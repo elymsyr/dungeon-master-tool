@@ -1341,11 +1341,16 @@ class _IdentityStep extends StatelessWidget {
               child: DropdownButtonFormField<String>(
                 initialValue:
                     draft.templateId.isEmpty ? null : draft.templateId,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Template *'),
                 items: templates
                     .map((t) => DropdownMenuItem(
                           value: t.schemaId,
-                          child: Text(t.name),
+                          child: Text(
+                            t.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ))
                     .toList(),
                 onChanged: (v) {
@@ -1370,6 +1375,7 @@ class _IdentityStep extends StatelessWidget {
                     : '';
                 return DropdownButtonFormField<String>(
                   initialValue: pickerValue,
+                  isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'World / Package',
                     suffixIcon: activatingWorld
@@ -1387,10 +1393,21 @@ class _IdentityStep extends StatelessWidget {
                   items: [
                     const DropdownMenuItem(
                       value: '',
-                      child: Text('Built-in SRD (default)'),
+                      child: Text(
+                        'Built-in SRD (default)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     ...uniqueWorlds.map(
-                      (w) => DropdownMenuItem(value: w, child: Text(w)),
+                      (w) => DropdownMenuItem(
+                        value: w,
+                        child: Text(
+                          w,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
                   ],
                   onChanged: activatingWorld
@@ -2022,13 +2039,17 @@ class _AbilityRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          SizedBox(
-            width: 90,
-            child: Text(
-              '= $total (${mod >= 0 ? '+' : ''}$mod)',
-              style: TextStyle(
-                color: palette.tabActiveText,
-                fontWeight: FontWeight.w600,
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '= $total (${mod >= 0 ? '+' : ''}$mod)',
+                maxLines: 1,
+                style: TextStyle(
+                  color: palette.tabActiveText,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
