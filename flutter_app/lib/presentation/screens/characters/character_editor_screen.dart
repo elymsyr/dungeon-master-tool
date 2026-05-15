@@ -1031,6 +1031,32 @@ class _CharacterEditorScreenState
       }
     }
 
+    final existingToolIds = <String>{};
+    final rawTools = character.entity.fields['tool_proficiencies'];
+    if (rawTools is List) {
+      for (final id in rawTools) {
+        if (id is String && id.isNotEmpty) existingToolIds.add(id);
+      }
+    }
+    final existingLanguageIds = <String>{};
+    for (final key in const ['language_refs', 'languages']) {
+      final raw = character.entity.fields[key];
+      if (raw is List) {
+        for (final id in raw) {
+          if (id is String && id.isNotEmpty) existingLanguageIds.add(id);
+        }
+      }
+    }
+    final featChoices = <String, String>{};
+    final rawFeatChoices = character.entity.fields['feat_choices'];
+    if (rawFeatChoices is Map) {
+      for (final entry in rawFeatChoices.entries) {
+        final k = entry.key.toString();
+        final v = entry.value;
+        if (v is String) featChoices[k] = v;
+      }
+    }
+
     final resolution = await showPendingChoiceResolver(
       context,
       choice: choice,
@@ -1040,6 +1066,9 @@ class _CharacterEditorScreenState
       existingSpellIds: existingSpellIds,
       existingSkillNames: existingSkillNames,
       expertiseSkillNames: expertiseSkillNames,
+      existingToolIds: existingToolIds,
+      existingLanguageIds: existingLanguageIds,
+      featChoices: featChoices,
     );
     if (!mounted || resolution == null) return;
 
@@ -1260,6 +1289,76 @@ class _CharacterEditorScreenState
         skills['rows'] = rows;
         updated['skills'] = skills;
       }
+    }
+
+    // Tool proficiency ids — append to tool_proficiencies.
+    if (resolution.toolIds.isNotEmpty) {
+      final list = updated['tool_proficiencies'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      for (final id in resolution.toolIds) {
+        if (id.isEmpty) continue;
+        if (!next.contains(id)) next.add(id);
+      }
+      updated['tool_proficiencies'] = next;
+    }
+
+    // Language ids — append to language_refs / languages (whichever the
+    // schema exposes; both are mirrored for the few templates that use the
+    // legacy key).
+    if (resolution.languageIds.isNotEmpty) {
+      for (final key in const ['language_refs', 'languages']) {
+        final list = updated[key];
+        if (list == null && key == 'languages') continue;
+        final next = list is List
+            ? List<String>.from(list.whereType<String>())
+            : <String>[];
+        for (final id in resolution.languageIds) {
+          if (id.isEmpty) continue;
+          if (!next.contains(id)) next.add(id);
+        }
+        updated[key] = next;
+      }
+    }
+
+    // Cantrip ids — write to spells_known (prepared=true, source=auto).
+    // Mirrors the wizard's commit-time `add(... prepared: true)` path so the
+    // editor renders the feat-granted cantrips alongside class cantrips.
+    if (resolution.cantripIds.isNotEmpty) {
+      final list = updated['spells_known'];
+      final next = <dynamic>[];
+      final seenIds = <String>{};
+      if (list is List) {
+        for (final row in list) {
+          next.add(row);
+          if (row is String) {
+            seenIds.add(row);
+          } else if (row is Map) {
+            final id = row['id'];
+            if (id is String) seenIds.add(id);
+          }
+        }
+      }
+      for (final id in resolution.cantripIds) {
+        if (id.isEmpty || seenIds.contains(id)) continue;
+        next.add({'id': id, 'equipped': true, 'source': 'auto'});
+        seenIds.add(id);
+      }
+      updated['spells_known'] = next;
+    }
+
+    // feat_choices map — persist a feat sub-pick (Magic Initiate's class
+    // list, cantrips, level-1 spell, etc.). Merge with any existing picks
+    // since featChoice resolutions can fire on top of partial wizard state.
+    final fcKey = resolution.featChoiceKey;
+    if (fcKey != null && fcKey.isNotEmpty) {
+      final raw = updated['feat_choices'];
+      final map = raw is Map
+          ? Map<String, dynamic>.from(raw)
+          : <String, dynamic>{};
+      map[fcKey] = resolution.featChoiceValue ?? '';
+      updated['feat_choices'] = map;
     }
 
     // Save-throw ability picks (Resilient via featAsi). Match on row's

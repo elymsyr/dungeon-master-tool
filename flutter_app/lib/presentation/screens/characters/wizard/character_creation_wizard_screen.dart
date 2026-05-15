@@ -1147,6 +1147,8 @@ Map<String, dynamic> buildSeedFields({
   // skip cantrip/spell/feat picks and finalize anyway. Anything still
   // unresolved at finalize is persisted as a pending choice so the level-up
   // dialog and the editor's pending-choices panel can surface it later.
+  final seededPending = <Map<String, dynamic>>[];
+
   if (characterClass != null) {
     final creationPlan = planLevelUp(
       fromLevel: 0,
@@ -1179,7 +1181,6 @@ Map<String, dynamic> buildSeedFields({
     final spellRemaining =
         (preparedCap - draft.preparedSpellIds.length).clamp(0, preparedCap);
 
-    final seededPending = <Map<String, dynamic>>[];
     for (final p in pending) {
       switch (p.kind) {
         case PendingChoiceKind.subclass:
@@ -1217,19 +1218,138 @@ Map<String, dynamic> buildSeedFields({
         case PendingChoiceKind.divineOrder:
         case PendingChoiceKind.featureOption:
         case PendingChoiceKind.skillProficiency:
+        case PendingChoiceKind.toolProficiency:
+        case PendingChoiceKind.languages:
         case PendingChoiceKind.expertise:
         case PendingChoiceKind.featAsi:
+        case PendingChoiceKind.featChoice:
           // Wizard has no inline resolver for these — always persist so the
           // pending panel + level-up dialog can surface them.
           seededPending.add(p.toMap());
       }
     }
-    if (seededPending.isNotEmpty) {
-      final existing = out['pending_choices'];
-      final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];
-      list.addAll(seededPending);
-      out['pending_choices'] = list;
+  }
+
+  // Skipped wizard-step picks (Skills / Tools / Languages) — anything the
+  // player left unselected in the Proficiencies step gets surfaced as a
+  // pending upgrade on the character card, mirroring the spell-skip path
+  // above. Field-key lookups are done with local helpers to mirror the
+  // existing `_validateProficiencies` logic.
+  int intOf(Object? v) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 0;
+    return 0;
+  }
+  List<String> listOf(Object? v) {
+    if (v is! List) return const [];
+    return v.whereType<String>().toList();
+  }
+
+  if (characterClass != null) {
+    final skillCap = intOf(characterClass.fields['skill_proficiency_choice_count']);
+    final skillOptions =
+        listOf(characterClass.fields['skill_proficiency_options']).length;
+    if (skillCap > 0 && skillOptions > 0) {
+      final remaining =
+          (skillCap - draft.skillChoiceIds.length).clamp(0, skillCap);
+      if (remaining > 0) {
+        seededPending.add(newPendingChoice(
+          kind: PendingChoiceKind.skillProficiency,
+          level: draft.level,
+          classId: characterClass.id,
+          classLabel: characterClass.name,
+          count: remaining,
+        ).toMap());
+      }
     }
+    final toolCap = intOf(characterClass.fields['tool_proficiency_count']);
+    final toolOptions =
+        listOf(characterClass.fields['tool_proficiency_options']).length;
+    if (toolCap > 0 && toolOptions > 0) {
+      final remaining =
+          (toolCap - draft.toolChoiceIds.length).clamp(0, toolCap);
+      if (remaining > 0) {
+        seededPending.add(newPendingChoice(
+          kind: PendingChoiceKind.toolProficiency,
+          level: draft.level,
+          classId: characterClass.id,
+          classLabel: characterClass.name,
+          count: remaining,
+        ).toMap());
+      }
+    }
+  }
+  if (background != null) {
+    final languageCap = intOf(background.fields['granted_language_count']);
+    final languageOptions =
+        entities.values.where((e) => e.categorySlug == 'language').length;
+    if (languageCap > 0 && languageOptions > 0) {
+      final remaining =
+          (languageCap - draft.languageChoiceIds.length).clamp(0, languageCap);
+      if (remaining > 0) {
+        seededPending.add(newPendingChoice(
+          kind: PendingChoiceKind.languages,
+          level: draft.level,
+          classId: background.id,
+          classLabel: background.name,
+          count: remaining,
+        ).toMap());
+      }
+    }
+  }
+
+  // Underfilled feat choice groups (e.g. Magic Initiate: picked the list but
+  // skipped some/all cantrip + L1 spell picks). One pending entry per group,
+  // keyed by feat_id (`sourceEntityId`) + group label (`featureName`); the
+  // resolver dialog re-reads the group definition off the feat entity.
+  {
+    final activeFeatIds = <String>[];
+    final bgOrigin = background?.fields['origin_feat_ref'];
+    if (bgOrigin is String && bgOrigin.isNotEmpty) {
+      activeFeatIds.add(bgOrigin);
+    }
+    for (final id in draft.featIds) {
+      if (!activeFeatIds.contains(id)) activeFeatIds.add(id);
+    }
+    for (final featId in activeFeatIds) {
+      final feat = entities[featId];
+      if (feat == null) continue;
+      final effects = feat.fields['effects'];
+      if (effects is! List) continue;
+      for (final row in effects) {
+        if (row is! Map) continue;
+        if (row['kind'] != 'choice_group') continue;
+        final payload = row['payload'];
+        if (payload is! Map) continue;
+        final groupId = payload['group_id']?.toString() ?? '';
+        if (groupId.isEmpty) continue;
+        final pickKind = payload['pick_kind']?.toString() ?? 'enum';
+        if (pickKind == 'ability') continue;
+        final pick = payload['pick'] is int ? payload['pick'] as int : 1;
+        final storageKey = '$featId:$groupId';
+        final raw = draft.originFeatChoices[storageKey] ?? '';
+        final pickedCount =
+            raw.isEmpty ? 0 : raw.split(',').where((s) => s.isNotEmpty).length;
+        final remaining = (pick - pickedCount).clamp(0, pick);
+        if (remaining <= 0) continue;
+        final label = payload['label']?.toString() ?? groupId;
+        seededPending.add(newPendingChoice(
+          kind: PendingChoiceKind.featChoice,
+          level: draft.level,
+          classLabel: feat.name,
+          featureName: label,
+          count: remaining,
+          sourceEntityId: featId,
+        ).toMap());
+      }
+    }
+  }
+
+  if (seededPending.isNotEmpty) {
+    final existing = out['pending_choices'];
+    final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];
+    list.addAll(seededPending);
+    out['pending_choices'] = list;
   }
 
   // Spell slots — derive from class caster_kind + level so a fresh

@@ -14,10 +14,13 @@ enum PendingChoiceKind {
   subclass('subclass'),
   weaponMastery('weapon_mastery'),
   skillProficiency('skill_proficiency'),
+  toolProficiency('tool_proficiency'),
+  languages('languages'),
   expertise('expertise'),
   featAsi('feat_asi'),
   divineOrder('divine_order'),
-  featureOption('feature_option');
+  featureOption('feature_option'),
+  featChoice('feat_choice');
 
   final String wire;
   const PendingChoiceKind(this.wire);
@@ -276,6 +279,16 @@ String pendingChoiceLabel(PendingChoice p) {
       return '$prefix · Pick ${p.count} weapon master${p.count == 1 ? 'y' : 'ies'}';
     case PendingChoiceKind.skillProficiency:
       return '$prefix · Pick ${p.count} skill proficienc${p.count == 1 ? 'y' : 'ies'}';
+    case PendingChoiceKind.toolProficiency:
+      return '$prefix · Pick ${p.count} tool proficienc${p.count == 1 ? 'y' : 'ies'}';
+    case PendingChoiceKind.languages:
+      return '$prefix · Pick ${p.count} language${p.count == 1 ? '' : 's'}';
+    case PendingChoiceKind.featChoice:
+      // classLabel holds the feat name at finalize; featureName the group_id.
+      final feat = p.classLabel ?? 'Feat';
+      final group = p.featureName ?? 'choice';
+      final suffix = p.count > 1 ? ' (pick ${p.count})' : '';
+      return 'L${p.level} · $feat: $group$suffix';
     case PendingChoiceKind.expertise:
       return '$prefix · Pick ${p.count} skill expertise';
     case PendingChoiceKind.featAsi:
@@ -308,6 +321,12 @@ Set<String> pendingChoiceFieldHints(PendingChoiceKind kind) {
     case PendingChoiceKind.skillProficiency:
     case PendingChoiceKind.expertise:
       return const {'skills'};
+    case PendingChoiceKind.toolProficiency:
+      return const {'tool_proficiencies'};
+    case PendingChoiceKind.languages:
+      return const {'language_refs', 'languages'};
+    case PendingChoiceKind.featChoice:
+      return const {'feats'};
     case PendingChoiceKind.featAsi:
       return const {'stat_block', 'saving_throws'};
     case PendingChoiceKind.divineOrder:
