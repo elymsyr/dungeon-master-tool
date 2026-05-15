@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
+import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/role_provider.dart';
@@ -145,10 +146,19 @@ class WorldMirrorApplier {
         final id = e.oldRecord['id'] as String?;
         if (id == null) return;
         notifier.removeMirror(id);
+        // 039 model: DELETE = canonical row gone. RPC'ler `(NULL,NULL)`
+        // CHECK violation olurdu yerine row'u siler. Hub-level local
+        // Character da silinmeli (cross-device DELETE echo).
+        // ignore: discarded_futures
+        ref.read(characterListProvider.notifier).removeMirror(id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final row = _charRowFromCdc(e.newRecord, fallbackWorldId: e.worldId);
         if (row != null) notifier.applyMirror(row);
+        // Note: hub-level Character mirror update (cross-device UPDATE
+        // echo'su owner'ın diğer cihazına worldId/owner patch'ini akıtsın)
+        // PR4'te eklenecek — şu an personal_characters CDC bu sorumluluğu
+        // taşıyor; sadece self-owned chars için.
       default:
         return;
     }

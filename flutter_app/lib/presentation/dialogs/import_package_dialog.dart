@@ -1,13 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/character_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
-import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../application/services/package_sync_service.dart';
 import '../../application/services/template_compatibility_service.dart';
@@ -15,7 +11,6 @@ import '../../data/database/database_provider.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:drift/drift.dart' hide Column, Table;
 import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
-import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/template_compatibility.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -43,11 +38,8 @@ class ImportPackageDialog extends ConsumerStatefulWidget {
       _ImportPackageDialogState();
 }
 
-enum _ImportSource { packages, characters }
-
 class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   bool _importing = false;
-  _ImportSource _source = _ImportSource.packages;
   Set<String> _installedPackageNames = const {};
 
   @override
@@ -80,29 +72,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       content: SizedBox(
         width: 500,
         height: 480,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!widget.viewOnly) ...[
-              _ImportSourcePillTabs(
-                source: _source,
-                palette: palette,
-                disabled: _importing,
-                onChanged: (s) => setState(() => _source = s),
-                l10n: l10n,
-              ),
-              const SizedBox(height: 12),
-            ],
-            Expanded(
-              child: switch (_source) {
-                _ImportSource.packages =>
-                  _packagesBody(l10n, palette, worldSchema, compatService),
-                _ImportSource.characters =>
-                  _charactersBody(l10n, palette, worldSchema, compatService),
-              },
-            ),
-          ],
-        ),
+        child: _packagesBody(l10n, palette, worldSchema, compatService),
       ),
       actions: [
         TextButton(
@@ -140,45 +110,6 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               viewOnly: widget.viewOnly,
               onImport: () => _importPackage(info, worldSchema),
               onRemove: () => _removePackage(info),
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
-
-  Widget _charactersBody(L10n l10n, DmToolColors palette,
-      WorldSchema worldSchema, TemplateCompatibilityService compatService) {
-    final charList = ref.watch(characterListProvider);
-    final templatesAsync = ref.watch(allTemplatesProvider);
-    return charList.when(
-      data: (chars) {
-        if (chars.isEmpty) {
-          return Center(
-            child: Text('No characters found.',
-                style: TextStyle(color: palette.sidebarLabelSecondary)),
-          );
-        }
-        final templates = templatesAsync.valueOrNull ?? const <WorldSchema>[];
-        return ListView.separated(
-          itemCount: chars.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 6),
-          itemBuilder: (context, index) {
-            final c = chars[index];
-            final templ = templates
-                .where((t) => t.schemaId == c.templateId)
-                .firstOrNull;
-            return _CharacterImportCard(
-              character: c,
-              template: templ,
-              worldSchema: worldSchema,
-              compatService: compatService,
-              palette: palette,
-              l10n: l10n,
-              importing: _importing,
-              onImport: templ == null ? null : () => _importCharacter(c),
             );
           },
         );
@@ -332,84 +263,6 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     }
   }
 
-  /// Karakter import'u **kopya değil, link** kurar.
-  ///
-  /// İki yol:
-  ///   - Karakter orphan (`worldName == ''`) ise: aktif world'ün adını
-  ///     karakterin `worldName`'ine yazar. Karakter artık o world'e
-  ///     "ait" — sidebar/editor/hub-tab başlığı doğru world adını
-  ///     gösterir, hala hub'da tek kopya olarak yaşar.
-  ///   - Karakter zaten başka bir world'de ise: world'ün
-  ///     `linked_character_ids` listesine eklenir (cross-link).
-  ///     Karakterin canonical `worldName`'i değişmez; iki world
-  ///     ondan referans tutar.
-  ///
-  /// Önceki davranış her zaman `linked_character_ids`'e ekliyordu —
-  /// böylece orphan karakter import'unda subtitle "No world assigned"
-  /// olarak kalıyordu, çünkü kimse `worldName` yazmıyordu.
-  Future<void> _importCharacter(Character c) async {
-    setState(() => _importing = true);
-    try {
-      final activeNotifier = ref.read(activeCampaignProvider.notifier);
-      final activeWorldName = ref.read(activeCampaignProvider);
-      final data = activeNotifier.data;
-      if (data == null || activeWorldName == null || activeWorldName.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No active world')),
-          );
-        }
-        return;
-      }
-      final existing =
-          (data['linked_character_ids'] as List?)?.whereType<String>().toList() ??
-              <String>[];
-      final alreadyLinked = existing.contains(c.id);
-      final alreadyOwned = c.worldName == activeWorldName;
-      if (alreadyLinked || alreadyOwned) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('"${c.entity.name}" already linked')),
-          );
-        }
-        return;
-      }
-      if (c.worldName.isEmpty) {
-        // Orphan karakter: world'ü canonical "owner" yap. Sidebar/editor
-        // subtitle ve hub-tab başlığı "World: X" gösterir, "No world
-        // assigned" yerine.
-        await ref
-            .read(characterListProvider.notifier)
-            .update(c.copyWith(worldName: activeWorldName));
-      } else {
-        // Cross-link: karakter zaten başka world'de yaşıyor. World'ün
-        // referans listesine ekle ki sidebar'da görünsün; canonical
-        // world değişmez.
-        data['linked_character_ids'] = [...existing, c.id];
-        await activeNotifier.save();
-      }
-      // Bump revision → EntityNotifier `_loadFromCampaign()` çalışır,
-      // linked karakter world görünümüne enjekte olur.
-      ref.read(campaignRevisionProvider.notifier).state++;
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Linked "${c.entity.name}" to this world')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Link failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _importing = false);
-    }
-  }
 }
 
 /// Tek bir paket kartı — uyumluluk bilgisi ile.
@@ -729,192 +582,3 @@ class _PackageImportCardState extends State<_PackageImportCard> {
   }
 }
 
-/// Tek bir karakter kartı — profil fotoğrafı + isim + template uyumluluk.
-class _CharacterImportCard extends StatelessWidget {
-  final Character character;
-  final WorldSchema? template;
-  final WorldSchema worldSchema;
-  final TemplateCompatibilityService compatService;
-  final DmToolColors palette;
-  final L10n l10n;
-  final bool importing;
-  final VoidCallback? onImport;
-
-  const _CharacterImportCard({
-    required this.character,
-    required this.template,
-    required this.worldSchema,
-    required this.compatService,
-    required this.palette,
-    required this.l10n,
-    required this.importing,
-    required this.onImport,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final compat = template == null
-        ? null
-        : compatService.check(template!, worldSchema);
-
-    final (IconData icon, Color color, String label) = compat == null
-        ? (
-            Icons.help_outline,
-            palette.sidebarLabelSecondary,
-            'Template missing'
-          )
-        : switch (compat.level) {
-            CompatibilityLevel.perfect => (
-                Icons.check_circle,
-                palette.successBtnBg,
-                l10n.importCompatPerfect,
-              ),
-            CompatibilityLevel.compatible => (
-                Icons.warning_amber,
-                palette.uiAutosaveTextEditing,
-                l10n.importCompatWarning,
-              ),
-            CompatibilityLevel.incompatible => (
-                Icons.cancel,
-                palette.dangerBtnBg,
-                l10n.importCompatIncompatible,
-              ),
-          };
-
-    final canImport = !importing && onImport != null;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          _avatar(),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(character.entity.name,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: palette.tabActiveText)),
-                Text(
-                  character.templateName,
-                  style: TextStyle(
-                      fontSize: 11, color: palette.sidebarLabelSecondary),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
-              Text(label, style: TextStyle(fontSize: 11, color: color)),
-            ],
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 28,
-            child: FilledButton(
-              onPressed: canImport ? onImport : null,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                textStyle: const TextStyle(fontSize: 12),
-              ),
-              child: Text(l10n.btnImport),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _avatar() {
-    final path = character.entity.imagePath;
-    final hasImage = path.isNotEmpty && File(path).existsSync();
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        shape: BoxShape.circle,
-        border: Border.all(color: palette.featureCardBorder),
-        image: hasImage
-            ? DecorationImage(image: FileImage(File(path)), fit: BoxFit.cover)
-            : null,
-      ),
-      alignment: Alignment.center,
-      child: hasImage
-          ? null
-          : Icon(Icons.person, size: 22, color: palette.tabText),
-    );
-  }
-}
-
-/// Feed-scope tarzı pill tab: Packages / Characters seçici.
-class _ImportSourcePillTabs extends StatelessWidget {
-  final _ImportSource source;
-  final DmToolColors palette;
-  final bool disabled;
-  final ValueChanged<_ImportSource> onChanged;
-  final L10n l10n;
-
-  const _ImportSourcePillTabs({
-    required this.source,
-    required this.palette,
-    required this.disabled,
-    required this.onChanged,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final items = <(_ImportSource, String)>[
-      (_ImportSource.packages, l10n.importSourcePackages),
-      (_ImportSource.characters, l10n.importSourceCharacters),
-    ];
-    return Opacity(
-      opacity: disabled ? 0.6 : 1,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: items.map((t) {
-          final isActive = t.$1 == source;
-          return InkWell(
-            borderRadius: palette.br,
-            onTap: disabled ? null : () => onChanged(t.$1),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color:
-                    isActive ? palette.featureCardAccent : Colors.transparent,
-                borderRadius: palette.br,
-                border: Border.all(
-                  color: isActive
-                      ? palette.featureCardAccent
-                      : palette.featureCardBorder,
-                ),
-              ),
-              child: Text(
-                t.$2,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isActive ? Colors.white : palette.tabText,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}

@@ -124,29 +124,12 @@ class PersonalMirrorApplier {
     }
   }
 
+  /// 039+040 model: personal_characters tablo retire edildi. world_characters
+  /// CDC zaten cross-device sync sağlar (RLS owner_id = auth.uid + orphan).
+  /// Bu handler legacy publication event'leri için kalır — production'da
+  /// publication membership de DROP edildi, event tetiklenmez. No-op.
   Future<void> _applyCharacterEvent(PersonalSyncEvent e) async {
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        final id = e.oldRecord['id'] as String?;
-        if (id == null) return;
-        if (mirror.isEchoOfId(id)) return;
-        ref
-            .read(personalOnlineCharIdsProvider.notifier)
-            .remove(id);
-        // Granular delete — repo + state in one notifier call, no full reload.
-        await ref.read(characterListProvider.notifier).removeMirror(id);
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final id = e.newRecord['id'] as String?;
-        if (id == null) return;
-        if (mirror.isEchoOfId(id)) return;
-        ref.read(personalOnlineCharIdsProvider.notifier).add(id);
-        final payload = e.newRecord['payload_json'];
-        if (payload is! String || payload.isEmpty) return;
-        await _writeCharacterFromPayload(payload);
-      default:
-        return;
-    }
+    // intentionally empty
   }
 
   Future<void> _writeCharacterFromPayload(String payload) async {

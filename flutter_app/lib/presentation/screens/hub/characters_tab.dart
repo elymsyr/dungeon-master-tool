@@ -5,15 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/character_claim_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
-import '../../../application/providers/online_worlds_provider.dart';
-import '../../../application/providers/role_provider.dart';
-import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/entity.dart';
@@ -37,7 +33,6 @@ class CharactersTab extends ConsumerStatefulWidget {
 
 class _CharactersTabState extends ConsumerState<CharactersTab> {
   int _selectedIndex = -1;
-  bool _importing = false;
   bool _releasing = false;
 
   /// Char tab visibility is own-only: signed-in users see characters whose
@@ -200,7 +195,11 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                                   _showCharacterSettings(c.id, palette),
                               infoChips: CharacterStatChips(
                                 lines: characterStatLines(
-                                    c, entitiesFor(c)),
+                                  c,
+                                  entitiesFor(c),
+                                  ownerLabel:
+                                      resolveCharacterOwnerLabel(ref, c),
+                                ),
                                 palette: palette,
                                 compact: true,
                               ),
@@ -254,46 +253,23 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     foregroundColor: palette.dangerBtnText,
                   ),
                 );
-                final importTarget =
-                    selected == null ? null : _importTargetWorld(selected);
-                return Column(
+                // Import butonu 039 model'de Characters Tab'da YOK. Kullanıcı
+                // kuralı: "Karakteri yalnızca dünya içinden import edebiliriz."
+                // World view (sidebar / player tab) üst kısmında dedicated
+                // Import buton var.
+                return Row(
                   children: [
-                    if (importTarget != null) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _importing
-                              ? null
-                              : () => _importToActiveWorld(
-                                  selected!, importTarget),
-                          icon: _importing
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.input, size: 18),
-                          label: Text('Import to "$importTarget"'),
-                        ),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: selected != null
+                            ? () => _openCharacter(selected)
+                            : null,
+                        icon: const Icon(Icons.folder_open, size: 18),
+                        label: const Text('Open Character'),
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: selected != null
-                                ? () => _openCharacter(selected)
-                                : null,
-                            icon: const Icon(Icons.folder_open, size: 18),
-                            label: const Text('Open Character'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        actionButton,
-                      ],
                     ),
+                    const SizedBox(width: 8),
+                    actionButton,
                   ],
                 );
               }),
@@ -344,96 +320,17 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     return sorted.where((c) => _isOwned(c, selfUid)).toList();
   }
 
-  /// Active world'e import edilebilirlik check'i. Null = uygun değil.
-  /// Geri dönüş = hedef world adı (button label'da kullanılır).
-  /// Eligibility:
-  ///   - char.worldName != active world (zaten bağlı değil)
-  ///   - active world var
-  ///   - active world online (member listesi var)
-  ///   - user member (dm veya player)
-  ///   - char ownerId null (offline/orphan) ya da ownerId == selfUid
-  String? _importTargetWorld(Character c) {
-    final activeWorld = ref.watch(activeCampaignProvider);
-    if (activeWorld == null || activeWorld.isEmpty) return null;
-    if (c.worldName == activeWorld) return null;
-    final infoList =
-        ref.watch(campaignInfoListProvider).valueOrNull ?? const [];
-    final info = infoList.where((w) => w.name == activeWorld).firstOrNull;
-    if (info == null) return null;
-    final onlineIds = ref.watch(onlineWorldIdsProvider);
-    if (!onlineIds.contains(info.id)) return null;
-    final role = ref.watch(worldRoleProvider(info.id)).valueOrNull;
-    if (role != WorldRole.dm && role != WorldRole.player) return null;
-    final selfUid = ref.watch(authProvider)?.uid;
-    if (c.ownerId != null && c.ownerId != selfUid) return null;
-    return activeWorld;
-  }
-
-  Future<void> _importToActiveWorld(Character c, String worldName) async {
-    setState(() => _importing = true);
-    try {
-      final selfUid = ref.read(authProvider)?.uid;
-      final infoList =
-          ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-      final info = infoList.where((w) => w.name == worldName).firstOrNull;
-      if (info == null) return;
-      final role = ref.read(worldRoleProvider(info.id)).valueOrNull;
-      // Player keeps ownership (and RLS `owner_id = auth.uid()` requires
-      // it). DM drops ownership on import — char becomes claimable in the
-      // world and disappears from the DM's own-only char tab.
-      final isPlayer = role == WorldRole.player;
-      final newOwnerId = isPlayer ? selfUid : null;
-      if (!isPlayer) {
-        // Unpublish personal sync BEFORE the update so `_mirrorPush` won't
-        // re-publish an ownerless payload to `personal_characters`. Char
-        // tab visibility on other devices stays consistent.
-        try {
-          await ref.read(characterListProvider.notifier).makeOffline(c.id);
-        } catch (e) {
-          debugPrint('import makeOffline error: $e');
-        }
-      }
-      final patched = c.copyWith(
-        worldName: worldName,
-        ownerId: newOwnerId,
-      );
-      await ref.read(characterListProvider.notifier).update(patched);
-      if (!mounted) return;
-      setState(() => _selectedIndex = -1);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Imported "${c.entity.name}" to "$worldName"')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _importing = false);
-    }
-  }
-
   String _subInfo(Character c, L10n l10n) {
     final parts = <String>[c.templateName];
     parts.add(_worldLabel(c, l10n));
     return parts.join(' · ');
   }
 
-  /// Resolves the world label for the tab. Falls back to the active
-  /// campaign when the character is referenced only via that world's
-  /// `linked_character_ids` (pre-fix linked-only chars); otherwise
-  /// shows the localized orphan string so unclaimed chars stay clear.
+  /// 039 model: world label canonical `worldName` (PR5 `worldId` lookup).
+  /// Boş = orphan (`(me, NULL)`). Eski `linked_character_ids` side-band
+  /// kaldırıldı.
   String _worldLabel(Character c, L10n l10n) {
     if (c.worldName.isNotEmpty) return c.worldName;
-    final activeWorld = ref.read(activeCampaignProvider);
-    if (activeWorld != null && activeWorld.isNotEmpty) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final linked =
-          (data?['linked_character_ids'] as List?)?.whereType<String>();
-      if (linked != null && linked.contains(c.id)) {
-        return activeWorld;
-      }
-    }
     return l10n.charWorldOrphan;
   }
 
@@ -487,15 +384,18 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
     setState(() => _releasing = true);
     try {
-      if (isHardDelete) {
-        await _hardDelete(c);
-      } else if (c.worldName.isNotEmpty) {
-        await _releaseWorldBound(c);
-      } else {
-        // Worldless + self-owned → release self, then hard delete: the
-        // row would otherwise linger as ownerless+worldless garbage and
-        // be invisible to every user under the own-only filter.
-        await _hardDelete(c);
+      // 039 model: provider.delete(id) server-side router.
+      //   - world-bound → remove_from_world RPC (owner varsa orphan'a düşür)
+      //   - orphan → delete_character RPC (hard delete)
+      // Cloud backup cleanup parallel: yine de tetikle, orphan→delete path'inde
+      // server row gitti, eski backup'lar silinmeli.
+      await ref.read(characterListProvider.notifier).delete(c.id);
+      try {
+        await ref
+            .read(cloudBackupOperationProvider.notifier)
+            .deleteBackupByItem(c.id, 'character');
+      } catch (e) {
+        debugPrint('cloud backup cleanup error: $e');
       }
       if (mounted) setState(() => _selectedIndex = -1);
     } catch (e) {
@@ -503,61 +403,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _releasing = false);
-    }
-  }
-
-  Future<void> _hardDelete(Character c) async {
-    await ref.read(characterListProvider.notifier).delete(c.id);
-    await ref
-        .read(cloudBackupOperationProvider.notifier)
-        .deleteBackupByItem(c.id, 'character');
-  }
-
-  /// Releases ownership of a world-bound character.
-  ///
-  /// Online world: `world_characters` is the canonical store. The
-  /// `release_character` RPC flips `owner_id` to null atomically under
-  /// RLS; CDC broadcasts to every member, and we drop the local mirror
-  /// so the char disappears from this user's own-only char tab without
-  /// waiting on the echo.
-  ///
-  /// Offline world: the local row IS the canonical store (the world's
-  /// `linked_character_ids` points at this id). We clear `ownerId` in
-  /// place — the row stays so the world keeps its character — and stop
-  /// personal sync. The char tab filter hides ownerless-with-auth rows
-  /// so it leaves the tab on its own.
-  Future<void> _releaseWorldBound(Character c) async {
-    final infoList =
-        ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-    final info = infoList.where((w) => w.name == c.worldName).firstOrNull;
-    final onlineIds = ref.read(onlineWorldIdsProvider);
-    final isOnline = info != null && onlineIds.contains(info.id);
-
-    try {
-      await ref.read(characterListProvider.notifier).makeOffline(c.id);
-    } catch (e) {
-      debugPrint('release makeOffline error: $e');
-    }
-
-    if (isOnline) {
-      final svc = ref.read(characterClaimServiceProvider);
-      if (svc != null) {
-        await svc.release(c.id);
-      }
-      await ref.read(characterListProvider.notifier).removeMirror(c.id);
-      try {
-        await ref
-            .read(cloudBackupOperationProvider.notifier)
-            .deleteBackupByItem(c.id, 'character');
-      } catch (e) {
-        debugPrint('release cloud backup cleanup error: $e');
-      }
-    } else {
-      // Offline: keep the row, just clear `ownerId`. World's
-      // `linked_character_ids` still resolves to this character.
-      await ref
-          .read(characterListProvider.notifier)
-          .update(c.copyWith(ownerId: null));
     }
   }
 
