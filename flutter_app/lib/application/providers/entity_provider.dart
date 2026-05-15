@@ -213,23 +213,18 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
 
     // 039 model: hub-level karakterlerin entity'sini world'e enjekte et.
-    // Kanon link `Character.worldId == activeWorldId` (legacy fallback
-    // `worldName == activeCampaign`). Eski `linked_character_ids` side-band
-    // list 039 ile birlikte retire edildi; aynı semantik tek kolonla.
+    // Kanon link `Character.worldId == activeWorldId`. Eski `linked_character_ids`
+    // side-band list 039 ile birlikte retire edildi.
     _linkedCharacterIds.clear();
     final activeWorldId =
         _ref.read(activeCampaignIdProvider).valueOrNull;
-    final activeWorldName = _ref.read(activeCampaignProvider);
     final chars = _ref.read(characterListProvider).valueOrNull ?? const [];
-    for (final c in chars) {
-      final matchesById =
-          activeWorldId != null && c.worldId == activeWorldId;
-      final matchesByName = activeWorldName != null &&
-          activeWorldName.isNotEmpty &&
-          c.worldName == activeWorldName;
-      if (matchesById || matchesByName) {
-        entities[c.entity.id] = c.entity;
-        _linkedCharacterIds.add(c.entity.id);
+    if (activeWorldId != null) {
+      for (final c in chars) {
+        if (c.worldId == activeWorldId) {
+          entities[c.entity.id] = c.entity;
+          _linkedCharacterIds.add(c.entity.id);
+        }
       }
     }
 

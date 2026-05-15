@@ -5,59 +5,11 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
 
-/// Aktif kullanıcının "Make Online" yaptığı karakter id'lerinin set'i.
-///
-/// Pattern `OnlineWorldIdsNotifier` ile aynı: auth değişikliğinde Supabase'den
-/// refresh; `add`/`remove` UI handler'ları için. Mirror push hook'ları bu
-/// set'i kontrol eder — online değilse RLS gürültüsü olmasın diye hiç
-/// push denemez.
-class PersonalOnlineCharIdsNotifier extends StateNotifier<Set<String>> {
-  final Ref _ref;
-  PersonalOnlineCharIdsNotifier(this._ref) : super(const <String>{}) {
-    refresh();
-    _ref.listen<AuthState?>(authProvider, (_, _) => refresh());
-  }
-
-  Future<void> refresh() async {
-    if (!SupabaseConfig.isConfigured) {
-      state = const <String>{};
-      return;
-    }
-    final auth = _ref.read(authProvider);
-    if (auth == null) {
-      state = const <String>{};
-      return;
-    }
-    try {
-      final rows = await Supabase.instance.client
-          .from('personal_characters')
-          .select('id')
-          .eq('owner_id', auth.uid);
-      final ids = <String>{};
-      for (final row in (rows as List)) {
-        final id = (row as Map)['id'];
-        if (id is String) ids.add(id);
-      }
-      state = ids;
-    } catch (e) {
-      debugPrint('personalOnlineCharIds refresh error: $e');
-    }
-  }
-
-  void add(String id) {
-    if (state.contains(id)) return;
-    state = {...state, id};
-  }
-
-  void remove(String id) {
-    if (!state.contains(id)) return;
-    state = state.where((x) => x != id).toSet();
-  }
-}
-
-final personalOnlineCharIdsProvider =
-    StateNotifierProvider<PersonalOnlineCharIdsNotifier, Set<String>>(
-        (ref) => PersonalOnlineCharIdsNotifier(ref));
+// 039+040: `personal_characters` table retired. Per-character "Make Online"
+// concept no longer exists — `world_characters` RLS auto-syncs every char
+// for the owning user. The former `personalOnlineCharIdsProvider` was
+// deleted; UI sites that consulted it now resolve "online" through auth
+// state alone.
 
 /// Aktif kullanıcının "Make Online" yaptığı paket adlarının set'i.
 class PersonalOnlinePackageNamesNotifier extends StateNotifier<Set<String>> {

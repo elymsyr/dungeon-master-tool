@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,13 +6,19 @@ import 'package:go_router/go_router.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
+import '../../application/providers/entity_provider.dart' show entityProvider;
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
+import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character_ext.dart';
+import '../../domain/entities/entity.dart';
 import '../screens/characters/character_editor_screen.dart';
 import '../theme/dm_tool_colors.dart';
 import 'character_add_menu.dart';
+import 'character_stat_chips.dart';
+import 'metadata_list_tile.dart';
 import 'world_characters_view.dart';
 
 /// Right-sidebar character workspace. Mirrors the player tab layout: 3
@@ -98,21 +105,35 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
   /// Offline path: keep the legacy load-cross-world behavior so picking a
   /// linked character from another world still opens correctly.
   Future<void> _openLocalCharacter(Character c) async {
-    if (c.worldName.isNotEmpty) {
+    final worldId = c.worldId;
+    String worldName = '';
+    if (worldId != null) {
+      final infos =
+          ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+      worldName = c.resolvedWorldName(infos);
+      if (worldName.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Character world not found locally.'),
+          ),
+        );
+        return;
+      }
       final active = ref.read(activeCampaignProvider);
-      if (active != c.worldName) {
+      if (active != worldName) {
         final ok = await withLoading(
           ref.read(globalLoadingProvider.notifier),
-          'open-world-${c.worldName}',
-          'Opening world "${c.worldName}"...',
-          () => ref.read(activeCampaignProvider.notifier).load(c.worldName),
+          'open-world-$worldId',
+          'Opening world "$worldName"...',
+          () => ref.read(activeCampaignProvider.notifier).load(worldName),
         );
         if (!mounted) return;
         if (!ok) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'World "${c.worldName}" not found on disk — character cannot open.'),
+                  'World "$worldName" not found on disk — character cannot open.'),
             ),
           );
           return;
@@ -121,8 +142,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     }
     if (!mounted) return;
     final active = ref.read(activeCampaignProvider);
-    final shouldEmbed =
-        c.worldName.isNotEmpty && c.worldName == active;
+    final shouldEmbed = worldName.isNotEmpty && worldName == active;
     if (shouldEmbed) {
       _openInline(c.id);
       return;
@@ -141,16 +161,15 @@ class _SidebarHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Match main center tab bar height (vertical:10 padding + ~18 icon row).
+    // No bottom border — visually flush with content like the other tabs
+    // (Database / Session / Mind Map / Map).
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: palette.tabBg,
-        border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: palette.tabBg,
       child: Row(
         children: [
-          Icon(Icons.people, size: 16, color: palette.tabActiveText),
+          Icon(Icons.people, size: 18, color: palette.tabActiveText),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -215,12 +234,10 @@ class _OfflineCharacterList extends ConsumerWidget {
         ),
       ),
       data: (all) {
-        final scoped = activeWorld == null
+        final scoped = activeWorldId == null
             ? const <Character>[]
             : (all
-                    .where((c) =>
-                        (activeWorldId != null && c.worldId == activeWorldId) ||
-                        c.worldName == activeWorld)
+                    .where((c) => c.worldId == activeWorldId)
                     .toList()
                   ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
         if (scoped.isEmpty) {
@@ -294,7 +311,7 @@ class _OfflineCharacterRowState
       builder: (ctx) => AlertDialog(
         title: const Text('Remove from world?'),
         content: Text(
-          '"${c.entity.name}" leaves "${c.worldName}". The character itself is kept and can be attached to another world later.',
+          '"${c.entity.name}" leaves this world. The character itself is kept and can be attached to another world later.',
         ),
         actions: [
           TextButton(
@@ -332,7 +349,7 @@ class _OfflineCharacterRowState
       }
       await ref
           .read(characterListProvider.notifier)
-          .update(c.copyWith(worldName: '', worldId: null));
+          .update(c.copyWith(worldId: null));
     });
   }
 
@@ -340,84 +357,87 @@ class _OfflineCharacterRowState
   Widget build(BuildContext context) {
     final palette = widget.palette;
     final c = widget.character;
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final campaign = ref.watch(entityProvider);
+    final Map<String, Entity> entities;
+    if (c.worldId == null || c.worldId != activeWorldId) {
+      entities = builtin;
+    } else {
+      entities = campaign.isEmpty
+          ? builtin
+          : UnmodifiableMapView<String, Entity>(
+              CombinedMapView<String, Entity>([campaign, builtin]),
+            );
+    }
     return InkWell(
       borderRadius: palette.br,
       onTap: _busy ? null : widget.onOpen,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: palette.featureCardBg,
-          borderRadius: palette.br,
-          border: Border.all(color: palette.featureCardBorder),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor:
-                  palette.featureCardAccent.withValues(alpha: 0.2),
-              child: Icon(Icons.person,
-                  color: palette.tabActiveText, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(c.entity.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: palette.tabActiveText,
-                      ),
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(c.templateName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: palette.sidebarLabelSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis),
-                ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 140),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: palette.featureCardBg,
+            borderRadius: palette.br,
+            border: Border.all(color: palette.featureCardBorder),
+          ),
+          child: MetadataListTile(
+            icon: Icons.person,
+            name: c.entity.name,
+            subtitle: c.templateName,
+            description: c.entity.description,
+            tags: c.entity.tags,
+            coverImagePath: c.entity.imagePath,
+            isSelected: false,
+            palette: palette,
+            layout: MetadataTileLayout.leftAvatar,
+            onSettings: () {},
+            infoChips: CharacterStatChips(
+              lines: characterStatLines(
+                c,
+                entities,
+                ownerLabel: resolveCharacterOwnerLabel(ref, c),
               ),
+              palette: palette,
+              compact: true,
             ),
-            const SizedBox(width: 8),
-            if (_busy)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              PopupMenuButton<String>(
-                tooltip: 'Actions',
-                icon: Icon(Icons.more_vert,
-                    size: 18, color: palette.sidebarLabelSecondary),
-                padding: EdgeInsets.zero,
-                splashRadius: 18,
-                onSelected: (v) async {
-                  switch (v) {
-                    case 'remove':
-                      await _removeFromWorld();
-                  }
-                },
-                itemBuilder: (_) => [
-                  if (c.worldName.isNotEmpty)
-                    PopupMenuItem(
-                      value: 'remove',
-                      child: Row(children: [
-                        Icon(Icons.exit_to_app,
-                            size: 16, color: palette.dangerBtnBg),
-                        const SizedBox(width: 8),
-                        const Text('Remove from world'),
-                    ]),
+            trailingControl: _busy
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : PopupMenuButton<String>(
+                    tooltip: 'Actions',
+                    icon: Icon(Icons.more_vert,
+                        size: 18, color: palette.sidebarLabelSecondary),
+                    padding: EdgeInsets.zero,
+                    splashRadius: 18,
+                    onSelected: (v) async {
+                      switch (v) {
+                        case 'remove':
+                          await _removeFromWorld();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (c.worldId != null)
+                        PopupMenuItem(
+                          value: 'remove',
+                          child: Row(children: [
+                            Icon(Icons.exit_to_app,
+                                size: 16, color: palette.dangerBtnBg),
+                            const SizedBox(width: 8),
+                            const Text('Remove from world'),
+                          ]),
+                        ),
+                    ],
                   ),
-                ],
-              ),
-          ],
+          ),
         ),
       ),
     );

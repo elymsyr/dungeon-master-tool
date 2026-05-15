@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
+import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/social_providers.dart';
@@ -48,6 +49,10 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     // Uygulama ilk kez açıldığında karşılama + beta bildirim dialog'u.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      // Cloud catch-up: world / package / character için cloud'da daha güncel
+      // versiyon varsa indir. Fire-and-forget; offline'da no-op.
+      // ignore: discarded_futures
+      ref.read(cloudCatchupServiceProvider).runAll();
       final ui = ref.read(uiStateProvider);
       if (ui.welcomeSeen) return;
       await WelcomeDialog.show(context);

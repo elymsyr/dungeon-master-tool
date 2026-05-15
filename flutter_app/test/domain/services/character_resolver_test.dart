@@ -25,7 +25,7 @@ Character _pc({
       templateId: 'tpl',
       templateName: 'Tpl',
       entity: Entity(id: '${id}_e', categorySlug: 'player', fields: fields),
-      worldName: 'world',
+      worldId: 'world',
       createdAt: '0',
       updatedAt: '0',
     );

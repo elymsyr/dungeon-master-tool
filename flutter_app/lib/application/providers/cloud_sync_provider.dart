@@ -79,8 +79,8 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
   Timer? _maxDelayTimer;
   bool _disposed = false;
 
-  static const _syncDelay = Duration(seconds: 30);
-  static const _maxSyncDelay = Duration(seconds: 120);
+  static const _syncDelay = Duration(seconds: 120);
+  static const _maxSyncDelay = Duration(seconds: 600);
 
   /// Dirty items: key = "$type:$id", value = (name, type, id)
   final Map<String, ({String name, String type, String id})> _dirtyItems = {};

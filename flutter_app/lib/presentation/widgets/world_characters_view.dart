@@ -1,17 +1,24 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
+import '../../application/providers/entity_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_characters_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/entity.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
+import 'character_stat_chips.dart';
+import 'metadata_list_tile.dart';
 
 /// Shared character list for both the DM world sidebar and the player tab.
 ///
@@ -66,25 +73,8 @@ class WorldCharactersView extends ConsumerWidget {
         final body = ListView(
           padding: padding,
           children: [
-            if (selfUid != null) ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.input, size: 16),
-                  label: const Text('Import character to this world'),
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => ImportOrphanDialog(
-                        worldId: worldId,
-                        palette: palette,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
+            // "Import character to this world" butonu kaldırıldı — character tab
+            // header'ındaki `+` menüsü zaten ImportOrphanDialog'u açıyor.
             if (mine.isNotEmpty) ...[
               _SectionHeader(
                 palette: palette,
@@ -626,6 +616,18 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     });
   }
 
+  /// Decoded Character from payloadJson. Null if payload malformed — caller
+  /// falls back to row-level metadata (templateName, etc).
+  Character? _decodeCharacter() {
+    try {
+      final decoded = jsonDecode(widget.row.payloadJson);
+      if (decoded is Map<String, dynamic>) {
+        return Character.fromJson(decoded);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
@@ -637,61 +639,69 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         : (isOther
             ? palette.featureCardBg.withValues(alpha: 0.6)
             : palette.featureCardBg);
-    final avatarBg = isOther
-        ? palette.sidebarDivider
-        : palette.featureCardAccent.withValues(alpha: 0.2);
-    final avatarIcon = isOther
-        ? Icons.lock_outline
-        : (isUnclaimed ? Icons.person_outline : Icons.person);
-    final avatarFg = isOther
-        ? palette.sidebarLabelSecondary
-        : palette.tabActiveText;
     final subtitle = isOther
         ? '${widget.row.templateName} · Owned by another player'
         : widget.row.templateName;
 
+    final character = _decodeCharacter();
+    // Resolve entity map for stat chip name lookups. Active campaign first,
+    // builtin SRD as fallback.
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final Map<String, Entity> entities;
+    if (character == null ||
+        character.worldId == null ||
+        character.worldId != activeWorldId) {
+      entities = builtin;
+    } else {
+      final campaign = ref.watch(entityProvider);
+      entities = campaign.isEmpty
+          ? builtin
+          : UnmodifiableMapView<String, Entity>(
+              CombinedMapView<String, Entity>([campaign, builtin]),
+            );
+    }
+
     return InkWell(
       borderRadius: palette.br,
       onTap: _busy ? null : () => widget.onOpen(widget.row.id),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: palette.br,
-          border: Border.all(color: palette.featureCardBorder),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: avatarBg,
-              child: Icon(avatarIcon, color: avatarFg, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: palette.tabActiveText,
-                      ),
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: palette.sidebarLabelSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            _trailingMenu(isUnclaimed),
-          ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 140),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: palette.br,
+            border: Border.all(color: palette.featureCardBorder),
+          ),
+          child: MetadataListTile(
+            icon: isOther
+                ? Icons.lock_outline
+                : (isUnclaimed ? Icons.person_outline : Icons.person),
+            name: name,
+            subtitle: subtitle,
+            description: character?.entity.description ?? '',
+            tags: character?.entity.tags ?? const <String>[],
+            coverImagePath: character?.entity.imagePath ?? '',
+            isSelected: false,
+            palette: palette,
+            layout: MetadataTileLayout.leftAvatar,
+            onSettings: () {},
+            infoChips: character == null
+                ? null
+                : CharacterStatChips(
+                    lines: characterStatLines(
+                      character,
+                      entities,
+                      ownerLabel:
+                          resolveCharacterOwnerLabel(ref, character),
+                    ),
+                    palette: palette,
+                    compact: true,
+                  ),
+            trailingControl: _trailingMenu(isUnclaimed),
+          ),
         ),
       ),
     );
@@ -813,10 +823,25 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
         characterId: c.id,
         worldId: widget.worldId,
       );
-      // Optimistic local patch: worldId set et. CDC echo'su `applyMirror`
-      // ile aynı state'i tekrar yazar — idempotent.
-      await ref.read(characterListProvider.notifier).update(
-            c.copyWith(worldId: widget.worldId),
+      // Hub-level optimistic patch: worldId set et. Display layer
+      // `campaignInfoListProvider` üzerinden adı çözer (worldName retired).
+      final patched = c.copyWith(worldId: widget.worldId);
+      await ref.read(characterListProvider.notifier).update(patched);
+      // World list optimistic insert — CDC echo'su gelene kadar UI'da
+      // boşluk olmasın. `applyMirror` idempotent, echo aynı row'u tekrar
+      // yazınca diff yok.
+      ref
+          .read(worldCharactersProvider(widget.worldId).notifier)
+          .applyMirror(
+            WorldCharacterRow(
+              id: c.id,
+              worldId: widget.worldId,
+              ownerId: c.ownerId,
+              templateId: c.templateId,
+              templateName: c.templateName,
+              payloadJson: jsonEncode(patched.toJson()),
+              updatedAt: DateTime.now().toUtc(),
+            ),
           );
       if (!mounted) return;
       Navigator.pop(context);
@@ -848,14 +873,11 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
           data: (chars) {
-            // Orphan + self-owned filtresi. `worldId == null` kanon; legacy
-            // `worldName == ''` ile de eşleştir — PR2'de tüm karakterler
-            // henüz worldId'ye migrate olmamış olabilir.
+            // Orphan + self-owned filtresi. `worldId == null` kanon.
             final candidates = chars
                 .where((c) =>
                     c.ownerId == selfUid &&
-                    c.worldId == null &&
-                    c.worldName.isEmpty)
+                    c.worldId == null)
                 .toList();
             if (candidates.isEmpty) {
               return Center(

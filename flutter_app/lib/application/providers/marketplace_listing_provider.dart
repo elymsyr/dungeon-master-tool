@@ -342,7 +342,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         final now = DateTime.now().toUtc().toIso8601String();
         final fresh = imported.copyWith(
           id: newId(),
-          worldName: '',
+          worldId: null,
           entity: imported.entity.copyWith(id: newId()),
           createdAt: now,
           updatedAt: now,

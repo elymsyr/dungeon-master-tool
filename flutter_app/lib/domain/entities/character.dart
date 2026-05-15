@@ -8,9 +8,9 @@ part 'character.g.dart';
 /// Hub-level karakter — bir template'in Player kategorisinden üretilir.
 /// Kampanyadan bağımsız olarak saklanır: `{charactersDir}/{id}.json`.
 ///
-/// Her karakter bir world'e (campaign) bağlanır; class/spell/equipment/traits
-/// gibi entity'leri o world'ün entities'inden çözer. Boş `worldName` =
-/// migration sırasında world bilgisi kaybedilen orphan karakter.
+/// Her karakter `worldId` ile bir world'e (campaign) bağlanır;
+/// class/spell/equipment/traits gibi entity'leri o world'ün entities'inden
+/// çözer. NULL `worldId` = orphan karakter (worldsuz).
 @freezed
 abstract class Character with _$Character {
   const factory Character({
@@ -21,16 +21,10 @@ abstract class Character with _$Character {
     /// character metadata bu alanlarda saklanır, böylece entity_card ile
     /// aynı field'ları paylaşırız.
     required Entity entity,
-    /// Karakterin bağlı olduğu world (campaign) adı. DEPRECATED — PR3/PR4'te
-    /// `worldId` ile değiştirilecek. Şimdilik UI ve mevcut filter'lar için
-    /// paralel tutuluyor; cloud `world_characters.world_id` ile name lookup
-    /// arasındaki tutarsızlık (world rename'i sessizce kopuyor) `worldId`
-    /// üzerine taşındığında düzelir.
-    @Default('') String worldName,
     /// Karakterin bağlı olduğu world id'si (Supabase `world_characters.world_id`
-    /// + local `Campaigns.id`). NULL = orphan (worldsuz). 039 migration sonrası
-    /// kanon link bu alandır. `worldName` paralel set edilir (PR2 deprecation
-    /// window).
+    /// + local `Campaigns.id`). NULL = orphan (worldsuz). Kanon link — display
+    /// adı `campaignInfoListProvider` üzerinden resolve edilir
+    /// (`character_ext.dart` extension).
     @Default(null) String? worldId,
     /// Karakterin sahibi olan user'ın Supabase uid'si. NULL = unclaimed
     /// (world içinde DM tarafından oluşturulup release edilmiş veya leave/kick

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
@@ -73,7 +74,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   // Right sidebar state (PDF / Soundmap — mutually exclusive, ortak genislik)
   RightSidebar _rightSidebar = RightSidebar.none;
   double _rightSidebarWidth = 450;
-  static const double _minRightSidebarWidth = 300;
+  static const double _minRightSidebarWidth = 360;
   static const double _maxRightSidebarWidth = 700;
   late final ValueNotifier<double> _rightSidebarWidthNotifier;
   // PDF tab state
@@ -143,7 +144,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
       ref.read(globalLoadingProvider.notifier),
       'save-world',
       'Saving world...',
-      () => ref.read(saveStateProvider.notifier).saveNow(),
+      () async {
+        await ref.read(saveStateProvider.notifier).saveNow();
+        // saveNow markDirty'leri tetikledikten sonra cloud upload'ı flush et.
+        // backupActiveItem beta + auth değilse no-op döner.
+        await ref.read(cloudSyncProvider.notifier).backupActiveItem();
+      },
     );
     if (!mounted) return;
     ref.invalidate(campaignListProvider);

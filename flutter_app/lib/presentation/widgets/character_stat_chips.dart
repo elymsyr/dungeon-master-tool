@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
-import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
@@ -192,21 +192,17 @@ String resolveCharacterOwnerLabel(WidgetRef ref, Character character) {
   if (ownerId == null || ownerId.isEmpty) return '—';
   final auth = ref.watch(authProvider);
   if (auth != null && auth.uid == ownerId) return 'You';
-  if (character.worldName.isNotEmpty) {
-    final infos = ref.watch(campaignInfoListProvider).valueOrNull;
-    final worldId =
-        infos?.firstWhereOrNull((w) => w.name == character.worldName)?.id;
-    if (worldId != null) {
-      final members = ref.watch(worldMembersProvider(worldId)).valueOrNull;
-      if (members != null) {
-        final m = members.firstWhereOrNull((m) => m.userId == ownerId);
-        if (m != null) {
-          if (m.displayName != null && m.displayName!.isNotEmpty) {
-            return m.displayName!;
-          }
-          if (m.username != null && m.username!.isNotEmpty) {
-            return '@${m.username!}';
-          }
+  final worldId = character.worldId;
+  if (worldId != null) {
+    final members = ref.watch(worldMembersProvider(worldId)).valueOrNull;
+    if (members != null) {
+      final m = members.firstWhereOrNull((m) => m.userId == ownerId);
+      if (m != null) {
+        if (m.displayName != null && m.displayName!.isNotEmpty) {
+          return m.displayName!;
+        }
+        if (m.username != null && m.username!.isNotEmpty) {
+          return '@${m.username!}';
         }
       }
     }
@@ -218,9 +214,9 @@ String resolveCharacterOwnerLabel(WidgetRef ref, Character character) {
 /// when the character's world is open, otherwise the bundled SRD pack.
 Map<String, Entity> readCharacterEntities(WidgetRef ref, Character character) {
   final builtin = ref.watch(builtinSrdEntitiesProvider);
-  if (character.worldName.isEmpty) return builtin;
-  final active = ref.watch(activeCampaignProvider);
-  if (active != character.worldName) return builtin;
+  if (character.worldId == null) return builtin;
+  final activeId = ref.watch(activeCampaignIdProvider).valueOrNull;
+  if (activeId != character.worldId) return builtin;
   final campaign = ref.watch(entityProvider);
   return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
 }
@@ -255,31 +251,32 @@ class CharacterStatChips extends StatelessWidget {
     final iconSize = compact ? 13.0 : 18.0;
     final gap = compact ? 3.0 : 6.0;
     final spacing = compact ? 10.0 : 18.0;
-    final chips = [
-      for (final l in lines)
-        Tooltip(
-          message: l.label,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(l.icon,
-                  size: iconSize, color: palette.sidebarLabelSecondary),
-              SizedBox(width: gap),
-              Text(
-                l.value,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.fade,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: palette.tabActiveText,
-                ),
-              ),
-            ],
-          ),
+    Widget chipRow(CharacterStatLine l, {bool flexValue = false}) {
+      final valueText = Text(
+        l.value,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.fade,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+          color: palette.tabActiveText,
         ),
-    ];
+      );
+      return Tooltip(
+        message: l.label,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(l.icon,
+                size: iconSize, color: palette.sidebarLabelSecondary),
+            SizedBox(width: gap),
+            flexValue ? Flexible(child: valueText) : valueText,
+          ],
+        ),
+      );
+    }
+    final chips = [for (final l in lines) chipRow(l)];
     // Compact surfaces (sidebar/list tiles) and explicit scroll requests
     // both use a single-row horizontal scroll viewport. Lets long species /
     // owner / ancestry strings extend past the parent width without
@@ -300,10 +297,13 @@ class CharacterStatChips extends StatelessWidget {
         ),
       );
     }
+    // Default (full-size, non-scroll) header: a Wrap gives unbounded width
+    // to each child Row, so when constrained the inner Text would overflow.
+    // Use flexValue chips so the Text shrinks instead of overflowing.
     return Wrap(
       spacing: spacing,
       runSpacing: compact ? 4 : 8,
-      children: chips,
+      children: [for (final l in lines) chipRow(l, flexValue: true)],
     );
   }
 }

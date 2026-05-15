@@ -13,6 +13,7 @@ import '../../../../application/character_creation/character_draft_notifier.dart
 import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/entity_provider.dart';
+import '../../../../application/providers/role_provider.dart';
 import '../../../../application/providers/template_provider.dart';
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
@@ -56,19 +57,39 @@ class _CharacterCreationWizardScreenState
   @override
   void initState() {
     super.initState();
-    // Pre-select the active campaign as the wizard's default world. When
-    // the user opens "create character" from inside a world (sidebar /
-    // characters tab), they expect that world to already be picked
-    // instead of having to re-select it from the dropdown. Falls back to
-    // the bundled SRD (empty `worldName`) when no campaign is active.
+    // Force-refresh the world list providers on mount. Cold-start + auto-open
+    // flows otherwise let the wizard render against a stale snapshot that
+    // includes worlds the user deleted in a prior session (file legacy +
+    // DB-merged source). Re-entering the wizard used to fix it because
+    // some other surface had invalidated in the meantime — invalidating
+    // here makes the behavior deterministic.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final activeWorld = ref.read(activeCampaignProvider);
-      if (activeWorld == null || activeWorld.isEmpty) return;
-      final draft = ref.read(characterDraftProvider);
-      if (draft.worldName.isNotEmpty) return;
-      ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
+      ref.invalidate(campaignListProvider);
+      ref.invalidate(campaignInfoListProvider);
+      _pickActiveWorldIfAny();
     });
+  }
+
+  /// Reads activeCampaignProvider; falls back to `activeCampaignIdProvider`
+  /// + `campaignInfoListProvider` to handle the cold-open race where the
+  /// campaign name notifier hasn't propagated yet but the id is already
+  /// resolved. Without the fallback, hitting "Create Character" on the
+  /// first frame after opening a world produced a worldless draft.
+  void _pickActiveWorldIfAny() {
+    final draft = ref.read(characterDraftProvider);
+    if (draft.worldName.isNotEmpty) return;
+    final activeWorld = ref.read(activeCampaignProvider);
+    if (activeWorld != null && activeWorld.isNotEmpty) {
+      ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
+      return;
+    }
+    final activeId = ref.read(activeCampaignIdProvider).valueOrNull;
+    if (activeId == null) return;
+    final infos = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final match = infos.where((i) => i.id == activeId).firstOrNull;
+    if (match == null) return;
+    ref.read(characterDraftProvider.notifier).setWorld(match.name);
   }
 
   /// Entity source the wizard reads from. Active campaign's entities when
@@ -112,6 +133,18 @@ class _CharacterCreationWizardScreenState
     final notifier = ref.read(characterDraftProvider.notifier);
     final templatesAsync = ref.watch(allTemplatesProvider);
     final campaignsAsync = ref.watch(campaignListProvider);
+    // Cold-open race: activeCampaignProvider may arrive after initState's
+    // postFrame. Watch both name + id providers and re-pick whenever they
+    // settle, as long as the user hasn't explicitly picked a world yet.
+    ref.listen<String?>(activeCampaignProvider, (_, _) {
+      if (mounted) _pickActiveWorldIfAny();
+    });
+    ref.listen<AsyncValue<String?>>(activeCampaignIdProvider, (_, _) {
+      if (mounted) _pickActiveWorldIfAny();
+    });
+    ref.listen(campaignInfoListProvider, (_, _) {
+      if (mounted) _pickActiveWorldIfAny();
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -514,8 +547,20 @@ class _CharacterCreationWizardScreenState
     try {
       // Empty world is intentional — the character runs against the
       // bundled SRD entity map. Editor falls back to
-      // [builtinSrdEntitiesProvider] when [worldName] is empty.
+      // [builtinSrdEntitiesProvider] when worldId is null.
       final worldName = draft.worldName;
+      String? resolvedWorldId;
+      if (worldName.isNotEmpty) {
+        final infos =
+            ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+        resolvedWorldId =
+            infos.where((i) => i.name == worldName).firstOrNull?.id;
+      }
+      // Cold-open fallback: draft.worldName may still be empty if the user
+      // hit Create before activeCampaignProvider populated. Use the
+      // canonical id directly so the new char binds to the open world
+      // instead of becoming orphan.
+      resolvedWorldId ??= ref.read(activeCampaignIdProvider).valueOrNull;
       final entities = _wizardEntities();
       Entity? lookup(String? id) =>
           id == null ? null : entities[id];
@@ -536,7 +581,7 @@ class _CharacterCreationWizardScreenState
           await ref.read(characterListProvider.notifier).create(
                 name: draft.name.trim(),
                 template: template,
-                worldName: worldName,
+                worldId: resolvedWorldId,
                 description: draft.description.trim(),
                 tags: draft.tags,
                 portraitPath: draft.portraitPath,

@@ -42,6 +42,11 @@ class MetadataListTile extends StatelessWidget {
   /// Used for role/online status indicators on world cards.
   final List<Widget> topRightOverlay;
 
+  /// Custom trailing widget that replaces the gear settings button. Used by
+  /// surfaces that need a popup menu (sidebar / world character rows) in the
+  /// same slot the main character tab uses for settings.
+  final Widget? trailingControl;
+
   const MetadataListTile({
     super.key,
     required this.icon,
@@ -57,6 +62,7 @@ class MetadataListTile extends StatelessWidget {
     this.trailingBadges = const [],
     this.infoChips,
     this.topRightOverlay = const [],
+    this.trailingControl,
   });
 
   bool get _hasImage =>
@@ -89,7 +95,7 @@ class MetadataListTile extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, right: 6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [_settingsButton()],
+              children: [trailingControl ?? _settingsButton()],
             ),
           ),
         ],
@@ -122,7 +128,7 @@ class MetadataListTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textBlock()),
-              _settingsButton(),
+              trailingControl ?? _settingsButton(),
             ],
           ),
         ),

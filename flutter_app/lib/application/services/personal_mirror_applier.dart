@@ -5,10 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../domain/entities/character.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
-import '../providers/character_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/personal_online_provider.dart';
@@ -19,14 +17,15 @@ import 'world_mirror_service.dart';
 
 /// `PersonalSyncService.events` stream'ini local state'e uygular.
 ///
-/// Sorumluluk:
-///   - `personal_characters` INSERT/UPDATE → local JSON dosyaya yaz +
-///     `characterListProvider` invalidate. DELETE → local dosyayı kaldır.
+/// Sorumluluk (039+040 retire sonrası):
 ///   - `personal_packages` INSERT/UPDATE → `PackageRepository.save` +
 ///     listeleri invalidate; aktif paketse data'yı in-memory replace.
 ///   - `world_members` INSERT (self) → `onlineWorldIdsProvider.add` +
 ///     hub world list refresh. DELETE (self) → karşılığı yoksa local
 ///     world'ü purge et (DM-kick on başka cihaz senaryosu).
+///
+/// `personal_characters` retire edildi — char cross-device sync `world_characters`
+/// CDC + RLS üzerinden çalışır (bkz. `world_mirror_applier.dart`).
 ///
 /// Echo'ları `WorldMirrorService._lastPushedAt` map'i üzerinden filtreler;
 /// böylece push → CDC → reapply döngüsü olmaz.
@@ -57,35 +56,16 @@ class PersonalMirrorApplier {
   }
 
   /// Subscribe sonrası local state'i sunucu ile aynı hizaya getirir.
-  /// `personal_characters` / `personal_packages` satırlarını full pull eder
-  /// — yeni cihaza ilk giriş için bootstrap. Aynı uid için idempotent;
-  /// auth değişmediği sürece tekrar SELECT yapmaz.
+  /// `personal_packages` satırlarını full pull eder — yeni cihaza ilk giriş
+  /// için bootstrap. Aynı uid için idempotent; auth değişmediği sürece tekrar
+  /// SELECT yapmaz. Karakterler `world_mirror_applier` üzerinden bootstrap
+  /// edilir (`world_characters` CDC + listWorldCharacters).
   Future<void> bootstrap() async {
     final auth = ref.read(authProvider);
     if (auth == null) return;
     if (_bootstrappedFor == auth.uid) return;
     _bootstrappedFor = auth.uid;
     final client = Supabase.instance.client;
-    try {
-      final rows = await client
-          .from('personal_characters')
-          .select('id, payload_json')
-          .eq('owner_id', auth.uid);
-      final list = rows as List;
-      for (final raw in list) {
-        final row = raw as Map;
-        final id = row['id'] as String?;
-        if (id == null) continue;
-        final payload = row['payload_json'];
-        if (payload is String && payload.isNotEmpty) {
-          // _writeCharacterFromPayload now applies granularly (no full reload).
-          await _writeCharacterFromPayload(payload);
-        }
-      }
-    } catch (e) {
-      debugPrint('PersonalMirrorApplier bootstrap chars error: $e');
-    }
-
     try {
       final rows = await client
           .from('personal_packages')
@@ -112,8 +92,6 @@ class PersonalMirrorApplier {
   Future<void> _onEvent(PersonalSyncEvent e) async {
     try {
       switch (e.table) {
-        case 'personal_characters':
-          await _applyCharacterEvent(e);
         case 'personal_packages':
           await _applyPackageEvent(e);
         case 'world_members':
@@ -121,27 +99,6 @@ class PersonalMirrorApplier {
       }
     } catch (err, st) {
       debugPrint('PersonalMirrorApplier error: $err\n$st');
-    }
-  }
-
-  /// 039+040 model: personal_characters tablo retire edildi. world_characters
-  /// CDC zaten cross-device sync sağlar (RLS owner_id = auth.uid + orphan).
-  /// Bu handler legacy publication event'leri için kalır — production'da
-  /// publication membership de DROP edildi, event tetiklenmez. No-op.
-  Future<void> _applyCharacterEvent(PersonalSyncEvent e) async {
-    // intentionally empty
-  }
-
-  Future<void> _writeCharacterFromPayload(String payload) async {
-    try {
-      final map = jsonDecode(payload) as Map<String, dynamic>;
-      final character = Character.fromJson(map);
-      // applyMirror persists to disk AND patches the in-memory state in
-      // place, replacing the previous `repo.save + invalidate` pattern that
-      // forced a full `loadAll()` from disk per CDC event.
-      await ref.read(characterListProvider.notifier).applyMirror(character);
-    } catch (e) {
-      debugPrint('_writeCharacterFromPayload error: $e');
     }
   }
 

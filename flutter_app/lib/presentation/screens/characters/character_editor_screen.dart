@@ -12,12 +12,13 @@ import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/multiclass_helper.dart';
 import '../../../application/character_creation/pending_choices.dart';
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
-import '../../../application/providers/personal_online_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
@@ -28,6 +29,7 @@ import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
@@ -556,13 +558,12 @@ class _CharacterEditorScreenState
     );
   }
 
-  /// Resolves the world label shown in headers/settings.
-  ///
-  /// 039 model: world label canonical `worldName` (PR5'te `worldId` lookup).
-  /// Boş = orphan. `linked_character_ids` fallback retired.
+  /// Resolves the world label shown in headers/settings. Display canonical
+  /// olarak `worldId` üzerinden `campaignInfoListProvider`'den ad çözer.
   String _displayWorldLabelFor(Character c, L10n l10n) {
-    if (c.worldName.isNotEmpty) return c.worldName;
-    return l10n.charWorldOrphan;
+    final infos = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final label = c.resolvedWorldName(infos);
+    return label.isEmpty ? l10n.charWorldOrphan : label;
   }
 
   /// EntityCard-style header — square portrait left, big serif red name +
@@ -674,7 +675,7 @@ class _CharacterEditorScreenState
                 ),
               const SizedBox(height: 2),
               InkWell(
-                onTap: c.worldName.isEmpty ? null : () => _openWorld(c.worldName),
+                onTap: c.worldId == null ? null : () => _openWorld(c),
                 child: Text(
                   subtitle,
                   style: TextStyle(
@@ -726,12 +727,17 @@ class _CharacterEditorScreenState
     );
   }
 
-  Future<void> _openWorld(String worldName) async {
+  Future<void> _openWorld(Character c) async {
+    final worldId = c.worldId;
+    if (worldId == null) return;
+    final infos = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final worldName = c.resolvedWorldName(infos);
+    if (worldName.isEmpty) return;
     await _save(silent: true);
     if (!mounted) return;
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
-      'open-world-$worldName',
+      'open-world-$worldId',
       'Opening world "$worldName"...',
       () => ref.read(activeCampaignProvider.notifier).load(worldName),
     );
@@ -2002,9 +2008,10 @@ class _CharacterEditorScreenState
   /// hitting this helper no longer allocate one 7 K-entry map each.
   Map<String, Entity> _readEntitiesFor(Character character) {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    if (character.worldName.isEmpty) return builtin;
-    final activeCampaign = ref.watch(activeCampaignProvider);
-    if (activeCampaign != character.worldName) return builtin;
+    if (character.worldId == null) return builtin;
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
+    if (activeWorldId != character.worldId) return builtin;
     final campaign = ref.watch(entityProvider);
     if (campaign.isEmpty) return builtin;
     return UnmodifiableMapView<String, Entity>(
@@ -2331,6 +2338,14 @@ class _CharacterEditorScreenState
   Future<void> _saveAndClose(BuildContext context) async {
     _autoSaveTimer?.cancel();
     await _save(silent: true);
+    // Flush cloud snapshot (beta + non-online-world chars) before the editor
+    // tears down so the user's last edit lands on the server. Mirror-route
+    // chars are already pushed from `update()`.
+    try {
+      await ref
+          .read(characterListProvider.notifier)
+          .flushCloudBackup(widget.characterId);
+    } catch (_) {/* best-effort */}
     if (!context.mounted) return;
     final onClose = widget.onClose;
     if (onClose != null) {
@@ -2780,12 +2795,9 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
-    // Select only this character's membership in the online set — without
-    // .select, every add/remove on any character (rebuilds the Set ref)
-    // rebuilds every open editor's app-bar button.
-    final isOnline = ref.watch(
-      personalOnlineCharIdsProvider.select((s) => s.contains(character.id)),
-    );
+    // 039+040: personal_characters retired. Char is "online" iff user is
+    // signed in — world_characters RLS auto-mirrors every owned row.
+    final isOnline = hasCloud && ref.watch(authProvider) != null;
 
     final (icon, color) = _resolveIcon(palette, hasCloud, isOnline);
 
@@ -2895,34 +2907,6 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                   type: 'character',
                   localUpdatedAt: updatedAt,
                 ),
-                const SizedBox(height: 16),
-
-                // Actions
-                _sectionLabel(palette, 'Actions'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _actionButton(
-                      palette,
-                      icon: Icons.save,
-                      label: 'Save Locally',
-                      onPressed: () async {
-                        await flushLocal();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Saved locally.'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-
                 if (hasCloud) ...[
                   const SizedBox(height: 16),
                   _sectionLabel(palette, 'Online'),
@@ -2950,29 +2934,13 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
         ),
       );
 
-  Widget _actionButton(
-    DmToolColors palette, {
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-  }) =>
-      OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 16),
-        label: Text(label, style: const TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          side: BorderSide(color: palette.featureCardBorder),
-          visualDensity: VisualDensity.compact,
-        ),
-      );
-
 }
 
-/// Karakter "Make Online" toggle'ı — Save & Sync dialog'unun online
-/// bölümünde gösterilir. Worlds tab'taki `OnlineWorldSection`'un
-/// karakter-ölçekli karşılığı: tek tıklama, davet/üyelik yok.
-class _CharacterOnlineToggle extends ConsumerStatefulWidget {
+/// Online sync status card. Routing rules:
+///   - Online world → world_characters mirror (real-time), regardless of beta.
+///   - Beta + (worldless or world offline) → cloud_backup snapshot auto-sync.
+///   - Non-beta + (worldless or world offline) → local only.
+class _CharacterOnlineToggle extends ConsumerWidget {
   final Character character;
   final Future<void> Function() flushLocal;
 
@@ -2982,21 +2950,29 @@ class _CharacterOnlineToggle extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_CharacterOnlineToggle> createState() =>
-      _CharacterOnlineToggleState();
-}
-
-class _CharacterOnlineToggleState
-    extends ConsumerState<_CharacterOnlineToggle> {
-  bool _busy = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final ids = ref.watch(personalOnlineCharIdsProvider);
-    final isOnline = ids.contains(widget.character.id);
-    final autoOnline =
-        ref.watch(autoOnlineForCharacterProvider(widget.character.id));
+    final isBeta = ref.watch(isBetaActiveProvider);
+    final worldId = character.worldId;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    final worldOnline = worldId != null && onlineIds.contains(worldId);
+
+    final IconData icon;
+    final Color color;
+    final String label;
+    if (worldOnline) {
+      icon = Icons.cloud_done;
+      color = palette.successBtnBg;
+      label = 'Online · auto-synced';
+    } else if (isBeta) {
+      icon = Icons.cloud_done;
+      color = palette.successBtnBg;
+      label = 'Cloud · auto-synced';
+    } else {
+      icon = Icons.cloud_off;
+      color = palette.sidebarLabelSecondary;
+      label = 'Offline · local only';
+    }
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -3005,121 +2981,17 @@ class _CharacterOnlineToggleState
         borderRadius: palette.br,
         border: Border.all(color: palette.featureCardBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                (isOnline || autoOnline)
-                    ? Icons.cloud_done
-                    : Icons.cloud_outlined,
-                size: 16,
-                color: (isOnline || autoOnline)
-                    ? palette.successBtnBg
-                    : palette.tabActiveText,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                autoOnline
-                    ? 'Online · linked to world'
-                    : (isOnline ? 'Online' : 'Local only'),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
           Text(
-            autoOnline
-                ? 'This character belongs to an online world — sync is automatic. '
-                    'Move it out of the world or leave the world to disable.'
-                : (isOnline
-                    ? 'Auto-syncing to your other devices in real time.'
-                    : 'Make this character online to sync it to your other '
-                        'devices automatically.'),
-            style: TextStyle(
-              fontSize: 12,
-              color: palette.sidebarLabelSecondary,
-            ),
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
-          if (!autoOnline) ...[
-            const SizedBox(height: 10),
-            isOnline
-                ? TextButton.icon(
-                    onPressed: _busy ? null : _makeOffline,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.cloud_off, size: 14),
-                    label: const Text('Make Offline'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: palette.dangerBtnBg,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  )
-                : FilledButton.icon(
-                    onPressed: _busy ? null : _makeOnline,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.cloud_upload, size: 16),
-                    label: const Text('Make Online'),
-                  ),
-          ],
         ],
       ),
     );
-  }
-
-  Future<void> _makeOnline() async {
-    setState(() => _busy = true);
-    try {
-      // Flush so the published payload matches the latest edits on disk.
-      await widget.flushLocal();
-      await ref
-          .read(characterListProvider.notifier)
-          .makeOnline(widget.character.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Character is now online')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _makeOffline() async {
-    setState(() => _busy = true);
-    try {
-      await ref
-          .read(characterListProvider.notifier)
-          .makeOffline(widget.character.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Character is now offline')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 }
 
@@ -3134,8 +3006,10 @@ class _StatChipsHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ids = characterRaceClassIds(character);
-    final useCampaign = character.worldName.isNotEmpty &&
-        ref.watch(activeCampaignProvider) == character.worldName;
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
+    final useCampaign = character.worldId != null &&
+        activeWorldId == character.worldId;
 
     String resolve(String? id) {
       if (id == null) return '—';

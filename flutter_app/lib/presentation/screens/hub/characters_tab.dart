@@ -10,8 +10,10 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -52,16 +54,17 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     // readCharacterEntities calls. 200 rows × 3 provider watches → 3
     // watches total. Lazy CombinedMapView so reads stay O(1) per id.
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final activeWorld = ref.watch(activeCampaignProvider) ?? '';
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
     final campaign = ref.watch(entityProvider);
-    final merged = (activeWorld.isEmpty || campaign.isEmpty)
+    final merged = (activeWorldId == null || campaign.isEmpty)
         ? builtin
         : UnmodifiableMapView<String, Entity>(
             CombinedMapView<String, Entity>([campaign, builtin]),
           );
     Map<String, Entity> entitiesFor(Character c) {
-      if (c.worldName.isEmpty) return builtin;
-      if (c.worldName != activeWorld) return builtin;
+      if (c.worldId == null) return builtin;
+      if (c.worldId != activeWorldId) return builtin;
       return merged;
     }
 
@@ -230,7 +233,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 // is cleared — handled in `_releaseOrDeleteSelected`).
                 final isHardDelete = selected != null &&
                     selected.ownerId == null &&
-                    selected.worldName.isEmpty;
+                    selected.worldId == null;
                 final actionButton = FilledButton.icon(
                   onPressed: selected == null || _releasing
                       ? null
@@ -284,23 +287,35 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   /// Loads the character's world (so entityProvider populates and relation
   /// fields resolve names) before pushing to the editor.
   Future<void> _openCharacter(Character c) async {
-    if (c.worldName.isNotEmpty) {
+    final worldId = c.worldId;
+    if (worldId != null) {
+      final infos =
+          ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+      final worldName = c.resolvedWorldName(infos);
+      if (worldName.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Character world not found locally.'),
+          ),
+        );
+        return;
+      }
       final active = ref.read(activeCampaignProvider);
-      if (active != c.worldName) {
+      if (active != worldName) {
         final ok = await withLoading(
           ref.read(globalLoadingProvider.notifier),
-          'open-world-${c.worldName}',
-          'Opening world "${c.worldName}"...',
+          'open-world-$worldId',
+          'Opening world "$worldName"...',
           () => ref
               .read(activeCampaignProvider.notifier)
-              .load(c.worldName),
+              .load(worldName),
         );
         if (!mounted) return;
         if (!ok) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'World "${c.worldName}" not found on disk — character cannot open.'),
+                  'World "$worldName" not found on disk — character cannot open.'),
             ),
           );
           return;
@@ -326,12 +341,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     return parts.join(' · ');
   }
 
-  /// 039 model: world label canonical `worldName` (PR5 `worldId` lookup).
-  /// Boş = orphan (`(me, NULL)`). Eski `linked_character_ids` side-band
-  /// kaldırıldı.
+  /// Display label: `worldId` üzerinden `campaignInfoListProvider`'den ad
+  /// çözer. NULL veya bulunamadıysa orphan label döner.
   String _worldLabel(Character c, L10n l10n) {
-    if (c.worldName.isNotEmpty) return c.worldName;
-    return l10n.charWorldOrphan;
+    final infos = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final name = c.resolvedWorldName(infos);
+    return name.isEmpty ? l10n.charWorldOrphan : name;
   }
 
   /// Char tab's destructive action. Branches on the canonical
@@ -348,7 +363,10 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (_selectedIndex < 0 || _selectedIndex >= list.length) return;
     final c = list[_selectedIndex];
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final isHardDelete = c.ownerId == null && c.worldName.isEmpty;
+    final isHardDelete = c.ownerId == null && c.worldId == null;
+    final infos =
+        ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final worldName = c.resolvedWorldName(infos);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -357,8 +375,8 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         content: Text(
           isHardDelete
               ? 'Delete "${c.entity.name}"? This cannot be undone.'
-              : c.worldName.isNotEmpty
-                  ? 'Release "${c.entity.name}" in "${c.worldName}"? '
+              : c.worldId != null
+                  ? 'Release "${c.entity.name}"${worldName.isNotEmpty ? ' in "$worldName"' : ''}? '
                       'The character stays in the world and can be claimed '
                       'again. It disappears from your Characters tab.'
                   : 'Release "${c.entity.name}"? You give up ownership; the '
@@ -473,7 +491,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                           () {
                             final label =
                                 _worldLabel(c, L10n.of(context)!);
-                            return c.worldName.isEmpty &&
+                            return c.worldId == null &&
                                     label == L10n.of(context)!.charWorldOrphan
                                 ? label
                                 : 'World: $label';
