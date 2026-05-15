@@ -91,7 +91,7 @@ class _PdfTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36,
+      height: 38,
       decoration: BoxDecoration(
         color: palette.tabBg,
         border: Border(bottom: BorderSide(color: palette.sidebarDivider)),

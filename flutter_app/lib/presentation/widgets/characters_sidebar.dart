@@ -165,7 +165,8 @@ class _SidebarHeader extends StatelessWidget {
     // No bottom border — visually flush with content like the other tabs
     // (Database / Session / Mind Map / Map).
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       color: palette.tabBg,
       child: Row(
         children: [

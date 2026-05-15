@@ -83,6 +83,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   static const int _maxPdfTabs = 10;
   // Tab bar'daki butonlarin sigmasi icin gereken minimum merkez genislik
   static const double _minCenterWidth = 480;
+  static const double _tabBarHeight = 38;
 
   @override
   void initState() {
@@ -726,17 +727,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   child: RepaintBoundary(
                     child: Column(
                       children: [
-                        // Tab bar — sağ sidebar açıkken padding ile kontrolleri kaydır
-                        ValueListenableBuilder<double>(
-                          valueListenable: _rightSidebarWidthNotifier,
-                          builder: (_, rightWidth, child) => Container(
+                        // Tab bar — sağ sidebar overlay top:_tabBarHeight'tan başlar,
+                        // toggle butonları her zaman ekranın en sağında sabit.
+                        SizedBox(
+                          height: _tabBarHeight,
+                          child: Container(
                             color: palette.tabBg,
-                            padding: EdgeInsets.only(
-                              right: _rightSidebar != RightSidebar.none ? rightWidth : 0,
-                            ),
-                            child: child,
-                          ),
-                          child: Row(
+                            child: Row(
                             children: [
                               // Sol kisim: sidebar toggle + tab butonlari (scrollable)
                               Expanded(
@@ -831,6 +828,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                               ),
                             ],
                           ),
+                          ),
                         ),
                         // Tab content
                         Expanded(child: RepaintBoundary(child: tabStack)),
@@ -845,7 +843,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               ValueListenableBuilder<double>(
                 valueListenable: _rightSidebarWidthNotifier,
                 builder: (_, width, child) => Positioned(
-                  top: 0,
+                  top: _tabBarHeight,
                   bottom: 0,
                   right: 0,
                   width: width,
@@ -856,6 +854,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     // Drag handle — sürükleyerek genişletme
                     _DragHandle(
                       palette: palette,
+                      dividerOnRight: true,
                       onDragUpdate: (dx) {
                         final totalW = MediaQuery.sizeOf(context).width;
                         final leftW = _sidebarOpen ? _sidebarWidthNotifier.value : 0.0;
@@ -1107,10 +1106,13 @@ class _DragHandle extends StatelessWidget {
   final void Function(double dx) onDragUpdate;
   final VoidCallback onDragEnd;
 
+  final bool dividerOnRight;
+
   const _DragHandle({
     required this.palette,
     required this.onDragUpdate,
     required this.onDragEnd,
+    this.dividerOnRight = false,
   });
 
   @override
@@ -1123,12 +1125,11 @@ class _DragHandle extends StatelessWidget {
         child: Container(
           width: 6,
           color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: 1,
-              height: double.infinity,
-              color: palette.sidebarDivider,
-            ),
+          alignment: dividerOnRight ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 1,
+            height: double.infinity,
+            color: palette.sidebarDivider,
           ),
         ),
       ),

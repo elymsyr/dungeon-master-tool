@@ -30,7 +30,7 @@ class SoundmapPlayerSidebar extends ConsumerWidget {
       child: Column(
         children: [
           Container(
-            height: 42,
+            height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               border: Border(
