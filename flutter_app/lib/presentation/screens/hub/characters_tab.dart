@@ -291,7 +291,22 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (worldId != null) {
       final infos =
           ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-      final worldName = c.resolvedWorldName(infos);
+      var worldName = c.resolvedWorldName(infos);
+      // Cross-device: char synced via cloud_backup but world wasn't pulled
+      // yet. One-shot restore from cloud_backup keyed by worldId before
+      // giving up.
+      if (worldName.isEmpty) {
+        final restored = await withLoading(
+          ref.read(globalLoadingProvider.notifier),
+          'pull-world-$worldId',
+          'Downloading world...',
+          () => ensureWorldLocalById(ref, worldId),
+        );
+        if (!mounted) return;
+        if (restored != null && restored.isNotEmpty) {
+          worldName = restored;
+        }
+      }
       if (worldName.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

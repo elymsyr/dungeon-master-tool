@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/utils/error_format.dart';
 import '../../data/repositories/character_repository.dart';
 import '../../data/repositories/pending_release_repository.dart';
 import '../../domain/entities/character.dart';
@@ -226,6 +227,14 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
           final c = Character.fromJson(raw);
           await applyMirror(c);
         } catch (e) {
+          if (isStorageNotFound(e)) {
+            // Orphan meta — storage file is gone; drop the table row so the
+            // next catch-up doesn't retry it forever.
+            try {
+              await repo.deleteOrphanedMeta(meta.id);
+            } catch (_) {/* ignore */}
+            continue;
+          }
           debugPrint('pull char from cloud error: $e');
         }
       }

@@ -89,6 +89,42 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
       .toList();
 });
 
+/// Resolves a worldId to its local campaign name, pulling the world from
+/// cloud_backup on demand when the local copy is missing.
+///
+/// Used by the character-open paths (Char Tab + sidebar) so a character that
+/// arrived via cross-device char sync but whose world has not yet been
+/// downloaded triggers a one-shot world restore instead of failing with
+/// "Character world not found locally."
+///
+/// Returns the resolved campaign name on success, or `null` when the world
+/// is neither local nor available in cloud_backup (or pull failed). The
+/// caller is responsible for surfacing the failure message; this helper
+/// stays silent so it can be used as a best-effort step.
+Future<String?> ensureWorldLocalById(WidgetRef ref, String worldId) async {
+  final infos = await ref.read(campaignInfoListProvider.future);
+  final match = infos.where((i) => i.id == worldId).firstOrNull;
+  if (match != null) return match.name;
+  if (!SupabaseConfig.isConfigured) return null;
+  if (ref.read(authProvider) == null) return null;
+  try {
+    final repo = ref.read(cloudBackupRepositoryProvider);
+    final meta = await repo.fetchByItem(worldId, 'world');
+    if (meta == null) return null;
+    final ok = await ref
+        .read(cloudBackupOperationProvider.notifier)
+        .restoreBackup(meta);
+    if (!ok) return null;
+    ref.invalidate(campaignInfoListProvider);
+    final fresh = await ref.read(campaignInfoListProvider.future);
+    final found = fresh.where((i) => i.id == worldId).firstOrNull;
+    return found?.name;
+  } catch (e, st) {
+    debugPrint('ensureWorldLocalById error: $e\n$st');
+    return null;
+  }
+}
+
 /// Per-campaign metadata lookup — cover / description / tags için.
 /// Campaign blob'undan `metadata` alanını okur. List UI bu provider'ı
 /// watch ederek cover/desc/tags gösterimi için kullanır.

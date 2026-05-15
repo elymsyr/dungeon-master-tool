@@ -55,6 +55,12 @@ class CloudCatchupService {
           await campaignRepo.save(name, fresh);
           pulled = true;
         } catch (e) {
+          if (isStorageNotFound(e)) {
+            try {
+              await repo.deleteOrphanedMeta(meta.id);
+            } catch (_) {/* ignore */}
+            continue;
+          }
           debugPrint('Cloud catch-up pull world "$name" error: $e');
         }
       }
@@ -92,6 +98,12 @@ class CloudCatchupService {
           await packageRepo.save(name, fresh);
           pulled = true;
         } catch (e) {
+          if (isStorageNotFound(e)) {
+            try {
+              await repo.deleteOrphanedMeta(meta.id);
+            } catch (_) {/* ignore */}
+            continue;
+          }
           debugPrint('Cloud catch-up pull package "$name" error: $e');
         }
       }

@@ -150,4 +150,8 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
     if (meta == null) return;
     await _remoteDs.delete(meta.id, meta.storagePath);
   }
+
+  @override
+  Future<void> deleteOrphanedMeta(String backupId) =>
+      _remoteDs.deleteMeta(backupId);
 }
