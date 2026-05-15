@@ -30,6 +30,10 @@ abstract class CloudBackupRepository {
   /// Backup yoksa no-op doner.
   Future<void> deleteBackupByItem(String itemId, String type);
 
+  /// Item ID + type kombinasyonuna gore tek backup metadata'sini getir.
+  /// Yoksa null doner.
+  Future<CloudBackupMeta?> fetchByItem(String itemId, String type);
+
   /// Kullanicinin toplam cloud storage kullanimini getir (bytes).
   Future<int> getTotalStorageUsed();
 

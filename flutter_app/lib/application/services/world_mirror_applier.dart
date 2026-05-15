@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/character.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
@@ -153,14 +154,77 @@ class WorldMirrorApplier {
         ref.read(characterListProvider.notifier).removeMirror(id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
+        final id = e.newRecord['id'] as String?;
+        if (id == null) return;
+        final newWorldId = e.newRecord['world_id'] as String?;
+        final newOwnerId = e.newRecord['owner_id'] as String?;
+        if (newWorldId == null) {
+          // remove_from_world UPDATE: row dünya'dan koptu, orphan'a düştü.
+          // Bu world view'dan çıkar; eğer ben owner'ım hub-level char'ı
+          // worldId/worldName=null patch et.
+          notifier.removeMirror(id);
+          final selfUid = ref.read(authProvider)?.uid;
+          if (selfUid != null && newOwnerId == selfUid) {
+            final list = ref.read(characterListProvider).valueOrNull ??
+                const [];
+            final c = list.where((x) => x.id == id).firstOrNull;
+            if (c != null) {
+              // ignore: discarded_futures
+              ref.read(characterListProvider.notifier).applyMirror(
+                    c.copyWith(worldId: null),
+                  );
+            }
+          }
+          return;
+        }
         final row = _charRowFromCdc(e.newRecord, fallbackWorldId: e.worldId);
         if (row != null) notifier.applyMirror(row);
-        // Note: hub-level Character mirror update (cross-device UPDATE
-        // echo'su owner'ın diğer cihazına worldId/owner patch'ini akıtsın)
-        // PR4'te eklenecek — şu an personal_characters CDC bu sorumluluğu
-        // taşıyor; sadece self-owned chars için.
+        // Hub-level mirror: personal_characters retire edildi (migration 040),
+        // owner'ın diğer cihazları world_characters CDC üzerinden senkron olur.
+        final selfUid = ref.read(authProvider)?.uid;
+        if (selfUid != null && newOwnerId == selfUid && row != null) {
+          final list =
+              ref.read(characterListProvider).valueOrNull ?? const [];
+          final existing = list.where((x) => x.id == id).firstOrNull;
+          if (existing != null) {
+            final patched = existing.copyWith(
+              worldId: newWorldId,
+              ownerId: selfUid,
+              updatedAt: row.updatedAt.toUtc().toIso8601String(),
+            );
+            // ignore: discarded_futures
+            ref.read(characterListProvider.notifier).applyMirror(patched);
+          } else {
+            // Yeni cihazda hiç görmediğimiz bir char — payload'dan tam
+            // Character üret (template/entity dahil).
+            final fromPayload = _characterFromPayload(row);
+            if (fromPayload != null) {
+              // ignore: discarded_futures
+              ref.read(characterListProvider.notifier)
+                  .applyMirror(fromPayload);
+            }
+          }
+        }
       default:
         return;
+    }
+  }
+
+  /// world_characters.payload_json field'ı tüm `Character` JSON'unu taşır.
+  /// Yeni cihaza ilk giriş veya owner-eklenmiş cross-device event'inde
+  /// hub-level Character'ı sıfırdan kurmak için kullanılır.
+  dynamic _characterFromPayload(WorldCharacterRow row) {
+    try {
+      final map = jsonDecode(row.payloadJson) as Map<String, dynamic>;
+      // Char tam Character.fromJson serializer'ına gider.
+      // CharacterListNotifier.applyMirror generic `Character` ile çalışır.
+      return Character.fromJson(map).copyWith(
+        worldId: row.worldId,
+        ownerId: row.ownerId,
+      );
+    } catch (e) {
+      debugPrint('_characterFromPayload decode error: $e');
+      return null;
     }
   }
 

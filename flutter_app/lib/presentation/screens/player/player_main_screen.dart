@@ -56,7 +56,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   // Right sidebar state (PDF / Soundmap — mutually exclusive)
   _RightSidebar _rightSidebar = _RightSidebar.none;
   double _rightSidebarWidth = 450;
-  static const double _minRightSidebarWidth = 300;
+  static const double _minRightSidebarWidth = 360;
   static const double _maxRightSidebarWidth = 700;
   late final ValueNotifier<double> _rightSidebarWidthNotifier;
   static const double _minCenterWidth = 480;

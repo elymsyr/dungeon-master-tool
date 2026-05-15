@@ -16,8 +16,11 @@ import '../../data/network/network_providers.dart';
 import '../services/campaign_import_service.dart';
 import '../services/media_bundler.dart';
 import '../services/world_mirror_service.dart';
+import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'builtin_package_provider.dart';
 import 'character_provider.dart';
+import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
 import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -142,10 +145,39 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
+      // ignore: discarded_futures
+      _pullIfCloudNewer();
       return true;
     } catch (e, st) {
       debugPrint('Campaign load error: $e\n$st');
       return false;
+    }
+  }
+
+  /// On open: if cloud_backup of this world is newer than the row we just
+  /// loaded from disk, download + replace in place. Best-effort — auth,
+  /// network or decode errors leave the local copy untouched.
+  Future<void> _pullIfCloudNewer() async {
+    if (!SupabaseConfig.isConfigured) return;
+    if (_ref.read(authProvider) == null) return;
+    if (!_ref.read(isBetaActiveProvider)) return;
+    final data = _data;
+    final name = state;
+    if (data == null || name == null) return;
+    final worldId = (data['world_id'] as String?) ?? name;
+    final localUpdatedRaw = data['last_modified'] ?? data['updated_at'];
+    final localUpdated = localUpdatedRaw is String
+        ? DateTime.tryParse(localUpdatedRaw)
+        : null;
+    try {
+      final repo = _ref.read(cloudBackupRepositoryProvider);
+      final meta = await repo.fetchByItem(worldId, 'world');
+      if (meta == null) return;
+      if (localUpdated != null && !meta.createdAt.isAfter(localUpdated)) return;
+      final fresh = await repo.downloadBackup(meta.id);
+      await replaceWithData(fresh);
+    } catch (e) {
+      debugPrint('Campaign cloud-pull error: $e');
     }
   }
 

@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Tek bir `dmt:user:{uid}` kanal'ı şu tablolardaki INSERT/UPDATE/DELETE
 /// event'lerini dinler:
-///   - `personal_characters` (`owner_id = uid`) — char cross-device sync
 ///   - `personal_packages`   (`owner_id = uid`) — package cross-device sync
 ///   - `world_members`       (`user_id  = uid`) — join/leave karşı cihazlara
 ///     anlık yansısın (kullanıcı Device A'da join etti → Device B'de world
 ///     listesi otomatik refresh)
+///
+/// `personal_characters` 040'da retire edildi; char cross-device sync
+/// `world_characters` CDC + RLS üzerinden çalışır (`world_mirror_applier`).
 ///
 /// Bu service kanalı yönetir ve event'leri tek `Stream<PersonalSyncEvent>`
 /// içinden yayar. Apply mantığı `PersonalMirrorApplier`'da.
@@ -50,19 +52,6 @@ class PersonalSyncService {
     await stop();
 
     final channel = client.channel('dmt:user:$uid');
-
-    channel.onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'personal_characters',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'owner_id',
-        value: uid,
-      ),
-      callback: (payload) =>
-          _dispatch('personal_characters', payload),
-    );
 
     channel.onPostgresChanges(
       event: PostgresChangeEvent.all,

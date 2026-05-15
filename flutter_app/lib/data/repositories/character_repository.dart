@@ -8,24 +8,53 @@ import '../../domain/entities/character.dart';
 
 /// Character JSON file storage.
 /// Her karakter `{charactersDir}/{id}.json` altında saklanır.
+class CharacterLoadResult {
+  final List<Character> chars;
+  /// `worldId` set olmayan ve sadece legacy `world_name` taşıyan karakterlerin
+  /// id→name eşlemesi. `_backfillWorldIds` campaign listesi yüklendiğinde bu
+  /// haritadan worldId'ye migrate eder.
+  final Map<String, String> legacyWorldNames;
+  const CharacterLoadResult({
+    required this.chars,
+    required this.legacyWorldNames,
+  });
+}
+
 class CharacterRepository {
-  Future<List<Character>> loadAll() async {
+  Future<List<Character>> loadAll() async => (await loadAllWithLegacy()).chars;
+
+  Future<CharacterLoadResult> loadAllWithLegacy() async {
     final dir = Directory(AppPaths.charactersDir);
-    if (!await dir.exists()) return const [];
+    if (!await dir.exists()) {
+      return const CharacterLoadResult(
+        chars: [],
+        legacyWorldNames: {},
+      );
+    }
     final out = <Character>[];
+    final legacy = <String, String>{};
     await for (final entry in dir.list()) {
       if (entry is! File || !entry.path.endsWith('.json')) continue;
       try {
         final text = await entry.readAsString();
         final map = jsonDecode(text) as Map<String, dynamic>;
         _migrateLegacyWorldLinks(map);
+        final id = map['id'] as String?;
+        final legacyName = map.remove('world_name');
+        if (id != null &&
+            legacyName is String &&
+            legacyName.isNotEmpty &&
+            (map['world_id'] == null ||
+                (map['world_id'] as String).isEmpty)) {
+          legacy[id] = legacyName;
+        }
         out.add(Character.fromJson(map));
       } catch (_) {
         // Skip corrupt files.
       }
     }
     out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return out;
+    return CharacterLoadResult(chars: out, legacyWorldNames: legacy);
   }
 
   Future<void> save(Character character) async {
@@ -91,6 +120,8 @@ class CharacterRepository {
     try {
       final map = jsonDecode(await targetFile.readAsString()) as Map<String, dynamic>;
       _migrateLegacyWorldLinks(map);
+      // Restore path also strips legacy world_name; backfill runs on next load.
+      map.remove('world_name');
       return Character.fromJson(map);
     } catch (_) {
       return null;
@@ -98,20 +129,19 @@ class CharacterRepository {
   }
 
   /// Eski karakter JSON'larında `linked_worlds: [...]` + `linked_packages: [...]`
-  /// vardı. Yeni model tek bir `world_name` bekliyor — ilk linkedWorld alınıp
-  /// worldName'e taşınır, paketler tamamen bırakılır.
+  /// vardı. Şimdiki kanon link `world_id`; legacy `world_name` field'ı yine
+  /// strip edilir (`loadAllWithLegacy` map'e taşır, sonra `_backfillWorldIds`
+  /// resolve eder). `linked_*` listeleri silinir.
   void _migrateLegacyWorldLinks(Map<String, dynamic> map) {
-    if (map.containsKey('world_name') && (map['world_name'] as String?) != null) {
-      return;
-    }
-    final linkedWorlds = map['linked_worlds'];
-    if (linkedWorlds is List && linkedWorlds.isNotEmpty) {
-      final first = linkedWorlds.first;
-      if (first is String && first.isNotEmpty) {
-        map['world_name'] = first;
+    if (!map.containsKey('world_name')) {
+      final linkedWorlds = map['linked_worlds'];
+      if (linkedWorlds is List && linkedWorlds.isNotEmpty) {
+        final first = linkedWorlds.first;
+        if (first is String && first.isNotEmpty) {
+          map['world_name'] = first;
+        }
       }
     }
-    map['world_name'] ??= '';
     map.remove('linked_worlds');
     map.remove('linked_packages');
   }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
@@ -215,7 +216,10 @@ class _PackageScreenContentState
       ref.read(globalLoadingProvider.notifier),
       'save-package',
       'Saving package...',
-      () => ref.read(saveStateProvider.notifier).saveNow(),
+      () async {
+        await ref.read(saveStateProvider.notifier).saveNow();
+        await ref.read(cloudSyncProvider.notifier).backupActiveItem();
+      },
     );
     if (!mounted) return;
     ref.invalidate(packageListProvider);

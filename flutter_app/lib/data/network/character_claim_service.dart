@@ -32,48 +32,71 @@ class CharacterClaimService {
   ///   - `(me, NULL) → DELETE` (CHECK violation olurdu, RPC siler)
   /// DM force-release de bu RPC'den geçer; RPC owner-or-DM gate uygular.
   /// Zaten serbestse idempotent — `deleted: false, worldId: prevWorldId`.
+  /// Server'da row hiç yoksa (local-only char) `P0002` swallow edilir —
+  /// kontrat: "satır server'da yok = istenen post-state".
   Future<({String characterId, String? worldId, bool deleted})> release(
       String characterId) async {
-    final rows = await client.rpc('release_character', params: {
-      'p_character_id': characterId,
-    });
-    if (rows is! List || rows.isEmpty) {
-      throw StateError('release_character returned empty result');
+    try {
+      final rows = await client.rpc('release_character', params: {
+        'p_character_id': characterId,
+      });
+      if (rows is! List || rows.isEmpty) {
+        throw StateError('release_character returned empty result');
+      }
+      final first = rows.first as Map<String, dynamic>;
+      return (
+        characterId: first['character_id'] as String,
+        worldId: first['world_id'] as String?,
+        deleted: (first['deleted'] as bool?) ?? false,
+      );
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0002' || e.code == 'PGRST116') {
+        return (characterId: characterId, worldId: null, deleted: false);
+      }
+      rethrow;
     }
-    final first = rows.first as Map<String, dynamic>;
-    return (
-      characterId: first['character_id'] as String,
-      worldId: first['world_id'] as String?,
-      deleted: (first['deleted'] as bool?) ?? false,
-    );
   }
 
   /// Karakteri dünyadan çıkar.
   ///   - `(owner, W) → (owner, NULL)` UPDATE — orphan'a düşer
   ///   - `(NULL, W) → DELETE` — unclaimed silinir
   /// Yetki: owner = auth.uid OR `is_world_dm(world_id)`.
+  /// Row server'da yoksa `P0002` swallow edilir; deleted=true döner.
   Future<({String characterId, bool deleted})> removeFromWorld(
       String characterId) async {
-    final rows = await client.rpc('remove_from_world', params: {
-      'p_character_id': characterId,
-    });
-    if (rows is! List || rows.isEmpty) {
-      throw StateError('remove_from_world returned empty result');
+    try {
+      final rows = await client.rpc('remove_from_world', params: {
+        'p_character_id': characterId,
+      });
+      if (rows is! List || rows.isEmpty) {
+        throw StateError('remove_from_world returned empty result');
+      }
+      final first = rows.first as Map<String, dynamic>;
+      return (
+        characterId: first['character_id'] as String,
+        deleted: (first['deleted'] as bool?) ?? false,
+      );
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0002' || e.code == 'PGRST116') {
+        return (characterId: characterId, deleted: true);
+      }
+      rethrow;
     }
-    final first = rows.first as Map<String, dynamic>;
-    return (
-      characterId: first['character_id'] as String,
-      deleted: (first['deleted'] as bool?) ?? false,
-    );
   }
 
   /// Hard delete — yalnız `(owner, NULL)` orphan'lar için. World-bound
   /// karakterlerde `P0005` exception (yanlış RPC; `removeFromWorld` veya
-  /// `release` çağrılmalı).
+  /// `release` çağrılmalı). Server'da satır yoksa (local-only char) `P0002`
+  /// swallow edilir — "yok = istenen post-state" kontratı.
   Future<void> deleteCharacter(String characterId) async {
-    await client.rpc('delete_character', params: {
-      'p_character_id': characterId,
-    });
+    try {
+      await client.rpc('delete_character', params: {
+        'p_character_id': characterId,
+      });
+    } on PostgrestException catch (e) {
+      if (e.code == 'P0002' || e.code == 'PGRST116') return;
+      rethrow;
+    }
   }
 
   /// DM: karaktere oyuncu ata. `(NULL, W) → (userId, W)` veya `(other, W) →

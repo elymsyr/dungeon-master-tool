@@ -15,8 +15,12 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../services/package_import_service.dart';
 import '../services/package_sync_service.dart';
 import '../services/srd_core_package_bootstrap.dart';
+import '../../core/config/supabase_config.dart';
+import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'campaign_provider.dart'
     show activeCampaignProvider, campaignRevisionProvider;
+import 'cloud_backup_provider.dart';
 import 'personal_online_provider.dart';
 import 'world_mirror_provider.dart';
 
@@ -165,11 +169,57 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
+      // ignore: discarded_futures
+      _pullIfCloudNewer();
       return true;
     } catch (e, st) {
       debugPrint('Package load error: $e\n$st');
       return false;
     }
+  }
+
+  /// On open: if cloud_backup of this package is newer than the row we just
+  /// loaded from disk, download + replace in place. Best-effort.
+  Future<void> _pullIfCloudNewer() async {
+    if (!SupabaseConfig.isConfigured) return;
+    if (_ref.read(authProvider) == null) return;
+    if (!_ref.read(isBetaActiveProvider)) return;
+    final data = _data;
+    final name = state;
+    if (data == null || name == null) return;
+    final packageId = (data['package_id'] as String?) ??
+        (data['world_id'] as String?) ??
+        name;
+    final localUpdatedRaw = data['last_modified'] ?? data['updated_at'];
+    final localUpdated = localUpdatedRaw is String
+        ? DateTime.tryParse(localUpdatedRaw)
+        : null;
+    try {
+      final repo = _ref.read(cloudBackupRepositoryProvider);
+      final meta = await repo.fetchByItem(packageId, 'package');
+      if (meta == null) return;
+      if (localUpdated != null && !meta.createdAt.isAfter(localUpdated)) return;
+      final fresh = await repo.downloadBackup(meta.id);
+      await _replaceWithData(fresh);
+    } catch (e) {
+      debugPrint('Package cloud-pull error: $e');
+    }
+  }
+
+  Future<void> _replaceWithData(Map<String, dynamic> newData) async {
+    final name = state;
+    if (name == null) return;
+    if (_data == null) {
+      _data = Map<String, dynamic>.from(newData);
+    } else {
+      _data!
+        ..clear()
+        ..addAll(newData);
+    }
+    await _repo.save(name, _data!);
+    // Bump revision so widgets re-read campaign-bound providers.
+    final notifier = _ref.read(campaignRevisionProvider.notifier);
+    notifier.state = notifier.state + 1;
   }
 
   Future<bool> create(String packageName, {WorldSchema? template}) async {

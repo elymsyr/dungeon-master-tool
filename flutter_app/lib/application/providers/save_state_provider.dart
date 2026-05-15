@@ -7,6 +7,7 @@ import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_sync_provider.dart';
+import 'package_provider.dart';
 import 'ui_state_provider.dart';
 
 enum SaveStatus { saved, dirty, saving }
@@ -19,8 +20,8 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
   final Ref _ref;
   Timer? _saveTimer;
   Timer? _maxDelayTimer;
-  static const _saveDelay = Duration(seconds: 2);
-  static const _maxSaveDelay = Duration(seconds: 10);
+  static const _saveDelay = Duration(seconds: 5);
+  static const _maxSaveDelay = Duration(seconds: 30);
   bool _disposed = false;
 
   SaveStateNotifier(this._ref) : super(SaveStatus.saved);
@@ -61,22 +62,26 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
       if (_disposed) return;
       lastSavedAt = DateTime.now();
 
-      // Cloud sync trigger — SADECE kullanıcı autoCloudSave ayarını
-      // açmışsa dirty olarak işaretle. Default kapalı olduğu için
-      // cloud backup yalnızca kullanıcı elle "Backup to Cloud" butonuna
-      // basınca yapılır.
-      if (SupabaseConfig.isConfigured &&
-          _ref.read(authProvider) != null &&
-          _ref.read(uiStateProvider).autoCloudSave) {
+      // Auto cloud sync. Always-on for signed-in beta users — cloudSync
+      // markDirty itself gates on supabase + auth + beta. Worlds that are
+      // currently online (`onlineWorldIdsProvider` contains worldId) skip
+      // the cloud_backup path because campaign_provider's `_mirrorAfterSave`
+      // already pushes the real-time world_state mirror.
+      if (SupabaseConfig.isConfigured && _ref.read(authProvider) != null) {
+        final notifier = _ref.read(cloudSyncProvider.notifier);
         final campaignName = _ref.read(activeCampaignProvider);
-        final data = _ref.read(activeCampaignProvider.notifier).data;
-        if (campaignName != null && data != null) {
-          final worldId = data['world_id'] as String? ?? campaignName;
-          _ref.read(cloudSyncProvider.notifier).markDirty(
-                worldId,
-                campaignName,
-                'world',
-              );
+        if (campaignName != null) {
+          final data = _ref.read(activeCampaignProvider.notifier).data;
+          final worldId = (data?['world_id'] as String?) ?? campaignName;
+          notifier.markDirty(worldId, campaignName, 'world');
+        }
+        final packageName = _ref.read(activePackageProvider);
+        if (packageName != null) {
+          final data = _ref.read(activePackageProvider.notifier).data;
+          final packageId = (data?['package_id'] as String?) ??
+              (data?['world_id'] as String?) ??
+              packageName;
+          notifier.markDirty(packageId, packageName, 'package');
         }
       }
     } catch (e) {

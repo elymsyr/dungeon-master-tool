@@ -97,7 +97,6 @@ class WorldSyncService {
     'world_mind_map_edges',
     'world_characters',
     'entity_shares',
-    'character_claim_pool',
   ];
 
   Future<void> dispose() async {

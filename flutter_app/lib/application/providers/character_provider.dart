@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/repositories/character_repository.dart';
+import '../../data/repositories/pending_release_repository.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
@@ -13,8 +14,10 @@ import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
 import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'character_claim_provider.dart';
+import 'cloud_backup_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
 import 'world_mirror_provider.dart';
@@ -43,6 +46,11 @@ EntityCategorySchema? findPlayerCategory(WorldSchema template) {
 final characterRepositoryProvider =
     Provider<CharacterRepository>((_) => CharacterRepository());
 
+/// Offline char tab "Release" akışı için sidecar queue. Online olununca
+/// `CharacterListNotifier.drainPendingReleases` çağrılır.
+final pendingReleasesProvider =
+    Provider<PendingReleaseRepository>((_) => PendingReleaseRepository());
+
 /// Hub-level karakter listesi. Senkron kalsın diye StateNotifier.
 class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   CharacterListNotifier(this._repo, this._ref)
@@ -55,6 +63,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       if (prev == null && next != null) {
         // ignore: discarded_futures
         _backfillWorldlessOwnership(next.uid);
+        // Sign-in → server'a ulaşabiliyoruz; offline'da biriken release'leri
+        // boşalt. drainPendingReleases idempotent.
+        // ignore: discarded_futures
+        drainPendingReleases();
+        // ignore: discarded_futures
+        pullNewerFromCloud();
       }
     });
     // Legacy `worldName` → `worldId` migration: campaign listesi yüklendiğinde
@@ -66,19 +80,77 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       // ignore: discarded_futures
       _backfillWorldIds(infos);
     });
+    // Online world set changed: for every world that just appeared, push the
+    // local copy of its owned chars to `world_characters` so reconnects /
+    // late publishes always upload the freshest local payload (last-write-
+    // wins). Also drains the pending release queue on the first transition.
+    _ref.listen(onlineWorldIdsProvider, (prev, next) {
+      final prevSet = prev ?? const <String>{};
+      final added = next.difference(prevSet);
+      if (added.isEmpty) return;
+      if (prevSet.isEmpty) {
+        // ignore: discarded_futures
+        drainPendingReleases();
+      }
+      _pushCharsForWorlds(added);
+    });
+    // Non-beta → beta transition: kullanıcı beta'ya katıldı, daha önce local
+    // kalan online-world karakterlerini world_characters'a push et.
+    _ref.listen(isBetaActiveProvider, (prev, next) {
+      if (prev != true && next == true) {
+        _backfillMirrorForBeta();
+      }
+    });
+  }
+
+  /// Beta'ya yeni katılan kullanıcının karakterlerini uygun backend'e
+  /// (world_characters veya cloud_backup) push'lar.
+  void _backfillMirrorForBeta() {
+    final list = state.valueOrNull;
+    if (list == null) return;
+    for (final c in list) {
+      _syncPush(c);
+    }
+  }
+
+  /// Reconnect / late-publish push: when worlds appear in
+  /// `onlineWorldIdsProvider`, upload every owned char belonging to them so
+  /// edits made while offline land on the server (last-write-wins).
+  void _pushCharsForWorlds(Set<String> worldIds) {
+    final list = state.valueOrNull;
+    if (list == null) return;
+    for (final c in list) {
+      final wid = c.worldId;
+      if (wid == null) continue;
+      if (!worldIds.contains(wid)) continue;
+      _mirrorPush(c);
+    }
   }
 
   final CharacterRepository _repo;
   final Ref _ref;
 
-  /// World mirror push: char online bir world'e bağlıysa `world_characters`
-  /// tablosuna upsert. 039 model'de personal sync kaldırıldı — `world_characters`
-  /// RLS `owner_id = auth.uid OR is_world_member` ile cross-device sync'i tek
-  /// kanaldan sağlar.
+  /// Unified sync entry point. Routes a char to the right backend:
+  ///   - World is online → `world_characters` mirror (real-time, RLS-gated).
+  ///   - Beta + (worldless or world offline) → `cloud_backup` snapshot
+  ///     (last-write-wins by item_id+type).
+  ///   - Non-beta + (worldless or world offline) → local only, no push.
+  void _syncPush(Character c) {
+    _mirrorPush(c);
+    _cloudBackupPush(c);
+  }
+
+  void _syncDelete(String characterId, {String? worldId}) {
+    _mirrorDelete(characterId, worldId: worldId);
+    _cloudBackupDelete(characterId);
+  }
+
+  /// world_characters mirror push — runs whenever the char's world is in
+  /// `onlineWorldIdsProvider`, regardless of beta. RLS enforces ownership.
   void _mirrorPush(Character c) {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) return;
-    final worldId = c.worldId ?? _worldIdFromName(c.worldName);
+    final worldId = c.worldId;
     if (worldId == null) return;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
     if (!onlineIds.contains(worldId)) return;
@@ -90,15 +162,117 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     );
   }
 
-  void _mirrorDelete(String characterId, {String? worldName, String? worldId}) {
+  void _mirrorDelete(String characterId, {String? worldId}) {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) return;
-    final wid = worldId ?? _worldIdFromName(worldName ?? '');
+    final wid = worldId;
     if (wid == null) return;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
     if (!onlineIds.contains(wid)) return;
     // ignore: discarded_futures
     mirror.deleteCharacter(characterId: characterId);
+  }
+
+  /// Beta-gated cloud_backup auto-sync — uploads a per-char snapshot when the
+  /// char is NOT covered by the world_characters mirror (worldless or world
+  /// offline). Idempotent: uploadBackup upserts by `item_id+type`, so each
+  /// push overwrites the prior snapshot keeping the cloud copy current.
+  void _cloudBackupPush(Character c) {
+    if (!_ref.read(isBetaActiveProvider)) return;
+    if (_ref.read(authProvider) == null) return;
+    final wid = c.worldId;
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    // Mirror handles online-world chars; cloud_backup is for the rest.
+    if (wid != null && onlineIds.contains(wid)) return;
+    final repo = _ref.read(cloudBackupRepositoryProvider);
+    // ignore: discarded_futures
+    () async {
+      try {
+        await repo.uploadBackup(
+          c.entity.name.isEmpty ? c.id : c.entity.name,
+          c.id,
+          'character',
+          {'character': c.toJson()},
+        );
+      } catch (e) {
+        debugPrint('cloudBackup char upload error: $e');
+      }
+    }();
+  }
+
+  /// Cloud-newer pull for the character list. Compares each cloud_backup
+  /// 'character' meta's `createdAt` to the local char's `updatedAt`; if cloud
+  /// is newer or the char is cloud-only, downloads + `applyMirror`'s the row.
+  /// Best-effort; auth/network errors are swallowed.
+  Future<void> pullNewerFromCloud() async {
+    if (!_ref.read(isBetaActiveProvider)) return;
+    if (_ref.read(authProvider) == null) return;
+    final repo = _ref.read(cloudBackupRepositoryProvider);
+    try {
+      final metas = await repo.listBackupsByType('character');
+      final localById = <String, Character>{
+        for (final c in state.valueOrNull ?? const <Character>[]) c.id: c,
+      };
+      for (final meta in metas) {
+        final local = localById[meta.itemId];
+        if (local != null) {
+          final localAt = DateTime.tryParse(local.updatedAt);
+          if (localAt != null && !meta.createdAt.isAfter(localAt)) continue;
+        }
+        try {
+          final data = await repo.downloadBackup(meta.id);
+          final raw = data['character'];
+          if (raw is! Map<String, dynamic>) continue;
+          final c = Character.fromJson(raw);
+          await applyMirror(c);
+        } catch (e) {
+          debugPrint('pull char from cloud error: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('listBackupsByType char error: $e');
+    }
+  }
+
+  /// Awaitable cloud_backup push for a single character. Called at editor
+  /// close so the user's most recent edit lands on the server before the
+  /// screen goes away. Mirror-route chars (online world) get their push via
+  /// `_mirrorPush` instead; this method handles the cloud_backup branch.
+  Future<void> flushCloudBackup(String characterId) async {
+    if (!_ref.read(isBetaActiveProvider)) return;
+    if (_ref.read(authProvider) == null) return;
+    final list = state.valueOrNull;
+    if (list == null) return;
+    final c = list.where((x) => x.id == characterId).firstOrNull;
+    if (c == null) return;
+    final wid = c.worldId;
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (wid != null && onlineIds.contains(wid)) return;
+    final repo = _ref.read(cloudBackupRepositoryProvider);
+    try {
+      await repo.uploadBackup(
+        c.entity.name.isEmpty ? c.id : c.entity.name,
+        c.id,
+        'character',
+        {'character': c.toJson()},
+      );
+    } catch (e) {
+      debugPrint('flushCloudBackup error: $e');
+    }
+  }
+
+  void _cloudBackupDelete(String characterId) {
+    if (!_ref.read(isBetaActiveProvider)) return;
+    if (_ref.read(authProvider) == null) return;
+    final repo = _ref.read(cloudBackupRepositoryProvider);
+    // ignore: discarded_futures
+    () async {
+      try {
+        await repo.deleteBackupByItem(characterId, 'character');
+      } catch (e) {
+        debugPrint('cloudBackup char delete error: $e');
+      }
+    }();
   }
 
   /// DEPRECATED no-op — 039 model `world_characters` RLS cross-device sync
@@ -116,18 +290,15 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   @Deprecated('Always true; auto-online implicit')
   bool isAutoOnline(String id) => true;
 
-  /// Legacy worldName → worldId resolver. Yeni karakterlerde worldId zaten
-  /// set; bu sadece migrate edilmemiş eski local files için fallback.
-  String? _worldIdFromName(String worldName) {
-    if (worldName.isEmpty) return null;
-    final list =
-        _ref.read(campaignInfoListProvider).valueOrNull ?? const [];
-    return list.where((c) => c.name == worldName).firstOrNull?.id;
-  }
+  /// Disk'ten yüklenen Character JSON'larından strip edilen legacy
+  /// `world_name` field'larını id'leri ile saklar. Campaign listesi
+  /// yüklendiğinde `_backfillWorldIds` bu haritadan resolve eder.
+  Map<String, String> _legacyWorldNames = const {};
 
   /// Campaign listesi yüklendiğinde legacy `worldName`-only karakterleri
-  /// `worldId`'ye migrate eder. Idempotent — `worldId` zaten varsa atlar.
+  /// `worldId`'ye migrate eder. Idempotent — eşleşen entry pop edilir.
   Future<void> _backfillWorldIds(List<dynamic> infos) async {
+    if (_legacyWorldNames.isEmpty) return;
     final list = state.valueOrNull;
     if (list == null || list.isEmpty) return;
     final nameToId = <String, String>{};
@@ -137,12 +308,17 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       nameToId[name] = id;
     }
     final out = [...list];
+    final remainingLegacy = Map<String, String>.from(_legacyWorldNames);
     var changed = false;
     for (var i = 0; i < out.length; i++) {
       final c = out[i];
-      if (c.worldId != null) continue;
-      if (c.worldName.isEmpty) continue;
-      final id = nameToId[c.worldName];
+      if (c.worldId != null) {
+        remainingLegacy.remove(c.id);
+        continue;
+      }
+      final legacyName = remainingLegacy[c.id];
+      if (legacyName == null) continue;
+      final id = nameToId[legacyName];
       if (id == null) continue;
       final patched = c.copyWith(worldId: id);
       try {
@@ -152,18 +328,25 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         continue;
       }
       out[i] = patched;
+      remainingLegacy.remove(c.id);
       changed = true;
+      _syncPush(patched);
     }
+    _legacyWorldNames = remainingLegacy;
     if (changed) state = AsyncValue.data(out);
   }
 
   Future<void> _load() async {
     try {
-      state = AsyncValue.data(await _repo.loadAll());
+      final loaded = await _repo.loadAllWithLegacy();
+      _legacyWorldNames = loaded.legacyWorldNames;
+      state = AsyncValue.data(loaded.chars);
       final auth = _ref.read(authProvider);
       if (auth != null) {
         await _backfillWorldlessOwnership(auth.uid);
       }
+      // ignore: discarded_futures
+      pullNewerFromCloud();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -200,11 +383,30 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (adopted.isEmpty) return;
     state = AsyncValue.data(out);
     for (final c in adopted) {
-      _mirrorPush(c);
+      _syncPush(c);
     }
   }
 
   Future<void> refresh() => _load();
+
+  /// Offline'da char tab "Release" akışında ownerId-null-only patch
+  /// uygulayanları server'a aktarır. `release_character` RPC zaten
+  /// idempotent — duplicate çağrı no-op. Hata olursa entry queue'da kalır,
+  /// sonraki online transition'ında tekrar denenir.
+  Future<void> drainPendingReleases() async {
+    final svc = _ref.read(characterClaimServiceProvider);
+    if (svc == null) return;
+    final repo = _ref.read(pendingReleasesProvider);
+    final ids = await repo.load();
+    for (final id in ids) {
+      try {
+        await svc.release(id);
+        await repo.remove(id);
+      } catch (e) {
+        debugPrint('drain release error for $id: $e');
+      }
+    }
+  }
 
   /// Granular insert/update from realtime mirror. Persists to disk and
   /// patches the in-memory list in place — avoids the
@@ -245,7 +447,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   Future<Character> create({
     required String name,
     required WorldSchema template,
-    required String worldName,
     String? worldId,
     String description = '',
     List<String> tags = const [],
@@ -275,41 +476,30 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     // Auth-always invariant (039+): yaratan kişi owner olur. Offline'da bile
     // hesap açıktır, ownerId her zaman dolu. Caller yine de explicit ownerId
     // geçebilir (örn. DM seed unclaimed → null, RLS DM branch ile geçer).
-    final effectiveOwnerId = ownerId ?? _resolveOwnerIdForWorld(worldName);
-    // worldId paralel: caller verirse onu kullan, yoksa worldName'den lookup
-    // et. campaignInfoListProvider yüklü değilse null kalır (PR3'te tek
-    // canonical link olacak; şimdilik worldName + worldId paralel taşınır).
-    final resolvedWorldId = worldId ?? _worldIdFromName(worldName);
+    final effectiveOwnerId = ownerId ?? _resolveOwnerId();
     final character = Character(
       id: _uuid.v4(),
       templateId: template.schemaId,
       templateName: template.name,
       entity: entity,
-      worldName: worldName,
-      worldId: resolvedWorldId,
+      worldId: worldId,
       ownerId: effectiveOwnerId,
       createdAt: now,
       updatedAt: now,
     );
     await _repo.save(character);
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
-    _mirrorPush(character);
+    _syncPush(character);
     return character;
   }
 
   /// Resolves the owner_id for a freshly created character.
   ///
   /// - No auth (pure offline) → null.
-  /// - Worldless (char tab create): creator becomes owner (auth.uid). Char
-  ///   tab visibility is own-only, so the creator must hold ownership to
-  ///   keep seeing their character there.
-  /// - Online world + player → auth.uid (RLS `Chars: player inserts own`
-  ///   WITH CHECK requires it).
-  /// - Online world + DM → auth.uid. Creator gets ownership; DM can later
-  ///   "Release" to make the char claimable by a player.
-  /// - Offline world (local-only campaign) → auth.uid when authenticated,
-  ///   else null. The creator still sees the char in their tab.
-  String? _resolveOwnerIdForWorld(String worldName) {
+  /// - Authenticated → auth.uid. Creator becomes owner irrespective of
+  ///   world binding; DM-seeded unclaimed chars pass `ownerId: null`
+  ///   explicitly.
+  String? _resolveOwnerId() {
     final auth = _ref.read(authProvider);
     if (auth == null) return null;
     return auth.uid;
@@ -319,7 +509,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   /// `entity.fields`'i yeni Player kategorisine göre haritalanır: yeni
   /// alanlara default, kaldırılan alanlar düşürülür.
   Future<void> applyTemplateUpdate({
-    required String worldName,
+    required String worldId,
     required WorldSchema newTemplate,
   }) async {
     final playerCat = findPlayerCategory(newTemplate);
@@ -330,7 +520,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     var changed = false;
     for (var i = 0; i < list.length; i++) {
       final c = list[i];
-      if (c.worldName != worldName) continue;
+      if (c.worldId != worldId) continue;
       final merged = <String, dynamic>{};
       for (final key in allowedKeys) {
         merged[key] = c.entity.fields.containsKey(key)
@@ -364,7 +554,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     }
     list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     state = AsyncValue.data(list);
-    _mirrorPush(bumped);
+    _syncPush(bumped);
   }
 
   /// Partial metadata update — name/description/tags/cover/rename combined.
@@ -392,28 +582,26 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   /// Player a world'den ayrıldığında (leave / kick / DM-delete) çağrılır:
   /// world'ün entity blob'unu okur, her char ref'ini builtin SRD'nin stable
-  /// UUID'sine çevirir (slug+name eşleşmesiyle), worldName'i temizler ve
+  /// UUID'sine çevirir (slug+name eşleşmesiyle), worldId'yi temizler ve
   /// karakteri kaydeder. Böylece world purge sonrası orphan karakterlerin
   /// Species/Class/Trait/Action refleri builtin SRD üzerinden çözülür.
   ///
   /// [worldEntitiesRaw]: campaign data'sının `entities` alt-map'i. Null veya
-  /// boş geçilebilir — entity remap atlanır ama `worldName` her durumda
-  /// temizlenir. Bu davranış kritik: aynı isimli yeni bir world yaratıldığında
-  /// eski karakterler `worldName == 'X'` ile asılı kalırsa hub filtresi
-  /// (`c.worldName == activeWorld`) onları yeni world'e yapıştırır.
+  /// boş geçilebilir — entity remap atlanır ama `worldId` her durumda
+  /// temizlenir.
   Future<void> orphanForWorld(
-    String worldName, [
+    String worldId, [
     Map<String, dynamic>? worldEntitiesRaw,
   ]) async {
-    if (worldName.isEmpty) return;
+    if (worldId.isEmpty) return;
     final list = state.valueOrNull ?? const <Character>[];
-    final affected = list.where((c) => c.worldName == worldName).toList();
+    final affected = list.where((c) => c.worldId == worldId).toList();
     if (affected.isEmpty) return;
 
     final remap = <String, String>{};
     if (worldEntitiesRaw != null && worldEntitiesRaw.isNotEmpty) {
       final builtin = _ref.read(builtinSrdEntitiesProvider);
-      worldEntitiesRaw.forEach((worldId, raw) {
+      worldEntitiesRaw.forEach((entityId, raw) {
         if (raw is! Map) return;
         final slug = (raw['type'] as String?)?.trim();
         final name = (raw['name'] as String?)?.trim();
@@ -421,7 +609,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         if (name == null || name.isEmpty) return;
         final stableId = srdStableEntityId(slug, name);
         if (builtin.containsKey(stableId)) {
-          remap[worldId] = stableId;
+          remap[entityId] = stableId;
         }
       });
     }
@@ -431,7 +619,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
           ? c.entity.fields
           : _rewriteRefs(c.entity.fields, remap) as Map<String, dynamic>;
       final patched = c.copyWith(
-        worldName: '',
+        worldId: null,
         entity: c.entity.copyWith(fields: rewritten),
       );
       await update(patched);
@@ -454,31 +642,38 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     return value;
   }
 
-  /// Char Tab "Delete/Leave world" action point. 039 model server-side router:
-  ///   - world-bound (worldId != null || worldName != ''): `remove_from_world`
-  ///     RPC. Server-side branch:
-  ///       * owner varsa → world_id NULL (karakter orphan'a düşer, local'de kalır)
-  ///       * owner yoksa → row DELETE (CHECK violation olurdu)
-  ///   - orphan: `delete_character` RPC → hard delete (cloud + local).
-  /// Offline (svc == null) durumda local-only patch.
+  /// Char Tab "Delete/Release" action point. Spec: owner-delete-from-char-tab
+  /// drops OWNER, not world. World tarafı `_dmDelete` ile koparılır.
+  ///
+  /// Online router:
+  ///   - world-bound: `release_character` RPC. Server-side branch:
+  ///       * (me, W) → (NULL, W) UPDATE — char tab'dan kaybolur, world'de kalır
+  ///       * (me, NULL) → DELETE — CHECK violation olurdu, RPC siler
+  ///     `deleted: false` → local'i ownerId=null patch et, dosya kalır.
+  ///     `deleted: true` (race) → local trash'e düşür.
+  ///   - orphan (worldsuz): `delete_character` RPC → hard delete + trash.
+  ///
+  /// Offline router:
+  ///   - world-bound: local-only `ownerId = null` patch; row dosyada kalır.
+  ///     Pending release queue'ya eklenir (Step 6) — online olunca drain edilir.
+  ///   - worldsuz: doğrudan local trash'e düşür.
   Future<void> delete(String id) async {
     final list = state.valueOrNull ?? const <Character>[];
     final existing = list.where((c) => c.id == id).firstOrNull;
     if (existing == null) return;
     final svc = _ref.read(characterClaimServiceProvider);
-    final isWorldBound =
-        existing.worldId != null || existing.worldName.isNotEmpty;
+    final isWorldBound = existing.worldId != null;
 
     if (svc != null) {
       try {
         if (isWorldBound) {
-          final result = await svc.removeFromWorld(id);
+          final result = await svc.release(id);
           if (!result.deleted) {
-            // Server (owner, NULL) yaptı — local'i orphan'a patch et.
-            // Cloud CDC UPDATE echo'su aynı state'i tekrar yazacak.
+            // Server (NULL, W) yaptı — local'i ownerId=null patch et,
+            // worldId / worldName aynen kalır. Char tab own-only filter'ı
+            // sayesinde karakter kaybolur; world view'da görünür kalır.
             final patched = existing.copyWith(
-              worldId: null,
-              worldName: '',
+              ownerId: null,
               updatedAt: DateTime.now().toUtc().toIso8601String(),
             );
             await _repo.save(patched);
@@ -491,7 +686,8 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
             state = AsyncValue.data(out);
             return;
           }
-          // result.deleted = true → server row'u sildi; local cleanup'a düş.
+          // result.deleted = true → server (me, NULL) idi, row silindi.
+          // Local cleanup'a düş.
         } else {
           await svc.deleteCharacter(id);
         }
@@ -499,24 +695,46 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         debugPrint('delete RPC error: $e');
         // Local cleanup'a düş — kullanıcının cihazında en azından silinsin.
       }
+    } else if (isWorldBound) {
+      // Offline + world-bound: server'a ulaşamıyoruz, ownerId'yi local
+      // olarak temizle ve queue'ya at. Karakter dosyası kalır; world görür
+      // edebilen başka bir cihaz CDC ile (NULL, W)'i öğrenecek.
+      final patched = existing.copyWith(
+        ownerId: null,
+        updatedAt: DateTime.now().toUtc().toIso8601String(),
+      );
+      await _repo.save(patched);
+      final out = [...list];
+      final idx = out.indexWhere((c) => c.id == id);
+      if (idx >= 0) {
+        out[idx] = patched;
+      }
+      out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      state = AsyncValue.data(out);
+      try {
+        await _ref.read(pendingReleasesProvider).add(id);
+      } catch (e) {
+        debugPrint('pending release queue add error: $e');
+      }
+      return;
     }
 
     final displayName = existing.entity.name;
     await _repo.delete(id, displayName: displayName);
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
-    _mirrorDelete(id, worldName: existing.worldName);
+    _syncDelete(id, worldId: existing.worldId);
   }
 
-  /// Local Character'in `worldName`'ini boşaltır. world_characters DB
+  /// Local Character'in `worldId`'sini boşaltır. world_characters DB
   /// satırının yok olduğu durumlarda (CDC DELETE event veya kendi initiate
   /// ettiğimiz remove-from-world) çağrılır — local char dosyası kalır,
-  /// sadece world bağı kopar. `update()` yolundan geçtiği için personal
+  /// sadece world bağı kopar. `update()` yolundan geçtiği için cross-device
   /// sync push'u tetiklenir; owner'ın diğer cihazlarına da yansır.
   Future<void> detachFromWorld(String id) async {
     final list = state.valueOrNull ?? const <Character>[];
     final c = list.where((x) => x.id == id).firstOrNull;
-    if (c == null || c.worldName.isEmpty) return;
-    await update(c.copyWith(worldName: ''));
+    if (c == null || c.worldId == null) return;
+    await update(c.copyWith(worldId: null));
   }
 
   /// Trash'ten karakteri geri yükle. UI tarafı settings_tab'tan çağırır.
@@ -583,7 +801,7 @@ final effectiveCharacterProvider =
   // builtin filling in any Tier-0 lookup the campaign hasn't seeded.
   final builtin = ref.watch(builtinSrdEntitiesProvider);
   final Map<String, Entity> entities;
-  if (pc.worldName.isEmpty) {
+  if (pc.worldId == null) {
     entities = builtin;
   } else {
     final campaign = ref.watch(entityProvider);

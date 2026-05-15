@@ -2,13 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/cloud_sync_provider.dart';
-import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
@@ -20,10 +18,8 @@ import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
-import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
-import '../../domain/entities/cloud_backup_meta.dart';
 import '../../application/services/media_bundler.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
@@ -240,20 +236,10 @@ class _SaveSyncDialog extends ConsumerWidget {
                     saveStatus: saveStatus,
                     syncState: syncState,
                     hasCloud: hasCloud,
-                    onBackup: () => _backupToCloud(context, ref),
-                    onSync: () => _syncFromCloud(context, ref),
                   ),
 
                   // ── Online world panel: invite code + members ──
                   _OnlineWorldPanel(palette: palette),
-                ],
-
-                // ── Backups (compact mode: show list above storage) ──
-                if (hasCloud && compact) ...[
-                  _SectionLabel('Backups', palette),
-                  const SizedBox(height: 8),
-                  _CompactBackupList(palette: palette),
-                  const SizedBox(height: 16),
                 ],
 
                 // ── Storage ──
@@ -290,187 +276,6 @@ class _SaveSyncDialog extends ConsumerWidget {
     );
   }
 
-  /// Force-uploads the currently active world/package to cloud. Wraps the
-  /// operation in the global loading overlay so the user sees progress.
-  Future<void> _backupToCloud(BuildContext context, WidgetRef ref) async {
-    // Gate up front so we can surface a clear "open something first"
-    // message instead of silently doing nothing.
-    final hasCampaign = ref.read(activeCampaignProvider) != null;
-    final hasPackage = ref.read(activePackageProvider) != null;
-    if (!hasCampaign && !hasPackage) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Open a world or package first to back up to cloud.'),
-        ),
-      );
-      return;
-    }
-    // Beta gate — cloud save özelliği yalnızca beta katılımcılarına açık.
-    if (!ref.read(betaProvider).isActive) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Cloud save is beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    try {
-      final ok = await withLoading(
-        ref.read(globalLoadingProvider.notifier),
-        'manual-backup-cloud',
-        'Backing up to cloud...',
-        () => ref.read(cloudSyncProvider.notifier).backupActiveItem(),
-      );
-      if (!context.mounted) return;
-      if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nothing to back up.')),
-        );
-        return;
-      }
-      final state = ref.read(cloudSyncProvider);
-      final msg = state.status == CloudSyncStatus.error
-          ? 'Cloud backup failed (${state.failedCount} item(s))'
-          : 'Cloud backup complete';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cloud backup failed: $e')),
-        );
-      }
-    }
-  }
-
-  /// Restores the currently open world/package from its latest cloud
-  /// backup. Targets ONLY the active item so the user-visible flow is:
-  /// "open world → Sync from Cloud → local state is replaced with the
-  /// cloud copy of this exact world". No other items are touched.
-  ///
-  /// Requires an active item; if the user opens the panel from the hub
-  /// (nothing open), we tell them to open something first.
-  Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
-    // 1. Resolve the active item (world, package or template).
-    final campaignName = ref.read(activeCampaignProvider);
-    final packageName = ref.read(activePackageProvider);
-    String? itemName;
-    String? itemId;
-    String? type;
-    if (campaignName != null) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      itemName = campaignName;
-      itemId = (data?['world_id'] as String?) ?? campaignName;
-      type = 'world';
-    } else if (packageName != null) {
-      final data = ref.read(activePackageProvider.notifier).data;
-      itemName = packageName;
-      itemId = (data?['package_id'] as String?) ??
-          (data?['world_id'] as String?) ??
-          packageName;
-      type = 'package';
-    }
-
-    if (itemName == null || itemId == null || type == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Open a world or package first to sync from cloud.'),
-        ),
-      );
-      return;
-    }
-
-    // 2. Fetch the cloud backup for this exact item.
-    final CloudBackupRemoteDataSource remoteDs = CloudBackupRemoteDataSource();
-    final loading = ref.read(globalLoadingProvider.notifier);
-    const fetchTaskId = 'sync-from-cloud-fetch';
-    loading.start(LoadingTask(
-      id: fetchTaskId,
-      message: 'Looking up cloud backup for "$itemName"...',
-    ));
-    final meta = await (() async {
-      try {
-        return await remoteDs.fetchByItem(itemId!, type!);
-      } catch (e) {
-        debugPrint('fetchByItem failed: $e');
-        return null;
-      } finally {
-        loading.end(fetchTaskId);
-      }
-    })();
-
-    if (meta == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No cloud backup found for "$itemName".'),
-          ),
-        );
-      }
-      return;
-    }
-
-    // 3. Destructive confirm — this replaces in-memory + on-disk state.
-    if (!context.mounted) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Restore "$itemName" from cloud?'),
-        content: const Text(
-          'This will OVERWRITE the current local state with the cloud '
-          'backup. Any unsaved changes since the last cloud backup will '
-          'be lost.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
-    // 4. Download + overwrite in place.
-    try {
-      await withLoading(
-        ref.read(globalLoadingProvider.notifier),
-        'sync-from-cloud',
-        'Restoring "$itemName" from cloud...',
-        () async {
-          final repo = ref.read(cloudBackupRepositoryProvider);
-          final data = await repo.downloadBackup(meta.id);
-          if (type == 'world') {
-            await ref
-                .read(activeCampaignProvider.notifier)
-                .replaceWithData(data);
-          } else {
-            await ref
-                .read(activePackageProvider.notifier)
-                .replaceWithData(data);
-            ref.invalidate(cloudBackupListProvider);
-          }
-        },
-      );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Restored "$itemName" from cloud.')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Restore failed: $e')),
-        );
-      }
-    }
-  }
 }
 
 // ── Helper widgets ──────────────────────────────────────────────────
@@ -579,82 +384,27 @@ class _OnlineWorldPanel extends ConsumerWidget {
 // world-settings online panel can render the same shape.
 
 /// Actions panel — world açıkken "Save Locally" + "Make Online" (toggle);
-/// package açıkken klasik "Save Locally" + "Backup to Cloud" + "Sync from
-/// Cloud". Worldler online olunca otomatik sync olur, manuel backup/restore
-/// gerekmez.
+/// World açıkken sadece "Make Online" toggle. Package açıkken eylem yok —
+/// local + cloud kayıt auto-sync ile.
 class _ActionsRow extends ConsumerWidget {
   final DmToolColors palette;
   final SaveStatus saveStatus;
   final CloudSyncState? syncState;
   final bool hasCloud;
-  final VoidCallback onBackup;
-  final VoidCallback onSync;
 
   const _ActionsRow({
     required this.palette,
     required this.saveStatus,
     required this.syncState,
     required this.hasCloud,
-    required this.onBackup,
-    required this.onSync,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final campaignName = ref.watch(activeCampaignProvider);
     final isWorld = campaignName != null;
-
-    final saveBtn = _ActionButton(
-      icon: Icons.save,
-      label: saveStatus == SaveStatus.saving ? 'Saving...' : 'Save Locally',
-      onPressed: saveStatus == SaveStatus.saving
-          ? null
-          : () => withLoading(
-                ref.read(globalLoadingProvider.notifier),
-                'manual-save-local',
-                'Saving locally...',
-                () => ref.read(saveStateProvider.notifier).saveNow(),
-              ),
-      palette: palette,
-    );
-
-    if (isWorld) {
-      return Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          saveBtn,
-          if (hasCloud) _MakeOnlineButton(palette: palette),
-        ],
-      );
-    }
-
-    // Package context — keep cloud backup/sync.
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        saveBtn,
-        if (hasCloud)
-          _ActionButton(
-            icon: Icons.cloud_upload_outlined,
-            label: syncState?.status == CloudSyncStatus.syncing
-                ? 'Syncing...'
-                : 'Backup to Cloud',
-            onPressed: syncState?.status == CloudSyncStatus.syncing
-                ? null
-                : onBackup,
-            palette: palette,
-          ),
-        if (hasCloud)
-          _ActionButton(
-            icon: Icons.cloud_download_outlined,
-            label: 'Sync from Cloud',
-            onPressed: onSync,
-            palette: palette,
-          ),
-      ],
-    );
+    if (!isWorld || !hasCloud) return const SizedBox.shrink();
+    return _MakeOnlineButton(palette: palette);
   }
 }
 
@@ -1115,212 +865,3 @@ class _ResultRow extends StatelessWidget {
   }
 }
 
-/// Compact backup list — top-right cloud icon dialog'unda storage bar'ın
-/// üstünde gösterilir. Restore/delete aksiyonları ile birlikte cloud
-/// backup'ları listeler.
-class _CompactBackupList extends ConsumerWidget {
-  final DmToolColors palette;
-  const _CompactBackupList({required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final backupsAsync = ref.watch(cloudBackupListProvider);
-    final opState = ref.watch(cloudBackupOperationProvider);
-
-    // Surface operation completion as snackbar.
-    ref.listen<CloudBackupOperationState>(cloudBackupOperationProvider, (prev, next) {
-      if (prev?.isBusy != true) return;
-      if (next.errorMessage != null) {
-        final msg = next.errorMessage!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              msg.startsWith("You're offline") ? msg : 'Backup error: $msg',
-            ),
-          ),
-        );
-        ref.read(cloudBackupOperationProvider.notifier).reset();
-      } else if (!next.isBusy && prev?.type == CloudBackupOpType.downloading) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Backup restored')),
-        );
-        ref.read(cloudBackupOperationProvider.notifier).reset();
-      } else if (!next.isBusy && prev?.type == CloudBackupOpType.deleting) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Backup deleted')),
-        );
-        ref.read(cloudBackupOperationProvider.notifier).reset();
-      }
-    });
-
-    return backupsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
-      error: (e, _) => Text(
-        isOfflineError(e)
-            ? "You're offline — backups unavailable."
-            : 'Could not load backups',
-        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-      ),
-      data: (backups) {
-        if (backups.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: palette.featureCardBg,
-              borderRadius: palette.cbr,
-              border: Border.all(color: palette.featureCardBorder),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.cloud_off_outlined, size: 16, color: palette.sidebarLabelSecondary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'No cloud backups yet',
-                    style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        return ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 220),
-          child: Container(
-            decoration: BoxDecoration(
-              color: palette.featureCardBg,
-              borderRadius: palette.cbr,
-              border: Border.all(color: palette.featureCardBorder),
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: backups.length,
-              separatorBuilder: (ctx, i) => Divider(height: 1, color: palette.featureCardBorder),
-              itemBuilder: (ctx, i) =>
-                  _BackupRow(meta: backups[i], palette: palette, busy: opState.isBusy),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _BackupRow extends ConsumerWidget {
-  final CloudBackupMeta meta;
-  final DmToolColors palette;
-  final bool busy;
-  const _BackupRow({required this.meta, required this.palette, required this.busy});
-
-  IconData get _typeIcon => switch (meta.type) {
-        'world' => Icons.public,
-        'template' => Icons.description_outlined,
-        'package' => Icons.inventory_2_outlined,
-        _ => Icons.backup,
-      };
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final date = DateFormat.yMMMd().add_Hm().format(meta.createdAt.toLocal());
-    final sizeKb = (meta.sizeBytes / 1024).toStringAsFixed(1);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          Icon(_typeIcon, size: 16, color: palette.featureCardAccent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  meta.itemName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                ),
-                Text(
-                  '$date · $sizeKb KB',
-                  style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.download, size: 16, color: palette.featureCardAccent),
-            tooltip: 'Restore',
-            visualDensity: VisualDensity.compact,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            padding: EdgeInsets.zero,
-            onPressed: busy
-                ? null
-                : () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (dctx) => AlertDialog(
-                        title: Text('Restore "${meta.itemName}"?'),
-                        content: const Text('This overwrites the local copy.'),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.pop(dctx, false),
-                              child: const Text('Cancel')),
-                          FilledButton(
-                              onPressed: () => Navigator.pop(dctx, true),
-                              child: const Text('Restore')),
-                        ],
-                      ),
-                    );
-                    if (confirmed == true) {
-                      ref.read(cloudBackupOperationProvider.notifier).restoreBackup(meta);
-                    }
-                  },
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
-            tooltip: 'Delete',
-            visualDensity: VisualDensity.compact,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            padding: EdgeInsets.zero,
-            onPressed: busy
-                ? null
-                : () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (dctx) => AlertDialog(
-                        title: const Text('Delete backup?'),
-                        content: Text('Permanently delete "${meta.itemName}" from cloud.'),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.pop(dctx, false),
-                              child: const Text('Cancel')),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(dctx, true),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: palette.dangerBtnBg,
-                              foregroundColor: palette.dangerBtnText,
-                            ),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirmed == true) {
-                      ref.read(cloudBackupOperationProvider.notifier).deleteBackup(meta.id);
-                    }
-                  },
-          ),
-        ],
-      ),
-    );
-  }
-}

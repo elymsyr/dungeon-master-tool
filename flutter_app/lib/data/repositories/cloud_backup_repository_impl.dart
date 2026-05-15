@@ -49,6 +49,10 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
       _remoteDs.fetchLatestCreatedAt();
 
   @override
+  Future<CloudBackupMeta?> fetchByItem(String itemId, String type) =>
+      _remoteDs.fetchByItem(itemId, type);
+
+  @override
   Future<CloudBackupMeta> uploadBackup(
     String itemName,
     String itemId,
