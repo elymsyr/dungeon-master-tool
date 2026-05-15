@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
@@ -24,6 +26,8 @@ import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
+import '../../application/providers/world_sync_provider.dart';
+import '../../application/providers/personal_sync_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
@@ -106,8 +110,30 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _rightSidebar = uiState.rightSidebar;
     _rightSidebarWidth = uiState.pdfSidebarWidth.clamp(_minRightSidebarWidth, _maxRightSidebarWidth);
     _rightSidebarWidthNotifier = ValueNotifier(_rightSidebarWidth);
-    _pdfOpenPaths = uiState.pdfOpenPaths.where((p) => File(p).existsSync()).toList();
-    _pdfActiveIndex = _pdfOpenPaths.isEmpty ? -1 : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1);
+    // Optimistic: assume saved paths still exist; verify async so initState
+    // doesn't block first paint on a slow mobile filesystem.
+    _pdfOpenPaths = List<String>.from(uiState.pdfOpenPaths);
+    _pdfActiveIndex = _pdfOpenPaths.isEmpty
+        ? -1
+        : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1);
+    unawaited(_pruneMissingPdfPaths());
+  }
+
+  Future<void> _pruneMissingPdfPaths() async {
+    final pending = List<String>.from(_pdfOpenPaths);
+    final survivors = <String>[];
+    for (final path in pending) {
+      if (await File(path).exists()) survivors.add(path);
+    }
+    if (!mounted || survivors.length == _pdfOpenPaths.length) return;
+    setState(() {
+      _pdfOpenPaths = survivors;
+      if (_pdfOpenPaths.isEmpty) {
+        _pdfActiveIndex = -1;
+      } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
+        _pdfActiveIndex = _pdfOpenPaths.length - 1;
+      }
+    });
   }
 
   @override
@@ -127,12 +153,27 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // backup is deliberately NOT auto-triggered here — the user asked
       // for explicit control over cloud backups.
       ref.read(saveStateProvider.notifier).saveNow();
+      // Mobile: drop realtime channels so the WiFi radio can sleep. The
+      // server queues missed events; on resume we refetch.
+      final worldSync = ref.read(worldSyncServiceProvider);
+      if (worldSync != null) unawaited(worldSync.unsubscribeAll());
+      final personalSync = ref.read(personalSyncServiceProvider);
+      if (personalSync != null) unawaited(personalSync.stop());
     } else if (state == AppLifecycleState.resumed) {
       // Beta program: her resume'da last_active_at'i tazele ve slot/quota
       // durumunu yenile. Beta'da değilse sunucu no-op yapar.
       final betaNotifier = ref.read(betaProvider.notifier);
       betaNotifier.heartbeat();
       betaNotifier.refresh();
+      // Resubscribe realtime + refetch authoritative state so any events
+      // we missed while backgrounded are reconciled in the background
+      // instead of replaying queued CDC in a single frame.
+      ref.invalidate(worldSyncAutoSubscribeProvider);
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      final personalSync = ref.read(personalSyncServiceProvider);
+      if (uid != null && personalSync != null) {
+        unawaited(personalSync.start(uid));
+      }
     }
   }
 

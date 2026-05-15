@@ -155,6 +155,7 @@ Widget _bannerCover({
             fit: BoxFit.cover,
             width: double.infinity,
             height: 120,
+            cacheHeight: 240,
             errorBuilder: (_, _, _) => Icon(
               icon,
               size: 48,

@@ -492,7 +492,13 @@ class _UserPostCard extends StatelessWidget {
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: palette.cbr,
-              child: Image.network(post.imageUrl!, fit: BoxFit.cover),
+              child: Image.network(
+                post.imageUrl!,
+                fit: BoxFit.cover,
+                cacheWidth: (MediaQuery.sizeOf(context).width *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .ceil(),
+              ),
             ),
           ],
           const SizedBox(height: 8),

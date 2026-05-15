@@ -33,7 +33,7 @@ class SoundpadLoader {
         final id = map['id'] as String? ?? '';
         final name = map['name'] as String? ?? '';
         final fileFrag = map['file'] as String? ?? '';
-        final files = _findAudioFiles(fileFrag, soundpadRoot);
+        final files = await _findAudioFiles(fileFrag, soundpadRoot);
         ambience.add(AmbienceEntry(id: id, name: name, files: files));
       }
 
@@ -43,7 +43,7 @@ class SoundpadLoader {
         final id = map['id'] as String? ?? '';
         final name = map['name'] as String? ?? '';
         final fileFrag = map['file'] as String? ?? '';
-        final files = _findAudioFiles(fileFrag, soundpadRoot);
+        final files = await _findAudioFiles(fileFrag, soundpadRoot);
         sfx.add(SfxEntry(id: id, name: name, files: files));
       }
 
@@ -227,14 +227,17 @@ class SoundpadLoader {
   // ---------------------------------------------------------------------------
 
   /// Dosya/dizin yolunu tarayarak ses dosyalarını bulur.
-  static List<String> _findAudioFiles(String pathFragment, String soundpadRoot) {
+  static Future<List<String>> _findAudioFiles(
+      String pathFragment, String soundpadRoot) async {
     final fullPath = p.join(soundpadRoot, pathFragment);
 
     // Dizin ise içindeki ses dosyalarını listele
-    if (Directory(fullPath).existsSync()) {
+    final dir = Directory(fullPath);
+    if (await dir.exists()) {
       final found = <String>[];
-      for (final file in Directory(fullPath).listSync()) {
-        if (file is File && _audioExtensions.contains(p.extension(file.path).toLowerCase())) {
+      await for (final file in dir.list()) {
+        if (file is File &&
+            _audioExtensions.contains(p.extension(file.path).toLowerCase())) {
           found.add(file.path);
         }
       }
@@ -243,11 +246,11 @@ class SoundpadLoader {
 
     // Dosya ise (uzantılı veya uzantısız)
     if (p.extension(fullPath).isNotEmpty) {
-      if (File(fullPath).existsSync()) return [fullPath];
+      if (await File(fullPath).exists()) return [fullPath];
     } else {
       for (final ext in _audioExtensions) {
         final probe = '$fullPath$ext';
-        if (File(probe).existsSync()) return [probe];
+        if (await File(probe).exists()) return [probe];
       }
     }
 
