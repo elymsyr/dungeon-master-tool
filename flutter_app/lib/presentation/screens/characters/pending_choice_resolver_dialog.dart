@@ -36,6 +36,26 @@ class PendingChoiceResolution {
   /// declares `grants_save_prof_from_asi: true` (Resilient).
   final Set<String> saveProfAbilityAbbrevs;
 
+  /// Tool entity IDs — populated for `toolProficiency` and for `featChoice`
+  /// when the underlying choice routes to tools (`tool_category` /
+  /// `skill_or_tool`). Editor appends to `tool_proficiencies`.
+  final List<String> toolIds;
+
+  /// Language entity IDs — populated for `languages`. Editor appends to
+  /// `language_refs` / `languages`.
+  final List<String> languageIds;
+
+  /// `feat_choices[$featChoiceKey] = $featChoiceValue` write. Populated when
+  /// resolving a `featChoice` pending so the picks become part of the
+  /// character's persisted feat sub-pick state.
+  final String? featChoiceKey;
+  final String? featChoiceValue;
+
+  /// Marks cantrip-leveled spell picks so the editor flags them prepared+
+  /// auto-source when writing into `spells_known` (matches the wizard's
+  /// commit-time spell add path).
+  final List<String> cantripIds;
+
   const PendingChoiceResolution({
     this.abilityBumps = const {},
     this.featId,
@@ -45,6 +65,11 @@ class PendingChoiceResolution {
     this.skillIds = const [],
     this.expertiseSkillIds = const [],
     this.saveProfAbilityAbbrevs = const {},
+    this.toolIds = const [],
+    this.languageIds = const [],
+    this.featChoiceKey,
+    this.featChoiceValue,
+    this.cantripIds = const [],
   });
 
   bool get isEmpty =>
@@ -55,7 +80,11 @@ class PendingChoiceResolution {
       weaponMasteryIds.isEmpty &&
       skillIds.isEmpty &&
       expertiseSkillIds.isEmpty &&
-      saveProfAbilityAbbrevs.isEmpty;
+      saveProfAbilityAbbrevs.isEmpty &&
+      toolIds.isEmpty &&
+      languageIds.isEmpty &&
+      featChoiceKey == null &&
+      cantripIds.isEmpty;
 }
 
 /// Open the picker UI for a single deferred level-up decision. Returns
@@ -72,6 +101,9 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
   required Set<String> existingSpellIds,
   Set<String> existingSkillNames = const {},
   Set<String> expertiseSkillNames = const {},
+  Set<String> existingToolIds = const {},
+  Set<String> existingLanguageIds = const {},
+  Map<String, String> featChoices = const {},
 }) {
   return showDialog<PendingChoiceResolution>(
     context: context,
@@ -83,6 +115,9 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
       existingSpellIds: existingSpellIds,
       existingSkillNames: existingSkillNames,
       expertiseSkillNames: expertiseSkillNames,
+      existingToolIds: existingToolIds,
+      existingLanguageIds: existingLanguageIds,
+      featChoices: featChoices,
     ),
   );
 }
@@ -95,6 +130,9 @@ class _ResolverDialog extends StatefulWidget {
   final Set<String> existingSpellIds;
   final Set<String> existingSkillNames;
   final Set<String> expertiseSkillNames;
+  final Set<String> existingToolIds;
+  final Set<String> existingLanguageIds;
+  final Map<String, String> featChoices;
 
   const _ResolverDialog({
     required this.choice,
@@ -104,6 +142,9 @@ class _ResolverDialog extends StatefulWidget {
     required this.existingSpellIds,
     required this.existingSkillNames,
     required this.expertiseSkillNames,
+    required this.existingToolIds,
+    required this.existingLanguageIds,
+    required this.featChoices,
   });
 
   @override
@@ -158,6 +199,19 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   // Expertise state — set of skill entity ids when kind == expertise.
   final Set<String> _pickedExpertise = <String>{};
 
+  // Tool proficiency state — set of tool entity ids when kind ==
+  // toolProficiency.
+  final Set<String> _pickedTools = <String>{};
+
+  // Language state — set of language entity ids when kind == languages.
+  final Set<String> _pickedLanguages = <String>{};
+
+  // Feat-choice state — set of option ids picked for the underlying choice
+  // group. Stored once on Apply as `feat_choices[<key>] = <comma-joined>`.
+  final Set<String> _pickedFeatChoice = <String>{};
+  Map<String, dynamic>? _featChoiceGroup;
+  String _featChoiceStorageKey = '';
+
   List<Entity> _eligibleFeats = const [];
   List<Entity> _fightingStyleFeats = const [];
   List<Entity> _divineOrderFeats = const [];
@@ -167,6 +221,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   List<Entity> _eligibleWeapons = const [];
   List<Entity> _eligibleSkills = const [];
   List<Entity> _eligibleExpertise = const [];
+  List<Entity> _eligibleTools = const [];
+  List<Entity> _eligibleLanguages = const [];
 
   @override
   void initState() {
@@ -192,8 +248,82 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         _eligibleSkills = _computeEligibleSkills();
       case PendingChoiceKind.expertise:
         _eligibleExpertise = _computeEligibleExpertise();
+      case PendingChoiceKind.toolProficiency:
+        _eligibleTools = _computeEligibleTools();
+      case PendingChoiceKind.languages:
+        _eligibleLanguages = _computeEligibleLanguages();
+      case PendingChoiceKind.featChoice:
+        _initFeatChoice();
       case PendingChoiceKind.featAsi:
         _initFeatAsi();
+    }
+  }
+
+  /// Tools defined on the class entity's `tool_proficiency_options`, minus
+  /// the ones the PC already has.
+  List<Entity> _computeEligibleTools() {
+    final classId = widget.choice.classId;
+    if (classId == null || classId.isEmpty) return const [];
+    final classEntity = widget.entities[classId];
+    if (classEntity == null) return const [];
+    final optionsRaw = classEntity.fields['tool_proficiency_options'];
+    if (optionsRaw is! List) return const [];
+    final out = <Entity>[];
+    for (final id in optionsRaw.whereType<String>()) {
+      if (widget.existingToolIds.contains(id)) continue;
+      final e = widget.entities[id];
+      if (e == null) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  /// All language entities in the campaign minus the ones the PC already
+  /// knows.
+  List<Entity> _computeEligibleLanguages() {
+    if (widget.entities.isEmpty) return const [];
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'language') continue;
+      if (widget.existingLanguageIds.contains(e.id)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  /// Locate the feat + group_id whose label matches `choice.featureName`.
+  /// The wizard stores the group's human-readable `label` so badges read
+  /// nicely; the resolver does the reverse lookup to find the machine
+  /// `group_id` for the storage key.
+  void _initFeatChoice() {
+    final featId = widget.choice.sourceEntityId;
+    if (featId == null) return;
+    final feat = widget.entities[featId];
+    if (feat == null) return;
+    final effects = feat.fields['effects'];
+    if (effects is! List) return;
+    final targetLabel = widget.choice.featureName;
+    for (final row in effects) {
+      if (row is! Map) continue;
+      if (row['kind'] != 'choice_group') continue;
+      final payload = row['payload'];
+      if (payload is! Map) continue;
+      final label = payload['label']?.toString() ?? '';
+      final groupId = payload['group_id']?.toString() ?? '';
+      if (label != targetLabel) continue;
+      _featChoiceGroup = Map<String, dynamic>.from(payload);
+      _featChoiceStorageKey = '$featId:$groupId';
+      // Pre-populate from any partial picks already in feat_choices so the
+      // user only needs to add the remaining ones.
+      final raw = widget.featChoices[_featChoiceStorageKey] ?? '';
+      if (raw.isNotEmpty) {
+        _pickedFeatChoice.addAll(
+          raw.split(',').where((s) => s.isNotEmpty),
+        );
+      }
+      return;
     }
   }
 
@@ -515,6 +645,16 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         return _pickedSkills.length <= widget.choice.count;
       case PendingChoiceKind.expertise:
         return _pickedExpertise.length <= widget.choice.count;
+      case PendingChoiceKind.toolProficiency:
+        return _pickedTools.length <= widget.choice.count;
+      case PendingChoiceKind.languages:
+        return _pickedLanguages.length <= widget.choice.count;
+      case PendingChoiceKind.featChoice:
+        if (_featChoiceGroup == null) return false;
+        final pick = _featChoiceGroup!['pick'] is int
+            ? _featChoiceGroup!['pick'] as int
+            : 1;
+        return _pickedFeatChoice.length <= pick;
       case PendingChoiceKind.featAsi:
         return _featAsiPickedAbility != null &&
             _canBump(_featAsiPickedAbility!, _featAsiAmount, cap: _featAsiMaxScore);
@@ -553,6 +693,16 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         return PendingChoiceResolution(
           expertiseSkillIds: _pickedExpertise.toList(growable: false),
         );
+      case PendingChoiceKind.toolProficiency:
+        return PendingChoiceResolution(
+          toolIds: _pickedTools.toList(growable: false),
+        );
+      case PendingChoiceKind.languages:
+        return PendingChoiceResolution(
+          languageIds: _pickedLanguages.toList(growable: false),
+        );
+      case PendingChoiceKind.featChoice:
+        return _buildFeatChoiceResolution();
       case PendingChoiceKind.featAsi:
         final picked = _featAsiPickedAbility;
         if (picked == null) return const PendingChoiceResolution();
@@ -621,9 +771,334 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         return _skillProficiencyBody(hint);
       case PendingChoiceKind.expertise:
         return _expertiseBody(hint);
+      case PendingChoiceKind.toolProficiency:
+        return _toolProficiencyBody(hint);
+      case PendingChoiceKind.languages:
+        return _languagesBody(hint);
+      case PendingChoiceKind.featChoice:
+        return _featChoiceBody(hint);
       case PendingChoiceKind.featAsi:
         return _featAsiBody(hint);
     }
+  }
+
+  Widget _toolProficiencyBody(Color hint) {
+    if (_eligibleTools.isEmpty) {
+      return Text(
+        'No class tool options available (or all already proficient).',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final cap = widget.choice.count;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pick up to $cap (selected ${_pickedTools.length}).',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final e in _eligibleTools)
+                  _descOption(
+                    name: e.name,
+                    description: e.description,
+                    selected: _pickedTools.contains(e.id),
+                    onTap: () {
+                      setState(() {
+                        if (_pickedTools.contains(e.id)) {
+                          _pickedTools.remove(e.id);
+                        } else if (_pickedTools.length < cap) {
+                          _pickedTools.add(e.id);
+                        }
+                      });
+                    },
+                    hint: hint,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _languagesBody(Color hint) {
+    if (_eligibleLanguages.isEmpty) {
+      return Text(
+        'No languages available — PC already knows every language in the campaign.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final cap = widget.choice.count;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pick up to $cap (selected ${_pickedLanguages.length}).',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final e in _eligibleLanguages)
+                  _descOption(
+                    name: e.name,
+                    description: e.description,
+                    selected: _pickedLanguages.contains(e.id),
+                    onTap: () {
+                      setState(() {
+                        if (_pickedLanguages.contains(e.id)) {
+                          _pickedLanguages.remove(e.id);
+                        } else if (_pickedLanguages.length < cap) {
+                          _pickedLanguages.add(e.id);
+                        }
+                      });
+                    },
+                    hint: hint,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _featChoiceBody(Color hint) {
+    final group = _featChoiceGroup;
+    if (group == null) {
+      return Text(
+        'Source feat / choice group not found.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final pickKind = group['pick_kind']?.toString() ?? 'enum';
+    final pick = group['pick'] is int ? group['pick'] as int : 1;
+    final prompt = group['prompt']?.toString() ?? '';
+
+    final options = _featChoiceOptions(group, pickKind);
+    if (options == null) {
+      // `null` means "blocked by an upstream choice" (spell_from_list whose
+      // list pick hasn't been made yet).
+      return Text(
+        'Pick the spell list first (resolve its pending choice).',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    if (options.isEmpty) {
+      return Text(
+        'No eligible options in the active campaign.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (prompt.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(prompt, style: TextStyle(fontSize: 11, color: hint)),
+          ),
+        Text(
+          'Pick up to $pick (selected ${_pickedFeatChoice.length}).',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final o in options)
+                  _descOption(
+                    name: o.label,
+                    description: o.description,
+                    selected: _pickedFeatChoice.contains(o.id),
+                    onTap: () {
+                      setState(() {
+                        if (_pickedFeatChoice.contains(o.id)) {
+                          _pickedFeatChoice.remove(o.id);
+                        } else if (pick == 1) {
+                          _pickedFeatChoice
+                            ..clear()
+                            ..add(o.id);
+                        } else if (_pickedFeatChoice.length < pick) {
+                          _pickedFeatChoice.add(o.id);
+                        }
+                      });
+                    },
+                    hint: hint,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build the list of selectable options for the active feat-choice group.
+  /// Returns `null` when the group depends on an upstream pick (e.g.
+  /// spell_from_list whose list isn't picked yet); returns an empty list
+  /// when the campaign just lacks matching entities.
+  List<_FeatChoiceOption>? _featChoiceOptions(
+    Map<String, dynamic> group,
+    String pickKind,
+  ) {
+    switch (pickKind) {
+      case 'enum':
+        final raw = group['options'];
+        if (raw is! List) return const [];
+        final out = <_FeatChoiceOption>[];
+        for (final row in raw) {
+          if (row is! Map) continue;
+          final id = row['id']?.toString() ?? '';
+          final label = row['label']?.toString() ?? id;
+          if (id.isEmpty) continue;
+          out.add(_FeatChoiceOption(id: id, label: label));
+        }
+        return out;
+      case 'tool_category':
+        final catName = group['tool_category_name']?.toString() ?? '';
+        if (catName.isEmpty) return const [];
+        final out = <_FeatChoiceOption>[];
+        for (final e in widget.entities.values) {
+          if (e.categorySlug != 'tool') continue;
+          final catRef = e.fields['category_ref'];
+          if (catRef is! String) continue;
+          final cat = widget.entities[catRef];
+          if (cat?.name != catName) continue;
+          out.add(_FeatChoiceOption(
+              id: e.id, label: e.name, description: e.description));
+        }
+        out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+        return out;
+      case 'skill_or_tool':
+        final out = <_FeatChoiceOption>[];
+        for (final e in widget.entities.values) {
+          final slug = e.categorySlug;
+          if (slug != 'skill' && slug != 'tool') continue;
+          out.add(_FeatChoiceOption(
+              id: e.id,
+              label: '${slug == 'skill' ? '[Skill] ' : '[Tool] '}${e.name}',
+              description: e.description));
+        }
+        out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+        return out;
+      case 'spell_from_list':
+        final featId = widget.choice.sourceEntityId;
+        if (featId == null) return const [];
+        final listGroupId = group['list_group_id']?.toString() ?? '';
+        if (listGroupId.isEmpty) return const [];
+        final listKey = '$featId:$listGroupId';
+        final listValue = (widget.featChoices[listKey] ?? '')
+            .split(',')
+            .where((s) => s.isNotEmpty)
+            .firstOrNull;
+        if (listValue == null || listValue.isEmpty) return null;
+        // listValue is the class name (e.g. "Cleric"). Resolve to its
+        // entity id, then filter spells by class_refs + level.
+        String? classId;
+        for (final e in widget.entities.values) {
+          if (e.categorySlug == 'class' && e.name == listValue) {
+            classId = e.id;
+            break;
+          }
+        }
+        if (classId == null) return const [];
+        final level = group['spell_level'] is int
+            ? group['spell_level'] as int
+            : 0;
+        final out = <_FeatChoiceOption>[];
+        for (final e in widget.entities.values) {
+          if (e.categorySlug != 'spell') continue;
+          final lvl = e.fields['level'];
+          if (lvl is! int || lvl != level) continue;
+          final refs = e.fields['class_refs'];
+          if (refs is! List) continue;
+          if (!refs.contains(classId)) continue;
+          out.add(_FeatChoiceOption(
+              id: e.id, label: e.name, description: e.description));
+        }
+        out.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+        return out;
+      default:
+        return const [];
+    }
+  }
+
+  PendingChoiceResolution _buildFeatChoiceResolution() {
+    final group = _featChoiceGroup;
+    if (group == null) return const PendingChoiceResolution();
+    final ids = _pickedFeatChoice.toList(growable: false);
+    final value = ids.join(',');
+    final pickKind = group['pick_kind']?.toString() ?? 'enum';
+
+    // Route picks into the right downstream bucket so the editor folds them
+    // onto the character (skills.rows, tool_proficiencies, spells_known,
+    // ability bumps, etc.) — mirrors deriveFeatChoiceContributions.
+    final skillIds = <String>[];
+    final toolIds = <String>[];
+    final cantripIds = <String>[];
+    final spellIds = <String>[];
+    switch (pickKind) {
+      case 'tool_category':
+        for (final id in ids) {
+          if (widget.entities[id]?.categorySlug == 'tool') {
+            toolIds.add(id);
+          }
+        }
+      case 'skill_or_tool':
+        for (final id in ids) {
+          final slug = widget.entities[id]?.categorySlug;
+          if (slug == 'skill') {
+            skillIds.add(id);
+          } else if (slug == 'tool') {
+            toolIds.add(id);
+          }
+        }
+      case 'spell_from_list':
+        final level = group['spell_level'] is int
+            ? group['spell_level'] as int
+            : 0;
+        for (final id in ids) {
+          if (widget.entities[id]?.categorySlug != 'spell') continue;
+          if (level == 0) {
+            cantripIds.add(id);
+          } else {
+            spellIds.add(id);
+          }
+        }
+      case 'enum':
+      default:
+        // No downstream side-effect — feat_choices write is enough.
+        break;
+    }
+
+    return PendingChoiceResolution(
+      featChoiceKey: _featChoiceStorageKey,
+      featChoiceValue: value,
+      skillIds: skillIds,
+      toolIds: toolIds,
+      cantripIds: cantripIds,
+      spellIds: spellIds,
+    );
   }
 
   Widget _featAsiBody(Color hint) {
@@ -1171,4 +1646,15 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       ),
     );
   }
+}
+
+class _FeatChoiceOption {
+  final String id;
+  final String label;
+  final String description;
+  const _FeatChoiceOption({
+    required this.id,
+    required this.label,
+    this.description = '',
+  });
 }
