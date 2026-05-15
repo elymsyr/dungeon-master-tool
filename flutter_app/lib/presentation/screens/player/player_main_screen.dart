@@ -60,6 +60,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   static const double _maxRightSidebarWidth = 700;
   late final ValueNotifier<double> _rightSidebarWidthNotifier;
   static const double _minCenterWidth = 480;
+  static const double _tabBarHeight = 38;
 
   // PDF tab state
   List<String> _pdfOpenPaths = [];
@@ -390,18 +391,11 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                     child: RepaintBoundary(
                       child: Column(
                         children: [
-                          ValueListenableBuilder<double>(
-                            valueListenable: _rightSidebarWidthNotifier,
-                            builder: (_, rightWidth, child) => Container(
+                          SizedBox(
+                            height: _tabBarHeight,
+                            child: Container(
                               color: palette.tabBg,
-                              padding: EdgeInsets.only(
-                                right: _rightSidebar != _RightSidebar.none
-                                    ? rightWidth
-                                    : 0,
-                              ),
-                              child: child,
-                            ),
-                            child: Row(
+                              child: Row(
                               children: [
                                 Expanded(
                                   child: SingleChildScrollView(
@@ -536,6 +530,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                 ),
                               ],
                             ),
+                            ),
                           ),
                           Expanded(child: RepaintBoundary(child: tabStack)),
                         ],
@@ -549,7 +544,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                 ValueListenableBuilder<double>(
                   valueListenable: _rightSidebarWidthNotifier,
                   builder: (_, width, child) => Positioned(
-                    top: 0,
+                    top: _tabBarHeight,
                     bottom: 0,
                     right: 0,
                     width: width,
@@ -559,6 +554,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                     children: [
                       _DragHandle(
                         palette: palette,
+                        dividerOnRight: true,
                         onDragUpdate: (dx) {
                           final totalW = MediaQuery.sizeOf(context).width;
                           final leftW = _sidebarOpen
@@ -855,10 +851,13 @@ class _DragHandle extends StatelessWidget {
   final void Function(double dx) onDragUpdate;
   final VoidCallback onDragEnd;
 
+  final bool dividerOnRight;
+
   const _DragHandle({
     required this.palette,
     required this.onDragUpdate,
     required this.onDragEnd,
+    this.dividerOnRight = false,
   });
 
   @override
@@ -871,12 +870,11 @@ class _DragHandle extends StatelessWidget {
         child: Container(
           width: 6,
           color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: 1,
-              height: double.infinity,
-              color: palette.sidebarDivider,
-            ),
+          alignment: dividerOnRight ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 1,
+            height: double.infinity,
+            color: palette.sidebarDivider,
           ),
         ),
       ),
