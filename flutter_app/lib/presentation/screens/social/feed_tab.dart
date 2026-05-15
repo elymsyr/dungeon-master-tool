@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -355,6 +357,7 @@ class _DiscoverBody extends ConsumerStatefulWidget {
 
 class _DiscoverBodyState extends ConsumerState<_DiscoverBody> {
   final _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -364,8 +367,18 @@ class _DiscoverBodyState extends ConsumerState<_DiscoverBody> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String v) {
+    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ref.read(discoverSearchQueryProvider.notifier).state = v.trim();
+    });
   }
 
   @override
@@ -378,7 +391,7 @@ class _DiscoverBodyState extends ConsumerState<_DiscoverBody> {
       children: [
         TextField(
           controller: _searchCtrl,
-          onChanged: (v) => ref.read(discoverSearchQueryProvider.notifier).state = v.trim(),
+          onChanged: _onSearchChanged,
           decoration: InputDecoration(
             hintText: l10n.discoverSearchHint,
             prefixIcon: Icon(Icons.search, size: 20, color: palette.sidebarLabelSecondary),
@@ -741,7 +754,13 @@ class _PostCard extends ConsumerWidget {
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: palette.cbr,
-              child: Image.network(post.imageUrl!, fit: BoxFit.cover),
+              child: Image.network(
+                post.imageUrl!,
+                fit: BoxFit.cover,
+                cacheWidth: (MediaQuery.sizeOf(context).width *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .ceil(),
+              ),
             ),
           ],
           if (post.marketplaceItemId != null && post.marketplaceItemTitle != null) ...[

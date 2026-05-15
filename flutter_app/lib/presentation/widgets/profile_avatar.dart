@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/dm_tool_colors.dart';
+import 'perf/image_cache_size.dart';
 
 /// Network avatar with gradient/initial fallback. Reused across profile menu,
 /// profile screen, post author rows, message bubbles.
@@ -47,17 +48,24 @@ class ProfileAvatar extends StatelessWidget {
       ),
     );
 
-    if (avatarUrl == null || avatarUrl!.isEmpty) return fallback;
+    if (avatarUrl == null || avatarUrl!.isEmpty) {
+      return RepaintBoundary(child: fallback);
+    }
 
-    return ClipOval(
-      child: Image.network(
-        avatarUrl!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (ctx, err, stack) => fallback,
-        loadingBuilder: (ctx, child, prog) =>
-            prog == null ? child : fallback,
+    final cachePx = cachePxFromLogical(context, size);
+    return RepaintBoundary(
+      child: ClipOval(
+        child: Image.network(
+          avatarUrl!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          cacheWidth: cachePx,
+          cacheHeight: cachePx,
+          errorBuilder: (ctx, err, stack) => fallback,
+          loadingBuilder: (ctx, child, prog) =>
+              prog == null ? child : fallback,
+        ),
       ),
     );
   }

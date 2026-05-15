@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'perf/image_cache_size.dart';
+
 /// Renders the project's branded castle icon from
 /// `assets/app_icon_transparent.png` at [size] logical pixels.
 ///
@@ -15,10 +17,13 @@ class AppIconImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cachePx = cachePxFromLogical(context, size);
     final image = Image.asset(
       'assets/app_icon_transparent.png',
       width: size,
       height: size,
+      cacheWidth: cachePx,
+      cacheHeight: cachePx,
       filterQuality: FilterQuality.medium,
     );
     if (color == null) return image;

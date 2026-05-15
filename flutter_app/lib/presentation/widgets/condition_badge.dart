@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../domain/entities/session.dart';
 import '../theme/dm_tool_colors.dart';
+import 'perf/image_cache_size.dart';
 
 class ConditionBadge extends ConsumerWidget {
   final CombatCondition condition;
@@ -64,7 +65,8 @@ class ConditionBadge extends ConsumerWidget {
                     width: size,
                     height: size,
                     fit: BoxFit.cover,
-                    cacheWidth: (size * 2).toInt(),
+                    cacheWidth: cachePxFromLogical(context, size),
+                    cacheHeight: cachePxFromLogical(context, size),
                   ),
                 )
               else

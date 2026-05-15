@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/asset_ref_resolver.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'perf/image_cache_size.dart';
 
 /// Displays an image from an [AssetRef] — local path or `dmt-asset://` cloud
 /// URI. Cloud refs download + cache on first render; subsequent renders hit
@@ -19,6 +20,7 @@ class AssetRefImage extends ConsumerStatefulWidget {
     this.width,
     this.height,
     this.cacheWidth,
+    this.cacheHeight,
     this.placeholder,
     this.errorWidget,
   });
@@ -28,6 +30,7 @@ class AssetRefImage extends ConsumerStatefulWidget {
   final double? width;
   final double? height;
   final int? cacheWidth;
+  final int? cacheHeight;
   final Widget? placeholder;
   final Widget? errorWidget;
 
@@ -76,12 +79,19 @@ class _AssetRefImageState extends ConsumerState<AssetRefImage> {
           return widget.errorWidget ??
               const Icon(Icons.broken_image_outlined);
         }
+        final autoW = widget.width != null
+            ? cachePxFromLogical(context, widget.width!)
+            : null;
+        final autoH = widget.height != null
+            ? cachePxFromLogical(context, widget.height!)
+            : null;
         return Image.file(
           file,
           fit: widget.fit,
           width: widget.width,
           height: widget.height,
-          cacheWidth: widget.cacheWidth,
+          cacheWidth: widget.cacheWidth ?? autoW,
+          cacheHeight: widget.cacheHeight ?? autoH,
           errorBuilder: (_, _, _) =>
               widget.errorWidget ?? const Icon(Icons.broken_image_outlined),
         );
