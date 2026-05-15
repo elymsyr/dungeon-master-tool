@@ -198,6 +198,12 @@ class CloudBackupRemoteDataSource {
     await _client.from(_table).delete().eq('id', backupId);
   }
 
+  /// Sadece metadata row'u sil. Storage'da karsiligi olmayan orphan
+  /// meta'lari (catchup sirasinda 404 alinca) temizlemek icin kullanilir.
+  Future<void> deleteMeta(String backupId) async {
+    await _client.from(_table).delete().eq('id', backupId);
+  }
+
   CloudBackupMeta _rowToMeta(Map<String, dynamic> row) {
     return CloudBackupMeta(
       id: row['id'] as String,

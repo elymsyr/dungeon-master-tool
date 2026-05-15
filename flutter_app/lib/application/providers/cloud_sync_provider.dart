@@ -85,7 +85,22 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
   /// Dirty items: key = "$type:$id", value = (name, type, id)
   final Map<String, ({String name, String type, String id})> _dirtyItems = {};
 
-  CloudSyncNotifier(this._ref) : super(const CloudSyncState());
+  CloudSyncNotifier(this._ref) : super(const CloudSyncState()) {
+    // World/package switch sonrası önceki dünyanın sync sonuçları
+    // state.results içinde kalıyordu (merge mantığı non-synced item'ları
+    // koruyor). Save & Sync paneli aktif dünyaya ait sonuç gösteriyor
+    // gibi görünsün diye context değişiminde results'ı sıfırla.
+    _ref.listen<String?>(activeCampaignProvider, (prev, next) {
+      if (prev != next && !_disposed && mounted) {
+        state = const CloudSyncState();
+      }
+    });
+    _ref.listen<String?>(activePackageProvider, (prev, next) {
+      if (prev != next && !_disposed && mounted) {
+        state = const CloudSyncState();
+      }
+    });
+  }
 
   /// Local save sonrası çağrılır. Item'ı dirty olarak işaretle.
   void markDirty(String itemId, String itemName, String type) {

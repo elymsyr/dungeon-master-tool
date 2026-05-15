@@ -30,6 +30,10 @@ abstract class CloudBackupRepository {
   /// Backup yoksa no-op doner.
   Future<void> deleteBackupByItem(String itemId, String type);
 
+  /// Storage'da karsiligi olmayan orphan meta row'unu sil. Catch-up
+  /// donguleri 404 alinca tablonun bu satirini kaldirmak icin kullanir.
+  Future<void> deleteOrphanedMeta(String backupId);
+
   /// Item ID + type kombinasyonuna gore tek backup metadata'sini getir.
   /// Yoksa null doner.
   Future<CloudBackupMeta?> fetchByItem(String itemId, String type);

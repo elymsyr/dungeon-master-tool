@@ -24,6 +24,21 @@ bool isOfflineError(Object error) {
       msg.contains('clientexception');
 }
 
+/// True when [error] is a Supabase Storage 404 (object not found). Used by
+/// catch-up flows to detect orphaned `cloud_backups` rows whose storage
+/// file is missing — so the meta row can be cleaned up and the spam log
+/// suppressed. Matches by message because the SDK's `StorageException`
+/// reports a String `statusCode` field and we don't want to import the
+/// supabase package into `core/`.
+bool isStorageNotFound(Object error) {
+  if (error.runtimeType.toString() != 'StorageException') return false;
+  final msg = error.toString().toLowerCase();
+  return msg.contains('"statuscode":"404"') ||
+      msg.contains("'statuscode': '404'") ||
+      msg.contains('not_found') ||
+      msg.contains('object not found');
+}
+
 /// Human-readable error text for display in the UI. Collapses network
 /// failures into a single "You're offline" string so raw SocketException /
 /// ClientException stack text never leaks into cards, snackbars, or dialogs.

@@ -70,8 +70,14 @@ class CharacterAddButton extends ConsumerWidget {
           case 'create':
             context.push('/character/new');
           case 'import':
+            // activeCampaignIdProvider is async (name → UUID lookup via
+            // campaignInfoListProvider). On a fresh world open, `.valueOrNull`
+            // can return null while the future is still resolving — await it
+            // so the "Open a world first" snackbar only fires when there's
+            // genuinely no active world.
             final worldId =
-                ref.read(activeCampaignIdProvider).valueOrNull;
+                await ref.read(activeCampaignIdProvider.future);
+            if (!context.mounted) return;
             if (worldId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

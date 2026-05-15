@@ -133,6 +133,9 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
 
     final tabStack = LazyIndexedStack(
       index: _tabIndex,
+      // Pre-warm offstage tabs after first paint so tab switches are
+      // cheap IndexedStack swaps instead of cold subtree mounts.
+      prewarm: true,
       children: [
         DatabaseScreen(
           editMode: editMode,
