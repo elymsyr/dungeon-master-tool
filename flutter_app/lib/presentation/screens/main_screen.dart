@@ -383,13 +383,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
 
-    // Fire-and-forget: trigger live-link sync against installed packages
-    // when the active campaign loads. Picks up new SRD pack content on
-    // app restart without the user opening Packages settings.
-    ref.watch(activeCampaignSyncProvider);
-    // Online: aktif world Supabase'e abone olur + initial state seed olur.
-    // Offline veya member değilse no-op.
-    ref.watch(worldSyncAutoSubscribeProvider);
+    // Side-effect only. ref.listen subscribes without blocking build on the
+    // FutureProvider chain — tab switch no longer waits for cloud sync to
+    // settle. AppBar action area shows a mini spinner while in-flight.
+    ref.listen(activeCampaignSyncProvider, (_, _) {});
+    ref.listen(worldSyncAutoSubscribeProvider, (_, _) {});
+    final cloudBusy = ref.watch(
+      activeCampaignSyncProvider.select((s) => s.isLoading),
+    );
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -553,6 +554,17 @@ class _MainScreenState extends ConsumerState<MainScreen>
           const SizedBox(width: 4),
           // Save indicator — full save/sync panel
           const SaveSyncIndicator(),
+          if (cloudBusy) ...[
+            const SizedBox(width: 4),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ],
           const SizedBox(width: 4),
           // Edit Mode toggle
           IconButton(

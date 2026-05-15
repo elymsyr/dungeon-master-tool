@@ -9,9 +9,9 @@ import '../../application/providers/character_provider.dart'
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/entity_share_provider.dart';
+import '../../application/providers/entity_sidebar_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
-import '../../application/providers/visible_entity_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
 import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
@@ -43,17 +43,9 @@ enum _SortMode { name, category, source }
 /// DM-only sharing filter modes. Empty selection = show all.
 enum _ShareFilter { builtin, shared, notShared }
 
-/// Sidebar list row için kompakt entity tuple'ı. `visibleEntityProvider`
-/// select'inden gelen alanlarla aynı şekilde.
-typedef _EntitySummary = ({
-  String id,
-  String name,
-  String categorySlug,
-  String source,
-  List<String> tags,
-  String? packageId,
-  bool linked,
-});
+// Row tuple type moved to `entity_sidebar_provider.dart` as `EntitySummary`
+// so the memoized provider can return a stable list reference.
+typedef _EntitySummary = EntitySummary;
 
 const int _kPageSize = 50;
 
@@ -78,6 +70,13 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   /// (~7 K) entity map. 200 ms is fast enough that the UI feels live
   /// and slow enough that bulk typing only triggers one rebuild.
   Timer? _searchDebounce;
+
+  /// Cached filter+sort output keyed by an Object.hash of inputs. Rebuilds
+  /// driven by keyboard `viewInsets` change still re-enter `build` but the
+  /// 7K-row filter+sort pass returns from cache in O(1).
+  int? _filterSig;
+  List<_EntitySummary>? _matchedCache;
+  List<_EntitySummary>? _othersCache;
 
   @override
   void initState() {
@@ -153,25 +152,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    // Watch only the sidebar-relevant fields — avoids rebuild when entity
-    // fields (description, dmNotes, custom fields etc.) change.
-    final summaries = ref.watch(
-      visibleEntityProvider.select(
-        (map) => map.values
-            .map(
-              (e) => (
-                id: e.id,
-                name: e.name,
-                categorySlug: e.categorySlug,
-                source: e.source,
-                tags: e.tags,
-                packageId: e.packageId,
-                linked: e.linked,
-              ),
-            )
-            .toList(),
-      ),
-    );
+    // Memoized at provider boundary — same list reference until the
+    // visible entity map identity changes. Avoids 7K-entity allocation
+    // per keyboard viewInsets relayout.
+    final summaries = ref.watch(entitySummaryListProvider);
 
     // DM-only sharing filter context. Player için chip render edilmez ve
     // filter aktif değilse pass-through.
@@ -222,54 +206,44 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       if (e.source.isNotEmpty) allSources.add(e.source);
     }
 
-    // Pass 1 — apply category + source + (DM) sharing filters.
-    final filtered = summaries.where((e) {
-      if (_selectedSlugs.isNotEmpty &&
-          !_selectedSlugs.contains(e.categorySlug)) {
-        return false;
-      }
-      if (_selectedSources.isNotEmpty && !_selectedSources.contains(e.source)) {
-        return false;
-      }
-      if (isDm && _selectedShareModes.isNotEmpty) {
-        final mode = classifyShareMode(e.packageId, e.linked, e.id);
-        if (!_selectedShareModes.contains(mode)) return false;
-      }
-      return true;
-    }).toList();
+    // Filter+sort signature. Same inputs → cached output. Keyboard
+    // viewInsets relayouts re-enter build but skip the 7K iter.
+    final sig = Object.hash(
+      identityHashCode(summaries),
+      Object.hashAll(_selectedSlugs),
+      Object.hashAll(_selectedSources),
+      Object.hashAll(_selectedShareModes),
+      _searchQuery,
+      _sortMode,
+      isDm,
+      builtinPackId,
+      identityHashCode(sharedEntityIds),
+    );
 
-    int cmp(_EntitySummary a, _EntitySummary b) {
-      return switch (_sortMode) {
-        _SortMode.name => a.name.compareTo(b.name),
-        _SortMode.category =>
-          a.categorySlug.compareTo(b.categorySlug) != 0
-              ? a.categorySlug.compareTo(b.categorySlug)
-              : a.name.compareTo(b.name),
-        _SortMode.source =>
-          a.source.compareTo(b.source) != 0
-              ? a.source.compareTo(b.source)
-              : a.name.compareTo(b.name),
-      };
-    }
-
-    // Pass 2 — split by search query.
-    //   query empty: matched = filtered, others empty.
-    //   query non-empty:
-    //     matched = entities in filter AND match query
-    //     others  = entities matching query but OUTSIDE the filter
-    //               (so user still sees matches across all categories,
-    //               just dimmed below the in-filter block).
-    final query = _searchQuery.trim().toLowerCase();
-    final matched = <_EntitySummary>[];
-    final others = <_EntitySummary>[];
-    if (query.isEmpty) {
-      matched.addAll(filtered);
+    final List<_EntitySummary> matched;
+    final List<_EntitySummary> others;
+    if (_filterSig == sig &&
+        _matchedCache != null &&
+        _othersCache != null) {
+      matched = _matchedCache!;
+      others = _othersCache!;
     } else {
-      bool hits(_EntitySummary e) =>
-          e.name.toLowerCase().contains(query) ||
-          e.source.toLowerCase().contains(query) ||
-          e.tags.any((t) => t.toLowerCase().contains(query));
-      bool isInFilter(_EntitySummary e) {
+      int cmp(_EntitySummary a, _EntitySummary b) {
+        return switch (_sortMode) {
+          _SortMode.name => a.name.compareTo(b.name),
+          _SortMode.category =>
+            a.categorySlug.compareTo(b.categorySlug) != 0
+                ? a.categorySlug.compareTo(b.categorySlug)
+                : a.name.compareTo(b.name),
+          _SortMode.source =>
+            a.source.compareTo(b.source) != 0
+                ? a.source.compareTo(b.source)
+                : a.name.compareTo(b.name),
+        };
+      }
+
+      // Pass 1 — apply category + source + (DM) sharing filters.
+      final filtered = summaries.where((e) {
         if (_selectedSlugs.isNotEmpty &&
             !_selectedSlugs.contains(e.categorySlug)) {
           return false;
@@ -283,15 +257,52 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           if (!_selectedShareModes.contains(mode)) return false;
         }
         return true;
-      }
+      }).toList();
 
-      for (final e in summaries) {
-        if (!hits(e)) continue;
-        (isInFilter(e) ? matched : others).add(e);
+      // Pass 2 — split by search query.
+      //   query empty: matched = filtered, others empty.
+      //   query non-empty:
+      //     matched = entities in filter AND match query
+      //     others  = entities matching query but OUTSIDE the filter.
+      final query = _searchQuery.trim().toLowerCase();
+      final m = <_EntitySummary>[];
+      final o = <_EntitySummary>[];
+      if (query.isEmpty) {
+        m.addAll(filtered);
+      } else {
+        bool hits(_EntitySummary e) =>
+            e.name.toLowerCase().contains(query) ||
+            e.source.toLowerCase().contains(query) ||
+            e.tags.any((t) => t.toLowerCase().contains(query));
+        bool isInFilter(_EntitySummary e) {
+          if (_selectedSlugs.isNotEmpty &&
+              !_selectedSlugs.contains(e.categorySlug)) {
+            return false;
+          }
+          if (_selectedSources.isNotEmpty &&
+              !_selectedSources.contains(e.source)) {
+            return false;
+          }
+          if (isDm && _selectedShareModes.isNotEmpty) {
+            final mode = classifyShareMode(e.packageId, e.linked, e.id);
+            if (!_selectedShareModes.contains(mode)) return false;
+          }
+          return true;
+        }
+
+        for (final e in summaries) {
+          if (!hits(e)) continue;
+          (isInFilter(e) ? m : o).add(e);
+        }
       }
+      m.sort(cmp);
+      o.sort(cmp);
+      matched = m;
+      others = o;
+      _filterSig = sig;
+      _matchedCache = matched;
+      _othersCache = others;
     }
-    matched.sort(cmp);
-    others.sort(cmp);
 
     return Column(
       children: [
@@ -495,7 +506,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           child: Row(
             children: [
               Text(
-                query.isEmpty
+                _searchQuery.trim().isEmpty
                     ? '${matched.length} entities'
                     : '${matched.length} match · ${others.length} other',
                 style: TextStyle(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -41,11 +43,17 @@ final worldSyncAutoSubscribeProvider = Provider<void>((ref) {
       ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
 
   if (campaignId == null || role == WorldRole.none) {
-    svc.unsubscribeAll();
+    unawaited(svc.unsubscribeAll());
     return;
   }
   if (!svc.isSubscribed(campaignId)) {
-    svc.subscribe(campaignId);
-    applier?.applyInitialState(campaignId);
+    // Fire-and-forget — UI build no longer blocks on remote snapshot seed.
+    // Drift mirror rows will trigger entity_provider notifiers as they
+    // arrive; tab content paints immediately.
+    unawaited(svc.subscribe(campaignId));
+    final a = applier;
+    if (a != null) {
+      unawaited(a.applyInitialState(campaignId));
+    }
   }
 });

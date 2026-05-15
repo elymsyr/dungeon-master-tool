@@ -54,12 +54,23 @@ final activeCampaignSyncProvider = FutureProvider<int>((ref) async {
   final campaignId = notifier.data?['world_id'] as String?;
   if (campaignId == null) return 0;
 
+  // Fast path: if no installed packs AND no orphan rows, sync would no-op.
+  // Skip the heavier scans below so 99% of tab transitions never pay this.
+  final installedNow =
+      await db.installedPackageDao.listForCampaign(campaignId);
+  if (installedNow.isEmpty) {
+    final firstOrphan = await (db.select(db.entities)
+          ..where((t) =>
+              t.campaignId.equals(campaignId) & t.packageId.isNotNull())
+          ..limit(1))
+        .get();
+    if (firstOrphan.isEmpty) return 0;
+  }
+
   // Migrate orphans: campaigns created before installed_packages existed
   // may have entities with packageId set but no matching install row.
   // Detect those and create install rows so sync can repair them (e.g.
   // rewrite spell.class_refs from pack-side UUIDs to campaign-side).
-  final installedNow =
-      await db.installedPackageDao.listForCampaign(campaignId);
   final installedIds = installedNow.map((r) => r.packageId).toSet();
   final orphanRows = await (db.select(db.entities)
         ..where((t) =>
