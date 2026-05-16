@@ -154,7 +154,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // Best-effort local save when the OS pauses/detaches us. Cloud
       // backup is deliberately NOT auto-triggered here — the user asked
       // for explicit control over cloud backups.
-      ref.read(saveStateProvider.notifier).saveNow();
+      ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
       // Mobile: drop realtime channels so the WiFi radio can sleep. The
       // server queues missed events; on resume we refetch.
       final worldSync = ref.read(worldSyncServiceProvider);
@@ -189,10 +189,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       'save-world',
       'Saving world...',
       () async {
-        await ref.read(saveStateProvider.notifier).saveNow();
-        // PR-SYNC-6: outbox drains in background. Trigger a manual backup
-        // pass for the active item so a "Back to Hub" exit captures any
-        // hub-only changes that wouldn't otherwise get flushed.
+        await ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
         await ref.read(manualBackupRunnerProvider).backupActiveItem();
       },
     );

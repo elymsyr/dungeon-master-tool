@@ -104,7 +104,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
       ref.read(globalLoadingProvider.notifier),
       'save-world',
       'Saving world...',
-      () => ref.read(saveStateProvider.notifier).saveNow(),
+      () => ref.read(saveStateProvider.notifier).saveNow(pushAfter: true),
     );
     if (!mounted) return;
     ref.invalidate(campaignListProvider);

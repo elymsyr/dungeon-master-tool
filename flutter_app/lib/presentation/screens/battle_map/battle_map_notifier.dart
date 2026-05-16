@@ -218,9 +218,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Viewport size (updated from LayoutBuilder — not part of state)
   Size _viewportSize = Size.zero;
 
-  // Debounced auto-save
-  Timer? _autoSaveTimer;
-
   // Projection viewport sync — leading-edge throttle so high-frequency
   // pan/zoom updates land on the player window at ~30Hz max.
   Timer? _projectionSyncThrottle;
@@ -263,7 +260,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     // memory is always up to date even if the last update was during a
     // gesture that hadn't finished firing listeners.
     _viewMemory[encounterId] = viewTransform.value;
-    _autoSaveTimer?.cancel();
     _projectionSyncThrottle?.cancel();
     _projectionDrawingsThrottle?.cancel();
     viewTransform.removeListener(_scheduleProjectionSync);
@@ -993,11 +989,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Persistence
   // -------------------------------------------------------------------------
 
+  /// Auto-save kaldırıldı; edit yapıldığında combat_provider in-memory
+  /// state'ine senkron flush. Diske yazılması Save butonu veya item close
+  /// akışında olur.
   void _debouncedAutoSave() {
-    _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) save();
-    });
+    if (!mounted) return;
+    // ignore: discarded_futures
+    save();
   }
 
   Future<void> save() async {

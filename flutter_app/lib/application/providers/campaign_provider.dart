@@ -237,10 +237,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     }
   }
 
-  Future<void> save() async {
+  Future<void> save({bool pushMirror = false}) async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
-      _mirrorAfterSave();
+      if (pushMirror) _mirrorAfterSave();
     }
   }
 

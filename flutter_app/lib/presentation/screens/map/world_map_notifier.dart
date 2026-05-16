@@ -10,7 +10,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/media_provider.dart';
-import '../../../application/providers/save_state_provider.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/map_data.dart';
@@ -182,10 +181,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   Offset _focalBase = Offset.zero;
   Offset _panBase = Offset.zero;
 
-  // Debounce coalesces drag/pan storms into one save per ~300ms idle window.
-  Timer? _saveDebounceTimer;
-  static const Duration _saveDebounceWindow = Duration(milliseconds: 300);
-
   // Image dimension cache keyed by file path. Decode is GPU-bound and cannot
   // run on a worker isolate (ui.Image is not transferable), so the win is
   // skipping the redundant decode on resetView / repeat _fitImageInViewport.
@@ -195,7 +190,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
 
   @override
   void dispose() {
-    _saveDebounceTimer?.cancel();
     viewTransform.dispose();
     disposeUndoRedo();
     super.dispose();
@@ -431,14 +425,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
         .join();
   }
 
+  /// Auto-save kaldırıldığı için bu metot artık sadece in-memory campaign
+  /// data'sına flush yapıyor. Kullanıcı Save butonuna basana veya item'i
+  /// kapatana kadar diske gitmiyor.
   void _debouncedSave() {
-    _saveDebounceTimer?.cancel();
-    _saveDebounceTimer = Timer(_saveDebounceWindow, () {
-      _saveDebounceTimer = null;
-      if (!mounted) return;
-      syncToCampaignData();
-      _ref.read(saveStateProvider.notifier).markDirty();
-    });
+    if (!mounted) return;
+    syncToCampaignData();
   }
 
   void undo() {
