@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart';
 
-import 'campaigns_table.dart';
+import 'worlds_table.dart';
 
-/// Tracks packages installed into a campaign. Live link enables sync:
+/// Tracks packages installed into a world. Live-link enables sync:
 /// pack add/update/remove propagates to linked entities. Detached entities
 /// (user-edited) survive package removal as homebrew copies.
 class InstalledPackages extends Table {
-  TextColumn get campaignId => text().references(Campaigns, #id)();
+  TextColumn get worldId => text().references(Worlds, #id)();
   TextColumn get packageId => text()();
   TextColumn get packageName => text().withDefault(const Constant(''))();
   TextColumn get packageVersion => text().withDefault(const Constant(''))();
@@ -16,5 +16,5 @@ class InstalledPackages extends Table {
       dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column> get primaryKey => {campaignId, packageId};
+  Set<Column> get primaryKey => {worldId, packageId};
 }

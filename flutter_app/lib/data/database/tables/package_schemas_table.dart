@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'packages_table.dart';
 
-/// Paket schema tablosu — WorldSchemas'ın paket karşılığı.
+/// Local schema record for a package. Matches former v11 shape.
 class PackageSchemas extends Table {
   TextColumn get id => text()();
   TextColumn get packageId => text().references(Packages, #id)();
@@ -19,8 +19,10 @@ class PackageSchemas extends Table {
   TextColumn get templateId => text().nullable()();
   TextColumn get templateHash => text().nullable()();
   TextColumn get templateOriginalHash => text().nullable()();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt =>
+      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt =>
+      dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column> get primaryKey => {id};

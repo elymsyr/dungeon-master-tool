@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'combatants_table.dart';
 
-/// Supabase mirror: combat_conditions tablosu.
+/// Local-only.
 class CombatConditions extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get combatantId => text().references(Combatants, #id)();

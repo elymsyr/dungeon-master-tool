@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart';
 
-import 'campaigns_table.dart';
+import 'worlds_table.dart';
 
-/// Supabase mirror: timeline_pins tablosu.
+/// Local-only.
 class TimelinePins extends Table {
   TextColumn get id => text()();
-  TextColumn get campaignId => text().references(Campaigns, #id)();
+  TextColumn get worldId => text().references(Worlds, #id)();
   RealColumn get x => real()();
   RealColumn get y => real()();
   IntColumn get day => integer().withDefault(const Constant(0))();
