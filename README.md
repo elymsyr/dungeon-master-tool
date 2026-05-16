@@ -24,7 +24,7 @@
   </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v6.0.0--beta-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v6.1.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
@@ -33,6 +33,10 @@
   <br>
   <b>Languages:</b> English | Turkish | German | French
 </p>
+
+---
+
+> **Heads-up — saves and sync are manual.** There is no auto-save and no auto-sync in v6.1. Local edits only persist when you tap **Save** in the relevant editor, and cloud sync (personal library, online worlds) runs only when you press the sync button. Bidirectional auto-sync is on the roadmap.
 
 ---
 

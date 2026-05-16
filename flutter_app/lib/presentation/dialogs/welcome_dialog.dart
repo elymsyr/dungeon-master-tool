@@ -4,14 +4,18 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 
 /// Uygulama ilk kez açıldığında gösterilen karşılama + beta bildirim
-/// dialog'u. Kullanıcıya beta durumu, gelecek paketler ve GitHub linkini
-/// iletir. Gösterildikten sonra `uiStateProvider.welcomeSeen = true` set
-/// edilir, bir daha açılmaz.
+/// dialog'u. Kullanıcıya sistemin kısa tanıtımı, manuel kayıt/sync uyarısı,
+/// beta durumu, gelecek paketler ve GitHub linki iletir. Gösterildikten
+/// sonra `uiStateProvider.welcomeSeen = true` set edilir, bir daha açılmaz.
 class WelcomeDialog {
   static const githubUrl = 'https://github.com/elymsyr/dungeon-master-tool';
 
   static Future<void> show(BuildContext context) async {
     final l10n = L10n.of(context)!;
+    final theme = Theme.of(context);
+    final warnBg = theme.colorScheme.error.withValues(alpha: 0.08);
+    final warnBorder = theme.colorScheme.error.withValues(alpha: 0.45);
+    final warnFg = theme.colorScheme.error;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -30,6 +34,38 @@ class WelcomeDialog {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  l10n.welcomeSystemIntro,
+                  style: const TextStyle(height: 1.45, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: warnBg,
+                    border: Border.all(color: warnBorder),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 18, color: warnFg),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.welcomeSaveWarning,
+                          style: TextStyle(
+                            height: 1.4,
+                            fontSize: 12.5,
+                            color: warnFg,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(
                   l10n.welcomeBetaNotice,
                   style: const TextStyle(height: 1.4, fontSize: 13),

@@ -9,6 +9,7 @@ import '../../application/providers/profile_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import 'profile_avatar.dart';
 
@@ -21,11 +22,12 @@ class ProfileMenuButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
     if (!SupabaseConfig.isConfigured) {
       // Even without auth the user still needs a way to reach Settings on
       // mobile (where the Settings tab is hidden). Show a compact gear.
       return IconButton(
-        tooltip: 'Settings',
+        tooltip: l10n.hubSettingsTooltip,
         icon: const Icon(Icons.settings_outlined, size: 20),
         onPressed: () =>
             ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex,
@@ -40,7 +42,7 @@ class ProfileMenuButton extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: TextButton.icon(
           icon: const Icon(Icons.login, size: 18),
-          label: const Text('Sign In'),
+          label: Text(l10n.profileMenuSignIn),
           onPressed: () => context.go('/'),
           style: TextButton.styleFrom(foregroundColor: palette.featureCardAccent),
         ),
@@ -61,7 +63,7 @@ class ProfileMenuButton extends ConsumerWidget {
     final isAdmin = isAdminAsync.maybeWhen(data: (v) => v, orElse: () => false);
 
     return PopupMenuButton<String>(
-      tooltip: 'Profile',
+      tooltip: l10n.profileMenuTooltip,
       offset: const Offset(0, 44),
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onSelected: (value) {
@@ -86,7 +88,7 @@ class ProfileMenuButton extends ConsumerWidget {
           child: Row(children: [
             const Icon(Icons.person_outline, size: 18),
             const SizedBox(width: 12),
-            Text('View Profile', style: TextStyle(color: palette.tabActiveText)),
+            Text(l10n.profileMenuViewProfile, style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         PopupMenuItem<String>(
@@ -94,7 +96,7 @@ class ProfileMenuButton extends ConsumerWidget {
           child: Row(children: [
             const Icon(Icons.edit_outlined, size: 18),
             const SizedBox(width: 12),
-            Text('Edit Profile', style: TextStyle(color: palette.tabActiveText)),
+            Text(l10n.profileMenuEditProfile, style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         PopupMenuItem<String>(
@@ -102,7 +104,7 @@ class ProfileMenuButton extends ConsumerWidget {
           child: Row(children: [
             const Icon(Icons.settings_outlined, size: 18),
             const SizedBox(width: 12),
-            Text('Settings', style: TextStyle(color: palette.tabActiveText)),
+            Text(l10n.profileMenuSettings, style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         if (isAdmin)
@@ -111,7 +113,7 @@ class ProfileMenuButton extends ConsumerWidget {
             child: Row(children: [
               Icon(Icons.shield_outlined, size: 18, color: palette.featureCardAccent),
               const SizedBox(width: 12),
-              Text('Admin Panel',
+              Text(l10n.profileMenuAdminPanel,
                   style: TextStyle(color: palette.featureCardAccent, fontWeight: FontWeight.w600)),
             ]),
           ),
@@ -121,7 +123,7 @@ class ProfileMenuButton extends ConsumerWidget {
           child: Row(children: [
             Icon(Icons.bug_report_outlined, size: 18, color: palette.sidebarLabelSecondary),
             const SizedBox(width: 12),
-            Text('Report a bug', style: TextStyle(color: palette.tabActiveText)),
+            Text(l10n.profileMenuReportBug, style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         PopupMenuItem<String>(
@@ -129,7 +131,7 @@ class ProfileMenuButton extends ConsumerWidget {
           child: Row(children: [
             Icon(Icons.logout, size: 18, color: palette.dangerBtnBg),
             const SizedBox(width: 12),
-            Text('Sign Out', style: TextStyle(color: palette.dangerBtnBg)),
+            Text(l10n.signOut, style: TextStyle(color: palette.dangerBtnBg)),
           ]),
         ),
       ],

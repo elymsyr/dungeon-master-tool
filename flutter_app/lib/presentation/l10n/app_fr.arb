@@ -320,7 +320,9 @@
   "helpSocialTitle": "Social",
   "helpSocialBody": "Restez en contact avec la communauté. Parcourez le Fil pour les publications et les annonces de parties, échangez des messages avec d'autres joueurs et postulez aux tables ouvertes. Les contenus de la communauté se trouvent dans un sous-onglet Marketplace séparé.",
   "helpSettingsTitle": "Paramètres",
-  "helpSettingsBody": "Configurez votre compte, le thème, la langue, l'écran de projection et la synchronisation cloud. La connexion et la gestion du profil se trouvent également ici.",
+  "helpSettingsBody": "Configurez votre compte, le thème, la langue, l'écran de projection et la synchronisation cloud. La connexion et la gestion du profil se trouvent également ici. La synchronisation cloud est manuelle — votre bibliothèque personnelle ne se téléverse que lorsque vous appuyez sur le bouton de synchronisation.",
+  "helpCharactersTitle": "Personnages",
+  "helpCharactersBody": "Parcourez tous les personnages que vous possédez à travers vos mondes. Ouvrez-en un pour le modifier, finaliser des choix de montée de niveau en attente, changer l'équipement ou le relâcher dans un monde en ligne. Pour créer un nouveau personnage, entrez dans un monde et utilisez la barre latérale Personnages — l'assistant vous guide à travers espèce, classe, historique, valeurs de caractéristique, compétences et équipement selon les règles SRD. Les sauvegardes sont manuelles : appuyez sur Enregistrer dans l'éditeur pour conserver les modifications, et lancez la synchronisation cloud depuis Paramètres pour les retrouver sur un autre appareil.",
   "helpWorldsTitle": "Mondes",
   "helpWorldsBody": "Un monde est l'endroit où vit votre partie — personnages, PNJ, objets, sorts, cartes, carte mentale, notes de session et règles cohabitent sous un même toit. Chaque monde est une campagne autonome avec sa propre base de données, ses sessions et ses médias. Deux manières de commencer : télécharger un squelette de monde prêt à l'emploi et y ajouter vos personnages et PNJ, ou tout concevoir depuis zéro et bâtir un jeu original. Rien n'est imposé côté Mondes — la structure, les règles et le contenu vous appartiennent. Cliquez sur une carte de monde pour l'ouvrir ; l'icône d'engrenage sur la carte gère le renommage, la suppression, le partage et la publication.",
   "helpTemplatesTitle": "Modèles",
@@ -499,8 +501,27 @@
   "profileHideFromDiscoverHint": "Votre profil n'apparaîtra pas dans les suggestions ni les résultats de recherche",
 
   "welcomeTitle": "Bienvenue, Maître du Donjon !",
+  "welcomeSystemIntro": "Dungeon Master Tool est un compagnon de jeu sur table portable, conçu pour fonctionner hors ligne. Le Hub compte six sections : Social (fil, messages, marketplace), Paramètres (compte, thème, langue, sync cloud), Mondes (campagnes avec carte de combat, carte mentale, entités et sessions), Personnages (tous les personnages que vous possédez à travers les mondes), Modèles (squelettes de jeu à partir desquels vous lancez des mondes) et Packages (bundles de contenu prêts à l'emploi).",
+  "welcomeSaveWarning": "Pas de sauvegarde automatique ni de synchronisation automatique. Les modifications locales ne sont conservées que lorsque vous appuyez sur Enregistrer dans l'éditeur concerné, et la synchronisation cloud (bibliothèque personnelle et mondes en ligne) ne s'exécute que lorsque vous appuyez sur le bouton de synchronisation. Fermer l'application en cours de modification sans enregistrer fait perdre cette modification.",
   "welcomeBetaNotice": "L'application est encore en bêta — les fonctionnalités, les modèles et packages intégrés peuvent évoluer entre les versions. Pensez à sauvegarder vos données importantes de temps en temps.",
   "welcomeRoadmap": "Les packs de contenu officiels D&D 5e (2014) et D&D 5e (2024) sont prévus dans la feuille de route et arriveront bientôt comme packs prêts à l'emploi.",
   "welcomeClosing": "Merci de l'essayer — que vos dés soient cléments et vos sessions inoubliables !",
-  "welcomeContinue": "C'est parti"
+  "welcomeContinue": "C'est parti",
+
+  "tabSocial": "Social",
+  "tabSettings": "Paramètres",
+  "tabWorlds": "Mondes",
+  "tabCharacters": "Personnages",
+  "tabTemplates": "Modèles",
+
+  "hubReportBugTooltip": "Signaler un bug",
+  "hubSettingsTooltip": "Paramètres",
+
+  "profileMenuTooltip": "Profil",
+  "profileMenuSignIn": "Se connecter",
+  "profileMenuViewProfile": "Voir le profil",
+  "profileMenuEditProfile": "Modifier le profil",
+  "profileMenuSettings": "Paramètres",
+  "profileMenuAdminPanel": "Panneau Admin",
+  "profileMenuReportBug": "Signaler un bug"
 }

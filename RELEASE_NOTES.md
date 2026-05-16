@@ -1,5 +1,28 @@
 # Release Notes
 
+## Dungeon Master Tool v6.1.0 — Onboarding, In-App Help, and Localization Polish (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v6.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A focus release on first-run clarity and translation coverage. No data migration: v6.1 reads the v6.0 database as-is.
+
+> **Heads-up — there is no auto-save and no auto-sync.** Local changes only persist when you tap **Save** in the relevant editor, and cloud sync (personal library, online worlds) only runs when you press the sync button. The welcome dialog now states this up front, but the rule applies app-wide: if you close the app mid-edit without saving, that edit is gone.
+
+### Highlights
+
+- **Welcome dialog rewritten** — First-run users now get a one-screen tour of the six hub tabs (Social, Settings, Worlds, Characters, Templates, Packages) and an explicit warning that saves and sync are manual.
+- **Per-tab help refreshed** — The `?` button in every hub tab now opens a longer, plainer-language explanation of that section, mentions which actions live on which control, and points to Marketplace when it's the natural next step.
+- **Localization sweep** — Tab labels, profile menu items, "Report a Bug" tooltips, and the most frequently-shown dialog buttons (Cancel / Save / Delete / Create / Copy / Marketplace / Refresh from cloud / Open / Sign in) are now translated into all four shipped languages (EN / TR / DE / FR) instead of falling back to English.
+- **Version bump** — `6.0.1` → `6.1.0`.
+
+### Upgrade notes
+- **Schema:** no changes since v6.0. Existing local databases load unchanged.
+- **Cloud:** Supabase migrations from v6.0 still apply; nothing new server-side.
+- **Translations:** language strings are bundled in the app — no online fetch.
+
+---
+
 ## Dungeon Master Tool v6.0.0 — Online Worlds, Full SRD Level-Up, and Personal Sync (Beta)
 
 **Release date:** May 2026

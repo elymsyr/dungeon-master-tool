@@ -320,7 +320,9 @@
   "helpSocialTitle": "Sosyal",
   "helpSocialBody": "Toplulukla bağlantıda kal. Akış'ta paylaşımları ve oyun ilanlarını gör, diğer oyuncularla mesajlaş, açık masalara başvur. Topluluk içerikleri ayrı bir Marketplace alt sekmesinde bulunur.",
   "helpSettingsTitle": "Ayarlar",
-  "helpSettingsBody": "Hesabını, temayı, dili, projeksiyon ekranını ve bulut senkronizasyonunu yapılandır. Oturum açma ve profil yönetimi de buradadır.",
+  "helpSettingsBody": "Hesabını, temayı, dili, projeksiyon ekranını ve bulut senkronizasyonunu yapılandır. Oturum açma ve profil yönetimi de buradadır. Bulut senkronizasyonu manueldir — kişisel kütüphanen yalnızca sync butonuna bastığında karşıya yüklenir.",
+  "helpCharactersTitle": "Karakterler",
+  "helpCharactersBody": "Tüm dünyalarında sahip olduğun karakterleri tek listede gör. Bir karakteri düzenlemek, bekleyen level-up seçimlerini tamamlamak, ekipman değiştirmek veya çevrimiçi bir dünyaya geri bırakmak için kartına dokun. Yeni karakter oluşturmak için bir dünyaya gir ve Karakterler kenar çubuğundan başla — sihirbaz seni SRD kurallarına göre tür, sınıf, geçmiş, yetenek puanları, beceriler ve ekipman adımlarından geçirir. Kayıtlar manueldir: değişiklikleri kalıcı yapmak için editörde Kaydet'e bas, başka cihazda görmek için Ayarlar'dan bulut senkronizasyonunu çalıştır.",
   "helpWorldsTitle": "Dünyalar",
   "helpWorldsBody": "Bir dünya, oyununun yaşadığı yerdir — karakterler, NPC'ler, eşyalar, büyüler, haritalar, zihin haritası, oturum notları ve kurallar aynı çatı altında toplanır. Her dünya kendi veritabanı, oturumları ve medyasıyla tamamen bağımsız bir kampanyadır. İki yoldan başlayabilirsin: hazır bir dünya iskeletini indirip üstüne kendi karakterlerini ve NPC'lerini ekleyerek kendine uyarlayabilir, ya da sıfırdan tasarlayıp doğrudan kendi oyununu kurgulayabilirsin. Worlds tarafında hiçbir şey kısıtlı değildir; yapı, kurallar ve içerik tamamen senin elinde. Dünyayı açmak için kartına tıkla; yeniden adlandırma, silme, paylaşma ve yayınlama işlemleri kartın üzerindeki dişli simgesinden yapılır.",
   "helpTemplatesTitle": "Şablonlar",
@@ -499,8 +501,27 @@
   "profileHideFromDiscoverHint": "Profiliniz önerilerde ve arama sonuçlarında görünmez",
 
   "welcomeTitle": "Hoş geldin, Zindan Ustası!",
+  "welcomeSystemIntro": "Dungeon Master Tool, taşınabilir ve offline-öncelikli bir masaüstü RPG yardımcısıdır. Hub altı sekmeden oluşur: Sosyal (akış, mesajlar, marketplace), Ayarlar (hesap, tema, dil, bulut sync), Dünyalar (savaş haritası, zihin haritası, varlıklar ve oturumlarla kampanyalar), Karakterler (tüm dünyalarındaki kendi karakterlerin), Şablonlar (üzerinden dünya başlattığın iskeletler) ve Paketler (tak-çalıştır içerik paketleri).",
+  "welcomeSaveWarning": "Otomatik kayıt ve otomatik sync yok. Yerel değişiklikler yalnızca ilgili editördeki Kaydet'e bastığında saklanır; bulut sync (kişisel kütüphane ve çevrimiçi dünyalar) yalnızca sync butonuna bastığında çalışır. Kaydetmeden uygulamayı kapatırsan o değişiklik kaybolur.",
   "welcomeBetaNotice": "Uygulama hâlâ beta aşamasında — özellikler, built-in template ve paketler sürümler arasında değişebilir. Önemli verilerinizi zaman zaman yedeklemeyi unutmayın.",
   "welcomeRoadmap": "D&D 5e (2014) ve D&D 5e (2024) resmi içerik paketleri yol haritasında; yakın zamanda hazır paketler olarak eklenecek.",
   "welcomeClosing": "Denediğin için teşekkürler — zarların yaver gitsin, seansların unutulmaz olsun!",
-  "welcomeContinue": "Hadi başlayalım"
+  "welcomeContinue": "Hadi başlayalım",
+
+  "tabSocial": "Sosyal",
+  "tabSettings": "Ayarlar",
+  "tabWorlds": "Dünyalar",
+  "tabCharacters": "Karakterler",
+  "tabTemplates": "Şablonlar",
+
+  "hubReportBugTooltip": "Hata bildir",
+  "hubSettingsTooltip": "Ayarlar",
+
+  "profileMenuTooltip": "Profil",
+  "profileMenuSignIn": "Giriş Yap",
+  "profileMenuViewProfile": "Profili Görüntüle",
+  "profileMenuEditProfile": "Profili Düzenle",
+  "profileMenuSettings": "Ayarlar",
+  "profileMenuAdminPanel": "Yönetici Paneli",
+  "profileMenuReportBug": "Hata bildir"
 }

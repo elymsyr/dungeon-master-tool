@@ -100,14 +100,23 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     }
   }
 
-  static const _tabs = [
-    (icon: Icons.people, label: 'Social'),
-    (icon: Icons.settings, label: 'Settings'),
-    (icon: Icons.public, label: 'Worlds'),
-    (icon: Icons.person, label: 'Characters'),
-    (icon: Icons.description, label: 'Templates'),
-    (icon: Icons.inventory_2, label: 'Packages'),
+  static const _tabIcons = <IconData>[
+    Icons.people,
+    Icons.settings,
+    Icons.public,
+    Icons.person,
+    Icons.description,
+    Icons.inventory_2,
   ];
+
+  List<({IconData icon, String label})> _buildTabs(L10n l10n) => [
+        (icon: _tabIcons[0], label: l10n.tabSocial),
+        (icon: _tabIcons[1], label: l10n.tabSettings),
+        (icon: _tabIcons[2], label: l10n.tabWorlds),
+        (icon: _tabIcons[3], label: l10n.tabCharacters),
+        (icon: _tabIcons[4], label: l10n.tabTemplates),
+        (icon: _tabIcons[5], label: l10n.tabPackages),
+      ];
 
   /// Renders [icon], optionally layered with a small accent dot in the top-
   /// right when [showBadge] is true. Shared by every navigation surface
@@ -203,7 +212,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     required bool hasUnread,
     required int currentTabIndex,
   }) {
-    final t = _tabs[index];
+    final t = _buildTabs(L10n.of(ctx)!)[index];
     final isActive = index == currentTabIndex;
     return InkWell(
       onTap: () {
@@ -262,9 +271,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
       case 3:
         return (
-          title: 'Characters',
-          body:
-              'View, edit, and delete every character across your worlds. Create new characters from inside a world via the Characters sidebar.',
+          title: l10n.helpCharactersTitle,
+          body: l10n.helpCharactersBody,
         );
       case 4:
         return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
@@ -299,8 +307,9 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         MediaQuery.orientationOf(context) == Orientation.landscape;
     // Settings is accessible only via the profile menu — hidden on desktop
     // side rail, mobile bottom nav, and landscape sheet.
+    final tabs = _buildTabs(l10n);
     final visibleTabs = <int>[
-      for (var i = 0; i < _tabs.length; i++)
+      for (var i = 0; i < tabs.length; i++)
         if (i != _settingsTabIndex) i,
     ];
     // Multi-device hint — another device uploaded changes we haven't pulled.
@@ -381,7 +390,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           // the desktop/tablet shortcut, hide on phone where space is tight.
           if (screen != ScreenType.phone)
             IconButton(
-              tooltip: 'Report a Bug',
+              tooltip: l10n.hubReportBugTooltip,
               icon: const Icon(Icons.bug_report_outlined),
               onPressed: () => BugReportDialog.show(context),
             ),
@@ -396,7 +405,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           ScreenType.desktop || ScreenType.tablet => Row(
               children: [
                 _HubSideRail(
-                  tabs: _tabs,
+                  tabs: tabs,
                   visibleTabs: visibleTabs,
                   selectedIndex: tabIndex,
                   onSelected: (i) =>
@@ -424,7 +433,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       ),
       bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
           ? _MobileHubNavBar(
-              tabs: _tabs,
+              tabs: tabs,
               visibleTabs: visibleTabs,
               selectedTabIndex: tabIndex,
               onSelected: (i) =>
