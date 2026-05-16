@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,8 +16,20 @@ import '../providers/online_worlds_provider.dart';
 import '../providers/role_provider.dart';
 import '../providers/world_characters_provider.dart';
 import '../providers/world_membership_provider.dart';
+import '../../data/database/database_provider.dart';
+import '../../data/database/app_database.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
+
+dynamic _decodeJsonStatic(String s) => jsonDecode(s);
+
+const int _kDecodeOffloadBytes = 4096;
+Future<dynamic> _decodeJsonMaybeOffload(String s) {
+  if (s.length < _kDecodeOffloadBytes) {
+    return Future.value(jsonDecode(s));
+  }
+  return compute(_decodeJsonStatic, s);
+}
 
 /// CDC event'lerini local state'e uygular.
 ///
@@ -83,6 +96,16 @@ class WorldMirrorApplier {
         if (mapped != null) notifier.applyMirror(mapped);
       }
     }
+    // PR-SYNC-3: seed granular world state into the active campaign blob.
+    if (snapshot.mapData != null) {
+      await _applyMapDataRow(snapshot.mapData!);
+    }
+    if (snapshot.sessions.isNotEmpty) {
+      await _applySessionsList(snapshot.sessions);
+    }
+    if (snapshot.settings != null) {
+      await _applySettingsRow(snapshot.settings!);
+    }
     _bumpRevision();
   }
 
@@ -93,13 +116,21 @@ class WorldMirrorApplier {
         case 'world_entities':
           _applyEntityEvent(e);
         case 'world_characters':
-          _applyCharacterEvent(e);
+          await _applyCharacterEvent(e);
         case 'worlds':
-          _applyWorldsEvent(e);
+          await _applyWorldsEvent(e);
         case 'entity_shares':
           ref.invalidate(worldEntitySharesProvider(e.worldId));
         case 'world_members':
           await _applyMembersEvent(e);
+        case 'world_map_data':
+          await _applyMapDataEvent(e);
+        case 'world_sessions':
+          await _applySessionEvent(e);
+        case 'world_settings':
+          await _applySettingsEvent(e);
+        case 'world_packages':
+          await _applyWorldPackageEvent(e);
         // mind_map_*: PR-O8'de dedicated invalidations.
       }
     } catch (err, st) {
@@ -139,7 +170,7 @@ class WorldMirrorApplier {
     }
   }
 
-  void _applyCharacterEvent(WorldSyncEvent e) {
+  Future<void> _applyCharacterEvent(WorldSyncEvent e) async {
     final notifier =
         ref.read(worldCharactersProvider(e.worldId).notifier);
     switch (e.eventType) {
@@ -197,7 +228,7 @@ class WorldMirrorApplier {
           } else {
             // Yeni cihazda hiç görmediğimiz bir char — payload'dan tam
             // Character üret (template/entity dahil).
-            final fromPayload = _characterFromPayload(row);
+            final fromPayload = await _characterFromPayload(row);
             if (fromPayload != null) {
               // ignore: discarded_futures
               ref.read(characterListProvider.notifier)
@@ -213,12 +244,11 @@ class WorldMirrorApplier {
   /// world_characters.payload_json field'ı tüm `Character` JSON'unu taşır.
   /// Yeni cihaza ilk giriş veya owner-eklenmiş cross-device event'inde
   /// hub-level Character'ı sıfırdan kurmak için kullanılır.
-  dynamic _characterFromPayload(WorldCharacterRow row) {
+  Future<dynamic> _characterFromPayload(WorldCharacterRow row) async {
     try {
-      final map = jsonDecode(row.payloadJson) as Map<String, dynamic>;
-      // Char tam Character.fromJson serializer'ına gider.
-      // CharacterListNotifier.applyMirror generic `Character` ile çalışır.
-      return Character.fromJson(map).copyWith(
+      final decoded = await _decodeJsonMaybeOffload(row.payloadJson);
+      if (decoded is! Map<String, dynamic>) return null;
+      return Character.fromJson(decoded).copyWith(
         worldId: row.worldId,
         ownerId: row.ownerId,
       );
@@ -274,6 +304,12 @@ class WorldMirrorApplier {
     }
     final selfUid = ref.read(authProvider)?.uid;
     final isSelf = selfUid != null && eventUid == selfUid;
+    // Snapshot role BEFORE invalidation — needed to choose trash vs purge
+    // when the membership row just vanished (server-side cascade after a
+    // DM-driven world delete on another device).
+    final priorRole = isSelf
+        ? (ref.read(worldRoleProvider(e.worldId)).valueOrNull ?? WorldRole.none)
+        : WorldRole.none;
     if (isSelf) {
       ref.invalidate(worldRoleProvider(e.worldId));
       ref.invalidate(currentWorldRoleProvider);
@@ -282,6 +318,13 @@ class WorldMirrorApplier {
     }
     if (e.eventType != PostgresChangeEvent.delete) return;
     if (!isSelf) return;
+    // DM cross-device: DM on device A deleted the world → server cascade
+    // dropped my membership row here on device B. Soft-delete (trash) so
+    // the user can still restore. Player path stays as hard purge.
+    if (priorRole == WorldRole.dm) {
+      await _trashLocalWorld(e.worldId);
+      return;
+    }
     try {
       final role = await ref.read(worldRoleProvider(e.worldId).future);
       if (role == WorldRole.none) {
@@ -290,6 +333,20 @@ class WorldMirrorApplier {
     } catch (err, st) {
       debugPrint('_applyMembersEvent role re-check error: $err\n$st');
     }
+  }
+
+  /// DM cross-device delete echo: move the local mirror to trash without
+  /// firing a fresh cloud delete (the originating device already did it).
+  Future<void> _trashLocalWorld(String worldId) async {
+    final list = ref.read(campaignInfoListProvider).valueOrNull;
+    if (list == null) return;
+    final match = list.where((c) => c.id == worldId).firstOrNull;
+    if (match == null) return;
+    final notifier = ref.read(activeCampaignProvider.notifier);
+    await notifier.delete(match.name);
+    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(campaignInfoListProvider);
   }
 
   /// Public so the per-user sync applier can purge a world when the
@@ -307,7 +364,7 @@ class WorldMirrorApplier {
     ref.invalidate(campaignInfoListProvider);
   }
 
-  void _applyWorldsEvent(WorldSyncEvent e) {
+  Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
     if (e.eventType != PostgresChangeEvent.update &&
         e.eventType != PostgresChangeEvent.insert) {
       return;
@@ -318,21 +375,190 @@ class WorldMirrorApplier {
     final newState = e.newRecord['state_json'];
     if (newState is! String) return;
     try {
-      final decoded = jsonDecode(newState);
+      final decoded = await _decodeJsonMaybeOffload(newState);
       if (decoded is! Map<String, dynamic>) return;
       // entities alt-map'i normalde world_entities'ten patch'leniyor;
-      // worlds.state_json sadece üst-düzey alanları (sessions, combat, vs.)
-      // taşır. Bu sebeple entities'i koruyup geri kalanı ezerek replace.
+      // worlds.state_json sadece üst-düzey alanları taşır. PR-SYNC-3:
+      // map_data + sessions + settings ayrı tablolardan geliyor, bu yüzden
+      // worlds event'inden gelen bu alanları da strip ediyoruz — aksi halde
+      // race olabilir (granular row henüz gelmemişken state_json daha yeni
+      // ama eksik veriyle local'i ezerdi). entities'i de koru.
       final entities = data['entities'];
+      final mapData = data['map_data'];
+      final sessions = data['sessions'];
+      final settings = data['settings'];
+      decoded.remove('map_data');
+      decoded.remove('sessions');
+      decoded.remove('settings');
       data
         ..clear()
         ..addAll(decoded);
       if (entities is Map<String, dynamic>) {
         data['entities'] = entities;
       }
+      if (mapData != null) data['map_data'] = mapData;
+      if (sessions != null) data['sessions'] = sessions;
+      if (settings != null) data['settings'] = settings;
       _bumpRevision();
     } catch (err) {
       debugPrint('_applyWorldsEvent decode error: $err');
+    }
+  }
+
+  // ── PR-SYNC-3 granular world state appliers ─────────────────────────
+
+  Future<void> _applyMapDataEvent(WorldSyncEvent e) async {
+    if (mirror.isEchoOfMapData(e.worldId)) return;
+    switch (e.eventType) {
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        await _applyMapDataRow(e.newRecord);
+      case PostgresChangeEvent.delete:
+        final data = ref.read(activeCampaignProvider.notifier).data;
+        if (data != null && data.remove('map_data') != null) _bumpRevision();
+      default:
+        return;
+    }
+  }
+
+  Future<void> _applyMapDataRow(Map<String, dynamic> row) async {
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    final raw = row['data_json'];
+    if (raw is! String) return;
+    try {
+      final decoded = await _decodeJsonMaybeOffload(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      data['map_data'] = decoded;
+      _bumpRevision();
+    } catch (err) {
+      debugPrint('_applyMapDataRow decode error: $err');
+    }
+  }
+
+  Future<void> _applySessionEvent(WorldSyncEvent e) async {
+    final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
+    if (id == null) return;
+    if (mirror.isEchoOfSession(id)) return;
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    final raw = data['sessions'];
+    final List sessions = raw is List ? List.from(raw) : <dynamic>[];
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        sessions.removeWhere((s) => s is Map && s['id'] == id);
+        data['sessions'] = sessions;
+        _bumpRevision();
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final mapped = await _sessionRowToBlob(e.newRecord);
+        if (mapped == null) return;
+        final idx = sessions.indexWhere((s) => s is Map && s['id'] == id);
+        if (idx >= 0) {
+          sessions[idx] = mapped;
+        } else {
+          sessions.add(mapped);
+        }
+        data['sessions'] = sessions;
+        _bumpRevision();
+      default:
+        return;
+    }
+  }
+
+  Future<void> _applySessionsList(List<Map<String, dynamic>> rows) async {
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    final mapped = <dynamic>[];
+    for (final row in rows) {
+      final m = await _sessionRowToBlob(row);
+      if (m != null) mapped.add(m);
+    }
+    data['sessions'] = mapped;
+  }
+
+  Future<Map<String, dynamic>?> _sessionRowToBlob(
+      Map<String, dynamic> row) async {
+    final id = row['id'];
+    if (id is! String) return null;
+    final raw = row['data_json'];
+    Map<String, dynamic>? inner;
+    if (raw is String) {
+      try {
+        final decoded = await _decodeJsonMaybeOffload(raw);
+        if (decoded is Map<String, dynamic>) inner = decoded;
+      } catch (_) {
+        // fall through — produce skeleton with id+name only
+      }
+    }
+    final blob = <String, dynamic>{
+      ...?inner,
+      'id': id,
+      if (row['name'] is String) 'name': row['name'],
+      if (row['is_active'] is bool) 'is_active': row['is_active'],
+      if (row['sort_order'] is num) 'sort_order': row['sort_order'],
+    };
+    return blob;
+  }
+
+  Future<void> _applySettingsEvent(WorldSyncEvent e) async {
+    if (mirror.isEchoOfSettings(e.worldId)) return;
+    switch (e.eventType) {
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        await _applySettingsRow(e.newRecord);
+      case PostgresChangeEvent.delete:
+        final data = ref.read(activeCampaignProvider.notifier).data;
+        if (data != null && data.remove('settings') != null) _bumpRevision();
+      default:
+        return;
+    }
+  }
+
+  // ── PR-SYNC-5: DM-shared world_packages mirror ──────────────────────
+
+  Future<void> _applyWorldPackageEvent(WorldSyncEvent e) async {
+    final id =
+        (e.newRecord['package_id'] ?? e.oldRecord['package_id']) as String?;
+    if (id == null) return;
+    if (mirror.isEchoOfWorldPackage(id)) return;
+    final dao = ref.read(appDatabaseProvider).worldPackageDao;
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        await dao.removeByPackageId(id);
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final row = e.newRecord;
+        await dao.upsert(
+          WorldPackagesCompanion(
+            worldId: Value((row['world_id'] as String?) ?? e.worldId),
+            packageId: Value(id),
+            packageName: Value((row['package_name'] as String?) ?? ''),
+            sharedBy: Value(row['shared_by'] as String?),
+            stateJson: Value((row['state_json'] as String?) ?? '{}'),
+            updatedAt: Value(
+              DateTime.tryParse((row['updated_at'] as String?) ?? '') ??
+                  DateTime.now(),
+            ),
+          ),
+        );
+      default:
+        return;
+    }
+  }
+
+  Future<void> _applySettingsRow(Map<String, dynamic> row) async {
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    final raw = row['settings_json'];
+    if (raw is! String) return;
+    try {
+      final decoded = await _decodeJsonMaybeOffload(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      data['settings'] = decoded;
+      _bumpRevision();
+    } catch (err) {
+      debugPrint('_applySettingsRow decode error: $err');
     }
   }
 

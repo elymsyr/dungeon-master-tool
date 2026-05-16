@@ -3,11 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/supabase_config.dart';
-import 'auth_provider.dart';
 import 'campaign_provider.dart';
-import 'cloud_sync_provider.dart';
-import 'package_provider.dart';
+import 'online_worlds_provider.dart';
 import 'ui_state_provider.dart';
 
 enum SaveStatus { saved, dirty, saving }
@@ -20,8 +17,15 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
   final Ref _ref;
   Timer? _saveTimer;
   Timer? _maxDelayTimer;
-  static const _saveDelay = Duration(seconds: 5);
-  static const _maxSaveDelay = Duration(seconds: 30);
+  // Active-world online (PR-SYNC-1): tighten the debounce so a remote
+  // player sees a DM edit within a couple of seconds.
+  static const _saveDelayOnline = Duration(milliseconds: 800);
+  static const _maxSaveDelayOnline = Duration(seconds: 3);
+
+  // Offline / hub-only: leave the original 5s/30s window — local-only writes
+  // shouldn't chew through SSD I/O.
+  static const _saveDelayOffline = Duration(seconds: 5);
+  static const _maxSaveDelayOffline = Duration(seconds: 30);
   bool _disposed = false;
 
   SaveStateNotifier(this._ref) : super(SaveStatus.saved);
@@ -35,10 +39,20 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
     state = SaveStatus.dirty;
     final autoSave = _ref.read(uiStateProvider).autoLocalSave;
     if (autoSave) {
+      final online = _isActiveWorldOnline();
+      final delay = online ? _saveDelayOnline : _saveDelayOffline;
+      final maxDelay = online ? _maxSaveDelayOnline : _maxSaveDelayOffline;
       _saveTimer?.cancel();
-      _saveTimer = Timer(_saveDelay, _performSave);
-      _maxDelayTimer ??= Timer(_maxSaveDelay, _performSave);
+      _saveTimer = Timer(delay, _performSave);
+      _maxDelayTimer ??= Timer(maxDelay, _performSave);
     }
+  }
+
+  bool _isActiveWorldOnline() {
+    final data = _ref.read(activeCampaignProvider.notifier).data;
+    final worldId = data?['world_id'] as String?;
+    if (worldId == null) return false;
+    return _ref.read(onlineWorldIdsProvider).contains(worldId);
   }
 
   /// Force an immediate save (e.g., before app close or tab switch).
@@ -61,29 +75,9 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
       }
       if (_disposed) return;
       lastSavedAt = DateTime.now();
-
-      // Auto cloud sync. Always-on for signed-in beta users — cloudSync
-      // markDirty itself gates on supabase + auth + beta. Worlds that are
-      // currently online (`onlineWorldIdsProvider` contains worldId) skip
-      // the cloud_backup path because campaign_provider's `_mirrorAfterSave`
-      // already pushes the real-time world_state mirror.
-      if (SupabaseConfig.isConfigured && _ref.read(authProvider) != null) {
-        final notifier = _ref.read(cloudSyncProvider.notifier);
-        final campaignName = _ref.read(activeCampaignProvider);
-        if (campaignName != null) {
-          final data = _ref.read(activeCampaignProvider.notifier).data;
-          final worldId = (data?['world_id'] as String?) ?? campaignName;
-          notifier.markDirty(worldId, campaignName, 'world');
-        }
-        final packageName = _ref.read(activePackageProvider);
-        if (packageName != null) {
-          final data = _ref.read(activePackageProvider.notifier).data;
-          final packageId = (data?['package_id'] as String?) ??
-              (data?['world_id'] as String?) ??
-              packageName;
-          notifier.markDirty(packageId, packageName, 'package');
-        }
-      }
+      // PR-SYNC-6: cloud_sync_provider retired. Per-mutation outbox enqueues
+      // already drive the real-time mirror + cloud_backup paths; no fan-out
+      // hook needed here.
     } catch (e) {
       debugPrint('Save error: $e');
     } finally {

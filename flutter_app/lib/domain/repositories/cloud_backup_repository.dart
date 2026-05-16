@@ -12,13 +12,20 @@ abstract class CloudBackupRepository {
 
   /// Item verisini cloud'a yedekle.
   /// [type]: `world`, `template`, `package`
+  /// [payloadHash]: opsiyonel; SyncEngine ayni icerigi tekrar
+  /// yuklememek icin kullanir. Repo bunu storage'a degil cloud_backups
+  /// satirinin `payload_hash` kolonuna yazar.
   Future<CloudBackupMeta> uploadBackup(
     String itemName,
     String itemId,
     String type,
     Map<String, dynamic> data, {
     String? notes,
+    String? payloadHash,
   });
+
+  /// Item icin cloud'daki son payload_hash. Yoksa null.
+  Future<String?> fetchPayloadHashByItem(String itemId, String type);
 
   /// Cloud backup'i indir ve veri olarak don.
   Future<Map<String, dynamic>> downloadBackup(String backupId);

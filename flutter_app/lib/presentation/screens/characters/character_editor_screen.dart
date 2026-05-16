@@ -96,6 +96,22 @@ class _CharacterEditorScreenState
   Timer? _undoIdleTimer;
 
   @override
+  void initState() {
+    super.initState();
+    // Cross-device freshness: another device may have pushed a newer
+    // cloud_backup while we were away. Pull on open so the editor renders
+    // the latest payload instead of stale local state. Skips silently when
+    // local is already at least as new.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // ignore: discarded_futures
+      ref
+          .read(characterListProvider.notifier)
+          .pullCharFromCloudIfNewer(widget.characterId);
+    });
+  }
+
+  @override
   void dispose() {
     _autoSaveTimer?.cancel();
     _undoIdleTimer?.cancel();
@@ -203,6 +219,26 @@ class _CharacterEditorScreenState
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    // Cross-device freshness: when the cloud-pull (initState) replaces the
+    // local Character with a newer payload, adopt it into `_working` so the
+    // editor renders the new data instead of the stale snapshot it cached
+    // on first build. Skipped when the user has dirtied `_working` (auto-
+    // save is dropped — autosave runs every 1.2s so the unsaved window is
+    // tiny but worth respecting).
+    ref.listen<Character?>(
+      characterByIdProvider(widget.characterId),
+      (prev, next) {
+        if (next == null || !mounted) return;
+        final working = _working;
+        if (working == null) return;
+        final nextAt = DateTime.tryParse(next.updatedAt);
+        final workingAt = DateTime.tryParse(working.updatedAt);
+        if (nextAt == null || workingAt == null) return;
+        if (!nextAt.isAfter(workingAt)) return;
+        if (_autoSaveTimer?.isActive == true) return;
+        setState(() => _working = next);
+      },
+    );
     final character =
         _working ?? ref.watch(characterByIdProvider(widget.characterId));
 

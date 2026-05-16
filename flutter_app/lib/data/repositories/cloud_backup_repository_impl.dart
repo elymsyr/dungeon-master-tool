@@ -53,12 +53,17 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
       _remoteDs.fetchByItem(itemId, type);
 
   @override
+  Future<String?> fetchPayloadHashByItem(String itemId, String type) =>
+      _remoteDs.fetchPayloadHashByItem(itemId, type);
+
+  @override
   Future<CloudBackupMeta> uploadBackup(
     String itemName,
     String itemId,
     String type,
     Map<String, dynamic> data, {
     String? notes,
+    String? payloadHash,
   }) async {
     // Backup envelope: versiyonlu wrapper
     final envelope = {
@@ -112,6 +117,7 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
       entityCount: entityCount,
       schemaVersion: 5,
       notes: notes,
+      payloadHash: payloadHash,
     );
   }
 

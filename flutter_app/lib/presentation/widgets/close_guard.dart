@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
+import '../../application/providers/manual_backup_provider.dart';
+import '../../application/providers/outbox_status_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../core/config/supabase_config.dart';
 
@@ -38,9 +39,9 @@ Future<bool> confirmCloseWithBackupCheck({
     return _askLocalOnly(context, ref, itemName);
   }
 
-  final syncState = ref.read(cloudSyncProvider);
-  final cloudClean = syncState.status == CloudSyncStatus.synced &&
-      syncState.failedCount == 0;
+  final outboxAsync = ref.read(outboxStatusProvider);
+  final outbox = outboxAsync.valueOrNull ?? OutboxStatus.empty;
+  final cloudClean = outbox.pending == 0;
   if (localClean && cloudClean) return true;
 
   if (!context.mounted) return true;
@@ -87,7 +88,7 @@ Future<bool> confirmCloseWithBackupCheck({
           'Saving and backing up "$itemName"...',
           () async {
             await ref.read(saveStateProvider.notifier).saveNow();
-            await ref.read(cloudSyncProvider.notifier).backupActiveItem();
+            await ref.read(manualBackupRunnerProvider).backupActiveItem();
           },
         );
       } catch (e) {

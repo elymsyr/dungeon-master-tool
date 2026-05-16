@@ -128,6 +128,33 @@ class CharacterClaimService {
         .eq('id', characterId);
   }
 
+  /// Single-character lookup by id. Used by the editor-open freshness hook
+  /// so a world-bound char that was edited on another device reflects the
+  /// latest `world_characters` row even when the user opens it from the
+  /// hub (no active realtime sub on that world).
+  Future<WorldCharacterRow?> fetchWorldCharacter(String characterId) async {
+    final rows = await client
+        .from('world_characters')
+        .select(
+            'id, world_id, owner_id, template_id, template_name, payload_json, updated_at')
+        .eq('id', characterId)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    final m = rows.first;
+    final wid = m['world_id'] as String?;
+    if (wid == null) return null;
+    return WorldCharacterRow(
+      id: m['id'] as String,
+      worldId: wid,
+      ownerId: m['owner_id'] as String?,
+      templateId: (m['template_id'] as String?) ?? '',
+      templateName: (m['template_name'] as String?) ?? '',
+      payloadJson: (m['payload_json'] as String?) ?? '{}',
+      updatedAt: DateTime.tryParse(m['updated_at'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
   /// `world_characters` bir world'ün satırlarını listeler. RLS gereği member
   /// olduğun dünyaların tüm karakterlerini görürsün. Bootstrap'te bir kez
   /// çağrılır; sonrası CDC ile granular patch.

@@ -11,6 +11,14 @@ class Campaigns extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
+  /// Last successful cloud push timestamp (PR-SYNC-1). Used by the SyncEngine
+  /// to skip uploads that no-op against the server.
+  DateTimeColumn get lastCloudPushAt => dateTime().nullable()();
+
+  /// SHA-256 of the last payload pushed to the cloud. Gates duplicate uploads
+  /// when the same state is re-saved.
+  TextColumn get lastPushedHash => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

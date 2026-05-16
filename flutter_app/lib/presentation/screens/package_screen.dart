@@ -6,15 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/manual_backup_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/personal_online_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../application/providers/world_packages_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
@@ -218,7 +221,7 @@ class _PackageScreenContentState
       'Saving package...',
       () async {
         await ref.read(saveStateProvider.notifier).saveNow();
-        await ref.read(cloudSyncProvider.notifier).backupActiveItem();
+        await ref.read(manualBackupRunnerProvider).backupActiveItem();
       },
     );
     if (!mounted) return;
@@ -391,6 +394,10 @@ class _PackageScreenContentState
               widget.packageName != srdCorePackageName &&
               getScreenType(context) != ScreenType.phone)
             _PackageOnlineButton(packageName: widget.packageName),
+          // PR-SYNC-5: DM-only — share this package into the active world.
+          if (SupabaseConfig.isConfigured &&
+              widget.packageName != srdCorePackageName)
+            _ShareToWorldButton(packageName: widget.packageName),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
             final isBuiltin = widget.packageName == srdCorePackageName;
@@ -662,5 +669,53 @@ class _PackageOnlineButtonState
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+/// PR-SYNC-5: AppBar action — DM of the active world shares the currently
+/// open package into that world. Hidden when there's no active world or
+/// the user isn't its DM. One-tap re-share refreshes the cloud state.
+class _ShareToWorldButton extends ConsumerWidget {
+  final String packageName;
+  const _ShareToWorldButton({required this.packageName});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final worldId = ref.watch(activeCampaignProvider);
+    if (worldId == null) return const SizedBox.shrink();
+    final roleAsync = ref.watch(currentWorldRoleProvider);
+    final role = roleAsync.valueOrNull;
+    if (role != WorldRole.dm) return const SizedBox.shrink();
+    final shared =
+        ref.watch(worldPackagesProvider(worldId)).valueOrNull ?? const [];
+    final existing =
+        shared.where((r) => r.packageName == packageName).firstOrNull;
+    return IconButton(
+      tooltip: existing != null
+          ? 'Re-share with world'
+          : 'Share with world',
+      icon: Icon(
+        existing != null ? Icons.cloud_sync : Icons.public,
+        size: 18,
+      ),
+      onPressed: () async {
+        try {
+          await shareLocalPackageToWorld(
+            ref: ref,
+            worldId: worldId,
+            packageName: packageName,
+          );
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Shared $packageName with world')),
+          );
+        } catch (e) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Share failed: $e')),
+          );
+        }
+      },
+    );
   }
 }

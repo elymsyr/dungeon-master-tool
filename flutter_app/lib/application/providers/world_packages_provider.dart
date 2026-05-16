@@ -1,0 +1,80 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/database/app_database.dart';
+import '../../data/database/database_provider.dart';
+import 'package_provider.dart';
+import 'sync_engine_provider.dart';
+
+/// PR-SYNC-5: stream of DM-shared world_packages rows for the given world.
+/// Rows arrive via Supabase `world_packages` CDC + WorldMirrorApplier.
+final worldPackagesProvider =
+    StreamProvider.family<List<WorldPackage>, String>((ref, worldId) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.worldPackageDao.watchForWorld(worldId);
+});
+
+/// DM-only: share a local personal package into the active world. Reads
+/// the package snapshot from [packageStateProvider] and enqueues a
+/// world-package outbox row; SyncEngine drains via `share_package_to_world`.
+/// Reader contract shared by Ref + WidgetRef so the helpers below work
+/// from both notifiers and widgets without duplication.
+typedef _RefRead = T Function<T>(ProviderListenable<T> p);
+
+Future<void> _shareImpl(
+  _RefRead read,
+  String worldId,
+  String packageName,
+) async {
+  final repo = read(packageRepositoryProvider);
+  final data = await repo.load(packageName);
+  final engine = read(syncEngineProvider);
+  await engine.enqueueWorldPackageShare(
+    worldId: worldId,
+    packageName: packageName,
+    state: data,
+  );
+  // Echo the serialized form into the local mirror so the DM sees the row
+  // immediately without waiting for the CDC round-trip. The temporary
+  // package_id gets replaced by the server's canonical id on next CDC.
+  await read(appDatabaseProvider).worldPackageDao.upsert(
+        WorldPackagesCompanion.insert(
+          worldId: worldId,
+          packageId: 'pending:$packageName',
+          packageName: Value(packageName),
+          stateJson: Value(jsonEncode(data)),
+        ),
+      );
+}
+
+Future<void> _unshareImpl(
+  _RefRead read,
+  String worldId,
+  String packageName,
+  String packageId,
+) async {
+  final engine = read(syncEngineProvider);
+  await engine.enqueueWorldPackageUnshare(
+    worldId: worldId,
+    packageName: packageName,
+    packageId: packageId,
+  );
+  await read(appDatabaseProvider).worldPackageDao.removeByPackageId(packageId);
+}
+
+Future<void> shareLocalPackageToWorld({
+  required WidgetRef ref,
+  required String worldId,
+  required String packageName,
+}) =>
+    _shareImpl(ref.read, worldId, packageName);
+
+Future<void> unshareWorldPackage({
+  required WidgetRef ref,
+  required String worldId,
+  required String packageName,
+  required String packageId,
+}) =>
+    _unshareImpl(ref.read, worldId, packageName, packageId);

@@ -78,6 +78,7 @@ class WorldMirrorService {
       await client.from('world_entities').upsert(rows);
     } catch (e, st) {
       debugPrint('pushEntities upsert error: $e\n$st');
+      rethrow;
     }
   }
 
@@ -95,6 +96,7 @@ class WorldMirrorService {
           .upsert(_entityRow(worldId, entityId, entityMap, builtinPackageId));
     } catch (e) {
       debugPrint('pushEntity error: $e');
+      rethrow;
     }
   }
 
@@ -107,6 +109,7 @@ class WorldMirrorService {
       await client.from('world_entities').delete().eq('id', entityId);
     } catch (e) {
       debugPrint('deleteEntity error: $e');
+      rethrow;
     }
   }
 
@@ -170,6 +173,7 @@ class WorldMirrorService {
       });
     } catch (e) {
       debugPrint('pushCharacter error: $e');
+      rethrow;
     }
   }
 
@@ -179,6 +183,7 @@ class WorldMirrorService {
       await client.from('world_characters').delete().eq('id', characterId);
     } catch (e) {
       debugPrint('deleteCharacter error: $e');
+      rethrow;
     }
   }
 
@@ -208,16 +213,100 @@ class WorldMirrorService {
       );
     } catch (e) {
       debugPrint('pushWorldState error: $e');
+      rethrow;
     }
   }
+
+  // ── Granular world state (PR-SYNC-3) ───────────────────────────────
+  //
+  // worlds.state_json was a monolithic blob; map drag / session note edits
+  // re-uploaded the whole world. These three tables carry the same content
+  // in separate rows so each mutation only ships the part that changed.
+  // Migration 042 created the tables; this PR's outbox handlers route
+  // through these methods. DM dual-writes worlds.state_json for now —
+  // PR-SYNC-6 retires the legacy path once players are on granular reads.
+
+  Future<void> pushMapData({
+    required String worldId,
+    required Map<String, dynamic> data,
+  }) async {
+    _stamp('mapdata:$worldId');
+    try {
+      await client.from('world_map_data').upsert({
+        'world_id': worldId,
+        'data_json': jsonEncode(data),
+      });
+    } catch (e) {
+      debugPrint('pushMapData error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> pushSession({
+    required String worldId,
+    required String sessionId,
+    required String name,
+    required Map<String, dynamic> data,
+    bool isActive = false,
+    int sortOrder = 0,
+  }) async {
+    _stamp('session:$sessionId');
+    try {
+      await client.from('world_sessions').upsert({
+        'id': sessionId,
+        'world_id': worldId,
+        'name': name,
+        'data_json': jsonEncode(data),
+        'is_active': isActive,
+        'sort_order': sortOrder,
+      });
+    } catch (e) {
+      debugPrint('pushSession error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteSession({required String sessionId}) async {
+    _stamp('session:$sessionId');
+    try {
+      await client.from('world_sessions').delete().eq('id', sessionId);
+    } catch (e) {
+      debugPrint('deleteSession error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> pushSettings({
+    required String worldId,
+    required Map<String, dynamic> settings,
+  }) async {
+    _stamp('settings:$worldId');
+    try {
+      await client.from('world_settings').upsert({
+        'world_id': worldId,
+        'settings_json': jsonEncode(settings),
+      });
+    } catch (e) {
+      debugPrint('pushSettings error: $e');
+      rethrow;
+    }
+  }
+
+  bool isEchoOfMapData(String worldId) => _isEcho('mapdata:$worldId');
+  bool isEchoOfSession(String sessionId) => _isEcho('session:$sessionId');
+  bool isEchoOfSettings(String worldId) => _isEcho('settings:$worldId');
 
   // ── Initial fetch on subscribe ─────────────────────────────────────
 
   /// World'e abone olunduğunda lokal Drift'i seed'lemek için pull.
+  /// Granular world tables (map_data/sessions/settings) eklendi (PR-SYNC-3).
   Future<
     ({
       List<Map<String, dynamic>> entities,
       List<Map<String, dynamic>> characters,
+      Map<String, dynamic>? mapData,
+      List<Map<String, dynamic>> sessions,
+      Map<String, dynamic>? settings,
     })
   >
   fetchInitialState(String worldId) async {
@@ -230,16 +319,41 @@ class WorldMirrorService {
           .from('world_characters')
           .select()
           .eq('world_id', worldId);
+      final mapDataRaw = await client
+          .from('world_map_data')
+          .select()
+          .eq('world_id', worldId)
+          .maybeSingle();
+      final sessionsRaw = await client
+          .from('world_sessions')
+          .select()
+          .eq('world_id', worldId);
+      final settingsRaw = await client
+          .from('world_settings')
+          .select()
+          .eq('world_id', worldId)
+          .maybeSingle();
       final List<Map<String, dynamic>> entities = (entitiesRaw as List)
           .cast<Map<String, dynamic>>();
       final List<Map<String, dynamic>> characters = (charactersRaw as List)
           .cast<Map<String, dynamic>>();
-      return (entities: entities, characters: characters);
+      final List<Map<String, dynamic>> sessions = (sessionsRaw as List)
+          .cast<Map<String, dynamic>>();
+      return (
+        entities: entities,
+        characters: characters,
+        mapData: mapDataRaw,
+        sessions: sessions,
+        settings: settingsRaw,
+      );
     } catch (e) {
       debugPrint('fetchInitialState error: $e');
       return (
         entities: const <Map<String, dynamic>>[],
         characters: const <Map<String, dynamic>>[],
+        mapData: null,
+        sessions: const <Map<String, dynamic>>[],
+        settings: null,
       );
     }
   }
@@ -311,6 +425,7 @@ class WorldMirrorService {
       );
     } catch (e) {
       debugPrint('pushPersonalPackage error: $e');
+      rethrow;
     }
   }
 
@@ -323,9 +438,57 @@ class WorldMirrorService {
       );
     } catch (e) {
       debugPrint('unpublishPersonalPackage error: $e');
+      rethrow;
     }
   }
 
   bool isEchoOfPackage(String packageName) =>
       _isEcho(_packageEchoKey(packageName));
+
+  // ── World packages (DM-shared per world) — PR-SYNC-5 ───────────────
+  //
+  // `share_package_to_world` RPC upserts by (world_id, package_name) and
+  // returns the canonical package_id. Echo keyed by `wpkg:<id>` once the
+  // RPC resolves so the inbound CDC for our own push gets suppressed.
+
+  static String _worldPackageEchoKey(String packageId) => 'wpkg:$packageId';
+
+  /// Returns the world-package id (server-assigned on first share).
+  Future<String?> shareWorldPackage({
+    required String worldId,
+    required String packageName,
+    required Map<String, dynamic> state,
+  }) async {
+    try {
+      final id = await client.rpc(
+        'share_package_to_world',
+        params: {
+          'p_world_id': worldId,
+          'p_package_name': packageName,
+          'p_state_json': jsonEncode(state),
+        },
+      ) as String?;
+      if (id != null) _stamp(_worldPackageEchoKey(id));
+      return id;
+    } catch (e) {
+      debugPrint('shareWorldPackage error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> unshareWorldPackage({required String packageId}) async {
+    _stamp(_worldPackageEchoKey(packageId));
+    try {
+      await client.rpc(
+        'unshare_world_package',
+        params: {'p_package_id': packageId},
+      );
+    } catch (e) {
+      debugPrint('unshareWorldPackage error: $e');
+      rethrow;
+    }
+  }
+
+  bool isEchoOfWorldPackage(String packageId) =>
+      _isEcho(_worldPackageEchoKey(packageId));
 }
