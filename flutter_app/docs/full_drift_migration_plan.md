@@ -32,7 +32,7 @@
 | `worlds` | worlds (026) | id TEXT | rename `campaigns` → `worlds`. Add owner_id, template_id, template_hash. Drop state_json. |
 | `world_members` | world_members (026) | (world_id, user_id) | role enum 'dm'\|'player' |
 | `world_entities` | world_entities (026) | id TEXT | rename `entities` → `world_entities`. Rename campaign_id → world_id |
-| `world_characters` | world_characters (026) | id TEXT | rename `characters` → `world_characters`. Add referenced_entity_ids JSON. owner_id UUID-string. **`entity_json` TEXT preserved as opaque blob — see Character Mechanics Preservation below.** |
+| `world_characters` | world_characters (026) | id TEXT | rename `characters` → `world_characters`. Add referenced_entity_ids JSON. owner_id UUID-string. **`payload_json` TEXT preserved as opaque blob — see Character Mechanics Preservation below.** (Postgres uses `payload_json`, not v11's `entity_json` — v12 follows Postgres.) |
 | `world_mind_map_nodes` | (026) | id | rename, scope by world_id |
 | `world_mind_map_edges` | (026) | id | rename, scope by world_id |
 | `world_sessions` | world_sessions (042) | id | data_json TEXT, sort_order INT. Drop legacy notes/logs |
@@ -47,8 +47,8 @@
 
 | Drift Table | Postgres Source | PK |
 |-------------|-----------------|----|
-| `personal_characters` | personal_characters (033) | id |
 | `personal_packages` | personal_packages (033) | (owner_id, package_name) |
+| ~~`personal_characters`~~ | DROPPED (migration 040) — chars unified into `world_characters` (orphan = ownerless) | n/a |
 | `packages` | (local catalog) | id |
 | `package_schemas` | (internal) | package_id |
 | `package_entities` | (internal) | (package_id, entity_id) |
@@ -102,7 +102,7 @@
 ### PR-D1: DAOs
 
 - Replace 10 existing DAOs with new set keyed to v12 names.
-- `WorldsDao`, `WorldEntitiesDao`, `WorldCharactersDao`, `WorldMindMapDao`, `WorldSessionsDao`, `WorldMapDataDao`, `WorldSettingsDao`, `WorldMembersDao`, `WorldPackagesDao`, `EntitySharesDao`, `CharacterClaimPoolDao`, `WorldInvitesDao`, `PersonalCharactersDao`, `PersonalPackagesDao`, `PackagesDao`, `InstalledPackagesDao`, `TrashDao`, `SyncOutboxDao`, `CombatDao`, `MapPinsDao`, `TimelinePinsDao`.
+- `WorldsDao`, `WorldEntitiesDao`, `WorldCharactersDao`, `WorldMindMapDao`, `WorldSessionsDao`, `WorldMapDataDao`, `WorldSettingsDao`, `WorldMembersDao`, `WorldPackagesDao`, `EntitySharesDao`, `CharacterClaimPoolDao`, `WorldInvitesDao`, `PersonalPackagesDao`, `PackagesDao`, `InstalledPackagesDao`, `TrashDao`, `SyncOutboxDao`, `CombatDao`, `MapPinsDao`, `TimelinePinsDao`. (No `PersonalCharactersDao` — table was dropped Postgres-side in migration 040.)
 - Each DAO mirrors Postgres CRUD semantics. Streams via `watch*` for reactive providers.
 - **Perf rules for DAO impl** (non-negotiable):
   - All multi-row writes wrapped in `db.transaction(...)` — CDC apply batches must commit once, not per row.
@@ -233,13 +233,13 @@
 
 ### Migration rule: `entity_json` is opaque
 
-The `world_characters.entity_json` blob (currently `entityJson` in v11 [characters_table.dart](../lib/data/database/tables/characters_table.dart)) **MUST** round-trip byte-for-byte. Do **not**:
+The `world_characters.payload_json` blob (currently `entityJson` in v11 [characters_table.dart](../lib/data/database/tables/characters_table.dart); renamed to match Postgres) **MUST** round-trip byte-for-byte. Do **not**:
 
 - ❌ Normalize `entity.fields` into per-mechanic columns (would drop `pending_choices`, custom user fields, future-added choice kinds).
 - ❌ Parse + re-serialize via a typed model class on write (would silently drop unknown keys when the model lags behind SRD additions).
 - ❌ Strip `pending_choices` (deferred ASI/feat/subclass/weapon-mastery picks — losing these orphans the character mid-level-up).
 
-The DAO must read/write `entity_json` as a `String` column without intermediate typed conversion. Only the resolver layer interprets it.
+The DAO must read/write `payload_json` as a `String` column without intermediate typed conversion. Only the resolver layer interprets it.
 
 ### What round-trips end-to-end (preserved-by-design)
 
