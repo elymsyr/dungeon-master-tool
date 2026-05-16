@@ -34,27 +34,6 @@
   <b>Languages:</b> English | Turkish | German | French
 </p>
 
-<p align="center">
-  <table align="center">
-    <tr>
-      <td align="center"><img src="media/char.png" alt="Character" width="400"/></td>
-      <td align="center"><img src="media/db.png" alt="Database" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/map.png" alt="Map" width="400"/></td>
-      <td align="center"><img src="media/settings.png" alt="Pack" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/social.png" alt="Social" width="400"/></td>
-      <td align="center"><img src="media/session.png" alt="Session" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="media/world.png" alt="World" width="400"/></td>
-      <td align="center"><img src="media/pack.png" alt="Settings" width="400"/></td>
-    </tr>
-  </table>
-</p>
-
 ---
 
 ## Roadmap
@@ -164,6 +143,31 @@ Planned for upcoming releases — order not final, scope may shift between patch
 
 1. Download `DungeonMasterTool-iOS.ipa` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
 2. Sideload using Xcode, AltStore, or a similar tool.
+
+---
+
+## Images
+
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><img src="media/char.png" alt="Character" width="400"/></td>
+      <td align="center"><img src="media/db.png" alt="Database" width="400"/></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="media/map.png" alt="Map" width="400"/></td>
+      <td align="center"><img src="media/settings.png" alt="Pack" width="400"/></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="media/social.png" alt="Social" width="400"/></td>
+      <td align="center"><img src="media/session.png" alt="Session" width="400"/></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="media/world.png" alt="World" width="400"/></td>
+      <td align="center"><img src="media/pack.png" alt="Settings" width="400"/></td>
+    </tr>
+  </table>
+</p>
 
 ---
 
