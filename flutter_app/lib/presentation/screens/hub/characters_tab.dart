@@ -12,6 +12,7 @@ import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/cloud_catchup_service.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
@@ -36,6 +37,20 @@ class CharactersTab extends ConsumerStatefulWidget {
 class _CharactersTabState extends ConsumerState<CharactersTab> {
   int _selectedIndex = -1;
   bool _releasing = false;
+  bool _refreshing = false;
+
+  Future<void> _doRefresh() async {
+    if (_refreshing) return;
+    setState(() => _refreshing = true);
+    try {
+      await ref.read(cloudCatchupServiceProvider).runAll();
+    } catch (e) {
+      debugPrint('Characters refresh error: $e');
+    }
+    if (!mounted) return;
+    ref.invalidate(characterListProvider);
+    setState(() => _refreshing = false);
+  }
 
   /// Char tab visibility is own-only: signed-in users see characters whose
   /// `ownerId == auth.uid`. Pre-auth (offline) data has `ownerId == null`
@@ -103,6 +118,22 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Refresh from cloud',
+                    child: OutlinedButton(
+                      onPressed: _refreshing ? null : _doRefresh,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        minimumSize: const Size(32, 32),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _refreshing
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.refresh, size: 16),
                     ),
                   ),
                   const SizedBox(width: 4),

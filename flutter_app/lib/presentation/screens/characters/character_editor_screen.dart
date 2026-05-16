@@ -75,7 +75,6 @@ class CharacterEditorScreen extends ConsumerStatefulWidget {
 class _CharacterEditorScreenState
     extends ConsumerState<CharacterEditorScreen> {
   Character? _working;
-  Timer? _autoSaveTimer;
   bool _saving = false;
   bool _readOnly = true;
   bool _grantsBackfilled = false;
@@ -113,7 +112,6 @@ class _CharacterEditorScreenState
 
   @override
   void dispose() {
-    _autoSaveTimer?.cancel();
     _undoIdleTimer?.cancel();
     _descController.dispose();
     _descFocus.dispose();
@@ -206,15 +204,9 @@ class _CharacterEditorScreenState
     _scheduleAutoSave();
   }
 
-  /// Mark `_working` as dirty and debounce-persist via characterListProvider.
-  /// Mirrors the world editor's autosave vibe.
-  void _scheduleAutoSave() {
-    _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      _save(silent: true);
-    });
-  }
+  /// Auto-save kaldırıldı. `_working` state in-memory tutulur; Save butonu
+  /// veya close akışı diske flush eder. Callsite'lar no-op gibi davranır.
+  void _scheduleAutoSave() {}
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +214,10 @@ class _CharacterEditorScreenState
     // Cross-device freshness: when the cloud-pull (initState) replaces the
     // local Character with a newer payload, adopt it into `_working` so the
     // editor renders the new data instead of the stale snapshot it cached
-    // on first build. Skipped when the user has dirtied `_working` (auto-
-    // save is dropped — autosave runs every 1.2s so the unsaved window is
-    // tiny but worth respecting).
+    // on first build. Auto-save kaldırıldı; user actively editing iken
+    // bile cloud-newer geldiğinde overwrite ediyoruz (kullanıcı Save'e
+    // basana kadar `_working` zaten kaydedilmiş değil — tek meşru kaynak
+    // cloud).
     ref.listen<Character?>(
       characterByIdProvider(widget.characterId),
       (prev, next) {
@@ -235,7 +228,6 @@ class _CharacterEditorScreenState
         final workingAt = DateTime.tryParse(working.updatedAt);
         if (nextAt == null || workingAt == null) return;
         if (!nextAt.isAfter(workingAt)) return;
-        if (_autoSaveTimer?.isActive == true) return;
         setState(() => _working = next);
       },
     );
@@ -2484,7 +2476,6 @@ class _CharacterEditorScreenState
   }
 
   Future<void> _saveAndClose(BuildContext context) async {
-    _autoSaveTimer?.cancel();
     await _save(silent: true);
     // Flush cloud snapshot (beta + non-online-world chars) before the editor
     // tears down so the user's last edit lands on the server. Mirror-route

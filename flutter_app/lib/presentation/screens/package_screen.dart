@@ -220,7 +220,7 @@ class _PackageScreenContentState
       'save-package',
       'Saving package...',
       () async {
-        await ref.read(saveStateProvider.notifier).saveNow();
+        await ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
         await ref.read(manualBackupRunnerProvider).backupActiveItem();
       },
     );

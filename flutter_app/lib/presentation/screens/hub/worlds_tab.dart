@@ -10,6 +10,7 @@ import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/world_membership_provider.dart';
+import '../../../application/services/cloud_catchup_service.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
@@ -38,11 +39,26 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
   WorldSchema? _selectedTemplate;
+  bool _refreshing = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _doRefresh() async {
+    if (_refreshing) return;
+    setState(() => _refreshing = true);
+    try {
+      await ref.read(cloudCatchupServiceProvider).runAll();
+    } catch (e) {
+      debugPrint('Worlds refresh error: $e');
+    }
+    if (!mounted) return;
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(campaignInfoListProvider);
+    setState(() => _refreshing = false);
   }
 
   @override
@@ -94,6 +110,22 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       ),
                     ),
                   ],
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Refresh from cloud',
+                    child: OutlinedButton(
+                      onPressed: _refreshing ? null : _doRefresh,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        minimumSize: const Size(32, 32),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _refreshing
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.refresh, size: 16),
+                    ),
+                  ),
                   const SizedBox(width: 4),
                   OutlinedButton(
                     onPressed: _openCreateWorldDialog,

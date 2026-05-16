@@ -95,10 +95,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       // ignore: discarded_futures
       _backfillWorldIds(infos);
     });
-    // Online world set changed: for every world that just appeared, push the
-    // local copy of its owned chars to `world_characters` so reconnects /
-    // late publishes always upload the freshest local payload (last-write-
-    // wins). Also drains the pending release queue on the first transition.
+    // Online world set changed: pending release queue (user explicitly
+    // released a char while offline) drained on first transition. Auto-push
+    // of edited chars kaldırıldı — kullanıcı manuel Sync butonu ile push'lar.
     _ref.listen(onlineWorldIdsProvider, (prev, next) {
       final prevSet = prev ?? const <String>{};
       final added = next.difference(prevSet);
@@ -107,39 +106,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         // ignore: discarded_futures
         drainPendingReleases();
       }
-      _pushCharsForWorlds(added);
     });
-    // Non-beta → beta transition: kullanıcı beta'ya katıldı, daha önce local
-    // kalan online-world karakterlerini world_characters'a push et.
-    _ref.listen(isBetaActiveProvider, (prev, next) {
-      if (prev != true && next == true) {
-        _backfillMirrorForBeta();
-      }
-    });
-  }
-
-  /// Beta'ya yeni katılan kullanıcının karakterlerini uygun backend'e
-  /// (world_characters veya cloud_backup) push'lar.
-  void _backfillMirrorForBeta() {
-    final list = state.valueOrNull;
-    if (list == null) return;
-    for (final c in list) {
-      _syncPush(c);
-    }
-  }
-
-  /// Reconnect / late-publish push: when worlds appear in
-  /// `onlineWorldIdsProvider`, upload every owned char belonging to them so
-  /// edits made while offline land on the server (last-write-wins).
-  void _pushCharsForWorlds(Set<String> worldIds) {
-    final list = state.valueOrNull;
-    if (list == null) return;
-    for (final c in list) {
-      final wid = c.worldId;
-      if (wid == null) continue;
-      if (!worldIds.contains(wid)) continue;
-      _mirrorPush(c);
-    }
   }
 
   final CharacterRepository _repo;
@@ -456,14 +423,10 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       if (auth != null) {
         await _backfillWorldlessOwnership(auth.uid);
       }
-      // Cold-start mirror/backup push: worlds and beta state may have settled
-      // before the char list finished loading, so the listeners above missed
-      // their chance. Each `_syncPush` short-circuits when the char isn't
-      // eligible for its route (offline world / non-beta worldless), so the
-      // sweep is cheap.
-      for (final c in state.valueOrNull ?? const <Character>[]) {
-        _syncPush(c);
-      }
+      // Cold-start push sweep kaldırıldı (manuel save+sync modeli).
+      // Cloud catch-up pull yine çalışır — `cloudCatchupServiceProvider`
+      // app startup'ta runAll() ile tetikler; bu satır da redundant ama
+      // ucuz no-op olduğu için bırakıldı.
       // ignore: discarded_futures
       pullNewerFromCloud();
     } catch (e, st) {

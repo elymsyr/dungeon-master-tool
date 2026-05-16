@@ -3,16 +3,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/outbox_status_provider.dart';
-import '../../application/providers/package_provider.dart'
-    show activePackageProvider, activeCampaignSyncProvider;
+import '../../application/providers/package_provider.dart' show activePackageProvider;
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/sync_engine_provider.dart';
-import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
@@ -22,6 +21,7 @@ import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
+import '../../application/services/cloud_catchup_service.dart';
 import '../../application/services/media_bundler.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
@@ -73,12 +73,7 @@ class SaveSyncIndicator extends ConsumerWidget {
     final outbox = itemOnCloud
         ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
         : null;
-    // Live-link engine (SRD pack apply on campaign open) — counts as local
-    // work so the spinner stays single-source.
-    final liveLinkBusy = ref.watch(
-      activeCampaignSyncProvider.select((s) => s.isLoading),
-    );
-    final localSaving = saveStatus == SaveStatus.saving || liveLinkBusy;
+    final localSaving = saveStatus == SaveStatus.saving;
     final cloudSyncing = outbox != null && outbox.isSyncing;
 
     final (IconData icon, Color color) = _resolveIcon(
@@ -100,7 +95,7 @@ class SaveSyncIndicator extends ConsumerWidget {
                   ),
                 )
               : Icon(icon, size: 20, color: color),
-          tooltip: _tooltip(saveStatus, outbox, liveLinkBusy: liveLinkBusy),
+          tooltip: _tooltip(saveStatus, outbox),
           onPressed: () => _showSaveSyncDialog(context, ref, compact: false),
         ),
         if (outbox != null && outbox.hasIssue)
@@ -162,9 +157,7 @@ class SaveSyncIndicator extends ConsumerWidget {
         : (Icons.cloud_done, palette.successBtnBg);
   }
 
-  String _tooltip(SaveStatus save, OutboxStatus? sync,
-      {required bool liveLinkBusy}) {
-    if (liveLinkBusy) return 'Applying package updates...';
+  String _tooltip(SaveStatus save, OutboxStatus? sync) {
     if (sync != null) {
       if (sync.hasIssue) {
         return 'Sync stuck (${sync.maxAttempts} attempts)';
@@ -198,7 +191,6 @@ class _SaveSyncDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final uiState = ref.watch(uiStateProvider);
     final saveStatus = ref.watch(saveStateProvider);
     final hasCloud = SupabaseConfig.isConfigured;
     final outbox = hasCloud
@@ -250,20 +242,8 @@ class _SaveSyncDialog extends ConsumerWidget {
                   _ActiveItemSaveInfo(palette: palette),
                 ],
 
-                // ── Settings (full mode only) ──
+                // ── Actions (full mode only) ──
                 if (!compact) ...[
-                  _SectionLabel('Settings', palette),
-                  const SizedBox(height: 4),
-                  _SettingsCheckbox(
-                    label: 'Auto local save',
-                    value: uiState.autoLocalSave,
-                    onChanged: (v) => ref.read(uiStateProvider.notifier).update(
-                        (s) => s.copyWith(autoLocalSave: v)),
-                    palette: palette,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Actions (full mode only) ──
                   _SectionLabel('Actions', palette),
                   const SizedBox(height: 8),
                   _ActionsRow(
@@ -333,49 +313,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _SettingsCheckbox extends StatelessWidget {
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final DmToolColors palette;
-
-  const _SettingsCheckbox({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    required this.palette,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => onChanged(!value),
-      borderRadius: palette.br,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: Checkbox(
-                value: value,
-                onChanged: (v) => onChanged(v ?? false),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(fontSize: 13, color: palette.tabActiveText),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// Online world panel — invite code (copy + regenerate) ve member listesini
 /// gösterir. World offline iken hiçbir şey render etmez.
@@ -417,9 +354,9 @@ class _OnlineWorldPanel extends ConsumerWidget {
 // _InviteCodeRow / _MemberRow extracted to online_world_widgets.dart so the
 // world-settings online panel can render the same shape.
 
-/// Actions panel — world açıkken "Save Locally" + "Make Online" (toggle);
-/// World açıkken sadece "Make Online" toggle. Package açıkken eylem yok —
-/// local + cloud kayıt auto-sync ile.
+/// Actions panel — active world/package için manuel Save (disk) + Sync
+/// (push + pull) + Make Online toggle (sadece world). Auto-save tamamen
+/// kaldırıldı; bu butonlar tek tetik noktası.
 class _ActionsRow extends ConsumerWidget {
   final DmToolColors palette;
   final SaveStatus saveStatus;
@@ -434,9 +371,120 @@ class _ActionsRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final campaignName = ref.watch(activeCampaignProvider);
-    final isWorld = campaignName != null;
-    if (!isWorld || !hasCloud) return const SizedBox.shrink();
-    return _MakeOnlineButton(palette: palette);
+    final packageName = ref.watch(activePackageProvider);
+    final hasActive = campaignName != null || packageName != null;
+    if (!hasActive) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _SaveButton(palette: palette, saveStatus: saveStatus),
+        if (hasCloud) _SyncButton(palette: palette),
+        if (campaignName != null && hasCloud)
+          _MakeOnlineButton(palette: palette),
+      ],
+    );
+  }
+}
+
+class _SaveButton extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  final SaveStatus saveStatus;
+  const _SaveButton({required this.palette, required this.saveStatus});
+
+  @override
+  ConsumerState<_SaveButton> createState() => _SaveButtonState();
+}
+
+class _SaveButtonState extends ConsumerState<_SaveButton> {
+  bool _busy = false;
+
+  Future<void> _save() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(saveStateProvider.notifier).saveNow();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final saving = _busy || widget.saveStatus == SaveStatus.saving;
+    return _ActionButton(
+      icon: Icons.save,
+      label: saving ? 'Saving...' : 'Save',
+      onPressed: saving ? null : _save,
+      palette: widget.palette,
+    );
+  }
+}
+
+class _SyncButton extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  const _SyncButton({required this.palette});
+
+  @override
+  ConsumerState<_SyncButton> createState() => _SyncButtonState();
+}
+
+class _SyncButtonState extends ConsumerState<_SyncButton> {
+  bool _busy = false;
+
+  Future<void> _sync() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(syncEngineProvider).forceTick();
+      await ref.read(cloudCatchupServiceProvider).runAll();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sync complete')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sync failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final campaignName = ref.watch(activeCampaignProvider);
+    final packageName = ref.watch(activePackageProvider);
+    bool online = false;
+    if (campaignName != null) {
+      final data = ref.read(activeCampaignProvider.notifier).data;
+      final worldId = (data?['world_id'] as String?) ?? campaignName;
+      online = ref.watch(onlineWorldIdsProvider).contains(worldId);
+    } else if (packageName != null) {
+      final signedIn = ref.watch(authProvider) != null;
+      final betaActive = ref.watch(betaProvider).isActive;
+      online = signedIn && betaActive;
+    }
+    final tooltip = online
+        ? 'Sync now (push + pull)'
+        : campaignName != null
+            ? 'Make this world online first'
+            : 'Sign in + join beta to sync';
+    return Tooltip(
+      message: tooltip,
+      child: _ActionButton(
+        icon: Icons.cloud_sync,
+        label: _busy ? 'Syncing...' : 'Sync',
+        onPressed: (online && !_busy) ? _sync : null,
+        palette: widget.palette,
+      ),
+    );
   }
 }
 
@@ -467,7 +515,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final isDm = role == WorldRole.dm;
 
     if (isOnline) {
-      final label = isDm ? 'Online · Auto-sync' : 'Online · Player';
+      final label = isDm ? 'Online · DM' : 'Online · Player';
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [

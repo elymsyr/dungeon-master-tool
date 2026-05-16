@@ -1,9 +1,7 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/deep_copy.dart';
-import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/local/package_local_ds.dart';
 import '../../data/repositories/package_repository_impl.dart';
@@ -11,15 +9,11 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
-import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
-import '../services/package_import_service.dart';
-import '../services/package_sync_service.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
-import 'campaign_provider.dart'
-    show activeCampaignProvider, campaignRevisionProvider;
+import 'campaign_provider.dart' show campaignRevisionProvider;
 import 'cloud_backup_provider.dart';
 import 'personal_online_provider.dart';
 import 'sync_engine_provider.dart';
@@ -42,96 +36,12 @@ final srdCorePackageBootstrapProvider = FutureProvider<void>((ref) async {
   await SrdCorePackageBootstrap(db).ensureInstalled();
 });
 
-/// Live-link sync for the active campaign. After SRD pack refresh, walks
-/// `installed_packages` rows for the campaign and applies each pack's
-/// current state to linked entities (add/update/remove). Runs once per
-/// (campaign, app session) — campaign switches re-trigger.
+/// Otomatik SRD pack live-link auto-apply kaldırıldı (manuel save/sync
+/// modeli). Provider mevcut callsite'ları break etmesin diye no-op olarak
+/// duruyor; kullanıcı paketleri açıkça apply etmek isterse hub'da ayrı bir
+/// aksiyon eklenecek (out of scope).
 final activeCampaignSyncProvider = FutureProvider<int>((ref) async {
-  await ref.watch(srdCorePackageBootstrapProvider.future);
-  final campaign = ref.watch(activeCampaignProvider);
-  if (campaign == null) return 0;
-  final db = ref.read(appDatabaseProvider);
-  final notifier = ref.read(activeCampaignProvider.notifier);
-  final campaignId = notifier.data?['world_id'] as String?;
-  if (campaignId == null) return 0;
-
-  // Fast path: if no installed packs AND no orphan rows, sync would no-op.
-  // Skip the heavier scans below so 99% of tab transitions never pay this.
-  final installedNow =
-      await db.installedPackageDao.listForCampaign(campaignId);
-  if (installedNow.isEmpty) {
-    final firstOrphan = await (db.select(db.entities)
-          ..where((t) =>
-              t.campaignId.equals(campaignId) & t.packageId.isNotNull())
-          ..limit(1))
-        .get();
-    if (firstOrphan.isEmpty) return 0;
-  }
-
-  // Migrate orphans: campaigns created before installed_packages existed
-  // may have entities with packageId set but no matching install row.
-  // Detect those and create install rows so sync can repair them (e.g.
-  // rewrite spell.class_refs from pack-side UUIDs to campaign-side).
-  final installedIds = installedNow.map((r) => r.packageId).toSet();
-  final orphanRows = await (db.select(db.entities)
-        ..where((t) =>
-            t.campaignId.equals(campaignId) & t.packageId.isNotNull()))
-      .get();
-  final orphanPackageIds = <String>{};
-  for (final row in orphanRows) {
-    final pid = row.packageId;
-    if (pid != null && !installedIds.contains(pid)) {
-      orphanPackageIds.add(pid);
-    }
-  }
-  for (final pid in orphanPackageIds) {
-    final pkg = await db.packageDao.getById(pid);
-    await db.installedPackageDao.upsert(InstalledPackagesCompanion.insert(
-      campaignId: campaignId,
-      packageId: pid,
-      packageName: Value(pkg?.name ?? ''),
-    ));
-  }
-
-  final installed =
-      await db.installedPackageDao.listForCampaign(campaignId);
-  if (installed.isEmpty) return 0;
-
-  // Build Tier-0 (slug,name) → uuid index from the destination campaign so
-  // pack-side `_lookup` placeholders resolve to this campaign's IDs.
-  final build = generateBuiltinDnd5eV2Schema();
-  final tier0Slugs = build.seedRows.keys.toSet();
-  final tier0Rows = await (db.select(db.entities)
-        ..where((t) =>
-            t.campaignId.equals(campaignId) &
-            t.categorySlug.isIn(tier0Slugs)))
-      .get();
-  final tier0Index = <String, Map<String, String>>{};
-  for (final row in tier0Rows) {
-    tier0Index
-        .putIfAbsent(row.categorySlug, () => <String, String>{})[row.name] =
-        row.id;
-  }
-  Map<String, dynamic> resolveAttrs(Map<String, dynamic> attrs) {
-    return PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
-        as Map<String, dynamic>;
-  }
-
-  final sync = PackageSyncService(db);
-  var total = 0;
-  for (final pkg in installed) {
-    final result = await sync.sync(
-      campaignId: campaignId,
-      packageId: pkg.packageId,
-      resolveAttrs: resolveAttrs,
-    );
-    total += result.total;
-  }
-  if (total > 0) {
-    // Reload campaign so the entity provider picks up the synced rows.
-    await notifier.reload();
-  }
-  return total;
+  return 0;
 });
 
 /// Paket listesi — hub ekranında gösterim için.
@@ -244,10 +154,10 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     }
   }
 
-  Future<void> save() async {
+  Future<void> save({bool pushMirror = false}) async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
-      _mirrorPushPersonal();
+      if (pushMirror) _mirrorPushPersonal();
     }
   }
 

@@ -6,6 +6,7 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -31,11 +32,25 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
   WorldSchema? _selectedTemplate;
+  bool _refreshing = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _doRefresh() async {
+    if (_refreshing) return;
+    setState(() => _refreshing = true);
+    try {
+      await ref.read(cloudCatchupServiceProvider).runAll();
+    } catch (e) {
+      debugPrint('Packages refresh error: $e');
+    }
+    if (!mounted) return;
+    ref.invalidate(packageListProvider);
+    setState(() => _refreshing = false);
   }
 
   @override
@@ -87,6 +102,22 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Refresh from cloud',
+                    child: OutlinedButton(
+                      onPressed: _refreshing ? null : _doRefresh,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        minimumSize: const Size(32, 32),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _refreshing
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.refresh, size: 16),
                     ),
                   ),
                   const SizedBox(width: 4),
