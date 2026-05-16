@@ -15,7 +15,6 @@ import '../services/campaign_import_service.dart';
 import '../services/media_bundler.dart';
 import '../services/world_mirror_service.dart';
 import 'auth_provider.dart';
-import 'beta_provider.dart';
 import 'builtin_package_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
@@ -181,39 +180,11 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
-      // ignore: discarded_futures
-      _pullIfCloudNewer();
+      // Manuel sync modeli: load sırasında otomatik cloud pull yok.
       return true;
     } catch (e, st) {
       debugPrint('Campaign load error: $e\n$st');
       return false;
-    }
-  }
-
-  /// On open: if cloud_backup of this world is newer than the row we just
-  /// loaded from disk, download + replace in place. Best-effort — auth,
-  /// network or decode errors leave the local copy untouched.
-  Future<void> _pullIfCloudNewer() async {
-    if (!SupabaseConfig.isConfigured) return;
-    if (_ref.read(authProvider) == null) return;
-    if (!_ref.read(isBetaActiveProvider)) return;
-    final data = _data;
-    final name = state;
-    if (data == null || name == null) return;
-    final worldId = (data['world_id'] as String?) ?? name;
-    final localUpdatedRaw = data['last_modified'] ?? data['updated_at'];
-    final localUpdated = localUpdatedRaw is String
-        ? DateTime.tryParse(localUpdatedRaw)
-        : null;
-    try {
-      final repo = _ref.read(cloudBackupRepositoryProvider);
-      final meta = await repo.fetchByItem(worldId, 'world');
-      if (meta == null) return;
-      if (localUpdated != null && !meta.createdAt.isAfter(localUpdated)) return;
-      final fresh = await repo.downloadBackup(meta.id);
-      await replaceWithData(fresh);
-    } catch (e) {
-      debugPrint('Campaign cloud-pull error: $e');
     }
   }
 
@@ -497,15 +468,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String campaignName) async {
-    // Karakter bağını kopar: world trash'e atılmadan önce bu world'e bağlı
-    // karakterleri orphan'a çevir (worldName boş + built-in SRD remap).
-    // Aksi halde world silindikten sonra karakter `worldName` set kalır,
-    // Hub Characters tab'da role-aware delete check world'ü bulamayıp
-    // "World-bound character" tooltip'i ile silmeyi engeller. Aynı isimli
-    // yeni bir world yaratılırsa hub filtresi (`c.worldName == activeWorld`)
-    // bu eski karakterleri yeni world'e yapıştırır — orphan adımı bunu önler.
-    // Trash restore sırasında bağ tekrar kurulmaz — DM gerekirse yeniden link
-    // eder.
+    // Karakter bağını kopar (önce orphan): bkz. eski yorum bloğu.
     Map<String, dynamic>? data;
     try {
       if (state == campaignName && _data != null) {
@@ -516,8 +479,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     } catch (e, st) {
       debugPrint('orphan-before-delete load error: $e\n$st');
     }
-    // Entities load başarısız olsa bile orphan zorunlu — yoksa eski chars
-    // worldName=X kalır, aynı isimli yeni world onları sahiplenir.
     final entitiesRaw = data?['entities'];
     final entitiesMap = entitiesRaw is Map<String, dynamic>
         ? entitiesRaw
@@ -529,16 +490,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     } catch (e, st) {
       debugPrint('orphan-before-delete error: $e\n$st');
     }
+    // Yeni sıra: cloud önce, sonra lokal. Cloud silinmezse rethrow et —
+    // UI lokal silmeyi iptal eder, refresh ile dünyanın geri gelmesini
+    // önler.
+    await _cloudDeleteWorld(
+      worldId: data?['world_id'] as String?,
+      campaignName: campaignName,
+    );
     await _repo.delete(campaignName);
     if (state == campaignName) {
       _data = null;
       state = null;
     }
-    // Cascade cloud cleanup: kill the `worlds` row (cascade wipes
-    // world_entities/world_characters/world_map_data/world_sessions/
-    // world_settings/world_packages) and any matching cloud_backups
-    // snapshot. Online-only — offline world never had cloud state.
-    await _cloudDeleteWorld(worldId: data?['world_id'] as String?, campaignName: campaignName);
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -595,24 +558,29 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (_ref.read(authProvider) == null) return;
     final wid = worldId ?? campaignName;
     final wasOnline = _ref.read(onlineWorldIdsProvider).contains(wid);
-    // Offline-only worlds never touched the cloud; skip both server calls
-    // so the delete doesn't light up the cloud-sync indicator.
-    if (!wasOnline) return;
-    try {
-      await _ref.read(worldMembershipServiceProvider).unpublishWorld(wid);
-    } catch (e) {
-      debugPrint('cloud-delete unpublishWorld error: $e');
-    }
-    try {
-      await _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
-            itemId: wid,
-            type: 'world',
-          );
-    } catch (e) {
-      debugPrint('cloud-delete cloud_backup enqueue error: $e');
-    }
-    // Drop the online flag so future operations see this world as offline.
+    // Cloud row var mı diye kontrol et — wasOnline set'i stale olabilir
+    // (publish edildi ama set güncellenmedi). Cloud'da satır varsa
+    // silmeyi zorla dene; yoksa skip.
+    final hasCloudRow = wasOnline || await _cloudHasWorld(wid);
+    if (!hasCloudRow) return;
+    // Başarısız olursa rethrow — caller lokal silmeyi iptal eder.
+    await _ref.read(worldMembershipServiceProvider).unpublishWorld(wid);
     _ref.read(onlineWorldIdsProvider.notifier).remove(wid);
+  }
+
+  Future<bool> _cloudHasWorld(String worldId) async {
+    if (!SupabaseConfig.isConfigured) return false;
+    try {
+      final row = await Supabase.instance.client
+          .from('worlds')
+          .select('id')
+          .eq('id', worldId)
+          .maybeSingle();
+      return row != null;
+    } catch (e) {
+      debugPrint('cloud-has-world check error: $e');
+      return false;
+    }
   }
 }
 

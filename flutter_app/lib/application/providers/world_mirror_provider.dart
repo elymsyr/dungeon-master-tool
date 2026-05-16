@@ -18,8 +18,9 @@ final worldMirrorServiceProvider = Provider<WorldMirrorService?>((ref) {
   return WorldMirrorService(Supabase.instance.client);
 });
 
-/// Applier — sync.events stream'ini local state'e bağlar. App startup
-/// `ref.watch(worldMirrorApplierProvider)` ile başlatılır.
+/// Applier — sync.events stream'ini local state'e bağlar. Singleton kalır;
+/// realtime subscription tamamen manuel olduğundan applier sadece event
+/// kanalına bağlı durur, hiç event almazsa no-op.
 final worldMirrorApplierProvider = Provider<WorldMirrorApplier?>((ref) {
   final mirror = ref.watch(worldMirrorServiceProvider);
   final sync = ref.watch(worldSyncServiceProvider);
@@ -30,30 +31,20 @@ final worldMirrorApplierProvider = Provider<WorldMirrorApplier?>((ref) {
   return applier;
 });
 
-/// Aktif campaign + rol değiştikçe sync subscription'ı otomatik açıp kapatır.
-/// Subscribe'tan hemen sonra `WorldMirrorApplier.applyInitialState` ile remote
-/// snapshot local'a seed edilir. MainScreen
-/// `ref.watch(worldSyncAutoSubscribeProvider)` ile tetikler.
-final worldSyncAutoSubscribeProvider = Provider<void>((ref) {
-  final svc = ref.watch(worldSyncServiceProvider);
+/// Manuel sync giriş noktası. Sync butonu çağırır — subscribe + initial
+/// snapshot pull. Hiçbir yerde otomatik watch edilmez. WidgetRef veya Ref
+/// kabul eder (her ikisi de `.read` + `.read(<future>)` destekler).
+Future<void> runManualWorldSync(WidgetRef ref) async {
+  final svc = ref.read(worldSyncServiceProvider);
   if (svc == null) return;
-  final applier = ref.watch(worldMirrorApplierProvider);
-  final campaignId = ref.watch(activeCampaignIdProvider).valueOrNull;
-  final role =
-      ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
-
-  if (campaignId == null || role == WorldRole.none) {
-    unawaited(svc.unsubscribeAll());
-    return;
-  }
+  final campaignId = await ref.read(activeCampaignIdProvider.future);
+  final role = await ref.read(currentWorldRoleProvider.future);
+  if (campaignId == null || role == WorldRole.none) return;
+  final applier = ref.read(worldMirrorApplierProvider);
   if (!svc.isSubscribed(campaignId)) {
-    // Fire-and-forget — UI build no longer blocks on remote snapshot seed.
-    // Drift mirror rows will trigger entity_provider notifiers as they
-    // arrive; tab content paints immediately.
-    unawaited(svc.subscribe(campaignId));
-    final a = applier;
-    if (a != null) {
-      unawaited(a.applyInitialState(campaignId));
-    }
+    await svc.subscribe(campaignId);
   }
-});
+  if (applier != null) {
+    await applier.applyInitialState(campaignId);
+  }
+}

@@ -50,8 +50,29 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
 
   @override
   Future<void> unpublishWorld(String worldId) async {
-    // ON DELETE CASCADE tüm mirror data'yı siler.
-    await client.from('worlds').delete().eq('id', worldId);
+    // ON DELETE CASCADE tüm mirror data'yı siler. PostgREST RLS reddederse
+    // sessizce 0 satır siler — `.select('id')` ile dönen listeyi kontrol
+    // ediyoruz. Boş dönerse satır hâlâ duruyor demek (owner değil, başka
+    // hesaptan publish edilmiş ya da artık yok). Lokal delete akışının
+    // refresh ile geri getirilmesini önlemek için bu durumu net hata
+    // olarak fırlat.
+    final result = await client
+        .from('worlds')
+        .delete()
+        .eq('id', worldId)
+        .select('id');
+    final rows = (result as List).cast<Map<String, dynamic>>();
+    if (rows.isEmpty) {
+      // Satır zaten yoksa idempotent başarı kabul et.
+      final remaining = await client
+          .from('worlds')
+          .select('id')
+          .eq('id', worldId)
+          .maybeSingle();
+      if (remaining == null) return;
+      throw StateError(
+          'unpublishWorld: cloud row $worldId silinemedi (RLS reddetti — owner değilsiniz).');
+    }
   }
 
   @override
