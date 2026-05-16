@@ -19,7 +19,8 @@ import 'personal_online_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_mirror_provider.dart';
 
-final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
+final packageLocalDsProvider =
+    Provider((_) => const PackageLocalDataSource());
 
 final packageRepositoryProvider = Provider<PackageRepository>(
   (ref) => PackageRepositoryImpl(
