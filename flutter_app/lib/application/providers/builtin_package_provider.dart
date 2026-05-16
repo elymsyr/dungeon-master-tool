@@ -12,6 +12,6 @@ import 'package_provider.dart' show srdCorePackageBootstrapProvider;
 final builtinPackageIdProvider = FutureProvider<String?>((ref) async {
   await ref.watch(srdCorePackageBootstrapProvider.future);
   final db = ref.watch(appDatabaseProvider);
-  final row = await db.packageDao.getByName(srdCorePackageName);
-  return row?.id;
+  final all = await db.packagesDao.getAll();
+  return all.where((p) => p.name == srdCorePackageName).firstOrNull?.id;
 });

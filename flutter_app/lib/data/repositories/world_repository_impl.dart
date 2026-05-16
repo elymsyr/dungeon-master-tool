@@ -144,6 +144,32 @@ class WorldRepositoryImpl implements CampaignRepository {
     return worldName;
   }
 
+  @override
+  Future<bool> restoreFromTrash(String trashId) async {
+    final trash = await _db.trashDao.getById(trashId);
+    if (trash == null || trash.kind != 'world') return false;
+    try {
+      final payload = jsonDecode(trash.payloadJson) as Map<String, dynamic>;
+      final restoredName =
+          (payload['world_name'] as String?) ?? trash.sourceId;
+      // Conflict — skip restore if a world with that name already exists.
+      final clash = await _findByName(restoredName);
+      if (clash != null) {
+        await _db.trashDao.deleteById(trashId);
+        return false;
+      }
+      await save(restoredName, payload);
+      await _db.trashDao.deleteById(trashId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> permanentlyDelete(String trashId) =>
+      _db.trashDao.deleteById(trashId);
+
   // ── Internal helpers ─────────────────────────────────────────────────────
 
   Future<World?> _findByName(String name) async {

@@ -18,6 +18,13 @@ class WorldCharactersDao extends DatabaseAccessor<AppDatabase>
       (select(worldCharacters)..where((t) => t.id.equals(id)))
           .getSingleOrNull();
 
+  /// Hub char tab cold-load. Returns every row in the table; CharacterRepository
+  /// is responsible for filtering by ownership when the UI demands it.
+  Future<List<WorldCharacterRow>> getAllChars() =>
+      (select(worldCharacters)
+            ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+          .get();
+
   Stream<WorldCharacterRow?> watchById(String id) =>
       (select(worldCharacters)..where((t) => t.id.equals(id)))
           .watchSingleOrNull()

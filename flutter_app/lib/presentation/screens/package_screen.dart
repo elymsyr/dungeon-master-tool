@@ -166,6 +166,12 @@ class _PackageAsCampaignRepo implements CampaignRepository {
 
   @override
   Future<String> create(String name, {WorldSchema? template}) async => name;
+
+  @override
+  Future<bool> restoreFromTrash(String trashId) async => false;
+
+  @override
+  Future<void> permanentlyDelete(String trashId) async {}
 }
 
 /// Paket düzenleme ekranının asıl içeriği — ProviderScope içinde çalışır.

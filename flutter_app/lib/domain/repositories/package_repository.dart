@@ -28,4 +28,11 @@ abstract class PackageRepository {
     required String sourceName,
     required String destinationName,
   });
+
+  /// PR-D4: restore a soft-deleted package from `trash_items` by its trash
+  /// row id. Returns false on conflict / corrupt payload.
+  Future<bool> restoreFromTrash(String trashId);
+
+  /// PR-D4: hard-delete a trash row.
+  Future<void> permanentlyDelete(String trashId);
 }
