@@ -11,19 +11,15 @@ import 'srd_core_package_bootstrap.dart' show srdCorePackageName;
 
 const _uuid = Uuid();
 
-/// One-shot bootstrap that seeds a freshly-created v2 D&D 5e campaign with:
-///   1. Tier-0 lookup rows from [BuiltinDnd5eV2Build.seedRows] (abilities,
-///      skills, damage types, conditions, sizes, alignments, …).
-///   2. The hand-authored SRD 5.2.1 content pack from [buildSrdCorePack] —
-///      classes, spells, monsters, magic items, … with relation references
-///      resolved against the Tier-0 UUIDs minted in step 1.
+/// One-shot bootstrap that seeds a freshly-created v2 D&D 5e world with:
+///   1. Tier-0 lookup rows from [BuiltinDnd5eV2Build.seedRows].
+///   2. The hand-authored SRD 5.2.1 content pack from [buildSrdCorePack].
 ///
 /// Operates directly on [AppDatabase] (not via [EntityNotifier]) because it
-/// runs during `CampaignRepositoryImpl.create`, before any campaign is
-/// loaded into the active-campaign provider.
+/// runs during `WorldRepositoryImpl.create`, before any world is loaded.
 ///
-/// Idempotent guard via [WorldSchemas.metadataJson] → `srdCoreImportedAt`.
-/// v1 schema (`builtin-dnd5e-default`) campaigns are intentionally skipped.
+/// Idempotency: tracks `_srdCoreImportedAt` inside `world_settings.settings_json`.
+/// `builtin-dnd5e-default` (v1) worlds are intentionally skipped.
 class SrdCoreBootstrap {
   final AppDatabase _db;
   SrdCoreBootstrap(this._db);
@@ -35,40 +31,26 @@ class SrdCoreBootstrap {
   /// Returns the number of entities inserted (Tier-0 + Tier-1).
   /// Returns 0 when the schema isn't v2 or the guard flag is already set.
   Future<int> ensureImported({
-    required String campaignId,
+    required String worldId,
     required BuiltinDnd5eV2Build build,
   }) async {
-    // Trigger gate — only the v2 schema gets the bootstrap.
     if (build.schema.schemaId != builtinDnd5eV2SchemaId) return 0;
 
-    // Idempotent guard — read the schema row, check metadata.
-    final schemaRow = await (_db.select(_db.worldSchemas)
-          ..where((t) => t.campaignId.equals(campaignId)))
-        .getSingleOrNull();
-    if (schemaRow == null) return 0;
-    final meta =
-        _decodeMetadata(schemaRow.metadataJson);
-    if (meta['srdCoreImportedAt'] is String) return 0;
+    final settings = await _readSettings(worldId);
+    if (settings['_srdCoreImportedAt'] is String) return 0;
 
     final inserted = await _db.transaction(() async {
-      // Resolve pack id BEFORE seeding so Tier-0 lookups can be tagged with
-      // it — that lets `uninstall` see and purge them when the SRD pack is
-      // removed, instead of leaving orphaned creature_type / spell_school
-      // / damage_type / … rows behind.
-      final pkg = await _db.packageDao.getByName(srdCorePackageName);
+      final pkg = await _findPackageByName(srdCorePackageName);
       final tier0Count = await _seedTier0(
-          campaignId: campaignId, build: build, packageId: pkg?.id);
+          worldId: worldId, build: build, packageId: pkg?.id);
       final tier1Count = await _importSrdCore(
-        campaignId: campaignId,
-        build: build,
+        worldId: worldId,
         packageId: pkg?.id,
       );
-      // Record install row so the Packages tab + sync service know this
-      // campaign is live-linked to the SRD pack.
       if (pkg != null) {
-        await _db.installedPackageDao.upsert(
+        await _db.installedPackagesDao.upsert(
           InstalledPackagesCompanion.insert(
-            campaignId: campaignId,
+            worldId: worldId,
             packageId: pkg.id,
             packageName: Value(pkg.name),
           ),
@@ -77,40 +59,51 @@ class SrdCoreBootstrap {
       return tier0Count + tier1Count;
     });
 
-    // Persist guard. Adds attribution + license to schema metadata so the
-    // About panel can read it from the world schema.
-    meta['srdCoreImportedAt'] = DateTime.now().toUtc().toIso8601String();
-    meta['attribution'] = srdAttribution;
-    meta['license'] = srdLicense;
-    meta['source'] = srdSourceTag;
-    await (_db.update(_db.worldSchemas)
-          ..where((t) => t.id.equals(schemaRow.id)))
-        .write(WorldSchemasCompanion(
-      metadataJson: Value(jsonEncode(meta)),
-      updatedAt: Value(DateTime.now()),
-    ));
+    settings['_srdCoreImportedAt'] =
+        DateTime.now().toUtc().toIso8601String();
+    settings['_srdAttribution'] = srdAttribution;
+    settings['_srdLicense'] = srdLicense;
+    settings['_srdSource'] = srdSourceTag;
+    await _writeSettings(worldId, settings);
 
     return inserted;
   }
 
-  Map<String, dynamic> _decodeMetadata(String raw) {
-    if (raw.isEmpty) return <String, dynamic>{};
+  Future<Map<String, dynamic>> _readSettings(String worldId) async {
+    final row = await _db.worldSettingsDao.get(worldId);
+    if (row == null || row.settingsJson.isEmpty) return <String, dynamic>{};
     try {
-      final decoded = jsonDecode(raw);
+      final decoded = jsonDecode(row.settingsJson);
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
     } catch (_) {}
     return <String, dynamic>{};
   }
 
-  /// Inserts every seed row from [build.seedRows] as a real Entity record
-  /// belonging to [campaignId]. Populates [_tier0Ids] for downstream
-  /// relation resolution. Returns the inserted row count.
+  Future<void> _writeSettings(
+      String worldId, Map<String, dynamic> settings) async {
+    await _db.worldSettingsDao.upsert(WorldSettingsCompanion(
+      worldId: Value(worldId),
+      settingsJson: Value(jsonEncode(settings)),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  Future<Package?> _findPackageByName(String name) async {
+    final all = await _db.packagesDao.getAll();
+    for (final p in all) {
+      if (p.name == name) return p;
+    }
+    return null;
+  }
+
+  /// Inserts every seed row from [build.seedRows] as a world entity belonging
+  /// to [worldId]. Populates [_tier0Ids] for downstream relation resolution.
   Future<int> _seedTier0({
-    required String campaignId,
+    required String worldId,
     required BuiltinDnd5eV2Build build,
     String? packageId,
   }) async {
-    final rows = <EntitiesCompanion>[];
+    final rows = <WorldEntitiesCompanion>[];
     final index = <String, Map<String, String>>{};
 
     for (final entry in build.seedRows.entries) {
@@ -121,21 +114,18 @@ class SrdCoreBootstrap {
         final name = (row['name'] as String?) ?? '';
         if (name.isEmpty) continue;
         slugIdx[name] = id;
-        rows.add(EntitiesCompanion.insert(
+        rows.add(WorldEntitiesCompanion.insert(
           id: id,
-          campaignId: campaignId,
+          worldId: worldId,
           categorySlug: slug,
           name: name,
           source: const Value(srdSourceTag),
           description: Value((row['description'] as String?) ?? ''),
           fieldsJson: Value(jsonEncode(row['fields'] ?? <String, dynamic>{})),
-          // Tag with the SRD pack id and the matching v5 `package_entity_id`
-          // so PackageSync recognises these rows as already-installed Tier-0
-          // entries (mirrored into `package_entities` by
-          // SrdCorePackageBootstrap) instead of treating them as new inserts.
           packageId: Value(packageId),
-          packageEntityId:
-              packageId == null ? const Value.absent() : Value(srdStableEntityId(slug, name)),
+          packageEntityId: packageId == null
+              ? const Value.absent()
+              : Value(srdStableEntityId(slug, name)),
           linked: Value(packageId != null),
         ));
       }
@@ -146,49 +136,38 @@ class SrdCoreBootstrap {
       return 0;
     }
 
-    await _db.entityDao.insertAll(rows);
+    await _db.worldEntitiesDao.upsertAll(rows);
     _tier0Ids = index;
     return rows.length;
   }
 
   Future<int> _importSrdCore({
-    required String campaignId,
-    required BuiltinDnd5eV2Build build,
+    required String worldId,
     String? packageId,
   }) async {
     final pack = buildSrdCorePack();
     if (pack.entities.isEmpty) return 0;
 
-    // First pass: mint campaign-side UUIDs for every pack entity. The pack
-    // build resolves inter-Tier-1 `_ref` placeholders to pack-side UUIDs,
-    // but each campaign needs its own UUIDs (entities table PK is global).
-    // Build a pack_id → campaign_id map so the second pass can rewrite
-    // every relation in attrs to point at this campaign's row UUIDs.
-    final packToCampaign = <String, String>{
+    final packToWorld = <String, String>{
       for (final id in pack.entities.keys) id: _uuid.v4(),
     };
 
-    final rows = <EntitiesCompanion>[];
+    final rows = <WorldEntitiesCompanion>[];
     for (final entry in pack.entities.entries) {
       final id = entry.key;
       final raw = Map<String, dynamic>.from(entry.value as Map);
       final attrs = raw['attributes'] is Map
           ? Map<String, dynamic>.from(raw['attributes'] as Map)
           : <String, dynamic>{};
-      // Resolve Tier-0 lookup placeholders against the campaign's freshly
-      // seeded Tier-0 row UUIDs.
       final resolvedAttrs =
           PackageImportService.resolveLookupPlaceholder(attrs, _tier0Ids)
               as Map<String, dynamic>;
-      // Rewrite any pack-side Tier-1 UUID inside the resolved attrs to the
-      // matching campaign-side UUID so spell.class_refs etc. resolve
-      // correctly post-import.
       final remappedAttrs =
-          _remapPackRefs(resolvedAttrs, packToCampaign) as Map<String, dynamic>;
-      final campaignEntityId = packToCampaign[id]!;
-      rows.add(EntitiesCompanion.insert(
-        id: campaignEntityId,
-        campaignId: campaignId,
+          _remapPackRefs(resolvedAttrs, packToWorld) as Map<String, dynamic>;
+      final worldEntityId = packToWorld[id]!;
+      rows.add(WorldEntitiesCompanion.insert(
+        id: worldEntityId,
+        worldId: worldId,
         categorySlug: raw['type'] as String? ?? 'unknown',
         name: raw['name'] as String? ?? 'Unnamed',
         source: Value((raw['source'] as String?) ?? srdSourceTag),
@@ -207,27 +186,22 @@ class SrdCoreBootstrap {
     }
 
     if (rows.isEmpty) return 0;
-    await _db.entityDao.insertAll(rows);
+    await _db.worldEntitiesDao.upsertAll(rows);
     return rows.length;
   }
 
-  /// Walks [value] and replaces any string that matches a key in
-  /// [packToCampaign] with the mapped campaign-side UUID. Used to rewrite
-  /// inter-Tier-1 relations (class_refs, trait_refs, action_refs, …) so
-  /// they point at this campaign's freshly minted row IDs instead of the
-  /// pack-side UUIDs that are scoped to the package_entities table.
   static dynamic _remapPackRefs(
-      dynamic value, Map<String, String> packToCampaign) {
-    if (value is String) return packToCampaign[value] ?? value;
+      dynamic value, Map<String, String> packToWorld) {
+    if (value is String) return packToWorld[value] ?? value;
     if (value is Map) {
       final out = <String, dynamic>{};
       value.forEach((k, v) {
-        out[k.toString()] = _remapPackRefs(v, packToCampaign);
+        out[k.toString()] = _remapPackRefs(v, packToWorld);
       });
       return out;
     }
     if (value is List) {
-      return value.map((e) => _remapPackRefs(e, packToCampaign)).toList();
+      return value.map((e) => _remapPackRefs(e, packToWorld)).toList();
     }
     return value;
   }

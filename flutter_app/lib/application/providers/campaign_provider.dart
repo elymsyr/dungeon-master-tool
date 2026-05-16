@@ -1,12 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/database/app_database.dart' as drift_db;
 import '../../data/database/database_provider.dart';
-import '../../data/datasources/local/campaign_local_ds.dart'
-    show CampaignLocalDataSource, TrashItem;
-import '../../data/repositories/campaign_repository_impl.dart';
+import '../../data/repositories/world_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -24,13 +25,31 @@ import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 
-final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
+/// View model for the Settings → Trash UI. Wraps a Drift trash row with the
+/// fields the UI consumes (display name + type). Replaces the old
+/// `campaign_local_ds.TrashItem` shape (deleted in PR-D2).
+class TrashItem {
+  final String id;
+  final String originalName;
+  final String type;
+  final DateTime deletedAt;
+  /// Drift `kind` column — `'world'` | `'package'`. Used by restore handlers.
+  final String kind;
+  /// Raw payload for restore.
+  final Map<String, dynamic> payload;
+
+  const TrashItem({
+    required this.id,
+    required this.originalName,
+    required this.type,
+    required this.deletedAt,
+    required this.kind,
+    required this.payload,
+  });
+}
 
 final campaignRepositoryProvider = Provider<CampaignRepository>(
-  (ref) => CampaignRepositoryImpl(
-    ref.watch(appDatabaseProvider),
-    ref.read(campaignLocalDsProvider),
-  ),
+  (ref) => WorldRepositoryImpl(ref.watch(appDatabaseProvider)),
 );
 
 /// Mevcut kampanya listesi.
@@ -60,21 +79,36 @@ class CampaignInfo {
   });
 }
 
-/// Kampanya listesi + template bilgileri.
+/// Kampanya listesi + template bilgileri. v12: worlds tablosundan oku, schema
+/// adını world_settings.settings_json içindeki `_world_schema.name`'den çıkar.
+/// N+1 var ama dünya sayısı küçük (typ < 20).
 final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
   ref,
 ) async {
   final db = ref.watch(appDatabaseProvider);
-  final rows = await db.campaignDao.getCampaignInfoList();
-  return rows
-      .map(
-        (r) => CampaignInfo(
-          id: r.id,
-          name: r.worldName,
-          templateName: r.templateName,
-        ),
-      )
-      .toList();
+  final worlds = await db.worldsDao.getAll();
+  final infos = <CampaignInfo>[];
+  for (final w in worlds) {
+    final settingsRow = await db.worldSettingsDao.get(w.id);
+    String templateName = '';
+    if (settingsRow != null && settingsRow.settingsJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(settingsRow.settingsJson);
+        if (decoded is Map) {
+          final schema = decoded['_world_schema'];
+          if (schema is Map && schema['name'] is String) {
+            templateName = schema['name'] as String;
+          }
+        }
+      } catch (_) {}
+    }
+    infos.add(CampaignInfo(
+      id: w.id,
+      name: w.worldName,
+      templateName: templateName,
+    ));
+  }
+  return infos;
 });
 
 /// Resolves a worldId to its local campaign name, pulling the world from
@@ -578,7 +612,31 @@ final activeCampaignProvider =
       return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
     });
 
-/// Trash'teki silinen kampanyalar.
-final trashListProvider = FutureProvider<List<TrashItem>>((ref) {
-  return ref.read(campaignLocalDsProvider).listTrash();
+/// Trash'teki silinen kampanyalar + paketler. v12: Drift `trash_items` tablosu.
+final trashListProvider = FutureProvider<List<TrashItem>>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final rows = <drift_db.TrashItem>[
+    ...await db.trashDao.getByKind('world'),
+    ...await db.trashDao.getByKind('package'),
+  ];
+  rows.sort((a, b) => b.deletedAt.compareTo(a.deletedAt));
+  return rows.map((r) {
+    Map<String, dynamic> payload = const {};
+    try {
+      final decoded = jsonDecode(r.payloadJson);
+      if (decoded is Map) payload = Map<String, dynamic>.from(decoded);
+    } catch (_) {}
+    final originalName = (payload['world_name'] as String?) ??
+        (payload['name'] as String?) ??
+        r.sourceId;
+    final type = r.kind == 'world' ? 'World' : 'Package';
+    return TrashItem(
+      id: r.id,
+      originalName: originalName,
+      type: type,
+      deletedAt: r.deletedAt,
+      kind: r.kind,
+      payload: payload,
+    );
+  }).toList();
 });
