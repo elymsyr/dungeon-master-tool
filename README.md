@@ -34,6 +34,23 @@
   <b>Languages:</b> English | Turkish | German | French
 </p>
 
+<p align="center">
+  <table align="center">
+    <tr>
+      <td align="center"><img src="media/char.png" alt="Character" width="220"/></td>
+      <td align="center"><img src="media/db.png" alt="Database" width="220"/></td>
+      <td align="center"><img src="media/map.png" alt="Map" width="220"/></td>
+      <td align="center"><img src="media/settings.png" alt="Pack" width="220"/></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="media/social.png" alt="Social" width="220"/></td>
+      <td align="center"><img src="media/session.png" alt="Session" width="220"/></td>
+      <td align="center"><img src="media/world.png" alt="World" width="220"/></td>
+      <td align="center"><img src="media/pack.png" alt="Settings" width="220"/></td>
+    </tr>
+  </table>
+</p>
+
 ---
 
 > **Heads-up — saves and sync are manual.** There is no auto-save and no auto-sync in v6.1. Local edits only persist when you tap **Save** in the relevant editor, and cloud sync (personal library, online worlds) runs only when you press the sync button. Bidirectional auto-sync is on the roadmap.
