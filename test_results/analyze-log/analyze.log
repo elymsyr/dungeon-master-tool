@@ -1,0 +1,257 @@
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 85.0.0 (100.0.0 available)
+  analyzer 7.6.0 (13.0.0 available)
+  analyzer_plugin 0.13.4 (0.14.9 available)
+  build 2.5.4 (4.0.6 available)
+  build_config 1.1.2 (1.3.0 available)
+  build_resolvers 2.5.4 (3.0.4 available)
+  build_runner 2.5.4 (2.15.0 available)
+  build_runner_core 9.1.2 (9.3.2 available)
+  built_value 8.12.5 (8.12.6 available)
+  cli_util 0.4.2 (0.5.1 available)
+  connectivity_plus 6.1.5 (7.1.1 available)
+  custom_lint 0.7.6 (0.8.1 available)
+  custom_lint_builder 0.7.6 (0.8.1 available)
+  custom_lint_core 0.7.5 (0.8.2 available)
+  custom_lint_visitor 1.0.0+7.7.0 (1.0.0+9.0.0 available)
+  dart_jsonwebtoken 3.4.0 (3.4.1 available)
+  dart_style 3.1.1 (3.1.9 available)
+  desktop_multi_window 0.2.1 (0.3.0 available)
+  drift 2.28.2 (2.33.0 available)
+  drift_dev 2.28.0 (2.33.0 available)
+  file_picker 10.3.10 (11.0.2 available)
+  flutter_markdown 0.7.7+1 (discontinued replaced by flutter_markdown_plus)
+  flutter_riverpod 2.6.1 (3.3.1 available)
+  flutter_soloud 3.5.4 (4.0.5 available)
+  freezed 3.1.0 (3.2.5 available)
+  go_router 14.8.1 (17.2.3 available)
+  gotrue 2.19.0 (2.20.0 available)
+  gtk 2.1.0 (2.2.0 available)
+  hooks 1.0.2 (1.0.3 available)
+  hotreloader 4.3.0 (4.4.0 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  json_serializable 6.9.5 (6.14.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  native_toolchain_c 0.17.6 (0.18.0 available)
+  path_provider_android 2.2.23 (2.3.1 available)
+  pdfium_dart 0.1.3 (0.2.2 available)
+  pdfium_flutter 0.1.9 (0.2.1 available)
+  pdfrx 2.2.24 (2.4.1 available)
+  pdfrx_engine 0.3.9 (0.4.2 available)
+  postgrest 2.6.0 (2.7.0 available)
+  realtime_client 2.7.1 (2.7.3 available)
+  riverpod 2.6.1 (3.2.1 available)
+  riverpod_annotation 2.6.1 (4.0.2 available)
+  riverpod_generator 2.6.5 (4.0.3 available)
+  riverpod_lint 2.6.5 (3.1.3 available)
+  source_gen 2.0.0 (4.2.3 available)
+  source_helper 1.3.7 (1.3.12 available)
+  sqlite3 2.9.4 (3.3.1 available)
+  sqlite3_flutter_libs 0.5.42 (0.6.0+eol available)
+  sqlparser 0.41.2 (0.44.4 available)
+  storage_client 2.5.1 (2.5.2 available)
+  supabase 2.10.4 (2.10.6 available)
+  supabase_flutter 2.12.2 (2.12.4 available)
+  synchronized 3.4.0 (3.4.0+1 available)
+  test_api 0.7.10 (0.7.12 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.0.2 (15.2.0 available)
+  win32 5.15.0 (6.2.0 available)
+  window_manager 0.4.3 (0.5.1 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies!
+1 package is discontinued.
+61 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing flutter_app...                                        
+
+   info • Angle brackets will be interpreted as HTML • lib/application/character_creation/level_up_planner.dart:268:13 • unintended_html_in_doc_comment
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/application/providers/builtin_package_provider.dart:15:24 • undefined_getter
+  error • Target of URI doesn't exist: '../../data/repositories/pending_release_repository.dart' • lib/application/providers/character_provider.dart:10:8 • uri_does_not_exist
+  error • Target of URI doesn't exist: '../services/character_migration_service.dart' • lib/application/providers/character_provider.dart:20:8 • uri_does_not_exist
+  error • The name 'CharacterMigrationService' isn't a type, so it can't be used as a type argument • lib/application/providers/character_provider.dart:61:14 • non_type_as_type_argument
+  error • The function 'CharacterMigrationService' isn't defined • lib/application/providers/character_provider.dart:62:9 • undefined_function
+  error • The name 'PendingReleaseRepository' isn't a type, so it can't be used as a type argument • lib/application/providers/character_provider.dart:67:14 • non_type_as_type_argument
+  error • The function 'PendingReleaseRepository' isn't defined • lib/application/providers/character_provider.dart:67:47 • undefined_function
+  error • Target of URI doesn't exist: '../../data/datasources/local/package_local_ds.dart' • lib/application/providers/package_provider.dart:6:8 • uri_does_not_exist
+  error • The function 'PackageLocalDataSource' isn't defined • lib/application/providers/package_provider.dart:22:48 • undefined_function
+  error • The getter 'worldPackageDao' isn't defined for the type 'AppDatabase' • lib/application/providers/world_packages_provider.dart:16:13 • undefined_getter
+  error • The getter 'worldPackageDao' isn't defined for the type 'AppDatabase' • lib/application/providers/world_packages_provider.dart:42:35 • undefined_getter
+  error • The getter 'worldPackageDao' isn't defined for the type 'AppDatabase' • lib/application/providers/world_packages_provider.dart:64:35 • undefined_getter
+  error • The getter 'entities' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:57:46 • undefined_getter
+  error • The getter 'campaignId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:59:19 • undefined_getter
+  error • The getter 'packageId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:60:19 • undefined_getter
+  error • The name 'Entity' isn't a type, so it can't be used as a type argument • lib/application/services/package_sync_service.dart:62:36 • non_type_as_type_argument
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:96:21 • undefined_getter
+  error • Undefined name 'EntitiesCompanion' • lib/application/services/package_sync_service.dart:96:44 • undefined_identifier
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:117:21 • undefined_getter
+  error • The method 'EntitiesCompanion' isn't defined for the type 'PackageSyncService' • lib/application/services/package_sync_service.dart:117:44 • undefined_method
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:142:21 • undefined_getter
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:146:21 • undefined_getter
+  error • The method 'EntitiesCompanion' isn't defined for the type 'PackageSyncService' • lib/application/services/package_sync_service.dart:146:44 • undefined_method
+  error • The getter 'installedPackageDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:157:17 • undefined_getter
+  error • The getter 'entities' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:195:42 • undefined_getter
+  error • The getter 'campaignId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:197:19 • undefined_getter
+  error • The getter 'packageId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:198:19 • undefined_getter
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:204:21 • undefined_getter
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:207:21 • undefined_getter
+  error • The method 'EntitiesCompanion' isn't defined for the type 'PackageSyncService' • lib/application/services/package_sync_service.dart:207:44 • undefined_method
+  error • The getter 'entities' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:218:38 • undefined_getter
+  error • The getter 'campaignId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:220:17 • undefined_getter
+  error • The getter 'categorySlug' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:221:17 • undefined_getter
+  error • The getter 'packageId' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:222:17 • undefined_getter
+  error • The getter 'source' isn't defined for the type 'HasResultSet' • lib/application/services/package_sync_service.dart:224:32 • undefined_getter
+  error • The getter 'entityDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:228:21 • undefined_getter
+  error • The getter 'installedPackageDao' isn't defined for the type 'AppDatabase' • lib/application/services/package_sync_service.dart:232:17 • undefined_getter
+  error • The method 'rescheduleAllNow' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:76:39 • undefined_method
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:95:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:97:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:100:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:114:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:116:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:119:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:129:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:131:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:134:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:147:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:149:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:152:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:166:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:168:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:171:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:184:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:186:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:189:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:204:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:206:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:209:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:218:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:220:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:223:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:238:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:240:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:243:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:261:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:263:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:266:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:280:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:282:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:285:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:298:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:300:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:302:15 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:308:30 • undefined_method
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:310:19 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:312:15 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:326:11 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:327:11 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:328:30 • undefined_method
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:332:15 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:347:11 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:348:11 • undefined_identifier
+  error • The method 'enqueue' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:349:30 • undefined_method
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:353:15 • undefined_identifier
+  error • The method 'nextBatch' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:370:47 • undefined_method
+  error • The getter 'entityKind' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:395:19 • undefined_getter
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:396:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:398:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:400:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:402:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:404:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:406:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:408:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:410:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:412:14 • undefined_identifier
+  error • Undefined name 'OutboxKind' • lib/application/services/sync_engine.dart:413:14 • undefined_identifier
+  error • The method 'deleteOp' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:417:35 • undefined_method
+  error • The method 'deleteOp' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:420:31 • undefined_method
+  error • The method 'markFailure' isn't defined for the type 'SyncOutboxDao' • lib/application/services/sync_engine.dart:432:29 • undefined_method
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:448:23 • undefined_identifier
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:449:65 • undefined_getter
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:455:21 • undefined_getter
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:465:23 • undefined_identifier
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:466:53 • undefined_getter
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:489:32 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:498:23 • undefined_identifier
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:499:49 • undefined_getter
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:505:22 • undefined_getter
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:518:36 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:527:23 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:548:23 • undefined_identifier
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:570:23 • undefined_identifier
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:571:49 • undefined_getter
+  error • The getter 'entityId' isn't defined for the type 'SyncOutboxRow' • lib/application/services/sync_engine.dart:576:24 • undefined_getter
+  error • Undefined name 'OutboxOp' • lib/application/services/sync_engine.dart:587:23 • undefined_identifier
+  error • The name 'WorldCharacterRow' is defined in the libraries 'package:dungeon_master_tool/application/providers/world_characters_provider.dart' and 'package:dungeon_master_tool/data/database/app_database.dart' • lib/application/services/world_mirror_applier.dart:247:41 • ambiguous_import
+  error • The name 'WorldCharacterRow' is defined in the libraries 'package:dungeon_master_tool/application/providers/world_characters_provider.dart' and 'package:dungeon_master_tool/data/database/app_database.dart' • lib/application/services/world_mirror_applier.dart:261:3 • ambiguous_import
+  error • 'WorldCharacterRow' isn't a function • lib/application/services/world_mirror_applier.dart:268:12 • invocation_of_non_function
+  error • The name 'WorldCharacterRow' is defined in the libraries 'package:dungeon_master_tool/application/providers/world_characters_provider.dart' and 'package:dungeon_master_tool/data/database/app_database.dart' • lib/application/services/world_mirror_applier.dart:268:12 • ambiguous_import
+  error • The getter 'worldPackageDao' isn't defined for the type 'AppDatabase' • lib/application/services/world_mirror_applier.dart:525:47 • undefined_getter
+  error • The getter 'characterDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/character_repository.dart:38:28 • undefined_getter
+  error • The getter 'characterDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/character_repository.dart:64:15 • undefined_getter
+  error • The getter 'characterDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/character_repository.dart:70:27 • undefined_getter
+  error • The getter 'characterDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/character_repository.dart:93:15 • undefined_getter
+  error • The getter 'characterDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/character_repository.dart:120:32 • undefined_getter
+  error • Undefined class 'CharacterRow' • lib/data/repositories/character_repository.dart:162:44 • undefined_class
+  error • Undefined class 'CharactersCompanion' • lib/data/repositories/character_repository.dart:176:3 • undefined_class
+  error • The method 'CharactersCompanion' isn't defined for the type 'CharacterRepository' • lib/data/repositories/character_repository.dart:179:12 • undefined_method
+warning • The library 'package:dungeon_master_tool/data/database/app_database.dart' doesn't export a member with the hidden name 'WorldSchema' • lib/data/repositories/package_repository_impl.dart:13:45 • undefined_hidden_name
+  error • Target of URI doesn't exist: '../datasources/local/package_local_ds.dart' • lib/data/repositories/package_repository_impl.dart:14:8 • uri_does_not_exist
+  error • Undefined class 'PackageLocalDataSource' • lib/data/repositories/package_repository_impl.dart:21:9 • undefined_class
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:27:16 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:32:28 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:44:32 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:59:32 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:65:17 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:80:32 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:87:17 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:95:32 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:103:15 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:142:32 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:146:27 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:161:15 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:172:27 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:181:34 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:255:17 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/data/repositories/package_repository_impl.dart:288:19 • undefined_getter
+warning • The declaration '_skill' isn't referenced • lib/domain/entities/schema/builtin/srd_core/feats_class.dart:83:21 • unused_element
+warning • The declaration '_state' isn't referenced • lib/domain/entities/schema/builtin/srd_core/feats_class.dart:84:21 • unused_element
+warning • The declaration '_sense' isn't referenced • lib/domain/entities/schema/builtin/srd_core/feats_class.dart:87:21 • unused_element
+  error • The getter 'installedPackageDao' isn't defined for the type 'AppDatabase' • lib/presentation/dialogs/import_package_dialog.dart:58:27 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/presentation/dialogs/import_package_dialog.dart:196:31 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/presentation/dialogs/import_package_dialog.dart:238:31 • undefined_getter
+  error • The getter 'installedPackageDao' isn't defined for the type 'AppDatabase' • lib/presentation/dialogs/import_package_dialog.dart:262:16 • undefined_getter
+  error • The named parameter 'worldId' is required, but there's no corresponding argument • lib/presentation/dialogs/import_package_dialog.dart:262:43 • missing_required_argument
+  error • The named parameter 'campaignId' isn't defined • lib/presentation/dialogs/import_package_dialog.dart:263:9 • undefined_named_parameter
+  error • The getter 'entities' isn't defined for the type 'AppDatabase' • lib/presentation/dialogs/import_package_dialog.dart:272:45 • undefined_getter
+  error • The getter 'campaignId' isn't defined for the type 'HasResultSet' • lib/presentation/dialogs/import_package_dialog.dart:274:19 • undefined_getter
+  error • The getter 'categorySlug' isn't defined for the type 'HasResultSet' • lib/presentation/dialogs/import_package_dialog.dart:275:19 • undefined_getter
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/presentation/screens/characters/pending_choice_resolver_dialog.dart:349:11 • use_null_aware_elements
+   info • Statements in an if should be enclosed in a block • lib/presentation/screens/database/entity_card.dart:952:9 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/presentation/screens/database/entity_card.dart:1081:7 • curly_braces_in_flow_control_structures
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/presentation/screens/hub/packages_tab.dart:540:45 • undefined_getter
+  error • Target of URI doesn't exist: '../../../data/datasources/local/campaign_local_ds.dart' • lib/presentation/screens/hub/settings_tab.dart:21:8 • uri_does_not_exist
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:309:69 • undefined_getter
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:319:44 • undefined_getter
+  error • Undefined name 'campaignLocalDsProvider' • lib/presentation/screens/hub/settings_tab.dart:322:37 • undefined_identifier
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:324:48 • undefined_getter
+  error • Undefined name 'campaignLocalDsProvider' • lib/presentation/screens/hub/settings_tab.dart:356:43 • undefined_identifier
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:359:67 • undefined_getter
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:361:68 • undefined_getter
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:391:88 • undefined_getter
+  error • Undefined name 'campaignLocalDsProvider' • lib/presentation/screens/hub/settings_tab.dart:393:32 • undefined_identifier
+  error • The getter 'directoryName' isn't defined for the type 'TrashItem' • lib/presentation/screens/hub/settings_tab.dart:393:89 • undefined_getter
+  error • The getter 'campaignDao' isn't defined for the type 'AppDatabase' • lib/presentation/screens/hub/worlds_tab.dart:584:10 • undefined_getter
+  error • The getter 'campaignDao' isn't defined for the type 'AppDatabase' • lib/presentation/widgets/save_sync_indicator.dart:873:12 • undefined_getter
+  error • The getter 'packageDao' isn't defined for the type 'AppDatabase' • lib/presentation/widgets/save_sync_indicator.dart:887:12 • undefined_getter
+warning • Unused import: 'package:drift/drift.dart' • lib/presentation/widgets/world_packages_section.dart:1:8 • unused_import
+  error • The getter 'installedPackageDao' isn't defined for the type 'AppDatabase' • lib/presentation/widgets/world_packages_section.dart:35:15 • undefined_getter
+  error • The getter 'entities' isn't defined for the type 'AppDatabase' • lib/presentation/widgets/world_packages_section.dart:50:43 • undefined_getter
+  error • The getter 'campaignId' isn't defined for the type 'HasResultSet' • lib/presentation/widgets/world_packages_section.dart:52:17 • undefined_getter
+  error • The getter 'categorySlug' isn't defined for the type 'HasResultSet' • lib/presentation/widgets/world_packages_section.dart:53:17 • undefined_getter
+   info • Use 'const' with the constructor to improve performance • test/presentation/resolved_grants_card_pool_test.dart:120:19 • prefer_const_constructors
+
+185 issues found. (ran in 31.3s)

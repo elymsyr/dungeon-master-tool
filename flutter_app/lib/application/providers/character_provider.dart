@@ -7,7 +7,6 @@ import 'package:uuid/uuid.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/repositories/character_repository.dart';
-import '../../data/repositories/pending_release_repository.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
@@ -17,7 +16,6 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
-import '../services/character_migration_service.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -53,18 +51,28 @@ EntityCategorySchema? findPlayerCategory(WorldSchema template) {
 final characterRepositoryProvider = Provider<CharacterRepository>(
     (ref) => CharacterRepository(ref.watch(appDatabaseProvider)));
 
-/// One-shot JSON → Drift migration service (PR-SYNC-0). Backfills the
-/// `characters` Drift table from `AppPaths.charactersDir/*.json` on the
-/// first cold start after the v9 schema upgrade. Idempotent via a
-/// per-user SharedPreferences flag.
-final characterMigrationServiceProvider =
-    Provider<CharacterMigrationService>((ref) =>
-        CharacterMigrationService(ref.watch(appDatabaseProvider)));
+/// v12 fresh-cut: legacy JSON→Drift migration service retired
+/// (`character_migration_service.dart` deleted in PR-D3). Beta data wipe
+/// makes a one-shot backfill unnecessary.
 
-/// Offline char tab "Release" akışı için sidecar queue. Online olununca
-/// `CharacterListNotifier.drainPendingReleases` çağrılır.
+/// Offline char tab "Release" queue — sidecar file impl deleted in PR-D2.
+/// v12 still needs a queue so player edits made offline get released
+/// when the device comes back online. Minimal in-memory stub: edits are
+/// lost across restarts. PR-D5 (sync engine rewrite) will move this onto
+/// the persistent outbox.
+class _PendingReleaseStub {
+  final Set<String> _ids = <String>{};
+  Future<void> add(String id) async {
+    _ids.add(id);
+  }
+  Future<void> remove(String id) async {
+    _ids.remove(id);
+  }
+  Future<List<String>> load() async => _ids.toList();
+}
+
 final pendingReleasesProvider =
-    Provider<PendingReleaseRepository>((_) => PendingReleaseRepository());
+    Provider<_PendingReleaseStub>((_) => _PendingReleaseStub());
 
 /// Hub-level karakter listesi. Senkron kalsın diye StateNotifier.
 class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
@@ -404,18 +412,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   Future<void> _load() async {
     try {
-      // PR-SYNC-0: run the one-shot JSON → Drift backfill before the first
-      // load. Idempotent via per-user SharedPreferences flag, so steady-state
-      // cold starts skip straight through.
-      try {
-        final svc = _ref.read(characterMigrationServiceProvider);
-        await svc.migrateFromJsonIfNeeded();
-        // PR-SYNC-6: delete legacy JSON snapshots after the migration
-        // committed (idempotent via separate flag).
-        await svc.cleanupLegacyJsonIfNeeded();
-      } catch (e) {
-        debugPrint('character JSON→Drift migration failed: $e');
-      }
+      // PR-D3: legacy JSON→Drift migration retired with v12 fresh-cut.
       final loaded = await _repo.loadAllWithLegacy();
       _legacyWorldNames = loaded.legacyWorldNames;
       state = AsyncValue.data(loaded.chars);
