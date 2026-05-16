@@ -1,0 +1,88 @@
+name: Analyze & Test (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_analyze:
+        description: "Run flutter analyze"
+        type: boolean
+        default: true
+      run_tests:
+        description: "Run flutter test"
+        type: boolean
+        default: true
+
+env:
+  FLUTTER_VERSION: "3.41.6"
+  WORKING_DIR: flutter_app
+
+jobs:
+  analyze:
+    name: Analyze
+    if: ${{ inputs.run_analyze }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        working-directory: ${{ env.WORKING_DIR }}
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee analyze.log
+
+      - name: Upload analyze log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analyze-log
+          path: ${{ env.WORKING_DIR }}/analyze.log
+          retention-days: 30
+
+  test:
+    name: Test
+    if: ${{ inputs.run_tests }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run tests
+        working-directory: ${{ env.WORKING_DIR }}
+        continue-on-error: true
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          flutter test --machine > test-results/test.json || true
+          flutter test --reporter=expanded 2>&1 | tee test-results/test.log
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ${{ env.WORKING_DIR }}/test-results/
+          retention-days: 30
