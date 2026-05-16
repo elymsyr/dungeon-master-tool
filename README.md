@@ -39,12 +39,16 @@
     <tr>
       <td align="center"><img src="media/char.png" alt="Character" width="220"/></td>
       <td align="center"><img src="media/db.png" alt="Database" width="220"/></td>
+    </tr>
+    <tr>
       <td align="center"><img src="media/map.png" alt="Map" width="220"/></td>
       <td align="center"><img src="media/settings.png" alt="Pack" width="220"/></td>
     </tr>
     <tr>
       <td align="center"><img src="media/social.png" alt="Social" width="220"/></td>
       <td align="center"><img src="media/session.png" alt="Session" width="220"/></td>
+    </tr>
+    <tr>
       <td align="center"><img src="media/world.png" alt="World" width="220"/></td>
       <td align="center"><img src="media/pack.png" alt="Settings" width="220"/></td>
     </tr>
