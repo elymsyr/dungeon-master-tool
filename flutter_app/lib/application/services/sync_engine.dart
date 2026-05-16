@@ -3,38 +3,37 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/app_database.dart';
-import '../../data/database/daos/sync_outbox_dao.dart';
 import '../../domain/entities/character.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beta_provider.dart';
 import '../providers/cloud_backup_provider.dart';
 import '../providers/world_mirror_provider.dart';
 
-/// Persistent outbox drain worker (PR-SYNC-1).
+/// Persistent outbox drain worker (PR-D5 v12 rewrite).
 ///
 /// The engine is a singleton owned by [syncEngineProvider]. Mutations elsewhere
-/// in the app call [SyncEngine.enqueue*] **inside the same Drift transaction**
-/// as the local write; the engine wakes up via the DAO's change stream and
-/// drains rows in serial.
+/// in the app call [SyncEngine.enqueue*] which routes through the v12
+/// `SyncOutboxDao.enqueueCoalesced` API: rows with matching
+/// `(target_table, target_pk, op_type)` overwrite each other so rapid edits
+/// don't bloat the outbox.
 ///
-/// Ordering: rows are drained in `created_at` ASC order so dependencies
-/// (e.g. world create before world_entity insert) are preserved per-actor.
+/// Ordering: rows drain in `(nextAttemptAt ASC, createdAt ASC)` per the DAO's
+/// `readyBatch`, so dependencies (e.g. world create before world_entity insert)
+/// are preserved per-actor.
 ///
 /// Retry: exponential backoff capped at 5 minutes; rows past 50 attempts are
-/// considered dead-lettered (left in the table for inspection; status surfaced
-/// to UI via the sync indicator).
+/// considered dead-lettered (left in the table for inspection).
 class SyncEngine {
   SyncEngine(this._db, this._ref);
 
   final AppDatabase _db;
   final Ref _ref;
 
-  StreamSubscription<void>? _outboxSub;
-  Timer? _retryTimer;
   bool _running = false;
   bool _paused = false;
   bool _started = false;
@@ -43,24 +42,31 @@ class SyncEngine {
   static const int _dlqAttempts = 50;
   static const Duration _maxBackoff = Duration(minutes: 5);
 
-  /// Starts the worker. Manuel sync modeli: outbox change-stream listener
-  /// devre dışı; otomatik cold-start tick yok. Drain yalnızca
-  /// [forceTick] üzerinden — Sync butonundan tetiklenir.
+  // ── v12 outbox target tables (mirror Postgres table names). ────────────
+  static const _tWorldEntities = 'world_entities';
+  static const _tWorldCharacters = 'world_characters';
+  static const _tWorldMapData = 'world_map_data';
+  static const _tWorldSessions = 'world_sessions';
+  static const _tWorldSettings = 'world_settings';
+  static const _tWorlds = 'worlds';
+  static const _tWorldPackages = 'world_packages';
+  static const _tPersonalPackages = 'personal_packages';
+  static const _tCloudBackups = 'cloud_backups';
+
+  static const _opUpsert = 'upsert';
+  static const _opDelete = 'delete';
+
+  /// Starts the worker. Manuel sync model: outbox change-stream listener
+  /// disabled; automatic cold-start tick yok. Drain only via [forceTick].
   void start() {
     if (_started) return;
     _started = true;
   }
 
-  /// Stops draining and tears down the stream. Used by app dispose paths.
   Future<void> stop() async {
     _started = false;
-    await _outboxSub?.cancel();
-    _outboxSub = null;
-    _retryTimer?.cancel();
-    _retryTimer = null;
   }
 
-  /// Lifecycle hooks for AppLifecycleState.paused / resumed.
   void pause() {
     _paused = true;
   }
@@ -71,9 +77,16 @@ class SyncEngine {
     _tick();
   }
 
-  /// UI affordance — "Retry now" button on the sync indicator.
+  /// UI affordance — "Retry now" button on the sync indicator. Resets every
+  /// pending row's backoff so the next drain processes them immediately.
   Future<int> forceTick() async {
-    final n = await _db.syncOutboxDao.rescheduleAllNow();
+    final n = await (_db.update(_db.syncOutbox)).write(
+      SyncOutboxCompanion(
+        attempts: const Value(0),
+        nextAttemptAt: Value(DateTime.now()),
+        lastError: const Value(null),
+      ),
+    );
     await _tick();
     return n;
   }
@@ -82,22 +95,18 @@ class SyncEngine {
   // Enqueue helpers — call from notifiers' Drift transactions.
   // ────────────────────────────────────────────────────────────────────
 
-  /// Enqueue a world_entity upsert. `entityMap` is the serialised entity
-  /// payload (id/name/fields/...). [builtinPackageId] is optional — used by
-  /// `WorldMirrorService.pushEntity` to mark linked SRD-Core entities so they
-  /// fan out via `is_builtin`.
   Future<void> enqueueWorldEntityUpsert({
     required String worldId,
     required String entityId,
     required Map<String, dynamic> entityMap,
     String? builtinPackageId,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldEntity,
-      entityId: entityId,
+      targetTable: _tWorldEntities,
+      targetPk: entityId,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'entity': entityMap,
@@ -110,13 +119,13 @@ class SyncEngine {
   Future<void> enqueueWorldEntityDelete({
     required String worldId,
     required String entityId,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldEntity,
-      entityId: entityId,
+      targetTable: _tWorldEntities,
+      targetPk: entityId,
+      opType: _opDelete,
       scopeId: worldId,
-      opType: OutboxOp.delete,
       payloadJson: jsonEncode({'world_id': worldId}),
     );
   }
@@ -125,13 +134,13 @@ class SyncEngine {
     required String worldId,
     required Character character,
     Set<String> referencedEntityIds = const {},
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldCharacter,
-      entityId: character.id,
+      targetTable: _tWorldCharacters,
+      targetPk: character.id,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'character': character.toJson(),
@@ -143,13 +152,13 @@ class SyncEngine {
   Future<void> enqueueWorldCharacterDelete({
     required String characterId,
     String? worldId,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldCharacter,
-      entityId: characterId,
+      targetTable: _tWorldCharacters,
+      targetPk: characterId,
+      opType: _opDelete,
       scopeId: worldId,
-      opType: OutboxOp.delete,
       payloadJson: jsonEncode({
         // ignore: use_null_aware_elements
         if (worldId != null) 'world_id': worldId,
@@ -157,18 +166,17 @@ class SyncEngine {
     );
   }
 
-  /// PR-SYNC-3: granular world state replaces the worlds.state_json blob.
-  /// One row per world; coalesces against the same scopeId.
+  /// Granular world map state. PK = worldId; rapid map edits coalesce.
   Future<void> enqueueWorldMapData({
     required String worldId,
     required Map<String, dynamic> data,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldMapData,
-      entityId: worldId,
+      targetTable: _tWorldMapData,
+      targetPk: worldId,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({'world_id': worldId, 'data': data}),
     );
   }
@@ -180,13 +188,13 @@ class SyncEngine {
     required Map<String, dynamic> data,
     bool isActive = false,
     int sortOrder = 0,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldSession,
-      entityId: sessionId,
+      targetTable: _tWorldSessions,
+      targetPk: sessionId,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'name': name,
@@ -200,13 +208,13 @@ class SyncEngine {
   Future<void> enqueueWorldSessionDelete({
     required String worldId,
     required String sessionId,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldSession,
-      entityId: sessionId,
+      targetTable: _tWorldSessions,
+      targetPk: sessionId,
+      opType: _opDelete,
       scopeId: worldId,
-      opType: OutboxOp.delete,
       payloadJson: jsonEncode({'world_id': worldId}),
     );
   }
@@ -214,33 +222,31 @@ class SyncEngine {
   Future<void> enqueueWorldSettings({
     required String worldId,
     required Map<String, dynamic> settings,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldSettings,
-      entityId: worldId,
+      targetTable: _tWorldSettings,
+      targetPk: worldId,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({'world_id': worldId, 'settings': settings}),
     );
   }
 
-  /// PR-SYNC-3 transitional: full worlds.state_json push routed through
-  /// the outbox. Coalesces per-world. Retired in PR-SYNC-6 once the
-  /// granular tables are the only readers.
+  /// Full worlds row push (name/template/state). PK = worldId.
   Future<void> enqueueWorldState({
     required String worldId,
     required String worldName,
     String? templateId,
     String? templateHash,
     required Map<String, dynamic> state,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldState,
-      entityId: worldId,
+      targetTable: _tWorlds,
+      targetPk: worldId,
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'world_name': worldName,
@@ -251,19 +257,18 @@ class SyncEngine {
     );
   }
 
-  /// PR-SYNC-5: DM shares a personal package into a world. Coalesced per
-  /// (worldId, packageName) — same package re-shared collapses to one push.
+  /// DM shares personal package into world. PK = "worldId:packageName".
   Future<void> enqueueWorldPackageShare({
     required String worldId,
     required String packageName,
     required Map<String, dynamic> state,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldPackage,
-      entityId: '$worldId:$packageName',
+      targetTable: _tWorldPackages,
+      targetPk: '$worldId:$packageName',
+      opType: _opUpsert,
       scopeId: worldId,
-      opType: OutboxOp.upsert,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'package_name': packageName,
@@ -276,13 +281,13 @@ class SyncEngine {
     required String worldId,
     required String packageName,
     required String packageId,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.worldPackage,
-      entityId: '$worldId:$packageName',
+      targetTable: _tWorldPackages,
+      targetPk: '$worldId:$packageName',
+      opType: _opDelete,
       scopeId: worldId,
-      opType: OutboxOp.delete,
       payloadJson: jsonEncode({
         'world_id': worldId,
         'package_name': packageName,
@@ -294,42 +299,40 @@ class SyncEngine {
   Future<void> enqueuePersonalPackageUpsert({
     required String packageName,
     required Map<String, dynamic> state,
-  }) {
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.personalPackage,
-      entityId: packageName,
-      opType: OutboxOp.upsert,
+      targetTable: _tPersonalPackages,
+      targetPk: packageName,
+      opType: _opUpsert,
       payloadJson: jsonEncode({'state': state}),
     );
   }
 
-  Future<void> enqueuePersonalPackageDelete({required String packageName}) {
-    return _db.syncOutboxDao.enqueue(
+  Future<void> enqueuePersonalPackageDelete({required String packageName}) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: OutboxKind.personalPackage,
-      entityId: packageName,
-      opType: OutboxOp.delete,
+      targetTable: _tPersonalPackages,
+      targetPk: packageName,
+      opType: _opDelete,
       payloadJson: '{}',
     );
   }
 
   /// Cloud backup snapshot for a worldless / world-offline item. [type] is
-  /// either `world`, `template`, `package`, or `character`.
+  /// `world`, `template`, `package`, or `character`. PK = "$type:$itemId" so
+  /// distinct types of the same id don't collide.
   Future<void> enqueueCloudBackupUpsert({
     required String itemId,
     required String itemName,
     required String type,
     required Map<String, dynamic> data,
-  }) {
-    final kind = type == 'package' || type == 'template'
-        ? OutboxKind.cloudBackupPackage
-        : OutboxKind.cloudBackupWorld;
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: kind,
-      entityId: '$type:$itemId',
-      opType: OutboxOp.upsert,
+      targetTable: _tCloudBackups,
+      targetPk: '$type:$itemId',
+      opType: _opUpsert,
       payloadJson: jsonEncode({
         'item_id': itemId,
         'item_name': itemName,
@@ -342,15 +345,12 @@ class SyncEngine {
   Future<void> enqueueCloudBackupDelete({
     required String itemId,
     required String type,
-  }) {
-    final kind = type == 'package' || type == 'template'
-        ? OutboxKind.cloudBackupPackage
-        : OutboxKind.cloudBackupWorld;
-    return _db.syncOutboxDao.enqueue(
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
-      entityKind: kind,
-      entityId: '$type:$itemId',
-      opType: OutboxOp.delete,
+      targetTable: _tCloudBackups,
+      targetPk: '$type:$itemId',
+      opType: _opDelete,
       payloadJson: jsonEncode({'item_id': itemId, 'type': type}),
     );
   }
@@ -361,13 +361,13 @@ class SyncEngine {
 
   Future<void> _tick() async {
     if (_running || _paused) return;
-    // Skip if signed out — there's nothing the server-side handlers can do.
     if (_ref.read(authProvider) == null) return;
     _running = true;
     try {
       var drained = 0;
       while (true) {
-        final batch = await _db.syncOutboxDao.nextBatch(limit: _batchSize);
+        final batch = await _db.syncOutboxDao
+            .readyBatch(now: DateTime.now(), limit: _batchSize);
         if (batch.isEmpty) break;
         for (final row in batch) {
           if (_paused) break;
@@ -388,36 +388,34 @@ class SyncEngine {
 
   Future<void> _handle(SyncOutboxRow row) async {
     if (row.attempts >= _dlqAttempts) {
-      // Dead-lettered — leave in table for inspection, never retried.
       return;
     }
     try {
-      switch (row.entityKind) {
-        case OutboxKind.worldEntity:
+      switch (row.targetTable) {
+        case _tWorldEntities:
           await _handleWorldEntity(row);
-        case OutboxKind.worldCharacter:
+        case _tWorldCharacters:
           await _handleWorldCharacter(row);
-        case OutboxKind.worldMapData:
+        case _tWorldMapData:
           await _handleWorldMapData(row);
-        case OutboxKind.worldSession:
+        case _tWorldSessions:
           await _handleWorldSession(row);
-        case OutboxKind.worldSettings:
+        case _tWorldSettings:
           await _handleWorldSettings(row);
-        case OutboxKind.worldState:
+        case _tWorlds:
           await _handleWorldState(row);
-        case OutboxKind.worldPackage:
+        case _tWorldPackages:
           await _handleWorldPackage(row);
-        case OutboxKind.personalPackage:
+        case _tPersonalPackages:
           await _handlePersonalPackage(row);
-        case OutboxKind.cloudBackupWorld:
-        case OutboxKind.cloudBackupPackage:
+        case _tCloudBackups:
           await _handleCloudBackup(row);
         default:
-          // Unknown kind — drop it so we don't loop forever.
-          await _db.syncOutboxDao.deleteOp(row.opId);
+          // Unknown table — drop so we don't loop forever.
+          await _db.syncOutboxDao.deleteById(row.opId);
           return;
       }
-      await _db.syncOutboxDao.deleteOp(row.opId);
+      await _db.syncOutboxDao.deleteById(row.opId);
     } catch (e) {
       await _markRetry(row, e.toString());
     }
@@ -428,14 +426,13 @@ class SyncEngine {
     final seconds = math
         .min(_maxBackoff.inSeconds, math.pow(2, attempts).toInt())
         .clamp(1, _maxBackoff.inSeconds);
-    final delay = Duration(seconds: seconds);
-    await _db.syncOutboxDao.markFailure(
-      opId: row.opId,
+    final nextAt = DateTime.now().add(Duration(seconds: seconds));
+    await _db.syncOutboxDao.incrementAttempts(row.opId);
+    await _db.syncOutboxDao.markFailed(
+      row.opId,
       error: error,
-      nextDelay: delay,
+      nextAttemptAt: nextAt,
     );
-    // Manuel sync modeli: otomatik retry timer kaldırıldı. Başarısız
-    // satırlar bir sonraki Sync butonuna kadar bekler.
   }
 
   // ── Handlers ───────────────────────────────────────────────────────
@@ -445,14 +442,14 @@ class SyncEngine {
     if (mirror == null) throw StateError('mirror service unavailable');
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final worldId = p['world_id'] as String;
-    if (row.opType == OutboxOp.delete) {
-      await mirror.deleteEntity(worldId: worldId, entityId: row.entityId);
+    if (row.opType == _opDelete) {
+      await mirror.deleteEntity(worldId: worldId, entityId: row.targetPk);
       return;
     }
     final entityMap = (p['entity'] as Map).cast<String, dynamic>();
     await mirror.pushEntity(
       worldId: worldId,
-      entityId: row.entityId,
+      entityId: row.targetPk,
       entityMap: entityMap,
       builtinPackageId: p['builtin_package_id'] as String?,
     );
@@ -462,8 +459,8 @@ class SyncEngine {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) throw StateError('mirror service unavailable');
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
-    if (row.opType == OutboxOp.delete) {
-      await mirror.deleteCharacter(characterId: row.entityId);
+    if (row.opType == _opDelete) {
+      await mirror.deleteCharacter(characterId: row.targetPk);
       return;
     }
     final worldId = p['world_id'] as String;
@@ -484,9 +481,9 @@ class SyncEngine {
     if (mirror == null) throw StateError('mirror service unavailable');
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final worldId = p['world_id'] as String;
-    // Delete op: clear the row by upserting an empty blob. Granular delete
-    // semantics are not exposed yet — the table is 1:1 with the world.
-    final data = row.opType == OutboxOp.delete
+    // Delete op: clear the row by upserting empty. Granular delete semantics
+    // not exposed — the table is 1:1 with the world.
+    final data = row.opType == _opDelete
         ? const <String, dynamic>{}
         : (p['data'] as Map).cast<String, dynamic>();
     await mirror.pushMapData(worldId: worldId, data: data);
@@ -495,14 +492,14 @@ class SyncEngine {
   Future<void> _handleWorldSession(SyncOutboxRow row) async {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) throw StateError('mirror service unavailable');
-    if (row.opType == OutboxOp.delete) {
-      await mirror.deleteSession(sessionId: row.entityId);
+    if (row.opType == _opDelete) {
+      await mirror.deleteSession(sessionId: row.targetPk);
       return;
     }
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     await mirror.pushSession(
       worldId: p['world_id'] as String,
-      sessionId: row.entityId,
+      sessionId: row.targetPk,
       name: (p['name'] as String?) ?? '',
       data: (p['data'] as Map).cast<String, dynamic>(),
       isActive: (p['is_active'] as bool?) ?? false,
@@ -515,7 +512,7 @@ class SyncEngine {
     if (mirror == null) throw StateError('mirror service unavailable');
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final worldId = p['world_id'] as String;
-    final settings = row.opType == OutboxOp.delete
+    final settings = row.opType == _opDelete
         ? const <String, dynamic>{}
         : (p['settings'] as Map).cast<String, dynamic>();
     await mirror.pushSettings(worldId: worldId, settings: settings);
@@ -524,7 +521,7 @@ class SyncEngine {
   Future<void> _handleWorldState(SyncOutboxRow row) async {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) throw StateError('mirror service unavailable');
-    if (row.opType == OutboxOp.delete) {
+    if (row.opType == _opDelete) {
       // worlds row delete goes through a separate "unpublish" flow elsewhere.
       return;
     }
@@ -545,7 +542,7 @@ class SyncEngine {
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final worldId = p['world_id'] as String;
     final packageName = p['package_name'] as String;
-    if (row.opType == OutboxOp.delete) {
+    if (row.opType == _opDelete) {
       final packageId = p['package_id'] as String?;
       if (packageId == null || packageId.isEmpty) return;
       await mirror.unshareWorldPackage(packageId: packageId);
@@ -562,18 +559,16 @@ class SyncEngine {
   Future<void> _handlePersonalPackage(SyncOutboxRow row) async {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) throw StateError('mirror service unavailable');
-    // Personal package sync is beta-only.
     if (!_ref.read(isBetaActiveProvider)) {
-      // Drop silently — outbox row goes away in [_handle].
       return;
     }
-    if (row.opType == OutboxOp.delete) {
-      await mirror.unpublishPersonalPackage(row.entityId);
+    if (row.opType == _opDelete) {
+      await mirror.unpublishPersonalPackage(row.targetPk);
       return;
     }
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     await mirror.pushPersonalPackage(
-      packageName: row.entityId,
+      packageName: row.targetPk,
       state: (p['state'] as Map).cast<String, dynamic>(),
     );
   }
@@ -584,7 +579,7 @@ class SyncEngine {
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final itemId = p['item_id'] as String;
     final type = p['type'] as String;
-    if (row.opType == OutboxOp.delete) {
+    if (row.opType == _opDelete) {
       await repo.deleteBackupByItem(itemId, type);
       return;
     }
@@ -592,16 +587,13 @@ class SyncEngine {
     final data = (p['data'] as Map).cast<String, dynamic>();
     // Idempotency: hash the canonical payload + skip upload when the
     // matching cloud_backups row already carries the same payload_hash.
-    // Same content saved 3x → uploaded once.
     final hash = _hashPayload(type, itemId, data);
     try {
       final remoteHash = await repo.fetchPayloadHashByItem(itemId, type);
       if (remoteHash == hash) {
         return;
       }
-    } catch (_) {
-      // Best-effort — on lookup failure fall through and re-upload.
-    }
+    } catch (_) {}
     await repo.uploadBackup(
       itemName,
       itemId,
@@ -619,8 +611,6 @@ class SyncEngine {
     });
     return sha256.convert(utf8.encode(canonical)).toString();
   }
-
-  // ── Utilities ──────────────────────────────────────────────────────
 
   static int _opSeq = 0;
   String _newOpId() {

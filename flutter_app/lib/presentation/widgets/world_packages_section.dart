@@ -32,7 +32,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
 
   Future<List<InstalledPackage>> _load() {
     final db = ref.read(appDatabaseProvider);
-    return db.installedPackageDao.listForCampaign(widget.campaignId);
+    return db.installedPackagesDao.getByWorld(widget.campaignId);
   }
 
   Future<void> _refresh() async {
@@ -47,9 +47,9 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
     // entities so pack-side `_lookup` placeholders resolve correctly.
     final build = generateBuiltinDnd5eV2Schema();
     final tier0Slugs = build.seedRows.keys.toSet();
-    final tier0Rows = await (db.select(db.entities)
+    final tier0Rows = await (db.select(db.worldEntities)
           ..where((t) =>
-              t.campaignId.equals(widget.campaignId) &
+              t.worldId.equals(widget.campaignId) &
               t.categorySlug.isIn(tier0Slugs)))
         .get();
     final tier0Index = <String, Map<String, String>>{};
@@ -58,7 +58,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
           .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] = r.id;
     }
     final result = await PackageSyncService(db).sync(
-      campaignId: widget.campaignId,
+      worldId: widget.campaignId,
       packageId: row.packageId,
       resolveAttrs: (attrs) =>
           PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
@@ -103,7 +103,7 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
 
     final db = ref.read(appDatabaseProvider);
     final result = await PackageSyncService(db).uninstall(
-      campaignId: widget.campaignId,
+      worldId: widget.campaignId,
       packageId: row.packageId,
     );
     if (!mounted) return;

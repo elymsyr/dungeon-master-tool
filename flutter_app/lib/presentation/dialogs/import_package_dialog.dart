@@ -55,7 +55,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final campaignId =
         ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
     if (campaignId == null) return;
-    final rows = await db.installedPackageDao.listForCampaign(campaignId);
+    final rows = await db.installedPackagesDao.getByWorld(campaignId);
     if (!mounted) return;
     setState(() {
       _installedPackageNames = rows.map((r) => r.packageName).toSet();
@@ -193,7 +193,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     setState(() => _importing = true);
     try {
       final db = ref.read(appDatabaseProvider);
-      final pkgRow = await db.packageDao.getByName(info.name);
+      final pkgRow = await db.packagesDao.getByName(info.name);
       final activeNotifier = ref.read(activeCampaignProvider.notifier);
       final campaignId = activeNotifier.data?['world_id'] as String?;
       if (pkgRow == null || campaignId == null) {
@@ -205,7 +205,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         return;
       }
       final result = await PackageSyncService(db).uninstall(
-        campaignId: campaignId,
+        worldId: campaignId,
         packageId: pkgRow.id,
       );
       await activeNotifier.reload();
@@ -235,7 +235,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
 
     try {
       final db = ref.read(appDatabaseProvider);
-      final pkgRow = await db.packageDao.getByName(info.name);
+      final pkgRow = await db.packagesDao.getByName(info.name);
       if (pkgRow == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -259,8 +259,8 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       // Live-link install: register the package, then sync. New pack rows
       // come in as linked entities — pack updates propagate, user edits
       // detach to homebrew.
-      await db.installedPackageDao.upsert(InstalledPackagesCompanion.insert(
-        campaignId: campaignId,
+      await db.installedPackagesDao.upsert(InstalledPackagesCompanion.insert(
+        worldId: campaignId,
         packageId: pkgRow.id,
         packageName: Value(pkgRow.name),
       ));
@@ -269,9 +269,9 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       // entities so pack-side `_lookup` placeholders resolve.
       final build = generateBuiltinDnd5eV2Schema();
       final tier0Slugs = build.seedRows.keys.toSet();
-      final tier0Rows = await (db.select(db.entities)
+      final tier0Rows = await (db.select(db.worldEntities)
             ..where((t) =>
-                t.campaignId.equals(campaignId) &
+                t.worldId.equals(campaignId) &
                 t.categorySlug.isIn(tier0Slugs)))
           .get();
       final tier0Index = <String, Map<String, String>>{};
@@ -282,7 +282,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       }
 
       final result = await PackageSyncService(db).sync(
-        campaignId: campaignId,
+        worldId: campaignId,
         packageId: pkgRow.id,
         resolveAttrs: (attrs) =>
             PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
