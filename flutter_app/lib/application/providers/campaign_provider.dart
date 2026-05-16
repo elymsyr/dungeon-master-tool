@@ -11,7 +11,6 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../data/network/network_providers.dart';
-import '../services/campaign_import_service.dart';
 import '../services/media_bundler.dart';
 import '../services/world_mirror_service.dart';
 import 'auth_provider.dart';
@@ -31,16 +30,6 @@ final campaignRepositoryProvider = Provider<CampaignRepository>(
   (ref) => CampaignRepositoryImpl(
     ref.watch(appDatabaseProvider),
     ref.read(campaignLocalDsProvider),
-  ),
-);
-
-/// Legacy (Python v0.8.4) world klasörlerini [AppPaths.worldsDir] altına
-/// kopyalayan servis. UI bunu çağırır; mevcut load pipeline sonrasında
-/// otomatik olarak MsgPack → SQLite migration'u devralır.
-final campaignImportServiceProvider = Provider<CampaignImportService>(
-  (ref) => CampaignImportService(
-    ref.watch(campaignRepositoryProvider),
-    ref.watch(campaignLocalDsProvider),
   ),
 );
 
