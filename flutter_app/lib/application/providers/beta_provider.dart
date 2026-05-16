@@ -195,6 +195,14 @@ class BetaNotifier extends StateNotifier<BetaState> {
   /// `leave_beta` — önce kullanıcının `campaign-backups` bucket objelerini
   /// Storage API ile siler (Supabase plpgsql'den storage.objects DELETE'e
   /// izin vermiyor), sonra metadata temizliği için RPC'yi çağırır.
+  ///
+  /// RPC (migration 044) şunları siler:
+  ///   • Sahip olunan online world'ler (FK cascade ile members, characters,
+  ///     entities, packages, invites, mind-map, claim-pool dahil).
+  ///   • cloud_backups, community_assets, beta_participants kayıtları.
+  /// Local Drift karakterleri, post'lar, mesajlar, game_listings ve diğer
+  /// online world'lerdeki üyelikler korunur. Beta dışı kullanıcı yeni world
+  /// publish edemez ama davetle başkasının world'üne katılıp oynayabilir.
   Future<bool> leaveBeta() async {
     if (!_canCallRpc) return false;
     final userId = _ref.read(authProvider)?.uid;
