@@ -16,6 +16,7 @@ import '../../domain/entities/schema/template_compatibility.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'export_package_dialog.dart';
 
 /// Paket / karakter import dialogu — aktif dünyaya paket veya karakter
 /// import etmek için. Üstteki segmented control ile kaynak seçilir.
@@ -41,6 +42,7 @@ class ImportPackageDialog extends ConsumerStatefulWidget {
 class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   bool _importing = false;
   Set<String> _installedPackageNames = const {};
+  bool _exportMode = false;
 
   @override
   void initState() {
@@ -66,13 +68,57 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final worldSchema = ref.read(worldSchemaProvider);
     final compatService = TemplateCompatibilityService();
+    final activeWorld = ref.watch(activeCampaignProvider);
+    final canExport = !widget.viewOnly && activeWorld != null;
 
     return AlertDialog(
-      title: Text(widget.viewOnly ? 'Packages' : l10n.importPackageTitle),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(widget.viewOnly
+              ? 'Packages'
+              : (_exportMode ? 'Export Package' : l10n.importPackageTitle)),
+          if (canExport) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _PillTab(
+                  label: 'Import',
+                  icon: Icons.download,
+                  active: !_exportMode,
+                  palette: palette,
+                  onTap: _importing
+                      ? null
+                      : () => setState(() => _exportMode = false),
+                ),
+                _PillTab(
+                  label: 'Export',
+                  icon: Icons.upload,
+                  active: _exportMode,
+                  palette: palette,
+                  onTap: _importing
+                      ? null
+                      : () => setState(() => _exportMode = true),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
       content: SizedBox(
         width: 500,
         height: 480,
-        child: _packagesBody(l10n, palette, worldSchema, compatService),
+        child: _exportMode && canExport
+            ? ExportPackagePanel(
+                lockedWorldName: activeWorld,
+                onExported: () {
+                  if (mounted) Navigator.pop(context);
+                },
+              )
+            : _packagesBody(l10n, palette, worldSchema, compatService),
       ),
       actions: [
         TextButton(
@@ -579,6 +625,56 @@ class _PackageImportCardState extends State<_PackageImportCard> {
     ).then((confirmed) {
       if (confirmed == true) widget.onImport();
     });
+  }
+}
+
+class _PillTab extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final DmToolColors palette;
+  final VoidCallback? onTap;
+
+  const _PillTab({
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.palette,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = active ? Colors.white : palette.tabText;
+    return InkWell(
+      borderRadius: palette.br,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? palette.featureCardAccent : Colors.transparent,
+          borderRadius: palette.br,
+          border: Border.all(
+            color: active ? palette.featureCardAccent : palette.featureCardBorder,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: fg),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: fg,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
