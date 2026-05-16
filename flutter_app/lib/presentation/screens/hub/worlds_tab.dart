@@ -581,7 +581,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // Fetch local updatedAt from the DB row for SaveInfoSection.
     final campaignRow = await ref
         .read(appDatabaseProvider)
-        .campaignDao
+        .worldsDao
         .getByName(campaignName);
     final localUpdatedAt = campaignRow?.updatedAt;
     final worldId = data['world_id'] as String? ?? campaignName;

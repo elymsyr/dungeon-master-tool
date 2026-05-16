@@ -17,7 +17,7 @@ import '../providers/role_provider.dart';
 import '../providers/world_characters_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
-import '../../data/database/app_database.dart';
+import '../../data/database/app_database.dart' hide WorldCharacterRow;
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -522,10 +522,10 @@ class WorldMirrorApplier {
         (e.newRecord['package_id'] ?? e.oldRecord['package_id']) as String?;
     if (id == null) return;
     if (mirror.isEchoOfWorldPackage(id)) return;
-    final dao = ref.read(appDatabaseProvider).worldPackageDao;
+    final dao = ref.read(appDatabaseProvider).worldPackagesDao;
     switch (e.eventType) {
       case PostgresChangeEvent.delete:
-        await dao.removeByPackageId(id);
+        await dao.deleteByPackage(id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final row = e.newRecord;

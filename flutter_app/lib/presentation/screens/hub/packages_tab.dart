@@ -537,7 +537,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
 
     // Fetch local updatedAt from the DB row for SaveInfoSection.
     final packageRow =
-        await ref.read(appDatabaseProvider).packageDao.getByName(packageName);
+        await ref.read(appDatabaseProvider).packagesDao.getByName(packageName);
     final localUpdatedAt = packageRow?.updatedAt;
     final packageId = data['package_id'] as String? ??
         data['world_id'] as String? ??

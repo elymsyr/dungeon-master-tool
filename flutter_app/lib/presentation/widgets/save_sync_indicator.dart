@@ -870,7 +870,7 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
     if (campaignName != null) {
       final row = await ref
           .read(appDatabaseProvider)
-          .campaignDao
+          .worldsDao
           .getByName(campaignName);
       final data = ref.read(activeCampaignProvider.notifier).data;
       final worldId = (data?['world_id'] as String?) ?? campaignName;
@@ -884,7 +884,7 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
     if (packageName != null) {
       final row = await ref
           .read(appDatabaseProvider)
-          .packageDao
+          .packagesDao
           .getByName(packageName);
       final data = ref.read(activePackageProvider.notifier).data;
       final packageId = (data?['package_id'] as String?) ??

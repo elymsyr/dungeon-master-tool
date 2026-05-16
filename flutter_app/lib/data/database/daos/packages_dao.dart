@@ -18,6 +18,12 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
   Future<Package?> getById(String id) =>
       (select(packages)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Future<Package?> getByName(String name) async {
+    final rows =
+        await (select(packages)..where((t) => t.name.equals(name))).get();
+    return rows.isEmpty ? null : rows.first;
+  }
+
   Future<List<Package>> getAll() => select(packages).get();
 
   Stream<List<Package>> watchAll() =>
