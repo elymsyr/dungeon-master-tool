@@ -7,13 +7,17 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/config/app_paths.dart';
 import 'daos/campaign_dao.dart';
+import 'daos/character_dao.dart';
 import 'daos/entity_dao.dart';
 import 'daos/installed_package_dao.dart';
 import 'daos/map_dao.dart';
 import 'daos/mind_map_dao.dart';
 import 'daos/package_dao.dart';
 import 'daos/session_dao.dart';
+import 'daos/sync_outbox_dao.dart';
+import 'daos/world_package_dao.dart';
 import 'tables/campaigns_table.dart';
+import 'tables/characters_table.dart';
 import 'tables/combat_conditions_table.dart';
 import 'tables/combatants_table.dart';
 import 'tables/encounters_table.dart';
@@ -26,7 +30,9 @@ import 'tables/package_entities_table.dart';
 import 'tables/package_schemas_table.dart';
 import 'tables/packages_table.dart';
 import 'tables/sessions_table.dart';
+import 'tables/sync_outbox_table.dart';
 import 'tables/timeline_pins_table.dart';
+import 'tables/world_packages_table.dart';
 import 'tables/world_schemas_table.dart';
 
 part 'app_database.g.dart';
@@ -48,6 +54,9 @@ part 'app_database.g.dart';
     PackageSchemas,
     PackageEntities,
     InstalledPackages,
+    Characters,
+    SyncOutbox,
+    WorldPackages,
   ],
   daos: [
     CampaignDao,
@@ -57,6 +66,9 @@ part 'app_database.g.dart';
     MindMapDao,
     PackageDao,
     InstalledPackageDao,
+    CharacterDao,
+    SyncOutboxDao,
+    WorldPackageDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -69,7 +81,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +137,74 @@ class AppDatabase extends _$AppDatabase {
             // sync hadn't shipped).
             await customStatement('DROP TABLE IF EXISTS installed_packages');
             await m.createTable(installedPackages);
+          }
+          if (from < 9) {
+            // v9: characters table — JSON file → Drift migration foundation
+            // (PR-SYNC-0). CharacterMigrationService backfills rows from
+            // `AppPaths.charactersDir` on first app start after upgrade.
+            await m.createTable(characters);
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_characters_world '
+                'ON characters (world_id)');
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_characters_owner '
+                'ON characters (owner_id)');
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_characters_updated '
+                'ON characters (updated_at DESC)');
+          }
+          if (from < 10) {
+            // v10 (PR-SYNC-1): persistent sync_outbox + per-row cloud-push
+            // tracking + S1 hot-path indexes.
+            await m.createTable(syncOutbox);
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_outbox_next_attempt '
+                'ON sync_outbox (next_attempt_at, created_at)');
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_outbox_kind_id '
+                'ON sync_outbox (entity_kind, entity_id)');
+
+            await m.addColumn(campaigns, campaigns.lastCloudPushAt);
+            await m.addColumn(campaigns, campaigns.lastPushedHash);
+            await m.addColumn(packages, packages.lastCloudPushAt);
+            await m.addColumn(packages, packages.lastPushedHash);
+
+            // S1 hot-path indexes (system_optimization_roadmap.md). All
+            // `IF NOT EXISTS` — idempotent against re-runs.
+            const s1 = <String>[
+              'CREATE INDEX IF NOT EXISTS idx_entities_campaign '
+                  'ON entities (campaign_id)',
+              'CREATE INDEX IF NOT EXISTS idx_entities_category '
+                  'ON entities (campaign_id, category_slug)',
+              'CREATE INDEX IF NOT EXISTS idx_entities_package_linked '
+                  'ON entities (package_id) WHERE package_id IS NOT NULL',
+              'CREATE INDEX IF NOT EXISTS idx_map_pins_campaign '
+                  'ON map_pins (campaign_id)',
+              'CREATE INDEX IF NOT EXISTS idx_mm_nodes_campaign_map '
+                  'ON mind_map_nodes (campaign_id, map_id)',
+              'CREATE INDEX IF NOT EXISTS idx_mm_edges_campaign_map '
+                  'ON mind_map_edges (campaign_id, map_id)',
+              'CREATE INDEX IF NOT EXISTS idx_sessions_campaign '
+                  'ON sessions (campaign_id)',
+              'CREATE INDEX IF NOT EXISTS idx_encounters_session '
+                  'ON encounters (session_id)',
+              'CREATE INDEX IF NOT EXISTS idx_combatants_encounter '
+                  'ON combatants (encounter_id)',
+              'CREATE INDEX IF NOT EXISTS idx_package_entities_package '
+                  'ON package_entities (package_id)',
+              'CREATE INDEX IF NOT EXISTS idx_world_schemas_campaign '
+                  'ON world_schemas (campaign_id)',
+            ];
+            for (final stmt in s1) {
+              await customStatement(stmt);
+            }
+          }
+          if (from < 11) {
+            // v11 (PR-SYNC-5): DM-shared world_packages mirror.
+            await m.createTable(worldPackages);
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_world_packages_world '
+                'ON world_packages (world_id)');
           }
         },
       );

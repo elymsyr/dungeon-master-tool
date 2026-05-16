@@ -17,9 +17,11 @@ import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
+import 'online_worlds_provider.dart';
 import 'role_provider.dart';
+import 'auth_provider.dart';
 import 'save_state_provider.dart';
-import 'world_mirror_provider.dart';
+import 'sync_engine_provider.dart';
 
 const _uuid = Uuid();
 
@@ -429,14 +431,17 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       },
       campaignId: _campaignId,
     ));
-    // Remote mirror — RLS DM dışı için reddeder, best-effort yeterli.
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror != null) {
+    // Remote mirror — routed through outbox. Engine handles RLS rejection
+    // by retrying with backoff; benign no-op when world isn't online.
+    final worldId = _campaignId;
+    if (worldId != null &&
+        _ref.read(authProvider) != null &&
+        _ref.read(onlineWorldIdsProvider).contains(worldId)) {
       // ignore: discarded_futures
-      mirror.deleteEntity(
-        worldId: _campaignId ?? '',
-        entityId: entityId,
-      );
+      _ref.read(syncEngineProvider).enqueueWorldEntityDelete(
+            worldId: worldId,
+            entityId: entityId,
+          );
     }
   }
 

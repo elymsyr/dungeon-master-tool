@@ -37,6 +37,7 @@ class CloudBackupRemoteDataSource {
     int schemaVersion = 5,
     String? appVersion,
     String? notes,
+    String? payloadHash,
   }) async {
     final storagePath = '$_userId/${type}s/$itemId.json.gz';
 
@@ -86,6 +87,7 @@ class CloudBackupRemoteDataSource {
       'app_version': appVersion,
       'created_at': now.toIso8601String(),
       'notes': notes,
+      'payload_hash': payloadHash,
     };
 
     await _client.from(_table).insert(row);
@@ -147,6 +149,22 @@ class CloudBackupRemoteDataSource {
 
     if (rows.isEmpty) return null;
     return _rowToMeta(rows.first);
+  }
+
+  /// Item icin cloud'daki son payload_hash. SyncEngine ayni icerigi
+  /// tekrar yuklemekten kacinmak icin upload oncesi kontrol eder.
+  /// Null doner: row yok veya hash henuz set edilmemis (legacy row).
+  Future<String?> fetchPayloadHashByItem(String itemId, String type) async {
+    final rows = await _client
+        .from(_table)
+        .select('payload_hash')
+        .eq('user_id', _userId)
+        .eq('item_id', itemId)
+        .eq('type', type)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    final raw = rows.first['payload_hash'];
+    return raw is String ? raw : null;
   }
 
   /// Tek bir backup metadata'sini getir.

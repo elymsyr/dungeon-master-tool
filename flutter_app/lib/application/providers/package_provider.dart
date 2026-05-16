@@ -22,6 +22,7 @@ import 'campaign_provider.dart'
     show activeCampaignProvider, campaignRevisionProvider;
 import 'cloud_backup_provider.dart';
 import 'personal_online_provider.dart';
+import 'sync_engine_provider.dart';
 import 'world_mirror_provider.dart';
 
 final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
@@ -260,8 +261,13 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     if (mirror == null) return;
     final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
     if (!onlineNames.contains(name)) return;
+    // Fire-and-forget — push errors are logged inside the service. The
+    // outbox path is the source of retries; this direct push is just an
+    // auto-mirror hook on save.
     // ignore: discarded_futures
-    mirror.pushPersonalPackage(packageName: name, state: data);
+    mirror.pushPersonalPackage(packageName: name, state: data).catchError(
+          (Object e) => debugPrint('_mirrorPushPersonal swallow: $e'),
+        );
   }
 
   /// "Make Online" — aktif paketi `personal_packages`'a publish eder ve
@@ -322,17 +328,50 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     final mirror = _ref.read(worldMirrorServiceProvider);
     final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
     final wasOnline = onlineNames.contains(packageName);
+    // Resolve the cloud_backup item_id before the row is wiped — convention
+    // matches manual_backup_provider: prefer `package_id`, then `world_id`,
+    // fallback to package name.
+    String backupItemId = packageName;
+    try {
+      final preDeleteData = state == packageName && _data != null
+          ? _data
+          : await _repo.load(packageName);
+      if (preDeleteData != null) {
+        backupItemId = (preDeleteData['package_id'] as String?) ??
+            (preDeleteData['world_id'] as String?) ??
+            packageName;
+      }
+    } catch (e) {
+      debugPrint('package delete pre-load error: $e');
+    }
     await _repo.delete(packageName);
     if (state == packageName) {
       _data = null;
       state = null;
     }
     if (wasOnline && mirror != null) {
+      // Fire-and-forget — caller already removed the local row.
       // ignore: discarded_futures
-      mirror.unpublishPersonalPackage(packageName);
+      mirror.unpublishPersonalPackage(packageName).catchError(
+            (Object e) =>
+                debugPrint('package delete unpublish swallow: $e'),
+          );
       _ref
           .read(personalOnlinePackageNamesProvider.notifier)
           .remove(packageName);
+    }
+    // Cloud-backup snapshot delete — best-effort via outbox so an offline
+    // delete still drains on reconnect. Engine itself enforces the beta
+    // gate before contacting Supabase.
+    if (_ref.read(authProvider) != null) {
+      try {
+        await _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
+              itemId: backupItemId,
+              type: 'package',
+            );
+      } catch (e) {
+        debugPrint('package delete cloud_backup enqueue error: $e');
+      }
     }
   }
 

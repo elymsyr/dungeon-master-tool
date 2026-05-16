@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import 'dart:convert';
-
 import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +20,8 @@ import 'builtin_package_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
+import 'sync_engine_provider.dart';
+import 'world_membership_provider.dart';
 import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
@@ -322,23 +322,71 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     } catch (_) {
       /* bootstrap pending → null, OK */
     }
-    await mirror.pushEntities(
+    // Bulk entity push is fire-and-forget — the granular world tables below
+     // go through the outbox (retried automatically). Failure here doesn't
+     // poison the rest of the push pipeline.
+    try {
+      await mirror.pushEntities(
+        worldId: worldId,
+        entitiesBlob: entitiesBlob,
+        builtinPackageId: builtinPackageId,
+      );
+    } catch (e) {
+      debugPrint('_bundleAndPush pushEntities swallow: $e');
+    }
+
+    // PR-SYNC-6: granular tables (`world_map_data` / `world_sessions` /
+    // `world_settings`) are now the canonical world-state mirror. The
+    // legacy `worlds.state_json` dual-write is retired — the `worlds` row
+    // still carries world_name / template_* metadata via membership service
+    // publish, but per-mutation pushes no longer re-upload the whole blob.
+    final engine = _ref.read(syncEngineProvider);
+
+    final mapDataRaw = bundled['map_data'];
+    final sessionsRaw = bundled['sessions'];
+    final settingsRaw = bundled['settings'];
+
+    if (mapDataRaw is Map) {
+      await engine.enqueueWorldMapData(
+        worldId: worldId,
+        data: Map<String, dynamic>.from(mapDataRaw),
+      );
+    }
+    if (sessionsRaw is List) {
+      for (var i = 0; i < sessionsRaw.length; i++) {
+        final s = sessionsRaw[i];
+        if (s is! Map) continue;
+        final sm = Map<String, dynamic>.from(s);
+        final sid = sm['id'] as String?;
+        if (sid == null) continue;
+        await engine.enqueueWorldSessionUpsert(
+          worldId: worldId,
+          sessionId: sid,
+          name: (sm['name'] as String?) ?? '',
+          data: sm,
+          isActive: (sm['is_active'] as bool?) ?? false,
+          sortOrder: (sm['sort_order'] as num?)?.toInt() ?? i,
+        );
+      }
+    }
+    // Everything else that isn't entities / map_data / sessions lives in
+    // settings_json so a single granular row carries it.
+    final settingsForPush = <String, dynamic>{};
+    if (settingsRaw is Map) {
+      settingsForPush.addAll(Map<String, dynamic>.from(settingsRaw));
+    }
+    for (final entry in bundled.entries) {
+      if (entry.key == 'entities' ||
+          entry.key == 'map_data' ||
+          entry.key == 'sessions' ||
+          entry.key == 'settings') {
+        continue;
+      }
+      settingsForPush[entry.key] = entry.value;
+    }
+    await engine.enqueueWorldSettings(
       worldId: worldId,
-      entitiesBlob: entitiesBlob,
-      builtinPackageId: builtinPackageId,
-    );
-    // Entities already mirror through world_entities CDC; including them
-    // again inside state_json doubles bandwidth and processing on every
-    // bundle push. Strip them before encoding — the applier's
-    // _applyWorldsEvent already preserves the in-memory entities map.
-    final stateForPush = Map<String, dynamic>.from(bundled);
-    stateForPush.remove('entities');
-    await mirror.pushWorldState(
-      worldId: worldId,
-      worldName: worldName,
-      templateId: templateId,
-      templateHash: templateHash,
-      stateJson: jsonEncode(stateForPush),
+      settings: settingsForPush,
     );
   }
 
@@ -486,6 +534,11 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       _data = null;
       state = null;
     }
+    // Cascade cloud cleanup: kill the `worlds` row (cascade wipes
+    // world_entities/world_characters/world_map_data/world_sessions/
+    // world_settings/world_packages) and any matching cloud_backups
+    // snapshot. Online-only — offline world never had cloud state.
+    await _cloudDeleteWorld(worldId: data?['world_id'] as String?, campaignName: campaignName);
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -527,6 +580,39 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       _data = null;
       state = null;
     }
+    await _cloudDeleteWorld(worldId: data?['world_id'] as String?, campaignName: campaignName);
+  }
+
+  /// Removes the world's footprint from Supabase: drops the `worlds` row
+  /// (cascade clears every mirror table) when the world was online, and
+  /// enqueues a `cloud_backup_world` delete so the manual snapshot (if
+  /// any) is removed too. Best-effort — failures don't block the local
+  /// delete that already happened.
+  Future<void> _cloudDeleteWorld({
+    required String? worldId,
+    required String campaignName,
+  }) async {
+    if (_ref.read(authProvider) == null) return;
+    final wid = worldId ?? campaignName;
+    final wasOnline = _ref.read(onlineWorldIdsProvider).contains(wid);
+    // Offline-only worlds never touched the cloud; skip both server calls
+    // so the delete doesn't light up the cloud-sync indicator.
+    if (!wasOnline) return;
+    try {
+      await _ref.read(worldMembershipServiceProvider).unpublishWorld(wid);
+    } catch (e) {
+      debugPrint('cloud-delete unpublishWorld error: $e');
+    }
+    try {
+      await _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
+            itemId: wid,
+            type: 'world',
+          );
+    } catch (e) {
+      debugPrint('cloud-delete cloud_backup enqueue error: $e');
+    }
+    // Drop the online flag so future operations see this world as offline.
+    _ref.read(onlineWorldIdsProvider.notifier).remove(wid);
   }
 }
 

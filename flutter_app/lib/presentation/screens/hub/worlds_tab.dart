@@ -372,6 +372,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              final wasOnline =
+                  ref.read(onlineWorldIdsProvider).contains(worldId);
               if (isPlayer) {
                 await _leaveOnlineAndPurge(worldId, name);
               } else {
@@ -386,8 +388,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     content: Text(
                       isPlayer
                           ? 'Left "$name". Local copy removed.'
-                          : 'World moved to trash. Cloud backup is still '
-                              'available under Cloud → Worlds.',
+                          : wasOnline
+                              ? 'World moved to trash. Cloud copy removed.'
+                              : 'World moved to trash.',
                     ),
                     duration: const Duration(seconds: 5),
                   ),

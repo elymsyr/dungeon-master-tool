@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
@@ -117,6 +118,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
     ref.watch(worldSyncAutoSubscribeProvider);
+    ref.watch(syncEngineProvider); // PR-SYNC-1: outbox drain worker.
 
     final editMode = ref.watch(editModeProvider);
     final schema = ref.read(worldSchemaProvider);

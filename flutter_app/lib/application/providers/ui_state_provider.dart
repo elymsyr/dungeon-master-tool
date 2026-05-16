@@ -48,7 +48,6 @@ class UiState {
 
   // Save & Sync
   final bool autoLocalSave;
-  final bool autoCloudSave;
 
   // First-launch onboarding: welcome/beta dialog shown once.
   final bool welcomeSeen;
@@ -75,7 +74,6 @@ class UiState {
     this.localeCode = 'en',
     this.volume = 1.0,
     this.autoLocalSave = true,
-    this.autoCloudSave = false,
     this.welcomeSeen = false,
   });
 
@@ -101,7 +99,6 @@ class UiState {
     String? localeCode,
     double? volume,
     bool? autoLocalSave,
-    bool? autoCloudSave,
     bool? welcomeSeen,
   }) {
     return UiState(
@@ -126,7 +123,6 @@ class UiState {
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
-      autoCloudSave: autoCloudSave ?? this.autoCloudSave,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
     );
   }
@@ -153,7 +149,6 @@ class UiState {
     'localeCode': localeCode,
     'volume': volume,
     'autoLocalSave': autoLocalSave,
-    'autoCloudSave': autoCloudSave,
     'welcomeSeen': welcomeSeen,
   };
 
@@ -190,7 +185,6 @@ class UiState {
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
-      autoCloudSave: json['autoCloudSave'] as bool? ?? false,
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,
     );
   }

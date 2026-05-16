@@ -59,6 +59,9 @@ dependencies:
   # Auth (Supabase — online features)
   supabase_flutter: ^2.8.0
 
+  # Network connectivity status (SyncEngine wake-on-online — PR-SYNC-1)
+  connectivity_plus: ^6.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -97,6 +97,12 @@ class WorldSyncService {
     'world_mind_map_edges',
     'world_characters',
     'entity_shares',
+    // PR-SYNC-3: granular replacements for the worlds.state_json blob.
+    'world_map_data',
+    'world_sessions',
+    'world_settings',
+    // PR-SYNC-5: DM-shared package mirror.
+    'world_packages',
   ];
 
   Future<void> dispose() async {

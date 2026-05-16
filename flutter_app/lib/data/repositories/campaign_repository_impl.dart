@@ -76,6 +76,14 @@ class CampaignRepositoryImpl implements CampaignRepository {
   @override
   Future<void> delete(String campaignName) async {
     final existing = await _db.campaignDao.getByName(campaignName);
+    final legacyDir =
+        Directory(p.join(AppPaths.worldsDir, campaignName));
+    final hasLegacyDir = await legacyDir.exists();
+    // Already deleted on this device — bail out before writing a second
+    // trash sidecar. Without this guard, cross-device DELETE echoes (or a
+    // duplicate user click) accumulate new `.trash/<name>_<ts>/` entries
+    // on every call.
+    if (existing == null && !hasLegacyDir) return;
 
     // Try filesystem-based trash first (legacy MsgPack/JSON campaigns).
     await _localDs.deleteCampaign(campaignName);
@@ -109,7 +117,9 @@ class CampaignRepositoryImpl implements CampaignRepository {
     final existing = await _db.campaignDao.getByName(campaignName);
     // Hard wipe of any legacy MsgPack/JSON dir — no trash entry written.
     final dir = Directory(p.join(AppPaths.worldsDir, campaignName));
-    if (await dir.exists()) {
+    final hasDir = await dir.exists();
+    if (existing == null && !hasDir) return;
+    if (hasDir) {
       await dir.delete(recursive: true);
     }
     if (existing != null) {

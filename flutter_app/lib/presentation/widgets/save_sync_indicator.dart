@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
-import '../../application/providers/package_provider.dart';
+import '../../application/providers/outbox_status_provider.dart';
+import '../../application/providers/package_provider.dart'
+    show activePackageProvider, activeCampaignSyncProvider;
 import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
@@ -50,19 +52,45 @@ class SaveSyncIndicator extends ConsumerWidget {
       );
     }
 
-    // Full (inside item) mode: reflects the active item's save + sync state.
+    // Full (inside item) mode: reflects the active item's save + outbox.
     final saveStatus = ref.watch(saveStateProvider);
-    final syncState = hasCloud ? ref.watch(cloudSyncProvider) : null;
+    // Active-item cloud eligibility: world only counts when "Made Online",
+    // package always counts (packages cloud-back automatically). When no
+    // item active → fall back to global hasCloud.
+    final activeCampaign = ref.watch(activeCampaignProvider);
+    final activePackage = ref.watch(activePackageProvider);
+    bool itemOnCloud;
+    if (activeCampaign != null) {
+      final data = ref.read(activeCampaignProvider.notifier).data;
+      final worldId = (data?['world_id'] as String?) ?? activeCampaign;
+      itemOnCloud =
+          hasCloud && ref.watch(onlineWorldIdsProvider).contains(worldId);
+    } else if (activePackage != null) {
+      itemOnCloud = hasCloud;
+    } else {
+      itemOnCloud = hasCloud;
+    }
+    final outbox = itemOnCloud
+        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        : null;
+    // Live-link engine (SRD pack apply on campaign open) — counts as local
+    // work so the spinner stays single-source.
+    final liveLinkBusy = ref.watch(
+      activeCampaignSyncProvider.select((s) => s.isLoading),
+    );
+    final localSaving = saveStatus == SaveStatus.saving || liveLinkBusy;
+    final cloudSyncing = outbox != null && outbox.isSyncing;
 
     final (IconData icon, Color color) = _resolveIcon(
-      saveStatus, syncState, palette, hasCloud,
+      saveStatus, outbox, palette, itemOnCloud,
+      localSaving: localSaving, cloudSyncing: cloudSyncing,
+      context: context,
     );
 
     return Stack(
       children: [
         IconButton(
-          icon: (saveStatus == SaveStatus.saving ||
-                  syncState?.status == CloudSyncStatus.syncing)
+          icon: (localSaving || cloudSyncing)
               ? SizedBox(
                   width: 20,
                   height: 20,
@@ -72,10 +100,10 @@ class SaveSyncIndicator extends ConsumerWidget {
                   ),
                 )
               : Icon(icon, size: 20, color: color),
-          tooltip: _tooltip(saveStatus, syncState),
+          tooltip: _tooltip(saveStatus, outbox, liveLinkBusy: liveLinkBusy),
           onPressed: () => _showSaveSyncDialog(context, ref, compact: false),
         ),
-        if (syncState != null && syncState.failedCount > 0)
+        if (outbox != null && outbox.hasIssue)
           Positioned(
             right: 4,
             top: 4,
@@ -86,13 +114,10 @@ class SaveSyncIndicator extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-              child: Text(
-                '${syncState.failedCount}',
-                style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textAlign: TextAlign.center,
+              child: const Icon(
+                Icons.priority_high,
+                size: 10,
+                color: Colors.white,
               ),
             ),
           ),
@@ -102,44 +127,52 @@ class SaveSyncIndicator extends ConsumerWidget {
 
   (IconData, Color) _resolveIcon(
     SaveStatus save,
-    CloudSyncState? sync,
+    OutboxStatus? sync,
     DmToolColors palette,
-    bool hasCloud,
-  ) {
+    bool hasCloud, {
+    required bool localSaving,
+    required bool cloudSyncing,
+    required BuildContext context,
+  }) {
+    // Color rules (single indicator):
+    //   - Cloud sync in progress (with or without local) → success/green.
+    //   - Local-only save in progress → theme primary.
+    //   - Idle: cloud-status driven (synced / dirty / queue) or local-only
+    //     dirty/save icon when there's no cloud.
+    final themePrimary = Theme.of(context).colorScheme.primary;
+    if (cloudSyncing) {
+      return (Icons.cloud_sync, palette.successBtnBg);
+    }
+    if (localSaving) {
+      return (Icons.save, themePrimary);
+    }
     if (!hasCloud) {
-      // Local-only mode
       return switch (save) {
-        SaveStatus.saving => (Icons.save, palette.featureCardAccent),
-        SaveStatus.dirty => (Icons.save_outlined, palette.featureCardAccent),
+        SaveStatus.saving => (Icons.save, themePrimary),
+        SaveStatus.dirty => (Icons.save_outlined, themePrimary),
         SaveStatus.saved => (Icons.save, palette.sidebarLabelSecondary),
       };
     }
-    // Cloud mode — prioritize cloud status over local
     if (sync == null) {
       return (Icons.cloud_queue, palette.sidebarLabelSecondary);
     }
-    return switch (sync.status) {
-      CloudSyncStatus.syncing => (Icons.cloud_sync, palette.featureCardAccent),
-      CloudSyncStatus.synced => (Icons.cloud_done, palette.successBtnBg),
-      CloudSyncStatus.error => (Icons.cloud_off, palette.dangerBtnBg),
-      CloudSyncStatus.pending => (Icons.cloud_upload_outlined, palette.featureCardAccent),
-      CloudSyncStatus.idle => save == SaveStatus.dirty
-          ? (Icons.cloud_upload_outlined, palette.featureCardAccent)
-          : (Icons.cloud_queue, palette.sidebarLabelSecondary),
-    };
+    if (sync.hasIssue) return (Icons.cloud_off, palette.dangerBtnBg);
+    return save == SaveStatus.dirty
+        ? (Icons.cloud_upload_outlined, palette.featureCardAccent)
+        : (Icons.cloud_done, palette.successBtnBg);
   }
 
-  String _tooltip(SaveStatus save, CloudSyncState? sync) {
+  String _tooltip(SaveStatus save, OutboxStatus? sync,
+      {required bool liveLinkBusy}) {
+    if (liveLinkBusy) return 'Applying package updates...';
     if (sync != null) {
-      return switch (sync.status) {
-        CloudSyncStatus.syncing => 'Syncing...',
-        CloudSyncStatus.synced => 'Cloud synced',
-        CloudSyncStatus.error => '${sync.failedCount} item(s) not synced',
-        CloudSyncStatus.pending => 'Sync pending...',
-        CloudSyncStatus.idle => save == SaveStatus.dirty
-            ? 'Unsaved changes'
-            : 'Save & Sync',
-      };
+      if (sync.hasIssue) {
+        return 'Sync stuck (${sync.maxAttempts} attempts)';
+      }
+      if (sync.pending > 0) {
+        return 'Syncing ${sync.pending} item${sync.pending == 1 ? '' : 's'}...';
+      }
+      return save == SaveStatus.dirty ? 'Unsaved changes' : 'Cloud synced';
     }
     return switch (save) {
       SaveStatus.saving => 'Saving...',
@@ -168,7 +201,9 @@ class _SaveSyncDialog extends ConsumerWidget {
     final uiState = ref.watch(uiStateProvider);
     final saveStatus = ref.watch(saveStateProvider);
     final hasCloud = SupabaseConfig.isConfigured;
-    final syncState = hasCloud ? ref.watch(cloudSyncProvider) : null;
+    final outbox = hasCloud
+        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        : null;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
@@ -234,7 +269,6 @@ class _SaveSyncDialog extends ConsumerWidget {
                   _ActionsRow(
                     palette: palette,
                     saveStatus: saveStatus,
-                    syncState: syncState,
                     hasCloud: hasCloud,
                   ),
 
@@ -251,12 +285,12 @@ class _SaveSyncDialog extends ConsumerWidget {
                   _StorageUsageBar(palette: palette),
                 ],
 
-                // ── Sync results (full mode only) ──
-                if (!compact && syncState != null && syncState.results.isNotEmpty) ...[
+                // ── Outbox status (full mode only) ──
+                if (!compact && outbox != null && outbox.pending > 0) ...[
                   const SizedBox(height: 16),
-                  _SectionLabel('Sync Results', palette),
+                  _SectionLabel('Sync Queue', palette),
                   const SizedBox(height: 8),
-                  ...syncState.results.map((r) => _ResultRow(r, palette)),
+                  _OutboxStatusRow(outbox: outbox, palette: palette),
                 ],
 
                 // ── Compact mode hint ──
@@ -389,13 +423,11 @@ class _OnlineWorldPanel extends ConsumerWidget {
 class _ActionsRow extends ConsumerWidget {
   final DmToolColors palette;
   final SaveStatus saveStatus;
-  final CloudSyncState? syncState;
   final bool hasCloud;
 
   const _ActionsRow({
     required this.palette,
     required this.saveStatus,
-    required this.syncState,
     required this.hasCloud,
   });
 
@@ -816,50 +848,58 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
   }
 }
 
-class _ResultRow extends StatelessWidget {
-  final SyncItemResult result;
+/// PR-SYNC-6: dialog row showing the persistent outbox depth. When rows are
+/// stuck (>3 attempts) we surface the most-recent error and a "Retry now"
+/// button that calls `SyncEngine.forceTick()`.
+class _OutboxStatusRow extends ConsumerWidget {
+  final OutboxStatus outbox;
   final DmToolColors palette;
-  const _ResultRow(this.result, this.palette);
+  const _OutboxStatusRow({required this.outbox, required this.palette});
 
   @override
-  Widget build(BuildContext context) {
-    final (IconData icon, Color color, String label) = switch (result.result) {
-      SyncResult.synced => (Icons.cloud_done, palette.successBtnBg, 'Synced'),
-      SyncResult.pending => (Icons.cloud_upload_outlined, palette.featureCardAccent, 'Pending'),
-      SyncResult.tooLarge => (Icons.warning_amber, palette.dangerBtnBg, 'Too large (>5 MB)'),
-      SyncResult.quotaExceeded => (Icons.storage, palette.dangerBtnBg, 'Quota exceeded'),
-      SyncResult.networkError => (Icons.wifi_off, palette.dangerBtnBg, 'Network error'),
-    };
-
-    final typeIcon = switch (result.type) {
-      'world' => Icons.public,
-      'template' => Icons.description,
-      'package' => Icons.inventory_2,
-      _ => Icons.file_present,
-    };
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: palette.featureCardBg,
-          borderRadius: palette.cbr,
-          border: Border.all(color: palette.featureCardBorder),
-        ),
-        child: Row(
-          children: [
-            Icon(typeIcon, size: 14, color: palette.sidebarLabelSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(result.name,
-                  style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stuck = outbox.hasIssue;
+    final color = stuck ? palette.dangerBtnBg : palette.featureCardAccent;
+    final icon = stuck ? Icons.cloud_off : Icons.cloud_sync;
+    final label = stuck
+        ? 'Stuck (${outbox.maxAttempts} attempts)'
+        : '${outbox.pending} pending';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.cbr,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label,
+                    style: TextStyle(fontSize: 12, color: color)),
+                if (stuck && outbox.lastError != null)
+                  Text(
+                    outbox.lastError!,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: palette.sidebarLabelSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
             ),
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 10, color: color)),
-          ],
-        ),
+          ),
+          TextButton(
+            onPressed: () => ref.read(syncEngineProvider).forceTick(),
+            child: const Text('Retry now', style: TextStyle(fontSize: 11)),
+          ),
+        ],
       ),
     );
   }

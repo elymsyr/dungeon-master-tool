@@ -9,9 +9,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
+import '../../application/providers/manual_backup_provider.dart';
+import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/package_provider.dart';
@@ -188,9 +190,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
       'Saving world...',
       () async {
         await ref.read(saveStateProvider.notifier).saveNow();
-        // saveNow markDirty'leri tetikledikten sonra cloud upload'ı flush et.
-        // backupActiveItem beta + auth değilse no-op döner.
-        await ref.read(cloudSyncProvider.notifier).backupActiveItem();
+        // PR-SYNC-6: outbox drains in background. Trigger a manual backup
+        // pass for the active item so a "Back to Hub" exit captures any
+        // hub-only changes that wouldn't otherwise get flushed.
+        await ref.read(manualBackupRunnerProvider).backupActiveItem();
       },
     );
     if (!mounted) return;
@@ -388,9 +391,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // settle. AppBar action area shows a mini spinner while in-flight.
     ref.listen(activeCampaignSyncProvider, (_, _) {});
     ref.listen(worldSyncAutoSubscribeProvider, (_, _) {});
-    final cloudBusy = ref.watch(
-      activeCampaignSyncProvider.select((s) => s.isLoading),
-    );
+    // PR-SYNC-1: eager-init the outbox drain worker. Builds the singleton
+    // on first frame so persisted rows from a prior session start uploading
+    // before the user touches anything.
+    ref.watch(syncEngineProvider);
+    ref.watch(connectivityWatcherProvider);
+    // Live-link engine busy state moved into SaveSyncIndicator. The
+    // FutureProvider must still be watched here to kick off its work on
+    // first frame; the indicator handles the visual state.
+    ref.watch(activeCampaignSyncProvider);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -555,19 +564,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Undo / Redo
           _UndoRedoButtons(tabIndex: _tabIndex),
           const SizedBox(width: 4),
-          // Save indicator — full save/sync panel
+          // Save indicator — unified local + cloud + live-link status.
           const SaveSyncIndicator(),
-          if (cloudBusy) ...[
-            const SizedBox(width: 4),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4),
-              child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          ],
           const SizedBox(width: 4),
           // Edit Mode toggle
           IconButton(
