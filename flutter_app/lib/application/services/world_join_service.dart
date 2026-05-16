@@ -54,19 +54,19 @@ class WorldJoinService {
     // player already has a different campaign with the same name we must
     // pick a unique local label to avoid overwriting their local data.
     final existingById =
-        await (db.select(db.campaigns)..where((t) => t.id.equals(res.worldId)))
+        await (db.select(db.worlds)..where((t) => t.id.equals(res.worldId)))
             .getSingleOrNull();
     String localName = existingById?.worldName ?? res.worldName;
     if (existingById == null) {
       final clash =
-          await (db.select(db.campaigns)..where((t) => t.worldName.equals(localName)))
+          await (db.select(db.worlds)..where((t) => t.worldName.equals(localName)))
               .getSingleOrNull();
       if (clash != null) {
         // Suffix until unique.
         var attempt = 2;
         while (true) {
           final candidate = '$localName ($attempt)';
-          final c = await (db.select(db.campaigns)
+          final c = await (db.select(db.worlds)
                 ..where((t) => t.worldName.equals(candidate)))
               .getSingleOrNull();
           if (c == null) {
@@ -80,15 +80,14 @@ class WorldJoinService {
           }
         }
       }
-      await db.into(db.campaigns).insert(
-            CampaignsCompanion.insert(
-              id: res.worldId,
-              worldName: localName,
-              stateJson: const Value('{}'),
-              createdAt: Value(now),
-              updatedAt: Value(now),
-            ),
-          );
+      await db.worldsDao.upsert(
+        WorldsCompanion.insert(
+          id: res.worldId,
+          worldName: localName,
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
     }
 
     if (parsed != null) {
