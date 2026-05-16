@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/deep_copy.dart';
 import '../../data/database/database_provider.dart';
-import '../../data/datasources/local/package_local_ds.dart';
 import '../../data/repositories/package_repository_impl.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -19,14 +18,8 @@ import 'personal_online_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_mirror_provider.dart';
 
-final packageLocalDsProvider =
-    Provider((_) => const PackageLocalDataSource());
-
 final packageRepositoryProvider = Provider<PackageRepository>(
-  (ref) => PackageRepositoryImpl(
-    ref.watch(appDatabaseProvider),
-    ref.read(packageLocalDsProvider),
-  ),
+  (ref) => PackageRepositoryImpl(ref.watch(appDatabaseProvider)),
 );
 
 /// Built-in SRD content pack auto-install gate. Runs once per app session;

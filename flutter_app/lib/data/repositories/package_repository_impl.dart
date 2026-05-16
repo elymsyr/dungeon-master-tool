@@ -10,38 +10,44 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
-import '../database/app_database.dart' hide WorldSchema;
-import '../datasources/local/package_local_ds.dart';
+import '../database/app_database.dart';
 
 const _uuid = Uuid();
 
-/// Drift-backed PackageRepository implementasyonu.
+/// PR-D4 v12 rewrite. Packages now route through `PackagesDao` (Packages +
+/// PackageSchemas + PackageEntities) and trash through `TrashDao`. The old
+/// `package_local_ds.dart` sidecar JSON store is gone.
 class PackageRepositoryImpl implements PackageRepository {
   final AppDatabase _db;
-  final PackageLocalDataSource _localDs;
 
-  PackageRepositoryImpl(this._db, this._localDs);
+  PackageRepositoryImpl(this._db);
 
   @override
   Future<List<String>> getAvailable() async {
-    return _db.packageDao.getAvailableNames();
+    final rows = await _db.packagesDao.getAll();
+    return rows.map((p) => p.name).toList()..sort();
   }
 
   @override
   Future<List<PackageInfo>> getPackageInfoList() async {
-    final rows = await _db.packageDao.getPackageInfoList();
-    return rows
-        .map((r) => PackageInfo(
-              name: r.name,
-              templateName: r.templateName,
-              entityCount: r.entityCount,
-            ))
-        .toList();
+    final rows = await _db.packagesDao.getAll();
+    final out = <PackageInfo>[];
+    for (final pkg in rows) {
+      final schemas = await _db.packagesDao.getSchemas(pkg.id);
+      final entities = await _db.packagesDao.getEntities(pkg.id);
+      out.add(PackageInfo(
+        name: pkg.name,
+        templateName:
+            schemas.isNotEmpty ? schemas.first.name : '',
+        entityCount: entities.length,
+      ));
+    }
+    return out;
   }
 
   @override
   Future<Map<String, dynamic>> load(String packageName) async {
-    final existing = await _db.packageDao.getByName(packageName);
+    final existing = await _findByName(packageName);
     if (existing == null) {
       throw StateError('Package not found: $packageName');
     }
@@ -52,22 +58,20 @@ class PackageRepositoryImpl implements PackageRepository {
   Future<void> save(String packageName, Map<String, dynamic> data) async {
     if (packageName == srdCorePackageName) {
       // Built-in pack is regenerated from code on every app start.
-      // Silently swallow saves so accidental "Save" presses can't corrupt
-      // the canonical content.
       return;
     }
-    final existing = await _db.packageDao.getByName(packageName);
+    final existing = await _findByName(packageName);
     if (existing != null) {
-      await _saveToDb(existing.id, data);
-    } else {
-      final packageId = data['package_id'] as String? ?? _uuid.v4();
-      data['package_id'] = packageId;
-      await _db.packageDao.createPackage(PackagesCompanion.insert(
-        id: packageId,
-        name: packageName,
-      ));
-      await _saveToDb(packageId, data);
+      await _saveToDb(existing.id, packageName, data);
+      return;
     }
+    final packageId = data['package_id'] as String? ?? _uuid.v4();
+    data['package_id'] = packageId;
+    await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
+      id: packageId,
+      name: packageName,
+    ));
+    await _saveToDb(packageId, packageName, data);
   }
 
   @override
@@ -77,22 +81,60 @@ class PackageRepositoryImpl implements PackageRepository {
       // belt-and-suspenders fallback for any non-UI caller.
       return;
     }
-    final existing = await _db.packageDao.getByName(packageName);
-    Map<String, dynamic>? data;
-    if (existing != null) {
-      // Veriyi DB'den silmeden önce yedekle (trash restore için)
-      try {
-        data = await _loadFromDb(existing.id);
-      } catch (_) {}
-      await _db.packageDao.deletePackage(existing.id);
-    }
-    await _localDs.moveToTrash(packageName, data: data);
+    final existing = await _findByName(packageName);
+    if (existing == null) return;
+
+    // Snapshot for trash row before cascade wipe.
+    Map<String, dynamic> snapshot = const {};
+    try {
+      snapshot = await _loadFromDb(existing.id);
+    } catch (_) {}
+    await _db.trashDao.upsert(TrashItemsCompanion.insert(
+      id: _uuid.v4(),
+      kind: 'package',
+      sourceId: existing.id,
+      payloadJson: jsonEncode({
+        ...snapshot,
+        '_original_name': packageName,
+      }),
+    ));
+
+    await _purgePackage(existing.id);
   }
+
+  /// Restore a soft-deleted package from `trash_items`. UI passes the trash
+  /// row id; previously this was a directory name on disk.
+  @override
+  Future<bool> restoreFromTrash(String trashId) async {
+    final trash = await _db.trashDao.getById(trashId);
+    if (trash == null || trash.kind != 'package') return false;
+    try {
+      final payload = jsonDecode(trash.payloadJson) as Map<String, dynamic>;
+      final originalName = (payload.remove('_original_name') as String?) ??
+          (payload['package_name'] as String?) ??
+          trash.sourceId;
+      // Conflict — skip restore if a package with that name already exists.
+      final clash = await _findByName(originalName);
+      if (clash != null) {
+        await _db.trashDao.deleteById(trashId);
+        return false;
+      }
+      await save(originalName, payload);
+      await _db.trashDao.deleteById(trashId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> permanentlyDelete(String trashId) =>
+      _db.trashDao.deleteById(trashId);
 
   @override
   Future<String> create(String packageName,
       {domain.WorldSchema? template}) async {
-    final existing = await _db.packageDao.getByName(packageName);
+    final existing = await _findByName(packageName);
     if (existing != null) {
       throw StateError('Package already exists: $packageName');
     }
@@ -100,7 +142,7 @@ class PackageRepositoryImpl implements PackageRepository {
     final packageId = _uuid.v4();
     final schema = template;
 
-    await _db.packageDao.createPackage(PackagesCompanion.insert(
+    await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: packageId,
       name: packageName,
     ));
@@ -110,8 +152,7 @@ class PackageRepositoryImpl implements PackageRepository {
           deepCopyJson(schema.toJson()) as Map<String, dynamic>;
       final currentHash = computeWorldSchemaContentHash(schema);
       final originalHash = schema.originalHash ?? currentHash;
-      await (_db.into(_db.packageSchemas))
-          .insert(PackageSchemasCompanion.insert(
+      await _db.packagesDao.upsertSchema(PackageSchemasCompanion.insert(
         id: _uuid.v4(),
         packageId: packageId,
         name: Value(schema.name),
@@ -139,11 +180,11 @@ class PackageRepositoryImpl implements PackageRepository {
     if (destinationName == srdCorePackageName) {
       throw StateError('Cannot overwrite the built-in package');
     }
-    final existing = await _db.packageDao.getByName(destinationName);
+    final existing = await _findByName(destinationName);
     if (existing != null) {
       throw StateError('Package already exists: $destinationName');
     }
-    final src = await _db.packageDao.getByName(sourceName);
+    final src = await _findByName(sourceName);
     if (src == null) {
       throw StateError('Source package not found: $sourceName');
     }
@@ -151,34 +192,37 @@ class PackageRepositoryImpl implements PackageRepository {
     final srcData = await _loadFromDb(src.id);
     final newId = _uuid.v4();
 
-    // Strip identity so `_saveToDb` writes a fresh row keyed by newId.
     srcData['package_id'] = newId;
     srcData['package_name'] = destinationName;
-    // Reset cloud provenance — the new copy has no upstream binding.
     srcData.remove('marketplace_listing_id');
     srcData.remove('marketplace_version');
 
-    await _db.packageDao.createPackage(PackagesCompanion.insert(
+    await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: newId,
       name: destinationName,
     ));
-    await _saveToDb(newId, srcData);
+    await _saveToDb(newId, destinationName, srcData);
     return destinationName;
   }
 
   // --- Internal helpers ---
 
+  Future<Package?> _findByName(String name) async {
+    final all = await _db.packagesDao.getAll();
+    for (final p in all) {
+      if (p.name == name) return p;
+    }
+    return null;
+  }
+
   Future<Map<String, dynamic>> _loadFromDb(String packageId) async {
-    final pkg = await _db.packageDao.getById(packageId);
+    final pkg = await _db.packagesDao.getById(packageId);
     if (pkg == null) throw StateError('Package not found: $packageId');
 
-    // Schema
-    final schemaRow = await (_db.select(_db.packageSchemas)
-          ..where((t) => t.packageId.equals(packageId)))
-        .getSingleOrNull();
+    final schemas = await _db.packagesDao.getSchemas(packageId);
+    final schemaRow = schemas.isNotEmpty ? schemas.first : null;
 
-    // Entities
-    final entityRows = await _db.packageDao.getAllEntities(packageId);
+    final entityRows = await _db.packagesDao.getEntities(packageId);
     final entitiesMap = <String, dynamic>{};
     for (final e in entityRows) {
       entitiesMap[e.id] = {
@@ -196,7 +240,7 @@ class PackageRepositoryImpl implements PackageRepository {
       };
     }
 
-    // WorldSchema reconstruct
+    // Reconstruct WorldSchema map from the package_schemas row.
     Map<String, dynamic>? worldSchemaMap;
     String? templateId;
     String? templateHash;
@@ -220,7 +264,20 @@ class PackageRepositoryImpl implements PackageRepository {
       templateOriginalHash = schemaRow.templateOriginalHash;
     }
 
+    // Unpack the stateJson sidecar (metadata, marketplace fields, etc.) so
+    // callers see the dynamic state they wrote via save().
+    final stateBlob = <String, dynamic>{};
+    if (pkg.stateJson.isNotEmpty && pkg.stateJson != '{}') {
+      try {
+        final decoded = jsonDecode(pkg.stateJson);
+        if (decoded is Map) {
+          stateBlob.addAll(Map<String, dynamic>.from(decoded));
+        }
+      } catch (_) {}
+    }
+
     return {
+      ...stateBlob,
       'package_id': pkg.id,
       'package_name': pkg.name,
       'created_at': pkg.createdAt.toIso8601String(),
@@ -243,7 +300,11 @@ class PackageRepositoryImpl implements PackageRepository {
     'template_original_hash',
   };
 
-  Future<void> _saveToDb(String packageId, Map<String, dynamic> data) async {
+  Future<void> _saveToDb(
+    String packageId,
+    String packageName,
+    Map<String, dynamic> data,
+  ) async {
     final stateBlob = <String, dynamic>{};
     for (final entry in data.entries) {
       if (_typedTopKeys.contains(entry.key)) continue;
@@ -252,17 +313,15 @@ class PackageRepositoryImpl implements PackageRepository {
     final stateJsonStr = jsonEncode(stateBlob);
 
     await _db.transaction(() async {
-      await _db.packageDao.updatePackage(PackagesCompanion(
+      await _db.packagesDao.upsertPackage(PackagesCompanion(
         id: Value(packageId),
-        name: Value(data['package_name'] as String? ?? ''),
+        name: Value(packageName),
         stateJson: Value(stateJsonStr),
         updatedAt: Value(DateTime.now()),
       ));
 
-      // Entities — full replace strategy
-      await (_db.delete(_db.packageEntities)
-            ..where((t) => t.packageId.equals(packageId)))
-          .go();
+      // Entities — full replace strategy.
+      await _db.packagesDao.deleteEntitiesByPackage(packageId);
       final entities = data['entities'] as Map<String, dynamic>? ?? {};
       if (entities.isNotEmpty) {
         final companions = entities.entries.map((e) {
@@ -285,15 +344,13 @@ class PackageRepositoryImpl implements PackageRepository {
             fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
           );
         }).toList();
-        await _db.packageDao.insertAllEntities(companions);
+        await _db.packagesDao.upsertEntities(companions);
       }
 
-      // Schema
+      // Schema — also full replace.
       final schemaData = data['world_schema'] as Map<String, dynamic>?;
       if (schemaData != null) {
-        await (_db.delete(_db.packageSchemas)
-              ..where((t) => t.packageId.equals(packageId)))
-            .go();
+        await _db.packagesDao.deleteSchemasByPackage(packageId);
 
         String pickStr(String camel, String snake, [String fallback = '']) =>
             (schemaData[camel] ?? schemaData[snake] ?? fallback) as String;
@@ -304,26 +361,32 @@ class PackageRepositoryImpl implements PackageRepository {
         final templateHash = data['template_hash'] as String?;
         final templateOriginalHash =
             data['template_original_hash'] as String?;
-        await (_db.into(_db.packageSchemas)).insert(
-          PackageSchemasCompanion.insert(
-            id: pickStr('schemaId', 'schema_id', _uuid.v4()),
-            packageId: packageId,
-            name: Value(schemaData['name'] as String? ?? ''),
-            version: Value(schemaData['version'] as String? ?? '1.0'),
-            description: Value(schemaData['description'] as String? ?? ''),
-            categoriesJson:
-                Value(jsonEncode(schemaData['categories'] ?? [])),
-            encounterConfigJson: Value(jsonEncode(
-                pickAny('encounterConfig', 'encounter_config') ?? {})),
-            encounterLayoutsJson: Value(jsonEncode(
-                pickAny('encounterLayouts', 'encounter_layouts') ?? [])),
-            metadataJson: Value(jsonEncode(schemaData['metadata'] ?? {})),
-            templateId: Value(templateId),
-            templateHash: Value(templateHash),
-            templateOriginalHash: Value(templateOriginalHash),
-          ),
-        );
+        await _db.packagesDao.upsertSchema(PackageSchemasCompanion.insert(
+          id: pickStr('schemaId', 'schema_id', _uuid.v4()),
+          packageId: packageId,
+          name: Value(schemaData['name'] as String? ?? ''),
+          version: Value(schemaData['version'] as String? ?? '1.0'),
+          description: Value(schemaData['description'] as String? ?? ''),
+          categoriesJson:
+              Value(jsonEncode(schemaData['categories'] ?? [])),
+          encounterConfigJson: Value(jsonEncode(
+              pickAny('encounterConfig', 'encounter_config') ?? {})),
+          encounterLayoutsJson: Value(jsonEncode(
+              pickAny('encounterLayouts', 'encounter_layouts') ?? [])),
+          metadataJson: Value(jsonEncode(schemaData['metadata'] ?? {})),
+          templateId: Value(templateId),
+          templateHash: Value(templateHash),
+          templateOriginalHash: Value(templateOriginalHash),
+        ));
       }
+    });
+  }
+
+  Future<void> _purgePackage(String packageId) async {
+    await _db.transaction(() async {
+      await _db.packagesDao.deleteEntitiesByPackage(packageId);
+      await _db.packagesDao.deleteSchemasByPackage(packageId);
+      await _db.packagesDao.deletePackage(packageId);
     });
   }
 }

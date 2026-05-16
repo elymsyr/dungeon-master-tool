@@ -18,7 +18,6 @@ import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/utils/screen_type.dart';
-import '../../../data/datasources/local/campaign_local_ds.dart' show TrashItem;
 import '../../../domain/entities/audio/audio_models.dart';
 import '../../dialogs/theme_builder_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -304,26 +303,24 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              if (item.type == 'Package') {
-                final ds = ref.read(packageLocalDsProvider);
-                final restoredData = await ds.restoreFromTrash(item.directoryName);
-                if (restoredData != null) {
-                  final name = restoredData['package_name'] as String? ?? item.originalName;
-                  await ref.read(packageRepositoryProvider).save(name, restoredData);
-                }
-                ref.invalidate(trashListProvider);
-                ref.invalidate(packageListProvider);
-              } else if (item.type == 'Character') {
-                await ref
-                    .read(characterListProvider.notifier)
-                    .restoreFromTrash(item.directoryName);
-                ref.invalidate(trashListProvider);
-              } else {
-                final ds = ref.read(campaignLocalDsProvider);
-                final restoreName = await ds.findUniqueRestoreName(item.originalName);
-                await ds.restoreFromTrash(item.directoryName, restoreName);
-                ref.invalidate(trashListProvider);
-                ref.invalidate(campaignInfoListProvider);
+              switch (item.kind) {
+                case 'package':
+                  await ref
+                      .read(packageRepositoryProvider)
+                      .restoreFromTrash(item.id);
+                  ref.invalidate(trashListProvider);
+                  ref.invalidate(packageListProvider);
+                case 'character':
+                  await ref
+                      .read(characterListProvider.notifier)
+                      .restoreFromTrash(item.id);
+                  ref.invalidate(trashListProvider);
+                default:
+                  await ref
+                      .read(campaignRepositoryProvider)
+                      .restoreFromTrash(item.id);
+                  ref.invalidate(trashListProvider);
+                  ref.invalidate(campaignInfoListProvider);
               }
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -352,13 +349,20 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
             onPressed: () async {
               Navigator.pop(ctx);
               final messenger = ScaffoldMessenger.of(context);
-              final packageDs = ref.read(packageLocalDsProvider);
-              final campaignDs = ref.read(campaignLocalDsProvider);
               for (final item in items) {
-                if (item.type == 'Package') {
-                  await packageDs.permanentlyDeleteFromTrash(item.directoryName);
-                } else {
-                  await campaignDs.permanentlyDeleteFromTrash(item.directoryName);
+                switch (item.kind) {
+                  case 'package':
+                    await ref
+                        .read(packageRepositoryProvider)
+                        .permanentlyDelete(item.id);
+                  case 'character':
+                    await ref
+                        .read(characterRepositoryProvider)
+                        .permanentlyDelete(item.id);
+                  default:
+                    await ref
+                        .read(campaignRepositoryProvider)
+                        .permanentlyDelete(item.id);
                 }
               }
               ref.invalidate(trashListProvider);
@@ -387,10 +391,19 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              if (item.type == 'Package') {
-                await ref.read(packageLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
-              } else {
-                await ref.read(campaignLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+              switch (item.kind) {
+                case 'package':
+                  await ref
+                      .read(packageRepositoryProvider)
+                      .permanentlyDelete(item.id);
+                case 'character':
+                  await ref
+                      .read(characterRepositoryProvider)
+                      .permanentlyDelete(item.id);
+                default:
+                  await ref
+                      .read(campaignRepositoryProvider)
+                      .permanentlyDelete(item.id);
               }
               ref.invalidate(trashListProvider);
             },

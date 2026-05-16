@@ -23,4 +23,11 @@ abstract class CampaignRepository {
 
   /// Yeni kampanya oluştur, template ile.
   Future<String> create(String worldName, {WorldSchema? template});
+
+  /// PR-D4: restore a soft-deleted world from `trash_items` by its trash
+  /// row id. Returns false on conflict / corrupt payload.
+  Future<bool> restoreFromTrash(String trashId);
+
+  /// PR-D4: hard-delete a trash row.
+  Future<void> permanentlyDelete(String trashId);
 }

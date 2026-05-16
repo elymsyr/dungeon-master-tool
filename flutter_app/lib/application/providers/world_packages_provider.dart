@@ -13,7 +13,7 @@ import 'sync_engine_provider.dart';
 final worldPackagesProvider =
     StreamProvider.family<List<WorldPackage>, String>((ref, worldId) {
   final db = ref.watch(appDatabaseProvider);
-  return db.worldPackageDao.watchForWorld(worldId);
+  return db.worldPackagesDao.watchByWorld(worldId);
 });
 
 /// DM-only: share a local personal package into the active world. Reads
@@ -39,7 +39,7 @@ Future<void> _shareImpl(
   // Echo the serialized form into the local mirror so the DM sees the row
   // immediately without waiting for the CDC round-trip. The temporary
   // package_id gets replaced by the server's canonical id on next CDC.
-  await read(appDatabaseProvider).worldPackageDao.upsert(
+  await read(appDatabaseProvider).worldPackagesDao.upsert(
         WorldPackagesCompanion.insert(
           worldId: worldId,
           packageId: 'pending:$packageName',
@@ -61,7 +61,7 @@ Future<void> _unshareImpl(
     packageName: packageName,
     packageId: packageId,
   );
-  await read(appDatabaseProvider).worldPackageDao.removeByPackageId(packageId);
+  await read(appDatabaseProvider).worldPackagesDao.deleteByPackage(packageId);
 }
 
 Future<void> shareLocalPackageToWorld({

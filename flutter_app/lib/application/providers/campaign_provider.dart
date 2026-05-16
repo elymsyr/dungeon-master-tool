@@ -612,12 +612,14 @@ final activeCampaignProvider =
       return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
     });
 
-/// Trash'teki silinen kampanyalar + paketler. v12: Drift `trash_items` tablosu.
+/// Trash'teki silinen kampanyalar + paketler + karakterler. v12: Drift
+/// `trash_items` tablosu — kind ∈ {'world','package','character'}.
 final trashListProvider = FutureProvider<List<TrashItem>>((ref) async {
   final db = ref.watch(appDatabaseProvider);
   final rows = <drift_db.TrashItem>[
     ...await db.trashDao.getByKind('world'),
     ...await db.trashDao.getByKind('package'),
+    ...await db.trashDao.getByKind('character'),
   ];
   rows.sort((a, b) => b.deletedAt.compareTo(a.deletedAt));
   return rows.map((r) {
@@ -626,10 +628,28 @@ final trashListProvider = FutureProvider<List<TrashItem>>((ref) async {
       final decoded = jsonDecode(r.payloadJson);
       if (decoded is Map) payload = Map<String, dynamic>.from(decoded);
     } catch (_) {}
-    final originalName = (payload['world_name'] as String?) ??
-        (payload['name'] as String?) ??
-        r.sourceId;
-    final type = r.kind == 'world' ? 'World' : 'Package';
+    String originalName;
+    switch (r.kind) {
+      case 'character':
+        originalName = (payload['_original_name'] as String?) ??
+            ((payload['entity'] as Map<String, dynamic>?)?['name']
+                as String?) ??
+            r.sourceId;
+      case 'package':
+        originalName = (payload['_original_name'] as String?) ??
+            (payload['package_name'] as String?) ??
+            r.sourceId;
+      default:
+        originalName = (payload['world_name'] as String?) ??
+            (payload['name'] as String?) ??
+            r.sourceId;
+    }
+    final type = switch (r.kind) {
+      'world' => 'World',
+      'package' => 'Package',
+      'character' => 'Character',
+      _ => r.kind,
+    };
     return TrashItem(
       id: r.id,
       originalName: originalName,

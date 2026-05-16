@@ -817,8 +817,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   /// Trash'ten karakteri geri yükle. UI tarafı settings_tab'tan çağırır.
-  Future<void> restoreFromTrash(String trashDirName) async {
-    final restored = await _repo.restoreFromTrash(trashDirName);
+  /// [trashId] = `trash_items.id` (v12 Drift row id, was directory name in v11).
+  Future<void> restoreFromTrash(String trashId) async {
+    final restored = await _repo.restoreFromTrash(trashId);
     if (restored == null) return;
     final list = [...(state.valueOrNull ?? const <Character>[])];
     final idx = list.indexWhere((c) => c.id == restored.id);
