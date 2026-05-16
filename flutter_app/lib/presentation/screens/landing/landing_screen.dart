@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
-import '../../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
@@ -33,8 +32,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   @override
   void initState() {
     super.initState();
-    // If already logged in (persisted session), activate user session and go to hub.
     if (SupabaseConfig.isConfigured) {
+      // If already logged in (persisted session), activate user session
+      // and go to hub. Otherwise auth UI renders for sign-in.
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final auth = ref.read(authProvider);
         if (mounted && auth != null) {
@@ -51,6 +51,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       // sonrası "ref after dispose" hatasına yol açıyor.
       _banMessageNotifier = ref.read(authProvider.notifier).banMessageNotifier
         ..addListener(_maybeShowBanDialog);
+    } else {
+      // Supabase off — no auth flow exists, skip landing entirely.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/hub');
+      });
     }
   }
 
@@ -104,50 +109,29 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: showAuth ? _buildAuthLanding(palette) : _buildStartLanding(palette),
+        body: showAuth ? _buildAuthLanding(palette) : _buildRedirectSplash(),
       ),
     );
   }
 
-  // ── Original Start landing ────────────────────────────────────────
-
-  Widget _buildStartLanding(DmToolColors palette) {
-    final size = MediaQuery.sizeOf(context);
-    return Stack(
-      children: [
-        _buildBackground(palette),
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIconImage(size: size.width > 600 ? 96 : 72),
-              const SizedBox(height: 16),
-              Text(
-                'Dungeon Master Tool',
-                style: TextStyle(
-                  fontSize: size.width > 600 ? 32 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: palette.tabActiveText,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(appReleaseTag, style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
-              const SizedBox(height: 48),
-              SizedBox(
-                width: 200,
-                height: 48,
-                child: FilledButton(
-                  onPressed: () => context.go('/hub'),
-                  style: FilledButton.styleFrom(backgroundColor: palette.featureCardAccent),
-                  child: const Text('Start', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
+  // No-auth-needed or already-signed-in: initState's postFrameCallback is
+  // about to navigate to /hub. Render a splash so the user sees a smooth
+  // hand-off instead of a "Start" button.
+  Widget _buildRedirectSplash() {
+    const bg = Color(0xFF1A1814);
+    const gold = Color(0xFFC8A24B);
+    return Container(
+      color: bg,
+      child: const Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(gold),
           ),
         ),
-        _buildTagline(palette),
-      ],
+      ),
     );
   }
 
