@@ -4,21 +4,31 @@ import 'package:uuid/uuid.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Dialog: pick a source world, filter its entities by source/category,
-/// select which to include, then export as a new package.
+/// Embeddable panel: pick a source world, filter entities, export as package.
 ///
-/// Reads entities directly from the chosen campaign via campaignRepository
-/// so it works without that campaign being the active one.
-class ExportPackageDialog extends ConsumerStatefulWidget {
-  const ExportPackageDialog({super.key});
+/// Reads entities directly via campaignRepository so it works without that
+/// campaign being the active one. Can be embedded inline (no dialog wrapper)
+/// or used through [ExportPackageDialog].
+class ExportPackagePanel extends ConsumerStatefulWidget {
+  /// If set, locks the source world to this name and hides the world picker.
+  final String? lockedWorldName;
+
+  /// Called after a successful export so hosts can dismiss / show feedback.
+  final VoidCallback? onExported;
+
+  const ExportPackagePanel({
+    super.key,
+    this.lockedWorldName,
+    this.onExported,
+  });
 
   @override
-  ConsumerState<ExportPackageDialog> createState() =>
-      _ExportPackageDialogState();
+  ConsumerState<ExportPackagePanel> createState() => _ExportPackagePanelState();
 }
 
 class _EntityRow {
@@ -36,7 +46,7 @@ class _EntityRow {
   });
 }
 
-class _ExportPackageDialogState extends ConsumerState<ExportPackageDialog> {
+class _ExportPackagePanelState extends ConsumerState<ExportPackagePanel> {
   final _nameController = TextEditingController();
   final _searchController = TextEditingController();
 
@@ -64,6 +74,11 @@ class _ExportPackageDialogState extends ConsumerState<ExportPackageDialog> {
         setState(() => _searchQuery = _searchController.text);
       }
     });
+    if (widget.lockedWorldName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadFromWorld(widget.lockedWorldName!);
+      });
+    }
   }
 
   @override
@@ -91,13 +106,15 @@ class _ExportPackageDialogState extends ConsumerState<ExportPackageDialog> {
       final rows = <_EntityRow>[];
       for (final e in entitiesRaw.entries) {
         final m = Map<String, dynamic>.from(e.value as Map);
+        final src = (m['source'] as String?) ?? '';
+        if (src == srdSourceTag) continue;
         rows.add(_EntityRow(
           id: e.key,
           name: (m['name'] as String?) ?? 'Unknown',
           categorySlug: ((m['type'] as String?) ?? 'npc')
               .toLowerCase()
               .replaceAll(' ', '-'),
-          source: (m['source'] as String?) ?? '',
+          source: src,
           raw: m,
         ));
       }
@@ -217,12 +234,12 @@ class _ExportPackageDialogState extends ConsumerState<ExportPackageDialog> {
       await repo.save(name, data);
       ref.invalidate(packageListProvider);
       if (!mounted) return;
-      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
                 'Exported "$name" with ${entitiesMap.length} entities.')),
       );
+      widget.onExported?.call();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -236,312 +253,269 @@ class _ExportPackageDialogState extends ConsumerState<ExportPackageDialog> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final mq = MediaQuery.of(context);
-    final width = mq.size.width.clamp(360.0, 720.0);
-    final height = (mq.size.height * 0.8).clamp(420.0, 720.0);
     final filtered = _filtered;
     final infoAsync = ref.watch(campaignInfoListProvider);
+    final locked = widget.lockedWorldName != null;
 
-    return Dialog(
-      insetPadding:
-          const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-              child: Row(
-                children: [
-                  Icon(Icons.upload_file,
-                      size: 18, color: palette.tabActiveText),
-                  const SizedBox(width: 6),
-                  Text('Export Entities to Package',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: palette.tabActiveText)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 18),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: palette.sidebarDivider),
-            // World picker
-            Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: infoAsync.when(
-                data: (worlds) => DropdownButtonFormField<String>(
-                  initialValue: _sourceWorldName,
-                  decoration: const InputDecoration(
-                    labelText: 'Source World',
-                    isDense: true,
-                  ),
-                  items: worlds
-                      .map((w) => DropdownMenuItem(
-                            value: w.name,
-                            child: Text(
-                                '${w.name}  (${w.templateName})',
-                                style: const TextStyle(fontSize: 12)),
-                          ))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) _loadFromWorld(v);
-                  },
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!locked)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
+            child: infoAsync.when(
+              data: (worlds) => DropdownButtonFormField<String>(
+                initialValue: _sourceWorldName,
+                decoration: const InputDecoration(
+                  labelText: 'Source World',
+                  isDense: true,
                 ),
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
+                items: worlds
+                    .map((w) => DropdownMenuItem(
+                          value: w.name,
+                          child: Text(
+                              '${w.name}  (${w.templateName})',
+                              style: const TextStyle(fontSize: 12)),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) _loadFromWorld(v);
+                },
               ),
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => Text('Error: $e'),
             ),
-            // Filter row
-            if (_sourceWorldName != null && !_loadingEntities)
-              Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                child: Column(
+          ),
+        if (_sourceWorldName != null && !_loadingEntities)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: const InputDecoration(
+                    hintText: 'Search entities...',
+                    prefixIcon: Icon(Icons.search, size: 18),
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
                   children: [
-                    TextField(
-                      controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search entities...',
-                        prefixIcon: Icon(Icons.search, size: 18),
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _categories.isEmpty
+                            ? null
+                            : () => _openCategoryDialog(palette),
+                        icon: const Icon(Icons.filter_list, size: 16),
+                        label: Text(
+                          _selectedSlugs.isEmpty
+                              ? 'All Categories'
+                              : '${_selectedSlugs.length}/${_categories.length}',
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          minimumSize: const Size(0, 32),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _categories.isEmpty
-                                ? null
-                                : () => _openCategoryDialog(palette),
-                            icon: const Icon(Icons.filter_list, size: 16),
-                            label: Text(
-                              _selectedSlugs.isEmpty
-                                  ? 'All Categories'
-                                  : '${_selectedSlugs.length}/${_categories.length}',
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              minimumSize: const Size(0, 32),
-                            ),
-                          ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _allSources.isEmpty
+                            ? null
+                            : () => _openSourceDialog(palette),
+                        icon: const Icon(Icons.label_outline, size: 16),
+                        label: Text(
+                          _selectedSources.isEmpty
+                              ? 'All Sources'
+                              : '${_selectedSources.length}/${_allSources.length}',
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _allSources.isEmpty
-                                ? null
-                                : () => _openSourceDialog(palette),
-                            icon: const Icon(Icons.label_outline, size: 16),
-                            label: Text(
-                              _selectedSources.isEmpty
-                                  ? 'All Sources'
-                                  : '${_selectedSources.length}/${_allSources.length}',
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              minimumSize: const Size(0, 32),
-                            ),
-                          ),
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          minimumSize: const Size(0, 32),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Text(
-                          '${_selectedEntityIds.length} of ${filtered.length} shown selected · ${_entities.length} total',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: palette.sidebarLabelSecondary),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: filtered.isEmpty
-                              ? null
-                              : () => setState(() {
-                                    _selectedEntityIds
-                                        .addAll(filtered.map((r) => r.id));
-                                  }),
-                          child: const Text('Select All',
-                              style: TextStyle(fontSize: 11)),
-                        ),
-                        TextButton(
-                          onPressed: _selectedEntityIds.isEmpty
-                              ? null
-                              : () => setState(_selectedEntityIds.clear),
-                          child: const Text('Clear',
-                              style: TextStyle(fontSize: 11)),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            Divider(height: 1, color: palette.sidebarDivider),
-            // Entity list
-            Expanded(
-              child: _sourceWorldName == null
-                  ? Center(
-                      child: Text('Pick a world to see its entities.',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: palette.sidebarLabelSecondary)),
-                    )
-                  : _loadingEntities
-                      ? const Center(child: CircularProgressIndicator())
-                      : _loadError != null
-                          ? Center(child: Text('Error: $_loadError'))
-                          : filtered.isEmpty
-                              ? Center(
-                                  child: Text('No entities match.',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color:
-                                              palette.sidebarLabelSecondary)))
-                              : ListView.builder(
-                                  itemCount: filtered.length,
-                                  itemBuilder: (_, i) {
-                                    final r = filtered[i];
-                                    final on =
-                                        _selectedEntityIds.contains(r.id);
-                                    return InkWell(
-                                      onTap: () => setState(() {
-                                        if (on) {
-                                          _selectedEntityIds.remove(r.id);
-                                        } else {
-                                          _selectedEntityIds.add(r.id);
-                                        }
-                                      }),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 4),
-                                        child: Row(
-                                          children: [
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Checkbox(
-                                                value: on,
-                                                visualDensity:
-                                                    const VisualDensity(
-                                                        horizontal: -4,
-                                                        vertical: -4),
-                                                materialTapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
-                                                onChanged: (_) =>
-                                                    setState(() {
-                                                  if (on) {
-                                                    _selectedEntityIds
-                                                        .remove(r.id);
-                                                  } else {
-                                                    _selectedEntityIds
-                                                        .add(r.id);
-                                                  }
-                                                }),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(r.name,
-                                                      style: TextStyle(
-                                                          fontSize: 13,
-                                                          color: palette
-                                                              .tabActiveText),
-                                                      overflow: TextOverflow
-                                                          .ellipsis),
-                                                  if (r.source.isNotEmpty)
-                                                    Text(r.source,
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            color: palette
-                                                                .sidebarLabelSecondary),
-                                                        overflow: TextOverflow
-                                                            .ellipsis),
-                                                ],
-                                              ),
-                                            ),
-                                            Text(r.categorySlug,
-                                                style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: palette
-                                                        .sidebarLabelSecondary)),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-            ),
-            Divider(height: 1, color: palette.sidebarDivider),
-            // Name + Export
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        hintText: 'New package name',
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                      ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      '${_selectedEntityIds.length} of ${filtered.length} shown selected · ${_entities.length} total',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: _exporting
-                        ? null
-                        : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 4),
-                  FilledButton.icon(
-                    onPressed: (_exporting ||
-                            _selectedEntityIds.isEmpty ||
-                            _sourceSchema == null ||
-                            _nameController.text.trim().isEmpty)
-                        ? null
-                        : _export,
-                    icon: _exporting
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.upload, size: 16),
-                    label: Text(_exporting ? 'Exporting…' : 'Export'),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: palette.successBtnBg,
-                        foregroundColor: palette.successBtnText),
-                  ),
-                ],
-              ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: filtered.isEmpty
+                          ? null
+                          : () => setState(() {
+                                _selectedEntityIds
+                                    .addAll(filtered.map((r) => r.id));
+                              }),
+                      child: const Text('Select All',
+                          style: TextStyle(fontSize: 11)),
+                    ),
+                    TextButton(
+                      onPressed: _selectedEntityIds.isEmpty
+                          ? null
+                          : () => setState(_selectedEntityIds.clear),
+                      child: const Text('Clear',
+                          style: TextStyle(fontSize: 11)),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
+        Divider(height: 1, color: palette.sidebarDivider),
+        Expanded(
+          child: _sourceWorldName == null
+              ? Center(
+                  child: Text('Pick a world to see its entities.',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: palette.sidebarLabelSecondary)),
+                )
+              : _loadingEntities
+                  ? const Center(child: CircularProgressIndicator())
+                  : _loadError != null
+                      ? Center(child: Text('Error: $_loadError'))
+                      : filtered.isEmpty
+                          ? Center(
+                              child: Text('No entities match.',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color:
+                                          palette.sidebarLabelSecondary)))
+                          : ListView.builder(
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) {
+                                final r = filtered[i];
+                                final on =
+                                    _selectedEntityIds.contains(r.id);
+                                return InkWell(
+                                  onTap: () => setState(() {
+                                    if (on) {
+                                      _selectedEntityIds.remove(r.id);
+                                    } else {
+                                      _selectedEntityIds.add(r.id);
+                                    }
+                                  }),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 4),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: Checkbox(
+                                            value: on,
+                                            visualDensity:
+                                                const VisualDensity(
+                                                    horizontal: -4,
+                                                    vertical: -4),
+                                            materialTapTargetSize:
+                                                MaterialTapTargetSize
+                                                    .shrinkWrap,
+                                            onChanged: (_) => setState(() {
+                                              if (on) {
+                                                _selectedEntityIds
+                                                    .remove(r.id);
+                                              } else {
+                                                _selectedEntityIds
+                                                    .add(r.id);
+                                              }
+                                            }),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(r.name,
+                                                  style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: palette
+                                                          .tabActiveText),
+                                                  overflow: TextOverflow
+                                                      .ellipsis),
+                                              if (r.source.isNotEmpty)
+                                                Text(r.source,
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: palette
+                                                            .sidebarLabelSecondary),
+                                                    overflow: TextOverflow
+                                                        .ellipsis),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(r.categorySlug,
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: palette
+                                                    .sidebarLabelSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
         ),
-      ),
+        Divider(height: 1, color: palette.sidebarDivider),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    hintText: 'New package name',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: (_exporting ||
+                        _selectedEntityIds.isEmpty ||
+                        _sourceSchema == null ||
+                        _nameController.text.trim().isEmpty)
+                    ? null
+                    : _export,
+                icon: _exporting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.upload, size: 16),
+                label: Text(_exporting ? 'Exporting…' : 'Export'),
+                style: FilledButton.styleFrom(
+                    backgroundColor: palette.successBtnBg,
+                    foregroundColor: palette.successBtnText),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
