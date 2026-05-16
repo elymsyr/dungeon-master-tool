@@ -320,7 +320,9 @@
   "helpSocialTitle": "Sozial",
   "helpSocialBody": "Bleib mit der Community in Kontakt. Durchstöbere den Feed nach Beiträgen und Spielanzeigen, schreibe anderen Spielern Nachrichten und bewirb dich auf offene Tische. Community-Inhalte liegen in einem separaten Marketplace-Untertab.",
   "helpSettingsTitle": "Einstellungen",
-  "helpSettingsBody": "Konfiguriere dein Konto, das Theme, die Sprache, das Projektionsdisplay und die Cloud-Synchronisierung. Anmeldung und Profilverwaltung findest du ebenfalls hier.",
+  "helpSettingsBody": "Konfiguriere dein Konto, das Theme, die Sprache, das Projektionsdisplay und die Cloud-Synchronisierung. Anmeldung und Profilverwaltung findest du ebenfalls hier. Die Cloud-Synchronisierung ist manuell — deine persönliche Bibliothek wird nur hochgeladen, wenn du auf die Sync-Schaltfläche tippst.",
+  "helpCharactersTitle": "Charaktere",
+  "helpCharactersBody": "Sieh dir alle Charaktere an, die dir über deine Welten hinweg gehören. Öffne einen, um ihn zu bearbeiten, offene Level-Up-Entscheidungen abzuschließen, Ausrüstung zu tauschen oder ihn in eine Online-Welt zurückzugeben. Um einen neuen Charakter zu erstellen, geh in eine Welt und nutze die Charakter-Sidebar — der Assistent führt dich nach SRD-Regeln durch Spezies, Klasse, Hintergrund, Attributwerte, Fertigkeiten und Ausrüstung. Speichern ist manuell: tippe im Editor auf Speichern, um Änderungen zu sichern, und starte die Cloud-Synchronisierung in den Einstellungen, um sie auf ein anderes Gerät zu übertragen.",
   "helpWorldsTitle": "Welten",
   "helpWorldsBody": "Eine Welt ist der Ort, an dem dein Spiel lebt — Charaktere, NSCs, Gegenstände, Zauber, Karten, Mindmap, Sitzungsnotizen und Regeln finden sich alle unter einem Dach. Jede Welt ist eine völlig eigenständige Kampagne mit eigener Datenbank, eigenen Sitzungen und Medien. Du kannst auf zwei Wegen starten: ein fertiges Weltgerüst herunterladen und deine eigenen Charaktere und NSCs darauf setzen, oder alles von Grund auf entwerfen und ein eigenes Spiel bauen. Auf der Welten-Seite ist nichts festgelegt — Struktur, Regeln und Inhalte liegen in deiner Hand. Klicke auf eine Weltkarte, um sie zu öffnen; über das Zahnradsymbol kannst du umbenennen, löschen, teilen und veröffentlichen.",
   "helpTemplatesTitle": "Vorlagen",
@@ -499,8 +501,27 @@
   "profileHideFromDiscoverHint": "Dein Profil erscheint nicht in Vorschlägen oder Suchergebnissen",
 
   "welcomeTitle": "Willkommen, Dungeon Master!",
+  "welcomeSystemIntro": "Dungeon Master Tool ist ein tragbarer, offline-fähiger Tabletop-Begleiter. Der Hub hat sechs Bereiche: Sozial (Feed, Nachrichten, Marketplace), Einstellungen (Konto, Theme, Sprache, Cloud-Sync), Welten (Kampagnen mit Battle Map, Mind Map, Entitäten und Sessions), Charaktere (alle Charaktere, die dir über deine Welten gehören), Vorlagen (Spielgerüste, aus denen du Welten startest) und Pakete (Plug-and-Play-Inhaltsbündel).",
+  "welcomeSaveWarning": "Kein Auto-Save, keine Auto-Synchronisierung. Lokale Änderungen werden nur gespeichert, wenn du im jeweiligen Editor auf Speichern tippst; die Cloud-Synchronisierung (persönliche Bibliothek und Online-Welten) läuft nur, wenn du auf die Sync-Schaltfläche tippst. Wenn du die App mitten in einer Bearbeitung ohne zu speichern schließt, ist diese Bearbeitung verloren.",
   "welcomeBetaNotice": "Die App befindet sich noch in der Beta — Funktionen, integrierte Vorlagen und Pakete können sich zwischen Releases ändern. Sichere wichtige Daten gelegentlich.",
   "welcomeRoadmap": "Offizielle Inhaltspakete für D&D 5e (2014) und D&D 5e (2024) sind auf der Roadmap und werden bald als fertige Pakete verfügbar sein.",
   "welcomeClosing": "Danke, dass du es ausprobierst — mögen deine Würfel glücklich und deine Sessions unvergesslich sein!",
-  "welcomeContinue": "Los geht's"
+  "welcomeContinue": "Los geht's",
+
+  "tabSocial": "Sozial",
+  "tabSettings": "Einstellungen",
+  "tabWorlds": "Welten",
+  "tabCharacters": "Charaktere",
+  "tabTemplates": "Vorlagen",
+
+  "hubReportBugTooltip": "Fehler melden",
+  "hubSettingsTooltip": "Einstellungen",
+
+  "profileMenuTooltip": "Profil",
+  "profileMenuSignIn": "Anmelden",
+  "profileMenuViewProfile": "Profil ansehen",
+  "profileMenuEditProfile": "Profil bearbeiten",
+  "profileMenuSettings": "Einstellungen",
+  "profileMenuAdminPanel": "Admin-Panel",
+  "profileMenuReportBug": "Fehler melden"
 }
