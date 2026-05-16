@@ -53,10 +53,6 @@
 
 ---
 
-> **Heads-up — saves and sync are manual.** There is no auto-save and no auto-sync in v6.1. Local edits only persist when you tap **Save** in the relevant editor, and cloud sync (personal library, online worlds) runs only when you press the sync button. Bidirectional auto-sync is on the roadmap.
-
----
-
 ## Roadmap
 
 Planned for upcoming releases — order not final, scope may shift between patch and minor versions.
