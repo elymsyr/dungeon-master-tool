@@ -8,13 +8,17 @@ import 'package:path_provider/path_provider.dart';
 /// Per-user isolation: `setUser(userId)` çağrıldığında tüm path'ler
 /// `{dataRoot}/users/{userId}/` altına taşınır. Offline modda (userId null)
 /// mevcut global path'ler kullanılır.
+///
+/// **v12 (PR-D8)**: `worldsDir` / `packagesDir` / `charactersDir` artık
+/// JSON storage **değil** — sadece media (image/PDF) subtree root'u olarak
+/// kalır. Tüm structured data Drift'te. Trash da Drift `trash_items`'da;
+/// `trashDir` const + FS purge kaldırıldı.
 class AppPaths {
   static late String dataRoot;
   static late String worldsDir;
   static late String packagesDir;
   static late String charactersDir;
   static late String cacheDir;
-  static late String trashDir;
   static late String soundpadRoot;
 
   /// Aktif kullanıcı ID'si. null = offline / guest mode.
@@ -30,11 +34,7 @@ class AppPaths {
     await Directory(packagesDir).create(recursive: true);
     await Directory(charactersDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
-    await Directory(trashDir).create(recursive: true);
     await Directory(soundpadRoot).create(recursive: true);
-
-    // 30 günden eski trash öğelerini temizle
-    await _cleanupTrash();
   }
 
   /// Kullanıcı değiştiğinde path'leri güncelle.
@@ -47,9 +47,6 @@ class AppPaths {
     await Directory(packagesDir).create(recursive: true);
     await Directory(charactersDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
-    await Directory(trashDir).create(recursive: true);
-
-    await _cleanupTrash();
   }
 
   static void _setPathsForUser(String? userId) {
@@ -58,7 +55,6 @@ class AppPaths {
     packagesDir = p.join(base, 'packages');
     charactersDir = p.join(base, 'characters');
     cacheDir = p.join(base, 'cache');
-    trashDir = p.join(base, '.trash');
   }
 
   static Future<String> _resolveDataRoot() async {
@@ -124,21 +120,6 @@ class AppPaths {
 
     // 4) Fallback: dataRoot altında
     return p.join(dataRoot, 'soundpad');
-  }
-
-  /// 30 günden eski trash öğelerini sil.
-  static Future<void> _cleanupTrash() async {
-    final dir = Directory(trashDir);
-    if (!await dir.exists()) return;
-    final now = DateTime.now();
-    await for (final entry in dir.list()) {
-      try {
-        final stat = await entry.stat();
-        if (now.difference(stat.modified).inDays >= 30) {
-          await entry.delete(recursive: true);
-        }
-      } catch (_) {}
-    }
   }
 
   /// Relatif yolu kampanya bazlı absolute yola çevir.

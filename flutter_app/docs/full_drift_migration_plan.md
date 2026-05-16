@@ -67,6 +67,24 @@
 
 ---
 
+## Status (2026-05-17)
+
+| PR | Status | Notes |
+|----|--------|-------|
+| D0 | ✅ DONE | v12 schema + S1 indexes + PRAGMA tuning + legacy `.legacy.<ts>` rename + 30d retention. |
+| D1 | ✅ DONE | 20 DAOs. PersonalCharactersDao dropped per Postgres migration 040. |
+| D2 | ✅ DONE | `campaign_local_ds.dart`, `pending_release_repository.dart`, `character_migration_service.dart`, `package_local_ds.dart` deleted. |
+| D3 | ✅ DONE | `world_repository_impl.dart` v12 — schema content rides in `world_settings.settings_json._world_schema`. |
+| D4 | ✅ DONE | `character_repository.dart` + `package_repository_impl.dart` + UI trash routing rewrite. Trash unified through `TrashDao`. |
+| D5 | ✅ DONE | `sync_engine.dart` v12 outbox shape (`target_table`/`target_pk`/`op_type`), `package_sync_service.dart` rewrite for v12 DAOs, `world_mirror_applier.dart` patches. |
+| D6 | ✅ DONE | UI DAO renames (`packageDao`→`packagesDao`, `worldPackageDao`→`worldPackagesDao`, etc), `WorldsDao.getByName`/`PackagesDao.getByName` added, `world_packages_section.dart` + `import_package_dialog.dart` rewired. |
+| D7 | ⏳ TODO | auto_save_sync test harness + DAO unit tests + sync apply tests + perf regression. |
+| D8 | ✅ PARTIAL | Drift trash 30d retention in `beforeOpen`, FS `_cleanupTrash` + `trashDir` const dropped, AppPaths docstring updated. Full doc audit pending. |
+
+**Final state (D0-D6)**: 0 errors, 539/539 tests pass (was 351/360 pre-D4).
+
+---
+
 ## PR Sequence
 
 ### PR-D0: Schema definition + fresh DB
