@@ -8,13 +8,9 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
-import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
-import '../../../application/providers/save_state_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
-import '../../../application/providers/world_mirror_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -100,12 +96,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   }
 
   Future<void> _exitToHub() async {
-    await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'save-world',
-      'Saving world...',
-      () => ref.read(saveStateProvider.notifier).saveNow(pushAfter: true),
-    );
+    // Manuel sync modeli: çıkışta otomatik save yok.
     if (!mounted) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
@@ -117,8 +108,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
-    ref.watch(worldSyncAutoSubscribeProvider);
-    ref.watch(syncEngineProvider); // PR-SYNC-1: outbox drain worker.
+    // Manuel sync modeli: realtime + outbox drain manuel Sync butonu üzerinden
+    // tetiklenir. Otomatik watch yok.
 
     final editMode = ref.watch(editModeProvider);
     final schema = ref.read(worldSchemaProvider);

@@ -34,24 +34,20 @@ final personalMirrorApplierProvider =
   return applier;
 });
 
-/// Auth değişikliğinde personal kanalı otomatik açar/kapatır + ilk
-/// bootstrap pull'unu yapar. Root widget `ref.watch(...)` ile tetikler.
-final personalSyncAutoSubscribeProvider = Provider<void>((ref) {
-  final svc = ref.watch(personalSyncServiceProvider);
-  if (svc == null) {
-    return;
-  }
-  final applier = ref.watch(personalMirrorApplierProvider);
-  final auth = ref.watch(authProvider);
+/// Manuel personal sync giriş noktası — Sync butonu çağırır. Subscribe +
+/// bootstrap'i sıraya alır. Otomatik tetiklenmez.
+Future<void> runManualPersonalSync(WidgetRef ref) async {
+  final svc = ref.read(personalSyncServiceProvider);
+  if (svc == null) return;
+  final auth = ref.read(authProvider);
   if (auth == null) {
-    // ignore: discarded_futures
-    svc.stop();
+    await svc.stop();
     return;
   }
+  final applier = ref.read(personalMirrorApplierProvider);
   final uid = auth.uid;
-  if (svc.activeUid == uid) return;
-  // ignore: discarded_futures
-  svc.start(uid).then((_) {
-    applier?.bootstrap();
-  });
-});
+  if (svc.activeUid != uid) {
+    await svc.start(uid);
+  }
+  await applier?.bootstrap();
+}

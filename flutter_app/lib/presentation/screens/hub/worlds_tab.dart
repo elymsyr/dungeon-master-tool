@@ -11,6 +11,7 @@ import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/world_membership_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
+import '../../../application/services/world_reconciler.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
@@ -51,6 +52,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (_refreshing) return;
     setState(() => _refreshing = true);
     try {
+      await ref.read(worldReconcilerProvider).reconcile();
       await ref.read(cloudCatchupServiceProvider).runAll();
     } catch (e) {
       debugPrint('Worlds refresh error: $e');
@@ -406,11 +408,24 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               Navigator.pop(ctx);
               final wasOnline =
                   ref.read(onlineWorldIdsProvider).contains(worldId);
-              if (isPlayer) {
-                await _leaveOnlineAndPurge(worldId, name);
-              } else {
-                await ref.read(activeCampaignProvider.notifier).delete(name);
-                ref.invalidate(trashListProvider);
+              try {
+                if (isPlayer) {
+                  await _leaveOnlineAndPurge(worldId, name);
+                } else {
+                  await ref
+                      .read(activeCampaignProvider.notifier)
+                      .delete(name);
+                  ref.invalidate(trashListProvider);
+                }
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Silme başarısız: $e'),
+                    duration: const Duration(seconds: 6),
+                  ),
+                );
+                return;
               }
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);

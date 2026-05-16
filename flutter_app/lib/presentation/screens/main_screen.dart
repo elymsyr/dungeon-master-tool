@@ -5,16 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
-import '../../application/providers/manual_backup_provider.dart';
-import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
-import '../../application/providers/sync_engine_provider.dart';
-import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
@@ -23,11 +18,9 @@ import '../../domain/entities/projection/projection_output_mode.dart';
 import '../dialogs/screencast_display_picker.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
-import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
-import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_sync_provider.dart';
 import '../../application/providers/personal_sync_provider.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -149,51 +142,24 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Manuel sync modeli: pause/resume otomatik save veya resubscribe
+    // tetiklemez. Realtime kanalları manuel Sync butonuyla açılır/kapanır.
+    // Mobile WiFi radyo tasarrufu için pause anında kanal kapatma yine de
+    // yapılır — re-açılış manuel Sync'te.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      // Best-effort local save when the OS pauses/detaches us. Cloud
-      // backup is deliberately NOT auto-triggered here — the user asked
-      // for explicit control over cloud backups.
-      ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
-      // Mobile: drop realtime channels so the WiFi radio can sleep. The
-      // server queues missed events; on resume we refetch.
       final worldSync = ref.read(worldSyncServiceProvider);
       if (worldSync != null) unawaited(worldSync.unsubscribeAll());
       final personalSync = ref.read(personalSyncServiceProvider);
       if (personalSync != null) unawaited(personalSync.stop());
-    } else if (state == AppLifecycleState.resumed) {
-      // Beta program: her resume'da last_active_at'i tazele ve slot/quota
-      // durumunu yenile. Beta'da değilse sunucu no-op yapar.
-      final betaNotifier = ref.read(betaProvider.notifier);
-      betaNotifier.heartbeat();
-      betaNotifier.refresh();
-      // Resubscribe realtime + refetch authoritative state so any events
-      // we missed while backgrounded are reconciled in the background
-      // instead of replaying queued CDC in a single frame.
-      ref.invalidate(worldSyncAutoSubscribeProvider);
-      final uid = Supabase.instance.client.auth.currentUser?.id;
-      final personalSync = ref.read(personalSyncServiceProvider);
-      if (uid != null && personalSync != null) {
-        unawaited(personalSync.start(uid));
-      }
     }
   }
 
-  /// Hub'a donuse tetiklenen ortak exit akisi (sessiz):
-  /// 1) Local save (saveNow) — loading overlay ile
-  /// 2) Campaign list provider'larini invalidate et
-  /// 3) /hub'a git
+  /// Hub'a donuse tetiklenen ortak exit akisi:
+  /// Save/sync yapılmaz — kullanıcı çıkmadan önce Save butonuyla açıkça
+  /// kaydeder. Burada sadece liste provider'larını invalidate edip /hub'a
+  /// geçer.
   Future<void> _exitToHub() async {
-    await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'save-world',
-      'Saving world...',
-      () async {
-        await ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
-        await ref.read(manualBackupRunnerProvider).backupActiveItem();
-      },
-    );
-    if (!mounted) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     if (mounted) context.go('/hub');
@@ -383,19 +349,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
 
-    // Side-effect only. ref.listen subscribes without blocking build on the
-    // FutureProvider chain — tab switch no longer waits for cloud sync to
-    // settle. AppBar action area shows a mini spinner while in-flight.
+    // Manuel sync modeli: auto-subscribe / connectivity / outbox drain
+    // watch'ları kaldırıldı. Realtime + outbox push manuel Sync butonu
+    // üzerinden tetiklenir. activeCampaignSyncProvider hâlâ side-effect
+    // olarak dinleniyor — initial cloud catchup'ı tetiklemez, sadece
+    // campaign load akışı için gerekli.
     ref.listen(activeCampaignSyncProvider, (_, _) {});
-    ref.listen(worldSyncAutoSubscribeProvider, (_, _) {});
-    // PR-SYNC-1: eager-init the outbox drain worker. Builds the singleton
-    // on first frame so persisted rows from a prior session start uploading
-    // before the user touches anything.
-    ref.watch(syncEngineProvider);
-    ref.watch(connectivityWatcherProvider);
-    // Live-link engine busy state moved into SaveSyncIndicator. The
-    // FutureProvider must still be watched here to kick off its work on
-    // first frame; the indicator handles the visual state.
     ref.watch(activeCampaignSyncProvider);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&

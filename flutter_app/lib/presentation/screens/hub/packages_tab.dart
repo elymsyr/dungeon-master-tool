@@ -69,16 +69,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(l10n.tabPackages,
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: palette.tabActiveText)),
-                  ),
-                  OutlinedButton.icon(
+              LayoutBuilder(
+                builder: (ctx, constraints) {
+                  final narrow = constraints.maxWidth < 420;
+                  final title = Text(
+                    l10n.tabPackages,
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: palette.tabActiveText),
+                  );
+                  final exportBtn = OutlinedButton.icon(
                     onPressed: _openExportDialog,
                     icon: const Icon(Icons.upload_file, size: 16),
                     label: const Text('Export'),
@@ -88,9 +89,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  OutlinedButton.icon(
+                  );
+                  final marketBtn = OutlinedButton.icon(
                     onPressed: () {
                       ref.read(socialSubTabProvider.notifier).state = 'marketplace';
                       ref.read(hubTabIndexProvider.notifier).state = 0;
@@ -103,9 +103,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Tooltip(
+                  );
+                  final refreshBtn = Tooltip(
                     message: 'Refresh from cloud',
                     child: OutlinedButton(
                       onPressed: _refreshing ? null : _doRefresh,
@@ -119,9 +118,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                           ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.refresh, size: 16),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  OutlinedButton(
+                  );
+                  final addBtn = OutlinedButton(
                     onPressed: _openCreatePackageDialog,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -130,8 +128,36 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Icon(Icons.add, size: 16),
-                  ),
-                ],
+                  );
+                  // Mobil (dar): başlık üstte ayrı satır; butonlar altta tam
+                  // genişlikte sığar. Geniş: tek satır eski yerleşim.
+                  if (narrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        title,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [exportBtn, marketBtn, refreshBtn, addBtn],
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: title),
+                      exportBtn,
+                      const SizedBox(width: 6),
+                      marketBtn,
+                      const SizedBox(width: 4),
+                      refreshBtn,
+                      const SizedBox(width: 4),
+                      addBtn,
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 4),
               Text('Select or create an entity package.',

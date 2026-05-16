@@ -43,18 +43,12 @@ class SyncEngine {
   static const int _dlqAttempts = 50;
   static const Duration _maxBackoff = Duration(minutes: 5);
 
-  /// Starts the worker. Idempotent — safe to call from `eagerLoad`.
+  /// Starts the worker. Manuel sync modeli: outbox change-stream listener
+  /// devre dışı; otomatik cold-start tick yok. Drain yalnızca
+  /// [forceTick] üzerinden — Sync butonundan tetiklenir.
   void start() {
     if (_started) return;
     _started = true;
-    _outboxSub = _db.syncOutboxDao.watchAnyChange().listen((_) {
-      // ignore: discarded_futures
-      _tick();
-    });
-    // Initial drain on cold start (rows from a prior session that never got
-    // pushed).
-    // ignore: discarded_futures
-    _tick();
   }
 
   /// Stops draining and tears down the stream. Used by app dispose paths.
@@ -440,14 +434,8 @@ class SyncEngine {
       error: error,
       nextDelay: delay,
     );
-    // Schedule a wake-up so we don't depend on the table-change stream
-    // alone — important when the only retryable row is the one we just
-    // bumped.
-    _retryTimer?.cancel();
-    _retryTimer = Timer(delay, () {
-      // ignore: discarded_futures
-      _tick();
-    });
+    // Manuel sync modeli: otomatik retry timer kaldırıldı. Başarısız
+    // satırlar bir sonraki Sync butonuna kadar bekler.
   }
 
   // ── Handlers ───────────────────────────────────────────────────────

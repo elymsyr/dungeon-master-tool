@@ -7,9 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
-import '../../application/providers/manual_backup_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
-import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/personal_online_provider.dart';
@@ -210,21 +208,9 @@ class _PackageScreenContentState
     super.dispose();
   }
 
-  /// Hub'a donuse tetiklenen ortak exit akisi (sessiz):
-  /// 1) Local save (saveNow)
-  /// 2) Package list invalidate
-  /// 3) /hub'a git
+  /// Manuel sync modeli: çıkışta otomatik save yok. Sadece liste invalidate +
+  /// /hub'a git.
   Future<void> _exitToHub() async {
-    await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'save-package',
-      'Saving package...',
-      () async {
-        await ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
-        await ref.read(manualBackupRunnerProvider).backupActiveItem();
-      },
-    );
-    if (!mounted) return;
     ref.invalidate(packageListProvider);
     if (mounted) context.go('/hub');
   }

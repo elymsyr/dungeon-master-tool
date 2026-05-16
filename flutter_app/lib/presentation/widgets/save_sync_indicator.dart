@@ -7,12 +7,15 @@ import '../../application/providers/auth_provider.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
+import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/outbox_status_provider.dart';
 import '../../application/providers/package_provider.dart' show activePackageProvider;
+import '../../application/providers/personal_sync_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/role_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -23,6 +26,7 @@ import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../application/services/cloud_catchup_service.dart';
 import '../../application/services/media_bundler.dart';
+import '../../application/services/world_reconciler.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
 import 'save_info_section.dart';
@@ -441,6 +445,11 @@ class _SyncButtonState extends ConsumerState<_SyncButton> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
+      // Manuel sync: realtime subscribe + bidirectional world reconcile +
+      // outbox drain + character/package catchup. Tek tetik noktası.
+      await runManualPersonalSync(ref);
+      await runManualWorldSync(ref);
+      await ref.read(worldReconcilerProvider).reconcile();
       await ref.read(syncEngineProvider).forceTick();
       await ref.read(cloudCatchupServiceProvider).runAll();
       if (!mounted) return;
@@ -587,6 +596,16 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
       );
       return;
     }
+    // Make Online publishWorld cloud yazımı yapar — internet zorunlu.
+    final online = ref.read(connectivityStreamProvider).valueOrNull ?? true;
+    if (!online) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('İnternet bağlantısı gerekli. Çevrimiçi olunca tekrar deneyin.'),
+        ),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final repo = ref.read(campaignRepositoryProvider);
@@ -650,6 +669,20 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
   }
 
   Future<void> _confirmOffline(String worldId) async {
+    // Make Offline cloud'dan dünyayı siler — internet zorunlu. Aksi halde
+    // unpublishWorld başarısız olur, lokal "online" bayrağı düşer ama cloud
+    // hâlâ açık kalır (state divergence). Bunu önle.
+    final online = ref.read(connectivityStreamProvider).valueOrNull ?? true;
+    if (!online) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'İnternet bağlantısı gerekli — offline yapmak için önce bağlanın.',
+          ),
+        ),
+      );
+      return;
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

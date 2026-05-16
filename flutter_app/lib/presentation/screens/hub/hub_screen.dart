@@ -10,7 +10,6 @@ import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
-import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
@@ -279,10 +278,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
   Widget build(BuildContext context) {
     if (!_bootstrapDone) return _BootSplash(message: _bootMessage);
 
-    // Personal multi-device sync (characters + packages + own world_members).
-    // Watching here keeps the realtime channel alive whenever the hub is in
-    // the widget tree — i.e. across the whole post-login session.
-    ref.watch(personalSyncAutoSubscribeProvider);
+    // Manuel sync modeli: personal realtime kanalı otomatik açılmaz. Sync
+    // butonu çağrıldığında subscribe + bootstrap yapılır.
 
     // Eager-load tüm hub listelerini app start'ta. LazyIndexedStack tab
     // widget'larını ilk seçimde inşa ettiği için provider'lar normalde tab'a
