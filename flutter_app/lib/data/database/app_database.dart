@@ -154,6 +154,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA temp_store = MEMORY');
           await customStatement('PRAGMA mmap_size = 67108864'); // 64 MB
           await customStatement('PRAGMA foreign_keys = OFF');
+          // PR-D8 cleanup: 30-day Drift trash retention (replaces v11 FS
+          // _cleanupTrash). Best-effort — purge errors don't block open.
+          try {
+            final cutoff = DateTime.now().subtract(const Duration(days: 30));
+            await trashDao.purgeOlderThan(cutoff);
+          } catch (_) {}
         },
       );
 }
