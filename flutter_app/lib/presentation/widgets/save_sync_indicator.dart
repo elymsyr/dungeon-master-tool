@@ -444,19 +444,27 @@ class _SyncButtonState extends ConsumerState<_SyncButton> {
   Future<void> _sync() async {
     if (_busy) return;
     setState(() => _busy = true);
+    final sw = Stopwatch()..start();
+    debugPrint('[SyncButton] ▶ manual sync started');
     try {
-      // Manuel sync: realtime subscribe + bidirectional world reconcile +
-      // outbox drain + character/package catchup. Tek tetik noktası.
+      debugPrint('[SyncButton]   1/5 runManualPersonalSync');
       await runManualPersonalSync(ref);
+      debugPrint('[SyncButton]   2/5 runManualWorldSync');
       await runManualWorldSync(ref);
+      debugPrint('[SyncButton]   3/5 worldReconciler.reconcile');
       await ref.read(worldReconcilerProvider).reconcile();
-      await ref.read(syncEngineProvider).forceTick();
+      debugPrint('[SyncButton]   4/5 syncEngine.forceTick (drain outbox)');
+      final drained = await ref.read(syncEngineProvider).forceTick();
+      debugPrint('[SyncButton]      forceTick drained=$drained');
+      debugPrint('[SyncButton]   5/5 cloudCatchupService.runAll');
       await ref.read(cloudCatchupServiceProvider).runAll();
+      debugPrint('[SyncButton] ✓ sync complete ${sw.elapsedMilliseconds}ms');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sync complete')),
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[SyncButton] ✗ sync failed ${sw.elapsedMilliseconds}ms: $e\n$st');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sync failed: $e')),
@@ -902,6 +910,27 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
 
   @override
   Widget build(BuildContext context) {
+    // Refresh on save-state transitions out of `saving` so the displayed
+    // `updated_at` reflects the freshly-touched Drift row.
+    ref.listen<SaveStatus>(saveStateProvider, (prev, next) {
+      if (prev == SaveStatus.saving && next != SaveStatus.saving) {
+        setState(() {
+          _infoFuture = _resolveActive();
+        });
+      }
+    });
+    // Also refresh when the outbox drains (cloud push completes — the
+    // cloud_backup `updated_at` for this item ticks forward).
+    ref.listen<AsyncValue<OutboxStatus>>(outboxStatusProvider, (prev, next) {
+      final prevPending = prev?.valueOrNull?.pending ?? 0;
+      final nextPending = next.valueOrNull?.pending ?? 0;
+      if (prevPending > 0 && nextPending == 0) {
+        setState(() {
+          _infoFuture = _resolveActive();
+        });
+      }
+    });
+
     return FutureBuilder(
       future: _infoFuture,
       builder: (context, snapshot) {

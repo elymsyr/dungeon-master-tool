@@ -8,6 +8,7 @@ import '../../application/providers/beta_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
+import '../../application/providers/outbox_status_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
@@ -93,6 +94,16 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
       cloudBackupListProvider,
       (_, _) => _refreshCloud(),
     );
+    // F6 follow-up: row-level cloud pushes (world_entities, world_settings,
+    // world_map_data) drain via outbox. After drain → `worlds.updated_at`
+    // ticked → re-fetch so the cloud timestamp shows the fresh value.
+    ref.listen<AsyncValue<OutboxStatus>>(outboxStatusProvider, (prev, next) {
+      final prevPending = prev?.valueOrNull?.pending ?? 0;
+      final nextPending = next.valueOrNull?.pending ?? 0;
+      if (prevPending > 0 && nextPending == 0) {
+        _refreshCloud();
+      }
+    });
 
     final mirrorRow = _offlineMirrorRow(palette, l10n);
 
