@@ -426,8 +426,17 @@ class SyncEngine {
 
   Future<void> _handle(SyncOutboxRow row) async {
     if (row.attempts >= _dlqAttempts) {
+      debugPrint(
+        '[SyncEngine] DLQ ${row.targetTable}/${row.targetPk} '
+        '${row.opType} attempts=${row.attempts}',
+      );
       return;
     }
+    final sw = Stopwatch()..start();
+    debugPrint(
+      '[SyncEngine] → ${row.targetTable}/${row.targetPk} ${row.opType} '
+      'attempt=${row.attempts + 1} payloadBytes=${row.payloadJson.length}',
+    );
     try {
       switch (row.targetTable) {
         case _tWorldEntities:
@@ -451,19 +460,30 @@ class SyncEngine {
         case _tCloudBackups:
           await _handleCloudBackup(row);
         default:
-          // Unknown table — drop so we don't loop forever.
+          debugPrint(
+            '[SyncEngine] ✗ unknown table ${row.targetTable}, dropping',
+          );
           await _db.syncOutboxDao.deleteById(row.opId);
           return;
       }
       await _db.syncOutboxDao.deleteById(row.opId);
-    } catch (e) {
+      debugPrint(
+        '[SyncEngine] ✓ ${row.targetTable}/${row.targetPk} ${row.opType} '
+        '${sw.elapsedMilliseconds}ms',
+      );
+    } catch (e, st) {
       if (_isPermanentRejection(e)) {
         debugPrint(
-          'SyncEngine dropping ${row.targetTable}/${row.targetPk}: $e',
+          '[SyncEngine] ✗ drop ${row.targetTable}/${row.targetPk} '
+          '${row.opType} ${sw.elapsedMilliseconds}ms: $e',
         );
         await _db.syncOutboxDao.deleteById(row.opId);
         return;
       }
+      debugPrint(
+        '[SyncEngine] ✗ retry ${row.targetTable}/${row.targetPk} '
+        '${row.opType} ${sw.elapsedMilliseconds}ms: $e\n$st',
+      );
       await _markRetry(row, e.toString());
     }
   }
@@ -670,32 +690,49 @@ class SyncEngine {
   }
 
   Future<void> _handleCloudBackup(SyncOutboxRow row) async {
-    if (!_ref.read(isBetaActiveProvider)) return;
+    if (!_ref.read(isBetaActiveProvider)) {
+      debugPrint('[SyncEngine]   cloud_backup: beta inactive, skip');
+      return;
+    }
     final repo = _ref.read(cloudBackupRepositoryProvider);
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final itemId = p['item_id'] as String;
     final type = p['type'] as String;
     if (row.opType == _opDelete) {
       await repo.deleteBackupByItem(itemId, type);
+      debugPrint('[SyncEngine]   cloud_backup deleted item=$itemId type=$type');
       return;
     }
     final itemName = p['item_name'] as String;
     final data = (p['data'] as Map).cast<String, dynamic>();
-    // Idempotency: hash the canonical payload + skip upload when the
-    // matching cloud_backups row already carries the same payload_hash.
     final hash = _hashPayload(type, itemId, data);
     try {
       final remoteHash = await repo.fetchPayloadHashByItem(itemId, type);
       if (remoteHash == hash) {
+        debugPrint(
+          '[SyncEngine]   cloud_backup hash match — skip upload '
+          'item=$itemId type=$type hash=${hash.substring(0, 8)}',
+        );
         return;
       }
-    } catch (_) {}
-    await repo.uploadBackup(
+      debugPrint(
+        '[SyncEngine]   cloud_backup remoteHash=${remoteHash?.substring(0, 8) ?? "null"} '
+        'localHash=${hash.substring(0, 8)} → upload',
+      );
+    } catch (e) {
+      debugPrint('[SyncEngine]   cloud_backup hash fetch failed: $e');
+    }
+    final meta = await repo.uploadBackup(
       itemName,
       itemId,
       type,
       data,
       payloadHash: hash,
+    );
+    debugPrint(
+      '[SyncEngine]   cloud_backup uploaded id=${meta.id} item=$itemId '
+      'type=$type createdAt=${meta.createdAt.toIso8601String()} '
+      'sizeBytes=${meta.sizeBytes}',
     );
   }
 
