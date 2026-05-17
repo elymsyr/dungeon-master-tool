@@ -484,6 +484,11 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// the row is already persisted, so the global autosave debounce
   /// would just delete+re-insert the same content. Linked characters
   /// live on the hub side and are skipped entirely.
+  ///
+  /// F4 row-level cloud: also enqueue a `world_entities` upsert outbox
+  /// row when the world is online + the user is authenticated. The
+  /// outbox coalesces by `(target_table, target_pk, op_type)` so rapid
+  /// keystrokes collapse to one push.
   void _writeEntityToCampaign(Entity entity) {
     final data = _campaign.data;
     if (data == null) return;
@@ -500,6 +505,18 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     entities[entity.id] = row;
     // ignore: discarded_futures
     _campaign.saveEntity(entity.id, row);
+
+    final worldId = _campaignId;
+    if (worldId != null &&
+        _ref.read(authProvider) != null &&
+        _ref.read(onlineWorldIdsProvider).contains(worldId)) {
+      // ignore: discarded_futures
+      _ref.read(syncEngineProvider).enqueueWorldEntityUpsert(
+            worldId: worldId,
+            entityId: entity.id,
+            entityMap: row,
+          );
+    }
   }
 
   /// F2: row-level delete. Drops the id from the in-memory blob then

@@ -148,11 +148,55 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     }
   }
 
-  Future<void> save({bool pushMirror = false}) async {
+  /// F6: `pushMirror` param retired — entity edits push row-level via
+  /// outbox (see [saveEntity]/[deleteEntity]). This bulk save remains
+  /// for cloud restore / trash safety nets.
+  Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
-      if (pushMirror) _mirrorPushPersonal();
     }
+  }
+
+  /// F5 row-level: single-entity write inside the active personal package.
+  /// Built-in pack is skipped by the repository guard. When the package
+  /// is "Make Online", a per-entity outbox row is enqueued so the cloud
+  /// gets the same change without re-uploading the entire `state_json`.
+  Future<void> saveEntity(String entityId, Map<String, dynamic> row) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.saveEntity(name, entityId, row);
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    if (_ref.read(authProvider) != null && onlineNames.contains(name)) {
+      // ignore: discarded_futures
+      _ref.read(syncEngineProvider).enqueuePersonalPackageEntityUpsert(
+            packageName: name,
+            entityId: entityId,
+            entityMap: row,
+          );
+    }
+  }
+
+  Future<void> deleteEntity(String entityId) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.deleteEntity(name, entityId);
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    if (_ref.read(authProvider) != null && onlineNames.contains(name)) {
+      // ignore: discarded_futures
+      _ref.read(syncEngineProvider).enqueuePersonalPackageEntityDelete(
+            packageName: name,
+            entityId: entityId,
+          );
+    }
+  }
+
+  /// F5: schema/metadata patch (rarely fires — template update, marketplace
+  /// fields, etc.). Cloud still gets the legacy full `state_json` blob via
+  /// [_mirrorPushPersonal] because schema isn't row-level.
+  Future<void> saveStatePatch(Map<String, dynamic> patch) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.saveStatePatch(name, patch);
   }
 
   /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.

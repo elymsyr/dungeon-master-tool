@@ -79,6 +79,21 @@ class PersonalSyncService {
           _dispatch('world_members', payload),
     );
 
+    // F5 row-level: per-entity CDC for personal package entities. Filtered
+    // by owner so the channel scales linearly with the user's catalog.
+    channel.onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'personal_package_entities',
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'owner_id',
+        value: uid,
+      ),
+      callback: (payload) =>
+          _dispatch('personal_package_entities', payload),
+    );
+
     channel.subscribe();
     _channel = channel;
     _activeUid = uid;

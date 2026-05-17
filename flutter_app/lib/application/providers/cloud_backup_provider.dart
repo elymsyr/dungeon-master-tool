@@ -127,7 +127,7 @@ class CloudBackupOperationNotifier
 
     state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
     try {
-      await _ref.read(saveStateProvider.notifier).saveNow(pushAfter: true);
+      await _ref.read(saveStateProvider.notifier).saveNow();
       final raw =
           await _ref.read(campaignRepositoryProvider).load(campaignName);
       final campaignId = raw['world_id'] as String? ?? '';

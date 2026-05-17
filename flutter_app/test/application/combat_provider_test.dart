@@ -15,9 +15,9 @@ CombatNotifier _createNotifier({
   return CombatNotifier(
     getEntities ?? () => <String, Entity>{},
     () => generateDefaultDnd5eSchema(),
-    () {},
     getCampaignData ?? () => null,
     eventBus ?? AppEventBus(),
+    (_) async {},
   );
 }
 

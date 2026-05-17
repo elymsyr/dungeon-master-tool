@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -56,12 +55,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     // building" assertion when the parent rebuild is still in flight.
     // Capture notifiers (provider singletons outlive this widget) and run
     // the sync after the current frame.
+    //
+    // F3 row-level: write `map_data` key only in settings_json via
+    // saveSettingsPatch — no global markDirty / world-wide bulk save.
     final mapNotifier = ref.read(worldMapProvider.notifier);
-    final saveNotifier = ref.read(saveStateProvider.notifier);
+    final campaign = ref.read(activeCampaignProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         mapNotifier.syncToCampaignData();
-        saveNotifier.markDirty();
+        final mapData = campaign.data?['map_data'];
+        if (mapData is Map) {
+          // ignore: discarded_futures
+          campaign.saveSettingsPatch(
+              {'map_data': Map<String, dynamic>.from(mapData)});
+        }
       } catch (_) {}
     });
     super.deactivate();

@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/mind_map_id_provider.dart';
-import '../../../application/providers/save_state_provider.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/mind_map.dart';
 
@@ -176,7 +175,16 @@ class MindMapNotifier extends StateNotifier<MindMapState>
 
   void _debouncedSave() {
     syncToCampaignData();
-    _ref.read(saveStateProvider.notifier).markDirty();
+    // F3 row-level: patch `mind_maps` only in settings_json. The entire
+    // mind_maps map is the patch value — splitting per mapId is a later
+    // step (would require a column or nested-key patch API).
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    final mindMaps = campaign.data?['mind_maps'];
+    if (mindMaps is Map) {
+      // ignore: discarded_futures
+      campaign.saveSettingsPatch(
+          {'mind_maps': Map<String, dynamic>.from(mindMaps)});
+    }
   }
 
   // -------------------------------------------------------------------------

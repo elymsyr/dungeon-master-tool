@@ -87,6 +87,32 @@ class PersonalMirrorApplier {
     } catch (e) {
       debugPrint('PersonalMirrorApplier bootstrap packages error: $e');
     }
+    // F5 row-level: pull per-entity rows for every personal package this
+    // user owns. The base packages are bootstrapped above; this fills the
+    // entity tables row-by-row.
+    try {
+      final rows = await client
+          .from('personal_package_entities')
+          .select('package_name, id, payload_json')
+          .eq('owner_id', auth.uid);
+      final repo = ref.read(packageRepositoryProvider);
+      for (final raw in rows as List) {
+        final row = raw as Map;
+        final name = row['package_name'] as String?;
+        final id = row['id'] as String?;
+        final payload = row['payload_json'];
+        if (name == null || id == null || payload is! String) continue;
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is! Map<String, dynamic>) continue;
+          await repo.saveEntity(name, id, decoded);
+        } catch (err) {
+          debugPrint('personal_package_entities bootstrap row error: $err');
+        }
+      }
+    } catch (e) {
+      debugPrint('PersonalMirrorApplier bootstrap entities error: $e');
+    }
   }
 
   Future<void> _onEvent(PersonalSyncEvent e) async {
@@ -94,11 +120,46 @@ class PersonalMirrorApplier {
       switch (e.table) {
         case 'personal_packages':
           await _applyPackageEvent(e);
+        case 'personal_package_entities':
+          await _applyPackageEntityEvent(e);
         case 'world_members':
           await _applyMembersEvent(e);
       }
     } catch (err, st) {
       debugPrint('PersonalMirrorApplier error: $err\n$st');
+    }
+  }
+
+  /// F5 row-level inbound: a remote `personal_package_entities` change is
+  /// written into Drift's `package_entities` via the repo's row-level API.
+  /// Echo suppression mirrors the per-package logic — the local push stamps
+  /// `ppe:{name}:{id}` so we skip the CDC of our own write.
+  Future<void> _applyPackageEntityEvent(PersonalSyncEvent e) async {
+    Map<String, dynamic> record;
+    if (e.eventType == PostgresChangeEvent.delete) {
+      record = e.oldRecord;
+    } else {
+      record = e.newRecord;
+    }
+    final packageName = record['package_name'] as String?;
+    final entityId = record['id'] as String?;
+    if (packageName == null || entityId == null) return;
+    if (mirror.isEchoOfPersonalPackageEntity(packageName, entityId)) return;
+    final repo = ref.read(packageRepositoryProvider);
+    try {
+      if (e.eventType == PostgresChangeEvent.delete) {
+        await repo.deleteEntity(packageName, entityId);
+      } else {
+        final payload = record['payload_json'];
+        if (payload is! String) return;
+        final decoded = jsonDecode(payload);
+        if (decoded is! Map<String, dynamic>) return;
+        await repo.saveEntity(packageName, entityId, decoded);
+      }
+      // Refresh listings so an open package picks up the change.
+      ref.invalidate(packageListProvider);
+    } catch (err) {
+      debugPrint('personal_package_entities apply error: $err');
     }
   }
 

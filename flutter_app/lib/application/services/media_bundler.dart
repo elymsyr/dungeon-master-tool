@@ -198,6 +198,56 @@ class MediaBundler {
     );
   }
 
+  /// F4 row-level push helper. Uploads any local `image_path` / `images[]`
+  /// in [entityMap] to R2 and returns a clone with paths rewritten to
+  /// `dmt-asset://`. The full-world variant ([bundleWorldMedia]) does the
+  /// same plus gallery walk + manifest — but per-row outbox pushes only
+  /// need the entity itself, so this skips the manifest pass.
+  ///
+  /// SHA dedupe is delegated to [AssetService.uploadAsset], which is cheap
+  /// when the same file is repeatedly bundled.
+  Future<Map<String, dynamic>> bundleEntityMedia({
+    required String worldId,
+    required String entityId,
+    required Map<String, dynamic> entityMap,
+  }) async {
+    final cloned = deepCopyJson(entityMap) as Map<String, dynamic>;
+
+    Future<String?> upload(String localPath) async {
+      final file = File(localPath);
+      if (!await file.exists()) return null;
+      try {
+        final uri = await _assetService.uploadAsset(
+          file,
+          campaignId: worldId,
+        );
+        final key = uri.toString().substring(AssetRef.scheme.length);
+        return AssetRef.formatCloudUri(key);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final legacyPath = cloned['image_path'];
+    if (legacyPath is String && legacyPath.isNotEmpty &&
+        !AssetRef(legacyPath).isCloud) {
+      final uri = await upload(legacyPath);
+      if (uri != null) cloned['image_path'] = uri;
+    }
+
+    final images = cloned['images'];
+    if (images is List) {
+      for (var i = 0; i < images.length; i++) {
+        final raw = images[i];
+        if (raw is! String || raw.isEmpty) continue;
+        if (AssetRef(raw).isCloud) continue;
+        final uri = await upload(raw);
+        if (uri != null) images[i] = uri;
+      }
+    }
+    return cloned;
+  }
+
   static const _imageExts = {
     '.png',
     '.jpg',
