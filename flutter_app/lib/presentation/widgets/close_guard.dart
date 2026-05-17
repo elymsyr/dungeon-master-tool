@@ -18,7 +18,7 @@ Future<bool> confirmCloseWithBackupCheck({
       ref.read(globalLoadingProvider.notifier),
       'close-guard-save',
       'Saving "$itemName"...',
-      () => ref.read(saveStateProvider.notifier).saveNow(pushAfter: true),
+      () => ref.read(saveStateProvider.notifier).saveNow(),
     );
   } catch (e) {
     if (context.mounted) {

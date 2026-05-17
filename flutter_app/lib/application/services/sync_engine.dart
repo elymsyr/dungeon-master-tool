@@ -9,11 +9,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/app_database.dart';
+import '../../data/network/network_providers.dart';
 import '../../domain/entities/character.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beta_provider.dart';
 import '../providers/cloud_backup_provider.dart';
 import '../providers/world_mirror_provider.dart';
+import 'media_bundler.dart';
 
 /// Persistent outbox drain worker (PR-D5 v12 rewrite).
 ///
@@ -52,6 +54,7 @@ class SyncEngine {
   static const _tWorlds = 'worlds';
   static const _tWorldPackages = 'world_packages';
   static const _tPersonalPackages = 'personal_packages';
+  static const _tPersonalPackageEntities = 'personal_package_entities';
   static const _tCloudBackups = 'cloud_backups';
 
   static const _opUpsert = 'upsert';
@@ -100,7 +103,6 @@ class SyncEngine {
     required String worldId,
     required String entityId,
     required Map<String, dynamic> entityMap,
-    String? builtinPackageId,
   }) async {
     await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
@@ -111,8 +113,6 @@ class SyncEngine {
       payloadJson: jsonEncode({
         'world_id': worldId,
         'entity': entityMap,
-        // ignore: use_null_aware_elements
-        if (builtinPackageId != null) 'builtin_package_id': builtinPackageId,
       }),
     );
   }
@@ -320,6 +320,43 @@ class SyncEngine {
     );
   }
 
+  /// F5 row-level. PK = "$packageName:$entityId" so distinct packages
+  /// don't collide on shared entity ids. Coalesced upsert means rapid
+  /// edits to the same entity collapse to one cloud push.
+  Future<void> enqueuePersonalPackageEntityUpsert({
+    required String packageName,
+    required String entityId,
+    required Map<String, dynamic> entityMap,
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
+      opId: _newOpId(),
+      targetTable: _tPersonalPackageEntities,
+      targetPk: '$packageName:$entityId',
+      opType: _opUpsert,
+      payloadJson: jsonEncode({
+        'package_name': packageName,
+        'entity_id': entityId,
+        'entity': entityMap,
+      }),
+    );
+  }
+
+  Future<void> enqueuePersonalPackageEntityDelete({
+    required String packageName,
+    required String entityId,
+  }) async {
+    await _db.syncOutboxDao.enqueueCoalesced(
+      opId: _newOpId(),
+      targetTable: _tPersonalPackageEntities,
+      targetPk: '$packageName:$entityId',
+      opType: _opDelete,
+      payloadJson: jsonEncode({
+        'package_name': packageName,
+        'entity_id': entityId,
+      }),
+    );
+  }
+
   /// Cloud backup snapshot for a worldless / world-offline item. [type] is
   /// `world`, `template`, `package`, or `character`. PK = "$type:$itemId" so
   /// distinct types of the same id don't collide.
@@ -409,6 +446,8 @@ class SyncEngine {
           await _handleWorldPackage(row);
         case _tPersonalPackages:
           await _handlePersonalPackage(row);
+        case _tPersonalPackageEntities:
+          await _handlePersonalPackageEntity(row);
         case _tCloudBackups:
           await _handleCloudBackup(row);
         default:
@@ -466,12 +505,27 @@ class SyncEngine {
       await mirror.deleteEntity(worldId: worldId, entityId: row.targetPk);
       return;
     }
-    final entityMap = (p['entity'] as Map).cast<String, dynamic>();
+    var entityMap = (p['entity'] as Map).cast<String, dynamic>();
+    // F4: per-row media bundle. Replaces the previous world-wide
+    // MediaBundler pass on the bulk pushEntities path — each outbox row
+    // re-uploads local-path images (AssetService SHA-dedupes the repeat
+    // case) and rewrites refs to `dmt-asset://` before the cloud push.
+    final assetSvc = _ref.read(assetServiceProvider);
+    if (assetSvc != null) {
+      try {
+        entityMap = await MediaBundler(assetSvc).bundleEntityMedia(
+          worldId: worldId,
+          entityId: row.targetPk,
+          entityMap: entityMap,
+        );
+      } catch (e, st) {
+        debugPrint('per-entity media bundle error: $e\n$st');
+      }
+    }
     await mirror.pushEntity(
       worldId: worldId,
       entityId: row.targetPk,
       entityMap: entityMap,
-      builtinPackageId: p['builtin_package_id'] as String?,
     );
   }
 
@@ -590,6 +644,28 @@ class SyncEngine {
     await mirror.pushPersonalPackage(
       packageName: row.targetPk,
       state: (p['state'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<void> _handlePersonalPackageEntity(SyncOutboxRow row) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) throw StateError('mirror service unavailable');
+    if (!_ref.read(isBetaActiveProvider)) return;
+    final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
+    final packageName = p['package_name'] as String;
+    final entityId = p['entity_id'] as String;
+    if (row.opType == _opDelete) {
+      await mirror.deletePersonalPackageEntity(
+        packageName: packageName,
+        entityId: entityId,
+      );
+      return;
+    }
+    final entityMap = (p['entity'] as Map).cast<String, dynamic>();
+    await mirror.pushPersonalPackageEntity(
+      packageName: packageName,
+      entityId: entityId,
+      entityMap: entityMap,
     );
   }
 

@@ -11,17 +11,11 @@ import '../../data/repositories/world_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
-import '../../data/network/network_providers.dart';
-import '../services/media_bundler.dart';
-import '../services/world_mirror_service.dart';
 import 'auth_provider.dart';
-import 'builtin_package_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
-import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
-import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 
@@ -231,10 +225,13 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     }
   }
 
-  Future<void> save({bool pushMirror = false}) async {
+  /// F6: `pushMirror` param retired — cloud sync is row-level via the
+  /// outbox (entities F4, settings F3, map_data/sessions F3). This bulk
+  /// save remains for trash restore / cloud restore safety nets where
+  /// the diff is unknown.
+  Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
-      if (pushMirror) _mirrorAfterSave();
     }
   }
 
@@ -255,150 +252,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     await _repo.deleteEntity(name, entityId);
   }
 
-  /// World online ise lokal save sonrası Supabase mirror'a push eder.
-  /// Best-effort: mirror null veya RLS reddederse sessizce geç.
-  void _mirrorAfterSave() {
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    final data = _data;
-    if (mirror == null || data == null) return;
-    final worldId = data['world_id'] as String?;
-    if (worldId == null) return;
-    // Offline world → mirror push'u atla (RLS gürültüsünü engeller).
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    if (!onlineIds.contains(worldId)) return;
-    final worldName = state ?? '';
-    final schemaMap = data['world_schema'];
-    final templateId = schemaMap is Map
-        ? schemaMap['schemaId'] as String?
-        : null;
-    final templateHash = data['template_hash'] as String?;
-    // Media'yı R2'ye yükleyip `dmt-asset://` ref'lerine rewrite et;
-    // sonra entity + state push. Bundle SHA-dedupe sayesinde repeat
-    // save'ler ucuz. AssetService yoksa (worker URL define yok) raw data.
-    // ignore: discarded_futures
-    _bundleAndPush(
-      mirror: mirror,
-      worldId: worldId,
-      worldName: worldName,
-      templateId: templateId,
-      templateHash: templateHash,
-      data: data,
-    );
-  }
-
-  Future<void> _bundleAndPush({
-    required WorldMirrorService mirror,
-    required String worldId,
-    required String worldName,
-    String? templateId,
-    String? templateHash,
-    required Map<String, dynamic> data,
-  }) async {
-    // Player rolündeki user world_entities/worlds tablolarına yazamaz (RLS).
-    // Async lookup — circular dep'i önlemek için doğrudan Supabase.
-    if (SupabaseConfig.isConfigured) {
-      final auth = Supabase.instance.client.auth.currentUser;
-      if (auth == null) return;
-      try {
-        final row = await Supabase.instance.client
-            .from('world_members')
-            .select('role')
-            .eq('world_id', worldId)
-            .eq('user_id', auth.id)
-            .maybeSingle();
-        if (row == null || row['role'] != 'dm') return;
-      } catch (_) {
-        return;
-      }
-    }
-    final assetSvc = _ref.read(assetServiceProvider);
-    Map<String, dynamic> bundled = data;
-    if (assetSvc != null) {
-      try {
-        final res = await MediaBundler(
-          assetSvc,
-        ).bundleWorldMedia(worldName: worldName, worldId: worldId, data: data);
-        bundled = res.data;
-      } catch (e, st) {
-        debugPrint('online mirror media bundle error: $e\n$st');
-      }
-    }
-    final entitiesRaw = bundled['entities'];
-    final entitiesBlob = entitiesRaw is Map<String, dynamic>
-        ? entitiesRaw
-        : const <String, dynamic>{};
-    String? builtinPackageId;
-    try {
-      builtinPackageId = await _ref.read(builtinPackageIdProvider.future);
-    } catch (_) {
-      /* bootstrap pending → null, OK */
-    }
-    // Bulk entity push is fire-and-forget — the granular world tables below
-     // go through the outbox (retried automatically). Failure here doesn't
-     // poison the rest of the push pipeline.
-    try {
-      await mirror.pushEntities(
-        worldId: worldId,
-        entitiesBlob: entitiesBlob,
-        builtinPackageId: builtinPackageId,
-      );
-    } catch (e) {
-      debugPrint('_bundleAndPush pushEntities swallow: $e');
-    }
-
-    // PR-SYNC-6: granular tables (`world_map_data` / `world_sessions` /
-    // `world_settings`) are now the canonical world-state mirror. The
-    // legacy `worlds.state_json` dual-write is retired — the `worlds` row
-    // still carries world_name / template_* metadata via membership service
-    // publish, but per-mutation pushes no longer re-upload the whole blob.
-    final engine = _ref.read(syncEngineProvider);
-
-    final mapDataRaw = bundled['map_data'];
-    final sessionsRaw = bundled['sessions'];
-    final settingsRaw = bundled['settings'];
-
-    if (mapDataRaw is Map) {
-      await engine.enqueueWorldMapData(
-        worldId: worldId,
-        data: Map<String, dynamic>.from(mapDataRaw),
-      );
-    }
-    if (sessionsRaw is List) {
-      for (var i = 0; i < sessionsRaw.length; i++) {
-        final s = sessionsRaw[i];
-        if (s is! Map) continue;
-        final sm = Map<String, dynamic>.from(s);
-        final sid = sm['id'] as String?;
-        if (sid == null) continue;
-        await engine.enqueueWorldSessionUpsert(
-          worldId: worldId,
-          sessionId: sid,
-          name: (sm['name'] as String?) ?? '',
-          data: sm,
-          isActive: (sm['is_active'] as bool?) ?? false,
-          sortOrder: (sm['sort_order'] as num?)?.toInt() ?? i,
-        );
-      }
-    }
-    // Everything else that isn't entities / map_data / sessions lives in
-    // settings_json so a single granular row carries it.
-    final settingsForPush = <String, dynamic>{};
-    if (settingsRaw is Map) {
-      settingsForPush.addAll(Map<String, dynamic>.from(settingsRaw));
-    }
-    for (final entry in bundled.entries) {
-      if (entry.key == 'entities' ||
-          entry.key == 'map_data' ||
-          entry.key == 'sessions' ||
-          entry.key == 'settings') {
-        continue;
-      }
-      settingsForPush[entry.key] = entry.value;
-    }
-    await engine.enqueueWorldSettings(
-      worldId: worldId,
-      settings: settingsForPush,
-    );
+  /// F3: read-merge-write a subset of `world_settings.settings_json`.
+  /// Repo decodes the existing JSON, applies [patch] keys on top, and
+  /// re-encodes — touching only the one `world_settings` row. Caller
+  /// (combat / mind_map / map) keeps the in-memory mirror in sync.
+  Future<void> saveSettingsPatch(Map<String, dynamic> patch) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.saveSettingsPatch(name, patch);
   }
 
   /// Re-reads the active campaign from disk, replaces [_data] in place

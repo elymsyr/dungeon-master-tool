@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,7 +14,6 @@ import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
-import 'save_state_provider.dart';
 
 const _uuid = Uuid();
 final _rng = Random();
@@ -57,13 +55,16 @@ class CombatNotifier extends StateNotifier<CombatState>
     with UndoRedoMixin<CombatState> {
   final Map<String, Entity> Function() _getEntities;
   final WorldSchema Function() _getSchema;
-  final VoidCallback _onChanged;
 
   final Map<String, dynamic>? Function() _getCampaignData;
   final AppEventBus _eventBus;
+  // F3 row-level: writes `combat_state` key only in `world_settings.settings_json`.
+  // Replaces the previous global markDirty path that triggered a full
+  // `world_repository.save` (delete+insertAll on world_entities included).
+  final Future<void> Function(Map<String, dynamic> patch) _saveSettingsPatch;
 
-  CombatNotifier(this._getEntities, this._getSchema, this._onChanged,
-      this._getCampaignData, this._eventBus)
+  CombatNotifier(this._getEntities, this._getSchema,
+      this._getCampaignData, this._eventBus, this._saveSettingsPatch)
       : super(const CombatState()) {
     _loadFromCampaign();
   }
@@ -98,10 +99,15 @@ class CombatNotifier extends StateNotifier<CombatState>
 
   void _saveAndNotify() {
     final data = _getCampaignData();
+    final session = getSessionState();
     if (data != null) {
-      data['combat_state'] = getSessionState();
+      data['combat_state'] = session;
     }
-    _onChanged();
+    // F3 row-level: patch only `combat_state` in settings_json. No global
+    // markDirty → autosave debounce skipped entirely; `world_entities`
+    // delete+insertAll cycle no longer fires for combat ticks.
+    // ignore: discarded_futures
+    _saveSettingsPatch({'combat_state': session});
   }
 
   EncounterConfig get _encounterConfig => _getSchema().encounterConfig;
@@ -608,8 +614,9 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
-    () => ref.read(saveStateProvider.notifier).markDirty(),
     () => ref.read(activeCampaignProvider.notifier).data,
     ref.read(eventBusProvider),
+    (patch) =>
+        ref.read(activeCampaignProvider.notifier).saveSettingsPatch(patch),
   );
 });

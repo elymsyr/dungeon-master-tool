@@ -164,18 +164,20 @@ class _PackageAsCampaignRepo implements CampaignRepository {
     String entityId,
     Map<String, dynamic> row,
   ) =>
-      _packageNotifier.save();
+      _packageNotifier.saveEntity(entityId, row);
 
   @override
   Future<void> deleteEntity(String name, String entityId) =>
-      _packageNotifier.save();
+      _packageNotifier.deleteEntity(entityId);
 
+  // F5: settings live in `package_state.state_json` (not entities). Delegate
+  // to `saveStatePatch` so a metadata edit only touches that one row.
   @override
   Future<void> saveSettingsPatch(
     String name,
     Map<String, dynamic> patch,
   ) =>
-      _packageNotifier.save();
+      _packageNotifier.saveStatePatch(patch);
 
   @override
   Future<void> delete(String name) async {}

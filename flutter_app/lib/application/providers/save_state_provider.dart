@@ -22,26 +22,21 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
   void markDirty() {}
 
   /// Save current active campaign/package to disk. `pushAfter` true ise
-  /// `_performSave` sonrası mirror push'ları zaten zincir içinden çalışır
-  /// (campaign_provider.save → mirror push). Kullanıcı Save butonundan
-  /// `pushAfter: false` ile çağırır, close-guard `pushAfter: true` ile.
-  Future<void> saveNow({bool pushAfter = false}) async {
-    await _performSave(pushAfter: pushAfter);
+  /// F6: cloud sync is row-level via the outbox — bulk close-time push
+  /// retired. `saveNow` now only persists in-memory data to disk.
+  Future<void> saveNow() async {
+    await _performSave();
   }
 
-  Future<void> _performSave({required bool pushAfter}) async {
+  Future<void> _performSave() async {
     if (_disposed || !mounted) return;
     state = SaveStatus.saving;
     try {
       if (_ref.read(activeCampaignProvider) != null) {
-        await _ref
-            .read(activeCampaignProvider.notifier)
-            .save(pushMirror: pushAfter);
+        await _ref.read(activeCampaignProvider.notifier).save();
       }
       if (_ref.read(activePackageProvider) != null) {
-        await _ref
-            .read(activePackageProvider.notifier)
-            .save(pushMirror: pushAfter);
+        await _ref.read(activePackageProvider.notifier).save();
       }
       if (_disposed) return;
       lastSavedAt = DateTime.now();

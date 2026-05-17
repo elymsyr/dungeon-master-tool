@@ -46,54 +46,18 @@ class WorldMirrorService {
 
   // ── Entities (DM-only writes) ──────────────────────────────────────
 
-  /// Lokal `data['entities']` blob'undan world_entities'e bulk upsert.
-  /// updated_at trigger ile idempotent. Deletion EntityNotifier.delete →
-  /// [deleteEntity] üzerinden ayrı path'te yapılır; bu push sadece upsert.
-  ///
-  /// [builtinPackageId] verildiğinde, entity'nin `package_id == builtinPackageId
-  /// && linked == true` koşulu world_entities.is_builtin = true olarak yazılır.
-  /// Player tarafında otomatik görünürlüğü tetikler.
-  Future<void> pushEntities({
-    required String worldId,
-    required Map<String, dynamic> entitiesBlob,
-    String? builtinPackageId,
-  }) async {
-    if (entitiesBlob.isEmpty) return;
-    final rows = <Map<String, dynamic>>[];
-    for (final entry in entitiesBlob.entries) {
-      final m = entry.value;
-      if (m is! Map) continue;
-      rows.add(
-        _entityRow(
-          worldId,
-          entry.key,
-          Map<String, dynamic>.from(m),
-          builtinPackageId,
-        ),
-      );
-      _stamp(entry.key);
-    }
-    if (rows.isEmpty) return;
-    try {
-      await client.from('world_entities').upsert(rows);
-    } catch (e, st) {
-      debugPrint('pushEntities upsert error: $e\n$st');
-      rethrow;
-    }
-  }
-
-  /// Single-entity upsert (notifier hook için, debouncing dışarıda).
+  /// Single-entity upsert. F4 retired the bulk `pushEntities` path —
+  /// every entity edit flows through the outbox per-row.
   Future<void> pushEntity({
     required String worldId,
     required String entityId,
     required Map<String, dynamic> entityMap,
-    String? builtinPackageId,
   }) async {
     _stamp(entityId);
     try {
       await client
           .from('world_entities')
-          .upsert(_entityRow(worldId, entityId, entityMap, builtinPackageId));
+          .upsert(_entityRow(worldId, entityId, entityMap));
     } catch (e) {
       debugPrint('pushEntity error: $e');
       rethrow;
@@ -116,16 +80,8 @@ class WorldMirrorService {
   Map<String, dynamic> _entityRow(
     String worldId,
     String entityId,
-    Map<String, dynamic> m, [
-    String? builtinPackageId,
-  ]) {
-    final pkgId = m['package_id'] as String?;
-    final linked = (m['linked'] as bool?) ?? false;
-    final isBuiltin =
-        builtinPackageId != null &&
-        pkgId != null &&
-        pkgId == builtinPackageId &&
-        linked;
+    Map<String, dynamic> m,
+  ) {
     return {
       'id': entityId,
       'world_id': worldId,
@@ -140,10 +96,9 @@ class WorldMirrorService {
       'pdfs_json': jsonEncode(m['pdfs'] ?? const []),
       'location_id': m['location_id'],
       'fields_json': jsonEncode(m['attributes'] ?? m['fields'] ?? const {}),
-      'package_id': pkgId,
+      'package_id': m['package_id'] as String?,
       'package_entity_id': m['package_entity_id'],
-      'linked': linked,
-      'is_builtin': isBuiltin,
+      'linked': (m['linked'] as bool?) ?? false,
     };
   }
 
@@ -444,6 +399,57 @@ class WorldMirrorService {
 
   bool isEchoOfPackage(String packageName) =>
       _isEcho(_packageEchoKey(packageName));
+
+  // F5 row-level: each personal-package entity has its own row in
+  // `personal_package_entities`. The legacy bulk `publish_personal_package`
+  // path still carries schema/metadata in `personal_packages.state_json`,
+  // but entity-level mutations route here.
+
+  static String _personalPkgEntityEchoKey(String packageName, String id) =>
+      'ppe:$packageName:$id';
+
+  Future<void> pushPersonalPackageEntity({
+    required String packageName,
+    required String entityId,
+    required Map<String, dynamic> entityMap,
+  }) async {
+    _stamp(_personalPkgEntityEchoKey(packageName, entityId));
+    try {
+      await client.rpc(
+        'publish_personal_package_entity',
+        params: {
+          'p_package_name': packageName,
+          'p_entity_id': entityId,
+          'p_payload_json': jsonEncode(entityMap),
+        },
+      );
+    } catch (e) {
+      debugPrint('pushPersonalPackageEntity error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deletePersonalPackageEntity({
+    required String packageName,
+    required String entityId,
+  }) async {
+    _stamp(_personalPkgEntityEchoKey(packageName, entityId));
+    try {
+      await client.rpc(
+        'delete_personal_package_entity',
+        params: {
+          'p_package_name': packageName,
+          'p_entity_id': entityId,
+        },
+      );
+    } catch (e) {
+      debugPrint('deletePersonalPackageEntity error: $e');
+      rethrow;
+    }
+  }
+
+  bool isEchoOfPersonalPackageEntity(String packageName, String entityId) =>
+      _isEcho(_personalPkgEntityEchoKey(packageName, entityId));
 
   // ── World packages (DM-shared per world) — PR-SYNC-5 ───────────────
   //
