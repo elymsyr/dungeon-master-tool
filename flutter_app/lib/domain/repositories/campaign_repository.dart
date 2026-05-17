@@ -13,6 +13,24 @@ abstract class CampaignRepository {
   /// Kampanya verisini kaydet.
   Future<void> save(String campaignName, Map<String, dynamic> data);
 
+  /// Row-level entity upsert. Tek satır world_entities yazımı; settings/diğer
+  /// entityler dokunulmaz. F0 additive — bulk [save] hala çağrılabilir.
+  Future<void> saveEntity(
+    String campaignName,
+    String entityId,
+    Map<String, dynamic> row,
+  );
+
+  /// Row-level entity delete. Yalnız belirtilen satırı kaldırır.
+  Future<void> deleteEntity(String campaignName, String entityId);
+
+  /// world_settings.settings_json içinde verilen key'leri merge eder.
+  /// Read-merge-write Drift transaction içinde; diğer key'ler korunur.
+  Future<void> saveSettingsPatch(
+    String campaignName,
+    Map<String, dynamic> patch,
+  );
+
   /// Kampanyayı sil (soft delete — `.trash/`'a taşır).
   Future<void> delete(String campaignName);
 

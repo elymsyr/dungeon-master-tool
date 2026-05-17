@@ -15,6 +15,21 @@ abstract class PackageRepository {
   /// Paket verisini kaydet.
   Future<void> save(String packageName, Map<String, dynamic> data);
 
+  /// Row-level package entity upsert. Tek satır package_entities yazımı.
+  /// Built-in pack adı verilirse no-op.
+  Future<void> saveEntity(
+    String packageName,
+    String entityId,
+    Map<String, dynamic> row,
+  );
+
+  /// Row-level package entity delete. Built-in pack adı verilirse no-op.
+  Future<void> deleteEntity(String packageName, String entityId);
+
+  /// Paket state_json içinde verilen key'leri merge eder. Read-merge-write
+  /// Drift transaction; diğer key'ler korunur. Built-in pack için no-op.
+  Future<void> saveStatePatch(String packageName, Map<String, dynamic> patch);
+
   /// Paketi sil.
   Future<void> delete(String packageName);
 

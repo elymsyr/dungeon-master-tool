@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../application/services/srd_core_bootstrap.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
+import '../database/util/builtin_synth.dart';
 import '../../core/utils/deep_copy.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
@@ -145,6 +146,101 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
+  Future<void> saveEntity(
+    String campaignName,
+    String entityId,
+    Map<String, dynamic> row,
+  ) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) {
+      throw StateError('World not found: $campaignName');
+    }
+    final worldId = existing.id;
+    await _db.transaction(() async {
+      await _db.worldEntitiesDao.upsert(_entityCompanion(worldId, entityId, row));
+      await _touchWorld(worldId);
+    });
+  }
+
+  @override
+  Future<void> deleteEntity(String campaignName, String entityId) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) return;
+    final worldId = existing.id;
+    await _db.transaction(() async {
+      await _db.worldEntitiesDao.deleteById(entityId);
+      await _touchWorld(worldId);
+    });
+  }
+
+  @override
+  Future<void> saveSettingsPatch(
+    String campaignName,
+    Map<String, dynamic> patch,
+  ) async {
+    if (patch.isEmpty) return;
+    final existing = await _findByName(campaignName);
+    if (existing == null) {
+      throw StateError('World not found: $campaignName');
+    }
+    final worldId = existing.id;
+    await _db.transaction(() async {
+      final row = await _db.worldSettingsDao.get(worldId);
+      final merged = <String, dynamic>{};
+      if (row != null && row.settingsJson.isNotEmpty &&
+          row.settingsJson != '{}') {
+        try {
+          final decoded = jsonDecode(row.settingsJson);
+          if (decoded is Map) {
+            merged.addAll(Map<String, dynamic>.from(decoded));
+          }
+        } catch (_) {}
+      }
+      merged.addAll(patch);
+      await _db.worldSettingsDao.upsert(WorldSettingsCompanion(
+        worldId: Value(worldId),
+        settingsJson: Value(jsonEncode(merged)),
+        updatedAt: Value(DateTime.now()),
+      ));
+      await _touchWorld(worldId);
+    });
+  }
+
+  Future<void> _touchWorld(String worldId) async {
+    await _db.worldsDao.upsert(WorldsCompanion(
+      id: Value(worldId),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  WorldEntitiesCompanion _entityCompanion(
+    String worldId,
+    String entityId,
+    Map<String, dynamic> m,
+  ) {
+    return WorldEntitiesCompanion.insert(
+      id: entityId,
+      worldId: worldId,
+      categorySlug: (m['type'] as String? ?? 'npc')
+          .toLowerCase()
+          .replaceAll(' ', '-'),
+      name: m['name'] as String? ?? 'Unknown',
+      source: Value(m['source'] as String? ?? ''),
+      description: Value(m['description'] as String? ?? ''),
+      imagePath: Value(m['image_path'] as String? ?? ''),
+      imagesJson: Value(jsonEncode(m['images'] ?? [])),
+      tagsJson: Value(jsonEncode(m['tags'] ?? [])),
+      dmNotes: Value(m['dm_notes'] as String? ?? ''),
+      pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
+      locationId: Value(m['location_id'] as String?),
+      fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+      packageId: Value(m['package_id'] as String?),
+      packageEntityId: Value(m['package_entity_id'] as String?),
+      linked: Value((m['linked'] as bool?) ?? false),
+    );
+  }
+
+  @override
   Future<bool> restoreFromTrash(String trashId) async {
     final trash = await _db.trashDao.getById(trashId);
     if (trash == null || trash.kind != 'world') return false;
@@ -203,9 +299,12 @@ class WorldRepositoryImpl implements CampaignRepository {
     final schemaSnapshot =
         settingsBlob.remove(_schemaSettingsKey) as Map<String, dynamic>?;
 
-    // Entities — joined from world_entities.
+    // Entities — joined from world_entities + synthesised built-in pack
+    // entries (F1: built-in pack rows live in `package_entities`, not
+    // duplicated per world).
     final entityRows = await _db.worldEntitiesDao.getByWorld(worldId);
     final entitiesMap = <String, dynamic>{};
+    final coveredPackageEntityIds = <String>{};
     for (final e in entityRows) {
       entitiesMap[e.id] = {
         'name': e.name,
@@ -223,6 +322,17 @@ class WorldRepositoryImpl implements CampaignRepository {
         if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
         if (e.linked) 'linked': true,
       };
+      if (e.packageEntityId != null) {
+        coveredPackageEntityIds.add(e.packageEntityId!);
+      }
+    }
+    final synth = await synthesizeWorldBuiltins(
+      _db,
+      worldId,
+      existingPackageEntityIds: coveredPackageEntityIds,
+    );
+    if (synth.entries.isNotEmpty) {
+      entitiesMap.addAll(synth.entries);
     }
 
     // Reconstruct WorldSchema map. Legacy world_schemas table is gone —
@@ -287,35 +397,26 @@ class WorldRepositoryImpl implements CampaignRepository {
         updatedAt: Value(DateTime.now()),
       ));
 
-      // Entities — full replace, mirrors v11 semantics. PR-D5 will switch
-      // to per-row diffing once the sync engine is rewritten.
+      // Entities — full replace, mirrors v11 semantics. F2 (row-level
+      // migration) drives per-row updates via [saveEntity] / [deleteEntity];
+      // this bulk path stays as the import/restore safety net.
+      //
+      // F1: entries marked `_synth: true` come from the built-in pack
+      // synthesiser and never persist. EntityNotifier edits drop the flag
+      // (its `_entityToMap` produces a fresh map), so an edited built-in
+      // entry naturally writes through and forks at the same synth id.
       await _db.worldEntitiesDao.deleteByWorld(worldId);
       final entities = data['entities'] as Map<String, dynamic>? ?? {};
       if (entities.isNotEmpty) {
-        final companions = entities.entries.map((e) {
+        final companions = <WorldEntitiesCompanion>[];
+        for (final e in entities.entries) {
           final m = Map<String, dynamic>.from(e.value as Map);
-          return WorldEntitiesCompanion.insert(
-            id: e.key,
-            worldId: worldId,
-            categorySlug: (m['type'] as String? ?? 'npc')
-                .toLowerCase()
-                .replaceAll(' ', '-'),
-            name: m['name'] as String? ?? 'Unknown',
-            source: Value(m['source'] as String? ?? ''),
-            description: Value(m['description'] as String? ?? ''),
-            imagePath: Value(m['image_path'] as String? ?? ''),
-            imagesJson: Value(jsonEncode(m['images'] ?? [])),
-            tagsJson: Value(jsonEncode(m['tags'] ?? [])),
-            dmNotes: Value(m['dm_notes'] as String? ?? ''),
-            pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
-            locationId: Value(m['location_id'] as String?),
-            fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
-            packageId: Value(m['package_id'] as String?),
-            packageEntityId: Value(m['package_entity_id'] as String?),
-            linked: Value((m['linked'] as bool?) ?? false),
-          );
-        }).toList();
-        await _db.worldEntitiesDao.upsertAll(companions);
+          if (m[synthFlagKey] == true) continue;
+          companions.add(_entityCompanion(worldId, e.key, m));
+        }
+        if (companions.isNotEmpty) {
+          await _db.worldEntitiesDao.upsertAll(companions);
+        }
       }
     });
   }

@@ -159,6 +159,25 @@ class _PackageAsCampaignRepo implements CampaignRepository {
       _packageNotifier.save();
 
   @override
+  Future<void> saveEntity(
+    String name,
+    String entityId,
+    Map<String, dynamic> row,
+  ) =>
+      _packageNotifier.save();
+
+  @override
+  Future<void> deleteEntity(String name, String entityId) =>
+      _packageNotifier.save();
+
+  @override
+  Future<void> saveSettingsPatch(
+    String name,
+    Map<String, dynamic> patch,
+  ) =>
+      _packageNotifier.save();
+
+  @override
   Future<void> delete(String name) async {}
 
   @override
