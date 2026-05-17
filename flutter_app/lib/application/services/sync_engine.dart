@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/app_database.dart';
 import '../../domain/entities/character.dart';
@@ -417,8 +418,27 @@ class SyncEngine {
       }
       await _db.syncOutboxDao.deleteById(row.opId);
     } catch (e) {
+      if (_isPermanentRejection(e)) {
+        debugPrint(
+          'SyncEngine dropping ${row.targetTable}/${row.targetPk}: $e',
+        );
+        await _db.syncOutboxDao.deleteById(row.opId);
+        return;
+      }
       await _markRetry(row, e.toString());
     }
+  }
+
+  /// Outbox row hatası geçici mi yoksa kalıcı RLS reddi mi? RLS reddi (PG
+  /// `42501`) ve "row not found" gibi durumlar retry'a değmez — orphan
+  /// outbox satırı dakikada bir 42501 spam'i üretir, drop temizler.
+  bool _isPermanentRejection(Object e) {
+    if (e is PostgrestException) {
+      if (e.code == '42501') return true;
+      // PostgREST "no rows" / PK miss — referenced parent likely deleted.
+      if (e.code == 'PGRST116') return true;
+    }
+    return false;
   }
 
   Future<void> _markRetry(SyncOutboxRow row, String error) async {

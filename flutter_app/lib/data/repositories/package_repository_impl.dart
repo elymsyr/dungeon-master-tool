@@ -173,6 +173,102 @@ class PackageRepositoryImpl implements PackageRepository {
   }
 
   @override
+  Future<void> saveEntity(
+    String packageName,
+    String entityId,
+    Map<String, dynamic> row,
+  ) async {
+    if (packageName == srdCorePackageName) return;
+    final existing = await _findByName(packageName);
+    if (existing == null) {
+      throw StateError('Package not found: $packageName');
+    }
+    final packageId = existing.id;
+    await _db.transaction(() async {
+      await _db.packagesDao
+          .upsertEntity(_packageEntityCompanion(packageId, entityId, row));
+      await _touchPackage(packageId, packageName);
+    });
+  }
+
+  @override
+  Future<void> deleteEntity(String packageName, String entityId) async {
+    if (packageName == srdCorePackageName) return;
+    final existing = await _findByName(packageName);
+    if (existing == null) return;
+    final packageId = existing.id;
+    await _db.transaction(() async {
+      await _db.packagesDao.deleteEntity(entityId);
+      await _touchPackage(packageId, packageName);
+    });
+  }
+
+  @override
+  Future<void> saveStatePatch(
+    String packageName,
+    Map<String, dynamic> patch,
+  ) async {
+    if (packageName == srdCorePackageName) return;
+    if (patch.isEmpty) return;
+    final existing = await _findByName(packageName);
+    if (existing == null) {
+      throw StateError('Package not found: $packageName');
+    }
+    final packageId = existing.id;
+    await _db.transaction(() async {
+      final pkg = await _db.packagesDao.getById(packageId);
+      final merged = <String, dynamic>{};
+      if (pkg != null && pkg.stateJson.isNotEmpty && pkg.stateJson != '{}') {
+        try {
+          final decoded = jsonDecode(pkg.stateJson);
+          if (decoded is Map) {
+            merged.addAll(Map<String, dynamic>.from(decoded));
+          }
+        } catch (_) {}
+      }
+      merged.addAll(patch);
+      await _db.packagesDao.upsertPackage(PackagesCompanion(
+        id: Value(packageId),
+        name: Value(packageName),
+        stateJson: Value(jsonEncode(merged)),
+        updatedAt: Value(DateTime.now()),
+      ));
+    });
+  }
+
+  Future<void> _touchPackage(String packageId, String packageName) async {
+    await _db.packagesDao.upsertPackage(PackagesCompanion(
+      id: Value(packageId),
+      name: Value(packageName),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  PackageEntitiesCompanion _packageEntityCompanion(
+    String packageId,
+    String entityId,
+    Map<String, dynamic> m,
+  ) {
+    return PackageEntitiesCompanion.insert(
+      id: entityId,
+      packageId: packageId,
+      categorySlug: (m['type'] as String? ?? 'npc')
+          .toLowerCase()
+          .replaceAll(' ', '-'),
+      name: m['name'] as String? ?? 'Unknown',
+      source: Value(m['source'] as String? ?? ''),
+      description: Value(m['description'] as String? ?? ''),
+      imagePath: Value(m['image_path'] as String? ?? ''),
+      imagesJson: Value(jsonEncode(m['images'] ?? [])),
+      tagsJson: Value(jsonEncode(m['tags'] ?? [])),
+      dmNotes: Value(m['dm_notes'] as String? ?? ''),
+      pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
+      locationId: Value(m['location_id'] as String?),
+      fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+    );
+  }
+
+  @override
   Future<String> copy({
     required String sourceName,
     required String destinationName,
@@ -320,29 +416,15 @@ class PackageRepositoryImpl implements PackageRepository {
         updatedAt: Value(DateTime.now()),
       ));
 
-      // Entities — full replace strategy.
+      // Entities — full replace strategy. F5 (row-level personal pkg) routes
+      // per-mutation through [saveEntity]; this bulk path stays as the
+      // import/restore safety net.
       await _db.packagesDao.deleteEntitiesByPackage(packageId);
       final entities = data['entities'] as Map<String, dynamic>? ?? {};
       if (entities.isNotEmpty) {
         final companions = entities.entries.map((e) {
           final m = Map<String, dynamic>.from(e.value as Map);
-          return PackageEntitiesCompanion.insert(
-            id: e.key,
-            packageId: packageId,
-            categorySlug: (m['type'] as String? ?? 'npc')
-                .toLowerCase()
-                .replaceAll(' ', '-'),
-            name: m['name'] as String? ?? 'Unknown',
-            source: Value(m['source'] as String? ?? ''),
-            description: Value(m['description'] as String? ?? ''),
-            imagePath: Value(m['image_path'] as String? ?? ''),
-            imagesJson: Value(jsonEncode(m['images'] ?? [])),
-            tagsJson: Value(jsonEncode(m['tags'] ?? [])),
-            dmNotes: Value(m['dm_notes'] as String? ?? ''),
-            pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
-            locationId: Value(m['location_id'] as String?),
-            fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
-          );
+          return _packageEntityCompanion(packageId, e.key, m);
         }).toList();
         await _db.packagesDao.upsertEntities(companions);
       }
