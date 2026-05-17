@@ -11,6 +11,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/role_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../domain/entities/character.dart';
@@ -43,6 +44,10 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (_refreshing) return;
     setState(() => _refreshing = true);
     try {
+      // Drain outbox first so pending deletes hit the server before we pull.
+      // Otherwise the catchup pulls a still-present cloud_backups row and
+      // resurrects a character the user just deleted.
+      await ref.read(syncEngineProvider).forceTick();
       await ref.read(cloudCatchupServiceProvider).runAll();
     } catch (e) {
       debugPrint('Characters refresh error: $e');

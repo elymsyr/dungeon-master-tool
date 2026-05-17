@@ -51,10 +51,22 @@ class CharacterRepository {
 
   /// Soft delete — snapshot the row into `trash_items` then drop from
   /// `world_characters`. UI restore reads the trash row by id.
-  Future<void> delete(String id, {String? displayName}) async {
+  ///
+  /// [fallback] is the caller's in-memory `Character` snapshot. Used when the
+  /// drift row was already cleared by a racing CDC echo so the trash row is
+  /// still created — without it, applyMirror's trash check has no entry to
+  /// match against and a subsequent cloud pull would resurrect the char.
+  Future<void> delete(String id,
+      {String? displayName, Character? fallback}) async {
     final row = await _db.worldCharactersDao.getById(id);
-    if (row == null) return;
-    final map = _rowToCharacterJson(row);
+    Map<String, dynamic>? map;
+    if (row != null) {
+      map = _rowToCharacterJson(row);
+    } else if (fallback != null) {
+      map = fallback.toJson();
+    } else {
+      return;
+    }
     final originalName = (displayName ?? '').trim().isEmpty
         ? ((map['entity'] as Map<String, dynamic>?)?['name'] as String? ?? id)
         : displayName!;
@@ -67,7 +79,9 @@ class CharacterRepository {
         '_original_name': originalName,
       }),
     ));
-    await _db.worldCharactersDao.deleteById(id);
+    if (row != null) {
+      await _db.worldCharactersDao.deleteById(id);
+    }
   }
 
   /// Restore a soft-deleted character. [trashId] is the `trash_items.id`

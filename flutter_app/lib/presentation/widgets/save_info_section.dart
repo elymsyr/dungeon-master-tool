@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/providers/auth_provider.dart';
+import '../../application/providers/beta_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
@@ -35,7 +37,10 @@ class SaveInfoSection extends ConsumerStatefulWidget {
 }
 
 class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
-  Future<CloudBackupMeta?>? _cloudFuture;
+  // Unified across types: surface only the "last cloud touch" timestamp.
+  //  - world  → `worlds.updated_at`
+  //  - other  → `cloud_backups.created_at` via fetchByItem
+  Future<DateTime?>? _cloudFuture;
 
   @override
   void initState() {
@@ -48,11 +53,29 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
       _cloudFuture = Future.value(null);
       return;
     }
-    // Use the raw remote DS for a direct query by itemId+type.
     setState(() {
-      _cloudFuture = CloudBackupRemoteDataSource()
-          .fetchByItem(widget.itemId, widget.type);
+      _cloudFuture = _fetchCloudTimestamp();
     });
+  }
+
+  Future<DateTime?> _fetchCloudTimestamp() async {
+    if (widget.type == 'world') {
+      try {
+        final row = await Supabase.instance.client
+            .from('worlds')
+            .select('updated_at')
+            .eq('id', widget.itemId)
+            .maybeSingle();
+        final raw = row?['updated_at'];
+        if (raw is String) return DateTime.tryParse(raw);
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+    final meta = await CloudBackupRemoteDataSource()
+        .fetchByItem(widget.itemId, widget.type);
+    return meta?.createdAt;
   }
 
   @override
@@ -71,15 +94,15 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
       (_, _) => _refreshCloud(),
     );
 
-    final mirrorRow = _characterMirrorRow(palette, l10n);
+    final mirrorRow = _offlineMirrorRow(palette, l10n);
 
-    return FutureBuilder<CloudBackupMeta?>(
+    return FutureBuilder<DateTime?>(
       future: _cloudFuture,
       builder: (context, snapshot) {
         final loading = hasCloud &&
             isAuthed &&
             snapshot.connectionState != ConnectionState.done;
-        final cloudMeta = snapshot.data;
+        final cloudAt = snapshot.data;
         final hasError = snapshot.hasError;
 
         return Column(
@@ -104,9 +127,9 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
                     ? l10n.saveInfoLoadingCloud
                     : hasError
                         ? 'Error: ${snapshot.error}'
-                        : cloudMeta == null
+                        : cloudAt == null
                             ? l10n.saveInfoNoCloud
-                            : _formatDate(cloudMeta.createdAt, l10n),
+                            : _formatDate(cloudAt, l10n),
                 palette: palette,
               ),
             ],
@@ -116,11 +139,20 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     );
   }
 
-  /// World-bound characters sync via the `world_characters` mirror, not
-  /// `cloud_backups`. Surface that path explicitly so the cloud row stops
-  /// claiming "No cloud backup yet" for chars that are actually syncing
-  /// live through the world.
-  Widget? _characterMirrorRow(DmToolColors palette, L10n l10n) {
+  /// Replaces the cloud timestamp row only for the offline branches where the
+  /// item isn't actually syncing. Online worlds + chars in online worlds fall
+  /// through to the timestamp row so the user sees the last cloud touch.
+  Widget? _offlineMirrorRow(DmToolColors palette, L10n l10n) {
+    if (widget.type == 'world') {
+      final online = ref.watch(onlineWorldIdsProvider).contains(widget.itemId);
+      if (online) return null;
+      return _row(
+        icon: Icons.cloud_off,
+        label: 'Online',
+        value: 'World offline — local only',
+        palette: palette,
+      );
+    }
     if (widget.type != 'character') return null;
     final list = ref.watch(characterListProvider).valueOrNull;
     if (list == null) return null;
@@ -129,13 +161,12 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     final wid = c.worldId;
     if (wid == null) return null;
     final online = ref.watch(onlineWorldIdsProvider).contains(wid);
-    final value = online
-        ? 'Synced live via world'
-        : 'World offline — local only';
+    if (!online) return null;
+    // World-bound + online world: char rides the world_characters mirror.
     return _row(
-      icon: online ? Icons.cloud_done : Icons.cloud_off,
+      icon: Icons.cloud_done,
       label: 'Online',
-      value: value,
+      value: 'Synced live via world',
       palette: palette,
     );
   }
@@ -175,10 +206,17 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     );
   }
 
-  /// World items only "on cloud" once Made Online; packages always are.
+  /// Items that may carry a cloud timestamp row.
+  ///   - World: only when published (`worlds` row exists, i.e. online).
+  ///   - Character: signed-in + beta covers either world-mirror or
+  ///     `cloud_backups` snapshot, so always reachable.
+  ///   - Package: always.
   bool _itemOnCloud() {
     if (widget.type == 'world') {
       return ref.watch(onlineWorldIdsProvider).contains(widget.itemId);
+    }
+    if (widget.type == 'character') {
+      return ref.watch(isBetaActiveProvider);
     }
     return true;
   }

@@ -182,20 +182,19 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         );
   }
 
-  /// Beta-gated cloud_backup auto-sync — uploads a per-char snapshot when the
-  /// char is NOT covered by the world_characters mirror (worldless or world
-  /// offline). Routed through the [SyncEngine] outbox so retries survive app
-  /// restarts; engine itself enforces the beta gate before uploading.
+  /// Beta-gated cloud_backup auto-sync — every char of a beta user gets a
+  /// `cloud_backups` snapshot unless the world mirror is already covering it
+  /// live. World-bound + offline world ALSO falls back here so leaving a world
+  /// offline doesn't leave the char without a remote copy. Routed through the
+  /// [SyncEngine] outbox so retries survive app restarts.
   void _cloudBackupPush(Character c) {
     if (!_ref.read(isBetaActiveProvider)) return;
     if (_ref.read(authProvider) == null) return;
     final wid = c.worldId;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
-    // Mirror handles online-world chars; cloud_backup is for the rest.
+    // Mirror handles online-world chars; cloud_backup is for everything else
+    // (worldless OR world-bound + world offline).
     if (wid != null && onlineIds.contains(wid)) return;
-    // World-bound but offline → user opted out of cloud entirely for this
-    // world; no auto-backup of its characters.
-    if (wid != null) return;
     // ignore: discarded_futures
     _ref.read(syncEngineProvider).enqueueCloudBackupUpsert(
           itemId: c.id,
@@ -213,12 +212,24 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (!_ref.read(isBetaActiveProvider)) return;
     if (_ref.read(authProvider) == null) return;
     final repo = _ref.read(cloudBackupRepositoryProvider);
+    // Don't resurrect chars the user just deleted: outbox delete may not have
+    // drained yet, so the cloud_backups row is still there. The trash table is
+    // the authoritative "user-intent: deleted" signal locally; re-enqueue the
+    // cloud delete and skip the apply.
+    final db = _ref.read(appDatabaseProvider);
+    final trashedIds = <String>{
+      for (final t in await db.trashDao.getByKind('character')) t.sourceId,
+    };
     try {
       final metas = await repo.listBackupsByType('character');
       final localById = <String, Character>{
         for (final c in state.valueOrNull ?? const <Character>[]) c.id: c,
       };
       for (final meta in metas) {
+        if (trashedIds.contains(meta.itemId)) {
+          _cloudBackupDelete(meta.itemId);
+          continue;
+        }
         final local = localById[meta.itemId];
         if (local != null) {
           final localAt = DateTime.tryParse(local.updatedAt);
@@ -328,9 +339,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (c == null) return;
     final wid = c.worldId;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
+    // World-bound + online world: mirror push already happened; cloud_backup
+    // would just be a duplicate snapshot.
     if (wid != null && onlineIds.contains(wid)) return;
-    // World-bound but offline → no cloud_backup auto-flush either.
-    if (wid != null) return;
     await _ref.read(syncEngineProvider).enqueueCloudBackupUpsert(
           itemId: c.id,
           itemName: c.entity.name.isEmpty ? c.id : c.entity.name,
@@ -433,10 +444,14 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   /// Adopt pre-existing chars on local disk that have no `ownerId`. Local
   /// char files were created by this user on this device, so under the
-  /// "creator owns" policy we claim them all on first sign-in — worldless
-  /// and world-bound alike. Without this, world-bound chars created
-  /// pre-auth (or under the old DM-null policy) would render with an
-  /// empty owner on the card.
+  /// "creator owns" policy we claim worldless ownerless rows on sign-in.
+  ///
+  /// World-bound chars are NOT adopted here even when `ownerId == null`:
+  /// for those, `world_characters` is the source of truth and a NULL owner
+  /// means "deliberately released" (release_character RPC). Re-adopting on
+  /// every `_load()` resurrected released chars in the char tab whenever
+  /// the user hit Refresh. World-bound pre-auth chars must be claimed
+  /// explicitly from the world view.
   ///
   /// Adopted rows are also mirror-pushed so the user's other devices
   /// receive them — without this, signing in on a new device produced an
@@ -449,6 +464,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     for (var i = 0; i < out.length; i++) {
       final c = out[i];
       if (c.ownerId != null) continue;
+      if (c.worldId != null) continue;
       final patched = c.copyWith(ownerId: uid);
       try {
         await _repo.save(patched);
@@ -492,6 +508,16 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   /// `invalidate(characterListProvider)` storm which would `loadAll()` from
   /// disk on every CDC event.
   Future<void> applyMirror(Character c) async {
+    // User-intent: deleted. Any mirror path (cloud_backups catchup or world
+    // CDC echo) hitting this with a trashed source must NOT resurrect the
+    // char — instead, kick off the remote cleanup that hasn't drained yet so
+    // the next refresh doesn't keep retrying.
+    final db = _ref.read(appDatabaseProvider);
+    final trashed = await db.trashDao.existsBySource('character', c.id);
+    if (trashed) {
+      _syncDelete(c.id, worldId: c.worldId);
+      return;
+    }
     try {
       await _repo.save(c);
     } catch (e) {
@@ -763,6 +789,10 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
             }
             out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
             state = AsyncValue.data(out);
+            // Beta-pushed cloud_backup snapshot is now stale (still claims
+            // self-ownership). Drop it so the next catch-up doesn't
+            // resurrect the char with the old owner.
+            _cloudBackupDelete(id);
             return;
           }
           // result.deleted = true → server (me, NULL) idi, row silindi.
@@ -795,11 +825,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       } catch (e) {
         debugPrint('pending release queue add error: $e');
       }
+      _cloudBackupDelete(id);
       return;
     }
 
     final displayName = existing.entity.name;
-    await _repo.delete(id, displayName: displayName);
+    await _repo.delete(id, displayName: displayName, fallback: existing);
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
     _syncDelete(id, worldId: existing.worldId);
   }
