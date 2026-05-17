@@ -389,13 +389,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
   /// Birden fazla entity'yi tek seferde ekle (paket import için).
   /// Çağıran taraf önceden pushUndo() yapmalıdır.
+  ///
+  /// F2: each entity persists as its own Drift row via [_writeEntityToCampaign].
+  /// `world_entities` upsert is idempotent, so N sequential single-row
+  /// writes match the previous bulk semantics without the destructive
+  /// delete+insertAll pass autosave used to do.
   void addEntities(Map<String, Entity> entities) {
     state = {...state, ...entities};
-    // F13 follow-up: patch each entity individually instead of full
-    // re-serialization. Package import with N entities goes from O(N²)
-    // (full sync per call) to O(N) total work in the campaign blob.
-    // Bulk-patch then a single dirty mark so the autosave debounce
-    // fires once for the whole batch.
     final data = _campaign.data;
     if (data == null) return;
     final raw = data['entities'];
@@ -408,20 +408,35 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
     for (final entity in entities.values) {
       if (_linkedCharacterIds.contains(entity.id)) continue;
-      existing[entity.id] = _entityToMap(entity);
+      final row = _entityToMap(entity);
+      existing[entity.id] = row;
+      // ignore: discarded_futures
+      _campaign.saveEntity(entity.id, row);
     }
-    _onDirty();
   }
 
   /// Mevcut entity map'inin bir kopyasını döndürür (import service için).
   Map<String, Entity> get currentEntities => Map.unmodifiable(state);
 
-  void delete(String entityId) {
+  /// Returns false when the deletion was rejected (synth built-in entry
+  /// — fork first by editing). UI layer should surface a snackbar.
+  bool delete(String entityId) {
+    // F2 reject-on-synth: built-in synth entries have no DB row; deleting
+    // would resurrect on next load from the synthesizer. Force the user
+    // to fork (edit) first, which removes the `_synth` flag and persists
+    // a real `world_entities` row that *can* be deleted normally.
+    final raw = _campaign.data?['entities'];
+    if (raw is Map) {
+      final entry = raw[entityId];
+      if (entry is Map && entry['_synth'] == true) {
+        return false;
+      }
+    }
     final removed = state[entityId];
     pushUndo(state);
     state = Map.from(state)..remove(entityId);
-    // F13: incremental delete — drop the single key instead of
-    // rewriting the entire entities blob.
+    // F2: row-level delete. Drops in-memory key + persists `world_entities`
+    // delete + bumps `worlds.updated_at` in a single Drift transaction.
     _removeEntityFromCampaign(entityId);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityDeleted,
@@ -443,6 +458,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
             entityId: entityId,
           );
     }
+    return true;
   }
 
   /// Full re-serialization fallback. Used by undo/redo/setAll/addEntities
@@ -462,10 +478,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     _onDirty();
   }
 
-  /// F13: incremental write. Serializes one entity and patches the
-  /// campaign's `entities` map in place. Linked characters are
-  /// intentionally not persisted to the world blob — they live on the
-  /// hub side and only their id is tracked via `linked_character_ids`.
+  /// F2: row-level write. Patches the in-memory `entities` map so other
+  /// readers see the change immediately, then fires a single-row Drift
+  /// write via [ActiveCampaignNotifier.saveEntity]. No `_onDirty()` —
+  /// the row is already persisted, so the global autosave debounce
+  /// would just delete+re-insert the same content. Linked characters
+  /// live on the hub side and are skipped entirely.
   void _writeEntityToCampaign(Entity entity) {
     final data = _campaign.data;
     if (data == null) return;
@@ -478,20 +496,23 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       entities = <String, dynamic>{};
       data['entities'] = entities;
     }
-    entities[entity.id] = _entityToMap(entity);
-    _onDirty();
+    final row = _entityToMap(entity);
+    entities[entity.id] = row;
+    // ignore: discarded_futures
+    _campaign.saveEntity(entity.id, row);
   }
 
-  /// F13: incremental delete. Drops a single id from the campaign's
-  /// `entities` blob.
+  /// F2: row-level delete. Drops the id from the in-memory blob then
+  /// fires a single-row Drift delete via [ActiveCampaignNotifier.deleteEntity].
   void _removeEntityFromCampaign(String entityId) {
     final data = _campaign.data;
     if (data == null) return;
     final raw = data['entities'];
     if (raw is Map<String, dynamic>) {
       raw.remove(entityId);
-      _onDirty();
     }
+    // ignore: discarded_futures
+    _campaign.deleteEntity(entityId);
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {

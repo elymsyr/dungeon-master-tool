@@ -575,8 +575,21 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                       ),
                       FilledButton(
                         onPressed: () {
-                          ref.read(entityProvider.notifier).delete(entity.id);
+                          final ok = ref
+                              .read(entityProvider.notifier)
+                              .delete(entity.id);
                           Navigator.pop(ctx);
+                          if (!ok) {
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(const SnackBar(
+                                content: Text(
+                                  'Built-in entries can\'t be deleted. '
+                                  'Edit it first to create a homebrew copy, '
+                                  'then delete the copy.',
+                                ),
+                              ));
+                          }
                         },
                         style: FilledButton.styleFrom(
                           backgroundColor: palette.dangerBtnBg,
