@@ -390,28 +390,14 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// Birden fazla entity'yi tek seferde ekle (paket import için).
   /// Çağıran taraf önceden pushUndo() yapmalıdır.
   ///
-  /// F2: each entity persists as its own Drift row via [_writeEntityToCampaign].
-  /// `world_entities` upsert is idempotent, so N sequential single-row
-  /// writes match the previous bulk semantics without the destructive
-  /// delete+insertAll pass autosave used to do.
+  /// F2: each entity persists as its own Drift row.
+  /// F4: each entity also enqueues a `world_entities` upsert outbox row
+  /// when the world is online. Delegating per-row to [_writeEntityToCampaign]
+  /// keeps local + cloud paths consistent.
   void addEntities(Map<String, Entity> entities) {
     state = {...state, ...entities};
-    final data = _campaign.data;
-    if (data == null) return;
-    final raw = data['entities'];
-    final Map<String, dynamic> existing;
-    if (raw is Map<String, dynamic>) {
-      existing = raw;
-    } else {
-      existing = <String, dynamic>{};
-      data['entities'] = existing;
-    }
     for (final entity in entities.values) {
-      if (_linkedCharacterIds.contains(entity.id)) continue;
-      final row = _entityToMap(entity);
-      existing[entity.id] = row;
-      // ignore: discarded_futures
-      _campaign.saveEntity(entity.id, row);
+      _writeEntityToCampaign(entity);
     }
   }
 

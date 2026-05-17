@@ -15,6 +15,7 @@ import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
+import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
@@ -256,11 +257,48 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// Repo decodes the existing JSON, applies [patch] keys on top, and
   /// re-encodes — touching only the one `world_settings` row. Caller
   /// (combat / mind_map / map) keeps the in-memory mirror in sync.
+  ///
+  /// F6 follow-up: when the world is online, also enqueue a
+  /// `world_settings` outbox upsert with the full merged blob so the
+  /// other-device CDC applier sees the change. Old bulk `_bundleAndPush`
+  /// used to handle this; row-level world_settings push replaces it.
   Future<void> saveSettingsPatch(Map<String, dynamic> patch) async {
     final name = state;
     if (name == null) return;
     await _repo.saveSettingsPatch(name, patch);
+    final data = _data;
+    if (data == null) return;
+    final worldId = data['world_id'] as String?;
+    if (worldId == null) return;
+    if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
+    if (_ref.read(authProvider) == null) return;
+    // Build the full settings_json mirror (everything except typed top
+    // keys and `entities`) so the cloud row contains the post-merge state.
+    final settings = <String, dynamic>{};
+    for (final entry in data.entries) {
+      if (_settingsTopKeyBlocklist.contains(entry.key)) continue;
+      settings[entry.key] = entry.value;
+    }
+    // ignore: discarded_futures
+    _ref.read(syncEngineProvider).enqueueWorldSettings(
+          worldId: worldId,
+          settings: settings,
+        );
   }
+
+  /// Keys that live in their own typed table or aren't part of the
+  /// `world_settings.settings_json` mirror.
+  static const _settingsTopKeyBlocklist = {
+    'world_id',
+    'world_name',
+    'created_at',
+    'entities',
+    'sessions',
+    'world_schema',
+    'template_id',
+    'template_hash',
+    'template_original_hash',
+  };
 
   /// Re-reads the active campaign from disk, replaces [_data] in place
   /// (so any cached references — e.g. the wrapped notifier inside
