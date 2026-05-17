@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
@@ -432,10 +433,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       },
       campaignId: _campaignId,
     ));
-    // Remote mirror — routed through outbox. Engine handles RLS rejection
-    // by retrying with backoff; benign no-op when world isn't online.
+    // Remote mirror — routed through outbox. DM-only (RLS rejects player
+    // writes). Engine drops 42501 + PGRST116 if a stale enqueue slips.
     final worldId = _campaignId;
+    final isDm =
+        _ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
     if (worldId != null &&
+        isDm &&
         _ref.read(authProvider) != null &&
         _ref.read(onlineWorldIdsProvider).contains(worldId)) {
       // ignore: discarded_futures
@@ -493,7 +497,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     _campaign.saveEntity(entity.id, row);
 
     final worldId = _campaignId;
+    final isDm =
+        _ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
     if (worldId != null &&
+        isDm &&
         _ref.read(authProvider) != null &&
         _ref.read(onlineWorldIdsProvider).contains(worldId)) {
       // ignore: discarded_futures
