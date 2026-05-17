@@ -197,6 +197,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     final name = state;
     if (name == null) return;
     await _repo.saveStatePatch(name, patch);
+    _mirrorPushPersonal();
   }
 
   /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.

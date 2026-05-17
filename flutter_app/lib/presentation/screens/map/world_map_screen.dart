@@ -6,8 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/role_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -58,16 +62,29 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     //
     // F3 row-level: write `map_data` key only in settings_json via
     // saveSettingsPatch — no global markDirty / world-wide bulk save.
+    // F6 follow-up: also enqueue typed `world_map_data` row so other
+    // online devices see the change (previously routed through the
+    // deleted `_bundleAndPush` close-time push).
     final mapNotifier = ref.read(worldMapProvider.notifier);
     final campaign = ref.read(activeCampaignProvider.notifier);
+    final worldId =
+        ref.read(activeCampaignIdProvider).valueOrNull;
+    final online = worldId != null &&
+        ref.read(onlineWorldIdsProvider).contains(worldId);
+    final auth = ref.read(authProvider);
+    final engine = ref.read(syncEngineProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         mapNotifier.syncToCampaignData();
         final mapData = campaign.data?['map_data'];
         if (mapData is Map) {
+          final mapMap = Map<String, dynamic>.from(mapData);
           // ignore: discarded_futures
-          campaign.saveSettingsPatch(
-              {'map_data': Map<String, dynamic>.from(mapData)});
+          campaign.saveSettingsPatch({'map_data': mapMap});
+          if (online && auth != null) {
+            // ignore: discarded_futures
+            engine.enqueueWorldMapData(worldId: worldId, data: mapMap);
+          }
         }
       } catch (_) {}
     });
