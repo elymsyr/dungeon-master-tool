@@ -365,6 +365,21 @@ class WorldMirrorApplier {
   }
 
   Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
+    if (e.eventType == PostgresChangeEvent.delete) {
+      final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
+      if (worldId == null) return;
+      ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+      ref.invalidate(worldRoleProvider(worldId));
+      ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(campaignInfoListProvider);
+      ref.invalidate(campaignListProvider);
+      try {
+        await purgeLocalWorld(worldId);
+      } catch (err) {
+        debugPrint('_applyWorldsEvent purgeLocalWorld error: $err');
+      }
+      return;
+    }
     if (e.eventType != PostgresChangeEvent.update &&
         e.eventType != PostgresChangeEvent.insert) {
       return;
