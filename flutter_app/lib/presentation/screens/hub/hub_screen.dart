@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +6,6 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
-import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/social_providers.dart';
@@ -43,42 +41,16 @@ class HubScreen extends ConsumerStatefulWidget {
 
 class _HubScreenState extends ConsumerState<HubScreen> {
   bool _profileDialogOpen = false;
-  bool _bootstrapDone = false;
-  String _bootMessage = 'Initializing services...';
 
   static const _settingsTabIndex = settingsTabIndex;
 
   @override
   void initState() {
     super.initState();
-    _runBootstrap();
-  }
-
-  /// Cold-start cloud catch-up. Splash overlay üzerinden çalışır;
-  /// connectivity offline ise sync hiç denenmez (uzun bekleme yok). Online
-  /// ise 15 sn timeout — sunucu yavaşsa bile hub açılır.
-  Future<void> _runBootstrap() async {
-    try {
-      final online = await _checkOnline().timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => false,
-      );
-      if (online) {
-        if (mounted) setState(() => _bootMessage = 'Syncing from cloud...');
-        try {
-          await ref
-              .read(cloudCatchupServiceProvider)
-              .runAll()
-              .timeout(const Duration(seconds: 15));
-        } catch (e) {
-          debugPrint('Hub bootstrap catchup error: $e');
-        }
-      }
-    } catch (e) {
-      debugPrint('Hub bootstrap error: $e');
-    }
-    if (!mounted) return;
-    setState(() => _bootstrapDone = true);
+    // Manuel sync modeli: hub mount'ta otomatik cloud catch-up YOK. World
+    // exit → hub re-mount fullscreen "Syncing from cloud..." splash'ı buradan
+    // geliyordu. Sync artık sadece SaveSyncIndicator "Sync" butonuyla
+    // tetiklenir.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final ui = ref.read(uiStateProvider);
@@ -89,15 +61,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           .read(uiStateProvider.notifier)
           .update((s) => s.copyWith(welcomeSeen: true));
     });
-  }
-
-  Future<bool> _checkOnline() async {
-    try {
-      final r = await Connectivity().checkConnectivity();
-      return r.any((e) => e != ConnectivityResult.none);
-    } catch (_) {
-      return false;
-    }
   }
 
   static const _tabIcons = <IconData>[
@@ -284,8 +247,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_bootstrapDone) return _BootSplash(message: _bootMessage);
-
     // Manuel sync modeli: personal realtime kanalı otomatik açılmaz. Sync
     // butonu çağrıldığında subscribe + bootstrap yapılır.
 
@@ -702,49 +663,3 @@ class _MobileNavTile extends StatelessWidget {
   }
 }
 
-/// Hub cold-start splash. main.dart bootstrap splash'ı ile aynı görünüm:
-/// koyu zemin, app icon, spinner + status mesajı.
-class _BootSplash extends StatelessWidget {
-  final String message;
-  const _BootSplash({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    const bg = Color(0xFF1A1814);
-    const gold = Color(0xFFC8A24B);
-    return Scaffold(
-      backgroundColor: bg,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/app_icon_transparent.png',
-              width: 160,
-              height: 160,
-              filterQuality: FilterQuality.medium,
-            ),
-            const SizedBox(height: 24),
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(gold),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.white70,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

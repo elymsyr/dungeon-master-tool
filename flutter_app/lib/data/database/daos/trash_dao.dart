@@ -25,6 +25,16 @@ class TrashDao extends DatabaseAccessor<AppDatabase> with _$TrashDaoMixin {
   Future<TrashItem?> getById(String id) =>
       (select(trashItems)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  /// Was this `sourceId` (original char/world/package id) soft-deleted by the
+  /// user? Used as the "user-intent: deleted" gate so concurrent cloud pulls
+  /// don't resurrect a row the user already trashed.
+  Future<bool> existsBySource(String kind, String sourceId) async {
+    final q = select(trashItems)
+      ..where((t) => t.kind.equals(kind) & t.sourceId.equals(sourceId))
+      ..limit(1);
+    return (await q.get()).isNotEmpty;
+  }
+
   Future<void> upsert(TrashItemsCompanion row) =>
       into(trashItems).insertOnConflictUpdate(row);
 
