@@ -12,6 +12,7 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../services/pending_write_buffer.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
@@ -198,6 +199,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   Future<bool> load(String name) async {
     try {
+      // Önceki world'ün pending row yazımlarını drain et — yeni world
+      // yüklenmeden eski edit'ler kayba uğramasın.
+      await _ref.read(pendingWriteBufferProvider).flush();
       _data = await _repo.load(name);
       state = name;
       // Manuel sync modeli: load sırasında otomatik cloud pull yok.

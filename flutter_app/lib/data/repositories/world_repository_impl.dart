@@ -207,10 +207,11 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   Future<void> _touchWorld(String worldId) async {
-    await _db.worldsDao.upsert(WorldsCompanion(
-      id: Value(worldId),
-      updatedAt: Value(DateTime.now()),
-    ));
+    // UPDATE only — `insertOnConflictUpdate` worldName gibi NOT NULL
+    // alanları ister, ama burada salt timestamp bump amaçlı; INSERT path'i
+    // çağrılırsa worldName eksik → InvalidDataException.
+    await (_db.update(_db.worlds)..where((t) => t.id.equals(worldId)))
+        .write(WorldsCompanion(updatedAt: Value(DateTime.now())));
   }
 
   WorldEntitiesCompanion _entityCompanion(

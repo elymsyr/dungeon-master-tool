@@ -8,6 +8,7 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
+import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
@@ -158,46 +159,72 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   }
 
   /// F5 row-level: single-entity write inside the active personal package.
-  /// Built-in pack is skipped by the repository guard. When the package
-  /// is "Make Online", a per-entity outbox row is enqueued so the cloud
-  /// gets the same change without re-uploading the entire `state_json`.
-  Future<void> saveEntity(String entityId, Map<String, dynamic> row) async {
+  /// Debounced via PendingWriteBuffer ([kind] caller'a göre). Built-in
+  /// pack repository guard'ından geçer. Online'sa per-entity outbox row
+  /// enqueue eder (same coalesced semantics).
+  Future<void> saveEntity(String entityId, Map<String, dynamic> row,
+      {WriteKind kind = WriteKind.shortText}) async {
     final name = state;
     if (name == null) return;
-    await _repo.saveEntity(name, entityId, row);
     final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    if (_ref.read(authProvider) != null && onlineNames.contains(name)) {
-      // ignore: discarded_futures
-      _ref.read(syncEngineProvider).enqueuePersonalPackageEntityUpsert(
-            packageName: name,
-            entityId: entityId,
-            entityMap: row,
-          );
-    }
+    final shouldEnqueue =
+        _ref.read(authProvider) != null && onlineNames.contains(name);
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'pkg_entity:$name:$entityId',
+          kind: kind,
+          action: () async {
+            await _repo.saveEntity(name, entityId, row);
+            if (shouldEnqueue) {
+              await _ref
+                  .read(syncEngineProvider)
+                  .enqueuePersonalPackageEntityUpsert(
+                    packageName: name,
+                    entityId: entityId,
+                    entityMap: row,
+                  );
+            }
+          },
+        );
   }
 
   Future<void> deleteEntity(String entityId) async {
     final name = state;
     if (name == null) return;
-    await _repo.deleteEntity(name, entityId);
     final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    if (_ref.read(authProvider) != null && onlineNames.contains(name)) {
-      // ignore: discarded_futures
-      _ref.read(syncEngineProvider).enqueuePersonalPackageEntityDelete(
-            packageName: name,
-            entityId: entityId,
-          );
-    }
+    final shouldEnqueue =
+        _ref.read(authProvider) != null && onlineNames.contains(name);
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'pkg_entity:$name:$entityId',
+          kind: WriteKind.immediate,
+          action: () async {
+            await _repo.deleteEntity(name, entityId);
+            if (shouldEnqueue) {
+              await _ref
+                  .read(syncEngineProvider)
+                  .enqueuePersonalPackageEntityDelete(
+                    packageName: name,
+                    entityId: entityId,
+                  );
+            }
+          },
+        );
   }
 
   /// F5: schema/metadata patch (rarely fires — template update, marketplace
   /// fields, etc.). Cloud still gets the legacy full `state_json` blob via
   /// [_mirrorPushPersonal] because schema isn't row-level.
-  Future<void> saveStatePatch(Map<String, dynamic> patch) async {
+  Future<void> saveStatePatch(Map<String, dynamic> patch,
+      {WriteKind kind = WriteKind.shortText}) async {
     final name = state;
     if (name == null) return;
-    await _repo.saveStatePatch(name, patch);
-    _mirrorPushPersonal();
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'pkg_state:$name',
+          kind: kind,
+          action: () async {
+            await _repo.saveStatePatch(name, patch);
+            _mirrorPushPersonal();
+          },
+        );
   }
 
   /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.

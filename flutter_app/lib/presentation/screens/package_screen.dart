@@ -17,6 +17,7 @@ import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
+import '../../application/services/pending_write_buffer.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -125,6 +126,7 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
               ref,
               () => ref.read(saveStateProvider.notifier).markDirty(),
               ref.read(eventBusProvider),
+              ref.read(pendingWriteBufferProvider),
             );
           },
         ),
