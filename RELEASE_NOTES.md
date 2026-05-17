@@ -1,5 +1,41 @@
 # Release Notes
 
+## Dungeon Master Tool v7.0.0 — Auto Save & Sync, Drift v12 Schema, World Sub-Tables (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v7.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+The persistence layer rewrite. v7.0 kills the "tap Save / press Sync" rule that v6.x ran on: edits now persist locally as you type and propagate to every connected device through a path-level granular merge, so you can pick up a half-finished character or world on another device without exporting anything. Under the hood the local database is now a fresh Drift v12 schema that mirrors the Postgres model 1:1, every world sub-resource has its own table, and the cloud side gained a beta-exit purge so leaving the program cleans up server state.
+
+> **Heads-up — schema v12 is a fresh local rebuild.** First launch of v7 migrates your existing data into the new Drift tables. Back up your data directory before launching if you want a hard restore point.
+
+> **Heads-up — auto save & sync are on by default.** Local edits commit without an explicit Save tap; reconciliation runs on a debounced timer. The old manual sync button still exists for explicit pulls.
+
+### Highlights
+
+- **Auto save & sync** — Path-level granular merge (`F0-F12`): edits land in the local DB immediately, queue into a sync outbox, and reconcile across devices without a manual Save or Sync press. Two-device test harness verifies convergence.
+- **Drift v12 fresh schema** — Full migration to a Postgres-mirror local schema (`D0-D6` + partial `D8`). Per-table DAOs replace the old monolithic data sources. 539/539 tests green, zero analyzer errors.
+- **World sub-tables** — Sessions, mind-maps, map data, settings, characters, members, invites, entities, and packages each get their own table on the client and server, matching the marketplace publish contract.
+- **Unified character ownership** — Personal-characters table retired (migrations 039–040). One ownership model applies to local, cloud-personal, and world characters; cross-tab claim/release/delete is consistent.
+- **Beta-exit world purge** — Migration 044: leaving the program cascade-deletes worlds and packages you own; publish/share are beta-gated, join+claim stay open.
+- **Multiplayer visibility & realtime** — RLS opened so every world member sees world characters; granular CDC notifiers for char + member; MembersStrip on the player tab.
+- **Cloud wipe scripts** — `supabase/scripts/wipe_all_cloud.sql`, `wipe_user_cloud.sql`, and `wipe_storage.sh` for clean test resets.
+
+### Upgrade notes
+
+- **App version bump:** `6.1.0` → `7.0.0`.
+- **Local DB:** schema v12 fresh build, auto-migrated from v8/v11 on first launch. Idempotent.
+- **Cloud migrations:** Supabase migrations `039`–`044` ship in this release.
+- **Manual Save / Sync:** still works as an explicit trigger but no longer required for persistence or cross-device propagation.
+
+### Known issues
+
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision, Berserker condition immunities, and Lore Bard L3 extra skill proficiencies tracked but not yet wired.
+- **D7 test harness** — Drift v12 round-trip test harness for the auto-migration path is pending.
+
+---
+
 ## Dungeon Master Tool v6.1.0 — Onboarding, In-App Help, and Localization Polish (Beta)
 
 **Release date:** May 2026
