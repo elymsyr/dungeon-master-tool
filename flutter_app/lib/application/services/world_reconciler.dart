@@ -36,6 +36,11 @@ class WorldReconciler {
     if (_ref.read(authProvider) == null) {
       return ReconcileResult.empty('Oturum açılmamış');
     }
+    // Cloud'daki gerçek üyelik durumuna göre online flag set'ini baştan
+    // kur — başka cihazda unpublish/leave yapılan dünya burada online
+    // gözükmesin. Aksi halde reconcile sadece eklemeyle ilerler, hiçbir
+    // zaman demote etmez.
+    await _ref.read(onlineWorldIdsProvider.notifier).refresh();
     final client = Supabase.instance.client;
 
     final List<Map<String, dynamic>> cloudRows;
