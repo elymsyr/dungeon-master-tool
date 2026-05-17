@@ -238,6 +238,23 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     }
   }
 
+  /// F2: row-level single-entity write. Skips legacy bulk `save`. Caller
+  /// (EntityNotifier) is responsible for keeping the in-memory
+  /// `_data['entities'][id]` map in sync; this method only touches the
+  /// Drift row + bumps `worlds.updated_at`.
+  Future<void> saveEntity(String entityId, Map<String, dynamic> row) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.saveEntity(name, entityId, row);
+  }
+
+  /// F2: row-level delete counterpart for [saveEntity].
+  Future<void> deleteEntity(String entityId) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.deleteEntity(name, entityId);
+  }
+
   /// World online ise lokal save sonrası Supabase mirror'a push eder.
   /// Best-effort: mirror null veya RLS reddederse sessizce geç.
   void _mirrorAfterSave() {
