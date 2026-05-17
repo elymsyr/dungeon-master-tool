@@ -11,10 +11,12 @@ import '../../data/repositories/world_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../domain/entities/online/world_role.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
+import 'role_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -272,6 +274,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (worldId == null) return;
     if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
     if (_ref.read(authProvider) == null) return;
+    // DM-only write: RLS on `world_settings` rejects players, and the
+    // outbox drops 42501 rows but pre-empting saves a round-trip.
+    final role = _ref.read(currentWorldRoleProvider).valueOrNull;
+    if (role != WorldRole.dm) return;
     // Build the full settings_json mirror (everything except typed top
     // keys and `entities`) so the cloud row contains the post-merge state.
     final settings = <String, dynamic>{};

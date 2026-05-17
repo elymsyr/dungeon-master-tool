@@ -13,6 +13,7 @@ import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../domain/entities/map_data.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'epoch_scroll_bar.dart';
@@ -72,6 +73,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final online = worldId != null &&
         ref.read(onlineWorldIdsProvider).contains(worldId);
     final auth = ref.read(authProvider);
+    final isDm =
+        ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
     final engine = ref.read(syncEngineProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
@@ -81,7 +84,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           final mapMap = Map<String, dynamic>.from(mapData);
           // ignore: discarded_futures
           campaign.saveSettingsPatch({'map_data': mapMap});
-          if (online && auth != null) {
+          // DM-only: world_map_data RLS rejects players (engine drops
+          // 42501 but pre-empting avoids the round-trip).
+          if (online && auth != null && isDm) {
             // ignore: discarded_futures
             engine.enqueueWorldMapData(worldId: worldId, data: mapMap);
           }
