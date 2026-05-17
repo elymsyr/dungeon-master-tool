@@ -195,7 +195,6 @@ class _SaveSyncDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final saveStatus = ref.watch(saveStateProvider);
     final hasCloud = SupabaseConfig.isConfigured;
     final outbox = hasCloud
         ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
@@ -252,7 +251,6 @@ class _SaveSyncDialog extends ConsumerWidget {
                   const SizedBox(height: 8),
                   _ActionsRow(
                     palette: palette,
-                    saveStatus: saveStatus,
                     hasCloud: hasCloud,
                   ),
 
@@ -358,17 +356,16 @@ class _OnlineWorldPanel extends ConsumerWidget {
 // _InviteCodeRow / _MemberRow extracted to online_world_widgets.dart so the
 // world-settings online panel can render the same shape.
 
-/// Actions panel — active world/package için manuel Save (disk) + Sync
-/// (push + pull) + Make Online toggle (sadece world). Auto-save tamamen
-/// kaldırıldı; bu butonlar tek tetik noktası.
+/// Actions panel — active world/package için Sync (push + pull) +
+/// Make Online toggle (sadece world). Auto-debounced lokal save row-level
+/// PendingWriteBuffer tarafından otomatik fire'lanır; manuel Save butonu
+/// kaldırıldı.
 class _ActionsRow extends ConsumerWidget {
   final DmToolColors palette;
-  final SaveStatus saveStatus;
   final bool hasCloud;
 
   const _ActionsRow({
     required this.palette,
-    required this.saveStatus,
     required this.hasCloud,
   });
 
@@ -382,50 +379,10 @@ class _ActionsRow extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        _SaveButton(palette: palette, saveStatus: saveStatus),
         if (hasCloud) _SyncButton(palette: palette),
         if (campaignName != null && hasCloud)
           _MakeOnlineButton(palette: palette),
       ],
-    );
-  }
-}
-
-class _SaveButton extends ConsumerStatefulWidget {
-  final DmToolColors palette;
-  final SaveStatus saveStatus;
-  const _SaveButton({required this.palette, required this.saveStatus});
-
-  @override
-  ConsumerState<_SaveButton> createState() => _SaveButtonState();
-}
-
-class _SaveButtonState extends ConsumerState<_SaveButton> {
-  bool _busy = false;
-
-  Future<void> _save() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      await ref.read(saveStateProvider.notifier).saveNow();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final saving = _busy || widget.saveStatus == SaveStatus.saving;
-    return _ActionButton(
-      icon: Icons.save,
-      label: saving ? 'Saving...' : 'Save',
-      onPressed: saving ? null : _save,
-      palette: widget.palette,
     );
   }
 }

@@ -14,6 +14,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../services/event_bus.dart';
+import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
@@ -138,6 +139,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   final Ref _ref;
   final VoidCallback _onDirty;
   final AppEventBus _eventBus;
+  final PendingWriteBuffer _buffer;
 
   @override
   int get maxUndoDepth => 30;
@@ -149,7 +151,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   final Set<String> _linkedCharacterIds = {};
 
   EntityNotifier(
-      this._campaign, this._ref, this._onDirty, this._eventBus)
+      this._campaign, this._ref, this._onDirty, this._eventBus, this._buffer)
       : super({}) {
     _loadFromCampaign();
     // Reload when the active campaign's data is mutated in-place
@@ -319,9 +321,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       source: 'Homebrew',
     );
     state = {...state, id: entity};
-    // F13: incremental write — set this entity's row in the campaign
-    // entities map instead of rebuilding the whole map.
-    _writeEntityToCampaign(entity);
+    // Yeni entity: hemen yaz (debounce yok), kullanıcı list'te göremezse
+    // kafa karışır.
+    _writeEntityToCampaign(entity, kind: WriteKind.immediate);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityCreated,
       {'entity_id': id, 'entity_type': categorySlug, 'name': name},
@@ -347,13 +349,30 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       );
     }
     state = {...state, next.id: next};
-    // F13: incremental write — O(1) instead of O(N) full re-serialize.
-    _writeEntityToCampaign(next);
+    final kind = _inferWriteKind(prev, next);
+    _writeEntityToCampaign(next, kind: kind);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityUpdated,
       {'entity_id': next.id, 'changed_fields': const <String>[]},
       campaignId: _campaignId,
     ));
+  }
+
+  /// Diff'lenmiş alanlara göre debounce penceresi seç. En geniş window
+  /// kazanır (kullanıcı eğer hem isim hem description değiştiriyorsa
+  /// description'un 1500ms'i geçerli).
+  WriteKind _inferWriteKind(Entity? prev, Entity next) {
+    if (prev == null) return WriteKind.shortText;
+    if (prev.description != next.description ||
+        prev.dmNotes != next.dmNotes) {
+      return WriteKind.longText;
+    }
+    if (!_listEquals(prev.tags, next.tags) ||
+        !_listEquals(prev.images, next.images) ||
+        !_listEquals(prev.pdfs, next.pdfs)) {
+      return WriteKind.listEdit;
+    }
+    return WriteKind.shortText;
   }
 
   /// True when [next] differs from [prev] in any user-editable surface.
@@ -398,7 +417,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   void addEntities(Map<String, Entity> entities) {
     state = {...state, ...entities};
     for (final entity in entities.values) {
-      _writeEntityToCampaign(entity);
+      _writeEntityToCampaign(entity, kind: WriteKind.immediate);
     }
   }
 
@@ -479,7 +498,8 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// row when the world is online + the user is authenticated. The
   /// outbox coalesces by `(target_table, target_pk, op_type)` so rapid
   /// keystrokes collapse to one push.
-  void _writeEntityToCampaign(Entity entity) {
+  void _writeEntityToCampaign(Entity entity,
+      {WriteKind kind = WriteKind.shortText}) {
     final data = _campaign.data;
     if (data == null) return;
     if (_linkedCharacterIds.contains(entity.id)) return;
@@ -492,28 +512,37 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       data['entities'] = entities;
     }
     final row = _entityToMap(entity);
+    // In-memory map hemen güncellenir (UI watcher'lar latest'i görür);
+    // Drift write + outbox enqueue buffer'a delegate edilir.
     entities[entity.id] = row;
-    // ignore: discarded_futures
-    _campaign.saveEntity(entity.id, row);
 
     final worldId = _campaignId;
     final isDm =
         _ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
-    if (worldId != null &&
+    final shouldEnqueue = worldId != null &&
         isDm &&
         _ref.read(authProvider) != null &&
-        _ref.read(onlineWorldIdsProvider).contains(worldId)) {
-      // ignore: discarded_futures
-      _ref.read(syncEngineProvider).enqueueWorldEntityUpsert(
-            worldId: worldId,
-            entityId: entity.id,
-            entityMap: row,
-          );
-    }
+        _ref.read(onlineWorldIdsProvider).contains(worldId);
+
+    _buffer.schedule(
+      key: 'entity:${worldId ?? "local"}:${entity.id}',
+      kind: kind,
+      action: () async {
+        await _campaign.saveEntity(entity.id, row);
+        if (shouldEnqueue) {
+          await _ref.read(syncEngineProvider).enqueueWorldEntityUpsert(
+                worldId: worldId,
+                entityId: entity.id,
+                entityMap: row,
+              );
+        }
+      },
+    );
   }
 
   /// F2: row-level delete. Drops the id from the in-memory blob then
   /// fires a single-row Drift delete via [ActiveCampaignNotifier.deleteEntity].
+  /// Delete debounce yok — immediate flush.
   void _removeEntityFromCampaign(String entityId) {
     final data = _campaign.data;
     if (data == null) return;
@@ -521,8 +550,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     if (raw is Map<String, dynamic>) {
       raw.remove(entityId);
     }
-    // ignore: discarded_futures
-    _campaign.deleteEntity(entityId);
+    final worldId = _campaignId;
+    // Aynı id için pending entity yazımını iptal et (silinmek üzere).
+    _buffer.schedule(
+      key: 'entity:${worldId ?? "local"}:$entityId',
+      kind: WriteKind.immediate,
+      action: () => _campaign.deleteEntity(entityId),
+    );
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {
@@ -602,5 +636,6 @@ final entityProvider =
     ref,
     () => ref.read(saveStateProvider.notifier).markDirty(),
     ref.read(eventBusProvider),
+    ref.read(pendingWriteBufferProvider),
   );
 });

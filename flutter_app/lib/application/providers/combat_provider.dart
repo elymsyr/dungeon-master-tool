@@ -10,6 +10,7 @@ import '../../domain/entities/schema/encounter_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
 import '../services/event_bus.dart';
+import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'entity_provider.dart';
@@ -616,7 +617,21 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
     () => ref.read(worldSchemaProvider),
     () => ref.read(activeCampaignProvider.notifier).data,
     ref.read(eventBusProvider),
-    (patch) =>
-        ref.read(activeCampaignProvider.notifier).saveSettingsPatch(patch),
+    (patch) async {
+      // Debounced via PendingWriteBuffer (combatTick = 500ms). Closure
+      // captures the latest patch; aynı key'e ardışık tick'ler timer
+      // reset eder → tek read-merge-write.
+      final worldId = ref
+              .read(activeCampaignProvider.notifier)
+              .data?['world_id'] as String? ??
+          'local';
+      ref.read(pendingWriteBufferProvider).schedule(
+            key: 'settings:$worldId:combat_state',
+            kind: WriteKind.combatTick,
+            action: () => ref
+                .read(activeCampaignProvider.notifier)
+                .saveSettingsPatch(patch),
+          );
+    },
   );
 });
