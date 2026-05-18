@@ -476,17 +476,21 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   Future<void> _loadCampaign(String name) async {
-    // Global loading overlay — unified across all open/close/save/backup
-    // operations. Replaces the old ad-hoc dialog.
-    final success = await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'open-world-$name',
-      'Opening world "$name"...',
-      () => ref.read(activeCampaignProvider.notifier).load(name),
-    );
-
-    if (!success || !mounted) return;
-    if (mounted) context.go('/main');
+    // Optimistic two-phase open: synchronously flip the active campaign +
+    // navigate so the route change happens in the same frame as the tap,
+    // then run the heavy flush + file IO in [completeLoad]. Skeletons in
+    // the affected tabs watch `activeCampaignLoadingProvider` for the
+    // transient state.
+    final notifier = ref.read(activeCampaignProvider.notifier);
+    notifier.beginLoad(name);
+    if (!mounted) return;
+    context.go('/main');
+    final success = await notifier.completeLoad();
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open world "$name"')),
+      );
+    }
   }
 
   // ignore: unused_element

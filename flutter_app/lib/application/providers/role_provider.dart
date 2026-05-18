@@ -9,11 +9,22 @@ import 'campaign_provider.dart';
 /// Aktif worlddeki campaign id (UUID). [activeCampaignProvider] world adı
 /// döner; Supabase mirror id ile çalıştığı için bu derived provider
 /// `campaignInfoListProvider` üzerinden mapping yapar.
+///
+/// Fast path: when the active world's `_data` is already loaded, its
+/// `world_id` field is the canonical id — return it without awaiting
+/// `campaignInfoListProvider` (which round-trips the worlds table). This
+/// keeps the post-flip route render path off the DB during the optimistic
+/// open from `worlds_tab` (B1).
 final activeCampaignIdProvider = FutureProvider<String?>(
-  dependencies: [activeCampaignProvider],
+  dependencies: [activeCampaignProvider, campaignRevisionProvider],
   (ref) async {
     final name = ref.watch(activeCampaignProvider);
     if (name == null) return null;
+    // Bump on data populate so this provider re-resolves once `_data` lands.
+    ref.watch(campaignRevisionProvider);
+    final loaded = ref.read(activeCampaignProvider.notifier).data;
+    final fastId = loaded?['world_id'] as String?;
+    if (fastId != null && fastId.isNotEmpty) return fastId;
     final list = await ref.watch(campaignInfoListProvider.future);
     final match = list.where((c) => c.name == name).firstOrNull;
     return match?.id;

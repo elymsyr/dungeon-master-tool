@@ -97,7 +97,13 @@ class _MusicTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    final soundpadState = ref.watch(soundpadStateProvider);
+    // Narrow watches: only the fields this widget actually renders. Volume,
+    // ambience scenes, sfx etc. live on the same SoundpadState but should
+    // not trigger a rebuild of the music tab chrome.
+    final activeThemeId =
+        ref.watch(soundpadStateProvider.select((s) => s.activeThemeId));
+    final intensityLevel =
+        ref.watch(soundpadStateProvider.select((s) => s.intensityLevel));
     final notifier = ref.read(soundpadStateProvider.notifier);
     final themesAsync = ref.watch(soundpadThemesProvider);
 
@@ -110,7 +116,7 @@ class _MusicTab extends ConsumerWidget {
           themesAsync.when(
             data: (themes) => _ThemeSelector(
               themes: themes,
-              activeThemeId: soundpadState.activeThemeId,
+              activeThemeId: activeThemeId,
               palette: palette,
               l10n: l10n,
               onSelect: notifier.selectTheme,
@@ -121,15 +127,16 @@ class _MusicTab extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
-          // State buttons (tema seçildiyse)
-          if (soundpadState.activeThemeId != null)
-            ..._buildStateSection(context, ref, soundpadState, notifier),
+          // State buttons (tema seçildiyse) — own Consumer so chip ChoiceChip
+          // selection updates don't reflow the theme dropdown / intensity.
+          if (activeThemeId != null)
+            _StateSection(activeThemeId: activeThemeId, palette: palette),
 
           // Intensity slider (tema seçildiyse)
-          if (soundpadState.activeThemeId != null) ...[
+          if (activeThemeId != null) ...[
             const SizedBox(height: 16),
             _IntensitySlider(
-              level: soundpadState.intensityLevel,
+              level: intensityLevel,
               palette: palette,
               l10n: l10n,
               onChanged: notifier.setIntensity,
@@ -139,7 +146,7 @@ class _MusicTab extends ConsumerWidget {
           const Spacer(),
 
           // Tema yoksa bilgi
-          if (soundpadState.activeThemeId == null)
+          if (activeThemeId == null)
             Center(
               child: Column(
                 children: [
@@ -156,43 +163,51 @@ class _MusicTab extends ConsumerWidget {
       ),
     );
   }
+}
 
-  List<Widget> _buildStateSection(
-    BuildContext context,
-    WidgetRef ref,
-    SoundpadState soundpadState,
-    SoundpadNotifier notifier,
-  ) {
+class _StateSection extends ConsumerWidget {
+  final String activeThemeId;
+  final DmToolColors palette;
+  const _StateSection({required this.activeThemeId, required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    final themes = ref.read(soundpadThemesProvider).valueOrNull ?? {};
-    final theme = themes[soundpadState.activeThemeId];
-    if (theme == null) return [];
+    final activeStateName =
+        ref.watch(soundpadStateProvider.select((s) => s.activeStateName));
+    final themes = ref.watch(soundpadThemesProvider).valueOrNull ?? {};
+    final theme = themes[activeThemeId];
+    if (theme == null) return const SizedBox.shrink();
+    final notifier = ref.read(soundpadStateProvider.notifier);
 
-    return [
-      Text(
-        l10n.soundpadMusicState,
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
-      ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        children: theme.states.keys.map((stateName) {
-          final isActive = stateName == soundpadState.activeStateName;
-          return ChoiceChip(
-            label: Text(
-              stateName[0].toUpperCase() + stateName.substring(1),
-              style: TextStyle(fontSize: 12, color: isActive ? Colors.white : palette.tabActiveText),
-            ),
-            selected: isActive,
-            selectedColor: palette.featureCardAccent,
-            backgroundColor: palette.tabBg,
-            side: BorderSide(color: isActive ? palette.featureCardAccent : palette.sidebarDivider),
-            onSelected: (_) => notifier.selectState(stateName),
-          );
-        }).toList(),
-      ),
-    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.soundpadMusicState,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: theme.states.keys.map((stateName) {
+            final isActive = stateName == activeStateName;
+            return ChoiceChip(
+              label: Text(
+                stateName[0].toUpperCase() + stateName.substring(1),
+                style: TextStyle(fontSize: 12, color: isActive ? Colors.white : palette.tabActiveText),
+              ),
+              selected: isActive,
+              selectedColor: palette.featureCardAccent,
+              backgroundColor: palette.tabBg,
+              side: BorderSide(color: isActive ? palette.featureCardAccent : palette.sidebarDivider),
+              onSelected: (_) => notifier.selectState(stateName),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }
 

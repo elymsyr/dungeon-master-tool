@@ -45,6 +45,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // Bottom tabs (desktop/tablet)
   int _bottomTabIndex = 0;
+  // Lazy-mount: only tabs visited at least once are built; rest stay as
+  // SizedBox.shrink() inside the IndexedStack until first activation. After
+  // visit they remain mounted, so switching is just an index swap.
+  final Set<int> _visitedBottomTabs = <int>{};
   // Mobile tabs: 0=Combat, 1=Log, 2=BattleMap
   int _mobileTabIndex = 0;
   // Log sub-tab: 0=EventLog, 1=Notes
@@ -58,6 +62,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     super.initState();
     _bottomTabIndex = ref.read(uiStateProvider).sessionBottomTab;
     _mobileTabIndex = ref.read(uiStateProvider).sessionMobileTab;
+    _visitedBottomTabs.add(_bottomTabIndex);
   }
 
   @override
@@ -563,7 +568,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final isActive = _bottomTabIndex == index;
     return InkWell(
       onTap: () {
-        setState(() => _bottomTabIndex = index);
+        setState(() {
+          _bottomTabIndex = index;
+          _visitedBottomTabs.add(index);
+        });
         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionBottomTab: index));
       },
       child: Container(
@@ -577,46 +585,55 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Widget _buildBottomTabContent(DmToolColors palette) {
-    switch (_bottomTabIndex) {
-      case 0: // Notes
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: MarkdownTextArea(
-            controller: _notesController,
-            expands: true,
-            textAlignVertical: TextAlignVertical.top,
-            decoration: InputDecoration(hintText: 'DM notes... (@ to mention)', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
-            textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
-          ),
-        );
-      case 1: // Battle Map
-        final enc = ref.watch(combatProvider.select((s) => s.activeEncounter));
-        if (enc == null) return Center(child: Text('No active encounter', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
-        return BattleMapScreen(encounterId: enc.id);
-      case 2: // Player Screen — projection panel
-        return const ProjectionPanel();
-      case 3: // Entity Stats
-        if (_selectedCombatantId == null) {
-          return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
-        }
-        final schema = ref.watch(worldSchemaProvider);
-        final entity = ref.watch(
-          entityProvider.select((map) => map[_selectedCombatantId]),
-        );
-        if (entity == null) {
-          return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
-        }
-        final catSchema = schema.categories
-            .where((c) => c.slug == entity.categorySlug)
-            .firstOrNull;
-        return EntityCard(
-          entityId: _selectedCombatantId!,
-          categorySchema: catSchema,
-          readOnly: true,
-        );
-      default:
-        return const SizedBox.shrink();
+    // IndexedStack keeps visited tabs mounted, so switching back is instant
+    // (no remount, no provider re-init, no scroll/state loss). Unvisited
+    // slots are SizedBox.shrink() — built on first activation only.
+    Widget slot(int idx, Widget Function() build) {
+      if (!_visitedBottomTabs.contains(idx)) return const SizedBox.shrink();
+      return build();
     }
+
+    return IndexedStack(
+      index: _bottomTabIndex,
+      sizing: StackFit.expand,
+      children: [
+        // 0: Notes — no provider watch in build; controller is shared state.
+        slot(
+          0,
+          () => Padding(
+            padding: const EdgeInsets.all(12),
+            child: MarkdownTextArea(
+              controller: _notesController,
+              expands: true,
+              textAlignVertical: TextAlignVertical.top,
+              decoration: InputDecoration(hintText: 'DM notes... (@ to mention)', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+              textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
+            ),
+          ),
+        ),
+        // 1: Battle Map — encounter watch scoped to inner Consumer so
+        // SessionScreen.build doesn't rebuild on every combat tick. Key
+        // ValueKey(encId) forces remount only when the active encounter
+        // actually changes; plain tab switches keep the same notifier state.
+        slot(
+          1,
+          () => Consumer(builder: (context, ref, _) {
+            final encId = ref.watch(combatProvider.select((s) => s.activeEncounter?.id));
+            if (encId == null) {
+              return Center(child: Text('No active encounter', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+            }
+            return BattleMapScreen(key: ValueKey(encId), encounterId: encId);
+          }),
+        ),
+        // 2: Player Screen — const, no watches.
+        slot(2, () => const ProjectionPanel()),
+        // 3: Entity Stats — schema + entity watches scoped to inner Consumer.
+        slot(3, () => _EntityStatsTab(
+              selectedCombatantId: _selectedCombatantId,
+              palette: palette,
+            )),
+      ],
+    );
   }
 
   // ============================================================
@@ -1943,6 +1960,41 @@ class _CombatantRow extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Entity Stats bottom-tab content. Scoped to its own Consumer so the
+/// expensive worldSchema + entity watches don't bubble up to
+/// SessionScreen.build on every entity edit.
+class _EntityStatsTab extends ConsumerWidget {
+  final String? selectedCombatantId;
+  final DmToolColors palette;
+
+  const _EntityStatsTab({
+    required this.selectedCombatantId,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (selectedCombatantId == null) {
+      return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+    }
+    final schema = ref.watch(worldSchemaProvider);
+    final entity = ref.watch(
+      entityProvider.select((map) => map[selectedCombatantId]),
+    );
+    if (entity == null) {
+      return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+    }
+    final catSchema = schema.categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    return EntityCard(
+      entityId: selectedCombatantId!,
+      categorySchema: catSchema,
+      readOnly: true,
     );
   }
 }
