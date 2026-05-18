@@ -70,9 +70,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             children: [
               LayoutBuilder(
                 builder: (ctx, constraints) {
-                  final narrow = constraints.maxWidth < 420;
+                  final narrow = constraints.maxWidth < 360;
                   final title = Text(
                     l10n.tabPackages,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -84,10 +85,11 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
-                    label: const Text('Marketplace'),
+                    label: Text(narrow ? '' : 'Marketplace'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      minimumSize: const Size(0, 32),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: narrow ? 4 : 10, vertical: 4),
+                      minimumSize: const Size(32, 32),
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -117,22 +119,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     ),
                     child: const Icon(Icons.add, size: 16),
                   );
-                  // Mobil (dar): başlık üstte ayrı satır; butonlar altta tam
-                  // genişlikte sığar. Geniş: tek satır eski yerleşim.
-                  if (narrow) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        title,
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [marketBtn, refreshBtn, addBtn],
-                        ),
-                      ],
-                    );
-                  }
                   return Row(
                     children: [
                       Expanded(child: title),

@@ -54,6 +54,13 @@ class _CharacterCreationWizardScreenState
   bool _activatingWorld = false;
   String? _lastActivatedWorld;
 
+  /// True once user explicitly chose a value in the World / Package picker —
+  /// including the empty "Built-in SRD" sentinel. Without this flag,
+  /// `draft.worldName == ''` is ambiguous: it could mean "never picked" OR
+  /// "user picked built-in". Both `_pickActiveWorldIfAny` and the commit
+  /// fallback would then silently rebind the character to the active world.
+  bool _userPickedWorld = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +84,7 @@ class _CharacterCreationWizardScreenState
   /// resolved. Without the fallback, hitting "Create Character" on the
   /// first frame after opening a world produced a worldless draft.
   void _pickActiveWorldIfAny() {
+    if (_userPickedWorld) return;
     final draft = ref.read(characterDraftProvider);
     if (draft.worldName.isNotEmpty) return;
     final activeWorld = ref.read(activeCampaignProvider);
@@ -258,6 +266,11 @@ class _CharacterCreationWizardScreenState
                           alignments: _alignments,
                           activatingWorld: _activatingWorld,
                           onWorldPicked: _activateWorld,
+                          onUserPickedWorld: () {
+                            if (!_userPickedWorld) {
+                              setState(() => _userPickedWorld = true);
+                            }
+                          },
                         ),
                       ),
                     ),
@@ -559,8 +572,11 @@ class _CharacterCreationWizardScreenState
       // Cold-open fallback: draft.worldName may still be empty if the user
       // hit Create before activeCampaignProvider populated. Use the
       // canonical id directly so the new char binds to the open world
-      // instead of becoming orphan.
-      resolvedWorldId ??= ref.read(activeCampaignIdProvider).valueOrNull;
+      // instead of becoming orphan. Skip when the user explicitly picked
+      // "Built-in SRD" — empty worldName then is a deliberate choice.
+      if (!_userPickedWorld) {
+        resolvedWorldId ??= ref.read(activeCampaignIdProvider).valueOrNull;
+      }
       final entities = _wizardEntities();
       Entity? lookup(String? id) =>
           id == null ? null : entities[id];
@@ -1400,6 +1416,7 @@ class _IdentityStep extends StatelessWidget {
   final List<String> alignments;
   final bool activatingWorld;
   final Future<void> Function(String) onWorldPicked;
+  final VoidCallback onUserPickedWorld;
 
   const _IdentityStep({
     required this.draft,
@@ -1409,6 +1426,7 @@ class _IdentityStep extends StatelessWidget {
     required this.alignments,
     required this.activatingWorld,
     required this.onWorldPicked,
+    required this.onUserPickedWorld,
   });
 
   @override
@@ -1534,6 +1552,7 @@ class _IdentityStep extends StatelessWidget {
                       ? null
                       : (v) {
                           if (v == null) return;
+                          onUserPickedWorld();
                           notifier.setWorld(v);
                           if (v.isNotEmpty) onWorldPicked(v);
                         },

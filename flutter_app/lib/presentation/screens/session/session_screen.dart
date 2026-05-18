@@ -102,7 +102,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
 
     if (screen == ScreenType.phone) {
-      final combat = ref.read(combatProvider);
+      final combat = ref.watch(combatProvider);
       return _buildMobileLayout(palette, combat, combat.activeEncounter);
     }
 
@@ -1084,52 +1084,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final catSchema = schema.categories
         .where((c) => c.slug == entity.categorySlug)
         .firstOrNull;
-    return SingleChildScrollView(
-      child: EntityCard(
-        entityId: _selectedCombatantId!,
-        categorySchema: catSchema,
-        readOnly: true,
-      ),
-    );
-  }
-
-  // --- Entity Stats Bottom Sheet ---
-  void _showMobileEntityStatsSheet(DmToolColors palette) {
-    if (_selectedCombatantId == null) return;
-    final schema = ref.read(worldSchemaProvider);
-    final entity = ref.read(entityProvider)[_selectedCombatantId];
-    final catSchema = entity != null
-        ? schema.categories.where((c) => c.slug == entity.categorySlug).firstOrNull
-        : null;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (ctx, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: EntityCard(
-            entityId: _selectedCombatantId!,
-            categorySchema: catSchema,
-            readOnly: true,
-          ),
-        ),
-      ),
+    // EntityCard already wraps content in a SingleChildScrollView; nesting
+    // another scroll view here swallows the drag gesture and locks the body.
+    return EntityCard(
+      entityId: _selectedCombatantId!,
+      categorySchema: catSchema,
+      readOnly: true,
     );
   }
 
   Widget _buildMobileCombatList(DmToolColors palette, Encounter enc) {
-    // Only watch entities referenced by current encounter combatants
-    final combatantEntityIds = enc.combatants.map((c) => c.entityId).whereType<String>().toSet();
-    final entities = ref.watch(entityProvider.select((map) =>
-      Map.fromEntries(map.entries.where((e) => combatantEntityIds.contains(e.key))),
-    ));
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
 
@@ -1151,9 +1115,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       itemCount: enc.combatants.length,
       itemBuilder: (context, index) {
         final c = enc.combatants[index];
-        final entity = c.entityId != null ? entities[c.entityId] : null;
-        final combatStats = entity?.fields[cfg.combatStatsFieldKey];
-        final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
+        // Encounter is a COPY — read stats from combatant snapshot, not the
+        // live entity. Source entity may not be in `entities` map (other
+        // player's owned char) and never updates after add anyway.
+        final statsMap = Map<String, dynamic>.from(c.stats);
 
         return _MobileCombatCard(
           key: ValueKey(c.id),
@@ -1163,8 +1128,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           config: cfg,
           statsMap: statsMap,
           onTap: () {
-            setState(() => _selectedCombatantId = c.entityId);
-            _showMobileEntityStatsSheet(palette);
+            setState(() {
+              _selectedCombatantId = c.entityId;
+              _mobileTabIndex = 4;
+            });
+            ref.read(uiStateProvider.notifier).update(
+              (s) => s.copyWith(sessionMobileTab: 4),
+            );
           },
           onModifyStat: (subKey, delta) => _modifyStat(c, subKey, delta, statsMap, cfg),
           onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
