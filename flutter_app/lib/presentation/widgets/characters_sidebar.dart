@@ -10,6 +10,7 @@ import '../../application/providers/entity_provider.dart' show entityProvider;
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
+import '../../application/providers/ui_state_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
@@ -47,6 +48,15 @@ class CharactersSidebar extends ConsumerStatefulWidget {
 class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
   String? _inlineCharacterId;
 
+  @override
+  void initState() {
+    super.initState();
+    // Restore last-opened inline character so close+reopen lands at the
+    // same view.
+    _inlineCharacterId =
+        ref.read(uiStateProvider).charactersSidebarInlineId;
+  }
+
   void _openInline(String id) {
     final inline = widget.onOpenCharacter;
     if (inline != null) {
@@ -54,10 +64,16 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       return;
     }
     setState(() => _inlineCharacterId = id);
+    ref
+        .read(uiStateProvider.notifier)
+        .update((s) => s.copyWith(charactersSidebarInlineId: id));
   }
 
   void _closeInline() {
     setState(() => _inlineCharacterId = null);
+    ref
+        .read(uiStateProvider.notifier)
+        .update((s) => s.copyWith(charactersSidebarInlineId: null));
   }
 
   @override
