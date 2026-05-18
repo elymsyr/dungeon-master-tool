@@ -72,14 +72,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
   late final ValueNotifier<double> _sidebarWidthNotifier;
 
   // Right sidebar state (PDF / Soundmap — mutually exclusive, ortak genislik)
-  RightSidebar _rightSidebar = RightSidebar.none;
+  // Hosted in a ValueNotifier so toggles + sub-tab switches don't trigger a
+  // top-level MainScreen rebuild. Only the small VLBs wrapping the toggle
+  // buttons + the sidebar overlay rebuild.
+  late final ValueNotifier<RightSidebar> _rightSidebarCtrl;
+  RightSidebar get _rightSidebar => _rightSidebarCtrl.value;
   double _rightSidebarWidth = 450;
   static const double _minRightSidebarWidth = 360;
   static const double _maxRightSidebarWidth = 700;
   late final ValueNotifier<double> _rightSidebarWidthNotifier;
   // PDF tab state
   List<String> _pdfOpenPaths = [];
-  int _pdfActiveIndex = -1;
+  late final ValueNotifier<int> _pdfActiveIndexNotifier;
+  int get _pdfActiveIndex => _pdfActiveIndexNotifier.value;
   static const int _maxPdfTabs = 10;
   // Tab bar'daki butonlarin sigmasi icin gereken minimum merkez genislik
   static const double _minCenterWidth = 480;
@@ -103,15 +108,17 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _sidebarWidth = uiState.sidebarWidth.clamp(_minSidebarWidth, _maxSidebarWidth);
     _sidebarWidthNotifier = ValueNotifier(_sidebarWidth);
     // Right sidebar restore — silinen dosyaları temizle
-    _rightSidebar = uiState.rightSidebar;
+    _rightSidebarCtrl = ValueNotifier(uiState.rightSidebar);
     _rightSidebarWidth = uiState.pdfSidebarWidth.clamp(_minRightSidebarWidth, _maxRightSidebarWidth);
     _rightSidebarWidthNotifier = ValueNotifier(_rightSidebarWidth);
     // Optimistic: assume saved paths still exist; verify async so initState
     // doesn't block first paint on a slow mobile filesystem.
     _pdfOpenPaths = List<String>.from(uiState.pdfOpenPaths);
-    _pdfActiveIndex = _pdfOpenPaths.isEmpty
-        ? -1
-        : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1);
+    _pdfActiveIndexNotifier = ValueNotifier(
+      _pdfOpenPaths.isEmpty
+          ? -1
+          : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1),
+    );
     unawaited(_pruneMissingPdfPaths());
   }
 
@@ -124,18 +131,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (!mounted || survivors.length == _pdfOpenPaths.length) return;
     setState(() {
       _pdfOpenPaths = survivors;
-      if (_pdfOpenPaths.isEmpty) {
-        _pdfActiveIndex = -1;
-      } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
-        _pdfActiveIndex = _pdfOpenPaths.length - 1;
-      }
     });
+    if (_pdfOpenPaths.isEmpty) {
+      _pdfActiveIndexNotifier.value = -1;
+    } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
+      _pdfActiveIndexNotifier.value = _pdfOpenPaths.length - 1;
+    }
   }
 
   @override
   void dispose() {
     _sidebarWidthNotifier.dispose();
     _rightSidebarWidthNotifier.dispose();
+    _rightSidebarCtrl.dispose();
+    _pdfActiveIndexNotifier.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -187,10 +196,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Zaten açıksa o tab'a geç
     final existing = _pdfOpenPaths.indexOf(path);
     if (existing != -1) {
-      setState(() {
-        _pdfActiveIndex = existing;
-        _rightSidebar = RightSidebar.pdf;
-      });
+      _pdfActiveIndexNotifier.value = existing;
+      _rightSidebarCtrl.value = RightSidebar.pdf;
       _persistUiState();
       return;
     }
@@ -203,9 +210,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
     }
     setState(() {
       _pdfOpenPaths = [..._pdfOpenPaths, path];
-      _pdfActiveIndex = _pdfOpenPaths.length - 1;
-      _rightSidebar = RightSidebar.pdf;
     });
+    _pdfActiveIndexNotifier.value = _pdfOpenPaths.length - 1;
+    _rightSidebarCtrl.value = RightSidebar.pdf;
     _persistUiState();
   }
 
@@ -213,14 +220,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (index < 0 || index >= _pdfOpenPaths.length) return;
     setState(() {
       _pdfOpenPaths = [..._pdfOpenPaths]..removeAt(index);
-      if (_pdfOpenPaths.isEmpty) {
-        _pdfActiveIndex = -1;
-      } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
-        _pdfActiveIndex = _pdfOpenPaths.length - 1;
-      } else if (_pdfActiveIndex > index) {
-        _pdfActiveIndex--;
-      }
     });
+    final cur = _pdfActiveIndex;
+    if (_pdfOpenPaths.isEmpty) {
+      _pdfActiveIndexNotifier.value = -1;
+    } else if (cur >= _pdfOpenPaths.length) {
+      _pdfActiveIndexNotifier.value = _pdfOpenPaths.length - 1;
+    } else if (cur > index) {
+      _pdfActiveIndexNotifier.value = cur - 1;
+    }
     _persistUiState();
   }
 
@@ -402,7 +410,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Listen for soundmap navigation requests
     ref.listen<bool?>(soundmapNavigationProvider, (_, value) {
       if (value != null) {
-        setState(() => _rightSidebar = RightSidebar.soundmap);
+        _rightSidebarCtrl.value = RightSidebar.soundmap;
         _persistUiState();
         ref.read(soundmapNavigationProvider.notifier).state = null;
       }
@@ -471,13 +479,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
           },
         ),
         // PDF tab (mobile/tablet only — desktop uses overlay sidebar)
-        PdfSidebar(
-          openPaths: _pdfOpenPaths,
-          activeIndex: _pdfActiveIndex,
-          palette: palette,
-          onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
-          onTabClose: _closePdfTab,
-          onOpenFile: _openPdfTab,
+        ValueListenableBuilder<int>(
+          valueListenable: _pdfActiveIndexNotifier,
+          builder: (_, activeIdx, _) => PdfSidebar(
+            openPaths: _pdfOpenPaths,
+            activeIndex: activeIdx,
+            palette: palette,
+            onTabSelect: (i) {
+              _pdfActiveIndexNotifier.value = i;
+              _persistUiState();
+            },
+            onTabClose: _closePdfTab,
+            onOpenFile: _openPdfTab,
+          ),
         ),
         // Soundmap tab (mobile/tablet only — desktop uses overlay sidebar)
         SoundmapSidebar(palette: palette),
@@ -803,44 +817,63 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                   ),
                                 ),
                               ),
-                              // PDF sidebar toggle
-                              IconButton(
-                                icon: Icon(
-                                  _rightSidebar == RightSidebar.pdf ? Icons.chrome_reader_mode : Icons.chrome_reader_mode_outlined,
-                                  size: 18,
-                                ),
-                                tooltip: _rightSidebar == RightSidebar.pdf ? 'Close PDF Viewer' : 'Open PDF Viewer',
-                                color: _rightSidebar == RightSidebar.pdf ? palette.tabIndicator : palette.tabText,
-                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.pdf ? RightSidebar.none : RightSidebar.pdf); _persistUiState(); },
-                                iconSize: 18,
-                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                              ),
-                              // Soundmap sidebar toggle
-                              IconButton(
-                                icon: Icon(
-                                  _rightSidebar == RightSidebar.soundmap ? Icons.music_note : Icons.music_note_outlined,
-                                  size: 18,
-                                ),
-                                tooltip: _rightSidebar == RightSidebar.soundmap ? 'Close Soundmap' : 'Open Soundmap',
-                                color: _rightSidebar == RightSidebar.soundmap ? palette.tabIndicator : palette.tabText,
-                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap); _persistUiState(); },
-                                iconSize: 18,
-                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                              ),
-                              // Characters sidebar toggle
-                              IconButton(
-                                icon: Icon(
-                                  _rightSidebar == RightSidebar.characters ? Icons.people : Icons.people_outline,
-                                  size: 18,
-                                ),
-                                tooltip: _rightSidebar == RightSidebar.characters ? 'Close Characters' : 'Open Characters',
-                                color: _rightSidebar == RightSidebar.characters ? palette.tabIndicator : palette.tabText,
-                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters); _persistUiState(); },
-                                iconSize: 18,
-                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              // Right-sidebar toggle group — wrapped in a single
+                              // VLB so toggling any of the three rebuilds only
+                              // this 3-button cluster (icons/color), not the
+                              // whole MainScreen tab bar.
+                              ValueListenableBuilder<RightSidebar>(
+                                valueListenable: _rightSidebarCtrl,
+                                builder: (context, current, _) {
+                                  void toggle(RightSidebar target) {
+                                    _rightSidebarCtrl.value =
+                                        current == target ? RightSidebar.none : target;
+                                    _persistUiState();
+                                  }
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // PDF sidebar toggle
+                                      IconButton(
+                                        icon: Icon(
+                                          current == RightSidebar.pdf ? Icons.chrome_reader_mode : Icons.chrome_reader_mode_outlined,
+                                          size: 18,
+                                        ),
+                                        tooltip: current == RightSidebar.pdf ? 'Close PDF Viewer' : 'Open PDF Viewer',
+                                        color: current == RightSidebar.pdf ? palette.tabIndicator : palette.tabText,
+                                        onPressed: () => toggle(RightSidebar.pdf),
+                                        iconSize: 18,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      ),
+                                      // Soundmap sidebar toggle
+                                      IconButton(
+                                        icon: Icon(
+                                          current == RightSidebar.soundmap ? Icons.music_note : Icons.music_note_outlined,
+                                          size: 18,
+                                        ),
+                                        tooltip: current == RightSidebar.soundmap ? 'Close Soundmap' : 'Open Soundmap',
+                                        color: current == RightSidebar.soundmap ? palette.tabIndicator : palette.tabText,
+                                        onPressed: () => toggle(RightSidebar.soundmap),
+                                        iconSize: 18,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      ),
+                                      // Characters sidebar toggle
+                                      IconButton(
+                                        icon: Icon(
+                                          current == RightSidebar.characters ? Icons.people : Icons.people_outline,
+                                          size: 18,
+                                        ),
+                                        tooltip: current == RightSidebar.characters ? 'Close Characters' : 'Open Characters',
+                                        color: current == RightSidebar.characters ? palette.tabIndicator : palette.tabText,
+                                        onPressed: () => toggle(RightSidebar.characters),
+                                        iconSize: 18,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -854,63 +887,105 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 ),
               ],
             ),
-            // Right sidebar — overlay olarak sağdan açılır (PDF veya Soundmap)
-            if (_rightSidebar != RightSidebar.none)
-              ValueListenableBuilder<double>(
-                valueListenable: _rightSidebarWidthNotifier,
-                builder: (_, width, child) => Positioned(
-                  top: _tabBarHeight,
-                  bottom: 0,
-                  right: 0,
-                  width: width,
-                  child: child!,
-                ),
-                child: Row(
-                  children: [
-                    // Drag handle — sürükleyerek genişletme
-                    _DragHandle(
-                      palette: palette,
-                      dividerOnRight: true,
-                      onDragUpdate: (dx) {
-                        final totalW = MediaQuery.sizeOf(context).width;
-                        final leftW = _sidebarOpen ? _sidebarWidthNotifier.value : 0.0;
-                        final dynamicMax = (totalW - leftW - _minCenterWidth).clamp(0.0, _maxRightSidebarWidth);
-                        _rightSidebarWidth = (_rightSidebarWidth - dx).clamp(_minRightSidebarWidth, dynamicMax);
-                        _rightSidebarWidthNotifier.value = _rightSidebarWidth;
-                      },
-                      onDragEnd: () => _persistUiState(),
-                    ),
-                    // Sidebar content
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: palette.canvasBg,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(-2, 0),
-                            ),
-                          ],
+            // Right sidebar — overlay olarak sağdan açılır (PDF / Soundmap /
+            // Characters). Always rendered so sub-sidebars (visited via
+            // LazyIndexedStack) preserve their state across toggles. When
+            // current == none, the Positioned collapses to width 0 + Offstage
+            // skips layout/paint of the inner subtree, while TickerMode
+            // disables any animations of the hidden sidebars.
+            ValueListenableBuilder<RightSidebar>(
+              valueListenable: _rightSidebarCtrl,
+              builder: (context, current, _) {
+                final visible = current != RightSidebar.none;
+                final sidebarIdx = switch (current) {
+                  RightSidebar.none => 0,
+                  RightSidebar.pdf => 1,
+                  RightSidebar.soundmap => 2,
+                  RightSidebar.characters => 3,
+                };
+                final content = Offstage(
+                  offstage: !visible,
+                  child: TickerMode(
+                    enabled: visible,
+                    child: Row(
+                      children: [
+                        // Drag handle — sürükleyerek genişletme
+                        _DragHandle(
+                          palette: palette,
+                          dividerOnRight: true,
+                          onDragUpdate: (dx) {
+                            final totalW = MediaQuery.sizeOf(context).width;
+                            final leftW = _sidebarOpen ? _sidebarWidthNotifier.value : 0.0;
+                            final dynamicMax = (totalW - leftW - _minCenterWidth).clamp(0.0, _maxRightSidebarWidth);
+                            _rightSidebarWidth = (_rightSidebarWidth - dx).clamp(_minRightSidebarWidth, dynamicMax);
+                            _rightSidebarWidthNotifier.value = _rightSidebarWidth;
+                          },
+                          onDragEnd: () => _persistUiState(),
                         ),
-                        child: switch (_rightSidebar) {
-                          RightSidebar.pdf => PdfSidebar(
-                              openPaths: _pdfOpenPaths,
-                              activeIndex: _pdfActiveIndex,
-                              palette: palette,
-                              onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
-                              onTabClose: _closePdfTab,
-                              onOpenFile: _openPdfTab,
+                        // Sidebar content — LazyIndexedStack mounts each
+                        // sub-sidebar at most once (on first visit) and keeps
+                        // it alive afterwards, so re-opening PDF/Soundmap/
+                        // Characters skips the cold-mount + provider re-init.
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: palette.canvasBg,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(-2, 0),
+                                ),
+                              ],
                             ),
-                          RightSidebar.soundmap => SoundmapSidebar(palette: palette),
-                          RightSidebar.characters => CharactersSidebar(palette: palette),
-                          RightSidebar.none => const SizedBox.shrink(),
-                        },
-                      ),
+                            child: LazyIndexedStack(
+                              index: sidebarIdx,
+                              children: [
+                                // 0: none → empty placeholder so untouched
+                                // sub-sidebars don't mount until first open.
+                                const SizedBox.shrink(),
+                                // 1: PDF (activeIndex scoped to inner VLB).
+                                ValueListenableBuilder<int>(
+                                  valueListenable: _pdfActiveIndexNotifier,
+                                  builder: (_, idx, _) => PdfSidebar(
+                                    openPaths: _pdfOpenPaths,
+                                    activeIndex: idx,
+                                    palette: palette,
+                                    onTabSelect: (i) {
+                                      _pdfActiveIndexNotifier.value = i;
+                                      _persistUiState();
+                                    },
+                                    onTabClose: _closePdfTab,
+                                    onOpenFile: _openPdfTab,
+                                  ),
+                                ),
+                                // 2: Soundmap.
+                                SoundmapSidebar(palette: palette),
+                                // 3: Characters.
+                                CharactersSidebar(palette: palette),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+                return ValueListenableBuilder<double>(
+                  valueListenable: _rightSidebarWidthNotifier,
+                  builder: (_, width, child) => Positioned(
+                    top: _tabBarHeight,
+                    bottom: 0,
+                    right: 0,
+                    // Collapse to 0 when hidden so the center pane reclaims
+                    // the space without paying any sidebar layout cost.
+                    width: visible ? width : 0,
+                    child: child!,
+                  ),
+                  child: content,
+                );
+              },
+            ),
           ],
         ),
 
@@ -1017,21 +1092,27 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     // Ctrl+P: toggle PDF sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyP) {
-      setState(() => _rightSidebar = _rightSidebar == RightSidebar.pdf ? RightSidebar.none : RightSidebar.pdf);
+      _rightSidebarCtrl.value = _rightSidebar == RightSidebar.pdf
+          ? RightSidebar.none
+          : RightSidebar.pdf;
       _persistUiState();
       return true;
     }
 
     // Ctrl+M: toggle Soundmap sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
-      setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap);
+      _rightSidebarCtrl.value = _rightSidebar == RightSidebar.soundmap
+          ? RightSidebar.none
+          : RightSidebar.soundmap;
       _persistUiState();
       return true;
     }
 
     // Ctrl+H: toggle Characters sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyH) {
-      setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters);
+      _rightSidebarCtrl.value = _rightSidebar == RightSidebar.characters
+          ? RightSidebar.none
+          : RightSidebar.characters;
       _persistUiState();
       return true;
     }

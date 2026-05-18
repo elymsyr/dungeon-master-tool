@@ -55,6 +55,12 @@ final campaignListProvider = FutureProvider<List<String>>((ref) {
   return ref.watch(campaignRepositoryProvider).getAvailable();
 });
 
+/// True while an active-campaign open/swap is in flight (after the
+/// optimistic state flip, before `_data` is populated). UI surfaces a
+/// skeleton/spinner while this is `true` and the underlying providers
+/// fall back to defaults (empty entity map, default schema).
+final activeCampaignLoadingProvider = StateProvider<bool>((_) => false);
+
 /// Monotonic revision counter for the active campaign/package data.
 ///
 /// Bumped when `_data` is mutated in-place and downstream providers need
@@ -197,19 +203,50 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     state = name;
   }
 
-  Future<bool> load(String name) async {
+  /// Optimistic state flip: synchronously points the active campaign at
+  /// [name] and clears `_data`, so route + dependent providers can update
+  /// in the same frame as the tap. The heavy file IO + flush runs in
+  /// [completeLoad], which the caller awaits separately.
+  ///
+  /// Downstream providers (`worldSchemaProvider`, `entityProvider`) treat
+  /// `_data == null` as a transient state — schema falls back to default,
+  /// entities to an empty map — until `completeLoad` lands and bumps
+  /// `campaignRevisionProvider` to trigger a reparse.
+  void beginLoad(String name) {
+    _data = null;
+    _ref.read(activeCampaignLoadingProvider.notifier).state = true;
+    state = name;
+  }
+
+  /// Async tail of [beginLoad]. Flushes pending writes for the prior
+  /// world, loads the new world's data, then bumps the revision counter.
+  Future<bool> completeLoad() async {
+    final name = state;
+    if (name == null) {
+      _ref.read(activeCampaignLoadingProvider.notifier).state = false;
+      return false;
+    }
     try {
       // Önceki world'ün pending row yazımlarını drain et — yeni world
       // yüklenmeden eski edit'ler kayba uğramasın.
       await _ref.read(pendingWriteBufferProvider).flush();
       _data = await _repo.load(name);
-      state = name;
-      // Manuel sync modeli: load sırasında otomatik cloud pull yok.
+      // `state` already equals `name` from beginLoad — bump revision so
+      // schema + entity providers re-read `_data` (state didn't change so
+      // they wouldn't otherwise see the new content).
+      _ref.read(campaignRevisionProvider.notifier).state++;
+      _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       return true;
     } catch (e, st) {
+      _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       debugPrint('Campaign load error: $e\n$st');
       return false;
     }
+  }
+
+  Future<bool> load(String name) async {
+    beginLoad(name);
+    return completeLoad();
   }
 
   Future<bool> create(String worldName, {WorldSchema? template}) async {

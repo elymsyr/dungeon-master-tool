@@ -353,24 +353,24 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       }
       final active = ref.read(activeCampaignProvider);
       if (active != worldName) {
-        final ok = await withLoading(
-          ref.read(globalLoadingProvider.notifier),
-          'open-world-$worldId',
-          'Opening world "$worldName"...',
-          () => ref
-              .read(activeCampaignProvider.notifier)
-              .load(worldName),
-        );
+        // Optimistic flip (B1 pattern): sync state change so the editor
+        // route pushes immediately. Heavy flush + file IO completes in the
+        // background; relation widgets render with the default schema until
+        // _data lands and the revision bump triggers a reparse.
+        final notifier = ref.read(activeCampaignProvider.notifier);
+        notifier.beginLoad(worldName);
         if (!mounted) return;
-        if (!ok) {
+        context.push('/character/${c.id}');
+        final ok = await notifier.completeLoad();
+        if (!ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                   'World "$worldName" not found on disk — character cannot open.'),
             ),
           );
-          return;
         }
+        return;
       }
     }
     if (!mounted) return;
