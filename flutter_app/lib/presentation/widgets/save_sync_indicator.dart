@@ -6,30 +6,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/outbox_status_provider.dart';
 import '../../application/providers/package_provider.dart' show activePackageProvider;
-import '../../application/providers/personal_sync_provider.dart';
 import '../../application/providers/save_state_provider.dart';
-import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/role_provider.dart';
-import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
-import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/network/network_providers.dart';
-import '../../data/repositories/cloud_backup_repository_impl.dart';
-import '../../application/services/cloud_catchup_service.dart';
 import '../../application/services/media_bundler.dart';
-import '../../application/services/world_reconciler.dart';
 import '../theme/dm_tool_colors.dart';
 import 'online_world_widgets.dart';
 import 'save_info_section.dart';
+import 'save_sync_shared.dart';
 
 /// AppBar'da save + cloud sync durumunu gösteren unified indicator.
 /// Tap → center dialog (ayarlar, aksiyonlar, storage, sync results).
@@ -296,25 +289,7 @@ class _SaveSyncDialog extends ConsumerWidget {
 
 // ── Helper widgets ──────────────────────────────────────────────────
 
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  final DmToolColors palette;
-  const _SectionLabel(this.text, this.palette);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: palette.sidebarLabelSecondary,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
+typedef _SectionLabel = SectionLabel;
 
 /// Online world panel — invite code (copy + regenerate) ve member listesini
 /// gösterir. World offline iken hiçbir şey render etmez.
@@ -375,66 +350,6 @@ class _ActionsRow extends ConsumerWidget {
     final packageName = ref.watch(activePackageProvider);
     final hasActive = campaignName != null || packageName != null;
     if (!hasActive) return const SizedBox.shrink();
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (hasCloud) _SyncButton(palette: palette),
-        if (campaignName != null && hasCloud)
-          _MakeOnlineButton(palette: palette),
-      ],
-    );
-  }
-}
-
-class _SyncButton extends ConsumerStatefulWidget {
-  final DmToolColors palette;
-  const _SyncButton({required this.palette});
-
-  @override
-  ConsumerState<_SyncButton> createState() => _SyncButtonState();
-}
-
-class _SyncButtonState extends ConsumerState<_SyncButton> {
-  bool _busy = false;
-
-  Future<void> _sync() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    final sw = Stopwatch()..start();
-    debugPrint('[SyncButton] ▶ manual sync started');
-    try {
-      debugPrint('[SyncButton]   1/5 runManualPersonalSync');
-      await runManualPersonalSync(ref);
-      debugPrint('[SyncButton]   2/5 runManualWorldSync');
-      await runManualWorldSync(ref);
-      debugPrint('[SyncButton]   3/5 worldReconciler.reconcile');
-      await ref.read(worldReconcilerProvider).reconcile();
-      debugPrint('[SyncButton]   4/5 syncEngine.forceTick (drain outbox)');
-      final drained = await ref.read(syncEngineProvider).forceTick();
-      debugPrint('[SyncButton]      forceTick drained=$drained');
-      debugPrint('[SyncButton]   5/5 cloudCatchupService.runAll');
-      await ref.read(cloudCatchupServiceProvider).runAll();
-      debugPrint('[SyncButton] ✓ sync complete ${sw.elapsedMilliseconds}ms');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sync complete')),
-      );
-    } catch (e, st) {
-      debugPrint('[SyncButton] ✗ sync failed ${sw.elapsedMilliseconds}ms: $e\n$st');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sync failed: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final campaignName = ref.watch(activeCampaignProvider);
-    final packageName = ref.watch(activePackageProvider);
     bool online = false;
     if (campaignName != null) {
       final data = ref.read(activeCampaignProvider.notifier).data;
@@ -445,19 +360,22 @@ class _SyncButtonState extends ConsumerState<_SyncButton> {
       final betaActive = ref.watch(betaProvider).isActive;
       online = signedIn && betaActive;
     }
-    final tooltip = online
-        ? 'Sync now (push + pull)'
-        : campaignName != null
-            ? 'Make this world online first'
-            : 'Sign in + join beta to sync';
-    return Tooltip(
-      message: tooltip,
-      child: _ActionButton(
-        icon: Icons.cloud_sync,
-        label: _busy ? 'Syncing...' : 'Sync',
-        onPressed: (online && !_busy) ? _sync : null,
-        palette: widget.palette,
-      ),
+    final disabledTooltip = campaignName != null
+        ? 'Make this world online first'
+        : 'Sign in + join beta to sync';
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (hasCloud)
+          SyncButton(
+            palette: palette,
+            enabled: online,
+            disabledTooltip: disabledTooltip,
+          ),
+        if (campaignName != null && hasCloud)
+          _MakeOnlineButton(palette: palette),
+      ],
     );
   }
 }
@@ -688,122 +606,8 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-  final DmToolColors palette;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    required this.palette,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        side: BorderSide(color: palette.featureCardBorder),
-        visualDensity: VisualDensity.compact,
-      ),
-    );
-  }
-}
-
-class _StorageUsageBar extends ConsumerWidget {
-  final DmToolColors palette;
-  const _StorageUsageBar({required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final storageAsync = ref.watch(cloudStorageUsedProvider);
-    final quotaBytes = ref.watch(betaProvider).quotaBytes;
-
-    return storageAsync.when(
-      data: (bytes) {
-        final usedMb = bytes / (1024 * 1024);
-        final totalMb = quotaBytes / (1024 * 1024);
-        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
-        final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
-        final remainingMb = totalMb - usedMb;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: palette.br,
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 8,
-                      backgroundColor: palette.featureCardBorder,
-                      color: ratio > 0.9
-                          ? palette.dangerBtnBg
-                          : palette.featureCardAccent,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${usedMb.toStringAsFixed(1)} / ${totalMb.toStringAsFixed(0)} MB',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${remainingMb.toStringAsFixed(1)} MB remaining  |  Max ${itemLimitMb.toStringAsFixed(0)} MB per item',
-              style: TextStyle(
-                fontSize: 11,
-                color: palette.sidebarLabelSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.info_outline,
-                    size: 12, color: palette.featureCardAccent),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    'Combined: cloud backups + media assets. Temporary limit.',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: palette.sidebarLabelSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-      loading: () => const SizedBox(
-        height: 8,
-        child: LinearProgressIndicator(),
-      ),
-      error: (e, _) => Text(
-        isOfflineError(e)
-            ? "You're offline — storage info unavailable."
-            : 'Could not load storage info',
-        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-      ),
-    );
-  }
-}
+typedef _ActionButton = ActionButton;
+typedef _StorageUsageBar = StorageUsageBar;
 
 /// Shows the active item's local + cloud save info inside the full-mode
 /// dialog. Detects the item type by watching [activeCampaignProvider] and
@@ -915,60 +719,5 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
   }
 }
 
-/// PR-SYNC-6: dialog row showing the persistent outbox depth. When rows are
-/// stuck (>3 attempts) we surface the most-recent error and a "Retry now"
-/// button that calls `SyncEngine.forceTick()`.
-class _OutboxStatusRow extends ConsumerWidget {
-  final OutboxStatus outbox;
-  final DmToolColors palette;
-  const _OutboxStatusRow({required this.outbox, required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stuck = outbox.hasIssue;
-    final color = stuck ? palette.dangerBtnBg : palette.featureCardAccent;
-    final icon = stuck ? Icons.cloud_off : Icons.cloud_sync;
-    final label = stuck
-        ? 'Stuck (${outbox.maxAttempts} attempts)'
-        : '${outbox.pending} pending';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.cbr,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label,
-                    style: TextStyle(fontSize: 12, color: color)),
-                if (stuck && outbox.lastError != null)
-                  Text(
-                    outbox.lastError!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: palette.sidebarLabelSecondary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => ref.read(syncEngineProvider).forceTick(),
-            child: const Text('Retry now', style: TextStyle(fontSize: 11)),
-          ),
-        ],
-      ),
-    );
-  }
-}
+typedef _OutboxStatusRow = OutboxStatusRow;
 
