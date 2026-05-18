@@ -85,7 +85,12 @@ class CombatNotifier extends StateNotifier<CombatState>
   }
 
   /// Mirror selected combat fields back onto the source character entity so
-  /// the character card and encounter row stay in sync.
+  /// the character card and encounter row stay in sync. Writes BOTH the
+  /// flat top-level keys (header HP indicator reads these via
+  /// EffectiveCharacter) AND the nested `combat_stats` sub-map (the
+  /// in-card Combat Stats section reads these). Skipping the nested write
+  /// caused the card's inner HP value to drift behind the header bar after
+  /// encounter +/- edits.
   void _syncCharacterFields(String? entityId,
       {int? hp, int? maxHp, int? ac}) {
     final character = _characterByEntityId(entityId);
@@ -103,6 +108,28 @@ class CombatNotifier extends StateNotifier<CombatState>
     if (ac != null && fields['ac'] != ac) {
       fields['ac'] = ac;
       changed = true;
+    }
+    final csKey = _encounterConfig.combatStatsFieldKey;
+    final rawCs = fields[csKey];
+    if (rawCs is Map) {
+      final cs = Map<String, dynamic>.from(rawCs);
+      var csChanged = false;
+      if (hp != null && cs['hp']?.toString() != hp.toString()) {
+        cs['hp'] = hp.toString();
+        csChanged = true;
+      }
+      if (maxHp != null && cs['max_hp']?.toString() != maxHp.toString()) {
+        cs['max_hp'] = maxHp.toString();
+        csChanged = true;
+      }
+      if (ac != null && cs['ac']?.toString() != ac.toString()) {
+        cs['ac'] = ac.toString();
+        csChanged = true;
+      }
+      if (csChanged) {
+        fields[csKey] = cs;
+        changed = true;
+      }
     }
     if (!changed) return;
     final patched = character.copyWith(
