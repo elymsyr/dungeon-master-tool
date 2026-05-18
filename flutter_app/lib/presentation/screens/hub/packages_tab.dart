@@ -70,7 +70,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             children: [
               LayoutBuilder(
                 builder: (ctx, constraints) {
-                  final narrow = constraints.maxWidth < 360;
                   final title = Text(
                     l10n.tabPackages,
                     overflow: TextOverflow.ellipsis,
@@ -85,10 +84,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
-                    label: Text(narrow ? '' : 'Marketplace'),
+                    label: const Text('Marketplace'),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: narrow ? 4 : 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       minimumSize: const Size(32, 32),
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
