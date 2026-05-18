@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dungeon_master_tool/application/providers/combat_provider.dart';
 import 'package:dungeon_master_tool/application/services/event_bus.dart';
+import 'package:dungeon_master_tool/domain/entities/character.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/session.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/default_dnd5e_schema.dart';
@@ -11,12 +12,15 @@ CombatNotifier _createNotifier({
   Map<String, Entity> Function()? getEntities,
   Map<String, dynamic>? Function()? getCampaignData,
   AppEventBus? eventBus,
+  List<Character> Function()? getCharacters,
 }) {
   return CombatNotifier(
     getEntities ?? () => <String, Entity>{},
     () => generateDefaultDnd5eSchema(),
+    getCharacters ?? () => const <Character>[],
     getCampaignData ?? () => null,
     eventBus ?? AppEventBus(),
+    (_) async {},
     (_) async {},
   );
 }

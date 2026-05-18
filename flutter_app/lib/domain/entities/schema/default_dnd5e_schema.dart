@@ -390,13 +390,6 @@ const _categoryDefs = [
   ], hasStatBlock: true, hasActions: true, hasSpells: true,
      sections: ['encounter', 'mindmap', 'worldmap', 'projection'], filters: ['cr', 'attack_type', 'source']),
 
-  _CategoryDef('Player', 'player', '#4caf50', [
-    _FieldDef('class_', 'Class', FieldType.relation, FieldValidation(allowedTypes: ['class'])),
-    _FieldDef('race', 'Race', FieldType.relation, FieldValidation(allowedTypes: ['race'])),
-    _FieldDef('level', 'Level', FieldType.text),
-  ], hasStatBlock: true, hasActions: true, hasSpells: true,
-     sections: ['encounter', 'mindmap', 'worldmap', 'projection'], filters: ['level']),
-
   _CategoryDef('Spell', 'spell', '#7b1fa2', [
     _FieldDef('level', 'Level', FieldType.enum_, FieldValidation(allowedValues: ['Cantrip', '1', '2', '3', '4', '5', '6', '7', '8', '9'])),
     _FieldDef('school', 'School', FieldType.text),

@@ -11,6 +11,7 @@ import '../../data/network/asset_service.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/pill_tab_bar.dart';
 
 /// Uygulama içi medya galerisi dialogu.
 ///
@@ -575,28 +576,20 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
               ),
             ),
 
-            // ── Tab bar (cloud mode) ──
+            // ── Tab bar (cloud mode) — pill style matching Social ──
             if (_cloudMode && _tabController != null)
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: palette.featureCardBorder),
-                  ),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: palette.tabActiveText,
-                  unselectedLabelColor: palette.sidebarLabelSecondary,
-                  indicatorColor: palette.tabIndicator,
-                  labelStyle: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: const TextStyle(fontSize: 12),
-                  tabs: const [
-                    Tab(text: 'This world', height: 32),
-                    Tab(text: 'All worlds', height: 32),
-                    Tab(text: 'Trash', height: 32),
-                  ],
-                ),
+              PillTabBar<int>(
+                phone: MediaQuery.of(context).size.width < 600,
+                tabs: const [
+                  PillTab(id: 0, icon: Icons.public, label: 'This world'),
+                  PillTab(
+                      id: 1, icon: Icons.travel_explore, label: 'All worlds'),
+                  PillTab(id: 2, icon: Icons.delete_outline, label: 'Trash'),
+                ],
+                currentTab: _tabController!.index,
+                onTabChanged: (i) => setState(() {
+                  _tabController!.animateTo(i);
+                }),
               ),
 
             // ── Grid / loading / empty / error ──

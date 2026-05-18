@@ -55,6 +55,11 @@ abstract class Combatant with _$Combatant {
     String? entityId,
     @Default([]) List<CombatCondition> conditions,
     String? tokenId,
+    /// Snapshot of the source entity's combat stats at add-time. Edits in
+    /// the encounter only mutate this map; the original entity is never
+    /// written back. `entityId` is retained as a read-only reference so the
+    /// row can open the original DB card.
+    @Default({}) Map<String, dynamic> stats,
   }) = _Combatant;
 
   factory Combatant.fromJson(Map<String, dynamic> json) =>
