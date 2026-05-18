@@ -19,11 +19,13 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/outbox_status_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
@@ -47,6 +49,7 @@ import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/save_sync_shared.dart';
 import '../database/entity_card.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
@@ -94,9 +97,15 @@ class _CharacterEditorScreenState
   Character? _undoBaseline;
   Timer? _undoIdleTimer;
 
+  // Captured at initState — Riverpod marks `ref` disposed before
+  // `state.dispose()` runs during unmount, so we cannot `ref.read(...)` in
+  // dispose(). Hold a direct reference to flush any pending writes.
+  PendingWriteBuffer? _pendingBuffer;
+
   @override
   void initState() {
     super.initState();
+    _pendingBuffer = ref.read(pendingWriteBufferProvider);
     // Cross-device freshness: another device may have pushed a newer
     // cloud_backup while we were away. Pull on open so the editor renders
     // the latest payload instead of stale local state. Skips silently when
@@ -113,6 +122,11 @@ class _CharacterEditorScreenState
   @override
   void dispose() {
     _undoIdleTimer?.cancel();
+    // Dispose sırasında bekleyen debounced write varsa hemen fire et —
+    // kullanıcı back tuşunu atlatarak (router pop, app close) çıkarsa
+    // son edit'in kaybolmasını önle.
+    // ignore: discarded_futures
+    _pendingBuffer?.flushPrefix('character:${widget.characterId}');
     _descController.dispose();
     _descFocus.dispose();
     _dmNotesController.dispose();
@@ -204,9 +218,25 @@ class _CharacterEditorScreenState
     _scheduleAutoSave();
   }
 
-  /// Auto-save kaldırıldı. `_working` state in-memory tutulur; Save butonu
-  /// veya close akışı diske flush eder. Callsite'lar no-op gibi davranır.
-  void _scheduleAutoSave() {}
+  /// Worlds parity: edit'leri row-level debounce et ve gecikmeli olarak
+  /// `characterListProvider.update()` ile diske + outbox'a yaz. Aynı key
+  /// (`character:$id`) ardışık fire'larda son `_working` snapshot'ını yazar
+  /// (coalesced). Owner/DM yetkisi yoksa fire silent no-op.
+  void _scheduleAutoSave({WriteKind kind = WriteKind.shortText}) {
+    final c = _working;
+    if (c == null) return;
+    if (!_canEdit) return;
+    final id = c.id;
+    ref.read(pendingWriteBufferProvider).schedule(
+          key: 'character:$id',
+          kind: kind,
+          action: () async {
+            final cur = _working;
+            if (cur == null || cur.id != id) return;
+            await ref.read(characterListProvider.notifier).update(cur);
+          },
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2476,6 +2506,15 @@ class _CharacterEditorScreenState
   }
 
   Future<void> _saveAndClose(BuildContext context) async {
+    // Pending debounced write'ı önce drain et — buffer fire'ı zaten
+    // characterListProvider.update() çağırıyor (disk + sync push). Yine de
+    // close öncesi explicit `_save` ile saving-spinner ve permission gate
+    // tutarlı kalsın.
+    try {
+      await ref
+          .read(pendingWriteBufferProvider)
+          .flushPrefix('character:${widget.characterId}');
+    } catch (_) {/* best-effort */}
     await _save(silent: true);
     // Flush cloud snapshot (beta + non-online-world chars) before the editor
     // tears down so the user's last edit lands on the server. Mirror-route
@@ -2989,6 +3028,24 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
+    final outbox = hasCloud
+        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        : null;
+
+    // Sync button eligibility: world-bound + online world OR worldless + beta.
+    // Aksi halde push edilecek bir cloud row yok.
+    final signedIn = ref.watch(authProvider) != null;
+    final betaActive = ref.watch(betaProvider).isActive;
+    final worldId = character.worldId;
+    final worldOnline = worldId != null &&
+        ref.watch(onlineWorldIdsProvider).contains(worldId);
+    final syncEnabled =
+        hasCloud && signedIn && (worldOnline || betaActive);
+    final disabledTooltip = !signedIn
+        ? 'Sign in to sync'
+        : (worldId != null && !worldOnline)
+            ? 'Make this world online first'
+            : 'Join beta to sync personal characters';
 
     DateTime? updatedAt;
     try {
@@ -3046,14 +3103,40 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                   type: 'character',
                   localUpdatedAt: updatedAt,
                 ),
+
                 if (hasCloud) ...[
                   const SizedBox(height: 16),
-                  _sectionLabel(palette, 'Online'),
+                  SectionLabel('Actions', palette),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      SyncButton(
+                        palette: palette,
+                        enabled: syncEnabled,
+                        disabledTooltip: disabledTooltip,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SectionLabel('Online', palette),
                   const SizedBox(height: 8),
                   _CharacterOnlineToggle(
                     character: character,
                     flushLocal: flushLocal,
                   ),
+                  const SizedBox(height: 16),
+                  SectionLabel('Storage', palette),
+                  const SizedBox(height: 8),
+                  StorageUsageBar(palette: palette),
+                ],
+
+                if (hasCloud && outbox != null && outbox.pending > 0) ...[
+                  const SizedBox(height: 16),
+                  SectionLabel('Sync Queue', palette),
+                  const SizedBox(height: 8),
+                  OutboxStatusRow(outbox: outbox, palette: palette),
                 ],
               ],
             ),
