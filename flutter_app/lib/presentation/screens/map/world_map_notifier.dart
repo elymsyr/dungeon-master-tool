@@ -1227,6 +1227,15 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     return canvasPt * vt.scale + vt.panOffset;
   }
 
+  /// Center of current viewport in canvas space. Falls back to (0,0) when
+  /// viewport hasn't been laid out yet.
+  Offset get viewportCenterCanvas {
+    if (_viewportSize == Size.zero) return Offset.zero;
+    return screenToCanvas(
+      Offset(_viewportSize.width / 2, _viewportSize.height / 2),
+    );
+  }
+
   /// F2: Current viewport in canvas-space (inverse of the Transform matrix).
   /// Used by the pin layer to viewport-cull at [cullTick] events.
   /// Inflated by ~1 viewport-worth so a pan-drag stays inside the culled set

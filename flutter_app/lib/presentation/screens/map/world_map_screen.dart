@@ -212,6 +212,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             onTap: () => notifier.pickMapImage(context),
           ),
 
+          // Mobile-only: add pin from database (no right-click on touch).
+          if (Platform.isAndroid || Platform.isIOS) ...[
+            _VertDiv(palette: palette),
+            _ToolbarButton(
+              icon: Icons.add_location_alt_outlined,
+              label: 'Add from DB',
+              palette: palette,
+              onTap: () => _showEntityPickerForMap(
+                notifier.viewportCenterCanvas,
+                notifier,
+              ),
+            ),
+          ],
+
           _VertDiv(palette: palette),
 
           // Pin category dropdown

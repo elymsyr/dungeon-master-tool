@@ -584,25 +584,33 @@ class _PackageScreenContentState
   }
 
   void _showMobileSidebar() {
+    // Root Navigator overlay'de açılan modal, PackageScreen'in
+    // ProviderScope override'ını miras almaz. EntitySidebar paket-scoped
+    // entityProvider'a erişebilsin diye container'ı yakalayıp
+    // UncontrolledProviderScope ile yeniden bağlıyoruz.
+    final container = ProviderScope.containerOf(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        expand: false,
-        builder: (_, scrollController) => EntitySidebar(
-          schema: widget.schema,
-          onEntitySelected: (id) {
-            Navigator.pop(ctx);
-            setState(() {
-              _selectedEntityId = id;
-            });
-          },
+      builder: (ctx) => UncontrolledProviderScope(
+        container: container,
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.3,
+          expand: false,
+          builder: (_, scrollController) => EntitySidebar(
+            schema: widget.schema,
+            onEntitySelected: (id) {
+              Navigator.pop(ctx);
+              setState(() {
+                _selectedEntityId = id;
+              });
+            },
+          ),
         ),
       ),
     );
