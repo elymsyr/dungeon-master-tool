@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/providers/visible_entity_provider.dart';
@@ -39,6 +40,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   final List<_TabEntry> _rightTabs = [];
   int _leftActiveIndex = -1;
   int _rightActiveIndex = -1;
+  String? _currentWorldKey;
 
   @override
   void didUpdateWidget(DatabaseScreen oldWidget) {
@@ -130,49 +132,78 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     _persistOpenTabs();
   }
 
+  String _worldKey() => ref.read(activeCampaignProvider) ?? '';
+
   void _persistOpenTabs() {
     Future(() {
       if (!mounted) return;
-      ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
-        dbOpenLeft: _leftTabs.map((t) => t.entityId).toList(),
-        dbOpenRight: _rightTabs.map((t) => t.entityId).toList(),
-        dbActiveLeft: _leftActiveIndex,
-        dbActiveRight: _rightActiveIndex,
-      ));
+      final key = _worldKey();
+      ref.read(uiStateProvider.notifier).update((s) {
+        final left = Map<String, List<String>>.from(s.dbOpenLeftByWorld);
+        final right = Map<String, List<String>>.from(s.dbOpenRightByWorld);
+        final activeL = Map<String, int>.from(s.dbActiveLeftByWorld);
+        final activeR = Map<String, int>.from(s.dbActiveRightByWorld);
+        left[key] = _leftTabs.map((t) => t.entityId).toList();
+        right[key] = _rightTabs.map((t) => t.entityId).toList();
+        activeL[key] = _leftActiveIndex;
+        activeR[key] = _rightActiveIndex;
+        return s.copyWith(
+          dbOpenLeftByWorld: left,
+          dbOpenRightByWorld: right,
+          dbActiveLeftByWorld: activeL,
+          dbActiveRightByWorld: activeR,
+        );
+      });
     });
   }
 
-  /// Uygulama açılışında UiState'den açık kartları restore et
-  void restoreOpenTabs() {
+  /// Restore open tabs for the given world key. Ghost ids (entity missing
+  /// in current world) are dropped silently — protects against stale state
+  /// when a world is renamed/reset or persistence predates a wipe.
+  void restoreOpenTabsForWorld(String worldKey) {
     final uiState = ref.read(uiStateProvider);
-    for (final eid in uiState.dbOpenLeft) {
-      _openTab(eid, panel: _Panel.left);
+    final entities = ref.read(visibleEntityProvider);
+    final leftIds = uiState.dbOpenLeftByWorld[worldKey] ?? const <String>[];
+    final rightIds = uiState.dbOpenRightByWorld[worldKey] ?? const <String>[];
+    for (final eid in leftIds) {
+      if (entities.containsKey(eid)) _openTab(eid, panel: _Panel.left);
     }
-    for (final eid in uiState.dbOpenRight) {
-      _openTab(eid, panel: _Panel.right);
+    for (final eid in rightIds) {
+      if (entities.containsKey(eid)) _openTab(eid, panel: _Panel.right);
     }
+    final activeL = uiState.dbActiveLeftByWorld[worldKey] ?? -1;
+    final activeR = uiState.dbActiveRightByWorld[worldKey] ?? -1;
     setState(() {
-      if (uiState.dbActiveLeft >= 0 && uiState.dbActiveLeft < _leftTabs.length) {
-        _leftActiveIndex = uiState.dbActiveLeft;
+      if (activeL >= 0 && activeL < _leftTabs.length) {
+        _leftActiveIndex = activeL;
       }
-      if (uiState.dbActiveRight >= 0 && uiState.dbActiveRight < _rightTabs.length) {
-        _rightActiveIndex = uiState.dbActiveRight;
+      if (activeR >= 0 && activeR < _rightTabs.length) {
+        _rightActiveIndex = activeR;
       }
     });
   }
-
-  bool _restored = false;
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
     final schema = ref.watch(worldSchemaProvider);
+    final worldKey = ref.watch(activeCampaignProvider) ?? '';
 
-    // İlk build'de açık kartları restore et
-    if (!_restored) {
-      _restored = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => restoreOpenTabs());
+    // World id değiştiğinde mevcut tablar temizlenir, yeni dünyaya ait
+    // persisted tablar restore edilir. Aksi halde eski dünyadan kalan id'ler
+    // "Unknown" başlıklı boş tab olarak görünüyordu.
+    if (worldKey != _currentWorldKey) {
+      _currentWorldKey = worldKey;
+      _leftTabs.clear();
+      _rightTabs.clear();
+      _leftActiveIndex = -1;
+      _rightActiveIndex = -1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _currentWorldKey == worldKey) {
+          restoreOpenTabsForWorld(worldKey);
+        }
+      });
     }
 
     // Mobile: tek panel
@@ -338,7 +369,7 @@ class _TabPanel extends ConsumerWidget {
 }
 
 /// Tab bar — Python EntityTabWidget karşılığı.
-class _TabBar extends StatelessWidget {
+class _TabBar extends ConsumerWidget {
   final List<_TabEntry> tabs;
   final int activeIndex;
   final DmToolColors palette;
@@ -354,7 +385,10 @@ class _TabBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Live entity map — keeps tab titles fresh when entities arrive async
+    // (mobile race) or get renamed without forcing a tab list rebuild.
+    final entities = ref.watch(visibleEntityProvider);
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -368,6 +402,8 @@ class _TabBar extends StatelessWidget {
           final tab = tabs[i];
           final isActive = i == activeIndex;
           final catColor = tab.categoryColor;
+          final liveEntity = entities[tab.entityId];
+          final title = liveEntity?.name ?? tab.title;
 
           return GestureDetector(
             key: ValueKey(tab.entityId),
@@ -391,7 +427,7 @@ class _TabBar extends StatelessWidget {
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 140),
                     child: Text(
-                      tab.title,
+                      title,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,

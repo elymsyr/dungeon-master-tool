@@ -22,10 +22,12 @@ class UiState {
 
   // Database
   final double dbSplitterRatio;
-  final List<String> dbOpenLeft;
-  final List<String> dbOpenRight;
-  final int dbActiveLeft;
-  final int dbActiveRight;
+  /// Open tab ids per world. Keyed by world id (activeCampaignProvider).
+  /// Empty world id (null active) is keyed as ''.
+  final Map<String, List<String>> dbOpenLeftByWorld;
+  final Map<String, List<String>> dbOpenRightByWorld;
+  final Map<String, int> dbActiveLeftByWorld;
+  final Map<String, int> dbActiveRightByWorld;
   /// Persisted category-filter selection for the database sidebar.
   /// Empty list = "show all" (no filter applied).
   final List<String> dbFilterSlugs;
@@ -64,10 +66,10 @@ class UiState {
     this.sidebarOpen = true,
     this.sidebarWidth = 280,
     this.dbSplitterRatio = 0.5,
-    this.dbOpenLeft = const [],
-    this.dbOpenRight = const [],
-    this.dbActiveLeft = -1,
-    this.dbActiveRight = -1,
+    this.dbOpenLeftByWorld = const {},
+    this.dbOpenRightByWorld = const {},
+    this.dbActiveLeftByWorld = const {},
+    this.dbActiveRightByWorld = const {},
     this.dbFilterSlugs = const [],
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
@@ -90,10 +92,10 @@ class UiState {
     bool? sidebarOpen,
     double? sidebarWidth,
     double? dbSplitterRatio,
-    List<String>? dbOpenLeft,
-    List<String>? dbOpenRight,
-    int? dbActiveLeft,
-    int? dbActiveRight,
+    Map<String, List<String>>? dbOpenLeftByWorld,
+    Map<String, List<String>>? dbOpenRightByWorld,
+    Map<String, int>? dbActiveLeftByWorld,
+    Map<String, int>? dbActiveRightByWorld,
     List<String>? dbFilterSlugs,
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
@@ -115,10 +117,10 @@ class UiState {
       sidebarOpen: sidebarOpen ?? this.sidebarOpen,
       sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       dbSplitterRatio: dbSplitterRatio ?? this.dbSplitterRatio,
-      dbOpenLeft: dbOpenLeft ?? this.dbOpenLeft,
-      dbOpenRight: dbOpenRight ?? this.dbOpenRight,
-      dbActiveLeft: dbActiveLeft ?? this.dbActiveLeft,
-      dbActiveRight: dbActiveRight ?? this.dbActiveRight,
+      dbOpenLeftByWorld: dbOpenLeftByWorld ?? this.dbOpenLeftByWorld,
+      dbOpenRightByWorld: dbOpenRightByWorld ?? this.dbOpenRightByWorld,
+      dbActiveLeftByWorld: dbActiveLeftByWorld ?? this.dbActiveLeftByWorld,
+      dbActiveRightByWorld: dbActiveRightByWorld ?? this.dbActiveRightByWorld,
       dbFilterSlugs: dbFilterSlugs ?? this.dbFilterSlugs,
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
@@ -144,10 +146,10 @@ class UiState {
     'sidebarOpen': sidebarOpen,
     'sidebarWidth': sidebarWidth,
     'dbSplitterRatio': dbSplitterRatio,
-    'dbOpenLeft': dbOpenLeft,
-    'dbOpenRight': dbOpenRight,
-    'dbActiveLeft': dbActiveLeft,
-    'dbActiveRight': dbActiveRight,
+    'dbOpenLeftByWorld': dbOpenLeftByWorld,
+    'dbOpenRightByWorld': dbOpenRightByWorld,
+    'dbActiveLeftByWorld': dbActiveLeftByWorld,
+    'dbActiveRightByWorld': dbActiveRightByWorld,
     'dbFilterSlugs': dbFilterSlugs,
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
@@ -180,10 +182,10 @@ class UiState {
       sidebarOpen: json['sidebarOpen'] as bool? ?? true,
       sidebarWidth: (json['sidebarWidth'] as num?)?.toDouble() ?? 280,
       dbSplitterRatio: (json['dbSplitterRatio'] as num?)?.toDouble() ?? 0.5,
-      dbOpenLeft: (json['dbOpenLeft'] as List?)?.cast<String>() ?? const [],
-      dbOpenRight: (json['dbOpenRight'] as List?)?.cast<String>() ?? const [],
-      dbActiveLeft: json['dbActiveLeft'] as int? ?? -1,
-      dbActiveRight: json['dbActiveRight'] as int? ?? -1,
+      dbOpenLeftByWorld: _decodeListMap(json['dbOpenLeftByWorld']),
+      dbOpenRightByWorld: _decodeListMap(json['dbOpenRightByWorld']),
+      dbActiveLeftByWorld: _decodeIntMap(json['dbActiveLeftByWorld']),
+      dbActiveRightByWorld: _decodeIntMap(json['dbActiveRightByWorld']),
       dbFilterSlugs:
           (json['dbFilterSlugs'] as List?)?.cast<String>() ?? const [],
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
@@ -202,6 +204,26 @@ class UiState {
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,
     );
   }
+}
+
+Map<String, List<String>> _decodeListMap(dynamic raw) {
+  if (raw is! Map) return const {};
+  final out = <String, List<String>>{};
+  raw.forEach((k, v) {
+    if (k is String && v is List) {
+      out[k] = v.whereType<String>().toList();
+    }
+  });
+  return out;
+}
+
+Map<String, int> _decodeIntMap(dynamic raw) {
+  if (raw is! Map) return const {};
+  final out = <String, int>{};
+  raw.forEach((k, v) {
+    if (k is String && v is int) out[k] = v;
+  });
+  return out;
 }
 
 class UiStateNotifier extends StateNotifier<UiState> {
