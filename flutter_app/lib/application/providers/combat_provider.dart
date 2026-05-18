@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
@@ -13,6 +14,7 @@ import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
+import 'character_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
 
@@ -56,6 +58,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     with UndoRedoMixin<CombatState> {
   final Map<String, Entity> Function() _getEntities;
   final WorldSchema Function() _getSchema;
+  final List<Character> Function() _getCharacters;
 
   final Map<String, dynamic>? Function() _getCampaignData;
   final AppEventBus _eventBus;
@@ -64,7 +67,7 @@ class CombatNotifier extends StateNotifier<CombatState>
   // `world_repository.save` (delete+insertAll on world_entities included).
   final Future<void> Function(Map<String, dynamic> patch) _saveSettingsPatch;
 
-  CombatNotifier(this._getEntities, this._getSchema,
+  CombatNotifier(this._getEntities, this._getSchema, this._getCharacters,
       this._getCampaignData, this._eventBus, this._saveSettingsPatch)
       : super(const CombatState()) {
     _loadFromCampaign();
@@ -141,13 +144,16 @@ class CombatNotifier extends StateNotifier<CombatState>
 
   // --- Helpers ---
 
-  /// Combat stats field'ı olan kategori slug'larını döndürür.
+  /// Encounter'a eklenebilen kategori slug'ları. v1 schema'da `combat_stats`
+  /// map field'ı vardı; v2 schema (builtin_dnd5e_v2) flat field'lara geçti
+  /// (ac, hp_average, initiative_modifier...). Tek doğru gate
+  /// `allowedInSections.contains('encounter')` — schema-author intent'i de
+  /// yansıtıyor.
   Set<String> get combatCapableSlugs {
     final schema = _getSchema();
-    final cfg = _encounterConfig;
     final slugs = <String>{};
     for (final cat in schema.categories) {
-      if (cat.fields.any((f) => f.fieldKey == cfg.combatStatsFieldKey)) {
+      if (cat.allowedInSections.contains('encounter')) {
         slugs.add(cat.slug);
       }
     }
@@ -176,17 +182,26 @@ class CombatNotifier extends StateNotifier<CombatState>
     final cfg = _encounterConfig;
     final combatStats = entity.fields[cfg.combatStatsFieldKey];
 
-    // Initiative — the configured field is now a dice spec ("-2", "+1d4",
-    // "1d20+3", ...). Roll = 1d20 + parsedSpec.
-    final initSpec = combatStats is Map
-        ? combatStats[cfg.initiativeSubField]?.toString()
-        : null;
+    // Initiative — v1 reads dice spec from combatStats.initiative; v2 monster
+    // /animal flat schema uses initiative_modifier (int) or initiative_score.
+    String? initSpec;
+    if (combatStats is Map) {
+      initSpec = combatStats[cfg.initiativeSubField]?.toString();
+    }
+    initSpec ??= _flatInitSpec(entity.fields);
     final initRoll = _rollInitFromSpec(initSpec);
 
-    // HP, AC from combatStats
-    final hp = _parseInt(combatStats, 'hp', 10);
-    final maxHp = _parseInt(combatStats, 'max_hp', hp);
-    final ac = _parseInt(combatStats, 'ac', 10);
+    // HP, AC — combatStats map > flat fields (v2 monster: ac, hp_average).
+    final hp = combatStats is Map
+        ? _parseInt(combatStats, 'hp',
+            _parseFlatInt(entity.fields, 'hp_average', 10))
+        : _parseFlatInt(entity.fields, 'hp_average', 10);
+    final maxHp = combatStats is Map
+        ? _parseInt(combatStats, 'max_hp', hp)
+        : hp;
+    final ac = combatStats is Map
+        ? _parseInt(combatStats, 'ac', _parseFlatInt(entity.fields, 'ac', 10))
+        : _parseFlatInt(entity.fields, 'ac', 10);
 
     final combatant = Combatant(
       id: _uuid.v4(),
@@ -240,14 +255,16 @@ class CombatNotifier extends StateNotifier<CombatState>
   void addAllPlayers() {
     final enc = state.activeEncounter;
     if (enc == null) return;
-    final entities = _getEntities();
     final existingIds = enc.combatants.map((c) => c.entityId).toSet();
-    final capable = combatCapableSlugs;
-
-    for (final entity in entities.values) {
-      if (entity.categorySlug == 'player' && capable.contains('player') && !existingIds.contains(entity.id)) {
-        addCombatantFromEntity(entity.id);
-      }
+    final worldId = _campaignId;
+    // 039 unified character model: "player" entity kategorisi sabit değil;
+    // owner'lı (claim edilmiş) karakterler oyuncu karakterleridir. World
+    // bağlı olanları + worldless (orphan) ownerlı'ları al.
+    for (final c in _getCharacters()) {
+      if (c.ownerId == null || c.ownerId!.isEmpty) continue;
+      if (worldId != null && c.worldId != null && c.worldId != worldId) continue;
+      if (existingIds.contains(c.entity.id)) continue;
+      addCombatantFromEntity(c.entity.id);
     }
   }
 
@@ -610,11 +627,32 @@ int _parseInt(dynamic map, String key, int fallback) {
   return int.tryParse(v?.toString() ?? '') ?? fallback;
 }
 
+/// Entity'nin flat field map'inden int al — v2 monster/animal schema'sı için.
+int _parseFlatInt(Map<String, dynamic> fields, String key, int fallback) {
+  final v = fields[key];
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v?.toString() ?? '') ?? fallback;
+}
+
+/// Flat schema init için spec hesapla. v2 monster: `initiative_modifier`
+/// (int). Eksikse `initiative_score - 10` ya da boş.
+String? _flatInitSpec(Map<String, dynamic> fields) {
+  final mod = fields['initiative_modifier'];
+  if (mod is num) {
+    final n = mod.toInt();
+    return n >= 0 ? '+$n' : '$n';
+  }
+  if (mod is String && mod.isNotEmpty) return mod;
+  return null;
+}
+
 final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) {
   ref.watch(activeCampaignProvider); // rebuild when campaign changes
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
+    () => ref.read(characterListProvider).valueOrNull ?? const <Character>[],
     () => ref.read(activeCampaignProvider.notifier).data,
     ref.read(eventBusProvider),
     (patch) async {
