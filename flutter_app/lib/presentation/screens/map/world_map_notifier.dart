@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/media_provider.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/map_data.dart';
@@ -449,12 +450,23 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
         .join();
   }
 
-  /// Auto-save kaldırıldığı için bu metot artık sadece in-memory campaign
-  /// data'sına flush yapıyor. Kullanıcı Save butonuna basana veya item'i
-  /// kapatana kadar diske gitmiyor.
+  /// In-memory campaign data güncelle + diske debounced yaz.
+  /// `pendingWriteBufferProvider` 800ms spatial debounce yapar — pin drag
+  /// burst'lerinde tek I/O.
   void _debouncedSave() {
     if (!mounted) return;
     syncToCampaignData();
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    final data = campaign.data;
+    if (data == null) return;
+    final mapMap = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
+    final worldId = (data['world_id'] as String?) ?? 'local';
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'settings:$worldId:map_data',
+          kind: WriteKind.spatial,
+          action: () => campaign
+              .saveSettingsPatch({'map_data': Map<String, dynamic>.from(mapMap)}),
+        );
   }
 
   void undo() {
@@ -838,6 +850,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     Offset? pos,
     String? label,
     String? pinType,
+    String? note,
+    String? color,
+    Map<String, dynamic>? style,
   }) {
     final idx = state.pins.indexWhere((p) => p.id == id);
     if (idx < 0) return;
@@ -849,6 +864,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       y: pos?.dy ?? p.y,
       label: label ?? p.label,
       pinType: pinType ?? p.pinType,
+      note: note ?? p.note,
+      color: color ?? p.color,
+      style: style ?? p.style,
     );
     state = state.copyWith(pins: updated);
     _debouncedSave();
@@ -931,6 +949,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     String? color,
     List<String>? entityIds,
     String? sessionId,
+    Map<String, dynamic>? style,
   }) {
     final idx = state.timelinePins.indexWhere((t) => t.id == id);
     if (idx < 0) return;
@@ -945,6 +964,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       color: color ?? t.color,
       entityIds: entityIds ?? t.entityIds,
       sessionId: sessionId ?? t.sessionId,
+      style: style ?? t.style,
     );
     state = state.copyWith(timelinePins: updated);
     _debouncedSave();
@@ -1116,19 +1136,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       PinSize.large => PinSize.small,
     };
     state = state.copyWith(pinSize: next);
-  }
-
-  void toggleNonPlayerTimeline() {
-    state = state.copyWith(
-        showNonPlayerTimeline: !state.showNonPlayerTimeline);
-  }
-
-  void setEntityFilter(Set<String> entityIds) {
-    state = state.copyWith(activeEntityFilters: entityIds);
-  }
-
-  void clearEntityFilter() {
-    state = state.copyWith(activeEntityFilters: const {});
   }
 
   // Memoized visible-pin slices. Identity-keyed on the immutable inputs the

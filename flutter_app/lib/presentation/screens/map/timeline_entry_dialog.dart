@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'widgets/pin_edit_dialog.dart' show kPinIconChoices;
 
 /// Dialog for creating / editing a timeline pin.
 ///
@@ -29,6 +30,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
   late TextEditingController _noteCtrl;
   late List<String> _selectedEntityIds;
   late String _color;
+  late String _iconName;
 
   static const _presetColors = [
     '#42a5f5', '#ef5350', '#66bb6a', '#ffa726', '#ab47bc',
@@ -43,6 +45,8 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
     _noteCtrl = TextEditingController(text: e?.note ?? '');
     _selectedEntityIds = List<String>.from(e?.entityIds ?? []);
     _color = e?.color ?? '#42a5f5';
+    final iconOverride = e?.style['icon'];
+    _iconName = iconOverride is String ? iconOverride : '';
   }
 
   @override
@@ -181,6 +185,33 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 12),
+              Text(
+                'Icon',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: palette.uiFloatingText.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _iconChip(
+                      name: '',
+                      icon: Icons.refresh,
+                      active: _iconName.isEmpty,
+                      tooltip: 'Default'),
+                  ...kPinIconChoices.map(
+                    (e) => _iconChip(
+                      name: e.$1,
+                      icon: e.$2,
+                      active: _iconName == e.$1,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -199,11 +230,45 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
     );
   }
 
+  Widget _iconChip({
+    required String name,
+    required IconData icon,
+    required bool active,
+    String? tooltip,
+  }) {
+    final palette = widget.palette;
+    final chip = GestureDetector(
+      onTap: () => setState(() => _iconName = name),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: active
+              ? palette.featureCardAccent.withValues(alpha: 0.25)
+              : palette.featureCardBg,
+          borderRadius: palette.br,
+          border: Border.all(
+            color: active ? palette.featureCardAccent : palette.uiFloatingBorder,
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Icon(icon, size: 18, color: palette.uiFloatingText),
+      ),
+    );
+    return tooltip == null ? chip : Tooltip(message: tooltip, child: chip);
+  }
+
   void _save() {
     final day = int.tryParse(_dayCtrl.text) ?? 1;
     final existing = widget.existing;
+    final style = Map<String, dynamic>.from(existing?.style ?? {});
+    if (_iconName.isEmpty) {
+      style.remove('icon');
+    } else {
+      style['icon'] = _iconName;
+    }
     final result = TimelinePin(
-      id: existing?.id ?? '', // caller will assign new ID if needed
+      id: existing?.id ?? '',
       x: existing?.x ?? 0,
       y: existing?.y ?? 0,
       day: day,
@@ -212,6 +277,7 @@ class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
       sessionId: existing?.sessionId,
       parentIds: existing?.parentIds ?? [],
       color: _color,
+      style: style,
     );
     Navigator.pop(context, result);
   }

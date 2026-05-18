@@ -579,61 +579,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  /// Combat stats'taki bir değeri +/- ile değiştir ve entity'ye sync et
+  /// Adjust a combat-stat subfield by [delta]. Only mutates the combatant
+  /// snapshot — the source entity is never touched (encounter is a COPY).
   void _modifyStat(Combatant c, String subKey, int delta, Map<String, dynamic> stats, EncounterConfig cfg) {
-    if (c.entityId == null) return;
-    final entities = ref.read(entityProvider);
-    final entity = entities[c.entityId];
-    if (entity == null) return;
-
+    if (subKey == 'hp') {
+      ref.read(combatProvider.notifier).modifyHp(c.id, delta);
+      return;
+    }
     final currentVal = int.tryParse(stats[subKey]?.toString() ?? '') ?? 0;
     final maxKey = 'max_$subKey';
     final maxVal = int.tryParse(stats[maxKey]?.toString() ?? '') ?? 9999;
     final newVal = (currentVal + delta).clamp(0, maxVal);
-
-    // Entity'deki combatStats güncelle
-    final combatStats = entity.fields[cfg.combatStatsFieldKey];
-    if (combatStats is Map) {
-      final updated = Map<String, dynamic>.from(combatStats);
-      updated[subKey] = newVal.toString();
-      final newFields = Map<String, dynamic>.from(entity.fields);
-      newFields[cfg.combatStatsFieldKey] = updated;
-      ref.read(entityProvider.notifier).update(entity.copyWith(fields: newFields));
-    }
-
-    // Combatant HP de güncelle (hardcoded hp alanı için)
-    if (subKey == 'hp') {
-      ref.read(combatProvider.notifier).modifyHp(c.id, delta);
-    }
+    ref.read(combatProvider.notifier)
+        .setStat(c.id, subKey, newVal.toString());
   }
 
-  /// Set a combat stat to a raw value (for inline-editable cells). Unlike
-  /// [_modifyStat] this does NOT clamp or assume the value is numeric — it
-  /// writes whatever string the user typed back to the entity. HP/maxHP
-  /// updates are also propagated to the live combatant.
+  /// Set a combat-stat subfield to a raw string. Combatant-only write.
   void _setStat(Combatant c, String subKey, String newVal, EncounterConfig cfg) {
-    if (c.entityId == null) return;
-    final entities = ref.read(entityProvider);
-    final entity = entities[c.entityId];
-    if (entity == null) return;
-
-    final combatStats = entity.fields[cfg.combatStatsFieldKey];
-    final updated = combatStats is Map
-        ? Map<String, dynamic>.from(combatStats)
-        : <String, dynamic>{};
-    updated[subKey] = newVal;
-    final newFields = Map<String, dynamic>.from(entity.fields);
-    newFields[cfg.combatStatsFieldKey] = updated;
-    ref.read(entityProvider.notifier).update(entity.copyWith(fields: newFields));
-
-    // Live HP/maxHP propagation to the combatant in the active encounter.
-    final asInt = int.tryParse(newVal);
-    if (asInt != null) {
-      if (subKey == 'hp') {
-        final delta = asInt - c.hp;
-        if (delta != 0) ref.read(combatProvider.notifier).modifyHp(c.id, delta);
-      }
-    }
+    ref.read(combatProvider.notifier).setStat(c.id, subKey, newVal);
   }
 
   /// Show a small dice-picker dialog (d4–d20) and re-roll initiative for
@@ -1607,12 +1570,10 @@ class _CombatantRow extends ConsumerWidget {
     final cfg = schema.encounterConfig;
     final cols = _SessionScreenState._effectiveColumns(cfg);
 
-    // Selective watch — only this combatant's entity
-    final entity = c.entityId != null
-        ? ref.watch(entityProvider.select((m) => m[c.entityId]))
-        : null;
-    final combatStats = entity?.fields[cfg.combatStatsFieldKey];
-    final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
+    // Encounter is a COPY — stats come from the combatant snapshot, not the
+    // live entity. `c.entityId` is retained only so the row can open the
+    // original DB card on tap.
+    final statsMap = Map<String, dynamic>.from(c.stats);
 
     return GestureDetector(
       onTap: () => onSelect(c.entityId),

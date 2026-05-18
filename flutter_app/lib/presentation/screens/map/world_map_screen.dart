@@ -20,6 +20,7 @@ import '../../widgets/unbounded_stack.dart';
 import 'epoch_scroll_bar.dart';
 import 'epoch_waypoint_dialog.dart';
 import 'timeline_entry_dialog.dart';
+import 'widgets/pin_edit_dialog.dart';
 import 'world_map_notifier.dart';
 
 /// World Map tab root — toolbar + pannable/zoomable image canvas with pins
@@ -273,42 +274,6 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             palette: palette,
             onChanged: (_) => notifier.toggleMapPinsVisibility(),
           ),
-
-          // Non-player timeline (only when timeline visible)
-          if (mapState.showTimeline)
-            _ToolbarCheckbox(
-              label: 'All Timeline',
-              value: mapState.showNonPlayerTimeline,
-              palette: palette,
-              onChanged: (_) => notifier.toggleNonPlayerTimeline(),
-            ),
-
-          _VertDiv(palette: palette),
-
-          // Entity filter
-          _ToolbarButton(
-            icon: Icons.filter_list,
-            label: mapState.activeEntityFilters.isEmpty
-                ? 'Filter'
-                : 'Filter (${mapState.activeEntityFilters.length})',
-            palette: palette,
-            highlight: mapState.activeEntityFilters.isNotEmpty,
-            onTap: () => _showEntityFilterDialog(notifier, palette),
-          ),
-          if (mapState.activeEntityFilters.isNotEmpty)
-            InkWell(
-              key: const ValueKey('clear_filter'),
-              onTap: notifier.clearEntityFilter,
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Icon(
-                  Icons.filter_list_off,
-                  size: 14,
-                  color: Colors.red[300],
-                ),
-              ),
-            ),
 
           _VertDiv(palette: palette),
 
@@ -613,12 +578,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             notifier: notifier,
             pinSize: mapState.pinSize,
             iconData: _pinIcon(pin, ref),
-            onTap: () => _showPinDetail(context, pin, notifier, palette),
+            onEdit: () => _editPin(pin, notifier, palette),
             onInspect: pin.entityId != null
                 ? () => widget.onOpenEntity?.call(pin.entityId!)
                 : null,
-            onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
-            onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
             onDelete: () => notifier.deletePin(pin.id),
             onCopyToEpoch: mapState.epochs.length > 1
                 ? () => _showCopyToEpochDialog(
@@ -679,8 +642,6 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             onAddConnected: () => _addConnectedTimeline(pin, notifier, palette),
             onLinkNew: () => notifier.startLinkMode(pin.id),
             onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
-            onChangeColor: () =>
-                _showTimelineColorPicker(pin, notifier, palette),
             onDelete: () => notifier.deleteTimelinePin(pin.id),
             onEntityDrop: (entityId) => _onEntityDropOnTimelinePin(
               context,
@@ -846,6 +807,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         globalPosition.dy + 1,
       ),
       color: palette.uiFloatingBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       items: [
         if (isTimelineMode)
           PopupMenuItem(
@@ -1110,6 +1072,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         color: result.color,
         entityIds: result.entityIds,
         sessionId: result.sessionId,
+        style: result.style,
       );
     });
   }
@@ -1196,253 +1159,25 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     });
   }
 
-  void _showPinDetail(
-    BuildContext context,
+  Future<void> _editPin(
     MapPin pin,
     WorldMapNotifier notifier,
     DmToolColors palette,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: palette.uiFloatingBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (ctx) =>
-          _PinDetailSheet(pin: pin, palette: palette, notifier: notifier),
+  ) async {
+    final result = await PinEditDialog.show(context, pin, palette);
+    if (result == null) return;
+    final updated = result.pin;
+    if (updated == null) {
+      notifier.deletePin(pin.id);
+      return;
+    }
+    notifier.updatePin(
+      pin.id,
+      label: updated.label,
+      note: updated.note,
+      color: updated.color,
+      style: updated.style,
     );
-  }
-
-  void _showEditPinNoteDialog(
-    MapPin pin,
-    WorldMapNotifier notifier,
-    DmToolColors palette,
-  ) {
-    final ctrl = TextEditingController(text: pin.note);
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: palette.uiFloatingBg,
-        title: Text(
-          'Edit Note',
-          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
-        ),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLines: 4,
-          style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderSide: BorderSide(color: palette.uiFloatingBorder),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: palette.uiFloatingText),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              notifier.updatePinNote(pin.id, ctrl.text);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    ).whenComplete(ctrl.dispose);
-  }
-
-  void _showPinColorPicker(
-    MapPin pin,
-    WorldMapNotifier notifier,
-    DmToolColors palette,
-  ) {
-    const colors = [
-      '#42a5f5',
-      '#ef5350',
-      '#66bb6a',
-      '#ffa726',
-      '#ab47bc',
-      '#26c6da',
-      '#ec407a',
-      '#8d6e63',
-      '#78909c',
-      '#ffee58',
-    ];
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: palette.uiFloatingBg,
-        title: Text(
-          'Pick Color',
-          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
-        ),
-        content: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: colors.map((hex) {
-            final c = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
-            return GestureDetector(
-              onTap: () {
-                notifier.updatePinColor(pin.id, hex);
-                Navigator.pop(ctx);
-              },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: pin.color == hex
-                      ? Border.all(color: Colors.white, width: 2)
-                      : null,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  void _showTimelineColorPicker(
-    TimelinePin pin,
-    WorldMapNotifier notifier,
-    DmToolColors palette,
-  ) {
-    const colors = [
-      '#42a5f5',
-      '#ef5350',
-      '#66bb6a',
-      '#ffa726',
-      '#ab47bc',
-      '#26c6da',
-      '#ec407a',
-      '#8d6e63',
-      '#78909c',
-      '#ffee58',
-    ];
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: palette.uiFloatingBg,
-        title: Text(
-          'Pick Color (chain)',
-          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
-        ),
-        content: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: colors.map((hex) {
-            final c = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
-            return GestureDetector(
-              onTap: () {
-                notifier.updateTimelineChainColor(pin.id, hex);
-                Navigator.pop(ctx);
-              },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: pin.color == hex
-                      ? Border.all(color: Colors.white, width: 2)
-                      : null,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  void _showEntityFilterDialog(
-    WorldMapNotifier notifier,
-    DmToolColors palette,
-  ) {
-    // Only show entities whose category allows 'worldmap'
-    final allEntities = ref.read(entityProvider);
-    final schema = ref.read(worldSchemaProvider);
-    final allowedSlugs = schema.categories
-        .where((c) => c.allowedInSections.contains('worldmap'))
-        .map((c) => c.slug)
-        .toSet();
-    final entities = Map.fromEntries(
-      allEntities.entries.where(
-        (e) => allowedSlugs.contains(e.value.categorySlug),
-      ),
-    );
-    if (entities.isEmpty) return;
-
-    final mapState = ref.read(worldMapProvider);
-    final selected = Set<String>.from(mapState.activeEntityFilters);
-
-    showDialog<Set<String>>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: palette.uiFloatingBg,
-          title: Text(
-            'Filter by Entity',
-            style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
-          ),
-          content: SizedBox(
-            width: 300,
-            height: 300,
-            child: ListView(
-              children: entities.entries.map((e) {
-                final isChecked = selected.contains(e.key);
-                return CheckboxListTile(
-                  dense: true,
-                  title: Text(
-                    e.value.name,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: palette.uiFloatingText,
-                    ),
-                  ),
-                  value: isChecked,
-                  onChanged: (v) {
-                    setDlgState(() {
-                      if (v == true) {
-                        selected.add(e.key);
-                      } else {
-                        selected.remove(e.key);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: palette.uiFloatingText),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, selected),
-              child: const Text('Apply'),
-            ),
-          ],
-        ),
-      ),
-    ).then((result) {
-      if (result != null) {
-        notifier.setEntityFilter(result);
-      }
-    });
   }
 
   void _projectMap(DmToolColors palette) {
@@ -1463,10 +1198,8 @@ class _DraggablePin extends StatefulWidget {
   final MapPin pin;
   final DmToolColors palette;
   final WorldMapNotifier notifier;
-  final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback? onInspect;
-  final VoidCallback? onEditNote;
-  final VoidCallback? onChangeColor;
   final VoidCallback? onDelete;
   final VoidCallback? onCopyToEpoch;
   final PinSize pinSize;
@@ -1477,11 +1210,9 @@ class _DraggablePin extends StatefulWidget {
     required this.pin,
     required this.palette,
     required this.notifier,
-    required this.onTap,
+    required this.onEdit,
     required this.iconData,
     this.onInspect,
-    this.onEditNote,
-    this.onChangeColor,
     this.onDelete,
     this.onCopyToEpoch,
     this.pinSize = PinSize.medium,
@@ -1514,7 +1245,7 @@ class _DraggablePinState extends State<_DraggablePin> {
     final pin = widget.pin;
     final displayColor = pin.color.isNotEmpty
         ? _parseHexColor(pin.color)
-        : _pinColor(pin.pinType);
+        : _pinColor(pin.pinType, widget.palette);
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
@@ -1612,14 +1343,6 @@ class _DraggablePinState extends State<_DraggablePin> {
         value: 'edit_pin',
         child: _menuRow(Icons.edit, 'Edit Pin', palette),
       ),
-      PopupMenuItem(
-        value: 'edit_note',
-        child: _menuRow(Icons.edit_note, 'Edit Note', palette),
-      ),
-      PopupMenuItem(
-        value: 'change_color',
-        child: _menuRow(Icons.palette, 'Change Color', palette),
-      ),
       if (widget.onCopyToEpoch != null) ...[
         const PopupMenuDivider(),
         PopupMenuItem(
@@ -1643,17 +1366,14 @@ class _DraggablePinState extends State<_DraggablePin> {
         globalPos.dy + 1,
       ),
       color: palette.uiFloatingBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       items: items,
     ).then((value) {
       switch (value) {
         case 'inspect':
           widget.onInspect?.call();
         case 'edit_pin':
-          widget.onTap();
-        case 'edit_note':
-          widget.onEditNote?.call();
-        case 'change_color':
-          widget.onChangeColor?.call();
+          widget.onEdit();
         case 'copy_to_epoch':
           widget.onCopyToEpoch?.call();
         case 'delete':
@@ -1676,7 +1396,6 @@ class _DraggableTimelinePin extends StatefulWidget {
   final VoidCallback? onAddConnected;
   final VoidCallback? onLinkNew;
   final VoidCallback? onEdit;
-  final VoidCallback? onChangeColor;
   final VoidCallback? onDelete;
   final void Function(String entityId)? onEntityDrop;
   final Map<String, String> entityNames;
@@ -1693,7 +1412,6 @@ class _DraggableTimelinePin extends StatefulWidget {
     this.onAddConnected,
     this.onLinkNew,
     this.onEdit,
-    this.onChangeColor,
     this.onDelete,
     this.onEntityDrop,
     this.onCopyToEpoch,
@@ -1747,12 +1465,14 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
 
     final isDragging = _dragOffset != null;
 
+    final iconOverride = pin.style['icon'];
+    final hasIcon = iconOverride is String && iconOverride.isNotEmpty;
     final container = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: widget.palette.br,
         border: Border.all(
           color: _isDragOver
               ? Colors.yellowAccent
@@ -1764,14 +1484,20 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 3)],
       ),
       alignment: Alignment.center,
-      child: Text(
-        '${pin.day}',
-        style: TextStyle(
-          fontSize: _fontSize,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
+      child: hasIcon
+          ? Icon(
+              _iconFromName(iconOverride),
+              size: size * 0.6,
+              color: Colors.white,
+            )
+          : Text(
+              '${pin.day}',
+              style: TextStyle(
+                fontSize: _fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
     );
 
     return Positioned(
@@ -1890,10 +1616,6 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
         value: 'edit',
         child: _menuRow(Icons.edit, 'Edit', palette),
       ),
-      PopupMenuItem(
-        value: 'change_color',
-        child: _menuRow(Icons.palette, 'Change Color (chain)', palette),
-      ),
       if (widget.onCopyToEpoch != null) ...[
         const PopupMenuDivider(),
         PopupMenuItem(
@@ -1917,6 +1639,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
         globalPos.dy + 1,
       ),
       color: palette.uiFloatingBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       items: items,
     ).then((value) {
       switch (value) {
@@ -1926,8 +1649,6 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
           widget.onLinkNew?.call();
         case 'edit':
           widget.onEdit?.call();
-        case 'change_color':
-          widget.onChangeColor?.call();
         case 'copy_to_epoch':
           widget.onCopyToEpoch?.call();
         case 'delete':
@@ -1953,7 +1674,7 @@ Widget _timelineHoverCard(
     decoration: BoxDecoration(
       color: palette.uiFloatingBg,
       border: Border.all(color: palette.uiFloatingBorder),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.cbr,
       boxShadow: const [
         BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(1, 2)),
       ],
@@ -2184,127 +1905,6 @@ class _TimelineConnectionPainter extends CustomPainter {
 }
 
 // ---------------------------------------------------------------------------
-// Pin detail bottom sheet (legacy — kept for left-click)
-// ---------------------------------------------------------------------------
-
-class _PinDetailSheet extends StatefulWidget {
-  final MapPin pin;
-  final DmToolColors palette;
-  final WorldMapNotifier notifier;
-
-  const _PinDetailSheet({
-    required this.pin,
-    required this.palette,
-    required this.notifier,
-  });
-
-  @override
-  State<_PinDetailSheet> createState() => _PinDetailSheetState();
-}
-
-class _PinDetailSheetState extends State<_PinDetailSheet> {
-  late TextEditingController _labelCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _labelCtrl = TextEditingController(text: widget.pin.label);
-  }
-
-  @override
-  void dispose() {
-    _labelCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = widget.palette;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                Icons.location_pin,
-                size: 20,
-                color: _pinColor(widget.pin.pinType),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Pin Details',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: palette.tabActiveText,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: Colors.red[300],
-                ),
-                tooltip: 'Delete pin',
-                onPressed: () {
-                  widget.notifier.deletePin(widget.pin.id);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Label field
-          TextField(
-            controller: _labelCtrl,
-            style: TextStyle(fontSize: 12, color: palette.tabText),
-            decoration: InputDecoration(
-              labelText: 'Label',
-              labelStyle: TextStyle(
-                fontSize: 11,
-                color: palette.tabText.withValues(alpha: 0.6),
-              ),
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: palette.sidebarDivider),
-              ),
-              isDense: true,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Save
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                widget.notifier.updatePin(
-                  widget.pin.id,
-                  label: _labelCtrl.text,
-                );
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Toolbar helpers
 // ---------------------------------------------------------------------------
 
@@ -2434,6 +2034,7 @@ class _PinCategoryDropdown extends StatelessWidget {
       tooltip: 'Pin categories',
       offset: const Offset(0, 36),
       color: palette.uiFloatingBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onSelected: onToggle,
       itemBuilder: (_) => _pinTypes.map((type) {
         final visible = !hiddenPinTypes.contains(type);
@@ -2462,7 +2063,7 @@ class _PinCategoryDropdown extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _pinColor(type),
+                  color: _pinColor(type, palette),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -2498,13 +2099,13 @@ class _PinCategoryDropdown extends StatelessWidget {
 // Helpers
 // ---------------------------------------------------------------------------
 
-Color _pinColor(String pinType) {
+Color _pinColor(String pinType, DmToolColors palette) {
   return switch (pinType) {
-    'npc' => Colors.orange,
-    'monster' => Colors.red,
-    'location' => Colors.blue,
-    'event' => Colors.purple,
-    _ => Colors.grey,
+    'npc' => palette.pinNpc,
+    'monster' => palette.pinMonster,
+    'location' => palette.pinLocation,
+    'player' => palette.pinPlayer,
+    _ => palette.pinDefault,
   };
 }
 
@@ -2530,7 +2131,27 @@ IconData _iconFromName(String name) {
     'directions_boat' => Icons.directions_boat,
     'diamond' => Icons.diamond,
     'auto_fix_high' => Icons.auto_fix_high,
-    'coronavirus' => Icons.bug_report, // monster builtin → daha az medikal görünüm
+    'coronavirus' => Icons.colorize, // monster builtin → kılıç silüetine yakın
+    // Builtin default_* category icon strings
+    'default_npc' => Icons.person_pin,
+    'default_monster' => Icons.colorize,
+    'default_player' => Icons.person,
+    'default_spell' => Icons.auto_awesome,
+    'default_equipment' => Icons.backpack,
+    'default_class' => Icons.shield,
+    'default_race' => Icons.diversity_3,
+    'default_location' => Icons.location_on,
+    'default_quest' => Icons.flag,
+    'default_lore' => Icons.history_edu,
+    'default_status-effect' => Icons.flash_on,
+    'default_feat' => Icons.stars,
+    'default_background' => Icons.album,
+    'default_plane' => Icons.workspaces,
+    'default_condition' => Icons.cruelty_free,
+    'default_trait' => Icons.fork_right,
+    'default_action' => Icons.flash_on,
+    'default_reaction' => Icons.fork_right,
+    'default_legendary-action' => Icons.auto_fix_high,
     'flash_on' => Icons.flash_on,
     'cruelty_free' => Icons.cruelty_free,
     // Common alternates a custom category might pick
@@ -2551,6 +2172,10 @@ IconData _iconFromName(String name) {
 /// Pin icon resolved from the linked entity's category icon when present;
 /// falls back to a pinType-keyed default for entity-less manual pins.
 IconData _pinIcon(MapPin pin, WidgetRef ref) {
+  final override = pin.style['icon'];
+  if (override is String && override.isNotEmpty) {
+    return _iconFromName(override);
+  }
   final entityId = pin.entityId;
   if (entityId != null) {
     final entity = ref.read(entityProvider)[entityId];
@@ -2566,9 +2191,10 @@ IconData _pinIcon(MapPin pin, WidgetRef ref) {
   }
   return switch (pin.pinType) {
     'npc' => Icons.person_pin,
-    'monster' => Icons.bug_report,
+    'monster' => Icons.colorize,
     'location' => Icons.location_on,
     'event' => Icons.event,
+    'player' => Icons.person,
     _ => Icons.location_pin,
   };
 }

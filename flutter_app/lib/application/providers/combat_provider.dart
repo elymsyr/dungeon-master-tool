@@ -66,11 +66,50 @@ class CombatNotifier extends StateNotifier<CombatState>
   // Replaces the previous global markDirty path that triggered a full
   // `world_repository.save` (delete+insertAll on world_entities included).
   final Future<void> Function(Map<String, dynamic> patch) _saveSettingsPatch;
+  // HP/ac write-back for characters (encounter ↔ character card sync).
+  final Future<void> Function(Character) _saveCharacter;
 
   CombatNotifier(this._getEntities, this._getSchema, this._getCharacters,
-      this._getCampaignData, this._eventBus, this._saveSettingsPatch)
+      this._getCampaignData, this._eventBus, this._saveSettingsPatch,
+      this._saveCharacter)
       : super(const CombatState()) {
     _loadFromCampaign();
+  }
+
+  Character? _characterByEntityId(String? entityId) {
+    if (entityId == null) return null;
+    for (final c in _getCharacters()) {
+      if (c.entity.id == entityId) return c;
+    }
+    return null;
+  }
+
+  /// Mirror selected combat fields back onto the source character entity so
+  /// the character card and encounter row stay in sync.
+  void _syncCharacterFields(String? entityId,
+      {int? hp, int? maxHp, int? ac}) {
+    final character = _characterByEntityId(entityId);
+    if (character == null) return;
+    final fields = Map<String, dynamic>.from(character.entity.fields);
+    var changed = false;
+    if (hp != null && fields['hp'] != hp) {
+      fields['hp'] = hp;
+      changed = true;
+    }
+    if (maxHp != null && fields['max_hp'] != maxHp) {
+      fields['max_hp'] = maxHp;
+      changed = true;
+    }
+    if (ac != null && fields['ac'] != ac) {
+      fields['ac'] = ac;
+      changed = true;
+    }
+    if (!changed) return;
+    final patched = character.copyWith(
+      entity: character.entity.copyWith(fields: fields),
+    );
+    // ignore: discarded_futures
+    _saveCharacter(patched);
   }
 
   String? get _campaignId => _getCampaignData()?['world_id'] as String?;
@@ -161,7 +200,10 @@ class CombatNotifier extends StateNotifier<CombatState>
   }
 
   /// Entity'nin encounter'a eklenebilir olup olmadığını kontrol eder.
+  /// Characters (oyuncu karakterleri) her zaman eklenebilir — kategori
+  /// slug'ı schema'da encounter section'da listelenmese bile.
   bool canAddToEncounter(String entityId) {
+    if (_characterByEntityId(entityId) != null) return true;
     final entities = _getEntities();
     final entity = entities[entityId];
     if (entity == null) return false;
@@ -191,30 +233,63 @@ class CombatNotifier extends StateNotifier<CombatState>
     initSpec ??= _flatInitSpec(entity.fields);
     final initRoll = _rollInitFromSpec(initSpec);
 
-    // HP, AC — combatStats map > flat fields (v2 monster: ac, hp_average).
-    final hp = combatStats is Map
-        ? _parseInt(combatStats, 'hp',
-            _parseFlatInt(entity.fields, 'hp_average', 10))
-        : _parseFlatInt(entity.fields, 'hp_average', 10);
-    final maxHp = combatStats is Map
-        ? _parseInt(combatStats, 'max_hp', hp)
-        : hp;
-    final ac = combatStats is Map
-        ? _parseInt(combatStats, 'ac', _parseFlatInt(entity.fields, 'ac', 10))
-        : _parseFlatInt(entity.fields, 'ac', 10);
+    // HP, AC — combatStats map > flat fields. Char (player) entity flat
+    // schema stores `hp`/`max_hp` (current+max); monster/animal v2 uses
+    // `hp_average` (single value) + `ac`. For characters we preserve the
+    // live current HP; non-char entities start at full HP.
+    final isCharacter = _characterByEntityId(entityId) != null;
+    final int maxHp;
+    final int currentHp;
+    final int ac;
+    if (combatStats is Map) {
+      final fallback = _parseFlatInt(entity.fields, 'hp_average', 10);
+      maxHp = _parseInt(combatStats, 'max_hp',
+          _parseInt(combatStats, 'hp', fallback));
+      currentHp = _parseInt(combatStats, 'hp', maxHp);
+      ac = _parseInt(combatStats, 'ac', _parseFlatInt(entity.fields, 'ac', 10));
+    } else if (isCharacter) {
+      final flatMax = _parseFlatInt(entity.fields, 'max_hp', 0);
+      final flatHp = _parseFlatInt(entity.fields, 'hp', flatMax);
+      maxHp = flatMax > 0 ? flatMax : flatHp;
+      currentHp = flatHp.clamp(0, maxHp == 0 ? flatHp : maxHp);
+      ac = _parseFlatInt(entity.fields, 'ac', 10);
+    } else {
+      final avgHp = _parseFlatInt(entity.fields, 'hp_average', 10);
+      maxHp = avgHp;
+      currentHp = avgHp;
+      ac = _parseFlatInt(entity.fields, 'ac', 10);
+    }
+
+    // Deep snapshot of source stats — encounter is a COPY, never reads
+    // back from the live entity. v1 carries the combatStats map; v2 has
+    // flat fields, so synthesize an equivalent map.
+    final Map<String, dynamic> snapshotStats;
+    if (combatStats is Map) {
+      snapshotStats = Map<String, dynamic>.from(combatStats);
+    } else {
+      snapshotStats = <String, dynamic>{
+        for (final k in const ['hp_average', 'ac', 'initiative_modifier',
+            'initiative_score', 'speed', 'cr'])
+          if (entity.fields[k] != null) k: entity.fields[k],
+      };
+    }
+    snapshotStats['hp'] = currentHp.toString();
+    snapshotStats['max_hp'] = maxHp.toString();
+    snapshotStats['ac'] = ac.toString();
 
     final combatant = Combatant(
       id: _uuid.v4(),
       name: entity.name,
       init: initRoll,
       ac: ac,
-      hp: hp,
+      hp: currentHp,
       maxHp: maxHp,
       entityId: entityId,
+      stats: snapshotStats,
     );
 
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
-    _log('Added ${entity.name} (Init: $initRoll, AC: $ac, HP: $hp/$maxHp)');
+    _log('Added ${entity.name} (Init: $initRoll, AC: $ac, HP: $currentHp/$maxHp)');
     _sortByInitiative();
     _eventBus.emit(EventEnvelope.now(
       EventTypes.sessionCombatantAdded,
@@ -417,7 +492,9 @@ class CombatNotifier extends StateNotifier<CombatState>
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
       final newHp = (c.hp + delta).clamp(0, c.maxHp);
-      return c.copyWith(hp: newHp);
+      final newStats = Map<String, dynamic>.from(c.stats);
+      newStats['hp'] = newHp.toString();
+      return c.copyWith(hp: newHp, stats: newStats);
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: updated));
@@ -425,8 +502,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     final c = updated.firstWhere((c) => c.id == combatantId);
     _log('${c.name} HP ${delta > 0 ? '+' : ''}$delta (${c.hp}/${c.maxHp})');
 
-    // Entity card sync — combatStats güncelle
-    _syncCombatStatToEntity(combatantId, 'hp', c.hp.toString());
+    _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp);
     _saveAndNotify();
     _eventBus.emit(EventEnvelope.now(
       EventTypes.sessionCombatantUpdated,
@@ -439,25 +515,39 @@ class CombatNotifier extends StateNotifier<CombatState>
     ));
   }
 
-  /// Combat stats'taki bir değeri entity'ye de yaz (canlı sync)
-  void _syncCombatStatToEntity(String combatantId, String subKey, String value) {
+  /// Update a single combat-stat subfield on the combatant's snapshot.
+  /// Pure combatant mutation — never touches the source entity.
+  void setStat(String combatantId, String subKey, String value) {
     final enc = state.activeEncounter;
     if (enc == null) return;
-    final combatant = enc.combatants.where((c) => c.id == combatantId);
-    if (combatant.isEmpty || combatant.first.entityId == null) return;
+    pushUndo(state);
 
-    final entities = _getEntities();
-    final entity = entities[combatant.first.entityId];
-    if (entity == null) return;
+    final updated = enc.combatants.map((c) {
+      if (c.id != combatantId) return c;
+      final newStats = Map<String, dynamic>.from(c.stats);
+      newStats[subKey] = value;
 
-    final cfg = _encounterConfig;
-    final stats = entity.fields[cfg.combatStatsFieldKey];
-    if (stats is Map) {
-      final updated = Map<String, dynamic>.from(stats);
-      updated[subKey] = value;
-      // Entity provider'a yazma — doğrudan _getEntities map'ini güncelle
-      // (Bu reactive provider üzerinden propagate olacak)
-    }
+      // Mirror canonical fields so the rest of the codebase (UI badges,
+      // sorting, condition logic) reads consistent values.
+      int hp = c.hp;
+      int maxHp = c.maxHp;
+      int ac = c.ac;
+      final asInt = int.tryParse(value);
+      if (asInt != null) {
+        if (subKey == 'hp') hp = asInt.clamp(0, maxHp);
+        if (subKey == 'max_hp') {
+          maxHp = asInt;
+          if (hp > maxHp) hp = maxHp;
+        }
+        if (subKey == 'ac') ac = asInt;
+      }
+      return c.copyWith(stats: newStats, hp: hp, maxHp: maxHp, ac: ac);
+    }).toList();
+
+    _updateEncounter(enc.copyWith(combatants: updated));
+    final c = updated.firstWhere((c) => c.id == combatantId);
+    _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp, ac: c.ac);
+    _saveAndNotify();
   }
 
   void addCondition(String combatantId, String condName, int? duration, {String? entityId}) {
@@ -671,5 +761,6 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
                 .saveSettingsPatch(patch),
           );
     },
+    (character) => ref.read(characterListProvider.notifier).update(character),
   );
 });

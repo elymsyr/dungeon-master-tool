@@ -54,6 +54,7 @@ abstract class TimelinePin with _$TimelinePin {
     String? sessionId,
     @Default([]) List<String> parentIds,
     @Default('#42a5f5') String color,
+    @Default({}) Map<String, dynamic> style,
   }) = _TimelinePin;
 
   factory TimelinePin.fromJson(Map<String, dynamic> json) =>
