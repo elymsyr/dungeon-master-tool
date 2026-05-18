@@ -31,6 +31,12 @@ class MindMapPainter extends CustomPainter {
   static final _nodeLabelCache = <String, TextPainter>{};
   static List<MindMapNode>? _lastNodes;
 
+  // F6: nodeMap identity cache. Rebuilds only when node list reference
+  // changes (CRUD/undo). During drag, only entries for dragged ids get
+  // overridden — no O(N) rebuild per paint at 60fps.
+  static List<MindMapNode>? _nmNodesRef;
+  static Map<String, (double, double, double, double)>? _nmCache;
+
   MindMapPainter({
     required this.mapState,
     required this.scale,
@@ -51,7 +57,33 @@ class MindMapPainter extends CustomPainter {
       _dashedRectCache.clear();
       _nodeLabelCache.clear();
       _arrowCache.clear();
+      // F6: nodeMap cache shares the same invalidation point.
+      _nmNodesRef = null;
+      _nmCache = null;
     }
+  }
+
+  /// F6: lazily build the (id → x,y,w,h) snapshot once per node-list
+  /// identity, then apply drag overrides on top. Avoids the O(N) loop
+  /// inside [_paintEdges] on every 60fps drag tick.
+  Map<String, (double, double, double, double)> _buildEdgeNodeMap() {
+    var base = _nmCache;
+    if (!identical(_nmNodesRef, mapState.nodes) || base == null) {
+      _nmNodesRef = mapState.nodes;
+      base = {
+        for (final n in mapState.nodes) n.id: (n.x, n.y, n.width, n.height),
+      };
+      _nmCache = base;
+    }
+    if (dragOverrides.isEmpty) return base;
+    // Apply overrides on top — only dragged ids deviate.
+    final merged = Map<String, (double, double, double, double)>.of(base);
+    for (final entry in dragOverrides.entries) {
+      final prev = base[entry.key];
+      if (prev == null) continue;
+      merged[entry.key] = (entry.value.dx, entry.value.dy, prev.$3, prev.$4);
+    }
+    return merged;
   }
 
   @override
@@ -203,14 +235,7 @@ class MindMapPainter extends CustomPainter {
   void _paintEdges(Canvas canvas) {
     if (mapState.edges.isEmpty) return;
 
-    final nodeMap = <String, (double, double, double, double)>{};
-    for (final n in mapState.nodes) {
-      // Use drag override position if available (during active drag)
-      final override = dragOverrides[n.id];
-      final x = override?.dx ?? n.x;
-      final y = override?.dy ?? n.y;
-      nodeMap[n.id] = (x, y, n.width, n.height);
-    }
+    final nodeMap = _buildEdgeNodeMap();
 
     for (final edge in mapState.edges) {
       final src = nodeMap[edge.sourceId];

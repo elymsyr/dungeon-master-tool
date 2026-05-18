@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +7,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/unbounded_stack.dart';
 import 'mind_map_notifier.dart';
 import 'mind_map_painter.dart';
 import 'mind_map_node_widget.dart';
@@ -190,12 +190,14 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     final scale = vt.scale;
     final lodZone = notifier.lodZone;
 
-    // Compute viewport rect in canvas-space for culling.
-    // Inflate generously so nodes near edges aren't culled when
-    // the child widget is cached across viewTransform changes.
-    final viewportRect = _computeViewportRect(notifier).inflate(500);
+    // F8: viewport rect in canvas-space for culling. Inflate by a constant
+    // screen-space buffer (~200px) divided by the current scale → the
+    // canvas-space buffer auto-shrinks when zoomed in and grows when
+    // zoomed out, keeping the on-screen edge band stable.
+    final viewportRect =
+        _computeViewportRect(notifier).inflate(200 / scale);
 
-    return _UnboundedStack(
+    return UnboundedStack(
       clipBehavior: Clip.none,
       children: [
         // Grid + edges + workspaces + LOD templates
@@ -234,13 +236,14 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                 mapState.connectingFromId != null && !isConnecting;
             final showResizeHandle = isSelected;
 
-            return ValueListenableBuilder<Map<String, Offset>>(
+            // F7: per-node override notifier — single listener per node;
+            //     a drag on node X fires only X's builder, not all N.
+            return ValueListenableBuilder<NodeOverride>(
               key: ValueKey('node_${node.id}'),
-              valueListenable: notifier.dragOverrides,
-              builder: (_, dragMap, child) {
-                final sizeMap = notifier.sizeOverrides.value;
-                final pos = dragMap[node.id];
-                final size = sizeMap[node.id];
+              valueListenable: notifier.nodeOverrideOf(node.id),
+              builder: (_, override, child) {
+                final pos = override.pos;
+                final size = override.size;
                 final cx = pos?.dx ?? node.x;
                 final cy = pos?.dy ?? node.y;
                 final w = size?.width ?? node.width;
@@ -491,51 +494,5 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   }
 }
 
-// ---------------------------------------------------------------------------
-// Stack whose hit-testing is not bounded by its layout size.
-//
-// In the infinite canvas the Transform inverse-maps screen coordinates to
-// canvas coordinates which can exceed the Stack's viewport-sized bounds.
-// Flutter's default RenderBox.hitTest checks size.contains(position) and
-// rejects those hits.  This widget removes that check so Positioned children
-// at any canvas coordinate receive pointer events.
-// ---------------------------------------------------------------------------
-
-class _UnboundedStack extends Stack {
-  const _UnboundedStack({
-    super.clipBehavior = Clip.none,
-    super.children = const <Widget>[],
-  });
-
-  @override
-  RenderStack createRenderObject(BuildContext context) {
-    return _RenderUnboundedStack(
-      alignment: alignment,
-      textDirection: textDirection ?? Directionality.maybeOf(context),
-      fit: fit,
-      clipBehavior: clipBehavior,
-    );
-  }
-
-}
-
-class _RenderUnboundedStack extends RenderStack {
-  _RenderUnboundedStack({
-    super.alignment,
-    super.textDirection,
-    super.fit,
-    super.clipBehavior,
-  });
-
-  @override
-  bool hitTest(BoxHitTestResult result, {required Offset position}) {
-    // Skip the default size.contains(position) check so that children
-    // at any canvas coordinate receive pointer events (right-click, tap, drag).
-    if (hitTestChildren(result, position: position) ||
-        hitTestSelf(position)) {
-      result.add(BoxHitTestEntry(this, position));
-      return true;
-    }
-    return false;
-  }
-}
+// Local _UnboundedStack moved to widgets/unbounded_stack.dart (shared with
+// world map). Use UnboundedStack from that import.

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/mind_map_id_provider.dart';
-import '../../../application/providers/save_state_provider.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'mind_map_canvas.dart';
@@ -50,19 +50,42 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
   @override
   void deactivate() {
-    // Mutating provider state during deactivate raises Riverpod's
-    // "modify provider while widget tree was building" assertion when the
-    // parent rebuild that's tearing this widget down is still in flight.
-    // Capture notifiers (provider singletons survive widget unmount) and
-    // run the sync after the current frame.
-    final mapNotifier = _notifier;
-    final saveNotifier = ref.read(saveStateProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        mapNotifier.syncToCampaignData();
-        saveNotifier.markDirty();
-      } catch (_) {}
-    });
+    // autoDispose mindMapProvider tab değişimde dispose olunca, notifier'ın
+    // _ref'i geçersiz; flushSave içindeki ref.read'lar atar ve save düşer.
+    // Burada in-memory snapshot'ı senkron al, singleton container üzerinden
+    // doğrudan saveSettingsPatch çağır — pending buffer + autoDispose
+    // notifier tamamen bypass.
+    try {
+      final vt = _notifier.viewTransform.value;
+      final mapId = ref.read(currentMindMapIdProvider);
+      final mapState = ref.read(mindMapProvider);
+      final mindMapData = <String, dynamic>{
+        'nodes': mapState.nodes.map((n) => n.toJson()).toList(),
+        'edges': mapState.edges.map((e) => e.toJson()).toList(),
+        'scale': vt.scale,
+        'pan_x': vt.panOffset.dx,
+        'pan_y': vt.panOffset.dy,
+      };
+      final campaign = ref.read(activeCampaignProvider.notifier);
+      final data = campaign.data;
+      if (data != null) {
+        final mindMaps = Map<String, dynamic>.from(
+            data['mind_maps'] as Map? ?? <String, dynamic>{});
+        mindMaps[mapId] = mindMapData;
+        data['mind_maps'] = mindMaps;
+        // Pending spatial timer'ı iptal et — aşağıda tam patch'i kendimiz
+        // yazıyoruz, stale closure'ın 800ms sonra üstüne yazması istenmiyor.
+        final worldId = (data['world_id'] as String?) ?? 'local';
+        ref.read(pendingWriteBufferProvider).schedule(
+              key: 'settings:$worldId:mind_maps',
+              kind: WriteKind.immediate,
+              action: () => campaign.saveSettingsPatch(
+                  {'mind_maps': Map<String, dynamic>.from(mindMaps)}),
+            );
+      }
+    } catch (e, st) {
+      debugPrint('MindMapScreen.deactivate save: $e\n$st');
+    }
     super.deactivate();
   }
 

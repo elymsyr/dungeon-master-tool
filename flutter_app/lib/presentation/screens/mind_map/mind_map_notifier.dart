@@ -22,6 +22,23 @@ class MindMapViewTransform {
   const MindMapViewTransform({this.scale = 1.0, this.panOffset = Offset.zero});
 }
 
+/// F7: per-node drag/resize override snapshot. Null fields mean "no
+/// override active for this dimension — fall back to MindMapNode.x/y/w/h".
+@immutable
+class NodeOverride {
+  final Offset? pos;
+  final Size? size;
+  const NodeOverride({this.pos, this.size});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NodeOverride && other.pos == pos && other.size == size;
+
+  @override
+  int get hashCode => Object.hash(pos, size);
+}
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -111,20 +128,46 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   final ValueNotifier<Map<String, Size>> sizeOverrides =
       ValueNotifier<Map<String, Size>>(const {});
 
+  // F7: per-node override notifier. Each node's Positioned listens only to
+  // its own notifier so a single drag tick fires one builder, not N. The
+  // global dragOverrides ValueNotifier above is kept for the edge painter
+  // (which still needs the full snapshot at paint time).
+  final Map<String, ValueNotifier<NodeOverride>> _nodeOverrideNotifiers = {};
+
+  ValueNotifier<NodeOverride> nodeOverrideOf(String id) {
+    return _nodeOverrideNotifiers.putIfAbsent(
+        id, () => ValueNotifier<NodeOverride>(const NodeOverride()));
+  }
+
+  void _writeNodeOverride(String id, {Offset? pos, Size? size}) {
+    final n = nodeOverrideOf(id);
+    if (n.value.pos == pos && n.value.size == size) return;
+    n.value = NodeOverride(pos: pos, size: size);
+  }
+
   // Gesture tracking
   double _scaleBase = 1.0;
   Offset _focalBase = Offset.zero;
   Offset _panBase = Offset.zero;
   Size _viewportSize = Size.zero;
 
-  MindMapNotifier(this._ref) : super(const MindMapState());
+  MindMapNotifier(this._ref) : super(const MindMapState()) {
+    // F9: keep lodZone cached. Listener fires only when scale crosses a
+    // bucket; getter is O(1) for every build-path consumer.
+    viewTransform.addListener(_recomputeLodZone);
+  }
 
   @override
   void dispose() {
+    viewTransform.removeListener(_recomputeLodZone);
     viewTransform.dispose();
     edgeTick.dispose();
     dragOverrides.dispose();
     sizeOverrides.dispose();
+    for (final n in _nodeOverrideNotifiers.values) {
+      n.dispose();
+    }
+    _nodeOverrideNotifiers.clear();
     disposeUndoRedo();
     super.dispose();
   }
@@ -183,9 +226,34 @@ class MindMapNotifier extends StateNotifier<MindMapState>
         (campaign.data?['world_id'] as String?) ?? 'local';
     // Debounce node move / edge edit'leri via PendingWriteBuffer
     // (spatial = 800ms). Drag tick'leri tek read-merge-write'a coalesce.
+    // Closure captures `campaign` (long-lived) ve `worldId`; mindMaps
+    // referansını fire anında re-read et ki en güncel snapshot diske gitsin
+    // — autoDispose notifier'ı pending timer'dan önce dispose olabiliyor.
     _ref.read(pendingWriteBufferProvider).schedule(
           key: 'settings:$worldId:mind_maps',
           kind: WriteKind.spatial,
+          action: () async {
+            final latest = campaign.data?['mind_maps'];
+            if (latest is! Map) return;
+            await campaign.saveSettingsPatch(
+                {'mind_maps': Map<String, dynamic>.from(latest)});
+          },
+        );
+  }
+
+  /// Drain pending debounce ve hemen diske yaz. Tab değişimi / world close
+  /// gibi noktalarda 800ms beklemeden save'i kapatır.
+  Future<void> flushSave() async {
+    syncToCampaignData();
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    final mindMaps = campaign.data?['mind_maps'];
+    if (mindMaps is! Map) return;
+    final worldId =
+        (campaign.data?['world_id'] as String?) ?? 'local';
+    // Pending debounce'u iptal ve hemen yaz.
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'settings:$worldId:mind_maps',
+          kind: WriteKind.immediate,
           action: () => campaign.saveSettingsPatch(
               {'mind_maps': Map<String, dynamic>.from(mindMaps)}),
         );
@@ -249,6 +317,9 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   /// Returns true if [canvasPos] is inside an entity or note node
   /// (nodes that contain scrollable content).
   bool isPointOverScrollableNode(Offset canvasPos) {
+    // F10: at LOD 2 entity/note widgets are replaced by static painter
+    // template rects (no scrollables on screen) → skip the O(N) loop.
+    if (_lodZone == 2) return false;
     return state.nodes.any((node) {
       if (node.nodeType != 'entity' && node.nodeType != 'note') return false;
       final nodeRect = Rect.fromCenter(
@@ -349,11 +420,15 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   // LOD
   // -------------------------------------------------------------------------
 
-  int get lodZone {
+  // F9: lodZone cache. Recomputed only when scale crosses a threshold via
+  // [_recomputeLodZone]; getter is O(1) for build-path consumers.
+  int _lodZone = 0;
+  int get lodZone => _lodZone;
+
+  void _recomputeLodZone() {
     final s = viewTransform.value.scale;
-    if (s >= 0.4) return 0;
-    if (s >= 0.1) return 1;
-    return 2;
+    final next = s >= 0.4 ? 0 : (s >= 0.1 ? 1 : 2);
+    if (_lodZone != next) _lodZone = next;
   }
 
   // -------------------------------------------------------------------------
@@ -526,6 +601,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   /// Update drag position override without touching Riverpod state.
   void updateDragOverride(String id, Offset pos) {
     dragOverrides.value = {...dragOverrides.value, id: pos};
+    _writeNodeOverride(id,
+        pos: pos, size: sizeOverrides.value[id]); // F7 per-node fanout
     edgeTick.value++;
   }
 
@@ -534,6 +611,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     final pos = dragOverrides.value[id];
     final updated = Map<String, Offset>.from(dragOverrides.value)..remove(id);
     dragOverrides.value = updated;
+    _writeNodeOverride(id,
+        pos: null, size: sizeOverrides.value[id]); // F7 clear
     if (pos != null) {
       _pushUndo();
       updateNodePosition(id, pos);
@@ -544,6 +623,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   void updateSizeOverride(String id, Offset pos, Size size) {
     dragOverrides.value = {...dragOverrides.value, id: pos};
     sizeOverrides.value = {...sizeOverrides.value, id: size};
+    _writeNodeOverride(id, pos: pos, size: size); // F7
     edgeTick.value++;
   }
 
@@ -555,6 +635,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     final updatedSize = Map<String, Size>.from(sizeOverrides.value)..remove(id);
     dragOverrides.value = updatedDrag;
     sizeOverrides.value = updatedSize;
+    _writeNodeOverride(id, pos: null, size: null); // F7 clear
     if (pos != null && size != null) {
       _pushUndo();
       updateNodeGeometry(id, pos, size);

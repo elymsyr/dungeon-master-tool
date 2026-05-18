@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
@@ -173,6 +174,20 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   final ValueNotifier<WorldMapViewTransform> viewTransform =
       ValueNotifier<WorldMapViewTransform>(const WorldMapViewTransform());
 
+  // F2: Viewport-cull recomputation tick. Bumped at gesture-END / discrete
+  // zoom events; the pin layer rebuilds its filtered list against the
+  // current viewTransform.value. During active scale/pan ticks viewTransform
+  // updates without bumping cullTick, so the pin Widget tree is not
+  // reinstantiated 60fps — Transform handles smooth visual update via the
+  // matrix alone (F1 child-slot pattern).
+  final ValueNotifier<int> cullTick = ValueNotifier<int>(0);
+
+  // F4: Single source of truth for the timeline pin under cursor. Per-pin
+  // MouseRegion writes here; one canvas-level ValueListenableBuilder renders
+  // the hover card. Drops 100x setState fanout vs per-pin local state.
+  final ValueNotifier<String?> hoveredTimelinePinId =
+      ValueNotifier<String?>(null);
+
   // Viewport size for fit-to-image calculations
   Size _viewportSize = Size.zero;
 
@@ -191,8 +206,16 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   @override
   void dispose() {
     viewTransform.dispose();
+    cullTick.dispose();
+    hoveredTimelinePinId.dispose();
     disposeUndoRedo();
     super.dispose();
+  }
+
+  /// Bumps [cullTick] to trigger viewport-culling recomputation on the pin
+  /// layer. Fired at gesture-END / discrete zoom / view-fit transitions.
+  void _bumpCullTick() {
+    cullTick.value++;
   }
 
   // -------------------------------------------------------------------------
@@ -207,6 +230,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       scale: scale,
       panOffset: Offset(panX, panY),
     );
+    _bumpCullTick();
 
     // --- Epoch support ---
     final rawEpochs = data['epochs'] as List?;
@@ -709,6 +733,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   void onScaleEnd() {
     pushUndo(state);
     _debouncedSave();
+    _bumpCullTick();
   }
 
   void zoomAtPoint(Offset localPos, double scrollDelta) {
@@ -719,10 +744,13 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final scaleRatio = newScale / vt.scale;
     final newPan = localPos - (localPos - vt.panOffset) * scaleRatio;
     viewTransform.value = WorldMapViewTransform(scale: newScale, panOffset: newPan);
+    _bumpCullTick();
   }
 
   void updateViewportSize(Size size) {
+    if (size == _viewportSize) return;
     _viewportSize = size;
+    _bumpCullTick();
   }
 
   void resetView() {
@@ -737,11 +765,13 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final path = state.imagePath;
     if (path.isEmpty || _viewportSize == Size.zero) {
       viewTransform.value = const WorldMapViewTransform();
+      _bumpCullTick();
       return;
     }
     final file = File(path);
     if (!file.existsSync()) {
       viewTransform.value = const WorldMapViewTransform();
+      _bumpCullTick();
       return;
     }
     try {
@@ -757,8 +787,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       final panY = (_viewportSize.height - imgH * scale) / 2;
       viewTransform.value =
           WorldMapViewTransform(scale: scale, panOffset: Offset(panX, panY));
+      _bumpCullTick();
     } catch (_) {
       viewTransform.value = const WorldMapViewTransform();
+      _bumpCullTick();
     }
   }
 
@@ -1186,6 +1218,27 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   Offset canvasToScreen(Offset canvasPt) {
     final vt = viewTransform.value;
     return canvasPt * vt.scale + vt.panOffset;
+  }
+
+  /// F2: Current viewport in canvas-space (inverse of the Transform matrix).
+  /// Used by the pin layer to viewport-cull at [cullTick] events.
+  /// Inflated by ~1 viewport-worth so a pan-drag stays inside the culled set
+  /// until the next gesture-END bumps cullTick.
+  Rect computeCullViewport() {
+    if (_viewportSize == Size.zero) {
+      return const Rect.fromLTWH(-1e6, -1e6, 2e6, 2e6);
+    }
+    final vt = viewTransform.value;
+    final visible = Rect.fromLTWH(
+      -vt.panOffset.dx / vt.scale,
+      -vt.panOffset.dy / vt.scale,
+      _viewportSize.width / vt.scale,
+      _viewportSize.height / vt.scale,
+    );
+    // One-viewport buffer so a pan within the current gesture doesn't blank
+    // edge pins before onScaleEnd refreshes the cull.
+    return visible.inflate(
+        math.max(visible.width, visible.height));
   }
 }
 

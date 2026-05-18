@@ -16,6 +16,7 @@ import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/unbounded_stack.dart';
 import 'epoch_scroll_bar.dart';
 import 'epoch_waypoint_dialog.dart';
 import 'timeline_entry_dialog.dart';
@@ -469,16 +470,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                         d.globalPosition,
                         notifier,
                         palette,
+                        isTimelineMode: mapState.showTimeline,
                       );
                     },
-                    onLongPressStart: (d) {
-                      _showCanvasContextMenu(
-                        d.localPosition,
-                        d.globalPosition,
-                        notifier,
-                        palette,
-                      );
-                    },
+                    // NB: parent canvas onLongPressStart kaldırıldı —
+                    // pin'lerin onLongPressStart (drag) ve onSecondaryTapUp
+                    // (context menu) gesture arena'da burayla yarışıyor ve
+                    // bazı durumlarda parent kazanıyordu. Mobil'de canvas
+                    // context menüsü için toolbar veya double-tap kullanın
+                    // (zaten timeline mode'da onDoubleTapDown var).
                     child: ClipRect(
                       child: Stack(
                         fit: StackFit.expand,
@@ -514,122 +514,190 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     WorldMapNotifier notifier,
     WorldMapState mapState,
   ) {
+    // F1: Transform isolated in ValueListenableBuilder's `builder` slot;
+    //     pin Stack lives in the `child` slot so it's built once per outer
+    //     rebuild instead of every viewTransform tick.
     return ValueListenableBuilder<WorldMapViewTransform>(
       valueListenable: notifier.viewTransform,
-      builder: (context, vt, _) {
-        return Transform(
-          transform: Matrix4.identity()
-            ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
-            ..scaleByDouble(vt.scale, vt.scale, 1, 1),
-          alignment: Alignment.topLeft,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Background image — OverflowBox removes parent constraints
-              // so Image renders at full natural size (Transform handles zoom).
-              // RepaintBoundary keeps the static image layer cached across
-              // pan/zoom so pin movements don't invalidate the image picture.
-              // cacheHeight caps decoded RAM for oversized maps; 4096 is the
-              // safe ceiling that still allows pixel-clean zoom for 4K assets.
-              if (mapState.imagePath.isNotEmpty &&
-                  File(mapState.imagePath).existsSync())
-                RepaintBoundary(
-                  child: OverflowBox(
-                    alignment: Alignment.topLeft,
-                    maxWidth: double.infinity,
-                    maxHeight: double.infinity,
-                    child: Image.file(
-                      File(mapState.imagePath),
-                      fit: BoxFit.none,
-                      cacheHeight: 4096,
-                    ),
-                  ),
-                )
-              else
-                _buildEmptyMapPlaceholder(palette),
-
-              // Timeline connections (dashed lines)
-              if (mapState.showTimeline)
-                Positioned.fill(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      painter: _TimelineConnectionPainter(
-                        pins: notifier.visibleTimelinePins,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Map pins
-              ...notifier.visiblePins.map(
-                (pin) => _DraggablePin(
-                  key: ValueKey('pin_${pin.id}'),
-                  pin: pin,
-                  palette: palette,
-                  notifier: notifier,
-                  pinSize: mapState.pinSize,
-                  onTap: () => _showPinDetail(context, pin, notifier, palette),
-                  onInspect: pin.entityId != null
-                      ? () => widget.onOpenEntity?.call(pin.entityId!)
-                      : null,
-                  onEditNote: () =>
-                      _showEditPinNoteDialog(pin, notifier, palette),
-                  onChangeColor: () =>
-                      _showPinColorPicker(pin, notifier, palette),
-                  onDelete: () => notifier.deletePin(pin.id),
-                  onCopyToEpoch: mapState.epochs.length > 1
-                      ? () => _showCopyToEpochDialog(
-                          notifier,
-                          palette,
-                          pinId: pin.id,
-                        )
-                      : null,
+      builder: (_, vt, child) => Transform(
+        transform: Matrix4.identity()
+          ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
+          ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+        alignment: Alignment.topLeft,
+        child: child,
+      ),
+      // UnboundedStack: Transform inverse-maps screen → canvas coords that
+      // exceed this Stack's viewport-sized bounds. Default Stack.hitTest
+      // rejects out-of-bounds positions, blocking pin tap/long-press.
+      child: UnboundedStack(
+        clipBehavior: Clip.none,
+        children: [
+          // Background image — OverflowBox removes parent constraints
+          // so Image renders at full natural size (Transform handles zoom).
+          // RepaintBoundary keeps the static image layer cached across
+          // pan/zoom so pin movements don't invalidate the image picture.
+          // F5: cacheWidth paired with cacheHeight caps decoded RAM on
+          //     wide landscape maps; Image SDK preserves aspect ratio.
+          if (mapState.imagePath.isNotEmpty &&
+              File(mapState.imagePath).existsSync())
+            RepaintBoundary(
+              child: OverflowBox(
+                alignment: Alignment.topLeft,
+                maxWidth: double.infinity,
+                maxHeight: double.infinity,
+                child: Image.file(
+                  File(mapState.imagePath),
+                  fit: BoxFit.none,
+                  cacheWidth: 4096,
+                  cacheHeight: 4096,
                 ),
               ),
+            )
+          else
+            _buildEmptyMapPlaceholder(palette),
 
-              // Timeline pins
-              ...notifier.visibleTimelinePins.map(
-                (pin) => _DraggableTimelinePin(
-                  key: ValueKey('tpin_${pin.id}'),
-                  pin: pin,
-                  palette: palette,
-                  notifier: notifier,
-                  pinSize: mapState.pinSize,
-                  isLinkMode: mapState.isLinkMode,
-                  entityNames: _entityNameMap(pin.entityIds),
-                  onTap: () {
-                    if (mapState.isLinkMode) {
-                      notifier.handleLinkToExisting(pin.id);
-                    } else {
-                      _showTimelineEditDialog(pin, notifier, palette);
-                    }
-                  },
-                  onAddConnected: () =>
-                      _addConnectedTimeline(pin, notifier, palette),
-                  onLinkNew: () => notifier.startLinkMode(pin.id),
-                  onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
-                  onChangeColor: () =>
-                      _showTimelineColorPicker(pin, notifier, palette),
-                  onDelete: () => notifier.deleteTimelinePin(pin.id),
-                  onEntityDrop: (entityId) => _onEntityDropOnTimelinePin(
-                    context,
-                    pin,
-                    entityId,
-                    notifier,
-                  ),
-                  onCopyToEpoch: mapState.epochs.length > 1
-                      ? () => _showCopyToEpochDialog(
-                          notifier,
-                          palette,
-                          timelinePinId: pin.id,
-                        )
-                      : null,
-                ),
-              ),
-            ],
+          // F2/F3: viewport-culled pin + painter layer. Rebuilds at
+          //        cullTick (gesture-END / discrete zoom), not on every
+          //        scale tick.
+          ValueListenableBuilder<int>(
+            valueListenable: notifier.cullTick,
+            builder: (_, _, _) =>
+                _buildCulledPinLayer(palette, notifier, mapState),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCulledPinLayer(
+    DmToolColors palette,
+    WorldMapNotifier notifier,
+    WorldMapState mapState,
+  ) {
+    final viewport = notifier.computeCullViewport();
+    bool inside(double x, double y) =>
+        x >= viewport.left &&
+        x <= viewport.right &&
+        y >= viewport.top &&
+        y <= viewport.bottom;
+
+    final culledPins =
+        notifier.visiblePins.where((p) => inside(p.x, p.y)).toList();
+    final culledTimeline =
+        notifier.visibleTimelinePins.where((p) => inside(p.x, p.y)).toList();
+
+    return UnboundedStack(
+      clipBehavior: Clip.none,
+      children: [
+        // Timeline connections (dashed lines) — segment-level cull inside
+        // the painter so a culled child whose parent is still visible
+        // doesn't drop its incoming line.
+        if (mapState.showTimeline)
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _TimelineConnectionPainter(
+                  pins: notifier.visibleTimelinePins,
+                  viewport: viewport,
+                ),
+              ),
+            ),
+          ),
+
+        // Map pins
+        ...culledPins.map(
+          (pin) => _DraggablePin(
+            key: ValueKey('pin_${pin.id}'),
+            pin: pin,
+            palette: palette,
+            notifier: notifier,
+            pinSize: mapState.pinSize,
+            iconData: _pinIcon(pin, ref),
+            onTap: () => _showPinDetail(context, pin, notifier, palette),
+            onInspect: pin.entityId != null
+                ? () => widget.onOpenEntity?.call(pin.entityId!)
+                : null,
+            onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
+            onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
+            onDelete: () => notifier.deletePin(pin.id),
+            onCopyToEpoch: mapState.epochs.length > 1
+                ? () => _showCopyToEpochDialog(
+                      notifier,
+                      palette,
+                      pinId: pin.id,
+                    )
+                : null,
+          ),
+        ),
+
+        // F4: single canvas-level hover overlay for the timeline pin under
+        //     cursor. Replaces 100x per-pin MouseRegion+setState fanout.
+        ValueListenableBuilder<String?>(
+          valueListenable: notifier.hoveredTimelinePinId,
+          builder: (_, hoveredId, _) {
+            if (hoveredId == null) return const SizedBox.shrink();
+            final hovered = culledTimeline
+                .where((p) => p.id == hoveredId)
+                .firstOrNull;
+            if (hovered == null) return const SizedBox.shrink();
+            final half = switch (mapState.pinSize) {
+              PinSize.small => 9.0,
+              PinSize.medium => 11.0,
+              PinSize.large => 14.0,
+            };
+            return Positioned(
+              left: hovered.x + half + 6,
+              top: hovered.y - half - 4,
+              child: IgnorePointer(
+                child: _timelineHoverCard(
+                  palette,
+                  hovered,
+                  _entityNameMap(hovered.entityIds),
+                ),
+              ),
+            );
+          },
+        ),
+
+        // Timeline pins
+        ...culledTimeline.map(
+          (pin) => _DraggableTimelinePin(
+            key: ValueKey('tpin_${pin.id}'),
+            pin: pin,
+            palette: palette,
+            notifier: notifier,
+            pinSize: mapState.pinSize,
+            isLinkMode: mapState.isLinkMode,
+            entityNames: _entityNameMap(pin.entityIds),
+            onTap: () {
+              if (mapState.isLinkMode) {
+                notifier.handleLinkToExisting(pin.id);
+              } else {
+                _showTimelineEditDialog(pin, notifier, palette);
+              }
+            },
+            onAddConnected: () => _addConnectedTimeline(pin, notifier, palette),
+            onLinkNew: () => notifier.startLinkMode(pin.id),
+            onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
+            onChangeColor: () =>
+                _showTimelineColorPicker(pin, notifier, palette),
+            onDelete: () => notifier.deleteTimelinePin(pin.id),
+            onEntityDrop: (entityId) => _onEntityDropOnTimelinePin(
+              context,
+              pin,
+              entityId,
+              notifier,
+            ),
+            onCopyToEpoch: mapState.epochs.length > 1
+                ? () => _showCopyToEpochDialog(
+                      notifier,
+                      palette,
+                      timelinePinId: pin.id,
+                    )
+                : null,
+          ),
+        ),
+      ],
     );
   }
 
@@ -765,8 +833,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     Offset localPosition,
     Offset globalPosition,
     WorldMapNotifier notifier,
-    DmToolColors palette,
-  ) {
+    DmToolColors palette, {
+    bool isTimelineMode = false,
+  }) {
     final canvasPos = notifier.screenToCanvas(localPosition);
     showMenu<String>(
       context: context,
@@ -778,40 +847,60 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       ),
       color: palette.uiFloatingBg,
       items: [
-        PopupMenuItem(
-          value: 'addPin',
-          child: Row(
-            children: [
-              Icon(
-                Icons.push_pin_outlined,
-                size: 16,
-                color: palette.uiFloatingText,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Add Pin',
-                style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
-              ),
-            ],
+        if (isTimelineMode)
+          PopupMenuItem(
+            value: 'addTimelinePin',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.flag_outlined,
+                  size: 16,
+                  color: palette.uiFloatingText,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Timeline Pin',
+                  style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
+                ),
+              ],
+            ),
+          )
+        else ...[
+          PopupMenuItem(
+            value: 'addPin',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.push_pin_outlined,
+                  size: 16,
+                  color: palette.uiFloatingText,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Pin',
+                  style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
+                ),
+              ],
+            ),
           ),
-        ),
-        PopupMenuItem(
-          value: 'addFromDb',
-          child: Row(
-            children: [
-              Icon(
-                Icons.dataset_outlined,
-                size: 16,
-                color: palette.uiFloatingText,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Add from Database',
-                style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
-              ),
-            ],
+          PopupMenuItem(
+            value: 'addFromDb',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.dataset_outlined,
+                  size: 16,
+                  color: palette.uiFloatingText,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add from Database',
+                  style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     ).then((value) {
       if (value == null) return;
@@ -820,6 +909,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           _showAddPinDialog(canvasPos, notifier);
         case 'addFromDb':
           _showEntityPickerForMap(canvasPos, notifier);
+        case 'addTimelinePin':
+          _showTimelineEntryDialog(canvasPos, notifier, palette);
       }
     });
   }
@@ -1379,6 +1470,7 @@ class _DraggablePin extends StatefulWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onCopyToEpoch;
   final PinSize pinSize;
+  final IconData iconData;
 
   const _DraggablePin({
     super.key,
@@ -1386,6 +1478,7 @@ class _DraggablePin extends StatefulWidget {
     required this.palette,
     required this.notifier,
     required this.onTap,
+    required this.iconData,
     this.onInspect,
     this.onEditNote,
     this.onChangeColor,
@@ -1433,9 +1526,23 @@ class _DraggablePinState extends State<_DraggablePin> {
       top: y - iconSize,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
+        // Tap = open context menu (sil/see-card/edit). Same on mobile tap
+        // and desktop left-click; detail sheet reachable as menu item.
+        onTapUp: (d) => _showContextMenu(context, d.globalPosition),
         onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
-        onLongPressStart: (d) => _showContextMenu(context, d.globalPosition),
+        // Touch: hold-and-drag via long-press chain.
+        onLongPressStart: (d) {
+          _dragStart = d.globalPosition;
+          _pinStartPos = Offset(pin.x, pin.y);
+        },
+        onLongPressMoveUpdate: (d) {
+          if (_dragStart == null || _pinStartPos == null) return;
+          final scale = widget.notifier.viewTransform.value.scale;
+          final delta = (d.globalPosition - _dragStart!) / scale;
+          setState(() => _dragOffset = _pinStartPos! + delta);
+        },
+        onLongPressEnd: (_) => _commitDrag(),
+        // Desktop mouse: click-drag without delay.
         onPanStart: (d) {
           _dragStart = d.globalPosition;
           _pinStartPos = Offset(pin.x, pin.y);
@@ -1446,19 +1553,12 @@ class _DraggablePinState extends State<_DraggablePin> {
           final delta = (d.globalPosition - _dragStart!) / scale;
           setState(() => _dragOffset = _pinStartPos! + delta);
         },
-        onPanEnd: (_) {
-          if (_dragOffset != null) {
-            widget.notifier.updatePin(pin.id, pos: _dragOffset!);
-          }
-          _dragStart = null;
-          _pinStartPos = null;
-          _dragOffset = null;
-        },
+        onPanEnd: (_) => _commitDrag(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.location_pin,
+              widget.iconData,
               size: iconSize,
               color: displayColor,
               shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
@@ -1486,6 +1586,15 @@ class _DraggablePinState extends State<_DraggablePin> {
     );
   }
 
+  void _commitDrag() {
+    if (_dragOffset != null) {
+      widget.notifier.updatePin(widget.pin.id, pos: _dragOffset!);
+    }
+    _dragStart = null;
+    _pinStartPos = null;
+    _dragOffset = null;
+  }
+
   void _showContextMenu(BuildContext context, Offset globalPos) {
     final palette = widget.palette;
     final items = <PopupMenuEntry<String>>[];
@@ -1494,11 +1603,15 @@ class _DraggablePinState extends State<_DraggablePin> {
       items.add(
         PopupMenuItem(
           value: 'inspect',
-          child: _menuRow(Icons.open_in_new, 'Inspect Entity', palette),
+          child: _menuRow(Icons.open_in_new, 'See Card', palette),
         ),
       );
     }
     items.addAll([
+      PopupMenuItem(
+        value: 'edit_pin',
+        child: _menuRow(Icons.edit, 'Edit Pin', palette),
+      ),
       PopupMenuItem(
         value: 'edit_note',
         child: _menuRow(Icons.edit_note, 'Edit Note', palette),
@@ -1535,6 +1648,8 @@ class _DraggablePinState extends State<_DraggablePin> {
       switch (value) {
         case 'inspect':
           widget.onInspect?.call();
+        case 'edit_pin':
+          widget.onTap();
         case 'edit_note':
           widget.onEditNote?.call();
         case 'change_color':
@@ -1595,7 +1710,17 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   Offset? _pinStartPos;
   Offset? _dragOffset;
   bool _isDragOver = false;
-  bool _isHovered = false;
+
+  // F4: hover state moved to WorldMapNotifier.hoveredTimelinePinId. This
+  // widget only WRITES on enter/exit; canvas-level VLB does the card render.
+  void _setHovered(bool hovered) {
+    final n = widget.notifier.hoveredTimelinePinId;
+    if (hovered) {
+      if (n.value != widget.pin.id) n.value = widget.pin.id;
+    } else if (n.value == widget.pin.id) {
+      n.value = null;
+    }
+  }
 
   // Timeline pins are one step smaller than map pins
   double get _boxSize => switch (widget.pinSize) {
@@ -1613,7 +1738,6 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
-    final palette = widget.palette;
     final color = _parseHexColor(pin.color);
 
     final x = _dragOffset?.dx ?? pin.x;
@@ -1674,20 +1798,40 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
               builder: (context, candidateData, _) {
                 return MouseRegion(
                   onEnter: (_) {
-                    if (!isDragging) setState(() => _isHovered = true);
+                    if (!isDragging) _setHovered(true);
                   },
-                  onExit: (_) => setState(() => _isHovered = false),
+                  onExit: (_) => _setHovered(false),
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: widget.onTap,
+                    // Tap = context menu (sil/edit/see card). Link mode'da
+                    // tap eski davranışı (link bağla) korur.
+                    onTapUp: (d) {
+                      if (widget.isLinkMode) {
+                        widget.onTap();
+                      } else {
+                        _showContextMenu(context, d.globalPosition);
+                      }
+                    },
                     onSecondaryTapUp: (d) =>
                         _showContextMenu(context, d.globalPosition),
-                    onLongPressStart: (d) =>
-                        _showContextMenu(context, d.globalPosition),
+                    // Touch: hold-and-drag via long-press chain.
+                    onLongPressStart: (d) {
+                      _dragStart = d.globalPosition;
+                      _pinStartPos = Offset(pin.x, pin.y);
+                      _setHovered(false);
+                    },
+                    onLongPressMoveUpdate: (d) {
+                      if (_dragStart == null || _pinStartPos == null) return;
+                      final scale = widget.notifier.viewTransform.value.scale;
+                      final delta = (d.globalPosition - _dragStart!) / scale;
+                      setState(() => _dragOffset = _pinStartPos! + delta);
+                    },
+                    onLongPressEnd: (_) => _commitDrag(),
+                    // Desktop mouse: hızlı tıkla-sürükle aynı pan handler'la.
                     onPanStart: (d) {
                       _dragStart = d.globalPosition;
                       _pinStartPos = Offset(pin.x, pin.y);
-                      setState(() => _isHovered = false);
+                      _setHovered(false);
                     },
                     onPanUpdate: (d) {
                       if (_dragStart == null || _pinStartPos == null) return;
@@ -1695,130 +1839,27 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                       final delta = (d.globalPosition - _dragStart!) / scale;
                       setState(() => _dragOffset = _pinStartPos! + delta);
                     },
-                    onPanEnd: (_) {
-                      if (_dragOffset != null) {
-                        widget.notifier.updateTimelinePin(
-                          pin.id,
-                          pos: _dragOffset!,
-                        );
-                      }
-                      _dragStart = null;
-                      _pinStartPos = null;
-                      _dragOffset = null;
-                    },
+                    onPanEnd: (_) => _commitDrag(),
                     child: container,
                   ),
                 );
               },
             ),
-            // Hover card — outside DragTarget so it doesn't affect layout
-            if (_isHovered && !isDragging)
-              Positioned(
-                left: size + 6,
-                top: -4,
-                child: IgnorePointer(child: _buildHoverCard(palette, pin)),
-              ),
+            // Hover card moved to canvas level (F4) — see
+            // _buildTimelineHoverOverlay.
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHoverCard(DmToolColors palette, TimelinePin pin) {
-    final hasNote = pin.note.isNotEmpty;
-    final hasEntities = widget.entityNames.isNotEmpty;
-    final hasSession = pin.sessionId != null;
-
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: palette.uiFloatingBg,
-        border: Border.all(color: palette.uiFloatingBorder),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(1, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Day ${pin.day}',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: palette.uiFloatingText,
-            ),
-          ),
-          if (hasNote) ...[
-            const SizedBox(height: 3),
-            Text(
-              pin.note,
-              style: TextStyle(
-                fontSize: 10,
-                color: palette.uiFloatingText.withValues(alpha: 0.8),
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          if (hasEntities) ...[
-            const SizedBox(height: 4),
-            ...widget.entityNames.values.map(
-              (name) => Padding(
-                padding: const EdgeInsets.only(bottom: 1),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.link,
-                      size: 10,
-                      color: palette.uiFloatingText.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 3),
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: palette.uiFloatingText.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (hasSession) ...[
-            const SizedBox(height: 3),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.event,
-                  size: 10,
-                  color: palette.uiFloatingText.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  'Session linked',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontStyle: FontStyle.italic,
-                    color: palette.uiFloatingText.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
+  void _commitDrag() {
+    if (_dragOffset != null) {
+      widget.notifier.updateTimelinePin(widget.pin.id, pos: _dragOffset!);
+    }
+    _dragStart = null;
+    _pinStartPos = null;
+    _dragOffset = null;
   }
 
   void _showContextMenu(BuildContext context, Offset globalPos) {
@@ -1896,6 +1937,108 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   }
 }
 
+// F4: top-level builder shared by canvas-level hover overlay.
+Widget _timelineHoverCard(
+  DmToolColors palette,
+  TimelinePin pin,
+  Map<String, String> entityNames,
+) {
+  final hasNote = pin.note.isNotEmpty;
+  final hasEntities = entityNames.isNotEmpty;
+  final hasSession = pin.sessionId != null;
+
+  return Container(
+    constraints: const BoxConstraints(maxWidth: 200),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    decoration: BoxDecoration(
+      color: palette.uiFloatingBg,
+      border: Border.all(color: palette.uiFloatingBorder),
+      borderRadius: BorderRadius.circular(4),
+      boxShadow: const [
+        BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(1, 2)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Day ${pin.day}',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: palette.uiFloatingText,
+          ),
+        ),
+        if (hasNote) ...[
+          const SizedBox(height: 3),
+          Text(
+            pin.note,
+            style: TextStyle(
+              fontSize: 10,
+              color: palette.uiFloatingText.withValues(alpha: 0.8),
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        if (hasEntities) ...[
+          const SizedBox(height: 4),
+          ...entityNames.values.map(
+            (name) => Padding(
+              padding: const EdgeInsets.only(bottom: 1),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.link,
+                    size: 10,
+                    color: palette.uiFloatingText.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 3),
+                  Flexible(
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: palette.uiFloatingText.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        if (hasSession) ...[
+          const SizedBox(height: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event,
+                size: 10,
+                color: palette.uiFloatingText.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                'Session linked',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontStyle: FontStyle.italic,
+                  color: palette.uiFloatingText.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 Widget _menuRow(
   IconData icon,
   String label,
@@ -1927,6 +2070,7 @@ Widget _menuRow(
 
 class _TimelineConnectionPainter extends CustomPainter {
   final List<TimelinePin> pins;
+  final Rect? viewport;
   late final Map<String, TimelinePin> _pinMap = {
     for (final p in pins) p.id: p,
   };
@@ -1944,17 +2088,27 @@ class _TimelineConnectionPainter extends CustomPainter {
   static const double _dashLen = 8.0;
   static const double _gapLen = 4.0;
 
-  _TimelineConnectionPainter({required this.pins});
+  _TimelineConnectionPainter({required this.pins, this.viewport});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (pins.isEmpty) return;
 
+    final vp = viewport;
     for (final pin in pins) {
       if (pin.parentIds.isEmpty) continue;
       for (final parentId in pin.parentIds) {
         final parent = _pinMap[parentId];
         if (parent == null) continue;
+
+        // F3: segment-level cull. inflate(8) covers stroke width.
+        if (vp != null) {
+          final segRect = Rect.fromPoints(
+            Offset(parent.x, parent.y),
+            Offset(pin.x, pin.y),
+          ).inflate(8);
+          if (!vp.overlaps(segRect)) continue;
+        }
 
         final color = _parseHexColor(pin.color);
         final paint = _paintFor(color);
@@ -2025,7 +2179,7 @@ class _TimelineConnectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TimelineConnectionPainter old) {
-    return old._fingerprint != _fingerprint;
+    return old._fingerprint != _fingerprint || old.viewport != viewport;
   }
 }
 
@@ -2351,6 +2505,71 @@ Color _pinColor(String pinType) {
     'location' => Colors.blue,
     'event' => Colors.purple,
     _ => Colors.grey,
+  };
+}
+
+/// Map builtin EntityCategorySchema.icon string (Material icon name) → IconData.
+/// Covers every builtin category icon plus a few extras for hand-picked pin
+/// types. Unknown names fall back to a generic location pin.
+IconData _iconFromName(String name) {
+  return switch (name) {
+    // Builtin EntityCategorySchema icons
+    'workspaces' => Icons.workspaces,
+    'fork_right' => Icons.fork_right,
+    'diversity_3' => Icons.diversity_3,
+    'history_edu' => Icons.history_edu,
+    'stars' => Icons.stars,
+    'auto_awesome' => Icons.auto_awesome,
+    'colorize' => Icons.colorize,
+    'shield' => Icons.shield,
+    'build' => Icons.build,
+    'inventory_2' => Icons.inventory_2,
+    'album' => Icons.album,
+    'backpack' => Icons.backpack,
+    'pets' => Icons.pets,
+    'directions_boat' => Icons.directions_boat,
+    'diamond' => Icons.diamond,
+    'auto_fix_high' => Icons.auto_fix_high,
+    'coronavirus' => Icons.bug_report, // monster builtin → daha az medikal görünüm
+    'flash_on' => Icons.flash_on,
+    'cruelty_free' => Icons.cruelty_free,
+    // Common alternates a custom category might pick
+    'person' => Icons.person,
+    'person_pin' => Icons.person_pin,
+    'location_on' => Icons.location_on,
+    'location_city' => Icons.location_city,
+    'event' => Icons.event,
+    'castle' => Icons.castle,
+    'forest' => Icons.forest,
+    'home' => Icons.home,
+    'map' => Icons.map,
+    'flag' => Icons.flag,
+    _ => Icons.location_pin,
+  };
+}
+
+/// Pin icon resolved from the linked entity's category icon when present;
+/// falls back to a pinType-keyed default for entity-less manual pins.
+IconData _pinIcon(MapPin pin, WidgetRef ref) {
+  final entityId = pin.entityId;
+  if (entityId != null) {
+    final entity = ref.read(entityProvider)[entityId];
+    if (entity != null) {
+      final schema = ref.read(worldSchemaProvider);
+      final cat = schema.categories
+          .where((c) => c.slug == entity.categorySlug)
+          .firstOrNull;
+      if (cat != null && cat.icon.isNotEmpty) {
+        return _iconFromName(cat.icon);
+      }
+    }
+  }
+  return switch (pin.pinType) {
+    'npc' => Icons.person_pin,
+    'monster' => Icons.bug_report,
+    'location' => Icons.location_on,
+    'event' => Icons.event,
+    _ => Icons.location_pin,
   };
 }
 
