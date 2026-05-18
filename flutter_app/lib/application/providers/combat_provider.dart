@@ -243,10 +243,34 @@ class CombatNotifier extends StateNotifier<CombatState>
     final enc = state.activeEncounter;
     if (enc == null) return;
     if (!canAddToEncounter(entityId)) return;
-    pushUndo(state);
     final entities = _getEntities();
-    final entity = entities[entityId];
+    // Player chars owned by another player may not exist in entityProvider
+    // (entityProvider only injects chars where `worldId == activeWorldId`
+    // AND the char is in the local hub list). Fall back to the char's own
+    // embedded entity in that case.
+    final entity = entities[entityId] ??
+        _characterByEntityId(entityId)?.entity;
     if (entity == null) return;
+    final isCharacter = _characterByEntityId(entityId) != null;
+    _addCombatant(entity, isCharacter: isCharacter);
+  }
+
+  /// World-character path: caller already has a decoded [Character] (e.g.
+  /// from `worldCharactersProvider` mirror — other player's owned char that
+  /// the DM's `characterListProvider` may not hydrate). Adds the combatant
+  /// directly without round-tripping through entityProvider.
+  void addCombatantForCharacter(Character character) {
+    final enc = state.activeEncounter;
+    if (enc == null) return;
+    final existingIds = enc.combatants.map((c) => c.entityId).toSet();
+    if (existingIds.contains(character.entity.id)) return;
+    _addCombatant(character.entity, isCharacter: true);
+  }
+
+  void _addCombatant(Entity entity, {required bool isCharacter}) {
+    final enc = state.activeEncounter;
+    if (enc == null) return;
+    pushUndo(state);
 
     final cfg = _encounterConfig;
     final combatStats = entity.fields[cfg.combatStatsFieldKey];
@@ -264,7 +288,6 @@ class CombatNotifier extends StateNotifier<CombatState>
     // schema stores `hp`/`max_hp` (current+max); monster/animal v2 uses
     // `hp_average` (single value) + `ac`. For characters we preserve the
     // live current HP; non-char entities start at full HP.
-    final isCharacter = _characterByEntityId(entityId) != null;
     final int maxHp;
     final int currentHp;
     final int ac;
@@ -311,13 +334,14 @@ class CombatNotifier extends StateNotifier<CombatState>
       ac: ac,
       hp: currentHp,
       maxHp: maxHp,
-      entityId: entityId,
+      entityId: entity.id,
       stats: snapshotStats,
     );
 
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
     _log('Added ${entity.name} (Init: $initRoll, AC: $ac, HP: $currentHp/$maxHp)');
     _sortByInitiative();
+    _saveAndNotify();
     _eventBus.emit(EventEnvelope.now(
       EventTypes.sessionCombatantAdded,
       {
@@ -352,6 +376,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
     _log('Added $name (Init: $init, AC: $ac, HP: $hp/$maxHp)');
     _sortByInitiative();
+    _saveAndNotify();
   }
 
   void addAllPlayers() {
@@ -440,8 +465,12 @@ class CombatNotifier extends StateNotifier<CombatState>
   }
 
   /// Reroll initiative for every combatant in the active encounter. [dSides]
-  /// selects the base die (the user picks d4/d6/...d20 in the UI). Each
+  /// selects the base die (default d20 — the user no longer picks). Each
   /// combatant's roll = 1d[dSides] + eval(entity.combat_stats[initiative]).
+  ///
+  /// Monsters (entities exposing flat `initiative_score`) skip the dice
+  /// entirely: their score is treated as a fixed initiative. Player chars
+  /// always roll.
   void rollInitiatives({int dSides = 20}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
@@ -452,10 +481,20 @@ class CombatNotifier extends StateNotifier<CombatState>
 
     final rolled = enc.combatants.map((c) {
       String? spec;
+      Entity? entity;
       if (c.entityId != null) {
-        final e = entities[c.entityId];
-        final cs = e?.fields[cfg.combatStatsFieldKey];
+        entity = entities[c.entityId] ??
+            _characterByEntityId(c.entityId)?.entity;
+        final cs = entity?.fields[cfg.combatStatsFieldKey];
         if (cs is Map) spec = cs[cfg.initiativeSubField]?.toString();
+      }
+      // Monster path: flat `initiative_score` → fixed init, no roll.
+      final isCharacter = _characterByEntityId(c.entityId) != null;
+      if (!isCharacter && entity != null) {
+        final score = _parseFlatInt(entity.fields, 'initiative_score', -1);
+        if (score >= 0) {
+          return c.copyWith(init: score);
+        }
       }
       return c.copyWith(init: _rollInitFromSpec(spec, dSides: dSides));
     }).toList();
@@ -649,11 +688,29 @@ class CombatNotifier extends StateNotifier<CombatState>
       Encounter.fromJson(Map<String, dynamic>.from(e as Map))
     ).toList() ?? [];
 
+    // Legacy heal: builds prior to the `stats` JSON fix dropped the per-
+    // combatant stats snapshot on save → reload landed `stats: {}` and the
+    // encounter table cells (which read from stats) drew 0/1. The typed
+    // hp/maxHp/ac/init int fields always rode through, so we rebuild a
+    // minimal stats map from them when missing.
+    final healed = encList.map((enc) {
+      final combatants = enc.combatants.map((c) {
+        if (c.stats.isNotEmpty) return c;
+        return c.copyWith(stats: <String, dynamic>{
+          'hp': c.hp.toString(),
+          'max_hp': c.maxHp.toString(),
+          'ac': c.ac.toString(),
+          'initiative': c.init.toString(),
+        });
+      }).toList();
+      return enc.copyWith(combatants: combatants);
+    }).toList();
+
     final eventLog = (data['event_log'] as List?)?.cast<String>() ?? const [];
 
     state = state.copyWith(
-      encounters: encList,
-      activeEncounterId: data['active_encounter_id'] as String? ?? (encList.isNotEmpty ? encList.first.id : null),
+      encounters: healed,
+      activeEncounterId: data['active_encounter_id'] as String? ?? (healed.isNotEmpty ? healed.first.id : null),
       eventLog: eventLog,
     );
   }

@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _key = 'ui_state';
 
+/// copyWith sentinel — distinguish "not supplied" from explicit null.
+const Object _sentinel = Object();
+
 /// Which right sidebar is currently open (mutually exclusive).
 enum RightSidebar { none, pdf, soundmap, characters }
 
@@ -38,6 +41,10 @@ class UiState {
   final double pdfSidebarWidth; // shared width for both PDF and Soundmap
   final List<String> pdfOpenPaths;
   final int pdfActiveIndex;
+  /// Last-opened character inside the right Characters sidebar. Restored
+  /// when the sidebar is reopened so the user lands where they left off.
+  /// null = list view.
+  final String? charactersSidebarInlineId;
 
   // Theme & Locale
   final String themeName;
@@ -70,6 +77,7 @@ class UiState {
     this.pdfSidebarWidth = 450,
     this.pdfOpenPaths = const [],
     this.pdfActiveIndex = -1,
+    this.charactersSidebarInlineId,
     this.themeName = 'dark',
     this.localeCode = 'en',
     this.volume = 1.0,
@@ -95,6 +103,7 @@ class UiState {
     double? pdfSidebarWidth,
     List<String>? pdfOpenPaths,
     int? pdfActiveIndex,
+    Object? charactersSidebarInlineId = _sentinel,
     String? themeName,
     String? localeCode,
     double? volume,
@@ -119,6 +128,9 @@ class UiState {
       pdfSidebarWidth: pdfSidebarWidth ?? this.pdfSidebarWidth,
       pdfOpenPaths: pdfOpenPaths ?? this.pdfOpenPaths,
       pdfActiveIndex: pdfActiveIndex ?? this.pdfActiveIndex,
+      charactersSidebarInlineId: identical(charactersSidebarInlineId, _sentinel)
+          ? this.charactersSidebarInlineId
+          : charactersSidebarInlineId as String?,
       themeName: themeName ?? this.themeName,
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
@@ -145,6 +157,7 @@ class UiState {
     'pdfSidebarWidth': pdfSidebarWidth,
     'pdfOpenPaths': pdfOpenPaths,
     'pdfActiveIndex': pdfActiveIndex,
+    'charactersSidebarInlineId': charactersSidebarInlineId,
     'themeName': themeName,
     'localeCode': localeCode,
     'volume': volume,
@@ -181,6 +194,7 @@ class UiState {
       pdfSidebarWidth: (json['pdfSidebarWidth'] as num?)?.toDouble() ?? 450,
       pdfOpenPaths: (json['pdfOpenPaths'] as List?)?.cast<String>() ?? const [],
       pdfActiveIndex: json['pdfActiveIndex'] as int? ?? -1,
+      charactersSidebarInlineId: json['charactersSidebarInlineId'] as String?,
       themeName: json['themeName'] as String? ?? 'dark',
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,

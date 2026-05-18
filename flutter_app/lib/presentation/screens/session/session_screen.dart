@@ -1,13 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
+import '../../../application/providers/world_characters_provider.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/session.dart';
@@ -196,7 +202,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         Divider(height: 1, color: palette.sidebarDivider),
 
-        // === Alt kontrol çubuğu: Round+NextTurn (sol) | Actions dropdown (sağ) ===
+        // === Alt kontrol çubuğu: Round + NextTurn + Players + Actions ===
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: SingleChildScrollView(
@@ -223,43 +229,43 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Actions dropdown
+                // Actions dropdown — everything (Players opens own sub-dialog)
                 PopupMenuButton<String>(
-                onSelected: (action) {
-                  switch (action) {
-                    case 'quick_add': _showQuickAddDialog();
-                    case 'add': _showAddDialog();
-                    case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
-                    case 'roll_init': _promptRollInitiative();
-                    case 'clear_all': ref.read(combatProvider.notifier).clearAll();
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(value: 'quick_add', child: _popupItem(Icons.bolt, 'Quick Add', palette.successBtnBg)),
-                  PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, 'Add from Database', palette.primaryBtnBg)),
-                  PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, 'Add All Players', palette.primaryBtnBg)),
-                  PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, 'Roll Initiative', palette.primaryBtnBg)),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, 'Clear All', palette.dangerBtnBg)),
-                ],
-                child: FilledButton.icon(
-                  onPressed: null, // PopupMenuButton handles the tap
-                  icon: const Icon(Icons.add_circle_outline, size: 20),
-                  label: const Text('Actions', style: TextStyle(fontSize: 13)),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  onSelected: (action) {
+                    switch (action) {
+                      case 'quick_add': _showQuickAddDialog();
+                      case 'add': _showAddDialog();
+                      case 'add_players': _showAddPlayersDialog();
+                      case 'roll_init': _promptRollInitiative();
+                      case 'clear_all': ref.read(combatProvider.notifier).clearAll();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(value: 'quick_add', child: _popupItem(Icons.bolt, 'Quick Add', palette.successBtnBg)),
+                    PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, 'Add from Database', palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, 'Add Players...', palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, 'Roll Initiative', palette.primaryBtnBg)),
+                    const PopupMenuDivider(),
+                    PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, 'Clear All', palette.dangerBtnBg)),
+                  ],
+                  child: FilledButton.icon(
+                    onPressed: null, // PopupMenuButton handles the tap
+                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                    label: const Text('Actions', style: TextStyle(fontSize: 13)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
 
-        // === Dice grubu ===
+        // === Dice grubu === (left padding aligned with Round badge above)
         Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           child: Wrap(
             spacing: 4,
             runSpacing: 4,
@@ -276,6 +282,161 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Owned player chars in the active world. Online: pull from
+  /// `worldCharactersProvider` (mirror covers other-player chars the local
+  /// `characterListProvider` doesn't hydrate). Offline: filter the local
+  /// list by worldId + ownerId.
+  List<Character> _ownedWorldCharacters() {
+    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
+    final onlineIds = ref.read(onlineWorldIdsProvider);
+    if (worldId != null && onlineIds.contains(worldId)) {
+      final rows =
+          ref.read(worldCharactersProvider(worldId)).valueOrNull ?? const [];
+      final out = <Character>[];
+      for (final r in rows) {
+        if (r.ownerId == null || r.ownerId!.isEmpty) continue;
+        try {
+          final decoded = jsonDecode(r.payloadJson);
+          if (decoded is Map<String, dynamic>) {
+            out.add(Character.fromJson(decoded).copyWith(
+              worldId: r.worldId,
+              ownerId: r.ownerId,
+            ));
+          }
+        } catch (_) {/* skip malformed */}
+      }
+      return out;
+    }
+    final list = ref.read(characterListProvider).valueOrNull ?? const [];
+    return list
+        .where((c) =>
+            c.ownerId != null &&
+            c.ownerId!.isNotEmpty &&
+            (worldId == null || c.worldId == null || c.worldId == worldId))
+        .toList();
+  }
+
+  /// Minimal theme-aware dialog opened from Actions → Add Players. Compact
+  /// list: "Add all" row + one row per owned char. No extra chrome.
+  Future<void> _showAddPlayersDialog() async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final chars = _ownedWorldCharacters();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: palette.uiPopupBg,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: palette.br,
+            side: BorderSide(color: palette.featureCardBorder),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Text(
+                    'Add Players',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.sidebarLabelSecondary,
+                    ),
+                  ),
+                ),
+                Divider(height: 1, color: palette.sidebarDivider),
+                if (chars.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Text(
+                      'No owned characters in this world.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  )
+                else ...[
+                  _addPlayersRow(
+                    palette: palette,
+                    icon: Icons.group_add,
+                    label: 'Add all',
+                    onTap: () {
+                      for (final c in chars) {
+                        ref
+                            .read(combatProvider.notifier)
+                            .addCombatantForCharacter(c);
+                      }
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  Divider(height: 1, color: palette.sidebarDivider),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: chars.length,
+                      itemBuilder: (_, i) {
+                        final c = chars[i];
+                        return _addPlayersRow(
+                          palette: palette,
+                          icon: Icons.person,
+                          label: c.entity.name,
+                          onTap: () {
+                            ref
+                                .read(combatProvider.notifier)
+                                .addCombatantForCharacter(c);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _addPlayersRow({
+    required DmToolColors palette,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: palette.tabActiveText),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: palette.tabActiveText,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -599,38 +760,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     ref.read(combatProvider.notifier).setStat(c.id, subKey, newVal);
   }
 
-  /// Show a small dice-picker dialog (d4–d20) and re-roll initiative for
-  /// every combatant with the chosen die. Each combatant's new init is
-  /// 1d[chosen] + the evaluated dice-spec from their entity's
-  /// `combat_stats[<initiativeSubField>]`.
-  Future<void> _promptRollInitiative() async {
-    const dice = [4, 6, 8, 10, 12, 20];
-    final chosen = await showDialog<int>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Roll Initiative'),
-        content: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final d in dice)
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, d),
-                child: Text('d$d'),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-    if (chosen != null) {
-      ref.read(combatProvider.notifier).rollInitiatives(dSides: chosen);
-    }
+  /// Roll initiative for every combatant. d20 fixed — no dice picker. PC
+  /// chars roll 1d20 + modifier; monsters with a flat `initiative_score`
+  /// skip the roll and use that score directly.
+  void _promptRollInitiative() {
+    ref.read(combatProvider.notifier).rollInitiatives();
   }
 
   // ============================================================
@@ -772,14 +906,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   switch (action) {
                     case 'quick_add': _showQuickAddDialog();
                     case 'add': _showAddDialog();
-                    case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
+                    case 'add_players': _showAddPlayersDialog();
                     case 'roll_init': _promptRollInitiative();
                   }
                 },
                 itemBuilder: (_) => const [
                   PopupMenuItem(value: 'quick_add', child: Text('Quick Add', style: TextStyle(fontSize: 12))),
                   PopupMenuItem(value: 'add', child: Text('Add from Database', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: 'add_players', child: Text('Add All Players', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'add_players', child: Text('Add Players...', style: TextStyle(fontSize: 12))),
                   PopupMenuItem(value: 'roll_init', child: Text('Roll Initiative', style: TextStyle(fontSize: 12))),
                 ],
               ),

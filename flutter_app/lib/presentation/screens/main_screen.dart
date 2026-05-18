@@ -23,6 +23,7 @@ import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_sync_provider.dart';
 import '../../application/providers/personal_sync_provider.dart';
+import '../../application/services/pending_write_buffer.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
@@ -148,6 +149,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // yapılır — re-açılış manuel Sync'te.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
+      // Combat/entity/etc. row-level writes ride PendingWriteBuffer with up
+      // to 1.5s debounce. App close mid-debounce dropped them silently —
+      // e.g. monster HP edits reverting on next launch. Flush before kanal
+      // teardown so the disk write completes.
+      unawaited(ref.read(pendingWriteBufferProvider).flush());
       final worldSync = ref.read(worldSyncServiceProvider);
       if (worldSync != null) unawaited(worldSync.unsubscribeAll());
       final personalSync = ref.read(personalSyncServiceProvider);

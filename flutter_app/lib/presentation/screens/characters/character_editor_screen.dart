@@ -222,18 +222,24 @@ class _CharacterEditorScreenState
   /// `characterListProvider.update()` ile diske + outbox'a yaz. Aynı key
   /// (`character:$id`) ardışık fire'larda son `_working` snapshot'ını yazar
   /// (coalesced). Owner/DM yetkisi yoksa fire silent no-op.
+  ///
+  /// Sidebar embed: widget close → State dispose → Riverpod marks `ref`
+  /// disposed → pending action `ref.read(...)` throws → save lost. Capture
+  /// the notifier + a snapshot of `_working` at schedule time so the
+  /// deferred fire is independent of widget lifecycle.
   void _scheduleAutoSave({WriteKind kind = WriteKind.shortText}) {
     final c = _working;
     if (c == null) return;
     if (!_canEdit) return;
     final id = c.id;
+    final notifier = ref.read(characterListProvider.notifier);
     ref.read(pendingWriteBufferProvider).schedule(
           key: 'character:$id',
           kind: kind,
           action: () async {
-            final cur = _working;
-            if (cur == null || cur.id != id) return;
-            await ref.read(characterListProvider.notifier).update(cur);
+            final cur = _working ?? c;
+            if (cur.id != id) return;
+            await notifier.update(cur);
           },
         );
   }
