@@ -566,7 +566,7 @@ class _SheetActionButton extends StatelessWidget {
   }
 }
 
-/// Row with label + switch toggle.
+/// Row with label + checkbox toggle (desktop pattern).
 class _SwitchRow extends StatelessWidget {
   final String label;
   final bool value;
@@ -582,21 +582,26 @@ class _SwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label, style: TextStyle(fontSize: 12, color: palette.tabText)),
+    return InkWell(
+      onTap: () => onChanged(!value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(label, style: TextStyle(fontSize: 12, color: palette.tabText)),
+            ),
+            Checkbox(
+              value: value,
+              onChanged: (v) => onChanged(v ?? false),
+              activeColor: palette.tabIndicator,
+              side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
         ),
-        SizedBox(
-          height: 24,
-          child: Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: palette.tabIndicator,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -637,6 +637,41 @@ ThemeData buildThemeData(String themeName) {
       unselectedLabelColor: palette.tabText,
       indicatorColor: palette.tabIndicator,
     ),
+
+    // Checkbox
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected)
+              ? palette.tabIndicator
+              : Colors.transparent),
+      checkColor: WidgetStatePropertyAll(palette.primaryBtnText),
+      side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+    ),
+
+    // Switch
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected)
+              ? palette.tabIndicator
+              : palette.tabText.withValues(alpha: 0.6)),
+      trackColor: WidgetStateProperty.resolveWith((s) =>
+          s.contains(WidgetState.selected)
+              ? palette.tabIndicator.withValues(alpha: 0.4)
+              : palette.sidebarDivider),
+      trackOutlineColor: WidgetStatePropertyAll(palette.sidebarDivider),
+    ),
+
+    // BottomSheet (mobile battlemap toolbar vs.)
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: palette.tabBg,
+      surfaceTintColor: Colors.transparent,
+      modalBackgroundColor: palette.tabBg,
+      modalBarrierColor: Colors.black.withValues(alpha: 0.4),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+    ),
   );
 }
 
