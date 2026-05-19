@@ -411,6 +411,12 @@ class WorldMirrorApplier {
       final mapData = data['map_data'];
       final sessions = data['sessions'];
       final settings = data['settings'];
+      // PRESERVE: local-only sibling keys (saveSettingsPatchLocalOnly yazıyor,
+      // cloud state_json'a hiç gitmez). clear+addAll'dan sonra geri konmazsa
+      // in-memory'den silinir → ekran reload'da viewport defaulta düşer.
+      // Yeni motion-class key eklenince buraya da ekle.
+      final mapView = data['map_view'];
+      final mindMapViews = data['mind_map_views'];
       decoded.remove('map_data');
       decoded.remove('sessions');
       decoded.remove('settings');
@@ -423,6 +429,8 @@ class WorldMirrorApplier {
       if (mapData != null) data['map_data'] = mapData;
       if (sessions != null) data['sessions'] = sessions;
       if (settings != null) data['settings'] = settings;
+      if (mapView != null) data['map_view'] = mapView;
+      if (mindMapViews != null) data['mind_map_views'] = mindMapViews;
       _bumpRevision();
     } catch (err) {
       debugPrint('_applyWorldsEvent decode error: $err');

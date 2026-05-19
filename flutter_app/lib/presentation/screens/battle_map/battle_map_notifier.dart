@@ -468,6 +468,35 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         );
       }
     }
+
+    // Persistent measurements (circles + rulers). Vector JSON — not flattened
+    // into annotationData PNG so individual marks remain deletable.
+    final measurements = <MeasurementMark>[];
+    final rawMeasurements = encounter.measurementsData;
+    if (rawMeasurements != null && rawMeasurements.isNotEmpty) {
+      try {
+        final list = jsonDecode(rawMeasurements);
+        if (list is List) {
+          for (final m in list) {
+            if (m is! Map) continue;
+            measurements.add(MeasurementMark(
+              type: m['type'] == 'circle'
+                  ? BattleMapTool.circle
+                  : BattleMapTool.ruler,
+              start: Offset(
+                (m['x1'] as num?)?.toDouble() ?? 0,
+                (m['y1'] as num?)?.toDouble() ?? 0,
+              ),
+              end: Offset(
+                (m['x2'] as num?)?.toDouble() ?? 0,
+                (m['y2'] as num?)?.toDouble() ?? 0,
+              ),
+              isPersistent: true,
+            ));
+          }
+        }
+      } catch (_) {}
+    }
     // Assign default positions for combatants without saved positions
     var col = 0;
     var row = 0;
@@ -479,7 +508,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         if (col > 4) { col = 0; row++; }
       }
     }
-    s = s.copyWith(tokenPositions: positions);
+    s = s.copyWith(
+      tokenPositions: positions,
+      persistentMeasurements: measurements,
+    );
 
     if (!mounted) return;
     state = s;
@@ -835,6 +867,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       clearActiveMeasurement: true,
     );
     _scheduleDrawingsSync();
+    _debouncedAutoSave();
   }
 
   void clearMeasurements() {
@@ -843,6 +876,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       clearActiveMeasurement: true,
     );
     _scheduleDrawingsSync();
+    _debouncedAutoSave();
   }
 
   /// Delete measurement closest to the tap in canvas-space (within 30px)
@@ -866,6 +900,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       final updated = List<MeasurementMark>.from(marks)..removeAt(closest);
       state = state.copyWith(persistentMeasurements: updated);
       _scheduleDrawingsSync();
+      _debouncedAutoSave();
     }
   }
 
@@ -1010,6 +1045,17 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Future<void> save() async {
     final fogB64 = await _fogToBase64();
     final annotB64 = await _annotationToBase64();
+    final measurementsJson = state.persistentMeasurements.isEmpty
+        ? null
+        : jsonEncode(state.persistentMeasurements
+            .map((m) => {
+                  'type': m.type == BattleMapTool.circle ? 'circle' : 'ruler',
+                  'x1': m.start.dx,
+                  'y1': m.start.dy,
+                  'x2': m.end.dx,
+                  'y2': m.end.dy,
+                })
+            .toList());
     final tokenPosMap = <String, dynamic>{};
     for (final entry in state.tokenPositions.entries) {
       tokenPosMap[entry.key] = {'x': entry.value.dx, 'y': entry.value.dy};
@@ -1021,6 +1067,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       encounterId: encounterId,
       fogData: fogB64,
       annotationData: annotB64,
+      measurementsData: measurementsJson,
     );
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
