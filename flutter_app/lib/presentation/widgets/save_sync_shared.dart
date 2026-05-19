@@ -85,7 +85,7 @@ class SyncButton extends ConsumerStatefulWidget {
     super.key,
     required this.palette,
     required this.enabled,
-    this.enabledTooltip = 'Sync now (push + pull)',
+    this.enabledTooltip = 'Force sync now (auto-sync on)',
     this.disabledTooltip = 'Sign in + join beta to sync',
   });
 

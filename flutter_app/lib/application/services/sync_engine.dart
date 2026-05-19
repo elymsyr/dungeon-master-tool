@@ -14,8 +14,12 @@ import '../../domain/entities/character.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beta_provider.dart';
 import '../providers/cloud_backup_provider.dart';
+import '../providers/connectivity_provider.dart';
 import '../providers/world_mirror_provider.dart';
 import 'media_bundler.dart';
+import 'pending_write_buffer.dart';
+import 'srd_core_package_bootstrap.dart';
+import 'sync_tier.dart';
 
 /// Persistent outbox drain worker (PR-D5 v12 rewrite).
 ///
@@ -24,6 +28,17 @@ import 'media_bundler.dart';
 /// `SyncOutboxDao.enqueueCoalesced` API: rows with matching
 /// `(target_table, target_pk, op_type)` overwrite each other so rapid edits
 /// don't bloat the outbox.
+///
+/// Tier-aware enqueue: fast tier (world entities, world-bound characters, world
+/// settings/map/sessions, world_packages) drain immediately on the next tick;
+/// slow tier (personal packages + entities, worldless char snapshots) carry a
+/// 30s `nextAttemptAt` offset so coalescing batches rapid edits before hitting
+/// the network.
+///
+/// Auto drain triggers (set up in [start]):
+///   - `PendingWriteBuffer.tick` bump → 150ms micro-debounce → `_tick()`.
+///   - `connectivityStreamProvider` false→true transition → `_tick()`.
+///   - 15s periodic safety timer → `_tick()` (slow tier eligibility + retry).
 ///
 /// Ordering: rows drain in `(nextAttemptAt ASC, createdAt ASC)` per the DAO's
 /// `readyBatch`, so dependencies (e.g. world create before world_entity insert)
@@ -41,9 +56,16 @@ class SyncEngine {
   bool _paused = false;
   bool _started = false;
 
+  Timer? _drainDebounce;
+  Timer? _retryTimer;
+  ProviderSubscription<AsyncValue<bool>>? _connSub;
+  VoidCallback? _bufferListener;
+
   static const int _batchSize = 20;
   static const int _dlqAttempts = 50;
   static const Duration _maxBackoff = Duration(minutes: 5);
+  static const Duration _drainMicroDebounce = Duration(milliseconds: 150);
+  static const Duration _retryInterval = Duration(seconds: 15);
 
   // ── v12 outbox target tables (mirror Postgres table names). ────────────
   static const _tWorldEntities = 'world_entities';
@@ -60,15 +82,55 @@ class SyncEngine {
   static const _opUpsert = 'upsert';
   static const _opDelete = 'delete';
 
-  /// Starts the worker. Manuel sync model: outbox change-stream listener
-  /// disabled; automatic cold-start tick yok. Drain only via [forceTick].
+  /// Starts the worker. Wires three auto-drain triggers:
+  ///   - PendingWriteBuffer.tick → 150ms micro-debounce → `_tick()`.
+  ///   - Connectivity false→true → `_tick()`.
+  ///   - 15s periodic timer → `_tick()` (slow tier eligibility + retries).
   void start() {
     if (_started) return;
     _started = true;
+
+    final buffer = _ref.read(pendingWriteBufferProvider);
+    void onBufferTick() => _scheduleDrain();
+    buffer.tick.addListener(onBufferTick);
+    _bufferListener = onBufferTick;
+
+    _connSub = _ref.listen<AsyncValue<bool>>(
+      connectivityStreamProvider,
+      (prev, next) {
+        final wasOnline = prev?.valueOrNull ?? false;
+        final isOnline = next.valueOrNull ?? false;
+        if (!wasOnline && isOnline) {
+          // ignore: discarded_futures
+          _tick();
+        }
+      },
+    );
+
+    _retryTimer = Timer.periodic(_retryInterval, (_) {
+      if (!_started) return;
+      // ignore: discarded_futures
+      _tick();
+    });
+
+    // Catch up on any rows enqueued before start() (cold-start residue).
+    // ignore: discarded_futures
+    _tick();
   }
 
   Future<void> stop() async {
     _started = false;
+    _drainDebounce?.cancel();
+    _drainDebounce = null;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _connSub?.close();
+    _connSub = null;
+    final listener = _bufferListener;
+    if (listener != null) {
+      _ref.read(pendingWriteBufferProvider).tick.removeListener(listener);
+      _bufferListener = null;
+    }
   }
 
   void pause() {
@@ -79,6 +141,16 @@ class SyncEngine {
     _paused = false;
     // ignore: discarded_futures
     _tick();
+  }
+
+  void _scheduleDrain() {
+    if (!_started || _paused) return;
+    _drainDebounce?.cancel();
+    _drainDebounce = Timer(_drainMicroDebounce, () {
+      if (!_started || _paused) return;
+      // ignore: discarded_futures
+      _tick();
+    });
   }
 
   /// UI affordance — "Retry now" button on the sync indicator. Resets every
@@ -97,7 +169,20 @@ class SyncEngine {
 
   // ────────────────────────────────────────────────────────────────────
   // Enqueue helpers — call from notifiers' Drift transactions.
+  //
+  // Fast tier (world_*) → default `nextAttemptAt = now`, drains on the next
+  // tick. Slow tier (personal_*, cloud_backups) → `now + cloudDelay` so the
+  // row coalesces edits before becoming drain-eligible.
   // ────────────────────────────────────────────────────────────────────
+
+  DateTime _slowAttemptAt() => DateTime.now().add(SyncTier.slow.cloudDelay);
+
+  /// Built-in (SRD core) package satırları cloud'a yazılmaz — pakage'ın
+  /// kendisi tüm cihazlarda yerel olarak seed edilir. World/character içine
+  /// linked row referans olarak girer; bu satırlar `world_entities` üzerinden
+  /// normal yoldan CDC ile dağılır. Built-in package row'u outbox'a girmez.
+  bool _isBuiltinPackage(String packageName) =>
+      packageName == srdCorePackageName;
 
   Future<void> enqueueWorldEntityUpsert({
     required String worldId,
@@ -301,22 +386,32 @@ class SyncEngine {
     required String packageName,
     required Map<String, dynamic> state,
   }) async {
+    if (_isBuiltinPackage(packageName)) {
+      debugPrint('[SyncEngine] skip builtin package $packageName');
+      return;
+    }
     await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
       targetTable: _tPersonalPackages,
       targetPk: packageName,
       opType: _opUpsert,
       payloadJson: jsonEncode({'state': state}),
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 
   Future<void> enqueuePersonalPackageDelete({required String packageName}) async {
+    if (_isBuiltinPackage(packageName)) {
+      debugPrint('[SyncEngine] skip builtin package $packageName');
+      return;
+    }
     await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
       targetTable: _tPersonalPackages,
       targetPk: packageName,
       opType: _opDelete,
       payloadJson: '{}',
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 
@@ -328,6 +423,10 @@ class SyncEngine {
     required String entityId,
     required Map<String, dynamic> entityMap,
   }) async {
+    if (_isBuiltinPackage(packageName)) {
+      debugPrint('[SyncEngine] skip builtin package $packageName/$entityId');
+      return;
+    }
     await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
       targetTable: _tPersonalPackageEntities,
@@ -338,6 +437,7 @@ class SyncEngine {
         'entity_id': entityId,
         'entity': entityMap,
       }),
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 
@@ -345,6 +445,10 @@ class SyncEngine {
     required String packageName,
     required String entityId,
   }) async {
+    if (_isBuiltinPackage(packageName)) {
+      debugPrint('[SyncEngine] skip builtin package $packageName/$entityId');
+      return;
+    }
     await _db.syncOutboxDao.enqueueCoalesced(
       opId: _newOpId(),
       targetTable: _tPersonalPackageEntities,
@@ -354,6 +458,7 @@ class SyncEngine {
         'package_name': packageName,
         'entity_id': entityId,
       }),
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 
@@ -377,6 +482,7 @@ class SyncEngine {
         'type': type,
         'data': data,
       }),
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 
@@ -390,6 +496,7 @@ class SyncEngine {
       targetPk: '$type:$itemId',
       opType: _opDelete,
       payloadJson: jsonEncode({'item_id': itemId, 'type': type}),
+      nextAttemptAt: _slowAttemptAt(),
     );
   }
 

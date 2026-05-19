@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +44,12 @@ void main(List<String> args) async {
   // global error hook for uncaught async errors instead.
   WidgetsFlutterBinding.ensureInitialized();
   LogBuffer.install();
+
+  // appDatabaseProvider re-creates AppDatabase when activeUserIdProvider
+  // flips (sign-in/out). Old instance is disposed (close()) but Drift's
+  // multi-instance debug check still fires during the brief overlap.
+  // Different user paths => different QueryExecutor => no real race.
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   // Reverse-IPC handler so sub-windows can notify the DM. The player window's
   // `WindowListener.onWindowClose` fires this when the user clicks the native

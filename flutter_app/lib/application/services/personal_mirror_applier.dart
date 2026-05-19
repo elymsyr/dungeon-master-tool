@@ -9,7 +9,6 @@ import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/package_provider.dart';
-import '../providers/personal_online_provider.dart';
 import '../providers/role_provider.dart';
 import 'personal_sync_service.dart';
 import 'world_mirror_applier.dart';
@@ -17,18 +16,19 @@ import 'world_mirror_service.dart';
 
 /// `PersonalSyncService.events` stream'ini local state'e uygular.
 ///
-/// Sorumluluk (039+040 retire sonrası):
-///   - `personal_packages` INSERT/UPDATE → `PackageRepository.save` +
-///     listeleri invalidate; aktif paketse data'yı in-memory replace.
+/// Sorumluluk (PR-3 sonrası):
 ///   - `world_members` INSERT (self) → `onlineWorldIdsProvider.add` +
 ///     hub world list refresh. DELETE (self) → karşılığı yoksa local
 ///     world'ü purge et (DM-kick on başka cihaz senaryosu).
 ///
-/// `personal_characters` retire edildi — char cross-device sync `world_characters`
-/// CDC + RLS üzerinden çalışır (bkz. `world_mirror_applier.dart`).
+/// **Package + worldless char realtime KALDIRILDI** (PR-3): `personal_packages`,
+/// `personal_package_entities`, `cloud_backups` CDC dinlenmez. Cross-device
+/// pull `bootstrap()` üzerinden (auto on applier provider resolve + manual
+/// Sync button).
 ///
-/// Echo'ları `WorldMirrorService._lastPushedAt` map'i üzerinden filtreler;
-/// böylece push → CDC → reapply döngüsü olmaz.
+/// `personal_characters` retire edildi — world-bound char cross-device sync
+/// `world_characters` CDC + RLS üzerinden çalışır
+/// (bkz. `world_mirror_applier.dart`).
 class PersonalMirrorApplier {
   final Ref ref;
   final PersonalSyncService service;
@@ -55,47 +55,46 @@ class PersonalMirrorApplier {
     _bootstrappedFor = null;
   }
 
-  /// Subscribe sonrası local state'i sunucu ile aynı hizaya getirir.
-  /// `personal_packages` satırlarını full pull eder — yeni cihaza ilk giriş
-  /// için bootstrap. Aynı uid için idempotent; auth değişmediği sürece tekrar
-  /// SELECT yapmaz. Karakterler `world_mirror_applier` üzerinden bootstrap
-  /// edilir (`world_characters` CDC + listWorldCharacters).
+  /// Subscribe sonrası lokal state'i sunucu ile aynı hizaya getirir.
+  /// Row-level pull: `personal_packages` her satırı + `personal_package_entities`
+  /// her satırı. Yeni cihaza ilk giriş için bootstrap. Aynı uid için idempotent.
+  /// World-bound karakterler `world_mirror_applier` üzerinden bootstrap edilir.
   Future<void> bootstrap() async {
     final auth = ref.read(authProvider);
     if (auth == null) return;
     if (_bootstrappedFor == auth.uid) return;
     _bootstrappedFor = auth.uid;
     final client = Supabase.instance.client;
+    final repo = ref.read(packageRepositoryProvider);
     try {
       final rows = await client
           .from('personal_packages')
           .select('package_name, state_json')
           .eq('owner_id', auth.uid);
-      final list = rows as List;
       var any = false;
-      for (final raw in list) {
+      for (final raw in rows as List) {
         final row = raw as Map;
         final name = row['package_name'] as String?;
         final state = row['state_json'];
         if (name == null || state is! String) continue;
-        await _writePackageFromState(name, state);
-        any = true;
+        try {
+          final decoded = jsonDecode(state);
+          if (decoded is! Map<String, dynamic>) continue;
+          await repo.save(name, decoded);
+          any = true;
+        } catch (err) {
+          debugPrint('personal_packages bootstrap row error: $err');
+        }
       }
-      if (any) {
-        ref.invalidate(packageListProvider);
-      }
+      if (any) ref.invalidate(packageListProvider);
     } catch (e) {
       debugPrint('PersonalMirrorApplier bootstrap packages error: $e');
     }
-    // F5 row-level: pull per-entity rows for every personal package this
-    // user owns. The base packages are bootstrapped above; this fills the
-    // entity tables row-by-row.
     try {
       final rows = await client
           .from('personal_package_entities')
           .select('package_name, id, payload_json')
           .eq('owner_id', auth.uid);
-      final repo = ref.read(packageRepositoryProvider);
       for (final raw in rows as List) {
         final row = raw as Map;
         final name = row['package_name'] as String?;
@@ -118,100 +117,11 @@ class PersonalMirrorApplier {
   Future<void> _onEvent(PersonalSyncEvent e) async {
     try {
       switch (e.table) {
-        case 'personal_packages':
-          await _applyPackageEvent(e);
-        case 'personal_package_entities':
-          await _applyPackageEntityEvent(e);
         case 'world_members':
           await _applyMembersEvent(e);
       }
     } catch (err, st) {
       debugPrint('PersonalMirrorApplier error: $err\n$st');
-    }
-  }
-
-  /// F5 row-level inbound: a remote `personal_package_entities` change is
-  /// written into Drift's `package_entities` via the repo's row-level API.
-  /// Echo suppression mirrors the per-package logic — the local push stamps
-  /// `ppe:{name}:{id}` so we skip the CDC of our own write.
-  Future<void> _applyPackageEntityEvent(PersonalSyncEvent e) async {
-    Map<String, dynamic> record;
-    if (e.eventType == PostgresChangeEvent.delete) {
-      record = e.oldRecord;
-    } else {
-      record = e.newRecord;
-    }
-    final packageName = record['package_name'] as String?;
-    final entityId = record['id'] as String?;
-    if (packageName == null || entityId == null) return;
-    if (mirror.isEchoOfPersonalPackageEntity(packageName, entityId)) return;
-    final repo = ref.read(packageRepositoryProvider);
-    try {
-      if (e.eventType == PostgresChangeEvent.delete) {
-        await repo.deleteEntity(packageName, entityId);
-      } else {
-        final payload = record['payload_json'];
-        if (payload is! String) return;
-        final decoded = jsonDecode(payload);
-        if (decoded is! Map<String, dynamic>) return;
-        await repo.saveEntity(packageName, entityId, decoded);
-      }
-      // Refresh listings so an open package picks up the change.
-      ref.invalidate(packageListProvider);
-    } catch (err) {
-      debugPrint('personal_package_entities apply error: $err');
-    }
-  }
-
-  Future<void> _applyPackageEvent(PersonalSyncEvent e) async {
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        final name = e.oldRecord['package_name'] as String?;
-        if (name == null) return;
-        if (mirror.isEchoOfPackage(name)) return;
-        ref
-            .read(personalOnlinePackageNamesProvider.notifier)
-            .remove(name);
-        try {
-          final repo = ref.read(packageRepositoryProvider);
-          await repo.delete(name);
-        } catch (err) {
-          debugPrint('personal_package delete local error: $err');
-        }
-        ref.invalidate(packageListProvider);
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final name = e.newRecord['package_name'] as String?;
-        if (name == null) return;
-        if (mirror.isEchoOfPackage(name)) return;
-        ref
-            .read(personalOnlinePackageNamesProvider.notifier)
-            .add(name);
-        final state = e.newRecord['state_json'];
-        if (state is! String) return;
-        await _writePackageFromState(name, state);
-        ref.invalidate(packageListProvider);
-      default:
-        return;
-    }
-  }
-
-  Future<void> _writePackageFromState(String name, String stateJson) async {
-    try {
-      final decoded = jsonDecode(stateJson);
-      if (decoded is! Map<String, dynamic>) return;
-      final repo = ref.read(packageRepositoryProvider);
-      await repo.save(name, decoded);
-      // If this package is currently open in the editor, swap in the
-      // new data so the user sees the change without a manual reopen.
-      final active = ref.read(activePackageProvider);
-      if (active == name) {
-        await ref
-            .read(activePackageProvider.notifier)
-            .replaceWithData(decoded);
-      }
-    } catch (e) {
-      debugPrint('_writePackageFromState error: $e');
     }
   }
 

@@ -68,7 +68,8 @@ class SaveSyncIndicator extends ConsumerWidget {
       itemOnCloud = hasCloud;
     }
     final outbox = itemOnCloud
-        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
+            OutboxStatus.empty)
         : null;
     final localSaving = saveStatus == SaveStatus.saving;
     final cloudSyncing = outbox != null && outbox.isSyncing;
@@ -157,17 +158,17 @@ class SaveSyncIndicator extends ConsumerWidget {
   String _tooltip(SaveStatus save, OutboxStatus? sync) {
     if (sync != null) {
       if (sync.hasIssue) {
-        return 'Sync stuck (${sync.maxAttempts} attempts)';
+        return 'Sync error — tap to retry';
       }
       if (sync.pending > 0) {
-        return 'Syncing ${sync.pending} item${sync.pending == 1 ? '' : 's'}...';
+        return 'Cloud sync in progress…';
       }
-      return save == SaveStatus.dirty ? 'Unsaved changes' : 'Cloud synced';
+      return save == SaveStatus.dirty ? 'Auto-saving…' : 'Cloud synced';
     }
     return switch (save) {
-      SaveStatus.saving => 'Saving...',
-      SaveStatus.dirty => 'Unsaved changes',
-      SaveStatus.saved => 'Save & Sync',
+      SaveStatus.saving => 'Auto-saving…',
+      SaveStatus.dirty => 'Auto-saving…',
+      SaveStatus.saved => 'Cloud synced',
     };
   }
 
@@ -190,7 +191,8 @@ class _SaveSyncDialog extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
     final outbox = hasCloud
-        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
+            OutboxStatus.empty)
         : null;
 
     return Dialog(
@@ -682,7 +684,8 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
     });
     // Also refresh when the outbox drains (cloud push completes — the
     // cloud_backup `updated_at` for this item ticks forward).
-    ref.listen<AsyncValue<OutboxStatus>>(outboxStatusProvider, (prev, next) {
+    ref.listen<AsyncValue<OutboxStatus>>(activeItemOutboxStatusProvider,
+        (prev, next) {
       final prevPending = prev?.valueOrNull?.pending ?? 0;
       final nextPending = next.valueOrNull?.pending ?? 0;
       if (prevPending > 0 && nextPending == 0) {
