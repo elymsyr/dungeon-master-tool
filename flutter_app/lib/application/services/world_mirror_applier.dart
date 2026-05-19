@@ -23,6 +23,7 @@ import '../../data/database/util/builtin_synth.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package_import_service.dart';
 import 'package_sync_service.dart';
+import 'pending_write_buffer.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -57,6 +58,8 @@ class WorldMirrorApplier {
     required this.mirror,
     required this.sync,
   });
+
+  PendingWriteBuffer get _buffer => ref.read(pendingWriteBufferProvider);
 
   void start() {
     _sub ??= sync.events.listen(_onEvent);
@@ -109,7 +112,7 @@ class WorldMirrorApplier {
       await _applySessionsList(snapshot.sessions);
     }
     if (snapshot.settings != null) {
-      await _applySettingsRow(snapshot.settings!);
+      await _applySettingsRow(snapshot.settings!, worldId: worldId);
     }
     _bumpRevision();
   }
@@ -161,6 +164,9 @@ class WorldMirrorApplier {
       case PostgresChangeEvent.delete:
         final id = e.oldRecord['id'] as String?;
         if (id == null) return;
+        // CDC race guard: local pending edit varken remote DELETE'i de
+        // uygulama — kullanıcı yazıyor, trailing fire upsert atacak.
+        if (_buffer.isPending('entity:${e.worldId}:$id')) return;
         if (entities.remove(id) != null) {
           _bumpRevision();
         }
@@ -168,6 +174,7 @@ class WorldMirrorApplier {
       case PostgresChangeEvent.update:
         final id = e.newRecord['id'] as String?;
         if (id == null) return;
+        if (_buffer.isPending('entity:${e.worldId}:$id')) return;
         entities[id] = _entityRowToBlob(e.newRecord);
         _bumpRevision();
       default:
@@ -182,6 +189,8 @@ class WorldMirrorApplier {
       case PostgresChangeEvent.delete:
         final id = e.oldRecord['id'] as String?;
         if (id == null) return;
+        // CDC race guard: local pending edit varken remote uygulanmaz.
+        if (_buffer.isPending('character:$id')) return;
         notifier.removeMirror(id);
         // 039 model: DELETE = canonical row gone. RPC'ler `(NULL,NULL)`
         // CHECK violation olurdu yerine row'u siler. Hub-level local
@@ -192,6 +201,7 @@ class WorldMirrorApplier {
       case PostgresChangeEvent.update:
         final id = e.newRecord['id'] as String?;
         if (id == null) return;
+        if (_buffer.isPending('character:$id')) return;
         final newWorldId = e.newRecord['world_id'] as String?;
         final newOwnerId = e.newRecord['owner_id'] as String?;
         if (newWorldId == null) {
@@ -441,6 +451,8 @@ class WorldMirrorApplier {
 
   Future<void> _applyMapDataEvent(WorldSyncEvent e) async {
     if (mirror.isEchoOfMapData(e.worldId)) return;
+    // CDC race guard: local pending pin/edit varken remote uygulanmaz.
+    if (_buffer.isPending('settings:${e.worldId}:map_data')) return;
     switch (e.eventType) {
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
@@ -538,7 +550,7 @@ class WorldMirrorApplier {
     switch (e.eventType) {
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
-        await _applySettingsRow(e.newRecord);
+        await _applySettingsRow(e.newRecord, worldId: e.worldId);
       case PostgresChangeEvent.delete:
         final data = ref.read(activeCampaignProvider.notifier).data;
         if (data != null && data.remove('settings') != null) _bumpRevision();
@@ -656,7 +668,10 @@ class WorldMirrorApplier {
     }
   }
 
-  Future<void> _applySettingsRow(Map<String, dynamic> row) async {
+  Future<void> _applySettingsRow(
+    Map<String, dynamic> row, {
+    required String worldId,
+  }) async {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final raw = row['settings_json'];
@@ -664,7 +679,30 @@ class WorldMirrorApplier {
     try {
       final decoded = await _decodeJsonMaybeOffload(raw);
       if (decoded is! Map<String, dynamic>) return;
-      data['settings'] = decoded;
+
+      // CDC race guard: settings JSON tek bir blob; lokal'da farklı subkey'ler
+      // (combat_state, map_data, mind_maps, map_view, mind_map_view:$mapId)
+      // ayrı buffer entry'leri olarak pending olabilir. Merge: pending subkey
+      // local'dan korunur, kalanları remote'tan al.
+      final prefix = 'settings:$worldId:';
+      final pendingKeys = _buffer.pendingKeysWithPrefix(prefix).toList();
+      if (pendingKeys.isEmpty) {
+        data['settings'] = decoded;
+      } else {
+        final currentSettings = (data['settings'] is Map<String, dynamic>)
+            ? data['settings'] as Map<String, dynamic>
+            : <String, dynamic>{};
+        final merged = <String, dynamic>{...decoded};
+        for (final pendingKey in pendingKeys) {
+          final subkey = pendingKey.substring(prefix.length).split(':').first;
+          if (currentSettings.containsKey(subkey)) {
+            merged[subkey] = currentSettings[subkey];
+          } else {
+            merged.remove(subkey);
+          }
+        }
+        data['settings'] = merged;
+      }
       _bumpRevision();
     } catch (err) {
       debugPrint('_applySettingsRow decode error: $err');

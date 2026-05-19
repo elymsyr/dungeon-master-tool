@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/connectivity_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
@@ -167,8 +169,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // teardown so the disk write completes.
       unawaited(() async {
         await ref.read(pendingWriteBufferProvider).flush();
-        // Force drain — slow tier rows would otherwise wait 30s past the OS
-        // suspend boundary.
+        // Force drain — slow tier rows would otherwise wait `cloudDelay`
+        // (10s) past the OS suspend boundary.
         await ref.read(syncEngineProvider).forceTick();
       }());
       final worldSync = ref.read(worldSyncServiceProvider);
@@ -180,11 +182,24 @@ class _MainScreenState extends ConsumerState<MainScreen>
     }
   }
 
-  /// Hub'a donuse tetiklenen ortak exit akisi:
-  /// Save/sync yapılmaz — kullanıcı çıkmadan önce Save butonuyla açıkça
-  /// kaydeder. Burada sadece liste provider'larını invalidate edip /hub'a
-  /// geçer.
+  /// Hub'a dönüşte tetiklenen ortak exit akışı:
+  /// Pending row-level edit'leri flush + (online ise) outbox forceTick
+  /// "Saving..." overlay ile bekletilir. Sonra liste provider'ları invalidate
+  /// + /hub. Kullanıcı arka tarafta data kaybetmesin diye sync zorlanır.
   Future<void> _exitToHub() async {
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'exit-world',
+      'Saving...',
+      () async {
+        await ref.read(pendingWriteBufferProvider).flush();
+        final online =
+            ref.read(connectivityStreamProvider).valueOrNull ?? false;
+        if (online) {
+          await ref.read(syncEngineProvider).forceTick();
+        }
+      },
+    );
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     if (mounted) context.go('/hub');

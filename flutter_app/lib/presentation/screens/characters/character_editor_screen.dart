@@ -15,8 +15,10 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/connectivity_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/outbox_status_provider.dart';
@@ -2515,24 +2517,37 @@ class _CharacterEditorScreenState
   }
 
   Future<void> _saveAndClose(BuildContext context) async {
-    // Pending debounced write'ı önce drain et — buffer fire'ı zaten
-    // characterListProvider.update() çağırıyor (disk + sync push). Yine de
-    // close öncesi explicit `_save` ile saving-spinner ve permission gate
-    // tutarlı kalsın.
-    try {
-      await ref
-          .read(pendingWriteBufferProvider)
-          .flushPrefix('character:${widget.characterId}');
-    } catch (_) {/* best-effort */}
-    await _save(silent: true);
-    // Flush cloud snapshot (beta + non-online-world chars) before the editor
-    // tears down so the user's last edit lands on the server. Mirror-route
-    // chars are already pushed from `update()`.
-    try {
-      await ref
-          .read(characterListProvider.notifier)
-          .flushCloudBackup(widget.characterId);
-    } catch (_) {/* best-effort */}
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'save-close-char-${widget.characterId}',
+      'Saving...',
+      () async {
+        // Pending debounced write'ı önce drain et — buffer fire'ı zaten
+        // characterListProvider.update() çağırıyor (disk + sync push).
+        try {
+          await ref
+              .read(pendingWriteBufferProvider)
+              .flushPrefix('character:${widget.characterId}');
+        } catch (_) {/* best-effort */}
+        await _save(silent: true);
+        // Flush cloud snapshot (beta + non-online-world chars). Mirror-route
+        // chars are already pushed from `update()`.
+        try {
+          await ref
+              .read(characterListProvider.notifier)
+              .flushCloudBackup(widget.characterId);
+        } catch (_) {/* best-effort */}
+        // Online ise outbox push'unu zorla — slow tier cloudDelay (10s)
+        // beklemeden network'e gitsin.
+        final online =
+            ref.read(connectivityStreamProvider).valueOrNull ?? false;
+        if (online) {
+          try {
+            await ref.read(syncEngineProvider).forceTick();
+          } catch (_) {/* best-effort */}
+        }
+      },
+    );
     if (!context.mounted) return;
     final onClose = widget.onClose;
     if (onClose != null) {

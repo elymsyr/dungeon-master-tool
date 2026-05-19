@@ -6,13 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -237,9 +240,24 @@ class _PackageScreenContentState
     super.dispose();
   }
 
-  /// Manuel sync modeli: çıkışta otomatik save yok. Sadece liste invalidate +
-  /// /hub'a git.
+  /// Pending row-level edit'leri flush + (online ise) outbox forceTick.
+  /// "Saving..." overlay sırasında bekletilir. Sonra liste invalidate + /hub.
   Future<void> _exitToHub() async {
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'exit-package',
+      'Saving...',
+      () async {
+        await ref.read(pendingWriteBufferProvider).flush();
+        final online =
+            ref.read(connectivityStreamProvider).valueOrNull ?? false;
+        if (online) {
+          try {
+            await ref.read(syncEngineProvider).forceTick();
+          } catch (_) {/* best-effort */}
+        }
+      },
+    );
     ref.invalidate(packageListProvider);
     if (mounted) context.go('/hub');
   }
