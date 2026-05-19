@@ -32,6 +32,12 @@ enum WriteKind {
   /// 500ms — combat_state mutation. Snappy bağlı kalır.
   combatTick,
 
+  /// 2000ms — pan/zoom/camera/scroll. Motion-class field; pair with
+  /// `CampaignNotifier.saveSettingsPatchLocalOnly` — local Drift'e yazılır,
+  /// outbox'a girmez. Reset-on-edit: PendingWriteBuffer aynı key için yeni
+  /// schedule'da timer'ı cancel + reset zaten yapıyor.
+  viewport,
+
   /// 0ms — addEntities import, paste, delete (hemen fire).
   immediate;
 
@@ -42,6 +48,7 @@ enum WriteKind {
         listEdit => const Duration(milliseconds: 1000),
         spatial => const Duration(milliseconds: 1000),
         combatTick => const Duration(milliseconds: 500),
+        viewport => const Duration(milliseconds: 2000),
         immediate => Duration.zero,
       };
 

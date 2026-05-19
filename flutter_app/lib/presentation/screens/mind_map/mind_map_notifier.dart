@@ -184,9 +184,20 @@ class MindMapNotifier extends StateNotifier<MindMapState>
         .map((e) => MindMapEdge.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
 
-    final panX = (data['pan_x'] as num? ?? 0).toDouble();
-    final panY = (data['pan_y'] as num? ?? 0).toDouble();
-    final scale = (data['scale'] as num? ?? 1.0).toDouble();
+    // Viewport now lives in sibling `mind_map_views[mapId]` (local-only).
+    // Prefer it; fall back to legacy nested `mind_maps[mapId].{scale,pan_*}`
+    // forwarded in `data` for worlds saved before the split.
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    final mapId = _ref.read(currentMindMapIdProvider);
+    final views = campaign.data?['mind_map_views'];
+    Map<String, dynamic>? view;
+    if (views is Map && views[mapId] is Map) {
+      view = Map<String, dynamic>.from(views[mapId] as Map);
+    }
+    final panX = (view?['pan_x'] as num? ?? data['pan_x'] as num? ?? 0).toDouble();
+    final panY = (view?['pan_y'] as num? ?? data['pan_y'] as num? ?? 0).toDouble();
+    final scale =
+        (view?['scale'] as num? ?? data['scale'] as num? ?? 1.0).toDouble();
     viewTransform.value = MindMapViewTransform(
       scale: scale,
       panOffset: Offset(panX, panY),
@@ -197,24 +208,33 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   }
 
   /// Synchronously update in-memory campaign data with current mind map state.
+  /// Nodes/edges go into `mind_maps[mapId]` (synced). Viewport goes into
+  /// sibling `mind_map_views[mapId]` (DM-local; cloud'a gitmez).
   void syncToCampaignData() {
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 
     final vt = viewTransform.value;
+    final mapId = _ref.read(currentMindMapIdProvider);
+
     final mindMapData = {
       'nodes': state.nodes.map((n) => n.toJson()).toList(),
       'edges': state.edges.map((e) => e.toJson()).toList(),
+    };
+    final mindMaps =
+        Map<String, dynamic>.from(campaign.data!['mind_maps'] as Map? ?? {});
+    mindMaps[mapId] = mindMapData;
+    campaign.data!['mind_maps'] = mindMaps;
+
+    final views = Map<String, dynamic>.from(
+      campaign.data!['mind_map_views'] as Map? ?? {},
+    );
+    views[mapId] = <String, dynamic>{
       'scale': vt.scale,
       'pan_x': vt.panOffset.dx,
       'pan_y': vt.panOffset.dy,
     };
-
-    final mindMaps =
-        Map<String, dynamic>.from(campaign.data!['mind_maps'] as Map? ?? {});
-    final mapId = _ref.read(currentMindMapIdProvider);
-    mindMaps[mapId] = mindMapData;
-    campaign.data!['mind_maps'] = mindMaps;
+    campaign.data!['mind_map_views'] = views;
   }
 
   void _debouncedSave() {
@@ -225,7 +245,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     final worldId =
         (campaign.data?['world_id'] as String?) ?? 'local';
     // Debounce node move / edge edit'leri via PendingWriteBuffer
-    // (spatial = 800ms). Drag tick'leri tek read-merge-write'a coalesce.
+    // (spatial = 1000ms). Drag tick'leri tek read-merge-write'a coalesce.
     // Closure captures `campaign` (long-lived) ve `worldId`; mindMaps
     // referansını fire anında re-read et ki en güncel snapshot diske gitsin
     // — autoDispose notifier'ı pending timer'dan önce dispose olabiliyor.
@@ -241,8 +261,31 @@ class MindMapNotifier extends StateNotifier<MindMapState>
         );
   }
 
+  /// Pan/zoom save — local-only, 2000ms reset-on-edit. Viewport DM-local;
+  /// cloud'a gitmez. Aynı key için yeni schedule timer'ı sıfırlar.
+  void _debouncedViewportSave() {
+    syncToCampaignData();
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    if (campaign.data == null) return;
+    final worldId = (campaign.data?['world_id'] as String?) ?? 'local';
+    final mapId = _ref.read(currentMindMapIdProvider);
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'settings:$worldId:mind_map_view:$mapId',
+          kind: WriteKind.viewport,
+          action: () async {
+            final latest = campaign.data?['mind_map_views'];
+            if (latest is! Map) return;
+            await campaign.saveSettingsPatchLocalOnly(
+              {'mind_map_views': Map<String, dynamic>.from(latest)},
+            );
+          },
+        );
+  }
+
   /// Drain pending debounce ve hemen diske yaz. Tab değişimi / world close
-  /// gibi noktalarda 800ms beklemeden save'i kapatır.
+  /// gibi noktalarda debounce beklemeden save'i kapatır. Hem content
+  /// (mind_maps, synced) hem viewport (mind_map_views, local-only) ayrı
+  /// fire'lanır.
   Future<void> flushSave() async {
     syncToCampaignData();
     final campaign = _ref.read(activeCampaignProvider.notifier);
@@ -250,13 +293,26 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     if (mindMaps is! Map) return;
     final worldId =
         (campaign.data?['world_id'] as String?) ?? 'local';
-    // Pending debounce'u iptal ve hemen yaz.
-    _ref.read(pendingWriteBufferProvider).schedule(
-          key: 'settings:$worldId:mind_maps',
-          kind: WriteKind.immediate,
-          action: () => campaign.saveSettingsPatch(
-              {'mind_maps': Map<String, dynamic>.from(mindMaps)}),
-        );
+    final buffer = _ref.read(pendingWriteBufferProvider);
+    // Pending debounce'u iptal ve hemen yaz — content (sync'li).
+    buffer.schedule(
+      key: 'settings:$worldId:mind_maps',
+      kind: WriteKind.immediate,
+      action: () => campaign.saveSettingsPatch(
+          {'mind_maps': Map<String, dynamic>.from(mindMaps)}),
+    );
+    // Viewport (local-only) — varsa hemen fire et.
+    final views = campaign.data?['mind_map_views'];
+    if (views is Map) {
+      final mapId = _ref.read(currentMindMapIdProvider);
+      buffer.schedule(
+        key: 'settings:$worldId:mind_map_view:$mapId',
+        kind: WriteKind.immediate,
+        action: () => campaign.saveSettingsPatchLocalOnly(
+          {'mind_map_views': Map<String, dynamic>.from(views)},
+        ),
+      );
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -300,7 +356,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   }
 
   void onScaleEnd() {
-    _debouncedSave();
+    // Viewport-only save: local Drift, no cloud push, 2s reset-on-edit.
+    _debouncedViewportSave();
   }
 
   /// Mouse-wheel zoom centered on [localPos].
@@ -312,6 +369,7 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     final scaleRatio = newScale / vt.scale;
     final newPan = localPos - (localPos - vt.panOffset) * scaleRatio;
     viewTransform.value = MindMapViewTransform(scale: newScale, panOffset: newPan);
+    _debouncedViewportSave();
   }
 
   /// Returns true if [canvasPos] is inside an entity or note node

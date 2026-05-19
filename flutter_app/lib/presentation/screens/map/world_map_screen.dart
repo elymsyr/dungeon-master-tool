@@ -53,6 +53,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final mapData = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
+    // Viewport now lives in sibling `map_view` (local-only). Prefer it; fall
+    // back to legacy nested scale/pan keys inside `map_data` for worlds saved
+    // before the split. `init` reads scale/pan_x/pan_y off the map it receives.
+    final mapView = data['map_view'] as Map?;
+    if (mapView != null) {
+      if (mapView['scale'] != null) mapData['scale'] = mapView['scale'];
+      if (mapView['pan_x'] != null) mapData['pan_x'] = mapView['pan_x'];
+      if (mapView['pan_y'] != null) mapData['pan_y'] = mapView['pan_y'];
+    }
     ref.read(worldMapProvider.notifier).init(mapData);
   }
 
@@ -92,6 +101,14 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             // ignore: discarded_futures
             engine.enqueueWorldMapData(worldId: worldId, data: mapMap);
           }
+        }
+        // Viewport sibling key — local only, never cloud.
+        final mapView = campaign.data?['map_view'];
+        if (mapView is Map) {
+          // ignore: discarded_futures
+          campaign.saveSettingsPatchLocalOnly(
+            {'map_view': Map<String, dynamic>.from(mapView)},
+          );
         }
       } catch (_) {}
     });
