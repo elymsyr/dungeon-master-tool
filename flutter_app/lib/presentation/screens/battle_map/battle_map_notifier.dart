@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
@@ -989,13 +990,21 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Persistence
   // -------------------------------------------------------------------------
 
-  /// Auto-save kaldırıldı; edit yapıldığında combat_provider in-memory
-  /// state'ine senkron flush. Diske yazılması Save butonu veya item close
-  /// akışında olur.
+  /// Edit burst'lerini PendingWriteBuffer ile coalesce et. Fog paint
+  /// stroke'ları, token drag, grid setting tek tek instant fire ederse
+  /// her biri combat_state outbox push'una çıkıyor → mobilde "ard arda
+  /// save" görüntüsü. combatTick (500ms) tier'ı multiplayer fog güncellemesi
+  /// için snappy kalır.
   void _debouncedAutoSave() {
     if (!mounted) return;
-    // ignore: discarded_futures
-    save();
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'battlemap:$encounterId:save',
+          kind: WriteKind.combatTick,
+          action: () async {
+            if (!mounted) return;
+            await save();
+          },
+        );
   }
 
   Future<void> save() async {

@@ -346,6 +346,15 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final firstEpoch =
         state.epochs.isNotEmpty ? state.epochs[0] : const MapEpoch(id: '');
 
+    // Viewport (pan/zoom) — DM-local motion class. Sibling key `map_view`
+    // out of `map_data` so content sync (pins/waypoints) and viewport
+    // local-save use different buffer keys + different cloud semantics.
+    campaign.data!['map_view'] = <String, dynamic>{
+      'scale': vt.scale,
+      'pan_x': vt.panOffset.dx,
+      'pan_y': vt.panOffset.dy,
+    };
+
     campaign.data!['map_data'] = {
       'image_path': firstEpoch.imagePath,
       'pins': firstEpoch.pins.map((p) => p.toJson()).toList(),
@@ -356,9 +365,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       'feet_per_cell': existing['feet_per_cell'] ?? 5,
       'fog_state': existing['fog_state'] ?? <String, dynamic>{},
       'drawings': existing['drawings'] ?? <dynamic>[],
-      'scale': vt.scale,
-      'pan_x': vt.panOffset.dx,
-      'pan_y': vt.panOffset.dy,
       // Epoch data
       'epochs': state.epochs
           .map((e) => {
@@ -451,8 +457,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   }
 
   /// In-memory campaign data güncelle + diske debounced yaz.
-  /// `pendingWriteBufferProvider` 800ms spatial debounce yapar — pin drag
-  /// burst'lerinde tek I/O.
+  /// `pendingWriteBufferProvider` 1000ms spatial debounce yapar — pin drag
+  /// burst'lerinde tek I/O. Viewport (pan/zoom) bu path'ten geçmez;
+  /// [_debouncedViewportSave] kullanır (local-only, 2000ms).
   void _debouncedSave() {
     if (!mounted) return;
     syncToCampaignData();
@@ -466,6 +473,27 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
           kind: WriteKind.spatial,
           action: () => campaign
               .saveSettingsPatch({'map_data': Map<String, dynamic>.from(mapMap)}),
+        );
+  }
+
+  /// Pan/zoom save — local-only, 2000ms reset-on-edit. Viewport DM-local
+  /// motion class; cloud'a gitmez (oyuncuya yansımaz, başka cihazda ekran
+  /// sıçramaz). PendingWriteBuffer aynı key için yeni schedule'da timer'ı
+  /// cancel + reset eder — kullanıcı pan'a devam ederken save tetiklenmez.
+  void _debouncedViewportSave() {
+    if (!mounted) return;
+    syncToCampaignData();
+    final campaign = _ref.read(activeCampaignProvider.notifier);
+    final data = campaign.data;
+    if (data == null) return;
+    final view = Map<String, dynamic>.from(data['map_view'] as Map? ?? {});
+    final worldId = (data['world_id'] as String?) ?? 'local';
+    _ref.read(pendingWriteBufferProvider).schedule(
+          key: 'settings:$worldId:map_view',
+          kind: WriteKind.viewport,
+          action: () => campaign.saveSettingsPatchLocalOnly(
+            {'map_view': Map<String, dynamic>.from(view)},
+          ),
         );
   }
 
@@ -722,6 +750,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     state = state.copyWith(imagePath: path);
     await _fitImageInViewport();
     _debouncedSave();
+    _debouncedViewportSave();
   }
 
   // -------------------------------------------------------------------------
@@ -743,8 +772,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   }
 
   void onScaleEnd() {
-    pushUndo(state);
-    _debouncedSave();
+    // Viewport-only save: local Drift, no cloud push, 2s reset-on-edit.
+    // Pan/zoom undo stack'i kirletmesin → pushUndo yok.
+    _debouncedViewportSave();
     _bumpCullTick();
   }
 
@@ -757,6 +787,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final newPan = localPos - (localPos - vt.panOffset) * scaleRatio;
     viewTransform.value = WorldMapViewTransform(scale: newScale, panOffset: newPan);
     _bumpCullTick();
+    _debouncedViewportSave();
   }
 
   void updateViewportSize(Size size) {
@@ -768,7 +799,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   void resetView() {
     pushUndo(state);
     _fitImageInViewport();
-    _debouncedSave();
+    _debouncedViewportSave();
   }
 
   /// Fit the current map image within the viewport (contain).

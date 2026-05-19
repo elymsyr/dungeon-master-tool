@@ -341,6 +341,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         );
   }
 
+  /// Same as [saveSettingsPatch] minus the cloud enqueue. Motion-class
+  /// field'lar (viewport pan/zoom, scroll position, ephemeral UI state)
+  /// için — local Drift yazılır, outbox'a girmez. Cihaz dünyayı yeniden
+  /// açtığında default viewport ile başlar; bilinçli karar — DM'in pan'ı
+  /// oyuncuya yansımasın, başka cihazda ekran sıçramasın.
+  Future<void> saveSettingsPatchLocalOnly(Map<String, dynamic> patch) async {
+    final name = state;
+    if (name == null) return;
+    await _repo.saveSettingsPatch(name, patch);
+    // bilerek enqueueWorldSettings çağrılmıyor — local-only motion class
+  }
+
   /// Keys that live in their own typed table or aren't part of the
   /// `world_settings.settings_json` mirror.
   static const _settingsTopKeyBlocklist = {
