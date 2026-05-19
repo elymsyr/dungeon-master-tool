@@ -469,12 +469,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                         isTimelineMode: mapState.showTimeline,
                       );
                     },
-                    // NB: parent canvas onLongPressStart kaldırıldı —
-                    // pin'lerin onLongPressStart (drag) ve onSecondaryTapUp
-                    // (context menu) gesture arena'da burayla yarışıyor ve
-                    // bazı durumlarda parent kazanıyordu. Mobil'de canvas
-                    // context menüsü için toolbar veya double-tap kullanın
-                    // (zaten timeline mode'da onDoubleTapDown var).
+                    onLongPressStart: (d) {
+                      _showCanvasContextMenu(
+                        d.localPosition,
+                        d.globalPosition,
+                        notifier,
+                        palette,
+                        isTimelineMode: mapState.showTimeline,
+                      );
+                    },
                     child: ClipRect(
                       child: Stack(
                         fit: StackFit.expand,
