@@ -44,6 +44,11 @@ class SyncOutboxDao extends DatabaseAccessor<AppDatabase>
           .getSingleOrNull();
 
   /// Coalescing enqueue. Returns the opId of the live row (existing or new).
+  ///
+  /// `nextAttemptAt` defaults to `now` (eligible for immediate drain). Slow
+  /// tier callers pass `now + cloudDelay` to batch within a coalesce window
+  /// before the row becomes drain-eligible. `createdAt` always tracks the
+  /// real enqueue moment so the drain order is stable.
   Future<String> enqueueCoalesced({
     required String opId,
     required String targetTable,
@@ -52,8 +57,10 @@ class SyncOutboxDao extends DatabaseAccessor<AppDatabase>
     required String payloadJson,
     String? scopeId,
     DateTime? now,
+    DateTime? nextAttemptAt,
   }) async {
     final ts = now ?? DateTime.now();
+    final attemptAt = nextAttemptAt ?? ts;
     return transaction(() async {
       final existing = await findPending(
         targetTable: targetTable,
@@ -71,7 +78,7 @@ class SyncOutboxDao extends DatabaseAccessor<AppDatabase>
             attempts: const Value(0),
             lastError: const Value(null),
             lastAttemptAt: const Value(null),
-            nextAttemptAt: Value(ts),
+            nextAttemptAt: Value(attemptAt),
             createdAt: Value(ts),
           ),
         );
@@ -86,7 +93,7 @@ class SyncOutboxDao extends DatabaseAccessor<AppDatabase>
         payloadJson: payloadJson,
         payloadBytes: Value(payloadJson.length),
         createdAt: Value(ts),
-        nextAttemptAt: Value(ts),
+        nextAttemptAt: Value(attemptAt),
       ));
       return opId;
     });

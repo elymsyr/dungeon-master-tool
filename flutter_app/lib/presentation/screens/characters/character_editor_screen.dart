@@ -3035,7 +3035,8 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
     final outbox = hasCloud
-        ? (ref.watch(outboxStatusProvider).valueOrNull ?? OutboxStatus.empty)
+        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
+            OutboxStatus.empty)
         : null;
 
     // Sync button eligibility: world-bound + online world OR worldless + beta.

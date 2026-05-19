@@ -3,41 +3,56 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'sync_tier.dart';
+
 /// Tipe göre debounce penceresi. Aynı (kind, key) için ardışık schedule
 /// timer'ı reset eder; tek fire'da en son closure çalışır. Settings
 /// patch'leri için key'i (örn. `"settings:$worldId:combat_state"`) ile
 /// anahtarlayarak farklı patch tipleri bağımsız fire'lansın.
+///
+/// Effective window = `kind.window * tier.debounceMultiplier`. Slow tier
+/// (package, worldless char) 2× window kullanır — cloud-only, hızlı fire'a
+/// ihtiyaç yok.
 enum WriteKind {
-  /// 500ms — HP/AC/level/CR/sayısal stat.
+  /// 750ms (fast) / 1500ms (slow) — HP/AC/level/CR/sayısal stat.
   shortNumber,
 
-  /// 1000ms — name, source, single-line identifier.
+  /// 1500ms (fast) / 3000ms (slow) — name, source, single-line identifier.
   shortText,
 
-  /// 1500ms — description, dm_notes, multi-line text area.
+  /// 2000ms (fast) / 4000ms (slow) — description, dm_notes, multi-line text.
   longText,
 
-  /// 800ms — tags, pdfs, images, linked refs.
+  /// 1000ms (fast) / 2000ms (slow) — tags, pdfs, images, linked refs.
   listEdit,
 
-  /// 800ms — map pin drag, mind map node move/resize.
+  /// 1000ms (fast) / 2000ms (slow) — map pin drag, mind map node move.
   spatial,
 
-  /// 500ms — combat_state mutation.
+  /// 500ms — combat_state mutation. Snappy bağlı kalır.
   combatTick,
 
   /// 0ms — addEntities import, paste, delete (hemen fire).
   immediate;
 
   Duration get window => switch (this) {
-        shortNumber => const Duration(milliseconds: 500),
-        shortText => const Duration(milliseconds: 1000),
-        longText => const Duration(milliseconds: 1500),
-        listEdit => const Duration(milliseconds: 800),
-        spatial => const Duration(milliseconds: 800),
+        shortNumber => const Duration(milliseconds: 750),
+        shortText => const Duration(milliseconds: 1500),
+        longText => const Duration(milliseconds: 2000),
+        listEdit => const Duration(milliseconds: 1000),
+        spatial => const Duration(milliseconds: 1000),
         combatTick => const Duration(milliseconds: 500),
         immediate => Duration.zero,
       };
+
+  /// Tier-aware effective duration. Fast = base; slow = 2× base.
+  Duration effectiveWindow(SyncTier tier) {
+    if (this == WriteKind.immediate) return Duration.zero;
+    final base = window.inMilliseconds;
+    return Duration(
+      milliseconds: (base * tier.debounceMultiplier).round(),
+    );
+  }
 }
 
 class _PendingWrite {
@@ -65,21 +80,23 @@ class PendingWriteBuffer {
   final ValueNotifier<int> tick = ValueNotifier<int>(0);
   void _bumpTick() => tick.value++;
 
-  /// [key] yeni schedule'da action ve timer reset. [kind.window] kadar
-  /// sessizlik olursa action fire'lanır. Action async ise Future
-  /// throw'ları yutulur (debugPrint).
+  /// [key] yeni schedule'da action ve timer reset. Effective duration =
+  /// `kind.effectiveWindow(tier)`. Action async ise Future throw'ları
+  /// yutulur (debugPrint).
   void schedule({
     required String key,
     required WriteKind kind,
     required FutureOr<void> Function() action,
+    SyncTier tier = SyncTier.fast,
   }) {
     _pending.remove(key)?.timer.cancel();
-    if (kind == WriteKind.immediate || kind.window == Duration.zero) {
+    final duration = kind.effectiveWindow(tier);
+    if (kind == WriteKind.immediate || duration == Duration.zero) {
       _run(action);
       _bumpTick();
       return;
     }
-    final timer = Timer(kind.window, () {
+    final timer = Timer(duration, () {
       final entry = _pending.remove(key);
       if (entry == null) return;
       _run(entry.action);

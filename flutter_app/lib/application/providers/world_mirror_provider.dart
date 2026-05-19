@@ -18,29 +18,48 @@ final worldMirrorServiceProvider = Provider<WorldMirrorService?>((ref) {
   return WorldMirrorService(Supabase.instance.client);
 });
 
-/// Applier — sync.events stream'ini local state'e bağlar. Singleton kalır;
-/// realtime subscription tamamen manuel olduğundan applier sadece event
-/// kanalına bağlı durur, hiç event almazsa no-op.
-final worldMirrorApplierProvider = Provider<WorldMirrorApplier?>((ref) {
+/// Applier — sync.events stream'ini lokal state'e bağlar + aktif world için
+/// otomatik subscribe + applyInitialState çalıştırır.
+///
+/// Bağlamlar:
+///   - `activeCampaignIdProvider` resolve → world açık.
+///   - `currentWorldRoleProvider` resolve + `WorldRole != none` → kullanıcı
+///     member, RLS subscribe'a izin verir.
+/// İki koşul sağlandığında channel açılır + initial state pull edilir.
+/// Provider dispose'da (world değiştirme / sign-out / app pause invalidate)
+/// kanal kapanır.
+final worldMirrorApplierProvider =
+    FutureProvider<WorldMirrorApplier?>((ref) async {
   final mirror = ref.watch(worldMirrorServiceProvider);
   final sync = ref.watch(worldSyncServiceProvider);
   if (mirror == null || sync == null) return null;
+
   final applier =
       WorldMirrorApplier(ref: ref, mirror: mirror, sync: sync)..start();
-  ref.onDispose(() => applier.stop());
+  ref.onDispose(applier.stop);
+
+  final worldId = await ref.watch(activeCampaignIdProvider.future);
+  final role = await ref.watch(currentWorldRoleProvider.future);
+  if (worldId == null || role == WorldRole.none) return applier;
+
+  if (!sync.isSubscribed(worldId)) {
+    await sync.subscribe(worldId);
+  }
+  ref.onDispose(() => sync.unsubscribe(worldId));
+  await applier.applyInitialState(worldId);
   return applier;
 });
 
-/// Manuel sync giriş noktası. Sync butonu çağırır — subscribe + initial
-/// snapshot pull. Hiçbir yerde otomatik watch edilmez. WidgetRef veya Ref
-/// kabul eder (her ikisi de `.read` + `.read(<future>)` destekler).
+/// Manuel sync entry — "Retry now" Sync butonu fallback'i. Auto-subscribe
+/// (PR-2) zaten kanal açar; bu fonksiyon kanal hâlâ kapalıysa açar ve
+/// `applyInitialState` ile catchup tetikler. Idempotent.
 Future<void> runManualWorldSync(WidgetRef ref) async {
   final svc = ref.read(worldSyncServiceProvider);
   if (svc == null) return;
   final campaignId = await ref.read(activeCampaignIdProvider.future);
   final role = await ref.read(currentWorldRoleProvider.future);
   if (campaignId == null || role == WorldRole.none) return;
-  final applier = ref.read(worldMirrorApplierProvider);
+  final applier = await ref.read(worldMirrorApplierProvider.future);
   if (!svc.isSubscribed(campaignId)) {
     await svc.subscribe(campaignId);
   }

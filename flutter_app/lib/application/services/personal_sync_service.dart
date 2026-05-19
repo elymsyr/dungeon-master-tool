@@ -4,18 +4,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Per-user Supabase Realtime sync orchestrator.
 ///
-/// Tek bir `dmt:user:{uid}` kanal'ı şu tablolardaki INSERT/UPDATE/DELETE
+/// Tek bir `dmt:user:{uid}` kanal'ı sadece şu tablodaki INSERT/UPDATE/DELETE
 /// event'lerini dinler:
-///   - `personal_packages`   (`owner_id = uid`) — package cross-device sync
-///   - `world_members`       (`user_id  = uid`) — join/leave karşı cihazlara
-///     anlık yansısın (kullanıcı Device A'da join etti → Device B'de world
-///     listesi otomatik refresh)
+///   - `world_members` (`user_id = uid`) — join/leave karşı cihazlara anlık
+///     yansısın (kullanıcı Device A'da join etti → Device B'de world listesi
+///     otomatik refresh)
 ///
-/// `personal_characters` 040'da retire edildi; char cross-device sync
-/// `world_characters` CDC + RLS üzerinden çalışır (`world_mirror_applier`).
+/// **Realtime YOK** (PR-3): paket ve worldless karakter senkronu cloud-save
+/// only — `personal_packages`, `personal_package_entities`, `cloud_backups`
+/// CDC subscribe edilmez. Cross-device pull = app-open bootstrap (auto via
+/// `personalMirrorApplierProvider`) + manuel "Sync" butonu.
 ///
-/// Bu service kanalı yönetir ve event'leri tek `Stream<PersonalSyncEvent>`
-/// içinden yayar. Apply mantığı `PersonalMirrorApplier`'da.
+/// `personal_characters` 040'da retire edildi; world-bound char cross-device
+/// sync `world_characters` CDC + RLS üzerinden çalışır
+/// (`world_mirror_applier`).
+///
+/// Apply mantığı `PersonalMirrorApplier`'da.
 class PersonalSyncService {
   final SupabaseClient client;
 
@@ -56,19 +60,6 @@ class PersonalSyncService {
     channel.onPostgresChanges(
       event: PostgresChangeEvent.all,
       schema: 'public',
-      table: 'personal_packages',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'owner_id',
-        value: uid,
-      ),
-      callback: (payload) =>
-          _dispatch('personal_packages', payload),
-    );
-
-    channel.onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
       table: 'world_members',
       filter: PostgresChangeFilter(
         type: PostgresChangeFilterType.eq,
@@ -77,21 +68,6 @@ class PersonalSyncService {
       ),
       callback: (payload) =>
           _dispatch('world_members', payload),
-    );
-
-    // F5 row-level: per-entity CDC for personal package entities. Filtered
-    // by owner so the channel scales linearly with the user's catalog.
-    channel.onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'personal_package_entities',
-      filter: PostgresChangeFilter(
-        type: PostgresChangeFilterType.eq,
-        column: 'owner_id',
-        value: uid,
-      ),
-      callback: (payload) =>
-          _dispatch('personal_package_entities', payload),
     );
 
     channel.subscribe();

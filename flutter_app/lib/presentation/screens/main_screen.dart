@@ -21,6 +21,8 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
+import '../../application/providers/sync_engine_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_sync_provider.dart';
 import '../../application/providers/personal_sync_provider.dart';
 import '../../application/services/pending_write_buffer.dart';
@@ -152,21 +154,29 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Manuel sync modeli: pause/resume otomatik save veya resubscribe
-    // tetiklemez. Realtime kanalları manuel Sync butonuyla açılır/kapanır.
-    // Mobile WiFi radyo tasarrufu için pause anında kanal kapatma yine de
-    // yapılır — re-açılış manuel Sync'te.
+    // Auto sync: pause'da pending writes flush + outbox forceTick (OS suspend
+    // etmeden önce slow tier'i da drain), realtime kanallarını kapat.
+    // Resume'da `worldMirrorApplierProvider` invalidate edilir → PR-2'nin
+    // FutureProvider yeniden resolve olur, subscribe + applyInitialState
+    // tetiklenir.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       // Combat/entity/etc. row-level writes ride PendingWriteBuffer with up
-      // to 1.5s debounce. App close mid-debounce dropped them silently —
+      // to 2s debounce. App close mid-debounce dropped them silently —
       // e.g. monster HP edits reverting on next launch. Flush before kanal
       // teardown so the disk write completes.
-      unawaited(ref.read(pendingWriteBufferProvider).flush());
+      unawaited(() async {
+        await ref.read(pendingWriteBufferProvider).flush();
+        // Force drain — slow tier rows would otherwise wait 30s past the OS
+        // suspend boundary.
+        await ref.read(syncEngineProvider).forceTick();
+      }());
       final worldSync = ref.read(worldSyncServiceProvider);
       if (worldSync != null) unawaited(worldSync.unsubscribeAll());
       final personalSync = ref.read(personalSyncServiceProvider);
       if (personalSync != null) unawaited(personalSync.stop());
+    } else if (state == AppLifecycleState.resumed) {
+      ref.invalidate(worldMirrorApplierProvider);
     }
   }
 
@@ -363,11 +373,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
 
-    // Manuel sync modeli: auto-subscribe / connectivity / outbox drain
-    // watch'ları kaldırıldı. Realtime + outbox push manuel Sync butonu
-    // üzerinden tetiklenir. activeCampaignSyncProvider hâlâ side-effect
-    // olarak dinleniyor — initial cloud catchup'ı tetiklemez, sadece
-    // campaign load akışı için gerekli.
+    // Auto sync: worldMirrorApplierProvider'i watch et — provider hayatta
+    // tutulur world açıkken. Provider içinde activeCampaignId/role resolve
+    // olunca otomatik subscribe + applyInitialState çalışır.
+    ref.watch(worldMirrorApplierProvider);
     ref.listen(activeCampaignSyncProvider, (_, _) {});
     ref.watch(activeCampaignSyncProvider);
     final screen = getScreenType(context);

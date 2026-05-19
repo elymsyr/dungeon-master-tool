@@ -97,7 +97,8 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     // F6 follow-up: row-level cloud pushes (world_entities, world_settings,
     // world_map_data) drain via outbox. After drain → `worlds.updated_at`
     // ticked → re-fetch so the cloud timestamp shows the fresh value.
-    ref.listen<AsyncValue<OutboxStatus>>(outboxStatusProvider, (prev, next) {
+    ref.listen<AsyncValue<OutboxStatus>>(activeItemOutboxStatusProvider,
+        (prev, next) {
       final prevPending = prev?.valueOrNull?.pending ?? 0;
       final nextPending = next.valueOrNull?.pending ?? 0;
       if (prevPending > 0 && nextPending == 0) {

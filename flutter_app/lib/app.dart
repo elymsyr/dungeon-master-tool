@@ -7,6 +7,7 @@ import 'application/providers/locale_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'presentation/l10n/app_localizations.dart';
 import 'presentation/router/app_router.dart';
+import 'presentation/screens/startup/startup_sync_gate.dart';
 import 'presentation/theme/palettes.dart';
 import 'presentation/widgets/global_loading_overlay.dart';
 
@@ -42,7 +43,7 @@ class DungeonMasterApp extends ConsumerWidget {
       scrollBehavior: const _AppScrollBehavior(),
       builder: (context, child) => Stack(
         children: [
-          child ?? const SizedBox.shrink(),
+          StartupSyncGate(child: child ?? const SizedBox.shrink()),
           const GlobalLoadingOverlay(),
         ],
       ),
