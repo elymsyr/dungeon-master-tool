@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -43,6 +44,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // Session
   final _logInputController = TextEditingController();
   final _notesController = TextEditingController();
+  // Debounce window for piping note edits into combatProvider. Edits ride the
+  // combat_state settings patch (PendingWriteBuffer combatTick), so we batch
+  // local keystrokes here before the per-state copyWith fires.
+  Timer? _notesDebounce;
 
   // Bottom tabs (desktop/tablet)
   int _bottomTabIndex = 0;
@@ -64,10 +69,28 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _bottomTabIndex = ref.read(uiStateProvider).sessionBottomTab;
     _mobileTabIndex = ref.read(uiStateProvider).sessionMobileTab;
     _visitedBottomTabs.add(_bottomTabIndex);
+    _notesController.text = ref.read(combatProvider).sessionNotes;
+    _notesController.addListener(_onNotesChanged);
+  }
+
+  void _onNotesChanged() {
+    _notesDebounce?.cancel();
+    _notesDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ref
+          .read(combatProvider.notifier)
+          .updateSessionNotes(_notesController.text);
+    });
   }
 
   @override
   void dispose() {
+    _notesDebounce?.cancel();
+    _notesController.removeListener(_onNotesChanged);
+    // Flush any pending edit so closing the screen doesn't lose the last
+    // keystrokes within the debounce window.
+    final notifier = ref.read(combatProvider.notifier);
+    notifier.updateSessionNotes(_notesController.text);
     _logInputController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -77,6 +100,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
+
+    // World swap (Fix A): combatProvider rebuilds when campaignRevisionProvider
+    // bumps → fresh notifier carries the newly-loaded sessionNotes. Sync the
+    // local controller; guard with text equality so user typing doesn't
+    // trigger a feedback loop (controller change → addListener → notifier →
+    // listen → controller).
+    ref.listen<String>(
+      combatProvider.select((s) => s.sessionNotes),
+      (_, next) {
+        if (_notesController.text != next) _notesController.text = next;
+      },
+    );
 
     // Auto-select entity when turn advances (without switching tab)
     ref.listen<int?>(
