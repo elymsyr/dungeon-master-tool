@@ -675,10 +675,9 @@
 
   "welcomeTitle": "Willkommen, Dungeon Master!",
   "welcomeSystemIntro": "Dungeon Master Tool ist ein tragbarer, offline-fähiger Tabletop-Begleiter. Der Hub hat sechs Bereiche: Sozial (Feed, Nachrichten, Marketplace), Einstellungen (Konto, Theme, Sprache, Cloud-Sync), Welten (Kampagnen mit Battle Map, Mind Map, Entitäten und Sessions), Charaktere (alle Charaktere, die dir über deine Welten gehören), Vorlagen (Spielgerüste, aus denen du Welten startest) und Pakete (Plug-and-Play-Inhaltsbündel).",
-  "welcomeSaveWarning": "Kein Auto-Save, keine Auto-Synchronisierung. Lokale Änderungen werden nur gespeichert, wenn du im jeweiligen Editor auf Speichern tippst; die Cloud-Synchronisierung (persönliche Bibliothek und Online-Welten) läuft nur, wenn du auf die Sync-Schaltfläche tippst. Wenn du die App mitten in einer Bearbeitung ohne zu speichern schließt, ist diese Bearbeitung verloren.",
   "welcomeBetaNotice": "Die App befindet sich noch in der Beta — Funktionen, integrierte Vorlagen und Pakete können sich zwischen Releases ändern. Sichere wichtige Daten gelegentlich.",
-  "welcomeRoadmap": "Offizielle Inhaltspakete für D&D 5e (2014) und D&D 5e (2024) sind auf der Roadmap und werden bald als fertige Pakete verfügbar sein.",
-  "welcomeClosing": "Danke, dass du es ausprobierst — mögen deine Würfel glücklich und deine Sessions unvergesslich sein!",
+  "welcomeRoadmap": "D&D 5e SRD-Inhalte sind bereits integriert. Visuelle Content-Packs und fertige Soundpad-Bundles folgen bald.",
+  "welcomeClosing": "Danke fürs Ausprobieren — mögen deine Würfel rollen!",
   "welcomeContinue": "Los geht's",
 
   "tabSocial": "Sozial",
