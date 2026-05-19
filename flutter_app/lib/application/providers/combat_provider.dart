@@ -26,11 +26,13 @@ class CombatState {
   final List<Encounter> encounters;
   final String? activeEncounterId;
   final List<String> eventLog;
+  final String sessionNotes;
 
   const CombatState({
     this.encounters = const [],
     this.activeEncounterId,
     this.eventLog = const [],
+    this.sessionNotes = '',
   });
 
   Encounter? get activeEncounter {
@@ -45,11 +47,13 @@ class CombatState {
     List<Encounter>? encounters,
     String? activeEncounterId,
     List<String>? eventLog,
+    String? sessionNotes,
   }) {
     return CombatState(
       encounters: encounters ?? this.encounters,
       activeEncounterId: activeEncounterId ?? this.activeEncounterId,
       eventLog: eventLog ?? this.eventLog,
+      sessionNotes: sessionNotes ?? this.sessionNotes,
     );
   }
 }
@@ -68,6 +72,11 @@ class CombatNotifier extends StateNotifier<CombatState>
   final Future<void> Function(Map<String, dynamic> patch) _saveSettingsPatch;
   // HP/ac write-back for characters (encounter ↔ character card sync).
   final Future<void> Function(Character) _saveCharacter;
+
+  // True once _loadFromCampaign consumed real campaign data. Gates write paths
+  // so the transient (beginLoad → completeLoad) window cannot patch
+  // combat_state with the default empty payload.
+  bool _loaded = false;
 
   CombatNotifier(this._getEntities, this._getSchema, this._getCharacters,
       this._getCampaignData, this._eventBus, this._saveSettingsPatch,
@@ -149,6 +158,7 @@ class CombatNotifier extends StateNotifier<CombatState>
       loadSessionState(Map<String, dynamic>.from(combatData));
     }
     clearUndoRedo();
+    _loaded = true;
   }
 
   void undo() {
@@ -168,6 +178,11 @@ class CombatNotifier extends StateNotifier<CombatState>
   }
 
   void _saveAndNotify() {
+    // Guard: never write back until initial load consumed real campaign data.
+    // Without this, edits (or the auto-create-encounter post-frame) during the
+    // beginLoad→completeLoad window would patch combat_state with an empty
+    // payload, clobbering the persisted state for that world.
+    if (!_loaded) return;
     final data = _getCampaignData();
     final session = getSessionState();
     if (data != null) {
@@ -185,6 +200,11 @@ class CombatNotifier extends StateNotifier<CombatState>
   // --- Encounter Management ---
 
   void createEncounter(String name) {
+    // Skip during pre-load transient — auto-create-encounter post-frame in
+    // session_screen.dart fires when encounters list is empty; without this
+    // guard a fresh world load would land a bogus "Encounter 1" before the
+    // real combat_state arrived via revision bump.
+    if (!_loaded) return;
     pushUndo(state);
     final enc = Encounter(id: _uuid.v4(), name: name);
     state = state.copyWith(
@@ -680,6 +700,7 @@ class CombatNotifier extends StateNotifier<CombatState>
       'encounters': state.encounters.map((e) => e.toJson()).toList(),
       'active_encounter_id': state.activeEncounterId,
       'event_log': state.eventLog,
+      'session_notes': state.sessionNotes,
     };
   }
 
@@ -707,11 +728,13 @@ class CombatNotifier extends StateNotifier<CombatState>
     }).toList();
 
     final eventLog = (data['event_log'] as List?)?.cast<String>() ?? const [];
+    final sessionNotes = data['session_notes'] as String? ?? '';
 
     state = state.copyWith(
       encounters: healed,
       activeEncounterId: data['active_encounter_id'] as String? ?? (healed.isNotEmpty ? healed.first.id : null),
       eventLog: eventLog,
+      sessionNotes: sessionNotes,
     );
   }
 
@@ -736,6 +759,15 @@ class CombatNotifier extends StateNotifier<CombatState>
 
   void _log(String message) {
     state = state.copyWith(eventLog: [...state.eventLog, message]);
+  }
+
+  /// World-scoped free-form notes (Notes pane in session tab). Persisted as
+  /// `combat_state.session_notes` — rides the existing settings patch path.
+  /// Skips pushUndo: text edits should not pollute the encounter undo stack.
+  void updateSessionNotes(String value) {
+    if (state.sessionNotes == value) return;
+    state = state.copyWith(sessionNotes: value);
+    _saveAndNotify();
   }
 
   // --- Battle Map ---
@@ -823,6 +855,12 @@ String? _flatInitSpec(Map<String, dynamic> fields) {
 
 final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) {
   ref.watch(activeCampaignProvider); // rebuild when campaign changes
+  // beginLoad clears _data synchronously; completeLoad repopulates it and bumps
+  // campaignRevisionProvider. Without this watch the notifier would be
+  // constructed against null data and stay empty for the world's lifetime —
+  // any later edit would patch combat_state with the empty payload, wiping
+  // encounters/event log/battlemap on next reopen. Matches worldSchemaProvider.
+  ref.watch(campaignRevisionProvider);
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
