@@ -793,11 +793,13 @@ class CombatNotifier extends StateNotifier<CombatState>
     required String encounterId,
     String? fogData,
     String? annotationData,
+    String? measurementsData,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
       fogData: fogData,
       annotationData: annotationData,
+      measurementsData: measurementsData,
     ));
     _saveAndNotify();
   }

@@ -36,6 +36,7 @@ abstract class Encounter with _$Encounter {
     @Default(5) int feetPerCell,
     String? fogData,
     String? annotationData,
+    String? measurementsData,
     String? encounterLayoutId,
   }) = _Encounter;
 
