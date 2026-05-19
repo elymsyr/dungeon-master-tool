@@ -143,23 +143,24 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     final l10n = L10n.of(context)!;
     final size = MediaQuery.sizeOf(context);
     final isWide = size.width > 700;
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    final keyboardOpen = bottomInset > 0;
 
+    // viewInsets okumayı bu üst widget'tan ÇIKARIYORUZ — keyboard her
+    // animasyon frame'inde tüm landing'i rebuild ediyordu (palette/l10n/bg
+    // tekrar inşa). Scaffold.resizeToAvoidBottomInset zaten içeriği yukarı
+    // iter; tagline ve scroll padding ayrı widget'larda viewInsets okur.
     return Stack(
       children: [
-        _buildBackground(palette),
+        RepaintBoundary(child: _buildBackground(palette)),
         SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: isWide ? 48 : 24,
-                  right: isWide ? 48 : 24,
-                  bottom: bottomInset + 24,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWide ? 48 : 24,
+                  vertical: 24,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight - bottomInset),
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -200,7 +201,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             },
           ),
         ),
-        if (!keyboardOpen) _buildTagline(palette),
+        const Positioned(
+          bottom: 24,
+          left: 0,
+          right: 0,
+          child: _KeyboardAwareTagline(),
+        ),
         // Language picker — top-right, floating over background.
         Positioned(
           top: 8,
@@ -417,19 +423,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     );
   }
 
-  Widget _buildTagline(DmToolColors palette) {
-    final l10n = L10n.of(context)!;
-    return Positioned(
-      bottom: 24,
-      left: 0,
-      right: 0,
-      child: Text(
-        l10n.landingTagline,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
-      ),
-    );
-  }
 
   Align _buildLabel(String text, DmToolColors palette) {
     return Align(
@@ -567,5 +560,26 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         _error = error;
       });
     }
+  }
+}
+
+// Tagline isolated so that only this widget rebuilds on keyboard animation
+// frames — parent _buildAuthLanding no longer reads viewInsets.
+class _KeyboardAwareTagline extends StatelessWidget {
+  const _KeyboardAwareTagline();
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (keyboardOpen) return const SizedBox.shrink();
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    return IgnorePointer(
+      child: Text(
+        l10n.landingTagline,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+      ),
+    );
   }
 }

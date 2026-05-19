@@ -49,7 +49,8 @@ class MarkdownTextArea extends ConsumerStatefulWidget {
   ConsumerState<MarkdownTextArea> createState() => _MarkdownTextAreaState();
 }
 
-class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
+class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
+    with WidgetsBindingObserver {
   late FocusNode _focusNode;
   bool _ownsFocusNode = false;
 
@@ -70,6 +71,13 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
       _ownsFocusNode = true;
     }
     _focusNode.addListener(_onFocusChange);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Keyboard yükselir/iner; mention overlay açıksa pozisyonu yeniden hesapla.
+    if (_mentionOverlay != null) _mentionOverlay!.markNeedsBuild();
   }
 
   @override
@@ -91,6 +99,7 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _dismissMentionOverlay();
     _focusNode.removeListener(_onFocusChange);
     if (_ownsFocusNode) _focusNode.dispose();
@@ -173,22 +182,34 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
 
     _mentionOverlay = OverlayEntry(
       builder: (ctx) {
-        // Recalculate position on each build (accounts for scroll/resize)
+        // Recalculate position on each build (accounts for scroll/resize/IME).
         final renderBox = context.findRenderObject() as RenderBox?;
         if (renderBox == null || !renderBox.attached) {
           return const SizedBox.shrink();
         }
         final widgetPos = renderBox.localToGlobal(Offset.zero);
-        final screenSize = MediaQuery.of(context).size;
+        final mq = MediaQuery.of(context);
+        final keyboardHeight = mq.viewInsets.bottom;
+        final usableHeight = mq.size.height - keyboardHeight;
+        final isNarrow = mq.size.width < 600;
 
-        // Position below the widget, clamped to screen
-        const overlayWidth = 320.0;
+        // Width: dar mobil portrait'te 320'i ekrana sığdır.
+        final overlayWidth = (mq.size.width - 16).clamp(40.0, 320.0).toDouble();
         const overlayMaxHeight = 200.0;
-        final left = widgetPos.dx.clamp(0.0, screenSize.width - overlayWidth);
+        final left = widgetPos.dx.clamp(0.0, mq.size.width - overlayWidth).toDouble();
         var top = widgetPos.dy + renderBox.size.height + 4;
-        // If would go off-screen bottom, show above instead
-        if (top + overlayMaxHeight > screenSize.height) {
+        // Mobilde her zaman cursor'un üstüne aç (keyboard collision kesin
+        // önlem); wide ekranda below-first ama keyboard'a girerse yukarı al.
+        if (isNarrow || top + overlayMaxHeight > usableHeight) {
           top = widgetPos.dy - overlayMaxHeight - 4;
+        }
+        // Üst clamp — status bar / notch güvenliği.
+        final maxTop = usableHeight - overlayMaxHeight;
+        final minTop = mq.padding.top + 4;
+        if (maxTop > minTop) {
+          top = top.clamp(minTop, maxTop);
+        } else {
+          top = minTop;
         }
 
         final palette = Theme.of(context).extension<DmToolColors>();

@@ -59,63 +59,69 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
     final ownedAsync = ref.watch(ownedSnapshotsProvider(_key));
     final sourceAsync = ref.watch(marketplaceSourceProvider(_key));
 
-    return ownedAsync.when(
-      loading: () => const SizedBox(
+    // İki provider paralel: nested .when bir tanesi tamamlanırken ötekinin
+    // loading state'ini gizliyordu (waterfall stutter). Hata varsa biri
+    // yeterli; ikisi de hazır olana kadar progress.
+    final ownedErr = ownedAsync.error;
+    if (ownedErr != null) {
+      return Text(
+        isOfflineError(ownedErr)
+            ? "You're offline — check your internet connection."
+            : L10n.of(context)!.marketplaceErrorPrefix('$ownedErr'),
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      );
+    }
+    final sourceErr = sourceAsync.error;
+    if (sourceErr != null) {
+      return Text(
+        isOfflineError(sourceErr)
+            ? "You're offline — check your internet connection."
+            : L10n.of(context)!.marketplaceErrorPrefix('$sourceErr'),
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      );
+    }
+    if (!ownedAsync.hasValue || !sourceAsync.hasValue) {
+      return const SizedBox(
         height: 36,
         child: Center(child: LinearProgressIndicator()),
+      );
+    }
+    final owned = ownedAsync.value!;
+    final source = sourceAsync.value;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        border: Border.all(color: palette.featureCardBorder),
+        borderRadius: palette.cbr,
       ),
-      error: (e, _) => Text(isOfflineError(e)
-              ? "You're offline — check your internet connection."
-              : L10n.of(context)!.marketplaceErrorPrefix('$e'),
-          style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
-      data: (owned) {
-        return sourceAsync.when(
-          loading: () => const SizedBox(
-            height: 36,
-            child: Center(child: LinearProgressIndicator()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _OwnerSection(
+            hasPublished: owned.isNotEmpty,
+            onPublish: _publishSnapshot,
+            palette: palette,
           ),
-          error: (e, _) => Text(isOfflineError(e)
-              ? "You're offline — check your internet connection."
-              : L10n.of(context)!.marketplaceErrorPrefix('$e'),
-              style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
-          data: (source) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: palette.featureCardBg,
-                border: Border.all(color: palette.featureCardBorder),
-                borderRadius: palette.cbr,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _OwnerSection(
-                    hasPublished: owned.isNotEmpty,
-                    onPublish: _publishSnapshot,
-                    palette: palette,
-                  ),
-                  if (owned.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    MySnapshotsPanel(
-                      itemType: widget.itemType,
-                      localId: widget.localId,
-                    ),
-                  ],
-                  if (source != null) ...[
-                    const SizedBox(height: 10),
-                    Divider(height: 1, color: palette.featureCardBorder),
-                    const SizedBox(height: 10),
-                    _ReaderBadge(
-                      ownerUsername: source.ownerUsername,
-                      palette: palette,
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
+          if (owned.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            MySnapshotsPanel(
+              itemType: widget.itemType,
+              localId: widget.localId,
+            ),
+          ],
+          if (source != null) ...[
+            const SizedBox(height: 10),
+            Divider(height: 1, color: palette.featureCardBorder),
+            const SizedBox(height: 10),
+            _ReaderBadge(
+              ownerUsername: source.ownerUsername,
+              palette: palette,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

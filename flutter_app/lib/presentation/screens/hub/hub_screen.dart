@@ -53,6 +53,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     // tetiklenir.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      // Hub list provider'larını ilk frame'den SONRA warm-load et — eager
+      // build() içinde watch etmek cold start'ta 3 ağır query'i mount frame'ine
+      // yığıyordu. Tab'a tıklandığında zaten LazyIndexedStack içinden
+      // watch'lanıyor; bu tetikleme sadece spinner ihtimalini düşürür.
+      ref.read(campaignInfoListProvider);
+      ref.read(characterListProvider);
+      ref.read(packageListProvider);
+
       final ui = ref.read(uiStateProvider);
       if (ui.welcomeSeen) return;
       await WelcomeDialog.show(context);
@@ -250,13 +258,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     // Manuel sync modeli: personal realtime kanalı otomatik açılmaz. Sync
     // butonu çağrıldığında subscribe + bootstrap yapılır.
 
-    // Eager-load tüm hub listelerini app start'ta. LazyIndexedStack tab
-    // widget'larını ilk seçimde inşa ettiği için provider'lar normalde tab'a
-    // geçince watch'lanır → ilk geçişte spinner. Bu watch'lar arka planda
-    // yüklemeyi tetikler, kullanıcı sekme değiştirdiğinde liste hazır olur.
-    ref.watch(campaignInfoListProvider);
-    ref.watch(characterListProvider);
-    ref.watch(packageListProvider);
+    // Eager warm-load initState postFrame'e taşındı (cold start frame
+    // budget'ını korumak için). Build içinde watch yok.
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
