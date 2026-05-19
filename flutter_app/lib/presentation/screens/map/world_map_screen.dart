@@ -926,6 +926,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   void _showAddPinDialog(Offset canvasPos, WorldMapNotifier notifier) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final labelCtrl = TextEditingController();
+    final labelFocus = FocusNode();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (labelFocus.canRequestFocus) labelFocus.requestFocus();
+    });
 
     showDialog<String>(
       context: context,
@@ -941,7 +945,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           children: [
             TextField(
               controller: labelCtrl,
-              autofocus: true,
+              focusNode: labelFocus,
               style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
               decoration: InputDecoration(
                 labelText: 'Label',

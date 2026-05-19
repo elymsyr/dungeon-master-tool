@@ -308,6 +308,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         .firstOrNull;
     _selectedTemplate = matched ?? uniqueTemplates.first;
     _nameController.clear();
+    final nameFocus = FocusNode();
+    // Dialog transition + IME açılışı aynı frame'e binince mobilde gecikme
+    // hissediliyor; dialog mount sonrası focus iste.
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (nameFocus.canRequestFocus) nameFocus.requestFocus();
+    });
 
     await showDialog<void>(
       context: context,
@@ -344,7 +350,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _nameController,
-                  autofocus: true,
+                  focusNode: nameFocus,
                   decoration: InputDecoration(hintText: l10n.worldsNameHint),
                   onSubmitted: (_) async {
                     Navigator.pop(ctx);

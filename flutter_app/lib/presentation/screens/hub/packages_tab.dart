@@ -310,6 +310,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         .firstOrNull;
     _selectedTemplate = matched ?? uniqueTemplates.first;
     _nameController.clear();
+    final nameFocus = FocusNode();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (nameFocus.canRequestFocus) nameFocus.requestFocus();
+    });
 
     await showDialog<void>(
       context: context,
@@ -346,7 +350,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _nameController,
-                  autofocus: true,
+                  focusNode: nameFocus,
                   decoration: InputDecoration(hintText: l10n.packageName),
                   onSubmitted: (_) async {
                     Navigator.pop(ctx);
@@ -396,13 +400,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     }
 
     final controller = TextEditingController(text: dest);
+    final focusNode = FocusNode();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) focusNode.requestFocus();
+    });
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Copy Package'),
         content: TextField(
           controller: controller,
-          autofocus: true,
+          focusNode: focusNode,
           decoration: const InputDecoration(labelText: 'New package name'),
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
@@ -419,6 +427,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       ),
     );
     controller.dispose();
+    focusNode.dispose();
     if (newName == null || newName.isEmpty) return;
     if (existingNames.contains(newName)) {
       if (mounted) {

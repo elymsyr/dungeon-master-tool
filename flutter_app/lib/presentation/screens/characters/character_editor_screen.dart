@@ -47,6 +47,7 @@ import '../../widgets/class_level_up_table.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
+import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
 import '../../widgets/save_sync_shared.dart';
@@ -692,6 +693,8 @@ class _CharacterEditorScreenState
                     ? Image.file(
                         File(entity.imagePath),
                         fit: BoxFit.cover,
+                        cacheWidth: cachePxFromLogical(context, portraitSize),
+                        cacheHeight: cachePxFromLogical(context, 260),
                         errorBuilder: (_, _, _) => portraitPlaceholder(),
                       )
                     : portraitPlaceholder(),

@@ -22,6 +22,7 @@ import '../../../../domain/entities/schema/dnd5e_constants.dart'
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../widgets/perf/image_cache_size.dart';
 import '../../../../application/character_creation/caster_progression.dart';
 import '../../../../application/character_creation/level_up_planner.dart';
 import '../../../../application/character_creation/pending_choices.dart';
@@ -1760,6 +1761,8 @@ class _PortraitTile extends StatelessWidget {
                 ? Image.file(
                     File(path),
                     fit: BoxFit.cover,
+                    cacheWidth: cachePxFromLogical(context, 96),
+                    cacheHeight: cachePxFromLogical(context, 96),
                     errorBuilder: (_, _, _) => placeholder,
                   )
                 : placeholder,

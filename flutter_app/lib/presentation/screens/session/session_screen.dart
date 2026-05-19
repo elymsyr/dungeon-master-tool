@@ -1228,6 +1228,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final l10n = L10n.of(context)!;
 
     final nameController = TextEditingController();
+    final nameFocus = FocusNode();
     int quantity = 1;
     // Dinamik alan controller'ları — encounterConfig columns'dan + max_hp
     final statControllers = <String, TextEditingController>{};
@@ -1238,6 +1239,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (!hasMaxHpColumn) {
       statControllers['max_hp'] = TextEditingController();
     }
+
+    // Dialog mount + IME açılışını aynı frame'e bindirmek mobilde
+    // gözle görülür gecikme yaratıyor; transition bitince focus iste.
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (nameFocus.canRequestFocus) nameFocus.requestFocus();
+    });
 
     showDialog(
       context: context,
@@ -1255,7 +1262,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     // Name
                     TextField(
                       controller: nameController,
-                      autofocus: true,
+                      focusNode: nameFocus,
                       decoration: InputDecoration(labelText: l10n.sessionName),
                       style: const TextStyle(fontSize: 13),
                     ),

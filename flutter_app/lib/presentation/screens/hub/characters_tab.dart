@@ -199,48 +199,50 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     itemBuilder: (context, index) {
                       final c = sorted[index];
                       final isSelected = index == _selectedIndex;
-                      return InkWell(
-                        borderRadius: palette.br,
-                        onTap: () =>
-                            setState(() => _selectedIndex = index),
-                        onDoubleTap: () => _openCharacter(c),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 140),
-                          child: Container(
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? palette.featureCardAccent
-                                      .withValues(alpha: 0.1)
-                                  : palette.featureCardBg,
-                              borderRadius: palette.br,
-                              border: Border.all(
+                      return RepaintBoundary(
+                        child: InkWell(
+                          borderRadius: palette.br,
+                          onTap: () =>
+                              setState(() => _selectedIndex = index),
+                          onDoubleTap: () => _openCharacter(c),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 140),
+                            child: Container(
+                              clipBehavior: Clip.antiAlias,
+                              decoration: BoxDecoration(
                                 color: isSelected
                                     ? palette.featureCardAccent
-                                    : palette.featureCardBorder,
-                              ),
-                            ),
-                            child: MetadataListTile(
-                              icon: Icons.person,
-                              name: c.entity.name,
-                              subtitle: _subInfo(c, l10n),
-                              description: c.entity.description,
-                              tags: c.entity.tags,
-                              coverImagePath: c.entity.imagePath,
-                              isSelected: isSelected,
-                              palette: palette,
-                              layout: MetadataTileLayout.leftAvatar,
-                              onSettings: () =>
-                                  _showCharacterSettings(c.id, palette),
-                              infoChips: CharacterStatChips(
-                                lines: characterStatLines(
-                                  c,
-                                  entitiesFor(c),
-                                  ownerLabel:
-                                      resolveCharacterOwnerLabel(ref, c),
+                                        .withValues(alpha: 0.1)
+                                    : palette.featureCardBg,
+                                borderRadius: palette.br,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? palette.featureCardAccent
+                                      : palette.featureCardBorder,
                                 ),
+                              ),
+                              child: MetadataListTile(
+                                icon: Icons.person,
+                                name: c.entity.name,
+                                subtitle: _subInfo(c, l10n),
+                                description: c.entity.description,
+                                tags: c.entity.tags,
+                                coverImagePath: c.entity.imagePath,
+                                isSelected: isSelected,
                                 palette: palette,
-                                compact: true,
+                                layout: MetadataTileLayout.leftAvatar,
+                                onSettings: () =>
+                                    _showCharacterSettings(c.id, palette),
+                                infoChips: CharacterStatChips(
+                                  lines: characterStatLines(
+                                    c,
+                                    entitiesFor(c),
+                                    ownerLabel:
+                                        resolveCharacterOwnerLabel(ref, c),
+                                  ),
+                                  palette: palette,
+                                  compact: true,
+                                ),
                               ),
                             ),
                           ),
