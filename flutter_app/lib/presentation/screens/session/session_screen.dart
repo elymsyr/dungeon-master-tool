@@ -18,6 +18,7 @@ import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/session.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
@@ -137,6 +138,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // ============================================================
   Widget _buildLeftPanel(
       DmToolColors palette, List<Encounter> encounters, Encounter? enc) {
+    final l10n = L10n.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -163,17 +165,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               IconButton(
                 icon: const Icon(Icons.add, size: 20),
                 onPressed: () => ref.read(combatProvider.notifier).createEncounter('Encounter ${encounters.length + 1}'),
-                tooltip: 'New Encounter',
+                tooltip: l10n.sessionNewEncounter,
               ),
               IconButton(
                 icon: const Icon(Icons.edit, size: 18),
                 onPressed: enc == null ? null : () => _renameEncounter(enc),
-                tooltip: 'Rename',
+                tooltip: l10n.sessionRename,
               ),
               IconButton(
                 icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
                 onPressed: encounters.length > 1 && enc != null ? () => ref.read(combatProvider.notifier).deleteEncounter(enc.id) : null,
-                tooltip: 'Delete',
+                tooltip: l10n.btnDelete,
               ),
             ],
           ),
@@ -191,7 +193,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 fit: StackFit.expand,
                 children: [
                   enc == null || enc.combatants.isEmpty
-                      ? Center(child: Text('No combatants\nDrag entities from sidebar or use Quick Add', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
+                      ? Center(child: Text(l10n.sessionNoCombatants, textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
                       : _buildCombatTable(palette, enc),
                   if (candidateData.isNotEmpty)
                     IgnorePointer(
@@ -218,14 +220,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(6)),
-                  child: Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                  child: Text(l10n.sessionRound(enc?.round ?? 1), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                 ),
                 const SizedBox(width: 8),
                 // Next Turn
                 FilledButton.icon(
                   onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
                   icon: const Icon(Icons.skip_next, size: 20),
-                  label: const Text('Next Turn', style: TextStyle(fontSize: 13)),
+                  label: Text(l10n.sessionNextTurn, style: const TextStyle(fontSize: 13)),
                   style: FilledButton.styleFrom(
                     backgroundColor: palette.actionBtnBg,
                     foregroundColor: palette.actionBtnText,
@@ -246,17 +248,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     }
                   },
                   itemBuilder: (_) => [
-                    PopupMenuItem(value: 'quick_add', child: _popupItem(Icons.bolt, 'Quick Add', palette.successBtnBg)),
-                    PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, 'Add from Database', palette.primaryBtnBg)),
-                    PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, 'Add Players...', palette.primaryBtnBg)),
-                    PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, 'Roll Initiative', palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'quick_add', child: _popupItem(Icons.bolt, l10n.sessionQuickAdd, palette.successBtnBg)),
+                    PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, l10n.sessionAddFromDatabase, palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, l10n.sessionAddPlayersMenu, palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, l10n.sessionRollInitiative, palette.primaryBtnBg)),
                     const PopupMenuDivider(),
-                    PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, 'Clear All', palette.dangerBtnBg)),
+                    PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, l10n.sessionClearAll, palette.dangerBtnBg)),
                   ],
                   child: FilledButton.icon(
                     onPressed: null, // PopupMenuButton handles the tap
                     icon: const Icon(Icons.add_circle_outline, size: 20),
-                    label: const Text('Actions', style: TextStyle(fontSize: 13)),
+                    label: Text(l10n.sessionActions, style: const TextStyle(fontSize: 13)),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 40),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -328,6 +330,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   /// list: "Add all" row + one row per owned char. No extra chrome.
   Future<void> _showAddPlayersDialog() async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final chars = _ownedWorldCharacters();
     if (!mounted) return;
     await showDialog<void>(
@@ -350,7 +353,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   child: Text(
-                    'Add Players',
+                    l10n.sessionAddPlayersTitle,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -364,7 +367,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     child: Text(
-                      'No owned characters in this world.',
+                      l10n.sessionNoOwnedChars,
                       style: TextStyle(
                         fontSize: 12,
                         color: palette.sidebarLabelSecondary,
@@ -375,7 +378,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   _addPlayersRow(
                     palette: palette,
                     icon: Icons.group_add,
-                    label: 'Add all',
+                    label: l10n.sessionAddAll,
                     onTap: () {
                       for (final c in chars) {
                         ref
@@ -459,6 +462,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // SAĞ PANEL — Session Controls + Log + Bottom Tabs
   // ============================================================
   Widget _buildRightPanel(DmToolColors palette, List<String> eventLog) {
+    final l10n = L10n.of(context)!;
     return Column(
       children: [
         // Session control bar
@@ -467,13 +471,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           color: palette.tabBg,
           child: Row(
             children: [
-              Expanded(flex: 2, child: Text('Session', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText))),
+              Expanded(flex: 2, child: Text(l10n.sessionSession, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText))),
               // Multi-session selector intentionally deferred — app currently
               // owns a single implicit session per campaign.
               FilledButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.save, size: 14),
-                label: const Text('Save', style: TextStyle(fontSize: 11)),
+                label: Text(l10n.btnSave, style: const TextStyle(fontSize: 11)),
                 style: FilledButton.styleFrom(minimumSize: const Size(0, 28)),
               ),
             ],
@@ -496,11 +500,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-                  child: Text('Event Log', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+                  child: Text(l10n.sessionEventLog, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
                 ),
                 Expanded(
                   child: eventLog.isEmpty
-                      ? Center(child: Text('No events yet', style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
+                      ? Center(child: Text(l10n.sessionNoEvents, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           itemCount: eventLog.length,
@@ -520,7 +524,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       Expanded(
                         child: MarkdownTextArea(
                           controller: _logInputController,
-                          decoration: const InputDecoration(hintText: 'Quick log entry... (@ to mention)', isDense: true),
+                          decoration: InputDecoration(hintText: l10n.sessionQuickLogHint, isDense: true),
                           textStyle: const TextStyle(fontSize: 12),
                           maxLines: 1,
                           onSubmitted: (_) => _addLogEntry(),
@@ -530,7 +534,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       FilledButton(
                         onPressed: _addLogEntry,
                         style: FilledButton.styleFrom(minimumSize: const Size(0, 32)),
-                        child: const Text('Add Log', style: TextStyle(fontSize: 11)),
+                        child: Text(l10n.sessionAddLog, style: const TextStyle(fontSize: 11)),
                       ),
                     ],
                   ),
@@ -547,10 +551,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _bottomTab('Notes', 0, palette),
-                        _bottomTab('Battle Map', 1, palette),
-                        _bottomTab('Player Screen', 2, palette),
-                        _bottomTab('Entity Stats', 3, palette),
+                        _bottomTab(l10n.sessionNotes, 0, palette),
+                        _bottomTab(l10n.sessionBattleMap, 1, palette),
+                        _bottomTab(l10n.sessionPlayerScreen, 2, palette),
+                        _bottomTab(l10n.sessionEntityStats, 3, palette),
                       ],
                     ),
                   ),
@@ -606,7 +610,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               controller: _notesController,
               expands: true,
               textAlignVertical: TextAlignVertical.top,
-              decoration: InputDecoration(hintText: 'DM notes... (@ to mention)', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+              decoration: InputDecoration(hintText: L10n.of(context)!.sessionDmNotesHint, border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
               textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
             ),
           ),
@@ -620,7 +624,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           () => Consumer(builder: (context, ref, _) {
             final encId = ref.watch(combatProvider.select((s) => s.activeEncounter?.id));
             if (encId == null) {
-              return Center(child: Text('No active encounter', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+              return Center(child: Text(L10n.of(context)!.sessionNoActiveEncounter, textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
             }
             return BattleMapScreen(key: ValueKey(encId), encounterId: encId);
           }),
@@ -670,6 +674,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       cols.any((c) => c.subFieldKey == conditionsColumnKey);
 
   Widget _buildCombatTable(DmToolColors palette, Encounter enc) {
+    final l10n = L10n.of(context)!;
     // `watch` (not `read`) so the table rebuilds when the lazy template
     // sync flow swaps the world schema in place — otherwise edits to the
     // template's columns / labels never reach this screen until a full
@@ -691,14 +696,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           color: palette.tabBg,
           child: Row(
             children: [
-              Expanded(flex: 2, child: Text('Name', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+              Expanded(flex: 2, child: Text(l10n.sessionName, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
               ...cols.map((col) {
                 if (col.subFieldKey == conditionsColumnKey) {
                   // Conditions column lives in the user-chosen position;
                   // give it `Expanded` so the badges have room to wrap.
                   return Expanded(
                     flex: 2,
-                    child: Text(col.label.isEmpty ? 'Conditions' : col.label,
+                    child: Text(col.label.isEmpty ? l10n.sessionConditions : col.label,
                         style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText)),
                   );
                 }
@@ -709,7 +714,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               }),
               if (!hasConditions) ...[
                 const SizedBox(width: 8),
-                Expanded(flex: 2, child: Text('Conditions', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+                Expanded(flex: 2, child: Text(l10n.sessionConditions, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
               ],
               const SizedBox(width: 28),
             ],
@@ -826,15 +831,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Widget _buildMobileTabBar(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Container(
       color: palette.tabBg,
       child: Row(
         children: [
-          _mobileTab('Combat', Icons.shield, 0, palette),
-          _mobileTab('Log', Icons.list_alt, 1, palette),
-          _mobileTab('Map', Icons.map, 2, palette),
-          _mobileTab('Player', Icons.tv, 3, palette),
-          _mobileTab('Stats', Icons.assessment, 4, palette),
+          _mobileTab(l10n.sessionCombat, Icons.shield, 0, palette),
+          _mobileTab(l10n.sessionLog, Icons.list_alt, 1, palette),
+          _mobileTab(l10n.sessionMap, Icons.map, 2, palette),
+          _mobileTab(l10n.sessionPlayer, Icons.tv, 3, palette),
+          _mobileTab(l10n.sessionStats, Icons.assessment, 4, palette),
         ],
       ),
     );
@@ -879,6 +885,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // --- Combat Tab ---
   Widget _buildMobileCombatTab(DmToolColors palette, CombatState combat, Encounter? enc) {
+    final l10n = L10n.of(context)!;
     return Column(
       children: [
         // Encounter selector + Round bar
@@ -906,7 +913,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
-                child: Text('R${enc?.round ?? 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                child: Text(l10n.sessionRoundShort(enc?.round ?? 1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               ),
               const SizedBox(width: 4),
               FilledButton(
@@ -915,7 +922,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   minimumSize: const Size(0, 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                child: const Text('Next', style: TextStyle(fontSize: 11)),
+                child: Text(l10n.sessionNext, style: const TextStyle(fontSize: 11)),
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
@@ -927,11 +934,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     case 'roll_init': _promptRollInitiative();
                   }
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'quick_add', child: Text('Quick Add', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: 'add', child: Text('Add from Database', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: 'add_players', child: Text('Add Players...', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: 'roll_init', child: Text('Roll Initiative', style: TextStyle(fontSize: 12))),
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'quick_add', child: Text(l10n.sessionQuickAdd, style: const TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'add', child: Text(l10n.sessionAddFromDatabase, style: const TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'add_players', child: Text(l10n.sessionAddPlayersMenu, style: const TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'roll_init', child: Text(l10n.sessionRollInitiative, style: const TextStyle(fontSize: 12))),
                 ],
               ),
             ],
@@ -941,7 +948,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         Expanded(
           child: enc != null && enc.combatants.isNotEmpty
               ? _buildMobileCombatList(palette, enc)
-              : Center(child: Text('No combatants', style: TextStyle(color: palette.sidebarLabelSecondary))),
+              : Center(child: Text(l10n.sessionNoCombatantsShort, style: TextStyle(color: palette.sidebarLabelSecondary))),
         ),
       ],
     );
@@ -957,9 +964,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Row(
             children: [
-              _logSubTab('Event Log', 0, palette),
+              _logSubTab(L10n.of(context)!.sessionEventLog, 0, palette),
               const SizedBox(width: 8),
-              _logSubTab('Notes', 1, palette),
+              _logSubTab(L10n.of(context)!.sessionNotes, 1, palette),
             ],
           ),
         ),
@@ -996,7 +1003,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       children: [
         Expanded(
           child: combat.eventLog.isEmpty
-              ? Center(child: Text('No events yet', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)))
+              ? Center(child: Text(L10n.of(context)!.sessionNoEvents, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)))
               : ListView.builder(
                   padding: const EdgeInsets.all(12),
                   itemCount: combat.eventLog.length,
@@ -1014,7 +1021,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               Expanded(
                 child: MarkdownTextArea(
                   controller: _logInputController,
-                  decoration: InputDecoration(hintText: 'Quick log entry... (@ to mention)', isDense: true, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+                  decoration: InputDecoration(hintText: L10n.of(context)!.sessionQuickLogHint, isDense: true, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
                   textStyle: const TextStyle(fontSize: 13),
                   maxLines: 1,
                   onSubmitted: (_) => _addLogEntry(),
@@ -1024,7 +1031,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               FilledButton(
                 onPressed: _addLogEntry,
                 style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
-                child: const Text('Add', style: TextStyle(fontSize: 12)),
+                child: Text(L10n.of(context)!.sessionAdd, style: const TextStyle(fontSize: 12)),
               ),
             ],
           ),
@@ -1041,7 +1048,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         expands: true,
         textAlignVertical: TextAlignVertical.top,
         decoration: InputDecoration(
-          hintText: 'DM notes... (@ to mention)',
+          hintText: L10n.of(context)!.sessionDmNotesHint,
           border: InputBorder.none,
           filled: false,
           hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
@@ -1055,7 +1062,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget _buildMobileBattleMapTab(DmToolColors palette, Encounter? enc) {
     if (enc == null) {
       return Center(
-        child: Text('No active encounter', style: TextStyle(color: palette.sidebarLabelSecondary)),
+        child: Text(L10n.of(context)!.sessionNoActiveEncounter, style: TextStyle(color: palette.sidebarLabelSecondary)),
       );
     }
     return BattleMapScreen(encounterId: enc.id);
@@ -1065,7 +1072,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget _buildMobileEntityStatsTab(DmToolColors palette) {
     if (_selectedCombatantId == null) {
       return Center(
-        child: Text('Select a combatant\nto view stats',
+        child: Text(L10n.of(context)!.sessionSelectCombatantStats,
           textAlign: TextAlign.center,
           style: TextStyle(color: palette.sidebarLabelSecondary)),
       );
@@ -1076,7 +1083,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
     if (entity == null) {
       return Center(
-        child: Text('Entity not found',
+        child: Text(L10n.of(context)!.sessionEntityNotFound,
           textAlign: TextAlign.center,
           style: TextStyle(color: palette.sidebarLabelSecondary)),
       );
@@ -1218,6 +1225,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
 
     final nameController = TextEditingController();
     int quantity = 1;
@@ -1236,7 +1244,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
           return AlertDialog(
-            title: const Text('Quick Add', style: TextStyle(fontSize: 14)),
+            title: Text(l10n.sessionQuickAdd, style: const TextStyle(fontSize: 14)),
             content: SizedBox(
               width: 340,
               child: SingleChildScrollView(
@@ -1248,14 +1256,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     TextField(
                       controller: nameController,
                       autofocus: true,
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      decoration: InputDecoration(labelText: l10n.sessionName),
                       style: const TextStyle(fontSize: 13),
                     ),
                     const SizedBox(height: 12),
                     // Quantity
                     Row(
                       children: [
-                        Text('Quantity', style: TextStyle(fontSize: 12, color: palette.tabText)),
+                        Text(l10n.sessionQuantity, style: TextStyle(fontSize: 12, color: palette.tabText)),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.remove, size: 18),
@@ -1286,7 +1294,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     const SizedBox(height: 8),
                     Divider(color: palette.sidebarDivider),
                     const SizedBox(height: 4),
-                    Text('Combat Stats', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+                    Text(l10n.sessionCombatStats, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
                     const SizedBox(height: 8),
                     // Dinamik stat alanları
                     ...cfg.columns.map((col) => Padding(
@@ -1307,9 +1315,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: TextField(
                           controller: statControllers['max_hp'],
-                          decoration: const InputDecoration(
-                            labelText: 'Max HP',
-                            hintText: 'Same as HP if empty',
+                          decoration: InputDecoration(
+                            labelText: l10n.sessionMaxHp,
+                            hintText: l10n.sessionHpHintSameAs,
                           ),
                           keyboardType: TextInputType.number,
                           style: const TextStyle(fontSize: 13),
@@ -1322,7 +1330,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: Text(l10n.btnCancel),
               ),
               FilledButton.icon(
                 onPressed: () {
@@ -1349,7 +1357,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   Navigator.pop(ctx);
                 },
                 icon: const Icon(Icons.add, size: 16),
-                label: Text('Add${quantity > 1 ? ' ($quantity)' : ''}', style: const TextStyle(fontSize: 12)),
+                label: Text(quantity > 1 ? l10n.sessionAddWithQuantity(quantity) : l10n.sessionAdd, style: const TextStyle(fontSize: 12)),
                 style: FilledButton.styleFrom(
                   backgroundColor: palette.successBtnBg,
                   foregroundColor: palette.successBtnText,
@@ -1376,20 +1384,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _renameEncounter(Encounter enc) {
     final controller = TextEditingController(text: enc.name);
+    final l10n = L10n.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rename Encounter', style: TextStyle(fontSize: 14)),
-        content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
+        title: Text(l10n.sessionRenameEncounterTitle, style: const TextStyle(fontSize: 14)),
+        content: TextField(controller: controller, autofocus: true, decoration: InputDecoration(labelText: l10n.sessionName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
           FilledButton(onPressed: () {
             final name = controller.text.trim();
             if (name.isNotEmpty && name != enc.name) {
               ref.read(combatProvider.notifier).renameEncounter(enc.id, name);
             }
             Navigator.pop(ctx);
-          }, child: const Text('Rename')),
+          }, child: Text(l10n.sessionRename)),
         ],
       ),
     ).whenComplete(controller.dispose);
@@ -1429,10 +1438,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         .toList()
       ..sort((a, b) => a.name.compareTo(b.name));
 
+    final l10n = L10n.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Condition', style: TextStyle(fontSize: 14)),
+        title: Text(l10n.sessionAddConditionTitle, style: const TextStyle(fontSize: 14)),
         content: SizedBox(
           width: 340,
           child: Column(
@@ -1474,20 +1484,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 const SizedBox(height: 8),
               ],
               // Custom condition
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Custom Condition'), autofocus: conditionEntities.isEmpty),
+              TextField(controller: nameController, decoration: InputDecoration(labelText: l10n.sessionCustomCondition), autofocus: conditionEntities.isEmpty),
               const SizedBox(height: 8),
-              TextField(controller: durationController, decoration: const InputDecoration(labelText: 'Duration (rounds, optional)'), keyboardType: TextInputType.number),
+              TextField(controller: durationController, decoration: InputDecoration(labelText: l10n.sessionDurationHint), keyboardType: TextInputType.number),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
           FilledButton(onPressed: () {
             final name = nameController.text.trim();
             if (name.isEmpty) return;
             ref.read(combatProvider.notifier).addCondition(combatantId, name, int.tryParse(durationController.text));
             Navigator.pop(ctx);
-          }, child: const Text('Add Custom')),
+          }, child: Text(l10n.sessionAddCustom)),
         ],
       ),
     ).whenComplete(() {
@@ -1919,14 +1929,14 @@ class _CombatantRow extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
             onPressed: () {
               onSubmit(controller.text);
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(L10n.of(context)!.btnSave),
           ),
         ],
       ),
@@ -1948,15 +1958,16 @@ class _EntityStatsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
     if (selectedCombatantId == null) {
-      return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+      return Center(child: Text(l10n.sessionSelectCombatantStats, textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
     }
     final schema = ref.watch(worldSchemaProvider);
     final entity = ref.watch(
       entityProvider.select((map) => map[selectedCombatantId]),
     );
     if (entity == null) {
-      return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+      return Center(child: Text(l10n.sessionEntityNotFound, textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
     }
     final catSchema = schema.categories
         .where((c) => c.slug == entity.categorySlug)

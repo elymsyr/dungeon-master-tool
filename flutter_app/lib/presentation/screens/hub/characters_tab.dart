@@ -103,7 +103,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Characters',
+                    child: Text(l10n.charactersHeading,
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -116,7 +116,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
-                    label: const Text('Marketplace'),
+                    label: Text(l10n.hubBtnMarketplace),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
@@ -127,7 +127,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                   ),
                   const SizedBox(width: 4),
                   Tooltip(
-                    message: 'Refresh from cloud',
+                    message: l10n.hubTooltipRefresh,
                     child: OutlinedButton(
                       onPressed: _refreshing ? null : _doRefresh,
                       style: OutlinedButton.styleFrom(
@@ -155,7 +155,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Open or manage your characters.',
+              Text(l10n.charactersSubtitle,
                   style: TextStyle(
                       fontSize: 12,
                       color: palette.sidebarLabelSecondary)),
@@ -182,7 +182,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       ),
                       child: Center(
                         child: Text(
-                          'No characters yet.',
+                          l10n.charactersEmpty,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: palette.sidebarLabelSecondary,
@@ -251,7 +251,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 },
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => Text(l10n.hubErrorGeneric(e.toString())),
               ),
 
               const SizedBox(height: 12),
@@ -286,7 +286,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               : Icons.logout,
                           size: 18,
                         ),
-                  label: Text(isHardDelete ? 'Delete' : 'Release'),
+                  label: Text(isHardDelete ? l10n.btnDelete : l10n.charBtnRelease),
                   style: FilledButton.styleFrom(
                     backgroundColor: palette.dangerBtnBg,
                     foregroundColor: palette.dangerBtnText,
@@ -304,7 +304,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                             ? () => _openCharacter(selected)
                             : null,
                         icon: const Icon(Icons.folder_open, size: 18),
-                        label: const Text('Open Character'),
+                        label: Text(l10n.charBtnOpen),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -323,6 +323,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   /// Loads the character's world (so entityProvider populates and relation
   /// fields resolve names) before pushing to the editor.
   Future<void> _openCharacter(Character c) async {
+    final l10n = L10n.of(context)!;
     final worldId = c.worldId;
     if (worldId != null) {
       final infos =
@@ -335,7 +336,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         final restored = await withLoading(
           ref.read(globalLoadingProvider.notifier),
           'pull-world-$worldId',
-          'Downloading world...',
+          l10n.charPullingWorld,
           () => ensureWorldLocalById(ref, worldId),
         );
         if (!mounted) return;
@@ -345,8 +346,8 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       }
       if (worldName.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Character world not found locally.'),
+          SnackBar(
+            content: Text(l10n.charWorldNotFound),
           ),
         );
         return;
@@ -365,8 +366,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         if (!ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  'World "$worldName" not found on disk — character cannot open.'),
+              content: Text(l10n.charWorldMissingOnDisk(worldName)),
             ),
           );
         }
@@ -410,6 +410,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   ///   - Worldless + self-owned: clear ownerId locally, then immediately
   ///     hard delete since the row is now ownerless+worldless.
   Future<void> _releaseOrDeleteSelected() async {
+    final l10n = L10n.of(context)!;
     final list = _visibleList();
     if (_selectedIndex < 0 || _selectedIndex >= list.length) return;
     final c = list[_selectedIndex];
@@ -422,21 +423,20 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isHardDelete ? 'Delete Character' : 'Release Character'),
+        title: Text(isHardDelete ? l10n.charDeleteTitle : l10n.charReleaseTitle),
         content: Text(
           isHardDelete
-              ? 'Delete "${c.entity.name}"? This cannot be undone.'
+              ? l10n.charDeleteBody(c.entity.name)
               : c.worldId != null
-                  ? 'Release "${c.entity.name}"${worldName.isNotEmpty ? ' in "$worldName"' : ''}? '
-                      'The character stays in the world and can be claimed '
-                      'again. It disappears from your Characters tab.'
-                  : 'Release "${c.entity.name}"? You give up ownership; the '
-                      'character is deleted because it has no world.',
+                  ? (worldName.isNotEmpty
+                      ? l10n.charReleaseBodyInWorldNamed(c.entity.name, worldName)
+                      : l10n.charReleaseBodyInWorldUnnamed(c.entity.name))
+                  : l10n.charReleaseBodyNoWorld(c.entity.name),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.btnCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -444,7 +444,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               backgroundColor: palette.dangerBtnBg,
               foregroundColor: palette.dangerBtnText,
             ),
-            child: Text(isHardDelete ? 'Delete' : 'Release'),
+            child: Text(isHardDelete ? l10n.btnDelete : l10n.charBtnRelease),
           ),
         ],
       ),
@@ -477,6 +477,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
   Future<void> _showCharacterSettings(
       String characterId, DmToolColors palette) async {
+    final l10n = L10n.of(context)!;
     final list = ref.read(characterListProvider).valueOrNull ?? const [];
     final c = list.where((x) => x.id == characterId).firstOrNull;
     if (c == null) return;
@@ -495,7 +496,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('${c.entity.name} — Settings'),
+          title: Text(l10n.charSettingsTitle(c.entity.name)),
           content: SizedBox(
             width: 440,
             child: SingleChildScrollView(
@@ -524,7 +525,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                           size: 16, color: palette.sidebarLabelSecondary),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text('Template: ${c.templateName}',
+                        child: Text(l10n.charTemplateLine(c.templateName),
                             style: TextStyle(
                                 fontSize: 13,
                                 color: palette.tabActiveText)),
@@ -540,12 +541,11 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       Expanded(
                         child: Text(
                           () {
-                            final label =
-                                _worldLabel(c, L10n.of(context)!);
+                            final label = _worldLabel(c, l10n);
                             return c.worldId == null &&
-                                    label == L10n.of(context)!.charWorldOrphan
+                                    label == l10n.charWorldOrphan
                                 ? label
-                                : 'World: $label';
+                                : l10n.charWorldLine(label);
                           }(),
                           style: TextStyle(
                               fontSize: 13, color: palette.tabActiveText),
@@ -562,7 +562,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                             color: palette.sidebarLabelSecondary),
                         const SizedBox(width: 6),
                         Text(
-                          'Last edited: ${updatedAt.toLocal().toString().split('.').first}',
+                          l10n.charLastEdited(updatedAt.toLocal().toString().split('.').first),
                           style: TextStyle(
                               fontSize: 12, color: palette.tabActiveText),
                         ),
@@ -588,7 +588,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l10n.btnCancel),
             ),
             FilledButton(
               onPressed: () async {
@@ -601,7 +601,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     );
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('Save'),
+              child: Text(l10n.btnSave),
             ),
           ],
         ),
