@@ -17,23 +17,39 @@ const _uuid = Uuid();
 const srdCorePackageName = 'SRD 5.2.1 Core';
 
 /// Idempotent installer that materialises the hand-authored SRD 5.2.1
-/// content pack as a real `Packages` row in the DB. Runs once per app
-/// session (gated by [_installed]).
+/// content pack as a real `Packages` row in the DB. Gated per DB instance
+/// via [_installedFor] so an auth-driven DB swap (sign-in opens a new
+/// user-scoped DB) re-installs into the new DB.
 class SrdCorePackageBootstrap {
   final AppDatabase _db;
   SrdCorePackageBootstrap(this._db);
 
-  static bool _installed = false;
+  /// Tracks DB instances that already have the pack installed in the
+  /// current process. Weak by `identityHashCode` so disposed DBs don't
+  /// leak entries (the same hashCode would only be reused after GC, and
+  /// at that point a re-install is cheap and correct).
+  static final Set<int> _installedFor = <int>{};
 
   Future<int> ensureInstalled() async {
-    if (_installed) return 0;
-    _installed = true;
+    final key = identityHashCode(_db);
+    if (_installedFor.contains(key)) return 0;
+
+    // Defense-in-depth: if a previous session already materialised the pack
+    // in this DB, skip work without relying solely on the in-memory set.
+    final existingRow = await _findByName(srdCorePackageName);
+    if (existingRow != null) {
+      final entities = await _db.packagesDao.getEntities(existingRow.id);
+      if (entities.isNotEmpty) {
+        _installedFor.add(key);
+        return 0;
+      }
+    }
 
     final build = generateBuiltinDnd5eV2Schema();
     final schema = build.schema;
     final pack = buildSrdCorePack();
 
-    return _db.transaction(() async {
+    final inserted = await _db.transaction(() async {
       final existing = await _findByName(srdCorePackageName);
       final packageId = existing?.id ?? _uuid.v4();
 
@@ -126,6 +142,11 @@ class SrdCorePackageBootstrap {
 
       return companions.length;
     });
+    // Mark this DB instance as installed only after the transaction
+    // succeeds; if it threw we want a retry on the next call rather than
+    // a permanent lockout.
+    _installedFor.add(key);
+    return inserted;
   }
 
   Future<Package?> _findByName(String name) async {
@@ -137,6 +158,6 @@ class SrdCorePackageBootstrap {
   }
 
   static void resetInstallGate() {
-    _installed = false;
+    _installedFor.clear();
   }
 }

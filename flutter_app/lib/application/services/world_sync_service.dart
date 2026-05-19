@@ -27,8 +27,20 @@ class WorldSyncService {
   bool isSubscribed(String worldId) => _channels.containsKey(worldId);
 
   /// World mirror'ı için subscribe başlat. İdempotent — zaten varsa no-op.
-  Future<void> subscribe(String worldId) async {
-    if (_channels.containsKey(worldId)) return;
+  ///
+  /// [onSubscribed] channel `SUBSCRIBED` durumuna geçtiğinde çağrılır. Bu
+  /// race-free taze fetch için kritik: subscribe öncesi yapılan join'ler
+  /// kaybedilebilir, callback tetiklendikten sonra bootstrap force-refresh
+  /// çekmek gerekir. Aynı worldId için ikinci subscribe çağrısında callback
+  /// hemen tetiklenir (channel zaten subscribed).
+  Future<void> subscribe(String worldId,
+      {void Function()? onSubscribed}) async {
+    if (_channels.containsKey(worldId)) {
+      if (onSubscribed != null) {
+        scheduleMicrotask(onSubscribed);
+      }
+      return;
+    }
 
     final channel = client.channel('dmt:world:$worldId');
     final filter = PostgresChangeFilter(
@@ -59,7 +71,15 @@ class WorldSyncService {
       callback: (payload) => _dispatch(worldId, 'worlds', payload),
     );
 
-    channel.subscribe();
+    var fired = false;
+    channel.subscribe((status, _) {
+      if (status == RealtimeSubscribeStatus.subscribed &&
+          !fired &&
+          onSubscribed != null) {
+        fired = true;
+        onSubscribed();
+      }
+    });
     _channels[worldId] = channel;
   }
 

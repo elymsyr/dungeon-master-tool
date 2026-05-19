@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,9 +15,14 @@ import '../providers/entity_share_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/role_provider.dart';
 import '../providers/world_characters_provider.dart';
+import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
+import '../../data/database/util/builtin_synth.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package_import_service.dart';
+import 'package_sync_service.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -295,8 +300,12 @@ class WorldMirrorApplier {
     switch (e.eventType) {
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
-        // ignore: discarded_futures
-        notifier.applyJoin(e.newRecord);
+        // Güvenlik ağı: applyJoin başarısızsa (profile fetch hata vs.)
+        // roster'ı bütünüyle yeniden çek — yeni member'ı kaybetmeyelim.
+        notifier.applyJoin(e.newRecord).catchError((err, st) {
+          debugPrint('_applyMembersEvent applyJoin error: $err\n$st');
+          return notifier.bootstrap(force: true);
+        });
       case PostgresChangeEvent.delete:
         if (eventUid != null) notifier.applyLeave(eventUid);
       default:
@@ -537,28 +546,105 @@ class WorldMirrorApplier {
         (e.newRecord['package_id'] ?? e.oldRecord['package_id']) as String?;
     if (id == null) return;
     if (mirror.isEchoOfWorldPackage(id)) return;
-    final dao = ref.read(appDatabaseProvider).worldPackagesDao;
+    final db = ref.read(appDatabaseProvider);
+    final dao = db.worldPackagesDao;
     switch (e.eventType) {
       case PostgresChangeEvent.delete:
+        final priorName =
+            (e.oldRecord['package_name'] as String?) ?? '';
+        final priorWorld =
+            (e.oldRecord['world_id'] as String?) ?? e.worldId;
         await dao.deleteByPackage(id);
+        await _uninstallSharedPackageLocally(db, priorWorld, priorName);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final row = e.newRecord;
+        final worldId = (row['world_id'] as String?) ?? e.worldId;
+        final packageName = (row['package_name'] as String?) ?? '';
+        final stateJson = (row['state_json'] as String?) ?? '{}';
         await dao.upsert(
           WorldPackagesCompanion(
-            worldId: Value((row['world_id'] as String?) ?? e.worldId),
+            worldId: Value(worldId),
             packageId: Value(id),
-            packageName: Value((row['package_name'] as String?) ?? ''),
+            packageName: Value(packageName),
             sharedBy: Value(row['shared_by'] as String?),
-            stateJson: Value((row['state_json'] as String?) ?? '{}'),
+            stateJson: Value(stateJson),
             updatedAt: Value(
               DateTime.tryParse((row['updated_at'] as String?) ?? '') ??
                   DateTime.now(),
             ),
           ),
         );
+        await _materializeSharedPackageLocally(
+          db,
+          worldId,
+          packageName,
+          stateJson,
+        );
       default:
         return;
+    }
+  }
+
+  /// Player-side: decode the DM-shared package state_json into a local
+  /// `packages` row + install it into the world so `world_entities` get the
+  /// pack entities. Idempotent — re-running on an `update` event refreshes
+  /// pkg contents and re-syncs.
+  Future<void> _materializeSharedPackageLocally(
+    AppDatabase db,
+    String worldId,
+    String packageName,
+    String stateJson,
+  ) async {
+    if (packageName.isEmpty || stateJson.isEmpty || stateJson == '{}') return;
+    try {
+      final decoded = await _decodeJsonMaybeOffload(stateJson);
+      if (decoded is! Map<String, dynamic>) return;
+      final repo = ref.read(packageRepositoryProvider);
+      await repo.save(packageName, decoded);
+      final pkg = await db.packagesDao.getByName(packageName);
+      if (pkg == null) return;
+      await db.installedPackagesDao.upsert(
+        InstalledPackagesCompanion.insert(
+          worldId: worldId,
+          packageId: pkg.id,
+          packageName: Value(pkg.name),
+        ),
+      );
+      final build = generateBuiltinDnd5eV2Schema();
+      final tier0Slugs = build.seedRows.keys.toSet();
+      final tier0Index =
+          await buildTier0LookupIndex(db, worldId, tier0Slugs: tier0Slugs);
+      await PackageSyncService(db).sync(
+        worldId: worldId,
+        packageId: pkg.id,
+        resolveAttrs: (attrs) =>
+            PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
+                as Map<String, dynamic>,
+      );
+      ref.invalidate(packageListProvider);
+      _bumpRevision();
+    } catch (err, st) {
+      debugPrint('_materializeSharedPackageLocally error: $err\n$st');
+    }
+  }
+
+  Future<void> _uninstallSharedPackageLocally(
+    AppDatabase db,
+    String worldId,
+    String packageName,
+  ) async {
+    if (packageName.isEmpty) return;
+    try {
+      final pkg = await db.packagesDao.getByName(packageName);
+      if (pkg == null) return;
+      await PackageSyncService(db).uninstall(
+        worldId: worldId,
+        packageId: pkg.id,
+      );
+      _bumpRevision();
+    } catch (err, st) {
+      debugPrint('_uninstallSharedPackageLocally error: $err\n$st');
     }
   }
 

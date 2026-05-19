@@ -223,60 +223,131 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
               onPressed: () =>
                   ref.read(editModeProvider.notifier).update((s) => !s),
             ),
-            // Packages — view-only (player can browse but cannot install)
-            IconButton(
-              icon: const Icon(Icons.inventory_2, size: 20),
-              tooltip: 'Packages',
-              onPressed: () =>
-                  ImportPackageDialog.show(context, viewOnly: true),
-            ),
-            // Theme
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.palette, size: 20),
-              tooltip: l10n.lblTheme,
-              onSelected: (name) =>
-                  ref.read(themeProvider.notifier).setTheme(name),
-              itemBuilder: (_) => themeNames
-                  .map((name) => PopupMenuItem(
-                        value: name,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: themePalettes[name]?.canvasBg,
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white24),
-                              ),
+            if (screen == ScreenType.phone) ...[
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'packages':
+                      ImportPackageDialog.show(context, viewOnly: true);
+                    case 'bug':
+                      BugReportDialog.show(context);
+                    default:
+                      if (action.startsWith('theme:')) {
+                        ref
+                            .read(themeProvider.notifier)
+                            .setTheme(action.substring(6));
+                      }
+                      if (action.startsWith('lang:')) {
+                        ref
+                            .read(localeProvider.notifier)
+                            .setLocale(action.substring(5));
+                      }
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'packages',
+                    child: Row(children: [
+                      const Icon(Icons.inventory_2, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l10n.importPackage),
+                    ]),
+                  ),
+                  const PopupMenuDivider(),
+                  ...themeNames.map((name) => PopupMenuItem(
+                        value: 'theme:$name',
+                        child: Row(children: [
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: themePalettes[name]?.canvasBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white24),
                             ),
-                            const SizedBox(width: 8),
-                            Text(name[0].toUpperCase() + name.substring(1)),
-                          ],
-                        ),
-                      ))
-                  .toList(),
-            ),
-            // Language
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.language, size: 20),
-              tooltip: l10n.lblLanguage,
-              onSelected: (code) =>
-                  ref.read(localeProvider.notifier).setLocale(code),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'en', child: Text('English')),
-                PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-                PopupMenuItem(value: 'de', child: Text('Deutsch')),
-                PopupMenuItem(value: 'fr', child: Text('Français')),
-              ],
-            ),
-            // Bug report
-            IconButton(
-              icon: const Icon(Icons.bug_report_outlined, size: 20),
-              tooltip: 'Report a Bug',
-              onPressed: () => BugReportDialog.show(context),
-            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(name[0].toUpperCase() + name.substring(1)),
+                        ]),
+                      )),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                      value: 'lang:en', child: Text('English')),
+                  const PopupMenuItem(
+                      value: 'lang:tr', child: Text('Türkçe')),
+                  const PopupMenuItem(
+                      value: 'lang:de', child: Text('Deutsch')),
+                  const PopupMenuItem(
+                      value: 'lang:fr', child: Text('Français')),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'bug',
+                    child: Row(children: [
+                      Icon(Icons.bug_report_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Text('Report a Bug'),
+                    ]),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Packages — view-only (player can browse but cannot install)
+              IconButton(
+                icon: const Icon(Icons.inventory_2, size: 20),
+                tooltip: 'Packages',
+                onPressed: () =>
+                    ImportPackageDialog.show(context, viewOnly: true),
+              ),
+              // Theme
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.palette, size: 20),
+                tooltip: l10n.lblTheme,
+                onSelected: (name) =>
+                    ref.read(themeProvider.notifier).setTheme(name),
+                itemBuilder: (_) => themeNames
+                    .map((name) => PopupMenuItem(
+                          value: name,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: themePalettes[name]?.canvasBg,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white24),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(name[0].toUpperCase() +
+                                  name.substring(1)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+              // Language
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.language, size: 20),
+                tooltip: l10n.lblLanguage,
+                onSelected: (code) =>
+                    ref.read(localeProvider.notifier).setLocale(code),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'en', child: Text('English')),
+                  PopupMenuItem(value: 'tr', child: Text('Türkçe')),
+                  PopupMenuItem(value: 'de', child: Text('Deutsch')),
+                  PopupMenuItem(value: 'fr', child: Text('Français')),
+                ],
+              ),
+              // Bug report
+              IconButton(
+                icon: const Icon(Icons.bug_report_outlined, size: 20),
+                tooltip: 'Report a Bug',
+                onPressed: () => BugReportDialog.show(context),
+              ),
+            ],
             const SizedBox(width: 4),
           ],
         ),
@@ -901,12 +972,9 @@ class _PlayerBottomTabBar extends StatelessWidget {
         top: false,
         child: SizedBox(
           height: 64,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tabs = [
                 for (var i = 0; i < tabLabels.length; i++)
                   _TabItem(
                     icon: tabIcons[i],
@@ -915,8 +983,23 @@ class _PlayerBottomTabBar extends StatelessWidget {
                     onTap: () => onSelect(i),
                     palette: palette,
                   ),
-              ],
-            ),
+              ];
+              const tabWidth = 80.0;
+              if (constraints.maxWidth >= tabLabels.length * tabWidth) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: tabs,
+                );
+              }
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: tabs,
+                ),
+              );
+            },
           ),
         ),
       ),

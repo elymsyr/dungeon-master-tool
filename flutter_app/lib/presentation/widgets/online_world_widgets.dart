@@ -67,10 +67,28 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
       ),
       data: (code) {
         if (code == null) {
-          return Text(
-            'No invite available.',
-            style:
-                TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'No invite available.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Retry fetch',
+                icon: const Icon(Icons.refresh, size: 16),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                onPressed: () => ref.invalidate(
+                    worldActiveInviteCodeProvider(widget.worldId)),
+              ),
+            ],
           );
         }
         return Row(
