@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
@@ -59,6 +60,14 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
   Future<void> _runSequence() async {
     _setMessage('Syncing local writes...');
     await ref.read(pendingWriteBufferProvider).flush();
+
+    // Built-in SRD pack must be present locally before world joins/CDC try
+    // to link it; gate idempotent per session.
+    try {
+      await ref.read(srdCorePackageBootstrapProvider.future);
+    } catch (e) {
+      debugPrint('startup SRD pack bootstrap error: $e');
+    }
 
     if (!SupabaseConfig.isConfigured) return;
     if (ref.read(authProvider) == null) return;

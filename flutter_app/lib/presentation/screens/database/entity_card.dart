@@ -1444,16 +1444,17 @@ class _ShareToggleState extends ConsumerState<_ShareToggle> {
         widget.entity.packageId == builtinPackId;
 
     if (isBuiltin) {
-      return Tooltip(
-        message: 'Built-in (always visible to players)',
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Icon(
-            Icons.public,
-            size: 16,
-            color: palette.srdHeadingRed.withValues(alpha: 0.55),
-          ),
+      return IconButton(
+        tooltip: 'Built-in (always visible to players)',
+        icon: Icon(
+          Icons.public,
+          size: 16,
+          color: palette.srdHeadingRed.withValues(alpha: 0.55),
         ),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        padding: EdgeInsets.zero,
+        onPressed: () {},
       );
     }
 

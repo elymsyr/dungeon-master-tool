@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/package_import_service.dart';
@@ -118,6 +119,61 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
   }
 
   return BuiltinSynthResult(entries: out, builtinPackageId: builtinPkgId);
+}
+
+/// Builds a `slug → name → entityId` index of Tier-0 lookup rows for
+/// [worldId], usable as `tier0NameToId` in
+/// [PackageImportService.resolveLookupPlaceholder].
+///
+/// F1 decouple: built-in Tier-0 rows are not materialised in `world_entities`
+/// — they live in `package_entities` and are synthesised at read time with
+/// deterministic synth IDs ([synthBuiltinEntityId]). Pack-sync callers used
+/// to query `world_entities` only and got an empty index on F1 worlds,
+/// causing `_lookup` placeholders inside shared/imported homebrew packages
+/// to resolve to `''` — manifested as "broken link entities" on joined
+/// players.
+///
+/// Resolution priority for a given (slug, name):
+///   1. Real `world_entities` row (legacy worlds + homebrew Tier-0 forks).
+///   2. Synth id derived from the built-in SRD pack's `package_entities`.
+Future<Map<String, Map<String, String>>> buildTier0LookupIndex(
+  AppDatabase db,
+  String worldId, {
+  required Set<String> tier0Slugs,
+}) async {
+  final index = <String, Map<String, String>>{};
+
+  // 1. Synth IDs for Tier-0 entries from the installed SRD pack.
+  final installed = await db.installedPackagesDao.getByWorld(worldId);
+  String? builtinPkgId;
+  for (final row in installed) {
+    final pkg = await db.packagesDao.getById(row.packageId);
+    if (pkg == null) continue;
+    if (pkg.name == srdCorePackageName) {
+      builtinPkgId = pkg.id;
+      break;
+    }
+  }
+  if (builtinPkgId != null) {
+    final packRows = await db.packagesDao.getEntities(builtinPkgId);
+    for (final r in packRows) {
+      if (!tier0Slugs.contains(r.categorySlug)) continue;
+      index.putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] =
+          synthBuiltinEntityId(worldId, r.id);
+    }
+  }
+
+  // 2. Real Tier-0 rows in `world_entities` (legacy worlds, or homebrew
+  // forks that overrode a pack entry) win over the synth id so edits stick.
+  final realRows = await (db.select(db.worldEntities)
+        ..where((t) =>
+            t.worldId.equals(worldId) & t.categorySlug.isIn(tier0Slugs)))
+      .get();
+  for (final r in realRows) {
+    index.putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] = r.id;
+  }
+
+  return index;
 }
 
 Map<String, dynamic> _decodeMap(String json) {

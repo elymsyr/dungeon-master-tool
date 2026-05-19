@@ -36,8 +36,10 @@ class WorldMembersNotifier
   WorldMembersNotifier(this._service, this._client, this.worldId)
       : super(const AsyncValue.loading());
 
-  Future<void> bootstrap() async {
-    if (_bootstrapped) return;
+  /// [force]=true ise `_bootstrapped` guard'ını atlar; channel re-subscribe
+  /// veya world reopen sonrası taze roster çekmek için kullanılır.
+  Future<void> bootstrap({bool force = false}) async {
+    if (_bootstrapped && !force) return;
     _bootstrapped = true;
     if (_service is NoOpWorldMembershipService) {
       state = const AsyncValue.data([]);
@@ -156,8 +158,12 @@ final worldInvitesProvider =
 /// World için tek paylaşılabilir davet kodu. İlk çağrıda oluşturur,
 /// sonraki çağrılarda aynı kodu döner. Regenerate sonrası invalidate
 /// edilmeli.
+///
+/// `autoDispose`: Save & Sync dialog kapandığında cache temizlenir;
+/// böylece offline → online geçişten önce null cache'lenmiş kodu
+/// sonsuza kadar görmeyiz.
 final worldActiveInviteCodeProvider =
-    FutureProvider.family<String?, String>((ref, worldId) async {
+    FutureProvider.autoDispose.family<String?, String>((ref, worldId) async {
   final svc = ref.watch(worldMembershipServiceProvider);
   if (svc is NoOpWorldMembershipService) return null;
   try {

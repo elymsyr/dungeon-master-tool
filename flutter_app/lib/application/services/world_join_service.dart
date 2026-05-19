@@ -6,7 +6,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/app_database.dart';
 import '../../data/network/world_membership_service.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import 'srd_core_bootstrap.dart';
+import 'srd_core_package_bootstrap.dart';
 
 /// "Join with code" akışını koordine eder:
 ///   1. RPC redeem_world_invite → (worldId, worldName)
@@ -34,10 +37,11 @@ class WorldJoinService {
 
     // Initial state snapshot — campaigns mirror'ı.
     Map<String, dynamic>? parsed;
+    String? templateId;
     try {
       final row = await supabase
           .from('worlds')
-          .select('state_json')
+          .select('state_json, template_id')
           .eq('id', res.worldId)
           .maybeSingle();
       final raw = row?['state_json'];
@@ -45,6 +49,7 @@ class WorldJoinService {
         final decoded = jsonDecode(raw);
         if (decoded is Map) parsed = Map<String, dynamic>.from(decoded);
       }
+      templateId = row?['template_id'] as String?;
     } catch (e, st) {
       debugPrint('joinWithCode snapshot fetch error: $e\n$st');
     }
@@ -100,6 +105,21 @@ class WorldJoinService {
       } catch (e, st) {
         debugPrint('joinWithCode local save error: $e\n$st');
         rethrow;
+      }
+    }
+    // Link built-in SRD pack into the joined world so synth resolves
+    // pristine Tier-0/Tier-1 entries. Idempotent — flag in world_settings.
+    final effectiveTemplateId = templateId ??
+        (parsed?['template_id'] as String?);
+    if (effectiveTemplateId == builtinDnd5eV2SchemaId) {
+      try {
+        await SrdCorePackageBootstrap(db).ensureInstalled();
+        await SrdCoreBootstrap(db).ensureImported(
+          worldId: res.worldId,
+          build: generateBuiltinDnd5eV2Schema(),
+        );
+      } catch (e, st) {
+        debugPrint('joinWithCode SRD link error: $e\n$st');
       }
     }
     return (worldId: res.worldId, worldName: localName);

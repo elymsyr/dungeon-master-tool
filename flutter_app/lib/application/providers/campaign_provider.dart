@@ -234,6 +234,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       // they wouldn't otherwise see the new content).
       _ref.read(campaignRevisionProvider.notifier).state++;
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
+      // Online dünya açılışında roster + invite cache'lerini temizle —
+      // kapalıyken kaçırılan join'ler ya da offline iken null cache'lenmiş
+      // invite kodu reopen ile kurtarılsın.
+      final worldId = _data?['world_id'] as String?;
+      if (worldId != null) {
+        _ref.invalidate(worldMembersProvider(worldId));
+        _ref.invalidate(worldActiveInviteCodeProvider(worldId));
+      }
       return true;
     } catch (e, st) {
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;

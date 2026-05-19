@@ -9,6 +9,7 @@ import '../services/world_mirror_applier.dart';
 import '../services/world_mirror_service.dart';
 import 'auth_provider.dart';
 import 'role_provider.dart';
+import 'world_membership_provider.dart';
 import 'world_sync_provider.dart';
 
 /// Tekil WorldMirrorService. Push + inbound echo-tracking için.
@@ -42,8 +43,26 @@ final worldMirrorApplierProvider =
   final role = await ref.watch(currentWorldRoleProvider.future);
   if (worldId == null || role == WorldRole.none) return applier;
 
+  // Race koşulu: subscribe öncesi yapılan join'ler kaybedilir. Channel
+  // `SUBSCRIBED` durumuna geçtiğinde roster'ı taze fetch et — listMembers
+  // RPC subscribe'tan sonraki INSERT'leri de toplar.
+  void refreshRoster() {
+    try {
+      // ignore: discarded_futures
+      ref
+          .read(worldMembersProvider(worldId).notifier)
+          .bootstrap(force: true);
+    } catch (_) {
+      // Provider scope tear-down sırasında patlamasın.
+    }
+  }
+
   if (!sync.isSubscribed(worldId)) {
-    await sync.subscribe(worldId);
+    await sync.subscribe(worldId, onSubscribed: refreshRoster);
+  } else {
+    // Zaten subscribe iken (örn. world reopen aynı oturumda) yine de
+    // bootstrap force et — CDC açıklığı olabilir.
+    refreshRoster();
   }
   ref.onDispose(() => sync.unsubscribe(worldId));
   await applier.applyInitialState(worldId);
@@ -63,6 +82,12 @@ Future<void> runManualWorldSync(WidgetRef ref) async {
   if (!svc.isSubscribed(campaignId)) {
     await svc.subscribe(campaignId);
   }
+  // Manuel "Retry" sync: roster'ı her durumda taze çek.
+  try {
+    await ref
+        .read(worldMembersProvider(campaignId).notifier)
+        .bootstrap(force: true);
+  } catch (_) {}
   if (applier != null) {
     await applier.applyInitialState(campaignId);
   }

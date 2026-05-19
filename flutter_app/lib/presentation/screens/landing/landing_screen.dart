@@ -140,51 +140,64 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   Widget _buildAuthLanding(DmToolColors palette) {
     final size = MediaQuery.sizeOf(context);
     final isWide = size.width > 700;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardOpen = bottomInset > 0;
 
     return Stack(
       children: [
         _buildBackground(palette),
         SafeArea(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: isWide ? 48 : 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Header ──
-                  AppIconImage(size: isWide ? 48 : 36),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Dungeon Master Tool',
-                    style: TextStyle(
-                      fontSize: isWide ? 24 : 20,
-                      fontWeight: FontWeight.bold,
-                      color: palette.tabActiveText,
-                      letterSpacing: 1,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: isWide ? 48 : 24,
+                  right: isWide ? 48 : 24,
+                  bottom: bottomInset + 24,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight - bottomInset),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ── Header ──
+                        AppIconImage(size: isWide ? 48 : 36),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Dungeon Master Tool',
+                          style: TextStyle(
+                            fontSize: isWide ? 24 : 20,
+                            fontWeight: FontWeight.bold,
+                            color: palette.tabActiveText,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Create an account to unlock online features.',
+                          style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+                        ),
+                        SizedBox(height: isWide ? 28 : 16),
+
+                        // ── Auth content — wide: side by side, narrow: stacked ──
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: isWide ? 780 : 400),
+                          child: isWide
+                              ? _buildWideAuthContent(palette)
+                              : _buildNarrowAuthContent(palette),
+                        ),
+
+                        SizedBox(height: isWide ? 16 : 10),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Create an account to unlock online features.',
-                    style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
-                  ),
-                  SizedBox(height: isWide ? 28 : 16),
-
-                  // ── Auth content — wide: side by side, narrow: stacked ──
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isWide ? 780 : 400),
-                    child: isWide
-                        ? _buildWideAuthContent(palette)
-                        : _buildNarrowAuthContent(palette),
-                  ),
-
-                  SizedBox(height: isWide ? 16 : 10),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
-        _buildTagline(palette),
+        if (!keyboardOpen) _buildTagline(palette),
       ],
     );
   }
