@@ -13,9 +13,9 @@ class WelcomeDialog {
   static Future<void> show(BuildContext context) async {
     final l10n = L10n.of(context)!;
     final theme = Theme.of(context);
-    final warnBg = theme.colorScheme.error.withValues(alpha: 0.08);
-    final warnBorder = theme.colorScheme.error.withValues(alpha: 0.45);
-    final warnFg = theme.colorScheme.error;
+    final ctaBg = theme.colorScheme.primary.withValues(alpha: 0.08);
+    final ctaBorder = theme.colorScheme.primary.withValues(alpha: 0.45);
+    final ctaFg = theme.colorScheme.primary;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -42,14 +42,14 @@ class WelcomeDialog {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: warnBg,
-                    border: Border.all(color: warnBorder),
+                    color: ctaBg,
+                    border: Border.all(color: ctaBorder),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_amber_rounded, size: 18, color: warnFg),
+                      Icon(Icons.rocket_launch_outlined, size: 18, color: ctaFg),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -57,7 +57,7 @@ class WelcomeDialog {
                           style: TextStyle(
                             height: 1.4,
                             fontSize: 12.5,
-                            color: warnFg,
+                            color: ctaFg,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
