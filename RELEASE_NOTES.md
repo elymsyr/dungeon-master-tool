@@ -25,6 +25,9 @@ The sync-correctness and canvas release. v8.0 lands the first phase of the row-l
 - **Save/Sync indicator decomposed** — `save_sync_indicator` split into `save_sync_shared` primitives and a thinner widget; same visual contract, much less duplication across the editor surfaces.
 - **Hub & player screens slimmed** — `main_screen` (+335/-90), `landing_screen`, `player_main_screen`, `database_screen`, `packages_tab`, and `session_screen` all decomposed into smaller widgets; UI state provider grows explicit tab/selection slots.
 - **Built-in content synthesizer** — New `builtin_synth` utility renders built-in entities for cards/lists without persisting them, replacing the bootstrap-time write loop.
+- **Localization sweep round 2** — ~165 new l10n keys covering landing, hub (worlds/characters/packages), session, main, campaign selector, and player main screens; full EN / TR / DE / FR coverage. Most remaining hardcoded UI strings are gone.
+- **Mobile responsiveness fixes (F-M1/M2)** — Landing screen no longer rebuilds the entire stack on every keyboard animation frame (tagline isolated into its own widget, viewInsets read locally). Mention overlay in `markdown_text_area` now repositions when the soft keyboard shows/hides via `WidgetsBindingObserver`. Marketplace panel layout reworked for narrow widths.
+- **Mobile responsiveness audit doc** — `flutter_app/docs/mobile_responsiveness_audit_may19.md` captures the May 19 sweep: K1–K5 keyboard items, M1–M2 mention overlay, plus the deferred O1–O14 layout findings.
 
 ### Upgrade notes
 

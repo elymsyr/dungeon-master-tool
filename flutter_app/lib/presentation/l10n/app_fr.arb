@@ -675,10 +675,9 @@
 
   "welcomeTitle": "Bienvenue, Maître du Donjon !",
   "welcomeSystemIntro": "Dungeon Master Tool est un compagnon de jeu sur table portable, conçu pour fonctionner hors ligne. Le Hub compte six sections : Social (fil, messages, marketplace), Paramètres (compte, thème, langue, sync cloud), Mondes (campagnes avec carte de combat, carte mentale, entités et sessions), Personnages (tous les personnages que vous possédez à travers les mondes), Modèles (squelettes de jeu à partir desquels vous lancez des mondes) et Packages (bundles de contenu prêts à l'emploi).",
-  "welcomeSaveWarning": "Pas de sauvegarde automatique ni de synchronisation automatique. Les modifications locales ne sont conservées que lorsque vous appuyez sur Enregistrer dans l'éditeur concerné, et la synchronisation cloud (bibliothèque personnelle et mondes en ligne) ne s'exécute que lorsque vous appuyez sur le bouton de synchronisation. Fermer l'application en cours de modification sans enregistrer fait perdre cette modification.",
   "welcomeBetaNotice": "L'application est encore en bêta — les fonctionnalités, les modèles et packages intégrés peuvent évoluer entre les versions. Pensez à sauvegarder vos données importantes de temps en temps.",
-  "welcomeRoadmap": "Les packs de contenu officiels D&D 5e (2014) et D&D 5e (2024) sont prévus dans la feuille de route et arriveront bientôt comme packs prêts à l'emploi.",
-  "welcomeClosing": "Merci de l'essayer — que vos dés soient cléments et vos sessions inoubliables !",
+  "welcomeRoadmap": "Le contenu D&D 5e SRD est déjà intégré. Des packs de contenu visuel et des bundles soundpad prêts à l'emploi arrivent bientôt.",
+  "welcomeClosing": "Merci de l'essayer — que vos dés soient cléments !",
   "welcomeContinue": "C'est parti",
 
   "tabSocial": "Social",

@@ -675,10 +675,9 @@
 
   "welcomeTitle": "Welcome, Dungeon Master!",
   "welcomeSystemIntro": "Dungeon Master Tool is a portable, offline-first tabletop companion. The Hub has six sections: Social (feed, messages, marketplace), Settings (account, theme, language, cloud sync), Worlds (campaigns with battle map, mind map, entities and sessions), Characters (every character you own across worlds), Templates (game skeletons you spin worlds from) and Packages (drop-in content bundles).",
-  "welcomeSaveWarning": "No auto-save, no auto-sync. Local edits only persist when you tap Save in the relevant editor, and cloud sync (personal library and online worlds) only runs when you press the sync button. Closing the app mid-edit without saving loses that edit.",
   "welcomeBetaNotice": "This app is still in beta — features, built-in templates and packages may change between releases. Please back up important data from time to time.",
-  "welcomeRoadmap": "Official D&D 5e (2014) and D&D 5e (2024) content packages are on the roadmap and will arrive soon as ready-to-import packs.",
-  "welcomeClosing": "Thanks for trying it out — may your rolls be lucky and your sessions unforgettable!",
+  "welcomeRoadmap": "D&D 5e SRD content ships built-in. Visual content packs and ready-made soundpad bundles arrive soon.",
+  "welcomeClosing": "Thanks for trying it out — roll well!",
   "welcomeContinue": "Let's roll",
 
   "tabSocial": "Social",

@@ -675,10 +675,9 @@
 
   "welcomeTitle": "Hoş geldin, Zindan Ustası!",
   "welcomeSystemIntro": "Dungeon Master Tool, taşınabilir ve offline-öncelikli bir masaüstü RPG yardımcısıdır. Hub altı sekmeden oluşur: Sosyal (akış, mesajlar, marketplace), Ayarlar (hesap, tema, dil, bulut sync), Dünyalar (savaş haritası, zihin haritası, varlıklar ve oturumlarla kampanyalar), Karakterler (tüm dünyalarındaki kendi karakterlerin), Şablonlar (üzerinden dünya başlattığın iskeletler) ve Paketler (tak-çalıştır içerik paketleri).",
-  "welcomeSaveWarning": "Otomatik kayıt ve otomatik sync yok. Yerel değişiklikler yalnızca ilgili editördeki Kaydet'e bastığında saklanır; bulut sync (kişisel kütüphane ve çevrimiçi dünyalar) yalnızca sync butonuna bastığında çalışır. Kaydetmeden uygulamayı kapatırsan o değişiklik kaybolur.",
   "welcomeBetaNotice": "Uygulama hâlâ beta aşamasında — özellikler, built-in template ve paketler sürümler arasında değişebilir. Önemli verilerinizi zaman zaman yedeklemeyi unutmayın.",
-  "welcomeRoadmap": "D&D 5e (2014) ve D&D 5e (2024) resmi içerik paketleri yol haritasında; yakın zamanda hazır paketler olarak eklenecek.",
-  "welcomeClosing": "Denediğin için teşekkürler — zarların yaver gitsin, seansların unutulmaz olsun!",
+  "welcomeRoadmap": "D&D 5e SRD içerikleri yerleşik geliyor. Görsel içerik paketleri ve hazır soundpad bundle'ları yakında ekleniyor.",
+  "welcomeClosing": "Denediğin için teşekkürler — zarların yaver gitsin!",
   "welcomeContinue": "Hadi başlayalım",
 
   "tabSocial": "Sosyal",
