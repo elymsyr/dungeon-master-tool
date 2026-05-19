@@ -3,30 +3,27 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'sync_tier.dart';
-
 /// Tipe göre debounce penceresi. Aynı (kind, key) için ardışık schedule
 /// timer'ı reset eder; tek fire'da en son closure çalışır. Settings
 /// patch'leri için key'i (örn. `"settings:$worldId:combat_state"`) ile
 /// anahtarlayarak farklı patch tipleri bağımsız fire'lansın.
 ///
-/// Effective window = `kind.window * tier.debounceMultiplier`. Slow tier
-/// (package, worldless char) 2× window kullanır — cloud-only, hızlı fire'a
-/// ihtiyaç yok.
+/// Effective window = `kind.window`. Tier çarpanı kaldırıldı — yalnızca
+/// `SyncTier.cloudDelay` outbox push'unu etkiler (sync_engine).
 enum WriteKind {
-  /// 750ms (fast) / 1500ms (slow) — HP/AC/level/CR/sayısal stat.
+  /// 750ms — HP/AC/level/CR/sayısal stat.
   shortNumber,
 
-  /// 1500ms (fast) / 3000ms (slow) — name, source, single-line identifier.
+  /// 1500ms — name, source, single-line identifier.
   shortText,
 
-  /// 2000ms (fast) / 4000ms (slow) — description, dm_notes, multi-line text.
+  /// 2000ms — description, dm_notes, multi-line text.
   longText,
 
-  /// 1000ms (fast) / 2000ms (slow) — tags, pdfs, images, linked refs.
+  /// 1000ms — tags, pdfs, images, linked refs.
   listEdit,
 
-  /// 1000ms (fast) / 2000ms (slow) — map pin drag, mind map node move.
+  /// 1000ms — map pin drag, mind map node move.
   spatial,
 
   /// 500ms — combat_state mutation. Snappy bağlı kalır.
@@ -51,15 +48,6 @@ enum WriteKind {
         viewport => const Duration(milliseconds: 2000),
         immediate => Duration.zero,
       };
-
-  /// Tier-aware effective duration. Fast = base; slow = 2× base.
-  Duration effectiveWindow(SyncTier tier) {
-    if (this == WriteKind.immediate) return Duration.zero;
-    final base = window.inMilliseconds;
-    return Duration(
-      milliseconds: (base * tier.debounceMultiplier).round(),
-    );
-  }
 }
 
 class _PendingWrite {
@@ -75,6 +63,10 @@ class _PendingWrite {
 ///
 /// Flush hook'ları (app close, world close, dispose) pending'leri hemen
 /// drain etmek için `flush()` veya `flushPrefix(...)` kullanır.
+///
+/// CDC race guard: remote applier'lar `isPending(key)` / `hasPendingPrefix`
+/// kontrol eder; pending varken remote event apply edilmez, trailing local
+/// fire LWW kazanır.
 class PendingWriteBuffer {
   PendingWriteBuffer(this._ref);
   // ignore: unused_field
@@ -88,16 +80,14 @@ class PendingWriteBuffer {
   void _bumpTick() => tick.value++;
 
   /// [key] yeni schedule'da action ve timer reset. Effective duration =
-  /// `kind.effectiveWindow(tier)`. Action async ise Future throw'ları
-  /// yutulur (debugPrint).
+  /// `kind.window`. Action async ise Future throw'ları yutulur (debugPrint).
   void schedule({
     required String key,
     required WriteKind kind,
     required FutureOr<void> Function() action,
-    SyncTier tier = SyncTier.fast,
   }) {
     _pending.remove(key)?.timer.cancel();
-    final duration = kind.effectiveWindow(tier);
+    final duration = kind.window;
     if (kind == WriteKind.immediate || duration == Duration.zero) {
       _run(action);
       _bumpTick();
@@ -153,8 +143,16 @@ class PendingWriteBuffer {
 
   int get pendingCount => _pending.length;
 
-  /// Belirli key pending mi (test/debug için).
+  /// Belirli key pending mi (CDC race guard + test).
   bool isPending(String key) => _pending.containsKey(key);
+
+  /// Prefix ile başlayan key'lerden biri pending mi?
+  bool hasPendingPrefix(String prefix) =>
+      _pending.keys.any((k) => k.startsWith(prefix));
+
+  /// Pending key listesi (prefix filter). Settings subkey merge'de kullanılır.
+  Iterable<String> pendingKeysWithPrefix(String prefix) =>
+      _pending.keys.where((k) => k.startsWith(prefix));
 
   void _run(FutureOr<void> Function() action) {
     final result = action();
