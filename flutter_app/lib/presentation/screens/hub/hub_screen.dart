@@ -330,13 +330,13 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               )
             : null,
         automaticallyImplyLeading: false,
-        title: const Row(
+        title: Row(
           children: [
-            AppIconImage(size: 22),
-            SizedBox(width: 8),
+            const AppIconImage(size: 22),
+            const SizedBox(width: 8),
             Expanded(
-              child: Text('Dungeon Master Tool',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: Text(l10n.appTitle,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 softWrap: false,
                 overflow: TextOverflow.fade,
               ),

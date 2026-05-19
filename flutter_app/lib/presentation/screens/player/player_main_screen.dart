@@ -162,7 +162,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
               isLandscapePhone ? Icons.menu : Icons.arrow_back,
               size: 22,
             ),
-            tooltip: isLandscapePhone ? 'Menu' : 'Back to hub',
+            tooltip: isLandscapePhone ? l10n.mainMenu : l10n.mainBackToHub,
             onPressed: isLandscapePhone
                 ? () => _showLandscapeNavSheet(tabLabels, palette)
                 : _exitToHub,
@@ -219,7 +219,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                 editMode ? Icons.edit : Icons.visibility,
                 color: editMode ? palette.tokenBorderActive : null,
               ),
-              tooltip: editMode ? 'Edit mode' : 'View mode',
+              tooltip: editMode ? l10n.mainEditMode : l10n.mainViewMode,
               onPressed: () =>
                   ref.read(editModeProvider.notifier).update((s) => !s),
             ),
@@ -281,12 +281,12 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                   const PopupMenuItem(
                       value: 'lang:fr', child: Text('Français')),
                   const PopupMenuDivider(),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'bug',
                     child: Row(children: [
-                      Icon(Icons.bug_report_outlined, size: 18),
-                      SizedBox(width: 8),
-                      Text('Report a Bug'),
+                      const Icon(Icons.bug_report_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text(l10n.menuReportBug),
                     ]),
                   ),
                 ],
@@ -295,7 +295,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
               // Packages — view-only (player can browse but cannot install)
               IconButton(
                 icon: const Icon(Icons.inventory_2, size: 20),
-                tooltip: 'Packages',
+                tooltip: l10n.mainPackages,
                 onPressed: () =>
                     ImportPackageDialog.show(context, viewOnly: true),
               ),
@@ -344,7 +344,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
               // Bug report
               IconButton(
                 icon: const Icon(Icons.bug_report_outlined, size: 20),
-                tooltip: 'Report a Bug',
+                tooltip: l10n.menuReportBug,
                 onPressed: () => BugReportDialog.show(context),
               ),
             ],
@@ -358,6 +358,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                 schema: schema,
                 tabStack: tabStack,
                 tabLabels: tabLabels,
+                l10n: l10n,
               ),
             ScreenType.tablet => Row(
                 children: [
@@ -417,6 +418,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     required dynamic schema,
     required Widget tabStack,
     required List<String> tabLabels,
+    required L10n l10n,
   }) {
     return Stack(
           children: [
@@ -479,8 +481,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                             size: 18,
                                           ),
                                           tooltip: _sidebarOpen
-                                              ? 'Close Sidebar'
-                                              : 'Open Sidebar',
+                                              ? l10n.mainCloseSidebar
+                                              : l10n.mainOpenSidebar,
                                           onPressed: () => setState(() {
                                             _sidebarOpen = !_sidebarOpen;
                                             if (_sidebarOpen) {
@@ -552,8 +554,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                     size: 18,
                                   ),
                                   tooltip: _rightSidebar == _RightSidebar.pdf
-                                      ? 'Close PDF Viewer'
-                                      : 'Open PDF Viewer',
+                                      ? l10n.mainClosePdf
+                                      : l10n.mainOpenPdf,
                                   color: _rightSidebar == _RightSidebar.pdf
                                       ? palette.tabIndicator
                                       : palette.tabText,
@@ -578,8 +580,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                   ),
                                   tooltip:
                                       _rightSidebar == _RightSidebar.soundmap
-                                          ? 'Close Soundmap'
-                                          : 'Open Soundmap',
+                                          ? l10n.mainCloseSoundmap
+                                          : l10n.mainOpenSoundmap,
                                   color:
                                       _rightSidebar == _RightSidebar.soundmap
                                           ? palette.tabIndicator
@@ -845,9 +847,10 @@ class _UndoRedoButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     if (undoTabIndex < 0) {
       // Render disabled placeholders for layout stability.
-      return _disabledRow(palette);
+      return _disabledRow(palette, l10n);
     }
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     final (canUndoVN, canRedoVN) = dispatcher.activeNotifiers(undoTabIndex);
@@ -858,7 +861,7 @@ class _UndoRedoButtons extends ConsumerWidget {
           valueListenable: canUndoVN,
           builder: (_, canUndo, _) => IconButton(
             icon: const Icon(Icons.undo, size: 18),
-            tooltip: 'Undo (Ctrl+Z)',
+            tooltip: l10n.mainUndoTooltip,
             onPressed: canUndo ? () => dispatcher.undo(undoTabIndex) : null,
             color: palette.tabActiveText,
             disabledColor: palette.tabText.withValues(alpha: 0.3),
@@ -872,7 +875,7 @@ class _UndoRedoButtons extends ConsumerWidget {
           valueListenable: canRedoVN,
           builder: (_, canRedo, _) => IconButton(
             icon: const Icon(Icons.redo, size: 18),
-            tooltip: 'Redo (Ctrl+Shift+Z)',
+            tooltip: l10n.mainRedoTooltip,
             onPressed: canRedo ? () => dispatcher.redo(undoTabIndex) : null,
             color: palette.tabActiveText,
             disabledColor: palette.tabText.withValues(alpha: 0.3),
@@ -886,12 +889,12 @@ class _UndoRedoButtons extends ConsumerWidget {
     );
   }
 
-  Widget _disabledRow(DmToolColors palette) => Row(
+  Widget _disabledRow(DmToolColors palette, L10n l10n) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
             icon: const Icon(Icons.undo, size: 18),
-            tooltip: 'Undo',
+            tooltip: l10n.mainUndoShort,
             onPressed: null,
             disabledColor: palette.tabText.withValues(alpha: 0.3),
             iconSize: 18,
@@ -901,7 +904,7 @@ class _UndoRedoButtons extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.redo, size: 18),
-            tooltip: 'Redo',
+            tooltip: l10n.mainRedoShort,
             onPressed: null,
             disabledColor: palette.tabText.withValues(alpha: 0.3),
             iconSize: 18,

@@ -66,6 +66,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final campaignInfoList = ref.watch(campaignInfoListProvider);
 
     return SingleChildScrollView(
@@ -81,7 +82,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Worlds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                    child: Text(l10n.worldsHeading, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
@@ -89,7 +90,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
-                    label: const Text('Marketplace'),
+                    label: Text(l10n.hubBtnMarketplace),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       minimumSize: const Size(0, 32),
@@ -102,7 +103,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     OutlinedButton.icon(
                       onPressed: () => JoinWorldDialog.show(context),
                       icon: const Icon(Icons.login, size: 16),
-                      label: const Text('Join'),
+                      label: Text(l10n.worldsBtnJoin),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -114,7 +115,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   ],
                   const SizedBox(width: 4),
                   Tooltip(
-                    message: 'Refresh from cloud',
+                    message: l10n.hubTooltipRefresh,
                     child: OutlinedButton(
                       onPressed: _refreshing ? null : _doRefresh,
                       style: OutlinedButton.styleFrom(
@@ -142,7 +143,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Select or create a campaign world.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+              Text(l10n.worldsSubtitle, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
               // Kampanya listesi
@@ -157,7 +158,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                         ),
                         child: Center(
                           child: Text(
-                            'No campaigns found.\n${AppPaths.worldsDir}',
+                            l10n.worldsEmpty(AppPaths.worldsDir),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
                           ),
@@ -232,7 +233,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                         },
                       ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error: $e'),
+                error: (e, _) => Text(l10n.hubErrorGeneric(e.toString())),
               ),
 
               const SizedBox(height: 12),
@@ -249,14 +250,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                             }
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
-                      label: const Text('Load World'),
+                      label: Text(l10n.worldsBtnLoad),
                     ),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: _selectedIndex >= 0 ? () => _deleteWorld() : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Delete'),
+                    label: Text(l10n.btnDelete),
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.dangerBtnBg,
                       foregroundColor: palette.dangerBtnText,
@@ -274,17 +275,17 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
   Future<void> _openCreateWorldDialog() async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final templatesAsync = await ref.read(allTemplatesProvider.future);
     if (!mounted) return;
     if (templatesAsync.isEmpty) {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('No templates installed'),
-          content: const Text(
-              'You need at least one template to create a world. Visit the Marketplace to install one.'),
+          title: Text(l10n.worldsNoTemplatesTitle),
+          content: Text(l10n.worldsNoTemplatesBody),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
             FilledButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -292,7 +293,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 ref.read(hubTabIndexProvider.notifier).state = 0;
               },
               icon: const Icon(Icons.storefront, size: 16),
-              label: const Text('Go to Marketplace'),
+              label: Text(l10n.worldsBtnGoToMarketplace),
             ),
           ],
         ),
@@ -312,7 +313,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Create New World'),
+          title: Text(l10n.worldsCreateTitle),
           content: SizedBox(
             width: 380,
             child: Column(
@@ -321,7 +322,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _selectedTemplate!.schemaId,
-                  decoration: const InputDecoration(labelText: 'Template'),
+                  decoration: InputDecoration(labelText: l10n.worldsTemplateLabel),
                   items: uniqueTemplates
                       .map((t) => DropdownMenuItem(
                             value: t.schemaId,
@@ -344,7 +345,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 TextField(
                   controller: _nameController,
                   autofocus: true,
-                  decoration: const InputDecoration(hintText: 'World name'),
+                  decoration: InputDecoration(hintText: l10n.worldsNameHint),
                   onSubmitted: (_) async {
                     Navigator.pop(ctx);
                     await _createCampaign();
@@ -356,14 +357,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
+                child: Text(l10n.btnCancel)),
             FilledButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
                 await _createCampaign();
               },
               icon: const Icon(Icons.add, size: 16),
-              label: const Text('Create'),
+              label: Text(l10n.btnCreate),
               style: FilledButton.styleFrom(
                   backgroundColor: palette.successBtnBg,
                   foregroundColor: palette.successBtnText),
@@ -375,6 +376,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   void _deleteWorld() {
+    final l10n = L10n.of(context)!;
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
     final name = campaigns[_selectedIndex].name;
@@ -390,19 +392,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isPlayer ? 'Leave World' : 'Delete World'),
+        title: Text(isPlayer ? l10n.worldsLeaveTitle : l10n.worldsDeleteTitle),
         content: Text(
           isPlayer
-              ? 'You will leave "$name" and any characters you owned will '
-                  'become claimable again. The local copy of this world '
-                  'will be deleted from this device. Your character copies '
-                  'remain in your library.'
-              : 'Are you sure you want to delete "$name"?\n\n'
-                  'The world will be moved to trash and automatically '
-                  'deleted after 30 days.',
+              ? l10n.worldsLeaveBody(name)
+              : l10n.worldsDeleteBody(name),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -421,7 +418,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Silme başarısız: $e'),
+                    content: Text(l10n.worldsDeleteFailed(e.toString())),
                     duration: const Duration(seconds: 6),
                   ),
                 );
@@ -434,10 +431,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   SnackBar(
                     content: Text(
                       isPlayer
-                          ? 'Left "$name". Local copy removed.'
+                          ? l10n.worldsLeftSnack(name)
                           : wasOnline
-                              ? 'World moved to trash. Cloud copy removed.'
-                              : 'World moved to trash.',
+                              ? l10n.worldsDeletedCloudSnack
+                              : l10n.worldsDeletedSnack,
                     ),
                     duration: const Duration(seconds: 5),
                   ),
@@ -449,7 +446,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               backgroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnBg,
               foregroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnText,
             ),
-            child: Text(isPlayer ? 'Leave' : 'Delete'),
+            child: Text(isPlayer ? l10n.worldsBtnLeave : l10n.btnDelete),
           ),
         ],
       ),
@@ -487,8 +484,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     context.go('/main');
     final success = await notifier.completeLoad();
     if (!success && mounted) {
+      final l10n = L10n.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open world "$name"')),
+        SnackBar(content: Text(l10n.worldsOpenFailed(name))),
       );
     }
   }
@@ -576,7 +574,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load campaign: $e')),
+          SnackBar(content: Text(l10n.worldsLoadFailed(e.toString()))),
         );
       }
       return;
@@ -593,7 +591,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
-    final templateName = schemaMap?['name'] as String? ?? 'Unknown';
+    final templateName = schemaMap?['name'] as String? ?? l10n.worldsUnknownTemplate;
 
     // Mutable metadata working copy — committed on Save.
     final existingMeta = data['metadata'];
@@ -608,7 +606,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: Text('$campaignName — Settings'),
+        title: Text(l10n.worldsSettingsTitle(campaignName)),
         content: SizedBox(
           width: 440,
           child: SingleChildScrollView(
@@ -640,7 +638,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 children: [
                   Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
                   const SizedBox(width: 6),
-                  Text('Template: $templateName',
+                  Text(l10n.worldsTemplateLine(templateName),
                       style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                 ],
               ),
@@ -682,7 +680,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               await updateCampaignMetadata(ref, campaignName, workingMeta);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(l10n.btnSave),
           ),
         ],
       ),
@@ -691,11 +689,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   Future<void> _createCampaign() async {
+    final l10n = L10n.of(context)!;
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (campaigns.any((c) => c.name == name)) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('World already exists')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.worldsAlreadyExists)));
       return;
     }
 
@@ -703,7 +702,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (templateFinal == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Install a template from the Marketplace before creating a world')),
+          SnackBar(content: Text(l10n.worldsInstallTemplate)),
         );
       }
       return;
@@ -711,7 +710,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-world-$name',
-      'Creating world "$name"...',
+      l10n.worldsCreatingLoad(name),
       () => ref
           .read(activeCampaignProvider.notifier)
           .create(name, template: templateFinal),
@@ -732,10 +731,11 @@ class _OnlineRoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
     final (IconData roleIcon, String tooltip) = switch (role) {
-      WorldRole.dm => (Icons.shield, 'Online · DM'),
-      WorldRole.player => (Icons.person, 'Online · Player'),
-      WorldRole.none => (Icons.help_outline, 'Online'),
+      WorldRole.dm => (Icons.shield, l10n.worldsRoleBadgeDm),
+      WorldRole.player => (Icons.person, l10n.worldsRoleBadgePlayer),
+      WorldRole.none => (Icons.help_outline, l10n.worldsRoleBadgeNone),
     };
     return Tooltip(
       message: tooltip,

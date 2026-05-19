@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../l10n/app_localizations.dart';
@@ -74,17 +75,18 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     if (msg == null || !mounted) return;
     notifier.value = null; // Idempotent — dialog bir kez açılsın.
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.block, size: 48, color: palette.dangerBtnBg),
-        title: const Text('Account Banned'),
+        title: Text(l10n.landingAccountBanned),
         content: Text(msg, textAlign: TextAlign.center),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
+            child: Text(l10n.landingOk),
           ),
         ],
       ),
@@ -138,6 +140,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   // ── Auth landing ──────────────────────────────────────────────────
 
   Widget _buildAuthLanding(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     final size = MediaQuery.sizeOf(context);
     final isWide = size.width > 700;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
@@ -165,7 +168,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         AppIconImage(size: isWide ? 48 : 36),
                         const SizedBox(height: 8),
                         Text(
-                          'Dungeon Master Tool',
+                          l10n.appTitle,
                           style: TextStyle(
                             fontSize: isWide ? 24 : 20,
                             fontWeight: FontWeight.bold,
@@ -175,7 +178,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Create an account to unlock online features.',
+                          l10n.landingSubtitle,
                           style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
                         ),
                         SizedBox(height: isWide ? 28 : 16),
@@ -198,13 +201,77 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           ),
         ),
         if (!keyboardOpen) _buildTagline(palette),
+        // Language picker — top-right, floating over background.
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            child: _buildLanguagePicker(palette),
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildLanguagePicker(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
+    final currentCode = ref.watch(localeProvider).languageCode;
+    return Material(
+      color: Colors.black.withValues(alpha: 0.32),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: PopupMenuButton<String>(
+        tooltip: l10n.lblLanguage,
+        onSelected: (code) =>
+            ref.read(localeProvider.notifier).setLocale(code),
+        itemBuilder: (_) => [
+          for (final entry in const [
+            ('en', 'English'),
+            ('tr', 'Türkçe'),
+            ('de', 'Deutsch'),
+            ('fr', 'Français'),
+          ])
+            PopupMenuItem(
+              value: entry.$1,
+              child: Row(
+                children: [
+                  Icon(
+                    entry.$1 == currentCode
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(entry.$2),
+                ],
+              ),
+            ),
+        ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.language, size: 16, color: palette.tabActiveText),
+              const SizedBox(width: 6),
+              Text(
+                currentCode.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   // ── Wide layout: OAuth left | OR | Email right ────────────────────
 
   Widget _buildWideAuthContent(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -219,7 +286,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               Container(width: 1, height: 40, color: palette.featureCardBorder),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('OR', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+                child: Text(l10n.landingOr, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
               ),
               Container(width: 1, height: 40, color: palette.featureCardBorder),
             ],
@@ -234,6 +301,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   // ── Narrow layout: OAuth top, OR, Email bottom ────────────────────
 
   Widget _buildNarrowAuthContent(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -245,7 +313,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             Expanded(child: Divider(color: palette.featureCardBorder)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('OR', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+              child: Text(l10n.landingOr, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
             ),
             Expanded(child: Divider(color: palette.featureCardBorder)),
           ],
@@ -259,12 +327,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   // ── OAuth buttons panel ───────────────────────────────────────────
 
   Widget _buildOAuthPanel(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _oauthButton(palette, icon: Icons.g_mobiledata, label: 'Continue with Google', provider: OAuthProvider.google),
+        _oauthButton(palette, icon: Icons.g_mobiledata, label: l10n.landingOauthGoogle, provider: OAuthProvider.google),
         const SizedBox(height: 10),
-        _oauthButton(palette, icon: Icons.code, label: 'Continue with GitHub', provider: OAuthProvider.github),
+        _oauthButton(palette, icon: Icons.code, label: l10n.landingOauthGithub, provider: OAuthProvider.github),
       ],
     );
   }
@@ -272,22 +341,23 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   // ── Email/password form ───────────────────────────────────────────
 
   Widget _buildEmailForm(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Email', palette),
+        _buildLabel(l10n.landingFieldEmail, palette),
         const SizedBox(height: 4),
-        _buildField(_emailController, 'you@example.com', palette, keyboardType: TextInputType.emailAddress),
+        _buildField(_emailController, l10n.landingHintEmail, palette, keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 10),
-        _buildLabel('Password', palette),
+        _buildLabel(l10n.landingFieldPassword, palette),
         const SizedBox(height: 4),
-        _buildField(_passwordController, 'Min 6 characters', palette, obscure: true),
+        _buildField(_passwordController, l10n.landingHintPasswordMin, palette, obscure: true),
         if (_isSignUp) ...[
           const SizedBox(height: 10),
-          _buildLabel('Confirm Password', palette),
+          _buildLabel(l10n.landingFieldConfirmPassword, palette),
           const SizedBox(height: 4),
-          _buildField(_confirmController, 'Re-enter password', palette, obscure: true),
+          _buildField(_confirmController, l10n.landingHintReenterPassword, palette, obscure: true),
         ],
         if (_error != null) ...[
           const SizedBox(height: 8),
@@ -309,7 +379,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             ),
             child: _loading
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text(_isSignUp ? 'Sign Up' : 'Sign In', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                : Text(_isSignUp ? l10n.landingSignUp : l10n.landingSignIn, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           ),
         ),
         const SizedBox(height: 2),
@@ -324,7 +394,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       _confirmController.clear();
                     }),
             child: Text(
-              _isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up",
+              _isSignUp ? l10n.landingToggleToSignIn : l10n.landingToggleToSignUp,
               style: TextStyle(fontSize: 11, color: palette.featureCardAccent),
             ),
           ),
@@ -348,12 +418,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   }
 
   Widget _buildTagline(DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     return Positioned(
       bottom: 24,
       left: 0,
       right: 0,
       child: Text(
-        'Campaign Management for Tabletop RPGs',
+        l10n.landingTagline,
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
       ),
@@ -420,23 +491,24 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   // ── Auth logic ────────────────────────────────────────────────────
 
   Future<void> _submit() async {
+    final l10n = L10n.of(context)!;
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Please fill in all fields.');
+      setState(() => _error = l10n.landingErrFillAll);
       return;
     }
     if (!email.contains('@') || !email.contains('.')) {
-      setState(() => _error = 'Please enter a valid email address.');
+      setState(() => _error = l10n.landingErrInvalidEmail);
       return;
     }
     if (password.length < 6) {
-      setState(() => _error = 'Password must be at least 6 characters.');
+      setState(() => _error = l10n.landingErrPasswordShort);
       return;
     }
     if (_isSignUp && password != _confirmController.text) {
-      setState(() => _error = 'Passwords do not match.');
+      setState(() => _error = l10n.landingErrPasswordMismatch);
       return;
     }
 
@@ -454,7 +526,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       if (error == null && ref.read(authProvider) == null) {
         setState(() {
           _loading = false;
-          _info = 'Check your email to confirm your account.';
+          _info = l10n.landingInfoConfirmEmail;
         });
         return;
       }

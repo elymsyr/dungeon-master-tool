@@ -525,7 +525,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             isLandscapePhone ? Icons.menu : Icons.arrow_back,
             size: 22,
           ),
-          tooltip: isLandscapePhone ? 'Menu' : 'Back to hub',
+          tooltip: isLandscapePhone ? l10n.mainMenu : l10n.mainBackToHub,
           onPressed: isLandscapePhone
               ? () => _showLandscapeNavSheet(tabLabels, palette)
               : _exitToHub,
@@ -558,7 +558,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               editMode ? Icons.edit : Icons.visibility,
               color: editMode ? palette.tokenBorderActive : null,
             ),
-            tooltip: editMode ? 'Edit mode' : 'View mode',
+            tooltip: editMode ? l10n.mainEditMode : l10n.mainViewMode,
             onPressed: () => ref
                 .read(editModeProvider.notifier)
                 .update((s) => !s),
@@ -625,7 +625,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                         Text(projLabel),
                       ]),
                     ),
-                const PopupMenuItem(value: 'media', child: Row(children: [Icon(Icons.photo_library_outlined, size: 18), SizedBox(width: 8), Text('Media Gallery')])),
+                PopupMenuItem(value: 'media', child: Row(children: [const Icon(Icons.photo_library_outlined, size: 18), const SizedBox(width: 8), Text(l10n.menuMediaGallery)])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 const PopupMenuDivider(),
                 ...themeNames.map((name) => PopupMenuItem(
@@ -642,7 +642,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
                 const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                 const PopupMenuDivider(),
-                const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
+                PopupMenuItem(value: 'bug', child: Row(children: [const Icon(Icons.bug_report_outlined, size: 18), const SizedBox(width: 8), Text(l10n.menuReportBug)])),
                 ];
               },
             ),
@@ -651,7 +651,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             // Media Gallery
             IconButton(
               icon: const Icon(Icons.photo_library_outlined, size: 20),
-              tooltip: 'Media Gallery',
+              tooltip: l10n.menuMediaGallery,
               onPressed: () {
                 final mediaDir = ref.read(mediaDirectoryProvider);
                 final campaignId = ref.read(mediaCampaignIdProvider);
@@ -713,7 +713,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             // Bug report
             IconButton(
               icon: const Icon(Icons.bug_report_outlined, size: 20),
-              tooltip: 'Report a Bug',
+              tooltip: l10n.menuReportBug,
               onPressed: () => BugReportDialog.show(context),
             ),
           ],
@@ -787,7 +787,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                           _sidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
                                           size: 18,
                                         ),
-                                        tooltip: _sidebarOpen ? 'Close Sidebar' : 'Open Sidebar',
+                                        tooltip: _sidebarOpen ? l10n.mainCloseSidebar : l10n.mainOpenSidebar,
                                         onPressed: () { setState(() { _sidebarOpen = !_sidebarOpen; if (_sidebarOpen) _sidebarWidthNotifier.value = _sidebarWidth; }); _persistUiState(); },
                                         color: palette.tabText,
                                         iconSize: 18,
@@ -847,7 +847,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                           current == RightSidebar.pdf ? Icons.chrome_reader_mode : Icons.chrome_reader_mode_outlined,
                                           size: 18,
                                         ),
-                                        tooltip: current == RightSidebar.pdf ? 'Close PDF Viewer' : 'Open PDF Viewer',
+                                        tooltip: current == RightSidebar.pdf ? l10n.mainClosePdf : l10n.mainOpenPdf,
                                         color: current == RightSidebar.pdf ? palette.tabIndicator : palette.tabText,
                                         onPressed: () => toggle(RightSidebar.pdf),
                                         iconSize: 18,
@@ -860,7 +860,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                           current == RightSidebar.soundmap ? Icons.music_note : Icons.music_note_outlined,
                                           size: 18,
                                         ),
-                                        tooltip: current == RightSidebar.soundmap ? 'Close Soundmap' : 'Open Soundmap',
+                                        tooltip: current == RightSidebar.soundmap ? l10n.mainCloseSoundmap : l10n.mainOpenSoundmap,
                                         color: current == RightSidebar.soundmap ? palette.tabIndicator : palette.tabText,
                                         onPressed: () => toggle(RightSidebar.soundmap),
                                         iconSize: 18,
@@ -873,7 +873,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                           current == RightSidebar.characters ? Icons.people : Icons.people_outline,
                                           size: 18,
                                         ),
-                                        tooltip: current == RightSidebar.characters ? 'Close Characters' : 'Open Characters',
+                                        tooltip: current == RightSidebar.characters ? l10n.mainCloseCharacters : l10n.mainOpenCharacters,
                                         color: current == RightSidebar.characters ? palette.tabIndicator : palette.tabText,
                                         onPressed: () => toggle(RightSidebar.characters),
                                         iconSize: 18,
@@ -1170,6 +1170,7 @@ class _UndoRedoButtons extends ConsumerWidget {
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     final (canUndoVN, canRedoVN) = dispatcher.activeNotifiers(tabIndex);
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1178,7 +1179,7 @@ class _UndoRedoButtons extends ConsumerWidget {
           valueListenable: canUndoVN,
           builder: (_, canUndo, _) => IconButton(
             icon: const Icon(Icons.undo, size: 18),
-            tooltip: 'Undo (Ctrl+Z)',
+            tooltip: l10n.mainUndoTooltip,
             onPressed: canUndo ? () => dispatcher.undo(tabIndex) : null,
             color: palette.tabActiveText,
             disabledColor: palette.tabText.withValues(alpha: 0.3),
@@ -1191,7 +1192,7 @@ class _UndoRedoButtons extends ConsumerWidget {
           valueListenable: canRedoVN,
           builder: (_, canRedo, _) => IconButton(
             icon: const Icon(Icons.redo, size: 18),
-            tooltip: 'Redo (Ctrl+Shift+Z)',
+            tooltip: l10n.mainRedoTooltip,
             onPressed: canRedo ? () => dispatcher.redo(tabIndex) : null,
             color: palette.tabActiveText,
             disabledColor: palette.tabText.withValues(alpha: 0.3),

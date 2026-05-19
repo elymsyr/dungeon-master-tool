@@ -62,7 +62,7 @@ class _CampaignSelectorScreenState
                   data: (campaigns) => campaigns.isEmpty
                       ? Center(
                           child: Text(
-                            'No campaigns found in:\n${AppPaths.worldsDir}',
+                            l10n.selectorEmpty(AppPaths.worldsDir),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: palette.sidebarLabelSecondary),
                           ),
@@ -96,7 +96,7 @@ class _CampaignSelectorScreenState
                         ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => Center(child: Text(l10n.hubErrorGeneric(e.toString()))),
                 ),
               ),
 
@@ -231,8 +231,9 @@ class _CampaignSelectorScreenState
     final campaigns = ref.read(campaignListProvider).valueOrNull ?? [];
     if (campaigns.contains(name)) {
       if (mounted) {
+        final l10n = L10n.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Campaign already exists')),
+          SnackBar(content: Text(l10n.worldsAlreadyExists)),
         );
       }
       return;
