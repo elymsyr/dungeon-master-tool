@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
+import '../../../theme/dm_tool_colors.dart';
 
 /// Player-window view of a battle map. Receives a [BattleMapSnapshot] over
 /// IPC, decodes the background and fog images on demand, and renders them
@@ -642,6 +643,7 @@ class _InitiativeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     final hpText = token.isPlayer ? '${token.hp} / ${token.maxHp}' : '???';
     final hpRatio = token.isPlayer && token.maxHp > 0
         ? (token.hp / token.maxHp).clamp(0.0, 1.0)
@@ -657,8 +659,8 @@ class _InitiativeRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         // Subtle brass underline marks the active row instead of a heavy rim.
         border: isActive
-            ? const Border(
-                left: BorderSide(color: _ddBrass, width: 2),
+            ? Border(
+                left: BorderSide(color: palette.tokenBorderActive, width: 2),
               )
             : null,
       ),
@@ -693,7 +695,7 @@ class _InitiativeRow extends StatelessWidget {
                   child: Text(
                     token.name,
                     style: TextStyle(
-                      color: isActive ? _ddBrass : _ddParchment,
+                      color: isActive ? palette.tokenBorderActive : _ddParchment,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),

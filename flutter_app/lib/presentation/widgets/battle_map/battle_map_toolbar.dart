@@ -315,7 +315,7 @@ class _ToolbarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         child: Icon(icon, size: 18, color: palette.tabText),
@@ -350,12 +350,12 @@ class _ToolButton extends StatelessWidget {
     final isActive = mapState.activeTool == tool;
     return InkWell(
       onTap: () => notifier.setTool(tool),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
         decoration: BoxDecoration(
           color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.br,
           border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
         ),
         child: Icon(
@@ -393,7 +393,7 @@ class _SpinBox extends StatelessWidget {
       height: 24,
       decoration: BoxDecoration(
         border: Border.all(color: palette.sidebarDivider),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: palette.br,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -443,7 +443,7 @@ class _DoubleSpinBox extends StatelessWidget {
       height: 24,
       decoration: BoxDecoration(
         border: Border.all(color: palette.sidebarDivider),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: palette.br,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -519,7 +519,7 @@ class _ProjectionLockButton extends ConsumerWidget {
       onTap: () => ref
           .read(projectionControllerProvider.notifier)
           .setBattleMapLocked(proj.id, !locked),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Tooltip(
         message: locked
             ? 'Player view locked — your zoom/pan stays private'
@@ -528,7 +528,7 @@ class _ProjectionLockButton extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           decoration: BoxDecoration(
             color: locked ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             border: locked
                 ? Border.all(color: palette.tabIndicator, width: 1)
                 : null,

@@ -96,7 +96,7 @@ class BattleMapMobileToolbar extends ConsumerWidget {
                   content: Text('Battle map projected'),
                 ));
             },
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Icon(Icons.cast, size: 18, color: palette.tabText),
@@ -106,7 +106,7 @@ class BattleMapMobileToolbar extends ConsumerWidget {
           // Expand button — opens full bottom sheet
           InkWell(
             onTap: () => _showFullSheet(context, encounterId),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Icon(Icons.expand_less, size: 22, color: palette.tabText),
@@ -152,12 +152,12 @@ class _MiniToolButton extends StatelessWidget {
     final isActive = activeTool == tool;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.br,
           border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
         ),
         child: Icon(
@@ -215,7 +215,9 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
     return Container(
       decoration: BoxDecoration(
         color: palette.tabBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(palette.cardBorderRadius + 8),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -227,7 +229,7 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
             height: 4,
             decoration: BoxDecoration(
               color: palette.sidebarDivider,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: palette.br,
             ),
           ),
           const SizedBox(height: 8),
@@ -497,13 +499,13 @@ class _SheetToolButton extends StatelessWidget {
     final isActive = tb.activeTool == tool;
     return InkWell(
       onTap: () => notifier.setTool(tool),
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.cbr,
       child: Container(
         width: 56,
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.cbr,
           border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
         ),
         child: Column(
@@ -546,12 +548,12 @@ class _SheetActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.cbr,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(color: palette.sidebarDivider),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.cbr,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -663,7 +665,7 @@ class _MobileSpinBox extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(
         border: Border.all(color: palette.sidebarDivider),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: palette.br,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
