@@ -19,29 +19,34 @@ class SrdCoreBootstrap {
   SrdCoreBootstrap(this._db);
 
   /// Returns 1 once installed_packages has been linked for this world, 0
-  /// otherwise (wrong schema, flag already set, or built-in pack missing).
+  /// otherwise (wrong schema, link already present, or built-in pack missing).
   Future<int> ensureImported({
     required String worldId,
     required BuiltinDnd5eV2Build build,
   }) async {
     if (build.schema.schemaId != builtinDnd5eV2SchemaId) return 0;
 
+    final pkg = await _findPackageByName(srdCorePackageName);
+    if (pkg == null) return 0;
+
+    // Idempotency keys on the LOCAL installed_packages link, NOT the
+    // _srdCoreImportedAt settings flag: that flag rides in synced
+    // world_settings.settings_json, so a player joining a world inherits the
+    // DM's flag without ever creating their own (device-local) link.
+    // Checking the link directly self-heals any world missing it.
+    final existingLink = await _db.installedPackagesDao.get(worldId, pkg.id);
+    if (existingLink != null) return 0;
+
+    await _db.installedPackagesDao.upsert(
+      InstalledPackagesCompanion.insert(
+        worldId: worldId,
+        packageId: pkg.id,
+        packageName: Value(pkg.name),
+      ),
+    );
+
+    // Attribution flags are informational (no longer the idempotency guard).
     final settings = await _readSettings(worldId);
-    if (settings['_srdCoreImportedAt'] is String) return 0;
-
-    final linked = await _db.transaction(() async {
-      final pkg = await _findPackageByName(srdCorePackageName);
-      if (pkg == null) return 0;
-      await _db.installedPackagesDao.upsert(
-        InstalledPackagesCompanion.insert(
-          worldId: worldId,
-          packageId: pkg.id,
-          packageName: Value(pkg.name),
-        ),
-      );
-      return 1;
-    });
-
     settings['_srdCoreImportedAt'] =
         DateTime.now().toUtc().toIso8601String();
     settings['_srdAttribution'] = srdAttribution;
@@ -49,7 +54,7 @@ class SrdCoreBootstrap {
     settings['_srdSource'] = srdSourceTag;
     await _writeSettings(worldId, settings);
 
-    return linked;
+    return 1;
   }
 
   Future<Map<String, dynamic>> _readSettings(String worldId) async {

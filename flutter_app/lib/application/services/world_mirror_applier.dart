@@ -53,6 +53,10 @@ class WorldMirrorApplier {
 
   StreamSubscription<WorldSyncEvent>? _sub;
 
+  /// Provider rebuild/dispose sonrası `ref` geçersiz — `stop()`'ta set edilir,
+  /// in-flight async event'ler stale ref kullanmadan bail eder.
+  bool _disposed = false;
+
   WorldMirrorApplier({
     required this.ref,
     required this.mirror,
@@ -66,6 +70,7 @@ class WorldMirrorApplier {
   }
 
   Future<void> stop() async {
+    _disposed = true;
     await _sub?.cancel();
     _sub = null;
   }
@@ -73,7 +78,9 @@ class WorldMirrorApplier {
   /// Subscribe sonrası remote state'i local'a seed eder. Update event'i
   /// gibi davranır — fakat liste olarak gelir, tek transaction'da uygular.
   Future<void> applyInitialState(String worldId) async {
+    if (_disposed) return;
     final snapshot = await mirror.fetchInitialState(worldId);
+    if (_disposed) return;
     if (snapshot.entities.isEmpty && snapshot.characters.isEmpty) return;
 
     final activeCampaign = ref.read(activeCampaignProvider.notifier);
@@ -118,6 +125,7 @@ class WorldMirrorApplier {
   }
 
   Future<void> _onEvent(WorldSyncEvent e) async {
+    if (_disposed) return;
     if (mirror.isEchoOf(e)) return;
     try {
       switch (e.table) {
@@ -672,41 +680,50 @@ class WorldMirrorApplier {
     Map<String, dynamic> row, {
     required String worldId,
   }) async {
+    if (_disposed) return;
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final raw = row['settings_json'];
     if (raw is! String) return;
-    try {
-      final decoded = await _decodeJsonMaybeOffload(raw);
-      if (decoded is! Map<String, dynamic>) return;
 
-      // CDC race guard: settings JSON tek bir blob; lokal'da farklı subkey'ler
-      // (combat_state, map_data, mind_maps, map_view, mind_map_view:$mapId)
-      // ayrı buffer entry'leri olarak pending olabilir. Merge: pending subkey
-      // local'dan korunur, kalanları remote'tan al.
-      final prefix = 'settings:$worldId:';
-      final pendingKeys = _buffer.pendingKeysWithPrefix(prefix).toList();
-      if (pendingKeys.isEmpty) {
-        data['settings'] = decoded;
-      } else {
-        final currentSettings = (data['settings'] is Map<String, dynamic>)
-            ? data['settings'] as Map<String, dynamic>
-            : <String, dynamic>{};
-        final merged = <String, dynamic>{...decoded};
-        for (final pendingKey in pendingKeys) {
-          final subkey = pendingKey.substring(prefix.length).split(':').first;
-          if (currentSettings.containsKey(subkey)) {
-            merged[subkey] = currentSettings[subkey];
-          } else {
-            merged.remove(subkey);
-          }
-        }
-        data['settings'] = merged;
-      }
-      _bumpRevision();
+    // ref-türevli değerler await'ten ÖNCE alınır — decode sırasında world/role
+    // değişirse ref stale olur (`_didChangeDependency`); sonrasında ref'e
+    // dokunmuyoruz, yalnızca _bumpRevision (self-guarded) kalıyor.
+    final prefix = 'settings:$worldId:';
+    final pendingKeys = _buffer.pendingKeysWithPrefix(prefix).toList();
+
+    Map<String, dynamic> decoded;
+    try {
+      final d = await _decodeJsonMaybeOffload(raw);
+      if (d is! Map<String, dynamic>) return;
+      decoded = d;
     } catch (err) {
       debugPrint('_applySettingsRow decode error: $err');
+      return;
     }
+
+    // CDC race guard: settings JSON tek bir blob; lokal'da farklı subkey'ler
+    // (combat_state, map_data, mind_maps, map_view, mind_map_view:$mapId)
+    // ayrı buffer entry'leri olarak pending olabilir. Merge: pending subkey
+    // local'dan korunur, kalanları remote'tan al.
+    if (pendingKeys.isEmpty) {
+      data['settings'] = decoded;
+    } else {
+      final currentSettings = (data['settings'] is Map<String, dynamic>)
+          ? data['settings'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final merged = <String, dynamic>{...decoded};
+      for (final pendingKey in pendingKeys) {
+        final subkey = pendingKey.substring(prefix.length).split(':').first;
+        if (currentSettings.containsKey(subkey)) {
+          merged[subkey] = currentSettings[subkey];
+        } else {
+          merged.remove(subkey);
+        }
+      }
+      data['settings'] = merged;
+    }
+    _bumpRevision();
   }
 
   Map<String, dynamic> _entityRowToBlob(Map<String, dynamic> row) {
@@ -743,7 +760,12 @@ class WorldMirrorApplier {
   }
 
   void _bumpRevision() {
-    final n = ref.read(campaignRevisionProvider.notifier);
-    n.state = n.state + 1;
+    if (_disposed) return;
+    try {
+      final n = ref.read(campaignRevisionProvider.notifier);
+      n.state = n.state + 1;
+    } catch (_) {
+      // ref dependency-change penceresinde stale — bir sonraki event toparlar.
+    }
   }
 }

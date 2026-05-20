@@ -179,33 +179,6 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: palette.tabBg,
-                  borderRadius: palette.chr,
-                  border: Border.all(color: palette.featureCardAccent),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person,
-                        size: 11, color: palette.featureCardAccent),
-                    const SizedBox(width: 4),
-                    Text(
-                      'PLAYER',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: palette.tabActiveText,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
           actions: [

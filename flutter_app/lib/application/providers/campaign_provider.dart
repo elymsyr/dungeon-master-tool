@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart' as drift_db;
 import '../../data/database/database_provider.dart';
 import '../../data/repositories/world_repository_impl.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -16,6 +17,7 @@ import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
+import 'role_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -321,12 +323,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (worldId == null) return;
     if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
     if (_ref.read(authProvider) == null) return;
-    // DM-only write enforced by RLS on `world_settings`. Earlier code
-    // pre-empted with a `_ref.read(currentWorldRoleProvider)` lookup but
-    // that path forms a circular provider dependency now that the role
-    // provider is auto-mounted (see PR-7). RLS rejects with 42501 for
-    // non-DMs and SyncEngine._isPermanentRejection drops the orphan row
-    // — no retry storm, just one wasted round-trip.
+    // Client-side DM gate. `_repo.saveSettingsPatch` above already wrote
+    // Drift, so for a non-DM this degrades to local-only persistence — the
+    // cloud outbox enqueue is skipped. Pre-empts the RLS 42501 rejection
+    // spam on `world_settings` for PLAYER-role members.
+    //
+    // `worldRoleProvider` is worldId-keyed, depends only on authProvider (no
+    // campaign dependency → no circular provider graph), and swallows errors
+    // internally → WorldRole.none on failure. `.future` is awaited so the
+    // gate is reliable on the first settings write after world-open, before
+    // any roster has bootstrapped.
+    final role = await _ref.read(worldRoleProvider(worldId).future);
+    if (role != WorldRole.dm) return;
     // Build the full settings_json mirror (everything except typed top
     // keys and `entities`) so the cloud row contains the post-merge state.
     final settings = <String, dynamic>{};
