@@ -84,6 +84,16 @@ class CharacterRepository {
     }
   }
 
+  /// Hard local-only drop — removes the Drift `world_characters` row without
+  /// snapshotting to `trash_items` and without any cloud delete. Used when
+  /// ownership moves away (unclaim / assign-to-other): the canonical row
+  /// stays in the world, only this device's personal copy is no longer ours.
+  /// Unlike [delete], no trash entry → a later re-claim isn't blocked by
+  /// `applyMirror`'s trash guard.
+  Future<void> dropLocal(String id) async {
+    await _db.worldCharactersDao.deleteById(id);
+  }
+
   /// Restore a soft-deleted character. [trashId] is the `trash_items.id`
   /// surfaced by the trash list provider — replaces the v11 directory-name
   /// argument.

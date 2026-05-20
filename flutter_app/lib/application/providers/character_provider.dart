@@ -536,7 +536,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   /// Granular delete from realtime mirror — disk + state in one shot, no
-  /// full-list reload.
+  /// full-list reload. Soft delete: snapshots to trash (restore destekli).
   Future<void> removeMirror(String id) async {
     final list = state.valueOrNull ?? const <Character>[];
     final existing = list.where((c) => c.id == id).firstOrNull;
@@ -545,6 +545,21 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       await _repo.delete(id, displayName: existing.entity.name);
     } catch (e) {
       debugPrint('removeMirror delete error: $e');
+    }
+    state = AsyncValue.data(list.where((c) => c.id != id).toList());
+  }
+
+  /// Ownership benden gittiğinde (unclaim / başka oyuncuya assign) hub char
+  /// listesinden + local Drift'ten çıkar. [removeMirror]'dan farkı: trash'e
+  /// snapshot ALMAZ (karakter silinmedi, yalnızca artık benim değil) ve cloud
+  /// delete tetiklemez — canonical `world_characters` row dünyada kalır.
+  Future<void> dropMirror(String id) async {
+    final list = state.valueOrNull ?? const <Character>[];
+    if (list.indexWhere((c) => c.id == id) < 0) return;
+    try {
+      await _repo.dropLocal(id);
+    } catch (e) {
+      debugPrint('dropMirror drop error: $e');
     }
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
   }
