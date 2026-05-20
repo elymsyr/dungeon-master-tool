@@ -8,6 +8,7 @@ import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
@@ -2009,7 +2010,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                         ),
                         child: MarkdownBody(
                           data: description,
-                          selectable: true,
+                          // Touch: selection swallows drag → no scroll.
+                          selectable: !isTouchPlatform,
                           styleSheet:
                               MarkdownStyleSheet.fromTheme(
                                 Theme.of(context),

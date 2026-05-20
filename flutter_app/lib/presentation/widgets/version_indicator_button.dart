@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/release_check_provider.dart';
 import '../../core/constants.dart';
+import '../../core/utils/screen_type.dart';
 import '../../data/network/release_check_service.dart';
 import '../theme/dm_tool_colors.dart';
 
@@ -141,7 +142,8 @@ class VersionIndicatorButton extends ConsumerWidget {
                 if (info.body.isNotEmpty)
                   MarkdownBody(
                     data: info.body,
-                    selectable: true,
+                    // Touch devices: selection swallows drag → no scroll.
+                    selectable: !isTouchPlatform,
                     onTapLink: (text, href, title) async {
                       if (href == null) return;
                       final uri = Uri.tryParse(href);

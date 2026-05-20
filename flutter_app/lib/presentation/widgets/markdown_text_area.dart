@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../core/utils/screen_type.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 
@@ -357,7 +358,8 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
 
     return MarkdownBody(
       data: text,
-      selectable: true,
+      // Touch devices: selection gestures swallow vertical drag → no scroll.
+      selectable: !isTouchPlatform,
       styleSheet: widget.markdownStyleSheet ?? _defaultStyleSheet(palette),
       onTapLink: (text, href, title) {
         if (href != null && href.startsWith('entity:')) {
