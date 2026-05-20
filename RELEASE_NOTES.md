@@ -7,10 +7,6 @@
 
 Follow-up to v8.1 focused on online-world realtime reliability. Players now get the same automatic realtime subscribe + initial-state seed that DMs already had — no manual Sync button required. Both the world and per-user realtime channels recover from connection drops on their own: every reconnect triggers a full catch-up (`postgres_changes` does not replay events missed during an outage), and failed channels resubscribe with exponential backoff instead of silently dying. Owner characters now sync live across a player's devices even while the world is closed. Several claim/release/assign bugs are fixed, including a character name reverting to the SRD package name after an ownership change.
 
-> **Heads-up — local DB schema is unchanged from v8.1.** Schema v12. No migration.
-
-> **Heads-up — no new Supabase migrations.** v8.2 is client-only on the cloud side. The new owner-character realtime filter (`world_characters` where `owner_id = uid`) relies on the existing "Chars: player reads own" RLS policy.
-
 ### Highlights
 
 - **Player auto-sync** — `worldMirrorApplierProvider` is now watched in `MainScreen` *before* the role branch, so `PlayerMainScreen` gets the same automatic realtime subscribe + `applyInitialState` seed that the DM view had. Players no longer need to press Sync to see live updates; the Sync button is now a manual "Retry" only.
