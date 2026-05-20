@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// World-scoped Supabase Realtime sync orchestrator.
@@ -19,6 +20,18 @@ class WorldSyncService {
   /// Aktif olarak subscribe edilen worldlerin channel handle'ları.
   final Map<String, RealtimeChannel> _channels = {};
 
+  /// worldId → `SUBSCRIBED` callback. Reconnect sonrası tekrar çağrılır,
+  /// resubscribe retry'ında da yeniden kullanılır.
+  final Map<String, void Function()> _onSubscribedCbs = {};
+
+  /// channelError/timedOut sonrası bekleyen resubscribe timer'ları.
+  final Map<String, Timer> _resubTimers = {};
+
+  /// worldId → ardışık resubscribe denemesi sayısı (exponential backoff).
+  final Map<String, int> _retryCounts = {};
+
+  bool _disposed = false;
+
   /// Birleştirilmiş event stream — tüm subscribe edilen worldlerden CDC
   /// payload'ları yayar. UI/sync hook'ları dinler.
   final _events = StreamController<WorldSyncEvent>.broadcast();
@@ -28,13 +41,15 @@ class WorldSyncService {
 
   /// World mirror'ı için subscribe başlat. İdempotent — zaten varsa no-op.
   ///
-  /// [onSubscribed] channel `SUBSCRIBED` durumuna geçtiğinde çağrılır. Bu
-  /// race-free taze fetch için kritik: subscribe öncesi yapılan join'ler
-  /// kaybedilebilir, callback tetiklendikten sonra bootstrap force-refresh
-  /// çekmek gerekir. Aynı worldId için ikinci subscribe çağrısında callback
-  /// hemen tetiklenir (channel zaten subscribed).
+  /// [onSubscribed] channel her `SUBSCRIBED` durumuna geçtiğinde çağrılır —
+  /// hem ilk bağlanma hem de **her reconnect**. postgres_changes kesinti
+  /// sırasındaki event'leri replay etmez; bu yüzden callback bir catch-up
+  /// (initial state + roster) tetikler. Aynı worldId için ikinci subscribe
+  /// çağrısında callback hemen tetiklenir (channel zaten subscribed).
   Future<void> subscribe(String worldId,
       {void Function()? onSubscribed}) async {
+    if (_disposed) return;
+    if (onSubscribed != null) _onSubscribedCbs[worldId] = onSubscribed;
     if (_channels.containsKey(worldId)) {
       if (onSubscribed != null) {
         scheduleMicrotask(onSubscribed);
@@ -71,22 +86,57 @@ class WorldSyncService {
       callback: (payload) => _dispatch(worldId, 'worlds', payload),
     );
 
-    var fired = false;
-    channel.subscribe((status, _) {
-      if (status == RealtimeSubscribeStatus.subscribed &&
-          !fired &&
-          onSubscribed != null) {
-        fired = true;
-        onSubscribed();
+    channel.subscribe((status, error) {
+      switch (status) {
+        case RealtimeSubscribeStatus.subscribed:
+          // Her SUBSCRIBED'da catch-up — ilk bağlanma + her reconnect.
+          _retryCounts.remove(worldId);
+          _onSubscribedCbs[worldId]?.call();
+        case RealtimeSubscribeStatus.channelError:
+        case RealtimeSubscribeStatus.timedOut:
+          debugPrint(
+              'WorldSyncService channel "$worldId" $status: $error');
+          _scheduleResubscribe(worldId);
+        case RealtimeSubscribeStatus.closed:
+          // Kasıtlı unsubscribe / socket teardown — resubscribe etme.
+          break;
       }
     });
     _channels[worldId] = channel;
   }
 
-  Future<void> unsubscribe(String worldId) async {
+  /// channelError / timedOut sonrası exponential backoff ile yeniden
+  /// subscribe et. Başarısız bir join sessizce kalıcı ölü kanal bırakmasın.
+  void _scheduleResubscribe(String worldId) {
+    if (_disposed) return;
+    if (_resubTimers.containsKey(worldId)) return;
+    final attempt = (_retryCounts[worldId] ?? 0) + 1;
+    _retryCounts[worldId] = attempt;
+    // 1, 2, 4, 8, 16, 30 (cap) saniye.
+    final secs = (1 << (attempt - 1)).clamp(1, 30);
+    _resubTimers[worldId] = Timer(Duration(seconds: secs), () async {
+      _resubTimers.remove(worldId);
+      if (_disposed) return;
+      // External unsubscribe bu timer'ı iptal eder — buraya geldiysek
+      // kanal hâlâ istenen durumda.
+      final cb = _onSubscribedCbs[worldId];
+      await _removeChannel(worldId);
+      if (_disposed) return;
+      await subscribe(worldId, onSubscribed: cb);
+    });
+  }
+
+  Future<void> _removeChannel(String worldId) async {
     final ch = _channels.remove(worldId);
     if (ch == null) return;
     await client.removeChannel(ch);
+  }
+
+  Future<void> unsubscribe(String worldId) async {
+    _resubTimers.remove(worldId)?.cancel();
+    _onSubscribedCbs.remove(worldId);
+    _retryCounts.remove(worldId);
+    await _removeChannel(worldId);
   }
 
   Future<void> unsubscribeAll() async {
@@ -126,6 +176,13 @@ class WorldSyncService {
   ];
 
   Future<void> dispose() async {
+    _disposed = true;
+    for (final t in _resubTimers.values) {
+      t.cancel();
+    }
+    _resubTimers.clear();
+    _onSubscribedCbs.clear();
+    _retryCounts.clear();
     await unsubscribeAll();
     await _events.close();
   }

@@ -181,18 +181,25 @@ List<CharacterStatLine> characterStatLinesWithNames(
 }
 
 /// Resolves the human-readable owner label for [character]'s `User` chip.
+/// Decodes the owner from the in-memory [Character]; for sources that carry
+/// the canonical `owner_id` separately (e.g. `WorldCharacterRow`) prefer
+/// [resolveOwnerLabelById] — `payload_json`'a gömülü owner claim/release/
+/// assign RPC'lerinden sonra stale kalır.
+String resolveCharacterOwnerLabel(WidgetRef ref, Character character) =>
+    resolveOwnerLabelById(ref, character.ownerId, character.worldId);
+
+/// Resolves the owner label from a canonical `owner_id` column.
 /// Returns `'You'` when the signed-in user owns it, otherwise looks up the
-/// owner in the active world's member roster for a display name / @username,
+/// owner in the world's member roster for a display name / @username,
 /// falls back to a truncated uid, and finally `'—'` when no owner is set.
 ///
-/// Cheap when the character is offline / pre-auth — no member-roster watch
-/// is established unless the character actually has a world id.
-String resolveCharacterOwnerLabel(WidgetRef ref, Character character) {
-  final ownerId = character.ownerId;
+/// Cheap when there's no owner / pre-auth — no member-roster watch is
+/// established unless a [worldId] is supplied.
+String resolveOwnerLabelById(
+    WidgetRef ref, String? ownerId, String? worldId) {
   if (ownerId == null || ownerId.isEmpty) return '—';
   final auth = ref.watch(authProvider);
   if (auth != null && auth.uid == ownerId) return 'You';
-  final worldId = character.worldId;
   if (worldId != null) {
     final members = ref.watch(worldMembersProvider(worldId)).valueOrNull;
     if (members != null) {

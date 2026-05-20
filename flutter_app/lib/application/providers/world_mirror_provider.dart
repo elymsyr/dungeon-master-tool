@@ -50,29 +50,30 @@ final worldMirrorApplierProvider =
       await ref.watch(currentWorldRoleProvider.selectAsync((r) => r));
   if (worldId == null || role == WorldRole.none) return applier;
 
-  // Race koşulu: subscribe öncesi yapılan join'ler kaybedilir. Channel
-  // `SUBSCRIBED` durumuna geçtiğinde roster'ı taze fetch et — listMembers
-  // RPC subscribe'tan sonraki INSERT'leri de toplar.
-  void refreshRoster() {
+  // Channel her `SUBSCRIBED` durumuna geçtiğinde (ilk bağlanma VE her
+  // reconnect) hem member roster'ını hem tüm mirror state'i taze çek.
+  // postgres_changes kesinti sırasındaki event'leri replay etmez — bu
+  // catch-up olmadan kullanıcı manuel "çık-gir" yapmak zorunda kalır.
+  void onResubscribed() {
     try {
       // ignore: discarded_futures
       ref
           .read(worldMembersProvider(worldId).notifier)
           .bootstrap(force: true);
+      // ignore: discarded_futures
+      applier.applyInitialState(worldId);
     } catch (_) {
       // Provider scope tear-down sırasında patlamasın.
     }
   }
 
   if (!sync.isSubscribed(worldId)) {
-    await sync.subscribe(worldId, onSubscribed: refreshRoster);
+    await sync.subscribe(worldId, onSubscribed: onResubscribed);
   } else {
-    // Zaten subscribe iken (örn. world reopen aynı oturumda) yine de
-    // bootstrap force et — CDC açıklığı olabilir.
-    refreshRoster();
+    // Zaten subscribe iken (örn. world reopen aynı oturumda) catch-up et.
+    onResubscribed();
   }
   ref.onDispose(() => sync.unsubscribe(worldId));
-  await applier.applyInitialState(worldId);
   return applier;
 });
 
