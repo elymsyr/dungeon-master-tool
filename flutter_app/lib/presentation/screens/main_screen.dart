@@ -380,6 +380,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // PlayerMainScreen'e geçer.
     final role =
         ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+
+    // Auto sync: worldMirrorApplierProvider'i watch et — provider hayatta
+    // tutulur world açıkken. Provider içinde activeCampaignId/role resolve
+    // olunca otomatik subscribe + applyInitialState çalışır. Role branch'ten
+    // ÖNCE watch edilir ki player (PlayerMainScreen) de auto-sync alsın —
+    // _MainScreenState build'i her iki rol için de çalışır.
+    ref.watch(worldMirrorApplierProvider);
+
     if (role == WorldRole.player) {
       return const PlayerMainScreen();
     }
@@ -388,10 +396,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
 
-    // Auto sync: worldMirrorApplierProvider'i watch et — provider hayatta
-    // tutulur world açıkken. Provider içinde activeCampaignId/role resolve
-    // olunca otomatik subscribe + applyInitialState çalışır.
-    ref.watch(worldMirrorApplierProvider);
     ref.listen(activeCampaignSyncProvider, (_, _) {});
     ref.watch(activeCampaignSyncProvider);
     final screen = getScreenType(context);
