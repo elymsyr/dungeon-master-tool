@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/network/no_op_world_membership_service.dart';
 import '../../data/network/supabase_world_membership_service.dart';
 import '../../data/network/world_membership_service.dart';
@@ -29,12 +30,13 @@ final worldMembershipServiceProvider =
 /// her join/leave için tüm roster yeniden fetch edilmez.
 class WorldMembersNotifier
     extends StateNotifier<AsyncValue<List<WorldMember>>> {
+  final Ref _ref;
   final WorldMembershipService _service;
   final SupabaseClient? _client;
   final String worldId;
   bool _bootstrapped = false;
 
-  WorldMembersNotifier(this._service, this._client, this.worldId)
+  WorldMembersNotifier(this._ref, this._service, this._client, this.worldId)
       : super(const AsyncValue.loading());
 
   /// [force]=true ise `_bootstrapped` guard'ını atlar; channel re-subscribe
@@ -47,13 +49,16 @@ class WorldMembersNotifier
       return;
     }
     try {
-      final rows = await _service
-          .listMembers(worldId)
-          .timeout(const Duration(seconds: 12));
+      final rows =
+          await guardedNetwork(_ref, () => _service.listMembers(worldId));
       if (!mounted) return;
       state = AsyncValue.data(rows);
     } catch (e, st) {
-      debugPrint('WorldMembersNotifier bootstrap error: $e');
+      if (isOfflineError(e)) {
+        debugPrint('world members skipped: offline');
+      } else {
+        debugPrint('WorldMembersNotifier bootstrap error: $e');
+      }
       if (!mounted) return;
       state = AsyncValue.error(e, st);
     }
@@ -148,7 +153,7 @@ final worldMembersProvider = StateNotifierProvider.family<
     final client = SupabaseConfig.isConfigured && ref.watch(authProvider) != null
         ? Supabase.instance.client
         : null;
-    final notifier = WorldMembersNotifier(svc, client, worldId);
+    final notifier = WorldMembersNotifier(ref, svc, client, worldId);
     // ignore: discarded_futures
     notifier.bootstrap();
     return notifier;

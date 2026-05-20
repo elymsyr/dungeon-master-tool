@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/admin_users_remote_ds.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// Şu anki kullanıcının admin olup olmadığı. Email kaynak kodda DEĞİL —
 /// Supabase tarafındaki `app_admins` tablosu ve `is_admin()` RPC'si
@@ -19,10 +21,15 @@ final isAdminProvider = FutureProvider<bool>((ref) async {
   if (auth == null) return false;
 
   try {
-    final result = await Supabase.instance.client.rpc('is_admin');
+    final result = await guardedNetwork(
+        ref, () => Supabase.instance.client.rpc('is_admin'));
     return result == true;
   } catch (e, st) {
-    debugPrint('isAdmin RPC error: $e\n$st');
+    if (isOfflineError(e)) {
+      debugPrint('isAdmin skipped: offline');
+    } else {
+      debugPrint('isAdmin RPC error: $e\n$st');
+    }
     return false;
   }
 });

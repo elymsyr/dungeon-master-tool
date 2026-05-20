@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/character.dart';
 import 'world_sync_service.dart';
 
@@ -29,6 +30,17 @@ class WorldMirrorService {
 
   void _stamp(String id) {
     _lastPushedAt[id] = DateTime.now().millisecondsSinceEpoch;
+  }
+
+  /// Offline hatasını tek satır breadcrumb'a indirger; offline değilse mevcut
+  /// tam hata logu basılır. Çağıran taraf `rethrow`'u kendi yapar (SyncEngine
+  /// outbox retry'ı için hata yukarı çıkmalı).
+  void _logMirrorError(String label, Object e) {
+    if (isOfflineError(e)) {
+      debugPrint('$label skipped: offline');
+    } else {
+      debugPrint('$label error: $e');
+    }
   }
 
   /// Inbound event'in kendi push'umuzdan kaynaklanıp kaynaklanmadığını
@@ -59,7 +71,7 @@ class WorldMirrorService {
           .from('world_entities')
           .upsert(_entityRow(worldId, entityId, entityMap));
     } catch (e) {
-      debugPrint('pushEntity error: $e');
+      _logMirrorError('pushEntity', e);
       rethrow;
     }
   }
@@ -72,7 +84,7 @@ class WorldMirrorService {
     try {
       await client.from('world_entities').delete().eq('id', entityId);
     } catch (e) {
-      debugPrint('deleteEntity error: $e');
+      _logMirrorError('deleteEntity', e);
       rethrow;
     }
   }
@@ -127,7 +139,7 @@ class WorldMirrorService {
         'referenced_entity_ids': referencedEntityIds.toList(),
       });
     } catch (e) {
-      debugPrint('pushCharacter error: $e');
+      _logMirrorError('pushCharacter', e);
       rethrow;
     }
   }
@@ -137,7 +149,7 @@ class WorldMirrorService {
     try {
       await client.from('world_characters').delete().eq('id', characterId);
     } catch (e) {
-      debugPrint('deleteCharacter error: $e');
+      _logMirrorError('deleteCharacter', e);
       rethrow;
     }
   }
@@ -167,7 +179,7 @@ class WorldMirrorService {
         },
       );
     } catch (e) {
-      debugPrint('pushWorldState error: $e');
+      _logMirrorError('pushWorldState', e);
       rethrow;
     }
   }
@@ -192,7 +204,7 @@ class WorldMirrorService {
         'data_json': jsonEncode(data),
       });
     } catch (e) {
-      debugPrint('pushMapData error: $e');
+      _logMirrorError('pushMapData', e);
       rethrow;
     }
   }
@@ -216,7 +228,7 @@ class WorldMirrorService {
         'sort_order': sortOrder,
       });
     } catch (e) {
-      debugPrint('pushSession error: $e');
+      _logMirrorError('pushSession', e);
       rethrow;
     }
   }
@@ -226,7 +238,7 @@ class WorldMirrorService {
     try {
       await client.from('world_sessions').delete().eq('id', sessionId);
     } catch (e) {
-      debugPrint('deleteSession error: $e');
+      _logMirrorError('deleteSession', e);
       rethrow;
     }
   }
@@ -242,7 +254,7 @@ class WorldMirrorService {
         'settings_json': jsonEncode(settings),
       });
     } catch (e) {
-      debugPrint('pushSettings error: $e');
+      _logMirrorError('pushSettings', e);
       rethrow;
     }
   }
@@ -302,7 +314,7 @@ class WorldMirrorService {
         settings: settingsRaw,
       );
     } catch (e) {
-      debugPrint('fetchInitialState error: $e');
+      _logMirrorError('fetchInitialState', e);
       return (
         entities: const <Map<String, dynamic>>[],
         characters: const <Map<String, dynamic>>[],
@@ -342,7 +354,7 @@ class WorldMirrorService {
         },
       );
     } catch (e) {
-      debugPrint('pushPersonalCharacter error: $e');
+      _logMirrorError('pushPersonalCharacter', e);
     }
   }
 
@@ -354,7 +366,7 @@ class WorldMirrorService {
         params: {'p_id': characterId},
       );
     } catch (e) {
-      debugPrint('unpublishPersonalCharacter error: $e');
+      _logMirrorError('unpublishPersonalCharacter', e);
     }
   }
 
@@ -379,7 +391,7 @@ class WorldMirrorService {
         },
       );
     } catch (e) {
-      debugPrint('pushPersonalPackage error: $e');
+      _logMirrorError('pushPersonalPackage', e);
       rethrow;
     }
   }
@@ -392,7 +404,7 @@ class WorldMirrorService {
         params: {'p_package_name': packageName},
       );
     } catch (e) {
-      debugPrint('unpublishPersonalPackage error: $e');
+      _logMirrorError('unpublishPersonalPackage', e);
       rethrow;
     }
   }
@@ -424,7 +436,7 @@ class WorldMirrorService {
         },
       );
     } catch (e) {
-      debugPrint('pushPersonalPackageEntity error: $e');
+      _logMirrorError('pushPersonalPackageEntity', e);
       rethrow;
     }
   }
@@ -443,7 +455,7 @@ class WorldMirrorService {
         },
       );
     } catch (e) {
-      debugPrint('deletePersonalPackageEntity error: $e');
+      _logMirrorError('deletePersonalPackageEntity', e);
       rethrow;
     }
   }
@@ -477,7 +489,7 @@ class WorldMirrorService {
       if (id != null) _stamp(_worldPackageEchoKey(id));
       return id;
     } catch (e) {
-      debugPrint('shareWorldPackage error: $e');
+      _logMirrorError('shareWorldPackage', e);
       rethrow;
     }
   }
@@ -490,7 +502,7 @@ class WorldMirrorService {
         params: {'p_package_id': packageId},
       );
     } catch (e) {
-      debugPrint('unshareWorldPackage error: $e');
+      _logMirrorError('unshareWorldPackage', e);
       rethrow;
     }
   }
