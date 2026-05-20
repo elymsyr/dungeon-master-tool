@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// Aktif Supabase user'ı için üye olduğu (online) world id'lerinin set'i.
 /// Mirror push hook'ları (campaign + character provider) bu set'i kontrol
@@ -31,10 +33,13 @@ class OnlineWorldIdsNotifier extends StateNotifier<Set<String>> {
       return;
     }
     try {
-      final rows = await Supabase.instance.client
-          .from('world_members')
-          .select('world_id')
-          .eq('user_id', auth.uid);
+      final rows = await guardedNetwork(
+        _ref,
+        () => Supabase.instance.client
+            .from('world_members')
+            .select('world_id')
+            .eq('user_id', auth.uid),
+      );
       final ids = <String>{};
       for (final row in (rows as List)) {
         final id = (row as Map)['world_id'];
@@ -42,7 +47,11 @@ class OnlineWorldIdsNotifier extends StateNotifier<Set<String>> {
       }
       state = ids;
     } catch (e) {
-      debugPrint('onlineWorldIds refresh error: $e');
+      if (isOfflineError(e)) {
+        debugPrint('onlineWorldIds skipped: offline');
+      } else {
+        debugPrint('onlineWorldIds refresh error: $e');
+      }
     }
   }
 

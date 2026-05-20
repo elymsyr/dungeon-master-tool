@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/entities/character.dart';
@@ -507,6 +508,9 @@ class SyncEngine {
   Future<void> _tick() async {
     if (_running || _paused) return;
     if (_ref.read(authProvider) == null) return;
+    // Offline → drain'i atla. Satırlar outbox'ta (SQLite) kalır; start()'taki
+    // offline→online listener bağlantı dönünce _tick()'i yeniden tetikler.
+    if (!(_ref.read(connectivityStreamProvider).valueOrNull ?? true)) return;
     _running = true;
     try {
       var drained = 0;
@@ -525,7 +529,11 @@ class SyncEngine {
         debugPrint('SyncEngine drained $drained outbox row(s)');
       }
     } catch (e, st) {
-      debugPrint('SyncEngine tick error: $e\n$st');
+      if (isOfflineError(e)) {
+        debugPrint('SyncEngine tick skipped: offline');
+      } else {
+        debugPrint('SyncEngine tick error: $e\n$st');
+      }
     } finally {
       _running = false;
     }
@@ -587,10 +595,17 @@ class SyncEngine {
         await _db.syncOutboxDao.deleteById(row.opId);
         return;
       }
-      debugPrint(
-        '[SyncEngine] ✗ retry ${row.targetTable}/${row.targetPk} '
-        '${row.opType} ${sw.elapsedMilliseconds}ms: $e\n$st',
-      );
+      if (isOfflineError(e)) {
+        debugPrint(
+          '[SyncEngine] ↻ ${row.targetTable}/${row.targetPk} '
+          'offline, retry queued',
+        );
+      } else {
+        debugPrint(
+          '[SyncEngine] ✗ retry ${row.targetTable}/${row.targetPk} '
+          '${row.opType} ${sw.elapsedMilliseconds}ms: $e\n$st',
+        );
+      }
       await _markRetry(row, e.toString());
     }
   }

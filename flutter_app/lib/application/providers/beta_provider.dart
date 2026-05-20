@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// Beta program state — ilk 200 kullanıcıya açık, 50 MB / kullanıcı cloud
 /// save quota'sı. 7 gün inaktif olanların slot'u otomatik serbest bırakılır.
@@ -133,7 +135,8 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
     state = state.copyWith(loading: true, error: null);
     try {
-      final rows = await Supabase.instance.client.rpc('get_beta_status');
+      final rows = await guardedNetwork(
+          _ref, () => Supabase.instance.client.rpc('get_beta_status'));
       final row = (rows is List && rows.isNotEmpty)
           ? rows.first as Map<String, dynamic>
           : (rows is Map ? rows as Map<String, dynamic> : null);
@@ -154,8 +157,13 @@ class BetaNotifier extends StateNotifier<BetaState> {
         loading: false,
       );
     } catch (e, st) {
-      debugPrint('beta refresh error: $e\n$st');
-      state = state.copyWith(loading: false, error: e.toString());
+      if (isOfflineError(e)) {
+        debugPrint('beta refresh skipped: offline');
+        state = state.copyWith(loading: false);
+      } else {
+        debugPrint('beta refresh error: $e\n$st');
+        state = state.copyWith(loading: false, error: e.toString());
+      }
     }
   }
 
@@ -236,9 +244,14 @@ class BetaNotifier extends StateNotifier<BetaState> {
   Future<void> heartbeat() async {
     if (!_canCallRpc) return;
     try {
-      await Supabase.instance.client.rpc('beta_heartbeat');
+      await guardedNetwork(
+          _ref, () => Supabase.instance.client.rpc('beta_heartbeat'));
     } catch (e) {
-      debugPrint('beta heartbeat error: $e');
+      if (isOfflineError(e)) {
+        debugPrint('beta heartbeat skipped: offline');
+      } else {
+        debugPrint('beta heartbeat error: $e');
+      }
     }
   }
 

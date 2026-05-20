@@ -19,6 +19,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/constants.dart';
 import '../../core/utils/cached_provider.dart';
+import '../../core/utils/error_format.dart';
+import 'connectivity_provider.dart';
 
 /// Base64-encoded app icon, lazily loaded from assets.
 String? _cachedIconBase64;
@@ -54,10 +56,11 @@ const oauthDeepLinkTimeout = '__OAUTH_DEEP_LINK_TIMEOUT__';
 /// Manages Supabase auth state. When Supabase is not configured the notifier
 /// stays inert (state is always null) and the app runs fully offline.
 class AuthNotifier extends StateNotifier<AuthState?> {
-  AuthNotifier() : super(null) {
+  AuthNotifier(this._ref) : super(null) {
     _init();
   }
 
+  final Ref _ref;
   StreamSubscription<AuthState?>? _sub;
 
   void _init() {
@@ -118,7 +121,8 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     if (!SupabaseConfig.isConfigured) return null;
     if (Supabase.instance.client.auth.currentUser == null) return null;
     try {
-      final res = await Supabase.instance.client.rpc('am_i_banned');
+      final res = await guardedNetwork(
+          _ref, () => Supabase.instance.client.rpc('am_i_banned'));
       final rows = (res as List?) ?? const [];
       if (rows.isEmpty) return null;
       final row = rows.first as Map<String, dynamic>;
@@ -130,7 +134,11 @@ class AuthNotifier extends StateNotifier<AuthState?> {
       }
       return null;
     } catch (e, st) {
-      debugPrint('am_i_banned RPC error: $e\n$st');
+      if (isOfflineError(e)) {
+        debugPrint('ban check skipped: offline');
+      } else {
+        debugPrint('am_i_banned RPC error: $e\n$st');
+      }
       return null;
     }
   }
@@ -468,5 +476,5 @@ class AuthNotifier extends StateNotifier<AuthState?> {
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState?>(
-  (ref) => AuthNotifier(),
+  (ref) => AuthNotifier(ref),
 );

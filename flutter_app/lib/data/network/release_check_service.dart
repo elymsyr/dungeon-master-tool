@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:logger/logger.dart';
 
 import '../../core/constants.dart';
+import '../../core/utils/error_format.dart';
 
 /// GitHub release metadata for the upstream repository.
 class ReleaseInfo {
@@ -95,7 +96,11 @@ class ReleaseCheckService {
         body: (json['body'] as String?) ?? '',
       );
     } catch (e, st) {
-      _logger.d('Release check failed: $e', error: e, stackTrace: st);
+      if (isOfflineError(e)) {
+        _logger.d('Release check skipped: offline');
+      } else {
+        _logger.d('Release check failed: $e', error: e, stackTrace: st);
+      }
       return null;
     }
   }
