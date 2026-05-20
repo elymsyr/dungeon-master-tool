@@ -48,11 +48,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // combat_state settings patch (PendingWriteBuffer combatTick), so we batch
   // local keystrokes here before the per-state copyWith fires.
   Timer? _notesDebounce;
-  // Captured in initState while `ref` is valid; dispose()/_onNotesChanged use
-  // this instead of `ref.read` — `ref` is unsafe once the element is
-  // deactivated. Mirrors the `late final BattleMapNotifier` pattern in
-  // battle_map_screen.dart.
-  late final CombatNotifier _combatNotifier;
+  // Captured in initState and refreshed every build() while `ref` is valid;
+  // dispose()/_onNotesChanged use this instead of `ref.read` — `ref` is unsafe
+  // once the element is deactivated. combatProvider is non-autoDispose but
+  // rebuilds on campaign/revision change, so the notifier instance can swap
+  // under us — build() re-capture keeps this pointed at the live notifier.
+  late CombatNotifier _combatNotifier;
 
   // Bottom tabs (desktop/tablet)
   int _bottomTabIndex = 0;
@@ -92,9 +93,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _notesDebounce?.cancel();
     _notesController.removeListener(_onNotesChanged);
     // Flush any pending edit so closing the screen doesn't lose the last
-    // keystrokes within the debounce window. Uses the notifier captured in
-    // initState — `ref` is unsafe here (element already deactivated).
-    _combatNotifier.updateSessionNotes(_notesController.text);
+    // keystrokes within the debounce window. Uses the notifier last captured in
+    // build() — `ref` is unsafe here (element already deactivated). Guard with
+    // `mounted` for the teardown race where the notifier disposes concurrently.
+    if (_combatNotifier.mounted) {
+      _combatNotifier.updateSessionNotes(_notesController.text);
+    }
     _logInputController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -102,6 +106,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // combatProvider rebuilds on campaign/revision change → fresh notifier.
+    // Re-capture so dispose()/_onNotesChanged flush to the live notifier, not a
+    // disposed one. `ref` is unsafe in dispose(), so build() is the refresh point.
+    _combatNotifier = ref.read(combatProvider.notifier);
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
 
