@@ -53,8 +53,10 @@ class WorldCharactersView extends ConsumerWidget {
       error: (e, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text('Error: $e',
-              style: TextStyle(color: palette.dangerBtnBg)),
+          child: Text(
+            'Error: $e',
+            style: TextStyle(color: palette.dangerBtnBg),
+          ),
         ),
       ),
       data: (rows) {
@@ -101,8 +103,7 @@ class WorldCharactersView extends ConsumerWidget {
                 title: 'Available to Claim',
               ),
               Padding(
-                padding:
-                    const EdgeInsets.only(left: 26, bottom: 8, top: 4),
+                padding: const EdgeInsets.only(left: 26, bottom: 8, top: 4),
                 child: Text(
                   dmMode
                       ? 'Unclaimed characters. Claim or assign to a player.'
@@ -201,12 +202,14 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: palette.tabIndicator),
         const SizedBox(width: 8),
-        Text(title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: palette.tabActiveText,
-            )),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: palette.tabActiveText,
+          ),
+        ),
       ],
     );
   }
@@ -225,8 +228,11 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_add_alt_1,
-                size: 56, color: palette.sidebarLabelSecondary),
+            Icon(
+              Icons.person_add_alt_1,
+              size: 56,
+              color: palette.sidebarLabelSecondary,
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -291,10 +297,9 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         final result = await svc.claim(widget.row.id);
         ref
             .read(worldCharactersProvider(result.worldId).notifier)
-            .applyMirror(widget.row.copyWith(
-              ownerId: selfUid,
-              updatedAt: DateTime.now(),
-            ));
+            .applyMirror(
+              widget.row.copyWith(ownerId: selfUid, updatedAt: DateTime.now()),
+            );
         try {
           final decoded = jsonDecode(widget.row.payloadJson);
           if (decoded is Map<String, dynamic>) {
@@ -313,14 +318,14 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
           debugPrint('claim local seed error: $e');
         }
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Character claimed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Character claimed')));
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     });
   }
@@ -361,9 +366,9 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     // kendisinde (`v_owner IS NULL → idempotent return`).
     if (widget.row.ownerId == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already released')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Already released')));
       return;
     }
     await _runBusy(() async {
@@ -377,23 +382,22 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         // eski owner'ı korurdu.
         ref
             .read(worldCharactersProvider(widget.row.worldId).notifier)
-            .applyMirror(widget.row.copyWith(
-              clearOwner: true,
-              updatedAt: DateTime.now(),
-            ));
+            .applyMirror(
+              widget.row.copyWith(clearOwner: true, updatedAt: DateTime.now()),
+            );
         // Karakter artık bizim değil → hub char tab'ından + local Drift'ten
         // düş. Dünya görünümünde unclaimed olarak kalır (sadece dünyada).
         // ignore: discarded_futures
         ref.read(characterListProvider.notifier).dropMirror(widget.row.id);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Character released')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Character released')));
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     });
   }
@@ -404,9 +408,9 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
   Future<void> _dmForceRelease() async {
     if (widget.row.ownerId == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already released')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Already released')));
       return;
     }
     final confirmed = await showDialog<bool>(
@@ -442,19 +446,18 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         // eski owner'ı korurdu. Eski owner'ın hub'ı CDC echo ile temizlenir.
         ref
             .read(worldCharactersProvider(widget.row.worldId).notifier)
-            .applyMirror(widget.row.copyWith(
-              clearOwner: true,
-              updatedAt: DateTime.now(),
-            ));
+            .applyMirror(
+              widget.row.copyWith(clearOwner: true, updatedAt: DateTime.now()),
+            );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ownership released')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Ownership released')));
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     });
   }
@@ -464,14 +467,14 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
   /// menu. Returns `(picked: true, userId: …)` so a null `userId` means
   /// "unassign" (distinguishable from dialog dismissal).
   Future<void> _dmAssignToPlayer() async {
-    final notifier =
-        ref.read(worldMembersProvider(widget.row.worldId).notifier);
+    final notifier = ref.read(
+      worldMembersProvider(widget.row.worldId).notifier,
+    );
     await notifier.bootstrap();
     final members =
         ref.read(worldMembersProvider(widget.row.worldId)).valueOrNull ??
-            const <WorldMember>[];
-    final players =
-        members.where((m) => m.role == WorldRole.player).toList();
+        const <WorldMember>[];
+    final players = members.where((m) => m.role == WorldRole.player).toList();
     if (!mounted) return;
     const noneSentinel = '__none__';
     final selected = await showDialog<String>(
@@ -481,11 +484,13 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         children: [
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, noneSentinel),
-            child: const Row(children: [
-              Icon(Icons.person_off_outlined, size: 16),
-              SizedBox(width: 8),
-              Text('None (unassign)'),
-            ]),
+            child: const Row(
+              children: [
+                Icon(Icons.person_off_outlined, size: 16),
+                SizedBox(width: 8),
+                Text('None (unassign)'),
+              ],
+            ),
           ),
           if (players.isEmpty)
             const Padding(
@@ -496,12 +501,14 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
               ),
             )
           else
-            ...players.map((m) => SimpleDialogOption(
-                  onPressed: () => Navigator.pop(ctx, m.userId),
-                  child: Text(m.displayName ??
-                      m.username ??
-                      m.userId.substring(0, 8)),
-                )),
+            ...players.map(
+              (m) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, m.userId),
+                child: Text(
+                  m.displayName ?? m.username ?? m.userId.substring(0, 8),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -516,31 +523,30 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
           // owner_id = NULL yapar.
           await svc.release(widget.row.id);
         } else {
-          await svc.assignToPlayer(
-            characterId: widget.row.id,
-            userId: userId,
-          );
+          await svc.assignToPlayer(characterId: widget.row.id, userId: userId);
         }
         ref
             .read(worldCharactersProvider(widget.row.worldId).notifier)
-            .applyMirror(widget.row.copyWith(
-              ownerId: userId,
-              clearOwner: userId == null,
-              updatedAt: DateTime.now(),
-            ));
+            .applyMirror(
+              widget.row.copyWith(
+                ownerId: userId,
+                clearOwner: userId == null,
+                updatedAt: DateTime.now(),
+              ),
+            );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(userId == null
-                ? 'Ownership cleared'
-                : 'Assigned to player'),
+            content: Text(
+              userId == null ? 'Ownership cleared' : 'Assigned to player',
+            ),
           ),
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     });
   }
@@ -552,9 +558,9 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final selfUid = ref.read(authProvider)?.uid;
     if (widget.row.ownerId == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already released')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Already released')));
       return;
     }
     if (selfUid != null && widget.row.ownerId == selfUid) {
@@ -610,16 +616,18 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.deleted
-                ? 'Deleted from world'
-                : 'Removed from world (owner keeps the character)'),
+            content: Text(
+              result.deleted
+                  ? 'Deleted from world'
+                  : 'Removed from world (owner keeps the character)',
+            ),
           ),
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     });
   }
@@ -642,11 +650,17 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final name = _displayNameFor(widget.row);
     final isUnclaimed = widget.variant == _RowVariant.unclaimed;
     final isOther = widget.variant == _RowVariant.other;
+    // Open gate: owner opens own card; DM opens any; unclaimed rows open
+    // read-only (editor `_canEdit` denies edit — non-owner, non-DM). Only
+    // another player's owned card stays locked from the list.
+    final canOpen = widget.dmMode ||
+        widget.variant == _RowVariant.owned ||
+        widget.variant == _RowVariant.unclaimed;
     final cardColor = isUnclaimed
         ? palette.featureCardAccent.withValues(alpha: 0.08)
         : (isOther
-            ? palette.featureCardBg.withValues(alpha: 0.6)
-            : palette.featureCardBg);
+              ? palette.featureCardBg.withValues(alpha: 0.6)
+              : palette.featureCardBg);
     final subtitle = isOther
         ? '${widget.row.templateName} · Owned by another player'
         : widget.row.templateName;
@@ -654,8 +668,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     final character = _decodeCharacter();
     // Resolve entity map for stat chip name lookups. Active campaign first,
     // builtin SRD as fallback.
-    final activeWorldId =
-        ref.watch(activeCampaignIdProvider).valueOrNull;
+    final activeWorldId = ref.watch(activeCampaignIdProvider).valueOrNull;
     final builtin = ref.watch(builtinSrdEntitiesProvider);
     final Map<String, Entity> entities;
     if (character == null ||
@@ -673,47 +686,50 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
 
     return InkWell(
       borderRadius: palette.br,
-      onTap: _busy ? null : () => widget.onOpen(widget.row.id),
+      onTap: (_busy || !canOpen) ? null : () => widget.onOpen(widget.row.id),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 140),
-        child: Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: palette.br,
-            border: Border.all(color: palette.featureCardBorder),
-          ),
-          child: MetadataListTile(
-            icon: isOther
-                ? Icons.lock_outline
-                : (isUnclaimed ? Icons.person_outline : Icons.person),
-            name: name,
-            subtitle: subtitle,
-            description: character?.entity.description ?? '',
-            tags: character?.entity.tags ?? const <String>[],
-            coverImagePath: character?.entity.imagePath ?? '',
-            isSelected: false,
-            palette: palette,
-            layout: MetadataTileLayout.leftAvatar,
-            onSettings: () {},
-            infoChips: character == null
-                ? null
-                : CharacterStatChips(
-                    lines: characterStatLines(
-                      character,
-                      entities,
-                      // Owner'ı kanonik kolondan çöz — payload_json'a gömülü
-                      // ownerId claim/release/assign RPC'lerinden sonra stale.
-                      ownerLabel: resolveOwnerLabelById(
-                        ref,
-                        widget.row.ownerId,
-                        widget.row.worldId,
+        child: Opacity(
+          opacity: canOpen ? 1.0 : 0.6,
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: palette.br,
+              border: Border.all(color: palette.featureCardBorder),
+            ),
+            child: MetadataListTile(
+              icon: isOther
+                  ? Icons.lock_outline
+                  : (isUnclaimed ? Icons.person_outline : Icons.person),
+              name: name,
+              subtitle: subtitle,
+              description: character?.entity.description ?? '',
+              tags: character?.entity.tags ?? const <String>[],
+              coverImagePath: character?.entity.imagePath ?? '',
+              isSelected: false,
+              palette: palette,
+              layout: MetadataTileLayout.leftAvatar,
+              onSettings: () {},
+              infoChips: character == null
+                  ? null
+                  : CharacterStatChips(
+                      lines: characterStatLines(
+                        character,
+                        entities,
+                        // Owner'ı kanonik kolondan çöz — payload_json'a gömülü
+                        // ownerId claim/release/assign RPC'lerinden sonra stale.
+                        ownerLabel: resolveOwnerLabelById(
+                          ref,
+                          widget.row.ownerId,
+                          widget.row.worldId,
+                        ),
                       ),
+                      palette: palette,
+                      compact: true,
                     ),
-                    palette: palette,
-                    compact: true,
-                  ),
-            trailingControl: _trailingMenu(isUnclaimed),
+              trailingControl: _trailingMenu(isUnclaimed),
+            ),
           ),
         ),
       ),
@@ -729,9 +745,13 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
   ///         force-release), Assign to player..., Remove from world.
   Widget _trailingMenu(bool isUnclaimed) {
     final palette = widget.palette;
-    final canShowUnclaim = !isUnclaimed &&
-        (widget.dmMode ||
-            widget.row.ownerId == ref.read(authProvider)?.uid);
+    final canShowUnclaim =
+        !isUnclaimed &&
+        (widget.dmMode || widget.row.ownerId == ref.read(authProvider)?.uid);
+    // Non-DM viewing another player's row has zero menu items — hide the
+    // hamburger entirely instead of opening an empty popup.
+    final hasAnyItem = isUnclaimed || canShowUnclaim || widget.dmMode;
+    if (!hasAnyItem) return const SizedBox.shrink();
     if (_busy) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 8),
@@ -744,8 +764,11 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     }
     return PopupMenuButton<String>(
       tooltip: 'Actions',
-      icon: Icon(Icons.more_vert,
-          size: 18, color: palette.sidebarLabelSecondary),
+      icon: Icon(
+        Icons.more_vert,
+        size: 18,
+        color: palette.sidebarLabelSecondary,
+      ),
       padding: EdgeInsets.zero,
       splashRadius: 18,
       onSelected: (v) async {
@@ -764,38 +787,45 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         if (isUnclaimed)
           const PopupMenuItem(
             value: 'claim',
-            child: Row(children: [
-              Icon(Icons.check, size: 16),
-              SizedBox(width: 8),
-              Text('Claim'),
-            ]),
+            child: Row(
+              children: [
+                Icon(Icons.check, size: 16),
+                SizedBox(width: 8),
+                Text('Claim'),
+              ],
+            ),
           ),
         if (canShowUnclaim)
           const PopupMenuItem(
             value: 'unclaim',
-            child: Row(children: [
-              Icon(Icons.logout, size: 16),
-              SizedBox(width: 8),
-              Text('Unclaim'),
-            ]),
+            child: Row(
+              children: [
+                Icon(Icons.logout, size: 16),
+                SizedBox(width: 8),
+                Text('Unclaim'),
+              ],
+            ),
           ),
         if (widget.dmMode) ...[
           const PopupMenuItem(
             value: 'assign',
-            child: Row(children: [
-              Icon(Icons.person_pin, size: 16),
-              SizedBox(width: 8),
-              Text('Assign to player...'),
-            ]),
+            child: Row(
+              children: [
+                Icon(Icons.person_pin, size: 16),
+                SizedBox(width: 8),
+                Text('Assign to player...'),
+              ],
+            ),
           ),
           PopupMenuItem(
             value: 'remove',
-            child: Row(children: [
-              Icon(Icons.exit_to_app,
-                  size: 16, color: palette.dangerBtnBg),
-              const SizedBox(width: 8),
-              const Text('Remove from world'),
-            ]),
+            child: Row(
+              children: [
+                Icon(Icons.exit_to_app, size: 16, color: palette.dangerBtnBg),
+                const SizedBox(width: 8),
+                const Text('Remove from world'),
+              ],
+            ),
           ),
         ],
       ],
@@ -818,8 +848,7 @@ class ImportOrphanDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ImportOrphanDialog> createState() =>
-      ImportOrphanDialogState();
+  ConsumerState<ImportOrphanDialog> createState() => ImportOrphanDialogState();
 }
 
 class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
@@ -832,10 +861,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
       if (svc == null) {
         throw StateError('Sign in to import characters.');
       }
-      await svc.attachToWorld(
-        characterId: c.id,
-        worldId: widget.worldId,
-      );
+      await svc.attachToWorld(characterId: c.id, worldId: widget.worldId);
       // Hub-level optimistic patch: worldId set et. Display layer
       // `campaignInfoListProvider` üzerinden adı çözer (worldName retired).
       final patched = c.copyWith(worldId: widget.worldId);
@@ -863,9 +889,9 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -888,9 +914,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
           data: (chars) {
             // Orphan + self-owned filtresi. `worldId == null` kanon.
             final candidates = chars
-                .where((c) =>
-                    c.ownerId == selfUid &&
-                    c.worldId == null)
+                .where((c) => c.ownerId == selfUid && c.worldId == null)
                 .toList();
             if (candidates.isEmpty) {
               return Center(
@@ -900,8 +924,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                     'No orphan characters to import. Create one from the '
                     'Characters tab first, then come back here.',
                     textAlign: TextAlign.center,
-                    style:
-                        TextStyle(color: palette.sidebarLabelSecondary),
+                    style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
                 ),
               );
@@ -913,7 +936,9 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                 final c = candidates[i];
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: palette.featureCardBg,
                     borderRadius: palette.cbr,
@@ -927,16 +952,20 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(c.entity.name,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: palette.tabActiveText)),
+                            Text(
+                              c.entity.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: palette.tabActiveText,
+                              ),
+                            ),
                             Text(
                               c.templateName,
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: palette.sidebarLabelSecondary),
+                                fontSize: 11,
+                                color: palette.sidebarLabelSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -946,8 +975,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                         child: FilledButton(
                           onPressed: _busy ? null : () => _attach(c),
                           style: FilledButton.styleFrom(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             textStyle: const TextStyle(fontSize: 12),
                           ),
                           child: const Text('Import'),
