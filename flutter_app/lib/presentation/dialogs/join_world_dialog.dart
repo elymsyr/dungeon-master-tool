@@ -6,6 +6,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/world_join_provider.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/network/no_op_world_membership_service.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../theme/dm_tool_colors.dart';
@@ -67,6 +68,7 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
   }
 
   String _humanize(Object e) {
+    if (isOfflineError(e)) return formatError(e);
     final s = e.toString();
     if (s.contains('P0002') || s.contains('invite not found')) {
       return 'Invite code not found';

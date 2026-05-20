@@ -22,6 +22,7 @@ import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../social/messages_tab.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
 import '../../widgets/pill_tab_bar.dart';
 import '../../widgets/profile_avatar.dart';
@@ -63,9 +64,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
       ),
-      body: profileAsync.when(
+      body: OfflineGuard(
+        child: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text(formatError(e))),
+        error: (e, st) => isOfflineError(e)
+            ? const ConnectionErrorView()
+            : Center(child: Text(formatError(e))),
         data: (profile) {
           if (profile == null) {
             // Henüz profil oluşturulmamış. Kendiyse edit dialog tetikle.
@@ -102,6 +106,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
           return _ProfileBody(profile: profile, isMe: isMe);
         },
+        ),
       ),
     );
   }
@@ -278,7 +283,7 @@ class _FollowButton extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
     // Optimistic: override varsa onu, yoksa async değeri kullan.
-    final isFollowing = override ?? following.value ?? false;
+    final isFollowing = override ?? following.valueOrNull ?? false;
     final busy = toggleState is AsyncLoading;
 
     return Row(

@@ -10,6 +10,7 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
@@ -87,7 +88,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             height: 18,
             child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (e, _) => Text('Error: $e',
+      error: (e, _) => Text(formatError(e),
           style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
       data: (isOnline) {
         final role = roleAsync.valueOrNull ?? WorldRole.none;
@@ -369,7 +370,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$e'),
+        content: Text(formatError(e)),
         backgroundColor: palette.dangerBtnBg,
       ),
     );

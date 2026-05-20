@@ -11,6 +11,7 @@ import '../../../domain/entities/conversation.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/connection_error_view.dart';
 import '../../widgets/profile_avatar.dart';
 import 'new_chat_picker_screen.dart';
 import 'social_shell.dart';
@@ -668,7 +669,10 @@ class MessagesTab extends ConsumerWidget {
           child: convsAsync.when(
             skipLoadingOnRefresh: true,
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text(formatError(e))),
+            error: (e, _) => isOfflineError(e)
+                ? ConnectionErrorView(
+                    onRetry: () => ref.invalidate(myConversationsProvider))
+                : Center(child: Text(formatError(e))),
             data: (convs) => Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: _kListMaxWidth),
@@ -1147,7 +1151,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         actions: const [],
       ),
-      body: Center(
+      body: OfflineGuard(
+        child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _kChatMaxWidth),
           child: Column(
@@ -1237,6 +1242,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

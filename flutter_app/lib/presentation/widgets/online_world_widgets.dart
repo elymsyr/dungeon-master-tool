@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers/world_membership_provider.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
@@ -62,7 +63,7 @@ class _InviteCodeRowState extends ConsumerState<InviteCodeRow> {
         ),
       ),
       error: (e, _) => Text(
-        'Could not load invite: $e',
+        isOfflineError(e) ? formatError(e) : 'Could not load invite: $e',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
       ),
       data: (code) {
@@ -433,7 +434,7 @@ class MembersList extends ConsumerWidget {
         ),
       ),
       error: (e, _) => Text(
-        'Could not load members: $e',
+        isOfflineError(e) ? formatError(e) : 'Could not load members: $e',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
       ),
       data: (members) {

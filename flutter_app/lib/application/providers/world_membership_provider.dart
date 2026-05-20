@@ -10,6 +10,7 @@ import '../../domain/entities/online/world_invite.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// WorldMembershipService — Supabase yapılandırılmış + auth varsa
 /// gerçek implementasyon; aksi halde NoOp.
@@ -46,7 +47,9 @@ class WorldMembersNotifier
       return;
     }
     try {
-      final rows = await _service.listMembers(worldId);
+      final rows = await _service
+          .listMembers(worldId)
+          .timeout(const Duration(seconds: 12));
       if (!mounted) return;
       state = AsyncValue.data(rows);
     } catch (e, st) {
@@ -157,7 +160,7 @@ final worldInvitesProvider =
     FutureProvider.family<List<WorldInvite>, String>((ref, worldId) async {
   final svc = ref.watch(worldMembershipServiceProvider);
   if (svc is NoOpWorldMembershipService) return const [];
-  return svc.listInvites(worldId);
+  return guardedNetwork(ref, () => svc.listInvites(worldId));
 });
 
 /// World için tek paylaşılabilir davet kodu. İlk çağrıda oluşturur,
@@ -172,7 +175,7 @@ final worldActiveInviteCodeProvider =
   final svc = ref.watch(worldMembershipServiceProvider);
   if (svc is NoOpWorldMembershipService) return null;
   try {
-    return await svc.ensureInvite(worldId);
+    return await guardedNetwork(ref, () => svc.ensureInvite(worldId));
   } catch (_) {
     return null;
   }

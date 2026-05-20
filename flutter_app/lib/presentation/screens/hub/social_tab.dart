@@ -6,6 +6,7 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/connection_error_view.dart';
 import '../../widgets/online_restriction_banner.dart';
 import '../social/feed_tab.dart';
 import '../social/game_listings_tab.dart';
@@ -35,7 +36,8 @@ class _SocialTabState extends ConsumerState<SocialTab> {
     if (auth == null) return const _NotSignedIn();
 
     final currentTab = ref.watch(socialSubTabProvider);
-    final messageUnread = ref.watch(totalUnreadCountProvider).value ?? 0;
+    final messageUnread =
+        ref.watch(totalUnreadCountProvider).valueOrNull ?? 0;
     final tabChild = switch (currentTab) {
       'feed' => const FeedTab(),
       'messages' => const MessagesTab(),
@@ -51,7 +53,7 @@ class _SocialTabState extends ConsumerState<SocialTab> {
       child: Column(
         children: [
           const OnlineRestrictionBanner(),
-          Expanded(child: tabChild),
+          Expanded(child: OfflineGuard(child: tabChild)),
         ],
       ),
     );
