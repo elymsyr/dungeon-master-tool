@@ -22,40 +22,30 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   if (!SupabaseConfig.isConfigured) return null;
   final auth = ref.watch(authProvider);
   if (auth == null) return null;
-  try {
-    return await cachedFetch<UserProfile?>(
-      ref: ref,
-      cacheKey: 'currentProfile',
-      ttl: const Duration(minutes: 5),
-      fetch: () => guardedNetwork(
-          ref, () => ref.read(profilesRemoteDsProvider).fetchCurrent()),
-    );
-  } catch (e, st) {
-    if (isOfflineError(e)) {
-      debugPrint('currentProfileProvider offline, returning null: $e');
-      return null;
-    }
-    debugPrint('currentProfileProvider error: $e\n$st');
-    rethrow;
-  }
+  // Offline hatası bilerek AsyncError olarak yayılır — null DÖNDÜRÜLMEZ.
+  // `null` = "profil yok → username oluştur" demek; offline kullanıcıyı
+  // yanlışlıkla onboarding dialog'una sokmamak için hata fırlatılır.
+  return cachedFetch<UserProfile?>(
+    ref: ref,
+    cacheKey: 'currentProfile',
+    ttl: const Duration(minutes: 5),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(profilesRemoteDsProvider).fetchCurrent()),
+  );
 });
 
 /// Başka bir kullanıcının profili (Profile screen, post author'u vs.).
 final profileByIdProvider =
     FutureProvider.family<UserProfile?, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return null;
-  try {
-    return await cachedFetch<UserProfile?>(
-      ref: ref,
-      cacheKey: 'profile:$userId',
-      ttl: const Duration(minutes: 5),
-      fetch: () => guardedNetwork(
-          ref, () => ref.read(profilesRemoteDsProvider).fetchById(userId)),
-    );
-  } catch (e) {
-    if (isOfflineError(e)) return null;
-    rethrow;
-  }
+  // Offline → AsyncError olarak yayılır (null = "profil yok" ile karışmasın).
+  return cachedFetch<UserProfile?>(
+    ref: ref,
+    cacheKey: 'profile:$userId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(profilesRemoteDsProvider).fetchById(userId)),
+  );
 });
 
 /// Username arama (Players tab discover sekmesi).
