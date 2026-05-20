@@ -24,7 +24,7 @@
   </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v8.1.0--beta-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v8.2.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
