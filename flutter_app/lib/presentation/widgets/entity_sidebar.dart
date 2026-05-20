@@ -159,8 +159,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
     // DM-only sharing filter context. Player için chip render edilmez ve
     // filter aktif değilse pass-through.
-    final isDm =
-        ref.watch(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
+    final role = ref.watch(currentWorldRoleProvider).valueOrNull;
+    final isDm = role == WorldRole.dm;
+    // Player rolü entity oluşturamaz — DM ve offline (none) oluşturabilir.
+    final isPlayer = role == WorldRole.player;
     final worldIdForShares = ref.watch(activeCampaignIdProvider).valueOrNull;
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
     final Set<String> sharedEntityIds;
@@ -647,31 +649,34 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                 ),
         ),
 
-        // Yeni entity ekleme
-        Divider(height: 1, color: palette.sidebarDivider),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _showCreateDialog(context, categories),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l10n.btnCreate),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: palette.successBtnBg,
-                        foregroundColor: palette.successBtnText,
-                        minimumSize: const Size(0, 36),
+        // Yeni entity ekleme — player rolüne kapalı.
+        if (!isPlayer) ...[
+          Divider(height: 1, color: palette.sidebarDivider),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            _showCreateDialog(context, categories),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(l10n.btnCreate),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: palette.successBtnBg,
+                          foregroundColor: palette.successBtnText,
+                          minimumSize: const Size(0, 36),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

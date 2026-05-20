@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/providers/visible_entity_provider.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
@@ -190,6 +192,12 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     final schema = ref.watch(worldSchemaProvider);
     final worldKey = ref.watch(activeCampaignProvider) ?? '';
 
+    // Player rolü DB tab'inde salt-okunur — edit mode zorla kapatılır.
+    // DM ve offline (none) için davranış değişmez.
+    final isPlayer =
+        ref.watch(currentWorldRoleProvider).valueOrNull == WorldRole.player;
+    final editMode = widget.editMode && !isPlayer;
+
     // World id değiştiğinde mevcut tablar temizlenir, yeni dünyaya ait
     // persisted tablar restore edilir. Aksi halde eski dünyadan kalan id'ler
     // "Unknown" başlıklı boş tab olarak görünüyordu.
@@ -230,7 +238,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                     entityId: t.entityId,
                     categorySchema: _firstWhereOrNull(
                         schema.categories, (c) => c.slug == t.categorySlug),
-                    readOnly: !widget.editMode,
+                    readOnly: !editMode,
                     panelId: 'left',
                   ),
               ],
@@ -259,7 +267,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           tabs: _leftTabs,
           activeIndex: _leftActiveIndex,
           palette: palette,
-          editMode: widget.editMode,
+          editMode: editMode,
           schema: schema,
           panelId: 'left',
           onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
@@ -273,7 +281,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           tabs: _rightTabs,
           activeIndex: _rightActiveIndex,
           palette: palette,
-          editMode: widget.editMode,
+          editMode: editMode,
           schema: schema,
           panelId: 'right',
           onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },

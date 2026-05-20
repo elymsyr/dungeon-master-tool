@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -37,6 +38,10 @@ Future<dynamic> _decodeJsonMaybeOffload(String s) {
   return compute(_decodeJsonStatic, s);
 }
 
+/// CDC event batch penceresi (R1). 1 frame — algılanabilir gecikme yok;
+/// profil sonrası 33-50ms'e çıkarılabilir.
+const Duration _kBatchWindow = Duration(milliseconds: 16);
+
 /// CDC event'lerini local state'e uygular.
 ///
 /// Sorumluluk:
@@ -57,22 +62,55 @@ class WorldMirrorApplier {
   /// in-flight async event'ler stale ref kullanmadan bail eder.
   bool _disposed = false;
 
+  /// CDC event batcher (R1) — gelen event'leri kısa pencerede toplar,
+  /// pencere sonunda tek `_bumpRevision()` ile rebuild fırtınasını önler.
+  late final _EventBatcher _batcher;
+
+  /// Flush sırasında `true` — `_bumpRevision()` çağrıları bastırılır,
+  /// pencere sonunda tek `_doBumpRevision()` atılır.
+  bool _suppressRevisionBump = false;
+
+  /// Flush penceresinde gerçek bir bump talebi oldu mu (echo/pending guard
+  /// ile atlanan event'lerde boşa bump atılmasın).
+  bool _revisionDirty = false;
+
   WorldMirrorApplier({
     required this.ref,
     required this.mirror,
     required this.sync,
-  });
+  }) {
+    _batcher = _EventBatcher(window: _kBatchWindow, onFlush: _flushBatch);
+  }
 
   PendingWriteBuffer get _buffer => ref.read(pendingWriteBufferProvider);
 
   void start() {
-    _sub ??= sync.events.listen(_onEvent);
+    _sub ??= sync.events.listen(_batcher.add);
   }
 
   Future<void> stop() async {
     _disposed = true;
     await _sub?.cancel();
     _sub = null;
+    _batcher.dispose();
+  }
+
+  /// Batcher penceresi dolunca çağrılır — batch'i SIRALI uygular (paylaşılan
+  /// `data` Map; paralel akış bozar), revision bump'larını bastırır, pencere
+  /// sonunda tek `_doBumpRevision()` atar.
+  Future<void> _flushBatch(List<WorldSyncEvent> batch) async {
+    if (_disposed) return;
+    _suppressRevisionBump = true;
+    _revisionDirty = false;
+    try {
+      for (final e in batch) {
+        if (_disposed) return;
+        await _onEvent(e);
+      }
+    } finally {
+      _suppressRevisionBump = false;
+    }
+    if (_revisionDirty && !_disposed) _doBumpRevision();
   }
 
   /// Subscribe sonrası remote state'i local'a seed eder. Update event'i
@@ -136,7 +174,7 @@ class WorldMirrorApplier {
         case 'worlds':
           await _applyWorldsEvent(e);
         case 'entity_shares':
-          ref.invalidate(worldEntitySharesProvider(e.worldId));
+          await _applyEntityShareEvent(e);
         case 'world_members':
           await _applyMembersEvent(e);
         case 'world_map_data':
@@ -188,6 +226,37 @@ class WorldMirrorApplier {
       default:
         return;
     }
+  }
+
+  /// entity_shares CDC event. Shares listesini invalidate eder; INSERT/UPDATE
+  /// için yeni paylaşılan entity'nin verisi player'da olmayabilir (RLS önceden
+  /// gizliyordu, world_entities satırı değişmediği için CDC çıkmaz) — açıkça
+  /// fetch edip local blob'a enjekte eder.
+  Future<void> _applyEntityShareEvent(WorldSyncEvent e) async {
+    ref.invalidate(worldEntitySharesProvider(e.worldId));
+    if (e.eventType != PostgresChangeEvent.insert &&
+        e.eventType != PostgresChangeEvent.update) {
+      // DELETE: visibleEntityProvider filtresi kartı zaten gizler.
+      return;
+    }
+    final entityId = e.newRecord['entity_id'] as String?;
+    if (entityId == null) return;
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    final raw = data['entities'];
+    final Map<String, dynamic> entities;
+    if (raw is Map<String, dynamic>) {
+      entities = raw;
+    } else {
+      entities = <String, dynamic>{};
+      data['entities'] = entities;
+    }
+    if (entities.containsKey(entityId)) return; // veri zaten var (DM dahil)
+    final row =
+        await mirror.fetchEntity(worldId: e.worldId, entityId: entityId);
+    if (_disposed || row == null) return;
+    entities[entityId] = _entityRowToBlob(row);
+    _bumpRevision();
   }
 
   Future<void> _applyCharacterEvent(WorldSyncEvent e) => applyCharacterCdc(
@@ -818,11 +887,111 @@ class WorldMirrorApplier {
 
   void _bumpRevision() {
     if (_disposed) return;
+    // Flush penceresi içinde — bump'ı ertele, pencere sonunda tek atılır.
+    if (_suppressRevisionBump) {
+      _revisionDirty = true;
+      return;
+    }
+    _doBumpRevision();
+  }
+
+  void _doBumpRevision() {
+    if (_disposed) return;
     try {
       final n = ref.read(campaignRevisionProvider.notifier);
       n.state = n.state + 1;
     } catch (_) {
       // ref dependency-change penceresinde stale — bir sonraki event toparlar.
     }
+  }
+}
+
+/// CDC event'lerini kısa pencerede toplayıp tek geçişte uygular (R1).
+///
+/// Çok-kişili realtime'da event seli her event için ayrı `_bumpRevision()`
+/// tetikliyordu → rebuild fırtınası. Batcher [window] boyunca event biriktirir,
+/// idempotent satır event'lerini PK bazlı coalesce eder (son event kazanır),
+/// sonra hepsini tek seferde flush eder.
+class _EventBatcher {
+  _EventBatcher({required this.window, required this.onFlush});
+
+  final Duration window;
+  final Future<void> Function(List<WorldSyncEvent> batch) onFlush;
+
+  /// PK bazlı coalesce edilen event'ler — recency order korunur (aynı key
+  /// tekrar gelince pozisyon sona taşınır, son event hem içerik hem sıra).
+  final LinkedHashMap<String, WorldSyncEvent> _coalesced =
+      LinkedHashMap<String, WorldSyncEvent>();
+
+  /// Coalesce edilemeyen event'ler (member join/leave sırası önemli).
+  final List<WorldSyncEvent> _ordered = <WorldSyncEvent>[];
+
+  Timer? _timer;
+  bool _flushing = false;
+  bool _disposed = false;
+
+  void add(WorldSyncEvent e) {
+    if (_disposed) return;
+    final key = _coalesceKey(e);
+    if (key != null) {
+      _coalesced.remove(key); // recency: pozisyonu sona taşı
+      _coalesced[key] = e;
+    } else {
+      _ordered.add(e);
+    }
+    _timer ??= Timer(window, _fire);
+  }
+
+  /// İdempotent, son-yazan-kazanır tablolar için coalesce anahtarı.
+  /// `world_members` / `worlds` / `entity_shares` → null (coalesce yok).
+  String? _coalesceKey(WorldSyncEvent e) {
+    switch (e.table) {
+      case 'world_entities':
+      case 'world_sessions':
+      case 'world_characters':
+        final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
+        return id == null ? null : '${e.table}:$id';
+      case 'world_map_data':
+      case 'world_settings':
+        return '${e.table}:${e.worldId}';
+      case 'world_packages':
+        final id =
+            (e.newRecord['package_id'] ?? e.oldRecord['package_id'])
+                as String?;
+        return id == null ? null : '${e.table}:$id';
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _fire() async {
+    _timer = null;
+    if (_disposed || _flushing) return;
+    _flushing = true;
+    try {
+      final batch = _drain();
+      if (batch.isNotEmpty) await onFlush(batch);
+    } finally {
+      _flushing = false;
+      // Flush sırasında biriken event varsa yeni pencere aç — ilerleme garanti.
+      if (!_disposed && (_coalesced.isNotEmpty || _ordered.isNotEmpty)) {
+        _timer ??= Timer(window, _fire);
+      }
+    }
+  }
+
+  List<WorldSyncEvent> _drain() {
+    final out = <WorldSyncEvent>[..._coalesced.values, ..._ordered];
+    _coalesced.clear();
+    _ordered.clear();
+    return out;
+  }
+
+  void dispose() {
+    _disposed = true;
+    _timer?.cancel();
+    _timer = null;
+    _coalesced.clear();
+    _ordered.clear();
   }
 }

@@ -45,6 +45,13 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   LogBuffer.install();
 
+  // M5: ImageCache tavanını açıkça belirle (varsayılan 100MB / 1000 girdi).
+  // Büyük world map + token + pin görselleri uzun oturumda öngörülebilir bir
+  // sınırda kalsın — sınırsız büyüme yerine kontrollü cap.
+  PaintingBinding.instance.imageCache
+    ..maximumSizeBytes = 128 << 20
+    ..maximumSize = 1500;
+
   // appDatabaseProvider re-creates AppDatabase when activeUserIdProvider
   // flips (sign-in/out). Old instance is disposed (close()) but Drift's
   // multi-instance debug check still fires during the brief overlap.

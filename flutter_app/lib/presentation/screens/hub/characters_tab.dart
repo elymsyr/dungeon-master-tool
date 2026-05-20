@@ -36,9 +36,17 @@ class CharactersTab extends ConsumerStatefulWidget {
 }
 
 class _CharactersTabState extends ConsumerState<CharactersTab> {
-  int _selectedIndex = -1;
+  // U2: ValueNotifier — seçim değişimi tüm tab build()'ini değil yalnızca
+  // satır + aksiyon paneli VLB'lerini rebuild eder (100+ karakterde kritik).
+  final ValueNotifier<int> _selectedIndex = ValueNotifier<int>(-1);
   bool _releasing = false;
   bool _refreshing = false;
+
+  @override
+  void dispose() {
+    _selectedIndex.dispose();
+    super.dispose();
+  }
 
   Future<void> _doRefresh() async {
     if (_refreshing) return;
@@ -198,54 +206,62 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       final c = sorted[index];
-                      final isSelected = index == _selectedIndex;
+                      // Ağır iş (stat satırları + entity çözümü) itemBuilder
+                      // gövdesinde bir kez hesaplanır — seçim değişiminde
+                      // VLB builder'ında TEKRARLANMAZ.
+                      final infoChips = CharacterStatChips(
+                        lines: characterStatLines(
+                          c,
+                          entitiesFor(c),
+                          ownerLabel: resolveCharacterOwnerLabel(ref, c),
+                        ),
+                        palette: palette,
+                        compact: true,
+                      );
                       return RepaintBoundary(
-                        child: InkWell(
-                          borderRadius: palette.br,
-                          onTap: () =>
-                              setState(() => _selectedIndex = index),
-                          onDoubleTap: () => _openCharacter(c),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(minHeight: 140),
-                            child: Container(
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? palette.featureCardAccent
-                                        .withValues(alpha: 0.1)
-                                    : palette.featureCardBg,
-                                borderRadius: palette.br,
-                                border: Border.all(
-                                  color: isSelected
-                                      ? palette.featureCardAccent
-                                      : palette.featureCardBorder,
-                                ),
-                              ),
-                              child: MetadataListTile(
-                                icon: Icons.person,
-                                name: c.entity.name,
-                                subtitle: _subInfo(c, l10n),
-                                description: c.entity.description,
-                                tags: c.entity.tags,
-                                coverImagePath: c.entity.imagePath,
-                                isSelected: isSelected,
-                                palette: palette,
-                                layout: MetadataTileLayout.leftAvatar,
-                                onSettings: () =>
-                                    _showCharacterSettings(c.id, palette),
-                                infoChips: CharacterStatChips(
-                                  lines: characterStatLines(
-                                    c,
-                                    entitiesFor(c),
-                                    ownerLabel:
-                                        resolveCharacterOwnerLabel(ref, c),
+                        child: ValueListenableBuilder<int>(
+                          valueListenable: _selectedIndex,
+                          builder: (context, selectedIdx, _) {
+                            final isSelected = index == selectedIdx;
+                            return InkWell(
+                              borderRadius: palette.br,
+                              onTap: () => _selectedIndex.value = index,
+                              onDoubleTap: () => _openCharacter(c),
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(minHeight: 140),
+                                child: Container(
+                                  clipBehavior: Clip.antiAlias,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? palette.featureCardAccent
+                                            .withValues(alpha: 0.1)
+                                        : palette.featureCardBg,
+                                    borderRadius: palette.br,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? palette.featureCardAccent
+                                          : palette.featureCardBorder,
+                                    ),
                                   ),
-                                  palette: palette,
-                                  compact: true,
+                                  child: MetadataListTile(
+                                    icon: Icons.person,
+                                    name: c.entity.name,
+                                    subtitle: _subInfo(c, l10n),
+                                    description: c.entity.description,
+                                    tags: c.entity.tags,
+                                    coverImagePath: c.entity.imagePath,
+                                    isSelected: isSelected,
+                                    palette: palette,
+                                    layout: MetadataTileLayout.leftAvatar,
+                                    onSettings: () =>
+                                        _showCharacterSettings(c.id, palette),
+                                    infoChips: infoChips,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       );
                     },
@@ -258,11 +274,13 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
               const SizedBox(height: 12),
 
-              Builder(builder: (context) {
+              ValueListenableBuilder<int>(
+                valueListenable: _selectedIndex,
+                builder: (context, selectedIdx, _) {
                 final list = _visibleList();
                 final selected =
-                    (_selectedIndex >= 0 && _selectedIndex < list.length)
-                        ? list[_selectedIndex]
+                    (selectedIdx >= 0 && selectedIdx < list.length)
+                        ? list[selectedIdx]
                         : null;
                 // Hard delete only when char has no owner AND no world.
                 // Otherwise the action releases ownership: char stays in
@@ -414,8 +432,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   Future<void> _releaseOrDeleteSelected() async {
     final l10n = L10n.of(context)!;
     final list = _visibleList();
-    if (_selectedIndex < 0 || _selectedIndex >= list.length) return;
-    final c = list[_selectedIndex];
+    final idx = _selectedIndex.value;
+    if (idx < 0 || idx >= list.length) return;
+    final c = list[idx];
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final isHardDelete = c.ownerId == null && c.worldId == null;
     final infos =
@@ -468,7 +487,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       } catch (e) {
         debugPrint('cloud backup cleanup error: $e');
       }
-      if (mounted) setState(() => _selectedIndex = -1);
+      if (mounted) _selectedIndex.value = -1;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

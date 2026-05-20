@@ -16,6 +16,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../markdown_text_area.dart';
+import '../perf/image_cache_size.dart';
 import 'structured_list_field_widgets.dart';
 
 /// Resolve a relation field value to an entity UUID. Handles three formats
@@ -413,13 +414,15 @@ class _LabeledFieldRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
+    // Telefonda 140px label dar ekranda input'a az yer bırakıyor — kıs.
+    final w = isPhone(context) ? 104.0 : labelWidth;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         crossAxisAlignment: alignment,
         children: [
           SizedBox(
-            width: labelWidth,
+            width: w,
             child: Padding(
               padding: const EdgeInsets.only(right: 8, top: 1),
               child: Text(
@@ -3041,7 +3044,15 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
             InteractiveViewer(
               minScale: 0.5,
               maxScale: 4.0,
-              child: Image.file(File(imagePath), fit: BoxFit.contain),
+              // U3: ekran genişliğinin 2x'i kadar decode — 4x zoom'da
+              // makul keskinlik, ama full-res photo'nun unbounded RGBA
+              // RAM'i (4000px → ~64MB) önlenir.
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.contain,
+                cacheWidth:
+                    cachePxFromLogical(ctx, MediaQuery.sizeOf(ctx).width * 2),
+              ),
             ),
             Positioned(
               top: 8,

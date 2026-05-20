@@ -30,6 +30,11 @@ class WorldSyncService {
   /// worldId → ardışık resubscribe denemesi sayısı (exponential backoff).
   final Map<String, int> _retryCounts = {};
 
+  /// Aynı anda açık tutulabilecek kanal sayısı tavanı (R3). Normalde aktif
+  /// dünya provider dispose'da unsubscribe eder → ~1 kanal; bu tavan uzun
+  /// oturumda dünya gezerken kazara sızıntıya karşı defansif ağ.
+  static const int _maxChannels = 6;
+
   bool _disposed = false;
 
   /// Birleştirilmiş event stream — tüm subscribe edilen worldlerden CDC
@@ -55,6 +60,13 @@ class WorldSyncService {
         scheduleMicrotask(onSubscribed);
       }
       return;
+    }
+
+    // R3: tavan aşıldıysa en eski kanalı (insertion-order ilk) kapat.
+    while (_channels.length >= _maxChannels) {
+      final oldest = _channels.keys.first;
+      debugPrint('WorldSyncService channel cap: evicting "$oldest"');
+      await unsubscribe(oldest);
     }
 
     final channel = client.channel('dmt:world:$worldId');
