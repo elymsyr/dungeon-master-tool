@@ -1837,7 +1837,9 @@ class _TimelineConnectionPainter extends CustomPainter {
 
   // Cache the per-color stroke Paint. withValues allocates on every call;
   // memoizing here avoids one allocation per dashed line.
+  // M2: tavanlı — uzun oturumda farklı pin renkleri Paint birikimi yapmasın.
   static final Map<int, Paint> _paintCache = <int, Paint>{};
+  static const int _paintCacheCap = 256;
 
   // Cache the dashed Path geometry per segment key. Key encodes endpoints;
   // flips when a parent or child pin moves. Bounded — drag spam can churn it.
@@ -1892,11 +1894,14 @@ class _TimelineConnectionPainter extends CustomPainter {
     final faded = color.withValues(alpha: 0.7);
     return _paintCache.putIfAbsent(
       faded.toARGB32(),
-      () => Paint()
-        ..color = faded
-        ..strokeWidth = 3
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
+      () {
+        if (_paintCache.length >= _paintCacheCap) _paintCache.clear();
+        return Paint()
+          ..color = faded
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
+      },
     );
   }
 

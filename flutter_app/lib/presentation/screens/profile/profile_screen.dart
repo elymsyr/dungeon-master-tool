@@ -56,6 +56,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final uid = _resolveUid(ref);
     final isMe = uid == auth?.uid;
 
+    // U5: varsayılan Posts sekmesinin verisini profil ile PARALEL ısıt —
+    // profil resolve olmadan fetch başlar, çift loading spinner waterfall'ı
+    // kalkar. .select((_) => 0): keep-alive only, ProfileScreen rebuild etmez.
+    if (uid.isNotEmpty) {
+      ref.watch(userPostsProvider(uid).select((_) => 0));
+    }
+
     final profileAsync = isMe
         ? ref.watch(currentProfileProvider)
         : ref.watch(profileByIdProvider(uid));

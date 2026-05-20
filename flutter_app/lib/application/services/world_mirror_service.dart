@@ -325,6 +325,27 @@ class WorldMirrorService {
     }
   }
 
+  /// Tek bir world_entities satırını çeker. entity_shares INSERT CDC'sinden
+  /// sonra applier yeni paylaşılan entity'nin verisini buradan alır — paylaşım
+  /// world_entities satırını değiştirmediği için o satır için CDC event'i
+  /// çıkmaz. RLS: player bu satırı ancak paylaşım sonrası görebilir.
+  Future<Map<String, dynamic>?> fetchEntity({
+    required String worldId,
+    required String entityId,
+  }) async {
+    try {
+      return await client
+          .from('world_entities')
+          .select()
+          .eq('id', entityId)
+          .eq('world_id', worldId)
+          .maybeSingle();
+    } catch (e) {
+      _logMirrorError('fetchEntity', e);
+      return null;
+    }
+  }
+
   // ── Inbound CDC event echo check ───────────────────────────────────
 
   /// CDC event'i apply etmeden önce kendi push'umuzla çakışıp çakışmadığını

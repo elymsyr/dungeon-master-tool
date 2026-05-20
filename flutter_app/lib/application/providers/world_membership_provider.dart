@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,8 +38,18 @@ class WorldMembersNotifier
   final String worldId;
   bool _bootstrapped = false;
 
+  late final _ProfileBatchLoader _profiles;
+
   WorldMembersNotifier(this._ref, this._service, this._client, this.worldId)
-      : super(const AsyncValue.loading());
+      : super(const AsyncValue.loading()) {
+    _profiles = _ProfileBatchLoader(_client);
+  }
+
+  @override
+  void dispose() {
+    _profiles.dispose();
+    super.dispose();
+  }
 
   /// [force]=true ise `_bootstrapped` guard'ını atlar; channel re-subscribe
   /// veya world reopen sonrası taze roster çekmek için kullanılır.
@@ -119,29 +131,88 @@ class WorldMembersNotifier
     await bootstrap();
   }
 
-  Future<Map<String, dynamic>?> _fetchProfile(String userId) async {
-    final client = _client;
-    if (client == null) return null;
-    try {
-      final rows = await client
-          .from('profiles')
-          .select('user_id, username, display_name, avatar_url')
-          .eq('user_id', userId)
-          .limit(1);
-      if (rows.isNotEmpty) {
-        return Map<String, dynamic>.from(rows.first as Map);
-      }
-    } catch (e) {
-      debugPrint('WorldMembersNotifier profile fetch error: $e');
-    }
-    return null;
-  }
+  /// R4: profil fetch'i 16ms penceresinde coalesce eder — çok-kişili realtime
+  /// burst'te N member event ayrı sorgu yerine tek `.inFilter` sorgusuna iner.
+  Future<Map<String, dynamic>?> _fetchProfile(String userId) =>
+      _profiles.load(userId);
 
   WorldRole _parseRole(String s) => switch (s) {
         'dm' => WorldRole.dm,
         'player' => WorldRole.player,
         _ => WorldRole.none,
       };
+}
+
+/// Profil fetch'lerini kısa pencerede toplayıp tek `.inFilter` sorgusuna
+/// indirir (R4). Çözülen profiller cache'lenir — aynı kullanıcının ardışık
+/// join/update event'leri tekrar sorgu açmaz. Cache oturum ömürlü; profil
+/// adı değişimleri `bootstrap(force: true)` (resubscribe) ile tazelenir.
+class _ProfileBatchLoader {
+  _ProfileBatchLoader(this._client);
+
+  final SupabaseClient? _client;
+  static const Duration _window = Duration(milliseconds: 16);
+
+  final Map<String, Map<String, dynamic>?> _cache = {};
+  final Map<String, List<Completer<Map<String, dynamic>?>>> _pending = {};
+  Timer? _timer;
+  bool _disposed = false;
+
+  Future<Map<String, dynamic>?> load(String userId) {
+    if (_disposed || _client == null) return Future.value(null);
+    if (_cache.containsKey(userId)) return Future.value(_cache[userId]);
+    final completer = Completer<Map<String, dynamic>?>();
+    (_pending[userId] ??= []).add(completer);
+    _timer ??= Timer(_window, _flush);
+    return completer.future;
+  }
+
+  Future<void> _flush() async {
+    _timer = null;
+    if (_pending.isEmpty) return;
+    final batch = Map<String, List<Completer<Map<String, dynamic>?>>>.from(
+      _pending,
+    );
+    _pending.clear();
+    final ids = batch.keys.toList();
+    final byId = <String, Map<String, dynamic>>{};
+    final client = _client;
+    if (client != null) {
+      try {
+        final rows = await client
+            .from('profiles')
+            .select('user_id, username, display_name, avatar_url')
+            .inFilter('user_id', ids);
+        for (final r in rows as List) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final uid = m['user_id'] as String?;
+          if (uid != null) byId[uid] = m;
+        }
+      } catch (e) {
+        debugPrint('_ProfileBatchLoader fetch error: $e');
+      }
+    }
+    for (final entry in batch.entries) {
+      final result = byId[entry.key];
+      if (!_disposed) _cache[entry.key] = result;
+      for (final c in entry.value) {
+        if (!c.isCompleted) c.complete(result);
+      }
+    }
+  }
+
+  void dispose() {
+    _disposed = true;
+    _timer?.cancel();
+    _timer = null;
+    for (final list in _pending.values) {
+      for (final c in list) {
+        if (!c.isCompleted) c.complete(null);
+      }
+    }
+    _pending.clear();
+    _cache.clear();
+  }
 }
 
 /// Aktif world'ün üyeleri (DM hub'ı + player roster widget'ı tüketir).

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/screen_type.dart';
 import '../../../application/providers/builtin_package_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/entity_share_provider.dart';
@@ -406,35 +407,39 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               ),
                             ),
                     ),
-                    IconButton(
-                      tooltip: 'Project entity card to player screen',
-                      icon: Icon(
-                        Icons.cast,
-                        size: 18,
-                        color: palette.srdHeadingRed,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        ref
-                            .read(projectionControllerProvider.notifier)
-                            .addEntityCard(entityId: widget.entityId);
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            const SnackBar(
-                              duration: Duration(seconds: 2),
-                              content: Text(
-                                'Entity card projected to player screen',
+                    // Cast/projection player rolüne kapalı — DM ve offline
+                    // (none) için açık.
+                    if (ref.watch(currentWorldRoleProvider).valueOrNull !=
+                        WorldRole.player)
+                      IconButton(
+                        tooltip: 'Project entity card to player screen',
+                        icon: Icon(
+                          Icons.cast,
+                          size: 18,
+                          color: palette.srdHeadingRed,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          ref
+                              .read(projectionControllerProvider.notifier)
+                              .addEntityCard(entityId: widget.entityId);
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              const SnackBar(
+                                duration: Duration(seconds: 2),
+                                content: Text(
+                                  'Entity card projected to player screen',
+                                ),
                               ),
-                            ),
-                          );
-                      },
-                    ),
+                            );
+                        },
+                      ),
                     if (ref.watch(currentWorldRoleProvider).valueOrNull ==
                         WorldRole.dm)
                       _ShareToggle(entityId: widget.entityId, entity: entity),
@@ -731,9 +736,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     DmToolColors palette, {
     bool cached = true,
   }) {
-    final compactRow = gridColumns > 1;
+    // Telefonda 2+ sütun, dar genişlikte field'ları sıkıştırıp edit modunda
+    // RenderFlex overflow'a yol açıyor — telefonda her zaman tek sütun.
+    final cols = isPhone(context) ? 1 : gridColumns;
+    final compactRow = cols > 1;
 
-    if (gridColumns <= 1) {
+    if (cols <= 1) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: fields
@@ -745,7 +753,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte.
     // Cached path uses the stable list identity from _SchemaFieldCache.
     // Filtered (read-only) path skips cache since the list is rebuilt per build.
-    final rows = _splitRows(fields, gridColumns, useCache: cached);
+    final rows = _splitRows(fields, cols, useCache: cached);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -754,7 +762,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         var totalSpan = 0;
         for (var i = 0; i < rowFields.length; i++) {
           if (i > 0) children.add(const SizedBox(width: 8));
-          final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
+          final span = rowFields[i].gridColumnSpan.clamp(1, cols);
           totalSpan += span;
           children.add(
             Expanded(
@@ -772,11 +780,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         // each cell at the column width it would occupy if the row were full.
         // Without this, an Expanded(flex: 1) in a 2-col row stretches across
         // the whole width and breaks vertical alignment with neighbouring rows.
-        if (totalSpan < gridColumns) {
+        if (totalSpan < cols) {
           children.add(const SizedBox(width: 8));
           children.add(
             Expanded(
-              flex: gridColumns - totalSpan,
+              flex: cols - totalSpan,
               child: const SizedBox.shrink(),
             ),
           );

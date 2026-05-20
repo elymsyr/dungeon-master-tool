@@ -378,15 +378,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Online player ise tamamen ayrı, sade shell. role henüz resolve
     // olmadıysa DM görünümü ile başlar; resolve sonrası rebuild ile
     // PlayerMainScreen'e geçer.
-    final role =
-        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    // U1: .select ile yalnızca çözülmüş role DEĞERİ değişince rebuild —
+    // loading→data AsyncValue geçişleri tüm shell'i rebuild ettirmez.
+    final role = ref.watch(
+      currentWorldRoleProvider
+          .select((r) => r.valueOrNull ?? WorldRole.none),
+    );
 
     // Auto sync: worldMirrorApplierProvider'i watch et — provider hayatta
     // tutulur world açıkken. Provider içinde activeCampaignId/role resolve
     // olunca otomatik subscribe + applyInitialState çalışır. Role branch'ten
-    // ÖNCE watch edilir ki player (PlayerMainScreen) de auto-sync alsın —
-    // _MainScreenState build'i her iki rol için de çalışır.
-    ref.watch(worldMirrorApplierProvider);
+    // ÖNCE watch edilir ki player (PlayerMainScreen) de auto-sync alsın.
+    // U1: .select((_) => 0) → keep-alive ama applier resolve/rebuild'i shell'i
+    // rebuild ETTİRMEZ (dönüş değeri burada kullanılmıyor).
+    ref.watch(worldMirrorApplierProvider.select((_) => 0));
 
     if (role == WorldRole.player) {
       return const PlayerMainScreen();
@@ -397,7 +402,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final campaignName = ref.read(activeCampaignProvider) ?? '';
 
     ref.listen(activeCampaignSyncProvider, (_, _) {});
-    ref.watch(activeCampaignSyncProvider);
+    // U1: keep-alive only — sync state değişimi shell'i rebuild ettirmesin.
+    ref.watch(activeCampaignSyncProvider.select((_) => 0));
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -448,8 +454,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // source state. Watching these providers installs their inner
     // listeners, which rebuild snapshots whenever the underlying data
     // changes. Both are no-ops when no matching projection items exist.
-    ref.watch(projectionBattleMapSyncProvider);
-    ref.watch(projectionEntitySyncProvider);
+    // U1: .select((_) => 0) → inner listener'lar kurulur ama provider
+    // emit'leri main shell'i rebuild ettirmez.
+    ref.watch(projectionBattleMapSyncProvider.select((_) => 0));
+    ref.watch(projectionEntitySyncProvider.select((_) => 0));
 
     final editMode = ref.watch(editModeProvider);
 

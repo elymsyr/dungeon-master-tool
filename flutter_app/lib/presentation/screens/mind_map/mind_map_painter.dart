@@ -31,6 +31,11 @@ class MindMapPainter extends CustomPainter {
   static final _nodeLabelCache = <String, TextPainter>{};
   static List<MindMapNode>? _lastNodes;
 
+  /// M3: node-list identity aynı kalsa bile zoom (fontSize/maxW key'leri) ve
+  /// node drag (_arrowCache endpoint key'leri) cache'leri sınırsız şişirir.
+  /// Tavan aşılınca düz clear — re-layout ucuz, LRU defteri tutmaya değmez.
+  static const int _cacheCap = 600;
+
   // F6: nodeMap identity cache. Rebuilds only when node list reference
   // changes (CRUD/undo). During drag, only entries for dragged ids get
   // overridden — no O(N) rebuild per paint at 60fps.
@@ -60,6 +65,18 @@ class MindMapPainter extends CustomPainter {
       // F6: nodeMap cache shares the same invalidation point.
       _nmNodesRef = null;
       _nmCache = null;
+      return;
+    }
+    // M3: identity değişmeden zoom/drag varyasyonu cache'leri şişirebilir —
+    // tavan aşılınca temizle (uzun oturumda bellek sızıntısı önlemi).
+    if (_nodeLabelCache.length > _cacheCap ||
+        _wsLabelCache.length > _cacheCap ||
+        _arrowCache.length > _cacheCap ||
+        _dashedRectCache.length > _cacheCap) {
+      _wsLabelCache.clear();
+      _dashedRectCache.clear();
+      _nodeLabelCache.clear();
+      _arrowCache.clear();
     }
   }
 
