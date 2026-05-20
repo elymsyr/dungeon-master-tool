@@ -237,7 +237,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                             decoration: BoxDecoration(
                               color: themePalettes[name]?.canvasBg,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white24),
+                              border: Border.all(color: palette.sidebarDivider),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -290,7 +290,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                   color: themePalettes[name]?.canvasBg,
                                   shape: BoxShape.circle,
                                   border:
-                                      Border.all(color: Colors.white24),
+                                      Border.all(color: palette.sidebarDivider),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -648,11 +648,12 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
 
   void _showMobileSidebar() {
     final schema = ref.read(worldSchemaProvider);
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(palette.cardBorderRadius)),
       ),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -676,8 +677,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(palette.cardBorderRadius)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(

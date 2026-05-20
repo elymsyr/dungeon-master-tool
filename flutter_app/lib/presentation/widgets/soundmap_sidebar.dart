@@ -196,7 +196,7 @@ class _StateSection extends ConsumerWidget {
             return ChoiceChip(
               label: Text(
                 stateName[0].toUpperCase() + stateName.substring(1),
-                style: TextStyle(fontSize: 12, color: isActive ? Colors.white : palette.tabActiveText),
+                style: TextStyle(fontSize: 12, color: palette.tabActiveText),
               ),
               selected: isActive,
               selectedColor: palette.featureCardAccent,

@@ -903,7 +903,7 @@ class ImportOrphanDialogState extends ConsumerState<ImportOrphanDialog> {
                       horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: palette.featureCardBg,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.cbr,
                     border: Border.all(color: palette.featureCardBorder),
                   ),
                   child: Row(
