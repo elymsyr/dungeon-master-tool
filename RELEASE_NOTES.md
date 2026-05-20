@@ -1,5 +1,49 @@
 # Release Notes
 
+## Dungeon Master Tool v8.2.0 — Player Auto-Sync, Reconnect Catch-Up, Claim/Unclaim Fixes (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v8.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Follow-up to v8.1 focused on online-world realtime reliability. Players now get the same automatic realtime subscribe + initial-state seed that DMs already had — no manual Sync button required. Both the world and per-user realtime channels recover from connection drops on their own: every reconnect triggers a full catch-up (`postgres_changes` does not replay events missed during an outage), and failed channels resubscribe with exponential backoff instead of silently dying. Owner characters now sync live across a player's devices even while the world is closed. Several claim/release/assign bugs are fixed, including a character name reverting to the SRD package name after an ownership change.
+
+> **Heads-up — local DB schema is unchanged from v8.1.** Schema v12. No migration.
+
+> **Heads-up — no new Supabase migrations.** v8.2 is client-only on the cloud side. The new owner-character realtime filter (`world_characters` where `owner_id = uid`) relies on the existing "Chars: player reads own" RLS policy.
+
+### Highlights
+
+- **Player auto-sync** — `worldMirrorApplierProvider` is now watched in `MainScreen` *before* the role branch, so `PlayerMainScreen` gets the same automatic realtime subscribe + `applyInitialState` seed that the DM view had. Players no longer need to press Sync to see live updates; the Sync button is now a manual "Retry" only.
+- **Player exit flushes pending writes** — Player exit-to-hub now shows the `Saving...` overlay while flushing the `PendingWriteBuffer` and, when online, calling `syncEngine.forceTick()` — debounced character edits no longer get dropped at the navigation boundary.
+- **Reconnect catch-up** — `WorldSyncService` and `PersonalSyncService` now fire their `SUBSCRIBED` callback on *every* connect, not just the first. Each reconnect re-runs `applyInitialState` + roster refresh so events missed during a connection drop are recovered without the user manually leaving and re-entering the world.
+- **Resubscribe with backoff** — On `channelError` / `timedOut`, both sync services rebuild the channel from scratch with exponential backoff (1, 2, 4, 8, 16, 30s cap). A failed join no longer leaves a permanently dead channel.
+- **Rebuild-storm fix** — `worldMirrorApplierProvider` switched from `.future` to `selectAsync` for `worldId` / `role`. `.future` minted a new Future every recompute, so `applyInitialState`'s `_bumpRevision` retriggered the provider in an infinite loop (rebuild storm, tooltip-ticker spam). `selectAsync` stays quiet when the resolved value is unchanged.
+- **Owner characters sync while world is closed** — `PersonalSyncService` now also listens to `world_characters` rows where `owner_id = uid`. An owner's online-world character syncs live to all their devices (hub Characters tab) even when the world itself isn't open. Apply logic is shared with the world channel via the new `WorldMirrorApplier.applyCharacterCdc`.
+- **Claim/unclaim name fix** — Metadata-only updates (claim / release / assign) don't put the large `payload_json` TOAST column in the Postgres WAL, so CDC delivered it as `null` and the character name fell back to the SRD package name. The CDC applier now resolves a fallback payload from the existing in-memory row before decoding.
+- **Ownership-leaves cleanup** — Releasing or reassigning a character now drops it from your hub Characters tab and local Drift via the new `dropMirror` / `dropLocal` path — without a trash snapshot and without a cloud delete. The canonical `world_characters` row stays in the world (shown as unclaimed), and a later re-claim isn't blocked by the trash guard.
+- **Optimistic release fix** — Optimistic owner clear used `copyWith(ownerId: null)`, which `?? this.ownerId` quietly ignored. A new `clearOwner: true` flag actually nulls the owner.
+- **Owner label from canonical column** — The character `User` chip now resolves the owner from the canonical `owner_id` column (`resolveOwnerLabelById`) instead of the `ownerId` embedded in `payload_json`, which goes stale after a claim/release/assign RPC.
+- **SRD core link self-heal** — `SrdCoreBootstrap` now keys idempotency on the device-local `installed_packages` link, not the `_srdCoreImportedAt` settings flag. That flag rides in synced `world_settings`, so a player joining a world inherited the DM's flag and never created their own link. Checking the link directly self-heals any world missing it.
+- **Disposed-applier guards** — `WorldMirrorApplier` now sets a `_disposed` flag on `stop()`; in-flight async events bail before touching a stale `ref` after a provider rebuild/dispose, and `_bumpRevision` is wrapped against the dependency-change window.
+- **Session-notes notifier re-capture** — `combatProvider` rebuilds on campaign/revision change, swapping the `CombatNotifier` instance. `session_screen` now re-captures the notifier every `build()` (instead of once in `initState`) so the dispose-time session-notes flush hits the live notifier, guarded by a `mounted` check.
+- **Theme-token cleanup** — Hardcoded `BorderRadius.circular(...)` and literal colors across the session screen, player screen, battle-map toolbars, entity card, and projection view replaced with palette tokens (`palette.br` / `cbr` / `chr`, `cardBorderRadius`, `tabIndicator`, `sidebarDivider`, `dangerBtnBg`, `tokenBorderActive`). `tabIndicator` added to the palettes that were missing it. The redundant "PLAYER" badge was removed from the player screen header.
+
+### Upgrade notes
+
+- **App version bump:** `8.1.0` → `8.2.0`.
+- **Local DB:** schema v12, unchanged. No migration.
+- **Cloud migrations:** none in this release.
+- **No user action required.** The SRD core link self-heal runs automatically on next world open for any world missing its device-local `installed_packages` link.
+
+### Known issues
+
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Row-level save+sync** — F0 (repo API) shipped in v8.0; F1–F6 (per-row outbox, change-bus apply, CDC row-merge) still pending.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills.
+- **D7 test harness** — Drift v12 round-trip test harness for the auto-migration path is still pending.
+
+---
+
 ## Dungeon Master Tool v8.1.0 — Save/Sync Correctness, Viewport Split, Persistent Measurements (Beta)
 
 **Release date:** May 2026
