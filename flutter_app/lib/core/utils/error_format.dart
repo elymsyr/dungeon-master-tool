@@ -1,18 +1,31 @@
 import 'dart:async';
 import 'dart:io';
 
+/// Thrown by network-guarded providers when the device is offline or a
+/// request exceeds its hard timeout. Recognized by [isOfflineError] so the
+/// UI collapses it into the single "You're offline" message.
+class OfflineException implements Exception {
+  const OfflineException();
+  @override
+  String toString() => 'OfflineException';
+}
+
 /// True when [error] looks like a transient offline / network failure
 /// (no DNS, no route, TLS handshake failed, socket refused, timeout).
 ///
-/// `package:http`'s `ClientException` is matched by class name rather than
+/// `package:http`'s `ClientException` and Supabase's
+/// `AuthRetryableFetchException` are matched by class name rather than
 /// type check so this helper can live in `core/` without dragging in a
-/// direct `http` dependency.
+/// direct `http` / `supabase` dependency.
 bool isOfflineError(Object error) {
+  if (error is OfflineException) return true;
   if (error is SocketException) return true;
   if (error is HandshakeException) return true;
   if (error is TimeoutException) return true;
   if (error is HttpException) return true;
-  if (error.runtimeType.toString() == 'ClientException') return true;
+  final rt = error.runtimeType.toString();
+  if (rt == 'ClientException') return true;
+  if (rt == 'AuthRetryableFetchException') return true;
   final msg = error.toString().toLowerCase();
   return msg.contains('failed host lookup') ||
       msg.contains('no address associated with hostname') ||
@@ -21,7 +34,11 @@ bool isOfflineError(Object error) {
       msg.contains('network is unreachable') ||
       msg.contains('operation not permitted') ||
       msg.contains('software caused connection abort') ||
-      msg.contains('clientexception');
+      msg.contains('clientexception') ||
+      msg.contains('failed to fetch') ||
+      msg.contains('socketexception') ||
+      msg.contains('connection timed out') ||
+      msg.contains('xmlhttprequest');
 }
 
 /// True when [error] is a Supabase Storage 404 (object not found). Used by

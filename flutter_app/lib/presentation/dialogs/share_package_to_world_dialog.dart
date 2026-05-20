@@ -5,6 +5,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/package_info.dart';
 
@@ -148,7 +149,7 @@ class _PackageRow extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Share failed: $e')),
+          SnackBar(content: Text('Share failed: ${formatError(e)}')),
         );
       }
     }
@@ -173,7 +174,7 @@ class _PackageRow extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unshare failed: $e')),
+          SnackBar(content: Text('Unshare failed: ${formatError(e)}')),
         );
       }
     }

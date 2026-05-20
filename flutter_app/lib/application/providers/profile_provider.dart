@@ -8,6 +8,7 @@ import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/profiles_remote_ds.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// Singleton remote DS.
 final profilesRemoteDsProvider = Provider<ProfilesRemoteDataSource>(
@@ -26,7 +27,8 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
       ref: ref,
       cacheKey: 'currentProfile',
       ttl: const Duration(minutes: 5),
-      fetch: () => ref.read(profilesRemoteDsProvider).fetchCurrent(),
+      fetch: () => guardedNetwork(
+          ref, () => ref.read(profilesRemoteDsProvider).fetchCurrent()),
     );
   } catch (e, st) {
     if (isOfflineError(e)) {
@@ -47,7 +49,8 @@ final profileByIdProvider =
       ref: ref,
       cacheKey: 'profile:$userId',
       ttl: const Duration(minutes: 5),
-      fetch: () => ref.read(profilesRemoteDsProvider).fetchById(userId),
+      fetch: () => guardedNetwork(
+          ref, () => ref.read(profilesRemoteDsProvider).fetchById(userId)),
     );
   } catch (e) {
     if (isOfflineError(e)) return null;
@@ -63,7 +66,8 @@ final profileSearchProvider =
     ref: ref,
     cacheKey: 'profileSearch:${query.trim().toLowerCase()}',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(profilesRemoteDsProvider).search(query),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(profilesRemoteDsProvider).search(query)),
   );
 });
 
@@ -100,7 +104,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
       return false;
     } catch (e, st) {
       debugPrint('Profile create error: $e\n$st');
-      state = ProfileEditState.error(e.toString());
+      state = ProfileEditState.error(formatError(e));
       return false;
     }
   }
@@ -135,7 +139,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
       return false;
     } catch (e, st) {
       debugPrint('Profile update error: $e\n$st');
-      state = ProfileEditState.error(e.toString());
+      state = ProfileEditState.error(formatError(e));
       return false;
     }
   }

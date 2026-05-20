@@ -5,6 +5,7 @@ import '../../core/utils/cached_provider.dart';
 import '../../data/datasources/remote/follows_remote_ds.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 import 'profile_provider.dart';
 
 final followsRemoteDsProvider = Provider<FollowsRemoteDataSource>(
@@ -23,7 +24,8 @@ final isFollowingProvider =
     ref: ref,
     cacheKey: 'isFollowing:$targetUserId',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(followsRemoteDsProvider).isFollowing(targetUserId),
+    fetch: () => guardedNetwork(ref,
+        () => ref.read(followsRemoteDsProvider).isFollowing(targetUserId)),
   );
 });
 
@@ -40,7 +42,8 @@ final followersProvider =
     ref: ref,
     cacheKey: 'followers:$userId',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(followsRemoteDsProvider).followersOf(userId),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(followsRemoteDsProvider).followersOf(userId)),
   );
 });
 
@@ -51,7 +54,8 @@ final followingProvider =
     ref: ref,
     cacheKey: 'following:$userId',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(followsRemoteDsProvider).followingOf(userId),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(followsRemoteDsProvider).followingOf(userId)),
   );
 });
 
@@ -63,7 +67,7 @@ class FollowToggleNotifier extends StateNotifier<AsyncValue<void>> {
   /// sonra DB'ye yaz. Hata olursa override'ı geri al ve hata bildir.
   Future<void> toggle(String targetUserId) async {
     final current = _ref.read(followOverrideProvider(targetUserId)) ??
-        (_ref.read(isFollowingProvider(targetUserId)).value ?? false);
+        (_ref.read(isFollowingProvider(targetUserId)).valueOrNull ?? false);
     final next = !current;
     _ref.read(followOverrideProvider(targetUserId).notifier).state = next;
 

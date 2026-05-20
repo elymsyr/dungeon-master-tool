@@ -22,6 +22,7 @@ import '../../dialogs/apply_listing_dialog.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
 import '../../widgets/profile_avatar.dart';
 import 'social_shell.dart';
@@ -276,9 +277,13 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => SocialCard(
-              child: Text(formatError(e), style: TextStyle(color: palette.dangerBtnBg)),
-            ),
+            error: (e, _) => isOfflineError(e)
+                ? ConnectionErrorView(
+                    onRetry: () => ref.invalidate(feedProvider))
+                : SocialCard(
+                    child: Text(formatError(e),
+                        style: TextStyle(color: palette.dangerBtnBg)),
+                  ),
             data: (posts) => posts.isEmpty
                 ? SocialEmptyState(
                     icon: Icons.dynamic_feed_outlined,
@@ -419,9 +424,13 @@ class _DiscoverBodyState extends ConsumerState<_DiscoverBody> {
             padding: EdgeInsets.symmetric(vertical: 48),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => SocialCard(
-            child: Text(formatError(e), style: TextStyle(color: palette.dangerBtnBg)),
-          ),
+          error: (e, _) => isOfflineError(e)
+              ? ConnectionErrorView(
+                  onRetry: () => ref.invalidate(discoverPeopleProvider))
+              : SocialCard(
+                  child: Text(formatError(e),
+                      style: TextStyle(color: palette.dangerBtnBg)),
+                ),
           data: (people) {
             if (people.isEmpty) {
               return SocialEmptyState(
@@ -453,7 +462,7 @@ class _DiscoverUserTile extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final override = ref.watch(followOverrideProvider(profile.userId));
     final isFollowingAsync = ref.watch(isFollowingProvider(profile.userId));
-    final isFollowing = override ?? isFollowingAsync.value ?? false;
+    final isFollowing = override ?? isFollowingAsync.valueOrNull ?? false;
     return InkWell(
       borderRadius: palette.cbr,
       onTap: () => context.push('/profile/${profile.userId}'),

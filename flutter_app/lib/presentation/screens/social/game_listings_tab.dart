@@ -9,6 +9,7 @@ import '../../../core/utils/world_languages.dart';
 import '../../dialogs/apply_listing_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
 import 'social_shell.dart';
 
@@ -168,9 +169,14 @@ class _FeedGameListings extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 48),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => SocialCard(
-        child: Text(formatError(e), style: TextStyle(color: palette.dangerBtnBg, fontSize: 12)),
-      ),
+      error: (e, _) => isOfflineError(e)
+          ? ConnectionErrorView(
+              onRetry: () => ref.invalidate(openGameListingsProvider))
+          : SocialCard(
+              child: Text(formatError(e),
+                  style:
+                      TextStyle(color: palette.dangerBtnBg, fontSize: 12)),
+            ),
       data: (items) {
         if (items.isEmpty) {
           return SocialEmptyState(

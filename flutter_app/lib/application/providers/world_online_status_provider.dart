@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 
 /// Verilen campaign id'sinin Supabase'de "publish" edilmiş olup olmadığını
 /// söyler (yani `worlds` tablosunda satır var mı). UI online toggle'ı
@@ -13,11 +14,14 @@ final worldOnlineStatusProvider =
   final auth = ref.watch(authProvider);
   if (auth == null) return false;
   try {
-    final row = await Supabase.instance.client
-        .from('worlds')
-        .select('id')
-        .eq('id', worldId)
-        .maybeSingle();
+    final row = await guardedNetwork(
+      ref,
+      () => Supabase.instance.client
+          .from('worlds')
+          .select('id')
+          .eq('id', worldId)
+          .maybeSingle(),
+    );
     return row != null;
   } catch (_) {
     return false;

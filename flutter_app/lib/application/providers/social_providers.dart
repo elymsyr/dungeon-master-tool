@@ -16,6 +16,7 @@ import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/post.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
+import 'connectivity_provider.dart';
 import 'follows_provider.dart';
 import 'marketplace_listing_provider.dart';
 
@@ -65,7 +66,8 @@ final feedProvider = FutureProvider<List<Post>>((ref) async {
     ref: ref,
     cacheKey: 'feed:${scope.name}',
     ttl: const Duration(minutes: 2),
-    fetch: () => ref.read(postsRemoteDsProvider).fetchFeed(scope: scope),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(postsRemoteDsProvider).fetchFeed(scope: scope)),
   );
 });
 
@@ -118,7 +120,8 @@ final userPostsProvider =
     ref: ref,
     cacheKey: 'userPosts:$userId',
     ttl: const Duration(minutes: 2),
-    fetch: () => ref.read(postsRemoteDsProvider).fetchByAuthor(userId),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(postsRemoteDsProvider).fetchByAuthor(userId)),
   );
 });
 
@@ -206,11 +209,14 @@ final openGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
     ref: ref,
     cacheKey: 'gameListings:${filters.gameLanguage}:${filters.system}:${filters.tag}',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchOpen(
-          gameLanguage: filters.gameLanguage,
-          system: filters.system,
-          tag: filters.tag,
-        ),
+    fetch: () => guardedNetwork(
+      ref,
+      () => ref.read(gameListingsRemoteDsProvider).fetchOpen(
+            gameLanguage: filters.gameLanguage,
+            system: filters.system,
+            tag: filters.tag,
+          ),
+    ),
   );
 });
 
@@ -224,7 +230,8 @@ final userGameListingsProvider =
     ref: ref,
     cacheKey: 'userGameListings:$userId',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchByOwner(userId),
+    fetch: () => guardedNetwork(ref,
+        () => ref.read(gameListingsRemoteDsProvider).fetchByOwner(userId)),
   );
 });
 
@@ -237,7 +244,8 @@ final myGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
     ref: ref,
     cacheKey: 'myGameListings',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchMine(),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(gameListingsRemoteDsProvider).fetchMine()),
   );
 });
 
@@ -246,7 +254,11 @@ final listingApplicationsProvider =
     FutureProvider.family<List<GameListingApplication>, String>(
   (ref, listingId) async {
     if (!SupabaseConfig.isConfigured) return const [];
-    return ref.read(gameListingsRemoteDsProvider).fetchApplicationsFor(listingId);
+    return guardedNetwork(
+        ref,
+        () => ref
+            .read(gameListingsRemoteDsProvider)
+            .fetchApplicationsFor(listingId));
   },
 );
 
@@ -257,7 +269,8 @@ final hasAppliedProvider =
   if (!SupabaseConfig.isConfigured) return false;
   final auth = ref.watch(authProvider);
   if (auth == null) return false;
-  return ref.read(gameListingsRemoteDsProvider).hasApplied(listingId);
+  return guardedNetwork(ref,
+      () => ref.read(gameListingsRemoteDsProvider).hasApplied(listingId));
 });
 
 class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
@@ -389,7 +402,8 @@ final myConversationsProvider = FutureProvider<List<Conversation>>((ref) async {
     ref: ref,
     cacheKey: 'conversations',
     ttl: const Duration(minutes: 1),
-    fetch: () => ref.read(messagesRemoteDsProvider).fetchMyConversations(),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(messagesRemoteDsProvider).fetchMyConversations()),
   );
 });
 
@@ -402,7 +416,8 @@ final totalUnreadCountProvider = FutureProvider<int>((ref) async {
     ref: ref,
     cacheKey: 'totalUnread',
     ttl: const Duration(seconds: 30),
-    fetch: () => ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount(),
+    fetch: () => guardedNetwork(ref,
+        () => ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount()),
   );
 });
 
@@ -527,11 +542,14 @@ final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async
     cacheKey:
         'marketplace:${filters.type}:${filters.language}:${filters.tag}',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
-          itemType: filters.type == 'all' ? null : filters.type,
-          language: filters.language,
-          tag: filters.tag,
-        ),
+    fetch: () => guardedNetwork(
+      ref,
+      () => ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
+            itemType: filters.type == 'all' ? null : filters.type,
+            language: filters.language,
+            tag: filters.tag,
+          ),
+    ),
   );
 });
 
@@ -548,7 +566,8 @@ final suggestedUsersProvider = FutureProvider<List<UserProfile>>((ref) async {
     ref: ref,
     cacheKey: 'suggestedUsers',
     ttl: const Duration(minutes: 10),
-    fetch: () => ref.read(profilesRemoteDsProvider).suggested(),
+    fetch: () => guardedNetwork(
+        ref, () => ref.read(profilesRemoteDsProvider).suggested()),
   );
 });
 
@@ -567,12 +586,12 @@ final discoverPeopleProvider = FutureProvider<List<UserProfile>>((ref) async {
     ref: ref,
     cacheKey: 'discover:${query.trim()}',
     ttl: const Duration(minutes: 5),
-    fetch: () {
+    fetch: () => guardedNetwork(ref, () {
       if (query.trim().isNotEmpty) {
         return ref.read(profilesRemoteDsProvider).search(query, limit: 30);
       }
       return ref.read(profilesRemoteDsProvider).suggested(limit: 30);
-    },
+    }),
   );
 });
 
@@ -585,7 +604,7 @@ final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async
     ref: ref,
     cacheKey: 'marketplacePlayers',
     ttl: const Duration(minutes: 5),
-    fetch: () async {
+    fetch: () => guardedNetwork(ref, () async {
       final followedFuture = ref.read(followsRemoteDsProvider).followingOf(uid);
       final suggestedFuture = ref.read(profilesRemoteDsProvider).suggested(limit: 10);
       final followed = await followedFuture;
@@ -595,6 +614,6 @@ final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async
         ...followed,
         ...suggested.where((p) => !seen.contains(p.userId)),
       ];
-    },
+    }),
   );
 });

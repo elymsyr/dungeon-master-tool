@@ -16,6 +16,7 @@ import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
+import 'connectivity_provider.dart';
 import 'character_provider.dart';
 import 'package_provider.dart';
 import 'template_provider.dart';
@@ -39,9 +40,11 @@ final ownedSnapshotsProvider = FutureProvider.family<List<MarketplaceListing>,
   if (ids.isEmpty) return const [];
   // Stored oldest-first; UI wants newest-first.
   final reversed = ids.reversed.toList();
-  return ref
-      .read(marketplaceListingsRemoteDsProvider)
-      .fetchListingsByIds(reversed);
+  return guardedNetwork(
+      ref,
+      () => ref
+          .read(marketplaceListingsRemoteDsProvider)
+          .fetchListingsByIds(reversed));
 });
 
 /// Current marketplace listings owned by [userId]. Used by the profile
@@ -55,9 +58,11 @@ final userMarketplaceListingsProvider =
     ref: ref,
     cacheKey: 'userListings:$userId',
     ttl: const Duration(minutes: 5),
-    fetch: () => ref
-        .read(marketplaceListingsRemoteDsProvider)
-        .listCurrentByOwner(userId),
+    fetch: () => guardedNetwork(
+        ref,
+        () => ref
+            .read(marketplaceListingsRemoteDsProvider)
+            .listCurrentByOwner(userId)),
   );
 });
 
