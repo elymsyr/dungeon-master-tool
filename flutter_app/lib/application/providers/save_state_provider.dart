@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/pending_write_buffer.dart';
@@ -22,7 +23,28 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
     buffer.tick.addListener(_onBufferTick);
   }
 
+  bool _tickScheduled = false;
+
+  /// Buffer tick gelir — `state =` build/teardown fazında yapılamaz (Riverpod
+  /// "modify provider while building" atar; örn. MindMapScreen.deactivate →
+  /// immediate schedule → _bumpTick). Faz güvenli değilse post-frame'e ertele.
   void _onBufferTick() {
+    if (_disposed || !mounted) return;
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      _applyTick();
+      return;
+    }
+    if (_tickScheduled) return;
+    _tickScheduled = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _tickScheduled = false;
+      _applyTick();
+    });
+  }
+
+  void _applyTick() {
     if (_disposed || !mounted) return;
     if (state == SaveStatus.saving) return;
     final hasPending = _ref.read(pendingWriteBufferProvider).hasPending;

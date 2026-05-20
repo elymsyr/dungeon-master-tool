@@ -48,6 +48,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // combat_state settings patch (PendingWriteBuffer combatTick), so we batch
   // local keystrokes here before the per-state copyWith fires.
   Timer? _notesDebounce;
+  // Captured in initState while `ref` is valid; dispose()/_onNotesChanged use
+  // this instead of `ref.read` — `ref` is unsafe once the element is
+  // deactivated. Mirrors the `late final BattleMapNotifier` pattern in
+  // battle_map_screen.dart.
+  late final CombatNotifier _combatNotifier;
 
   // Bottom tabs (desktop/tablet)
   int _bottomTabIndex = 0;
@@ -69,6 +74,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _bottomTabIndex = ref.read(uiStateProvider).sessionBottomTab;
     _mobileTabIndex = ref.read(uiStateProvider).sessionMobileTab;
     _visitedBottomTabs.add(_bottomTabIndex);
+    _combatNotifier = ref.read(combatProvider.notifier);
     _notesController.text = ref.read(combatProvider).sessionNotes;
     _notesController.addListener(_onNotesChanged);
   }
@@ -77,9 +83,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _notesDebounce?.cancel();
     _notesDebounce = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      ref
-          .read(combatProvider.notifier)
-          .updateSessionNotes(_notesController.text);
+      _combatNotifier.updateSessionNotes(_notesController.text);
     });
   }
 
@@ -88,9 +92,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _notesDebounce?.cancel();
     _notesController.removeListener(_onNotesChanged);
     // Flush any pending edit so closing the screen doesn't lose the last
-    // keystrokes within the debounce window.
-    final notifier = ref.read(combatProvider.notifier);
-    notifier.updateSessionNotes(_notesController.text);
+    // keystrokes within the debounce window. Uses the notifier captured in
+    // initState — `ref` is unsafe here (element already deactivated).
+    _combatNotifier.updateSessionNotes(_notesController.text);
     _logInputController.dispose();
     _notesController.dispose();
     super.dispose();

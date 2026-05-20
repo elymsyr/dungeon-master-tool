@@ -39,17 +39,19 @@ class WorldMembersNotifier
   /// [force]=true ise `_bootstrapped` guard'ını atlar; channel re-subscribe
   /// veya world reopen sonrası taze roster çekmek için kullanılır.
   Future<void> bootstrap({bool force = false}) async {
-    if (_bootstrapped && !force) return;
+    if (!mounted || (_bootstrapped && !force)) return;
     _bootstrapped = true;
     if (_service is NoOpWorldMembershipService) {
-      state = const AsyncValue.data([]);
+      if (mounted) state = const AsyncValue.data([]);
       return;
     }
     try {
       final rows = await _service.listMembers(worldId);
+      if (!mounted) return;
       state = AsyncValue.data(rows);
     } catch (e, st) {
       debugPrint('WorldMembersNotifier bootstrap error: $e');
+      if (!mounted) return;
       state = AsyncValue.error(e, st);
     }
   }
@@ -68,6 +70,7 @@ class WorldMembersNotifier
         : DateTime.tryParse(joinedAtStr) ?? DateTime.now();
 
     final profile = await _fetchProfile(userId);
+    if (!mounted) return;
     final member = WorldMember(
       worldId: worldId,
       userId: userId,
@@ -89,6 +92,7 @@ class WorldMembersNotifier
 
   /// CDC DELETE — userId üzerinden granular remove.
   void applyLeave(String userId) {
+    if (!mounted) return;
     final list = state.valueOrNull;
     if (list == null) return;
     final next = list.where((m) => m.userId != userId).toList();
@@ -98,6 +102,7 @@ class WorldMembersNotifier
 
   void clear() {
     _bootstrapped = false;
+    if (!mounted) return;
     state = const AsyncValue.data([]);
   }
 

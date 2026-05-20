@@ -327,6 +327,17 @@ class WorldRepositoryImpl implements CampaignRepository {
         coveredPackageEntityIds.add(e.packageEntityId!);
       }
     }
+    // Self-heal: ensure the built-in SRD pack link exists before synthesis.
+    // A player who joined before the link-based idempotency fix has no
+    // installed_packages row — without this, synthesis yields nothing and
+    // the built-in catalog is empty. Cheap when already linked (one query).
+    if (world.templateId == builtinDnd5eV2SchemaId) {
+      await SrdCorePackageBootstrap(_db).ensureInstalled();
+      await SrdCoreBootstrap(_db).ensureImported(
+        worldId: worldId,
+        build: generateBuiltinDnd5eV2Schema(),
+      );
+    }
     final synth = await synthesizeWorldBuiltins(
       _db,
       worldId,
