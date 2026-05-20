@@ -258,7 +258,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 // Round badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(6)),
+                  decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: palette.chr),
                   child: Text(l10n.sessionRound(enc?.round ?? 1), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                 ),
                 const SizedBox(width: 8),
@@ -951,7 +951,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: palette.chr),
                 child: Text(l10n.sessionRoundShort(enc?.round ?? 1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               ),
               const SizedBox(width: 4),
@@ -1026,7 +1026,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
           color: isActive ? palette.tabActiveBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.br,
         ),
         child: Text(label, style: TextStyle(
           fontSize: 11,
@@ -1205,8 +1205,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     String? lastDie;
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(palette.cardBorderRadius)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -1324,7 +1324,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           decoration: BoxDecoration(
                             color: palette.featureCardBg,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: palette.chr,
                           ),
                           child: Text('$quantity', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                         ),
@@ -1600,7 +1600,7 @@ class _MobileCombatCard extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isActive ? palette.tokenBorderActive.withValues(alpha: 0.08) : palette.featureCardBg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: palette.cbr,
           border: Border.all(
             color: isActive ? palette.tokenBorderActive : palette.featureCardBorder,
             width: isActive ? 2 : 1,
@@ -1617,7 +1617,7 @@ class _MobileCombatCard extends StatelessWidget {
                   width: 28, height: 28,
                   decoration: BoxDecoration(
                     color: palette.tabBg,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: palette.chr,
                   ),
                   child: Center(
                     child: Text(init, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
@@ -1637,7 +1637,7 @@ class _MobileCombatCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: palette.tabBg,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.chr,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1664,7 +1664,7 @@ class _MobileCombatCard extends StatelessWidget {
                   onTap: () => onModifyStat('hp', -1),
                   child: Container(
                     width: 28, height: 28,
-                    decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: palette.br),
                     child: Center(child: Text('-', style: TextStyle(fontSize: 16, color: palette.hpBtnText, fontWeight: FontWeight.bold))),
                   ),
                 ),
@@ -1675,7 +1675,7 @@ class _MobileCombatCard extends StatelessWidget {
                   onTap: () => onModifyStat('hp', 1),
                   child: Container(
                     width: 28, height: 28,
-                    decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: palette.br),
                     child: Center(child: Text('+', style: TextStyle(fontSize: 16, color: palette.hpBtnText, fontWeight: FontWeight.bold))),
                   ),
                 ),
@@ -1805,7 +1805,7 @@ class _CombatantRow extends ConsumerWidget {
                     children: [
                       InkWell(
                         onTap: () => onModifyStat(c, col.subFieldKey, -1, statsMap, cfg),
-                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(3)),
+                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: palette.br),
                           child: Center(child: Text('-', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
                       ),
                       const SizedBox(width: 2),
@@ -1824,7 +1824,7 @@ class _CombatantRow extends ConsumerWidget {
                       const SizedBox(width: 2),
                       InkWell(
                         onTap: () => onModifyStat(c, col.subFieldKey, 1, statsMap, cfg),
-                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(3)),
+                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: palette.br),
                           child: Center(child: Text('+', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
                       ),
                     ],
@@ -1940,7 +1940,7 @@ class _CombatantRow extends ConsumerWidget {
           onTap: () => onShowAddCondition(c.id, cfg.conditions),
           child: Container(
             width: 24, height: 24,
-            decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: palette.cbr),
             child: Icon(Icons.add, size: 12, color: palette.sidebarLabelSecondary),
           ),
         ),

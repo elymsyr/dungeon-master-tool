@@ -1225,7 +1225,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black38,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: widget.palette.chr,
                       ),
                       child: Text(
                         '${_currentIndex + 1}/${widget.images.length}',

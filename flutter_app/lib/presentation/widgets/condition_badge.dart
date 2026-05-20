@@ -166,9 +166,9 @@ class ConditionBadge extends ConsumerWidget {
           value: 'remove',
           child: Row(
             children: [
-              Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
+              Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
               const SizedBox(width: 8),
-              Text('Remove', style: TextStyle(fontSize: 12, color: Colors.red[300])),
+              Text('Remove', style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
             ],
           ),
         ),
