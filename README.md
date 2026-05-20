@@ -24,7 +24,7 @@
   </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v8.2.0--beta-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v8.3.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
@@ -82,6 +82,7 @@ Planned for upcoming releases — order not final, scope may shift between patch
 - **Realtime Sync** -- Character, member, and world-entity changes stream to every connected client via change-data-capture; offline edits reconcile on reconnect.
 - **Character Ownership** -- Claim a world character to make it yours, release it back to the world, or delete it (if you're the DM and nobody owns it).
 - **Personal Cloud Sync** -- Back up your own characters, worlds, templates, and packages to your account so you can pick them up on another device.
+- **Graceful Offline** -- Network-backed screens (feed, marketplace, messages, profiles, game listings) show a single clean "You're offline" placeholder instead of infinite spinners, and auto-recover when the connection returns. Outbox writes hold and flush on reconnect.
 
 ### Social & Community
 
