@@ -6,11 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/connectivity_provider.dart';
 import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
+import '../../../application/services/pending_write_buffer.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -96,8 +100,21 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   }
 
   Future<void> _exitToHub() async {
-    // Manuel sync modeli: çıkışta otomatik save yok.
-    if (!mounted) return;
+    // Çıkışta pending row-level edit'leri flush + (online ise) outbox
+    // forceTick — player'ın debounce'lu karakter düzenlemeleri kaybolmasın.
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'exit-world',
+      'Saving...',
+      () async {
+        await ref.read(pendingWriteBufferProvider).flush();
+        final online =
+            ref.read(connectivityStreamProvider).valueOrNull ?? false;
+        if (online) {
+          await ref.read(syncEngineProvider).forceTick();
+        }
+      },
+    );
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     if (mounted) context.go('/hub');
@@ -108,8 +125,9 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
-    // Manuel sync modeli: realtime + outbox drain manuel Sync butonu üzerinden
-    // tetiklenir. Otomatik watch yok.
+    // Auto-sync: worldMirrorApplierProvider _MainScreenState'te (MainScreen
+    // build) watch edilir — realtime subscribe + applyInitialState player
+    // için de otomatik çalışır. Sync butonu yalnızca manuel "Retry".
 
     final editMode = ref.watch(editModeProvider);
     final schema = ref.read(worldSchemaProvider);
