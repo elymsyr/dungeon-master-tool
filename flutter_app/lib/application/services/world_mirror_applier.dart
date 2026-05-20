@@ -190,33 +190,55 @@ class WorldMirrorApplier {
     }
   }
 
-  Future<void> _applyCharacterEvent(WorldSyncEvent e) async {
-    final notifier =
-        ref.read(worldCharactersProvider(e.worldId).notifier);
-    switch (e.eventType) {
+  Future<void> _applyCharacterEvent(WorldSyncEvent e) => applyCharacterCdc(
+        eventType: e.eventType,
+        newRecord: e.newRecord,
+        oldRecord: e.oldRecord,
+        channelWorldId: e.worldId,
+      );
+
+  /// Karakter CDC event'ini local state'e uygular. Hem world channel
+  /// (`world_sync_service`) hem per-user channel (`personal_sync_service`)
+  /// tarafından kullanılır — char tab'dan (aktif dünya yokken) düzenleme de
+  /// canlı sync olsun diye. [channelWorldId] world channel'da kanalın dünya
+  /// id'si; per-user channel'da `null` geçilir, dünya id'si satırdan okunur.
+  Future<void> applyCharacterCdc({
+    required PostgresChangeEvent eventType,
+    required Map<String, dynamic> newRecord,
+    required Map<String, dynamic> oldRecord,
+    String? channelWorldId,
+  }) async {
+    if (_disposed) return;
+    switch (eventType) {
       case PostgresChangeEvent.delete:
-        final id = e.oldRecord['id'] as String?;
+        final id = oldRecord['id'] as String?;
         if (id == null) return;
         // CDC race guard: local pending edit varken remote uygulanmaz.
         if (_buffer.isPending('character:$id')) return;
-        notifier.removeMirror(id);
-        // 039 model: DELETE = canonical row gone. RPC'ler `(NULL,NULL)`
-        // CHECK violation olurdu yerine row'u siler. Hub-level local
-        // Character da silinmeli (cross-device DELETE echo).
+        final wid = (oldRecord['world_id'] as String?) ?? channelWorldId;
+        if (wid != null) {
+          ref.read(worldCharactersProvider(wid).notifier).removeMirror(id);
+        }
+        // 039 model: DELETE = canonical row gone. Hub-level local Character
+        // da silinmeli (cross-device DELETE echo).
         // ignore: discarded_futures
         ref.read(characterListProvider.notifier).removeMirror(id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
-        final id = e.newRecord['id'] as String?;
+        final id = newRecord['id'] as String?;
         if (id == null) return;
         if (_buffer.isPending('character:$id')) return;
-        final newWorldId = e.newRecord['world_id'] as String?;
-        final newOwnerId = e.newRecord['owner_id'] as String?;
+        final newWorldId = newRecord['world_id'] as String?;
+        final newOwnerId = newRecord['owner_id'] as String?;
         if (newWorldId == null) {
           // remove_from_world UPDATE: row dünya'dan koptu, orphan'a düştü.
           // Bu world view'dan çıkar; eğer ben owner'ım hub-level char'ı
-          // worldId/worldName=null patch et.
-          notifier.removeMirror(id);
+          // worldId=null patch et.
+          if (channelWorldId != null) {
+            ref
+                .read(worldCharactersProvider(channelWorldId).notifier)
+                .removeMirror(id);
+          }
           final selfUid = ref.read(authProvider)?.uid;
           if (selfUid != null && newOwnerId == selfUid) {
             final list = ref.read(characterListProvider).valueOrNull ??
@@ -231,32 +253,24 @@ class WorldMirrorApplier {
           }
           return;
         }
-        final row = _charRowFromCdc(e.newRecord, fallbackWorldId: e.worldId);
-        if (row != null) notifier.applyMirror(row);
-        // Hub-level mirror: personal_characters retire edildi (migration 040),
-        // owner'ın diğer cihazları world_characters CDC üzerinden senkron olur.
+        final row = _charRowFromCdc(newRecord, fallbackWorldId: newWorldId);
+        if (row != null) {
+          ref
+              .read(worldCharactersProvider(newWorldId).notifier)
+              .applyMirror(row);
+        }
+        // Hub-level mirror: personal_characters retire edildi (migration
+        // 040). Owner'ın hub char listesi (= editör kaynağı) tam payload'la
+        // güncellenir — yalnızca metadata patch'lemek DM'in içerik
+        // düzenlemesini player editörüne taşımıyordu.
         final selfUid = ref.read(authProvider)?.uid;
         if (selfUid != null && newOwnerId == selfUid && row != null) {
-          final list =
-              ref.read(characterListProvider).valueOrNull ?? const [];
-          final existing = list.where((x) => x.id == id).firstOrNull;
-          if (existing != null) {
-            final patched = existing.copyWith(
-              worldId: newWorldId,
-              ownerId: selfUid,
-              updatedAt: row.updatedAt.toUtc().toIso8601String(),
-            );
+          final fromPayload = await _characterFromPayload(row);
+          if (fromPayload != null) {
             // ignore: discarded_futures
-            ref.read(characterListProvider.notifier).applyMirror(patched);
-          } else {
-            // Yeni cihazda hiç görmediğimiz bir char — payload'dan tam
-            // Character üret (template/entity dahil).
-            final fromPayload = await _characterFromPayload(row);
-            if (fromPayload != null) {
-              // ignore: discarded_futures
-              ref.read(characterListProvider.notifier)
-                  .applyMirror(fromPayload);
-            }
+            ref
+                .read(characterListProvider.notifier)
+                .applyMirror(fromPayload);
           }
         }
       default:

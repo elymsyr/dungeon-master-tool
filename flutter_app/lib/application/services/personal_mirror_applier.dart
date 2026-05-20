@@ -20,6 +20,8 @@ import 'world_mirror_service.dart';
 ///   - `world_members` INSERT (self) → `onlineWorldIdsProvider.add` +
 ///     hub world list refresh. DELETE (self) → karşılığı yoksa local
 ///     world'ü purge et (DM-kick on başka cihaz senaryosu).
+///   - `world_characters` (`owner_id = uid`) → `WorldMirrorApplier`
+///     ortak apply'ı; owner'ın karakteri dünya kapalıyken de canlı sync.
 ///
 /// **Package + worldless char realtime KALDIRILDI** (PR-3): `personal_packages`,
 /// `personal_package_entities`, `cloud_backups` CDC dinlenmez. Cross-device
@@ -119,10 +121,30 @@ class PersonalMirrorApplier {
       switch (e.table) {
         case 'world_members':
           await _applyMembersEvent(e);
+        case 'world_characters':
+          await _applyCharacterEvent(e);
       }
     } catch (err, st) {
       debugPrint('PersonalMirrorApplier error: $err\n$st');
     }
+  }
+
+  /// `world_characters` CDC per-user channel'dan `owner_id = uid` filtreli
+  /// gelir — owner'ın online-dünya karakteri dünya açık olmasa da (hub char
+  /// tab) canlı sync olsun. Apply mantığı world channel ile ortak
+  /// (`WorldMirrorApplier.applyCharacterCdc`).
+  Future<void> _applyCharacterEvent(PersonalSyncEvent e) async {
+    final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
+    if (id == null) return;
+    // Self-echo: kendi push'umuzun event'i — `WorldMirrorService` ile
+    // paylaşılan stamp map'i üzerinden filtrele.
+    if (mirror.isEchoOfId(id)) return;
+    await worldApplier?.applyCharacterCdc(
+      eventType: e.eventType,
+      newRecord: e.newRecord,
+      oldRecord: e.oldRecord,
+      channelWorldId: null,
+    );
   }
 
   /// `world_members` CDC kullanıcının kendi user_id'si üzerinden filtreli

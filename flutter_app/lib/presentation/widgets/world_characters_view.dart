@@ -694,8 +694,13 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
                     lines: characterStatLines(
                       character,
                       entities,
-                      ownerLabel:
-                          resolveCharacterOwnerLabel(ref, character),
+                      // Owner'ı kanonik kolondan çöz — payload_json'a gömülü
+                      // ownerId claim/release/assign RPC'lerinden sonra stale.
+                      ownerLabel: resolveOwnerLabelById(
+                        ref,
+                        widget.row.ownerId,
+                        widget.row.worldId,
+                      ),
                     ),
                     palette: palette,
                     compact: true,
