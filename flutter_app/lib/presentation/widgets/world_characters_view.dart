@@ -373,12 +373,18 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         await svc.release(widget.row.id);
         // Optimistic local patch: owner_id → NULL. CDC echo'su geldiğinde de
         // aynı state'i ekleyecek; arada UI latency için optimistic.
+        // `clearOwner: true` — copyWith(ownerId: null) `?? this.ownerId` ile
+        // eski owner'ı korurdu.
         ref
             .read(worldCharactersProvider(widget.row.worldId).notifier)
             .applyMirror(widget.row.copyWith(
-              ownerId: null,
+              clearOwner: true,
               updatedAt: DateTime.now(),
             ));
+        // Karakter artık bizim değil → hub char tab'ından + local Drift'ten
+        // düş. Dünya görünümünde unclaimed olarak kalır (sadece dünyada).
+        // ignore: discarded_futures
+        ref.read(characterListProvider.notifier).dropMirror(widget.row.id);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Character released')),
@@ -432,10 +438,12 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         final svc = ref.read(characterClaimServiceProvider);
         if (svc == null) return;
         await svc.release(widget.row.id);
+        // `clearOwner: true` — copyWith(ownerId: null) `?? this.ownerId` ile
+        // eski owner'ı korurdu. Eski owner'ın hub'ı CDC echo ile temizlenir.
         ref
             .read(worldCharactersProvider(widget.row.worldId).notifier)
             .applyMirror(widget.row.copyWith(
-              ownerId: null,
+              clearOwner: true,
               updatedAt: DateTime.now(),
             ));
         if (!mounted) return;

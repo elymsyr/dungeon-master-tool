@@ -253,24 +253,44 @@ class WorldMirrorApplier {
           }
           return;
         }
-        final row = _charRowFromCdc(newRecord, fallbackWorldId: newWorldId);
+        // Unchanged-TOAST guard: claim/release/assign gibi metadata-only
+        // UPDATE'lerde Postgres `payload_json`'u (büyük TOAST kolonu) WAL'a
+        // koymaz → CDC newRecord'da null gelir. Mevcut satırın payload'unu
+        // fallback al, aksi halde `{}` decode patlar (isim paket adına düşer).
+        final fallbackPayload = _resolveFallbackPayload(newWorldId, id);
+        final row = _charRowFromCdc(
+          newRecord,
+          fallbackWorldId: newWorldId,
+          fallbackPayloadJson: fallbackPayload,
+        );
         if (row != null) {
           ref
               .read(worldCharactersProvider(newWorldId).notifier)
               .applyMirror(row);
         }
         // Hub-level mirror: personal_characters retire edildi (migration
-        // 040). Owner'ın hub char listesi (= editör kaynağı) tam payload'la
-        // güncellenir — yalnızca metadata patch'lemek DM'in içerik
-        // düzenlemesini player editörüne taşımıyordu.
+        // 040).
         final selfUid = ref.read(authProvider)?.uid;
-        if (selfUid != null && newOwnerId == selfUid && row != null) {
-          final fromPayload = await _characterFromPayload(row);
-          if (fromPayload != null) {
+        if (selfUid != null && row != null) {
+          if (newOwnerId == selfUid) {
+            // Bu karakteri ben sahipleniyorum → hub char tab'ında tam
+            // payload'la tut (içerik + metadata). Yalnızca metadata
+            // patch'lemek DM'in içerik düzenlemesini player editörüne
+            // taşımıyordu.
+            final fromPayload = await _characterFromPayload(row);
+            if (fromPayload != null) {
+              // ignore: discarded_futures
+              ref
+                  .read(characterListProvider.notifier)
+                  .applyMirror(fromPayload);
+            }
+          } else {
+            // Ownership benden gitti (unclaim / başka oyuncuya assign) ama
+            // karakter dünyada kaldı → hub char tab'ımdan + local Drift'ten
+            // çıkar. worldCharactersProvider'da (dünya görünümü) unclaimed
+            // olarak kalır; cloud row silinmez.
             // ignore: discarded_futures
-            ref
-                .read(characterListProvider.notifier)
-                .applyMirror(fromPayload);
+            ref.read(characterListProvider.notifier).dropMirror(id);
           }
         }
       default:
@@ -298,22 +318,45 @@ class WorldMirrorApplier {
   WorldCharacterRow? _charRowFromCdc(
     Map<String, dynamic> row, {
     required String fallbackWorldId,
+    String? fallbackPayloadJson,
   }) {
     final id = row['id'] as String?;
     if (id == null) return null;
     final updatedRaw = row['updated_at'] as String?;
+    // Postgres unchanged-TOAST: metadata-only UPDATE'te payload_json CDC'de
+    // null gelir → mevcut payload'u koru, asla `{}`'a düşürme (decode patlar).
+    final cdcPayload = row['payload_json'] as String?;
     return WorldCharacterRow(
       id: id,
       worldId: (row['world_id'] as String?) ?? fallbackWorldId,
       ownerId: row['owner_id'] as String?,
       templateId: (row['template_id'] as String?) ?? '',
       templateName: (row['template_name'] as String?) ?? '',
-      payloadJson: (row['payload_json'] as String?) ?? '{}',
+      payloadJson: cdcPayload ?? fallbackPayloadJson ?? '{}',
       updatedAt: updatedRaw == null
           ? DateTime.fromMillisecondsSinceEpoch(0)
           : DateTime.tryParse(updatedRaw) ??
               DateTime.fromMillisecondsSinceEpoch(0),
     );
+  }
+
+  /// Unchanged-TOAST fallback: CDC `payload_json` null geldiğinde decode
+  /// edilebilir bir payload bul — önce world view satırı, sonra hub char
+  /// listesi. Hiçbiri yoksa null (genelde INSERT tam payload taşır).
+  String? _resolveFallbackPayload(String worldId, String id) {
+    final existing = ref
+        .read(worldCharactersProvider(worldId))
+        .valueOrNull
+        ?.where((r) => r.id == id)
+        .firstOrNull;
+    final fromWorld = existing?.payloadJson;
+    if (fromWorld != null && fromWorld != '{}') return fromWorld;
+    final hubChar =
+        (ref.read(characterListProvider).valueOrNull ?? const <Character>[])
+            .where((c) => c.id == id)
+            .firstOrNull;
+    if (hubChar != null) return jsonEncode(hubChar.toJson());
+    return null;
   }
 
   /// world_members CDC: roster always refreshes. Role + hub world-list
