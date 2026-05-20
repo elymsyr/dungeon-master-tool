@@ -39,8 +39,15 @@ final worldMirrorApplierProvider =
       WorldMirrorApplier(ref: ref, mirror: mirror, sync: sync)..start();
   ref.onDispose(applier.stop);
 
-  final worldId = await ref.watch(activeCampaignIdProvider.future);
-  final role = await ref.watch(currentWorldRoleProvider.future);
+  // selectAsync: yalnızca çözülen DEĞER (worldId / role) değişince recompute
+  // et. `.future` her recompute'ta yeni Future üretir — applyInitialState'in
+  // `_bumpRevision`'ı activeCampaignIdProvider'ı recompute ettirir, o da bu
+  // provider'ı yeniden tetikler → sonsuz döngü (rebuild fırtınası, tooltip
+  // ticker spam). selectAsync revision bump'larında değer aynıysa susar.
+  final worldId =
+      await ref.watch(activeCampaignIdProvider.selectAsync((id) => id));
+  final role =
+      await ref.watch(currentWorldRoleProvider.selectAsync((r) => r));
   if (worldId == null || role == WorldRole.none) return applier;
 
   // Race koşulu: subscribe öncesi yapılan join'ler kaybedilir. Channel
