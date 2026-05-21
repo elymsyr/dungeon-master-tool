@@ -38,6 +38,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/services/character_resolver.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -1698,6 +1699,23 @@ class _CharacterEditorScreenState
     // character) or the bundled SRD map (worldless character). Either
     // path returns a non-null map so feat / class / race chips render.
     final entities = _readEntitiesFor(character);
+
+    // Combat-stats grid: feed the derived `level` (root field, kept current
+    // by level-up) and `ac` (resolver: equipped armor + Dex + shield) so
+    // those cells track live values instead of stale manual entries.
+    // Resolve against the in-editor working copy directly — the
+    // `effectiveCharacterProvider` only sees the persisted character, so it
+    // lags behind unsaved inventory equip toggles.
+    int? combatStatsLevel;
+    int? combatStatsAc;
+    if (f.fieldType == FieldType.combatStats) {
+      final rawLevel = character.entity.fields['level'];
+      combatStatsLevel = rawLevel is int
+          ? rawLevel
+          : (rawLevel is String ? int.tryParse(rawLevel) : null);
+      combatStatsAc = CharacterResolver.resolve(character, entities).armorClass;
+    }
+
     final tile = FieldWidgetFactory.create(
       schema: f,
       value: value,
@@ -1723,6 +1741,8 @@ class _CharacterEditorScreenState
       entities: entities,
       entityFields: character.entity.fields,
       ref: ref,
+      combatStatsLevel: combatStatsLevel,
+      combatStatsAc: combatStatsAc,
     );
 
     // Inline `!` badges for any pending level-up decisions that map to
@@ -3278,13 +3298,17 @@ class _StatChipsHeader extends ConsumerWidget {
     // rows. Render the compact variant and allow horizontal scroll so chips
     // can extend off-screen instead of pushing layout around.
     final isPhone = getScreenType(context) == ScreenType.phone;
-    // Pull the resolver-computed AC via .select so the chip strip rebuilds
-    // whenever inventory equip flags / acBonus / Dex shift — not on every
-    // unrelated effective-character mutation.
-    final effectiveAc = ref.watch(
-      effectiveCharacterProvider(character.entity.id)
-          .select((e) => e?.armorClass),
-    );
+    // Resolve AC off the live working `character` so equipping armor
+    // refreshes the chip immediately. `effectiveCharacterProvider` only sees
+    // the persisted copy and lags behind unsaved equip toggles. Campaign
+    // entities read (not watched) — this widget already rebuilds on every
+    // editor `_mutate`, which is when inventory actually changes.
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final entities = useCampaign
+        ? <String, Entity>{...builtin, ...ref.read(entityProvider)}
+        : builtin;
+    final effectiveAc =
+        CharacterResolver.resolve(character, entities).armorClass;
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(

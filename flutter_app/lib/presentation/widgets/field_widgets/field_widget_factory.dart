@@ -117,6 +117,13 @@ class FieldWidgetFactory {
     /// it so a tap on a referenced entity opens the target in the OPPOSITE
     /// panel rather than replacing the source card.
     String? panelId,
+
+    /// Derived overrides for the `combat_stats` grid — the character's root
+    /// `level` and resolver-computed armor class. When supplied the matching
+    /// cell renders read-only off the live value instead of the stale
+    /// manually-stored entry.
+    int? combatStatsLevel,
+    int? combatStatsAc,
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -224,6 +231,8 @@ class FieldWidgetFactory {
         value: value,
         readOnly: readOnly,
         onChanged: onChanged,
+        levelOverride: combatStatsLevel,
+        acOverride: combatStatsAc,
       ),
       FieldType.conditionStats => _CombatStatsFieldWidget(
         schema: schema,
@@ -1372,11 +1381,22 @@ class _CombatStatsFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
+  /// Derived overrides — when supplied, the matching grid cell shows the
+  /// computed value read-only instead of the manually stored `combat_stats`
+  /// entry. `levelOverride` mirrors the entity's root `level` field (kept in
+  /// sync by level-up); `acOverride` is the resolver-computed armor class
+  /// (armor + Dex + shield). Null = fall back to the editable stored value
+  /// (monsters / NPCs have no root level or resolver AC).
+  final int? levelOverride;
+  final int? acOverride;
+
   const _CombatStatsFieldWidget({
     required this.schema,
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.levelOverride,
+    this.acOverride,
   });
 
   @override
@@ -1412,24 +1432,42 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
           ('xp', 'XP', 'integer'),
         ];
 
+  /// Resolved override for a sub-field key, or null when the cell stays a
+  /// plain editable stored value.
+  int? _overrideFor(String key) {
+    if (key == 'level') return widget.levelOverride;
+    if (key == 'ac') return widget.acOverride;
+    return null;
+  }
+
+  /// Display text for [key]: the derived override when present, else the
+  /// stored `combat_stats` entry.
+  String _textFor(String key, Map<String, dynamic> stats) {
+    final ov = _overrideFor(key);
+    if (ov != null) return '$ov';
+    return stats[key]?.toString() ?? '';
+  }
+
   @override
   void initState() {
     super.initState();
     final stats = _stats;
     for (final f in _fields) {
-      _controllers[f.$1] = TextEditingController(
-        text: stats[f.$1]?.toString() ?? '',
-      );
+      _controllers[f.$1] = TextEditingController(text: _textFor(f.$1, stats));
     }
   }
 
   @override
   void didUpdateWidget(covariant _CombatStatsFieldWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
+    // Re-sync when the stored map OR a derived override (level-up / equipped
+    // armor) changed — both can shift the text a cell should display.
+    if (oldWidget.value != widget.value ||
+        oldWidget.levelOverride != widget.levelOverride ||
+        oldWidget.acOverride != widget.acOverride) {
       final stats = _stats;
       for (final f in _fields) {
-        final newText = stats[f.$1]?.toString() ?? '';
+        final newText = _textFor(f.$1, stats);
         final ctrl = _controllers[f.$1];
         if (ctrl != null && ctrl.text != newText) {
           ctrl.text = newText;
@@ -1493,13 +1531,23 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                             final alwaysEditable = f.$1 == 'hp' ||
                                 f.$1 == 'max_hp' ||
                                 f.$1 == 'temp_hp';
+                            // `level` / `ac` are derived (root level field +
+                            // resolver AC) — always read-only, never write the
+                            // stale stored value back via onChanged.
+                            final isDerived = _overrideFor(f.$1) != null;
                             final field = TextFormField(
                               key: ValueKey('cs_${f.$1}'),
                               controller: _controllers[f.$1],
-                              readOnly: widget.readOnly && !alwaysEditable,
+                              readOnly: isDerived ||
+                                  (widget.readOnly && !alwaysEditable),
                               textAlign: TextAlign.center,
                               decoration: InputDecoration(
                                 labelText: f.$2,
+                                // Keep the floating label centred over the
+                                // centred input text instead of snapping to
+                                // the top-left on focus.
+                                floatingLabelAlignment:
+                                    FloatingLabelAlignment.center,
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
                                   vertical: 8,
