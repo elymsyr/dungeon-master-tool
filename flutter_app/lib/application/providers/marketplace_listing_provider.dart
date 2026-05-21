@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/cached_provider.dart';
 import '../../core/utils/id_gen.dart';
@@ -11,6 +12,7 @@ import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
 import '../services/asset_ref_resolver.dart';
+import '../services/cover_image_bundler.dart';
 import '../services/marketplace_cover_encoder.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
@@ -187,6 +189,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         listing.itemType,
         listing.title,
         payload,
+        listing.coverImageB64,
       );
 
       await _ref.read(marketplaceLinksLocalDsProvider).setSource(
@@ -299,18 +302,40 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
   /// Imports a downloaded payload as a *new* local item. Returns the local
   /// id under which it was saved (campaign name / template schemaId /
   /// package name). Conflicting names get a " (imported)" suffix.
+  ///
+  /// [coverImageB64] — the listing's base64 cover thumbnail. When present it is
+  /// materialised to a self-contained local file and set as the imported
+  /// item's cover, overriding whatever (stale) `cover_image_path` the payload
+  /// carried from the publisher.
   Future<String> _importPayload(
     String itemType,
     String title,
     Map<String, dynamic> payload,
+    String? coverImageB64,
   ) async {
     switch (itemType) {
       case 'world':
         final name = await _uniqueCampaignName(title);
+        final cover =
+            await _materializeCover(coverImageB64, AppPaths.worldsDir);
+        if (cover != null) {
+          final meta = (payload['metadata'] as Map?)?.cast<String, dynamic>() ??
+              <String, dynamic>{};
+          meta['cover_image_path'] = cover;
+          payload['metadata'] = meta;
+        }
         await _ref.read(campaignRepositoryProvider).save(name, payload);
         return name;
       case 'package':
         final name = await _uniquePackageName(title);
+        final cover =
+            await _materializeCover(coverImageB64, AppPaths.packagesDir);
+        if (cover != null) {
+          final meta = (payload['metadata'] as Map?)?.cast<String, dynamic>() ??
+              <String, dynamic>{};
+          meta['cover_image_path'] = cover;
+          payload['metadata'] = meta;
+        }
         await _ref.read(packageRepositoryProvider).save(name, payload);
         return name;
       case 'character':
@@ -320,10 +345,19 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         }
         final imported = Character.fromJson(raw);
         final now = DateTime.now().toUtc().toIso8601String();
-        final fresh = imported.copyWith(
+        final charId = newId();
+        final cover = await _materializeCover(
+          coverImageB64,
+          AppPaths.charactersDir,
+        );
+        final entity = imported.entity.copyWith(
           id: newId(),
+          imagePath: cover ?? imported.entity.imagePath,
+        );
+        final fresh = imported.copyWith(
+          id: charId,
           worldId: null,
-          entity: imported.entity.copyWith(id: newId()),
+          entity: entity,
           createdAt: now,
           updatedAt: now,
         );
@@ -332,6 +366,25 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         return fresh.id;
     }
     throw ArgumentError('Unknown itemType: $itemType');
+  }
+
+  /// Writes the listing's base64 cover thumbnail to a self-contained local
+  /// file under [destDir] and returns its path. Best-effort — returns null
+  /// when there is no cover or the decode/write fails.
+  Future<String?> _materializeCover(
+    String? coverImageB64,
+    String destDir,
+  ) async {
+    if (coverImageB64 == null || coverImageB64.isEmpty) return null;
+    final tmp = <String, dynamic>{
+      'cover_image_data': coverImageB64,
+      'cover_image_ext': '.png', // marketplace_cover_encoder always emits PNG.
+    };
+    return CoverImageBundler.restore(
+      metadata: tmp,
+      destDir: destDir,
+      itemId: newId(), // Unique filename — worldsDir/packagesDir are flat.
+    );
   }
 
   Future<String> _uniqueCampaignName(String desired) async {
