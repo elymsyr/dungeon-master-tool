@@ -13,8 +13,6 @@ import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
-import '../providers/online_worlds_provider.dart';
-import '../providers/role_provider.dart';
 import '../providers/world_characters_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
@@ -74,11 +72,18 @@ class WorldMirrorApplier {
   /// ile atlanan event'lerde boşa bump atılmasın).
   bool _revisionDirty = false;
 
+  /// Captured at construction (host provider building → `ref` clean). The
+  /// notifier is owned by the stable `activeCampaignProvider`, so it stays
+  /// valid for world-removal work even after this applier's host is torn
+  /// down by a role-cache invalidation.
+  late final ActiveCampaignNotifier _campaign;
+
   WorldMirrorApplier({
     required this.ref,
     required this.mirror,
     required this.sync,
   }) {
+    _campaign = ref.read(activeCampaignProvider.notifier);
     _batcher = _EventBatcher(window: _kBatchWindow, onFlush: _flushBatch);
   }
 
@@ -462,20 +467,16 @@ class WorldMirrorApplier {
     }
     final selfUid = ref.read(authProvider)?.uid;
     final isSelf = selfUid != null && eventUid == selfUid;
+    if (!isSelf) return;
     // Snapshot role BEFORE invalidation — needed to choose trash vs purge
     // when the membership row just vanished (server-side cascade after a
     // DM-driven world delete on another device).
-    final priorRole = isSelf
-        ? (ref.read(worldRoleProvider(e.worldId)).valueOrNull ?? WorldRole.none)
-        : WorldRole.none;
-    if (isSelf) {
-      ref.invalidate(worldRoleProvider(e.worldId));
-      ref.invalidate(currentWorldRoleProvider);
-      ref.invalidate(campaignInfoListProvider);
-      ref.invalidate(campaignListProvider);
-    }
+    final priorRole = _campaign.cachedWorldRole(e.worldId);
+    // Role + hub caches refresh via the stable notifier ref: invalidating
+    // `currentWorldRoleProvider` tears down this applier's host provider,
+    // so the applier must not invalidate (or read) via its own `ref` after.
+    _campaign.refreshWorldCaches(e.worldId);
     if (e.eventType != PostgresChangeEvent.delete) return;
-    if (!isSelf) return;
     // DM cross-device: DM on device A deleted the world → server cascade
     // dropped my membership row here on device B. Soft-delete (trash) so
     // the user can still restore. Player path stays as hard purge.
@@ -484,7 +485,7 @@ class WorldMirrorApplier {
       return;
     }
     try {
-      final role = await ref.read(worldRoleProvider(e.worldId).future);
+      final role = await _campaign.recheckWorldRole(e.worldId);
       if (role == WorldRole.none) {
         await purgeLocalWorld(e.worldId);
       }
@@ -495,46 +496,29 @@ class WorldMirrorApplier {
 
   /// DM cross-device delete echo: move the local mirror to trash without
   /// firing a fresh cloud delete (the originating device already did it).
-  Future<void> _trashLocalWorld(String worldId) async {
-    final list = ref.read(campaignInfoListProvider).valueOrNull;
-    if (list == null) return;
-    final match = list.where((c) => c.id == worldId).firstOrNull;
-    if (match == null) return;
-    final notifier = ref.read(activeCampaignProvider.notifier);
-    await notifier.delete(match.name);
-    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
-    ref.invalidate(campaignListProvider);
-    ref.invalidate(campaignInfoListProvider);
-  }
+  /// Routed through the stable [ActiveCampaignNotifier] — see [_campaign].
+  Future<void> _trashLocalWorld(String worldId) =>
+      _campaign.trashWorldById(worldId);
 
   /// Public so the per-user sync applier can purge a world when the
   /// `world_members` DELETE event arrives via the personal channel (e.g.
   /// the user is logged in on another device and got kicked there).
-  Future<void> purgeLocalWorld(String worldId) async {
-    final list = ref.read(campaignInfoListProvider).valueOrNull;
-    if (list == null) return;
-    final match = list.where((c) => c.id == worldId).firstOrNull;
-    if (match == null) return;
-    final notifier = ref.read(activeCampaignProvider.notifier);
-    await notifier.purge(match.name);
-    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
-    ref.invalidate(campaignListProvider);
-    ref.invalidate(campaignInfoListProvider);
-  }
+  /// Routed through the stable [ActiveCampaignNotifier] — see [_campaign].
+  Future<void> purgeLocalWorld(String worldId) =>
+      _campaign.purgeWorldById(worldId);
 
   Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
     if (e.eventType == PostgresChangeEvent.delete) {
       final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
       if (worldId == null) return;
-      ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
-      ref.invalidate(worldRoleProvider(worldId));
-      ref.invalidate(currentWorldRoleProvider);
-      ref.invalidate(campaignInfoListProvider);
-      ref.invalidate(campaignListProvider);
+      // Routed through the stable notifier: it purges the local mirror AND
+      // refreshes role/hub caches via its own ref. Invalidating
+      // `currentWorldRoleProvider` tears down this applier (its host
+      // watches that provider), so the applier must not touch `ref` here.
       try {
-        await purgeLocalWorld(worldId);
+        await _campaign.purgeWorldById(worldId);
       } catch (err) {
-        debugPrint('_applyWorldsEvent purgeLocalWorld error: $err');
+        debugPrint('_applyWorldsEvent purgeWorldById error: $err');
       }
       return;
     }

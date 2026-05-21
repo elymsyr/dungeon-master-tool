@@ -112,6 +112,8 @@
   "landingInfoConfirmEmail": "Check your email to confirm your account.",
   "menuReportBug": "Report a Bug",
   "mediaQuotaFull": "Storage quota full — image kept on this device.",
+  "mediaImageLimitReached": "Up to {count} images per entity.",
+  "@mediaImageLimitReached": { "placeholders": { "count": { "type": "int" } } },
 
   "hubBtnMarketplace": "Marketplace",
   "hubTooltipRefresh": "Refresh from cloud",

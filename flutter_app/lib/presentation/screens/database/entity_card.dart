@@ -1063,16 +1063,25 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   bool get _showControls => _hovered || Platform.isAndroid || Platform.isIOS;
 
   Future<void> _pickImage() async {
+    // Per-entity image cap — bail early when already full.
+    final remaining = kMaxEntityImages - widget.images.length;
+    if (remaining <= 0) {
+      showImageLimitSnackbar(context, kMaxEntityImages);
+      return;
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
     );
     if (result == null || result.files.isEmpty) return;
-    final picked = result.files
+    var picked = result.files
         .where((f) => f.path != null)
         .map((f) => f.path!)
         .toList();
     if (picked.isEmpty) return;
+    // Trim selection to the free slots; warn if extras were dropped.
+    final overflow = picked.length > remaining;
+    if (overflow) picked = picked.sublist(0, remaining);
 
     // Eager cloud upload: if the host item is online + signed-in, push each
     // freshly picked file to the cloud now so the ref is portable on every
@@ -1084,6 +1093,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
     if (!mounted) return;
     widget.onImagesChanged([...widget.images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
+    if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
 
     // World entity: flush the just-scheduled debounced write so the
     // `world_entities` outbox row is enqueued, then drain it now. Package
@@ -1207,9 +1217,9 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                       child: Container(
                         width: 26,
                         height: 26,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.black26,
-                          shape: BoxShape.circle,
+                          borderRadius: widget.palette.chr,
                         ),
                         child: const Icon(
                           Icons.chevron_left,
@@ -1235,9 +1245,9 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                       child: Container(
                         width: 26,
                         height: 26,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.black26,
-                          shape: BoxShape.circle,
+                          borderRadius: widget.palette.chr,
                         ),
                         child: const Icon(
                           Icons.chevron_right,
@@ -1276,8 +1286,10 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   ),
                 ),
 
-              // Edit: üstte ekle
-              if (!widget.readOnly && _showControls)
+              // Edit: üstte ekle (kMaxEntityImages'e ulaşınca gizle)
+              if (!widget.readOnly &&
+                  _showControls &&
+                  widget.images.length < kMaxEntityImages)
                 Positioned(
                   top: 4,
                   right: 4,
@@ -1286,9 +1298,9 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.black26,
-                        shape: BoxShape.circle,
+                        borderRadius: widget.palette.chr,
                       ),
                       child: const Icon(
                         Icons.add_photo_alternate,
@@ -1309,9 +1321,9 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.black26,
-                        shape: BoxShape.circle,
+                        borderRadius: widget.palette.chr,
                       ),
                       child: Icon(
                         Icons.close,

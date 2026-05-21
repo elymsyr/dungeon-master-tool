@@ -112,6 +112,7 @@
   "landingInfoConfirmEmail": "Bestätige dein Konto über die zugesandte E-Mail.",
   "menuReportBug": "Fehler melden",
   "mediaQuotaFull": "Speicherkontingent voll — Bild auf diesem Gerät gespeichert.",
+  "mediaImageLimitReached": "Bis zu {count} Bilder pro Eintrag.",
 
   "hubBtnMarketplace": "Marktplatz",
   "hubTooltipRefresh": "Aus Cloud aktualisieren",

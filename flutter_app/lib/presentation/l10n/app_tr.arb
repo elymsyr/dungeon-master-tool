@@ -112,6 +112,7 @@
   "landingInfoConfirmEmail": "Hesabını onaylamak için e-postanı kontrol et.",
   "menuReportBug": "Hata Bildir",
   "mediaQuotaFull": "Depolama kotanız dolu — resim bu cihazda saklandı.",
+  "mediaImageLimitReached": "Her varlığa en fazla {count} resim eklenebilir.",
 
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",
