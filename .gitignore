@@ -14,6 +14,7 @@ supabase/.branches
 worlds/
 cache/
 output.txt
+cloudflare/node_modules/
 
 # OS
 .DS_Store

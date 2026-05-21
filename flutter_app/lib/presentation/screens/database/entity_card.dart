@@ -23,6 +23,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/projection/projectable.dart';
 
 /// Module-level cache: sorted/filtered field schema lists per category.
@@ -1301,12 +1302,14 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   Widget _buildImage(String path) {
     // Entity.images[] may hold either a legacy absolute path or a
     // `dmt-asset://` cloud URI — both flow through AssetRefImage.
+    // No width/height/cacheWidth here: the 200x260 Container + StackFit.expand
+    // already constrains the box. Passing both cacheWidth and cacheHeight
+    // stretches the bitmap to those exact dims, squishing the portrait before
+    // BoxFit.cover can crop it. Decode on the larger (height) axis only.
     return AssetRefImage(
       ref: AssetRef(path),
-      width: 200,
-      height: 260,
       fit: BoxFit.cover,
-      cacheWidth: 400,
+      cacheHeight: cachePxFromLogical(context, 260),
       placeholder: _buildPlaceholder(),
       errorWidget: _buildPlaceholder(),
     );

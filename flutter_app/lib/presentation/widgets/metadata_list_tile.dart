@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
+import 'asset_ref_image.dart';
 
 /// Cover + name + description + tags içeren shared list satırı.
 /// Hub tab'larında (Characters / Worlds / Packages / Templates) kullanılır.
@@ -65,8 +65,9 @@ class MetadataListTile extends StatelessWidget {
     this.trailingControl,
   });
 
-  bool get _hasImage =>
-      coverImagePath.isNotEmpty && File(coverImagePath).existsSync();
+  // AssetRefImage local/cloud/public ref'leri çözer; çözülemezse fallback
+  // (errorWidget) gösterilir — varlık kontrolü artık render sırasında yapılır.
+  bool get _hasImage => coverImagePath.isNotEmpty;
 
   static const double _leftCoverWidth = 96;
   static const double _topCoverHeight = 120;
@@ -155,11 +156,11 @@ class MetadataListTile extends StatelessWidget {
     return Container(
       width: _leftCoverWidth,
       decoration: BoxDecoration(border: border),
-      child: Image.file(
-        File(coverImagePath),
+      child: AssetRefImage(
+        ref: AssetRef(coverImagePath),
         fit: BoxFit.cover,
         cacheWidth: 300,
-        errorBuilder: (_, _, _) => fallback,
+        errorWidget: fallback,
       ),
     );
   }
@@ -186,11 +187,11 @@ class MetadataListTile extends StatelessWidget {
       height: _topCoverHeight,
       decoration: BoxDecoration(border: border),
       width: double.infinity,
-      child: Image.file(
-        File(coverImagePath),
+      child: AssetRefImage(
+        ref: AssetRef(coverImagePath),
         fit: BoxFit.cover,
         cacheWidth: 1200,
-        errorBuilder: (_, _, _) => fallback,
+        errorWidget: fallback,
       ),
     );
   }

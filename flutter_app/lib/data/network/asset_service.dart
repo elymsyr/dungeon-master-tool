@@ -6,6 +6,9 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/value_objects/asset_ref.dart';
+import '../../domain/value_objects/media_kind.dart';
+
 /// Cloudflare R2 asset pipeline — Worker gatekeeper'ı üzerinden upload/download.
 ///
 /// Mimari bkz. docs/ONLINE_REPORT.md §4.3, §7.3, §8.1.
@@ -42,6 +45,7 @@ class AssetService {
   Future<Uri> uploadAsset(
     File file, {
     required String campaignId,
+    required MediaKind kind,
     String? sessionId,
   }) async {
     final user = _requireUser();
@@ -52,10 +56,12 @@ class AssetService {
     }
 
     final bytes = await file.readAsBytes();
-    if (bytes.length > maxItemBytes) {
+    // Per-kind limit (2MB resim / 5MB battle map). [maxItemBytes] (10MB) hard
+    // ceiling olarak kalır; Worker da `X-Asset-Kind` ile per-kind uygular.
+    if (bytes.length > kind.maxBytes) {
       throw AssetServiceException(
         'too_large',
-        '${bytes.length} > $maxItemBytes',
+        '${bytes.length} > ${kind.maxBytes}',
       );
     }
     final sha = sha256.convert(bytes).toString();
@@ -82,6 +88,7 @@ class AssetService {
     req.headers.set(HttpHeaders.contentTypeHeader, mime);
     req.headers.contentLength = bytes.length;
     req.headers.set('X-Content-SHA256', sha);
+    req.headers.set('X-Asset-Kind', kind.wireName);
     req.add(bytes);
 
     final res = await req.close();
@@ -108,6 +115,69 @@ class AssetService {
     });
 
     return Uri.parse('dmt-asset://$r2Key');
+  }
+
+  /// Storage-dolu geçici paylaşım: dosyayı `transient/{uid}/{sha}.{ext}`
+  /// key'ine yükler. `community_assets` satırı OLUŞTURULMAZ → quota'ya sayılmaz
+  /// (Worker `transient/` prefix'inde quota check'i atlar). Dönen ref
+  /// `dmt-transient://{sha}.{ext}` — uploader id taşımaz, oyuncu SHA ile
+  /// local cache'i kontrol eder.
+  Future<Uri> uploadTransient(File file, {required MediaKind kind}) async {
+    final user = _requireUser();
+    final token = _requireToken();
+
+    if (!await file.exists()) {
+      throw AssetServiceException('file_not_found', file.path);
+    }
+    final bytes = await file.readAsBytes();
+    if (bytes.length > kind.maxBytes) {
+      throw AssetServiceException(
+        'too_large',
+        '${bytes.length} > ${kind.maxBytes}',
+      );
+    }
+    final sha = sha256.convert(bytes).toString();
+    final ext = _extensionOf(file.path);
+    final mime = _guessMime(ext);
+    final r2Key = 'transient/${user.id}/$sha$ext';
+
+    final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
+    final req = await _httpClient.putUrl(uri);
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+    req.headers.set(HttpHeaders.contentTypeHeader, mime);
+    req.headers.contentLength = bytes.length;
+    req.headers.set('X-Content-SHA256', sha);
+    req.headers.set('X-Asset-Kind', kind.wireName);
+    req.add(bytes);
+
+    final res = await req.close();
+    if (res.statusCode != 200) {
+      final body = await _readBody(res);
+      throw AssetServiceException(
+        'transient_upload_failed_${res.statusCode}',
+        body,
+      );
+    }
+    await res.drain<void>();
+
+    // SHA-cache'e de yaz — DM kendi gösterdiği resmi yeniden indirmesin.
+    final cacheFile = _cacheFileFor(sha);
+    await cacheFile.parent.create(recursive: true);
+    await cacheFile.writeAsBytes(bytes, flush: true);
+
+    return Uri.parse(AssetRef.formatTransientUri(sha, ext));
+  }
+
+  /// Geçici paylaşılan bir asset'i SHA ile cache-first indirir. Cache hit'te
+  /// (resim daha önce alındı veya aynı SHA'lı sayılan asset cache'li) sıfır
+  /// transfer. [downloadAsset] ile aynı SHA-cache'i (`cacheDir/assets/`)
+  /// kullanır.
+  Future<File> downloadTransient(
+    String sha256Hex,
+    String ext,
+    String uploaderId,
+  ) {
+    return downloadAsset('transient/$uploaderId/$sha256Hex$ext');
   }
 
   /// Cache-first download. SHA-256 doğrulaması yapar; mismatch → cache at + hata.

@@ -12,7 +12,7 @@
 
 import { JwtError, verifyJwt } from './jwt';
 import { checkRateLimit } from './rate_limit';
-import { checkAssetAccess, checkAssetQuota } from './rls';
+import { checkAssetAccess, checkAssetQuota, checkTransientAccess } from './rls';
 
 export interface Env {
   R2_BUCKET: R2Bucket;
@@ -29,8 +29,23 @@ const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers':
-    'Authorization, Content-Type, X-Content-SHA256',
+    'Authorization, Content-Type, X-Content-SHA256, X-Asset-Kind',
   'Access-Control-Max-Age': '86400',
+};
+
+// Per-kind upload limitleri — Flutter MediaKind enum'u ile senkron tutulmalı.
+// Bilinmeyen/eksik kind MAX_UPLOAD_BYTES ceiling'ine düşer (eski client uyumu).
+// Ücretsiz kind'ler (character_portrait/world_cover/package_cover) normalde
+// Worker'a hiç gelmez — Supabase Storage'a gider — ama savunma için listede.
+const KIND_MAX_BYTES: Record<string, number> = {
+  character_portrait: 2 * 1024 * 1024,
+  world_cover: 2 * 1024 * 1024,
+  package_cover: 2 * 1024 * 1024,
+  world_entity_image: 2 * 1024 * 1024,
+  package_entity_image: 2 * 1024 * 1024,
+  character_extra_image: 2 * 1024 * 1024,
+  battle_map: 5 * 1024 * 1024,
+  mind_map_image: 2 * 1024 * 1024,
 };
 
 const ALLOWED_MIME_PREFIXES = ['image/', 'audio/'];
@@ -116,12 +131,24 @@ async function handleDownload(
 
   let allowed: boolean;
   try {
-    allowed = await checkAssetAccess(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-      userId,
-      r2Key,
-    );
+    if (r2Key.startsWith('transient/')) {
+      // transient/{uploaderId}/{sha}.{ext} — community_assets satırı yok;
+      // erişim ortak dünya üyeliğiyle belirlenir.
+      const uploaderId = r2Key.split('/')[1] ?? '';
+      allowed = await checkTransientAccess(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        uploaderId,
+      );
+    } else {
+      allowed = await checkAssetAccess(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        r2Key,
+      );
+    }
   } catch (err) {
     console.error('rls_check_failed', err);
     return jsonResponse(502, { error: 'access_check_failed' });
@@ -151,7 +178,11 @@ async function handleUpload(
   userId: string,
   r2Key: string,
 ): Promise<Response> {
-  if (!r2Key.startsWith(`${userId}/`)) {
+  // Transient objeler `transient/{userId}/...` altında; kalıcı objeler
+  // `{userId}/...` altında. Her iki halde de prefix JWT sub ile eşleşmeli.
+  const isTransient = r2Key.startsWith('transient/');
+  const requiredPrefix = isTransient ? `transient/${userId}/` : `${userId}/`;
+  if (!r2Key.startsWith(requiredPrefix)) {
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
 
@@ -165,38 +196,57 @@ async function handleUpload(
     return rateLimitedResponse(rl.limit, rl.resetInSeconds);
   }
 
-  const maxBytes = parseInt(env.MAX_UPLOAD_BYTES, 10);
+  // Effective limit = min(global ceiling, per-kind limit). X-Asset-Kind
+  // header'ı client tarafından gönderilir; tampered/eski client bilinmeyen
+  // kind gönderirse ceiling uygulanır (asla ceiling'in üstüne çıkamaz).
+  const ceilingBytes = parseInt(env.MAX_UPLOAD_BYTES, 10);
+  const assetKind = request.headers.get('X-Asset-Kind') ?? '';
+  const maxBytes = Math.min(
+    ceilingBytes,
+    KIND_MAX_BYTES[assetKind] ?? ceilingBytes,
+  );
   const contentLength = parseInt(
     request.headers.get('Content-Length') ?? '0',
     10,
   );
   if (!contentLength || contentLength > maxBytes) {
-    return jsonResponse(413, { error: 'too_large', max_bytes: maxBytes });
+    return jsonResponse(413, {
+      error: 'too_large',
+      max_bytes: maxBytes,
+      kind: assetKind,
+    });
   }
 
-  const quotaLimit = parseInt(env.USER_QUOTA_BYTES, 10);
-  // Asset upload'lar son ASSET_QUOTA_RESERVE_BYTES'i kullanamaz; o alan
-  // template/world/package backup'lara ayrılır.
-  const assetEffectiveLimit = Math.max(0, quotaLimit - ASSET_QUOTA_RESERVE_BYTES);
-  let quotaOk: boolean;
-  try {
-    quotaOk = await checkAssetQuota(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-      userId,
-      contentLength,
-      assetEffectiveLimit,
+  // Quota kontrolü YALNIZCA kalıcı (sayılan) upload'lar için. Transient
+  // objeler quota'ya sayılmaz — R2 lifecycle rule ile auto-purge edilir.
+  if (!isTransient) {
+    const quotaLimit = parseInt(env.USER_QUOTA_BYTES, 10);
+    // Asset upload'lar son ASSET_QUOTA_RESERVE_BYTES'i kullanamaz; o alan
+    // template/world/package backup'lara ayrılır.
+    const assetEffectiveLimit = Math.max(
+      0,
+      quotaLimit - ASSET_QUOTA_RESERVE_BYTES,
     );
-  } catch (err) {
-    console.error('quota_check_failed', err);
-    return jsonResponse(502, { error: 'quota_check_failed' });
-  }
-  if (!quotaOk) {
-    return jsonResponse(413, {
-      error: 'quota_exceeded',
-      limit_bytes: assetEffectiveLimit,
-      reserved_for_backups_bytes: ASSET_QUOTA_RESERVE_BYTES,
-    });
+    let quotaOk: boolean;
+    try {
+      quotaOk = await checkAssetQuota(
+        env.SUPABASE_URL,
+        env.SUPABASE_SERVICE_ROLE_KEY,
+        userId,
+        contentLength,
+        assetEffectiveLimit,
+      );
+    } catch (err) {
+      console.error('quota_check_failed', err);
+      return jsonResponse(502, { error: 'quota_check_failed' });
+    }
+    if (!quotaOk) {
+      return jsonResponse(413, {
+        error: 'quota_exceeded',
+        limit_bytes: assetEffectiveLimit,
+        reserved_for_backups_bytes: ASSET_QUOTA_RESERVE_BYTES,
+      });
+    }
   }
 
   const contentType = (request.headers.get('Content-Type') ?? '').toLowerCase();
@@ -221,6 +271,7 @@ async function handleUpload(
     customMetadata: {
       uploader: userId,
       sha256: sha256.toLowerCase(),
+      ...(isTransient ? { transient: 'true' } : {}),
     },
   });
 
@@ -237,7 +288,10 @@ async function handleDelete(
   userId: string,
   r2Key: string,
 ): Promise<Response> {
-  if (!r2Key.startsWith(`${userId}/`)) {
+  const requiredPrefix = r2Key.startsWith('transient/')
+    ? `transient/${userId}/`
+    : `${userId}/`;
+  if (!r2Key.startsWith(requiredPrefix)) {
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
   await env.R2_BUCKET.delete(r2Key);

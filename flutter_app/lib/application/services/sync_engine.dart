@@ -12,6 +12,7 @@ import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/value_objects/media_kind.dart';
 import '../providers/auth_provider.dart';
 import '../providers/beta_provider.dart';
 import '../providers/cloud_backup_provider.dart';
@@ -656,9 +657,10 @@ class SyncEngine {
     if (assetSvc != null) {
       try {
         entityMap = await MediaBundler(assetSvc).bundleEntityMedia(
-          worldId: worldId,
+          scopeId: worldId,
           entityId: row.targetPk,
           entityMap: entityMap,
+          kind: MediaKind.worldEntityImage,
         );
       } catch (e, st) {
         debugPrint('per-entity media bundle error: $e\n$st');
@@ -680,8 +682,24 @@ class SyncEngine {
       return;
     }
     final worldId = p['world_id'] as String;
-    final char = Character.fromJson(
-        (p['character'] as Map).cast<String, dynamic>());
+    var characterMap = (p['character'] as Map).cast<String, dynamic>();
+    // Faz 3: karakter medyası — portre ücretsiz Supabase'e (dmt-public://),
+    // ek resimler R2'ya (characterExtraImage). Bundle hatası sync'i bozmaz.
+    final assetSvc = _ref.read(assetServiceProvider);
+    if (assetSvc != null) {
+      try {
+        characterMap = await MediaBundler(
+          assetSvc,
+          freeMediaService: _ref.read(freeMediaServiceProvider),
+        ).bundleCharacterMedia(
+          scopeId: worldId.isEmpty ? 'personal' : worldId,
+          characterMap: characterMap,
+        );
+      } catch (e, st) {
+        debugPrint('character media bundle error: $e\n$st');
+      }
+    }
+    final char = Character.fromJson(characterMap);
     final refs = ((p['referenced_entity_ids'] as List?) ?? const [])
         .map((e) => e.toString())
         .toSet();
@@ -699,9 +717,21 @@ class SyncEngine {
     final worldId = p['world_id'] as String;
     // Delete op: clear the row by upserting empty. Granular delete semantics
     // not exposed — the table is 1:1 with the world.
-    final data = row.opType == _opDelete
+    var data = row.opType == _opDelete
         ? const <String, dynamic>{}
         : (p['data'] as Map).cast<String, dynamic>();
+    // Faz 3: battle map arkaplan resmi R2'ya bundle (battleMap, 5MB).
+    if (row.opType != _opDelete) {
+      final assetSvc = _ref.read(assetServiceProvider);
+      if (assetSvc != null) {
+        try {
+          data = await MediaBundler(assetSvc)
+              .bundleMapMedia(worldId: worldId, mapData: data);
+        } catch (e, st) {
+          debugPrint('map media bundle error: $e\n$st');
+        }
+      }
+    }
     await mirror.pushMapData(worldId: worldId, data: data);
   }
 
@@ -803,7 +833,21 @@ class SyncEngine {
       );
       return;
     }
-    final entityMap = (p['entity'] as Map).cast<String, dynamic>();
+    var entityMap = (p['entity'] as Map).cast<String, dynamic>();
+    // Faz 3: package entity kart resimleri R2'ya bundle (packageEntityImage).
+    final assetSvc = _ref.read(assetServiceProvider);
+    if (assetSvc != null) {
+      try {
+        entityMap = await MediaBundler(assetSvc).bundleEntityMedia(
+          scopeId: packageName,
+          entityId: entityId,
+          entityMap: entityMap,
+          kind: MediaKind.packageEntityImage,
+        );
+      } catch (e, st) {
+        debugPrint('package entity media bundle error: $e\n$st');
+      }
+    }
     await mirror.pushPersonalPackageEntity(
       packageName: packageName,
       entityId: entityId,
@@ -826,7 +870,31 @@ class SyncEngine {
       return;
     }
     final itemName = p['item_name'] as String;
-    final data = (p['data'] as Map).cast<String, dynamic>();
+    var data = (p['data'] as Map).cast<String, dynamic>();
+    // Faz 3: cloud_backup ile senkronlanan karakter (worldless / dünya
+    // offline) medyası da bundle edilmeli. `_handleWorldCharacter` world
+    // mirror yolunu bundle eder ama cloud_backup yolu etmiyordu — portre/ek
+    // resim local dosya yolu olarak cloud'a gidip ikinci cihazda çözülemez
+    // kalıyordu. Portre → ücretsiz Supabase (dmt-public://), ek resimler →
+    // R2 (dmt-asset://). Bundle hatası backup'ı bozmaz (best-effort).
+    if (type == 'character') {
+      final assetSvc = _ref.read(assetServiceProvider);
+      final charRaw = data['character'];
+      if (assetSvc != null && charRaw is Map) {
+        try {
+          final bundled = await MediaBundler(
+            assetSvc,
+            freeMediaService: _ref.read(freeMediaServiceProvider),
+          ).bundleCharacterMedia(
+            scopeId: 'personal',
+            characterMap: charRaw.cast<String, dynamic>(),
+          );
+          data = {...data, 'character': bundled};
+        } catch (e, st) {
+          debugPrint('cloud_backup character media bundle error: $e\n$st');
+        }
+      }
+    }
     final hash = _hashPayload(type, itemId, data);
     try {
       final remoteHash = await repo.fetchPayloadHashByItem(itemId, type);

@@ -17,6 +17,7 @@ import '../../../application/services/cloud_catchup_service.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/character_stat_chips.dart';
@@ -61,7 +62,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       debugPrint('Characters refresh error: $e');
     }
     if (!mounted) return;
-    ref.invalidate(characterListProvider);
+    // `invalidate` yerine `refresh()`: invalidate notifier'ı yok edip yenisini
+    // `AsyncValue.loading()` ile kurar → liste bir frame boş kalır → karakter
+    // "gelip kayboluyor" titremesi. `refresh()` = `_load()`, loading emit
+    // etmez; mevcut data state'i diskten yeniden yükleyerek günceller.
+    await ref.read(characterListProvider.notifier).refresh();
+    if (!mounted) return;
     setState(() => _refreshing = false);
   }
 
@@ -536,6 +542,8 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                         setDialogState(() => workingTags = v),
                     onCoverChanged: (v) =>
                         setDialogState(() => workingCover = v),
+                    coverKind: MediaKind.characterPortrait,
+                    coverScopeId: c.id,
                   ),
                   const SizedBox(height: 16),
                   Divider(height: 1, color: palette.featureCardBorder),

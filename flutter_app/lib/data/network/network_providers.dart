@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
 import 'asset_service.dart';
+import 'free_media_service.dart';
 import 'network_bridge.dart';
 import 'no_op_network_bridge.dart';
 import 'no_op_session_manager.dart';
@@ -45,4 +46,19 @@ final assetServiceProvider = Provider<AssetService?>((ref) {
     cacheDir: cacheDir,
   );
   return service;
+});
+
+/// FreeMediaService — ücretsiz medya pipeline (Supabase Storage `free-media`).
+///
+/// Karakter portresi + world/package kapak resimleri buradan gider; quota'ya
+/// sayılmaz. Worker URL gerekmez — yalnızca Supabase konfigüre olmalı.
+/// Konfigüre değilse null döner; çağıranlar local fallback yapar.
+final freeMediaServiceProvider = Provider<FreeMediaService?>((ref) {
+  if (!SupabaseConfig.isConfigured) return null;
+
+  final cacheDir = Directory(p.join(AppPaths.cacheDir, 'free_media'));
+  return FreeMediaService(
+    supabase: Supabase.instance.client,
+    cacheDir: cacheDir,
+  );
 });

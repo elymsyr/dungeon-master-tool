@@ -16,6 +16,9 @@ class CoverImageBundler {
   static Future<void> bundle(Map<String, dynamic> metadata) async {
     final path = metadata['cover_image_path'];
     if (path is! String || path.isEmpty) return;
+    // Zaten taşınabilir bir ref (dmt-public:// / dmt-asset://) — base64 gömme
+    // gereksiz; ref olduğu gibi envelope'da kalır ve cihazlar arası çözülür.
+    if (path.startsWith('dmt-')) return;
     try {
       final file = File(path);
       if (!await file.exists()) return;

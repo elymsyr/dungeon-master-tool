@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -14,6 +13,8 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
+import '../../domain/value_objects/asset_ref.dart';
+import '../services/asset_ref_resolver.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
@@ -230,9 +231,12 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       return null;
     }
     try {
-      final file = File(path);
-      if (!await file.exists()) {
-        debugPrint('marketplace cover: file missing at $path');
+      // Cover artık local path veya dmt-public:// / dmt-asset:// ref olabilir;
+      // resolver hepsini cache'li bir File'a indirger.
+      final file =
+          await _ref.read(assetRefResolverProvider).resolve(AssetRef(path));
+      if (file == null || !await file.exists()) {
+        debugPrint('marketplace cover: cannot resolve $path');
         return null;
       }
       final rawBytes = await file.readAsBytes();

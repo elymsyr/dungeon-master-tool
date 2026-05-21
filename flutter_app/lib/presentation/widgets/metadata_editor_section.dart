@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/global_tags_provider.dart';
 import '../../application/services/tag_moderation.dart';
+import '../../data/network/network_providers.dart';
+import '../../domain/value_objects/asset_ref.dart';
+import '../../domain/value_objects/media_kind.dart';
 import '../theme/dm_tool_colors.dart';
+import 'asset_ref_image.dart';
 
 /// Kart metadata'sı için shared editor: cover image + name + description + tags.
 /// Worlds / Packages / Templates / Characters settings dialog'larında aynı
@@ -26,6 +30,15 @@ class MetadataEditorSection extends ConsumerStatefulWidget {
   /// Name alanını gizle — entity_card gibi başka bir yerde isim düzenleniyorsa.
   final bool showNameField;
 
+  /// Verilirse kapak resmi seçildiğinde ücretsiz Supabase Storage'a eager
+  /// upload edilir (`dmt-public://` ref). Null ise local path saklanır —
+  /// template gibi online olmayan içerikler için davranış değişmez.
+  final MediaKind? coverKind;
+
+  /// `free_media_assets.scope_id` — galeri "this world" filtresi için
+  /// (world/package id). Opsiyonel.
+  final String? coverScopeId;
+
   const MetadataEditorSection({
     super.key,
     required this.name,
@@ -37,6 +50,8 @@ class MetadataEditorSection extends ConsumerStatefulWidget {
     required this.onTagsChanged,
     required this.onCoverChanged,
     this.showNameField = true,
+    this.coverKind,
+    this.coverScopeId,
   });
 
   @override
@@ -262,8 +277,9 @@ class _MetadataEditorSectionState
   }
 
   Widget _coverPreview(DmToolColors palette) {
-    final hasImage = widget.coverImagePath.isNotEmpty &&
-        File(widget.coverImagePath).existsSync();
+    // Boş değilse görsel var kabul edilir; AssetRefImage local/cloud/public
+    // ref'leri çözer, çözülemezse errorWidget gösterir.
+    final hasImage = widget.coverImagePath.isNotEmpty;
 
     return InkWell(
       onTap: _pickCover,
@@ -274,33 +290,39 @@ class _MetadataEditorSectionState
           color: palette.featureCardBg,
           borderRadius: palette.cbr,
           border: Border.all(color: palette.featureCardBorder),
-          image: hasImage
-              ? DecorationImage(
-                  image: FileImage(File(widget.coverImagePath)),
-                  fit: BoxFit.cover,
-                )
-              : null,
         ),
         alignment: Alignment.center,
         child: hasImage
-            ? Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Material(
-                    color: Colors.black54,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => widget.onCoverChanged(''),
-                      child: const Padding(
-                        padding: EdgeInsets.all(4),
-                        child: Icon(Icons.close,
-                            size: 16, color: Colors.white),
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: palette.cbr,
+                    child: AssetRefImage(
+                      ref: AssetRef(widget.coverImagePath),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Material(
+                        color: Colors.black54,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => widget.onCoverChanged(''),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(Icons.close,
+                                size: 16, color: Colors.white),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -324,6 +346,26 @@ class _MetadataEditorSectionState
       allowMultiple: false,
     );
     final path = result?.files.firstOrNull?.path;
-    if (path != null) widget.onCoverChanged(path);
+    if (path == null) return;
+
+    // Ücretsiz medya kind'i verildiyse + servis hazırsa Supabase Storage'a
+    // eager upload → dmt-public:// ref (cihazlar arası taşınabilir). Upload
+    // başarısız olur veya kind verilmezse local path saklanır.
+    final kind = widget.coverKind;
+    final svc = ref.read(freeMediaServiceProvider);
+    if (kind != null && svc != null) {
+      try {
+        final uri = await svc.uploadFreeMedia(
+          File(path),
+          kind: kind,
+          scopeId: widget.coverScopeId,
+        );
+        widget.onCoverChanged(uri.toString());
+        return;
+      } catch (_) {
+        // Upload hatası → local path fallback.
+      }
+    }
+    widget.onCoverChanged(path);
   }
 }
