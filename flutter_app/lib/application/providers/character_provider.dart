@@ -16,6 +16,7 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
+import '../services/entity_media_cleanup_service.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -357,6 +358,19 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
           itemId: characterId,
           type: 'character',
+        );
+  }
+
+  /// Best-effort: karakter kalıcı silindiğinde portre + ek resimlerinin cloud
+  /// objelerini temizler. Local cache korunur — trash'ten restore edilirse
+  /// resim local'den render olur. Bkz. [EntityMediaCleanupService].
+  void _cleanupCloudMedia(Character character) {
+    if (_ref.read(authProvider) == null) return;
+    final svc = _ref.read(entityMediaCleanupServiceProvider);
+    if (svc == null) return;
+    // ignore: discarded_futures
+    svc.cleanupCharacter(character.toJson()).catchError(
+          (Object e) => debugPrint('character media cleanup error: $e'),
         );
   }
 
@@ -848,6 +862,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     await _repo.delete(id, displayName: displayName, fallback: existing);
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
     _syncDelete(id, worldId: existing.worldId);
+    _cleanupCloudMedia(existing);
   }
 
   /// Local Character'in `worldId`'sini boşaltır. world_characters DB

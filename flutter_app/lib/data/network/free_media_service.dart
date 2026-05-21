@@ -148,8 +148,15 @@ class FreeMediaService {
         .toList();
   }
 
-  /// Storage object'ini + metadata satırını + local cache'i siler.
-  Future<void> deleteFreeMedia(String publicPath) async {
+  /// Storage object'ini + metadata satırını siler.
+  ///
+  /// [keepCache] `true` ise local SHA cache KORUNUR — entity silindiğinde
+  /// cloud objesi kalkar ama trash'ten restore edilirse resim local'den
+  /// render olmaya devam eder (bkz. EntityMediaCleanupService).
+  Future<void> deleteFreeMedia(
+    String publicPath, {
+    bool keepCache = false,
+  }) async {
     final user = _requireUser();
     await _supabase.storage.from(_bucket).remove([publicPath]);
     await _supabase
@@ -157,6 +164,7 @@ class FreeMediaService {
         .delete()
         .eq('owner_id', user.id)
         .eq('storage_path', publicPath);
+    if (keepCache) return;
     final cacheFile = _cacheFileFor(_shaFromPath(publicPath));
     if (await cacheFile.exists()) await cacheFile.delete();
   }

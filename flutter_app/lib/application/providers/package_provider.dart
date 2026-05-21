@@ -8,6 +8,7 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
+import '../services/entity_media_cleanup_service.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
@@ -347,6 +348,18 @@ class ActivePackageNotifier extends StateNotifier<String?> {
             );
       } catch (e) {
         debugPrint('package delete cloud_backup enqueue error: $e');
+      }
+    }
+
+    // Best-effort: pakete bağlı cloud medyayı (kapak + entity resimleri)
+    // temizler. Local cache korunur — trash'ten restore'da resim local kalır.
+    if (_ref.read(authProvider) != null) {
+      final cleanup = _ref.read(entityMediaCleanupServiceProvider);
+      if (cleanup != null) {
+        // ignore: discarded_futures
+        cleanup.cleanupPackage(packageName: packageName).catchError(
+              (Object e) => debugPrint('package media cleanup error: $e'),
+            );
       }
     }
   }
