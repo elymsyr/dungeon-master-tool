@@ -28,9 +28,16 @@ class UiState {
   final Map<String, List<String>> dbOpenRightByWorld;
   final Map<String, int> dbActiveLeftByWorld;
   final Map<String, int> dbActiveRightByWorld;
-  /// Persisted category-filter selection for the database sidebar.
-  /// Empty list = "show all" (no filter applied).
-  final List<String> dbFilterSlugs;
+  /// Persisted database-sidebar filter selections, keyed by world id
+  /// (activeCampaignProvider). Empty world id (null active) is keyed as ''.
+  /// Empty/absent = "show all". Per-world so filters don't leak across worlds
+  /// and survive exit/re-entry.
+  final Map<String, List<String>> dbFilterSlugsByWorld;
+  final Map<String, List<String>> dbFilterSourcesByWorld;
+  /// DM-only sharing filter — stores `_ShareFilter.name` strings.
+  final Map<String, List<String>> dbFilterShareModesByWorld;
+  /// Sort mode — stores `_SortMode.name` string.
+  final Map<String, String> dbSortModeByWorld;
 
   // Session
   final double sessionMainSplitterRatio;
@@ -70,7 +77,10 @@ class UiState {
     this.dbOpenRightByWorld = const {},
     this.dbActiveLeftByWorld = const {},
     this.dbActiveRightByWorld = const {},
-    this.dbFilterSlugs = const [],
+    this.dbFilterSlugsByWorld = const {},
+    this.dbFilterSourcesByWorld = const {},
+    this.dbFilterShareModesByWorld = const {},
+    this.dbSortModeByWorld = const {},
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
     this.sessionBottomTab = 0,
@@ -96,7 +106,10 @@ class UiState {
     Map<String, List<String>>? dbOpenRightByWorld,
     Map<String, int>? dbActiveLeftByWorld,
     Map<String, int>? dbActiveRightByWorld,
-    List<String>? dbFilterSlugs,
+    Map<String, List<String>>? dbFilterSlugsByWorld,
+    Map<String, List<String>>? dbFilterSourcesByWorld,
+    Map<String, List<String>>? dbFilterShareModesByWorld,
+    Map<String, String>? dbSortModeByWorld,
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
     int? sessionBottomTab,
@@ -121,7 +134,12 @@ class UiState {
       dbOpenRightByWorld: dbOpenRightByWorld ?? this.dbOpenRightByWorld,
       dbActiveLeftByWorld: dbActiveLeftByWorld ?? this.dbActiveLeftByWorld,
       dbActiveRightByWorld: dbActiveRightByWorld ?? this.dbActiveRightByWorld,
-      dbFilterSlugs: dbFilterSlugs ?? this.dbFilterSlugs,
+      dbFilterSlugsByWorld: dbFilterSlugsByWorld ?? this.dbFilterSlugsByWorld,
+      dbFilterSourcesByWorld:
+          dbFilterSourcesByWorld ?? this.dbFilterSourcesByWorld,
+      dbFilterShareModesByWorld:
+          dbFilterShareModesByWorld ?? this.dbFilterShareModesByWorld,
+      dbSortModeByWorld: dbSortModeByWorld ?? this.dbSortModeByWorld,
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
@@ -150,7 +168,10 @@ class UiState {
     'dbOpenRightByWorld': dbOpenRightByWorld,
     'dbActiveLeftByWorld': dbActiveLeftByWorld,
     'dbActiveRightByWorld': dbActiveRightByWorld,
-    'dbFilterSlugs': dbFilterSlugs,
+    'dbFilterSlugsByWorld': dbFilterSlugsByWorld,
+    'dbFilterSourcesByWorld': dbFilterSourcesByWorld,
+    'dbFilterShareModesByWorld': dbFilterShareModesByWorld,
+    'dbSortModeByWorld': dbSortModeByWorld,
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
     'sessionBottomTab': sessionBottomTab,
@@ -186,8 +207,13 @@ class UiState {
       dbOpenRightByWorld: _decodeListMap(json['dbOpenRightByWorld']),
       dbActiveLeftByWorld: _decodeIntMap(json['dbActiveLeftByWorld']),
       dbActiveRightByWorld: _decodeIntMap(json['dbActiveRightByWorld']),
-      dbFilterSlugs:
-          (json['dbFilterSlugs'] as List?)?.cast<String>() ?? const [],
+      // Legacy flat `dbFilterSlugs` (global list) intentionally dropped —
+      // one-time filter reset on upgrade.
+      dbFilterSlugsByWorld: _decodeListMap(json['dbFilterSlugsByWorld']),
+      dbFilterSourcesByWorld: _decodeListMap(json['dbFilterSourcesByWorld']),
+      dbFilterShareModesByWorld:
+          _decodeListMap(json['dbFilterShareModesByWorld']),
+      dbSortModeByWorld: _decodeStringMap(json['dbSortModeByWorld']),
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
       sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
@@ -213,6 +239,15 @@ Map<String, List<String>> _decodeListMap(dynamic raw) {
     if (k is String && v is List) {
       out[k] = v.whereType<String>().toList();
     }
+  });
+  return out;
+}
+
+Map<String, String> _decodeStringMap(dynamic raw) {
+  if (raw is! Map) return const {};
+  final out = <String, String>{};
+  raw.forEach((k, v) {
+    if (k is String && v is String) out[k] = v;
   });
   return out;
 }

@@ -2234,7 +2234,13 @@ class _AbilityRow extends StatelessWidget {
       AbilityScoreMethod.random ||
       AbilityScoreMethod.manual =>
         TextFormField(
-          key: ValueKey('manual_$abilityKey-$base'),
+          // Manual: stable key so typing (which updates `base`) doesn't
+          // rebuild the field and drop keyboard focus. Random: key tracks
+          // `base` so a reroll re-seeds the field (button press already
+          // dismisses the keyboard, so no focus loss).
+          key: method == AbilityScoreMethod.manual
+              ? ValueKey('manual_$abilityKey')
+              : ValueKey('random_$abilityKey-$base'),
           initialValue: '$base',
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(labelText: 'Base'),

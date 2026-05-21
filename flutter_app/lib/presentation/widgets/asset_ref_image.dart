@@ -79,12 +79,23 @@ class _AssetRefImageState extends ConsumerState<AssetRefImage> {
           return widget.errorWidget ??
               const Icon(Icons.broken_image_outlined);
         }
-        final autoW = widget.width != null
+        var autoW = widget.width != null
             ? cachePxFromLogical(context, widget.width!)
             : null;
-        final autoH = widget.height != null
+        var autoH = widget.height != null
             ? cachePxFromLogical(context, widget.height!)
             : null;
+        // Decode on one axis only. Setting both cacheWidth and cacheHeight
+        // makes ResizeImage stretch the bitmap to those exact dims, distorting
+        // the image before `fit` ever applies. Keep the larger axis so the
+        // decoded resolution stays generous.
+        if (autoW != null && autoH != null) {
+          if (autoW >= autoH) {
+            autoH = null;
+          } else {
+            autoW = null;
+          }
+        }
         return Image.file(
           file,
           fit: widget.fit,

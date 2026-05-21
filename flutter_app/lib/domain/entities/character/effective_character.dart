@@ -68,6 +68,12 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// authored `combat_stats.ac` field so re-equipping armor refreshes the
     /// display without manual edits.
     @Default(10) int armorClass,
+    /// Human-readable SRD 5.2.1 consequences of the currently equipped armor:
+    /// untrained-armor penalty (Disadvantage on STR/DEX Tests + no spells),
+    /// STR-requirement speed cut, and Stealth disadvantage. Empty when no
+    /// armor is worn or the worn armor triggers none of them. The character
+    /// editor renders these as a warning banner above the combat stats.
+    @Default([]) List<String> armorNotes,
     @Default(0) int speedBonus,
     /// Non-walking speeds in feet, keyed by mode (`fly`, `swim`, `climb`,
     /// `burrow`). Populated by effects like `climb_speed_equals_speed`

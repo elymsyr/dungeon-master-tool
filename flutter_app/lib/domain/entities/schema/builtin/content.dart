@@ -691,7 +691,9 @@ EntityCategorySchema _armorCategory(String schemaId, String now, int orderIndex)
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
   fb.relation('category_ref', 'Category', const ['armor-category'], required_: true);
-  fb.integer('base_ac', 'Base AC', required_: true, min: 10, max: 20);
+  // min 0: the Shield row stores base_ac 2 (an AC bonus, not a body-armor
+  // base). min 10 would reject it in the content editor.
+  fb.integer('base_ac', 'Base AC', required_: true, min: 0, max: 20);
   fb.boolean('adds_dex', 'Adds DEX', required_: true);
   fb.integer('dex_cap', 'DEX Cap', min: 0, max: 10);
   fb.integer('strength_requirement', 'STR Requirement', min: 0, max: 30);

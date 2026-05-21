@@ -388,10 +388,10 @@ class _CharacterEditorScreenState
               const SizedBox.shrink(),
             ],
             IconButton(
-              icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
+              icon: Icon(_readOnly ? Icons.visibility : Icons.edit,
                   size: 20),
               tooltip: _canEdit
-                  ? (_readOnly ? 'Edit' : 'View')
+                  ? (_readOnly ? 'View' : 'Edit')
                   : 'Read-only (not owner)',
               onPressed: !_canEdit
                   ? null
@@ -696,7 +696,10 @@ class _CharacterEditorScreenState
                     ? Image.file(
                         File(entity.imagePath),
                         fit: BoxFit.cover,
-                        cacheWidth: cachePxFromLogical(context, portraitSize),
+                        // Decode on a single axis only — passing both
+                        // cacheWidth and cacheHeight stretches the bitmap to
+                        // those exact dims, squishing the portrait before
+                        // BoxFit.cover can crop it.
                         cacheHeight: cachePxFromLogical(context, 260),
                         errorBuilder: (_, _, _) => portraitPlaceholder(),
                       )
@@ -1708,12 +1711,15 @@ class _CharacterEditorScreenState
     // lags behind unsaved inventory equip toggles.
     int? combatStatsLevel;
     int? combatStatsAc;
+    List<String> combatStatsArmorNotes = const [];
     if (f.fieldType == FieldType.combatStats) {
       final rawLevel = character.entity.fields['level'];
       combatStatsLevel = rawLevel is int
           ? rawLevel
           : (rawLevel is String ? int.tryParse(rawLevel) : null);
-      combatStatsAc = CharacterResolver.resolve(character, entities).armorClass;
+      final ec = CharacterResolver.resolve(character, entities);
+      combatStatsAc = ec.armorClass;
+      combatStatsArmorNotes = ec.armorNotes;
     }
 
     final tile = FieldWidgetFactory.create(
@@ -1743,6 +1749,7 @@ class _CharacterEditorScreenState
       ref: ref,
       combatStatsLevel: combatStatsLevel,
       combatStatsAc: combatStatsAc,
+      combatStatsArmorNotes: combatStatsArmorNotes,
     );
 
     // Inline `!` badges for any pending level-up decisions that map to

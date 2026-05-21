@@ -917,6 +917,35 @@ class CharacterResolver {
       }
     }
 
+    // ── 8b. Armor-worn conditions (SRD 5.2.1 p. 92) ────────────────────
+    // STR-requirement speed penalty, untrained-armor warning, and stealth
+    // disadvantage. Runs after Pass 8 so `armorCats` is complete, and before
+    // the `extraSpeeds` resolution below so the speed cut propagates into
+    // walk-derived speeds. Shields are excluded by `_equippedArmor`, so the
+    // STR / stealth checks only see body armor (SRD shields have neither).
+    final armorNotes = <String>[];
+    final wornArmor = _equippedArmor(fields, entitiesById);
+    if (wornArmor != null) {
+      final strReq = wornArmor.fields['strength_requirement'];
+      if (strReq is int && (abilities['STR'] ?? 10) < strReq) {
+        speedBonus -= 10;
+        armorNotes.add(
+          'Speed −10 ft: STR ${abilities['STR'] ?? 10} is below '
+          "${wornArmor.name}'s requirement ($strReq).");
+      }
+      final catId = _resolveRef(wornArmor.fields['category_ref'], entitiesById);
+      if (catId != null && !armorCats.contains(catId)) {
+        final catName = entitiesById[catId]?.name ?? 'this';
+        armorNotes.add(
+          'Untrained in $catName armor: Disadvantage on STR/DEX D20 Tests, '
+          "and you can't cast spells.");
+      }
+      if (wornArmor.fields['stealth_disadvantage'] == true) {
+        armorNotes.add(
+          '${wornArmor.name}: Disadvantage on Dexterity (Stealth) checks.');
+      }
+    }
+
     // ── 9. Pass 6: equipment ───────────────────────────────────────────
     final inventory = <ResolvedInventoryItem>[];
 
@@ -996,6 +1025,7 @@ class CharacterResolver {
         acBonus: acBonus,
         unarmoredFormulas: unarmoredFormulas,
       ),
+      armorNotes: armorNotes,
       speedBonus: speedBonus,
       extraSpeeds: extraSpeeds,
       hpBonusFlat: hpBonusFlat,
