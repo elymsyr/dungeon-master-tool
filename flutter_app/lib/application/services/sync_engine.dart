@@ -759,9 +759,30 @@ class SyncEngine {
     if (mirror == null) throw StateError('mirror service unavailable');
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
     final worldId = p['world_id'] as String;
-    final settings = row.opType == _opDelete
+    var settings = row.opType == _opDelete
         ? const <String, dynamic>{}
         : (p['settings'] as Map).cast<String, dynamic>();
+    // Dünya kapak resmi (`metadata.cover_image_path`) hâlâ local path ise
+    // free-media bucket'a yükle → portable `dmt-public://` ref. `_pickCover`
+    // zaten eager upload yapar; bu blok offline iken kaçan upload'u kurtarır.
+    if (row.opType != _opDelete) {
+      final meta = settings['metadata'];
+      if (meta is Map<String, dynamic>) {
+        try {
+          settings = {
+            ...settings,
+            'metadata': await uploadCoverImageInMetadata(
+              _ref.read(freeMediaServiceProvider),
+              metadata: meta,
+              coverKind: MediaKind.worldCover,
+              scopeId: worldId,
+            ),
+          };
+        } catch (e, st) {
+          debugPrint('world settings cover bundle error: $e\n$st');
+        }
+      }
+    }
     await mirror.pushSettings(worldId: worldId, settings: settings);
   }
 
@@ -773,26 +794,7 @@ class SyncEngine {
       return;
     }
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
-    var state = (p['state'] as Map).cast<String, dynamic>();
-    // Dünya kapak resmi (`metadata.cover_image_path`) hâlâ local path ise
-    // free-media bucket'a yükle → portable `dmt-public://` ref. `_pickCover`
-    // zaten eager upload yapar; bu blok offline iken kaçan upload'u kurtarır.
-    final meta = state['metadata'];
-    if (meta is Map<String, dynamic>) {
-      try {
-        state = {
-          ...state,
-          'metadata': await uploadCoverImageInMetadata(
-            _ref.read(freeMediaServiceProvider),
-            metadata: meta,
-            coverKind: MediaKind.worldCover,
-            scopeId: (p['world_name'] as String?) ?? p['world_id'] as String,
-          ),
-        };
-      } catch (e, st) {
-        debugPrint('world state cover bundle error: $e\n$st');
-      }
-    }
+    final state = (p['state'] as Map).cast<String, dynamic>();
     await mirror.pushWorldState(
       worldId: p['world_id'] as String,
       worldName: (p['world_name'] as String?) ?? '',
