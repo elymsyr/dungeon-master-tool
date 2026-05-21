@@ -643,6 +643,69 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     _cleanupMarketplace(campaignName);
   }
 
+  // ── CDC self-contained world-removal entry points ────────────────────
+  //
+  // A CDC applier (`WorldMirrorApplier`) is hosted by a FutureProvider that
+  // watches `currentWorldRoleProvider`. The instant that provider is
+  // invalidated, the applier's `ref` is dead (`_didChangeDependency`
+  // assertion). So world-removal driven by CDC must run through *this*
+  // notifier's ref (`activeCampaignProvider` is a stable top-level provider
+  // that does not watch the role/list providers, so its ref survives).
+
+  /// Resolves a world UUID to its local campaign name. Null if this device
+  /// holds no local mirror of that world.
+  Future<String?> _resolveWorldName(String worldId) async {
+    try {
+      final list = await _ref.read(campaignInfoListProvider.future);
+      return list.where((c) => c.id == worldId).firstOrNull?.name;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Refreshes role + hub-list caches after a membership/world change.
+  /// Invalidates via the notifier's stable ref — see the block comment.
+  void refreshWorldCaches(String worldId) {
+    _ref.invalidate(worldRoleProvider(worldId));
+    _ref.invalidate(currentWorldRoleProvider);
+    _ref.invalidate(campaignInfoListProvider);
+    _ref.invalidate(campaignListProvider);
+  }
+
+  /// Cached role snapshot for [worldId] (synchronous, no network).
+  WorldRole cachedWorldRole(String worldId) =>
+      _ref.read(worldRoleProvider(worldId)).valueOrNull ?? WorldRole.none;
+
+  /// Live role re-check for [worldId] (network round-trip).
+  Future<WorldRole> recheckWorldRole(String worldId) =>
+      _ref.read(worldRoleProvider(worldId).future);
+
+  void _afterWorldRemoved(String worldId) {
+    _ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    refreshWorldCaches(worldId);
+  }
+
+  /// CDC entry point: hard-purge the local mirror of [worldId] (deleted on
+  /// the server, or membership lost as a player). Self-contained — safe to
+  /// drive from a short-lived CDC applier.
+  Future<bool> purgeWorldById(String worldId) async {
+    final name = await _resolveWorldName(worldId);
+    if (name == null) return false;
+    await purge(name);
+    _afterWorldRemoved(worldId);
+    return true;
+  }
+
+  /// CDC entry point: soft-delete (trash) the local mirror of [worldId] —
+  /// the DM cross-device delete echo, so the user can still restore.
+  Future<bool> trashWorldById(String worldId) async {
+    final name = await _resolveWorldName(worldId);
+    if (name == null) return false;
+    await delete(name);
+    _afterWorldRemoved(worldId);
+    return true;
+  }
+
   /// Best-effort: dünya silindiğinde dünyaya bağlı cloud medyayı (kapak +
   /// entity resimleri + battle map'ler) temizler. Hayatta kalan karakterlerin
   /// kullandığı ref'ler korunur; local cache silinmez. Bkz.

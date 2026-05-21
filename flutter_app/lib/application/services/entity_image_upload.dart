@@ -14,6 +14,11 @@ import 'entity_media_cleanup_service.dart';
 import 'image_upload_helper.dart';
 import 'pending_write_buffer.dart';
 
+/// Max number of images allowed per entity image collection — the portrait
+/// gallery (`entity.images`) and each schema-defined image field are each
+/// capped at this count.
+const int kMaxEntityImages = 5;
+
 /// Eager-uploads freshly picked entity image [paths] to Cloudflare R2 when the
 /// host entity is online + signed-in, mirroring the gating used for entity
 /// portraits (`entity_card._PortraitGallery`).

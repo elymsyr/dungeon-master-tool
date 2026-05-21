@@ -112,6 +112,7 @@
   "landingInfoConfirmEmail": "Consultez votre e-mail pour confirmer votre compte.",
   "menuReportBug": "Signaler un bug",
   "mediaQuotaFull": "Quota de stockage plein — image conservée sur cet appareil.",
+  "mediaImageLimitReached": "Jusqu'à {count} images par entité.",
 
   "hubBtnMarketplace": "Marché",
   "hubTooltipRefresh": "Actualiser depuis le cloud",

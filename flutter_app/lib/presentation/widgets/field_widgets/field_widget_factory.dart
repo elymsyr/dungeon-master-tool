@@ -3139,16 +3139,25 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   }
 
   Future<void> _pickImages() async {
+    // Per-entity image cap — bail early when this field is already full.
+    final remaining = kMaxEntityImages - _images.length;
+    if (remaining <= 0) {
+      showImageLimitSnackbar(context, kMaxEntityImages);
+      return;
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
     );
     if (result == null || result.files.isEmpty) return;
-    final newPaths = result.files
+    var newPaths = result.files
         .where((f) => f.path != null)
         .map((f) => f.path!)
         .toList();
     if (newPaths.isEmpty) return;
+    // Trim selection to the free slots; warn if extras were dropped.
+    final overflow = newPaths.length > remaining;
+    if (overflow) newPaths = newPaths.sublist(0, remaining);
 
     // Eager cloud upload — mirrors the entity portrait flow: online + signed
     // in → push to R2 now; offline / quota-full → keep the local path.
@@ -3157,6 +3166,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
     if (!mounted) return;
     widget.onChanged([..._images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
+    if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
   }
 
   void _removeImage(int index) {
@@ -3332,14 +3342,15 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                         style: TextStyle(fontSize: 12),
                       ),
                     ),
-                  TextButton.icon(
-                    onPressed: _pickImages,
-                    icon: const Icon(Icons.add_photo_alternate, size: 16),
-                    label: const Text(
-                      'Add Image',
-                      style: TextStyle(fontSize: 12),
+                  if (images.length < kMaxEntityImages)
+                    TextButton.icon(
+                      onPressed: _pickImages,
+                      icon: const Icon(Icons.add_photo_alternate, size: 16),
+                      label: const Text(
+                        'Add Image',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ),
-                  ),
                 ],
               ),
           ],
