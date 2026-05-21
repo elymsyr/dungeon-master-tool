@@ -1995,8 +1995,10 @@ class _AbilitiesStep extends StatelessWidget {
               racial: draft.racialBonuses[k] ?? 0,
               asiTotal: asiTotal,
               method: draft.abilityMethod,
-              standardArrayUsed: _standardArrayUsageFor(draft, k),
-              onBase: (v) => notifier.setAbility(k, v),
+              onBase: (v) =>
+                  draft.abilityMethod == AbilityScoreMethod.standardArray
+                      ? notifier.swapAbility(k, v)
+                      : notifier.setAbility(k, v),
               onRacial: (v) => notifier.setRacialBonus(k, v),
             )),
         const SizedBox(height: 8),
@@ -2021,16 +2023,6 @@ class _AbilitiesStep extends StatelessWidget {
     return t;
   }
 
-  /// For Standard Array UI: which values are still available given other
-  /// abilities' picks (so the dropdown can hide already-used numbers).
-  List<int> _standardArrayUsageFor(CharacterDraft d, String currentKey) {
-    final used = <int>[];
-    for (final k in kAbilityKeys) {
-      if (k == currentKey) continue;
-      used.add(d.baseAbilities[k] ?? 10);
-    }
-    return used;
-  }
 }
 
 class _PointBuyHeader extends StatelessWidget {
@@ -2124,7 +2116,6 @@ class _AbilityRow extends StatelessWidget {
   final int racial;
   final int asiTotal;
   final AbilityScoreMethod method;
-  final List<int> standardArrayUsed;
   final ValueChanged<int> onBase;
   final ValueChanged<int> onRacial;
 
@@ -2134,7 +2125,6 @@ class _AbilityRow extends StatelessWidget {
     required this.racial,
     required this.asiTotal,
     required this.method,
-    required this.standardArrayUsed,
     required this.onBase,
     required this.onRacial,
   });
@@ -2206,16 +2196,11 @@ class _AbilityRow extends StatelessWidget {
           initialValue:
               kStandardArray.contains(base) ? base : kStandardArray.first,
           decoration: const InputDecoration(labelText: 'Base'),
-          items: kStandardArray.map((v) {
-            final taken =
-                v != base && standardArrayUsed.where((u) => u == v).length >=
-                    _countOf(kStandardArray, v);
-            return DropdownMenuItem(
-              value: v,
-              enabled: !taken,
-              child: Text('$v'),
-            );
-          }).toList(),
+          // Every array value stays selectable: picking one already held by
+          // another ability swaps the two (see swapAbility).
+          items: kStandardArray
+              .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
+              .toList(),
           onChanged: (v) {
             if (v != null) onBase(v);
           },
@@ -2251,8 +2236,6 @@ class _AbilityRow extends StatelessWidget {
         ),
     };
   }
-
-  int _countOf(List<int> arr, int v) => arr.where((x) => x == v).length;
 
   /// Soft cap: each ability ≤ +2, total ≤ +3. Patterns +2/+1, +1/+1,
   /// +1/+1/+1 all reachable.

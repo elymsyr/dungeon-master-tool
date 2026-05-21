@@ -186,6 +186,22 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
     state = state.copyWith(baseAbilities: next);
   }
 
+  /// Standard Array: assign [value] to [key]. If another ability already
+  /// holds [value], the two abilities swap values so the array stays a
+  /// valid permutation (no duplicate, none dropped).
+  void swapAbility(String key, int value) {
+    final next = Map<String, int>.from(state.baseAbilities);
+    final previous = next[key];
+    for (final k in kAbilityKeys) {
+      if (k != key && next[k] == value) {
+        next[k] = previous ?? value;
+        break;
+      }
+    }
+    next[key] = value;
+    state = state.copyWith(baseAbilities: next);
+  }
+
   void setRacialBonus(String key, int value) {
     final next = Map<String, int>.from(state.racialBonuses);
     next[key] = value;
