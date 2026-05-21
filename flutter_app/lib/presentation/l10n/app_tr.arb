@@ -593,6 +593,9 @@
   "subsBetaLeaveBtn": "Beta'dan Ayrıl",
   "subsBetaLeaveConfirmTitle": "Beta'dan ayrılmak istiyor musun?",
   "subsBetaLeaveConfirmBody": "Cloud kayıtların ve topluluk varlıkların silinecek, beta slot'un serbest bırakılacak. Post'lar ve marketplace listelemeleri etkilenmez.",
+  "subsBetaLeaveWarnIntro": "Beta'dan ayrılmak tüm online verini kalıcı olarak siler. Bu işlem geri alınamaz.",
+  "subsBetaLeaveWarnDeleted": "Kalıcı silinir: online dünyaların, paketlerin ve karakterlerin; marketplace itemlerin ve onlara bağlı görseller; cloud'a yüklediğin tüm resimler.",
+  "subsBetaLeaveWarnKept": "Korunur: bu cihazdaki ve diğer cihazlarındaki tüm local verin güvende kalır. Post'ların, oyun ilanların ve mesajların etkilenmez — topluluğu kullanmaya devam edebilirsin.",
   "subsBetaLeaveSuccess": "Beta'dan ayrıldın.",
   "subsBetaLeaveFailed": "Beta'dan ayrılma başarısız. Daha sonra tekrar dene.",
 

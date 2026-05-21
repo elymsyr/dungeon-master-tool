@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:ui' as ui;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,9 +10,10 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
-import '../../domain/value_objects/asset_ref.dart';
 import '../services/asset_ref_resolver.dart';
+import '../services/marketplace_cover_encoder.dart';
 import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
 import 'character_provider.dart';
@@ -94,6 +92,16 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     List<String> tags = const [],
     String? changelog,
   }) async {
+    // Publishing to the marketplace is beta-gated (the `publish_listing_snapshot`
+    // RPC enforces this server-side too — migration 057). Fail fast with a
+    // friendly message instead of letting the RPC raise.
+    if (!_ref.read(isBetaActiveProvider)) {
+      state = AsyncValue.error(
+        'Beta membership is required to publish to the marketplace.',
+        StackTrace.current,
+      );
+      return null;
+    }
     state = const AsyncValue.loading();
     try {
       final payload = await _loadPayload(itemType, localId);
@@ -230,40 +238,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       debugPrint('marketplace cover: $itemType/$localId — no local path');
       return null;
     }
-    try {
-      // Cover artık local path veya dmt-public:// / dmt-asset:// ref olabilir;
-      // resolver hepsini cache'li bir File'a indirger.
-      final file =
-          await _ref.read(assetRefResolverProvider).resolve(AssetRef(path));
-      if (file == null || !await file.exists()) {
-        debugPrint('marketplace cover: cannot resolve $path');
-        return null;
-      }
-      final rawBytes = await file.readAsBytes();
-      if (rawBytes.lengthInBytes > _coverRawMaxBytes) {
-        debugPrint('marketplace cover: raw too large (${rawBytes.lengthInBytes} B)');
-        return null;
-      }
-      final codec = await ui.instantiateImageCodec(
-        rawBytes,
-        targetWidth: _coverTargetWidth,
-      );
-      final frame = await codec.getNextFrame();
-      final byteData =
-          await frame.image.toByteData(format: ui.ImageByteFormat.png);
-      frame.image.dispose();
-      if (byteData == null) return null;
-      final thumb = byteData.buffer.asUint8List();
-      if (thumb.lengthInBytes > _coverEncodedMaxBytes) {
-        debugPrint(
-            'marketplace cover: encoded too large (${thumb.lengthInBytes} B, cap $_coverEncodedMaxBytes)');
-        return null;
-      }
-      return base64Encode(thumb);
-    } catch (e) {
-      debugPrint('cover read/resize failed: $e');
-      return null;
-    }
+    return encodeCoverThumbnailB64(_ref.read(assetRefResolverProvider), path);
   }
 
   Future<String?> _resolveCoverPath(String itemType, String localId) async {
@@ -302,10 +277,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     }
     return null;
   }
-
-  static const int _coverRawMaxBytes = 20 * 1024 * 1024;
-  static const int _coverEncodedMaxBytes = 2 * 1024 * 1024;
-  static const int _coverTargetWidth = 480;
 
   Future<Map<String, dynamic>> _loadPayload(
     String itemType,

@@ -1215,17 +1215,47 @@ class _SubscriptionsSection extends ConsumerWidget {
 
   Future<void> _leave(
       BuildContext context, WidgetRef ref, L10n l10n) async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.subsBetaLeaveConfirmTitle),
-        content: Text(l10n.subsBetaLeaveConfirmBody),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: palette.dangerBtnBg, size: 24),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l10n.subsBetaLeaveConfirmTitle)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.subsBetaLeaveWarnIntro,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.subsBetaLeaveWarnDeleted,
+                  style: const TextStyle(height: 1.4)),
+              const SizedBox(height: 12),
+              Text(l10n.subsBetaLeaveWarnKept,
+                  style: const TextStyle(height: 1.4)),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(l10n.btnCancel),
           ),
-          TextButton(
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.dangerBtnBg,
+              foregroundColor: palette.dangerBtnText,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(l10n.subsBetaLeaveBtn),
           ),

@@ -27,6 +27,7 @@ import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../application/services/entity_media_cleanup_service.dart';
+import '../../../application/services/marketplace_cover_sync_service.dart';
 import '../../../application/services/image_upload_helper.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../data/network/network_providers.dart';
@@ -872,8 +873,12 @@ class _CharacterEditorScreenState
     // `dmt-public://` ref is portable across devices immediately — mirrors
     // `_pickCover`. Offline / failure → keep the local path; the portrait
     // bundles later via the character outbox / cloud-backup push.
+    // Cloud upload is a beta feature — non-beta users keep a local path.
+    final svc = ref.read(isBetaActiveProvider)
+        ? ref.read(freeMediaServiceProvider)
+        : null;
     final newRef = await uploadCharacterPortraitRef(
-      ref.read(freeMediaServiceProvider),
+      svc,
       localPath: path,
       scopeId: c.worldId ?? c.id,
     );
@@ -892,6 +897,19 @@ class _CharacterEditorScreenState
           ?.cleanupReplacedRef(oldRef: oldRef, newRef: newRef)
           .catchError(
             (Object e) => debugPrint('portrait cleanup error: $e'),
+          );
+      // Portre değiştiyse publish edilmiş listing banner'larını da tazele.
+      final coverSync = ref.read(marketplaceCoverSyncServiceProvider);
+      // ignore: discarded_futures
+      coverSync
+          ?.syncCover(
+            itemType: 'character',
+            localId: c.id,
+            oldRef: oldRef,
+            newRef: newRef,
+          )
+          .catchError(
+            (Object e) => debugPrint('portrait cover sync error: $e'),
           );
     }
   }

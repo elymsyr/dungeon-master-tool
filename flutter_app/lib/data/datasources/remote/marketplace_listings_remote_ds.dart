@@ -117,6 +117,19 @@ class MarketplaceListingsRemoteDataSource {
     }
   }
 
+  /// Owner refreshes a published listing's cover thumbnail. The payload
+  /// snapshot (`content_hash` / `payload_path`) is untouched — only the
+  /// inline banner base64 changes. [coverImageB64] null clears the banner.
+  Future<void> updateListingCover({
+    required String listingId,
+    required String? coverImageB64,
+  }) async {
+    await _client.rpc('update_listing_cover', params: {
+      'p_id': listingId,
+      'p_cover_image_b64': coverImageB64,
+    });
+  }
+
   /// Marketplace browse: all listings with optional filters and a join on
   /// `profiles.username` for the author column.
   Future<List<MarketplaceListing>> listAllCurrent({

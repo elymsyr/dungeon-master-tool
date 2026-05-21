@@ -593,6 +593,9 @@
   "subsBetaLeaveBtn": "Leave Beta",
   "subsBetaLeaveConfirmTitle": "Leave the beta?",
   "subsBetaLeaveConfirmBody": "Your cloud saves and community assets will be deleted and your beta slot will be released. Posts and marketplace listings are unaffected.",
+  "subsBetaLeaveWarnIntro": "Leaving the beta permanently deletes all of your online data. This cannot be undone.",
+  "subsBetaLeaveWarnDeleted": "Deleted forever: your online worlds, packages and characters; your marketplace items and their images; and every image you uploaded to the cloud.",
+  "subsBetaLeaveWarnKept": "Kept: all data saved locally on this and your other devices stays safe. Your posts, game listings and messages are not affected — you can keep using the community.",
   "subsBetaLeaveSuccess": "You have left the beta.",
   "subsBetaLeaveFailed": "Couldn't leave the beta. Try again later.",
 

@@ -27,6 +27,7 @@ class FreeMediaService {
 
   final SupabaseClient _supabase;
   final Directory _cacheDir;
+  final HttpClient _httpClient = HttpClient();
 
   static const String _bucket = 'free-media';
 
@@ -98,6 +99,12 @@ class FreeMediaService {
   /// `dmt-public://` ref'in storage path'ini cache-first çözer.
   /// Cache miss'te `free-media` bucket'ından indirir, SHA-doğrular, cache'ler.
   /// Çözülemezse null döner.
+  ///
+  /// İndirme **public URL** üzerinden yapılır (authenticated `download()`
+  /// değil). `free-media` public bucket olduğundan public URL endpoint'i
+  /// RLS'i bypass eder → herhangi bir kullanıcının görseli çözülebilir; bu
+  /// sayede storage SELECT policy'si owner-scoped kalabilir (cross-user
+  /// enumeration kapalı — bkz. migration 058).
   Future<File?> resolveFreeMedia(String publicPath) async {
     final sha = _shaFromPath(publicPath);
     final cacheFile = _cacheFileFor(sha);
@@ -109,7 +116,8 @@ class FreeMediaService {
 
     final Uint8List bytes;
     try {
-      bytes = await _supabase.storage.from(_bucket).download(publicPath);
+      final url = _supabase.storage.from(_bucket).getPublicUrl(publicPath);
+      bytes = await _downloadPublic(url);
     } catch (_) {
       return null;
     }
@@ -119,6 +127,20 @@ class FreeMediaService {
     }
     await _writeCache(sha, bytes);
     return cacheFile;
+  }
+
+  /// Public URL'den ham baytları indirir. Public bucket → auth header gerekmez.
+  Future<Uint8List> _downloadPublic(String url) async {
+    final req = await _httpClient.getUrl(Uri.parse(url));
+    final res = await req.close();
+    if (res.statusCode != 200) {
+      throw FreeMediaException('download_failed_${res.statusCode}', url);
+    }
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in res) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
   }
 
   /// Kullanıcının tüm ücretsiz medyası (galeri "All worlds" görünümü).

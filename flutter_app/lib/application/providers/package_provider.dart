@@ -10,6 +10,7 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
+import '../services/marketplace_cover_sync_service.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
@@ -90,6 +91,21 @@ Future<void> updatePackageMetadata(
           )
           .catchError(
             (Object e) => debugPrint('package cover cleanup error: $e'),
+          );
+    }
+    // Kapak değiştiyse publish edilmiş listing banner'larını da tazele.
+    final coverSync = ref.read(marketplaceCoverSyncServiceProvider);
+    if (coverSync != null) {
+      // ignore: discarded_futures
+      coverSync
+          .syncCover(
+            itemType: 'package',
+            localId: packageName,
+            oldRef: oldCover,
+            newRef: newMetadata['cover_image_path'] as String?,
+          )
+          .catchError(
+            (Object e) => debugPrint('package cover sync error: $e'),
           );
     }
   }
