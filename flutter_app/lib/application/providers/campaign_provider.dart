@@ -186,6 +186,23 @@ Future<void> updateCampaignMetadata(
   await repo.save(campaignName, data);
   ref.invalidate(campaignMetadataProvider(campaignName));
   ref.invalidate(campaignInfoListProvider);
+
+  // Online dünya: metadata (kapak resmi dahil) şimdiye dek yalnızca lokale
+  // yazıldı — cloud `worlds.state_json` eski kalır, başka cihaz pull edemez.
+  // Outbox'a world-state push enqueue et + hemen drain et ki diğer cihazlar
+  // bir sonraki Refresh/Sync'te güncel kapağı çeksin.
+  final worldId = data['world_id'] as String?;
+  if (worldId != null && ref.read(onlineWorldIdsProvider).contains(worldId)) {
+    final engine = ref.read(syncEngineProvider);
+    await engine.enqueueWorldState(
+      worldId: worldId,
+      worldName: campaignName,
+      templateId: data['template_id'] as String?,
+      templateHash: data['template_hash'] as String?,
+      state: data,
+    );
+    await engine.forceTick();
+  }
 }
 
 /// Aktif kampanya adı. null = henüz seçilmedi.
