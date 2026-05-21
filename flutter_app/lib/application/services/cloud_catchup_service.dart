@@ -8,7 +8,11 @@ import '../providers/beta_provider.dart';
 import '../providers/character_provider.dart';
 import '../providers/cloud_backup_provider.dart';
 import '../providers/package_provider.dart';
+import '../../data/network/network_providers.dart';
+import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
+import '../../domain/value_objects/asset_ref.dart';
+import 'image_upload_helper.dart';
 
 /// App-start cloud catch-up. For each cloud_backup row of type
 /// `world` / `package` / `character`, pulls the row when the cloud copy is
@@ -31,6 +35,38 @@ class CloudCatchupService {
       _pullPackages(),
       _pullCharacters(),
     ]);
+    await _pushLocalPortraits();
+  }
+
+  /// Uploads still-local portraits of worldless characters to the free-media
+  /// bucket so the main image (`entity.imagePath`) becomes a portable
+  /// `dmt-public://` ref. World-bound characters bundle their portrait on the
+  /// `world_characters` mirror push, so they're skipped here.
+  Future<void> _pushLocalPortraits() async {
+    try {
+      final svc = _ref.read(freeMediaServiceProvider);
+      if (svc == null) return;
+      final list =
+          _ref.read(characterListProvider).valueOrNull ?? const <Character>[];
+      final notifier = _ref.read(characterListProvider.notifier);
+      for (final c in list) {
+        if (c.worldId != null) continue;
+        final portrait = c.entity.imagePath;
+        if (portrait.isEmpty || !AssetRef(portrait).isLocal) continue;
+        final newRef = await uploadCharacterPortraitRef(
+          svc,
+          localPath: portrait,
+          scopeId: c.id,
+        );
+        if (newRef == portrait) continue; // upload failed / no-op
+        await notifier.update(
+          c.copyWith(entity: c.entity.copyWith(imagePath: newRef)),
+        );
+      }
+    } catch (e) {
+      if (isOfflineError(e)) return;
+      debugPrint('Cloud catch-up portrait push error: $e');
+    }
   }
 
   Future<void> _pullPackages() async {

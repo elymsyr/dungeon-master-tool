@@ -6,18 +6,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/screen_type.dart';
+import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/builtin_package_provider.dart';
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/entity_share_provider.dart';
 import '../../../application/providers/media_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
+import '../../../application/providers/sync_engine_provider.dart';
+import '../../../application/services/image_upload_helper.dart';
+import '../../../application/services/pending_write_buffer.dart';
+import '../../../data/network/network_providers.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -1063,6 +1073,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   Future<void> _pickImage() async {
     final mediaDir = ref.read(mediaDirectoryProvider);
     final campaignId = ref.read(mediaCampaignIdProvider);
+    List<String> picked;
     if (mediaDir.isNotEmpty) {
       final selected = await MediaGalleryDialog.show(
         context,
@@ -1071,20 +1082,83 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
         allowMultiple: true,
       );
       if (selected == null || selected.isEmpty) return;
-      widget.onImagesChanged([...widget.images, ...selected]);
-      return;
+      picked = selected;
+    } else {
+      // Fallback: doğrudan dosya seçici
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      picked = result.files
+          .where((f) => f.path != null)
+          .map((f) => f.path!)
+          .toList();
     }
-    // Fallback: doğrudan dosya seçici
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final newPaths = result.files
-        .where((f) => f.path != null)
-        .map((f) => f.path!)
-        .toList();
-    widget.onImagesChanged([...widget.images, ...newPaths]);
+    if (picked.isEmpty) return;
+
+    // Eager cloud upload: if the host item is online + signed-in, push each
+    // freshly picked file to the cloud now so the ref is portable on every
+    // device immediately (mirrors `_pickCover`). Offline / failure → the
+    // helper returns the local path and the image bundles later via the
+    // outbox push (`_handleWorldEntity`) or Make Online.
+    final (:refs, :pushWorldId) = await _eagerUploadImages(picked);
+    if (!mounted) return;
+    widget.onImagesChanged([...widget.images, ...refs]);
+
+    // World entity: flush the just-scheduled debounced write so the
+    // `world_entities` outbox row is enqueued, then drain it now. Package
+    // entities have no per-row outbox (the whole package pushes on share),
+    // so the eager upload above is all that's needed there.
+    if (pushWorldId != null) {
+      await ref
+          .read(pendingWriteBufferProvider)
+          .flushPrefix('entity:$pushWorldId:');
+      await ref.read(syncEngineProvider).forceTick();
+    }
+  }
+
+  /// Uploads freshly picked local paths to the cloud when the host item is
+  /// online. Returns the resolved refs (cloud or local-path fallback) and,
+  /// for an online world, the world id whose outbox row should be drained.
+  Future<({List<String> refs, String? pushWorldId})> _eagerUploadImages(
+    List<String> paths,
+  ) async {
+    if (ref.read(authProvider) == null) return (refs: paths, pushWorldId: null);
+    final assetSvc = ref.read(assetServiceProvider);
+    if (assetSvc == null) return (refs: paths, pushWorldId: null);
+
+    final String scopeId;
+    final MediaKind kind;
+    String? pushWorldId;
+    final packageName = ref.read(activePackageProvider);
+    if (packageName != null) {
+      // Package entity image — counted R2; no per-row outbox to drain.
+      if (!ref.read(betaProvider).isActive) {
+        return (refs: paths, pushWorldId: null);
+      }
+      scopeId = packageName;
+      kind = MediaKind.packageEntityImage;
+    } else {
+      // World entity image — only eager-upload for an online world; offline
+      // worlds bundle their media at Make Online.
+      final worldId = ref.read(activeCampaignProvider.notifier).data?['world_id']
+          as String?;
+      if (worldId == null ||
+          !ref.read(onlineWorldIdsProvider).contains(worldId)) {
+        return (refs: paths, pushWorldId: null);
+      }
+      scopeId = worldId;
+      kind = MediaKind.worldEntityImage;
+      pushWorldId = worldId;
+    }
+
+    final refs = await Future.wait([
+      for (final p in paths)
+        uploadEntityImageRef(assetSvc,
+            localPath: p, scopeId: scopeId, kind: kind),
+    ]);
+    return (refs: refs, pushWorldId: pushWorldId);
   }
 
   void _removeCurrentImage() {

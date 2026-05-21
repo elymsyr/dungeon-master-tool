@@ -9,9 +9,11 @@ import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/world_mirror_provider.dart';
+import 'image_upload_helper.dart';
 import 'media_bundler.dart';
 import 'world_mirror_service.dart';
 import '../../data/network/network_providers.dart';
+import '../../domain/value_objects/media_kind.dart';
 
 /// Yeni dünya senkron mantığı (manuel Refresh + Sync).
 ///
@@ -179,6 +181,21 @@ class WorldReconciler {
         } catch (e) {
           debugPrint('reconcile push media bundle error: $e');
         }
+      }
+      // The cover image (`metadata.cover_image_path`) isn't walked by
+      // bundleWorldMedia — upload an unsynced local cover to the free-media
+      // bucket so it becomes a portable `dmt-public://` ref before the push.
+      final meta = bundled['metadata'];
+      if (meta is Map<String, dynamic>) {
+        bundled = {
+          ...bundled,
+          'metadata': await uploadCoverImageInMetadata(
+            _ref.read(freeMediaServiceProvider),
+            metadata: meta,
+            coverKind: MediaKind.worldCover,
+            scopeId: worldName,
+          ),
+        };
       }
       await mirror.pushWorldState(
         worldId: worldId,

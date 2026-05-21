@@ -13,6 +13,11 @@ import '../../core/utils/error_format.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../theme/dm_tool_colors.dart';
 
+/// Bumped once at the end of every [runFullManualSync]. Widgets that show a
+/// cloud timestamp (e.g. [SaveInfoSection]) listen to this so they re-fetch
+/// after a manual Sync even when no outbox rows were pending.
+final manualSyncCompletedTickProvider = StateProvider<int>((ref) => 0);
+
 /// Full manual sync chain — push personal + world outboxes, reconcile world
 /// mirror, drain outbox, then run catch-up pulls. Shared by world and
 /// character Save & Sync dialogs.
@@ -22,6 +27,7 @@ Future<void> runFullManualSync(WidgetRef ref) async {
   await ref.read(worldReconcilerProvider).reconcile();
   await ref.read(syncEngineProvider).forceTick();
   await ref.read(cloudCatchupServiceProvider).runAll();
+  ref.read(manualSyncCompletedTickProvider.notifier).state++;
 }
 
 class SectionLabel extends StatelessWidget {
