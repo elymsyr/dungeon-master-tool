@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/mind_map_id_provider.dart';
+import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/mind_map.dart';
@@ -585,6 +587,10 @@ class MindMapNotifier extends StateNotifier<MindMapState>
 
   void deleteNode(String id) {
     _pushUndo();
+    final removedImage = state.nodes
+        .where((n) => n.id == id)
+        .map((n) => n.imageUrl)
+        .firstOrNull;
     final updatedNodes = state.nodes.where((n) => n.id != id).toList();
     final updatedEdges = state.edges
         .where((e) => e.sourceId != id && e.targetId != id)
@@ -597,6 +603,12 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     );
     edgeTick.value++;
     _debouncedSave();
+    // Best-effort orphan cleanup for the deleted node's cloud image.
+    unawaited(cleanupMapImageRef(
+      _ref.read,
+      removedRef: removedImage,
+      flushPrefix: 'settings:',
+    ));
   }
 
   void duplicateNode(String id) {

@@ -10,11 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/media_provider.dart';
+import '../../../application/services/asset_ref_resolver.dart';
+import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
-import '../../dialogs/media_gallery_dialog.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/map_data.dart';
+import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
+import '../../widgets/quota_snackbar.dart';
 
 const _uuid = Uuid();
 
@@ -725,32 +728,34 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // -------------------------------------------------------------------------
 
   Future<void> pickMapImage(BuildContext context) async {
-    String? path;
-    final mediaDir = _ref.read(mediaDirectoryProvider);
-    final campaignId = _ref.read(mediaCampaignIdProvider);
-    if (mediaDir.isNotEmpty) {
-      final selected = await MediaGalleryDialog.show(
-        context,
-        mediaDir: mediaDir,
-        campaignId: campaignId,
-        allowMultiple: false,
-      );
-      if (selected == null || selected.isEmpty) return;
-      path = selected.first;
-    } else {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-      if (result == null || result.files.isEmpty) return;
-      path = result.files.first.path;
-    }
-    if (path == null) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final localPath = result.files.first.path;
+    if (localPath == null) return;
+
+    final oldRef = state.imagePath;
+    // Eager cloud upload — online world → push to R2; offline / quota-full
+    // → keep the local path.
+    final (ref: stored, :quotaExceeded) = await uploadMapImage(
+      _ref.read,
+      path: localPath,
+      kind: MediaKind.battleMap,
+    );
     pushUndo(state);
-    state = state.copyWith(imagePath: path);
+    state = state.copyWith(imagePath: stored);
     await _fitImageInViewport();
     _debouncedSave();
     _debouncedViewportSave();
+    if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
+    // Replaced an earlier cloud image → best-effort orphan cleanup.
+    unawaited(cleanupMapImageRef(
+      _ref.read,
+      removedRef: oldRef,
+      flushPrefix: 'settings:',
+    ));
   }
 
   // -------------------------------------------------------------------------
@@ -811,8 +816,11 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       _bumpCullTick();
       return;
     }
-    final file = File(path);
-    if (!file.existsSync()) {
+    // imagePath may be a local path or a `dmt-asset://` cloud ref — resolve
+    // through AssetRefResolver (cloud refs download + cache on first use).
+    final file =
+        await _ref.read(assetRefResolverProvider).resolve(AssetRef(path));
+    if (file == null) {
       viewTransform.value = const WorldMapViewTransform();
       _bumpCullTick();
       return;

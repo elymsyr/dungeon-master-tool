@@ -111,7 +111,7 @@
   "landingErrPasswordMismatch": "Parolalar eşleşmiyor.",
   "landingInfoConfirmEmail": "Hesabını onaylamak için e-postanı kontrol et.",
   "menuReportBug": "Hata Bildir",
-  "menuMediaGallery": "Medya Galerisi",
+  "mediaQuotaFull": "Depolama kotanız dolu — resim bu cihazda saklandı.",
 
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",

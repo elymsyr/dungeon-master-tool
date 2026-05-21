@@ -782,6 +782,18 @@ class SyncEngine {
           debugPrint('world settings cover bundle error: $e\n$st');
         }
       }
+      // Mind map / world map / battle map images picked while offline are
+      // still local paths — bundle them to counted R2 now so they round-trip
+      // on every device (parallels `bundleEntityMedia`).
+      final assetSvc = _ref.read(assetServiceProvider);
+      if (assetSvc != null) {
+        try {
+          settings = await MediaBundler(assetSvc)
+              .bundleSettingsMedia(worldId: worldId, settings: settings);
+        } catch (e, st) {
+          debugPrint('world settings map media bundle error: $e\n$st');
+        }
+      }
     }
     await mirror.pushSettings(worldId: worldId, settings: settings);
   }

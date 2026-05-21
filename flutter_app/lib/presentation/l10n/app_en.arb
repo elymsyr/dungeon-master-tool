@@ -111,7 +111,7 @@
   "landingErrPasswordMismatch": "Passwords do not match.",
   "landingInfoConfirmEmail": "Check your email to confirm your account.",
   "menuReportBug": "Report a Bug",
-  "menuMediaGallery": "Media Gallery",
+  "mediaQuotaFull": "Storage quota full — image kept on this device.",
 
   "hubBtnMarketplace": "Marketplace",
   "hubTooltipRefresh": "Refresh from cloud",

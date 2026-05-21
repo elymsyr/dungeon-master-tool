@@ -3,14 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:path/path.dart' as p;
-
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
-import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/role_provider.dart';
@@ -22,11 +19,9 @@ import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../application/services/pending_write_buffer.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
-import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
-import '../dialogs/media_gallery_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
@@ -114,9 +109,6 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
           },
         ),
         worldSchemaProvider.overrideWithValue(schema),
-        mediaDirectoryProvider.overrideWithValue(
-          p.join(AppPaths.packagesDir, packageName, 'media'),
-        ),
         saveStateProvider.overrideWith(
           (ref) => SaveStateNotifier(ref),
         ),
@@ -451,77 +443,41 @@ class _PackageScreenContentState
                   : () => setState(() => _editMode = !_editMode),
             );
           }),
-          // Phone: collapse infrequent actions into overflow menu.
-          // Desktop/Tablet: show inline.
-          if (getScreenType(context) == ScreenType.phone)
-            Builder(builder: (popupCtx) {
-              final canSync = SupabaseConfig.isConfigured &&
-                  widget.packageName != srdCorePackageName;
-              final isOnline = canSync &&
-                  ref
-                      .watch(personalOnlinePackageNamesProvider)
-                      .contains(widget.packageName);
+          // Phone: collapse package sync into an overflow menu (desktop
+          // shows the inline _PackageOnlineButton above). Built-in /
+          // unconfigured packages have nothing to collapse here.
+          if (getScreenType(context) == ScreenType.phone &&
+              SupabaseConfig.isConfigured &&
+              widget.packageName != srdCorePackageName)
+            Builder(builder: (_) {
+              final isOnline = ref
+                  .watch(personalOnlinePackageNamesProvider)
+                  .contains(widget.packageName);
               return PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
                 onSelected: (action) async {
-                  switch (action) {
-                    case 'sync':
-                      await _togglePackageOnline(isOnline);
-                    case 'media':
-                      final mediaDir = ref.read(mediaDirectoryProvider);
-                      if (mediaDir.isNotEmpty) {
-                        MediaGalleryDialog.show(
-                          context,
-                          mediaDir: mediaDir,
-                          campaignId: 'package:${widget.packageName}',
-                        );
-                      }
+                  if (action == 'sync') {
+                    await _togglePackageOnline(isOnline);
                   }
                 },
                 itemBuilder: (_) => [
-                  if (canSync)
-                    PopupMenuItem(
-                      value: 'sync',
-                      child: Row(children: [
-                        Icon(
-                          isOnline ? Icons.cloud_done : Icons.cloud_outlined,
-                          size: 18,
-                          color: isOnline ? palette.successBtnBg : null,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(isOnline
-                            ? 'Online — tap to make offline'
-                            : 'Save & Sync (Make Online)'),
-                      ]),
-                    ),
-                  if (canSync) const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'media',
+                  PopupMenuItem(
+                    value: 'sync',
                     child: Row(children: [
-                      Icon(Icons.photo_library_outlined, size: 18),
-                      SizedBox(width: 8),
-                      Text('Media Gallery'),
+                      Icon(
+                        isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+                        size: 18,
+                        color: isOnline ? palette.successBtnBg : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(isOnline
+                          ? 'Online — tap to make offline'
+                          : 'Save & Sync (Make Online)'),
                     ]),
                   ),
                 ],
               );
-            })
-          else
-            // Media Gallery
-            IconButton(
-              icon: const Icon(Icons.photo_library_outlined, size: 18),
-              tooltip: 'Media Gallery',
-              onPressed: () {
-                final mediaDir = ref.read(mediaDirectoryProvider);
-                if (mediaDir.isNotEmpty) {
-                  MediaGalleryDialog.show(
-                    context,
-                    mediaDir: mediaDir,
-                    campaignId: 'package:${widget.packageName}',
-                  );
-                }
-              },
-            ),
+            }),
           const SizedBox(width: 4),
         ],
       ),

@@ -111,7 +111,7 @@
   "landingErrPasswordMismatch": "Die Passwörter stimmen nicht überein.",
   "landingInfoConfirmEmail": "Bestätige dein Konto über die zugesandte E-Mail.",
   "menuReportBug": "Fehler melden",
-  "menuMediaGallery": "Mediengalerie",
+  "mediaQuotaFull": "Speicherkontingent voll — Bild auf diesem Gerät gespeichert.",
 
   "hubBtnMarketplace": "Marktplatz",
   "hubTooltipRefresh": "Aus Cloud aktualisieren",

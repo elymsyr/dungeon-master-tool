@@ -83,6 +83,20 @@ class EntityMediaCleanupService {
     await _deleteRefs({old});
   }
 
+  /// Bir entity'den KALDIRILAN medya ref'i. Başka hayatta kalan bir entity
+  /// onu referanslamıyorsa cloud objesini best-effort siler. Local SHA cache
+  /// + lokal `mediaDir` kopyası KORUNUR — yalnız [_deleteRefs] R2 objesi +
+  /// `community_assets` satırını siler. Kaldırma yazımı local Drift'e commit
+  /// edildikten SONRA çağrılmalı; aksi halde [_isReferencedElsewhere] bu
+  /// entity'nin bayat ref'ini görür ve silmeyi yanlışlıkla atlar.
+  Future<void> cleanupRemovedRef(String? ref) async {
+    final raw = ref?.trim() ?? '';
+    if (raw.isEmpty) return;
+    final r = AssetRef(raw);
+    if (!r.isCloud && !r.isPublic) return; // local/transient → no-op
+    await _deleteRefs({raw});
+  }
+
   // ── discovery ─────────────────────────────────────────────────────────
 
   /// `community_assets` / `free_media_assets` tablolarından scope'a bağlı
