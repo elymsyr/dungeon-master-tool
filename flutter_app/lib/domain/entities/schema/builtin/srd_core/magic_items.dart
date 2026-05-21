@@ -272,7 +272,7 @@ List<Map<String, dynamic>> srdMagicItems() => [
         requiresAttunement: false,
         activation: 'None',
         effects:
-            'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. The bonus applies to any weapon of the chosen base type (e.g. all longswords). The Item Rarity table determines the bonus: +1 (Uncommon), +2 (Rare), +3 (Very Rare).',
+            'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. Any Simple or Martial weapon can be made into a +1 weapon.',
       ),
       _mi(
         name: 'Armor, +1',
@@ -281,7 +281,7 @@ List<Map<String, dynamic>> srdMagicItems() => [
         requiresAttunement: false,
         activation: 'None',
         effects:
-            'You have a +1 bonus to AC while wearing this armor. The bonus increases by rarity: +1 (Rare), +2 (Very Rare), +3 (Legendary). Choose any base armor.',
+            'You have a +1 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +1 armor.',
       ),
       _mi(
         name: 'Shield, +1',
@@ -290,7 +290,7 @@ List<Map<String, dynamic>> srdMagicItems() => [
         requiresAttunement: false,
         activation: 'None',
         effects:
-            'While holding this Shield, you have a bonus to AC in addition to the Shield\'s normal bonus. The Item Rarity table determines the bonus: +1 (Uncommon), +2 (Rare), +3 (Very Rare).',
+            'While holding this Shield, you have a +1 bonus to Armor Class, in addition to the Shield\'s normal bonus to AC.',
       ),
 
       // ─── Common potions / scrolls ───────────────────────────────────────
@@ -439,8 +439,8 @@ List<Map<String, dynamic>> srdMagicItems() => [
       _mi(name: 'Ammunition, +2', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.'),
       _mi(name: 'Ammunition, +3', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.'),
       _mi(name: 'Ammunition of Slaying', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'Magic ammunition meant to slay creatures of a particular type (chosen at creation). When such a creature takes damage from this ammunition, it makes a DC 17 Constitution save, taking 6d10 extra Force damage on a failed save (half on success). After dealing extra damage, the ammunition becomes nonmagical.'),
-      _mi(name: 'Armor, +2', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to AC while wearing this magic armor.'),
-      _mi(name: 'Armor, +3', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to AC while wearing this magic armor.'),
+      _mi(name: 'Armor, +2', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +2 armor.'),
+      _mi(name: 'Armor, +3', category: 'Armor', rarity: 'Legendary', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +3 armor.'),
       _mi(name: 'Shield, +2', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have a +2 bonus to AC, in addition to the Shield\'s normal bonus to AC.'),
       _mi(name: 'Shield, +3', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have a +3 bonus to AC, in addition to the Shield\'s normal bonus to AC.'),
       _mi(name: 'Weapon, +2', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon.'),
