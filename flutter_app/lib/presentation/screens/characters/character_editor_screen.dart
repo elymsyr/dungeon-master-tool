@@ -26,6 +26,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/entity_media_cleanup_service.dart';
 import '../../../application/services/image_upload_helper.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../data/network/network_providers.dart';
@@ -865,6 +866,7 @@ class _CharacterEditorScreenState
     if (path == null) return;
     final c = _working;
     if (c == null) return;
+    final oldRef = c.entity.imagePath;
 
     // Eager upload the portrait to the free-media bucket (quota-exempt) so the
     // `dmt-public://` ref is portable across devices immediately — mirrors
@@ -880,6 +882,18 @@ class _CharacterEditorScreenState
     // Persist + push now so the portrait reaches the cloud without waiting
     // for the autosave debounce.
     await _flushAndPush();
+
+    // Portre değiştiyse eski cloud resmini best-effort sil.
+    if (!mounted) return;
+    if (ref.read(authProvider) != null) {
+      final cleanup = ref.read(entityMediaCleanupServiceProvider);
+      // ignore: discarded_futures
+      cleanup
+          ?.cleanupReplacedRef(oldRef: oldRef, newRef: newRef)
+          .catchError(
+            (Object e) => debugPrint('portrait cleanup error: $e'),
+          );
+    }
   }
 
   /// Drains the pending debounced write, persists, flushes the cloud
