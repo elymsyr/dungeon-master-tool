@@ -181,28 +181,43 @@ Future<void> updateCampaignMetadata(
   Map<String, dynamic> newMetadata,
 ) async {
   final repo = ref.read(campaignRepositoryProvider);
-  final data = await repo.load(campaignName);
-  data['metadata'] = newMetadata;
-  await repo.save(campaignName, data);
+  // Row-level: yalnızca `world_settings.settings_json` içindeki `metadata`
+  // alanını güncelle. `metadata` typed top key değil — settings blob'una
+  // ait. Tüm world'ü (entities dahil) yeniden yazan `save()` yerine
+  // surgical patch.
+  await repo.saveSettingsPatch(campaignName, {'metadata': newMetadata});
   ref.invalidate(campaignMetadataProvider(campaignName));
   ref.invalidate(campaignInfoListProvider);
 
-  // Online dünya: metadata (kapak resmi dahil) şimdiye dek yalnızca lokale
-  // yazıldı — cloud `worlds.state_json` eski kalır, başka cihaz pull edemez.
-  // Outbox'a world-state push enqueue et + hemen drain et ki diğer cihazlar
-  // bir sonraki Refresh/Sync'te güncel kapağı çeksin.
-  final worldId = data['world_id'] as String?;
-  if (worldId != null && ref.read(onlineWorldIdsProvider).contains(worldId)) {
-    final engine = ref.read(syncEngineProvider);
-    await engine.enqueueWorldState(
-      worldId: worldId,
-      worldName: campaignName,
-      templateId: data['template_id'] as String?,
-      templateHash: data['template_hash'] as String?,
-      state: data,
-    );
-    await engine.forceTick();
+  // Açık dünya ise notifier'ın `_data` kopyası bayatladı — diskten tazele
+  // ki sonraki in-world settings push'u güncel metadata göndersin.
+  if (ref.read(activeCampaignProvider) == campaignName) {
+    await ref.read(activeCampaignProvider.notifier).reload();
   }
+
+  // Online dünya (DM): metadata şimdiye dek yalnızca lokale yazıldı — cloud
+  // `world_settings` satırı eski kalır, başka cihaz güncel kapağı görmez.
+  // Row-level `world_settings` outbox push enqueue et + hemen drain et ki
+  // diğer cihazlar CDC / seed-pull ile değişimi alsın.
+  final data = await repo.load(campaignName);
+  final worldId = data['world_id'] as String?;
+  if (worldId == null) return;
+  if (!ref.read(onlineWorldIdsProvider).contains(worldId)) return;
+  if (ref.read(authProvider) == null) return;
+  final role = await ref.read(worldRoleProvider(worldId).future);
+  if (role != WorldRole.dm) return;
+  // Tam settings blob'u kur — cloud satırı post-merge state içermeli
+  // (`ActiveCampaignNotifier.saveSettingsPatch` ile aynı şekil).
+  final settings = <String, dynamic>{};
+  for (final entry in data.entries) {
+    if (ActiveCampaignNotifier._settingsTopKeyBlocklist.contains(entry.key)) {
+      continue;
+    }
+    settings[entry.key] = entry.value;
+  }
+  final engine = ref.read(syncEngineProvider);
+  await engine.enqueueWorldSettings(worldId: worldId, settings: settings);
+  await engine.forceTick();
 }
 
 /// Aktif kampanya adı. null = henüz seçilmedi.
