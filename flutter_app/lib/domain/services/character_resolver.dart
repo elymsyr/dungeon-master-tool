@@ -199,7 +199,7 @@ class CharacterResolver {
           final want = argMap['value']?.toString() ?? '';
           final armor = _equippedArmor(fields, entitiesById);
           if (armor == null) return want == 'none' || want == 'not_heavy';
-          final catRef = armor.fields['armor_category_ref'];
+          final catRef = armor.fields['category_ref'];
           final catId = _resolveRef(catRef, entitiesById);
           final cat = (catId != null) ? entitiesById[catId]?.name.toLowerCase() ?? '' : '';
           if (want == 'none') return false;
@@ -1131,9 +1131,9 @@ class CharacterResolver {
 
   /// Walk a PC's `inventory` field and return the first equipped armor
   /// entity (category slug `armor`). Inventory rows are either bare ID
-  /// strings (no equip toggle) or `{id, equipped}` maps. Magic-item armor
-  /// counts too — we accept any equipped row whose target entity carries an
-  /// `armor_category_ref`.
+  /// strings (no equip toggle) or `{id, equipped}` maps. Shields share the
+  /// `armor` slug — they're excluded here (handled by _hasEquippedShield)
+  /// by resolving `category_ref` to the armor-category name.
   static Entity? _equippedArmor(
     Map<String, dynamic> fields,
     Map<String, Entity> entitiesById,
@@ -1143,22 +1143,21 @@ class CharacterResolver {
       if (id == null) continue;
       final e = entitiesById[id];
       if (e == null) continue;
-      if (e.categorySlug == 'armor' || e.fields['armor_category_ref'] != null) {
-        // Treat shields as a separate concern (handled by _hasEquippedShield).
-        final catRef = e.fields['armor_category_ref'];
-        final catId = _resolveRef(catRef, entitiesById);
-        final catName = catId != null
-            ? (entitiesById[catId]?.name.toLowerCase() ?? '')
-            : '';
-        if (catName.contains('shield')) continue;
-        return e;
-      }
+      if (e.categorySlug != 'armor') continue;
+      // Treat shields as a separate concern (handled by _hasEquippedShield).
+      final catRef = e.fields['category_ref'];
+      final catId = _resolveRef(catRef, entitiesById);
+      final catName = catId != null
+          ? (entitiesById[catId]?.name.toLowerCase() ?? '')
+          : '';
+      if (catName.contains('shield')) continue;
+      return e;
     }
     return null;
   }
 
   /// True iff the PC has an equipped shield in `inventory`. Shields are
-  /// armor-category entities whose `armor_category_ref` resolves to a name
+  /// armor-category entities whose `category_ref` resolves to a name
   /// containing "shield".
   static bool _hasEquippedShield(
     Map<String, dynamic> fields,
@@ -1169,7 +1168,8 @@ class CharacterResolver {
       if (id == null) continue;
       final e = entitiesById[id];
       if (e == null) continue;
-      final catRef = e.fields['armor_category_ref'];
+      if (e.categorySlug != 'armor') continue;
+      final catRef = e.fields['category_ref'];
       final catId = _resolveRef(catRef, entitiesById);
       final catName = catId != null
           ? (entitiesById[catId]?.name.toLowerCase() ?? '')
