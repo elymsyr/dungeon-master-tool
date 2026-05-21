@@ -315,6 +315,67 @@ class MediaBundler {
     return cloned;
   }
 
+  /// `world_settings` patch'inin (mind map / world map / battle map) içindeki
+  /// local image path'lerini counted R2'ya bundle eder. Offline iken seçilip
+  /// eager-upload edilemeyen map resimlerini Make Online'da kurtarır — entity
+  /// `bundleEntityMedia` ile paralel. Map deep-clone edilir.
+  ///
+  /// Hedef alt-ağaçlar:
+  /// - `mind_maps` → node `imageUrl` (`mindMapImage` kind).
+  /// - `map_data` → root + epoch `image_path` (`battleMap` kind).
+  /// - `combat_state` → encounter `mapPath` (`battleMap` kind).
+  Future<Map<String, dynamic>> bundleSettingsMedia({
+    required String worldId,
+    required Map<String, dynamic> settings,
+  }) async {
+    final cloned = deepCopyJson(settings) as Map<String, dynamic>;
+    await _bundleLocalImagesUnder(
+        cloned['mind_maps'], worldId, MediaKind.mindMapImage);
+    await _bundleLocalImagesUnder(
+        cloned['map_data'], worldId, MediaKind.battleMap);
+    await _bundleLocalImagesUnder(
+        cloned['combat_state'], worldId, MediaKind.battleMap);
+    return cloned;
+  }
+
+  /// JSON keys carrying an image path inside `world_settings` subtrees.
+  static const _settingsImageKeys = {
+    'imageUrl', // mind map node
+    'image_path', // world map epoch
+    'imagePath', // legacy / MapData
+    'mapPath', // battle map encounter
+    'map_path',
+  };
+
+  /// Recursively walks [node], replacing every local image-path string under a
+  /// [_settingsImageKeys] key with its uploaded `dmt-asset://` ref. Mutates
+  /// [node] in place (caller passes a deep copy).
+  Future<void> _bundleLocalImagesUnder(
+    Object? node,
+    String worldId,
+    MediaKind kind,
+  ) async {
+    if (node is Map) {
+      for (final key in node.keys.toList()) {
+        final value = node[key];
+        if (value is String &&
+            key is String &&
+            _settingsImageKeys.contains(key) &&
+            value.isNotEmpty &&
+            AssetRef(value).isLocal) {
+          final ref = await _uploadCounted(value, kind, worldId);
+          if (ref != null) node[key] = ref;
+        } else {
+          await _bundleLocalImagesUnder(value, worldId, kind);
+        }
+      }
+    } else if (node is List) {
+      for (final child in node) {
+        await _bundleLocalImagesUnder(child, worldId, kind);
+      }
+    }
+  }
+
   /// Local path'i ücretsiz Supabase Storage'a yükler, `dmt-public://` ref döner.
   /// Servis yoksa / dosya yoksa / hata olursa null (caller local path'i korur).
   Future<String?> _uploadFree(

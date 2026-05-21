@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -9,13 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
-import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
+import '../../../application/services/asset_ref_resolver.dart';
+import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
-import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
+import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
+import '../../widgets/quota_snackbar.dart';
 
 // ---------------------------------------------------------------------------
 // Tool enum
@@ -629,38 +631,40 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // -------------------------------------------------------------------------
 
   Future<void> pickMapImage(BuildContext context) async {
-    String? path;
-    final mediaDir = _ref.read(mediaDirectoryProvider);
-    final campaignId = _ref.read(mediaCampaignIdProvider);
-    if (mediaDir.isNotEmpty) {
-      final selected = await MediaGalleryDialog.show(
-        context,
-        mediaDir: mediaDir,
-        campaignId: campaignId,
-        allowMultiple: false,
-      );
-      if (selected == null || selected.isEmpty) return;
-      path = selected.first;
-    } else {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
-      );
-      if (result == null || result.files.single.path == null) return;
-      path = result.files.single.path!;
-    }
-    final img = await _loadImageFromFile(path);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
+    );
+    if (result == null || result.files.single.path == null) return;
+    final localPath = result.files.single.path!;
+
+    final oldRef = state.mapPath;
+    // Eager cloud upload — online world → push to R2; offline / quota-full
+    // → keep the local path.
+    final (ref: stored, :quotaExceeded) = await uploadMapImage(
+      _ref.read,
+      path: localPath,
+      kind: MediaKind.battleMap,
+    );
+    final img = await _loadImageFromFile(stored);
     if (!mounted) return;
     state = state.copyWith(
       backgroundImage: img,
-      mapPath: path,
+      mapPath: stored,
       canvasWidth: img?.width ?? 2048,
       canvasHeight: img?.height ?? 2048,
     );
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
-      mapPath: path,
+      mapPath: stored,
     );
+    if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
+    // Replaced an earlier cloud image → best-effort orphan cleanup.
+    unawaited(cleanupMapImageRef(
+      _ref.read,
+      removedRef: oldRef,
+      flushPrefix: 'settings:',
+    ));
   }
 
   // -------------------------------------------------------------------------
@@ -1156,9 +1160,16 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     return completer.future;
   }
 
-  static Future<ui.Image?> _loadImageFromFile(String path) async {
+  /// Decodes the background map image. [pathOrRef] may be a local path or a
+  /// `dmt-asset://` cloud ref — resolved through [AssetRefResolver] (cloud
+  /// refs download + cache on first use) before decoding.
+  Future<ui.Image?> _loadImageFromFile(String pathOrRef) async {
     try {
-      final bytes = await File(path).readAsBytes();
+      final file = await _ref
+          .read(assetRefResolverProvider)
+          .resolve(AssetRef(pathOrRef));
+      if (file == null) return null;
+      final bytes = await file.readAsBytes();
       final completer = Completer<ui.Image>();
       ui.decodeImageFromList(bytes, completer.complete);
       return completer.future;

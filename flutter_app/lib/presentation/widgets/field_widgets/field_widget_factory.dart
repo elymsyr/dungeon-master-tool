@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -6,17 +7,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
-import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
+import '../../../application/services/entity_image_upload.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
-import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../asset_ref_image.dart';
 import '../markdown_text_area.dart';
 import '../perf/image_cache_size.dart';
+import '../quota_snackbar.dart';
 import 'structured_list_field_widgets.dart';
 
 /// Resolve a relation field value to an entity UUID. Handles three formats
@@ -129,9 +132,6 @@ class FieldWidgetFactory {
     /// (untrained penalty, STR speed cut, Stealth disadvantage).
     List<String> combatStatsArmorNotes = const [],
   }) {
-    // Media directory — image field'ları için galeri desteği.
-    final mediaDir = ref?.read(mediaDirectoryProvider);
-
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
@@ -162,7 +162,6 @@ class FieldWidgetFactory {
           value: value,
           readOnly: readOnly,
           onChanged: onChanged,
-          mediaDir: mediaDir,
         );
       }
       if (schema.fieldType == FieldType.enum_) {
@@ -312,7 +311,6 @@ class FieldWidgetFactory {
         value: value,
         readOnly: readOnly,
         onChanged: onChanged,
-        mediaDir: mediaDir,
       ),
       FieldType.file => _FileFieldWidget(
         schema: schema,
@@ -3117,14 +3115,12 @@ class _ImageFieldWidget extends ConsumerStatefulWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
-  final String? mediaDir;
 
   const _ImageFieldWidget({
     required this.schema,
     required this.value,
     required this.readOnly,
     required this.onChanged,
-    this.mediaDir,
   });
 
   @override
@@ -3143,20 +3139,6 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   }
 
   Future<void> _pickImages() async {
-    final mediaDir = widget.mediaDir;
-    if (mediaDir != null && mediaDir.isNotEmpty) {
-      final campaignId = ref.read(mediaCampaignIdProvider);
-      final selected = await MediaGalleryDialog.show(
-        context,
-        mediaDir: mediaDir,
-        campaignId: campaignId,
-        allowMultiple: true,
-      );
-      if (selected == null || selected.isEmpty) return;
-      widget.onChanged([..._images, ...selected]);
-      return;
-    }
-    // Fallback: doğrudan dosya seçici
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,
@@ -3166,15 +3148,31 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
         .where((f) => f.path != null)
         .map((f) => f.path!)
         .toList();
-    widget.onChanged([..._images, ...newPaths]);
+    if (newPaths.isEmpty) return;
+
+    // Eager cloud upload — mirrors the entity portrait flow: online + signed
+    // in → push to R2 now; offline / quota-full → keep the local path.
+    final (:refs, :quotaExceeded, pushWorldId: _) =
+        await eagerUploadEntityImages(ref, newPaths);
+    if (!mounted) return;
+    widget.onChanged([..._images, ...refs]);
+    if (quotaExceeded) showQuotaFullSnackbar(context);
   }
 
   void _removeImage(int index) {
+    final removedRef = _images[index];
     final updated = List<String>.from(_images)..removeAt(index);
     if (_currentIndex >= updated.length && updated.isNotEmpty) {
       _currentIndex = updated.length - 1;
     }
     widget.onChanged(updated);
+    // Orphan cloud cleanup — best-effort, fire-and-forget.
+    unawaited(cleanupRemovedEntityImageRef(
+      ref,
+      removedRef,
+      readOnly: widget.readOnly,
+      remaining: updated,
+    ));
   }
 
   void _showFullScreen(BuildContext context, String imagePath) {
@@ -3190,8 +3188,8 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
               // U3: ekran genişliğinin 2x'i kadar decode — 4x zoom'da
               // makul keskinlik, ama full-res photo'nun unbounded RGBA
               // RAM'i (4000px → ~64MB) önlenir.
-              child: Image.file(
-                File(imagePath),
+              child: AssetRefImage(
+                ref: AssetRef(imagePath),
                 fit: BoxFit.contain,
                 cacheWidth:
                     cachePxFromLogical(ctx, MediaQuery.sizeOf(ctx).width * 2),
@@ -3242,12 +3240,12 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                           _showFullScreen(context, images[_currentIndex]),
                       child: ClipRRect(
                         borderRadius: palette?.cbr ?? BorderRadius.circular(4),
-                        child: Image.file(
-                          File(images[_currentIndex]),
+                        child: AssetRefImage(
+                          ref: AssetRef(images[_currentIndex]),
                           fit: BoxFit.contain,
                           width: double.infinity,
                           cacheWidth: 600,
-                          errorBuilder: (_, _, _) => Container(
+                          errorWidget: Container(
                             color: palette?.canvasBg ?? Colors.grey.shade800,
                             child: Center(
                               child: Icon(

@@ -21,24 +21,33 @@ import '../../domain/value_objects/media_kind.dart';
 /// its `dmt-asset://` ref. Returns [localPath] untouched when [service] is
 /// null, the path is already a cloud ref, the file is missing, or the upload
 /// fails.
-Future<String> uploadEntityImageRef(
+///
+/// The result's [quotaExceeded] is `true` only when the upload fell back to
+/// the local path because the user's storage quota is full — callers use it
+/// to surface a "stored on device" notice. Every other fallback (offline, no
+/// service, missing file, already-cloud ref) returns `quotaExceeded: false`.
+Future<({String ref, bool quotaExceeded})> uploadEntityImageRef(
   AssetService? service, {
   required String localPath,
   required String scopeId,
   required MediaKind kind,
 }) async {
-  if (service == null || !AssetRef(localPath).isLocal) return localPath;
+  if (service == null || !AssetRef(localPath).isLocal) {
+    return (ref: localPath, quotaExceeded: false);
+  }
   final file = File(localPath);
-  if (!await file.exists()) return localPath;
+  if (!await file.exists()) return (ref: localPath, quotaExceeded: false);
   try {
     final uri = await service.uploadAsset(
       file,
       campaignId: scopeId,
       kind: kind,
     );
-    return uri.toString();
+    return (ref: uri.toString(), quotaExceeded: false);
+  } on AssetQuotaExceededException catch (_) {
+    return (ref: localPath, quotaExceeded: true);
   } catch (_) {
-    return localPath;
+    return (ref: localPath, quotaExceeded: false);
   }
 }
 

@@ -14,8 +14,10 @@ import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/online/world_role.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/asset_ref_image.dart';
 import '../../widgets/unbounded_stack.dart';
 import 'epoch_scroll_bar.dart';
 import 'epoch_waypoint_dialog.dart';
@@ -537,18 +539,21 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           // pan/zoom so pin movements don't invalidate the image picture.
           // F5: cacheWidth paired with cacheHeight caps decoded RAM on
           //     wide landscape maps; Image SDK preserves aspect ratio.
-          if (mapState.imagePath.isNotEmpty &&
-              File(mapState.imagePath).existsSync())
+          // imagePath may be a local path or a `dmt-asset://` cloud ref —
+          // AssetRefImage resolves either (placeholder while resolving).
+          if (mapState.imagePath.isNotEmpty)
             RepaintBoundary(
               child: OverflowBox(
                 alignment: Alignment.topLeft,
                 maxWidth: double.infinity,
                 maxHeight: double.infinity,
-                child: Image.file(
-                  File(mapState.imagePath),
+                child: AssetRefImage(
+                  ref: AssetRef(mapState.imagePath),
                   fit: BoxFit.none,
                   cacheWidth: 4096,
                   cacheHeight: 4096,
+                  placeholder: _buildEmptyMapPlaceholder(palette),
+                  errorWidget: _buildEmptyMapPlaceholder(palette),
                 ),
               ),
             )

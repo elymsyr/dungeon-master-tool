@@ -1,17 +1,19 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/media_provider.dart';
+import '../../../application/services/map_image_upload.dart';
 import '../../../core/utils/screen_type.dart';
-import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/mind_map.dart';
+import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/asset_ref_image.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/quota_snackbar.dart';
 import 'mind_map_notifier.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
@@ -636,12 +638,20 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (entity.imagePath.isNotEmpty) entity.imagePath,
       ...entity.images,
     ];
-    final hasImage =
-        allImages.isNotEmpty &&
-        _fileExistsCache.putIfAbsent(
-          allImages.first,
-          () => File(allImages.first).existsSync(),
-        );
+
+    final imagePlaceholder = Container(
+      width: n.width * 0.3,
+      height: n.height - 16,
+      decoration: BoxDecoration(
+        color: palette.canvasBg.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Icon(
+        Icons.person_outline,
+        size: 24,
+        color: palette.tabText.withValues(alpha: 0.3),
+      ),
+    );
 
     // Mini feature card — mirrors EntityCard default section layout
     return Padding(
@@ -649,32 +659,24 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Portrait thumbnail (left)
-          if (hasImage)
+          // Portrait thumbnail (left) — entity images may be local paths or
+          // `dmt-asset://` / `dmt-public://` cloud refs; AssetRefImage resolves
+          // either.
+          if (allImages.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: Image.file(
-                File(allImages.first),
+              child: AssetRefImage(
+                ref: AssetRef(allImages.first),
                 width: n.width * 0.35,
                 height: n.height - 16,
                 fit: BoxFit.cover,
                 cacheWidth: (n.width * 0.7).toInt(),
+                placeholder: imagePlaceholder,
+                errorWidget: imagePlaceholder,
               ),
             )
           else
-            Container(
-              width: n.width * 0.3,
-              height: n.height - 16,
-              decoration: BoxDecoration(
-                color: palette.canvasBg.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Icon(
-                Icons.person_outline,
-                size: 24,
-                color: palette.tabText.withValues(alpha: 0.3),
-              ),
-            ),
+            imagePlaceholder,
           const SizedBox(width: 8),
           // Info column (right)
           Expanded(
@@ -783,26 +785,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     });
   }
 
-  static final _fileExistsCache = <String, bool>{};
-
-  Widget _buildImageContent(MindMapNode n, DmToolColors palette) {
-    if (n.imageUrl != null && n.imageUrl!.isNotEmpty) {
-      final exists = _fileExistsCache.putIfAbsent(
-        n.imageUrl!,
-        () => File(n.imageUrl!).existsSync(),
-      );
-      if (exists) {
-        return ClipRRect(
-          child: Image.file(
-            File(n.imageUrl!),
-            fit: BoxFit.cover,
-            width: n.width,
-            height: n.height,
-            cacheWidth: (n.width * 2).toInt(),
-          ),
-        );
-      }
-    }
+  Widget _buildImagePlaceholder(DmToolColors palette) {
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(color: palette.tabBg),
@@ -823,6 +806,26 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImageContent(MindMapNode n, DmToolColors palette) {
+    if (n.imageUrl == null || n.imageUrl!.isEmpty) {
+      return _buildImagePlaceholder(palette);
+    }
+    // imageUrl may be a legacy local path or a `dmt-asset://` cloud ref —
+    // both flow through AssetRefImage (cloud refs download + cache on first
+    // render).
+    return ClipRRect(
+      child: AssetRefImage(
+        ref: AssetRef(n.imageUrl!),
+        fit: BoxFit.cover,
+        width: n.width,
+        height: n.height,
+        cacheWidth: (n.width * 2).toInt(),
+        placeholder: _buildImagePlaceholder(palette),
+        errorWidget: _buildImagePlaceholder(palette),
       ),
     );
   }
@@ -1190,20 +1193,6 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
   Future<void> _pickImageForNode(BuildContext context) async {
     try {
-      final mediaDir = ref.read(mediaDirectoryProvider);
-      final campaignId = ref.read(mediaCampaignIdProvider);
-      if (mediaDir.isNotEmpty) {
-        final selected = await MediaGalleryDialog.show(
-          context,
-          mediaDir: mediaDir,
-          campaignId: campaignId,
-          allowMultiple: false,
-        );
-        if (!mounted || selected == null || selected.isEmpty) return;
-        widget.notifier.updateNodeImageUrl(widget.node.id, selected.first);
-        return;
-      }
-      // Fallback
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
@@ -1211,9 +1200,25 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (!mounted) return;
       if (result == null || result.files.isEmpty) return;
       final path = result.files.first.path;
-      if (path != null) {
-        widget.notifier.updateNodeImageUrl(widget.node.id, path);
-      }
+      if (path == null) return;
+
+      final oldRef = widget.node.imageUrl;
+      // Eager cloud upload — online world → push to R2; offline / quota-full
+      // → keep the local path.
+      final (ref: uploaded, :quotaExceeded) = await uploadMapImage(
+        ref.read,
+        path: path,
+        kind: MediaKind.mindMapImage,
+      );
+      if (!mounted) return;
+      widget.notifier.updateNodeImageUrl(widget.node.id, uploaded);
+      if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
+      // Replaced an earlier cloud image → best-effort orphan cleanup.
+      unawaited(cleanupMapImageRef(
+        ref.read,
+        removedRef: oldRef,
+        flushPrefix: 'settings:',
+      ));
     } catch (_) {}
   }
 

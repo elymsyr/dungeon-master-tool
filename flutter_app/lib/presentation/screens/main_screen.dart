@@ -30,10 +30,8 @@ import '../../application/providers/personal_sync_provider.dart';
 import '../../application/services/pending_write_buffer.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
-import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
-import '../dialogs/media_gallery_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
@@ -602,16 +600,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 switch (action) {
                   case 'projection':
                     _togglePhoneProjection();
-                  case 'media':
-                    final mediaDir = ref.read(mediaDirectoryProvider);
-                    final campaignId = ref.read(mediaCampaignIdProvider);
-                    if (mediaDir.isNotEmpty) {
-                      MediaGalleryDialog.show(
-                        context,
-                        mediaDir: mediaDir,
-                        campaignId: campaignId,
-                      );
-                    }
                   case 'import':
                     ImportPackageDialog.show(context);
                   case 'bug':
@@ -652,7 +640,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                         Text(projLabel),
                       ]),
                     ),
-                PopupMenuItem(value: 'media', child: Row(children: [const Icon(Icons.photo_library_outlined, size: 18), const SizedBox(width: 8), Text(l10n.menuMediaGallery)])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 const PopupMenuDivider(),
                 ...themeNames.map((name) => PopupMenuItem(
@@ -675,22 +662,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
             ),
           ] else ...[
             // Desktop/Tablet: show all buttons
-            // Media Gallery
-            IconButton(
-              icon: const Icon(Icons.photo_library_outlined, size: 20),
-              tooltip: l10n.menuMediaGallery,
-              onPressed: () {
-                final mediaDir = ref.read(mediaDirectoryProvider);
-                final campaignId = ref.read(mediaCampaignIdProvider);
-                if (mediaDir.isNotEmpty) {
-                  MediaGalleryDialog.show(
-                    context,
-                    mediaDir: mediaDir,
-                    campaignId: campaignId,
-                  );
-                }
-              },
-            ),
             // Import Package
             IconButton(
               icon: const Icon(Icons.inventory_2, size: 20),
