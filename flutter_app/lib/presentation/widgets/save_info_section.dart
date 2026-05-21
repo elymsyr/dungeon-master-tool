@@ -14,6 +14,7 @@ import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'save_sync_shared.dart';
 
 /// Reusable section showing local save timestamp and cloud backup
 /// timestamp. Read-only — no download/restore action. Restoration is
@@ -105,6 +106,13 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
         _refreshCloud();
       }
     });
+    // Manual Sync with no pending outbox rows fires neither listener above.
+    // The tick bumps after `runFullManualSync` completes → re-fetch so the
+    // cloud timestamp reflects the just-pushed `updated_at`.
+    ref.listen<int>(
+      manualSyncCompletedTickProvider,
+      (_, _) => _refreshCloud(),
+    );
 
     final mirrorRow = _offlineMirrorRow(palette, l10n);
 

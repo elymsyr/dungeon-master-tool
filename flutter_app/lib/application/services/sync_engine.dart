@@ -18,6 +18,7 @@ import '../providers/beta_provider.dart';
 import '../providers/cloud_backup_provider.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/world_mirror_provider.dart';
+import 'image_upload_helper.dart';
 import 'media_bundler.dart';
 import 'pending_write_buffer.dart';
 import 'srd_core_package_bootstrap.dart';
@@ -813,9 +814,29 @@ class SyncEngine {
       return;
     }
     final p = jsonDecode(row.payloadJson) as Map<String, dynamic>;
+    var state = (p['state'] as Map).cast<String, dynamic>();
+    // Faz 3: paket kapak resmi (`metadata.cover_image_path`) hâlâ local path
+    // ise free-media bucket'a yükle → portable `dmt-public://` ref. Bundle
+    // hatası push'u bozmaz (best-effort).
+    final meta = state['metadata'];
+    if (meta is Map<String, dynamic>) {
+      try {
+        state = {
+          ...state,
+          'metadata': await uploadCoverImageInMetadata(
+            _ref.read(freeMediaServiceProvider),
+            metadata: meta,
+            coverKind: MediaKind.packageCover,
+            scopeId: row.targetPk,
+          ),
+        };
+      } catch (e, st) {
+        debugPrint('personal package cover bundle error: $e\n$st');
+      }
+    }
     await mirror.pushPersonalPackage(
       packageName: row.targetPk,
-      state: (p['state'] as Map).cast<String, dynamic>(),
+      state: state,
     );
   }
 

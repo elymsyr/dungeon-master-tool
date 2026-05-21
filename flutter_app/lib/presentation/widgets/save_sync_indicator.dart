@@ -539,6 +539,13 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
         debugPrint('makeOnline ensureInvite error: $e');
       }
       ref.invalidate(worldActiveInviteCodeProvider(worldId));
+      // publish_world inserts the DM `world_members` row, but the role
+      // providers had resolved to `none` while offline and stayed cached.
+      // Without this the in-world panel keeps role=none → no InviteCodeRow
+      // until the world is closed/reopened. Invalidate so role re-resolves
+      // to `dm` on the same tick the publish succeeds.
+      ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(worldRoleProvider(worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),

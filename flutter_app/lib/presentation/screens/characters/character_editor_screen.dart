@@ -26,7 +26,9 @@ import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/image_upload_helper.dart';
 import '../../../application/services/pending_write_buffer.dart';
+import '../../../data/network/network_providers.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
@@ -863,7 +865,50 @@ class _CharacterEditorScreenState
     if (path == null) return;
     final c = _working;
     if (c == null) return;
-    _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: path)));
+
+    // Eager upload the portrait to the free-media bucket (quota-exempt) so the
+    // `dmt-public://` ref is portable across devices immediately — mirrors
+    // `_pickCover`. Offline / failure → keep the local path; the portrait
+    // bundles later via the character outbox / cloud-backup push.
+    final newRef = await uploadCharacterPortraitRef(
+      ref.read(freeMediaServiceProvider),
+      localPath: path,
+      scopeId: c.worldId ?? c.id,
+    );
+    if (!mounted) return;
+    _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: newRef)));
+    // Persist + push now so the portrait reaches the cloud without waiting
+    // for the autosave debounce.
+    await _flushAndPush();
+  }
+
+  /// Drains the pending debounced write, persists, flushes the cloud
+  /// snapshot, and forces the outbox push. Shared by [_saveAndClose] and
+  /// [_pickPortrait] so a freshly picked portrait syncs immediately.
+  Future<void> _flushAndPush() async {
+    // Pending debounced write'ı önce drain et — buffer fire'ı zaten
+    // characterListProvider.update() çağırıyor (disk + sync push).
+    try {
+      await ref
+          .read(pendingWriteBufferProvider)
+          .flushPrefix('character:${widget.characterId}');
+    } catch (_) {/* best-effort */}
+    await _save(silent: true);
+    // Flush cloud snapshot (beta + non-online-world chars). Mirror-route
+    // chars are already pushed from `update()`.
+    try {
+      await ref
+          .read(characterListProvider.notifier)
+          .flushCloudBackup(widget.characterId);
+    } catch (_) {/* best-effort */}
+    // Online ise outbox push'unu zorla — slow tier cloudDelay (10s)
+    // beklemeden network'e gitsin.
+    final online = ref.read(connectivityStreamProvider).valueOrNull ?? false;
+    if (online) {
+      try {
+        await ref.read(syncEngineProvider).forceTick();
+      } catch (_) {/* best-effort */}
+    }
   }
 
 
@@ -2576,32 +2621,7 @@ class _CharacterEditorScreenState
       ref.read(globalLoadingProvider.notifier),
       'save-close-char-${widget.characterId}',
       'Saving...',
-      () async {
-        // Pending debounced write'ı önce drain et — buffer fire'ı zaten
-        // characterListProvider.update() çağırıyor (disk + sync push).
-        try {
-          await ref
-              .read(pendingWriteBufferProvider)
-              .flushPrefix('character:${widget.characterId}');
-        } catch (_) {/* best-effort */}
-        await _save(silent: true);
-        // Flush cloud snapshot (beta + non-online-world chars). Mirror-route
-        // chars are already pushed from `update()`.
-        try {
-          await ref
-              .read(characterListProvider.notifier)
-              .flushCloudBackup(widget.characterId);
-        } catch (_) {/* best-effort */}
-        // Online ise outbox push'unu zorla — slow tier cloudDelay (10s)
-        // beklemeden network'e gitsin.
-        final online =
-            ref.read(connectivityStreamProvider).valueOrNull ?? false;
-        if (online) {
-          try {
-            await ref.read(syncEngineProvider).forceTick();
-          } catch (_) {/* best-effort */}
-        }
-      },
+      _flushAndPush,
     );
     if (!context.mounted) return;
     final onClose = widget.onClose;
