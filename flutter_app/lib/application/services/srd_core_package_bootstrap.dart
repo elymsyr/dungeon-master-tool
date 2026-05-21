@@ -11,9 +11,9 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 const _uuid = Uuid();
 
 /// Canonical name of the built-in SRD content package. The package row is
-/// owned by the app — never deleted by `getAvailableNames` cleanup, refreshed
-/// on every app start so newly-authored Tier-1 rows land without a manual
-/// reinstall.
+/// owned by the app — never deleted by `getAvailableNames` cleanup, and
+/// re-seeded whenever the code's `pack_version` differs from the stored copy
+/// so content fixes / new rows land without a manual reinstall.
 const srdCorePackageName = 'SRD 5.2.1 Core';
 
 /// Idempotent installer that materialises the hand-authored SRD 5.2.1
@@ -36,10 +36,18 @@ class SrdCorePackageBootstrap {
 
     // Defense-in-depth: if a previous session already materialised the pack
     // in this DB, skip work without relying solely on the in-memory set.
+    final pack = buildSrdCorePack();
+    final codeVersion = pack.metadata['pack_version'] as String?;
+
     final existingRow = await _findByName(srdCorePackageName);
     if (existingRow != null) {
       final entities = await _db.packagesDao.getEntities(existingRow.id);
-      if (entities.isNotEmpty) {
+      // Skip only when the seeded copy is non-empty AND its pack_version
+      // matches the code. A version bump (content fix / new rows) falls
+      // through to the delete-and-replace path below so existing installs
+      // pick up the change without a manual reinstall.
+      if (entities.isNotEmpty &&
+          _storedPackVersion(existingRow) == codeVersion) {
         _installedFor.add(key);
         return 0;
       }
@@ -47,7 +55,6 @@ class SrdCorePackageBootstrap {
 
     final build = generateBuiltinDnd5eV2Schema();
     final schema = build.schema;
-    final pack = buildSrdCorePack();
 
     final inserted = await _db.transaction(() async {
       final existing = await _findByName(srdCorePackageName);
@@ -147,6 +154,26 @@ class SrdCorePackageBootstrap {
     // a permanent lockout.
     _installedFor.add(key);
     return inserted;
+  }
+
+  /// Reads `metadata.pack_version` out of a package row's `stateJson`.
+  /// Returns null when absent or malformed — treated as a version mismatch
+  /// so a legacy unversioned row re-seeds.
+  String? _storedPackVersion(Package row) {
+    final raw = row.stateJson;
+    if (raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final meta = decoded['metadata'];
+        if (meta is Map && meta['pack_version'] is String) {
+          return meta['pack_version'] as String;
+        }
+      }
+    } catch (_) {
+      // Malformed stateJson — fall through to re-seed.
+    }
+    return null;
   }
 
   Future<Package?> _findByName(String name) async {

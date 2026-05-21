@@ -149,7 +149,7 @@ SrdCorePack buildSrdCorePack() {
     'attribution': srdAttribution,
     'license': srdLicense,
     'source': srdSourceTag,
-    'pack_version': '1.0.0',
+    'pack_version': '1.0.1',
   };
 
   return SrdCorePack(entities: entities, metadata: metadata);

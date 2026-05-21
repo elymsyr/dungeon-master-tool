@@ -275,8 +275,30 @@ class _CharacterEditorScreenState
         _working ?? ref.watch(characterByIdProvider(widget.characterId));
 
     if (character == null) {
+      final onClose = widget.onClose;
       return Scaffold(
-        appBar: AppBar(title: const Text('Character')),
+        appBar: AppBar(
+          titleSpacing: 8,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                tooltip: 'Back',
+                onPressed: () {
+                  if (onClose != null) {
+                    onClose();
+                  } else {
+                    context.pop();
+                  }
+                },
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 4),
+              const Text('Character'),
+            ],
+          ),
+        ),
         body: const Center(child: Text('Character not found.')),
       );
     }
