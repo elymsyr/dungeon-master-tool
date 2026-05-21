@@ -10,6 +10,7 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
@@ -447,13 +448,29 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         ref.read(campaignInfoListProvider).valueOrNull ?? const [];
     final worldName = c.resolvedWorldName(infos);
 
+    // Marketplace listing kontrolü — yalnızca hard delete'te (release
+    // listing'i korur). Offline-safe local index okuması.
+    var hasListings = false;
+    if (isHardDelete) {
+      try {
+        final ids = await ref
+            .read(marketplaceLinksLocalDsProvider)
+            .getOwnedListingIds('character', c.id);
+        hasListings = ids.isNotEmpty;
+      } catch (_) {/* ignore */}
+    }
+    if (!mounted) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(isHardDelete ? l10n.charDeleteTitle : l10n.charReleaseTitle),
         content: Text(
           isHardDelete
-              ? l10n.charDeleteBody(c.entity.name)
+              ? (hasListings
+                  ? '${l10n.charDeleteBody(c.entity.name)}\n\n'
+                      '${l10n.charDeleteMarketplaceWarning}'
+                  : l10n.charDeleteBody(c.entity.name))
               : c.worldId != null
                   ? (worldName.isNotEmpty
                       ? l10n.charReleaseBodyInWorldNamed(c.entity.name, worldName)

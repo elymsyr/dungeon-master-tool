@@ -13,6 +13,7 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../services/entity_media_cleanup_service.dart';
+import '../services/marketplace_cleanup_service.dart';
 import '../services/pending_write_buffer.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -181,6 +182,13 @@ Future<void> updateCampaignMetadata(
   Map<String, dynamic> newMetadata,
 ) async {
   final repo = ref.read(campaignRepositoryProvider);
+  // Kapak değiştirildiyse eski cloud resmini silmek için eski ref'i
+  // patch'ten ÖNCE yakala.
+  String? oldCover;
+  try {
+    final prevMeta = (await repo.load(campaignName))['metadata'];
+    if (prevMeta is Map) oldCover = prevMeta['cover_image_path'] as String?;
+  } catch (_) {/* ignore */}
   // Row-level: yalnızca `world_settings.settings_json` içindeki `metadata`
   // alanını güncelle. `metadata` typed top key değil — settings blob'una
   // ait. Tüm world'ü (entities dahil) yeniden yazan `save()` yerine
@@ -193,6 +201,22 @@ Future<void> updateCampaignMetadata(
   // ki sonraki in-world settings push'u güncel metadata göndersin.
   if (ref.read(activeCampaignProvider) == campaignName) {
     await ref.read(activeCampaignProvider.notifier).reload();
+  }
+
+  // Kapak değiştiyse eski cloud resmini best-effort sil (offline dünyada da).
+  if (ref.read(authProvider) != null) {
+    final cleanup = ref.read(entityMediaCleanupServiceProvider);
+    if (cleanup != null) {
+      // ignore: discarded_futures
+      cleanup
+          .cleanupReplacedRef(
+            oldRef: oldCover,
+            newRef: newMetadata['cover_image_path'] as String?,
+          )
+          .catchError(
+            (Object e) => debugPrint('world cover cleanup error: $e'),
+          );
+    }
   }
 
   // Online dünya (DM): metadata şimdiye dek yalnızca lokale yazıldı — cloud
@@ -553,6 +577,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       worldId: data?['world_id'] as String?,
       campaignName: campaignName,
     );
+    _cleanupMarketplace(campaignName);
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -599,6 +624,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       worldId: data?['world_id'] as String?,
       campaignName: campaignName,
     );
+    _cleanupMarketplace(campaignName);
   }
 
   /// Best-effort: dünya silindiğinde dünyaya bağlı cloud medyayı (kapak +
@@ -620,6 +646,20 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         )
         .catchError(
           (Object e) => debugPrint('world media cleanup error: $e'),
+        );
+  }
+
+  /// Best-effort: dünya silindiğinde bu dünyadan publish edilmiş tüm
+  /// marketplace listing'lerini siler. Bkz. [MarketplaceCleanupService].
+  void _cleanupMarketplace(String campaignName) {
+    if (_ref.read(authProvider) == null) return;
+    final svc = _ref.read(marketplaceCleanupServiceProvider);
+    if (svc == null) return;
+    // ignore: discarded_futures
+    svc
+        .cleanupItem(itemType: 'world', localId: campaignName)
+        .catchError(
+          (Object e) => debugPrint('world marketplace cleanup error: $e'),
         );
   }
 

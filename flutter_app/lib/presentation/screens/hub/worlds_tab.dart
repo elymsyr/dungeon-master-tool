@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -382,7 +383,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
   }
 
-  void _deleteWorld() {
+  Future<void> _deleteWorld() async {
     final l10n = L10n.of(context)!;
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
@@ -396,6 +397,20 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         ?? WorldRole.none;
     final isPlayer = role == WorldRole.player;
 
+    // Marketplace listing kontrolü — offline-safe local index okuması.
+    // Sadece DM-delete yolunda; player Leave dünyayı silmez, listing'i
+    // etkilemez.
+    var hasListings = false;
+    if (!isPlayer) {
+      try {
+        final ids = await ref
+            .read(marketplaceLinksLocalDsProvider)
+            .getOwnedListingIds('world', name);
+        hasListings = ids.isNotEmpty;
+      } catch (_) {/* ignore */}
+    }
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -403,7 +418,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         content: Text(
           isPlayer
               ? l10n.worldsLeaveBody(name)
-              : l10n.worldsDeleteBody(name),
+              : hasListings
+                  ? '${l10n.worldsDeleteBody(name)}\n\n'
+                      '${l10n.worldsDeleteMarketplaceWarning}'
+                  : l10n.worldsDeleteBody(name),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),

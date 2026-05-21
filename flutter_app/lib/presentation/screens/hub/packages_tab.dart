@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart';
@@ -465,17 +466,32 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     return packages[_selectedIndex].name == srdCorePackageName;
   }
 
-  void _deletePackage() {
+  Future<void> _deletePackage() async {
     final packages = ref.read(packageListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= packages.length) return;
     final name = packages[_selectedIndex].name;
     final l10n = L10n.of(context)!;
 
+    // Marketplace listing kontrolü — offline-safe local index okuması.
+    var hasListings = false;
+    try {
+      final ids = await ref
+          .read(marketplaceLinksLocalDsProvider)
+          .getOwnedListingIds('package', name);
+      hasListings = ids.isNotEmpty;
+    } catch (_) {/* ignore */}
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.packageDelete),
-        content: Text(l10n.packageDeleteConfirm(name)),
+        content: Text(
+          hasListings
+              ? '${l10n.packageDeleteConfirm(name)}\n\n'
+                  '${l10n.packageDeleteMarketplaceWarning}'
+              : l10n.packageDeleteConfirm(name),
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),

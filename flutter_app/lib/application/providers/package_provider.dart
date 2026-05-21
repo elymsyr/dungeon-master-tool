@@ -9,6 +9,7 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
 import '../services/entity_media_cleanup_service.dart';
+import '../services/marketplace_cleanup_service.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
@@ -67,10 +68,31 @@ Future<void> updatePackageMetadata(
 ) async {
   final repo = ref.read(packageRepositoryProvider);
   final data = await repo.load(packageName);
+  // Kapak değiştirildiyse eski cloud resmini silmek için eski ref'i
+  // overwrite'tan ÖNCE yakala.
+  String? oldCover;
+  final prevMeta = data['metadata'];
+  if (prevMeta is Map) oldCover = prevMeta['cover_image_path'] as String?;
   data['metadata'] = newMetadata;
   await repo.save(packageName, data);
   ref.invalidate(packageMetadataProvider(packageName));
   ref.invalidate(packageListProvider);
+
+  // Kapak değiştiyse eski cloud resmini best-effort sil.
+  if (ref.read(authProvider) != null) {
+    final cleanup = ref.read(entityMediaCleanupServiceProvider);
+    if (cleanup != null) {
+      // ignore: discarded_futures
+      cleanup
+          .cleanupReplacedRef(
+            oldRef: oldCover,
+            newRef: newMetadata['cover_image_path'] as String?,
+          )
+          .catchError(
+            (Object e) => debugPrint('package cover cleanup error: $e'),
+          );
+    }
+  }
 }
 
 /// Aktif paket adı. null = henüz seçilmedi.
@@ -359,6 +381,17 @@ class ActivePackageNotifier extends StateNotifier<String?> {
         // ignore: discarded_futures
         cleanup.cleanupPackage(packageName: packageName).catchError(
               (Object e) => debugPrint('package media cleanup error: $e'),
+            );
+      }
+      // Best-effort: bu paketten publish edilmiş marketplace listing'lerini sil.
+      final mkt = _ref.read(marketplaceCleanupServiceProvider);
+      if (mkt != null) {
+        // ignore: discarded_futures
+        mkt
+            .cleanupItem(itemType: 'package', localId: packageName)
+            .catchError(
+              (Object e) =>
+                  debugPrint('package marketplace cleanup error: $e'),
             );
       }
     }

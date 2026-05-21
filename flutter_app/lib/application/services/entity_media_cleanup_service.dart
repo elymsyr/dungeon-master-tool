@@ -69,6 +69,20 @@ class EntityMediaCleanupService {
     await _deleteRefs(refs);
   }
 
+  /// Bir kapak/portre DEĞİŞTİRİLDİĞİNDE eski cloud ref'i temizler. Yeni ref
+  /// DB'ye commit edildikten SONRA çağrılmalı — aksi halde [_isReferencedElsewhere]
+  /// satırın kendi bayat ref'ini görür ve silmeyi yanlışlıkla atlar.
+  Future<void> cleanupReplacedRef({
+    required String? oldRef,
+    required String? newRef,
+  }) async {
+    final old = oldRef?.trim() ?? '';
+    if (old.isEmpty || old == (newRef?.trim() ?? '')) return;
+    final r = AssetRef(old);
+    if (!r.isCloud && !r.isPublic) return; // local/transient → no-op
+    await _deleteRefs({old});
+  }
+
   // ── discovery ─────────────────────────────────────────────────────────
 
   /// `community_assets` / `free_media_assets` tablolarından scope'a bağlı
