@@ -124,6 +124,10 @@ class FieldWidgetFactory {
     /// manually-stored entry.
     int? combatStatsLevel,
     int? combatStatsAc,
+
+    /// SRD armor consequences for the `combat_stats` warning banner
+    /// (untrained penalty, STR speed cut, Stealth disadvantage).
+    List<String> combatStatsArmorNotes = const [],
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -233,6 +237,7 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         levelOverride: combatStatsLevel,
         acOverride: combatStatsAc,
+        armorNotes: combatStatsArmorNotes,
       ),
       FieldType.conditionStats => _CombatStatsFieldWidget(
         schema: schema,
@@ -1390,6 +1395,11 @@ class _CombatStatsFieldWidget extends StatefulWidget {
   final int? levelOverride;
   final int? acOverride;
 
+  /// SRD 5.2.1 consequences of the currently equipped armor (untrained
+  /// penalty, STR speed cut, Stealth disadvantage). Rendered as a warning
+  /// banner above the stats grid. Empty = no banner.
+  final List<String> armorNotes;
+
   const _CombatStatsFieldWidget({
     required this.schema,
     required this.value,
@@ -1397,6 +1407,7 @@ class _CombatStatsFieldWidget extends StatefulWidget {
     required this.onChanged,
     this.levelOverride,
     this.acOverride,
+    this.armorNotes = const [],
   });
 
   @override
@@ -1486,6 +1497,47 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
     super.dispose();
   }
 
+  /// Amber warning banner listing the SRD armor consequences in
+  /// [_CombatStatsFieldWidget.armorNotes] (untrained penalty, STR speed cut,
+  /// Stealth disadvantage).
+  Widget _armorNotesBanner(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              size: 18, color: scheme.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final note in widget.armorNotes)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      note,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: scheme.onErrorContainer,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final stats = _stats;
@@ -1505,6 +1557,10 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
+            if (widget.armorNotes.isNotEmpty) ...[
+              _armorNotesBanner(context),
+              const SizedBox(height: 8),
+            ],
             if (gridFields.isNotEmpty)
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -1829,6 +1885,23 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
   WidgetRef? get ref => widget.ref;
   String? get panelId => widget.panelId;
 
+  /// Armor slot for an inventory entity: `'shield'` or `'body'` for an armor
+  /// entity, else null. Used to enforce SRD "one suit + one shield at a time"
+  /// — equipping an armor auto-unequips any other equipped armor in the same
+  /// slot. Returns null for non-armor (weapons, spells) so the toggle stays
+  /// generic.
+  String? _armorSlot(String itemId) {
+    final all = entities;
+    if (all == null) return null;
+    final e = all[itemId];
+    if (e == null || e.categorySlug != 'armor') return null;
+    final catRef = e.fields['category_ref'];
+    final catId = catRef is String ? catRef : null;
+    final cat = catId != null ? all[catId] : null;
+    final name = cat?.name.toLowerCase() ?? '';
+    return name.contains('shield') ? 'shield' : 'body';
+  }
+
   @override
   Widget build(BuildContext context) {
     // Değer iki formatta olabilir:
@@ -1977,6 +2050,28 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                               // Equip/prepare flag toggles independent of edit
                               // mode — players juggle these mid-session.
                               onPressed: () {
+                                // SRD: one suit of armor + one shield at a
+                                // time. Equipping an armor auto-unequips any
+                                // other equipped armor in the same slot.
+                                if (!isEquipped) {
+                                  final slot = _armorSlot(itemId);
+                                  if (slot != null) {
+                                    for (var j = 0; j < items.length; j++) {
+                                      if (j == i) continue;
+                                      if (items[j]['equipped'] == true &&
+                                          _armorSlot(
+                                                items[j]['id']?.toString() ??
+                                                    '',
+                                              ) ==
+                                              slot) {
+                                        items[j] = {
+                                          ...items[j],
+                                          'equipped': false,
+                                        };
+                                      }
+                                    }
+                                  }
+                                }
                                 items[i] = {
                                   ...item,
                                   'equipped': !isEquipped,

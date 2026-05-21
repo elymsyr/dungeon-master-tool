@@ -117,6 +117,11 @@ class WorldMirrorApplier {
   /// gibi davranır — fakat liste olarak gelir, tek transaction'da uygular.
   Future<void> applyInitialState(String worldId) async {
     if (_disposed) return;
+    // entity_shares CDC kesinti sırasında replay edilmez; offline/world-closed
+    // sırasında yapılan paylaşımlar shares cache'ine düşmez. Catch-up'ta
+    // (reconnect / world re-entry / manuel sync) shares'i taze çek — aksi halde
+    // visibleEntityProvider stale liste ile filtreler, kart açılmaz.
+    ref.invalidate(worldEntitySharesProvider(worldId));
     final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
     if (snapshot.entities.isEmpty && snapshot.characters.isEmpty) return;

@@ -65,6 +65,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   _SortMode _sortMode = _SortMode.name;
   int _visibleLimit = _kPageSize;
 
+  /// World key whose persisted filters are currently loaded into the State
+  /// above. `null` until the first `build`. Drives the per-world reload.
+  String? _loadedFilterWorld;
+
   /// Debounces search-text writes into `_searchQuery` so each keystroke
   /// doesn't fan out a setState → full filter+sort over the entire
   /// (~7 K) entity map. 200 ms is fast enough that the UI feels live
@@ -95,20 +99,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       });
     });
     _scrollController = ScrollController()..addListener(_onScroll);
-    // Restore the persisted category-filter selection on the next frame
-    // (avoid `ref.read` in initState before the framework has finished
-    // wiring this widget's element into the tree).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final persisted = ref.read(uiStateProvider).dbFilterSlugs;
-      if (persisted.isNotEmpty) {
-        setState(() {
-          _selectedSlugs
-            ..clear()
-            ..addAll(persisted);
-        });
-      }
-    });
+    // Per-world filters are restored in `build` via `_loadFiltersForWorld` —
+    // it runs on first build and on every world switch.
   }
 
   @override
@@ -127,11 +119,60 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     }
   }
 
+  /// Persists all four filter selections for the currently-loaded world.
   void _persistFilter() {
-    ref
-        .read(uiStateProvider.notifier)
-        .update((s) => s.copyWith(dbFilterSlugs: _selectedSlugs.toList()));
+    final key = _loadedFilterWorld ?? '';
+    ref.read(uiStateProvider.notifier).update(
+          (s) => s.copyWith(
+            dbFilterSlugsByWorld: {
+              ...s.dbFilterSlugsByWorld,
+              key: _selectedSlugs.toList(),
+            },
+            dbFilterSourcesByWorld: {
+              ...s.dbFilterSourcesByWorld,
+              key: _selectedSources.toList(),
+            },
+            dbFilterShareModesByWorld: {
+              ...s.dbFilterShareModesByWorld,
+              key: _selectedShareModes.map((e) => e.name).toList(),
+            },
+            dbSortModeByWorld: {
+              ...s.dbSortModeByWorld,
+              key: _sortMode.name,
+            },
+          ),
+        );
   }
+
+  /// Loads persisted per-world filters into local State when the active world
+  /// changes. Called from `build` — mutates State directly without `setState`
+  /// (the values are consumed by the filter pass immediately below, and a
+  /// `setState` inside `build` is illegal anyway).
+  void _loadFiltersForWorld(String worldKey) {
+    if (_loadedFilterWorld == worldKey) return;
+    _loadedFilterWorld = worldKey;
+    final ui = ref.read(uiStateProvider);
+    _selectedSlugs
+      ..clear()
+      ..addAll(ui.dbFilterSlugsByWorld[worldKey] ?? const []);
+    _selectedSources
+      ..clear()
+      ..addAll(ui.dbFilterSourcesByWorld[worldKey] ?? const []);
+    _selectedShareModes
+      ..clear()
+      ..addAll((ui.dbFilterShareModesByWorld[worldKey] ?? const [])
+          .map(_shareFilterFromName)
+          .whereType<_ShareFilter>());
+    _sortMode =
+        _sortModeFromName(ui.dbSortModeByWorld[worldKey]) ?? _SortMode.name;
+    _visibleLimit = _kPageSize;
+  }
+
+  static _ShareFilter? _shareFilterFromName(String n) =>
+      _ShareFilter.values.where((e) => e.name == n).firstOrNull;
+
+  static _SortMode? _sortModeFromName(String? n) =>
+      n == null ? null : _SortMode.values.where((e) => e.name == n).firstOrNull;
 
   /// Map slug → tier number (0/1/2) using the canonical built-in slug lists.
   /// Custom (user-authored) categories not in any list fall through to tier 2.
@@ -164,6 +205,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     // Player rolü entity oluşturamaz — DM ve offline (none) oluşturabilir.
     final isPlayer = role == WorldRole.player;
     final worldIdForShares = ref.watch(activeCampaignIdProvider).valueOrNull;
+    // Restore persisted per-world filters on first build / world switch.
+    _loadFiltersForWorld(worldIdForShares ?? '');
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
     final Set<String> sharedEntityIds;
     if (isDm && worldIdForShares != null) {
@@ -219,7 +262,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       _sortMode,
       isDm,
       builtinPackId,
-      identityHashCode(sharedEntityIds),
+      // Value-based: sharedEntityIds is a fresh Set every build. identity hash
+      // would always mismatch → cache miss → 7K filter+sort re-runs on every
+      // keyboard viewInsets relayout → jank.
+      Object.hashAllUnordered(sharedEntityIds),
     );
 
     final List<_EntitySummary> matched;
@@ -422,6 +468,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                                     _selectedSources.clear();
                                     _visibleLimit = _kPageSize;
                                   });
+                                  _persistFilter();
                                 },
                                 child: Icon(
                                   Icons.close,
@@ -474,6 +521,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                                       _selectedShareModes.clear();
                                       _visibleLimit = _kPageSize;
                                     });
+                                    _persistFilter();
                                   },
                                   child: Icon(
                                     Icons.close,
@@ -519,7 +567,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               const Spacer(),
               PopupMenuButton<_SortMode>(
                 initialValue: _sortMode,
-                onSelected: (v) => setState(() => _sortMode = v),
+                onSelected: (v) {
+                  setState(() => _sortMode = v);
+                  _persistFilter();
+                },
                 itemBuilder: (_) => const [
                   PopupMenuItem(
                     value: _SortMode.name,
@@ -825,6 +876,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                                   ..addAll(working);
                                 _visibleLimit = _kPageSize;
                               });
+                              _persistFilter();
                               Navigator.pop(ctx);
                             },
                             child: const Text('Apply'),
@@ -986,6 +1038,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                                   ..addAll(working);
                                 _visibleLimit = _kPageSize;
                               });
+                              _persistFilter();
                               Navigator.pop(ctx);
                             },
                             child: const Text('Apply'),
