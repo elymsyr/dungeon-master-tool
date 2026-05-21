@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
+import '../services/beta_exit_cleanup_service.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
 
@@ -200,31 +201,33 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
   }
 
-  /// `leave_beta` — önce kullanıcının `campaign-backups` bucket objelerini
-  /// Storage API ile siler (Supabase plpgsql'den storage.objects DELETE'e
-  /// izin vermiyor), sonra metadata temizliği için RPC'yi çağırır.
+  /// `leave_beta` — önce kullanıcının Storage object'lerini client'tan siler
+  /// (Supabase plpgsql'den `storage.objects` DELETE'e izin vermiyor), sonra
+  /// DB temizliği için `leave_beta` RPC'sini çağırır.
   ///
-  /// RPC (migration 044) şunları siler:
-  ///   • Sahip olunan online world'ler (FK cascade ile members, characters,
-  ///     entities, packages, invites, mind-map, claim-pool dahil).
-  ///   • cloud_backups, community_assets, beta_participants kayıtları.
-  /// Local Drift karakterleri, post'lar, mesajlar, game_listings ve diğer
-  /// online world'lerdeki üyelikler korunur. Beta dışı kullanıcı yeni world
-  /// publish edemez ama davetle başkasının world'üne katılıp oynayabilir.
+  /// RPC (migration 057) şu online verileri kalıcı siler:
+  ///   • Sahip olunan online world'ler (FK cascade: members, world-bound
+  ///     characters, entities, packages, invites, mind-map dahil).
+  ///   • Orphan online karakterler, personal package sync kayıtları.
+  ///   • Marketplace listing'leri (kapak görseli inline, satırla birlikte gider).
+  ///   • free_media_assets + community_assets + transient_shares + cloud_backups.
+  /// Storage tarafında `campaign-backups`, `free-media`, `shared-payloads`
+  /// bucket'larındaki object'ler [BetaExitCleanupService] ile silinir.
+  ///
+  /// KORUNUR: cihazlardaki tüm local Drift verisi; post'lar, game_listing'ler,
+  /// mesajlar — sosyal katman tamamen kullanılabilir kalır. Beta dışı kullanıcı
+  /// yeni online içerik üretemez ama davetle başkasının world'üne katılıp
+  /// oynamaya devam edebilir.
   Future<bool> leaveBeta() async {
     if (!_canCallRpc) return false;
     final userId = _ref.read(authProvider)?.uid;
     if (userId == null) return false;
     state = state.copyWith(loading: true, error: null);
     try {
-      final storage =
-          Supabase.instance.client.storage.from('campaign-backups');
       try {
-        final objs = await storage.list(path: userId);
-        if (objs.isNotEmpty) {
-          final paths = objs.map((o) => '$userId/${o.name}').toList();
-          await storage.remove(paths);
-        }
+        await _ref
+            .read(betaExitCleanupServiceProvider)
+            ?.wipeUserStorage(userId);
       } catch (e) {
         debugPrint('leave_beta storage cleanup warning: $e');
       }

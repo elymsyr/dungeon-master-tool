@@ -14,6 +14,7 @@ import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
+import '../services/marketplace_cover_sync_service.dart';
 import '../services/pending_write_buffer.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -215,6 +216,21 @@ Future<void> updateCampaignMetadata(
           )
           .catchError(
             (Object e) => debugPrint('world cover cleanup error: $e'),
+          );
+    }
+    // Kapak değiştiyse publish edilmiş listing banner'larını da tazele.
+    final coverSync = ref.read(marketplaceCoverSyncServiceProvider);
+    if (coverSync != null) {
+      // ignore: discarded_futures
+      coverSync
+          .syncCover(
+            itemType: 'world',
+            localId: campaignName,
+            oldRef: oldCover,
+            newRef: newMetadata['cover_image_path'] as String?,
+          )
+          .catchError(
+            (Object e) => debugPrint('world cover sync error: $e'),
           );
     }
   }

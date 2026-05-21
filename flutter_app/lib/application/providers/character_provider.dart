@@ -18,6 +18,7 @@ import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
+import '../services/marketplace_cover_sync_service.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -742,6 +743,19 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
           )
           .catchError(
             (Object e) => debugPrint('portrait cleanup error: $e'),
+          );
+      // Portre değiştiyse publish edilmiş listing banner'larını da tazele.
+      final coverSync = _ref.read(marketplaceCoverSyncServiceProvider);
+      // ignore: discarded_futures
+      coverSync
+          ?.syncCover(
+            itemType: 'character',
+            localId: id,
+            oldRef: oldRef,
+            newRef: patched.entity.imagePath,
+          )
+          .catchError(
+            (Object e) => debugPrint('portrait cover sync error: $e'),
           );
     }
   }

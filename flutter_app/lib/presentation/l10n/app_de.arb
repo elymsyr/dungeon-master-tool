@@ -593,6 +593,9 @@
   "subsBetaLeaveBtn": "Beta verlassen",
   "subsBetaLeaveConfirmTitle": "Beta verlassen?",
   "subsBetaLeaveConfirmBody": "Deine Cloud-Speicherungen und Community-Assets werden gelöscht und dein Beta-Slot wird freigegeben. Posts und Marketplace-Angebote bleiben erhalten.",
+  "subsBetaLeaveWarnIntro": "Wenn du die Beta verlässt, werden alle deine Online-Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
+  "subsBetaLeaveWarnDeleted": "Dauerhaft gelöscht: deine Online-Welten, -Pakete und -Charaktere; deine Marketplace-Angebote und ihre Bilder; alle in die Cloud hochgeladenen Bilder.",
+  "subsBetaLeaveWarnKept": "Behalten: Alle lokal auf diesem und deinen anderen Geräten gespeicherten Daten bleiben erhalten. Deine Posts, Spielangebote und Nachrichten sind nicht betroffen — du kannst die Community weiter nutzen.",
   "subsBetaLeaveSuccess": "Du hast die Beta verlassen.",
   "subsBetaLeaveFailed": "Beta konnte nicht verlassen werden. Bitte später erneut versuchen.",
 

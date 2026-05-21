@@ -593,6 +593,9 @@
   "subsBetaLeaveBtn": "Quitter la bêta",
   "subsBetaLeaveConfirmTitle": "Quitter la bêta ?",
   "subsBetaLeaveConfirmBody": "Vos sauvegardes cloud et vos ressources communautaires seront supprimées et votre place de bêta sera libérée. Les publications et annonces du marché ne sont pas concernées.",
+  "subsBetaLeaveWarnIntro": "Quitter la bêta supprime définitivement toutes vos données en ligne. Cette action est irréversible.",
+  "subsBetaLeaveWarnDeleted": "Supprimé définitivement : vos mondes, packs et personnages en ligne ; vos articles du marché et leurs images ; toutes les images que vous avez téléversées dans le cloud.",
+  "subsBetaLeaveWarnKept": "Conservé : toutes les données enregistrées localement sur cet appareil et vos autres appareils restent intactes. Vos publications, annonces de jeu et messages ne sont pas affectés — vous pouvez continuer à utiliser la communauté.",
   "subsBetaLeaveSuccess": "Vous avez quitté la bêta.",
   "subsBetaLeaveFailed": "Impossible de quitter la bêta. Réessayez plus tard.",
 
