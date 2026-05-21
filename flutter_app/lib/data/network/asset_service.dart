@@ -273,10 +273,14 @@ class AssetService {
         .toList();
   }
 
-  /// R2 object'ini + community_assets row'unu + local cache'i sil.
+  /// R2 object'ini + community_assets row'unu sil.
   /// Worker DELETE + Supabase delete atomic değil — hata durumunda row
   /// kalabilir; sonraki upload dedupe ile aynı row'u döner.
-  Future<void> deleteAsset(String r2Key) async {
+  ///
+  /// [keepCache] `true` ise local SHA cache KORUNUR — entity silindiğinde
+  /// cloud objesi kalkar ama trash'ten restore edilirse resim local'den
+  /// render olmaya devam eder (bkz. EntityMediaCleanupService).
+  Future<void> deleteAsset(String r2Key, {bool keepCache = false}) async {
     final user = _requireUser();
     final token = _requireToken();
 
@@ -296,7 +300,7 @@ class AssetService {
         .eq('uploader_id', user.id)
         .eq('r2_object_key', r2Key);
 
-    await evictCache(r2Key);
+    if (!keepCache) await evictCache(r2Key);
   }
 
   Future<void> evictCache(String r2Key) async {

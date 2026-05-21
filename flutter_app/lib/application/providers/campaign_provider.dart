@@ -12,6 +12,7 @@ import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../services/entity_media_cleanup_service.dart';
 import '../services/pending_write_buffer.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -516,6 +517,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       _data = null;
       state = null;
     }
+    _cleanupCloudMedia(
+      worldId: data?['world_id'] as String?,
+      campaignName: campaignName,
+    );
   }
 
   /// Hard delete — bypasses trash. Used when the user leaves an online
@@ -558,6 +563,32 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       state = null;
     }
     await _cloudDeleteWorld(worldId: data?['world_id'] as String?, campaignName: campaignName);
+    _cleanupCloudMedia(
+      worldId: data?['world_id'] as String?,
+      campaignName: campaignName,
+    );
+  }
+
+  /// Best-effort: dünya silindiğinde dünyaya bağlı cloud medyayı (kapak +
+  /// entity resimleri + battle map'ler) temizler. Hayatta kalan karakterlerin
+  /// kullandığı ref'ler korunur; local cache silinmez. Bkz.
+  /// [EntityMediaCleanupService].
+  void _cleanupCloudMedia({
+    required String? worldId,
+    required String campaignName,
+  }) {
+    if (_ref.read(authProvider) == null) return;
+    final svc = _ref.read(entityMediaCleanupServiceProvider);
+    if (svc == null) return;
+    // ignore: discarded_futures
+    svc
+        .cleanupWorld(
+          worldId: worldId ?? campaignName,
+          campaignName: campaignName,
+        )
+        .catchError(
+          (Object e) => debugPrint('world media cleanup error: $e'),
+        );
   }
 
   /// Removes the world's footprint from Supabase: drops the `worlds` row
