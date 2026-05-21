@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -39,6 +38,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/character_resolver.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -46,6 +46,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/asset_ref_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
@@ -715,15 +716,20 @@ class _CharacterEditorScreenState
                   border: Border.all(color: palette.featureCardBorder),
                 ),
                 child: hasImagePath
-                    ? Image.file(
-                        File(entity.imagePath),
+                    // AssetRefImage: portre `dmt-public://` (ücretsiz Supabase)
+                    // ref'i olabilir — ham `File()` bunu çözemez, ikinci
+                    // cihazda kırık görünürdü. Resolver local/public/cloud
+                    // hepsini çözer + SHA-cache'ler.
+                    ? AssetRefImage(
+                        ref: AssetRef(entity.imagePath),
                         fit: BoxFit.cover,
                         // Decode on a single axis only — passing both
                         // cacheWidth and cacheHeight stretches the bitmap to
                         // those exact dims, squishing the portrait before
                         // BoxFit.cover can crop it.
                         cacheHeight: cachePxFromLogical(context, 260),
-                        errorBuilder: (_, _, _) => portraitPlaceholder(),
+                        placeholder: portraitPlaceholder(),
+                        errorWidget: portraitPlaceholder(),
                       )
                     : portraitPlaceholder(),
               ),

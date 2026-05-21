@@ -6,7 +6,9 @@ import 'package:path/path.dart' as p;
 import '../../core/config/app_paths.dart';
 import '../../core/utils/deep_copy.dart';
 import '../../data/network/asset_service.dart';
+import '../../data/network/free_media_service.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import '../../domain/value_objects/media_kind.dart';
 
 /// Walks a world-backup `data` map and uploads every local image referenced
 /// by an entity — or sitting loose in `{worldsDir}/{worldName}/media/` — to
@@ -20,9 +22,13 @@ import '../../domain/value_objects/asset_ref.dart';
 /// Failures for individual files are collected in [MediaBundleResult.failures]
 /// and do NOT abort the bundle — upload best-effort, let the user retry.
 class MediaBundler {
-  MediaBundler(this._assetService);
+  MediaBundler(this._assetService, {this.freeMediaService});
 
   final AssetService _assetService;
+
+  /// Ücretsiz medya (karakter portresi) için. Null ise portre local kalır;
+  /// counted medya bundling'i bundan etkilenmez.
+  final FreeMediaService? freeMediaService;
 
   /// Deep-clone [data] (so the in-memory entity graph is untouched), upload
   /// all local-path media to R2, replace strings with `dmt-asset://` URIs,
@@ -53,6 +59,7 @@ class MediaBundler {
         final uri = await _assetService.uploadAsset(
           file,
           campaignId: worldId,
+          kind: MediaKind.worldEntityImage,
         );
         final key = uri.toString().substring(AssetRef.scheme.length);
 
@@ -206,10 +213,14 @@ class MediaBundler {
   ///
   /// SHA dedupe is delegated to [AssetService.uploadAsset], which is cheap
   /// when the same file is repeatedly bundled.
+  ///
+  /// [scopeId] R2 key'in campaign segmenti olur (world id veya package adı).
+  /// [kind] entity'nin bağlamına göre verilir — world entity vs package entity.
   Future<Map<String, dynamic>> bundleEntityMedia({
-    required String worldId,
+    required String scopeId,
     required String entityId,
     required Map<String, dynamic> entityMap,
+    required MediaKind kind,
   }) async {
     final cloned = deepCopyJson(entityMap) as Map<String, dynamic>;
 
@@ -219,7 +230,8 @@ class MediaBundler {
       try {
         final uri = await _assetService.uploadAsset(
           file,
-          campaignId: worldId,
+          campaignId: scopeId,
+          kind: kind,
         );
         final key = uri.toString().substring(AssetRef.scheme.length);
         return AssetRef.formatCloudUri(key);
@@ -246,6 +258,100 @@ class MediaBundler {
       }
     }
     return cloned;
+  }
+
+  /// Bir karakter JSON map'inin (`Character.toJson()` formatı) medyasını
+  /// bundle eder:
+  /// - `entity.imagePath` (portre) → FreeMediaService (ücretsiz, dmt-public://)
+  /// - `entity.images[]` (ek resimler) → AssetService (sayılan, dmt-asset://)
+  ///
+  /// Zaten upload edilmiş (local olmayan) ref'lere dokunulmaz. Map deep-clone
+  /// edilir; orijinal değişmez.
+  Future<Map<String, dynamic>> bundleCharacterMedia({
+    required String scopeId,
+    required Map<String, dynamic> characterMap,
+  }) async {
+    final cloned = deepCopyJson(characterMap) as Map<String, dynamic>;
+    final entity = cloned['entity'];
+    if (entity is! Map<String, dynamic>) return cloned;
+
+    // Portre → ücretsiz Supabase Storage (quota'ya sayılmaz).
+    final portrait = entity['imagePath'];
+    if (portrait is String &&
+        portrait.isNotEmpty &&
+        AssetRef(portrait).isLocal) {
+      final ref =
+          await _uploadFree(portrait, MediaKind.characterPortrait, scopeId);
+      if (ref != null) entity['imagePath'] = ref;
+    }
+
+    // Ek resimler → sayılan R2.
+    final images = entity['images'];
+    if (images is List) {
+      for (var i = 0; i < images.length; i++) {
+        final raw = images[i];
+        if (raw is! String || raw.isEmpty || !AssetRef(raw).isLocal) continue;
+        final ref =
+            await _uploadCounted(raw, MediaKind.characterExtraImage, scopeId);
+        if (ref != null) images[i] = ref;
+      }
+    }
+    return cloned;
+  }
+
+  /// Battle map JSON map'inin (`MapData.toJson()` formatı) arkaplan resmini
+  /// R2'ya bundle eder (`battleMap` kind, 5MB limit). Map deep-clone edilir.
+  Future<Map<String, dynamic>> bundleMapMedia({
+    required String worldId,
+    required Map<String, dynamic> mapData,
+  }) async {
+    final cloned = deepCopyJson(mapData) as Map<String, dynamic>;
+
+    final main = cloned['imagePath'];
+    if (main is String && main.isNotEmpty && AssetRef(main).isLocal) {
+      final ref = await _uploadCounted(main, MediaKind.battleMap, worldId);
+      if (ref != null) cloned['imagePath'] = ref;
+    }
+    return cloned;
+  }
+
+  /// Local path'i ücretsiz Supabase Storage'a yükler, `dmt-public://` ref döner.
+  /// Servis yoksa / dosya yoksa / hata olursa null (caller local path'i korur).
+  Future<String?> _uploadFree(
+    String localPath,
+    MediaKind kind,
+    String scopeId,
+  ) async {
+    final svc = freeMediaService;
+    if (svc == null) return null;
+    final file = File(localPath);
+    if (!await file.exists()) return null;
+    try {
+      final uri = await svc.uploadFreeMedia(file, kind: kind, scopeId: scopeId);
+      return uri.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Local path'i sayılan R2'ya yükler, `dmt-asset://` ref döner.
+  Future<String?> _uploadCounted(
+    String localPath,
+    MediaKind kind,
+    String scopeId,
+  ) async {
+    final file = File(localPath);
+    if (!await file.exists()) return null;
+    try {
+      final uri = await _assetService.uploadAsset(
+        file,
+        campaignId: scopeId,
+        kind: kind,
+      );
+      return uri.toString();
+    } catch (_) {
+      return null;
+    }
   }
 
   static const _imageExts = {

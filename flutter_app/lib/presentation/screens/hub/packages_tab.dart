@@ -12,6 +12,7 @@ import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -578,6 +579,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     setDialogState(() => workingMeta['tags'] = v),
                 onCoverChanged: (v) => setDialogState(
                     () => workingMeta['cover_image_path'] = v),
+                coverKind: MediaKind.packageCover,
+                coverScopeId: packageName,
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),

@@ -17,6 +17,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -636,6 +637,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     setDialogState(() => workingMeta['tags'] = v),
                 onCoverChanged: (v) => setDialogState(
                     () => workingMeta['cover_image_path'] = v),
+                coverKind: MediaKind.worldCover,
+                coverScopeId: campaignName,
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),
