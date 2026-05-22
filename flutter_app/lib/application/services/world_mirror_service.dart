@@ -56,6 +56,36 @@ class WorldMirrorService {
     return true;
   }
 
+  /// worldId → expiry timestamp (ms). "Make Offline" UI aksiyonu
+  /// `unpublishWorld` çağrısından hemen önce buraya kaydeder. Bir worldId
+  /// bu set'teyken CDC applier'ları o dünyanın `worlds`/`world_members`
+  /// DELETE event'inde lokal purge/trash'i ATLAR — Make Offline tüm lokal
+  /// Drift verisini korumalı. [_unpublishGuardMs] sonra kendiliğinden expire.
+  final Map<String, int> _expectedUnpublish = {};
+  static const int _unpublishGuardMs = 60000;
+
+  /// DM-initiated unpublish'i [worldId] için kaydet.
+  void registerExpectedUnpublish(String worldId) {
+    _expectedUnpublish[worldId] =
+        DateTime.now().millisecondsSinceEpoch + _unpublishGuardMs;
+  }
+
+  /// [worldId] için canlı bir "Make Offline" guard'ı var mı? Self-expiring.
+  bool isExpectedUnpublish(String worldId) {
+    final until = _expectedUnpublish[worldId];
+    if (until == null) return false;
+    if (DateTime.now().millisecondsSinceEpoch > until) {
+      _expectedUnpublish.remove(worldId);
+      return false;
+    }
+    return true;
+  }
+
+  /// Guard'ı erken temizle — unpublish CDC cleanup'ı çalıştıktan sonra
+  /// ya da unpublish başarısız olduğunda çağrılır.
+  void clearExpectedUnpublish(String worldId) =>
+      _expectedUnpublish.remove(worldId);
+
   // ── Entities (DM-only writes) ──────────────────────────────────────
 
   /// Single-entity upsert. F4 retired the bulk `pushEntities` path —

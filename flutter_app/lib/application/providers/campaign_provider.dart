@@ -23,6 +23,7 @@ import 'online_worlds_provider.dart';
 import 'role_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
+import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 
@@ -663,6 +664,11 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     }
   }
 
+  /// Public: dünya UUID'sini lokal kampanya adına çözer (lokal mirror yoksa
+  /// null). CDC applier'ları synced settings'i Drift'e yazarken kullanır.
+  Future<String?> resolveWorldName(String worldId) =>
+      _resolveWorldName(worldId);
+
   /// Refreshes role + hub-list caches after a membership/world change.
   /// Invalidates via the notifier's stable ref — see the block comment.
   void refreshWorldCaches(String worldId) {
@@ -670,6 +676,16 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     _ref.invalidate(currentWorldRoleProvider);
     _ref.invalidate(campaignInfoListProvider);
     _ref.invalidate(campaignListProvider);
+  }
+
+  /// Hub liste + per-world metadata cache'lerini tazeler — synced settings
+  /// (cover/metadata) Drift'e yazıldıktan sonra cover'ın canlı görünmesi
+  /// için. `refreshWorldCaches`'ten farkı: rol provider'larına dokunmaz
+  /// (CDC applier host'unu teardown etmesin).
+  void refreshWorldMetadataCaches(String worldId, String worldName) {
+    _ref.invalidate(campaignInfoListProvider);
+    _ref.invalidate(campaignListProvider);
+    _ref.invalidate(campaignMetadataProvider(worldName));
   }
 
   /// Cached role snapshot for [worldId] (synchronous, no network).
@@ -683,6 +699,24 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   void _afterWorldRemoved(String worldId) {
     _ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
     refreshWorldCaches(worldId);
+  }
+
+  /// Make Offline yolu: cloud `worlds`/`world_members` satırları kasıtlı
+  /// silindi. TÜM lokal Drift verisini KORU — yalnızca online artefaktları
+  /// (üyeler, davetler) temizle ki dünya normal bir offline dünyaya dönsün.
+  Future<void> handleExpectedUnpublish(String worldId) async {
+    _ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    refreshWorldCaches(worldId);
+    // Cloud karşılığı kalmayan online-only lokal satırları düşür.
+    try {
+      final db = _ref.read(appDatabaseProvider);
+      await db.worldMembersDao.deleteByWorld(worldId);
+      await db.worldInvitesDao.deleteByWorld(worldId);
+    } catch (err) {
+      debugPrint('handleExpectedUnpublish local cleanup error: $err');
+    }
+    // Cleanup çalıştı → guard'ı bırak (expire olsa da idempotent).
+    _ref.read(worldMirrorServiceProvider)?.clearExpectedUnpublish(worldId);
   }
 
   /// CDC entry point: hard-purge the local mirror of [worldId] (deleted on

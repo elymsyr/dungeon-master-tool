@@ -168,6 +168,10 @@ class PersonalMirrorApplier {
         ref.invalidate(currentWorldRoleProvider);
         ref.invalidate(campaignInfoListProvider);
         ref.invalidate(campaignListProvider);
+        // Make Offline: DM lokal dünyayı offline olarak tutmak istiyor —
+        // purge'ü atla. Cleanup + guard temizliği world kanalı applier'ına
+        // ait (handleExpectedUnpublish); burada çift cleanup yapma.
+        if (mirror.isExpectedUnpublish(worldId)) break;
         // Local mirror'ı temizle — başka cihazda leave/kick edildikse bu
         // cihazda ölü dünya kalmasın.
         try {
