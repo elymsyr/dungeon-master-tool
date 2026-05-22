@@ -1,7 +1,7 @@
 # Online İkinci Ekran (Second Screen) — Mimari
 
 Tarih: 2026-05-21
-Durum: tasarım — implementasyon başlamadı
+Durum: implementasyon — **Faz A tamam** (manifest altyapısı, 2026-05-22)
 İlgili: `second_screen_dm_player_view_spec_may21.md` (view/UX spec),
 medya redesign planı `~/.claude/plans/online-backup-zelli-ini-de-i-tirece-iz-hidden-puzzle.md`
 
@@ -87,9 +87,10 @@ Supabase Realtime **Broadcast** ile efemeral — Faz F cilası.
 
 ## 5. Veri modeli — yeni migration'lar
 
-Migration 053-055 medya redesign'a ait; bunlar append-only sonrası: **056 → 057**.
+Migration 053-058 kullanımda (medya redesign + diğer iş); yeni tablolar
+append-only sonrası: **059 → 060**.
 
-### Migration 056 `online_projection_manifest.sql`
+### Migration 059 `online_projection_manifest.sql`
 
 ```sql
 create table public.world_projection (
@@ -105,7 +106,7 @@ create table public.world_projection (
 
 `world_settings` ile aynı şekil — combat_state blob'una coupling olmasın diye ayrı tablo.
 
-### Migration 057 `online_battlemap_collab.sql`
+### Migration 060 `online_battlemap_collab.sql`
 
 ```sql
 create table public.world_battlemap_marks (
@@ -190,12 +191,13 @@ listeliyor — ortak iş.
 
 ## 9. Faz planı
 
-- **Faz A — manifest altyapısı:** migration 056, `ProjectionOutputMode.online`,
+- **Faz A ✓ — manifest altyapısı:** migration 059, `ProjectionOutputMode.online`,
   `ProjectionOutputOnline`, çıkış fan-out, `world_projection` CDC handler.
+  *(tamamlandı 2026-05-22 — UI tetikleyici yok, Faz C ekler.)*
 - **Faz B — AssetRef köprüsü:** 3 projection view + 2 snapshot builder ref-aware.
 - **Faz C — player tab:** `PlayerSecondScreenTab` manifest'ten render (3 view tipi +
   black screen).
-- **Faz D — battle map collab:** migration 057, `world_battlemap_marks` CDC, çizim
+- **Faz D — battle map collab:** migration 060, `world_battlemap_marks` CDC, çizim
   araçları player tarafı, renk atama.
 - **Faz E — token hareketi:** `move_own_token` RPC + turn-gate UI.
 - **Faz F (cila):** in-progress broadcast preview (canlı stroke / drag).

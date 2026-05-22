@@ -25,9 +25,9 @@ class ProjectionStatusIcon extends ConsumerWidget {
     if (state.isActive) {
       // Active — tap to deactivate.
       return IconButton(
-        tooltip: _tooltipForMode(state.outputMode, active: true),
+        tooltip: _tooltipForMode(state.primaryMode, active: true),
         icon: Icon(
-          _iconForMode(state.outputMode),
+          _iconForMode(state.primaryMode),
           size: 20,
           color: palette.tokenBorderActive,
         ),
@@ -100,6 +100,7 @@ class ProjectionStatusIcon extends ConsumerWidget {
     return switch (mode) {
       ProjectionOutputMode.secondWindow => Icons.desktop_windows,
       ProjectionOutputMode.screencast => Icons.cast_connected,
+      ProjectionOutputMode.online => Icons.groups,
       ProjectionOutputMode.none => Icons.cast,
     };
   }
@@ -108,6 +109,7 @@ class ProjectionStatusIcon extends ConsumerWidget {
     return switch (mode) {
       ProjectionOutputMode.secondWindow => 'Second Window',
       ProjectionOutputMode.screencast => 'Screen Cast',
+      ProjectionOutputMode.online => 'Online Players',
       ProjectionOutputMode.none => '',
     };
   }

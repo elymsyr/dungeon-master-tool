@@ -34,14 +34,24 @@ class ProjectionController extends StateNotifier<ProjectionState> {
 
   final Ref _ref;
 
-  /// Currently active output. Null when no output is active.
-  ProjectionOutput? _activeOutput;
-  StreamSubscription<void>? _externalCloseSub;
+  /// Active outputs keyed by mode. Multiple can run at once (fan-out) — e.g.
+  /// a local second window plus [ProjectionOutputMode.online] for remote
+  /// players. Every push fans out to all of them.
+  final Map<ProjectionOutputMode, ProjectionOutput> _outputs = {};
+
+  /// Per-output external-close subscriptions, keyed by the same mode.
+  final Map<ProjectionOutputMode, StreamSubscription<void>> _closeSubs = {};
 
   @override
   void dispose() {
-    _externalCloseSub?.cancel();
-    _activeOutput?.dispose();
+    for (final sub in _closeSubs.values) {
+      sub.cancel();
+    }
+    _closeSubs.clear();
+    for (final output in _outputs.values) {
+      output.dispose();
+    }
+    _outputs.clear();
     super.dispose();
   }
 
@@ -49,14 +59,14 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   // Output lifecycle
   // ---------------------------------------------------------------------
 
-  /// Activates the given output mode. If another output is already active,
-  /// deactivates it first (mutually exclusive).
+  /// Activates the given output [mode]. Other active modes keep running —
+  /// outputs fan out; they are not mutually exclusive.
   ///
   /// For [ProjectionOutputMode.screencast], [displayId] must be provided
   /// (the target external display chosen by the user from the picker).
   ///
-  /// Returns `true` on success, `false` if the output could not be started
-  /// (e.g. no second monitor, no external display).
+  /// Returns `true` on success (or if [mode] was already active), `false`
+  /// if the output could not be started (e.g. no second monitor).
   Future<bool> activateOutput(
     ProjectionOutputMode mode, {
     String? displayId,
@@ -66,11 +76,9 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       return true;
     }
 
-    // Already active with the same mode — no-op.
-    if (_activeOutput != null && state.outputMode == mode) return true;
-
-    // Deactivate any previous output.
-    if (_activeOutput != null) await deactivateOutput();
+    // Already active with this mode — no-op. Other modes keep running
+    // (fan-out): activating a new output never tears down the others.
+    if (_outputs.containsKey(mode)) return true;
 
     final factory = _ref.read(projectionOutputFactoryProvider);
     final output = factory(mode, displayId: displayId);
@@ -85,32 +93,33 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       return false;
     }
 
-    _activeOutput = output;
-    state = state.copyWith(outputMode: mode);
-
-    _externalCloseSub = output.onExternalClose.listen((_) {
-      _markOutputClosed();
+    _outputs[mode] = output;
+    _closeSubs[mode] = output.onExternalClose.listen((_) {
+      _markOutputClosed(mode);
     });
+    state = state.copyWith(outputModes: _outputs.keys.toSet());
 
     // Push full state immediately — the native side buffers until the
     // presentation engine signals readiness via the engineReady handshake.
-    _activeOutput!.pushFull(state).then((ok) {
-      if (!ok) _markOutputClosed();
+    output.pushFull(state).then((pushed) {
+      if (!pushed) _markOutputClosed(mode);
     });
 
     return true;
   }
 
-  /// Deactivates the current output (if any).
-  Future<void> deactivateOutput() async {
-    final output = _activeOutput;
-    if (output == null) return;
-    _activeOutput = null;
-    _externalCloseSub?.cancel();
-    _externalCloseSub = null;
-    state = state.copyWith(outputMode: ProjectionOutputMode.none);
-    await output.deactivate();
-    output.dispose();
+  /// Deactivates one output [mode], or every active output when [mode] is
+  /// null (the latter is what the status icon / Ctrl+Shift+P toggle use).
+  Future<void> deactivateOutput([ProjectionOutputMode? mode]) async {
+    final modes = mode != null ? [mode] : _outputs.keys.toList();
+    for (final m in modes) {
+      final output = _outputs.remove(m);
+      if (output == null) continue;
+      _closeSubs.remove(m)?.cancel();
+      await output.deactivate();
+      output.dispose();
+    }
+    state = state.copyWith(outputModes: _outputs.keys.toSet());
   }
 
   // ---------------------------------------------------------------------
@@ -446,10 +455,9 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   }
 
   void _pushBattleMapPatch(String itemId, Map<String, dynamic> patch) {
-    final output = _activeOutput;
-    if (output != null) {
-      output.pushBattleMapPatch(itemId, patch).then((ok) {
-        if (!ok) _markOutputClosed();
+    for (final entry in _outputs.entries.toList()) {
+      entry.value.pushBattleMapPatch(itemId, patch).then((ok) {
+        if (!ok) _markOutputClosed(entry.key);
       });
     }
     _emitEvent();
@@ -470,34 +478,30 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   // ---------------------------------------------------------------------
 
   void _pushFullAndEmit() {
-    final output = _activeOutput;
-    if (output != null) {
-      output.pushFull(state).then((ok) {
-        if (!ok) _markOutputClosed();
+    for (final entry in _outputs.entries.toList()) {
+      entry.value.pushFull(state).then((ok) {
+        if (!ok) _markOutputClosed(entry.key);
       });
     }
     _emitEvent();
   }
 
   void _pushPatch(Map<String, dynamic> patch) {
-    final output = _activeOutput;
-    if (output != null) {
-      output.pushPatch(patch).then((ok) {
-        if (!ok) _markOutputClosed();
+    for (final entry in _outputs.entries.toList()) {
+      entry.value.pushPatch(patch).then((ok) {
+        if (!ok) _markOutputClosed(entry.key);
       });
     }
   }
 
   /// Called when an output push fails or the output is closed externally.
-  void _markOutputClosed() {
-    if (_activeOutput == null && !state.isActive) return;
-    _externalCloseSub?.cancel();
-    _externalCloseSub = null;
-    _activeOutput?.dispose();
-    _activeOutput = null;
-    if (state.isActive) {
-      state = state.copyWith(outputMode: ProjectionOutputMode.none);
-    }
+  /// Removes just that one output — other modes keep running.
+  void _markOutputClosed(ProjectionOutputMode mode) {
+    final output = _outputs.remove(mode);
+    if (output == null) return;
+    _closeSubs.remove(mode)?.cancel();
+    output.dispose();
+    state = state.copyWith(outputModes: _outputs.keys.toSet());
   }
 
   /// Emits a `projection.content_set` event on the AppEventBus.

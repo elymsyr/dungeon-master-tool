@@ -1,11 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../services/projection_output.dart';
+import '../services/projection_output_online.dart';
 import '../services/projection_output_screencast.dart';
 import '../services/projection_output_window.dart';
+import 'online_worlds_provider.dart';
+import 'role_provider.dart';
 
 bool get _isDesktop =>
     Platform.isWindows || Platform.isLinux || Platform.isMacOS;
@@ -41,6 +45,15 @@ final projectionOutputFactoryProvider =
       case ProjectionOutputMode.screencast:
         if (displayId == null) return null;
         return ProjectionOutputScreencast(targetDisplayId: displayId);
+      case ProjectionOutputMode.online:
+        // Online projection needs an active, online world to write into.
+        final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
+        if (worldId == null) return null;
+        if (!ref.read(onlineWorldIdsProvider).contains(worldId)) return null;
+        return ProjectionOutputOnline(
+          client: Supabase.instance.client,
+          worldId: worldId,
+        );
       case ProjectionOutputMode.none:
         return null;
     }
