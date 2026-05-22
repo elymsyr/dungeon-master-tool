@@ -14,6 +14,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
@@ -3161,11 +3162,14 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
 
     // Eager cloud upload — mirrors the entity portrait flow: online + signed
     // in → push to R2 now; offline / quota-full → keep the local path.
-    final (:refs, :quotaExceeded, pushWorldId: _) =
+    final (:refs, :quotaExceeded, :tooLarge, pushWorldId: _) =
         await eagerUploadEntityImages(ref, newPaths);
     if (!mounted) return;
     widget.onChanged([..._images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
+    if (tooLarge) {
+      showImageTooLargeSnackbar(context, MediaKind.worldEntityImage.maxBytes);
+    }
     if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
   }
 

@@ -7,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
 import '../../application/services/tag_moderation.dart';
+import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../theme/dm_tool_colors.dart';
 import 'asset_ref_image.dart';
+import 'quota_snackbar.dart';
 
 /// Kart metadata'sı için shared editor: cover image + name + description + tags.
 /// Worlds / Packages / Templates / Characters settings dialog'larında aynı
@@ -366,6 +368,12 @@ class _MetadataEditorSectionState
         );
         widget.onCoverChanged(uri.toString());
         return;
+      } on FreeMediaException catch (e) {
+        // Boyut limiti aşıldı → buluta yedeklenmez; kullanıcıyı uyar.
+        if (e.code == 'too_large' && mounted) {
+          showImageTooLargeSnackbar(context, kind.maxBytes);
+        }
+        // Diğer upload hataları → sessiz local path fallback.
       } catch (_) {
         // Upload hatası → local path fallback.
       }

@@ -25,20 +25,37 @@ const int kMaxEntityImages = 5;
 ///
 /// Returns the resolved refs (cloud `dmt-asset://` ref, or the local path
 /// unchanged when upload is skipped/failed), the online world id whose outbox
-/// row should be drained (null for package entities / offline / skipped), and
+/// row should be drained (null for package entities / offline / skipped),
 /// `quotaExceeded` — true when any upload fell back to local because the
-/// user's storage quota is full (callers surface a snackbar).
+/// user's storage quota is full, and `tooLarge` — true when any upload was
+/// rejected for exceeding the per-kind size limit (callers surface a snackbar).
 ///
 /// Offline worlds bundle their media at Make Online, so they skip the upload
 /// here and return the paths untouched.
-Future<({List<String> refs, String? pushWorldId, bool quotaExceeded})>
+Future<
+        ({
+          List<String> refs,
+          String? pushWorldId,
+          bool quotaExceeded,
+          bool tooLarge,
+        })>
     eagerUploadEntityImages(WidgetRef ref, List<String> paths) async {
   if (ref.read(authProvider) == null) {
-    return (refs: paths, pushWorldId: null, quotaExceeded: false);
+    return (
+      refs: paths,
+      pushWorldId: null,
+      quotaExceeded: false,
+      tooLarge: false,
+    );
   }
   final assetSvc = ref.read(assetServiceProvider);
   if (assetSvc == null) {
-    return (refs: paths, pushWorldId: null, quotaExceeded: false);
+    return (
+      refs: paths,
+      pushWorldId: null,
+      quotaExceeded: false,
+      tooLarge: false,
+    );
   }
 
   final String scopeId;
@@ -48,7 +65,12 @@ Future<({List<String> refs, String? pushWorldId, bool quotaExceeded})>
   if (packageName != null) {
     // Package entity image — counted R2; no per-row outbox to drain.
     if (!ref.read(betaProvider).isActive) {
-      return (refs: paths, pushWorldId: null, quotaExceeded: false);
+      return (
+        refs: paths,
+        pushWorldId: null,
+        quotaExceeded: false,
+        tooLarge: false,
+      );
     }
     scopeId = packageName;
     kind = MediaKind.packageEntityImage;
@@ -58,7 +80,12 @@ Future<({List<String> refs, String? pushWorldId, bool quotaExceeded})>
         ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
     if (worldId == null ||
         !ref.read(onlineWorldIdsProvider).contains(worldId)) {
-      return (refs: paths, pushWorldId: null, quotaExceeded: false);
+      return (
+        refs: paths,
+        pushWorldId: null,
+        quotaExceeded: false,
+        tooLarge: false,
+      );
     }
     scopeId = worldId;
     kind = MediaKind.worldEntityImage;
@@ -74,6 +101,7 @@ Future<({List<String> refs, String? pushWorldId, bool quotaExceeded})>
     refs: [for (final r in results) r.ref],
     pushWorldId: pushWorldId,
     quotaExceeded: results.any((r) => r.quotaExceeded),
+    tooLarge: results.any((r) => r.tooLarge),
   );
 }
 

@@ -24,53 +24,69 @@ import '../../domain/value_objects/media_kind.dart';
 ///
 /// The result's [quotaExceeded] is `true` only when the upload fell back to
 /// the local path because the user's storage quota is full — callers use it
-/// to surface a "stored on device" notice. Every other fallback (offline, no
-/// service, missing file, already-cloud ref) returns `quotaExceeded: false`.
-Future<({String ref, bool quotaExceeded})> uploadEntityImageRef(
+/// to surface a "stored on device" notice. [tooLarge] is `true` when the
+/// upload was rejected because the file exceeds the per-kind size limit
+/// ([MediaKind.maxBytes]); callers surface a "not backed up to cloud" notice.
+/// Every other fallback (offline, no service, missing file, already-cloud
+/// ref) returns both flags `false`.
+Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadEntityImageRef(
   AssetService? service, {
   required String localPath,
   required String scopeId,
   required MediaKind kind,
 }) async {
   if (service == null || !AssetRef(localPath).isLocal) {
-    return (ref: localPath, quotaExceeded: false);
+    return (ref: localPath, quotaExceeded: false, tooLarge: false);
   }
   final file = File(localPath);
-  if (!await file.exists()) return (ref: localPath, quotaExceeded: false);
+  if (!await file.exists()) {
+    return (ref: localPath, quotaExceeded: false, tooLarge: false);
+  }
   try {
     final uri = await service.uploadAsset(
       file,
       campaignId: scopeId,
       kind: kind,
     );
-    return (ref: uri.toString(), quotaExceeded: false);
+    return (ref: uri.toString(), quotaExceeded: false, tooLarge: false);
   } on AssetQuotaExceededException catch (_) {
-    return (ref: localPath, quotaExceeded: true);
+    return (ref: localPath, quotaExceeded: true, tooLarge: false);
+  } on AssetServiceException catch (e) {
+    return (
+      ref: localPath,
+      quotaExceeded: false,
+      tooLarge: e.code == 'too_large',
+    );
   } catch (_) {
-    return (ref: localPath, quotaExceeded: false);
+    return (ref: localPath, quotaExceeded: false, tooLarge: false);
   }
 }
 
 /// Uploads a local character portrait to the free-media bucket (quota-exempt)
 /// and returns its `dmt-public://` ref. Same fallback contract as
-/// [uploadEntityImageRef].
-Future<String> uploadCharacterPortraitRef(
+/// [uploadEntityImageRef]; [tooLarge] is `true` when the upload was rejected
+/// for exceeding [MediaKind.characterPortrait]'s size limit.
+Future<({String ref, bool tooLarge})> uploadCharacterPortraitRef(
   FreeMediaService? service, {
   required String localPath,
   required String scopeId,
 }) async {
-  if (service == null || !AssetRef(localPath).isLocal) return localPath;
+  if (service == null || !AssetRef(localPath).isLocal) {
+    return (ref: localPath, tooLarge: false);
+  }
   final file = File(localPath);
-  if (!await file.exists()) return localPath;
+  if (!await file.exists()) return (ref: localPath, tooLarge: false);
   try {
     final uri = await service.uploadFreeMedia(
       file,
       kind: MediaKind.characterPortrait,
       scopeId: scopeId,
     );
-    return uri.toString();
+    return (ref: uri.toString(), tooLarge: false);
+  } on FreeMediaException catch (e) {
+    return (ref: localPath, tooLarge: e.code == 'too_large');
   } catch (_) {
-    return localPath;
+    return (ref: localPath, tooLarge: false);
   }
 }
 

@@ -1205,7 +1205,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       final oldRef = widget.node.imageUrl;
       // Eager cloud upload — online world → push to R2; offline / quota-full
       // → keep the local path.
-      final (ref: uploaded, :quotaExceeded) = await uploadMapImage(
+      final (ref: uploaded, :quotaExceeded, :tooLarge) = await uploadMapImage(
         ref.read,
         path: path,
         kind: MediaKind.mindMapImage,
@@ -1213,6 +1213,9 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (!mounted) return;
       widget.notifier.updateNodeImageUrl(widget.node.id, uploaded);
       if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
+      if (tooLarge && context.mounted) {
+        showImageTooLargeSnackbar(context, MediaKind.mindMapImage.maxBytes);
+      }
       // Replaced an earlier cloud image → best-effort orphan cleanup.
       unawaited(cleanupMapImageRef(
         ref.read,

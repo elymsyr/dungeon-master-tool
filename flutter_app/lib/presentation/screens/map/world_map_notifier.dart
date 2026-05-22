@@ -739,7 +739,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final oldRef = state.imagePath;
     // Eager cloud upload — online world → push to R2; offline / quota-full
     // → keep the local path.
-    final (ref: stored, :quotaExceeded) = await uploadMapImage(
+    final (ref: stored, :quotaExceeded, :tooLarge) = await uploadMapImage(
       _ref.read,
       path: localPath,
       kind: MediaKind.battleMap,
@@ -750,6 +750,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     _debouncedSave();
     _debouncedViewportSave();
     if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
+    if (tooLarge && context.mounted) {
+      showImageTooLargeSnackbar(context, MediaKind.battleMap.maxBytes);
+    }
     // Replaced an earlier cloud image → best-effort orphan cleanup.
     unawaited(cleanupMapImageRef(
       _ref.read,
