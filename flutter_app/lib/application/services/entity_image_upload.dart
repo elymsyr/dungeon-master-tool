@@ -39,7 +39,11 @@ Future<
           bool quotaExceeded,
           bool tooLarge,
         })>
-    eagerUploadEntityImages(WidgetRef ref, List<String> paths) async {
+    eagerUploadEntityImages(
+  WidgetRef ref,
+  List<String> paths, {
+  bool transientFallback = false,
+}) async {
   if (ref.read(authProvider) == null) {
     return (
       refs: paths,
@@ -95,7 +99,10 @@ Future<
   final results = await Future.wait([
     for (final p in paths)
       uploadEntityImageRef(assetSvc,
-          localPath: p, scopeId: scopeId, kind: kind),
+          localPath: p,
+          scopeId: scopeId,
+          kind: kind,
+          transientFallback: transientFallback),
   ]);
   return (
     refs: [for (final r in results) r.ref],

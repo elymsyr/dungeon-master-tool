@@ -761,6 +761,27 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     ));
   }
 
+  /// Ensures the active map image is cloud-hosted so remote players can
+  /// resolve it: a still-local path is eager-uploaded, the rewritten ref is
+  /// persisted, and the resolved ref is returned (empty when no image).
+  Future<String> ensureMapImageUploaded() async {
+    final current = state.imagePath;
+    if (current.isEmpty || !AssetRef(current).isLocal) return current;
+    final (ref: stored, quotaExceeded: _, tooLarge: _) = await uploadMapImage(
+      _ref.read,
+      path: current,
+      kind: MediaKind.battleMap,
+      transientFallback: true,
+    );
+    // Counted ref → persist (permanent). Transient ref (quota full) → use for
+    // this projection only; persisting it would orphan the row at R2 TTL.
+    if (stored != current && !AssetRef(stored).isTransient) {
+      state = state.copyWith(imagePath: stored);
+      _debouncedSave();
+    }
+    return stored;
+  }
+
   // -------------------------------------------------------------------------
   // Pan / Zoom (manual GestureDetector — same pattern as BattleMap)
   // -------------------------------------------------------------------------

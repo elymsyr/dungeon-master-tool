@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/supabase_config.dart';
 import '../../data/network/asset_service.dart';
 import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
@@ -15,15 +17,17 @@ import '../../domain/value_objects/asset_ref.dart';
 ///   `cacheDir/r2/assets/` altında cache'li).
 /// - `dmt-public://` → [FreeMediaService.resolveFreeMedia] (Supabase Storage
 ///   `free-media`, SHA-verified, `cacheDir/free_media/` altında cache'li).
-/// - `dmt-transient://` → resolver tek başına çözemez (uploader id ref'te yok);
-///   `TransientShareService` realtime event üzerinden çözer. Burada null döner.
+/// - `dmt-transient://` → `transient_shares` tablosundan SHA ile `uploader_id`
+///   bulunur (RLS çağıranı kendi dünyalarına kısıtlar), sonra
+///   [AssetService.downloadTransient] SHA-cache-first indirir.
 ///
 /// Çözülemeyen her durumda (dosya yok, servis offline, download hatası) null.
 class AssetRefResolver {
-  AssetRefResolver(this._assetService, this._freeMediaService);
+  AssetRefResolver(this._assetService, this._freeMediaService, this._supabase);
 
   final AssetService? _assetService;
   final FreeMediaService? _freeMediaService;
+  final SupabaseClient? _supabase;
 
   Future<File?> resolve(AssetRef ref) async {
     if (ref.raw.isEmpty) return null;
@@ -38,8 +42,28 @@ class AssetRefResolver {
       return _freeMediaService?.resolveFreeMedia(ref.publicPath!);
     }
 
-    // Transient ref'ler uploader id taşımaz — TransientShareService çözer.
-    if (ref.isTransient) return null;
+    if (ref.isTransient) {
+      final sha = ref.transientSha;
+      final sb = _supabase;
+      final svc = _assetService;
+      if (sha == null || sb == null || svc == null) return null;
+      try {
+        final row = await sb
+            .from('transient_shares')
+            .select('uploader_id, ext')
+            .eq('sha256', sha)
+            .limit(1)
+            .maybeSingle();
+        if (row == null) return null;
+        return await svc.downloadTransient(
+          sha,
+          (row['ext'] as String?) ?? ref.transientExt,
+          row['uploader_id'] as String,
+        );
+      } catch (_) {
+        return null;
+      }
+    }
 
     final svc = _assetService;
     if (svc == null) return null;
@@ -56,5 +80,6 @@ final assetRefResolverProvider = Provider<AssetRefResolver>((ref) {
   return AssetRefResolver(
     ref.watch(assetServiceProvider),
     ref.watch(freeMediaServiceProvider),
+    SupabaseConfig.isConfigured ? Supabase.instance.client : null,
   );
 });

@@ -289,6 +289,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   void addEntityCard({
     required String entityId,
     bool setActive = true,
+    Map<String, String> imageRemap = const {},
   }) {
     // Dedupe: same entity already projected → just activate it.
     final existing = state.items
@@ -300,12 +301,15 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       return;
     }
 
-    final entity = _ref.read(entityProvider)[entityId];
+    final entities = _ref.read(entityProvider);
+    final entity = entities[entityId];
     if (entity == null) return;
     final schema = _ref.read(worldSchemaProvider);
     final snapshot = EntitySnapshotBuilder.build(
       entity: entity,
       schema: schema,
+      entities: entities,
+      imageRemap: imageRemap,
     );
     final id = _projectionUuid.v4();
     addItem(
@@ -537,7 +541,11 @@ final projectionEntitySyncProvider = Provider<void>((ref) {
       if (entity == null) continue;
       controller.updateEntitySnapshot(
         item.id,
-        EntitySnapshotBuilder.build(entity: entity, schema: schema),
+        EntitySnapshotBuilder.build(
+          entity: entity,
+          schema: schema,
+          entities: next,
+        ),
       );
     }
   }, fireImmediately: false);

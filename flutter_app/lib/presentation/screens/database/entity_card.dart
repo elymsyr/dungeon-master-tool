@@ -13,6 +13,7 @@ import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
+import '../../../application/services/entity_share_prepare.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/entity.dart';
@@ -176,6 +177,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   Entity? _subtitleEntity;
   EntityCategorySchema? _subtitleCat;
   String? _cachedSubtitle;
+
+  /// Portrait gallery's currently-shown image index — surfaced by
+  /// [_PortraitGallery] so the world menu's "Project image" projects the
+  /// image the user is actually looking at.
+  int _currentImageIndex = 0;
 
   final FocusNode _nameFocus = FocusNode();
   final FocusNode _descFocus = FocusNode();
@@ -359,6 +365,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     .read(entityProvider.notifier)
                     .update(entity.copyWith(imagePath: '', images: newImages));
               },
+              onIndexChanged: (i) =>
+                  setState(() => _currentImageIndex = i),
             ),
             const SizedBox(width: 16),
           ],
@@ -411,42 +419,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               ),
                             ),
                     ),
-                    // Cast/projection player rolüne kapalı — DM ve offline
-                    // (none) için açık.
-                    if (ref.watch(currentWorldRoleProvider).valueOrNull !=
-                        WorldRole.player)
-                      IconButton(
-                        tooltip: 'Project entity card to player screen',
-                        icon: Icon(
-                          Icons.cast,
-                          size: 18,
-                          color: palette.srdHeadingRed,
-                        ),
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          ref
-                              .read(projectionControllerProvider.notifier)
-                              .addEntityCard(entityId: widget.entityId);
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              const SnackBar(
-                                duration: Duration(seconds: 2),
-                                content: Text(
-                                  'Entity card projected to player screen',
-                                ),
-                              ),
-                            );
-                        },
-                      ),
-                    if (ref.watch(currentWorldRoleProvider).valueOrNull ==
-                        WorldRole.dm)
-                      _ShareToggle(entityId: widget.entityId, entity: entity),
+                    // All projection / share controls live in one menu.
+                    _EntityWorldMenu(
+                      entityId: widget.entityId,
+                      entity: entity,
+                      currentImageIndex: _currentImageIndex,
+                    ),
                   ],
                 ),
                 // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
@@ -1045,12 +1023,17 @@ class _PortraitGallery extends ConsumerStatefulWidget {
   final DmToolColors palette;
   final ValueChanged<List<String>> onImagesChanged;
 
+  /// Reports the currently-shown image index up to the entity card so the
+  /// world menu's "Project image" targets the visible image.
+  final ValueChanged<int>? onIndexChanged;
+
   const _PortraitGallery({
     required this.images,
     required this.entityName,
     required this.readOnly,
     required this.palette,
     required this.onImagesChanged,
+    this.onIndexChanged,
   });
 
   @override
@@ -1062,6 +1045,12 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   bool _hovered = false;
 
   bool get _showControls => _hovered || Platform.isAndroid || Platform.isIOS;
+
+  void _setIndex(int i) {
+    if (i == _currentIndex) return;
+    setState(() => _currentIndex = i);
+    widget.onIndexChanged?.call(i);
+  }
 
   Future<void> _pickImage() async {
     // Per-entity image cap — bail early when already full.
@@ -1158,38 +1147,6 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        // Sağ tık → player screen'e project menüsü.
-        // GestureDetector dış Container'da çünkü iç Stack'teki overlay'ler
-        // pointer event'leri tutuyor.
-        onSecondaryTapDown: widget.images.isEmpty
-            ? null
-            : (details) {
-                context.showProjectionMenu(
-                  ref: ref,
-                  globalPosition: details.globalPosition,
-                  itemBuilder: () => ProjectionItemBuilders.image(
-                    label: widget.entityName.isEmpty
-                        ? 'Image'
-                        : widget.entityName,
-                    filePaths: [widget.images[_currentIndex]],
-                  ),
-                );
-              },
-        // Long-press → projection menüsü (mobile, sağ tık yerine)
-        onLongPressStart: widget.images.isEmpty
-            ? null
-            : (details) {
-                context.showProjectionMenu(
-                  ref: ref,
-                  globalPosition: details.globalPosition,
-                  itemBuilder: () => ProjectionItemBuilders.image(
-                    label: widget.entityName.isEmpty
-                        ? 'Image'
-                        : widget.entityName,
-                    filePaths: [widget.images[_currentIndex]],
-                  ),
-                );
-              },
         child: Container(
           width: 200,
           height: 260,
@@ -1222,7 +1179,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   bottom: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => setState(() => _currentIndex--),
+                      onTap: () => _setIndex(_currentIndex - 1),
                       child: Container(
                         width: 26,
                         height: 26,
@@ -1250,7 +1207,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   bottom: 0,
                   child: Center(
                     child: GestureDetector(
-                      onTap: () => setState(() => _currentIndex++),
+                      onTap: () => _setIndex(_currentIndex + 1),
                       child: Container(
                         width: 26,
                         height: 26,
@@ -1480,78 +1437,195 @@ class EntityCardCollapsibleGroupCardState
 /// DM-only quick share toggle. Built-in pack entity'leri için static
 /// "always visible" badge gösterir; custom entity'ler için world-wide
 /// share state'i tek tıkla on/off.
-class _ShareToggle extends ConsumerStatefulWidget {
+enum _WorldMenuAction { projectImage, projectCard, share }
+
+/// Single consolidated player-screen control for an entity card. One world
+/// icon whose dropdown projects the visible image, projects the card, and
+/// toggles world-wide sharing — replacing the old scattered project button,
+/// share toggle, and image long-press menu.
+class _EntityWorldMenu extends ConsumerStatefulWidget {
   final String entityId;
   final Entity entity;
-  const _ShareToggle({required this.entityId, required this.entity});
+
+  /// Portrait gallery's currently-shown image index — "Project image"
+  /// projects this one.
+  final int currentImageIndex;
+
+  const _EntityWorldMenu({
+    required this.entityId,
+    required this.entity,
+    required this.currentImageIndex,
+  });
 
   @override
-  ConsumerState<_ShareToggle> createState() => _ShareToggleState();
+  ConsumerState<_EntityWorldMenu> createState() => _EntityWorldMenuState();
 }
 
-class _ShareToggleState extends ConsumerState<_ShareToggle> {
+class _EntityWorldMenuState extends ConsumerState<_EntityWorldMenu> {
   bool _busy = false;
+
+  List<String> get _images => [
+        if (widget.entity.imagePath.isNotEmpty) widget.entity.imagePath,
+        ...widget.entity.images,
+      ];
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final role = ref.watch(currentWorldRoleProvider).valueOrNull;
     final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
-    if (worldId == null) return const SizedBox.shrink();
+
+    // Project: DM + offline (none); hidden for players. Share: DM only.
+    final canProject = role != WorldRole.player;
+    final isDm = role == WorldRole.dm;
+    final canShare = isDm && worldId != null;
+    if (!canProject && !canShare) return const SizedBox.shrink();
 
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
-    final isBuiltin =
-        builtinPackId != null &&
+    final isBuiltin = builtinPackId != null &&
         widget.entity.linked &&
         widget.entity.packageId == builtinPackId;
 
-    if (isBuiltin) {
-      return IconButton(
-        tooltip: 'Built-in (always visible to players)',
-        icon: Icon(
-          Icons.public,
-          size: 16,
-          color: palette.srdHeadingRed.withValues(alpha: 0.55),
-        ),
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-        padding: EdgeInsets.zero,
-        onPressed: () {},
+    var isShared = false;
+    if (worldId != null && isDm) {
+      final shares =
+          ref.watch(worldEntitySharesProvider(worldId)).valueOrNull ??
+              const [];
+      isShared = shares.any(
+        (s) => s.entityId == widget.entityId && s.isWorldWide,
       );
     }
 
-    final sharesAsync = ref.watch(worldEntitySharesProvider(worldId));
-    final shares = sharesAsync.valueOrNull ?? const [];
-    final isShared = shares.any(
-      (s) => s.entityId == widget.entityId && s.isWorldWide,
-    );
+    final hasImage = _images.isNotEmpty;
 
-    return IconButton(
-      tooltip: isShared
-          ? 'Stop sharing with players'
-          : 'Share with all players',
-      icon: Icon(
-        isShared ? Icons.share : Icons.share_outlined,
-        size: 18,
-        color: isShared
-            ? palette.srdHeadingRed
-            : palette.srdHeadingRed.withValues(alpha: 0.45),
-      ),
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+    return PopupMenuButton<_WorldMenuAction>(
+      tooltip: 'Player screen',
+      enabled: !_busy,
+      iconSize: 18,
       padding: EdgeInsets.zero,
-      onPressed: _busy ? null : () => _toggle(worldId, isShared),
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      icon: _busy
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: palette.srdHeadingRed,
+              ),
+            )
+          : Icon(Icons.public, size: 18, color: palette.srdHeadingRed),
+      itemBuilder: (context) => [
+        if (canProject) ...[
+          PopupMenuItem(
+            value: _WorldMenuAction.projectImage,
+            enabled: hasImage,
+            child: const ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.image),
+              title: Text('Project image'),
+            ),
+          ),
+          const PopupMenuItem(
+            value: _WorldMenuAction.projectCard,
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.cast),
+              title: Text('Project card'),
+            ),
+          ),
+        ],
+        if (canProject && canShare) const PopupMenuDivider(),
+        if (canShare)
+          CheckedPopupMenuItem(
+            value: _WorldMenuAction.share,
+            checked: isBuiltin || isShared,
+            enabled: !isBuiltin,
+            child: Text(isBuiltin ? 'Built-in — always shared' : 'Share'),
+          ),
+      ],
+      onSelected: (action) => _onSelected(action, worldId, isShared),
     );
   }
 
-  Future<void> _toggle(String worldId, bool currentlyShared) async {
+  Future<void> _onSelected(
+    _WorldMenuAction action,
+    String? worldId,
+    bool isShared,
+  ) async {
+    switch (action) {
+      case _WorldMenuAction.projectImage:
+        await _projectImage();
+      case _WorldMenuAction.projectCard:
+        await _projectCard();
+      case _WorldMenuAction.share:
+        if (worldId == null) return;
+        await _toggleShare(worldId, isShared);
+    }
+  }
+
+  /// Projects the currently-shown image. Eager-uploads still-local images
+  /// first (counted, or transient when quota is full) so online players get
+  /// a resolvable cloud link instead of a local path.
+  Future<void> _projectImage() async {
     setState(() => _busy = true);
     try {
-      final svc = ref.read(entityShareServiceProvider);
-      if (svc == null) return;
-      if (currentlyShared) {
-        await svc.unshareAll(entityId: widget.entityId, worldId: worldId);
+      final remap = await prepareEntityImagesForProjection(
+        ref,
+        entityId: widget.entityId,
+      );
+      if (!mounted) return;
+      final entity = ref.read(entityProvider)[widget.entityId];
+      if (entity == null) return;
+      final images = [
+        if (entity.imagePath.isNotEmpty) entity.imagePath,
+        ...entity.images,
+      ];
+      if (images.isEmpty) return;
+      final idx = widget.currentImageIndex.clamp(0, images.length - 1);
+      final chosen = remap[images[idx]] ?? images[idx];
+      ref.read(projectionControllerProvider.notifier).addItem(
+            ProjectionItemBuilders.image(
+              label: entity.name.isEmpty ? 'Image' : entity.name,
+              filePaths: [chosen],
+            ),
+            setActive: true,
+          );
+      showProjectedSnack(context, ref);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Projects the entity card. Eager-uploads still-local images first; the
+  /// returned transient remap is applied to the card snapshot only.
+  Future<void> _projectCard() async {
+    setState(() => _busy = true);
+    try {
+      final remap = await prepareEntityImagesForProjection(
+        ref,
+        entityId: widget.entityId,
+      );
+      if (!mounted) return;
+      ref.read(projectionControllerProvider.notifier).addEntityCard(
+            entityId: widget.entityId,
+            imageRemap: remap,
+          );
+      showProjectedSnack(context, ref);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _toggleShare(String worldId, bool isShared) async {
+    setState(() => _busy = true);
+    try {
+      if (isShared) {
+        await unshareEntity(ref, entityId: widget.entityId, worldId: worldId);
       } else {
-        await svc.shareWithAll(entityId: widget.entityId, worldId: worldId);
+        await shareEntityWithPlayers(ref,
+            entityId: widget.entityId, worldId: worldId);
       }
       ref.invalidate(worldEntitySharesProvider(worldId));
       if (!mounted) return;
@@ -1561,7 +1635,7 @@ class _ShareToggleState extends ConsumerState<_ShareToggle> {
           SnackBar(
             duration: const Duration(seconds: 2),
             content: Text(
-              currentlyShared
+              isShared
                   ? 'Stopped sharing with players'
                   : 'Shared with all players',
             ),

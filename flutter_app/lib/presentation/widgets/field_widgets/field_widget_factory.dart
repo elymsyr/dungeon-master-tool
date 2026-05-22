@@ -1174,7 +1174,9 @@ class _RelationFieldWidget extends StatelessWidget {
         : _relationSubtitle(linkedEntity);
     final hasValue = linkedId.isNotEmpty;
 
-    if (readOnly && !hasValue) return const SizedBox.shrink();
+    // Read-only surface (e.g. player viewing a shared card): never render a
+    // raw entity id — hide the row when the linked entity isn't present.
+    if (readOnly && linkedEntity == null) return const SizedBox.shrink();
 
     return _LabeledFieldRow(
       label: schema.label,
@@ -2016,6 +2018,12 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               // equip toggle only — name leads the row now that the link
               // icon is gone).
               final descIndent = showEquip ? 28.0 : 0.0;
+
+              // Read-only surface (e.g. player viewing a shared card): never
+              // render a raw entity id — skip the row when unresolvable.
+              if (readOnly && linkedEntity == null) {
+                return const SizedBox.shrink();
+              }
 
               Widget itemRow = Padding(
                 padding: const EdgeInsets.only(bottom: 6),
