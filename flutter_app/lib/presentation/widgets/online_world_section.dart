@@ -8,6 +8,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
@@ -265,6 +266,11 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     );
     if (ok != true) return;
     setState(() => _busy = true);
+    // Make Offline = kasıtlı; lokal Drift verisi korunmalı. unpublish'in
+    // cascade DELETE CDC echo'su bu cihaza döndüğünde applier purge'ü
+    // atlasın diye guard'ı kaydet.
+    final mirror = ref.read(worldMirrorServiceProvider);
+    mirror?.registerExpectedUnpublish(widget.campaignId);
     try {
       await ref
           .read(worldMembershipServiceProvider)
@@ -276,6 +282,8 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.invalidate(worldMembersProvider(widget.campaignId));
       ref.invalidate(worldInvitesProvider(widget.campaignId));
     } catch (e) {
+      // Unpublish başarısız → DELETE CDC gelmez, guard'ı bırak.
+      mirror?.clearExpectedUnpublish(widget.campaignId);
       _showError(e);
     } finally {
       if (mounted) setState(() => _busy = false);

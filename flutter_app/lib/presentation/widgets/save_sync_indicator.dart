@@ -13,6 +13,7 @@ import '../../application/providers/package_provider.dart' show activePackagePro
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
@@ -594,6 +595,11 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     );
     if (ok != true) return;
     setState(() => _busy = true);
+    // Make Offline = kasıtlı; lokal Drift verisi korunmalı. unpublish'in
+    // cascade DELETE CDC echo'su bu cihaza döndüğünde applier purge'ü
+    // atlasın diye guard'ı kaydet.
+    final mirror = ref.read(worldMirrorServiceProvider);
+    mirror?.registerExpectedUnpublish(worldId);
     try {
       await ref
           .read(worldMembershipServiceProvider)
@@ -605,6 +611,8 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
         const SnackBar(content: Text('World is now offline')),
       );
     } catch (e) {
+      // Unpublish başarısız → DELETE CDC gelmez, guard'ı bırak.
+      mirror?.clearExpectedUnpublish(worldId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Unpublish failed: $e')),

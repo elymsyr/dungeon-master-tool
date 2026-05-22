@@ -477,6 +477,12 @@ class WorldMirrorApplier {
     // so the applier must not invalidate (or read) via its own `ref` after.
     _campaign.refreshWorldCaches(e.worldId);
     if (e.eventType != PostgresChangeEvent.delete) return;
+    // Make Offline echo: kendi membership satırım cascade ile silindi ama
+    // DM lokal dünyayı offline olarak tutmak istiyor. Trash/purge'ü atla.
+    if (mirror.isExpectedUnpublish(e.worldId)) {
+      await _campaign.handleExpectedUnpublish(e.worldId);
+      return;
+    }
     // DM cross-device: DM on device A deleted the world → server cascade
     // dropped my membership row here on device B. Soft-delete (trash) so
     // the user can still restore. Player path stays as hard purge.
@@ -511,6 +517,13 @@ class WorldMirrorApplier {
     if (e.eventType == PostgresChangeEvent.delete) {
       final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
       if (worldId == null) return;
+      // Make Offline: DM cloud satırını kasıtlı düşürdü ama TÜM lokal Drift
+      // verisini tutmak istiyor. Purge'ü atla; yalnızca online-state
+      // cleanup yap → dünya normal bir offline dünyaya dönsün.
+      if (mirror.isExpectedUnpublish(worldId)) {
+        await _campaign.handleExpectedUnpublish(worldId);
+        return;
+      }
       // Routed through the stable notifier: it purges the local mirror AND
       // refreshes role/hub caches via its own ref. Invalidating
       // `currentWorldRoleProvider` tears down this applier (its host
@@ -565,6 +578,13 @@ class WorldMirrorApplier {
       if (mapView != null) data['map_view'] = mapView;
       if (mindMapViews != null) data['mind_map_views'] = mindMapViews;
       _bumpRevision();
+      // Cover/metadata `worlds.state_json` içinde de taşınır. Granular
+      // `world_settings` event'i bu update'e eşlik etmese bile hub liste
+      // refresh'inin cover'ı görmesi için metadata alt-kümesini Drift'e yaz.
+      final meta = decoded['metadata'];
+      if (meta is Map<String, dynamic>) {
+        await _persistSettingsToDrift(e.worldId, {'metadata': meta});
+      }
     } catch (err) {
       debugPrint('_applyWorldsEvent decode error: $err');
     }
@@ -838,7 +858,31 @@ class WorldMirrorApplier {
       }
       data['settings'] = merged;
     }
+    // Synced settings blob'unu device-local Drift'e de yaz — `_applySettingsRow`
+    // önceden yalnızca in-memory state'e dokunuyordu, bu yüzden hub liste
+    // (campaignInfoListProvider) refresh sonrası eski cover'ı okuyordu.
+    await _persistSettingsToDrift(worldId, decoded);
     _bumpRevision();
+  }
+
+  /// Synced bir `world_settings` blob'unu device-local Drift'e yazar — hub
+  /// liste (campaignInfoListProvider / campaignMetadataProvider) refresh
+  /// sonrası güncel cover/metadata'yı görsün. MERGE semantiği:
+  /// `repo.saveSettingsPatch` kullanılır → cloud `settings_json`'da olmayan
+  /// local-only `_world_schema` snapshot'ı korunur.
+  Future<void> _persistSettingsToDrift(
+    String worldId,
+    Map<String, dynamic> decoded,
+  ) async {
+    try {
+      final repo = ref.read(campaignRepositoryProvider); // await ÖNCESİ
+      final name = await _campaign.resolveWorldName(worldId);
+      if (name == null) return;
+      await repo.saveSettingsPatch(name, decoded);
+      _campaign.refreshWorldMetadataCaches(worldId, name);
+    } catch (err) {
+      debugPrint('_persistSettingsToDrift error: $err');
+    }
   }
 
   Map<String, dynamic> _entityRowToBlob(Map<String, dynamic> row) {
