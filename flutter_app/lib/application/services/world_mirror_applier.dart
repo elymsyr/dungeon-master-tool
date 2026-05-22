@@ -9,7 +9,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/character.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../../domain/entities/projection/projection_state.dart';
 import '../providers/auth_provider.dart';
+import '../providers/online_projection_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
@@ -195,6 +197,8 @@ class WorldMirrorApplier {
           await _applySettingsEvent(e);
         case 'world_packages':
           await _applyWorldPackageEvent(e);
+        case 'world_projection':
+          _applyProjectionEvent(e);
         // mind_map_*: PR-O8'de dedicated invalidations.
       }
     } catch (err, st) {
@@ -882,6 +886,33 @@ class WorldMirrorApplier {
       _campaign.refreshWorldMetadataCaches(worldId, name);
     } catch (err) {
       debugPrint('_persistSettingsToDrift error: $err');
+    }
+  }
+
+  // ── Online ikinci ekran — projeksiyon manifesti (Faz A) ─────────────
+
+  /// world_projection CDC event → player-side `onlineProjectionProvider`.
+  /// INSERT/UPDATE manifesti decode eder; DELETE (DM projeksiyonu kapattı)
+  /// temizler. DM kendi yazımının echo'sunu da alır — zararsız, DM bu
+  /// provider'ı render etmez.
+  void _applyProjectionEvent(WorldSyncEvent e) {
+    final notifier = ref.read(onlineProjectionProvider.notifier);
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        notifier.state = null;
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final raw = e.newRecord['state_json'];
+        if (raw is! String) return;
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is! Map<String, dynamic>) return;
+          notifier.state = ProjectionState.fromJson(decoded);
+        } catch (err) {
+          debugPrint('_applyProjectionEvent decode error: $err');
+        }
+      default:
+        return;
     }
   }
 

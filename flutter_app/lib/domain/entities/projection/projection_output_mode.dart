@@ -1,6 +1,7 @@
-/// How the projection content is delivered to the player.
+/// How projection content is delivered to the player.
 ///
-/// Mutually exclusive — only one output mode can be active at a time.
+/// Multiple modes can be active at once (fan-out) — e.g. a local second
+/// window for the DM plus [online] for remote players.
 enum ProjectionOutputMode {
   /// No output active.
   none,
@@ -11,4 +12,8 @@ enum ProjectionOutputMode {
   /// External display via platform Presentation API — Miracast, Chromecast,
   /// HDMI, AirPlay (desktop + mobile).
   screencast,
+
+  /// Remote players over Supabase realtime — the `world_projection` manifest
+  /// table replicated via the world CDC channel.
+  online,
 }

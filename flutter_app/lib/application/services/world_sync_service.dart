@@ -185,6 +185,8 @@ class WorldSyncService {
     'world_settings',
     // PR-SYNC-5: DM-shared package mirror.
     'world_packages',
+    // Online ikinci ekran — projeksiyon manifesti (Faz A).
+    'world_projection',
   ];
 
   Future<void> dispose() async {
