@@ -45,17 +45,34 @@ class EntityMediaCleanupService {
     await _deleteRefs(refs);
   }
 
+  /// Bir world/package entity'si silindiğinde: `image_path` + `images` + custom
+  /// field içindeki tüm cloud ref'leri. [entityJson] entity map formatı
+  /// (`EntityProvider._entityToMap`). Entity'nin Drift satırı silindikten
+  /// SONRA çağrılmalı — yoksa [_isReferencedElsewhere] entity'nin kendi bayat
+  /// ref'ini görür ve silmeyi yanlışlıkla atlar.
+  Future<void> cleanupEntity(Map<String, dynamic> entityJson) async {
+    final refs = <String>{};
+    _collectRefs(entityJson, refs);
+    await _deleteRefs(refs);
+  }
+
   /// World silindiğinde: dünyaya bağlı tüm counted + free medya. Counted
   /// medya `campaign_id == worldId`; free medya (kapak + world-bound karakter
   /// portreleri) `scope_id` worldId veya kampanya adı olabilir.
+  ///
+  /// [worldData] verilirse (silinen dünyanın yüklü JSON'u) ref'ler ayrıca o
+  /// ağaçtan da toplanır — Supabase scope sorgusu transient hata verirse veya
+  /// asset yanlış `campaign_id`/`scope_id` ile etiketlenmişse yedek yol.
   Future<void> cleanupWorld({
     required String worldId,
     required String campaignName,
+    Map<String, dynamic>? worldData,
   }) async {
     final refs = await _scopedRefs(
       countedScopes: {worldId, campaignName},
       freeScopes: {worldId, campaignName},
     );
+    if (worldData != null) _collectRefs(worldData, refs);
     await _deleteRefs(refs);
   }
 

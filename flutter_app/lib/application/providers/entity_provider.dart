@@ -13,6 +13,7 @@ import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../services/entity_media_cleanup_service.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
@@ -444,6 +445,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     // F2: row-level delete. Drops in-memory key + persists `world_entities`
     // delete + bumps `worlds.updated_at` in a single Drift transaction.
     _removeEntityFromCampaign(entityId);
+    // Best-effort: silinen entity'ye ait cloud medyayı (R2 + community_assets)
+    // temizle. Hayatta kalan entity/paket paylaşıyorsa korunur. Bkz.
+    // [EntityMediaCleanupService].
+    if (removed != null) {
+      // ignore: discarded_futures
+      _cleanupEntityMedia(removed);
+    }
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityDeleted,
       {
@@ -468,6 +476,22 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
           );
     }
     return true;
+  }
+
+  /// Best-effort: silinen [removed] entity'nin cloud medyasını temizler.
+  /// `_isReferencedElsewhere` ref-scan'i entity'nin kendi bayat satırını
+  /// görmesin diye önce Drift satırının kesin silinmesini bekler
+  /// (`deleteEntity` id ile siler → idempotent, buffer'la yarışsa da güvenli).
+  Future<void> _cleanupEntityMedia(Entity removed) async {
+    if (_ref.read(authProvider) == null) return;
+    final svc = _ref.read(entityMediaCleanupServiceProvider);
+    if (svc == null) return;
+    try {
+      await _campaign.deleteEntity(removed.id);
+      await svc.cleanupEntity(_entityToMap(removed));
+    } catch (e) {
+      debugPrint('entity media cleanup error: $e');
+    }
   }
 
   /// Full re-serialization fallback. Used by undo/redo/setAll/addEntities
