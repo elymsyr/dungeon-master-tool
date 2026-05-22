@@ -74,6 +74,12 @@ class PendingWriteBuffer {
 
   final Map<String, _PendingWrite> _pending = {};
 
+  /// Uçuştaki (fire edilmiş ama henüz tamamlanmamış) async yazımlar —
+  /// `immediate` schedule'lar ve timer fire'ları buraya kaydolur. `flush`
+  /// / `flushPrefix` bunları da await eder ki world close / app pause
+  /// anında yarıda kalan Drift yazımı düşmesin.
+  final Set<Future<void>> _inFlight = {};
+
   /// Pending count + fire event'leri için tick — saveStateProvider gibi
   /// listener'lar dirty/saved transition'larını buradan görür.
   final ValueNotifier<int> tick = ValueNotifier<int>(0);
@@ -104,27 +110,37 @@ class PendingWriteBuffer {
   }
 
   /// Tüm pending'leri hemen fire'la. Timer'lar iptal, action'lar sırayla
-  /// await edilir. Bekleyen iş yoksa no-op.
+  /// await edilir. Pending action'lardan sonra uçuştaki (immediate /
+  /// timer-fired) yazımlar da beklenir.
   Future<void> flush() async {
-    if (_pending.isEmpty) return;
-    final entries = _pending.entries.toList();
-    _pending.clear();
-    for (final e in entries) {
-      e.value.timer.cancel();
-      try {
-        await e.value.action();
-      } catch (err, st) {
-        debugPrint('PendingWriteBuffer flush(${e.key}): $err\n$st');
+    if (_pending.isNotEmpty) {
+      final entries = _pending.entries.toList();
+      _pending.clear();
+      for (final e in entries) {
+        e.value.timer.cancel();
+        try {
+          await e.value.action();
+        } catch (err, st) {
+          debugPrint('PendingWriteBuffer flush(${e.key}): $err\n$st');
+        }
       }
     }
+    await _drainInFlight();
     _bumpTick();
+  }
+
+  /// Uçuştaki async yazımların hepsini bekle. Bir yazım tamamlanırken
+  /// yenisini schedule ederse onu da yakalamak için boşalana dek döner.
+  Future<void> _drainInFlight() async {
+    while (_inFlight.isNotEmpty) {
+      await Future.wait(_inFlight.toList());
+    }
   }
 
   /// Belirli prefix'li key'leri flush et (örn. world close →
   /// `flushPrefix("world:$worldId")`).
   Future<void> flushPrefix(String prefix) async {
     final keys = _pending.keys.where((k) => k.startsWith(prefix)).toList();
-    if (keys.isEmpty) return;
     for (final k in keys) {
       final entry = _pending.remove(k);
       if (entry == null) continue;
@@ -135,6 +151,8 @@ class PendingWriteBuffer {
         debugPrint('PendingWriteBuffer flushPrefix($k): $err\n$st');
       }
     }
+    // Uçuştaki yazımlar prefix'siz izleniyor — hepsini bekle (zararsız).
+    await _drainInFlight();
     _bumpTick();
   }
 
@@ -156,11 +174,15 @@ class PendingWriteBuffer {
 
   void _run(FutureOr<void> Function() action) {
     final result = action();
-    if (result is Future) {
-      result.catchError((Object e, StackTrace st) {
+    if (result is! Future) return;
+    // Uçuştaki yazımı izle — flush()/flushPrefix() tamamlanmasını bekler.
+    final Future<void> tracked = result.then<void>((_) {}).catchError(
+      (Object e, StackTrace st) {
         debugPrint('PendingWriteBuffer fire error: $e\n$st');
-      });
-    }
+      },
+    );
+    _inFlight.add(tracked);
+    tracked.whenComplete(() => _inFlight.remove(tracked));
   }
 }
 
