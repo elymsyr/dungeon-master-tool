@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v8.4.0 — Online Second Screen, Free vs. Counted Cloud Media, Beta-Leave Purge (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v8.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+A feature release on top of v8.3.1. Online worlds gain a second screen: the DM projects entity cards, images, the world map, and the battle map to every remote player's client, not just a local window. Cloud media is split into *free* (uncounted) and *counted* tiers so portraits and covers no longer eat your storage quota, with per-kind size limits, a per-entity image cap, online count limits, and transient sharing when storage is full. Leaving the beta now purges all of your online data, two storage-security holes are closed, and the standalone Media Gallery is retired. Eight cloud migrations (053–060) and a Cloudflare Worker redeploy are required.
+
+### Highlights
+
+#### Online second screen
+
+- **Project to remote players** — The DM can broadcast the active projection (entity card, image, world map, or battle map) to every connected client in an online world, not just a local second window. A new `world_projection` manifest table holds one row per world (`state_json` = `ProjectionState`) and replicates "what's on screen" via change-data-capture, so a late-joining or reconnecting player catches up the moment they subscribe.
+- **Player Second Screen tab** — The player tab now renders whatever the DM is projecting and shows a "Waiting for DM" placeholder when nothing is shared.
+- **Multi-output fan-out** — One `ProjectionController` drives a local second window and remote players at the same time; a DM-only online broadcast toggle in the projection panel turns the online output on or off.
+- **AssetRef image bridge** — Projection views (image, entity card, battle map) resolve images through `AssetRef` instead of raw file paths, so remote players can fetch counted (R2), free (Supabase), or transient images. This also fixes character portraits showing broken on a second device.
+- **World map projection** — The world map's active-epoch background can be projected; the map provider eagerly uploads the image so remote players resolve it.
+
+#### Cloud media storage redesign
+
+- **Free vs. counted media** — Character portraits and world/package cover images now upload to a public Supabase `free-media` bucket and **do not count** against your cloud storage quota. Entity images, battle maps, and mind-map images stay *counted* media in Cloudflare R2.
+- **Per-kind size limits** — Each media kind has its own ceiling — 2 MB for portraits, covers, and entity images; 5 MB for battle maps — enforced by the Cloudflare Worker through a new `X-Asset-Kind` header.
+- **Per-entity image cap** — Up to 5 images per entity, applied to both the portrait gallery and each schema-defined image field.
+- **Online count limits** — 10 online characters per user, 10 online worlds per user, 10 characters per world, and 10 online packages per user, enforced server-side via triggers and publish RPCs.
+- **Transient sharing** — When your cloud storage is full, projecting or sharing an image still works: the image is written to a short-lived `transient/` R2 path that skips the quota and is auto-deleted by an R2 lifecycle rule. Players who already have the image cached (matched by SHA-256) transfer nothing.
+- **Quota-aware feedback** — New messages when the quota is full, an image exceeds its size limit, or an entity hits the image cap; the image is kept on the device but not backed up to the cloud.
+- **Media Gallery retired** — The standalone Media Gallery dialog is removed. Media now lives directly on entities and projections.
+- **Entity media cleanup** — Deleting a character, world, or package now removes its cloud images automatically; the local cache is kept.
+
+#### Marketplace cover refresh
+
+- **Refreshable listing covers** — When a published item's cover or portrait changes, its marketplace banner now updates without re-publishing. The downloadable content snapshot stays frozen — `content_hash` and `payload_path` are unchanged — and only the inline `cover_image_b64` banner is mutable, refreshed through the owner-scoped `update_listing_cover` RPC.
+- **Delete warnings** — Deleting a world, package, or character that still has marketplace listings now warns that those listings will be permanently removed.
+
+#### Beta-leave full purge
+
+- **`leave_beta` purges all online data** — Leaving the beta now deletes every piece of your online content: online worlds, personal packages, and characters; marketplace listings and their images; free-media images and transient shares. (Worlds, cloud backups, and community assets were already covered in v8.3.)
+- **Beta-gated publishing** — Publishing marketplace listings and personal packages is now locked behind active beta membership, with hardened row-level security on `marketplace_listings`, `personal_packages`, and orphan `world_characters` inserts.
+- **Community untouched** — Posts, game listings, conversations, messages, profiles, and follows are deliberately left intact, so leaving the beta keeps your community presence. The leave-beta confirmation copy now spells out exactly what is deleted versus kept.
+
+#### Security & access fixes
+
+- **Owner-scoped bucket listing** — The public image buckets (`free-media`, `avatars`, `post-images`) had bucket-wide SELECT policies that let any authenticated client enumerate every object and harvest uploader UUIDs. SELECT is now scoped to the caller's own folder. Image display is unaffected — file contents are still served RLS-free through the public URL endpoint.
+- **Shared-world asset access** — Counted R2 images on shared or projected entity cards returned 403 for players because access was uploader-only. `get_asset_access` now also grants access when the requester and the uploader share a world, matching transient access.
+- **Worker transient access** — The Cloudflare Worker validates `transient/` downloads against shared-world membership and enforces the per-kind upload limits.
+
+### Upgrade notes
+
+- **App version bump:** `8.3.1` → `8.4.0`.
+- **SRD core pack:** `1.0.1`, unchanged. No re-seed.
+- **Local DB:** schema v12, unchanged. No migration.
+- **Cloud migrations:** **8 new — `053`–`060`.** Apply them in order via the Supabase SQL editor:
+  - `053_free_media_bucket` — `free-media` bucket + `free_media_assets` table.
+  - `054_transient_share` — `transient_shares` table + `get_transient_access`.
+  - `055_online_count_limits` — per-user / per-world count limits.
+  - `056_marketplace_cover_mutable` — refreshable listing covers.
+  - `057_leave_beta_full_purge` — full online-data purge + beta gating.
+  - `058_storage_select_owner_scoped` — owner-scoped bucket SELECT.
+  - `059_online_projection_manifest` — `world_projection` manifest table.
+  - `060_asset_access_shared_world` — shared-world counted-asset access.
+- **Cloudflare Worker:** redeploy required — adds transient access checks, the `X-Asset-Kind` header, and per-kind upload limits.
+- **R2 lifecycle:** add a lifecycle rule that auto-deletes objects under the `transient/` prefix.
+- Until the migrations and Worker are deployed, clients graceful-degrade: media stays local instead of syncing to the cloud.
+
+### Known issues
+
+- **Battle map collaboration (second screen Phase D–F)** — Player drawing (rulers, circles, free draw) and turn-gated token movement on the projected battle map are still pending; players currently see the battle map read-only.
+- **Media redesign client tails** — Gallery-side and a few transient/count pre-check client paths (Phase 5, 6-client, 7-client) are still in progress.
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Remaining SRD effect gaps** — Drow 120 ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills.
+- **D7 test harness** — Drift v12 round-trip test harness for the auto-migration path is still pending.
+
+---
+
 ## Dungeon Master Tool v8.3.1 — SRD Armor Mechanics, Derived Combat Stats, Per-World DB Filters (Beta)
 
 **Release date:** May 2026
