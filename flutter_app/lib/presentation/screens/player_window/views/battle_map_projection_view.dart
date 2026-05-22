@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/services/asset_ref_resolver.dart';
 import '../../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
+import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../widgets/asset_ref_image.dart';
 
 /// Player-window view of a battle map. Receives a [BattleMapSnapshot] over
 /// IPC, decodes the background and fog images on demand, and renders them
@@ -20,17 +23,18 @@ import '../../../theme/dm_tool_colors.dart';
 /// - Background and fog are decoded only when their source paths/data
 ///   change (memoized via `_lastMapPath` / `_lastFogHash`).
 /// - Token rendering is a single CustomPaint pass — no per-token widgets.
-class BattleMapProjectionView extends StatefulWidget {
+class BattleMapProjectionView extends ConsumerStatefulWidget {
   final BattleMapProjection item;
 
   const BattleMapProjectionView({required this.item, super.key});
 
   @override
-  State<BattleMapProjectionView> createState() =>
+  ConsumerState<BattleMapProjectionView> createState() =>
       _BattleMapProjectionViewState();
 }
 
-class _BattleMapProjectionViewState extends State<BattleMapProjectionView>
+class _BattleMapProjectionViewState
+    extends ConsumerState<BattleMapProjectionView>
     with AutomaticKeepAliveClientMixin {
   ui.Image? _bgImage;
   ui.Image? _fogImage;
@@ -77,9 +81,15 @@ class _BattleMapProjectionViewState extends State<BattleMapProjectionView>
       return;
     }
     try {
-      final file = File(path);
-      final exists = file.existsSync();
-      debugPrint('SCREENCAST: loading map image path=$path exists=$exists');
+      // Resolve through the shared resolver: local path (offline window) or
+      // `dmt-asset://` / `dmt-public://` ref (remote player).
+      final file =
+          await ref.read(assetRefResolverProvider).resolve(AssetRef(path));
+      if (file == null) {
+        debugPrint('SCREENCAST: map image unresolved path=$path');
+        if (mounted) setState(() => _bgImage = null);
+        return;
+      }
       final bytes = await file.readAsBytes();
       final codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
@@ -139,7 +149,10 @@ class _BattleMapProjectionViewState extends State<BattleMapProjectionView>
     for (final p in paths) {
       if (_tokenImageCache.containsKey(p)) continue;
       try {
-        final bytes = await File(p).readAsBytes();
+        final file =
+            await ref.read(assetRefResolverProvider).resolve(AssetRef(p));
+        if (file == null) continue;
+        final bytes = await file.readAsBytes();
         final codec = await ui.instantiateImageCodec(bytes, targetWidth: 256);
         final frame = await codec.getNextFrame();
         if (!mounted) {
@@ -793,11 +806,12 @@ class _ConditionBadge extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (hasImage)
-                Image.file(
-                  File(condition.imagePath!),
+                AssetRefImage(
+                  ref: AssetRef(condition.imagePath!),
                   fit: BoxFit.cover,
                   cacheWidth: 80,
-                  errorBuilder: (_, _, _) => _conditionFallback(),
+                  placeholder: _conditionFallback(),
+                  errorWidget: _conditionFallback(),
                 )
               else
                 _conditionFallback(),

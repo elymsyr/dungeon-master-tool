@@ -1,10 +1,11 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/projection/image_view_state.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
+import '../../../../domain/value_objects/asset_ref.dart';
+import '../../../widgets/asset_ref_image.dart';
 
 /// Renders an `ImageProjection` for the player window. Uses
 /// `AutomaticKeepAliveClientMixin` so the decoded image stays in the widget
@@ -83,34 +84,24 @@ class _SingleImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final file = File(path);
-    if (!file.existsSync()) {
-      return const ColoredBox(
-        color: Colors.black,
-        child: Center(
-          child: Icon(Icons.broken_image, color: Colors.white24, size: 64),
-        ),
-      );
-    }
     // cacheWidth keyed to physical pixel width — avoids decoding 4k sources
     // at full resolution on a 1080p TV.
     final mq = MediaQuery.of(context);
     final cacheWidth =
         (mq.size.width * mq.devicePixelRatio).toInt().clamp(640, 3840);
-    return Image.file(
-      file,
+    // AssetRefImage resolves local paths (offline window) and `dmt-asset://`
+    // / `dmt-public://` refs (remote player) through the shared resolver.
+    return AssetRefImage(
+      ref: AssetRef(path),
       fit: BoxFit.contain,
       cacheWidth: cacheWidth,
-      gaplessPlayback: true,
-      errorBuilder: (_, error, _) {
-        debugPrint('SCREENCAST: Image load error for $path: $error');
-        return const ColoredBox(
-          color: Colors.black,
-          child: Center(
-            child: Icon(Icons.broken_image, color: Colors.white24, size: 48),
-          ),
-        );
-      },
+      placeholder: const ColoredBox(color: Colors.black),
+      errorWidget: const ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: Icon(Icons.broken_image, color: Colors.white24, size: 64),
+        ),
+      ),
     );
   }
 }
