@@ -113,6 +113,7 @@
   "menuReportBug": "Signaler un bug",
   "mediaQuotaFull": "Quota de stockage plein — image conservée sur cet appareil.",
   "mediaImageLimitReached": "Jusqu'à {count} images par entité.",
+  "mediaImageTooLarge": "Image trop volumineuse (max {max} Mo) — conservée sur cet appareil, non sauvegardée dans le cloud.",
 
   "hubBtnMarketplace": "Marché",
   "hubTooltipRefresh": "Actualiser depuis le cloud",

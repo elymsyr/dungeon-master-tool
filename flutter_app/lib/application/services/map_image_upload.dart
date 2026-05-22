@@ -23,21 +23,28 @@ typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);
 /// Returns the cloud `dmt-asset://` ref, or [path] unchanged when the upload
 /// is skipped (offline world, signed-out, no service, already a cloud ref) or
 /// failed. `quotaExceeded` is true when the upload fell back to local because
-/// the user's storage quota is full. Offline worlds bundle map media at Make
-/// Online instead (see `MediaBundler.bundleSettingsMedia` / `bundleMapMedia`).
-Future<({String ref, bool quotaExceeded})> uploadMapImage(
+/// the user's storage quota is full; `tooLarge` is true when it was rejected
+/// for exceeding the per-kind size limit. Offline worlds bundle map media at
+/// Make Online instead (see `MediaBundler.bundleSettingsMedia` / `bundleMapMedia`).
+Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadMapImage(
   ProviderReader read, {
   required String path,
   required MediaKind kind,
 }) async {
-  if (!AssetRef(path).isLocal) return (ref: path, quotaExceeded: false);
-  if (read(authProvider) == null) return (ref: path, quotaExceeded: false);
+  if (!AssetRef(path).isLocal) {
+    return (ref: path, quotaExceeded: false, tooLarge: false);
+  }
+  if (read(authProvider) == null) {
+    return (ref: path, quotaExceeded: false, tooLarge: false);
+  }
   final assetSvc = read(assetServiceProvider);
-  if (assetSvc == null) return (ref: path, quotaExceeded: false);
+  if (assetSvc == null) {
+    return (ref: path, quotaExceeded: false, tooLarge: false);
+  }
   final worldId =
       read(activeCampaignProvider.notifier).data?['world_id'] as String?;
   if (worldId == null || !read(onlineWorldIdsProvider).contains(worldId)) {
-    return (ref: path, quotaExceeded: false);
+    return (ref: path, quotaExceeded: false, tooLarge: false);
   }
   return uploadEntityImageRef(assetSvc,
       localPath: path, scopeId: worldId, kind: kind);

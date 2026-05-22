@@ -43,6 +43,7 @@ import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/character_resolver.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
@@ -56,6 +57,7 @@ import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
 import '../../widgets/perf/image_cache_size.dart';
+import '../../widgets/quota_snackbar.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
 import '../../widgets/save_sync_shared.dart';
@@ -877,12 +879,15 @@ class _CharacterEditorScreenState
     final svc = ref.read(isBetaActiveProvider)
         ? ref.read(freeMediaServiceProvider)
         : null;
-    final newRef = await uploadCharacterPortraitRef(
+    final (ref: newRef, :tooLarge) = await uploadCharacterPortraitRef(
       svc,
       localPath: path,
       scopeId: c.worldId ?? c.id,
     );
     if (!mounted) return;
+    if (tooLarge) {
+      showImageTooLargeSnackbar(context, MediaKind.characterPortrait.maxBytes);
+    }
     _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: newRef)));
     // Persist + push now so the portrait reaches the cloud without waiting
     // for the autosave debounce.

@@ -19,6 +19,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/value_objects/media_kind.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
@@ -1088,11 +1089,14 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
     // device immediately (mirrors `_pickCover`). Offline / failure → the
     // helper returns the local path and the image bundles later via the
     // outbox push (`_handleWorldEntity`) or Make Online.
-    final (:refs, :pushWorldId, :quotaExceeded) =
+    final (:refs, :pushWorldId, :quotaExceeded, :tooLarge) =
         await _eagerUploadImages(picked);
     if (!mounted) return;
     widget.onImagesChanged([...widget.images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
+    if (tooLarge) {
+      showImageTooLargeSnackbar(context, MediaKind.worldEntityImage.maxBytes);
+    }
     if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
 
     // World entity: flush the just-scheduled debounced write so the
@@ -1109,9 +1113,14 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
 
   /// Uploads freshly picked local paths to the cloud when the host item is
   /// online — delegates to the shared [eagerUploadEntityImages].
-  Future<({List<String> refs, String? pushWorldId, bool quotaExceeded})>
-      _eagerUploadImages(List<String> paths) =>
-          eagerUploadEntityImages(ref, paths);
+  Future<
+      ({
+        List<String> refs,
+        String? pushWorldId,
+        bool quotaExceeded,
+        bool tooLarge,
+      })> _eagerUploadImages(List<String> paths) =>
+      eagerUploadEntityImages(ref, paths);
 
   void _removeCurrentImage() {
     if (widget.images.isEmpty) return;
