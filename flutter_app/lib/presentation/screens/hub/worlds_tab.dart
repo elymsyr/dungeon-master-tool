@@ -504,6 +504,25 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // the affected tabs watch `activeCampaignLoadingProvider` for the
     // transient state.
     final notifier = ref.read(activeCampaignProvider.notifier);
+    // Açılış-anı rol ipucunu seed et: worlds listesi kartı online world
+    // için `worldRoleProvider(id)`'ı zaten watch etmiş → cache hazır.
+    // MainScreen ilk frame'de bu ipucuyla player/DM shell seçer.
+    final campaigns =
+        ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    CampaignInfo? info;
+    for (final c in campaigns) {
+      if (c.name == name) {
+        info = c;
+        break;
+      }
+    }
+    final onlineIds = ref.read(onlineWorldIdsProvider);
+    final isOnline = info != null && onlineIds.contains(info.id);
+    // Online world: kartın watch ettiği cache'lenmiş rol (dm/player).
+    // Lokal world: kesin DM modu → ipucu dm, splash gösterme.
+    ref.read(worldRoleHintProvider.notifier).state = isOnline
+        ? ref.read(worldRoleProvider(info.id)).valueOrNull
+        : (info != null ? WorldRole.dm : null);
     notifier.beginLoad(name);
     if (!mounted) return;
     context.go('/main');

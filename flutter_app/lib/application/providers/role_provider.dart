@@ -70,6 +70,14 @@ final currentWorldRoleProvider = FutureProvider<WorldRole>(
   },
 );
 
+/// Açılış-anı rol ipucu. `worlds_tab._loadCampaign` worlds listesindeki
+/// önceden cache'lenmiş [worldRoleProvider] değerinden seed eder; böylece
+/// MainScreen, `currentWorldRoleProvider` async resolve olurken İLK
+/// frame'de player/DM shell'ini doğru seçer — DM→player flash olmaz.
+/// `currentWorldRoleProvider` resolve olunca gerçek değer kazanır; bu
+/// ipucu yalnızca onun loading penceresinde tüketilir.
+final worldRoleHintProvider = StateProvider<WorldRole?>((ref) => null);
+
 /// Convenience: senkron access (rebuild olunca güncel). UI rol-bazlı
 /// dallanma için tüketir.
 WorldRole readCurrentRole(WidgetRef ref) =>

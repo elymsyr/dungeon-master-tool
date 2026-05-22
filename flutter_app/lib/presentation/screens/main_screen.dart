@@ -378,10 +378,28 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // PlayerMainScreen'e geçer.
     // U1: .select ile yalnızca çözülmüş role DEĞERİ değişince rebuild —
     // loading→data AsyncValue geçişleri tüm shell'i rebuild ettirmez.
-    final role = ref.watch(
-      currentWorldRoleProvider
-          .select((r) => r.valueOrNull ?? WorldRole.none),
+    final roleState = ref.watch(
+      currentWorldRoleProvider.select(
+        (r) => (value: r.valueOrNull, loading: r.isLoading),
+      ),
     );
+    final roleHint = ref.watch(worldRoleHintProvider);
+    final resolvedRole = roleState.value;
+    // Resolve önceliği: provider somut dm/player verdiyse ona güven.
+    // currentWorldRoleProvider re-resolve olurken AsyncLoading önceki
+    // değeri (stale `none`) tutar → `valueOrNull` `null` değil `none`
+    // döner. Bu yüzden `none`/`null` durumda açılış ipucuna düşeriz;
+    // ipucu da yoksa ve hâlâ loading ise nötr splash → DM flash olmaz.
+    final WorldRole? role;
+    if (resolvedRole == WorldRole.dm || resolvedRole == WorldRole.player) {
+      role = resolvedRole;
+    } else if (roleHint != null) {
+      role = roleHint;
+    } else if (roleState.loading) {
+      role = null;
+    } else {
+      role = WorldRole.none;
+    }
 
     // Auto sync: worldMirrorApplierProvider'i watch et — provider hayatta
     // tutulur world açıkken. Provider içinde activeCampaignId/role resolve
@@ -390,6 +408,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // U1: .select((_) => 0) → keep-alive ama applier resolve/rebuild'i shell'i
     // rebuild ETTİRMEZ (dönüş değeri burada kullanılmıyor).
     ref.watch(worldMirrorApplierProvider.select((_) => 0));
+
+    if (role == null) {
+      // Rol henüz çözülmedi ve ipucu yok — nötr splash, DM flash etme.
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const SizedBox.shrink(),
+      );
+    }
 
     if (role == WorldRole.player) {
       return const PlayerMainScreen();
