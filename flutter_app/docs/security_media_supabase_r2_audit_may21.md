@@ -4,6 +4,29 @@
 **Kapsam:** Medya yükleme sistemi, Cloudflare Worker + R2, Supabase
 migration'ları ve RLS politikaları.
 
+## Yeniden Doğrulama — 2026-05-22
+
+Audit'ten 1 gün sonra kod yeniden tarandı. **Tüm bulgular (M1–M7, S1–S8,
+O1–O2) hâlâ geçerli — hiçbiri düzeltilmedi.** Önerilen `059`/`060`
+migration'ları oluşturulmadı; en yüksek migration hâlâ `058`. Worker
+(`worker.ts`, `rate_limit.ts`) audit anındaki durumla birebir aynı.
+
+Bu arada commit `5968979` medya galerisini (`media_gallery_dialog.dart`,
+`media_provider.dart`) kaldırıp yerine eager-upload servisleri ekledi:
+`entity_image_upload.dart`, `map_image_upload.dart`, `media_bundler.dart`. Bu
+değişiklik **sunucu saldırı yüzeyini değiştirmez** — aynı Worker `PUT /assets`
+ve Supabase `free-media` yollarını kullanır. M4'teki "metadata insert'i istemci
+yapar" durumu yeni eager-upload servislerinde de aynı; M4 hâlâ geçerli. Audit
+server-tarafı odaklı olduğundan bulgular olduğu gibi durur.
+
+İki bulguda hassaslaştırma:
+
+- **S4** — ≥`005` migration'larındaki SECURITY DEFINER fonksiyonları çoğunlukla
+  `SET search_path = public` içeriyor (`006`/`043`/`054` doğrulandı). Yalnız
+  pre-`005` fonksiyonlar taranmalı → pratik önem MEDIUM→LOW.
+- **S7** — 3 aday index'ten biri zaten **var**: `idx_world_characters_claim`
+  (`039_unify_character_ownership.sql:57`). Kalan ikisi hâlâ yok.
+
 ## Mimari Özet
 
 - **Supabase edge function YOK.** `supabase/functions/` dizini mevcut değil.
@@ -147,11 +170,12 @@ yoğunsa WAL büyümesini izle.
 
 **S7 — Eksik index'ler.** Aday sık-sorgu pattern'leri:
 - `world_characters (world_id) WHERE owner_id IS NULL` — claim-edilmemiş char.
-- `world_entities (world_id, created_at DESC)` — DM "tüm entity" görünümü.
-- `marketplace_listings (lineage_id, is_current)` — drift kontrolü.
+  **Zaten var** → `idx_world_characters_claim` (`039_unify_character_ownership.sql:57`).
+- `world_entities (world_id, created_at DESC)` — DM "tüm entity" görünümü. Yok.
+- `marketplace_listings (lineage_id, is_current)` — drift kontrolü. Composite
+  yok (yalnız tekil `idx_ml_lineage` + `idx_ml_current` var).
 
-*Not:* uygulamadan önce mevcut index'ler `pg_indexes` ile doğrulanmalı
-(bazıları zaten eklenmiş olabilir — bu yalnızca aday liste).
+*Not:* yeni index'lerden önce `pg_indexes` ile son doğrulama yapılmalı.
 
 **S8 — Rate limit: sabit saatlik pencere.**
 `cloudflare/src/rate_limit.ts` `Math.floor(now/3_600_000)` bucket'ı — burst
