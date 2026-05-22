@@ -227,8 +227,7 @@ class _FloatingControls extends StatelessWidget {
               Expanded(
                 child: Text(
                   ws.label,
-                  style: TextStyle(
-                      fontSize: 12, color: palette.uiFloatingText),
+                  style: TextStyle(fontSize: 12, color: color),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
