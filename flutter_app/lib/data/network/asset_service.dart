@@ -168,6 +168,36 @@ class AssetService {
     return Uri.parse(AssetRef.formatTransientUri(sha, ext));
   }
 
+  /// Transient upload + `transient_shares` kaydı. Oyuncu, ref'teki SHA ile bu
+  /// tabloyu sorgulayıp `uploader_id`'yi bulur ([downloadTransient]). Dünya
+  /// başına aynı SHA için idempotent (re-share). [uploadTransient] gibi
+  /// quota'ya SAYILMAZ — storage dolu iken projeksiyon paylaşımı için.
+  Future<Uri> uploadTransientShare(
+    File file, {
+    required MediaKind kind,
+    required String worldId,
+  }) async {
+    final uri = await uploadTransient(file, kind: kind);
+    final ref = AssetRef(uri.toString());
+    final sha = ref.transientSha;
+    if (sha == null) return uri; // beklenmez — uploadTransient hep transient döner
+    final uid = _requireUser().id;
+    await _supabase
+        .from('transient_shares')
+        .delete()
+        .eq('world_id', worldId)
+        .eq('uploader_id', uid)
+        .eq('sha256', sha);
+    await _supabase.from('transient_shares').insert({
+      'id': _uuidV4(),
+      'world_id': worldId,
+      'uploader_id': uid,
+      'sha256': sha,
+      'ext': ref.transientExt,
+    });
+    return uri;
+  }
+
   /// Geçici paylaşılan bir asset'i SHA ile cache-first indirir. Cache hit'te
   /// (resim daha önce alındı veya aynı SHA'lı sayılan asset cache'li) sıfır
   /// transfer. [downloadAsset] ile aynı SHA-cache'i (`cacheDir/assets/`)

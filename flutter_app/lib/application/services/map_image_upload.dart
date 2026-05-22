@@ -30,6 +30,7 @@ Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadMapImage(
   ProviderReader read, {
   required String path,
   required MediaKind kind,
+  bool transientFallback = false,
 }) async {
   if (!AssetRef(path).isLocal) {
     return (ref: path, quotaExceeded: false, tooLarge: false);
@@ -47,7 +48,10 @@ Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadMapImage(
     return (ref: path, quotaExceeded: false, tooLarge: false);
   }
   return uploadEntityImageRef(assetSvc,
-      localPath: path, scopeId: worldId, kind: kind);
+      localPath: path,
+      scopeId: worldId,
+      kind: kind,
+      transientFallback: transientFallback);
 }
 
 /// Best-effort cloud cleanup for a map image ref that was just removed or

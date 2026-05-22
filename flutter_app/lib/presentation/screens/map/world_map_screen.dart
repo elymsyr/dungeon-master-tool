@@ -10,6 +10,7 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../domain/entities/map_data.dart';
@@ -18,6 +19,7 @@ import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
+import '../../widgets/projection/projectable.dart';
 import '../../widgets/unbounded_stack.dart';
 import 'epoch_scroll_bar.dart';
 import 'epoch_waypoint_dialog.dart';
@@ -339,15 +341,17 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             ),
           ),
 
-          _VertDiv(palette: palette),
-
-          // Project Map (export)
-          _ToolbarButton(
-            icon: Icons.photo_camera,
-            label: 'Project',
-            palette: palette,
-            onTap: () => _projectMap(palette),
-          ),
+          // Project Map (export) — DM / offline only; players don't project.
+          if (ref.watch(currentWorldRoleProvider).valueOrNull !=
+              WorldRole.player) ...[
+            _VertDiv(palette: palette),
+            _ToolbarButton(
+              icon: Icons.photo_camera,
+              label: 'Project',
+              palette: palette,
+              onTap: () => _projectMap(palette),
+            ),
+          ],
 
           _VertDiv(palette: palette),
 
@@ -1223,13 +1227,29 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     );
   }
 
-  void _projectMap(DmToolColors palette) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Project Map: Player window not yet implemented'),
-        backgroundColor: palette.tabBg,
-      ),
-    );
+  /// Projects the active epoch's map background image to the player screen.
+  /// DM pins are deliberately excluded — only the bare map is shared.
+  Future<void> _projectMap(DmToolColors palette) async {
+    final imagePath =
+        await ref.read(worldMapProvider.notifier).ensureMapImageUploaded();
+    if (!mounted) return;
+    if (imagePath.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No map image to project'),
+          backgroundColor: palette.tabBg,
+        ),
+      );
+      return;
+    }
+    ref.read(projectionControllerProvider.notifier).addItem(
+          ProjectionItemBuilders.image(
+            label: 'World Map',
+            filePaths: [imagePath],
+          ),
+          setActive: true,
+        );
+    showProjectedSnack(context, ref);
   }
 }
 

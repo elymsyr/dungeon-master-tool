@@ -34,6 +34,7 @@ Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadEntityImageRef(
   required String localPath,
   required String scopeId,
   required MediaKind kind,
+  bool transientFallback = false,
 }) async {
   if (service == null || !AssetRef(localPath).isLocal) {
     return (ref: localPath, quotaExceeded: false, tooLarge: false);
@@ -50,6 +51,21 @@ Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadEntityImageRef(
     );
     return (ref: uri.toString(), quotaExceeded: false, tooLarge: false);
   } on AssetQuotaExceededException catch (_) {
+    // Quota full. For projection ([transientFallback] true), fall back to a
+    // quota-exempt transient share so online players still resolve it; the
+    // transient ref must NOT be persisted (R2 lifecycle ~1 day TTL).
+    if (transientFallback) {
+      try {
+        final uri = await service.uploadTransientShare(
+          file,
+          kind: kind,
+          worldId: scopeId,
+        );
+        return (ref: uri.toString(), quotaExceeded: false, tooLarge: false);
+      } catch (_) {
+        return (ref: localPath, quotaExceeded: true, tooLarge: false);
+      }
+    }
     return (ref: localPath, quotaExceeded: true, tooLarge: false);
   } on AssetServiceException catch (e) {
     return (
