@@ -53,9 +53,26 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     super.dispose();
   }
 
+  /// Loads the saved map into the notifier. Idempotent — no-ops once the
+  /// notifier is initialised for the current world.
+  ///
+  /// `activeCampaignProvider` clears `_data` on a world open/swap and
+  /// repopulates it asynchronously in `completeLoad`. The `initState`
+  /// post-frame fires inside that window for the default tab, so `data`
+  /// is often still null on the first try. `build` re-invokes `_init` on
+  /// every `campaignRevisionProvider` bump (`completeLoad` fires one once
+  /// the data lands) so the saved map initialises as soon as it can —
+  /// before, a missed first try left the map empty and a later
+  /// `deactivate` overwrote the on-disk map with that empty state.
   void _init() {
-    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (!mounted) return;
+    final campaign = ref.read(activeCampaignProvider.notifier);
+    final data = campaign.data;
     if (data == null) return;
+    final worldId =
+        data['world_id'] as String? ?? ref.read(activeCampaignProvider);
+    final notifier = ref.read(worldMapProvider.notifier);
+    if (notifier.isInitializedFor(worldId)) return;
     final mapData = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
     // Viewport now lives in sibling `map_view` (local-only). Prefer it; fall
     // back to legacy nested scale/pan keys inside `map_data` for worlds saved
@@ -66,7 +83,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       if (mapView['pan_x'] != null) mapData['pan_x'] = mapView['pan_x'];
       if (mapView['pan_y'] != null) mapData['pan_y'] = mapView['pan_y'];
     }
-    ref.read(worldMapProvider.notifier).init(mapData);
+    notifier.init(mapData, worldId: worldId);
   }
 
   @override
@@ -127,6 +144,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final notifier = ref.read(worldMapProvider.notifier);
+
+    // The map tab often builds while the world is mid-load (campaign data
+    // still null). `completeLoad` bumps `campaignRevisionProvider` once the
+    // data is in memory — retry `_init` then so the saved map shows.
+    ref.listen<int>(campaignRevisionProvider, (_, _) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _init());
+    });
 
     // Each Consumer subtree watches the world map provider independently so a
     // toolbar toggle does not invalidate the canvas, and an epoch switch does

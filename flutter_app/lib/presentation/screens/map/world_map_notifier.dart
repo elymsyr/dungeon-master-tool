@@ -205,6 +205,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // skipping the redundant decode on resetView / repeat _fitImageInViewport.
   final Map<String, Size> _imageSizeCache = <String, Size>{};
 
+  // Guard: until [init] runs, `state` is the empty default. Syncing that
+  // back into campaign data would wipe the real saved map (deactivate then
+  // persists it). [syncToCampaignData] early-returns while this is false.
+  bool _initialized = false;
+  String? _initializedWorldId;
+
   WorldMapNotifier(this._ref) : super(const WorldMapState());
 
   @override
@@ -226,7 +232,13 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // Init / Save
   // -------------------------------------------------------------------------
 
-  void init(Map<String, dynamic> data) {
+  /// Whether [init] has already populated this notifier for [worldId].
+  /// The screen checks this before re-initialising so a `campaignRevision`
+  /// bump (unrelated entity edit, etc.) doesn't clobber live map state.
+  bool isInitializedFor(String? worldId) =>
+      _initialized && _initializedWorldId == worldId;
+
+  void init(Map<String, dynamic> data, {String? worldId}) {
     final panX = (data['pan_x'] as num? ?? 0).toDouble();
     final panY = (data['pan_y'] as num? ?? 0).toDouble();
     final scale = (data['scale'] as num? ?? 1.0).toDouble();
@@ -301,6 +313,8 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       epochEndLabel: epochEndLabel,
     );
     clearUndoRedo();
+    _initialized = true;
+    _initializedWorldId = worldId;
   }
 
   List<MapPin> _parseRawPins(List<dynamic> raw) {
@@ -337,6 +351,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   }
 
   void syncToCampaignData() {
+    // Not initialised → `state` is the empty default. Writing it into
+    // campaign data would wipe the saved map (deactivate then persists it).
+    if (!_initialized) return;
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 
