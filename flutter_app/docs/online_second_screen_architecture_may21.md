@@ -1,7 +1,8 @@
 # Online İkinci Ekran (Second Screen) — Mimari
 
 Tarih: 2026-05-21
-Durum: implementasyon — **Faz A tamam** (manifest altyapısı, 2026-05-22)
+Durum: implementasyon — **Faz A+B+C tamam** (manifest + AssetRef köprüsü +
+player render, 2026-05-22)
 İlgili: `second_screen_dm_player_view_spec_may21.md` (view/UX spec),
 medya redesign planı `~/.claude/plans/online-backup-zelli-ini-de-i-tirece-iz-hidden-puzzle.md`
 
@@ -194,9 +195,16 @@ listeliyor — ortak iş.
 - **Faz A ✓ — manifest altyapısı:** migration 059, `ProjectionOutputMode.online`,
   `ProjectionOutputOnline`, çıkış fan-out, `world_projection` CDC handler.
   *(tamamlandı 2026-05-22 — UI tetikleyici yok, Faz C ekler.)*
-- **Faz B — AssetRef köprüsü:** 3 projection view + 2 snapshot builder ref-aware.
-- **Faz C — player tab:** `PlayerSecondScreenTab` manifest'ten render (3 view tipi +
-  black screen).
+- **Faz B ✓ — AssetRef köprüsü:** 3 projection view (`image_projection_view`,
+  `entity_card_projection_view`, `battle_map_projection_view`) ham `File(path)` →
+  `AssetRefImage` / `AssetRefResolver`. Snapshot builder'lar DEĞİŞMEDİ — `Entity` /
+  `Encounter` zaten karma path/ref tutuyor; view katmanı çözüyor.
+  *(tamamlandı 2026-05-22)*
+- **Faz C ✓ — player tab + DM tetikleyici:** `PlayerSecondScreenTab` →
+  `ConsumerWidget`, `onlineProjectionProvider` null → "Waiting for DM",
+  non-null → `PlayerWindowRoot(onlineProjectionStateProvider)`. `ProjectionPanel`'de
+  DM-only online broadcast toggle (online dünya + DM iken görünür, fan-out).
+  *(tamamlandı 2026-05-22)*
 - **Faz D — battle map collab:** migration 060, `world_battlemap_marks` CDC, çizim
   araçları player tarafı, renk atama.
 - **Faz E — token hareketi:** `move_own_token` RPC + turn-gate UI.

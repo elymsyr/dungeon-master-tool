@@ -11,3 +11,13 @@ import '../../domain/entities/projection/projection_state.dart';
 ///
 /// `null` = the DM is not projecting anything right now.
 final onlineProjectionProvider = StateProvider<ProjectionState?>((ref) => null);
+
+/// Non-nullable view of [onlineProjectionProvider] for [PlayerWindowRoot],
+/// whose `stateProvider` expects a non-null [ProjectionState]. `null`
+/// (DM not projecting) maps to an empty state — `PlayerWindowRoot` then
+/// renders its black-screen fallback. Consumers that need the null sentinel
+/// (e.g. to show a "Waiting for DM" placeholder) watch
+/// [onlineProjectionProvider] directly.
+final onlineProjectionStateProvider = Provider<ProjectionState>((ref) {
+  return ref.watch(onlineProjectionProvider) ?? const ProjectionState();
+});

@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/projection/entity_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
+import '../../../../domain/value_objects/asset_ref.dart';
+import '../../../widgets/asset_ref_image.dart';
 
 const _parchment = Color(0xFFF5EFE0);
 const _ink = Color(0xFF1B1B1B);
@@ -98,22 +98,26 @@ class _Portrait extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final file = File(path);
-    if (!file.existsSync()) {
-      return const SizedBox(
-        width: 360,
-        height: 480,
-        child: ColoredBox(color: Color(0xFF222222)),
-      );
-    }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: Image.file(
-        file,
+      // AssetRefImage resolves local paths (offline window) and `dmt-asset://`
+      // / `dmt-public://` refs (remote player) through the shared resolver.
+      child: AssetRefImage(
+        ref: AssetRef(path),
         width: 360,
         height: 480,
         fit: BoxFit.cover,
         cacheWidth: 720,
+        placeholder: const SizedBox(
+          width: 360,
+          height: 480,
+          child: ColoredBox(color: Color(0xFF222222)),
+        ),
+        errorWidget: const SizedBox(
+          width: 360,
+          height: 480,
+          child: ColoredBox(color: Color(0xFF222222)),
+        ),
       ),
     );
   }
