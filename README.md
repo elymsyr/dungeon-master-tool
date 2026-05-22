@@ -24,7 +24,7 @@
   </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v8.3.1--beta-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v8.4.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
@@ -41,9 +41,9 @@
 Planned for upcoming releases — order not final, scope may shift between patch and minor versions.
 
 - **Better battle map system** — Smoother large-grid performance, snap-to-grid tokens with stat-block previews, line-of-sight + dynamic vision, measurement modes (cone/line/sphere), and animated AoE overlays.
-- **Second screen for online play** — Dedicated player-screen view for online worlds: every member's client can act as the projected view, so remote players see the same battle map, entity cards, and reveals the in-person table sees.
+- **Second-screen battle map collaboration** — Make the online second screen two-way: players draw rulers, circles, and free strokes on the projected battle map and move their own token on their turn, instead of viewing it read-only.
 - **Built-in D&D 5e package visuals** — Cover art, monster/species/class portraits, equipment icons, and spell glyphs bundled with the SRD core pack so default content stops looking like raw text.
-- **More online storage for users** — Larger per-account quota for personal cloud sync (characters, worlds, templates, packages) and selectable retention tiers; current beta cap is intentionally conservative.
+- **More online storage for users** — Larger per-account quota for counted cloud media and selectable retention tiers; current beta cap is intentionally conservative (portraits and covers already sync free of quota).
 - **Deeper D&D 5e implementation** — Close remaining SRD gaps (Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills, missing `auto_granted_by` metadata), automate more class/subclass effects, and finish bidirectional sync of mechanical resolutions across devices.
 - **Full custom-content editors** — WYSIWYG editors for schemas, templates, and packages so creators stop hand-editing JSON.
 
@@ -80,8 +80,10 @@ Planned for upcoming releases — order not final, scope may shift between patch
 - **Invite Codes** -- One active invite per world; generate, regenerate, copy, and revoke from the world panel.
 - **Roles** -- Player and DM roles with row-level security; only the DM can publish, manage members, or delete characters that aren't owned by anyone.
 - **Realtime Sync** -- Character, member, and world-entity changes stream to every connected client via change-data-capture; offline edits reconcile on reconnect.
+- **Online Second Screen** -- The DM projects entity cards, images, the world map, and the battle map to every connected player's client. A per-world manifest replicates the active view, so a late-joining or reconnecting player catches up instantly.
 - **Character Ownership** -- Claim a world character to make it yours, release it back to the world, or delete it (if you're the DM and nobody owns it).
 - **Personal Cloud Sync** -- Back up your own characters, worlds, templates, and packages to your account so you can pick them up on another device.
+- **Cloud Media Tiers** -- Character portraits and world/package covers sync free of your storage quota; entity images and battle maps count against it, with per-kind size limits and transient sharing when storage is full.
 - **Graceful Offline** -- Network-backed screens (feed, marketplace, messages, profiles, game listings) show a single clean "You're offline" placeholder instead of infinite spinners, and auto-recover when the connection returns. Outbox writes hold and flush on reconnect.
 
 ### Social & Community
