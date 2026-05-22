@@ -27,6 +27,13 @@ class MindMapScreen extends ConsumerStatefulWidget {
 class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   late final MindMapNotifier _notifier;
 
+  /// `_init()` campaign verisiyle başarıyla çalıştı mı? Dünya açılışında
+  /// MindMapScreen, `completeLoad()` bitmeden build olabilir → `data == null`
+  /// → init boş döner. Bu bayrak false kaldığı sürece `deactivate()` persist
+  /// etmez (boş state ile kayıtlı mind map'i ezmeyi engeller) ve
+  /// campaignRevision bump'ında init yeniden denenir.
+  bool _initialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +45,7 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   }
 
   void _init() {
+    if (_initialized) return;
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final mindMaps = data['mind_maps'] as Map? ?? {};
@@ -46,10 +54,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
       mindMaps[mapId] as Map? ?? {},
     );
     _notifier.init(scoped);
+    _initialized = true;
   }
 
   @override
   void deactivate() {
+    // Init hiç başarılı olmadıysa (campaign verisi geç geldi) state boş —
+    // kayıtlı mind map'i boşla ezmemek için persist'i atla.
+    if (!_initialized) {
+      super.deactivate();
+      return;
+    }
     // autoDispose mindMapProvider tab değişimde dispose olunca, notifier'ın
     // _ref'i geçersiz; flushSave içindeki ref.read'lar atar ve save düşer.
     // Burada in-memory snapshot'ı senkron al, singleton container üzerinden
@@ -91,6 +106,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Campaign verisi `completeLoad()` ile geç gelirse revision bump olur —
+    // init henüz başarılı değilse yeniden dene.
+    ref.listen(campaignRevisionProvider, (_, _) {
+      if (!_initialized && mounted) _init();
+    });
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final notifier = ref.read(mindMapProvider.notifier);
     final mapState = ref.watch(mindMapProvider);

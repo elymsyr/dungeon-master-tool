@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
@@ -25,6 +27,7 @@ import 'role_provider.dart';
 import 'auth_provider.dart';
 import 'save_state_provider.dart';
 import 'sync_engine_provider.dart';
+import 'ui_state_provider.dart';
 
 const _uuid = Uuid();
 
@@ -150,6 +153,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// disk'e `entities`'e yazmaz — karakterler hub'da kalır, world sadece
   /// referansı (`linked_character_ids`) tutar.
   final Set<String> _linkedCharacterIds = {};
+
+  /// Yeni fork edilmiş built-in id → homebrew kopya id. Fork sonrası eski
+  /// kartın dispose-flush'ı gibi gecikmeli edit'lerin İKİNCİ bir kopya
+  /// üretmesini engeller — bunun yerine edit kopyaya yönlendirilir. Her
+  /// kayıt kısa süre sonra temizlenir, böylece kullanıcı built-in'i
+  /// tekrar açarsa yeni bir kopya forklayabilir.
+  final Map<String, String> _recentForks = {};
 
   EntityNotifier(
       this._campaign, this._ref, this._onDirty, this._eventBus, this._buffer)
@@ -335,26 +345,65 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
   void update(Entity entity) {
     if (identical(state[entity.id], entity)) return;
-    pushUndo(state);
-    // Detach-on-edit: any content change marks the entity as homebrew.
-    // Linked pack entities break the link; pack-side row is unaffected.
-    // Manual source edits (source field changed in this update) are
-    // preserved — only auto-stamp Homebrew when the user didn't set one.
-    final prev = state[entity.id];
-    var next = entity;
-    if (prev != null && _isContentChanged(prev, entity)) {
-      final userEditedSource = entity.source != prev.source;
-      next = entity.copyWith(
+
+    // Bu built-in az önce forklandıysa, gecikmeli edit'i (eski kartın
+    // dispose-flush'ı vb.) yeni kopya daha üretmek yerine kopyaya yönlendir.
+    final redirectId = _recentForks[entity.id];
+    if (redirectId != null && state.containsKey(redirectId)) {
+      update(entity.copyWith(
+        id: redirectId,
         linked: false,
+        packageId: null,
+        packageEntityId: null,
+      ));
+      return;
+    }
+
+    final prev = state[entity.id];
+
+    // Fork-on-edit: built-in/pack (linked) bir entity'de içerik değişimi,
+    // yerinde detach etmek yerine YENİ bir homebrew kopya oluşturur.
+    // Orijinal built-in `state`'te değişmeden kalır — `world_entities`'e
+    // satır yazılmadığı için reload'da `synthesizeWorldBuiltins` onu
+    // yeniden üretir (kaybolmaz). UI, fork redirect sinyaliyle açık
+    // kartı/sekmeyi kopyaya geçirir.
+    if (prev != null && prev.linked && _isContentChanged(prev, entity)) {
+      pushUndo(state);
+      final newId = _uuid.v4();
+      final userEditedSource =
+          entity.source != prev.source && entity.source.isNotEmpty;
+      final forked = entity.copyWith(
+        id: newId,
+        linked: false,
+        packageId: null,
+        packageEntityId: null,
         source: userEditedSource ? entity.source : 'Homebrew',
       );
+      state = {...state, prev.id: prev, forked.id: forked};
+      _recentForks[prev.id] = newId;
+      Timer(const Duration(seconds: 3), () => _recentForks.remove(prev.id));
+      _writeEntityToCampaign(forked, kind: WriteKind.immediate);
+      _eventBus.emit(EventEnvelope.now(
+        EventTypes.entityCreated,
+        {
+          'entity_id': newId,
+          'entity_type': forked.categorySlug,
+          'name': forked.name,
+        },
+        campaignId: _campaignId,
+      ));
+      _ref.read(entityForkRedirectProvider.notifier).state =
+          EntityForkRedirect(oldId: prev.id, newId: newId);
+      return;
     }
-    state = {...state, next.id: next};
-    final kind = _inferWriteKind(prev, next);
-    _writeEntityToCampaign(next, kind: kind);
+
+    pushUndo(state);
+    state = {...state, entity.id: entity};
+    final kind = _inferWriteKind(prev, entity);
+    _writeEntityToCampaign(entity, kind: kind);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityUpdated,
-      {'entity_id': next.id, 'changed_fields': const <String>[]},
+      {'entity_id': entity.id, 'changed_fields': const <String>[]},
       campaignId: _campaignId,
     ));
   }

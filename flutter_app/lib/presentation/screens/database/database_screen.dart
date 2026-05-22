@@ -134,6 +134,38 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     _persistOpenTabs();
   }
 
+  /// Built-in bir entity edit'lenip homebrew kopya forklandığında, eski
+  /// id'yi gösteren sekme(ler)i kopyaya geçirir. Orijinal built-in DB
+  /// listesinde kalır (reload'da yeniden synth edilir) — yalnızca sekme
+  /// kopyaya döner. [EntityNotifier.update] forku [entityForkRedirectProvider]
+  /// üzerinden sinyaller.
+  void _swapTab(String oldId, String newId) {
+    final entity = ref.read(visibleEntityProvider)[newId];
+    if (entity == null) return;
+    final schema = ref.read(worldSchemaProvider);
+    var catColor = const Color(0xFF808080);
+    final cat = _firstWhereOrNull(
+        schema.categories, (c) => c.slug == entity.categorySlug);
+    if (cat != null) catColor = _parseHexColor(cat.color);
+    final replacement = _TabEntry(
+      entityId: newId,
+      title: entity.name,
+      categorySlug: entity.categorySlug,
+      categoryColor: catColor,
+    );
+    var swapped = false;
+    setState(() {
+      for (final tabs in [_leftTabs, _rightTabs]) {
+        final idx = tabs.indexWhere((t) => t.entityId == oldId);
+        if (idx >= 0) {
+          tabs[idx] = replacement;
+          swapped = true;
+        }
+      }
+    });
+    if (swapped) _persistOpenTabs();
+  }
+
   String _worldKey() => ref.read(activeCampaignProvider) ?? '';
 
   void _persistOpenTabs() {
@@ -187,6 +219,18 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Built-in entity fork edildiğinde açık sekmeyi kopyaya geçir. Sinyal
+    // bir Timer (debounced edit) içinden gelir → build dışı; yine de
+    // provider mutasyonunu frame sonrasına erteleyip güvende kal.
+    ref.listen(entityForkRedirectProvider, (_, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _swapTab(next.oldId, next.newId);
+        ref.read(entityForkRedirectProvider.notifier).state = null;
+      });
+    });
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
     final schema = ref.watch(worldSchemaProvider);
