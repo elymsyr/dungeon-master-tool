@@ -593,6 +593,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     _cleanupCloudMedia(
       worldId: data?['world_id'] as String?,
       campaignName: campaignName,
+      worldData: data,
     );
     _cleanupMarketplace(campaignName);
   }
@@ -640,6 +641,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     _cleanupCloudMedia(
       worldId: data?['world_id'] as String?,
       campaignName: campaignName,
+      worldData: data,
     );
     _cleanupMarketplace(campaignName);
   }
@@ -670,12 +672,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       _resolveWorldName(worldId);
 
   /// Refreshes role + hub-list caches after a membership/world change.
-  /// Invalidates via the notifier's stable ref — see the block comment.
+  ///
+  /// Routed through [_worldCacheInvalidatorProvider]: this notifier's own ref
+  /// belongs to `activeCampaignProvider`, and `currentWorldRoleProvider`
+  /// transitively depends on it — invalidating it from `_ref` trips
+  /// Riverpod's `_debugAssertCanDependOn` cycle check (`CircularDependencyError`).
+  /// The invalidator provider watches nothing, so its ref can do it safely.
   void refreshWorldCaches(String worldId) {
-    _ref.invalidate(worldRoleProvider(worldId));
-    _ref.invalidate(currentWorldRoleProvider);
-    _ref.invalidate(campaignInfoListProvider);
-    _ref.invalidate(campaignListProvider);
+    _ref.read(_worldCacheInvalidatorProvider)(worldId);
   }
 
   /// Hub liste + per-world metadata cache'lerini tazeler — synced settings
@@ -747,6 +751,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   void _cleanupCloudMedia({
     required String? worldId,
     required String campaignName,
+    Map<String, dynamic>? worldData,
   }) {
     if (_ref.read(authProvider) == null) return;
     final svc = _ref.read(entityMediaCleanupServiceProvider);
@@ -756,6 +761,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         .cleanupWorld(
           worldId: worldId ?? campaignName,
           campaignName: campaignName,
+          worldData: worldData,
         )
         .catchError(
           (Object e) => debugPrint('world media cleanup error: $e'),
@@ -818,6 +824,21 @@ final activeCampaignProvider =
     StateNotifierProvider<ActiveCampaignNotifier, String?>((ref) {
       return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
     });
+
+/// Ref-holder used purely to invalidate role/hub caches from CDC-driven
+/// flows. `ActiveCampaignNotifier`'s own ref belongs to `activeCampaignProvider`,
+/// which `currentWorldRoleProvider` transitively depends on — invalidating it
+/// from that ref throws `CircularDependencyError`. This provider watches
+/// nothing, so its ref can legally invalidate those caches. Non-autoDispose,
+/// so the captured ref stays valid for the app's lifetime.
+final _worldCacheInvalidatorProvider = Provider<void Function(String)>((ref) {
+  return (String worldId) {
+    ref.invalidate(worldRoleProvider(worldId));
+    ref.invalidate(currentWorldRoleProvider);
+    ref.invalidate(campaignInfoListProvider);
+    ref.invalidate(campaignListProvider);
+  };
+});
 
 /// Trash'teki silinen kampanyalar + paketler + karakterler. v12: Drift
 /// `trash_items` tablosu — kind ∈ {'world','package','character'}.
