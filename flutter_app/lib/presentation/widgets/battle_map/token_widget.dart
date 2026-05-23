@@ -57,7 +57,7 @@ class _TokenWidgetState extends State<TokenWidget> {
     final size = widget.tokenSize.toDouble();
     final canvasPos = _effectiveCanvasPos;
 
-    final borderWidth = widget.isActive ? 5.0 : 3.2;
+    final borderWidth = widget.isActive ? 7.0 : 3.2;
 
     // Canvas-space positioning — Transform wrapper handles screen projection
     return Positioned(
@@ -102,14 +102,6 @@ class _TokenWidgetState extends State<TokenWidget> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: widget.borderColor, width: borderWidth),
-              boxShadow: widget.isActive
-                  ? [
-                      BoxShadow(
-                        color: widget.borderColor.withValues(alpha: 0.5),
-                        blurRadius: 8,
-                      ),
-                    ]
-                  : null,
             ),
             clipBehavior: Clip.antiAlias,
             child: ClipOval(child: _buildAvatar(size)),
