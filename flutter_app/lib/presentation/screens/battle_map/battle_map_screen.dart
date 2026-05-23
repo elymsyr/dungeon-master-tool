@@ -4,8 +4,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../domain/entities/entity.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -159,10 +161,28 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // Token layer with Transform wrapper
   // -------------------------------------------------------------------------
 
-  String? _entityImagePath(String? entityId) {
+  /// Looks up the combatant's source entity. Falls back to the characters
+  /// list because [entityProvider] only injects chars whose `worldId` matches
+  /// the active world — encounters can still reference orphan or
+  /// other-world PCs.
+  Entity? _entityFor(String? entityId) {
     if (entityId == null) return null;
     final entities = ref.read(entityProvider);
-    final entity = entities[entityId];
+    final fromProvider = entities[entityId];
+    if (fromProvider != null) return fromProvider;
+    // Combined source: own chars + other-player chars from the world mirror.
+    // The DM may add another player's PC to a combat (via the world chars
+    // mirror) — that entity is in neither `entityProvider` nor `character
+    // ListProvider`. `combatCharactersProvider` unions both.
+    final chars = ref.read(combatCharactersProvider);
+    for (final c in chars) {
+      if (c.entity.id == entityId) return c.entity;
+    }
+    return null;
+  }
+
+  String? _entityImagePath(String? entityId) {
+    final entity = _entityFor(entityId);
     if (entity == null) return null;
     if (entity.images.isNotEmpty) return entity.images.first;
     if (entity.imagePath.isNotEmpty) return entity.imagePath;
@@ -170,9 +190,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 
   Color _categoryColor(String? entityId, DmToolColors palette) {
-    if (entityId == null) return palette.tokenBorderNeutral;
-    final entities = ref.read(entityProvider);
-    final entity = entities[entityId];
+    final entity = _entityFor(entityId);
     if (entity == null) return palette.tokenBorderNeutral;
     final schema = ref.read(worldSchemaProvider);
     for (final cat in schema.categories) {

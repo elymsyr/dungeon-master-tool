@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:ui' as ui show instantiateImageCodec;
 
+import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../providers/character_provider.dart' show kPlayerCategorySlugs;
 
 /// Builds a [BattleMapSnapshot] from a live [Encounter] + the entity map.
 /// Pure function (no Riverpod, no state) so it can be unit-tested and reused
@@ -25,9 +27,17 @@ class BattleMapSnapshotBuilder {
     required Encounter encounter,
     required Map<String, Entity> entities,
     WorldSchema? schema,
+    Iterable<Character> characters = const [],
     int canvasWidth = 2048,
     int canvasHeight = 2048,
   }) {
+    // Characters' entities aren't always present in [entities] (the
+    // EntityNotifier only injects chars matching the active world). Build a
+    // local fallback so combatants whose `entityId` points at a character
+    // still resolve to a PC entity (→ correct image, isPlayer=true, HP shown).
+    final charEntities = <String, Entity>{
+      for (final c in characters) c.entity.id: c.entity,
+    };
     // Index categories by slug for O(1) color lookup.
     final categoryColors = <String, String>{};
     if (schema != null) {
@@ -58,8 +68,11 @@ class BattleMapSnapshotBuilder {
         }
       }
 
-      // Entity-derived visuals
-      final entity = c.entityId != null ? entities[c.entityId!] : null;
+      // Entity-derived visuals. Fall back to the characters lookup so PCs
+      // not yet injected into the entity provider still resolve.
+      final entity = c.entityId != null
+          ? (entities[c.entityId!] ?? charEntities[c.entityId!])
+          : null;
       String? imagePath;
       if (entity != null) {
         if (entity.imagePath.isNotEmpty) {
@@ -69,9 +82,8 @@ class BattleMapSnapshotBuilder {
         }
       }
       final colorHex = _resolveColor(entity, c, categoryColors);
-      final isPlayer = entity?.categorySlug == 'player_character' ||
-          entity?.categorySlug == 'player' ||
-          entity?.categorySlug == 'pc';
+      final isPlayer = entity != null &&
+          kPlayerCategorySlugs.contains(entity.categorySlug);
 
       tokens.add(TokenSnapshot(
         id: c.id,
@@ -89,7 +101,7 @@ class BattleMapSnapshotBuilder {
           // initiative panel can show condition art instead of plain text.
           String? condImage;
           if (cond.entityId != null) {
-            final ce = entities[cond.entityId!];
+            final ce = entities[cond.entityId!] ?? charEntities[cond.entityId!];
             if (ce != null) {
               if (ce.imagePath.isNotEmpty) {
                 condImage = ce.imagePath;

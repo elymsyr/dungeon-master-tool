@@ -1098,3 +1098,44 @@ Map<String, dynamic> _defaultFieldsFor(EntityCategorySchema cat) {
   }
   return out;
 }
+
+/// Birleşik karakter kaynağı: hub'daki own chars + aktif online dünyanın
+/// `world_characters` mirror'undan decode edilmiş diğer oyuncu chars'ları.
+///
+/// Battle-map projection snapshot builder ve DM battle map screen `_entityFor`
+/// fallback'i için tek geçerli kaynak. `characterListProvider` tek başına
+/// yetmiyor çünkü DM, başka oyuncuların PC'lerini encounter'a `addCombatantFor
+/// Character` ile ekleyebilir; bu chars `characterListProvider`'da yok
+/// (yalnız `worldCharactersProvider` mirror'unda).
+///
+/// Dedup `Character.id`'ye göre — hub kopyası önceliklidir (lokal düzenlemeler
+/// mirror push'una yetişmeden önce de doğru gözüksün).
+final combatCharactersProvider = Provider<List<Character>>((ref) {
+  final own = ref.watch(characterListProvider).valueOrNull ?? const <Character>[];
+  final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+  final onlineIds = ref.watch(onlineWorldIdsProvider);
+
+  final out = <String, Character>{};
+  for (final c in own) {
+    out[c.id] = c;
+  }
+
+  if (worldId != null && onlineIds.contains(worldId)) {
+    final rows =
+        ref.watch(worldCharactersProvider(worldId)).valueOrNull ?? const [];
+    for (final r in rows) {
+      if (out.containsKey(r.id)) continue;
+      try {
+        final decoded = jsonDecode(r.payloadJson);
+        if (decoded is Map<String, dynamic>) {
+          out[r.id] = Character.fromJson(decoded).copyWith(
+            worldId: r.worldId,
+            ownerId: r.ownerId,
+          );
+        }
+      } catch (_) {/* malformed row — skip */}
+    }
+  }
+
+  return out.values.toList(growable: false);
+});
