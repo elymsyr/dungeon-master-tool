@@ -1,5 +1,5 @@
 const String appName = 'Dungeon Master Tool';
-const String appVersion = '8.4.0';
+const String appVersion = '9.0.0';
 const String appProcess = 'beta';
 String get appReleaseTag => '$appProcess-v$appVersion';
 const String githubRepo = 'elymsyr/dungeon-master-tool';
