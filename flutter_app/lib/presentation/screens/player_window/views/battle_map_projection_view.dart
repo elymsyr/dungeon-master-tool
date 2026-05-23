@@ -26,7 +26,16 @@ import '../../../widgets/asset_ref_image.dart';
 class BattleMapProjectionView extends ConsumerStatefulWidget {
   final BattleMapProjection item;
 
-  const BattleMapProjectionView({required this.item, super.key});
+  /// Online viewer mode — wraps the map canvas in an InteractiveViewer so
+  /// the remote player can pan/zoom locally. The initiative side panel
+  /// stays fixed (it lives outside the transformed subtree).
+  final bool interactive;
+
+  const BattleMapProjectionView({
+    required this.item,
+    this.interactive = false,
+    super.key,
+  });
 
   @override
   ConsumerState<BattleMapProjectionView> createState() =>
@@ -170,35 +179,48 @@ class _BattleMapProjectionViewState
   Widget build(BuildContext context) {
     super.build(context);
     final snap = widget.item.snapshot;
+    // Drop initiative side panel on narrow viewports (mobile) — the map
+    // canvas is too small to share. Threshold matches Flutter's compact
+    // breakpoint.
+    final isCompact = MediaQuery.of(context).size.width < 600;
+    final canvas = LayoutBuilder(builder: (context, constraints) {
+      Widget c = CustomPaint(
+        size: Size(constraints.maxWidth, constraints.maxHeight),
+        painter: _BattleMapProjectionPainter(
+          snapshot: snap,
+          bgImage: _bgImage,
+          fogImage: _fogImage,
+          tokenImages: _tokenImageCache,
+          compact: isCompact,
+        ),
+      );
+      if (widget.interactive) {
+        c = InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 8,
+          clipBehavior: Clip.hardEdge,
+          child: c,
+        );
+      }
+      return c;
+    });
     return RepaintBoundary(
       child: ColoredBox(
         color: Colors.black,
-        child: LayoutBuilder(builder: (context, constraints) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: _BattleMapProjectionPainter(
-                  snapshot: snap,
-                  bgImage: _bgImage,
-                  fogImage: _fogImage,
-                  tokenImages: _tokenImageCache,
-                ),
+        child: isCompact
+            ? canvas
+            : Row(
+                children: [
+                  Expanded(child: canvas),
+                  // Initiative side panel — outside the transformed subtree so
+                  // pan/zoom doesn't drag the text. Reserves its own width so
+                  // the map canvas isn't squished underneath an opaque overlay.
+                  SizedBox(
+                    width: 280,
+                    child: _InitiativeSidePanel(snapshot: snap),
+                  ),
+                ],
               ),
-              // Initiative side panel — player-only overlay. Lives in widget
-              // tree (not the painter) so text is real Flutter widgets and
-              // can scroll if the encounter is huge.
-              Positioned(
-                top: 0,
-                bottom: 0,
-                right: 0,
-                width: 280,
-                child: _InitiativeSidePanel(snapshot: snap),
-              ),
-            ],
-          );
-        }),
       ),
     );
   }
@@ -216,11 +238,16 @@ class _BattleMapProjectionPainter extends CustomPainter {
   final ui.Image? fogImage;
   final Map<String, ui.Image> tokenImages;
 
+  /// When true, render strokes thinner and labels smaller for narrow
+  /// viewports (mobile second-screen).
+  final bool compact;
+
   _BattleMapProjectionPainter({
     required this.snapshot,
     required this.bgImage,
     required this.fogImage,
     required this.tokenImages,
+    this.compact = false,
   });
 
   @override
@@ -357,7 +384,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
               text: t.name[0].toUpperCase(),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: tokenRadius,
+                fontSize: tokenRadius * (compact ? 0.7 : 1.0),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -376,7 +403,9 @@ class _BattleMapProjectionPainter extends CustomPainter {
           text: t.name,
           style: TextStyle(
             color: Colors.white,
-            fontSize: (tokenRadius * 0.45).clamp(10, 18),
+            fontSize: compact
+                ? (tokenRadius * 0.35).clamp(7, 12)
+                : (tokenRadius * 0.45).clamp(10, 18),
             fontWeight: FontWeight.w600,
             shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
           ),
@@ -402,27 +431,43 @@ class _BattleMapProjectionPainter extends CustomPainter {
         fogImage!.height.toDouble(),
       );
       final sigma = (12 * scale).clamp(4.0, 32.0);
+      // Pad fog dst by ~3σ outside destRect, then clip strictly to destRect.
+      // Blur feathers alpha→0 at the dst rect edge — without padding, that
+      // feather would land on top of the bg image's edge and the bg would
+      // peek through full-cover fog. With padding + tight clip, the feather
+      // is in the cropped-out ring; what remains in destRect is opaque.
+      final fogPad = sigma * 3;
+      final fogDest = Rect.fromLTRB(
+        destRect.left - fogPad,
+        destRect.top - fogPad,
+        destRect.right + fogPad,
+        destRect.bottom + fogPad,
+      );
+      canvas.save();
+      canvas.clipRect(destRect);
       canvas.drawImageRect(
         fogImage!,
         src,
-        destRect,
+        fogDest,
         Paint()
           ..isAntiAlias = true
           ..filterQuality = FilterQuality.medium
           ..imageFilter = ui.ImageFilter.blur(
             sigmaX: sigma,
             sigmaY: sigma,
-            tileMode: TileMode.decal,
+            tileMode: TileMode.clamp,
           )
           ..colorFilter = const ColorFilter.mode(
-            Color(0xF2000000),
+            Color(0xFF000000),
             BlendMode.srcIn,
           ),
       );
+      canvas.restore();
     }
 
     // 5. Annotation strokes — drawn ABOVE the fog so the DM's drawings
     // remain visible even where players are looking through fog.
+    final strokeMult = compact ? 0.5 : 1.0;
     for (final s in snapshot.strokes) {
       if (s.points.length < 4) continue;
       final path = Path()
@@ -434,7 +479,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
         path,
         Paint()
           ..color = _hexColor(s.colorHex)
-          ..strokeWidth = s.width * scale
+          ..strokeWidth = s.width * scale * strokeMult
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
@@ -451,10 +496,11 @@ class _BattleMapProjectionPainter extends CustomPainter {
           p2,
           Paint()
             ..color = const Color(0xFFFFD54F)
-            ..strokeWidth = 2,
+            ..strokeWidth = compact ? 1.2 : 2,
         );
-        canvas.drawCircle(p1, 4, Paint()..color = const Color(0xFFFFD54F));
-        canvas.drawCircle(p2, 4, Paint()..color = const Color(0xFFFFD54F));
+        final dotR = compact ? 2.5 : 4.0;
+        canvas.drawCircle(p1, dotR, Paint()..color = const Color(0xFFFFD54F));
+        canvas.drawCircle(p2, dotR, Paint()..color = const Color(0xFFFFD54F));
         final dxC = m.x2 - m.x1;
         final dyC = m.y2 - m.y1;
         final dist = math.sqrt(dxC * dxC + dyC * dyC);
@@ -464,11 +510,11 @@ class _BattleMapProjectionPainter extends CustomPainter {
           final tp = TextPainter(
             text: TextSpan(
               text: '$feet ft',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.yellow,
-                fontSize: 13,
+                fontSize: compact ? 9 : 13,
                 fontWeight: FontWeight.bold,
-                shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+                shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
               ),
             ),
             textDirection: TextDirection.ltr,
@@ -484,21 +530,22 @@ class _BattleMapProjectionPainter extends CustomPainter {
           r,
           Paint()
             ..color = const Color(0xFF00BCD4)
-            ..strokeWidth = 2
+            ..strokeWidth = compact ? 1.2 : 2
             ..style = PaintingStyle.stroke,
         );
-        canvas.drawCircle(p1, 3, Paint()..color = const Color(0xFF00BCD4));
+        canvas.drawCircle(p1, compact ? 2 : 3,
+            Paint()..color = const Color(0xFF00BCD4));
         if (snapshot.gridSize > 0) {
           final cells = r / scale / snapshot.gridSize;
           final feet = (cells * snapshot.feetPerCell).round();
           final tp = TextPainter(
             text: TextSpan(
               text: '$feet ft',
-              style: const TextStyle(
-                color: Color(0xFF00BCD4),
-                fontSize: 13,
+              style: TextStyle(
+                color: const Color(0xFF00BCD4),
+                fontSize: compact ? 9 : 13,
                 fontWeight: FontWeight.bold,
-                shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+                shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
               ),
             ),
             textDirection: TextDirection.ltr,
@@ -522,7 +569,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
     return old.snapshot != snapshot ||
         old.bgImage != bgImage ||
         old.fogImage != fogImage ||
-        old.tokenImages.length != tokenImages.length;
+        old.tokenImages.length != tokenImages.length ||
+        old.compact != compact;
   }
 }
 

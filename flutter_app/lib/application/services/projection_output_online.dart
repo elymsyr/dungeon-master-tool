@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/projection/battle_map_snapshot.dart';
+import '../../domain/entities/projection/image_view_state.dart';
+import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_state.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import 'projection_output.dart';
@@ -46,6 +49,8 @@ class ProjectionOutputOnline extends ProjectionOutput {
   @override
   Future<void> deactivate() async {
     _active = false;
+    _bmCoalesceTimer?.cancel();
+    _bmCoalesceTimer = null;
     try {
       await client.from('world_projection').delete().eq('world_id', worldId);
     } catch (e, st) {
@@ -68,12 +73,76 @@ class ProjectionOutputOnline extends ProjectionOutput {
     return _upsert(merged);
   }
 
+  Timer? _bmCoalesceTimer;
+
+  /// Tiered window: viewport / token-only patches fire fast (120ms), heavier
+  /// patches (strokes / fog / measurements) coalesce at 500ms. Caller may
+  /// send many small token-move patches per second; we still write at most
+  /// ~8 updates/sec to `world_projection`.
+  static const Duration _fastBmDebounce = Duration(milliseconds: 120);
+  static const Duration _slowBmDebounce = Duration(milliseconds: 500);
+
   @override
   Future<bool> pushBattleMapPatch(
       String itemId, Map<String, dynamic> patch) async {
-    // Battle-map live data flows through the Faz D collab table, not the
-    // manifest — no-op keeps `world_projection` writes low-frequency.
+    if (!_active) return false;
+    final base = _last;
+    if (base == null) return _active;
+
+    BattleMapProjection? target;
+    for (final it in base.items) {
+      if (it is BattleMapProjection && it.id == itemId) {
+        target = it;
+        break;
+      }
+    }
+    if (target == null) return _active;
+
+    final mergedSnapJson = <String, dynamic>{
+      ...target.snapshot.toJson(),
+      ...patch,
+    };
+    final mergedSnap = BattleMapSnapshot.fromJson(
+      jsonDecode(jsonEncode(mergedSnapJson)) as Map<String, dynamic>,
+    );
+    final newItems = <ProjectionItem>[
+      for (final it in base.items)
+        if (it is BattleMapProjection && it.id == itemId)
+          it.copyWith(snapshot: mergedSnap)
+        else
+          it,
+    ];
+    _last = base.copyWith(items: newItems);
+
+    final isHeavy = patch.containsKey('strokes') ||
+        patch.containsKey('measurements') ||
+        patch.containsKey('fogDataBase64');
+    final debounce = isHeavy ? _slowBmDebounce : _fastBmDebounce;
+    _bmCoalesceTimer?.cancel();
+    _bmCoalesceTimer = Timer(debounce, () {
+      final s = _last;
+      if (s != null) _upsert(s);
+    });
     return _active;
+  }
+
+  /// Strips DM-side navigation state (battle-map viewport, image zoom/pan)
+  /// from the payload so the remote viewer is free to pan/zoom locally
+  /// without being yanked by the DM's view.
+  static ProjectionState _stripNavState(ProjectionState state) {
+    return state.copyWith(
+      items: state.items.map<ProjectionItem>((item) {
+        if (item is ImageProjection) {
+          return item.copyWith(viewState: const ImageViewState());
+        }
+        if (item is BattleMapProjection) {
+          return item.copyWith(
+            snapshot: item.snapshot.copyWith(clearViewport: true),
+          );
+        }
+        return item;
+      }).toList(),
+    );
   }
 
   /// Upserts the manifest row. A failed write does NOT kill the output —
@@ -82,7 +151,7 @@ class ProjectionOutputOnline extends ProjectionOutput {
   Future<bool> _upsert(ProjectionState state) async {
     if (!_active) return false;
     try {
-      final json = state.toJson();
+      final json = _stripNavState(state).toJson();
       // F7 debug guard: state_json'da AssetRef olmayan ham path varsa
       // player çözemez. Caller (entity_share_prepare /
       // prepareEntityImagesForProjection) bunu önceden upload etmiş
@@ -142,6 +211,7 @@ class ProjectionOutputOnline extends ProjectionOutput {
 
   @override
   void dispose() {
+    _bmCoalesceTimer?.cancel();
     _externalCloseController.close();
   }
 }
