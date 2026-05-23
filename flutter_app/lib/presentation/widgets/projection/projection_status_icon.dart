@@ -7,11 +7,13 @@ import '../../../domain/entities/projection/projection_output_mode.dart';
 import '../../dialogs/screencast_display_picker.dart';
 import '../../theme/dm_tool_colors.dart';
 
-/// AppBar projection toggle button. Adapts to the current platform:
+/// AppBar projection toggle button. Adapts to the current platform + role:
 ///
-/// - **Mobile** (only screencast available): single tap opens display picker.
-/// - **Desktop** (both modes available): tap opens a popup menu to choose
-///   between "Second Window" and "Screencast". When active, tap deactivates.
+/// - **Single available mode** (mobile, no online): direct tap toggles it.
+/// - **Multiple modes**: popup menu lists each available output with its
+///   current on/off state. Tapping an item toggles that specific mode —
+///   outputs fan out, so several can be live simultaneously (e.g. second
+///   window + online broadcast).
 class ProjectionStatusIcon extends ConsumerWidget {
   const ProjectionStatusIcon({super.key});
 
@@ -22,33 +24,29 @@ class ProjectionStatusIcon extends ConsumerWidget {
     final available = ref.watch(availableProjectionOutputsProvider);
     final controller = ref.read(projectionControllerProvider.notifier);
 
-    if (state.isActive) {
-      // Active — tap to deactivate.
+    final anyActive = state.outputModes.isNotEmpty;
+    final iconColor = anyActive ? palette.tokenBorderActive : null;
+
+    if (available.length <= 1) {
+      // Single-mode platforms: direct tap toggles.
+      final mode = available.isEmpty
+          ? ProjectionOutputMode.screencast
+          : available.first;
+      final active = state.outputModes.contains(mode);
       return IconButton(
-        tooltip: _tooltipForMode(state.primaryMode, active: true),
-        icon: Icon(
-          _iconForMode(state.primaryMode),
-          size: 20,
-          color: palette.tokenBorderActive,
-        ),
-        onPressed: () => controller.deactivateOutput(),
+        tooltip: active
+            ? 'Close ${_labelForMode(mode)} (Ctrl+Shift+P)'
+            : 'Open ${_labelForMode(mode)} (Ctrl+Shift+P)',
+        icon: Icon(_iconForMode(mode), size: 20, color: iconColor),
+        onPressed: () => _toggle(context, controller, mode, active),
       );
     }
 
-    if (available.length == 1) {
-      // Only one option (mobile) — direct tap opens display picker.
-      return IconButton(
-        tooltip: _tooltipForMode(available.first, active: false),
-        icon: const Icon(Icons.cast, size: 20),
-        onPressed: () => _activate(context, controller, available.first),
-      );
-    }
-
-    // Multiple options (desktop) — popup menu.
     return PopupMenuButton<ProjectionOutputMode>(
-      tooltip: 'Open projection output',
-      icon: const Icon(Icons.cast, size: 20),
-      onSelected: (mode) => _activate(context, controller, mode),
+      tooltip: 'Projection outputs',
+      icon: Icon(Icons.cast, size: 20, color: iconColor),
+      onSelected: (mode) =>
+          _toggle(context, controller, mode, state.outputModes.contains(mode)),
       itemBuilder: (_) => [
         for (final mode in available)
           PopupMenuItem(
@@ -56,9 +54,18 @@ class ProjectionStatusIcon extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(_iconForMode(mode), size: 18),
+                Icon(
+                  _iconForMode(mode),
+                  size: 18,
+                  color: state.outputModes.contains(mode)
+                      ? palette.tokenBorderActive
+                      : null,
+                ),
                 const SizedBox(width: 8),
                 Text(_labelForMode(mode)),
+                const SizedBox(width: 10),
+                if (state.outputModes.contains(mode))
+                  Icon(Icons.check, size: 16, color: palette.tokenBorderActive),
               ],
             ),
           ),
@@ -66,12 +73,24 @@ class ProjectionStatusIcon extends ConsumerWidget {
     );
   }
 
+  Future<void> _toggle(
+    BuildContext context,
+    ProjectionController controller,
+    ProjectionOutputMode mode,
+    bool active,
+  ) async {
+    if (active) {
+      await controller.deactivateOutput(mode);
+      return;
+    }
+    await _activate(context, controller, mode);
+  }
+
   Future<void> _activate(BuildContext context,
       ProjectionController controller, ProjectionOutputMode mode) async {
     if (mode == ProjectionOutputMode.screencast) {
-      // Show display picker dialog — user selects target display.
       final display = await ScreencastDisplayPicker.show(context);
-      if (display == null) return; // cancelled
+      if (display == null) return;
       if (!context.mounted) return;
       final ok = await controller.activateOutput(mode, displayId: display.id);
       if (!ok && context.mounted) {
@@ -82,17 +101,16 @@ class ProjectionStatusIcon extends ConsumerWidget {
           ),
         );
       }
-    } else {
-      // Second window — activate directly.
-      final ok = await controller.activateOutput(mode);
-      if (!ok && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open second window.'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
+      return;
+    }
+    final ok = await controller.activateOutput(mode);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open ${_labelForMode(mode)}.'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -109,15 +127,8 @@ class ProjectionStatusIcon extends ConsumerWidget {
     return switch (mode) {
       ProjectionOutputMode.secondWindow => 'Second Window',
       ProjectionOutputMode.screencast => 'Screen Cast',
-      ProjectionOutputMode.online => 'Online Players',
+      ProjectionOutputMode.online => 'Broadcast to Online Players',
       ProjectionOutputMode.none => '',
     };
-  }
-
-  static String _tooltipForMode(ProjectionOutputMode mode,
-      {required bool active}) {
-    final label = _labelForMode(mode);
-    if (active) return 'Close $label (Ctrl+Shift+P)';
-    return 'Open $label (Ctrl+Shift+P)';
   }
 }

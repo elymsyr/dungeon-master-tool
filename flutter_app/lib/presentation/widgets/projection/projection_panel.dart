@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/projection_provider.dart';
-import '../../../application/providers/role_provider.dart';
-import '../../../domain/entities/online/world_role.dart';
-import '../../../domain/entities/projection/projection_output_mode.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'projection_thumb_chip.dart';
 
@@ -23,18 +19,6 @@ class ProjectionPanel extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final state = ref.watch(projectionControllerProvider);
     final controller = ref.read(projectionControllerProvider.notifier);
-
-    // DM-only online broadcast toggle — visible only when the active world is
-    // online and the current user is its DM. Fan-out lets it run alongside
-    // the offline second window.
-    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
-    final isOnlineWorld =
-        worldId != null && ref.watch(onlineWorldIdsProvider).contains(worldId);
-    final isDm =
-        ref.watch(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
-    final showOnlineToggle = isOnlineWorld && isDm;
-    final onlineActive =
-        state.outputModes.contains(ProjectionOutputMode.online);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,24 +41,6 @@ class ProjectionPanel extends ConsumerWidget {
                 icon: const Icon(Icons.tonality, size: 18),
                 onPressed: controller.toggleBlackout,
               ),
-              if (showOnlineToggle)
-                IconButton(
-                  tooltip: onlineActive
-                      ? 'Broadcasting to online players (tap to stop)'
-                      : 'Broadcast to online players',
-                  isSelected: onlineActive,
-                  selectedIcon: Icon(
-                    Icons.groups,
-                    size: 18,
-                    color: palette.tokenBorderActive,
-                  ),
-                  icon: const Icon(Icons.groups_outlined, size: 18),
-                  onPressed: () => onlineActive
-                      ? controller
-                          .deactivateOutput(ProjectionOutputMode.online)
-                      : controller
-                          .activateOutput(ProjectionOutputMode.online),
-                ),
               const Spacer(),
               if (state.items.isNotEmpty)
                 IconButton(

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../services/projection_output.dart';
 import '../services/projection_output_online.dart';
@@ -16,17 +17,26 @@ bool get _isDesktop =>
 
 /// Which projection output modes are available on the current platform.
 ///
-/// - Desktop: both second window and screencast
-/// - Mobile: screencast only
+/// - Desktop: second window + screencast (+ online when DM in an online world)
+/// - Mobile: screencast (+ online when DM in an online world)
+///
+/// Online mode is gated on DM role + active online world so the dropdown only
+/// surfaces it when activating actually succeeds.
 final availableProjectionOutputsProvider =
     Provider<List<ProjectionOutputMode>>((ref) {
+  final modes = <ProjectionOutputMode>[];
   if (_isDesktop) {
-    return const [
-      ProjectionOutputMode.secondWindow,
-      ProjectionOutputMode.screencast,
-    ];
+    modes.add(ProjectionOutputMode.secondWindow);
   }
-  return const [ProjectionOutputMode.screencast];
+  modes.add(ProjectionOutputMode.screencast);
+
+  final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+  if (worldId != null &&
+      ref.watch(onlineWorldIdsProvider).contains(worldId) &&
+      ref.watch(currentWorldRoleProvider).valueOrNull?.isDm == true) {
+    modes.add(ProjectionOutputMode.online);
+  }
+  return modes;
 });
 
 /// Factory that creates the appropriate [ProjectionOutput] for the given mode.
