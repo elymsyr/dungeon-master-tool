@@ -764,8 +764,14 @@ class CombatNotifier extends StateNotifier<CombatState>
 
   void addLog(String message) => _log(message);
 
+  static const _eventLogCap = 500;
+
   void _log(String message) {
-    state = state.copyWith(eventLog: [...state.eventLog, message]);
+    final next = [...state.eventLog, message];
+    if (next.length > _eventLogCap) {
+      next.removeRange(0, next.length - _eventLogCap);
+    }
+    state = state.copyWith(eventLog: next);
   }
 
   /// World-scoped free-form notes (Notes pane in session tab). Persisted as

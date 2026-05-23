@@ -12,6 +12,7 @@ import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../widgets/app_icon_image.dart';
 
 /// Cold-start sync gate. Splash card with progress message stays on top until:
 ///   1. Pending local writes flushed (drain any debounce timers carried over
@@ -111,12 +112,7 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/app_icon_transparent.png',
-              width: 160,
-              height: 160,
-              filterQuality: FilterQuality.medium,
-            ),
+            const AppIconImage(size: 160),
             const SizedBox(height: 24),
             const SizedBox(
               width: 28,

@@ -25,11 +25,13 @@ class PostsRemoteDataSource {
   }
 
   /// Feed sorgusu. [scope] = all → tüm kullanıcılar, following → takip
-  /// edilenler + kendisi. Sonuçların yaklaşık üçte biri "hot" sırasıyla
-  /// (post_scores view) en başa konur, geri kalan sade tarih sırasıyla.
+  /// edilenler + kendisi. Cursor pagination: [before] verilirse `created_at <
+  /// before` ile sonraki sayfa getirilir. Sadece ilk sayfada (before == null)
+  /// HN-style "hot" rerank uygulanır; sonraki sayfalar saf kronolojik akar.
   Future<List<Post>> fetchFeed({
     FeedScope scope = FeedScope.all,
-    int limit = 50,
+    int limit = 20,
+    DateTime? before,
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
@@ -57,11 +59,17 @@ class PostsRemoteDataSource {
     if (authorIds != null) {
       query = query.inFilter('author_id', authorIds);
     }
+    if (before != null) {
+      query = query.lt('created_at', before.toUtc().toIso8601String());
+    }
     final rows = await query
         .order('created_at', ascending: false)
         .limit(limit);
     final posts = rows.map(_rowToPost).toList();
-    return _hydrateLikesAndRank(posts, uid);
+    if (before == null) {
+      return _hydrateLikesAndRank(posts, uid);
+    }
+    return _hydrateLikes(posts, uid);
   }
 
   /// Belirli bir kullanıcının postları — profile screen.

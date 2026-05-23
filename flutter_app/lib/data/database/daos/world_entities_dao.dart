@@ -43,6 +43,11 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteById(String id) =>
       (delete(worldEntities)..where((t) => t.id.equals(id))).go();
 
+  Future<int> deleteByIds(List<String> ids) {
+    if (ids.isEmpty) return Future.value(0);
+    return (delete(worldEntities)..where((t) => t.id.isIn(ids))).go();
+  }
+
   Future<int> deleteByWorld(String worldId) =>
       (delete(worldEntities)..where((t) => t.worldId.equals(worldId))).go();
 }

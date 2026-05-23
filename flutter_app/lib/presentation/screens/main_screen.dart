@@ -293,23 +293,39 @@ class _MainScreenState extends ConsumerState<MainScreen>
   }
 
   /// Phone overflow-menu projection toggle. Mirrors [ProjectionStatusIcon]:
-  /// deactivate when active, otherwise activate the first available output
-  /// (screencast picker on mobile, second window on desktop layouts).
-  Future<void> _togglePhoneProjection() async {
+  /// each available output (screencast, online broadcast, …) gets its own
+  /// entry; tapping toggles that specific mode so outputs can fan out.
+  Future<void> _togglePhoneProjectionMode(ProjectionOutputMode mode) async {
     final controller = ref.read(projectionControllerProvider.notifier);
     final state = ref.read(projectionControllerProvider);
-    if (state.isActive) {
-      controller.deactivateOutput();
+    if (state.outputModes.contains(mode)) {
+      await controller.deactivateOutput(mode);
       return;
     }
-    final available = ref.read(availableProjectionOutputsProvider);
-    if (available.isEmpty) return;
-    final mode = available.first;
     if (mode == ProjectionOutputMode.screencast) {
       await _openScreencastPicker(controller);
     } else {
       await controller.activateOutput(mode);
     }
+  }
+
+  static IconData _phoneProjectionIcon(ProjectionOutputMode mode) {
+    return switch (mode) {
+      ProjectionOutputMode.secondWindow => Icons.desktop_windows,
+      ProjectionOutputMode.screencast => Icons.cast_connected,
+      ProjectionOutputMode.online => Icons.groups,
+      ProjectionOutputMode.none => Icons.cast,
+    };
+  }
+
+  static String _phoneProjectionLabel(ProjectionOutputMode mode, bool active) {
+    final base = switch (mode) {
+      ProjectionOutputMode.secondWindow => 'Second Window',
+      ProjectionOutputMode.screencast => 'Screen Cast',
+      ProjectionOutputMode.online => 'Broadcast to Online Players',
+      ProjectionOutputMode.none => '',
+    };
+    return active ? 'Close $base' : 'Open $base';
   }
 
   void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
@@ -624,13 +640,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
               icon: const Icon(Icons.more_vert, size: 20),
               onSelected: (action) {
                 switch (action) {
-                  case 'projection':
-                    _togglePhoneProjection();
                   case 'import':
                     ImportPackageDialog.show(context);
                   case 'bug':
                     BugReportDialog.show(context);
                   default:
+                    if (action.startsWith('projection:')) {
+                      final mode = ProjectionOutputMode.values.firstWhere(
+                        (m) => m.name == action.substring('projection:'.length),
+                        orElse: () => ProjectionOutputMode.none,
+                      );
+                      if (mode != ProjectionOutputMode.none) {
+                        _togglePhoneProjectionMode(mode);
+                      }
+                    }
                     // Theme selection
                     if (action.startsWith('theme:')) {
                       ref.read(themeProvider.notifier).setTheme(action.substring(6));
@@ -644,26 +667,21 @@ class _MainScreenState extends ConsumerState<MainScreen>
               itemBuilder: (_) {
                 final projState = ref.read(projectionControllerProvider);
                 final projAvail = ref.read(availableProjectionOutputsProvider);
-                final projLabel = projState.isActive
-                    ? 'Close Player Window'
-                    : 'Open Player Window';
-                final canProject = projState.isActive || projAvail.isNotEmpty;
                 return [
-                  if (canProject)
+                  for (final mode in projAvail)
                     PopupMenuItem(
-                      value: 'projection',
+                      value: 'projection:${mode.name}',
                       child: Row(children: [
                         Icon(
-                          projState.isActive
-                              ? Icons.cast_connected
-                              : Icons.cast,
+                          _phoneProjectionIcon(mode),
                           size: 18,
-                          color: projState.isActive
+                          color: projState.outputModes.contains(mode)
                               ? palette.tokenBorderActive
                               : null,
                         ),
                         const SizedBox(width: 8),
-                        Text(projLabel),
+                        Text(_phoneProjectionLabel(
+                            mode, projState.outputModes.contains(mode))),
                       ]),
                     ),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),

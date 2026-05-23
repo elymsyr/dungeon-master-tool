@@ -55,21 +55,80 @@ final messagesRemoteDsProvider =
 /// Feed sekmesi: 'all' (tüm kullanıcılar) | 'following' (takip edilenler).
 final feedScopeProvider = StateProvider<FeedScope>((_) => FeedScope.all);
 
-/// Auth user için feed. Aktif scope'a göre tüm kullanıcılar veya
-/// yalnızca takip edilenler döner.
-final feedProvider = FutureProvider<List<Post>>((ref) async {
-  if (!SupabaseConfig.isConfigured) return const [];
-  final auth = ref.watch(authProvider);
-  if (auth == null) return const [];
-  final scope = ref.watch(feedScopeProvider);
-  return cachedFetch(
-    ref: ref,
-    cacheKey: 'feed:${scope.name}',
-    ttl: const Duration(minutes: 2),
-    fetch: () => guardedNetwork(
-        ref, () => ref.read(postsRemoteDsProvider).fetchFeed(scope: scope)),
-  );
-});
+/// Feed sayfası: post listesi + pagination state. `loadingMore=true` UI'da
+/// footer spinner gösterir; `hasMore=false` "end of feed" işareti içindir.
+class FeedPage {
+  final List<Post> posts;
+  final bool hasMore;
+  final bool loadingMore;
+  final Object? loadMoreError;
+  const FeedPage({
+    this.posts = const [],
+    this.hasMore = false,
+    this.loadingMore = false,
+    this.loadMoreError,
+  });
+}
+
+/// Auth user için feed. Cursor pagination — ilk sayfa build()'te, sonraki
+/// sayfalar `loadMore()` ile. Scope/auth değişince Riverpod otomatik
+/// reset eder.
+class FeedNotifier extends AsyncNotifier<FeedPage> {
+  static const _pageSize = 20;
+
+  @override
+  Future<FeedPage> build() async {
+    if (!SupabaseConfig.isConfigured) return const FeedPage();
+    final auth = ref.watch(authProvider);
+    if (auth == null) return const FeedPage();
+    final scope = ref.watch(feedScopeProvider);
+    final posts = await guardedNetwork(
+      ref,
+      () => ref
+          .read(postsRemoteDsProvider)
+          .fetchFeed(scope: scope, limit: _pageSize),
+    );
+    return FeedPage(posts: posts, hasMore: posts.length >= _pageSize);
+  }
+
+  /// Bir sonraki sayfayı (cursor = son post createdAt) çek ve mevcut listeye
+  /// ekle. No-op: zaten yükleniyorsa, daha fazla yoksa, ya da boş ise.
+  Future<void> loadMore() async {
+    final cur = state.valueOrNull;
+    if (cur == null || !cur.hasMore || cur.loadingMore || cur.posts.isEmpty) {
+      return;
+    }
+    state = AsyncData(FeedPage(
+      posts: cur.posts,
+      hasMore: cur.hasMore,
+      loadingMore: true,
+    ));
+    final scope = ref.read(feedScopeProvider);
+    try {
+      final more = await guardedNetwork(
+        ref,
+        () => ref.read(postsRemoteDsProvider).fetchFeed(
+              scope: scope,
+              limit: _pageSize,
+              before: cur.posts.last.createdAt,
+            ),
+      );
+      state = AsyncData(FeedPage(
+        posts: [...cur.posts, ...more],
+        hasMore: more.length >= _pageSize,
+      ));
+    } catch (e) {
+      state = AsyncData(FeedPage(
+        posts: cur.posts,
+        hasMore: cur.hasMore,
+        loadMoreError: e,
+      ));
+    }
+  }
+}
+
+final feedProvider =
+    AsyncNotifierProvider<FeedNotifier, FeedPage>(FeedNotifier.new);
 
 /// Bir post'un lokal override'ı (optimistic): beğeni sayısı + likedByMe.
 /// UI, feed'ten gelen post'u bu override ile maskeleyebilir.
