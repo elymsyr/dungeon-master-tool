@@ -1,40 +1,56 @@
 # Release Notes
 
-## Dungeon Master Tool v8.3.1 — SRD Armor Mechanics, Derived Combat Stats, Per-World DB Filters (Beta)
+## Dungeon Master Tool v9.0.0 — Online Play, Second Screen, Free Session Media, Admin-Gated Beta (Beta)
 
 **Release date:** May 2026
-**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v8.3.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-A maintenance release on top of v8.3.0. The character editor now resolves armor consequences from the SRD 5.2.1 rules instead of leaving them to the DM, the combat-stats grid shows live derived values for level and AC, and the database sidebar remembers its filters per world. Several bugs around equipped armor, image decoding, and shared-entity sync are fixed. No database or cloud migrations.
+The biggest release since v8.0. The closed beta now powers full online play: every character of a beta member becomes online, worlds and packages can be published, and **only the DM needs a beta slot** for the whole table to play together. The DM second screen is live for all connected players (entity cards, world map, battle map, images) and players can now mark up the projected battle map. Cloud media is split into free vs. counted kinds and a shared transient pool means images and battle maps shared in a live session no longer count against your save quota. Beta enrolment moved to admin-reviewed requests with a slot cap of 90.
 
 ### Highlights
 
-- **SRD armor consequences** — The character resolver now derives the rule consequences of worn armor: an untrained-armor penalty (Disadvantage on STR/DEX D20 Tests + no spellcasting), a Speed −10 ft cut when STR is below the armor's requirement, and Stealth disadvantage. `EffectiveCharacter` carries a new `armorNotes` list and the combat-stats field renders them as an amber warning banner above the grid.
-- **Derived combat stats** — The `combat_stats` grid's **Level** and **AC** cells are now read-only and track live derived values — root `level` (kept current by level-up) and resolver-computed armor class (equipped armor + Dex + shield) — instead of stale manually-stored entries. Monsters/NPCs with no root level or resolver AC keep the editable stored value.
-- **One suit + one shield** — Equipping a piece of armor now auto-unequips any other equipped armor in the same slot (body / shield), enforcing the SRD "one suit of armor and one shield at a time" rule.
-- **Equipped-armor detection fix** — `_equippedArmor` / `_hasEquippedShield` resolved the wrong field (`armor_category_ref`) and could pick up non-armor rows. They now read `category_ref` and require `categorySlug == 'armor'`, so AC, shield bonus, and armor-training checks resolve correctly.
-- **Live AC on the stat-chip strip** — The character header's AC chip resolves off the live working copy, so equipping armor refreshes it immediately instead of lagging behind the persisted character.
-- **Magic-item text corrections** — Weapon +1, Armor +1/+2/+3, and Shield +1 effect text rewritten to the SRD 5.2.1 wording. Armor +2 rarity corrected Rare → Very Rare and Armor +3 Very Rare → Legendary.
-- **Version-aware SRD pack re-seed** — `SrdCorePackageBootstrap` now re-seeds the built-in pack whenever the code's `pack_version` differs from the stored copy, so content fixes land without a manual reinstall. SRD core pack bumped `1.0.0` → `1.0.1`.
-- **Standard Array swap** — Picking an array value already held by another ability now swaps the two abilities instead of disabling the option, so the array always stays a valid permutation (no duplicate, none dropped). Every value stays selectable.
-- **Manual ability-score focus fix** — The manual ability-score field uses a stable widget key so typing no longer rebuilds the field and drops keyboard focus.
-- **Per-world database filters** — The database sidebar's category, source, share-mode, and sort selections are now persisted per world instead of in one global list, so filters no longer leak across worlds and survive exit/re-entry. (The legacy global filter resets once on upgrade.)
-- **Sidebar filter jank fix** — The filter/sort cache key switched from an identity hash of the shared-entity set to a value-based hash, so a keyboard relayout no longer forces a full ~7 K-entity filter+sort re-run.
-- **Single-axis image decode** — Character portraits and `AssetRefImage` now decode on one axis only. Passing both `cacheWidth` and `cacheHeight` made `ResizeImage` stretch the bitmap to those exact dimensions, distorting the image before `BoxFit` could crop it.
-- **Shared-entity sync catch-up** — `applyInitialState` now invalidates the world entity-shares cache on reconnect / world re-entry. `entity_shares` CDC isn't replayed across a disconnect, so shares made while offline were filtered out by a stale list and the card never opened.
-- **Minor UI fixes** — The "Character not found" screen gained a back button; the editor's Edit/View toggle icon was swapped to match its action; armor `base_ac` minimum lowered 10 → 0 so the Shield row (base_ac 2) is accepted in the content editor.
+#### Online play (experimental)
+
+- **All-characters-online on beta join** — Joining the beta auto-mirrors every character you own to your cloud account and unlocks "Publish online" on worlds and packages. Leaving the beta hydrates the rows back into local-only storage instead of dropping them, so a beta exit no longer destroys work (migration 057 + 064).
+- **DM-only beta requirement** — Only the DM has to be a beta member. Players connect, claim characters, see live updates, and use the projected second screen without their own beta slot.
+- **DM-driven second screen for every player** — The DM's projection output (entity cards, images, world map, battle map) replicates to every connected player's client. A per-world manifest stores the active view so a late-joining or reconnecting player catches up instantly. Player tab gained a "second screen" view that mirrors what the DM is projecting (migrations 059, 061, 062).
+- **Player marks on battle map** — Players can now place rulers, circles and free strokes on the DM-projected battle map (battlemap_marks_protocol). Marks stream through CDC with optimistic ghost + 50 ms debounce.
+- **Row-level online sync, F1–F12** — Outbox + change-bus + per-row CDC apply replaces the legacy blob mirror for worlds, characters, packages and projection state. Schema versioning, reference graph, LRU sweeper, prefetch/prewarm, fog externalisation, raw-path migrator and telemetry shipped together.
+- **Shared real-time visibility** — World members see each other's character changes live; member CDC + character CDC use granular notifiers; MembersStrip surfaces who's online on the player tab.
+
+#### Media & storage
+
+- **Free vs. counted media** — Character portraits and world/package cover art now sync free of your beta quota. Entity images and battle map media count against it, with per-kind size limits and a separate counted-asset bucket (migrations 053, 058, 060).
+- **Free session-media pool** — Images and battle maps shared during a live online session use a shared transient pool (100 MB/user, 10 GB global LRU). Sharing live content with players no longer eats into your personal cloud save (migration 065 + worker evict-sweep + admin-purge).
+- **Doubled cloud media limits** for paid kinds (migration 062).
+- **Marketplace cover updates** — Cover images on marketplace listings are now mutable and re-encoded with a dedicated cover-sync service (migration 056).
+- **Cloud media cleanup on delete** — Deleting a character, world or package now sweeps the associated cloud images server-side (`EntityMediaCleanupService`); local cache is preserved.
+
+#### Beta program
+
+- **Admin-reviewed beta requests** — Beta enrolment is now a request → admin review → approve/reject flow with a "Beta Requests" admin tab. Slot cap raised to 90 (migrations 063, 066, 067).
+- **Hard reset path** — Mass beta wipe is available to admins for emergency resets (migration 064).
+- **Beta exit preserves your data** — `BetaExitPreserveService` hydrates owned worlds, orphan characters and personal packages into offline-only storage on leave, with CDC purge guards and a summary dialog of what stayed local vs. what was uploaded.
+
+#### App-wide
+
+- **Unified debounce + tier-1 perf wins** — 5-tier SyncTier classifier, batched package_sync upsert+delete, combat event log capped at 500, startup AppIconImage swap, CDC race guard.
+- **Offline guard** — Network-backed screens (feed, marketplace, messages, profiles, game listings) render a single "You're offline" placeholder via the new `OfflineGuard` widget + `guardedNetwork` helper instead of infinite spinners. Auto-recovers on reconnect; outbox writes hold and flush.
+- **Mobile responsiveness** — Keyboard relayout fixes (K1/K3/K4), mention input fix (M1/M2), single-axis image decode for portraits and `AssetRefImage`.
+- **Workspace + map fixes** — Battle-map snapshot + snapshot builder reworked; mind-map node rebuilds reduced; world-map notifier streamlined.
+- **Soundpad sidebar rebuilt** — Layout and theming overhaul (≈670 LoC churn).
 
 ### Upgrade notes
 
-- **App version bump:** `8.3.0` → `8.3.1`.
-- **SRD core pack:** `1.0.0` → `1.0.1` — re-seeds automatically on first launch; no manual reinstall.
-- **Local DB:** schema v12, unchanged. No migration.
-- **Cloud migrations:** none.
-- **No user action required.**
+- **App version bump:** `8.4.0` → `9.0.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **Cloud migrations 053 → 067** — All required, in order. Run via `supabase/migrations/`.
+- **Beta members re-enrolled via request flow** — Existing beta slots are preserved; new members go through the admin-reviewed request.
+- **No user action required for offline players** — Players connecting to a DM's world don't need a beta slot.
 
 ### Known issues
 
 - **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
-- **Row-level save+sync** — F0 (repo API) shipped in v8.0; F1–F6 (per-row outbox, change-bus apply, CDC row-merge) still pending.
 - **Remaining SRD effect gaps** — Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills.
 - **D7 test harness** — Drift v12 round-trip test harness for the auto-migration path is still pending.
+- **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.

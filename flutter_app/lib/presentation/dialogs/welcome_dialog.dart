@@ -41,6 +41,16 @@ class WelcomeDialog {
                 ),
                 const SizedBox(height: 12),
                 Text(
+                  l10n.welcomeOnlinePlay,
+                  style: const TextStyle(height: 1.4, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.welcomeOnlineStorage,
+                  style: const TextStyle(height: 1.4, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Text(
                   l10n.welcomeRoadmap,
                   style: const TextStyle(height: 1.4, fontSize: 13),
                 ),
