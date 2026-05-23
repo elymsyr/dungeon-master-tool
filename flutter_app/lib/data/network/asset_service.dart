@@ -120,11 +120,20 @@ class AssetService {
   }
 
   /// Storage-dolu geçici paylaşım: dosyayı `transient/{uid}/{sha}.{ext}`
-  /// key'ine yükler. `community_assets` satırı OLUŞTURULMAZ → quota'ya sayılmaz
-  /// (Worker `transient/` prefix'inde quota check'i atlar). Dönen ref
-  /// `dmt-transient://{sha}.{ext}` — uploader id taşımaz, oyuncu SHA ile
-  /// local cache'i kontrol eder.
-  Future<Uri> uploadTransient(File file, {required MediaKind kind}) async {
+  /// key'ine yükler. `community_assets` satırı OLUŞTURULMAZ → sayılan
+  /// quota'ya gitmez. Bunun yerine `transient_reserve` RPC kontrol eder:
+  ///   • per-user cap 100 MB → aşarsa [TransientQuotaExceededException]
+  ///   • global pool 10 GB → en eski transient LRU ile silinir
+  /// Worker `transient/` prefix'inde counted-quota check'i atlar; gerçek
+  /// sınır per-user transient cap'tir. Dönen ref `dmt-transient://{sha}.{ext}`.
+  ///
+  /// [worldId] verilirse RPC'ye geçirilir (audit/scope için); şu an sunucu
+  /// tarafı kullanmıyor ama gelecekte dünya başına alt-cap için ayrılmış.
+  Future<Uri> uploadTransient(
+    File file, {
+    required MediaKind kind,
+    String? worldId,
+  }) async {
     final user = _requireUser();
     final token = _requireToken();
 
@@ -142,6 +151,22 @@ class AssetService {
     final ext = _extensionOf(file.path);
     final mime = _guessMime(ext);
     final r2Key = 'transient/${user.id}/$sha$ext';
+
+    // Reserve per-user transient capacity + trigger global LRU eviction.
+    // Server bytes'a göre kapasite hesaplar; başarısızsa upload yapma.
+    try {
+      await _supabase.rpc('transient_reserve', params: {
+        '_bytes': bytes.length,
+        '_world': worldId,
+      });
+    } on PostgrestException catch (e) {
+      final msg = e.message;
+      if (msg.contains('transient_per_user_full') ||
+          msg.contains('transient_file_too_large')) {
+        throw TransientQuotaExceededException(msg);
+      }
+      rethrow;
+    }
 
     final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
     final req = await _httpClient.putUrl(uri);
@@ -188,11 +213,14 @@ class AssetService {
     required MediaKind kind,
     required String worldId,
   }) async {
-    final uri = await uploadTransient(file, kind: kind);
+    final bytes = await file.length();
+    final uri = await uploadTransient(file, kind: kind, worldId: worldId);
     final ref = AssetRef(uri.toString());
     final sha = ref.transientSha;
     if (sha == null) return uri; // beklenmez — uploadTransient hep transient döner
     final uid = _requireUser().id;
+    final ext = ref.transientExt;
+    final mime = _guessMime(ext);
     await _supabase
         .from('transient_shares')
         .delete()
@@ -204,7 +232,9 @@ class AssetService {
       'world_id': worldId,
       'uploader_id': uid,
       'sha256': sha,
-      'ext': ref.transientExt,
+      'ext': ext,
+      'bytes': bytes,
+      'mime_type': mime,
     });
     return uri;
   }
@@ -217,8 +247,20 @@ class AssetService {
     String sha256Hex,
     String ext,
     String uploaderId,
-  ) {
-    return downloadAsset('transient/$uploaderId/$sha256Hex$ext');
+  ) async {
+    final file = await downloadAsset('transient/$uploaderId/$sha256Hex$ext');
+    // LRU touch — server side last_used_at = now(). Fire-and-forget; başarısız
+    // olursa eviction politikası en kötü ihtimal bu satırı erken siler.
+    unawaited(_touchTransient(sha256Hex));
+    return file;
+  }
+
+  Future<void> _touchTransient(String sha) async {
+    try {
+      await _supabase.rpc('transient_touch', params: {'_sha': sha});
+    } catch (_) {
+      // best-effort
+    }
   }
 
   /// Cache-first download. SHA-256 doğrulaması yapar; mismatch → cache at + hata.
@@ -491,4 +533,15 @@ class AssetQuotaExceededException implements Exception {
   final String detail;
   @override
   String toString() => 'AssetQuotaExceededException: $detail';
+}
+
+/// `transient_reserve` RPC `transient_per_user_full` veya
+/// `transient_file_too_large` fırlattığında. Per-user 100 MB transient
+/// cap dolu ya da tek dosya cap üstü — caller "ekstra paylaşım alanın doldu"
+/// banner'ı gösterir.
+class TransientQuotaExceededException implements Exception {
+  TransientQuotaExceededException(this.detail);
+  final String detail;
+  @override
+  String toString() => 'TransientQuotaExceededException: $detail';
 }

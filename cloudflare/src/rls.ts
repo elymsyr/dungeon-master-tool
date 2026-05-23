@@ -99,3 +99,37 @@ export async function checkTransientAccess(
   if (typeof body === 'boolean') return body;
   return body?.get_transient_access === true;
 }
+
+// ============================================================================
+// Transient evict kuyruğunu boşalt — service_role only. transient_evict_pop
+// FOR UPDATE SKIP LOCKED kullanır, iki worker çakışmaz.
+// ============================================================================
+
+export interface TransientEvictRow {
+  id: number;
+  sha256: string;
+  ext: string;
+  uploader_id: string;
+}
+
+export async function popTransientEvictQueue(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  limit: number,
+): Promise<TransientEvictRow[]> {
+  const url = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/rpc/transient_evict_pop`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ _limit: limit }),
+  });
+  if (!res.ok) {
+    throw new Error(`evict_pop_rpc_failed_${res.status}`);
+  }
+  const body = (await res.json()) as TransientEvictRow[] | null;
+  return Array.isArray(body) ? body : [];
+}

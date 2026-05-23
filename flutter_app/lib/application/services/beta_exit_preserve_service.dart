@@ -136,7 +136,7 @@ class BetaExitPreserveService {
     final orphanCharsRaw = await client
         .from('world_characters')
         .select(
-            'id, owner_id, world_id, template_id, template_name, payload_json, referenced_entity_ids_json, created_at, updated_at')
+            'id, owner_id, world_id, template_id, template_name, payload_json, referenced_entity_ids, created_at, updated_at')
         .eq('owner_id', uid)
         .isFilter('world_id', null);
     final pkgsRaw = await client
@@ -348,7 +348,7 @@ class BetaExitPreserveService {
       templateName: Value((raw['template_name'] as String?) ?? ''),
       payloadJson: Value((raw['payload_json'] as String?) ?? '{}'),
       referencedEntityIdsJson:
-          Value((raw['referenced_entity_ids_json'] as String?) ?? '[]'),
+          Value(_refsToJsonStatic(raw['referenced_entity_ids'])),
       createdAt: Value(_parseTs(raw['created_at']) ?? DateTime.now()),
       updatedAt: Value(_parseTs(raw['updated_at']) ?? DateTime.now()),
     );
@@ -534,8 +534,7 @@ class _OrphanChar {
       templateId: (row['template_id'] as String?) ?? '',
       templateName: (row['template_name'] as String?) ?? '',
       payloadJson: (row['payload_json'] as String?) ?? '{}',
-      referencedEntityIdsJson:
-          (row['referenced_entity_ids_json'] as String?) ?? '[]',
+      referencedEntityIdsJson: _refsToJsonStatic(row['referenced_entity_ids']),
       createdAt: _parseTsStatic(row['created_at']),
       updatedAt: _parseTsStatic(row['updated_at']),
     );
@@ -556,6 +555,15 @@ DateTime? _parseTsStatic(Object? v) {
   if (v == null) return null;
   if (v is DateTime) return v;
   return DateTime.tryParse(v.toString());
+}
+
+/// Supabase JSONB `referenced_entity_ids` → Drift TEXT (`_json` suffix).
+/// Sunucu List döner; null → "[]"; tip uyumsuz → "[]".
+String _refsToJsonStatic(Object? v) {
+  if (v == null) return '[]';
+  if (v is String) return v.isEmpty ? '[]' : v;
+  if (v is List) return jsonEncode(v);
+  return '[]';
 }
 
 /// Supabase konfigüre değilse null döner — çağıranlar no-op yapar.

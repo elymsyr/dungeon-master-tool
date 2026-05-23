@@ -12,7 +12,12 @@
 
 import { JwtError, verifyJwt } from './jwt';
 import { checkRateLimit } from './rate_limit';
-import { checkAssetAccess, checkAssetQuota, checkTransientAccess } from './rls';
+import {
+  checkAssetAccess,
+  checkAssetQuota,
+  checkTransientAccess,
+  popTransientEvictQueue,
+} from './rls';
 
 export interface Env {
   R2_BUCKET: R2Bucket;
@@ -23,6 +28,8 @@ export interface Env {
   USER_QUOTA_BYTES: string;
   DOWNLOAD_LIMIT_PER_HOUR: string;
   UPLOAD_LIMIT_PER_HOUR: string;
+  // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep gate.
+  ADMIN_TOKEN?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -78,6 +85,15 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   const url = new URL(request.url);
+
+  // Admin / maintenance routes — Bearer ADMIN_TOKEN ile gated.
+  if (url.pathname === '/transient/evict-sweep') {
+    return handleTransientEvictSweep(request, env);
+  }
+  if (url.pathname === '/admin/purge-all') {
+    return handleAdminPurgeAll(request, env);
+  }
+
   const match = url.pathname.match(ASSET_PATH_REGEX);
   if (!match) {
     return jsonResponse(404, { error: 'route_not_found' });
@@ -296,6 +312,118 @@ async function handleDelete(
   }
   await env.R2_BUCKET.delete(r2Key);
   return jsonResponse(200, { ok: true, key: r2Key });
+}
+
+// ── Admin gate ───────────────────────────────────────────────────────────────
+// ADMIN_TOKEN secret yoksa endpoint kapalı. Token Bearer ile gelir.
+function checkAdminAuth(request: Request, env: Env): boolean {
+  const expected = env.ADMIN_TOKEN;
+  if (!expected || expected.length < 16) return false;
+  const header = request.headers.get('Authorization') ?? '';
+  if (!header.startsWith('Bearer ')) return false;
+  return header.slice(7) === expected;
+}
+
+// /transient/evict-sweep — transient_evict_queue'dan N satır al, R2'da sil.
+// Supabase transient_reserve LRU eviction sırasında satırları kuyruğa atar;
+// bu endpoint kuyruğu boşaltır (cron veya manuel tetik).
+async function handleTransientEvictSweep(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse(405, { error: 'method_not_allowed' });
+  }
+  if (!checkAdminAuth(request, env)) {
+    return jsonResponse(401, { error: 'admin_auth_required' });
+  }
+  const limitParam = new URL(request.url).searchParams.get('limit');
+  const limit = Math.min(
+    Math.max(parseInt(limitParam ?? '50', 10) || 50, 1),
+    500,
+  );
+  let popped: Array<{ sha256: string; ext: string; uploader_id: string }>;
+  try {
+    popped = await popTransientEvictQueue(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY,
+      limit,
+    );
+  } catch (err) {
+    console.error('evict_pop_failed', err);
+    return jsonResponse(502, { error: 'evict_pop_failed' });
+  }
+  let deleted = 0;
+  for (const row of popped) {
+    const key = `transient/${row.uploader_id}/${row.sha256}${row.ext}`;
+    try {
+      await env.R2_BUCKET.delete(key);
+      deleted++;
+    } catch (err) {
+      console.error('evict_r2_delete_failed', key, err);
+    }
+  }
+  return jsonResponse(200, { ok: true, popped: popped.length, deleted });
+}
+
+// /admin/purge-all — TÜM R2 objelerini siler (beta fresh reset için).
+// Cursor-paginated R2 list + batch delete. DB ile uyumu çağıran kişinin
+// sorumluluğunda: migration 064 community_assets/free_media_assets'ı zaten
+// boşaltmış olmalı, aksi halde DB'de yetim ref kalır.
+async function handleAdminPurgeAll(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse(405, { error: 'method_not_allowed' });
+  }
+  if (!checkAdminAuth(request, env)) {
+    return jsonResponse(401, { error: 'admin_auth_required' });
+  }
+  // dry=1 → sayım, silme yok (smoke test).
+  const dry = new URL(request.url).searchParams.get('dry') === '1';
+
+  let cursor: string | undefined;
+  let total = 0;
+  let deleted = 0;
+  const batchSize = 200; // R2 delete tek tek; bigger list batch ile döner.
+  // R2 list 1000 max; her sayfayı silip cursor ile devam et.
+  // Süre limiti: Worker default ~30sn. Çok büyük bucket için endpoint
+  // birden fazla kez çağrılır (cursor parametresi opsiyonel).
+  const startCursor = new URL(request.url).searchParams.get('cursor') ?? undefined;
+  cursor = startCursor;
+  // Tek invocation içinde 5 sayfa (≈5000 obje) işle, sonra cursor döndür.
+  for (let page = 0; page < 5; page++) {
+    const listed = await env.R2_BUCKET.list({ cursor, limit: 1000 });
+    total += listed.objects.length;
+    if (!dry) {
+      // Toplu silme yok; sırayla sil. batchSize kadar paralel.
+      for (let i = 0; i < listed.objects.length; i += batchSize) {
+        const slice = listed.objects.slice(i, i + batchSize);
+        await Promise.all(
+          slice.map((o) =>
+            env.R2_BUCKET.delete(o.key)
+              .then(() => {
+                deleted++;
+              })
+              .catch((err) => console.error('purge_delete_failed', o.key, err)),
+          ),
+        );
+      }
+    }
+    if (!listed.truncated) {
+      cursor = undefined;
+      break;
+    }
+    cursor = listed.cursor;
+  }
+  return jsonResponse(200, {
+    ok: true,
+    listed: total,
+    deleted: dry ? 0 : deleted,
+    dry,
+    next_cursor: cursor ?? null,
+  });
 }
 
 function isMimeAllowed(mime: string): boolean {
