@@ -322,9 +322,10 @@ class _BattleMapProjectionPainter extends CustomPainter {
     }
 
     // 2. Grid — uses the same destRect (full canvas in screen space).
+    // Matches DM grid style (dim 55/255 alpha, cosmetic 1px pen).
     if (snapshot.gridVisible && snapshot.gridSize > 0) {
       final gridPaint = Paint()
-        ..color = const Color(0x55ffffff)
+        ..color = const Color(0x37ffffff)
         ..strokeWidth = 1;
       final step = snapshot.gridSize * scale;
       final gx0 = destRect.left;
@@ -340,17 +341,23 @@ class _BattleMapProjectionPainter extends CustomPainter {
     }
 
     // 3. Tokens — drawn BEFORE fog so the fog actually hides hidden tokens.
-    for (final t in snapshot.tokens) {
+    final activeIdx = snapshot.turnIndex;
+    for (var i = 0; i < snapshot.tokens.length; i++) {
+      final t = snapshot.tokens[i];
       final mult = snapshot.tokenSizeMultipliers[t.id] ?? 1.0;
       final tokenRadius = (snapshot.tokenSize * mult * scale) / 2;
       final cx = dx + t.x * scale;
       final cy = dy + t.y * scale;
       final tokenColor = _hexColor(t.colorHex);
+      final isActive = i == activeIdx;
 
-      // Border
+      // Border — DM TokenWidget border kalınlıkları canvas-space (3.2/7.0).
+      // Scale ile çarp ki map zoom seviyesi DM ile aynıyken görünen kalınlık
+      // da eşleşsin. Border, çekirdek tokenRadius'un dışına eklenir.
+      final borderPx = (isActive ? 7.0 : 3.2) * scale;
       canvas.drawCircle(
         Offset(cx, cy),
-        tokenRadius + 2,
+        tokenRadius + borderPx * 0.5,
         Paint()..color = tokenColor,
       );
 
@@ -372,20 +379,36 @@ class _BattleMapProjectionPainter extends CustomPainter {
         canvas.drawImageRect(img, src, dst, Paint());
         canvas.restore();
       } else {
+        // No-image fallback: DM `_tokenColor()` parity — name-hashed HSL,
+        // full opacity (NOT border-color * alpha).
+        final hash = t.name.hashCode;
+        final hue = (hash.abs() % 360).toDouble();
+        final initialsBg = HSLColor.fromAHSL(1.0, hue, 0.6, 0.4).toColor();
         canvas.drawCircle(
           Offset(cx, cy),
           tokenRadius,
-          Paint()..color = tokenColor.withValues(alpha: 0.6),
+          Paint()..color = initialsBg,
         );
-        // Initial letter
+        // 2-char initials split-by-space (DM `_buildInitials` parity).
         if (t.name.isNotEmpty) {
+          final initials = t.name
+              .split(' ')
+              .map((w) => w.isNotEmpty ? w[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase();
+          final dmSize = tokenRadius * 2;
+          final fontSize = (dmSize * 0.35).clamp(8.0, 24.0);
           final tp = TextPainter(
             text: TextSpan(
-              text: t.name[0].toUpperCase(),
+              text: initials,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: tokenRadius * (compact ? 0.7 : 1.0),
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
+                shadows: const [
+                  Shadow(blurRadius: 2, color: Colors.black54),
+                ],
               ),
             ),
             textDirection: TextDirection.ltr,
@@ -396,27 +419,6 @@ class _BattleMapProjectionPainter extends CustomPainter {
           );
         }
       }
-
-      // Name label below the token
-      final nameTp = TextPainter(
-        text: TextSpan(
-          text: t.name,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: compact
-                ? (tokenRadius * 0.35).clamp(7, 12)
-                : (tokenRadius * 0.45).clamp(10, 18),
-            fontWeight: FontWeight.w600,
-            shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-        textAlign: TextAlign.center,
-      )..layout(maxWidth: tokenRadius * 4);
-      nameTp.paint(
-        canvas,
-        Offset(cx - nameTp.width / 2, cy + tokenRadius + 4),
-      );
     }
 
     // 4. Fog — drawn after tokens so hidden tokens actually disappear
