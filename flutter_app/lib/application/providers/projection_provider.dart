@@ -11,6 +11,8 @@ import '../../domain/entities/projection/entity_snapshot.dart';
 import '../../domain/entities/projection/projection_item.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
 import '../../domain/entities/projection/projection_state.dart';
+import '../../domain/value_objects/asset_ref.dart';
+import '../services/asset_ref_resolver.dart';
 import '../services/battle_map_snapshot_builder.dart';
 import '../services/entity_snapshot_builder.dart';
 import '../services/projection_output.dart';
@@ -245,6 +247,16 @@ class ProjectionController extends StateNotifier<ProjectionState> {
         .firstOrNull;
     if (existing != null) {
       if (setActive) this.setActive(existing.id);
+      // Repair path: an older session may have stored 2048×2048 because
+      // measureCanvas fell back on an AssetRef-shaped mapPath. Re-measure
+      // through the resolver if mapPath is set and dims look default.
+      if (existing.snapshot.canvasWidth == 2048 &&
+          existing.snapshot.canvasHeight == 2048) {
+        final mp = existing.snapshot.mapPath;
+        if (mp != null && mp.isNotEmpty) {
+          unawaited(_repairCanvasDims(existing.id, mp));
+        }
+      }
       return;
     }
 
@@ -254,11 +266,20 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     if (encounter == null) return;
 
     // Measure canvas FIRST so the first push already has correct dims.
+    // mapPath may be a `dmt-asset://` AssetRef on online worlds — resolve
+    // through AssetRefResolver before measureCanvas so we don't fall back to
+    // the 2048×2048 default (which squishes non-square maps).
     int? w, h;
     if (encounter.mapPath != null && encounter.mapPath!.isNotEmpty) {
-      final measured = await BattleMapSnapshotBuilder.measureCanvas(
-        encounter.mapPath,
-      );
+      String? localPath = encounter.mapPath;
+      try {
+        final resolved = await _ref
+            .read(assetRefResolverProvider)
+            .resolve(AssetRef(encounter.mapPath!));
+        if (resolved != null) localPath = resolved.path;
+      } catch (_) {/* fall through to raw path */}
+      final measured =
+          await BattleMapSnapshotBuilder.measureCanvas(localPath);
       w = measured.$1;
       h = measured.$2;
     }
@@ -456,6 +477,32 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       'feetPerCell': feetPerCell,
       if (includeFog) 'fogDataBase64': fogDataBase64,
     });
+  }
+
+  /// Resolves [mapPath] through the AssetRefResolver, measures the image,
+  /// and patches the projection's canvas dims if it produces non-default
+  /// values. No-op on resolve / decode failure.
+  Future<void> _repairCanvasDims(String itemId, String mapPath) async {
+    String? local = mapPath;
+    try {
+      final resolved =
+          await _ref.read(assetRefResolverProvider).resolve(AssetRef(mapPath));
+      if (resolved != null) local = resolved.path;
+    } catch (_) {/* fall through */}
+    final measured = await BattleMapSnapshotBuilder.measureCanvas(local);
+    final w = measured.$1;
+    final h = measured.$2;
+    if (w == 2048 && h == 2048) return;
+    final current = state.items
+        .whereType<BattleMapProjection>()
+        .where((it) => it.id == itemId)
+        .firstOrNull;
+    if (current == null) return;
+    final newSnap = current.snapshot.copyWith(
+      canvasWidth: w,
+      canvasHeight: h,
+    );
+    _replaceItem(current.copyWith(snapshot: newSnap));
   }
 
   void _pushBattleMapPatch(String itemId, Map<String, dynamic> patch) {

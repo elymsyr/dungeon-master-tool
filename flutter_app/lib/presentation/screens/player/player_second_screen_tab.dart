@@ -22,7 +22,10 @@ class PlayerSecondScreenTab extends ConsumerWidget {
     if (projection == null) {
       return const _WaitingPlaceholder();
     }
-    return PlayerWindowRoot(stateProvider: onlineProjectionStateProvider);
+    return PlayerWindowRoot(
+      stateProvider: onlineProjectionStateProvider,
+      interactive: true,
+    );
   }
 }
 

@@ -17,7 +17,15 @@ import '../../../widgets/asset_ref_image.dart';
 class ImageProjectionView extends StatefulWidget {
   final ImageProjection item;
 
-  const ImageProjectionView({required this.item, super.key});
+  /// Online viewer mode — enables local InteractiveViewer pan/zoom so the
+  /// remote player can navigate independently of the DM.
+  final bool interactive;
+
+  const ImageProjectionView({
+    required this.item,
+    this.interactive = false,
+    super.key,
+  });
 
   @override
   State<ImageProjectionView> createState() => _ImageProjectionViewState();
@@ -35,10 +43,19 @@ class _ImageProjectionViewState extends State<ImageProjectionView>
     if (paths.isEmpty) {
       return const ColoredBox(color: Colors.black);
     }
+    Widget body = _layout(context, paths);
+    if (widget.interactive) {
+      body = InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 8,
+        clipBehavior: Clip.hardEdge,
+        child: body,
+      );
+    }
     return RepaintBoundary(
       child: ColoredBox(
         color: Colors.black,
-        child: _layout(context, paths),
+        child: body,
       ),
     );
   }

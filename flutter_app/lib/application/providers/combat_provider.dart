@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -696,12 +697,18 @@ class CombatNotifier extends StateNotifier<CombatState>
   // --- Serialization ---
 
   Map<String, dynamic> getSessionState() {
-    return {
+    // Deep JSON round-trip: freezed/json_serializable default keeps nested
+    // Combatant/CombatCondition as object refs in `Encounter.toJson()` (no
+    // explicitToJson). Without this, the map stored in `combat_state`
+    // retains freezed instances and `loadSessionState` crashes casting them
+    // back to `Map<String, dynamic>`.
+    final raw = {
       'encounters': state.encounters.map((e) => e.toJson()).toList(),
       'active_encounter_id': state.activeEncounterId,
       'event_log': state.eventLog,
       'session_notes': state.sessionNotes,
     };
+    return jsonDecode(jsonEncode(raw)) as Map<String, dynamic>;
   }
 
   void loadSessionState(Map<String, dynamic> data) {

@@ -23,7 +23,15 @@ class PlayerWindowRoot extends ConsumerWidget {
   /// will pass a remote-event-fed provider instead.
   final ProviderListenable<ProjectionState>? stateProvider;
 
-  const PlayerWindowRoot({this.stateProvider, super.key});
+  /// When true, image and battle-map views support local pan/zoom so the
+  /// viewer can navigate independently of the DM (online second screen).
+  final bool interactive;
+
+  const PlayerWindowRoot({
+    this.stateProvider,
+    this.interactive = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,10 +77,12 @@ class PlayerWindowRoot extends ConsumerWidget {
     return KeyedSubtree(
       key: ValueKey('projection_${item.id}'),
       child: switch (item) {
-        ImageProjection() => ImageProjectionView(item: item),
+        ImageProjection() =>
+          ImageProjectionView(item: item, interactive: interactive),
         BlackScreenProjection() => const BlackScreenView(),
         EntityCardProjection() => EntityCardProjectionView(item: item),
-        BattleMapProjection() => BattleMapProjectionView(item: item),
+        BattleMapProjection() =>
+          BattleMapProjectionView(item: item, interactive: interactive),
         PdfProjection() => const _StubView(label: 'PDF (Phase 3)'),
       },
     );
