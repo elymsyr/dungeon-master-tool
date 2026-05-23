@@ -54,6 +54,7 @@ class PdfSidebar extends StatelessWidget {
             palette: palette,
             onSelect: onTabSelect,
             onClose: onTabClose,
+            onAdd: _pickPdf,
           ),
         // PDF viewer area
         Expanded(
@@ -79,6 +80,7 @@ class _PdfTabBar extends StatelessWidget {
   final DmToolColors palette;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onClose;
+  final VoidCallback onAdd;
 
   const _PdfTabBar({
     required this.paths,
@@ -86,6 +88,7 @@ class _PdfTabBar extends StatelessWidget {
     required this.palette,
     required this.onSelect,
     required this.onClose,
+    required this.onAdd,
   });
 
   @override
@@ -96,10 +99,13 @@ class _PdfTabBar extends StatelessWidget {
         color: palette.tabBg,
         border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
       ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: paths.length,
-        itemBuilder: (context, i) {
+      child: Row(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: paths.length,
+              itemBuilder: (context, i) {
           final fileName = paths[i].split('/').last.split('\\').last;
           final isActive = i == activeIndex;
 
@@ -151,6 +157,21 @@ class _PdfTabBar extends StatelessWidget {
             ),
           );
         },
+            ),
+          ),
+          InkWell(
+            onTap: onAdd,
+            child: Container(
+              width: 32,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.add,
+                size: 18,
+                color: palette.tabText,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
