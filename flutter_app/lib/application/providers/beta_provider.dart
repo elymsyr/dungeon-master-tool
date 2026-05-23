@@ -4,11 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
+import 'package:drift/drift.dart' show Value;
+
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
+import '../../data/database/app_database.dart' show WorldsCompanion, PackagesCompanion;
+import '../../data/database/database_provider.dart';
 import '../services/beta_exit_cleanup_service.dart';
+import '../services/beta_exit_preserve_service.dart';
 import 'auth_provider.dart';
+import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
+import 'online_worlds_provider.dart';
+import 'personal_online_provider.dart';
+import 'role_provider.dart';
 
 /// Beta program state — ilk 200 kullanıcıya açık, 50 MB / kullanıcı cloud
 /// save quota'sı. 7 gün inaktif olanların slot'u otomatik serbest bırakılır.
@@ -201,29 +210,45 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
   }
 
-  /// `leave_beta` — önce kullanıcının Storage object'lerini client'tan siler
-  /// (Supabase plpgsql'den `storage.objects` DELETE'e izin vermiyor), sonra
-  /// DB temizliği için `leave_beta` RPC'sini çağırır.
+  /// `leave_beta` — beta'dan çıkış akışı.
   ///
-  /// RPC (migration 057) şu online verileri kalıcı siler:
-  ///   • Sahip olunan online world'ler (FK cascade: members, world-bound
-  ///     characters, entities, packages, invites, mind-map dahil).
-  ///   • Orphan online karakterler, personal package sync kayıtları.
-  ///   • Marketplace listing'leri (kapak görseli inline, satırla birlikte gider).
-  ///   • free_media_assets + community_assets + transient_shares + cloud_backups.
-  /// Storage tarafında `campaign-backups`, `free-media`, `shared-payloads`
-  /// bucket'larındaki object'ler [BetaExitCleanupService] ile silinir.
+  /// Akış:
+  ///   1. [BetaExitPreserveService.preserve] — sahip olunan online world'leri,
+  ///      orphan online karakterleri ve personal paketleri lokale indirir
+  ///      (zaten cached olanlar atlanır). Ardından CDC DELETE event'leri
+  ///      sırasında lokal kopyayı temizlememek için guard'ları arm eder.
+  ///   2. [BetaExitCleanupService.wipeUserStorage] — Storage object'lerini
+  ///      siler (Supabase plpgsql `storage.objects` DELETE'i engelleniyor).
+  ///   3. `leave_beta` RPC — online satırları siler:
+  ///      • Sahip olunan online world'ler (cascade).
+  ///      • Orphan online karakterler, personal package sync kayıtları.
+  ///      • Marketplace listing'leri, free_media_assets, community_assets,
+  ///        transient_shares, cloud_backups.
+  ///   4. Reconcile — `onlineWorldIdsProvider`'i clear et, sahip olunan
+  ///      world/package satırlarındaki cloud-association sütunlarını sıfırla,
+  ///      hub liste cache'lerini invalidate et.
   ///
-  /// KORUNUR: cihazlardaki tüm local Drift verisi; post'lar, game_listing'ler,
-  /// mesajlar — sosyal katman tamamen kullanılabilir kalır. Beta dışı kullanıcı
-  /// yeni online içerik üretemez ama davetle başkasının world'üne katılıp
-  /// oynamaya devam edebilir.
+  /// KORUNUR: lokal Drift'teki tüm world/karakter/package verisi offline
+  /// olarak; post'lar, game_listing'ler, mesajlar — sosyal katman tamamen
+  /// kullanılabilir kalır.
   Future<bool> leaveBeta() async {
     if (!_canCallRpc) return false;
     final userId = _ref.read(authProvider)?.uid;
     if (userId == null) return false;
     state = state.copyWith(loading: true, error: null);
     try {
+      // 1. Hydrate + arm guards. Ağ hatası halinde caller fırlat dialog'da
+      // gösterir — RPC çağrılmadan abort edilir (online içerik korunmalı).
+      PreserveResult? preserved;
+      try {
+        preserved = await _ref.read(betaExitPreserveServiceProvider)?.preserve();
+      } catch (e, st) {
+        debugPrint('leave_beta preserve error: $e\n$st');
+        state = state.copyWith(loading: false, error: e.toString());
+        return false;
+      }
+
+      // 2. Storage cleanup (best-effort).
       try {
         await _ref
             .read(betaExitCleanupServiceProvider)
@@ -232,8 +257,16 @@ class BetaNotifier extends StateNotifier<BetaState> {
         debugPrint('leave_beta storage cleanup warning: $e');
       }
 
+      // 3. RPC.
       final res = await Supabase.instance.client.rpc('leave_beta');
       final ok = res == true || (res is List && res.isNotEmpty && res.first == true);
+
+      // 4. Reconcile lokal state. Guard CDC delete'i yutuyor ama "online"
+      // bayrakları + cloud push timestamp'leri stale kalır — burada düşür.
+      if (ok && preserved != null) {
+        await _reconcileAfterLeave(preserved);
+      }
+
       await refresh();
       return ok;
     } catch (e, st) {
@@ -241,6 +274,47 @@ class BetaNotifier extends StateNotifier<BetaState> {
       state = state.copyWith(loading: false, error: e.toString());
       return false;
     }
+  }
+
+  Future<void> _reconcileAfterLeave(PreserveResult preserved) async {
+    final db = _ref.read(appDatabaseProvider);
+    // Worlds: cloud sync sütunlarını sıfırla, online set'ten çıkar.
+    for (final wid in preserved.worldIds) {
+      try {
+        await (db.update(db.worlds)..where((t) => t.id.equals(wid))).write(
+          const WorldsCompanion(
+            lastCloudPushAt: Value(null),
+            lastPushedHash: Value(null),
+          ),
+        );
+      } catch (e) {
+        debugPrint('leave_beta reconcile world $wid error: $e');
+      }
+      _ref.read(onlineWorldIdsProvider.notifier).remove(wid);
+      _ref.invalidate(worldRoleProvider(wid));
+    }
+    // Packages: cloud sync sütunlarını sıfırla + "online package names" set'i
+    // boşalt (beta dışı kullanıcı yeni publish yapamaz, mevcut hepsi offline).
+    for (final name in preserved.personalPackageNames) {
+      try {
+        final pkg = await db.packagesDao.getByName(name);
+        if (pkg != null) {
+          await (db.update(db.packages)..where((t) => t.id.equals(pkg.id))).write(
+            const PackagesCompanion(
+              lastCloudPushAt: Value(null),
+              lastPushedHash: Value(null),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('leave_beta reconcile package $name error: $e');
+      }
+      _ref.read(personalOnlinePackageNamesProvider.notifier).remove(name);
+    }
+    // Hub liste cache'lerini invalidate — UI offline rozetine geç.
+    _ref.invalidate(campaignInfoListProvider);
+    _ref.invalidate(campaignListProvider);
+    _ref.invalidate(currentWorldRoleProvider);
   }
 
   /// `beta_heartbeat` — fire-and-forget; beta'da değilse sunucu no-op yapar.

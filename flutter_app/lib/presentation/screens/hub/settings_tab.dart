@@ -10,6 +10,8 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/services/beta_exit_preserve_service.dart';
+import '../../../core/utils/error_format.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
@@ -1216,51 +1218,100 @@ class _SubscriptionsSection extends ConsumerWidget {
   Future<void> _leave(
       BuildContext context, WidgetRef ref, L10n l10n) async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Owned online içeriği özetle. Cloud-only öğeler beta exit'ten önce
+    // indirilecek — kullanıcıya gösterip onay alalım.
+    SummaryCounts? summary;
+    String? summaryError;
+    try {
+      summary =
+          await ref.read(betaExitPreserveServiceProvider)?.summarize();
+    } catch (e) {
+      summaryError = isOfflineError(e)
+          ? 'Internet gerekli — sahip olduğun online içeriği lokale indirmek için bağlanmalısın.'
+          : formatError(e);
+    }
+    if (!context.mounted) return;
+
+    if (summaryError != null) {
+      messenger.showSnackBar(SnackBar(content: Text(summaryError)));
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded,
-                color: palette.dangerBtnBg, size: 24),
-            const SizedBox(width: 8),
-            Expanded(child: Text(l10n.subsBetaLeaveConfirmTitle)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.subsBetaLeaveWarnIntro,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+      builder: (ctx) {
+        final preserveLines = <Widget>[];
+        if (summary != null && summary.hasAnything) {
+          preserveLines.add(const SizedBox(height: 12));
+          preserveLines.add(Text(
+            'Bu cihazda offline olarak saklanacak: '
+            '${summary.ownedWorlds} dünya · '
+            '${summary.orphanChars} karakter · '
+            '${summary.personalPackages} paket.',
+            style: const TextStyle(height: 1.4),
+          ));
+          if (summary.hasDownloads) {
+            preserveLines.add(const SizedBox(height: 6));
+            preserveLines.add(Text(
+              'Bunlardan ${summary.cloudOnlyWorlds} dünya / '
+              '${summary.cloudOnlyChars} karakter / '
+              '${summary.cloudOnlyPackages} paket önce cloud\'dan indirilecek.',
+              style: TextStyle(
+                height: 1.4,
+                color: palette.sidebarLabelSecondary,
+                fontSize: 12,
               ),
-              const SizedBox(height: 12),
-              Text(l10n.subsBetaLeaveWarnDeleted,
-                  style: const TextStyle(height: 1.4)),
-              const SizedBox(height: 12),
-              Text(l10n.subsBetaLeaveWarnKept,
-                  style: const TextStyle(height: 1.4)),
+            ));
+          }
+        }
+
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded,
+                  color: palette.dangerBtnBg, size: 24),
+              const SizedBox(width: 8),
+              Expanded(child: Text(l10n.subsBetaLeaveConfirmTitle)),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.btnCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: palette.dangerBtnBg,
-              foregroundColor: palette.dangerBtnText,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.subsBetaLeaveWarnIntro,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, height: 1.4),
+                ),
+                const SizedBox(height: 12),
+                Text(l10n.subsBetaLeaveWarnDeleted,
+                    style: const TextStyle(height: 1.4)),
+                const SizedBox(height: 12),
+                Text(l10n.subsBetaLeaveWarnKept,
+                    style: const TextStyle(height: 1.4)),
+                ...preserveLines,
+              ],
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.subsBetaLeaveBtn),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.btnCancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: palette.dangerBtnBg,
+                foregroundColor: palette.dangerBtnText,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.subsBetaLeaveBtn),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true) return;
     final ok = await ref.read(betaProvider.notifier).leaveBeta();

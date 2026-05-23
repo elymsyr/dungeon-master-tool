@@ -9,77 +9,34 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Sağ sidebar veya mobil tab olarak gösterilen Soundpad paneli.
-/// 3 tab: Music, Ambience, SFX + alt kısımda global kontroller.
-class SoundmapSidebar extends ConsumerStatefulWidget {
+/// Tek scroll: Music → SFX → Ambience + alt global controls.
+class SoundmapSidebar extends ConsumerWidget {
   final DmToolColors palette;
 
   const SoundmapSidebar({super.key, required this.palette});
 
   @override
-  ConsumerState<SoundmapSidebar> createState() => _SoundmapSidebarState();
-}
-
-class _SoundmapSidebarState extends ConsumerState<SoundmapSidebar>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = widget.palette;
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
 
     return Column(
       children: [
-        // Tab bar
-        Container(
-          height: 38,
-          decoration: BoxDecoration(
-            color: palette.tabBg,
-            border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: false,
-            labelColor: palette.tabActiveText,
-            unselectedLabelColor: palette.tabText,
-            indicatorColor: palette.featureCardAccent,
-            indicatorSize: TabBarIndicatorSize.tab,
-            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
-            dividerHeight: 0,
-            tabs: [
-              Tab(text: l10n.soundpadTabMusic),
-              Tab(text: l10n.soundpadTabAmbience),
-              Tab(text: l10n.soundpadTabSfx),
-            ],
-          ),
-        ),
-
-        // Tab content
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _MusicTab(palette: palette),
-              _AmbienceTab(palette: palette),
-              _SfxTab(palette: palette),
-            ],
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SectionHeader(label: l10n.soundpadTabMusic, palette: palette),
+                _MusicSection(palette: palette),
+                _SectionHeader(label: l10n.soundpadTabSfx, palette: palette),
+                _SfxSection(palette: palette),
+                _SectionHeader(label: l10n.soundpadTabAmbience, palette: palette),
+                _AmbienceSection(palette: palette),
+              ],
+            ),
           ),
         ),
-
-        // Global controls — her zaman görünür
         _GlobalControls(palette: palette),
       ],
     );
@@ -87,19 +44,43 @@ class _SoundmapSidebarState extends ConsumerState<SoundmapSidebar>
 }
 
 // =============================================================================
-// Music Tab
+// Section Header / Divider
 // =============================================================================
 
-class _MusicTab extends ConsumerWidget {
+class _SectionHeader extends StatelessWidget {
+  final String label;
   final DmToolColors palette;
-  const _MusicTab({required this.palette});
+
+  const _SectionHeader({required this.label, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: palette.featureCardAccent,
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Music Section
+// =============================================================================
+
+class _MusicSection extends ConsumerWidget {
+  final DmToolColors palette;
+  const _MusicSection({required this.palette});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    // Narrow watches: only the fields this widget actually renders. Volume,
-    // ambience scenes, sfx etc. live on the same SoundpadState but should
-    // not trigger a rebuild of the music tab chrome.
     final activeThemeId =
         ref.watch(soundpadStateProvider.select((s) => s.activeThemeId));
     final intensityLevel =
@@ -108,11 +89,10 @@ class _MusicTab extends ConsumerWidget {
     final themesAsync = ref.watch(soundpadThemesProvider);
 
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Theme selector
           themesAsync.when(
             data: (themes) => _ThemeSelector(
               themes: themes,
@@ -121,42 +101,31 @@ class _MusicTab extends ConsumerWidget {
               l10n: l10n,
               onSelect: notifier.selectTheme,
             ),
-            loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            error: (e, _) => Text('Error: $e', style: TextStyle(color: palette.tokenBorderHostile)),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+            error: (e, _) => Text('Error: $e',
+                style: TextStyle(color: palette.tokenBorderHostile)),
           ),
-
-          const SizedBox(height: 16),
-
-          // State buttons (tema seçildiyse) — own Consumer so chip ChoiceChip
-          // selection updates don't reflow the theme dropdown / intensity.
-          if (activeThemeId != null)
-            _StateSection(activeThemeId: activeThemeId, palette: palette),
-
-          // Intensity slider (tema seçildiyse)
           if (activeThemeId != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            _StateSection(activeThemeId: activeThemeId, palette: palette),
+            const SizedBox(height: 12),
             _IntensitySlider(
               level: intensityLevel,
               palette: palette,
               l10n: l10n,
               onChanged: notifier.setIntensity,
             ),
-          ],
-
-          const Spacer(),
-
-          // Tema yoksa bilgi
-          if (activeThemeId == null)
-            Center(
-              child: Column(
-                children: [
-                  Icon(Icons.music_note, size: 48, color: palette.tabText.withValues(alpha: 0.3)),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.soundpadNoThemes,
-                    style: TextStyle(fontSize: 12, color: palette.tabText.withValues(alpha: 0.5)),
-                  ),
-                ],
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                l10n.soundpadNoThemes,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: palette.tabText.withValues(alpha: 0.6)),
               ),
             ),
         ],
@@ -185,7 +154,10 @@ class _StateSection extends ConsumerWidget {
       children: [
         Text(
           l10n.soundpadMusicState,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: palette.tabActiveText),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -201,7 +173,10 @@ class _StateSection extends ConsumerWidget {
               selected: isActive,
               selectedColor: palette.featureCardAccent,
               backgroundColor: palette.tabBg,
-              side: BorderSide(color: isActive ? palette.featureCardAccent : palette.sidebarDivider),
+              side: BorderSide(
+                  color: isActive
+                      ? palette.featureCardAccent
+                      : palette.sidebarDivider),
               onSelected: (_) => notifier.selectState(stateName),
             );
           }).toList(),
@@ -210,10 +185,6 @@ class _StateSection extends ConsumerWidget {
     );
   }
 }
-
-// =============================================================================
-// Theme Selector
-// =============================================================================
 
 class _ThemeSelector extends StatelessWidget {
   final Map<String, SoundpadTheme> themes;
@@ -239,7 +210,8 @@ class _ThemeSelector extends StatelessWidget {
         labelText: l10n.soundpadSelectTheme,
         labelStyle: TextStyle(fontSize: 13, color: palette.tabText),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         border: OutlineInputBorder(borderRadius: palette.br),
         enabledBorder: OutlineInputBorder(
           borderRadius: palette.br,
@@ -251,7 +223,8 @@ class _ThemeSelector extends StatelessWidget {
       items: [
         DropdownMenuItem<String?>(
           value: null,
-          child: Text('-- ${l10n.soundpadSelectTheme} --', style: TextStyle(color: palette.tabText)),
+          child: Text('-- ${l10n.soundpadSelectTheme} --',
+              style: TextStyle(color: palette.tabText)),
         ),
         ...themes.entries.map((e) => DropdownMenuItem<String?>(
               value: e.key,
@@ -262,10 +235,6 @@ class _ThemeSelector extends StatelessWidget {
     );
   }
 }
-
-// =============================================================================
-// Intensity Slider
-// =============================================================================
 
 class _IntensitySlider extends StatelessWidget {
   final int level;
@@ -294,7 +263,10 @@ class _IntensitySlider extends StatelessWidget {
       children: [
         Text(
           l10n.soundpadIntensity,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: palette.tabActiveText),
         ),
         const SizedBox(height: 4),
         Row(
@@ -324,203 +296,72 @@ class _IntensitySlider extends StatelessWidget {
 }
 
 // =============================================================================
-// Ambience Tab
+// SFX Section
 // =============================================================================
 
-class _AmbienceTab extends ConsumerWidget {
+class _SfxSection extends ConsumerWidget {
   final DmToolColors palette;
-  const _AmbienceTab({required this.palette});
+  const _SfxSection({required this.palette});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = L10n.of(context)!;
-    final soundpadState = ref.watch(soundpadStateProvider);
     final notifier = ref.read(soundpadStateProvider.notifier);
     final libraryAsync = ref.watch(soundpadLibraryProvider);
 
     return libraryAsync.when(
-      data: (library) => Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: SoundpadEngine.ambienceSlotCount,
-              itemBuilder: (context, i) => _AmbienceSlotCard(
-                key: ValueKey(i),
-                index: i,
-                slotState: soundpadState.ambienceSlots[i],
-                ambienceList: library.ambience,
+      data: (library) {
+        if (library.sfx.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: Text(
+              'No SFX available',
+              style: TextStyle(
+                  fontSize: 12, color: palette.tabText.withValues(alpha: 0.5)),
+            ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 2.5,
+            ),
+            itemCount: library.sfx.length,
+            itemBuilder: (context, i) {
+              final sfx = library.sfx[i];
+              return _SfxButton(
+                sfx: sfx,
                 palette: palette,
-                l10n: l10n,
-                onSelectId: (id) => notifier.setAmbienceSlot(i, id),
-                onVolumeChanged: (v) => notifier.setAmbienceVolume(i, v),
-              ),
-            ),
+                onTap: () => notifier.playSfx(sfx.id),
+              );
+            },
           ),
-          const SizedBox(height: 8),
-        ],
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
-
-}
-
-// =============================================================================
-// Ambience Slot Card
-// =============================================================================
-
-class _AmbienceSlotCard extends StatelessWidget {
-  final int index;
-  final AmbienceSlotState slotState;
-  final List<AmbienceEntry> ambienceList;
-  final DmToolColors palette;
-  final L10n l10n;
-  final ValueChanged<String?> onSelectId;
-  final ValueChanged<double> onVolumeChanged;
-
-  const _AmbienceSlotCard({
-    super.key,
-    required this.index,
-    required this.slotState,
-    required this.ambienceList,
-    required this.palette,
-    required this.l10n,
-    required this.onSelectId,
-    required this.onVolumeChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: palette.tabBg,
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${l10n.soundpadAmbienceSlot} ${index + 1}',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText),
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String?>(
-              initialValue: slotState.ambienceId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                border: OutlineInputBorder(borderRadius: palette.br),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: palette.br,
-                  borderSide: BorderSide(color: palette.sidebarDivider),
-                ),
-              ),
-              dropdownColor: palette.canvasBg,
-              style: TextStyle(fontSize: 12, color: palette.tabActiveText),
-              items: [
-                DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text(l10n.soundpadSilence, style: TextStyle(color: palette.tabText)),
-                ),
-                ...ambienceList.map((a) => DropdownMenuItem<String?>(
-                      value: a.id,
-                      child: Text(a.name),
-                    )),
-              ],
-              onChanged: onSelectId,
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.volume_down, size: 14, color: palette.tabText),
-                Expanded(
-                  child: Slider(
-                    value: slotState.volume,
-                    onChanged: onVolumeChanged,
-                  ),
-                ),
-                SizedBox(
-                  width: 32,
-                  child: Text(
-                    '${(slotState.volume * 100).round()}%',
-                    style: TextStyle(fontSize: 10, color: palette.tabText),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text('Error: $e'),
       ),
     );
   }
 }
-
-// =============================================================================
-// SFX Tab
-// =============================================================================
-
-class _SfxTab extends ConsumerWidget {
-  final DmToolColors palette;
-  const _SfxTab({required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(soundpadStateProvider.notifier);
-    final libraryAsync = ref.watch(soundpadLibraryProvider);
-
-    return libraryAsync.when(
-      data: (library) => Column(
-        children: [
-          Expanded(
-            child: library.sfx.isEmpty
-                ? Center(
-                    child: Text(
-                      'No SFX available',
-                      style: TextStyle(fontSize: 12, color: palette.tabText.withValues(alpha: 0.5)),
-                    ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 2.5,
-                    ),
-                    itemCount: library.sfx.length,
-                    itemBuilder: (context, i) {
-                      final sfx = library.sfx[i];
-                      return _SfxButton(
-                        sfx: sfx,
-                        palette: palette,
-                        onTap: () => notifier.playSfx(sfx.id),
-                      );
-                    },
-                  ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-      loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Center(child: Text('Error: $e')),
-    );
-  }
-
-}
-
-// =============================================================================
-// SFX Button
-// =============================================================================
 
 class _SfxButton extends StatelessWidget {
   final SfxEntry sfx;
   final DmToolColors palette;
   final VoidCallback onTap;
 
-  const _SfxButton({required this.sfx, required this.palette, required this.onTap});
+  const _SfxButton(
+      {required this.sfx, required this.palette, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -551,6 +392,233 @@ class _SfxButton extends StatelessWidget {
 }
 
 // =============================================================================
+// Ambience Section
+// =============================================================================
+
+class _AmbienceSection extends ConsumerWidget {
+  final DmToolColors palette;
+  const _AmbienceSection({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ambienceSlots =
+        ref.watch(soundpadStateProvider.select((s) => s.ambienceSlots));
+    final notifier = ref.read(soundpadStateProvider.notifier);
+    final libraryAsync = ref.watch(soundpadLibraryProvider);
+
+    return libraryAsync.when(
+      data: (library) {
+        final filled = <MapEntry<int, AmbienceSlotState>>[];
+        for (var i = 0; i < ambienceSlots.length; i++) {
+          if (ambienceSlots[i].ambienceId != null) {
+            filled.add(MapEntry(i, ambienceSlots[i]));
+          }
+        }
+        final canAdd = filled.length < SoundpadEngine.ambienceSlotCount;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ...filled.map((entry) {
+                final idx = entry.key;
+                final slot = entry.value;
+                final ambience = library.ambience.firstWhere(
+                  (a) => a.id == slot.ambienceId,
+                  orElse: () => AmbienceEntry(
+                      id: slot.ambienceId!,
+                      name: slot.ambienceId!,
+                      files: const []),
+                );
+                return _AmbienceCompactRow(
+                  key: ValueKey('amb-$idx-${slot.ambienceId}'),
+                  name: ambience.name,
+                  volume: slot.volume,
+                  palette: palette,
+                  onVolumeChanged: (v) => notifier.setAmbienceVolume(idx, v),
+                  onClear: () => notifier.setAmbienceSlot(idx, null),
+                );
+              }),
+              if (canAdd) ...[
+                if (filled.isNotEmpty) const SizedBox(height: 4),
+                _AddAmbienceButton(
+                  ambienceList: library.ambience,
+                  usedIds: filled
+                      .map((e) => e.value.ambienceId!)
+                      .toSet(),
+                  palette: palette,
+                  onPick: (pickedId) {
+                    final emptyIdx = ambienceSlots
+                        .indexWhere((s) => s.ambienceId == null);
+                    if (emptyIdx >= 0) {
+                      notifier.setAmbienceSlot(emptyIdx, pickedId);
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text('Error: $e'),
+      ),
+    );
+  }
+}
+
+class _AmbienceCompactRow extends StatelessWidget {
+  final String name;
+  final double volume;
+  final DmToolColors palette;
+  final ValueChanged<double> onVolumeChanged;
+  final VoidCallback onClear;
+
+  const _AmbienceCompactRow({
+    super.key,
+    required this.name,
+    required this.volume,
+    required this.palette,
+    required this.onVolumeChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: palette.tabBg,
+        borderRadius: palette.cbr,
+        border: Border.all(color: palette.sidebarDivider),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.graphic_eq, size: 14, color: palette.tabText),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 78,
+            child: Text(
+              name,
+              style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 2,
+                thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
+              ),
+              child: Slider(
+                value: volume,
+                onChanged: onVolumeChanged,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '${(volume * 100).round()}%',
+              style: TextStyle(fontSize: 10, color: palette.tabText),
+              textAlign: TextAlign.end,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            visualDensity: VisualDensity.compact,
+            color: palette.tabText,
+            onPressed: onClear,
+            tooltip: 'Remove',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddAmbienceButton extends StatelessWidget {
+  final List<AmbienceEntry> ambienceList;
+  final Set<String> usedIds;
+  final DmToolColors palette;
+  final ValueChanged<String> onPick;
+
+  const _AddAmbienceButton({
+    required this.ambienceList,
+    required this.usedIds,
+    required this.palette,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final available =
+        ambienceList.where((a) => !usedIds.contains(a.id)).toList();
+    final enabled = available.isNotEmpty;
+
+    return SizedBox(
+      width: double.infinity,
+      child: PopupMenuButton<String>(
+        enabled: enabled,
+        tooltip: 'Add ambience',
+        color: palette.canvasBg,
+        position: PopupMenuPosition.under,
+        itemBuilder: (context) => available
+            .map((a) => PopupMenuItem<String>(
+                  value: a.id,
+                  child: Text(
+                    a.name,
+                    style: TextStyle(
+                        fontSize: 13, color: palette.tabActiveText),
+                  ),
+                ))
+            .toList(),
+        onSelected: onPick,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: palette.tabBg,
+            borderRadius: palette.cbr,
+            border: Border.all(color: palette.sidebarDivider),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add,
+                  size: 16,
+                  color: enabled
+                      ? palette.tabActiveText
+                      : palette.tabText.withValues(alpha: 0.4)),
+              const SizedBox(width: 6),
+              Text(
+                'Add ambience',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: enabled
+                      ? palette.tabActiveText
+                      : palette.tabText.withValues(alpha: 0.4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
 // Global Controls
 // =============================================================================
 
@@ -570,47 +638,39 @@ class _GlobalControls extends ConsumerWidget {
         color: palette.tabBg,
         border: Border(top: BorderSide(color: palette.sidebarDivider)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          // Master volume
-          Row(
-            children: [
-              Icon(Icons.volume_down, size: 16, color: palette.tabText),
-              Expanded(
-                child: Slider(
-                  value: volume,
-                  onChanged: (v) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(volume: v)),
-                ),
-              ),
-              SizedBox(
-                width: 32,
-                child: Text(
-                  '${(volume * 100).round()}%',
-                  style: TextStyle(fontSize: 10, color: palette.tabText),
-                ),
-              ),
-            ],
+          Icon(Icons.volume_down, size: 16, color: palette.tabText),
+          Expanded(
+            child: Slider(
+              value: volume,
+              onChanged: (v) => ref
+                  .read(uiStateProvider.notifier)
+                  .update((s) => s.copyWith(volume: v)),
+            ),
           ),
-          const SizedBox(height: 6),
-          // Stop buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: notifier.stopAmbience,
-                  child: Text(l10n.soundpadStopAmbience, style: const TextStyle(fontSize: 11)),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '${(volume * 100).round()}%',
+              style: TextStyle(fontSize: 10, color: palette.tabText),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: l10n.soundpadStopAll,
+            child: Material(
+              color: palette.tokenBorderHostile,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: notifier.stopAll,
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.stop, size: 18, color: Colors.white),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  onPressed: notifier.stopAll,
-                  style: FilledButton.styleFrom(backgroundColor: palette.tokenBorderHostile),
-                  child: Text(l10n.soundpadStopAll, style: const TextStyle(fontSize: 11)),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

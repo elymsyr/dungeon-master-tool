@@ -92,12 +92,17 @@ class AppPaths {
 
   /// Python config.py'daki SOUNDPAD_ROOT karşılığı.
   /// SOUNDPAD_ROOT = os.path.join(ASSETS_DIR, "soundpad")
+  /// Geçerli kabul edilmek için dizinde `soundpad_library.yaml` olmalı —
+  /// `flutter_app/assets/soundpad/` gibi boş kabuk dizinleri atlanır.
   static Future<String> _resolveSoundpadRoot() async {
     // 1) Env override
     final override = Platform.environment['SOUNDPAD_ROOT']?.trim();
     if (override != null && override.isNotEmpty && await Directory(override).exists()) {
       return override;
     }
+
+    Future<bool> hasLibrary(String dir) =>
+        File(p.join(dir, 'soundpad_library.yaml')).exists();
 
     // 2) cwd tabanlı arama (flutter run cwd = flutter_app/, ../assets/soundpad/)
     final cwd = Directory.current.path;
@@ -107,7 +112,7 @@ class AppPaths {
       p.join(cwd, '..', '..', 'assets', 'soundpad'),
     ]) {
       final normalized = p.normalize(candidate);
-      if (await Directory(normalized).exists()) return normalized;
+      if (await hasLibrary(normalized)) return normalized;
     }
 
     // 3) Exe tabanlı arama (portable / release build)
@@ -115,7 +120,17 @@ class AppPaths {
     for (var i = 0; i <= 6; i++) {
       final ups = List.filled(i, '..').join('/');
       final candidate = p.normalize(p.join(exeDir, ups, 'assets', 'soundpad'));
-      if (await Directory(candidate).exists()) return candidate;
+      if (await hasLibrary(candidate)) return candidate;
+    }
+
+    // 3b) Dizin var ama library.yaml yoksa yine de döndür (eski davranış)
+    for (final candidate in [
+      p.join(cwd, 'assets', 'soundpad'),
+      p.join(cwd, '..', 'assets', 'soundpad'),
+      p.join(cwd, '..', '..', 'assets', 'soundpad'),
+    ]) {
+      final normalized = p.normalize(candidate);
+      if (await Directory(normalized).exists()) return normalized;
     }
 
     // 4) Fallback: dataRoot altında

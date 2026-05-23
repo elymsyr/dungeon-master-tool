@@ -86,6 +86,30 @@ class WorldMirrorService {
   void clearExpectedUnpublish(String worldId) =>
       _expectedUnpublish.remove(worldId);
 
+  /// charId → expiry timestamp (ms). `leave_beta` orphan online karakterleri
+  /// sunucudan silerken DM lokal kopyayı tutmak ister; bu set'teyken
+  /// `applyCharacterCdc` DELETE event'inde lokal removeMirror/dropMirror
+  /// çağrısı ATLANIR. [_unpublishGuardMs] sonra kendiliğinden expire.
+  final Map<String, int> _expectedCharDelete = {};
+
+  void registerExpectedCharDelete(String characterId) {
+    _expectedCharDelete[characterId] =
+        DateTime.now().millisecondsSinceEpoch + _unpublishGuardMs;
+  }
+
+  bool isExpectedCharDelete(String characterId) {
+    final until = _expectedCharDelete[characterId];
+    if (until == null) return false;
+    if (DateTime.now().millisecondsSinceEpoch > until) {
+      _expectedCharDelete.remove(characterId);
+      return false;
+    }
+    return true;
+  }
+
+  void clearExpectedCharDelete(String characterId) =>
+      _expectedCharDelete.remove(characterId);
+
   // ── Entities (DM-only writes) ──────────────────────────────────────
 
   /// Single-entity upsert. F4 retired the bulk `pushEntities` path —
