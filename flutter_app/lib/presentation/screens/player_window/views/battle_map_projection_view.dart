@@ -10,7 +10,6 @@ import '../../../../application/services/asset_ref_resolver.dart';
 import '../../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
-import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/asset_ref_image.dart';
 
 /// Player-window view of a battle map. Receives a [BattleMapSnapshot] over
@@ -706,7 +705,6 @@ class _InitiativeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final hpText = token.isPlayer ? '${token.hp} / ${token.maxHp}' : '???';
     final hpRatio = token.isPlayer && token.maxHp > 0
         ? (token.hp / token.maxHp).clamp(0.0, 1.0)
@@ -722,8 +720,8 @@ class _InitiativeRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         // Subtle brass underline marks the active row instead of a heavy rim.
         border: isActive
-            ? Border(
-                left: BorderSide(color: palette.tokenBorderActive, width: 2),
+            ? const Border(
+                left: BorderSide(color: _ddBrass, width: 2),
               )
             : null,
       ),
@@ -758,7 +756,7 @@ class _InitiativeRow extends StatelessWidget {
                   child: Text(
                     token.name,
                     style: TextStyle(
-                      color: isActive ? palette.tokenBorderActive : _ddParchment,
+                      color: isActive ? _ddBrass : _ddParchment,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
