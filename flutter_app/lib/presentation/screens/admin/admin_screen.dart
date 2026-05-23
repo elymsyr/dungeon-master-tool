@@ -10,6 +10,7 @@ import '../../dialogs/admin_compose_dm_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/pill_tab_bar.dart';
 import 'audit_log_tab.dart';
+import 'beta_requests_tab.dart';
 import 'bug_reports_tab.dart';
 import 'content_moderation_tab.dart';
 import 'restricted_users_tab.dart';
@@ -60,6 +61,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         final tabs = <PillTab<String>>[
           const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
           const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
+          const PillTab(id: 'beta_requests', icon: Icons.science_outlined, label: 'Beta Requests'),
           const PillTab(id: 'content', icon: Icons.forum_outlined, label: 'Content'),
           const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
           const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
@@ -80,6 +82,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         switch (_tab) {
           case 'users':
             content = const _UsersTab();
+            break;
+          case 'beta_requests':
+            content = const BetaRequestsTab();
             break;
           case 'content':
             content = const ContentModerationTab();

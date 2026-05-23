@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgresChangeEvent, RealtimeChannel, Supabase;
 
 import 'package:drift/drift.dart' show Value;
 
@@ -19,13 +20,13 @@ import 'online_worlds_provider.dart';
 import 'personal_online_provider.dart';
 import 'role_provider.dart';
 
-/// Beta program state — ilk 200 kullanıcıya açık, 100 MB / kullanıcı cloud
+/// Beta program state — ilk 90 kullanıcıya açık, 100 MB / kullanıcı cloud
 /// save quota'sı. 7 gün inaktif olanların slot'u otomatik serbest bırakılır.
 /// Sunucu otoritedir (RLS + trigger); burası yalnızca UX gate'i ve UI kaynağı.
 @immutable
 class BetaState {
   final bool isActive;
-  final int slotCap;            // 200
+  final int slotCap;            // 90
   final int slotsRemaining;     // 0..slotCap
   final int? slotNumber;        // aktif kullanıcı için 1..slotCap
   final DateTime? joinedAt;
@@ -33,19 +34,25 @@ class BetaState {
   final int usedBytes;
   final int quotaBytes;         // sunucudan gelir (100 MB mirror)
   final int inactivityDays;     // 7
+  final bool requestPending;    // admin onayı bekleyen istek var mı
+  final DateTime? requestedAt;
+  final String? requestMessage;
   final bool loading;
   final String? error;
 
   const BetaState({
     this.isActive = false,
-    this.slotCap = 200,
-    this.slotsRemaining = 200,
+    this.slotCap = 90,
+    this.slotsRemaining = 90,
     this.slotNumber,
     this.joinedAt,
     this.lastActiveAt,
     this.usedBytes = 0,
     this.quotaBytes = 100 * 1024 * 1024,
     this.inactivityDays = 7,
+    this.requestPending = false,
+    this.requestedAt,
+    this.requestMessage,
     this.loading = false,
     this.error,
   });
@@ -56,7 +63,7 @@ class BetaState {
       : this(
           isActive: false,
           loading: false,
-          slotsRemaining: 200,
+          slotsRemaining: 90,
         );
 
   BetaState copyWith({
@@ -69,6 +76,9 @@ class BetaState {
     int? usedBytes,
     int? quotaBytes,
     int? inactivityDays,
+    bool? requestPending,
+    Object? requestedAt = _sentinel,
+    Object? requestMessage = _sentinel,
     bool? loading,
     Object? error = _sentinel,
   }) =>
@@ -83,6 +93,11 @@ class BetaState {
         usedBytes: usedBytes ?? this.usedBytes,
         quotaBytes: quotaBytes ?? this.quotaBytes,
         inactivityDays: inactivityDays ?? this.inactivityDays,
+        requestPending: requestPending ?? this.requestPending,
+        requestedAt:
+            requestedAt == _sentinel ? this.requestedAt : requestedAt as DateTime?,
+        requestMessage:
+            requestMessage == _sentinel ? this.requestMessage : requestMessage as String?,
         loading: loading ?? this.loading,
         error: error == _sentinel ? this.error : error as String?,
       );
@@ -94,16 +109,20 @@ class BetaState {
   static const _sentinel = Object();
 }
 
-enum BetaJoinStatus { joined, already, full, notSignedIn, error }
+/// Beta access request RPC sonuç enum'u.
+/// • requested: yeni istek atıldı
+/// • alreadyPending: istek zaten var, mesaj güncellendi
+/// • alreadyActive: kullanıcı zaten beta'da
+/// • notSignedIn: oturum açık değil
+/// • error: ağ/sunucu hatası
+enum BetaRequestStatus { requested, alreadyPending, alreadyActive, notSignedIn, error }
 
-class BetaJoinResult {
-  final BetaJoinStatus status;
-  final int? slotNumber;
+class BetaRequestResult {
+  final BetaRequestStatus status;
   final int slotsRemaining;
   final String? errorMessage;
-  const BetaJoinResult({
+  const BetaRequestResult({
     required this.status,
-    this.slotNumber,
     this.slotsRemaining = 0,
     this.errorMessage,
   });
@@ -112,14 +131,19 @@ class BetaJoinResult {
 class BetaNotifier extends StateNotifier<BetaState> {
   final Ref _ref;
   ProviderSubscription<AuthState?>? _authSub;
+  RealtimeChannel? _rt;
+  String? _rtUid;
+  Timer? _rtDebounce;
 
   BetaNotifier(this._ref) : super(const BetaState.initial()) {
     _authSub = _ref.listen<AuthState?>(
       authProvider,
       (previous, next) {
         if (next == null) {
+          _teardownRealtime();
           state = const BetaState.signedOut();
         } else {
+          _ensureRealtime(next.uid);
           refresh();
         }
       },
@@ -130,7 +154,50 @@ class BetaNotifier extends StateNotifier<BetaState> {
   @override
   void dispose() {
     _authSub?.close();
+    _teardownRealtime();
     super.dispose();
+  }
+
+  /// Admin onayı/reddi/revoke için realtime CDC dinleyici. beta_participants
+  /// veya beta_requests'te kullanıcının kendi satırı eklenip silindiğinde
+  /// `refresh()` tetiklenir (RLS sayesinde sadece self event'ler gelir).
+  void _ensureRealtime(String uid) {
+    if (_rt != null && _rtUid == uid) return;
+    _teardownRealtime();
+    if (!SupabaseConfig.isConfigured) return;
+    _rtUid = uid;
+    final client = Supabase.instance.client;
+    void onChange(_) {
+      _rtDebounce?.cancel();
+      _rtDebounce = Timer(const Duration(milliseconds: 300), refresh);
+    }
+    _rt = client.channel('public:beta:self:$uid')
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'beta_participants',
+        callback: onChange,
+      )
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'beta_requests',
+        callback: onChange,
+      )
+      ..subscribe();
+  }
+
+  void _teardownRealtime() {
+    _rtDebounce?.cancel();
+    _rtDebounce = null;
+    final c = _rt;
+    _rt = null;
+    _rtUid = null;
+    if (c != null) {
+      try {
+        Supabase.instance.client.removeChannel(c);
+      } catch (_) {}
+    }
   }
 
   bool get _canCallRpc =>
@@ -156,7 +223,7 @@ class BetaNotifier extends StateNotifier<BetaState> {
       }
       state = BetaState(
         isActive: (row['is_active'] as bool?) ?? false,
-        slotCap: (row['slot_cap'] as num?)?.toInt() ?? 200,
+        slotCap: (row['slot_cap'] as num?)?.toInt() ?? 90,
         slotsRemaining: (row['slots_remaining'] as num?)?.toInt() ?? 0,
         slotNumber: (row['slot_number'] as num?)?.toInt(),
         joinedAt: _parseTs(row['joined_at']),
@@ -164,6 +231,9 @@ class BetaNotifier extends StateNotifier<BetaState> {
         usedBytes: (row['used_bytes'] as num?)?.toInt() ?? 0,
         quotaBytes: (row['quota_bytes'] as num?)?.toInt() ?? (100 * 1024 * 1024),
         inactivityDays: (row['inactivity_days'] as num?)?.toInt() ?? 7,
+        requestPending: (row['request_pending'] as bool?) ?? false,
+        requestedAt: _parseTs(row['requested_at']),
+        requestMessage: row['request_message'] as String?,
         loading: false,
       );
     } catch (e, st) {
@@ -177,36 +247,53 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
   }
 
-  /// `join_beta` RPC'si — atomik slot alır, sonra refresh eder.
-  Future<BetaJoinResult> joinBeta() async {
+  /// `request_beta` RPC'si — opsiyonel mesajla admin onayı için istek atar.
+  /// Var olan request'i overwrite eder (mesajı günceller).
+  Future<BetaRequestResult> requestAccess({String? message}) async {
     if (!_canCallRpc) {
-      return const BetaJoinResult(status: BetaJoinStatus.notSignedIn);
+      return const BetaRequestResult(status: BetaRequestStatus.notSignedIn);
     }
     state = state.copyWith(loading: true, error: null);
     try {
-      final rows = await Supabase.instance.client.rpc('join_beta');
+      final rows = await Supabase.instance.client
+          .rpc('request_beta', params: {'p_message': message});
       final row = (rows is List && rows.isNotEmpty)
           ? rows.first as Map<String, dynamic>
           : (rows is Map ? rows as Map<String, dynamic> : null);
       if (row == null) {
         await refresh();
-        return const BetaJoinResult(status: BetaJoinStatus.error);
+        return const BetaRequestResult(status: BetaRequestStatus.error);
       }
       final statusStr = row['status'] as String? ?? 'error';
-      final result = BetaJoinResult(
-        status: _parseStatus(statusStr),
-        slotNumber: (row['assigned_slot'] as num?)?.toInt(),
+      final result = BetaRequestResult(
+        status: _parseRequestStatus(statusStr),
         slotsRemaining: (row['slots_remaining'] as num?)?.toInt() ?? 0,
       );
       await refresh();
       return result;
     } catch (e, st) {
-      debugPrint('join_beta error: $e\n$st');
+      debugPrint('request_beta error: $e\n$st');
       state = state.copyWith(loading: false, error: e.toString());
-      return BetaJoinResult(
-        status: BetaJoinStatus.error,
+      return BetaRequestResult(
+        status: BetaRequestStatus.error,
         errorMessage: e.toString(),
       );
+    }
+  }
+
+  /// `cancel_beta_request` — kullanıcı kendi pending isteğini geri çeker.
+  Future<bool> cancelRequest() async {
+    if (!_canCallRpc) return false;
+    state = state.copyWith(loading: true, error: null);
+    try {
+      final res = await Supabase.instance.client.rpc('cancel_beta_request');
+      final ok = res == true || (res is List && res.isNotEmpty && res.first == true);
+      await refresh();
+      return ok;
+    } catch (e, st) {
+      debugPrint('cancel_beta_request error: $e\n$st');
+      state = state.copyWith(loading: false, error: e.toString());
+      return false;
     }
   }
 
@@ -332,18 +419,18 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
   }
 
-  BetaJoinStatus _parseStatus(String s) {
+  BetaRequestStatus _parseRequestStatus(String s) {
     switch (s) {
-      case 'joined':
-        return BetaJoinStatus.joined;
-      case 'already':
-        return BetaJoinStatus.already;
-      case 'full':
-        return BetaJoinStatus.full;
+      case 'requested':
+        return BetaRequestStatus.requested;
+      case 'already_pending':
+        return BetaRequestStatus.alreadyPending;
+      case 'already_active':
+        return BetaRequestStatus.alreadyActive;
       case 'not_signed_in':
-        return BetaJoinStatus.notSignedIn;
+        return BetaRequestStatus.notSignedIn;
       default:
-        return BetaJoinStatus.error;
+        return BetaRequestStatus.error;
     }
   }
 

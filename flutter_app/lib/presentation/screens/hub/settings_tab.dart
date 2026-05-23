@@ -1082,32 +1082,114 @@ class _SubscriptionsSection extends ConsumerWidget {
       );
     }
 
-    // State: beta full
-    if (beta.slotsRemaining <= 0) {
+    // State: request already pending
+    if (beta.requestPending) {
+      final sent = beta.requestedAt == null
+          ? '—'
+          : DateFormat.yMMMd().add_Hm().format(beta.requestedAt!.toLocal());
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          header,
+          Row(
+            children: [
+              Icon(Icons.hourglass_top,
+                  size: 18, color: palette.featureCardAccent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.subsBetaRequestPendingTitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           Text(
-            l10n.subsBetaFull,
+            l10n.subsBetaRequestPendingBody,
             style: TextStyle(fontSize: 12, color: palette.tabText, height: 1.4),
           ),
           const SizedBox(height: 10),
           Text(
-            l10n.subsBetaRoadmap,
+            l10n.subsBetaRequestPendingSince(sent),
             style: TextStyle(
               fontSize: 11,
-              fontStyle: FontStyle.italic,
-              color: palette.featureCardAccent,
-              height: 1.4,
+              color: palette.sidebarLabelSecondary,
             ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.subsBetaRequestYourMessage,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: palette.sidebarLabelSecondary,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: palette.featureCardBorder.withValues(alpha: 0.25),
+              borderRadius: palette.br,
+            ),
+            child: Text(
+              (beta.requestMessage == null || beta.requestMessage!.isEmpty)
+                  ? l10n.subsBetaRequestNoMessage
+                  : beta.requestMessage!,
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: (beta.requestMessage == null || beta.requestMessage!.isEmpty)
+                    ? FontStyle.italic
+                    : FontStyle.normal,
+                color: palette.tabActiveText,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: Text(l10n.subsBetaRequestEditBtn),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: palette.br),
+                  ),
+                  onPressed: beta.loading
+                      ? null
+                      : () => _requestDialog(context, ref, l10n,
+                          initialMessage: beta.requestMessage, isEdit: true),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.cancel_outlined, size: 16),
+                  label: Text(l10n.subsBetaRequestCancelBtn),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: palette.dangerBtnBg,
+                    side: BorderSide(color: palette.dangerBtnBg),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: palette.br),
+                  ),
+                  onPressed: beta.loading ? null : () => _cancelRequest(context, ref, l10n),
+                ),
+              ),
+            ],
           ),
         ],
       );
     }
 
-    // State: can join (slot available)
+    // State: can request (no slot or slots open — admin gates either way)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1135,6 +1217,17 @@ class _SubscriptionsSection extends ConsumerWidget {
             color: palette.featureCardAccent,
           ),
         ),
+        if (beta.slotsRemaining <= 0) ...[
+          const SizedBox(height: 4),
+          Text(
+            l10n.subsBetaRequestFullNote,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
@@ -1142,12 +1235,11 @@ class _SubscriptionsSection extends ConsumerWidget {
             style: FilledButton.styleFrom(
               backgroundColor: palette.featureCardAccent,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape:
-                  RoundedRectangleBorder(borderRadius: palette.br),
+              shape: RoundedRectangleBorder(borderRadius: palette.br),
             ),
             onPressed: beta.loading
                 ? null
-                : () => _join(context, ref, l10n),
+                : () => _requestDialog(context, ref, l10n),
             child: beta.loading
                 ? const SizedBox(
                     width: 18,
@@ -1156,7 +1248,7 @@ class _SubscriptionsSection extends ConsumerWidget {
                         strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
-                    l10n.subsBetaJoinBtn,
+                    l10n.subsBetaRequestBtn,
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1178,40 +1270,106 @@ class _SubscriptionsSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _join(
-      BuildContext context, WidgetRef ref, L10n l10n) async {
-    final result = await ref.read(betaProvider.notifier).joinBeta();
+  Future<void> _requestDialog(
+    BuildContext context,
+    WidgetRef ref,
+    L10n l10n, {
+    String? initialMessage,
+    bool isEdit = false,
+  }) async {
+    final controller = TextEditingController(text: initialMessage ?? '');
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.science_outlined),
+              const SizedBox(width: 8),
+              Expanded(child: Text(l10n.subsBetaRequestDialogTitle)),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.subsBetaRequestDialogIntro,
+                    style: const TextStyle(height: 1.4)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 4,
+                  maxLength: 500,
+                  decoration: InputDecoration(
+                    hintText: l10n.subsBetaRequestMessageHint,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.btnCancel),
+            ),
+            FilledButton.icon(
+              icon: const Icon(Icons.send, size: 16),
+              label: Text(l10n.subsBetaRequestSubmit),
+              onPressed: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    if (submitted != true) return;
+    if (!context.mounted) return;
+
+    final message = controller.text.trim();
+    final result = await ref
+        .read(betaProvider.notifier)
+        .requestAccess(message: message.isEmpty ? null : message);
     if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     switch (result.status) {
-      case BetaJoinStatus.joined:
+      case BetaRequestStatus.requested:
         messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.subsBetaActiveBadge(result.slotNumber ?? 0),
-            ),
-          ),
+          SnackBar(content: Text(l10n.subsBetaRequestSubmitted)),
         );
-      case BetaJoinStatus.already:
-        // No message — UI state already reflects membership.
+      case BetaRequestStatus.alreadyPending:
+        messenger.showSnackBar(
+          SnackBar(content: Text(
+            isEdit ? l10n.subsBetaRequestUpdated : l10n.subsBetaRequestSubmitted,
+          )),
+        );
+      case BetaRequestStatus.alreadyActive:
+        // UI refresh will swap to active state.
         break;
-      case BetaJoinStatus.full:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.subsBetaJoinFailedFull)),
-        );
-      case BetaJoinStatus.notSignedIn:
+      case BetaRequestStatus.notSignedIn:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.subsBetaSignInHint)),
         );
-      case BetaJoinStatus.error:
+      case BetaRequestStatus.error:
         messenger.showSnackBar(
           SnackBar(
             content: Text(
-              l10n.subsBetaJoinFailedGeneric(
-                  result.errorMessage ?? 'unknown'),
+              l10n.subsBetaRequestFailed(result.errorMessage ?? 'unknown'),
             ),
           ),
         );
+    }
+  }
+
+  Future<void> _cancelRequest(
+      BuildContext context, WidgetRef ref, L10n l10n) async {
+    final ok = await ref.read(betaProvider.notifier).cancelRequest();
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.subsBetaRequestCancelled)),
+      );
     }
   }
 

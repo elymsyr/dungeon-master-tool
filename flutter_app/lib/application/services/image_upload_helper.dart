@@ -69,9 +69,10 @@ Future<({String ref, bool quotaExceeded, bool tooLarge, int? actualBytes})>
       actualBytes: null,
     );
   } on AssetQuotaExceededException catch (_) {
-    // Quota full. For projection ([transientFallback] true), fall back to a
-    // quota-exempt transient share so online players still resolve it; the
-    // transient ref must NOT be persisted (R2 lifecycle ~1 day TTL).
+    // Counted quota full. For projection ([transientFallback] true), fall
+    // back to the shared transient pool (per-user 100 MB cap, global LRU)
+    // so online players still resolve it; the transient ref must NOT be
+    // persisted (server LRU may evict + R2 lifecycle TTL).
     if (transientFallback) {
       try {
         final uri = await service.uploadTransientShare(
@@ -82,6 +83,15 @@ Future<({String ref, bool quotaExceeded, bool tooLarge, int? actualBytes})>
         return (
           ref: uri.toString(),
           quotaExceeded: false,
+          tooLarge: false,
+          actualBytes: null,
+        );
+      } on TransientQuotaExceededException catch (_) {
+        // İki katmanlı: counted full + transient full. Caller bunu
+        // "her iki alan da dolu" mesajına çevirir.
+        return (
+          ref: localPath,
+          quotaExceeded: true,
           tooLarge: false,
           actualBytes: null,
         );
