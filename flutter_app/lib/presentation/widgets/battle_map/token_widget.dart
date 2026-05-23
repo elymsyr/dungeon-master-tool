@@ -1,11 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/session.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../asset_ref_image.dart';
 
 /// Battle map token — canvas-space positioning.
 ///
@@ -113,23 +113,21 @@ class _TokenWidgetState extends State<TokenWidget> {
 
   Widget _buildAvatar(double size) {
     final path = widget.imagePath;
-    if (path != null && path.isNotEmpty) {
-      final file = File(path);
-      if (file.existsSync()) {
-        final cacheDim = (size * 2).toInt();
-        return Image.file(
-          file,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          cacheWidth: cacheDim,
-          cacheHeight: cacheDim,
-          filterQuality: FilterQuality.low,
-          errorBuilder: (_, _, _) => _buildInitials(size),
-        );
-      }
-    }
-    return _buildInitials(size);
+    if (path == null || path.isEmpty) return _buildInitials(size);
+    final cacheDim = (size * 2).toInt();
+    // AssetRefImage handles raw paths, local `asset://` refs, and cloud
+    // `dmt-asset://` refs (downloads + caches). Falls back to initials when
+    // the ref can't be resolved.
+    return AssetRefImage(
+      ref: AssetRef(path),
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      cacheWidth: cacheDim,
+      cacheHeight: cacheDim,
+      placeholder: _buildInitials(size),
+      errorWidget: _buildInitials(size),
+    );
   }
 
   Widget _buildInitials(double size) {

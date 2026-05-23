@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../domain/entities/character.dart';
+import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/projection/battle_map_snapshot.dart';
@@ -16,6 +18,7 @@ import '../services/asset_ref_resolver.dart';
 import '../services/battle_map_snapshot_builder.dart';
 import '../services/entity_snapshot_builder.dart';
 import '../services/projection_output.dart';
+import 'character_provider.dart';
 import 'combat_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
@@ -286,10 +289,12 @@ class ProjectionController extends StateNotifier<ProjectionState> {
 
     final entities = _ref.read(entityProvider);
     final schema = _ref.read(worldSchemaProvider);
+    final characters = _ref.read(combatCharactersProvider);
     final snapshot = BattleMapSnapshotBuilder.build(
       encounter: encounter,
       entities: entities,
       schema: schema,
+      characters: characters,
       canvasWidth: w ?? 2048,
       canvasHeight: h ?? 2048,
     );
@@ -598,30 +603,41 @@ final projectionEntitySyncProvider = Provider<void>((ref) {
   }, fireImmediately: false);
 });
 
-/// Auto-installed sync — whenever combat state changes, walks all active
-/// `BattleMapProjection` items and rebuilds their snapshots from the latest
-/// encounter + entity data.
+/// Auto-installed sync — rebuilds every active `BattleMapProjection`
+/// snapshot whenever combat state, the entity map, or the combined character
+/// source changes. Without the entity + character listens, a snapshot pushed
+/// before chars hydrate stays stuck with `isPlayer=false` + null portraits
+/// for PC tokens (sidebar shows `???`, player view shows initials).
 final projectionBattleMapSyncProvider = Provider<void>((ref) {
-  ref.listen<CombatState>(combatProvider, (prev, next) {
+  void rebuildAll() {
     final state = ref.read(projectionControllerProvider);
     if (!state.items.any((i) => i is BattleMapProjection)) return;
     final controller = ref.read(projectionControllerProvider.notifier);
     final entities = ref.read(entityProvider);
     final schema = ref.read(worldSchemaProvider);
+    final characters = ref.read(combatCharactersProvider);
+    final encounters = ref.read(combatProvider).encounters;
     for (final item in state.items) {
       if (item is! BattleMapProjection) continue;
-      final encounter = next.encounters
-          .where((e) => e.id == item.encounterId)
-          .firstOrNull;
+      final encounter =
+          encounters.where((e) => e.id == item.encounterId).firstOrNull;
       if (encounter == null) continue;
       final newSnap = BattleMapSnapshotBuilder.build(
         encounter: encounter,
         entities: entities,
         schema: schema,
+        characters: characters,
         canvasWidth: item.snapshot.canvasWidth,
         canvasHeight: item.snapshot.canvasHeight,
       );
       controller.updateBattleMapSnapshot(item.id, newSnap);
     }
-  }, fireImmediately: false);
+  }
+
+  ref.listen<CombatState>(combatProvider, (_, _) => rebuildAll(),
+      fireImmediately: false);
+  ref.listen<Map<String, Entity>>(entityProvider, (_, _) => rebuildAll(),
+      fireImmediately: false);
+  ref.listen<List<Character>>(combatCharactersProvider, (_, _) => rebuildAll(),
+      fireImmediately: false);
 });
