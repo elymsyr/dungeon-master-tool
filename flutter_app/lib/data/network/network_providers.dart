@@ -35,9 +35,18 @@ const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
 /// bu durumda çağıranlar offline fallback yapmalı.
 final assetServiceProvider = Provider<AssetService?>((ref) {
   if (!SupabaseConfig.isConfigured || _workerBaseUrl.isEmpty) return null;
-
+  // Runtime guard: sub-isolates (player sub-window) may compile with the
+  // flags set but fail/skip Supabase.initialize(). Reading
+  // Supabase.instance.client there throws an assertion. Return null →
+  // callers fall back to local resolution.
+  final SupabaseClient client;
+  try {
+    client = Supabase.instance.client;
+  } catch (_) {
+    return null;
+  }
   final service = AssetService(
-    supabase: Supabase.instance.client,
+    supabase: client,
     workerBaseUrl: _workerBaseUrl,
     contentStore: ref.watch(contentStoreProvider),
   );
@@ -51,9 +60,14 @@ final assetServiceProvider = Provider<AssetService?>((ref) {
 /// Konfigüre değilse null döner; çağıranlar local fallback yapar.
 final freeMediaServiceProvider = Provider<FreeMediaService?>((ref) {
   if (!SupabaseConfig.isConfigured) return null;
-
+  final SupabaseClient client;
+  try {
+    client = Supabase.instance.client;
+  } catch (_) {
+    return null;
+  }
   return FreeMediaService(
-    supabase: Supabase.instance.client,
+    supabase: client,
     contentStore: ref.watch(contentStoreProvider),
   );
 });

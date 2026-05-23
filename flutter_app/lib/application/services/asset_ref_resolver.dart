@@ -77,9 +77,19 @@ class AssetRefResolver {
 }
 
 final assetRefResolverProvider = Provider<AssetRefResolver>((ref) {
+  // Runtime guard for sub-isolates where Supabase.initialize() may not have
+  // run yet — reading Supabase.instance.client there asserts.
+  SupabaseClient? client;
+  if (SupabaseConfig.isConfigured) {
+    try {
+      client = Supabase.instance.client;
+    } catch (_) {
+      client = null;
+    }
+  }
   return AssetRefResolver(
     ref.watch(assetServiceProvider),
     ref.watch(freeMediaServiceProvider),
-    SupabaseConfig.isConfigured ? Supabase.instance.client : null,
+    client,
   );
 });
