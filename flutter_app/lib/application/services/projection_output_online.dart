@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/projection/projection_state.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import 'projection_output.dart';
 
 /// Online projection output — mirrors the projection manifest into the
@@ -81,9 +82,18 @@ class ProjectionOutputOnline extends ProjectionOutput {
   Future<bool> _upsert(ProjectionState state) async {
     if (!_active) return false;
     try {
+      final json = state.toJson();
+      // F7 debug guard: state_json'da AssetRef olmayan ham path varsa
+      // player çözemez. Caller (entity_share_prepare /
+      // prepareEntityImagesForProjection) bunu önceden upload etmiş
+      // olmalı. Sessiz fail yerine debug log → erken yakala.
+      assert(() {
+        _warnRawPaths(json);
+        return true;
+      }());
       await client.from('world_projection').upsert({
         'world_id': worldId,
-        'state_json': jsonEncode(state.toJson()),
+        'state_json': jsonEncode(json),
         'updated_by': client.auth.currentUser?.id,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
@@ -91,6 +101,40 @@ class ProjectionOutputOnline extends ProjectionOutput {
       debugPrint('ProjectionOutputOnline._upsert failed: $e\n$st');
     }
     return _active;
+  }
+
+  /// Debug-only: state_json içinde ham filesystem path (AssetRef DEĞİL)
+  /// var mı? Varsa player tarafı çözemez (RLS yok, file sistem yok).
+  static void _warnRawPaths(Object? node) {
+    if (node is String) {
+      if (node.isEmpty) return;
+      if (node.startsWith(AssetRef.scheme) ||
+          node.startsWith(AssetRef.publicScheme) ||
+          node.startsWith(AssetRef.transientScheme)) {
+        return;
+      }
+      // Heuristic: path-like (slash + dot extension); base64 fog veya kısa
+      // string'leri eleme.
+      if (node.length > 8 &&
+          node.contains('/') &&
+          RegExp(r'\.(png|jpe?g|webp|gif)$', caseSensitive: false)
+              .hasMatch(node)) {
+        debugPrint('ProjectionOutputOnline: raw path in state_json → '
+            'player will not resolve: ${node.substring(0, node.length.clamp(0, 80))}');
+      }
+      return;
+    }
+    if (node is Map) {
+      for (final v in node.values) {
+        _warnRawPaths(v);
+      }
+      return;
+    }
+    if (node is List) {
+      for (final v in node) {
+        _warnRawPaths(v);
+      }
+    }
   }
 
   @override

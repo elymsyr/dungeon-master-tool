@@ -3,8 +3,12 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
+
+// SHA-256 doğrulaması artık ContentStore.write içinde — sha import burada
+// yalnızca uploadFreeMedia bayt hash'i için kullanılır.
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../application/services/content_store.dart';
 import '../../core/utils/id_gen.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
@@ -21,12 +25,12 @@ import '../../domain/value_objects/media_kind.dart';
 class FreeMediaService {
   FreeMediaService({
     required SupabaseClient supabase,
-    required Directory cacheDir,
+    required ContentStore contentStore,
   })  : _supabase = supabase,
-        _cacheDir = cacheDir;
+        _store = contentStore;
 
   final SupabaseClient _supabase;
-  final Directory _cacheDir;
+  final ContentStore _store;
   final HttpClient _httpClient = HttpClient();
 
   static const String _bucket = 'free-media';
@@ -67,7 +71,7 @@ class FreeMediaService {
         .eq('storage_path', path)
         .maybeSingle();
     if (existing != null) {
-      await _writeCache(sha, bytes);
+      await _writeCacheWithMeta(sha, bytes, path, kind);
       return Uri.parse(AssetRef.formatPublicUri(path));
     }
 
@@ -91,7 +95,7 @@ class FreeMediaService {
     });
 
     // Yüklenen baytları local cache'e de yaz — hemen render edilebilsin.
-    await _writeCache(sha, bytes);
+    await _writeCacheWithMeta(sha, bytes, path, kind);
 
     return Uri.parse(AssetRef.formatPublicUri(path));
   }
@@ -107,12 +111,9 @@ class FreeMediaService {
   /// enumeration kapalı — bkz. migration 058).
   Future<File?> resolveFreeMedia(String publicPath) async {
     final sha = _shaFromPath(publicPath);
-    final cacheFile = _cacheFileFor(sha);
 
-    if (await cacheFile.exists()) {
-      if (await _verifyFileHash(cacheFile, sha)) return cacheFile;
-      await cacheFile.delete();
-    }
+    final cached = await _store.read(sha);
+    if (cached != null) return cached;
 
     final Uint8List bytes;
     try {
@@ -122,11 +123,12 @@ class FreeMediaService {
       return null;
     }
 
-    if (sha256.convert(bytes).toString() != sha.toLowerCase()) {
+    try {
+      return await _writeCacheWithMeta(sha, bytes, publicPath, null);
+    } on ContentStoreException {
+      // SHA mismatch — corrupt download
       return null;
     }
-    await _writeCache(sha, bytes);
-    return cacheFile;
   }
 
   /// Public URL'den ham baytları indirir. Public bucket → auth header gerekmez.
@@ -187,18 +189,29 @@ class FreeMediaService {
         .eq('owner_id', user.id)
         .eq('storage_path', publicPath);
     if (keepCache) return;
-    final cacheFile = _cacheFileFor(_shaFromPath(publicPath));
-    if (await cacheFile.exists()) await cacheFile.delete();
+    await _store.delete(_shaFromPath(publicPath));
   }
 
   // ── helpers ────────────────────────────────────────────────────────────
 
-  File _cacheFileFor(String sha) => File(p.join(_cacheDir.path, '$sha.bin'));
-
-  Future<void> _writeCache(String sha, Uint8List bytes) async {
-    final cacheFile = _cacheFileFor(sha);
-    await cacheFile.parent.create(recursive: true);
-    await cacheFile.writeAsBytes(bytes, flush: true);
+  Future<File> _writeCacheWithMeta(
+    String sha,
+    Uint8List bytes,
+    String publicPath,
+    MediaKind? kind,
+  ) async {
+    return _store.write(
+      sha,
+      bytes,
+      ContentMetadata(
+        sha: sha,
+        sizeBytes: bytes.length,
+        createdAt: DateTime.now(),
+        lastAccessAt: DateTime.now(),
+        sourceUri: AssetRef.formatPublicUri(publicPath),
+        kind: kind?.wireName,
+      ),
+    );
   }
 
   /// `{uid}/{sha256}.{ext}` path'inden sha256 hex'ini çıkarır.
@@ -208,11 +221,6 @@ class FreeMediaService {
     final dot = filename.indexOf('.');
     final base = dot >= 0 ? filename.substring(0, dot) : filename;
     return base.toLowerCase();
-  }
-
-  Future<bool> _verifyFileHash(File file, String expected) async {
-    final bytes = await file.readAsBytes();
-    return sha256.convert(bytes).toString() == expected.toLowerCase();
   }
 
   User _requireUser() {

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../application/services/content_store.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 
@@ -21,16 +23,16 @@ class AssetService {
   AssetService({
     required SupabaseClient supabase,
     required String workerBaseUrl,
-    required Directory cacheDir,
+    required ContentStore contentStore,
     HttpClient? httpClient,
   })  : _supabase = supabase,
         _workerBaseUrl = workerBaseUrl.replaceAll(RegExp(r'/$'), ''),
-        _cacheDir = cacheDir,
+        _store = contentStore,
         _httpClient = httpClient ?? HttpClient();
 
   final SupabaseClient _supabase;
   final String _workerBaseUrl;
-  final Directory _cacheDir;
+  final ContentStore _store;
   final HttpClient _httpClient;
 
   static const int _maxDownloadRetries = 2;
@@ -161,9 +163,18 @@ class AssetService {
     await res.drain<void>();
 
     // SHA-cache'e de yaz — DM kendi gösterdiği resmi yeniden indirmesin.
-    final cacheFile = _cacheFileFor(sha);
-    await cacheFile.parent.create(recursive: true);
-    await cacheFile.writeAsBytes(bytes, flush: true);
+    await _store.write(
+      sha,
+      bytes,
+      ContentMetadata(
+        sha: sha,
+        sizeBytes: bytes.length,
+        createdAt: DateTime.now(),
+        lastAccessAt: DateTime.now(),
+        sourceUri: AssetRef.formatTransientUri(sha, ext),
+        kind: kind.wireName,
+      ),
+    );
 
     return Uri.parse(AssetRef.formatTransientUri(sha, ext));
   }
@@ -211,22 +222,17 @@ class AssetService {
   }
 
   /// Cache-first download. SHA-256 doğrulaması yapar; mismatch → cache at + hata.
+  /// Cache hit'te (yeni store veya legacy migrate) zero transfer.
   Future<File> downloadAsset(String r2Key) async {
     final token = _requireToken();
     final expectedSha = extractShaFromKey(r2Key);
-    final cacheFile = _cacheFileFor(expectedSha);
 
-    if (await cacheFile.exists()) {
-      final ok = await _verifyFileHash(cacheFile, expectedSha);
-      if (ok) return cacheFile;
-      await cacheFile.delete();
-    }
-
-    await cacheFile.parent.create(recursive: true);
+    final cached = await _store.read(expectedSha);
+    if (cached != null) return cached;
 
     for (int attempt = 0; attempt <= _maxDownloadRetries; attempt++) {
       try {
-        return await _downloadOnce(r2Key, token, cacheFile, expectedSha);
+        return await _downloadOnce(r2Key, token, expectedSha);
       } on AssetRateLimitException {
         if (attempt == _maxDownloadRetries) rethrow;
         await Future<void>.delayed(Duration(seconds: 1 << attempt));
@@ -238,7 +244,6 @@ class AssetService {
   Future<File> _downloadOnce(
     String r2Key,
     String token,
-    File cacheFile,
     String expectedSha,
   ) async {
     final uri = Uri.parse('$_workerBaseUrl/assets/$r2Key');
@@ -255,21 +260,30 @@ class AssetService {
       throw AssetServiceException('download_${res.statusCode}', body);
     }
 
-    final sink = cacheFile.openWrite();
+    // Stream'i baytlara topla — store.write atomic rename + SHA verify yapar.
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in res) {
+      builder.add(chunk);
+    }
+    final bytes = builder.takeBytes();
     try {
-      await res.pipe(sink);
-    } catch (_) {
-      await sink.close();
-      if (await cacheFile.exists()) await cacheFile.delete();
+      return await _store.write(
+        expectedSha,
+        bytes,
+        ContentMetadata(
+          sha: expectedSha,
+          sizeBytes: bytes.length,
+          createdAt: DateTime.now(),
+          lastAccessAt: DateTime.now(),
+          sourceUri: 'dmt-asset://$r2Key',
+        ),
+      );
+    } on ContentStoreException catch (e) {
+      if (e.code == 'sha_mismatch') {
+        throw AssetServiceException('sha256_mismatch', r2Key);
+      }
       rethrow;
     }
-
-    final ok = await _verifyFileHash(cacheFile, expectedSha);
-    if (!ok) {
-      await cacheFile.delete();
-      throw AssetServiceException('sha256_mismatch', r2Key);
-    }
-    return cacheFile;
   }
 
   /// Kullanıcının bir kampanyaya yüklediği asset metadata'larını listele.
@@ -335,31 +349,12 @@ class AssetService {
 
   Future<void> evictCache(String r2Key) async {
     final sha = extractShaFromKey(r2Key);
-    final file = _cacheFileFor(sha);
-    if (await file.exists()) await file.delete();
+    await _store.delete(sha);
   }
 
-  Future<int> cacheSizeBytes() async {
-    final dir = Directory(p.join(_cacheDir.path, 'assets'));
-    if (!await dir.exists()) return 0;
-    var total = 0;
-    await for (final entry in dir.list()) {
-      if (entry is File) {
-        total += (await entry.stat()).size;
-      }
-    }
-    return total;
-  }
+  Future<int> cacheSizeBytes() => _store.totalSizeBytes();
 
   // ── helpers ────────────────────────────────────────────────────────────
-
-  File _cacheFileFor(String sha256Hex) =>
-      File(p.join(_cacheDir.path, 'assets', '$sha256Hex.bin'));
-
-  Future<bool> _verifyFileHash(File file, String expected) async {
-    final bytes = await file.readAsBytes();
-    return sha256.convert(bytes).toString() == expected.toLowerCase();
-  }
 
   User _requireUser() {
     final user = _supabase.auth.currentUser;

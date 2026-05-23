@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
 import '../services/pending_write_buffer.dart';
+import '../services/prewarm_orchestrator.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
@@ -317,6 +319,16 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       if (worldId != null) {
         _ref.invalidate(worldMembersProvider(worldId));
         _ref.invalidate(worldActiveInviteCodeProvider(worldId));
+        // F6: kritik medya pre-warm (portre + aktif encounter + cover).
+        // Fire-and-forget; başarısızlık UI'ı bloklamaz.
+        unawaited(
+          _ref.read(preWarmOrchestratorProvider).warmWorld(worldId).catchError(
+            (Object e, StackTrace s) {
+              debugPrint('preWarm error: $e');
+              return 0;
+            },
+          ),
+        );
       }
       return true;
     } catch (e, st) {

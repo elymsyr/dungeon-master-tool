@@ -16,6 +16,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../services/entity_media_cleanup_service.dart';
+import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
@@ -609,6 +610,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
                 entityMap: row,
               );
         }
+        // F3: AssetRef grafını DAO write commit sonrası güncelle.
+        _ref.read(referenceIndexerProvider).scheduleReindex(
+              table: 'world_entities',
+              id: entity.id,
+              json: row,
+              worldId: worldId,
+            );
       },
     );
   }
@@ -628,7 +636,14 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     _buffer.schedule(
       key: 'entity:${worldId ?? "local"}:$entityId',
       kind: WriteKind.immediate,
-      action: () => _campaign.deleteEntity(entityId),
+      action: () async {
+        await _campaign.deleteEntity(entityId);
+        // F3: grafdan owner ref'lerini düşür → F4 sweeper orphan'ları siler.
+        _ref.read(referenceIndexerProvider).scheduleRemove(
+              'world_entities',
+              entityId,
+            );
+      },
     );
   }
 

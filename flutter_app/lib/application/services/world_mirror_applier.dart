@@ -20,6 +20,9 @@ import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
+import 'eviction_sweeper.dart';
+import 'fetch_queue.dart';
+import 'reference_indexer.dart';
 import '../../data/database/util/builtin_synth.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package_import_service.dart';
@@ -230,13 +233,33 @@ class WorldMirrorApplier {
         if (entities.remove(id) != null) {
           _bumpRevision();
         }
+        // F3: ref graf temizliği (player tarafı dahil)
+        ref
+            .read(referenceIndexerProvider)
+            .scheduleRemove('world_entities', id);
+        // F10: orphan local cache temizliği — debounced 30s. DM cloud silmesini
+        // burada DENEMEZ; cloud objesi zaten DM tarafında EntityMediaCleanup
+        // ile temizlenmiş (RLS player'da delete'i zaten reddeder).
+        ref.read(evictionSweeperProvider).requestSweep();
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final id = e.newRecord['id'] as String?;
         if (id == null) return;
         if (_buffer.isPending('entity:${e.worldId}:$id')) return;
-        entities[id] = _entityRowToBlob(e.newRecord);
+        final blob = _entityRowToBlob(e.newRecord);
+        entities[id] = blob;
         _bumpRevision();
+        ref.read(referenceIndexerProvider).scheduleReindex(
+              table: 'world_entities',
+              id: id,
+              json: blob,
+              worldId: e.worldId,
+            );
+        // F5: CDC pre-fetcher — UI açılana kadar AssetRef'leri arka planda indir.
+        final refs = ReferenceIndexer.extractRefs(blob);
+        if (refs.isNotEmpty) {
+          ref.read(fetchQueueProvider).scheduleAll(refs);
+        }
       default:
         return;
     }
@@ -622,6 +645,21 @@ class WorldMirrorApplier {
       if (decoded is! Map<String, dynamic>) return;
       data['map_data'] = decoded;
       _bumpRevision();
+      // F3: map_data içindeki AssetRef'ler (map images, pin icons)
+      final worldId = row['world_id'] as String?;
+      if (worldId != null) {
+        ref.read(referenceIndexerProvider).scheduleReindex(
+              table: 'world_map_data',
+              id: worldId,
+              json: decoded,
+              worldId: worldId,
+            );
+      }
+      // F5: pre-fetch map images / pin icons.
+      final refs = ReferenceIndexer.extractRefs(decoded);
+      if (refs.isNotEmpty) {
+        ref.read(fetchQueueProvider).scheduleAll(refs);
+      }
     } catch (err) {
       debugPrint('_applyMapDataRow decode error: $err');
     }
@@ -867,6 +905,19 @@ class WorldMirrorApplier {
     // (campaignInfoListProvider) refresh sonrası eski cover'ı okuyordu.
     await _persistSettingsToDrift(worldId, decoded);
     _bumpRevision();
+    // F3: settings JSON içindeki AssetRef'ler (cover, mind_map images,
+    // battle_map fog/annotation, vb.) için graf güncellemesi.
+    ref.read(referenceIndexerProvider).scheduleReindex(
+          table: 'world_settings',
+          id: worldId,
+          json: decoded,
+          worldId: worldId,
+        );
+    // F5: settings içindeki tüm AssetRef'leri arka planda indir.
+    final settingsRefs = ReferenceIndexer.extractRefs(decoded);
+    if (settingsRefs.isNotEmpty) {
+      ref.read(fetchQueueProvider).scheduleAll(settingsRefs);
+    }
   }
 
   /// Synced bir `world_settings` blob'unu device-local Drift'e yazar — hub
