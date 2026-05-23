@@ -1,10 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/config/app_paths.dart';
+import '../../application/services/content_store.dart';
 import '../../core/config/supabase_config.dart';
 import 'asset_service.dart';
 import 'free_media_service.dart';
@@ -39,11 +36,10 @@ const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
 final assetServiceProvider = Provider<AssetService?>((ref) {
   if (!SupabaseConfig.isConfigured || _workerBaseUrl.isEmpty) return null;
 
-  final cacheDir = Directory(p.join(AppPaths.cacheDir, 'r2'));
   final service = AssetService(
     supabase: Supabase.instance.client,
     workerBaseUrl: _workerBaseUrl,
-    cacheDir: cacheDir,
+    contentStore: ref.watch(contentStoreProvider),
   );
   return service;
 });
@@ -56,9 +52,8 @@ final assetServiceProvider = Provider<AssetService?>((ref) {
 final freeMediaServiceProvider = Provider<FreeMediaService?>((ref) {
   if (!SupabaseConfig.isConfigured) return null;
 
-  final cacheDir = Directory(p.join(AppPaths.cacheDir, 'free_media'));
   return FreeMediaService(
     supabase: Supabase.instance.client,
-    cacheDir: cacheDir,
+    contentStore: ref.watch(contentStoreProvider),
   );
 });

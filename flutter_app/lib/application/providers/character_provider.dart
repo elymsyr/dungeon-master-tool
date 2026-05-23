@@ -19,6 +19,8 @@ import '../services/builtin_srd_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
+import '../services/fetch_queue.dart';
+import '../services/reference_indexer.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -131,11 +133,23 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   void _syncPush(Character c) {
     _mirrorPush(c);
     _cloudBackupPush(c);
+    // F3: AssetRef grafını güncelle (DM+worldless ortak yol).
+    _ref.read(referenceIndexerProvider).scheduleReindex(
+          table: 'world_characters',
+          id: c.id,
+          json: c.toJson(),
+          worldId: c.worldId,
+        );
   }
 
   void _syncDelete(String characterId, {String? worldId}) {
     _mirrorDelete(characterId, worldId: worldId);
     _cloudBackupDelete(characterId);
+    // F3: graf temizliği.
+    _ref.read(referenceIndexerProvider).scheduleRemove(
+          'world_characters',
+          characterId,
+        );
   }
 
   /// world_characters mirror push — runs whenever the char's world is in
@@ -565,6 +579,19 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     }
     list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     state = AsyncValue.data(list);
+    // F3: CDC apply sonrası graf güncellemesi (player tarafı).
+    final cJson = c.toJson();
+    _ref.read(referenceIndexerProvider).scheduleReindex(
+          table: 'world_characters',
+          id: c.id,
+          json: cJson,
+          worldId: c.worldId,
+        );
+    // F5: portre + ek galeri resimlerini arka planda indir.
+    final refs = ReferenceIndexer.extractRefs(cJson);
+    if (refs.isNotEmpty) {
+      _ref.read(fetchQueueProvider).scheduleAll(refs);
+    }
   }
 
   /// Granular delete from realtime mirror — disk + state in one shot, no
@@ -579,6 +606,10 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       debugPrint('removeMirror delete error: $e');
     }
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
+    _ref.read(referenceIndexerProvider).scheduleRemove(
+          'world_characters',
+          id,
+        );
   }
 
   /// Ownership benden gittiğinde (unclaim / başka oyuncuya assign) hub char

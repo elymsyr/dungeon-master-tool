@@ -154,6 +154,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA temp_store = MEMORY');
           await customStatement('PRAGMA mmap_size = 67108864'); // 64 MB
           await customStatement('PRAGMA foreign_keys = OFF');
+          // F2+: drift-codegen kaçınmak için side-tables raw SQL ile
+          // idempotent kurulur (asset_refs, sync_telemetry, migration_progress,
+          // bm_mark_ops). Schema bump yok — IF NOT EXISTS.
+          for (final stmt in _sideTablesDDL) {
+            await customStatement(stmt);
+          }
           // PR-D8 cleanup: 30-day Drift trash retention (replaces v11 FS
           // _cleanupTrash). Best-effort — purge errors don't block open.
           try {
@@ -248,6 +254,65 @@ const List<String> _v12Indexes = <String>[
   // trash
   'CREATE INDEX IF NOT EXISTS idx_trash_kind_deleted '
       'ON trash_items (kind, deleted_at)',
+];
+
+/// F2+ side-tables. Drift codegen kaçınmak için raw SQL ile yönetilir.
+/// `beforeOpen` her açılışta idempotent çalıştırır.
+///
+/// - `asset_refs` (F2): AssetRef → owner satır grafı; eviction sweeper
+///   orphan tespiti için.
+/// - `sync_telemetry` (F12): latency histogram bucket'ları.
+/// - `migration_progress` (F11): raw-path migrator resume state.
+/// - `bm_mark_ops_local` (F8): server `world_battlemap_mark_ops` mirror'u.
+const List<String> _sideTablesDDL = <String>[
+  // asset_refs
+  'CREATE TABLE IF NOT EXISTS asset_refs ('
+      'uri TEXT NOT NULL, '
+      'owner_table TEXT NOT NULL, '
+      'owner_id TEXT NOT NULL, '
+      'owner_field TEXT NOT NULL DEFAULT \'\', '
+      'world_id TEXT, '
+      'last_seen_at INTEGER NOT NULL, '
+      'PRIMARY KEY (uri, owner_table, owner_id, owner_field)'
+      ')',
+  'CREATE INDEX IF NOT EXISTS idx_asset_refs_uri ON asset_refs (uri)',
+  'CREATE INDEX IF NOT EXISTS idx_asset_refs_owner '
+      'ON asset_refs (owner_table, owner_id)',
+  'CREATE INDEX IF NOT EXISTS idx_asset_refs_world ON asset_refs (world_id)',
+
+  // sync_telemetry — F12
+  'CREATE TABLE IF NOT EXISTS sync_telemetry ('
+      'metric TEXT NOT NULL, '
+      'bucket TEXT NOT NULL, '
+      'count INTEGER NOT NULL DEFAULT 0, '
+      'sum_ms INTEGER NOT NULL DEFAULT 0, '
+      'last_at INTEGER NOT NULL, '
+      'PRIMARY KEY (metric, bucket)'
+      ')',
+
+  // migration_progress — F11
+  'CREATE TABLE IF NOT EXISTS migration_progress ('
+      'migration_name TEXT NOT NULL, '
+      'world_id TEXT NOT NULL DEFAULT \'\', '
+      'last_id TEXT, '
+      'completed INTEGER NOT NULL DEFAULT 0, '
+      'updated_at INTEGER NOT NULL, '
+      'PRIMARY KEY (migration_name, world_id)'
+      ')',
+
+  // bm_mark_ops_local — F8 (server world_battlemap_mark_ops mirror)
+  'CREATE TABLE IF NOT EXISTS bm_mark_ops_local ('
+      'op_id TEXT NOT NULL PRIMARY KEY, '
+      'world_id TEXT NOT NULL, '
+      'encounter_id TEXT NOT NULL, '
+      'author_id TEXT NOT NULL, '
+      'kind TEXT NOT NULL, '
+      'payload_json TEXT NOT NULL, '
+      'seq INTEGER NOT NULL, '
+      'created_at INTEGER NOT NULL'
+      ')',
+  'CREATE INDEX IF NOT EXISTS idx_bm_ops_enc_seq '
+      'ON bm_mark_ops_local (world_id, encounter_id, seq)',
 ];
 
 LazyDatabase _openConnection() => _openConnectionForUser(null);

@@ -1,13 +1,11 @@
-import 'package:drift/drift.dart' show Variable;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/database/app_database.dart';
-import '../../data/database/database_provider.dart';
 import '../../data/network/asset_service.dart';
 import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'reference_graph.dart';
 
 /// Bir entity (karakter / world / package) silindiğinde o entity'ye ait cloud
 /// medya objelerini siler — Cloudflare R2 (`community_assets`) + Supabase
@@ -26,14 +24,14 @@ import '../../domain/value_objects/asset_ref.dart';
 /// Tüm işlem best-effort: hata fırlatmaz, local silmeyi bloklamaz.
 class EntityMediaCleanupService {
   EntityMediaCleanupService({
-    required AppDatabase db,
+    required ReferenceGraph referenceGraph,
     required AssetService assetService,
     required FreeMediaService freeMediaService,
-  })  : _db = db,
+  })  : _refs = referenceGraph,
         _asset = assetService,
         _free = freeMediaService;
 
-  final AppDatabase _db;
+  final ReferenceGraph _refs;
   final AssetService _asset;
   final FreeMediaService _free;
 
@@ -189,30 +187,11 @@ class EntityMediaCleanupService {
   /// Hayatta kalan (silinmemiş) bir entity hâlâ [ref]'i kullanıyor mu?
   /// Kullanıyorsa cloud objesi silinmemeli (paylaşılan SHA-dedupe objesi).
   ///
+  /// F2 ile O(1) — `asset_refs` INDEX(uri) tek lookup. Eski LIKE-scan ölü.
   /// Tarama hatasında güvenli tarafa düşer (referans VAR sayar → silmez).
   Future<bool> _isReferencedElsewhere(String ref) async {
-    const sql = '''
-SELECT 1 FROM world_characters WHERE payload_json LIKE ?1
-UNION ALL
-SELECT 1 FROM world_entities
-  WHERE image_path LIKE ?1 OR images_json LIKE ?1 OR fields_json LIKE ?1
-UNION ALL
-SELECT 1 FROM package_entities
-  WHERE image_path LIKE ?1 OR images_json LIKE ?1 OR fields_json LIKE ?1
-UNION ALL
-SELECT 1 FROM world_map_data WHERE data_json LIKE ?1
-UNION ALL
-SELECT 1 FROM world_settings WHERE settings_json LIKE ?1
-UNION ALL
-SELECT 1 FROM packages WHERE state_json LIKE ?1
-LIMIT 1
-''';
     try {
-      final rows = await _db.customSelect(
-        sql,
-        variables: [Variable<String>('%$ref%')],
-      ).get();
-      return rows.isNotEmpty;
+      return await _refs.isReferenced(ref);
     } catch (e) {
       debugPrint('media cleanup: ref-scan error for "$ref": $e');
       return true;
@@ -227,7 +206,7 @@ final entityMediaCleanupServiceProvider =
   final free = ref.watch(freeMediaServiceProvider);
   if (asset == null || free == null) return null;
   return EntityMediaCleanupService(
-    db: ref.watch(appDatabaseProvider),
+    referenceGraph: ref.watch(referenceGraphProvider),
     assetService: asset,
     freeMediaService: free,
   );

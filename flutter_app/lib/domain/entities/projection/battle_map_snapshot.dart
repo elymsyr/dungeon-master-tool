@@ -105,7 +105,14 @@ class BattleMapSnapshot {
     );
   }
 
+  /// Schema version — F7+ schema_version'lama:
+  /// - v1: ham filesystem path veya AssetRef (mixed).
+  /// - v2: yalnız AssetRef. Player tarafı v1'i okur ve resolver fallback
+  ///   yapar, ama yeni write'lar v2 hedefler.
+  static const int schemaVersion = 2;
+
   Map<String, dynamic> toJson() => {
+        '_v': schemaVersion,
         if (mapPath != null) 'mapPath': mapPath,
         if (fogDataBase64 != null) 'fogDataBase64': fogDataBase64,
         'canvasWidth': canvasWidth,
