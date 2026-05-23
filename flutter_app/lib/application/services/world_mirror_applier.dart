@@ -322,6 +322,12 @@ class WorldMirrorApplier {
         // CDC race guard: local pending edit varken remote uygulanmaz.
         if (_buffer.isPending('character:$id')) return;
         final wid = (oldRecord['world_id'] as String?) ?? channelWorldId;
+        // leave_beta / Make Offline: parent world unpublish guard'ında veya
+        // orphan char delete guard'ında ise lokal kopyayı koru.
+        if ((wid != null && mirror.isExpectedUnpublish(wid)) ||
+            mirror.isExpectedCharDelete(id)) {
+          return;
+        }
         if (wid != null) {
           ref.read(worldCharactersProvider(wid).notifier).removeMirror(id);
         }
@@ -759,6 +765,9 @@ class WorldMirrorApplier {
             (e.oldRecord['package_name'] as String?) ?? '';
         final priorWorld =
             (e.oldRecord['world_id'] as String?) ?? e.worldId;
+        // leave_beta / Make Offline: parent world korunuyorsa world_packages
+        // satırını + materialize edilmiş local package'ı koru.
+        if (mirror.isExpectedUnpublish(priorWorld)) break;
         await dao.deleteByPackage(id);
         await _uninstallSharedPackageLocally(db, priorWorld, priorName);
       case PostgresChangeEvent.insert:
