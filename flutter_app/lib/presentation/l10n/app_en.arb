@@ -114,8 +114,8 @@
   "mediaQuotaFull": "Storage quota full — image kept on this device.",
   "mediaImageLimitReached": "Up to {count} images per entity.",
   "@mediaImageLimitReached": { "placeholders": { "count": { "type": "int" } } },
-  "mediaImageTooLarge": "Image too large (max {max} MB) — kept on this device, not backed up to the cloud.",
-  "@mediaImageTooLarge": { "placeholders": { "max": { "type": "int" } } },
+  "mediaImageTooLarge": "Image too large ({actual} MB, limit {max} MB) — kept on this device, not backed up to the cloud.",
+  "@mediaImageTooLarge": { "placeholders": { "actual": { "type": "String" }, "max": { "type": "int" } } },
 
   "hubBtnMarketplace": "Marketplace",
   "hubTooltipRefresh": "Refresh from cloud",

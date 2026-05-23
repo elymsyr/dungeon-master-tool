@@ -113,7 +113,7 @@
   "menuReportBug": "Fehler melden",
   "mediaQuotaFull": "Speicherkontingent voll — Bild auf diesem Gerät gespeichert.",
   "mediaImageLimitReached": "Bis zu {count} Bilder pro Eintrag.",
-  "mediaImageTooLarge": "Bild zu groß (max. {max} MB) — auf diesem Gerät gespeichert, nicht in der Cloud gesichert.",
+  "mediaImageTooLarge": "Bild zu groß ({actual} MB, Limit {max} MB) — auf diesem Gerät gespeichert, nicht in der Cloud gesichert.",
 
   "hubBtnMarketplace": "Marktplatz",
   "hubTooltipRefresh": "Aus Cloud aktualisieren",

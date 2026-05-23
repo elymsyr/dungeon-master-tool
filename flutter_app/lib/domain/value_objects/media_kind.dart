@@ -6,63 +6,63 @@
 /// `KIND_MAX_BYTES` map'i bu enum ile senkron tutulmalıdır.
 library;
 
-const int _kLimit2mb = 2 * 1024 * 1024;
-const int _kLimit5mb = 5 * 1024 * 1024;
+const int _kLimit4mb = 4 * 1024 * 1024;
+const int _kLimit10mb = 10 * 1024 * 1024;
 
 enum MediaKind {
   /// Karakterin ana portresi (`entity.imagePath`). Ücretsiz — quota'ya sayılmaz.
   characterPortrait(
     counted: false,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'character_portrait',
   ),
 
   /// Online dünya kapak/kart resmi. Ücretsiz — quota'ya sayılmaz.
   worldCover(
     counted: false,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'world_cover',
   ),
 
   /// Online package kapak/kart resmi. Ücretsiz — quota'ya sayılmaz.
   packageCover(
     counted: false,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'package_cover',
   ),
 
-  /// Dünya entity kartına atanan resim. Kullanıcının 50MB quota'sına sayılır.
+  /// Dünya entity kartına atanan resim. Kullanıcının 100MB quota'sına sayılır.
   worldEntityImage(
     counted: true,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'world_entity_image',
   ),
 
   /// Package entity kartına atanan resim. Quota'ya sayılır.
   packageEntityImage(
     counted: true,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'package_entity_image',
   ),
 
   /// Karakterin portre dışındaki ek resimleri (`entity.images[]`). Sayılır.
   characterExtraImage(
     counted: true,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'character_extra_image',
   ),
 
   /// Battle map arkaplan resmi. Quota'ya sayılır.
   battleMap(
     counted: true,
-    maxBytes: _kLimit5mb,
+    maxBytes: _kLimit10mb,
     wireName: 'battle_map',
   ),
 
   /// Mind map node resmi (kendi veya katılınan dünyada). Quota'ya sayılır.
   mindMapImage(
     counted: true,
-    maxBytes: _kLimit2mb,
+    maxBytes: _kLimit4mb,
     wireName: 'mind_map_image',
   );
 
@@ -77,7 +77,7 @@ enum MediaKind {
   /// (`FreeMediaService`); quota'ya sayılmaz.
   final bool counted;
 
-  /// Per-öğe upload boyut limiti (byte). `AssetService.maxItemBytes` (10MB
+  /// Per-öğe upload boyut limiti (byte). `AssetService.maxItemBytes` (20MB
   /// hard ceiling) bunun üstünde kalmalıdır.
   final int maxBytes;
 

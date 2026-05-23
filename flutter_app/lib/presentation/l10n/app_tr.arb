@@ -113,7 +113,7 @@
   "menuReportBug": "Hata Bildir",
   "mediaQuotaFull": "Depolama kotanız dolu — resim bu cihazda saklandı.",
   "mediaImageLimitReached": "Her varlığa en fazla {count} resim eklenebilir.",
-  "mediaImageTooLarge": "Resim çok büyük (en fazla {max} MB) — bu cihazda saklandı, buluta yedeklenmedi.",
+  "mediaImageTooLarge": "Resim çok büyük ({actual} MB, limit {max} MB) — bu cihazda saklandı, buluta yedeklenmedi.",
 
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",

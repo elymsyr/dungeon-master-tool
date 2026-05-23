@@ -40,7 +40,7 @@ class AssetService {
   /// Per-item upload limiti — cloud_backup_repository_impl.dart'taki
   /// cloudBackupItemSizeLimit ile aynı değer. Worker tarafında MAX_UPLOAD_BYTES
   /// ile de senkron (wrangler.toml).
-  static const int maxItemBytes = 10 * 1024 * 1024;
+  static const int maxItemBytes = 20 * 1024 * 1024;
 
   /// Worker'a upload + `community_assets` metadata insert.
   /// Dönen URI `dmt-asset://{r2_object_key}` — domain event'lerde referans.

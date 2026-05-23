@@ -888,7 +888,7 @@ class _SoundRow extends StatelessWidget {
 }
 
 // =============================================================================
-// Subscriptions Section — Beta Program (first 200 users, 50 MB cloud save)
+// Subscriptions Section — Beta Program (first 200 users, 100 MB cloud save)
 // =============================================================================
 
 class _SubscriptionsSection extends ConsumerWidget {

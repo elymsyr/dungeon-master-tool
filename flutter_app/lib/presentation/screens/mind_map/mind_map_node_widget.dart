@@ -1217,7 +1217,8 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       final oldRef = widget.node.imageUrl;
       // Eager cloud upload — online world → push to R2; offline / quota-full
       // → keep the local path.
-      final (ref: uploaded, :quotaExceeded, :tooLarge) = await uploadMapImage(
+      final (ref: uploaded, :quotaExceeded, :tooLarge, :actualBytes) =
+          await uploadMapImage(
         ref.read,
         path: path,
         kind: MediaKind.mindMapImage,
@@ -1226,7 +1227,11 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       widget.notifier.updateNodeImageUrl(widget.node.id, uploaded);
       if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
       if (tooLarge && context.mounted) {
-        showImageTooLargeSnackbar(context, MediaKind.mindMapImage.maxBytes);
+        showImageTooLargeSnackbar(
+          context,
+          maxBytes: MediaKind.mindMapImage.maxBytes,
+          actualBytes: actualBytes,
+        );
       }
       // Replaced an earlier cloud image → best-effort orphan cleanup.
       unawaited(cleanupMapImageRef(
@@ -1245,7 +1250,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     var url = initial;
     try {
       if (AssetRef(url).isLocal) {
-        final (ref: uploaded, :quotaExceeded, :tooLarge) =
+        final (ref: uploaded, :quotaExceeded, :tooLarge, :actualBytes) =
             await uploadMapImage(
           ref.read,
           path: url,
@@ -1263,7 +1268,11 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         }
         if (quotaExceeded && context.mounted) showQuotaFullSnackbar(context);
         if (tooLarge && context.mounted) {
-          showImageTooLargeSnackbar(context, MediaKind.mindMapImage.maxBytes);
+          showImageTooLargeSnackbar(
+            context,
+            maxBytes: MediaKind.mindMapImage.maxBytes,
+            actualBytes: actualBytes,
+          );
         }
       }
     } catch (_) {}

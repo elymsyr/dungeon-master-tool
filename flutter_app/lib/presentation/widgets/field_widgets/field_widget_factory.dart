@@ -3170,13 +3170,17 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
 
     // Eager cloud upload — mirrors the entity portrait flow: online + signed
     // in → push to R2 now; offline / quota-full → keep the local path.
-    final (:refs, :quotaExceeded, :tooLarge, pushWorldId: _) =
+    final (:refs, :quotaExceeded, :tooLarge, :tooLargeActualBytes, pushWorldId: _) =
         await eagerUploadEntityImages(ref, newPaths);
     if (!mounted) return;
     widget.onChanged([..._images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
     if (tooLarge) {
-      showImageTooLargeSnackbar(context, MediaKind.worldEntityImage.maxBytes);
+      showImageTooLargeSnackbar(
+        context,
+        maxBytes: MediaKind.worldEntityImage.maxBytes,
+        actualBytes: tooLargeActualBytes,
+      );
     }
     if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
   }
