@@ -29,7 +29,7 @@ id = "c7108c256a5342389b036d5bfa80cc7a"
 # Not: supabase_url client tarafında da görünür, secret değildir.
 [vars]
 SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"
-MAX_UPLOAD_BYTES = "10485760"           # 10 MB per item
-USER_QUOTA_BYTES = "52428800"           # 50 MB combined (cloud_backups + community_assets)
+MAX_UPLOAD_BYTES = "20971520"           # 20 MB per item
+USER_QUOTA_BYTES = "104857600"          # 100 MB combined (cloud_backups + community_assets)
 DOWNLOAD_LIMIT_PER_HOUR = "20"
 UPLOAD_LIMIT_PER_HOUR = "60"

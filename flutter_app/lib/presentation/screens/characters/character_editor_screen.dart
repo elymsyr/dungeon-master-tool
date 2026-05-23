@@ -879,14 +879,19 @@ class _CharacterEditorScreenState
     final svc = ref.read(isBetaActiveProvider)
         ? ref.read(freeMediaServiceProvider)
         : null;
-    final (ref: newRef, :tooLarge) = await uploadCharacterPortraitRef(
+    final (ref: newRef, :tooLarge, :actualBytes) =
+        await uploadCharacterPortraitRef(
       svc,
       localPath: path,
       scopeId: c.worldId ?? c.id,
     );
     if (!mounted) return;
     if (tooLarge) {
-      showImageTooLargeSnackbar(context, MediaKind.characterPortrait.maxBytes);
+      showImageTooLargeSnackbar(
+        context,
+        maxBytes: MediaKind.characterPortrait.maxBytes,
+        actualBytes: actualBytes,
+      );
     }
     _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: newRef)));
     // Persist + push now so the portrait reaches the cloud without waiting

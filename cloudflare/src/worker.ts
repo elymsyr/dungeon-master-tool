@@ -38,14 +38,14 @@ const CORS_HEADERS: Record<string, string> = {
 // Ücretsiz kind'ler (character_portrait/world_cover/package_cover) normalde
 // Worker'a hiç gelmez — Supabase Storage'a gider — ama savunma için listede.
 const KIND_MAX_BYTES: Record<string, number> = {
-  character_portrait: 2 * 1024 * 1024,
-  world_cover: 2 * 1024 * 1024,
-  package_cover: 2 * 1024 * 1024,
-  world_entity_image: 2 * 1024 * 1024,
-  package_entity_image: 2 * 1024 * 1024,
-  character_extra_image: 2 * 1024 * 1024,
-  battle_map: 5 * 1024 * 1024,
-  mind_map_image: 2 * 1024 * 1024,
+  character_portrait: 4 * 1024 * 1024,
+  world_cover: 4 * 1024 * 1024,
+  package_cover: 4 * 1024 * 1024,
+  world_entity_image: 4 * 1024 * 1024,
+  package_entity_image: 4 * 1024 * 1024,
+  character_extra_image: 4 * 1024 * 1024,
+  battle_map: 10 * 1024 * 1024,
+  mind_map_image: 4 * 1024 * 1024,
 };
 
 const ALLOWED_MIME_PREFIXES = ['image/', 'audio/'];
@@ -57,9 +57,9 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
 
-// Cloud backup (template/world/package) için son 2MB rezerve.
+// Cloud backup (template/world/package) için son 4MB rezerve.
 // Asset (community_assets) upload'ları için effective limit = USER_QUOTA - bu sabit.
-const ASSET_QUOTA_RESERVE_BYTES = 2 * 1024 * 1024;
+const ASSET_QUOTA_RESERVE_BYTES = 4 * 1024 * 1024;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {

@@ -53,7 +53,8 @@ class CloudCatchupService {
         if (c.worldId != null) continue;
         final portrait = c.entity.imagePath;
         if (portrait.isEmpty || !AssetRef(portrait).isLocal) continue;
-        final (ref: newRef, tooLarge: _) = await uploadCharacterPortraitRef(
+        final (ref: newRef, tooLarge: _, actualBytes: _) =
+            await uploadCharacterPortraitRef(
           svc,
           localPath: portrait,
           scopeId: c.id,

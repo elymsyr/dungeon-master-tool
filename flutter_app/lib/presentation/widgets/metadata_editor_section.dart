@@ -360,9 +360,10 @@ class _MetadataEditorSectionState
         ? ref.read(freeMediaServiceProvider)
         : null;
     if (kind != null && svc != null) {
+      final file = File(path);
       try {
         final uri = await svc.uploadFreeMedia(
-          File(path),
+          file,
           kind: kind,
           scopeId: widget.coverScopeId,
         );
@@ -371,7 +372,17 @@ class _MetadataEditorSectionState
       } on FreeMediaException catch (e) {
         // Boyut limiti aşıldı → buluta yedeklenmez; kullanıcıyı uyar.
         if (e.code == 'too_large' && mounted) {
-          showImageTooLargeSnackbar(context, kind.maxBytes);
+          int? actualBytes;
+          try {
+            actualBytes = await file.length();
+          } catch (_) {}
+          if (mounted) {
+            showImageTooLargeSnackbar(
+              context,
+              maxBytes: kind.maxBytes,
+              actualBytes: actualBytes,
+            );
+          }
         }
         // Diğer upload hataları → sessiz local path fallback.
       } catch (_) {

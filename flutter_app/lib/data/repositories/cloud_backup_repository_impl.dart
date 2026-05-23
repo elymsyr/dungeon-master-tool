@@ -9,12 +9,12 @@ import '../datasources/remote/cloud_backup_remote_ds.dart';
 
 /// Per-item limit — cloud backup JSON (compression oncesi) ve R2 asset upload
 /// icin ortak sinir. AssetService.maxItemBytes da bu degere bagli.
-const cloudBackupItemSizeLimit = 10 * 1024 * 1024; // 10 MB
+const cloudBackupItemSizeLimit = 20 * 1024 * 1024; // 20 MB
 
 /// Per-user toplam cloud quota fallback. Beta programı aktif olduğunda
 /// `CloudBackupRepositoryImpl` constructor'ına `quota` callback'i üzerinden
-/// sunucuda tanımlı değer (varsayılan 50 MB) geçilir.
-const cloudBackupUserQuotaFallback = 50 * 1024 * 1024; // 50 MB
+/// sunucuda tanımlı değer (varsayılan 100 MB) geçilir.
+const cloudBackupUserQuotaFallback = 100 * 1024 * 1024; // 100 MB
 
 /// Repository'ye run-time quota (bytes) sağlayan callback. Beta kullanıcısı
 /// için `betaProvider.quotaBytes`'ı döndürür.

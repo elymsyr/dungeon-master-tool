@@ -77,7 +77,7 @@ SELECT public.is_admin();
   (`messages`, `conversations`) yalnızca üyelerine açıktır.
 - **Storage quota** `get_user_total_storage_used()` RPC'si üzerinden
   cloud_backups + community_assets + posts + shared_items toplamını döner.
-  Default kullanıcı kotası **50 MB** (`profiles.storage_quota_bytes`).
+  Default kullanıcı kotası **100 MB** (`profiles.storage_quota_bytes`).
 - **`profile_counts` view** takipçi/takip sayıları için lazy hesaplanır;
   büyük ölçekte materialize edilebilir.
 

@@ -1078,13 +1078,17 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
     // device immediately (mirrors `_pickCover`). Offline / failure → the
     // helper returns the local path and the image bundles later via the
     // outbox push (`_handleWorldEntity`) or Make Online.
-    final (:refs, :pushWorldId, :quotaExceeded, :tooLarge) =
+    final (:refs, :pushWorldId, :quotaExceeded, :tooLarge, :tooLargeActualBytes) =
         await _eagerUploadImages(picked);
     if (!mounted) return;
     widget.onImagesChanged([...widget.images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
     if (tooLarge) {
-      showImageTooLargeSnackbar(context, MediaKind.worldEntityImage.maxBytes);
+      showImageTooLargeSnackbar(
+        context,
+        maxBytes: MediaKind.worldEntityImage.maxBytes,
+        actualBytes: tooLargeActualBytes,
+      );
     }
     if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
 
@@ -1108,6 +1112,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
         String? pushWorldId,
         bool quotaExceeded,
         bool tooLarge,
+        int? tooLargeActualBytes,
       })> _eagerUploadImages(List<String> paths) =>
       eagerUploadEntityImages(ref, paths);
 

@@ -19,7 +19,7 @@ import 'online_worlds_provider.dart';
 import 'personal_online_provider.dart';
 import 'role_provider.dart';
 
-/// Beta program state — ilk 200 kullanıcıya açık, 50 MB / kullanıcı cloud
+/// Beta program state — ilk 200 kullanıcıya açık, 100 MB / kullanıcı cloud
 /// save quota'sı. 7 gün inaktif olanların slot'u otomatik serbest bırakılır.
 /// Sunucu otoritedir (RLS + trigger); burası yalnızca UX gate'i ve UI kaynağı.
 @immutable
@@ -31,7 +31,7 @@ class BetaState {
   final DateTime? joinedAt;
   final DateTime? lastActiveAt;
   final int usedBytes;
-  final int quotaBytes;         // sunucudan gelir (50 MB mirror)
+  final int quotaBytes;         // sunucudan gelir (100 MB mirror)
   final int inactivityDays;     // 7
   final bool loading;
   final String? error;
@@ -44,7 +44,7 @@ class BetaState {
     this.joinedAt,
     this.lastActiveAt,
     this.usedBytes = 0,
-    this.quotaBytes = 50 * 1024 * 1024,
+    this.quotaBytes = 100 * 1024 * 1024,
     this.inactivityDays = 7,
     this.loading = false,
     this.error,
@@ -162,7 +162,7 @@ class BetaNotifier extends StateNotifier<BetaState> {
         joinedAt: _parseTs(row['joined_at']),
         lastActiveAt: _parseTs(row['last_active_at']),
         usedBytes: (row['used_bytes'] as num?)?.toInt() ?? 0,
-        quotaBytes: (row['quota_bytes'] as num?)?.toInt() ?? (50 * 1024 * 1024),
+        quotaBytes: (row['quota_bytes'] as num?)?.toInt() ?? (100 * 1024 * 1024),
         inactivityDays: (row['inactivity_days'] as num?)?.toInt() ?? 7,
         loading: false,
       );

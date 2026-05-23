@@ -16,7 +16,7 @@ import '../../domain/value_objects/media_kind.dart';
 /// Ücretsiz medya pipeline'ı — Supabase Storage `free-media` public bucket.
 ///
 /// Karakter portreleri ve world/package kapak resimleri buraya gider; bu
-/// içerikler kullanıcının 50MB storage quota'sına SAYILMAZ (`free_media_assets`
+/// içerikler kullanıcının 100MB storage quota'sına SAYILMAZ (`free_media_assets`
 /// hiçbir quota toplamına dahil değil — bkz. migration 053).
 ///
 /// `AssetService` (Cloudflare R2) ile aynı şekli izler ama Worker yok:

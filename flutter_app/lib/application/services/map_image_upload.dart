@@ -26,26 +26,27 @@ typedef ProviderReader = T Function<T>(ProviderListenable<T> provider);
 /// the user's storage quota is full; `tooLarge` is true when it was rejected
 /// for exceeding the per-kind size limit. Offline worlds bundle map media at
 /// Make Online instead (see `MediaBundler.bundleSettingsMedia` / `bundleMapMedia`).
-Future<({String ref, bool quotaExceeded, bool tooLarge})> uploadMapImage(
+Future<({String ref, bool quotaExceeded, bool tooLarge, int? actualBytes})>
+    uploadMapImage(
   ProviderReader read, {
   required String path,
   required MediaKind kind,
   bool transientFallback = false,
 }) async {
   if (!AssetRef(path).isLocal) {
-    return (ref: path, quotaExceeded: false, tooLarge: false);
+    return (ref: path, quotaExceeded: false, tooLarge: false, actualBytes: null);
   }
   if (read(authProvider) == null) {
-    return (ref: path, quotaExceeded: false, tooLarge: false);
+    return (ref: path, quotaExceeded: false, tooLarge: false, actualBytes: null);
   }
   final assetSvc = read(assetServiceProvider);
   if (assetSvc == null) {
-    return (ref: path, quotaExceeded: false, tooLarge: false);
+    return (ref: path, quotaExceeded: false, tooLarge: false, actualBytes: null);
   }
   final worldId =
       read(activeCampaignProvider.notifier).data?['world_id'] as String?;
   if (worldId == null || !read(onlineWorldIdsProvider).contains(worldId)) {
-    return (ref: path, quotaExceeded: false, tooLarge: false);
+    return (ref: path, quotaExceeded: false, tooLarge: false, actualBytes: null);
   }
   return uploadEntityImageRef(assetSvc,
       localPath: path,

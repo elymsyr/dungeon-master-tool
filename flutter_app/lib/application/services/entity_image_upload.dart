@@ -38,6 +38,7 @@ Future<
           String? pushWorldId,
           bool quotaExceeded,
           bool tooLarge,
+          int? tooLargeActualBytes,
         })>
     eagerUploadEntityImages(
   WidgetRef ref,
@@ -50,6 +51,7 @@ Future<
       pushWorldId: null,
       quotaExceeded: false,
       tooLarge: false,
+      tooLargeActualBytes: null,
     );
   }
   final assetSvc = ref.read(assetServiceProvider);
@@ -59,6 +61,7 @@ Future<
       pushWorldId: null,
       quotaExceeded: false,
       tooLarge: false,
+      tooLargeActualBytes: null,
     );
   }
 
@@ -74,6 +77,7 @@ Future<
         pushWorldId: null,
         quotaExceeded: false,
         tooLarge: false,
+        tooLargeActualBytes: null,
       );
     }
     scopeId = packageName;
@@ -89,6 +93,7 @@ Future<
         pushWorldId: null,
         quotaExceeded: false,
         tooLarge: false,
+        tooLargeActualBytes: null,
       );
     }
     scopeId = worldId;
@@ -104,11 +109,19 @@ Future<
           kind: kind,
           transientFallback: transientFallback),
   ]);
+  int? firstTooLargeBytes;
+  for (final r in results) {
+    if (r.tooLarge) {
+      firstTooLargeBytes = r.actualBytes;
+      break;
+    }
+  }
   return (
     refs: [for (final r in results) r.ref],
     pushWorldId: pushWorldId,
     quotaExceeded: results.any((r) => r.quotaExceeded),
     tooLarge: results.any((r) => r.tooLarge),
+    tooLargeActualBytes: firstTooLargeBytes,
   );
 }
 

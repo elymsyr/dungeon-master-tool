@@ -25,13 +25,22 @@ void showImageLimitSnackbar(BuildContext context, int limit) {
 
 /// Shows a brief snackbar telling the user a freshly picked image exceeded the
 /// per-kind upload size limit ([maxBytes]) so it was kept on the device only
-/// and NOT backed up to the cloud. Called from every image-pick site after an
-/// upload helper reports `tooLarge`.
-void showImageTooLargeSnackbar(BuildContext context, int maxBytes) {
+/// and NOT backed up to the cloud. [actualBytes] is the rejected file's size
+/// so the user sees both numbers (e.g. "5.2 MB, limit 4 MB"). When unknown,
+/// pass `null` and the message degrades to the limit alone.
+/// Called from every image-pick site after an upload helper reports `tooLarge`.
+void showImageTooLargeSnackbar(
+  BuildContext context, {
+  required int maxBytes,
+  int? actualBytes,
+}) {
   final l10n = L10n.of(context);
   if (l10n == null) return;
   final maxMb = (maxBytes / (1024 * 1024)).round();
+  final actualMb = actualBytes == null
+      ? '?'
+      : (actualBytes / (1024 * 1024)).toStringAsFixed(1);
   ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(content: Text(l10n.mediaImageTooLarge(maxMb))),
+    SnackBar(content: Text(l10n.mediaImageTooLarge(actualMb, maxMb))),
   );
 }
