@@ -55,13 +55,31 @@ class FeedTab extends ConsumerStatefulWidget {
 
 class _FeedTabState extends ConsumerState<FeedTab> {
   final _bodyCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
   bool _composerFocused = false;
   AttachedListing? _attached;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(_maybeLoadMore);
+  }
+
+  @override
   void dispose() {
+    _scrollCtrl
+      ..removeListener(_maybeLoadMore)
+      ..dispose();
     _bodyCtrl.dispose();
     super.dispose();
+  }
+
+  void _maybeLoadMore() {
+    if (!_scrollCtrl.hasClients) return;
+    final pos = _scrollCtrl.position;
+    if (pos.pixels >= pos.maxScrollExtent - 600) {
+      ref.read(feedProvider.notifier).loadMore();
+    }
   }
 
   Future<void> _submit() async {
@@ -162,6 +180,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         ref.invalidate(feedProvider);
       },
       child: ListView(
+        controller: _scrollCtrl,
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           _FeedScopeTabs(scope: scope, palette: palette),
@@ -284,7 +303,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     child: Text(formatError(e),
                         style: TextStyle(color: palette.dangerBtnBg)),
                   ),
-            data: (posts) => posts.isEmpty
+            data: (page) => page.posts.isEmpty
                 ? SocialEmptyState(
                     icon: Icons.dynamic_feed_outlined,
                     title: l10n.feedEmptyTitle,
@@ -292,7 +311,44 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                   )
                 : Column(
                     children: [
-                      for (final p in posts) _PostCard(post: p),
+                      for (final p in page.posts) _PostCard(post: p),
+                      if (page.loadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        )
+                      else if (page.loadMoreError != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: TextButton(
+                              onPressed: () => ref
+                                  .read(feedProvider.notifier)
+                                  .loadMore(),
+                              child: Text(formatError(page.loadMoreError!)),
+                            ),
+                          ),
+                        )
+                      else if (!page.hasMore)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              '—',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: palette.sidebarLabelSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
           ),

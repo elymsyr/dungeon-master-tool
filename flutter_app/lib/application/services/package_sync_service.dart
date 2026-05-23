@@ -76,7 +76,8 @@ class PackageSyncService {
       var removed = 0;
       var detachedSurvived = 0;
 
-      // Add + update.
+      // Add + update — collect companions then batch upsert.
+      final upserts = <WorldEntitiesCompanion>[];
       for (final pack in packRows) {
         final existing = byPackEntId[pack.id];
         final attrsRaw =
@@ -90,8 +91,7 @@ class PackageSyncService {
             as Map<String, dynamic>;
 
         if (existing == null) {
-          // New entity: insert linked.
-          await _db.worldEntitiesDao.upsert(WorldEntitiesCompanion.insert(
+          upserts.add(WorldEntitiesCompanion.insert(
             id: packToWorld[pack.id]!,
             worldId: worldId,
             categorySlug: pack.categorySlug,
@@ -111,8 +111,7 @@ class PackageSyncService {
           ));
           added++;
         } else if (existing.linked) {
-          // Linked: overwrite from pack.
-          await _db.worldEntitiesDao.upsert(WorldEntitiesCompanion(
+          upserts.add(WorldEntitiesCompanion(
             id: Value(existing.id),
             worldId: Value(worldId),
             categorySlug: Value(pack.categorySlug),
@@ -136,16 +135,16 @@ class PackageSyncService {
         // else: detached, leave alone.
       }
 
-      // Remove.
+      // Remove — collect ids for batch delete, detached → homebrew batch upsert.
+      final deleteIds = <String>[];
       for (final entry in byPackEntId.entries) {
         if (packById.containsKey(entry.key)) continue;
         final row = entry.value;
         if (row.linked) {
-          await _db.worldEntitiesDao.deleteById(row.id);
+          deleteIds.add(row.id);
           removed++;
         } else {
-          // Detached: clear package_id, becomes pure homebrew.
-          await _db.worldEntitiesDao.upsert(WorldEntitiesCompanion(
+          upserts.add(WorldEntitiesCompanion(
             id: Value(row.id),
             worldId: Value(row.worldId),
             categorySlug: Value(row.categorySlug),
@@ -157,6 +156,13 @@ class PackageSyncService {
           ));
           detachedSurvived++;
         }
+      }
+
+      if (upserts.isNotEmpty) {
+        await _db.worldEntitiesDao.upsertAll(upserts);
+      }
+      if (deleteIds.isNotEmpty) {
+        await _db.worldEntitiesDao.deleteByIds(deleteIds);
       }
 
       await _db.installedPackagesDao.upsert(InstalledPackagesCompanion(
@@ -205,12 +211,14 @@ class PackageSyncService {
           .get();
       var removed = 0;
       var detachedSurvived = 0;
+      final deleteIds = <String>[];
+      final homebrewUpserts = <WorldEntitiesCompanion>[];
       for (final row in rows) {
         if (row.linked || purgeDetached) {
-          await _db.worldEntitiesDao.deleteById(row.id);
+          deleteIds.add(row.id);
           removed++;
         } else {
-          await _db.worldEntitiesDao.upsert(WorldEntitiesCompanion(
+          homebrewUpserts.add(WorldEntitiesCompanion(
             id: Value(row.id),
             worldId: Value(row.worldId),
             categorySlug: Value(row.categorySlug),
@@ -234,9 +242,15 @@ class PackageSyncService {
         }
         final orphans = await query.get();
         for (final row in orphans) {
-          await _db.worldEntitiesDao.deleteById(row.id);
+          deleteIds.add(row.id);
           removed++;
         }
+      }
+      if (homebrewUpserts.isNotEmpty) {
+        await _db.worldEntitiesDao.upsertAll(homebrewUpserts);
+      }
+      if (deleteIds.isNotEmpty) {
+        await _db.worldEntitiesDao.deleteByIds(deleteIds);
       }
       await _db.installedPackagesDao.deleteOne(worldId, packageId);
       return PackageSyncResult(
