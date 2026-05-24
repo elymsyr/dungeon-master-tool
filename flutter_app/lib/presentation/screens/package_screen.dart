@@ -177,6 +177,21 @@ class _PackageAsCampaignRepo implements CampaignRepository {
       _packageNotifier.saveStatePatch(patch);
 
   @override
+  Future<void> saveMapData(String name, Map<String, dynamic> mapData) async {}
+
+  @override
+  Future<void> saveSessions(
+    String name,
+    List<Map<String, dynamic>> sessions,
+  ) async {}
+
+  @override
+  Future<void> saveSession(String name, Map<String, dynamic> session) async {}
+
+  @override
+  Future<void> deleteSession(String name, String sessionId) async {}
+
+  @override
   Future<void> delete(String name) async {}
 
   @override
