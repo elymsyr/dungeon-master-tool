@@ -115,6 +115,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final isDm =
         ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
     final engine = ref.read(syncEngineProvider);
+    // App close/reopen sonrası map resmi kalsın diye granular Drift row'una
+    // da yazıyoruz; aksi halde yalnızca settings_json'da kalıyor ve force-
+    // close, partial sync, ya da CDC clobber gibi durumlarda kayboluyor.
+    final repo = ref.read(campaignRepositoryProvider);
+    final campaignName = ref.read(activeCampaignProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         mapNotifier.syncToCampaignData();
@@ -123,6 +128,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           final mapMap = Map<String, dynamic>.from(mapData);
           // ignore: discarded_futures
           campaign.saveSettingsPatch({'map_data': mapMap});
+          // Granular world_map_data Drift row — source-of-truth for reopen.
+          if (campaignName != null) {
+            // ignore: discarded_futures
+            repo.saveMapData(campaignName, mapMap);
+          }
           // DM-only: world_map_data RLS rejects players (engine drops
           // 42501 but pre-empting avoids the round-trip).
           if (online && auth != null && isDm) {

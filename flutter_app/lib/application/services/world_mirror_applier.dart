@@ -738,6 +738,10 @@ class WorldMirrorApplier {
               json: decoded,
               worldId: worldId,
             );
+        // Granular Drift persistence — _loadFromDb buradan okur, app
+        // reopen sonrası map resmi/pinleri korur. Aksi halde cloud sync
+        // sadece runtime data'sını günceller, app restart sıfırlar.
+        await _persistMapDataToDrift(worldId, decoded);
       }
       // F5: pre-fetch map images / pin icons.
       final refs = ReferenceIndexer.extractRefs(decoded);
@@ -749,6 +753,23 @@ class WorldMirrorApplier {
     }
   }
 
+  /// Cloud'dan gelen map_data'yı yerel `world_map_data` Drift satırına yazar
+  /// — `_loadFromDb` reopen'da buradan okur. `_persistSettingsToDrift` ile
+  /// aynı pattern (ref'i bir kerede yakala, await sonrası ref'e dokunma).
+  Future<void> _persistMapDataToDrift(
+    String worldId,
+    Map<String, dynamic> mapData,
+  ) async {
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final name = await _campaign.resolveWorldName(worldId);
+      if (name == null) return;
+      await repo.saveMapData(name, mapData);
+    } catch (err) {
+      debugPrint('_persistMapDataToDrift error: $err');
+    }
+  }
+
   Future<void> _applySessionEvent(WorldSyncEvent e) async {
     final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
     if (id == null) return;
@@ -757,11 +778,14 @@ class WorldMirrorApplier {
     if (data == null) return;
     final raw = data['sessions'];
     final List sessions = raw is List ? List.from(raw) : <dynamic>[];
+    final worldId = e.worldId;
     switch (e.eventType) {
       case PostgresChangeEvent.delete:
         sessions.removeWhere((s) => s is Map && s['id'] == id);
         data['sessions'] = sessions;
         _bumpRevision();
+        // Granular Drift persistence — _loadFromDb buradan okur.
+        await _persistSessionDelete(worldId, id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final mapped = await _sessionRowToBlob(e.newRecord);
@@ -774,6 +798,7 @@ class WorldMirrorApplier {
         }
         data['sessions'] = sessions;
         _bumpRevision();
+        await _persistSessionUpsert(worldId, mapped);
       default:
         return;
     }
@@ -782,12 +807,57 @@ class WorldMirrorApplier {
   Future<void> _applySessionsList(List<Map<String, dynamic>> rows) async {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
-    final mapped = <dynamic>[];
+    final mapped = <Map<String, dynamic>>[];
     for (final row in rows) {
       final m = await _sessionRowToBlob(row);
       if (m != null) mapped.add(m);
     }
     data['sessions'] = mapped;
+    // Granular Drift persistence — initial sync için tüm sessions tek
+    // batch'te yerel Drift'e yazılır; reopen `_loadFromDb` buradan okur.
+    final worldId = data['world_id'] as String?;
+    if (worldId != null && mapped.isNotEmpty) {
+      await _persistSessionsBatch(worldId, mapped);
+    }
+  }
+
+  Future<void> _persistSessionsBatch(
+    String worldId,
+    List<Map<String, dynamic>> sessions,
+  ) async {
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final name = await _campaign.resolveWorldName(worldId);
+      if (name == null) return;
+      await repo.saveSessions(name, sessions);
+    } catch (err) {
+      debugPrint('_persistSessionsBatch error: $err');
+    }
+  }
+
+  Future<void> _persistSessionUpsert(
+    String worldId,
+    Map<String, dynamic> session,
+  ) async {
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final name = await _campaign.resolveWorldName(worldId);
+      if (name == null) return;
+      await repo.saveSession(name, session);
+    } catch (err) {
+      debugPrint('_persistSessionUpsert error: $err');
+    }
+  }
+
+  Future<void> _persistSessionDelete(String worldId, String sessionId) async {
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final name = await _campaign.resolveWorldName(worldId);
+      if (name == null) return;
+      await repo.deleteSession(name, sessionId);
+    } catch (err) {
+      debugPrint('_persistSessionDelete error: $err');
+    }
   }
 
   Future<Map<String, dynamic>?> _sessionRowToBlob(

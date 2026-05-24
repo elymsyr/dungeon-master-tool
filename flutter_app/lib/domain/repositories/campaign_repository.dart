@@ -31,6 +31,31 @@ abstract class CampaignRepository {
     Map<String, dynamic> patch,
   );
 
+  /// Granular `world_map_data` row write — yerel kalıcılık için.
+  /// `settings_json` blob'una bağımlı kalmadan map_data (image_path, pins,
+  /// epochs, …) app close/reopen sonrası yerel Drift'ten okunabilsin.
+  Future<void> saveMapData(
+    String campaignName,
+    Map<String, dynamic> mapData,
+  );
+
+  /// Granular `world_sessions` rows yazımı — bir kerede birden çok session
+  /// upsert (CDC catch-up + initial sync için). Var olan diğer satırları
+  /// silmez; sadece verilen id'leri yazıp/günceller.
+  Future<void> saveSessions(
+    String campaignName,
+    List<Map<String, dynamic>> sessions,
+  );
+
+  /// Tek bir session upsert — single-row CDC apply için.
+  Future<void> saveSession(
+    String campaignName,
+    Map<String, dynamic> session,
+  );
+
+  /// Tek bir session sil — DELETE CDC için.
+  Future<void> deleteSession(String campaignName, String sessionId);
+
   /// Kampanyayı sil (soft delete — `.trash/`'a taşır).
   Future<void> delete(String campaignName);
 
