@@ -1,0 +1,54 @@
+Dungeon Master Tool — free & open-source DM companion (Beta)
+
+Links
+- https://github.com/elymsyr/dungeon-master-tool
+- https://elymsyr.github.io/
+
+Hi :) I've been building an offline-first DM tool for D&D 5e and just opened limited beta slots for the online side. Sharing in case it helps your table.
+
+What it is
+- Free, open-source tool for players, worldbuilders and dungeon masters
+- Runs on Android, iOS, Windows, Linux, macOS
+- Two-screen layout: DM screen + projected player screen (TV, second monitor, or another device)
+- Fully usable offline/online
+
+Online mode (experimental beta - limited slots)
+- Share worlds with players, invite via code
+- Realtime sync of characters, combat, battlemaps, fog of war
+- Second-screen projection over the network for remote sessions
+- Shared media pool with per-account quota (cloud art, portraits, session media)
+- Beta is invite-gated right now; features still shifting and will keep evolving, expect rough edges and changes
+
+Roadmap
+- Full D&D 5e SRD implementation (closing remaining gaps)
+- Bundled art for every species/class/monster/spell/item, no more raw-text cards
+- Ready-made music packs for the built-in soundpad
+- Better battlemap system (LoS, dynamic vision, AoE overlays, smoother large grids) + free visual asset packs for maps
+
+Context for worldbuilders:
+
+Tool isn't just combat — core is structured world wiki + timeline + map you build alongside your campaign. Useful even if you never run a session.
+
+- Custom entities: species, cultures, factions, locations, NPCs, items, lore notes — all linked via @mentions so world becomes navigable graph
+- Custom content packages: bundle homebrew species/classes/items/spells into shareable packs (JSON now, WYSIWYG editors on roadmap)
+- Per-entity art, tags, descriptions, stat blocks — visual + textual worldbuilding in one place
+- Mind map view: drag-arrange entities as nodes, see relationships at a glance
+
+World Map
+- Drop your own map image (any size), pan/zoom freely
+- Pin entities directly to coordinates — kingdoms, cities, dungeons, NPCs, lore notes
+- Pins link back to wiki entries, so clicking a pin opens the full entity
+- Multiple maps per world (continent → region → city)
+- Project map to second screen for players, hide DM-only pins
+
+Epochs & Timeline
+- Define epochs/eras for your setting
+- Waypoint events on timeline tied to entities, locations, map pins
+- Map state can shift per epoch — borders, ruins, settlements change as players move through history
+- Great for long-running campaigns or pure worldbuilding projects with deep history
+
+- Fully offline — world stays on disk, no account required
+- Optional online mode (invite-only beta) lets co-worldbuilders edit same world in realtime
+- Second-screen projection shows players curated wiki/map view without exposing DM notes
+
+Built it because existing tools either lock worldbuilding behind subscriptions or force cloud-only. Free, open-source, yours to keep.
