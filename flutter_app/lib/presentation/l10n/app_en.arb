@@ -199,6 +199,8 @@
   "@selectorEmpty": { "placeholders": { "path": { "type": "String" } } },
 
   "mainBackToHub": "Back to hub",
+  "worldExitConfirmTitle": "Leave this world?",
+  "worldExitConfirmBody": "Pending edits will be saved before returning to the hub.",
   "mainMenu": "Menu",
   "mainEditMode": "Edit mode",
   "mainViewMode": "View mode",
@@ -602,6 +604,11 @@
   "subsBetaLeaveWarnKept": "Kept: all data saved locally on this and your other devices stays safe. Your posts, game listings and messages are not affected — you can keep using the community.",
   "subsBetaLeaveSuccess": "You have left the beta.",
   "subsBetaLeaveFailed": "Couldn't leave the beta. Try again later.",
+  "subsBetaLeavePreserveLine": "Kept offline on this device: {worlds} worlds · {chars} characters · {packages} packages.",
+  "@subsBetaLeavePreserveLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
+  "subsBetaLeaveDownloadLine": "Of these, {worlds} worlds / {chars} characters / {packages} packages will be downloaded from the cloud first.",
+  "@subsBetaLeaveDownloadLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
+  "subsBetaLeaveOfflineNeeded": "Internet required — connect to download your owned online content to this device.",
 
   "subsBetaRequestBtn": "Request beta access",
   "subsBetaRequestDialogTitle": "Request beta access",

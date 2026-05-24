@@ -197,6 +197,8 @@
   "@selectorEmpty": { "placeholders": { "path": { "type": "String" } } },
 
   "mainBackToHub": "Ana ekrana dön",
+  "worldExitConfirmTitle": "Bu dünyadan çıkılsın mı?",
+  "worldExitConfirmBody": "Bekleyen değişiklikler kaydedilip ana ekrana dönülecek.",
   "mainMenu": "Menü",
   "mainEditMode": "Düzenleme modu",
   "mainViewMode": "Görüntüleme modu",
@@ -600,6 +602,11 @@
   "subsBetaLeaveWarnKept": "Korunur: bu cihazdaki ve diğer cihazlarındaki tüm local verin güvende kalır. Post'ların, oyun ilanların ve mesajların etkilenmez — topluluğu kullanmaya devam edebilirsin.",
   "subsBetaLeaveSuccess": "Beta'dan ayrıldın.",
   "subsBetaLeaveFailed": "Beta'dan ayrılma başarısız. Daha sonra tekrar dene.",
+  "subsBetaLeavePreserveLine": "Bu cihazda offline saklanacak: {worlds} dünya · {chars} karakter · {packages} paket.",
+  "@subsBetaLeavePreserveLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
+  "subsBetaLeaveDownloadLine": "Bunlardan {worlds} dünya / {chars} karakter / {packages} paket önce cloud'dan indirilecek.",
+  "@subsBetaLeaveDownloadLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
+  "subsBetaLeaveOfflineNeeded": "İnternet gerekli — sahip olduğun online içeriği lokale indirmek için bağlanmalısın.",
 
   "subsBetaRequestBtn": "Betaya katılmak için istek gönder",
   "subsBetaRequestDialogTitle": "Beta katılım isteği",
