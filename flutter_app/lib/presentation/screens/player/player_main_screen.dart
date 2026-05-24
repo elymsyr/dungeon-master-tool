@@ -101,6 +101,26 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   }
 
   Future<void> _exitToHub() async {
+    final l10n = L10n.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.worldExitConfirmTitle),
+        content: Text(l10n.worldExitConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.mainBackToHub),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
     // Çıkışta pending row-level edit'leri flush + (online ise) outbox
     // forceTick — player'ın debounce'lu karakter düzenlemeleri kaybolmasın.
     await withLoading(

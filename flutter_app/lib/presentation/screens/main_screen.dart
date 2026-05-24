@@ -186,6 +186,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
   /// "Saving..." overlay ile bekletilir. Sonra liste provider'ları invalidate
   /// + /hub. Kullanıcı arka tarafta data kaybetmesin diye sync zorlanır.
   Future<void> _exitToHub() async {
+    final l10n = L10n.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.worldExitConfirmTitle),
+        content: Text(l10n.worldExitConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.mainBackToHub),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'exit-world',

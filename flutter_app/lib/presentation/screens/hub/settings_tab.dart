@@ -1387,7 +1387,7 @@ class _SubscriptionsSection extends ConsumerWidget {
           await ref.read(betaExitPreserveServiceProvider)?.summarize();
     } catch (e) {
       summaryError = isOfflineError(e)
-          ? 'Internet gerekli — sahip olduğun online içeriği lokale indirmek için bağlanmalısın.'
+          ? l10n.subsBetaLeaveOfflineNeeded
           : formatError(e);
     }
     if (!context.mounted) return;
@@ -1404,18 +1404,21 @@ class _SubscriptionsSection extends ConsumerWidget {
         if (summary != null && summary.hasAnything) {
           preserveLines.add(const SizedBox(height: 12));
           preserveLines.add(Text(
-            'Bu cihazda offline olarak saklanacak: '
-            '${summary.ownedWorlds} dünya · '
-            '${summary.orphanChars} karakter · '
-            '${summary.personalPackages} paket.',
+            l10n.subsBetaLeavePreserveLine(
+              summary.ownedWorlds,
+              summary.orphanChars,
+              summary.personalPackages,
+            ),
             style: const TextStyle(height: 1.4),
           ));
           if (summary.hasDownloads) {
             preserveLines.add(const SizedBox(height: 6));
             preserveLines.add(Text(
-              'Bunlardan ${summary.cloudOnlyWorlds} dünya / '
-              '${summary.cloudOnlyChars} karakter / '
-              '${summary.cloudOnlyPackages} paket önce cloud\'dan indirilecek.',
+              l10n.subsBetaLeaveDownloadLine(
+                summary.cloudOnlyWorlds,
+                summary.cloudOnlyChars,
+                summary.cloudOnlyPackages,
+              ),
               style: TextStyle(
                 height: 1.4,
                 color: palette.sidebarLabelSecondary,
