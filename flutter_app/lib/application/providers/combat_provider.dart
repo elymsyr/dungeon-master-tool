@@ -14,10 +14,12 @@ import '../../domain/entities/session.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
+import '../services/world_mirror_applier.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
+import 'online_worlds_provider.dart';
 
 const _uuid = Uuid();
 final _rng = Random();
@@ -73,15 +75,23 @@ class CombatNotifier extends StateNotifier<CombatState>
   final Future<void> Function(Map<String, dynamic> patch) _saveSettingsPatch;
   // HP/ac write-back for characters (encounter ↔ character card sync).
   final Future<void> Function(Character) _saveCharacter;
+  /// True iff combat_state YOK ama yine de _loaded set'i güvenli — offline
+  /// world ya da online world'da initial cloud sync settled. Cross-device
+  /// open'da empty local + pending cloud durumunda false döner; sonra
+  /// applyInitialState settled marker'ı set'leyince ve combatProvider
+  /// rebuild olunca true döner.
+  final bool Function() _isLoadWithoutDataSafe;
 
-  // True once _loadFromCampaign consumed real campaign data. Gates write paths
-  // so the transient (beginLoad → completeLoad) window cannot patch
-  // combat_state with the default empty payload.
+  // True once _loadFromCampaign consumed real campaign data (or confirmed
+  // truly empty cloud state). Gates write paths so the transient
+  // beginLoad → completeLoad + cross-device pre-sync window cannot patch
+  // combat_state with the default empty payload (which would propagate via
+  // saveSettingsPatch → cloud → all devices).
   bool _loaded = false;
 
   CombatNotifier(this._getEntities, this._getSchema, this._getCharacters,
       this._getCampaignData, this._eventBus, this._saveSettingsPatch,
-      this._saveCharacter)
+      this._saveCharacter, this._isLoadWithoutDataSafe)
       : super(const CombatState()) {
     _loadFromCampaign();
   }
@@ -159,7 +169,17 @@ class CombatNotifier extends StateNotifier<CombatState>
       loadSessionState(Map<String, dynamic>.from(combatData));
     }
     clearUndoRedo();
-    _loaded = true;
+    // Cross-device açılışta combat_state daha bulutta gelmemiş olabilir;
+    // _loaded'ı true set'lemek session_screen'in auto-create-encounter
+    // post-frame'inin "Encounter 1" fake'ini bulut'a yazıp tüm cihazlara
+    // yaymasına yol açar. combatData GERÇEK Map ise ya da
+    // `worldInitialSyncSettledProvider` worldId için settled ise (veya
+    // world offline'sa) safe — değilse pending kabul edip _loaded false
+    // bırak, bir sonraki revision bump'ta (applyInitialState bitişi)
+    // combatProvider rebuild → yeniden değerlendirilir.
+    if (combatData is Map || _isLoadWithoutDataSafe()) {
+      _loaded = true;
+    }
   }
 
   void undo() {
@@ -876,6 +896,10 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
   // any later edit would patch combat_state with the empty payload, wiping
   // encounters/event log/battlemap on next reopen. Matches worldSchemaProvider.
   ref.watch(campaignRevisionProvider);
+  // applyInitialState bittikten sonra settled marker'a worldId eklenir; bu
+  // watch revision bump'la birlikte combatProvider'ı rebuild eder ki _loaded
+  // gate (cross-device empty load için) yeniden değerlendirilsin.
+  ref.watch(worldInitialSyncSettledProvider);
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
@@ -899,5 +923,18 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
           );
     },
     (character) => ref.read(characterListProvider.notifier).update(character),
+    () {
+      // _isLoadWithoutDataSafe: combat_state YOK ama _loaded güvenli mi?
+      // - World offline → bulut yok, anında safe.
+      // - World online + initial sync settled → bulut "boş" diye onayladı, safe.
+      // - World online + sync pending → kritik kapı, defer (false).
+      final worldId = ref
+          .read(activeCampaignProvider.notifier)
+          .data?['world_id'] as String?;
+      if (worldId == null) return true; // local fallback, no cloud
+      final isOnline = ref.read(onlineWorldIdsProvider).contains(worldId);
+      if (!isOnline) return true;
+      return ref.read(worldInitialSyncSettledProvider).contains(worldId);
+    },
   );
 });
