@@ -36,6 +36,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
+import '../widgets/world_open_splash.dart';
 import '../widgets/characters_sidebar.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
@@ -389,6 +390,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Cross-device hydrate gate: completeLoad awaits cloud applyInitialState
+    // before flipping this flag. Without the splash here, battlemap / mindmap
+    // / map tabs mount against stale local snapshot and the post-hydrate
+    // revision bump only patches what their notifier listeners agree to
+    // re-apply — token positions / drawings / fog can stay stale on a cold
+    // open. Block the shell entirely until the load finishes.
+    if (ref.watch(activeCampaignLoadingProvider)) {
+      return const WorldOpenSplash();
+    }
+
     // Online player ise tamamen ayrı, sade shell. role henüz resolve
     // olmadıysa DM görünümü ile başlar; resolve sonrası rebuild ile
     // PlayerMainScreen'e geçer.

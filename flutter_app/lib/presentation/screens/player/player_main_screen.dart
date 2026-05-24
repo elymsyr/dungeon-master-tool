@@ -22,6 +22,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/world_open_splash.dart';
 import '../../widgets/entity_sidebar.dart';
 import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/pdf_sidebar.dart';
@@ -122,6 +123,10 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Cross-device hydrate gate — see main_screen.dart for rationale.
+    if (ref.watch(activeCampaignLoadingProvider)) {
+      return const WorldOpenSplash();
+    }
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
