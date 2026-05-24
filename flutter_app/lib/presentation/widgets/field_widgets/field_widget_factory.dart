@@ -132,7 +132,27 @@ class FieldWidgetFactory {
     /// SRD armor consequences for the `combat_stats` warning banner
     /// (untrained penalty, STR speed cut, Stealth disadvantage).
     List<String> combatStatsArmorNotes = const [],
+
+    /// Multi-field patch callback. Used by side-effect widgets (e.g.
+    /// `extra_hp` adjusts its own value AND combat_stats.{hp,max_hp}
+    /// atomically). Editor merges the patch into the entity fields.
+    void Function(Map<String, dynamic> patch)? onPatchFields,
   }) {
+    // Special-case top-level extra_hp field (signed delta input that also
+    // mutates combat_stats.hp/max_hp). Must precede the type switch since
+    // it's a plain int field that needs side-effect write access.
+    if (schema.fieldKey == 'extra_hp' &&
+        schema.fieldType == FieldType.integer &&
+        !schema.isList) {
+      return _ExtraHpFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+        onPatchFields: onPatchFields,
+      );
+    }
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
@@ -1025,6 +1045,165 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
   }
 }
 
+// --- EXTRA HP (signed delta input, mirrors to combat_stats) ---
+// Sticky-cumulative bonus to max HP. Input accepts "+n" / "n" / "-n";
+// on commit Δ is applied to combat_stats.{hp,max_hp} alongside this field.
+// max_hp stays the single source of truth for current effective max; this
+// field is the audit trail of manual adjustments only.
+class _ExtraHpFieldWidget extends StatefulWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, dynamic>? entityFields;
+  final void Function(Map<String, dynamic> patch)? onPatchFields;
+
+  const _ExtraHpFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    required this.entityFields,
+    required this.onPatchFields,
+  });
+
+  @override
+  State<_ExtraHpFieldWidget> createState() => _ExtraHpFieldWidgetState();
+}
+
+class _ExtraHpFieldWidgetState extends State<_ExtraHpFieldWidget> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) {
+      final t = v.trim();
+      if (t.isEmpty) return 0;
+      return int.tryParse(t) ?? 0;
+    }
+    return 0;
+  }
+
+  // Resolves committed text to the new absolute extra HP value.
+  // "+5"/"5" → 5; "-3" → -3; "0" → 0. Null for invalid/empty.
+  int? _resolveNewExtra(String text, int oldExtra) {
+    final t = text.trim();
+    if (t.isEmpty) return null;
+    final body = t.startsWith('+') ? t.substring(1) : t;
+    return int.tryParse(body);
+  }
+
+  String _formatSigned(int n) {
+    if (n > 0) return '+$n';
+    if (n < 0) return '$n';
+    return '0';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        TextEditingController(text: _formatSigned(_asInt(widget.value)));
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      // Pre-select cumulative text so typed input replaces it instead of
+      // concatenating ("+5" + typing "+3" otherwise becomes "+5+3" → no-op).
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    } else {
+      _applyDelta(_controller.text);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExtraHpFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value && !_focusNode.hasFocus) {
+      final newText = _formatSigned(_asInt(widget.value));
+      if (_controller.text != newText) _controller.text = newText;
+    }
+  }
+
+  @override
+  void deactivate() {
+    // Save buton / mode toggle widget tree'den çıkmadan delta uygula.
+    if (_focusNode.hasFocus) {
+      _applyDelta(_controller.text);
+    }
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _applyDelta(String text) {
+    final oldExtra = _asInt(widget.value);
+    final newExtra = _resolveNewExtra(text, oldExtra);
+    if (newExtra == null) {
+      _controller.text = _formatSigned(oldExtra);
+      return;
+    }
+    final delta = newExtra - oldExtra;
+    if (delta == 0) {
+      _controller.text = _formatSigned(oldExtra);
+      return;
+    }
+    final stats = widget.entityFields?['combat_stats'];
+    final statsMap = stats is Map
+        ? Map<String, dynamic>.from(stats)
+        : <String, dynamic>{};
+    final oldMax = _asInt(statsMap['max_hp']);
+    final oldHp = _asInt(statsMap['hp']);
+    final newMax = (oldMax + delta).clamp(0, 9999).toInt();
+    final newHp = (oldHp + delta).clamp(0, newMax).toInt();
+    statsMap['max_hp'] = newMax;
+    statsMap['hp'] = newHp;
+    final patch = widget.onPatchFields;
+    if (patch != null) {
+      patch({'extra_hp': newExtra, 'combat_stats': statsMap});
+    } else {
+      widget.onChanged(newExtra);
+    }
+    _controller.text = _formatSigned(newExtra);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _asInt(widget.value);
+    final Widget child = widget.readOnly
+        ? Text(_formatSigned(current), style: _fieldValueStyle(context))
+        : TextFormField(
+            key: const ValueKey('extra_hp_input'),
+            controller: _controller,
+            focusNode: _focusNode,
+            keyboardType: const TextInputType.numberWithOptions(signed: true),
+            style: _fieldValueStyle(context),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              helperText: '+/-',
+              helperStyle: TextStyle(fontSize: 9),
+            ),
+            onFieldSubmitted: _applyDelta,
+          );
+    return _LabeledFieldRow(label: widget.schema.label, child: child);
+  }
+}
+
 // --- ENUM (Dropdown) ---
 class _EnumFieldWidget extends StatelessWidget {
   final FieldSchema schema;
@@ -1582,12 +1761,13 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                         ),
                         child: Row(
                           children: rowFields.map((f) {
-                            // HP-family stays editable even in view mode so
-                            // mid-session damage/heal doesn't require an edit
-                            // toggle. Other combat stats follow widget.readOnly.
-                            final alwaysEditable = f.$1 == 'hp' ||
-                                f.$1 == 'max_hp' ||
-                                f.$1 == 'temp_hp';
+                            // hp/max_hp locked everywhere: damage/heal flows
+                            // through rest buttons + combat tracker (not this
+                            // widget). Manual edit removed to prevent mis-edit
+                            // vs level-up math. Bonus adjustments go through
+                            // the top-level `extra_hp` field.
+                            final lockedHp =
+                                f.$1 == 'hp' || f.$1 == 'max_hp';
                             // `level` / `ac` are derived (root level field +
                             // resolver AC) — always read-only, never write the
                             // stale stored value back via onChanged.
@@ -1595,8 +1775,8 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                             final field = TextFormField(
                               key: ValueKey('cs_${f.$1}'),
                               controller: _controllers[f.$1],
-                              readOnly: isDerived ||
-                                  (widget.readOnly && !alwaysEditable),
+                              readOnly:
+                                  isDerived || lockedHp || widget.readOnly,
                               textAlign: TextAlign.center,
                               decoration: InputDecoration(
                                 labelText: f.$2,
@@ -1612,9 +1792,8 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                                 ),
                               ),
                               onChanged: (v) {
-                                final updated = Map<String, dynamic>.from(
-                                  stats,
-                                );
+                                final updated =
+                                    Map<String, dynamic>.from(stats);
                                 updated[f.$1] = v;
                                 widget.onChanged(updated);
                               },

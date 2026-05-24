@@ -593,7 +593,19 @@ class CharacterResolver {
             }
           case 'subclass':
             final subId = _resolveRef(ref, entitiesById);
-            if (subId != null && subId == subclassId) return true;
+            if (subId == null || subId != subclassId) break;
+            // Gate by the parent class's level so subclass L6/L10/L14
+            // features don't auto-grant the moment the L3 subclass is
+            // picked. Falls back to total character level when the
+            // subclass doesn't declare a parent_class_ref.
+            final minLevel = atLevel == 0 ? 1 : atLevel;
+            final subEntity = entitiesById[subId];
+            final parentClassId =
+                _resolveRef(subEntity?.fields['parent_class_ref'], entitiesById);
+            final levelHere = parentClassId != null
+                ? (classLevels[parentClassId] ?? 0)
+                : classLevels.values.fold<int>(0, (a, b) => a + b);
+            if (levelHere >= minLevel) return true;
           case 'species':
             final spId = _resolveRef(ref, entitiesById);
             if (spId != null && spId == raceId) return true;

@@ -724,6 +724,9 @@ Map<String, dynamic> buildSeedFields({
       'xp': 0,
     };
   }
+  if (fieldsByKey.containsKey('extra_hp')) {
+    out['extra_hp'] = 0;
+  }
   if (fieldsByKey.containsKey('speed_walk_ft')) {
     out['speed_walk_ft'] = speedFt;
   }
@@ -1007,6 +1010,24 @@ Map<String, dynamic> buildSeedFields({
   if (goldGain > 0 && fieldsByKey.containsKey('gp')) {
     final existing = (out['gp'] is int) ? out['gp'] as int : 0;
     out['gp'] = existing + goldGain;
+  }
+  // SRD §1 "Starting at Higher Levels" — auto-add the GP bundle the table
+  // specifies (1d10 resolved to the average roll = 6). Magic items stay
+  // advisory because rarity-picked items require DM curation; the panel on
+  // the Identity step lists what's recommended.
+  if (draft.level > 1 && fieldsByKey.containsKey('gp')) {
+    int bonusGp = 0;
+    if (draft.level >= 17) {
+      bonusGp = 20000 + 6 * 250;
+    } else if (draft.level >= 11) {
+      bonusGp = 5000 + 6 * 250;
+    } else if (draft.level >= 5) {
+      bonusGp = 500 + 6 * 25;
+    }
+    if (bonusGp > 0) {
+      final existing = (out['gp'] is int) ? out['gp'] as int : 0;
+      out['gp'] = existing + bonusGp;
+    }
   }
 
   // Inherit granted refs from each source entity (race / class / subclass)
@@ -1294,6 +1315,38 @@ Map<String, dynamic> buildSeedFields({
           count: remaining,
         ).toMap());
       }
+    }
+  }
+  // Subclass-driven bonus skill picks (e.g. Bard College of Lore L3 grants
+  // 3 free skill picks via `bonus_skill_pick_count`). Mirrors the editor's
+  // level-up subclass resolution; here it covers higher-level start chars
+  // that pick a subclass through the wizard.
+  if (subclassEntity != null) {
+    final subSkillCount =
+        intOf(subclassEntity.fields['bonus_skill_pick_count']);
+    if (subSkillCount > 0) {
+      seededPending.add(newPendingChoice(
+        kind: PendingChoiceKind.skillProficiency,
+        level: intOf(subclassEntity.fields['granted_at_level']) > 0
+            ? intOf(subclassEntity.fields['granted_at_level'])
+            : draft.level,
+        classId: characterClass?.id,
+        classLabel: subclassEntity.name,
+        count: subSkillCount,
+      ).toMap());
+    }
+    final subExpertiseCount =
+        intOf(subclassEntity.fields['bonus_expertise_pick_count']);
+    if (subExpertiseCount > 0) {
+      seededPending.add(newPendingChoice(
+        kind: PendingChoiceKind.expertise,
+        level: intOf(subclassEntity.fields['granted_at_level']) > 0
+            ? intOf(subclassEntity.fields['granted_at_level'])
+            : draft.level,
+        classId: characterClass?.id,
+        classLabel: subclassEntity.name,
+        count: subExpertiseCount,
+      ).toMap());
     }
   }
   if (background != null) {
@@ -1710,8 +1763,9 @@ class _HigherLevelStartPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Add the GP and magic-item picks manually in the editor — the '
-            'wizard does not auto-grant these yet.',
+            'GP auto-added on creation (1d10 resolved at average = 6). '
+            'Magic-item picks remain advisory — the DM curates rarity in '
+            'the editor.',
             style: TextStyle(
               fontSize: 10,
               fontStyle: FontStyle.italic,
