@@ -66,6 +66,17 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       battleMapProvider(widget.encounterId).select((s) => s.activeTool),
     );
 
+    // Cross-device / CDC catch-up: activeEncounter content fresher than what
+    // the notifier was init'd with → re-hydrate. Idempotent + pending-write
+    // guarded inside syncFromEncounter.
+    ref.listen(
+      combatProvider.select((s) => s.activeEncounter),
+      (prev, next) {
+        if (next == null || next.id != widget.encounterId) return;
+        _notifier.syncFromEncounter(next);
+      },
+    );
+
     final phone = isPhone(context);
 
     return Column(

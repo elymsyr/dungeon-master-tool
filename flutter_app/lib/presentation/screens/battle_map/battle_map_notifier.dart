@@ -447,6 +447,46 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Init
   // -------------------------------------------------------------------------
 
+  /// Last applied cloud-side encounter fingerprint. Compared in
+  /// [syncFromEncounter] to decide whether incoming activeEncounter update is
+  /// a fresh cloud snapshot worth re-hydrating from. Local saves bump it via
+  /// [_stampFingerprint] so the notifier's own writes don't trigger a
+  /// re-init loop.
+  String? _appliedFingerprint;
+
+  static String _fingerprintOf(Encounter e) {
+    return jsonEncode({
+      'm': e.mapPath ?? '',
+      'ts': e.tokenSize,
+      'tm': e.tokenSizeMultipliers,
+      'tp': e.tokenPositions,
+      'f': e.fogData?.length ?? 0,
+      'a': e.annotationData?.length ?? 0,
+      'ms': e.measurementsData ?? '',
+      'g': '${e.gridSize}/${e.gridVisible}/${e.gridSnap}/${e.feetPerCell}',
+    });
+  }
+
+  void _stampFingerprint(Encounter e) {
+    _appliedFingerprint = _fingerprintOf(e);
+  }
+
+  /// Re-hydrate notifier from a fresh [encounter] snapshot (CDC catch-up,
+  /// cross-device open). Idempotent — bails when the fingerprint matches the
+  /// last applied snapshot, or when a local battlemap write is still pending
+  /// (about to overwrite cloud anyway).
+  Future<void> syncFromEncounter(Encounter encounter) async {
+    if (encounter.id != encounterId) return;
+    final fp = _fingerprintOf(encounter);
+    if (fp == _appliedFingerprint) return;
+    if (_ref
+        .read(pendingWriteBufferProvider)
+        .isPending('battlemap:$encounterId:save')) {
+      return;
+    }
+    await init(encounter);
+  }
+
   Future<void> init(Encounter encounter) async {
     // Grid settings
     var s = state.copyWith(
@@ -537,6 +577,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       canvasWidth: bg?.width ?? 2048,
       canvasHeight: bg?.height ?? 2048,
     );
+    _stampFingerprint(encounter);
 
     // First time we open this encounter's battle map — auto-fit the
     // background to the viewport so the user doesn't see the top-left
@@ -1087,6 +1128,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       tokenSizeMultipliers: state.tokenSizeMultipliers,
       tokenSize: state.tokenSize,
     );
+    // Stamp fingerprint from the just-pushed encounter so the CDC echo or
+    // own-write activeEncounter update doesn't trigger syncFromEncounter.
+    final enc = _ref.read(combatProvider).activeEncounter;
+    if (enc != null && enc.id == encounterId) {
+      _stampFingerprint(enc);
+    }
   }
 
   Future<String?> _fogToBase64() async {
