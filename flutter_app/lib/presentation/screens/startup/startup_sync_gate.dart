@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
+import '../../../application/services/world_reconciler.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/app_icon_image.dart';
 
@@ -90,6 +92,17 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       } catch (e) {
         debugPrint('startup char pull error: $e');
       }
+      // Worlds list pull — `cloudCatchupService` paket + char çekiyor,
+      // worlds için ayrı reconciler var. App startup'ta çağırılmadığı
+      // sürece hub Worlds tab'ı yeni cihaz / sign-out+in sonrası boş
+      // geliyor ve manuel refresh gerekiyor. Reconcile cloud row'ları
+      // yerel Drift'e yazıp `onlineWorldIdsProvider`'ı refresh ediyor.
+      _setMessage('Syncing worlds...');
+      try {
+        await ref.read(worldReconcilerProvider).reconcile();
+      } catch (e) {
+        debugPrint('startup world reconcile error: $e');
+      }
     }
 
     _setMessage('Connecting to active world...');
@@ -97,6 +110,23 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       await ref.read(worldMirrorApplierProvider.future);
     } catch (e) {
       debugPrint('startup world subscribe error: $e');
+    }
+
+    // Hub liste provider'ları (worlds / packages / characters) tamamen yerel
+    // Drift'i okuyor. Yukarıdaki pull'lar Drift'i populate ettiyse de eğer
+    // bu provider'lar startup splash sırasında çözüldüyse stale snapshot
+    // tutarlar. Splash kapanmadan invalidate edelim ki hub açılışında
+    // taze veri okunsun.
+    if (mounted) {
+      ref.invalidate(campaignInfoListProvider);
+      ref.invalidate(campaignListProvider);
+      ref.invalidate(packageListProvider);
+      // characterListProvider StateNotifier — refresh() metoduyla _load yenile.
+      try {
+        await ref.read(characterListProvider.notifier).refresh();
+      } catch (e) {
+        debugPrint('startup char list refresh error: $e');
+      }
     }
   }
 
