@@ -296,6 +296,12 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   /// Async tail of [beginLoad]. Flushes pending writes for the prior
   /// world, loads the new world's data, then bumps the revision counter.
+  ///
+  /// Online dünyalar için: lokal Drift hydrate'inden sonra cloud
+  /// `applyInitialState`'i AWAIT eder (8s ceiling). Aksi halde Device B
+  /// world ekranı stale local snapshot ile açılır, sonra arka planda gelen
+  /// cloud snapshot battlemap/mindmap notifier'ı geç güncellediği için
+  /// "battlemap resmi+içeriği kayboluyor" görüntüsü oluşur.
   Future<bool> completeLoad() async {
     final name = state;
     if (name == null) {
@@ -311,7 +317,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       // schema + entity providers re-read `_data` (state didn't change so
       // they wouldn't otherwise see the new content).
       _ref.read(campaignRevisionProvider.notifier).state++;
-      _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       // Online dünya açılışında roster + invite cache'lerini temizle —
       // kapalıyken kaçırılan join'ler ya da offline iken null cache'lenmiş
       // invite kodu reopen ile kurtarılsın.
@@ -329,13 +334,45 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
             },
           ),
         );
+        // Online + auth ready → cloud full snapshot'ı AWAIT et. Loading
+        // flag bu süre boyunca true kalır → hub UI spinner gösterir, world
+        // ekranı stale state ile açılmaz.
+        if (SupabaseConfig.isConfigured &&
+            _ref.read(authProvider) != null &&
+            _ref.read(onlineWorldIdsProvider).contains(worldId)) {
+          try {
+            await _awaitCloudHydrate(worldId)
+                .timeout(const Duration(seconds: 8));
+          } on TimeoutException {
+            debugPrint('Cloud hydrate timeout for $worldId — opening with '
+                'local snapshot; CDC will catch up');
+          } catch (e, st) {
+            debugPrint('Cloud hydrate error: $e\n$st');
+          }
+          // Hydrate cloud snapshot'ı _data'ya yazdı → providerları yeniden
+          // okumaya zorla.
+          _ref.read(campaignRevisionProvider.notifier).state++;
+        }
       }
+      _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       return true;
     } catch (e, st) {
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       debugPrint('Campaign load error: $e\n$st');
       return false;
     }
+  }
+
+  /// World mirror applier provider'ını warm up edip `applyInitialState`'i
+  /// AWAIT eder. Applier provider lazy — ilk read'inde channel subscribe +
+  /// initial pull başlar; biz subscribe sonrası ayrıca pull'u beklemek için
+  /// applier handle'ı üzerinden ikinci kez tetikliyoruz (idempotent —
+  /// upsert + spread). Channel subscribe başarısız olursa applier null
+  /// olabilir, o durumda erken döner.
+  Future<void> _awaitCloudHydrate(String worldId) async {
+    final applier = await _ref.read(worldMirrorApplierProvider.future);
+    if (applier == null) return;
+    await applier.applyInitialState(worldId);
   }
 
   Future<bool> load(String name) async {
