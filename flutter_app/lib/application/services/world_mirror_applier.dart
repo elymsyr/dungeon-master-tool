@@ -45,6 +45,26 @@ Future<dynamic> _decodeJsonMaybeOffload(String s) {
 /// profil sonrası 33-50ms'e çıkarılabilir.
 const Duration _kBatchWindow = Duration(milliseconds: 16);
 
+/// `world_settings.settings_json` decode edilip top-level `data`'ya yayılırken
+/// atlanan anahtarlar. Identity / template alanları + granular tablo sahipleri
+/// (`entities`, `sessions`, `map_data`): `world_settings` legacy mirror olarak
+/// bu alanları taşıyabilir ama dedicated row/table source-of-truth.
+/// `_world_schema`: yerelde repo katmanı `world_schema`'ya çeviriyor;
+/// snapshot'ı top-level'a koymak yanıltıcı olur.
+const Set<String> _settingsApplyBlocklist = {
+  'world_id',
+  'world_name',
+  'created_at',
+  'entities',
+  'sessions',
+  'map_data',
+  'world_schema',
+  'template_id',
+  'template_hash',
+  'template_original_hash',
+  '_world_schema',
+};
+
 /// CDC event'lerini local state'e uygular.
 ///
 /// Sorumluluk:
@@ -134,7 +154,17 @@ class WorldMirrorApplier {
     ref.invalidate(worldEntitySharesProvider(worldId));
     final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
-    if (snapshot.entities.isEmpty && snapshot.characters.isEmpty) return;
+    // Cross-device açılışta entities/characters cloud'da olmayabilir ama
+    // mapData/sessions/settings dolu olabilir. Beşi de boşsa bail et,
+    // herhangi biri varsa devam — yoksa session/map/mind-map sekmeleri
+    // boş kalır.
+    if (snapshot.entities.isEmpty &&
+        snapshot.characters.isEmpty &&
+        snapshot.mapData == null &&
+        snapshot.sessions.isEmpty &&
+        snapshot.settings == null) {
+      return;
+    }
 
     final activeCampaign = ref.read(activeCampaignProvider.notifier);
     final data = activeCampaign.data;
@@ -589,7 +619,15 @@ class WorldMirrorApplier {
       final entities = data['entities'];
       final mapData = data['map_data'];
       final sessions = data['sessions'];
-      final settings = data['settings'];
+      // PRESERVE: settings subkey'leri artık top-level'da yaşıyor
+      // (`_applySettingsRow` spread eder). Granular `world_settings`
+      // event'i bu anahtarları ayrıca taze tutuyor. Worlds payload'undan
+      // gelen stale değerler bunları ezmesin diye `decoded`'dan strip et.
+      final preservedSettingsKeys = <String, dynamic>{};
+      for (final entry in data.entries) {
+        if (_settingsApplyBlocklist.contains(entry.key)) continue;
+        preservedSettingsKeys[entry.key] = entry.value;
+      }
       // PRESERVE: local-only sibling keys (saveSettingsPatchLocalOnly yazıyor,
       // cloud state_json'a hiç gitmez). clear+addAll'dan sonra geri konmazsa
       // in-memory'den silinir → ekran reload'da viewport defaulta düşer.
@@ -598,7 +636,12 @@ class WorldMirrorApplier {
       final mindMapViews = data['mind_map_views'];
       decoded.remove('map_data');
       decoded.remove('sessions');
-      decoded.remove('settings');
+      // Worlds payload'undaki settings subkey'leri kullanılmaz — preserve
+      // edilmiş top-level değerler `_applySettingsRow` ile yeniden yazılacak.
+      for (final key in preservedSettingsKeys.keys) {
+        decoded.remove(key);
+      }
+      decoded.remove('settings'); // legacy nested kopyayı da düşür
       data
         ..clear()
         ..addAll(decoded);
@@ -607,7 +650,7 @@ class WorldMirrorApplier {
       }
       if (mapData != null) data['map_data'] = mapData;
       if (sessions != null) data['sessions'] = sessions;
-      if (settings != null) data['settings'] = settings;
+      data.addAll(preservedSettingsKeys);
       if (mapView != null) data['map_view'] = mapView;
       if (mindMapViews != null) data['mind_map_views'] = mindMapViews;
       _bumpRevision();
@@ -888,27 +931,31 @@ class WorldMirrorApplier {
       return;
     }
 
-    // CDC race guard: settings JSON tek bir blob; lokal'da farklı subkey'ler
-    // (combat_state, map_data, mind_maps, map_view, mind_map_view:$mapId)
-    // ayrı buffer entry'leri olarak pending olabilir. Merge: pending subkey
-    // local'dan korunur, kalanları remote'tan al.
-    if (pendingKeys.isEmpty) {
-      data['settings'] = decoded;
-    } else {
-      final currentSettings = (data['settings'] is Map<String, dynamic>)
-          ? data['settings'] as Map<String, dynamic>
-          : <String, dynamic>{};
-      final merged = <String, dynamic>{...decoded};
-      for (final pendingKey in pendingKeys) {
-        final subkey = pendingKey.substring(prefix.length).split(':').first;
-        if (currentSettings.containsKey(subkey)) {
-          merged[subkey] = currentSettings[subkey];
-        } else {
-          merged.remove(subkey);
-        }
-      }
-      data['settings'] = merged;
+    // `_loadFromDb` settings_json subkey'lerini top-level `data`'ya yayıyor
+    // (combat_state, mind_maps, map_view, mind_map_views, metadata, …) ve
+    // okurlar (combat_provider, mind_map_screen, …) da top-level'dan okuyor.
+    // Cross-device açılışta cloud sync de aynı yere yazmalı — önceden tüm
+    // blob `data['settings']` altına gömülüyordu, bu yüzden başka cihazdan
+    // açılınca session/mind-map sekmeleri boş kalıyordu.
+    //
+    // CDC race guard: subkey için lokal pending write varsa, kullanıcının
+    // henüz flush edilmemiş edit'i `data[subkey]` içinde duruyor — cloud
+    // değerini uygulama ki kullanıcı edit'i ezilmesin.
+    final pendingSubkeys = pendingKeys
+        .map((k) => k.substring(prefix.length).split(':').first)
+        .toSet();
+
+    for (final entry in decoded.entries) {
+      final key = entry.key;
+      if (_settingsApplyBlocklist.contains(key)) continue;
+      if (pendingSubkeys.contains(key)) continue;
+      data[key] = entry.value;
     }
+
+    // Önceki versiyonlarda blob'un tamamı `data['settings']` altına
+    // yazılıyordu. Top-level spread'e geçişte legacy nested kopyayı temizle —
+    // stale değerler taze top-level anahtarları gölgelemesin.
+    data.remove('settings');
     // Synced settings blob'unu device-local Drift'e de yaz — `_applySettingsRow`
     // önceden yalnızca in-memory state'e dokunuyordu, bu yüzden hub liste
     // (campaignInfoListProvider) refresh sonrası eski cover'ı okuyordu.

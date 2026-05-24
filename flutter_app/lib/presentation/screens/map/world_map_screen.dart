@@ -72,8 +72,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final worldId =
         data['world_id'] as String? ?? ref.read(activeCampaignProvider);
     final notifier = ref.read(worldMapProvider.notifier);
-    if (notifier.isInitializedFor(worldId)) return;
     final mapData = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
+    // Cross-device açılışta ilk `_init` boş `mapData` ile çalışır (yerel
+    // Drift'te `world_map_data` yok); `_applyMapDataRow` cloud'dan dolar ve
+    // revision bump eder. Notifier zaten bu worldId için init olduysa ama
+    // hâlâ boşsa (`hasContent == false`) ve yeni veri geldiyse re-init et.
+    if (notifier.isInitializedFor(worldId)) {
+      if (notifier.hasContent) return;
+      if (mapData.isEmpty) return;
+    }
     // Viewport now lives in sibling `map_view` (local-only). Prefer it; fall
     // back to legacy nested scale/pan keys inside `map_data` for worlds saved
     // before the split. `init` reads scale/pan_x/pan_y off the map it receives.
