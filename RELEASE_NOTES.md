@@ -32,6 +32,15 @@ The biggest release since v8.0. The closed beta now powers full online play: eve
 - **Hard reset path** — Mass beta wipe is available to admins for emergency resets (migration 064).
 - **Beta exit preserves your data** — `BetaExitPreserveService` hydrates owned worlds, orphan characters and personal packages into offline-only storage on leave, with CDC purge guards and a summary dialog of what stayed local vs. what was uploaded.
 
+#### Characters & SRD
+
+- **"~3 HP at level 1" bug fix** — Wizard wrote HP to `combat_stats` while editor/rest/level-up paths read top-level fields, so newly-created characters showed 0/0 and the first level-up landed them in the 3–6 band. HP now uses `combat_stats.{hp,max_hp}` as the single source of truth via `_readHp`/`_writeHp` helpers; level-up, short rest, long rest and damage flows are all aligned.
+- **Locked HP, new Extra HP field** — `combat_stats.hp` / `combat_stats.max_hp` are now read-only in the character editor (mid-session damage/heal still goes through the combat tracker and rest buttons). A new top-level **Extra HP** field above Death Save Successes accepts a signed value (`+5`, `-3`, `0`) and propagates the delta to `max_hp` + current HP atomically.
+- **Subclass skill picks** — `bonus_skill_pick_count` / `bonus_expertise_pick_count` on subclasses now seed the wizard's pending-choice pipeline (e.g. College of Lore L3 → 3 skill picks at higher-level start). Subclass auto-grants are gated by parent class level, so a level-3 subclass selection no longer fires its L6 features.
+- **Berserker Mindless Rage as a mechanical grant** — L6 Mindless Rage now grants both the narrative trait and the `Mindless Rage` feat so the resolver actually walks its effects; condition-immunity-while-raging surfaces in ResolvedGrantsCard instead of staying narrative-only.
+- **Higher-level start gold (SRD §1 "Starting at Higher Levels")** — Wizard now auto-adds the SRD higher-level GP bundle when starting above L1 (L5–10 +500, L11–16 +5 000, L17+ +20 000, plus 1d10×25/L5+ avg-fixed) instead of leaving it as advisory-only text.
+- **Template re-apply preserves combat_stats subfields** — `applyTemplateUpdate` now shallow-merges Map fields so re-running a template against an existing character doesn't wipe HP/AC sub-values back to defaults.
+
 #### App-wide
 
 - **Unified debounce + tier-1 perf wins** — 5-tier SyncTier classifier, batched package_sync upsert+delete, combat event log capped at 500, startup AppIconImage swap, CDC race guard.
@@ -51,6 +60,6 @@ The biggest release since v8.0. The closed beta now powers full online play: eve
 ### Known issues
 
 - **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
-- **Remaining SRD effect gaps** — Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision still needs resolver `sense_grant range_ft` wiring; Tier-4 combat-tracker-dependent effects (aura predicates, advantage/disadvantage grants, on-hit extra damage, condition writers, pool spending automation) remain unimplemented.
 - **D7 test harness** — Drift v12 round-trip test harness for the auto-migration path is still pending.
 - **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.
