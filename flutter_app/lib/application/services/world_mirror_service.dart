@@ -321,6 +321,11 @@ class WorldMirrorService {
 
   /// World'e abone olunduğunda lokal Drift'i seed'lemek için pull.
   /// Granular world tables (map_data/sessions/settings) eklendi (PR-SYNC-3).
+  /// `worlds` satırı (state_json) + mindmap node/edge'leri cross-device boş-
+  /// snapshot fix'inde eklendi: granular tablolarda yer almayan legacy
+  /// alanları (battle_maps, mind_maps, metadata, …) ve dedicated mind_map
+  /// tablolarındaki node/edge'leri Device B world open'ında tek seferde
+  /// hydrate eder.
   Future<
     ({
       List<Map<String, dynamic>> entities,
@@ -328,6 +333,9 @@ class WorldMirrorService {
       Map<String, dynamic>? mapData,
       List<Map<String, dynamic>> sessions,
       Map<String, dynamic>? settings,
+      Map<String, dynamic>? worldRow,
+      List<Map<String, dynamic>> mindMapNodes,
+      List<Map<String, dynamic>> mindMapEdges,
     })
   >
   fetchInitialState(String worldId) async {
@@ -354,11 +362,28 @@ class WorldMirrorService {
           .select()
           .eq('world_id', worldId)
           .maybeSingle();
+      final worldRowRaw = await client
+          .from('worlds')
+          .select('id, world_name, updated_at, state_json')
+          .eq('id', worldId)
+          .maybeSingle();
+      final mindNodesRaw = await client
+          .from('world_mind_map_nodes')
+          .select()
+          .eq('world_id', worldId);
+      final mindEdgesRaw = await client
+          .from('world_mind_map_edges')
+          .select()
+          .eq('world_id', worldId);
       final List<Map<String, dynamic>> entities = (entitiesRaw as List)
           .cast<Map<String, dynamic>>();
       final List<Map<String, dynamic>> characters = (charactersRaw as List)
           .cast<Map<String, dynamic>>();
       final List<Map<String, dynamic>> sessions = (sessionsRaw as List)
+          .cast<Map<String, dynamic>>();
+      final List<Map<String, dynamic>> mindNodes = (mindNodesRaw as List)
+          .cast<Map<String, dynamic>>();
+      final List<Map<String, dynamic>> mindEdges = (mindEdgesRaw as List)
           .cast<Map<String, dynamic>>();
       return (
         entities: entities,
@@ -366,6 +391,9 @@ class WorldMirrorService {
         mapData: mapDataRaw,
         sessions: sessions,
         settings: settingsRaw,
+        worldRow: worldRowRaw,
+        mindMapNodes: mindNodes,
+        mindMapEdges: mindEdges,
       );
     } catch (e) {
       _logMirrorError('fetchInitialState', e);
@@ -375,6 +403,9 @@ class WorldMirrorService {
         mapData: null,
         sessions: const <Map<String, dynamic>>[],
         settings: null,
+        worldRow: null,
+        mindMapNodes: const <Map<String, dynamic>>[],
+        mindMapEdges: const <Map<String, dynamic>>[],
       );
     }
   }

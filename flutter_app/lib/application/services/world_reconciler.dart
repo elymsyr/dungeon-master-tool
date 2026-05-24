@@ -33,9 +33,11 @@ class WorldReconciler {
 
   Future<ReconcileResult> reconcile() async {
     if (!SupabaseConfig.isConfigured) {
+      debugPrint('WorldReconciler: skipped — Supabase not configured');
       return ReconcileResult.empty('Cloud yapılandırılmamış');
     }
     if (_ref.read(authProvider) == null) {
+      debugPrint('WorldReconciler: skipped — auth session null');
       return ReconcileResult.empty('Oturum açılmamış');
     }
     // Cloud'daki gerçek üyelik durumuna göre online flag set'ini baştan
