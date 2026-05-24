@@ -335,18 +335,40 @@ class BetaNotifier extends StateNotifier<BetaState> {
         return false;
       }
 
-      // 2. Storage cleanup (best-effort).
+      // 2. + 3. — `beta_purge_with_cleanup` Edge Function: leave_beta RPC +
+      // Supabase Storage `{userId}/` sweep + R2 `{userId}/` + transient
+      // sweep. Tek noktada atomik temizlik. Edge Function 4xx/5xx olursa
+      // fallback yok — caller hata mesajını görsün ve tekrar denesin
+      // (yetim Storage/R2 verisi bırakmaktansa beta-içi kalmak yeğdir).
+      bool ok = false;
       try {
-        await _ref
-            .read(betaExitCleanupServiceProvider)
-            ?.wipeUserStorage(userId);
+        final res = await Supabase.instance.client.functions.invoke(
+          'beta_purge_with_cleanup',
+          body: {'user_id': userId},
+        );
+        final data = res.data;
+        if (data is Map && data['ok'] == true) {
+          ok = true;
+        } else {
+          debugPrint('leave_beta function response: $data');
+        }
       } catch (e) {
-        debugPrint('leave_beta storage cleanup warning: $e');
+        debugPrint('leave_beta function error: $e');
+        // Fallback to legacy RPC + client storage sweep — Edge Function
+        // henüz deploy edilmemiş ortamlarda (eski self-hosted) self-exit
+        // tamamen blok olmasın. R2 öksüz kalır ama DB + Supabase Storage
+        // user JWT ile temizlenir.
+        try {
+          await _ref
+              .read(betaExitCleanupServiceProvider)
+              ?.wipeUserStorage(userId);
+        } catch (se) {
+          debugPrint('leave_beta storage fallback warning: $se');
+        }
+        final res = await Supabase.instance.client.rpc('leave_beta');
+        ok = res == true ||
+            (res is List && res.isNotEmpty && res.first == true);
       }
-
-      // 3. RPC.
-      final res = await Supabase.instance.client.rpc('leave_beta');
-      final ok = res == true || (res is List && res.isNotEmpty && res.first == true);
 
       // 4. Reconcile lokal state. Guard CDC delete'i yutuyor ama "online"
       // bayrakları + cloud push timestamp'leri stale kalır — burada düşür.

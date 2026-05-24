@@ -125,9 +125,23 @@ class AdminBetaRequestsRemoteDataSource {
         .toList(growable: false);
   }
 
+  /// Admin revoke — `beta_purge_with_cleanup` Edge Function üzerinden
+  /// orkestre edilir: DB satırları (admin_revoke_beta RPC) + Supabase
+  /// Storage `{userId}/` + R2 `{userId}/` + `transient/{userId}/`. Önceden
+  /// yalnızca RPC çağrılıyordu, Storage/R2 öksüz kalıyordu.
   Future<bool> revoke(String userId) async {
-    final res = await _sb.rpc('admin_revoke_beta', params: {'p_user': userId});
-    return res == true || (res is List && res.isNotEmpty && res.first == true);
+    try {
+      final res = await _sb.functions.invoke(
+        'beta_purge_with_cleanup',
+        body: {'user_id': userId},
+      );
+      // Edge Function 200 + body.ok döner; status diğer hatalarda fail.
+      final data = res.data;
+      if (data is Map && data['ok'] == true) return true;
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   BetaApproveStatus _parse(String s) {

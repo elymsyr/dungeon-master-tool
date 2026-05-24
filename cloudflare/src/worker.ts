@@ -93,6 +93,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (url.pathname === '/admin/purge-all') {
     return handleAdminPurgeAll(request, env);
   }
+  if (url.pathname === '/admin/purge-user') {
+    return handleAdminPurgeUser(request, env);
+  }
 
   const match = url.pathname.match(ASSET_PATH_REGEX);
   if (!match) {
@@ -423,6 +426,80 @@ async function handleAdminPurgeAll(
     deleted: dry ? 0 : deleted,
     dry,
     next_cursor: cursor ?? null,
+  });
+}
+
+// /admin/purge-user — belirli bir kullanıcının TÜM R2 objelerini siler.
+// Beta exit / admin revoke akışında çağrılır. `{userId}/...` (permanent) +
+// `transient/{userId}/...` (transient) iki prefix ayrı ayrı sweep edilir.
+// Pattern: handleAdminPurgeAll cursor + batch delete, prefix-scoped.
+// Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN.
+async function handleAdminPurgeUser(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse(405, { error: 'method_not_allowed' });
+  }
+  if (!checkAdminAuth(request, env)) {
+    return jsonResponse(401, { error: 'admin_auth_required' });
+  }
+  let body: { user_id?: unknown };
+  try {
+    body = (await request.json()) as { user_id?: unknown };
+  } catch (_) {
+    return jsonResponse(400, { error: 'invalid_json' });
+  }
+  const userId = typeof body.user_id === 'string' ? body.user_id.trim() : '';
+  // UUID rough validation — path traversal & accidental wildcard guard.
+  if (!/^[0-9a-fA-F-]{20,64}$/.test(userId)) {
+    return jsonResponse(400, { error: 'invalid_user_id' });
+  }
+  const dry = new URL(request.url).searchParams.get('dry') === '1';
+
+  const prefixes = [`${userId}/`, `transient/${userId}/`];
+  let totalListed = 0;
+  let totalDeleted = 0;
+  const batchSize = 200;
+
+  for (const prefix of prefixes) {
+    let cursor: string | undefined;
+    // Aynı invocation içinde sayfalama — büyük kullanıcılar için worker
+    // 30sn limiti. Tek user için tipik <100 obje, ama yine de cursor
+    // pattern korunur — admin endpoint'i ihtiyaç olursa retry edebilir.
+    do {
+      const listed = await env.R2_BUCKET.list({
+        prefix,
+        cursor,
+        limit: 1000,
+      });
+      totalListed += listed.objects.length;
+      if (!dry && listed.objects.length > 0) {
+        for (let i = 0; i < listed.objects.length; i += batchSize) {
+          const slice = listed.objects.slice(i, i + batchSize);
+          await Promise.all(
+            slice.map((o) =>
+              env.R2_BUCKET.delete(o.key)
+                .then(() => {
+                  totalDeleted++;
+                })
+                .catch((err) =>
+                  console.error('purge_user_delete_failed', o.key, err),
+                ),
+            ),
+          );
+        }
+      }
+      cursor = listed.truncated ? listed.cursor : undefined;
+    } while (cursor);
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    user_id: userId,
+    listed: totalListed,
+    deleted: dry ? 0 : totalDeleted,
+    dry,
   });
 }
 
