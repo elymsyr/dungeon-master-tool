@@ -30,9 +30,16 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   /// `_init()` campaign verisiyle başarıyla çalıştı mı? Dünya açılışında
   /// MindMapScreen, `completeLoad()` bitmeden build olabilir → `data == null`
   /// → init boş döner. Bu bayrak false kaldığı sürece `deactivate()` persist
-  /// etmez (boş state ile kayıtlı mind map'i ezmeyi engeller) ve
-  /// campaignRevision bump'ında init yeniden denenir.
+  /// etmez (boş state ile kayıtlı mind map'i ezmeyi engeller).
   bool _initialized = false;
+
+  /// İlk init gerçek (non-empty) mind_maps verisi okudu mu? False kaldığı
+  /// sürece `campaignRevision` bump'larında re-init denenir — başka cihazdan
+  /// dünya açılışında yerel Drift boş gelir, cloud sync birkaç frame sonra
+  /// `data['mind_maps']`'i doldurur ama state notifier hâlâ boş kalır.
+  /// Re-init için ek koruma: notifier hâlâ boş olmalı (kullanıcı edit etmeye
+  /// başladıysa cloud arrive ile ezmek istemiyoruz).
+  bool _consumedRealData = false;
 
   @override
   void initState() {
@@ -45,7 +52,6 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   }
 
   void _init() {
-    if (_initialized) return;
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final mindMaps = data['mind_maps'] as Map? ?? {};
@@ -53,8 +59,20 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     final scoped = Map<String, dynamic>.from(
       mindMaps[mapId] as Map? ?? {},
     );
+    if (_consumedRealData) return; // gerçek veri yüklendi — clobber yok
+    if (_initialized) {
+      // İlk init boş veriyle yapıldı; cloud sync sonrası re-init için izinli.
+      // Ama kullanıcı bu arada node eklemişse (state non-empty) re-init etme.
+      final currentState = ref.read(mindMapProvider);
+      if (currentState.nodes.isNotEmpty || currentState.edges.isNotEmpty) {
+        _consumedRealData = true;
+        return;
+      }
+      if (scoped.isEmpty) return; // hâlâ bir şey yok, retry beklemeye devam
+    }
     _notifier.init(scoped);
     _initialized = true;
+    _consumedRealData = scoped.isNotEmpty;
   }
 
   @override
@@ -106,10 +124,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Campaign verisi `completeLoad()` ile geç gelirse revision bump olur —
-    // init henüz başarılı değilse yeniden dene.
+    // Campaign verisi `completeLoad()` ile geç gelir (revision bump). Cloud
+    // sync de `_applySettingsRow`'tan sonra bump eder. Gerçek mind_maps
+    // verisi gelene dek re-init dene; sonrası `_init`'in iç guard'ı bloklar.
     ref.listen(campaignRevisionProvider, (_, _) {
-      if (!_initialized && mounted) _init();
+      if (!_consumedRealData && mounted) _init();
     });
 
     final palette = Theme.of(context).extension<DmToolColors>()!;

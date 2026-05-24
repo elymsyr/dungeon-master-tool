@@ -238,6 +238,25 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   bool isInitializedFor(String? worldId) =>
       _initialized && _initializedWorldId == worldId;
 
+  /// True when the notifier carries actual map content (image, pins or
+  /// multi-epoch data). Used by the screen to allow a re-init when the
+  /// first init ran with empty data (cross-device open before cloud sync
+  /// arrived) and the underlying `data['map_data']` has since been filled.
+  /// Single default epoch with no pins/image counts as empty.
+  bool get hasContent {
+    if (state.imagePath.isNotEmpty) return true;
+    if (state.pins.isNotEmpty) return true;
+    if (state.timelinePins.isNotEmpty) return true;
+    if (state.epochs.length > 1) return true;
+    if (state.epochs.length == 1) {
+      final ep = state.epochs.first;
+      if (ep.imagePath.isNotEmpty) return true;
+      if (ep.pins.isNotEmpty) return true;
+      if (ep.timelinePins.isNotEmpty) return true;
+    }
+    return false;
+  }
+
   void init(Map<String, dynamic> data, {String? worldId}) {
     final panX = (data['pan_x'] as num? ?? 0).toDouble();
     final panY = (data['pan_y'] as num? ?? 0).toDouble();
