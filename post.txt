@@ -1,0 +1,26 @@
+Dungeon Master Tool — free & open-source DM companion (Beta)
+
+Hi :) I've been building an offline-first DM tool for D&D 5e and just opened limited beta slots for the online side. Sharing in case it helps your table.
+
+What it is
+- Free, open-source tool for players, worldbuilders and dungeon masters
+- Runs on Android, iOS, Windows, Linux, macOS
+- Two-screen layout: DM screen + projected player screen (TV, second monitor, or another device)
+- Fully usable offline/online
+
+Online mode (experimental beta - limited slots)
+- Share worlds with players, invite via code
+- Realtime sync of characters, combat, battlemaps, fog of war
+- Second-screen projection over the network for remote sessions
+- Shared media pool with per-account quota (cloud art, portraits, session media)
+- Beta is invite-gated right now; features still shifting and will keep evolving, expect rough edges and changes
+
+Roadmap
+- Full D&D 5e SRD implementation (closing remaining gaps)
+- Bundled art for every species/class/monster/spell/item, no more raw-text cards
+- Ready-made music packs for the built-in soundpad
+- Better battlemap system (LoS, dynamic vision, AoE overlays, smoother large grids) + free visual asset packs for maps
+
+Links
+- https://github.com/elymsyr/dungeon-master-tool
+- https://elymsyr.github.io/
