@@ -39,10 +39,51 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
   String _message = 'Syncing local writes...';
   static const Duration _ceiling = Duration(seconds: 8);
 
+  /// Initial `_runSequence` auth-null guard'ında çıktıysa veya kullanıcı
+  /// uygulama içinde sign-in yaptıysa, bu listener bir kez catchup+reconcile
+  /// tetikler. `null → non-null` geçişinde fire eder; aynı session'da tekrar
+  /// fire etmez. Splash kapalıyken UI'a görünür değişiklik yok — sadece
+  /// provider invalidate (`worlds` / `packages` / `characters`).
+  bool _retryFired = false;
+
   @override
   void initState() {
     super.initState();
     _run();
+  }
+
+  Future<void> _runDeferredCatchup() async {
+    if (_retryFired) return;
+    _retryFired = true;
+    if (!SupabaseConfig.isConfigured) return;
+    if (ref.read(authProvider) == null) return;
+    try {
+      if (ref.read(isBetaActiveProvider)) {
+        await ref.read(cloudCatchupServiceProvider).runAll();
+        ref.read(personalMirrorApplierProvider);
+        try {
+          await ref.read(characterListProvider.notifier).pullNewerFromCloud();
+        } catch (e) {
+          debugPrint('deferred char pull error: $e');
+        }
+      }
+      try {
+        await ref.read(worldReconcilerProvider).reconcile();
+      } catch (e) {
+        debugPrint('deferred world reconcile error: $e');
+      }
+    } finally {
+      if (mounted) {
+        ref.invalidate(campaignInfoListProvider);
+        ref.invalidate(campaignListProvider);
+        ref.invalidate(packageListProvider);
+        try {
+          await ref.read(characterListProvider.notifier).refresh();
+        } catch (e) {
+          debugPrint('deferred char list refresh error: $e');
+        }
+      }
+    }
   }
 
   void _setMessage(String m) {
@@ -73,7 +114,27 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     }
 
     if (!SupabaseConfig.isConfigured) return;
-    if (ref.read(authProvider) == null) return;
+    // Cold-start race: Supabase session restore senkron olsa da provider build
+    // sırası bazen authProvider'ı henüz set etmemiş oluyor. `_ceiling` içinde
+    // sinyali bekle; gelirse devam, gelmezse offline gibi davran. Reconcile
+    // sonraki sign-in event'inde retry edilecek (`_StartupRetryHooks`).
+    if (ref.read(authProvider) == null) {
+      try {
+        await ref
+            .read(authProvider.notifier)
+            .stream
+            .firstWhere((s) => s != null)
+            .timeout(const Duration(seconds: 4));
+      } catch (_) {
+        // timeout veya provider tear-down — sessiz; retry hook devreye girer.
+      }
+      if (ref.read(authProvider) == null) {
+        debugPrint(
+            'StartupSyncGate: auth still null after wait — skipping catchup, '
+            'will retry on next sign-in event');
+        return;
+      }
+    }
 
     if (ref.read(isBetaActiveProvider)) {
       _setMessage('Syncing packages and characters...');
@@ -132,6 +193,15 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
 
   @override
   Widget build(BuildContext context) {
+    // Auth `null → non-null` transition'unda bir kez catchup+reconcile fire et.
+    // Initial `_runSequence` auth henüz null iken çıktıysa veya kullanıcı
+    // landing → sign-in → hub akışında geldiyse, manuel "Refresh" gerek
+    // kalmadan worlds listesinin dolması için.
+    ref.listen<AuthState?>(authProvider, (prev, next) {
+      if (prev == null && next != null) {
+        unawaited(_runDeferredCatchup());
+      }
+    });
     if (_ready) return widget.child;
 
     const bg = Color(0xFF1A1814);

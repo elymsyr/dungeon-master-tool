@@ -178,7 +178,10 @@ class WorldMirrorApplier {
         snapshot.characters.isEmpty &&
         snapshot.mapData == null &&
         snapshot.sessions.isEmpty &&
-        snapshot.settings == null) {
+        snapshot.settings == null &&
+        snapshot.worldRow == null &&
+        snapshot.mindMapNodes.isEmpty &&
+        snapshot.mindMapEdges.isEmpty) {
       _markInitialSyncSettled(worldId);
       _bumpRevision();
       return;
@@ -222,10 +225,216 @@ class WorldMirrorApplier {
     if (snapshot.settings != null) {
       await _applySettingsRow(snapshot.settings!, worldId: worldId);
     }
+    // Cross-device hydrate: granular tablolarda olmayan blob alanlarını
+    // (legacy `battle_maps`/`mind_maps` taşıyıcılar varsa, `metadata`
+    // varyantları, vb.) `worlds.state_json` üzerinden seed et. Granular
+    // anahtarlar (entities/map_data/sessions + settings spread'i) zaten
+    // yukarıda yazıldı; `_seedWorldStateJson` onları korur.
+    if (snapshot.worldRow != null) {
+      await _seedWorldStateJson(snapshot.worldRow!);
+    }
+    // Mindmap dedicated tables → Drift. Blob-side `mind_maps` zaten
+    // `_applySettingsRow` ile geldi; bu adım dedicated tablo abonelerini
+    // (graph viewer, vb.) doldurur.
+    if (snapshot.mindMapNodes.isNotEmpty ||
+        snapshot.mindMapEdges.isNotEmpty) {
+      await _seedMindMap(
+        worldId: worldId,
+        nodes: snapshot.mindMapNodes,
+        edges: snapshot.mindMapEdges,
+      );
+    }
     // Bütün granular row'lar uygulandı — write path'leri serbest bırak.
     // Settled bayrağı zaten set ise no-op.
     _markInitialSyncSettled(worldId);
     _bumpRevision();
+  }
+
+  /// Cross-device cold-open için `worlds.state_json` snapshot'ını mevcut
+  /// in-memory blob ile birleştirir. Granular tablolardan (`entities`,
+  /// `map_data`, `sessions`, `world_settings` spread'i) gelen taze değerler
+  /// korunur; cloud blob'da olup local'de henüz olmayan üst-düzey alanlar
+  /// hydrate edilir. Bu adım `applyInitialState` sonunda çağrılır.
+  Future<void> _seedWorldStateJson(Map<String, dynamic> worldRow) async {
+    final raw = worldRow['state_json'];
+    if (raw is! String || raw.isEmpty) return;
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data == null) return;
+    try {
+      final decoded = await _decodeJsonMaybeOffload(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      // Granular tablolardan / settings spread'inden gelen alanları koru.
+      // settings_json subkey'leri tüm top-level'ı kaplayabildiği için, sadece
+      // settings_blocklist'teki "alias granular owner" anahtarları + halen
+      // local-only kalan motion-class alanları KORUNUR; geri kalanı blob
+      // overwrite eder (worlds.state_json son DM publish'inin snapshot'ı,
+      // taze değer odur). `_applySettingsRow` zaten settings subkey'lerini
+      // bizim için yazdı → tekrar üzerine yazılması no-op değil, ama spread
+      // sırası önemli: settings_row ÖNCE çalıştı → state_json sonra çalışırsa
+      // settings_row tarafından yazılan taze değerler ezilebilir. Bu yüzden
+      // `state_json` sadece local'de OLMAYAN keyleri ekler.
+      var added = 0;
+      decoded.forEach((key, value) {
+        if (_settingsApplyBlocklist.contains(key)) return;
+        if (data.containsKey(key)) return;
+        data[key] = value;
+        added++;
+      });
+      if (added > 0) _bumpRevision();
+    } catch (err) {
+      debugPrint('_seedWorldStateJson decode error: $err');
+    }
+  }
+
+  /// Mindmap dedicated tablolarını Drift'e seed eder. World açık halde
+  /// CDC dökmesini önlemek için her map_id için `replaceMap` çağırır —
+  /// idempotent.
+  Future<void> _seedMindMap({
+    required String worldId,
+    required List<Map<String, dynamic>> nodes,
+    required List<Map<String, dynamic>> edges,
+  }) async {
+    try {
+      final dao = ref.read(appDatabaseProvider).worldMindMapDao;
+      // Group by map_id.
+      final byMap = <String, ({
+        List<WorldMindMapNodesCompanion> n,
+        List<WorldMindMapEdgesCompanion> e,
+      })>{};
+      for (final row in nodes) {
+        final mapId = row['map_id'] as String?;
+        if (mapId == null) continue;
+        final group = byMap.putIfAbsent(
+          mapId,
+          () => (n: <WorldMindMapNodesCompanion>[], e: <WorldMindMapEdgesCompanion>[]),
+        );
+        final companion = _mindMapNodeCompanion(row, fallbackWorldId: worldId);
+        if (companion != null) group.n.add(companion);
+      }
+      for (final row in edges) {
+        final mapId = row['map_id'] as String?;
+        if (mapId == null) continue;
+        final group = byMap.putIfAbsent(
+          mapId,
+          () => (n: <WorldMindMapNodesCompanion>[], e: <WorldMindMapEdgesCompanion>[]),
+        );
+        final companion = _mindMapEdgeCompanion(row, fallbackWorldId: worldId);
+        if (companion != null) group.e.add(companion);
+      }
+      for (final entry in byMap.entries) {
+        await dao.replaceMap(
+          worldId,
+          entry.key,
+          nodes: entry.value.n,
+          edges: entry.value.e,
+        );
+      }
+    } catch (err, st) {
+      debugPrint('_seedMindMap error: $err\n$st');
+    }
+  }
+
+  Future<void> _applyMindMapNodeEvent(WorldSyncEvent e) async {
+    final dao = ref.read(appDatabaseProvider).worldMindMapDao;
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        final id = e.oldRecord['id'] as String?;
+        if (id == null) return;
+        await dao.deleteNode(id);
+        _bumpRevision();
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final companion =
+            _mindMapNodeCompanion(e.newRecord, fallbackWorldId: e.worldId);
+        if (companion == null) return;
+        await dao.upsertNode(companion);
+        _bumpRevision();
+      default:
+        return;
+    }
+  }
+
+  Future<void> _applyMindMapEdgeEvent(WorldSyncEvent e) async {
+    final dao = ref.read(appDatabaseProvider).worldMindMapDao;
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        final id = e.oldRecord['id'] as String?;
+        if (id == null) return;
+        await dao.deleteEdge(id);
+        _bumpRevision();
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final companion =
+            _mindMapEdgeCompanion(e.newRecord, fallbackWorldId: e.worldId);
+        if (companion == null) return;
+        await dao.upsertEdge(companion);
+        _bumpRevision();
+      default:
+        return;
+    }
+  }
+
+  WorldMindMapNodesCompanion? _mindMapNodeCompanion(
+    Map<String, dynamic> row, {
+    required String fallbackWorldId,
+  }) {
+    final id = row['id'] as String?;
+    if (id == null) return null;
+    final mapId = row['map_id'] as String?;
+    if (mapId == null) return null;
+    final worldId = (row['world_id'] as String?) ?? fallbackWorldId;
+    return WorldMindMapNodesCompanion(
+      id: Value(id),
+      worldId: Value(worldId),
+      mapId: Value(mapId),
+      label: Value((row['label'] as String?) ?? ''),
+      nodeType: Value((row['node_type'] as String?) ?? 'note'),
+      x: Value(_toDouble(row['x']) ?? 0.0),
+      y: Value(_toDouble(row['y']) ?? 0.0),
+      width: Value(_toDouble(row['width']) ?? 150.0),
+      height: Value(_toDouble(row['height']) ?? 80.0),
+      entityId: Value(row['entity_id'] as String?),
+      imageUrl: Value(row['image_url'] as String?),
+      content: Value((row['content'] as String?) ?? ''),
+      styleJson: Value((row['style_json'] as String?) ?? '{}'),
+      color: Value((row['color'] as String?) ?? ''),
+      updatedAt: Value(_toDateTime(row['updated_at']) ?? DateTime.now()),
+    );
+  }
+
+  WorldMindMapEdgesCompanion? _mindMapEdgeCompanion(
+    Map<String, dynamic> row, {
+    required String fallbackWorldId,
+  }) {
+    final id = row['id'] as String?;
+    if (id == null) return null;
+    final mapId = row['map_id'] as String?;
+    final sourceId = row['source_id'] as String?;
+    final targetId = row['target_id'] as String?;
+    if (mapId == null || sourceId == null || targetId == null) return null;
+    final worldId = (row['world_id'] as String?) ?? fallbackWorldId;
+    return WorldMindMapEdgesCompanion(
+      id: Value(id),
+      worldId: Value(worldId),
+      mapId: Value(mapId),
+      sourceId: Value(sourceId),
+      targetId: Value(targetId),
+      label: Value((row['label'] as String?) ?? ''),
+      styleJson: Value((row['style_json'] as String?) ?? '{}'),
+      updatedAt: Value(_toDateTime(row['updated_at']) ?? DateTime.now()),
+    );
+  }
+
+  static double? _toDouble(Object? v) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v);
+    return null;
+  }
+
+  static DateTime? _toDateTime(Object? v) {
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    return null;
   }
 
   /// `worldInitialSyncSettledProvider`'a worldId ekler. Sticky — aynı session
@@ -267,7 +476,10 @@ class WorldMirrorApplier {
           await _applyWorldPackageEvent(e);
         case 'world_projection':
           _applyProjectionEvent(e);
-        // mind_map_*: PR-O8'de dedicated invalidations.
+        case 'world_mind_map_nodes':
+          await _applyMindMapNodeEvent(e);
+        case 'world_mind_map_edges':
+          await _applyMindMapEdgeEvent(e);
       }
     } catch (err, st) {
       debugPrint('WorldMirrorApplier error: $err\n$st');
