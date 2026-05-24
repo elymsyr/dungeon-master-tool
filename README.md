@@ -23,6 +23,13 @@
     <img src="https://img.shields.io/badge/Download-iOS-999999?style=for-the-badge&logo=apple" alt="Download iOS" />
   </a>
   <br><br>
+  <a href="https://www.patreon.com/elymsyr">
+    <img src="https://img.shields.io/badge/Support-Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Support on Patreon" />
+  </a>
+  <a href="https://thanks.dev/u/gh/elymsyr">
+    <img src="https://img.shields.io/badge/Sponsor-thanks.dev-2EBC4F?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor via thanks.dev" />
+  </a>
+  <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
   <img src="https://img.shields.io/badge/Version-v9.1.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
