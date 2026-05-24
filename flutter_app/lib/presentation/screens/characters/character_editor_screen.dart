@@ -1859,6 +1859,15 @@ class _CharacterEditorScreenState
           );
         }
       },
+      onPatchFields: (patch) {
+        final updatedFields = {
+          ...character.entity.fields,
+          ...patch,
+        };
+        _mutate(character.copyWith(
+          entity: character.entity.copyWith(fields: updatedFields),
+        ));
+      },
       entities: entities,
       entityFields: character.entity.fields,
       ref: ref,
@@ -1975,11 +1984,15 @@ class _CharacterEditorScreenState
     );
     if (!mounted || result == null || !result.applied) return;
 
-    final updated = Map<String, dynamic>.from(base.entity.fields);
+    var updated = Map<String, dynamic>.from(base.entity.fields);
 
     if (result.hpDelta > 0) {
-      updated['max_hp'] = asInt(updated['max_hp']) + result.hpDelta;
-      updated['hp'] = asInt(updated['hp']) + result.hpDelta;
+      final (currentHp, currentMaxHp) = _readHp(updated);
+      updated = _writeHp(
+        updated,
+        hp: currentHp + result.hpDelta,
+        maxHp: currentMaxHp + result.hpDelta,
+      );
     }
 
     // SRD §1.6: gain one Hit Die per level. Max is derived from `level`
@@ -2278,6 +2291,47 @@ class _CharacterEditorScreenState
     return fallback;
   }
 
+  // HP canonical = combat_stats.{hp,max_hp} (schema-defined). Top-level
+  // hp/max_hp keys aren't in the player schema, so applyTemplateUpdate drops
+  // them — we still read them as a fallback for legacy chars that pre-date
+  // wizard combat_stats seeding, and mirror writes to both so downstream
+  // surfaces (character_stat_chips, combat_provider) keep working without
+  // a separate migration.
+  (int hp, int maxHp) _readHp(Map<String, dynamic> fields) {
+    var hp = 0;
+    var maxHp = 0;
+    final combat = fields['combat_stats'];
+    if (combat is Map) {
+      hp = _asInt(combat['hp']);
+      maxHp = _asInt(combat['max_hp']);
+    }
+    if (hp == 0) hp = _asInt(fields['hp']);
+    if (maxHp == 0) maxHp = _asInt(fields['max_hp']);
+    return (hp, maxHp);
+  }
+
+  Map<String, dynamic> _writeHp(
+    Map<String, dynamic> fields, {
+    int? hp,
+    int? maxHp,
+  }) {
+    final out = Map<String, dynamic>.from(fields);
+    final existing = out['combat_stats'];
+    final combat = existing is Map
+        ? Map<String, dynamic>.from(existing)
+        : <String, dynamic>{};
+    if (hp != null) {
+      combat['hp'] = hp;
+      out['hp'] = hp;
+    }
+    if (maxHp != null) {
+      combat['max_hp'] = maxHp;
+      out['max_hp'] = maxHp;
+    }
+    out['combat_stats'] = combat;
+    return out;
+  }
+
   /// Hit die max value parsed from class entity's `hit_die` field
   /// ('d8' → 8). Returns 0 when unknown.
   int _hitDieMax(Character character, Map<String, Entity> entities) {
@@ -2545,8 +2599,7 @@ class _CharacterEditorScreenState
     final entities = _activeEntities(character);
     final fields = character.entity.fields;
     final level = _asInt(fields['level'], 1);
-    final maxHp = _asInt(fields['max_hp'], 0);
-    final hp = _asInt(fields['hp'], 0);
+    final (hp, maxHp) = _readHp(fields);
     final dieMax = _hitDieMax(character, entities);
     final conMod = _conModifier(character);
     final maxHd = level;
@@ -2578,11 +2631,8 @@ class _CharacterEditorScreenState
 
     final newHp = (hp + restored).clamp(0, maxHp);
     final newHdRemaining = (hdRemaining - dice).clamp(0, maxHd);
-    final updated = {
-      ...fields,
-      'hp': newHp,
-      'hit_dice_remaining': newHdRemaining,
-    };
+    final updated = _writeHp(fields, hp: newHp);
+    updated['hit_dice_remaining'] = newHdRemaining;
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));
@@ -2591,7 +2641,7 @@ class _CharacterEditorScreenState
   Future<void> _longRest(Character character) async {
     final fields = character.entity.fields;
     final level = _asInt(fields['level'], 1);
-    final maxHp = _asInt(fields['max_hp'], 0);
+    final (_, maxHp) = _readHp(fields);
     final maxHd = level;
     final hdRemaining = fields.containsKey('hit_dice_remaining')
         ? _asInt(fields['hit_dice_remaining'], maxHd)
@@ -2623,11 +2673,8 @@ class _CharacterEditorScreenState
     );
     if (confirm != true || !mounted) return;
 
-    final updated = {
-      ...fields,
-      if (maxHp > 0) 'hp': maxHp,
-      'hit_dice_remaining': newHd,
-    };
+    final updated = maxHp > 0 ? _writeHp(fields, hp: maxHp) : {...fields};
+    updated['hit_dice_remaining'] = newHd;
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));

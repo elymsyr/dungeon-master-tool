@@ -706,9 +706,26 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       if (c.worldId != worldId) continue;
       final merged = <String, dynamic>{};
       for (final key in allowedKeys) {
-        merged[key] = c.entity.fields.containsKey(key)
-            ? c.entity.fields[key]
-            : defaults[key];
+        if (!c.entity.fields.containsKey(key)) {
+          merged[key] = defaults[key];
+          continue;
+        }
+        // Map fields (combat_stats, stat_block) — shallow-merge so new
+        // template subfields are populated from defaults without dropping
+        // existing values like HP/AC the user has been tracking. The
+        // previous full-replace lost subfields entirely when a template
+        // gained a new key.
+        final existing = c.entity.fields[key];
+        final def = defaults[key];
+        if (existing is Map && def is Map) {
+          final merge = <String, dynamic>{
+            ...def.map((k, v) => MapEntry(k.toString(), v)),
+            ...existing.map((k, v) => MapEntry(k.toString(), v)),
+          };
+          merged[key] = merge;
+        } else {
+          merged[key] = existing;
+        }
       }
       final bumped = c.copyWith(
         entity: c.entity.copyWith(fields: merged),

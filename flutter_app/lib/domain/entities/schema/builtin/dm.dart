@@ -325,6 +325,9 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   // Combat
   fb.statBlock('stat_block', 'Ability Scores');
   fb.combatStats('combat_stats', 'Combat Stats');
+  // Manual signed bonus to max HP / current HP. Editable via delta input
+  // (+n / n / -n); commit propagates Δ to combat_stats.max_hp + hp.
+  fb.integer('extra_hp', 'Extra HP', defaultValue: 0, g: grpCombat);
   // 0..3 successes / failures rendered as 3-checkbox widget. Heroic
   // inspiration: 0..3 charges, rendered as 3 checkboxes.
   fb.integer('death_saves_successes', 'Death Save Successes',
