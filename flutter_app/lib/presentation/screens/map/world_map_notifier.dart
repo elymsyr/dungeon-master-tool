@@ -210,6 +210,13 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // persists it). [syncToCampaignData] early-returns while this is false.
   bool _initialized = false;
   String? _initializedWorldId;
+  /// İlk [init] çağrısı gerçek (non-empty) `map_data` ile mi yapıldı?
+  /// Cross-device açılışta yerel boş + cloud pending durumunda false kalır
+  /// ve [syncToCampaignData] kullanıcı içerik eklemediği sürece sessiz
+  /// döner — aksi halde deactivate boş map'i bulut'a yazıp tüm cihazlara
+  /// "kayıp harita" olarak yayılırdı. Kullanıcı pin/görsel/epoch eklerse
+  /// `hasContent` true olur → save serbest.
+  bool _initializedWithContent = false;
 
   WorldMapNotifier(this._ref) : super(const WorldMapState());
 
@@ -334,6 +341,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     clearUndoRedo();
     _initialized = true;
     _initializedWorldId = worldId;
+    // Init'in gerçek veriyle yapılıp yapılmadığını şimdi tespit et — kullanıcı
+    // sonradan içerik eklerse `hasContent` true olur, ama "init geldi mi"
+    // sinyalini bağımsız tut.
+    _initializedWithContent = hasContent;
   }
 
   List<MapPin> _parseRawPins(List<dynamic> raw) {
@@ -373,6 +384,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     // Not initialised → `state` is the empty default. Writing it into
     // campaign data would wipe the saved map (deactivate then persists it).
     if (!_initialized) return;
+    // Cross-device clobber guard: init boş veriyle yapıldı VE kullanıcı
+    // bir şey eklemedi → bu state'in canonicalliği belirsiz; cloud sync
+    // henüz arrive etmemiş olabilir. Yazma, sessiz dön.
+    if (!_initializedWithContent && !hasContent) return;
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 

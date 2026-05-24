@@ -45,6 +45,20 @@ Future<dynamic> _decodeJsonMaybeOffload(String s) {
 /// profil sonrası 33-50ms'e çıkarılabilir.
 const Duration _kBatchWindow = Duration(milliseconds: 16);
 
+/// Bir online world için `applyInitialState` en az bir kez tamamlandı mı —
+/// içerik bulundu mu bulunmadı mı ayrı, sadece "cloud snapshot alındı"
+/// sinyali. Cross-device open'da auto-create-encounter (session_screen
+/// postFrame) ya da mind-map deactivate gibi yollar boş local state'i
+/// bulut'a yazıp tüm cihazlara yaymasın diye write-path'leri bu sinyale
+/// kadar bekletir.
+///
+/// İlk world open'da set boştur → combat _loaded false → auto-create bail.
+/// applyInitialState bitince set'e worldId eklenir → revision bump'ında
+/// combatProvider rebuild → _loaded true. Sticky: aynı session içinde
+/// reopen'larda yeniden ödenmeye gerek yok.
+final worldInitialSyncSettledProvider =
+    StateProvider<Set<String>>((_) => const <String>{});
+
 /// `world_settings.settings_json` decode edilip top-level `data`'ya yayılırken
 /// atlanan anahtarlar. Identity / template alanları + granular tablo sahipleri
 /// (`entities`, `sessions`, `map_data`): `world_settings` legacy mirror olarak
@@ -157,12 +171,16 @@ class WorldMirrorApplier {
     // Cross-device açılışta entities/characters cloud'da olmayabilir ama
     // mapData/sessions/settings dolu olabilir. Beşi de boşsa bail et,
     // herhangi biri varsa devam — yoksa session/map/mind-map sekmeleri
-    // boş kalır.
+    // boş kalır. Erken çıkışta da settled marker set edilir ki cloud
+    // gerçekten boş olan world'lerde combat/mind-map write path'leri
+    // bloklanmasın.
     if (snapshot.entities.isEmpty &&
         snapshot.characters.isEmpty &&
         snapshot.mapData == null &&
         snapshot.sessions.isEmpty &&
         snapshot.settings == null) {
+      _markInitialSyncSettled(worldId);
+      _bumpRevision();
       return;
     }
 
@@ -204,7 +222,24 @@ class WorldMirrorApplier {
     if (snapshot.settings != null) {
       await _applySettingsRow(snapshot.settings!, worldId: worldId);
     }
+    // Bütün granular row'lar uygulandı — write path'leri serbest bırak.
+    // Settled bayrağı zaten set ise no-op.
+    _markInitialSyncSettled(worldId);
     _bumpRevision();
+  }
+
+  /// `worldInitialSyncSettledProvider`'a worldId ekler. Sticky — aynı session
+  /// içinde tekrar settle gerekli değil. Ref geçersizse sessizce atla
+  /// (provider scope tear-down).
+  void _markInitialSyncSettled(String worldId) {
+    if (_disposed) return;
+    try {
+      final n = ref.read(worldInitialSyncSettledProvider.notifier);
+      if (n.state.contains(worldId)) return;
+      n.state = {...n.state, worldId};
+    } catch (_) {
+      // ref dependency-change penceresinde stale — bir sonraki retry toparlar.
+    }
   }
 
   Future<void> _onEvent(WorldSyncEvent e) async {

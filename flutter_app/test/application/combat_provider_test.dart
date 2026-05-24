@@ -13,6 +13,7 @@ CombatNotifier _createNotifier({
   Map<String, dynamic>? Function()? getCampaignData,
   AppEventBus? eventBus,
   List<Character> Function()? getCharacters,
+  bool Function()? isLoadWithoutDataSafe,
 }) {
   return CombatNotifier(
     getEntities ?? () => <String, Entity>{},
@@ -22,6 +23,11 @@ CombatNotifier _createNotifier({
     eventBus ?? AppEventBus(),
     (_) async {},
     (_) async {},
+    // Tests default to "safe" so existing assertions about _loaded
+    // transitions (immediate write-back after first load) keep their
+    // semantics — production cross-device gate is exercised via the
+    // provider-level wiring.
+    isLoadWithoutDataSafe ?? () => true,
   );
 }
 

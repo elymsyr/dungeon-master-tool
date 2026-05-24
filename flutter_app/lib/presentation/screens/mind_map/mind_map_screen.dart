@@ -83,6 +83,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
       super.deactivate();
       return;
     }
+    // Cross-device clobber guard: ilk init boş veriyle yapıldı (cloud sync
+    // henüz arrive etmedi) VE kullanıcı bu screen'de hiçbir node/edge
+    // eklemedi → state hâlâ default boş. Bunu data['mind_maps'][mapId]'e
+    // yazıp bulut'a göndermek tüm cihazlarda mind map'i siler. Sessiz dön.
+    final preCheckState = ref.read(mindMapProvider);
+    final userHasContent = preCheckState.nodes.isNotEmpty ||
+        preCheckState.edges.isNotEmpty;
+    if (!_consumedRealData && !userHasContent) {
+      super.deactivate();
+      return;
+    }
     // autoDispose mindMapProvider tab değişimde dispose olunca, notifier'ın
     // _ref'i geçersiz; flushSave içindeki ref.read'lar atar ve save düşer.
     // Burada in-memory snapshot'ı senkron al, singleton container üzerinden
