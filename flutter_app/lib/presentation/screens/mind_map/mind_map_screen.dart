@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,6 +43,18 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   /// başladıysa cloud arrive ile ezmek istemiyoruz).
   bool _consumedRealData = false;
 
+  /// Last applied cloud-side `mind_maps[mapId]` fingerprint. Compared on every
+  /// `campaignRevisionProvider` bump — when cloud snapshot brings new nodes /
+  /// edges (CDC mid-session or hydrate-after-init), we re-init the notifier
+  /// instead of getting stuck on the first non-empty read.
+  String? _appliedFingerprint;
+
+  String _fingerprintOf(Map<String, dynamic> scoped) {
+    final nodes = scoped['nodes'];
+    final edges = scoped['edges'];
+    return jsonEncode({'n': nodes, 'e': edges});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -59,20 +73,31 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     final scoped = Map<String, dynamic>.from(
       mindMaps[mapId] as Map? ?? {},
     );
-    if (_consumedRealData) return; // gerçek veri yüklendi — clobber yok
-    if (_initialized) {
+    final fp = _fingerprintOf(scoped);
+    if (fp == _appliedFingerprint) return; // no change since last apply
+    // Local pending mind_maps write — user'ın henüz flush edilmemiş edit'i
+    // var, cloud snapshot'ı uygulama (kullanıcı yazımını ezme).
+    final worldId = (data['world_id'] as String?) ?? 'local';
+    if (ref
+        .read(pendingWriteBufferProvider)
+        .isPending('settings:$worldId:mind_maps')) {
+      return;
+    }
+    if (_initialized && !_consumedRealData) {
       // İlk init boş veriyle yapıldı; cloud sync sonrası re-init için izinli.
       // Ama kullanıcı bu arada node eklemişse (state non-empty) re-init etme.
       final currentState = ref.read(mindMapProvider);
       if (currentState.nodes.isNotEmpty || currentState.edges.isNotEmpty) {
         _consumedRealData = true;
+        _appliedFingerprint = fp;
         return;
       }
-      if (scoped.isEmpty) return; // hâlâ bir şey yok, retry beklemeye devam
+      if (scoped.isEmpty) return;
     }
     _notifier.init(scoped);
     _initialized = true;
     _consumedRealData = scoped.isNotEmpty;
+    _appliedFingerprint = fp;
   }
 
   @override
@@ -138,8 +163,17 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     // Campaign verisi `completeLoad()` ile geç gelir (revision bump). Cloud
     // sync de `_applySettingsRow`'tan sonra bump eder. Gerçek mind_maps
     // verisi gelene dek re-init dene; sonrası `_init`'in iç guard'ı bloklar.
+    // Revision bumps from: completeLoad finish, applyInitialState, CDC
+    // world_settings UPDATE. _init guards against same-fingerprint reapplies
+    // + pending-local-write clobbers.
     ref.listen(campaignRevisionProvider, (_, _) {
-      if (!_consumedRealData && mounted) _init();
+      if (mounted) _init();
+    });
+    ref.listen(currentMindMapIdProvider, (_, _) {
+      if (mounted) {
+        _appliedFingerprint = null;
+        _init();
+      }
     });
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
