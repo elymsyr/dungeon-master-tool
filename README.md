@@ -28,6 +28,13 @@
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
+  <br><br>
+  <a href="https://www.patreon.com/elymsyr">
+    <img src="https://img.shields.io/badge/Patreon-Support-F96854?logo=patreon&logoColor=white" alt="Support on Patreon" />
+  </a>
+  <a href="https://thanks.dev/u/gh/elymsyr">
+    <img src="https://img.shields.io/badge/thanks.dev-Sponsor-2EBC4F" alt="Sponsor via thanks.dev" />
+  </a>
   <br>
   <b>Platforms:</b> Android | iOS | Windows | Linux | macOS
   <br>
