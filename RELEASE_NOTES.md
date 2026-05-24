@@ -1,5 +1,39 @@
 # Release Notes
 
+## Dungeon Master Tool v9.1.0 — Cross-Device Sync Hardening, Storage Cleanup, Map Persistence (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release focused on cross-device reliability and storage hygiene on top of v9.0.0. Online worlds opened from a second device now populate Session, Mind Map and World Map tabs correctly; empty-state clobbers during the initial sync race no longer wipe cloud state; world map data persists across reopens via granular Drift mirrors; beta exit and admin revoke now fully purge Cloudflare R2 and all Supabase Storage buckets, not just DB rows.
+
+### Highlights
+
+#### Cross-device sync
+
+- **Tabs no longer empty on second-device open** — Cloud settings blob was being stuffed under `data['settings']` while screens read top-level keys (`combat_state`, `mind_maps`, `map_view`, …). `_applySettingsRow` / `_applyWorldsEvent` now spread cloud subkeys to top-level with a blocklist for granular-table owners (entities/sessions/map_data) and identity fields. Pending-write merges are preserved subkey-by-subkey.
+- **Screens re-initialise after cloud arrives** — `MindMapScreen` gained a `_consumedRealData` flag and `WorldMapNotifier` exposes `hasContent`. If first init happened against an empty Drift snapshot and the user has not edited yet, a revision bump now triggers re-init; user edits or real data still block clobber. `applyInitialState` early-return widened to also continue when only `mapData`/`sessions`/`settings` are populated.
+- **Empty-state clobber guard** — A cross-device open used to surface empty defaults before cloud sync, and the first auto-save would write that empty state back to the cloud and fan it out. Three gates added: (1) `combatProvider._loaded` now requires either real `combat_state` or a `worldInitialSyncSettledProvider` signal so `session_screen`'s auto-create-encounter cannot publish a phantom "Encounter 1"; (2) `WorldMapNotifier.syncToCampaignData` only writes when init had real data or the user added content; (3) `MindMapScreen.deactivate` skips save when init was empty and the notifier is still empty.
+- **Worlds tab populates on startup** — `StartupSyncGate` now runs `worldReconciler.reconcile()` after beta/auth ready and invalidates the three hub list providers (worlds, packages, characters) before the splash closes, so sign-in / cache-wipe / new-device opens no longer require a manual hub refresh. Stays inside the 8 s startup ceiling.
+
+#### Storage & persistence
+
+- **World map + sessions persist locally** — `world_map_data` and `world_sessions` have had Drift tables for a while but the campaign load path was only reading the `settings_json` dual-write, so a force-close or partial sync could lose the battle map image. `CampaignRepository` now exposes `saveMapData`, `saveSessions`, `saveSession`, `deleteSession` against the typed DAOs; `_loadFromDb` overlays the typed rows on top of `settings_json` (granular = source of truth); cloud appliers (`_applyMapDataRow`, `_applySessionEvent`, `_applySessionsList`) write through to disk too.
+- **Full R2 + Supabase Storage cleanup on beta exit & admin revoke** — Previously the admin "Revoke" button only called `admin_revoke_beta`, leaving Supabase Storage (`campaign-backups`, `free-media`, `shared-payloads`) and Cloudflare R2 (`{userId}/`, `transient/{userId}/`) orphaned. Self-exit cleaned Supabase Storage but couldn't touch R2 from the client. Three-tier fix: (1) new Cloudflare Worker endpoint `POST /admin/purge-user` does cursor-paginated list + batch delete of both prefixes behind `ADMIN_TOKEN`; (2) new Supabase Edge Function `beta_purge_with_cleanup` orchestrates everything — verifies caller JWT, picks self-exit vs. admin-gate path, runs the corresponding RPC, sweeps the three Storage buckets with the service role, then calls the Worker; (3) Flutter `admin_beta_requests_remote_ds.revoke` and `beta_provider.leaveBeta` route through the Edge Function, with a legacy fallback on self-exit when the function is not deployed.
+
+### Upgrade notes
+
+- **App version bump:** `9.0.0` → `9.1.0`.
+- **Local DB:** schema v12, unchanged.
+- **No new SQL migrations.**
+- **Deploy required for full beta-exit cleanup:** `wrangler deploy` (Worker) + `supabase functions deploy beta_purge_with_cleanup`. Edge Function secrets `R2_WORKER_URL` and `R2_ADMIN_TOKEN` must match the Worker's `ADMIN_TOKEN`. Without the deploy, self-exit still works via the legacy fallback but leaves R2 objects behind.
+
+### Known issues
+
+- Carry-over from v9.0.0: full WYSIWYG custom-content editors still deferred; remaining SRD effect gaps (Drow 120 ft superior darkvision, Tier-4 combat-tracker-dependent effects); D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v9.0.0 — Online Play, Second Screen, Free Session Media, Admin-Gated Beta (Beta)
 
 **Release date:** May 2026
