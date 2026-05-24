@@ -206,6 +206,82 @@ class WorldRepositoryImpl implements CampaignRepository {
     });
   }
 
+  @override
+  Future<void> saveMapData(
+    String campaignName,
+    Map<String, dynamic> mapData,
+  ) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) {
+      throw StateError('World not found: $campaignName');
+    }
+    final worldId = existing.id;
+    await _db.transaction(() async {
+      await _db.worldMapDataDao.upsert(WorldMapDataCompanion(
+        worldId: Value(worldId),
+        dataJson: Value(jsonEncode(mapData)),
+        updatedAt: Value(DateTime.now()),
+      ));
+      await _touchWorld(worldId);
+    });
+  }
+
+  @override
+  Future<void> saveSessions(
+    String campaignName,
+    List<Map<String, dynamic>> sessions,
+  ) async {
+    if (sessions.isEmpty) return;
+    final existing = await _findByName(campaignName);
+    if (existing == null) {
+      throw StateError('World not found: $campaignName');
+    }
+    final worldId = existing.id;
+    final companions = <WorldSessionsCompanion>[];
+    for (final s in sessions) {
+      final id = s['id'];
+      if (id is! String) continue;
+      // Strip typed columns from inner blob; they ride in their own fields.
+      final inner = Map<String, dynamic>.from(s)
+        ..remove('id')
+        ..remove('name')
+        ..remove('is_active')
+        ..remove('sort_order');
+      companions.add(WorldSessionsCompanion(
+        id: Value(id),
+        worldId: Value(worldId),
+        name: Value((s['name'] as String?) ?? ''),
+        dataJson: Value(jsonEncode(inner)),
+        isActive: Value((s['is_active'] as bool?) ?? false),
+        sortOrder: Value((s['sort_order'] as num?)?.toInt() ?? 0),
+        updatedAt: Value(DateTime.now()),
+      ));
+    }
+    if (companions.isEmpty) return;
+    await _db.transaction(() async {
+      await _db.worldSessionsDao.upsertAll(companions);
+      await _touchWorld(worldId);
+    });
+  }
+
+  @override
+  Future<void> saveSession(
+    String campaignName,
+    Map<String, dynamic> session,
+  ) async {
+    await saveSessions(campaignName, [session]);
+  }
+
+  @override
+  Future<void> deleteSession(String campaignName, String sessionId) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) return;
+    await _db.transaction(() async {
+      await _db.worldSessionsDao.deleteById(sessionId);
+      await _touchWorld(existing.id);
+    });
+  }
+
   Future<void> _touchWorld(String worldId) async {
     // UPDATE only — `insertOnConflictUpdate` worldName gibi NOT NULL
     // alanları ister, ama burada salt timestamp bump amaçlı; INSERT path'i
@@ -358,8 +434,54 @@ class WorldRepositoryImpl implements CampaignRepository {
       worldSchemaMap = Map<String, dynamic>.from(schemaSnapshot);
     }
 
+    // Granular `world_map_data` Drift row — source-of-truth for map_data.
+    // Settings_json may still carry a legacy `map_data` key (DM dual-write);
+    // the typed row wins if present. App reopen path: without this, map
+    // image vanishes on close→open when settings_json drift gets out of
+    // sync with cloud (force-close before flush, partial sync, etc.).
+    Map<String, dynamic>? mapDataOverride;
+    final mapDataRow = await _db.worldMapDataDao.get(world.id);
+    if (mapDataRow != null &&
+        mapDataRow.dataJson.isNotEmpty &&
+        mapDataRow.dataJson != '{}') {
+      try {
+        final decoded = jsonDecode(mapDataRow.dataJson);
+        if (decoded is Map) {
+          mapDataOverride = Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+    }
+
+    // Granular `world_sessions` Drift rows — source-of-truth for sessions.
+    // Settings_json no longer carries sessions (PR-SYNC-3). Reconstruct from
+    // typed rows so session tab persists across app reopens (without this,
+    // sessions only live in-memory after a cloud sync apply).
+    List<Map<String, dynamic>>? sessionsOverride;
+    final sessionRows = await _db.worldSessionsDao.getByWorld(world.id);
+    if (sessionRows.isNotEmpty) {
+      sessionsOverride = <Map<String, dynamic>>[];
+      for (final row in sessionRows) {
+        Map<String, dynamic> inner = <String, dynamic>{};
+        if (row.dataJson.isNotEmpty && row.dataJson != '{}') {
+          try {
+            final decoded = jsonDecode(row.dataJson);
+            if (decoded is Map) {
+              inner = Map<String, dynamic>.from(decoded);
+            }
+          } catch (_) {}
+        }
+        sessionsOverride.add(<String, dynamic>{
+          ...inner,
+          'id': row.id,
+          'name': row.name,
+          'is_active': row.isActive,
+          'sort_order': row.sortOrder,
+        });
+      }
+    }
+
     return {
-      ...settingsBlob, // combat_state, map_data, mind_maps, sessions, ...
+      ...settingsBlob, // combat_state, mind_maps, map_view, mind_map_views, …
       'world_id': world.id,
       'world_name': world.worldName,
       'created_at': world.createdAt.toIso8601String(),
@@ -368,6 +490,10 @@ class WorldRepositoryImpl implements CampaignRepository {
       'template_id': templateId,
       'template_hash': ?templateHash,
       'template_original_hash': ?templateOriginalHash,
+      // Granular tables override anything that may have leaked into
+      // settings_json blob — see comments above.
+      if (mapDataOverride != null) 'map_data': mapDataOverride,
+      if (sessionsOverride != null) 'sessions': sessionsOverride,
     };
   }
 

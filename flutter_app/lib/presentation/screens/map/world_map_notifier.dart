@@ -522,11 +522,20 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     if (data == null) return;
     final mapMap = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
     final worldId = (data['world_id'] as String?) ?? 'local';
+    final campaignName = _ref.read(activeCampaignProvider);
+    final repo = _ref.read(campaignRepositoryProvider);
     _ref.read(pendingWriteBufferProvider).schedule(
           key: 'settings:$worldId:map_data',
           kind: WriteKind.spatial,
-          action: () => campaign
-              .saveSettingsPatch({'map_data': Map<String, dynamic>.from(mapMap)}),
+          action: () async {
+            final snapshot = Map<String, dynamic>.from(mapMap);
+            // Dual write: settings_json merge (legacy compat + cloud push)
+            // + granular world_map_data Drift row (reopen kalıcılığı).
+            await campaign.saveSettingsPatch({'map_data': snapshot});
+            if (campaignName != null) {
+              await repo.saveMapData(campaignName, snapshot);
+            }
+          },
         );
   }
 
