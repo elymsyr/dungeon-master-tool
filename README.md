@@ -15,7 +15,7 @@
   </a>
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
     <img src="https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download Linux" />
-  </a>
+  </a> <br>
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
     <img src="https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple" alt="Download macOS" />
   </a>
