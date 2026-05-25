@@ -23,6 +23,7 @@
     <img src="https://img.shields.io/badge/Download-iOS-999999?style=for-the-badge&logo=apple" alt="Download iOS" />
   </a>
   <br>
+  <br>
   <a href="https://www.patreon.com/elymsyr">
     <img src="https://img.shields.io/badge/Support-Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Support on Patreon" />
   </a>
@@ -32,6 +33,7 @@
   <a href="https://groupfinder.eu/library/dungeon-master-tool">
     <img src="https://img.shields.io/badge/Listed_on-GroupFinder-6A5ACD?style=for-the-badge&logo=dungeonsanddragons&logoColor=white" alt="Listed on GroupFinder" />
   </a>
+  <br>
   <br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
   <img src="https://img.shields.io/badge/Version-v9.1.0--beta-blueviolet" />
