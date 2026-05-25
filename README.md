@@ -29,6 +29,9 @@
   <a href="https://thanks.dev/u/gh/elymsyr">
     <img src="https://img.shields.io/badge/Sponsor-thanks.dev-2EBC4F?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor via thanks.dev" />
   </a>
+  <a href="https://groupfinder.eu/library/dungeon-master-tool">
+    <img src="https://img.shields.io/badge/Listed_on-GroupFinder-6A5ACD?style=for-the-badge&logo=dungeonsanddragons&logoColor=white" alt="Listed on GroupFinder" />
+  </a>
   <br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
   <img src="https://img.shields.io/badge/Version-v9.1.0--beta-blueviolet" />
