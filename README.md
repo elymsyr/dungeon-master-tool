@@ -1,49 +1,48 @@
 # Dungeon Master Tool
 
 <p align="center">
-  <b>A portable, offline-first DM tool built with Flutter.</b>
-  <br>
-  <i>Manage combat, build characters, run online worlds, and project a rich campaign wiki seamlessly.</i>
-  <br><br>
-  <a href="https://elymsyr.github.io/">Project Website</a>
-  <br><br>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Android_APK-34A853?style=for-the-badge&logo=android" alt="Download Android" />
-  </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
-  </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download Linux" />
-  </a> <br>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
-    <img src="https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple" alt="Download macOS" />
-  </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
-    <img src="https://img.shields.io/badge/Download-iOS-999999?style=for-the-badge&logo=apple" alt="Download iOS" />
-  </a>
-  <br>
-  <br>
-  <a href="https://www.patreon.com/elymsyr">
-    <img src="https://img.shields.io/badge/Support-Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Support on Patreon" />
-  </a>
-  <a href="https://thanks.dev/u/gh/elymsyr">
-    <img src="https://img.shields.io/badge/Sponsor-thanks.dev-2EBC4F?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor via thanks.dev" />
-  </a>
-  <a href="https://groupfinder.eu/library/dungeon-master-tool">
-    <img src="https://img.shields.io/badge/Listed_on-GroupFinder-6A5ACD?style=for-the-badge&logo=dungeonsanddragons&logoColor=white" alt="Listed on GroupFinder" />
-  </a>
-  <br>
-  <br>
-  <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v9.1.0--beta-blueviolet" />
-  <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
-  <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
-  <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
-  <br>
-  <b>Platforms:</b> Android | iOS | Windows | Linux | macOS
-  <br>
-  <b>Languages:</b> English | Turkish | German | French
+  <b>A portable, offline-first DM tool.</b><br>
+  <i>Build worlds, run sessions, play together — all in one app.</i>
+</p>
+
+<p align="center">
+  <a href="https://elymsyr.github.io/"><b>Website</b></a> ·
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><b>Releases</b></a> ·
+  <a href="https://github.com/elymsyr/dungeon-master-tool/issues"><b>Report a Bug</b></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v9.1.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
+  <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
+  <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
+</p>
+
+<p align="center">
+  <b>Platforms:</b> Android · iOS · Windows · Linux · macOS &nbsp;|&nbsp;
+  <b>Languages:</b> EN · TR · DE · FR
+</p>
+
+<h3 align="center">Download</h3>
+
+<p align="center">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/Android-APK-34A853?style=for-the-badge&logo=android&logoColor=white" alt="Android" /></a>
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/Windows-x64-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" /></a>
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/Linux-zip-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux" /></a>
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/macOS-app-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS" /></a>
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest"><img src="https://img.shields.io/badge/iOS-ipa-999999?style=for-the-badge&logo=apple&logoColor=white" alt="iOS" /></a>
+</p>
+
+<p align="center">
+  <sub>Support development:</sub><br><br>
+  <a href="https://www.patreon.com/elymsyr"><img src="https://img.shields.io/badge/Patreon-F96854?style=flat-square&logo=patreon&logoColor=white" alt="Patreon" /></a>
+  <a href="https://thanks.dev/u/gh/elymsyr"><img src="https://img.shields.io/badge/thanks.dev-2EBC4F?style=flat-square&logo=githubsponsors&logoColor=white" alt="thanks.dev" /></a>
+  <p align="center">
+    <a href="https://groupfinder.eu/library/dungeon-master-tool">
+      <img src="media/gf-bar-rw.png" alt="Support us on GroupFinder Library" height="40" />
+    </a>
+  </p>
 </p>
 
 ---
@@ -60,103 +59,82 @@ Planned for upcoming releases — order not final, scope may shift between patch
 
 ---
 
-## Features
+## For Worldbuilders 🗺️
 
-### Table & Campaign Tools
+Build a setting, then bring it to the table.
 
-- **Combat Tracker** -- Initiative, HP tracking, conditions, turn management, and auto event logging.
-- **Battle Map** -- 6-layer canvas (grid, token, annotation, fog, terrain, decal) with fog of war, persistent rulers, circles, and a draw tool. All synced to the player screen.
-- **Mind Map** -- Infinite canvas with Bezier connections, level-of-detail rendering, workspaces, undo/redo.
-- **World Map** -- Pin system with location and timeline data, fog of war, epoch timeline.
-- **Entity System** -- Schema-driven entity cards with 16 field widget types (text, markdown, image, stat block, dice roller, and more).
-- **Soundpad** -- Layered audio engine with gapless loops, volume fade, and custom themes.
-- **Player Window** -- Second-screen projection for battle maps, entity cards, and images.
-- **Session and Campaign Management** -- Create, load, and manage campaigns with rich text notes, timeline tracking, and encounter setup.
-- **Templates and Packages** -- Built-in D&D 5e schema, user-defined templates, and package import/export.
-- **PDF Viewer** -- Integrated viewer with page navigation and zoom.
-- **Dice Roller** -- d4, d6, d8, d10, d12, d20, d100.
-- **Customization** -- 11 themes (dark and light variants) and 4-language localization.
+- **Mind Map** — Infinite canvas, Bezier connections, workspaces, undo/redo.
+- **World Map** — Pin system with location data, fog of war, timeline metadata per pin.
+- **Era Timeline** — Track historical eras and waypoints; pin events to specific points in time.
+- **Entity System** — Schema-driven cards with 16 field widget types (text, markdown, image, stat block, dice roller, and more).
+- **Templates & Packages** — Built-in D&D 5e schema, user-defined templates, full import/export.
 
-### Characters & SRD
-
-- **Character Creation Wizard** -- SRD-driven character builder covering species, class, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, and starting traits.
-- **Level-Up Planner** -- Auto-applies non-interactive deltas (HP, proficiency bonus, hit dice) and queues interactive picks (ASI/feat, fighting styles, subclass, divine order, weapon mastery, spell choices) as **Pending Choices** you resolve inline in the character editor.
-- **Multiclass Support** -- Full SRD multiclass prerequisite checks (AND/OR ability gates) with human-readable rejection reasons and multiclass caster spell-slot math.
-- **Weapon Mastery** -- Auto-grants mastery slot counts per class/subclass features, taking the maximum across feats that overlap.
-- **Pending Choices Panel** -- Existing characters keep working; the editor reveals a panel for every choice the SRD says you owe yourself.
-
-### Online Worlds & Multiplayer
-
-- **Closed-Beta Online Play (experimental)** -- When you join the closed beta every one of your characters becomes online and your worlds and packages become publishable. **Only the DM has to be in the beta** for the whole table to play together online — players can join, claim characters, and see live updates without their own beta slot.
-- **Share a World** -- Publish a campaign online so other players can join and see live character, member, and entity updates.
-- **Invite Codes** -- One active invite per world; generate, regenerate, copy, and revoke from the world panel.
-- **Roles** -- Player and DM roles with row-level security; only the DM can publish, manage members, or delete characters that aren't owned by anyone.
-- **Realtime Sync** -- Character, member, and world-entity changes stream to every connected client via change-data-capture; offline edits reconcile on reconnect.
-- **Online Second Screen** -- The DM projects entity cards, images, the world map, and the battle map to every connected player's client. A per-world manifest replicates the active view, so a late-joining or reconnecting player catches up instantly. Players can now place their own marks on the projected battle map.
-- **Character Ownership** -- Claim a world character to make it yours, release it back to the world, or delete it (if you're the DM and nobody owns it).
-- **Personal Cloud Sync** -- Back up your own characters, worlds, templates, and packages to your account so you can pick them up on another device.
-- **Cloud Media Tiers** -- Character portraits and world/package covers sync free of your storage quota; entity images and battle maps count against it, with per-kind size limits. **In a live online session you can share images and battle maps with your players without hitting the quota** — session media uses a shared transient pool that doesn't bill against your save space.
-- **Graceful Offline** -- Network-backed screens (feed, marketplace, messages, profiles, game listings) show a single clean "You're offline" placeholder instead of infinite spinners, and auto-recover when the connection returns. Outbox writes hold and flush on reconnect.
-
-### Social & Community
-
-- **Public Profiles** -- Username, display name, bio, avatar, and follower/following counts. Opt-out of discovery supported.
-- **Follow System** -- Follow and unfollow other players with optimistic updates; browse followers and following lists per profile.
-- **Activity Feed** -- Share text and image posts, like entries, and toggle the feed between *all users* and *following only*. Rate-limited server-side to keep the feed healthy.
-- **Direct Messaging** -- Realtime 1-to-1 and group conversations with unread counters, group renaming, member leave, and admin-managed deletion.
-- **User Discovery** -- Suggested profiles based on community activity and username search with prefix matching.
-
-### Player Search & Looking-for-Group
-
-- **Game Listings** -- DMs can post open games with title, description, system (D&D 5e, Pathfinder, etc.), seat count, schedule, language, and tags.
-- **Filtering** -- Browse listings filtered by language, system, and tags; status tracking for open/closed seats.
-- **Applications** -- Players apply to a listing with a personal message. Listing owners review, accept, or reject applicants; applicants can withdraw at any time.
-
-### Marketplace
-
-- **Publish & Share** -- Publish worlds, templates, packages, and characters as immutable snapshots with title, description, tags, changelog, and cover image.
-- **Versioning & Lineage** -- Every publish creates a new version; all releases of the same item are linked via lineage tracking so subscribers can see history.
-- **Browse & Download** -- Filter by item type (world, template, package, character), language, and tags. Atomic download counters and separate built-in vs. community sections.
-- **Integrity Guarantees** -- Database-enforced immutability for core metadata (title, description, content hash, ownership) prevents silent edits after publish.
+Works fully offline. Join the beta to sync your worlds across devices and share them with collaborators.
 
 ---
 
-## Installation
+## For Dungeon Masters ⚔️
 
-### Android
-1. Download `DungeonMasterTool-Android.apk` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
-2. Enable "Install from unknown sources" in your device settings if prompted.
-3. Open the APK to install and launch.
+Run a session without breaking flow.
 
-### Windows
-1. Download `DungeonMasterTool-Windows.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
-2. Extract the folder and run `dungeon_master_tool.exe`.
+- **Combat Tracker** — Initiative, HP, conditions, turn management, automatic event log.
+- **Battle Map** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war.
+- **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, save state across sessions.
+- **Soundpad** — Layered audio, gapless loops, volume fade, custom themes.
+- **PDF Viewer** — Page navigation and zoom for your reference docs.
+- **Dice Roller** — d4 through d100.
 
-### Linux
-1. Download `DungeonMasterTool-Linux.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
-2. Extract and run:
-   ```bash
-   unzip DungeonMasterTool-Linux.zip
-   cd bundle
-   ./dungeon_master_tool
-   ```
+**Second screen, three ways:**
+- **Same device** — Pop out a second window for your TV or projector.
+- **Different device** — Cast battle maps, entity cards, and images to a tablet or laptop on the side.
+- **Online players** — Project directly into every connected player's app. Per-world manifest replays the active view so late joiners catch up instantly.
 
-<div id="macos-installation"></div>
+---
 
-### macOS
-1. Download `DungeonMasterTool-MacOS.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
-2. Extract and drag `dungeon_master_tool.app` to your **Applications** folder.
-3. Remove the quarantine flag:
-   ```bash
-   sudo xattr -rd com.apple.quarantine /Applications/dungeon_master_tool.app
-   ```
-4. Launch from Applications or Launchpad.
+## For Players 🎲
 
-### iOS
-> **Note:** iOS builds are currently unsigned. You will need to sideload via Xcode or a signing service.
+Roll up a character, then take it anywhere.
 
-1. Download `DungeonMasterTool-iOS.ipa` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
-2. Sideload using Xcode, AltStore, or a similar tool.
+- **Character Creation Wizard** — SRD-driven: species, class, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, traits.
+- **Level-Up Planner** — Auto-applies HP, proficiency bonus, hit dice. Queues ASI/feat, fighting styles, subclass, spell choices as **Pending Choices** you resolve inline.
+- **Multiclass** — Full SRD prereq checks (AND/OR ability gates) with human-readable rejection reasons. Multiclass caster slot math built in.
+- **Weapon Mastery** — Auto-grants mastery slots per class/subclass; takes the max across overlapping feats.
+- **Online Worlds** — Join any world the DM publishes, claim a character, see live updates from every device at the table.
+- **Battle Map Marks** — Place your own markers on the projected map during play.
+
+---
+
+## Online & Offline
+
+Everything core works fully offline. Online features (sync, sharing, marketplace, social) require a free account.
+
+- **Closed-Beta Online Play** — When a DM is in the beta, the whole table plays together online. Only the DM needs a beta slot; players just join.
+- **Share a World** — Publish a world so players can join and see live updates. One active invite code per world; generate, copy, revoke at will.
+- **Realtime Sync** — Character, member, and entity changes stream to every connected client via CDC. Offline edits reconcile on reconnect.
+- **Roles** — Player and DM roles with row-level security.
+- **Character Ownership** — Claim a world character, release it back, or delete it (DM only, if ownerless).
+- **Personal Cloud Sync** — Back up characters, worlds, templates, and packages to your account; pick them up on another device.
+- **Cloud Media Tiers** — Portraits and covers sync free of quota. Entity images and battle maps count against your quota with per-kind size limits. **Live session media uses a shared transient pool** that does not bill your save space.
+- **Graceful Offline** — Network screens show a clean "You're offline" placeholder and auto-recover. Outbox writes flush on reconnect.
+
+### Marketplace
+
+- **Publish & Share** — Worlds, templates, packages, characters as immutable snapshots with title, description, tags, changelog, cover image.
+- **Versioning** — Every publish is a new version. Lineage tracking links every release of the same item.
+- **Browse & Download** — Filter by type, language, tags. Atomic download counters; built-in vs. community sections.
+- **Integrity** — Database-enforced immutability on core metadata prevents silent edits post-publish.
+
+---
+
+## Social & Community
+
+- **Public Profiles** — Username, display name, bio, avatar, follower counts. Discovery opt-out supported.
+- **Follow System** — Optimistic follow/unfollow; browse followers and following per profile.
+- **Activity Feed** — Text and image posts, likes, switch between *all* and *following only*. Server-side rate-limited.
+- **Direct Messaging** — Realtime 1-to-1 and group chats. Unread counters, group rename, member leave, admin-managed deletion.
+- **User Discovery** — Suggested profiles and username search with prefix matching.
+- **Game Listings** — Post open games with system, seats, schedule, language, tags. Filter by language/system/tags.
+- **Applications** — Players apply with a message; listing owners accept, reject, or applicants withdraw.
 
 ---
 
@@ -185,6 +163,45 @@ Planned for upcoming releases — order not final, scope may shift between patch
 
 ---
 
+## Installation
+
+### Android
+1. Download `DungeonMasterTool-Android.apk` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+2. Enable "Install from unknown sources" if prompted.
+3. Open the APK to install.
+
+### Windows
+1. Download `DungeonMasterTool-Windows.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+2. Extract and run `dungeon_master_tool.exe`.
+
+### Linux
+1. Download `DungeonMasterTool-Linux.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+2. Extract and run:
+   ```bash
+   unzip DungeonMasterTool-Linux.zip
+   cd bundle
+   ./dungeon_master_tool
+   ```
+
+<div id="macos-installation"></div>
+
+### macOS
+1. Download `DungeonMasterTool-MacOS.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+2. Extract and drag `dungeon_master_tool.app` into **Applications**.
+3. Remove the quarantine flag:
+   ```bash
+   sudo xattr -rd com.apple.quarantine /Applications/dungeon_master_tool.app
+   ```
+4. Launch from Applications or Launchpad.
+
+### iOS
+> **Note:** iOS builds are currently unsigned. Sideload via Xcode or a signing service.
+
+1. Download `DungeonMasterTool-iOS.ipa` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+2. Sideload using Xcode, AltStore, or similar.
+
+---
+
 ## Development
 
 ```bash
@@ -200,7 +217,7 @@ See [flutter_app/README.md](flutter_app/README.md) for full developer documentat
 
 ## License
 
-This project is licensed under [CC BY-NC 4.0](LICENSE). See the LICENSE file for details.
+Licensed under [CC BY-NC 4.0](LICENSE). See the LICENSE file for details.
 
 ---
 
