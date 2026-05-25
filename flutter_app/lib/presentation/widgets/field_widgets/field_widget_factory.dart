@@ -11,11 +11,13 @@ import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../../screens/map/world_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../asset_ref_image.dart';
 import '../markdown_text_area.dart';
@@ -328,6 +330,12 @@ class FieldWidgetFactory {
         onChanged: onChanged,
       ),
       FieldType.image => _ImageFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.imagePerEra => _ImagePerEraFieldWidget(
         schema: schema,
         value: value,
         readOnly: readOnly,
@@ -3327,15 +3335,19 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   }
 
   Future<void> _pickImages() async {
-    // Per-entity image cap — bail early when this field is already full.
-    final remaining = kMaxEntityImages - _images.length;
+    // Single-image fields cap at 1; list fields share kMaxEntityImages.
+    final cap = widget.schema.isList ? kMaxEntityImages : 1;
+    final fieldKind = widget.schema.mediaKindWire != null
+        ? MediaKind.fromWireName(widget.schema.mediaKindWire!)
+        : null;
+    final remaining = cap - _images.length;
     if (remaining <= 0) {
-      showImageLimitSnackbar(context, kMaxEntityImages);
+      showImageLimitSnackbar(context, cap);
       return;
     }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
-      allowMultiple: true,
+      allowMultiple: widget.schema.isList,
     );
     if (result == null || result.files.isEmpty) return;
     var newPaths = result.files
@@ -3350,18 +3362,18 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
     // Eager cloud upload — mirrors the entity portrait flow: online + signed
     // in → push to R2 now; offline / quota-full → keep the local path.
     final (:refs, :quotaExceeded, :tooLarge, :tooLargeActualBytes, pushWorldId: _) =
-        await eagerUploadEntityImages(ref, newPaths);
+        await eagerUploadEntityImages(ref, newPaths, overrideKind: fieldKind);
     if (!mounted) return;
     widget.onChanged([..._images, ...refs]);
     if (quotaExceeded) showQuotaFullSnackbar(context);
     if (tooLarge) {
       showImageTooLargeSnackbar(
         context,
-        maxBytes: MediaKind.worldEntityImage.maxBytes,
+        maxBytes: (fieldKind ?? MediaKind.worldEntityImage).maxBytes,
         actualBytes: tooLargeActualBytes,
       );
     }
-    if (overflow) showImageLimitSnackbar(context, kMaxEntityImages);
+    if (overflow) showImageLimitSnackbar(context, cap);
   }
 
   void _removeImage(int index) {
@@ -3550,6 +3562,184 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// --- IMAGE PER ERA ---
+class _ImagePerEraFieldWidget extends ConsumerStatefulWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _ImagePerEraFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  ConsumerState<_ImagePerEraFieldWidget> createState() =>
+      _ImagePerEraFieldWidgetState();
+}
+
+class _ImagePerEraFieldWidgetState
+    extends ConsumerState<_ImagePerEraFieldWidget> {
+  Map<String, String> get _map {
+    final v = widget.value;
+    if (v is! Map) return const {};
+    return {
+      for (final entry in v.entries)
+        if (entry.value is String && (entry.value as String).isNotEmpty)
+          entry.key.toString(): entry.value as String,
+    };
+  }
+
+  Future<void> _pickFor(String eraId) async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result == null || result.files.isEmpty) return;
+    final path = result.files.first.path;
+    if (path == null) return;
+    final kind = widget.schema.mediaKindWire != null
+        ? MediaKind.fromWireName(widget.schema.mediaKindWire!)
+        : null;
+    final (:refs, :quotaExceeded, :tooLarge, :tooLargeActualBytes, pushWorldId: _) =
+        await eagerUploadEntityImages(ref, [path], overrideKind: kind);
+    if (!mounted || refs.isEmpty) return;
+    final updated = Map<String, String>.from(_map);
+    final oldRef = updated[eraId];
+    updated[eraId] = refs.first;
+    widget.onChanged(updated);
+    if (quotaExceeded) showQuotaFullSnackbar(context);
+    if (tooLarge) {
+      showImageTooLargeSnackbar(
+        context,
+        maxBytes: (kind ?? MediaKind.worldEntityImage).maxBytes,
+        actualBytes: tooLargeActualBytes,
+      );
+    }
+    if (oldRef != null && oldRef != refs.first) {
+      unawaited(cleanupRemovedEntityImageRef(
+        ref,
+        oldRef,
+        readOnly: widget.readOnly,
+        remaining: updated.values.toList(),
+      ));
+    }
+  }
+
+  void _removeFor(String eraId) {
+    final updated = Map<String, String>.from(_map);
+    final removed = updated.remove(eraId);
+    widget.onChanged(updated);
+    if (removed != null) {
+      unawaited(cleanupRemovedEntityImageRef(
+        ref,
+        removed,
+        readOnly: widget.readOnly,
+        remaining: updated.values.toList(),
+      ));
+    }
+  }
+
+  String _eraLabel(WorldMapNotifier notifier, int index, MapEra era) {
+    final names = notifier.eraNames;
+    if (index < names.length) return names[index];
+    return 'Era ${index + 1}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    final eras = ref.watch(worldMapProvider.select((s) => s.eras));
+    final notifier = ref.read(worldMapProvider.notifier);
+    final map = _map;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: widget.schema.label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        child: eras.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  'No eras defined yet. Add eras from the Map tab to set per-era images.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette?.srdSubtitle,
+                  ),
+                ),
+              )
+            : Column(
+                children: [
+                  for (var i = 0; i < eras.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 96,
+                            height: 64,
+                            child: map[eras[i].id] != null
+                                ? GestureDetector(
+                                    onTap: widget.readOnly
+                                        ? null
+                                        : () => _pickFor(eras[i].id),
+                                    child: ClipRRect(
+                                      borderRadius: palette?.cbr ??
+                                          BorderRadius.circular(4),
+                                      child: AssetRefImage(
+                                        ref: AssetRef(map[eras[i].id]!),
+                                        fit: BoxFit.cover,
+                                        cacheWidth: 192,
+                                        errorWidget: Container(
+                                          color: palette?.canvasBg ??
+                                              Colors.grey.shade800,
+                                          child: const Center(
+                                            child: Icon(Icons.broken_image,
+                                                size: 18),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : OutlinedButton(
+                                    onPressed: widget.readOnly
+                                        ? null
+                                        : () => _pickFor(eras[i].id),
+                                    child: const Icon(
+                                      Icons.add_photo_alternate,
+                                      size: 18,
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _eraLabel(notifier, i, eras[i]),
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (map[eras[i].id] != null && !widget.readOnly)
+                            IconButton(
+                              tooltip: 'Remove',
+                              icon: const Icon(Icons.delete, size: 18),
+                              onPressed: () => _removeFor(eras[i].id),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }

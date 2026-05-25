@@ -677,15 +677,20 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
     );
     if (result == null || result.files.single.path == null) return;
-    final localPath = result.files.single.path!;
+    if (!context.mounted) return;
+    await applyMapImage(context, result.files.single.path!);
+  }
 
+  /// Applies a map image from any source — a freshly picked local path or an
+  /// already-uploaded `dmt-asset://` ref (e.g. a location's `battlemaps`
+  /// entry). `uploadMapImage` is a no-op for non-local refs, so reused refs
+  /// skip R2 traffic but still flow through the same decode/state pipeline.
+  Future<void> applyMapImage(BuildContext context, String pathOrRef) async {
     final oldRef = state.mapPath;
-    // Eager cloud upload — online world → push to R2; offline / quota-full
-    // → keep the local path.
     final (ref: stored, :quotaExceeded, :tooLarge, :actualBytes) =
         await uploadMapImage(
       _ref.read,
-      path: localPath,
+      path: pathOrRef,
       kind: MediaKind.battleMap,
     );
     final img = await _loadImageFromFile(stored);
@@ -708,7 +713,6 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         actualBytes: actualBytes,
       );
     }
-    // Replaced an earlier cloud image → best-effort orphan cleanup.
     unawaited(cleanupMapImageRef(
       _ref.read,
       removedRef: oldRef,

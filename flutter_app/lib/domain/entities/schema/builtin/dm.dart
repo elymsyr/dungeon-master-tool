@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import '../../../value_objects/media_kind.dart';
 import '../dnd5e_constants.dart';
 import '../entity_category_schema.dart';
 import '../field_group.dart';
@@ -83,6 +84,7 @@ class _FB {
     dynamic defaultValue,
     List<Map<String, String>> subFields = const [],
     FieldVisibility visibility = FieldVisibility.shared,
+    String? mediaKindWire,
   }) {
     final f = FieldSchema(
       fieldId: _uuid.v4(),
@@ -101,6 +103,7 @@ class _FB {
       defaultValue: defaultValue,
       subFields: subFields,
       visibility: visibility,
+      mediaKindWire: mediaKindWire,
       orderIndex: idx++,
       createdAt: now,
       updatedAt: now,
@@ -182,6 +185,34 @@ class _FB {
       );
   void grantedModifiers(String k, String l, {String g = grpRules}) =>
       _base(key: k, label: l, type: FieldType.grantedModifiers, groupId: g, isList: true, gridSpan: 2);
+  void image(String k, String l,
+          {bool isList = false,
+          String g = grpIdentity,
+          MediaKind? kind,
+          FieldVisibility vis = FieldVisibility.shared}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.image,
+        isList: isList,
+        groupId: g,
+        gridSpan: isList ? 2 : 1,
+        visibility: vis,
+        mediaKindWire: kind?.wireName,
+      );
+  void imagePerEra(String k, String l,
+          {String g = grpIdentity,
+          MediaKind? kind,
+          FieldVisibility vis = FieldVisibility.shared}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.imagePerEra,
+        groupId: g,
+        gridSpan: 2,
+        visibility: vis,
+        mediaKindWire: kind?.wireName,
+      );
   void combatStats(String k, String l) => _base(
         key: k,
         label: l,
@@ -474,6 +505,11 @@ EntityCategorySchema _locationCategory(String schemaId, String now, int orderInd
   fb.relation('hazard_refs', 'Hazards', const ['hazard'], isList: true);
   fb.markdown('description_long', 'Description', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
+  fb.image('map', 'Map', g: grpMaps, kind: MediaKind.battleMap);
+  fb.imagePerEra('map_per_era', 'Map per Era',
+      g: grpMaps, kind: MediaKind.battleMap);
+  fb.image('battlemaps', 'Battlemaps',
+      g: grpMaps, kind: MediaKind.battleMap, isList: true);
 
   return _mk(
     schemaId: schemaId,
@@ -486,6 +522,7 @@ EntityCategorySchema _locationCategory(String schemaId, String now, int orderInd
     groups: const [
       FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
       FieldGroup(groupId: grpRules, name: 'Description', gridColumns: 1, orderIndex: 1),
+      FieldGroup(groupId: grpMaps, name: 'Maps', gridColumns: 1, orderIndex: 2),
     ],
     orderIndex: orderIndex,
     now: now,

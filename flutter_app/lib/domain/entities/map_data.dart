@@ -61,28 +61,46 @@ abstract class TimelinePin with _$TimelinePin {
       _$TimelinePinFromJson(json);
 }
 
-/// A single epoch (time segment) with its own map image, pins, and timeline.
+/// A single era (time segment) with its own map image, pins, and timeline.
+/// `locationMaps` holds per-location nested pin collections — the map image
+/// is sourced from the location entity's `map_per_era[era.id]`, not stored
+/// here.
 @freezed
-abstract class MapEpoch with _$MapEpoch {
-  const factory MapEpoch({
+abstract class MapEra with _$MapEra {
+  const factory MapEra({
     required String id,
     @Default('') String imagePath,
     @Default([]) List<MapPin> pins,
     @Default([]) List<TimelinePin> timelinePins,
-  }) = _MapEpoch;
+    @Default({}) Map<String, LocationMapData> locationMaps,
+  }) = _MapEra;
 
-  factory MapEpoch.fromJson(Map<String, dynamic> json) =>
-      _$MapEpochFromJson(json);
+  factory MapEra.fromJson(Map<String, dynamic> json) =>
+      _$MapEraFromJson(json);
 }
 
-/// A waypoint marker separating two epochs on the epoch scroll bar.
+/// Per-location nested map data inside a [MapEra]. Holds the pins and
+/// timeline pins for a drill-in view; the background image comes from the
+/// location entity's `map_per_era[eraId]` (falls back to `map`).
 @freezed
-abstract class EpochWaypoint with _$EpochWaypoint {
-  const factory EpochWaypoint({
+abstract class LocationMapData with _$LocationMapData {
+  const factory LocationMapData({
+    @Default([]) List<MapPin> pins,
+    @Default([]) List<TimelinePin> timelinePins,
+  }) = _LocationMapData;
+
+  factory LocationMapData.fromJson(Map<String, dynamic> json) =>
+      _$LocationMapDataFromJson(json);
+}
+
+/// A waypoint marker separating two eras on the era scroll bar.
+@freezed
+abstract class EraWaypoint with _$EraWaypoint {
+  const factory EraWaypoint({
     required String id,
     @Default('') String label,
-  }) = _EpochWaypoint;
+  }) = _EraWaypoint;
 
-  factory EpochWaypoint.fromJson(Map<String, dynamic> json) =>
-      _$EpochWaypointFromJson(json);
+  factory EraWaypoint.fromJson(Map<String, dynamic> json) =>
+      _$EraWaypointFromJson(json);
 }

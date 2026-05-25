@@ -6,6 +6,7 @@ import '../../../application/providers/projection_provider.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'battlemap_picker_flow.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -82,7 +83,9 @@ class BattleMapToolbar extends ConsumerWidget {
             icon: Icons.image_outlined,
             tooltip: 'Open Map Image',
             palette: palette,
-            onPressed: () async { await notifier.pickMapImage(context); },
+            onPressed: () async {
+              await openBattlemapPicker(context, ref, notifier);
+            },
           ),
           const SizedBox(width: 8),
           // Project to player screen

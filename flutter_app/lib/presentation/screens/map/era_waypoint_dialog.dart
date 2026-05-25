@@ -15,7 +15,7 @@ class AddWaypointResult {
   });
 }
 
-/// Dialog for adding a new epoch waypoint.
+/// Dialog for adding a new era waypoint.
 class AddWaypointDialog extends StatefulWidget {
   final DmToolColors palette;
 
@@ -131,7 +131,7 @@ class DeleteWaypointDialog extends StatefulWidget {
 }
 
 class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
-  EpochMergeStrategy _strategy = EpochMergeStrategy.merge;
+  EraMergeStrategy _strategy = EraMergeStrategy.merge;
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +140,15 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
       backgroundColor: p.uiFloatingBg,
       title: Text('Delete: ${widget.waypointLabel}',
           style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
-      content: RadioGroup<EpochMergeStrategy>(
+      content: RadioGroup<EraMergeStrategy>(
         groupValue: _strategy,
         onChanged: (v) => setState(() => _strategy = v ?? _strategy),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _radio(EpochMergeStrategy.merge, 'Merge both segments'),
-            _radio(EpochMergeStrategy.keepLeft, 'Keep left, discard right'),
-            _radio(EpochMergeStrategy.keepRight, 'Keep right, discard left'),
+            _radio(EraMergeStrategy.merge, 'Merge both segments'),
+            _radio(EraMergeStrategy.keepLeft, 'Keep left, discard right'),
+            _radio(EraMergeStrategy.keepRight, 'Keep right, discard left'),
           ],
         ),
       ),
@@ -167,9 +167,9 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
     );
   }
 
-  Widget _radio(EpochMergeStrategy value, String label) {
+  Widget _radio(EraMergeStrategy value, String label) {
     final p = widget.palette;
-    return RadioListTile<EpochMergeStrategy>(
+    return RadioListTile<EraMergeStrategy>(
       value: value,
       title: Text(label,
           style: TextStyle(fontSize: 12, color: p.uiFloatingText)),
@@ -179,25 +179,25 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
   }
 }
 
-/// Dialog to pick which epoch to copy a pin to.
-class CopyToEpochDialog extends StatelessWidget {
+/// Dialog to pick which era to copy a pin to.
+class CopyToEraDialog extends StatelessWidget {
   final DmToolColors palette;
-  final List<String> epochNames;
-  final int currentEpochIndex;
+  final List<String> eraNames;
+  final int currentEraIndex;
 
-  const CopyToEpochDialog({
+  const CopyToEraDialog({
     super.key,
     required this.palette,
-    required this.epochNames,
-    required this.currentEpochIndex,
+    required this.eraNames,
+    required this.currentEraIndex,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = palette;
     final options = <int>[];
-    for (int i = 0; i < epochNames.length; i++) {
-      if (i != currentEpochIndex) options.add(i);
+    for (int i = 0; i < eraNames.length; i++) {
+      if (i != currentEraIndex) options.add(i);
     }
 
     return AlertDialog(
@@ -211,7 +211,7 @@ class CopyToEpochDialog extends StatelessWidget {
           children: options.map((i) {
             return ListTile(
               dense: true,
-              title: Text(epochNames[i],
+              title: Text(eraNames[i],
                   style:
                       TextStyle(fontSize: 12, color: p.uiFloatingText)),
               onTap: () => Navigator.pop(context, i),

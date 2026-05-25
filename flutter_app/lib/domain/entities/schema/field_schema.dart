@@ -17,6 +17,7 @@ enum FieldType {
   enum_,
   date,
   image,
+  imagePerEra,    // `Map<eraId, assetRef>` — per-era image variants (e.g. location.map_per_era). Widget reads world map era list.
   file,
   pdf,
   relation,       // Tek referans veya liste referans (allowedTypes ile hedef kategori belirlenir)
@@ -103,6 +104,11 @@ abstract class FieldSchema with _$FieldSchema {
     @Default(null) String? groupId,
     /// Grid layout'ta kaç sütun kaplar (1 = normal, 2+ = geniş)
     @Default(1) int gridColumnSpan,
+    /// image tipi için per-field upload kind override (`MediaKind.wireName`).
+    /// null → upload service mevcut hardcode'a düşer (worldEntityImage /
+    /// packageEntityImage). Schema layer'a `MediaKind` import'u sızdırmamak
+    /// için string olarak saklanır; resolver `MediaKind.fromWireName` ile çevirir.
+    @Default(null) String? mediaKindWire,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;

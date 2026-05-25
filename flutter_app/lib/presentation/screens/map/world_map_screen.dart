@@ -13,6 +13,7 @@ import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/value_objects/asset_ref.dart';
@@ -21,9 +22,11 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/projection/projectable.dart';
 import '../../widgets/unbounded_stack.dart';
-import 'epoch_scroll_bar.dart';
-import 'epoch_waypoint_dialog.dart';
+import 'era_scroll_bar.dart';
+import 'era_waypoint_dialog.dart';
 import 'timeline_entry_dialog.dart';
+import 'widgets/location_pin_preview_card.dart';
+import 'widgets/map_breadcrumb_bar.dart';
 import 'widgets/pin_edit_dialog.dart';
 import 'world_map_notifier.dart';
 
@@ -170,7 +173,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     });
 
     // Each Consumer subtree watches the world map provider independently so a
-    // toolbar toggle does not invalidate the canvas, and an epoch switch does
+    // toolbar toggle does not invalidate the canvas, and an era switch does
     // not rebuild the toolbar. The canvas Consumer holds the heaviest paint
     // workload, so isolating its rebuild surface is the highest-leverage win.
     return Column(
@@ -190,36 +193,56 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   return _buildCanvas(palette, notifier, mapState);
                 },
               ),
+              // Drill-in breadcrumb (only visible while drilled).
+              Positioned(
+                left: 16,
+                top: 12,
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final stack = ref.watch(
+                      worldMapProvider.select((s) => s.locationStack),
+                    );
+                    if (stack.isEmpty) return const SizedBox.shrink();
+                    final entities = ref.watch(entityProvider);
+                    return MapBreadcrumbBar(
+                      locationStack: stack,
+                      entities: entities,
+                      palette: palette,
+                      onJumpToDepth: notifier.popToLocationDepth,
+                    );
+                  },
+                ),
+              ),
               Positioned(
                 left: 16,
                 bottom: 16,
                 child: Consumer(
                   builder: (context, ref, _) {
-                    final epochs = ref.watch(
-                      worldMapProvider.select((s) => s.epochs),
+                    final eras = ref.watch(
+                      worldMapProvider.select((s) => s.eras),
                     );
-                    if (epochs.length <= 1) return const SizedBox.shrink();
+                    if (eras.length <= 1) return const SizedBox.shrink();
                     final waypoints = ref.watch(
                       worldMapProvider.select((s) => s.waypoints),
                     );
-                    final activeEpochIndex = ref.watch(
-                      worldMapProvider.select((s) => s.activeEpochIndex),
+                    final activeEraIndex = ref.watch(
+                      worldMapProvider.select((s) => s.activeEraIndex),
                     );
                     final startLabel = ref.watch(
-                      worldMapProvider.select((s) => s.epochStartLabel),
+                      worldMapProvider.select((s) => s.eraStartLabel),
                     );
                     final endLabel = ref.watch(
-                      worldMapProvider.select((s) => s.epochEndLabel),
+                      worldMapProvider.select((s) => s.eraEndLabel),
                     );
-                    return EpochScrollBar(
-                      epochs: epochs,
+                    return EraScrollBar(
+                      eras: eras,
                       waypoints: waypoints,
-                      activeEpochIndex: activeEpochIndex,
-                      epochNames: notifier.epochNames,
+                      activeEraIndex: activeEraIndex,
+                      eraNames: notifier.eraNames,
                       palette: palette,
                       startLabel: startLabel,
                       endLabel: endLabel,
-                      onSwitchEpoch: notifier.switchEpoch,
+                      onSwitchEra: notifier.switchEra,
                       onAddWaypoint: (insertIdx) =>
                           _showAddWaypointDialog(insertIdx, notifier, palette),
                       onDeleteWaypoint: (wpIdx) =>
@@ -227,7 +250,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                       onRenameWaypoint: (wpIdx) =>
                           _showRenameWaypointDialog(wpIdx, notifier, palette),
                       onRenameBoundary: (s, e) =>
-                          notifier.updateEpochBoundaryLabels(
+                          notifier.updateEraBoundaryLabels(
                             startLabel: s,
                             endLabel: e,
                           ),
@@ -396,16 +419,16 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
           _VertDiv(palette: palette),
 
-          // Epochs
+          // Eras
           _ToolbarButton(
             icon: Icons.timeline,
-            label: mapState.epochs.length > 1
-                ? 'Epochs (${mapState.epochs.length})'
-                : 'Epochs',
+            label: mapState.eras.length > 1
+                ? 'Eras (${mapState.eras.length})'
+                : 'Eras',
             palette: palette,
-            highlight: mapState.epochs.length > 1,
+            highlight: mapState.eras.length > 1,
             onTap: () => _showAddWaypointDialog(
-              mapState.activeEpochIndex,
+              mapState.activeEraIndex,
               notifier,
               palette,
             ),
@@ -654,27 +677,64 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           ),
 
         // Map pins
-        ...culledPins.map(
-          (pin) => _DraggablePin(
+        ...culledPins.map((pin) {
+          final linkedLoc = pin.entityId != null &&
+                  ref.read(entityProvider)[pin.entityId!]?.categorySlug ==
+                      'location'
+              ? pin.entityId
+              : null;
+          return _DraggablePin(
             key: ValueKey('pin_${pin.id}'),
             pin: pin,
             palette: palette,
             notifier: notifier,
             pinSize: mapState.pinSize,
             iconData: _pinIcon(pin, ref),
+            linkedLocationId: linkedLoc,
             onEdit: () => _editPin(pin, notifier, palette),
             onInspect: pin.entityId != null
                 ? () => widget.onOpenEntity?.call(pin.entityId!)
                 : null,
             onDelete: () => notifier.deletePin(pin.id),
-            onCopyToEpoch: mapState.epochs.length > 1
-                ? () => _showCopyToEpochDialog(
+            onCopyToEra: mapState.eras.length > 1
+                ? () => _showCopyToEraDialog(
                       notifier,
                       palette,
                       pinId: pin.id,
                     )
                 : null,
-          ),
+          );
+        }),
+
+        // Location pin preview card — single canvas-level overlay driven by
+        // `hoveredLocationPinId`. Card's map thumbnail drills into the
+        // location's per-era map (PR-3 UI-only; pins persist in PR-4).
+        ValueListenableBuilder<String?>(
+          valueListenable: notifier.hoveredLocationPinId,
+          builder: (_, hoveredId, _) {
+            if (hoveredId == null) return const SizedBox.shrink();
+            final pin =
+                culledPins.where((p) => p.id == hoveredId).firstOrNull;
+            if (pin == null || pin.entityId == null) {
+              return const SizedBox.shrink();
+            }
+            final entity = ref.read(entityProvider)[pin.entityId!];
+            if (entity == null) return const SizedBox.shrink();
+            final mapRef = _resolveLocationMapRef(entity, mapState);
+            return Positioned(
+              left: pin.x + 12,
+              top: pin.y - 24,
+              child: LocationPinPreviewCard(
+                location: entity,
+                mapRef: mapRef,
+                palette: palette,
+                onDrillIn: () {
+                  notifier.hoveredLocationPinId.value = null;
+                  notifier.drillIntoLocation(entity.id);
+                },
+              ),
+            );
+          },
         ),
 
         // F4: single canvas-level hover overlay for the timeline pin under
@@ -733,8 +793,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               entityId,
               notifier,
             ),
-            onCopyToEpoch: mapState.epochs.length > 1
-                ? () => _showCopyToEpochDialog(
+            onCopyToEra: mapState.eras.length > 1
+                ? () => _showCopyToEraDialog(
                       notifier,
                       palette,
                       timelinePinId: pin.id,
@@ -1079,6 +1139,22 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     return {for (final eid in entityIds) eid: entities[eid]?.name ?? eid};
   }
 
+  /// Picks the best map image ref for a location entity given the active era.
+  String? _resolveLocationMapRef(Entity location, WorldMapState mapState) {
+    final perEra = location.fields['map_per_era'];
+    final activeEra = mapState.eras.isNotEmpty &&
+            mapState.activeEraIndex < mapState.eras.length
+        ? mapState.eras[mapState.activeEraIndex]
+        : null;
+    if (perEra is Map && activeEra != null) {
+      final v = perEra[activeEra.id];
+      if (v is String && v.isNotEmpty) return v;
+    }
+    final fallback = location.fields['map'];
+    if (fallback is String && fallback.isNotEmpty) return fallback;
+    return null;
+  }
+
   /// Add a connected timeline pin: copies entities + session from parent,
   /// opens the timeline entry dialog pre-filled.
   void _addConnectedTimeline(
@@ -1166,7 +1242,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Epoch dialogs
+  // Era dialogs
   // -------------------------------------------------------------------------
 
   void _showAddWaypointDialog(
@@ -1195,7 +1271,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   ) {
     final mapState = ref.read(worldMapProvider);
     final label = mapState.waypoints[wpIndex].label;
-    showDialog<EpochMergeStrategy>(
+    showDialog<EraMergeStrategy>(
       context: context,
       builder: (ctx) =>
           DeleteWaypointDialog(palette: palette, waypointLabel: label),
@@ -1222,27 +1298,27 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     });
   }
 
-  void _showCopyToEpochDialog(
+  void _showCopyToEraDialog(
     WorldMapNotifier notifier,
     DmToolColors palette, {
     String? pinId,
     String? timelinePinId,
   }) {
     final mapState = ref.read(worldMapProvider);
-    if (mapState.epochs.length <= 1) return;
+    if (mapState.eras.length <= 1) return;
     showDialog<int>(
       context: context,
-      builder: (ctx) => CopyToEpochDialog(
+      builder: (ctx) => CopyToEraDialog(
         palette: palette,
-        epochNames: notifier.epochNames,
-        currentEpochIndex: mapState.activeEpochIndex,
+        eraNames: notifier.eraNames,
+        currentEraIndex: mapState.activeEraIndex,
       ),
     ).then((targetIdx) {
       if (targetIdx == null) return;
       if (pinId != null) {
-        notifier.copyPinToEpoch(pinId, targetIdx);
+        notifier.copyPinToEra(pinId, targetIdx);
       } else if (timelinePinId != null) {
-        notifier.copyTimelinePinToEpoch(timelinePinId, targetIdx);
+        notifier.copyTimelinePinToEra(timelinePinId, targetIdx);
       }
     });
   }
@@ -1268,7 +1344,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     );
   }
 
-  /// Projects the active epoch's map background image to the player screen.
+  /// Projects the active era's map background image to the player screen.
   /// DM pins are deliberately excluded — only the bare map is shared.
   Future<void> _projectMap(DmToolColors palette) async {
     final imagePath =
@@ -1305,9 +1381,12 @@ class _DraggablePin extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback? onInspect;
   final VoidCallback? onDelete;
-  final VoidCallback? onCopyToEpoch;
+  final VoidCallback? onCopyToEra;
   final PinSize pinSize;
   final IconData iconData;
+  // When non-null this pin links to a location entity → tap/hover surfaces
+  // the LocationPinPreviewCard with a drill-in handle.
+  final String? linkedLocationId;
 
   const _DraggablePin({
     super.key,
@@ -1318,7 +1397,8 @@ class _DraggablePin extends StatefulWidget {
     required this.iconData,
     this.onInspect,
     this.onDelete,
-    this.onCopyToEpoch,
+    this.onCopyToEra,
+    this.linkedLocationId,
     this.pinSize = PinSize.medium,
   });
 
@@ -1356,68 +1436,92 @@ class _DraggablePinState extends State<_DraggablePin> {
     final iconSize = _iconSize;
     final label = pin.label.isNotEmpty ? pin.label : pin.pinType;
 
+    final isLocation = widget.linkedLocationId != null;
+    final hovered = widget.notifier.hoveredLocationPinId;
+
+    Widget gesture = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      // Location pins: tap → preview card (mobile entry point).
+      // Other pins: tap → context menu (existing behavior).
+      // Right-click always = context menu.
+      onTapUp: (d) {
+        if (isLocation) {
+          hovered.value = hovered.value == pin.id ? null : pin.id;
+        } else {
+          _showContextMenu(context, d.globalPosition);
+        }
+      },
+      onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
+      // Touch: hold-and-drag via long-press chain.
+      onLongPressStart: (d) {
+        _dragStart = d.globalPosition;
+        _pinStartPos = Offset(pin.x, pin.y);
+      },
+      onLongPressMoveUpdate: (d) {
+        if (_dragStart == null || _pinStartPos == null) return;
+        final scale = widget.notifier.viewTransform.value.scale;
+        final delta = (d.globalPosition - _dragStart!) / scale;
+        setState(() => _dragOffset = _pinStartPos! + delta);
+      },
+      onLongPressEnd: (_) => _commitDrag(),
+      // Desktop mouse: click-drag without delay.
+      onPanStart: (d) {
+        _dragStart = d.globalPosition;
+        _pinStartPos = Offset(pin.x, pin.y);
+      },
+      onPanUpdate: (d) {
+        if (_dragStart == null || _pinStartPos == null) return;
+        final scale = widget.notifier.viewTransform.value.scale;
+        final delta = (d.globalPosition - _dragStart!) / scale;
+        setState(() => _dragOffset = _pinStartPos! + delta);
+      },
+      onPanEnd: (_) => _commitDrag(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            widget.iconData,
+            size: iconSize,
+            color: displayColor,
+            shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+          ),
+          Transform.translate(
+            offset: const Offset(0, -4),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                shadows: const [
+                  Shadow(color: Colors.black, blurRadius: 3),
+                  Shadow(color: Colors.black, blurRadius: 6),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isLocation) {
+      // Desktop hover: enter → show preview, exit → hide (unless mobile tap
+      // already pinned it). Card visibility owned by hoveredLocationPinId.
+      gesture = MouseRegion(
+        onEnter: (_) => hovered.value = pin.id,
+        onExit: (_) {
+          if (hovered.value == pin.id) hovered.value = null;
+        },
+        child: gesture,
+      );
+    }
+
     return Positioned(
       left: x - iconSize / 2,
       top: y - iconSize,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        // Tap = open context menu (sil/see-card/edit). Same on mobile tap
-        // and desktop left-click; detail sheet reachable as menu item.
-        onTapUp: (d) => _showContextMenu(context, d.globalPosition),
-        onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
-        // Touch: hold-and-drag via long-press chain.
-        onLongPressStart: (d) {
-          _dragStart = d.globalPosition;
-          _pinStartPos = Offset(pin.x, pin.y);
-        },
-        onLongPressMoveUpdate: (d) {
-          if (_dragStart == null || _pinStartPos == null) return;
-          final scale = widget.notifier.viewTransform.value.scale;
-          final delta = (d.globalPosition - _dragStart!) / scale;
-          setState(() => _dragOffset = _pinStartPos! + delta);
-        },
-        onLongPressEnd: (_) => _commitDrag(),
-        // Desktop mouse: click-drag without delay.
-        onPanStart: (d) {
-          _dragStart = d.globalPosition;
-          _pinStartPos = Offset(pin.x, pin.y);
-        },
-        onPanUpdate: (d) {
-          if (_dragStart == null || _pinStartPos == null) return;
-          final scale = widget.notifier.viewTransform.value.scale;
-          final delta = (d.globalPosition - _dragStart!) / scale;
-          setState(() => _dragOffset = _pinStartPos! + delta);
-        },
-        onPanEnd: (_) => _commitDrag(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              widget.iconData,
-              size: iconSize,
-              color: displayColor,
-              shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
-            ),
-            Transform.translate(
-              offset: const Offset(0, -4),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  shadows: const [
-                    Shadow(color: Colors.black, blurRadius: 3),
-                    Shadow(color: Colors.black, blurRadius: 6),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: gesture,
     );
   }
 
@@ -1447,11 +1551,11 @@ class _DraggablePinState extends State<_DraggablePin> {
         value: 'edit_pin',
         child: _menuRow(Icons.edit, 'Edit Pin', palette),
       ),
-      if (widget.onCopyToEpoch != null) ...[
+      if (widget.onCopyToEra != null) ...[
         const PopupMenuDivider(),
         PopupMenuItem(
-          value: 'copy_to_epoch',
-          child: _menuRow(Icons.copy, 'Copy to Epoch...', palette),
+          value: 'copy_to_era',
+          child: _menuRow(Icons.copy, 'Copy to Era...', palette),
         ),
       ],
       const PopupMenuDivider(),
@@ -1478,8 +1582,8 @@ class _DraggablePinState extends State<_DraggablePin> {
           widget.onInspect?.call();
         case 'edit_pin':
           widget.onEdit();
-        case 'copy_to_epoch':
-          widget.onCopyToEpoch?.call();
+        case 'copy_to_era':
+          widget.onCopyToEra?.call();
         case 'delete':
           widget.onDelete?.call();
       }
@@ -1503,7 +1607,7 @@ class _DraggableTimelinePin extends StatefulWidget {
   final VoidCallback? onDelete;
   final void Function(String entityId)? onEntityDrop;
   final Map<String, String> entityNames;
-  final VoidCallback? onCopyToEpoch;
+  final VoidCallback? onCopyToEra;
   final PinSize pinSize;
 
   const _DraggableTimelinePin({
@@ -1518,7 +1622,7 @@ class _DraggableTimelinePin extends StatefulWidget {
     this.onEdit,
     this.onDelete,
     this.onEntityDrop,
-    this.onCopyToEpoch,
+    this.onCopyToEra,
     this.entityNames = const {},
     this.pinSize = PinSize.medium,
   });
@@ -1720,11 +1824,11 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
         value: 'edit',
         child: _menuRow(Icons.edit, 'Edit', palette),
       ),
-      if (widget.onCopyToEpoch != null) ...[
+      if (widget.onCopyToEra != null) ...[
         const PopupMenuDivider(),
         PopupMenuItem(
-          value: 'copy_to_epoch',
-          child: _menuRow(Icons.copy, 'Copy to Epoch...', palette),
+          value: 'copy_to_era',
+          child: _menuRow(Icons.copy, 'Copy to Era...', palette),
         ),
       ],
       const PopupMenuDivider(),
@@ -1753,8 +1857,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
           widget.onLinkNew?.call();
         case 'edit':
           widget.onEdit?.call();
-        case 'copy_to_epoch':
-          widget.onCopyToEpoch?.call();
+        case 'copy_to_era':
+          widget.onCopyToEra?.call();
         case 'delete':
           widget.onDelete?.call();
       }

@@ -5,6 +5,7 @@ import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'battlemap_picker_flow.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -396,7 +397,7 @@ class _GridTab extends StatelessWidget {
 // Tab 3: View — reset view, map picker, token size slider
 // ---------------------------------------------------------------------------
 
-class _ViewTab extends StatelessWidget {
+class _ViewTab extends ConsumerWidget {
   final _ToolbarState tb;
   final BattleMapNotifier notifier;
   final DmToolColors palette;
@@ -408,7 +409,7 @@ class _ViewTab extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
@@ -427,7 +428,9 @@ class _ViewTab extends StatelessWidget {
                 icon: Icons.image_outlined,
                 label: 'Open Map',
                 palette: palette,
-                onTap: () async { await notifier.pickMapImage(context); },
+                onTap: () async {
+                  await openBattlemapPicker(context, ref, notifier);
+                },
               ),
             ],
           ),
