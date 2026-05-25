@@ -10,10 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../../application/services/asset_ref_resolver.dart';
 import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/services/undo_redo_mixin.dart';
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/media_kind.dart';
@@ -35,8 +37,8 @@ class WorldMapViewTransform {
 // State
 // ---------------------------------------------------------------------------
 
-/// Strategy for merging epochs when a waypoint is deleted.
-enum EpochMergeStrategy { merge, keepLeft, keepRight }
+/// Strategy for merging eras when a waypoint is deleted.
+enum EraMergeStrategy { merge, keepLeft, keepRight }
 
 /// Pin display size preset.
 enum PinSize { small, medium, large }
@@ -64,12 +66,16 @@ class WorldMapState {
   final bool isLinkMode;
   final String? pendingParentId;
 
-  // Epoch / date range
-  final List<MapEpoch> epochs;
-  final List<EpochWaypoint> waypoints;
-  final int activeEpochIndex;
-  final String epochStartLabel;
-  final String epochEndLabel;
+  // Era / date range
+  final List<MapEra> eras;
+  final List<EraWaypoint> waypoints;
+  final int activeEraIndex;
+  final String eraStartLabel;
+  final String eraEndLabel;
+
+  // Drill-in: location IDs deepest-last. Empty = root world map.
+  // Drill pins are RAM-only in PR-3; persistence ships in PR-4.
+  final List<String> locationStack;
 
   const WorldMapState({
     this.imagePath = '',
@@ -85,11 +91,12 @@ class WorldMapState {
     this.movingPinType,
     this.isLinkMode = false,
     this.pendingParentId,
-    this.epochs = const [],
+    this.eras = const [],
     this.waypoints = const [],
-    this.activeEpochIndex = 0,
-    this.epochStartLabel = 'Start',
-    this.epochEndLabel = 'End',
+    this.activeEraIndex = 0,
+    this.eraStartLabel = 'Start',
+    this.eraEndLabel = 'End',
+    this.locationStack = const [],
   });
 
   WorldMapState copyWith({
@@ -108,11 +115,12 @@ class WorldMapState {
     String? pendingParentId,
     bool clearMovingPin = false,
     bool clearPendingParent = false,
-    List<MapEpoch>? epochs,
-    List<EpochWaypoint>? waypoints,
-    int? activeEpochIndex,
-    String? epochStartLabel,
-    String? epochEndLabel,
+    List<MapEra>? eras,
+    List<EraWaypoint>? waypoints,
+    int? activeEraIndex,
+    String? eraStartLabel,
+    String? eraEndLabel,
+    List<String>? locationStack,
   }) {
     return WorldMapState(
       imagePath: imagePath ?? this.imagePath,
@@ -128,11 +136,12 @@ class WorldMapState {
       movingPinType: clearMovingPin ? null : (movingPinType ?? this.movingPinType),
       isLinkMode: isLinkMode ?? this.isLinkMode,
       pendingParentId: clearPendingParent ? null : (pendingParentId ?? this.pendingParentId),
-      epochs: epochs ?? this.epochs,
+      eras: eras ?? this.eras,
       waypoints: waypoints ?? this.waypoints,
-      activeEpochIndex: activeEpochIndex ?? this.activeEpochIndex,
-      epochStartLabel: epochStartLabel ?? this.epochStartLabel,
-      epochEndLabel: epochEndLabel ?? this.epochEndLabel,
+      activeEraIndex: activeEraIndex ?? this.activeEraIndex,
+      eraStartLabel: eraStartLabel ?? this.eraStartLabel,
+      eraEndLabel: eraEndLabel ?? this.eraEndLabel,
+      locationStack: locationStack ?? this.locationStack,
     );
   }
 
@@ -152,18 +161,28 @@ class WorldMapState {
           movingPinId == other.movingPinId &&
           isLinkMode == other.isLinkMode &&
           pendingParentId == other.pendingParentId &&
-          epochs == other.epochs &&
+          eras == other.eras &&
           waypoints == other.waypoints &&
-          activeEpochIndex == other.activeEpochIndex &&
-          epochStartLabel == other.epochStartLabel &&
-          epochEndLabel == other.epochEndLabel;
+          activeEraIndex == other.activeEraIndex &&
+          eraStartLabel == other.eraStartLabel &&
+          eraEndLabel == other.eraEndLabel &&
+          _listEquals(locationStack, other.locationStack);
+
+  static bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode => Object.hash(
         imagePath, pins, timelinePins, hiddenPinTypes, pinSize,
         showTimeline, showMapPins, showNonPlayerTimeline,
         activeEntityFilters, movingPinId, isLinkMode, pendingParentId,
-        epochs, waypoints, activeEpochIndex, epochStartLabel, epochEndLabel,
+        eras, waypoints, activeEraIndex, eraStartLabel, eraEndLabel,
+        Object.hashAll(locationStack),
       );
 }
 
@@ -192,6 +211,11 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   final ValueNotifier<String?> hoveredTimelinePinId =
       ValueNotifier<String?>(null);
 
+  /// Pin ID under the mouse cursor (desktop) or last tapped (mobile) for a
+  /// location-linked pin → drives [LocationPinPreviewCard] overlay.
+  final ValueNotifier<String?> hoveredLocationPinId =
+      ValueNotifier<String?>(null);
+
   // Viewport size for fit-to-image calculations
   Size _viewportSize = Size.zero;
 
@@ -214,7 +238,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   /// Cross-device açılışta yerel boş + cloud pending durumunda false kalır
   /// ve [syncToCampaignData] kullanıcı içerik eklemediği sürece sessiz
   /// döner — aksi halde deactivate boş map'i bulut'a yazıp tüm cihazlara
-  /// "kayıp harita" olarak yayılırdı. Kullanıcı pin/görsel/epoch eklerse
+  /// "kayıp harita" olarak yayılırdı. Kullanıcı pin/görsel/era eklerse
   /// `hasContent` true olur → save serbest.
   bool _initializedWithContent = false;
 
@@ -225,6 +249,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     viewTransform.dispose();
     cullTick.dispose();
     hoveredTimelinePinId.dispose();
+    hoveredLocationPinId.dispose();
     disposeUndoRedo();
     super.dispose();
   }
@@ -246,17 +271,17 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       _initialized && _initializedWorldId == worldId;
 
   /// True when the notifier carries actual map content (image, pins or
-  /// multi-epoch data). Used by the screen to allow a re-init when the
+  /// multi-era data). Used by the screen to allow a re-init when the
   /// first init ran with empty data (cross-device open before cloud sync
   /// arrived) and the underlying `data['map_data']` has since been filled.
-  /// Single default epoch with no pins/image counts as empty.
+  /// Single default era with no pins/image counts as empty.
   bool get hasContent {
     if (state.imagePath.isNotEmpty) return true;
     if (state.pins.isNotEmpty) return true;
     if (state.timelinePins.isNotEmpty) return true;
-    if (state.epochs.length > 1) return true;
-    if (state.epochs.length == 1) {
-      final ep = state.epochs.first;
+    if (state.eras.length > 1) return true;
+    if (state.eras.length == 1) {
+      final ep = state.eras.first;
       if (ep.imagePath.isNotEmpty) return true;
       if (ep.pins.isNotEmpty) return true;
       if (ep.timelinePins.isNotEmpty) return true;
@@ -274,16 +299,16 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     );
     _bumpCullTick();
 
-    // --- Epoch support ---
-    final rawEpochs = data['epochs'] as List?;
+    // --- Era support (legacy key `epochs` still read for backwards-compat) ---
+    final rawEras = (data['eras'] ?? data['epochs']) as List?;
     final rawWaypoints = data['waypoints'] as List?;
 
-    List<MapEpoch> epochs;
-    List<EpochWaypoint> waypoints;
+    List<MapEra> eras;
+    List<EraWaypoint> waypoints;
     int activeIdx;
 
-    if (rawEpochs != null && rawEpochs.isNotEmpty) {
-      epochs = rawEpochs.map((e) {
+    if (rawEras != null && rawEras.isNotEmpty) {
+      eras = rawEras.map((e) {
         final m = Map<String, dynamic>.from(e as Map);
         // Parse nested timeline pins with legacy compat
         m['timelinePins'] = _parseRawTimelinePins(
@@ -295,21 +320,42 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
             .map((p) => MapPin.fromJson(Map<String, dynamic>.from(p as Map)).toJson())
             .toList();
         m['imagePath'] ??= m['image_path'] ?? '';
-        return MapEpoch.fromJson(m);
+        // Per-location nested maps (PR-4). Snake-case alias `location_maps`.
+        final rawLocMaps =
+            (m['location_maps'] ?? m['locationMaps']) as Map?;
+        if (rawLocMaps != null) {
+          final parsed = <String, dynamic>{};
+          for (final entry in rawLocMaps.entries) {
+            final inner = Map<String, dynamic>.from(entry.value as Map);
+            inner['pins'] = _parseRawPins(inner['pins'] as List? ?? [])
+                .map((p) => p.toJson())
+                .toList();
+            inner['timelinePins'] = _parseRawTimelinePins(
+                    inner['timeline_pins'] as List? ??
+                        inner['timelinePins'] as List? ??
+                        [])
+                .map((t) => t.toJson())
+                .toList();
+            parsed[entry.key.toString()] = inner;
+          }
+          m['locationMaps'] = parsed;
+          m.remove('location_maps');
+        }
+        return MapEra.fromJson(m);
       }).toList();
       waypoints = (rawWaypoints ?? [])
-          .map((w) => EpochWaypoint.fromJson(Map<String, dynamic>.from(w as Map)))
+          .map((w) => EraWaypoint.fromJson(Map<String, dynamic>.from(w as Map)))
           .toList();
-      activeIdx = (data['active_epoch_index'] as int?) ?? 0;
-      if (activeIdx >= epochs.length) activeIdx = 0;
+      activeIdx = (data['active_era_index'] ?? data['active_epoch_index']) as int? ?? 0;
+      if (activeIdx >= eras.length) activeIdx = 0;
     } else {
-      // Legacy: wrap existing data into a single epoch
+      // Legacy: wrap existing data into a single era
       final pins = _parseRawPins(data['pins'] as List? ?? []);
       final timelinePins =
           _parseRawTimelinePins(data['timeline'] as List? ?? []);
       final imagePath = data['image_path'] as String? ?? '';
-      epochs = [
-        MapEpoch(
+      eras = [
+        MapEra(
           id: _uuid.v4(),
           imagePath: imagePath,
           pins: pins,
@@ -323,20 +369,23 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final pinSizeStr = data['pin_size'] as String?;
     final pinSize = PinSize.values.where((e) => e.name == pinSizeStr).firstOrNull
         ?? PinSize.medium;
-    final epochStartLabel = data['epoch_start_label'] as String? ?? 'Start';
-    final epochEndLabel = data['epoch_end_label'] as String? ?? 'End';
+    final eraStartLabel =
+        (data['era_start_label'] ?? data['epoch_start_label']) as String? ??
+            'Start';
+    final eraEndLabel =
+        (data['era_end_label'] ?? data['epoch_end_label']) as String? ?? 'End';
 
-    final active = epochs[activeIdx];
+    final active = eras[activeIdx];
     state = WorldMapState(
       imagePath: active.imagePath,
       pins: active.pins,
       timelinePins: active.timelinePins,
-      epochs: epochs,
+      eras: eras,
       waypoints: waypoints,
-      activeEpochIndex: activeIdx,
+      activeEraIndex: activeIdx,
       pinSize: pinSize,
-      epochStartLabel: epochStartLabel,
-      epochEndLabel: epochEndLabel,
+      eraStartLabel: eraStartLabel,
+      eraEndLabel: eraEndLabel,
     );
     clearUndoRedo();
     _initialized = true;
@@ -391,14 +440,14 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 
-    _syncActiveEpoch();
+    _syncProjection();
 
     final vt = viewTransform.value;
     final existing = campaign.data!['map_data'] as Map? ?? {};
 
-    // Legacy compat: root fields from epoch[0]
-    final firstEpoch =
-        state.epochs.isNotEmpty ? state.epochs[0] : const MapEpoch(id: '');
+    // Legacy compat: root fields from eras[0]
+    final firstEra =
+        state.eras.isNotEmpty ? state.eras[0] : const MapEra(id: '');
 
     // Viewport (pan/zoom) — DM-local motion class. Sibling key `map_view`
     // out of `map_data` so content sync (pins/waypoints) and viewport
@@ -410,84 +459,200 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     };
 
     campaign.data!['map_data'] = {
-      'image_path': firstEpoch.imagePath,
-      'pins': firstEpoch.pins.map((p) => p.toJson()).toList(),
-      'timeline': firstEpoch.timelinePins.map((t) => t.toJson()).toList(),
+      'image_path': firstEra.imagePath,
+      'pins': firstEra.pins.map((p) => p.toJson()).toList(),
+      'timeline': firstEra.timelinePins.map((t) => t.toJson()).toList(),
       'grid_size': existing['grid_size'] ?? 50,
       'grid_visible': existing['grid_visible'] ?? false,
       'grid_snap': existing['grid_snap'] ?? false,
       'feet_per_cell': existing['feet_per_cell'] ?? 5,
       'fog_state': existing['fog_state'] ?? <String, dynamic>{},
       'drawings': existing['drawings'] ?? <dynamic>[],
-      // Epoch data
-      'epochs': state.epochs
+      // Era data
+      'eras': state.eras
           .map((e) => {
                 'id': e.id,
                 'image_path': e.imagePath,
                 'pins': e.pins.map((p) => p.toJson()).toList(),
                 'timeline_pins':
                     e.timelinePins.map((t) => t.toJson()).toList(),
+                if (e.locationMaps.isNotEmpty)
+                  'location_maps': {
+                    for (final entry in e.locationMaps.entries)
+                      entry.key: {
+                        'pins':
+                            entry.value.pins.map((p) => p.toJson()).toList(),
+                        'timeline_pins': entry.value.timelinePins
+                            .map((t) => t.toJson())
+                            .toList(),
+                      },
+                  },
               })
           .toList(),
       'waypoints': state.waypoints
           .map((w) => {'id': w.id, 'label': w.label})
           .toList(),
-      'active_epoch_index': state.activeEpochIndex,
-      'epoch_start_label': state.epochStartLabel,
-      'epoch_end_label': state.epochEndLabel,
+      'active_era_index': state.activeEraIndex,
+      'era_start_label': state.eraStartLabel,
+      'era_end_label': state.eraEndLabel,
       'pin_size': state.pinSize.name,
     };
   }
 
   // -------------------------------------------------------------------------
-  // Epoch projection helpers
+  // Era projection helpers
   // -------------------------------------------------------------------------
 
-  /// Syncs projected state back into the epochs list at the active index.
-  void _syncActiveEpoch() {
-    if (state.epochs.isEmpty) return;
-    final idx = state.activeEpochIndex;
-    final updated = List<MapEpoch>.from(state.epochs);
-    updated[idx] = updated[idx].copyWith(
-      imagePath: state.imagePath,
-      pins: state.pins,
-      timelinePins: state.timelinePins,
-    );
-    state = state.copyWith(epochs: updated);
+  /// Syncs the projected `state.pins`/`state.timelinePins`/`state.imagePath`
+  /// back into the eras list. At root → writes the active era directly. While
+  /// drilled → writes into `era.locationMaps[currentLocationId]` (image is
+  /// sourced from the location entity, not stored here).
+  void _syncProjection() {
+    if (state.eras.isEmpty) return;
+    final idx = state.activeEraIndex;
+    final updated = List<MapEra>.from(state.eras);
+    if (state.locationStack.isEmpty) {
+      updated[idx] = updated[idx].copyWith(
+        imagePath: state.imagePath,
+        pins: state.pins,
+        timelinePins: state.timelinePins,
+      );
+    } else {
+      final locId = state.locationStack.last;
+      final maps = Map<String, LocationMapData>.from(updated[idx].locationMaps);
+      if (state.pins.isEmpty && state.timelinePins.isEmpty) {
+        maps.remove(locId);
+      } else {
+        maps[locId] = LocationMapData(
+          pins: state.pins,
+          timelinePins: state.timelinePins,
+        );
+      }
+      updated[idx] = updated[idx].copyWith(locationMaps: maps);
+    }
+    state = state.copyWith(eras: updated);
   }
 
-  /// Loads an epoch's data into the projected state fields.
-  void _loadEpoch(int index) {
-    final epoch = state.epochs[index];
+  /// Legacy alias — call sites updated to [_syncProjection].
+  void _syncActiveEra() => _syncProjection();
+
+  /// Loads an era's data into the projected state fields.
+  void _loadEra(int index) {
+    final era = state.eras[index];
     state = state.copyWith(
-      imagePath: epoch.imagePath,
-      pins: epoch.pins,
-      timelinePins: epoch.timelinePins,
-      activeEpochIndex: index,
+      imagePath: era.imagePath,
+      pins: era.pins,
+      timelinePins: era.timelinePins,
+      activeEraIndex: index,
     );
   }
 
-  /// Switches the active epoch: syncs current, loads target.
-  void switchEpoch(int index) {
-    if (index == state.activeEpochIndex) return;
-    if (index < 0 || index >= state.epochs.length) return;
+  /// Switches the active era: syncs current, loads target. While drilled into
+  /// a location, both the image and the drilled pin set swap to the new era's
+  /// `locationMaps[locId]` (era is global).
+  void switchEra(int index) {
+    if (index == state.activeEraIndex) return;
+    if (index < 0 || index >= state.eras.length) return;
     pushUndo(state);
-    _syncActiveEpoch();
-    _loadEpoch(index);
+    _syncProjection();
+    if (state.locationStack.isEmpty) {
+      _loadEra(index);
+    } else {
+      final locId = state.locationStack.last;
+      final loc = _resolveLocation(locId);
+      final existing = state.eras[index].locationMaps[locId];
+      state = state.copyWith(
+        activeEraIndex: index,
+        imagePath: _resolveLocationMapImage(loc),
+        pins: existing?.pins ?? const [],
+        timelinePins: existing?.timelinePins ?? const [],
+      );
+    }
     _debouncedSave();
   }
 
-  /// Display names for each epoch, derived from adjacent waypoints.
-  List<String> get epochNames {
-    if (state.epochs.length <= 1) return ['Default'];
+  // -------------------------------------------------------------------------
+  // Drill-in (PR-3: UI-only; pins/timelinePins reset in-place, persistence
+  // ships in PR-4 via per-location nested maps inside MapEra)
+  // -------------------------------------------------------------------------
+
+  Entity? _resolveLocation(String? id) {
+    if (id == null) return null;
+    return _ref.read(entityProvider)[id];
+  }
+
+  String _resolveLocationMapImage(Entity? loc) {
+    if (loc == null) return '';
+    final perEra = loc.fields['map_per_era'];
+    final activeEra = state.eras.isNotEmpty &&
+            state.activeEraIndex < state.eras.length
+        ? state.eras[state.activeEraIndex]
+        : null;
+    if (perEra is Map && activeEra != null) {
+      final v = perEra[activeEra.id];
+      if (v is String && v.isNotEmpty) return v;
+    }
+    final fallback = loc.fields['map'];
+    if (fallback is String && fallback.isNotEmpty) return fallback;
+    return '';
+  }
+
+  /// Drills the map view into [locationId]. Active era preserved; projected
+  /// image swaps to the location's `map_per_era[currentEra]` (falls back to
+  /// `map`). Pins for the (era, location) tuple are persisted in
+  /// `MapEra.locationMaps`.
+  void drillIntoLocation(String locationId) {
+    _syncProjection();
+    final loc = _resolveLocation(locationId);
+    if (loc == null) return;
+    final newStack = [...state.locationStack, locationId];
+    final existing = state.eras.isNotEmpty
+        ? state.eras[state.activeEraIndex].locationMaps[locationId]
+        : null;
+    state = state.copyWith(
+      locationStack: newStack,
+      imagePath: _resolveLocationMapImage(loc),
+      pins: existing?.pins ?? const [],
+      timelinePins: existing?.timelinePins ?? const [],
+    );
+  }
+
+  /// Pops to a given depth (0 = root, 1 = first child, …).
+  void popToLocationDepth(int depth) {
+    if (depth < 0 || depth > state.locationStack.length) return;
+    if (depth == state.locationStack.length) return;
+    _syncProjection();
+    if (depth == 0) {
+      state = state.copyWith(locationStack: const []);
+      if (state.eras.isNotEmpty) _loadEra(state.activeEraIndex);
+      _debouncedSave();
+      return;
+    }
+    final newStack = state.locationStack.sublist(0, depth);
+    final loc = _resolveLocation(newStack.last);
+    final existing = state.eras.isNotEmpty
+        ? state.eras[state.activeEraIndex].locationMaps[newStack.last]
+        : null;
+    state = state.copyWith(
+      locationStack: newStack,
+      imagePath: _resolveLocationMapImage(loc),
+      pins: existing?.pins ?? const [],
+      timelinePins: existing?.timelinePins ?? const [],
+    );
+    _debouncedSave();
+  }
+
+  /// Display names for each era, derived from adjacent waypoints.
+  List<String> get eraNames {
+    if (state.eras.length <= 1) return ['Default'];
     final wps = state.waypoints;
     final names = <String>[];
-    for (int i = 0; i < state.epochs.length; i++) {
+    for (int i = 0; i < state.eras.length; i++) {
       final left = i == 0
-          ? state.epochStartLabel
+          ? state.eraStartLabel
           : _waypointDisplayLabel(wps[i - 1]);
       final right = i >= wps.length
-          ? state.epochEndLabel
+          ? state.eraEndLabel
           : _waypointDisplayLabel(wps[i]);
       names.add('$left \u2013 $right');
     }
@@ -498,7 +663,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   static final RegExp _wsRe = RegExp(r'\s+');
 
   /// Short display label for a waypoint.
-  static String _waypointDisplayLabel(EpochWaypoint wp) {
+  static String _waypointDisplayLabel(EraWaypoint wp) {
     if (wp.label.isEmpty) return '?';
     // If it looks like a number or date, show as-is
     if (_digitsLikeRe.hasMatch(wp.label)) return wp.label;
@@ -575,11 +740,11 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   }
 
   // -------------------------------------------------------------------------
-  // Waypoint / Epoch CRUD
+  // Waypoint / Era CRUD
   // -------------------------------------------------------------------------
 
   /// Adds a waypoint at [insertIndex] (0-based within waypoints list).
-  /// Splits the epoch that contains this position into two.
+  /// Splits the era that contains this position into two.
   void addWaypoint(
     int insertIndex,
     String label, {
@@ -587,124 +752,124 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     bool copyTimelinePins = false,
   }) {
     pushUndo(state);
-    _syncActiveEpoch();
+    _syncActiveEra();
 
-    final wp = EpochWaypoint(id: _uuid.v4(), label: label);
-    final updatedWps = List<EpochWaypoint>.from(state.waypoints)
+    final wp = EraWaypoint(id: _uuid.v4(), label: label);
+    final updatedWps = List<EraWaypoint>.from(state.waypoints)
       ..insert(insertIndex, wp);
 
-    // The waypoint at insertIndex splits epochIndex = insertIndex into two.
-    // Left epoch keeps the original, right epoch is new.
-    final epochIdx = insertIndex; // epoch to split
-    final original = state.epochs[epochIdx];
+    // The waypoint at insertIndex splits eraIndex = insertIndex into two.
+    // Left era keeps the original, right era is new.
+    final eraIdx = insertIndex; // era to split
+    final original = state.eras[eraIdx];
 
-    MapEpoch leftEpoch;
-    MapEpoch rightEpoch;
+    MapEra leftEra;
+    MapEra rightEra;
 
     if (copyPins && copyTimelinePins) {
-      leftEpoch = original.copyWith(id: _uuid.v4());
-      rightEpoch = original.copyWith(
+      leftEra = original.copyWith(id: _uuid.v4());
+      rightEra = original.copyWith(
         id: _uuid.v4(),
         pins: _clonePins(original.pins),
         timelinePins: _cloneTimelinePins(original.timelinePins),
       );
     } else if (copyPins) {
-      leftEpoch = original.copyWith(id: _uuid.v4());
-      rightEpoch = MapEpoch(
+      leftEra = original.copyWith(id: _uuid.v4());
+      rightEra = MapEra(
         id: _uuid.v4(),
         imagePath: original.imagePath,
         pins: _clonePins(original.pins),
       );
     } else if (copyTimelinePins) {
-      leftEpoch = original.copyWith(id: _uuid.v4());
-      rightEpoch = MapEpoch(
+      leftEra = original.copyWith(id: _uuid.v4());
+      rightEra = MapEra(
         id: _uuid.v4(),
         imagePath: original.imagePath,
         timelinePins: _cloneTimelinePins(original.timelinePins),
       );
     } else {
-      leftEpoch = original.copyWith(id: _uuid.v4());
-      rightEpoch = MapEpoch(id: _uuid.v4(), imagePath: original.imagePath);
+      leftEra = original.copyWith(id: _uuid.v4());
+      rightEra = MapEra(id: _uuid.v4(), imagePath: original.imagePath);
     }
 
-    final updatedEpochs = List<MapEpoch>.from(state.epochs)
-      ..removeAt(epochIdx)
-      ..insert(epochIdx, leftEpoch)
-      ..insert(epochIdx + 1, rightEpoch);
+    final updatedEras = List<MapEra>.from(state.eras)
+      ..removeAt(eraIdx)
+      ..insert(eraIdx, leftEra)
+      ..insert(eraIdx + 1, rightEra);
 
-    // Adjust activeEpochIndex if needed
-    var newActive = state.activeEpochIndex;
-    if (newActive > epochIdx) {
+    // Adjust activeEraIndex if needed
+    var newActive = state.activeEraIndex;
+    if (newActive > eraIdx) {
       newActive += 1; // shifted right by the split
     }
 
     state = state.copyWith(
       waypoints: updatedWps,
-      epochs: updatedEpochs,
-      activeEpochIndex: newActive,
+      eras: updatedEras,
+      activeEraIndex: newActive,
     );
-    // Re-project in case active epoch shifted
-    _loadEpoch(state.activeEpochIndex);
+    // Re-project in case active era shifted
+    _loadEra(state.activeEraIndex);
     _debouncedSave();
   }
 
-  /// Deletes a waypoint and merges its adjacent epochs.
-  void deleteWaypoint(int wpIndex, EpochMergeStrategy strategy) {
+  /// Deletes a waypoint and merges its adjacent eras.
+  void deleteWaypoint(int wpIndex, EraMergeStrategy strategy) {
     if (wpIndex < 0 || wpIndex >= state.waypoints.length) return;
     pushUndo(state);
-    _syncActiveEpoch();
+    _syncActiveEra();
 
-    final leftIdx = wpIndex;     // epoch to the left of the waypoint
-    final rightIdx = wpIndex + 1; // epoch to the right
+    final leftIdx = wpIndex;     // era to the left of the waypoint
+    final rightIdx = wpIndex + 1; // era to the right
 
-    final leftEpoch = state.epochs[leftIdx];
-    final rightEpoch = state.epochs[rightIdx];
+    final leftEra = state.eras[leftIdx];
+    final rightEra = state.eras[rightIdx];
 
-    MapEpoch merged;
+    MapEra merged;
     switch (strategy) {
-      case EpochMergeStrategy.merge:
-        merged = MapEpoch(
+      case EraMergeStrategy.merge:
+        merged = MapEra(
           id: _uuid.v4(),
-          imagePath: leftEpoch.imagePath.isNotEmpty
-              ? leftEpoch.imagePath
-              : rightEpoch.imagePath,
-          pins: [...leftEpoch.pins, ..._clonePins(rightEpoch.pins)],
+          imagePath: leftEra.imagePath.isNotEmpty
+              ? leftEra.imagePath
+              : rightEra.imagePath,
+          pins: [...leftEra.pins, ..._clonePins(rightEra.pins)],
           timelinePins: [
-            ...leftEpoch.timelinePins,
-            ..._cloneTimelinePins(rightEpoch.timelinePins),
+            ...leftEra.timelinePins,
+            ..._cloneTimelinePins(rightEra.timelinePins),
           ],
         );
-      case EpochMergeStrategy.keepLeft:
-        merged = leftEpoch.copyWith(id: _uuid.v4());
-      case EpochMergeStrategy.keepRight:
-        merged = rightEpoch.copyWith(id: _uuid.v4());
+      case EraMergeStrategy.keepLeft:
+        merged = leftEra.copyWith(id: _uuid.v4());
+      case EraMergeStrategy.keepRight:
+        merged = rightEra.copyWith(id: _uuid.v4());
     }
 
-    final updatedEpochs = List<MapEpoch>.from(state.epochs)
+    final updatedEras = List<MapEra>.from(state.eras)
       ..removeAt(rightIdx)
       ..removeAt(leftIdx)
       ..insert(leftIdx, merged);
 
-    final updatedWps = List<EpochWaypoint>.from(state.waypoints)
+    final updatedWps = List<EraWaypoint>.from(state.waypoints)
       ..removeAt(wpIndex);
 
     // Adjust active index
-    var newActive = state.activeEpochIndex;
+    var newActive = state.activeEraIndex;
     if (newActive == rightIdx) {
       newActive = leftIdx;
     } else if (newActive > rightIdx) {
       newActive -= 1;
     }
-    if (newActive >= updatedEpochs.length) {
-      newActive = updatedEpochs.length - 1;
+    if (newActive >= updatedEras.length) {
+      newActive = updatedEras.length - 1;
     }
 
     state = state.copyWith(
       waypoints: updatedWps,
-      epochs: updatedEpochs,
-      activeEpochIndex: newActive,
+      eras: updatedEras,
+      activeEraIndex: newActive,
     );
-    _loadEpoch(newActive);
+    _loadEra(newActive);
     _debouncedSave();
   }
 
@@ -712,56 +877,56 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   void updateWaypointLabel(int wpIndex, String label) {
     if (wpIndex < 0 || wpIndex >= state.waypoints.length) return;
     pushUndo(state);
-    final updated = List<EpochWaypoint>.from(state.waypoints);
+    final updated = List<EraWaypoint>.from(state.waypoints);
     updated[wpIndex] = updated[wpIndex].copyWith(label: label);
     state = state.copyWith(waypoints: updated);
     _debouncedSave();
   }
 
   /// Updates the Start / End boundary labels.
-  void updateEpochBoundaryLabels({String? startLabel, String? endLabel}) {
+  void updateEraBoundaryLabels({String? startLabel, String? endLabel}) {
     pushUndo(state);
     state = state.copyWith(
-      epochStartLabel: startLabel,
-      epochEndLabel: endLabel,
+      eraStartLabel: startLabel,
+      eraEndLabel: endLabel,
     );
     _debouncedSave();
   }
 
-  /// Copies a MapPin from the active epoch to a target epoch (new UUID).
-  void copyPinToEpoch(String pinId, int targetEpochIndex) {
-    _syncActiveEpoch();
+  /// Copies a MapPin from the active era to a target era (new UUID).
+  void copyPinToEra(String pinId, int targetEraIndex) {
+    _syncActiveEra();
     final pin = state.pins.where((p) => p.id == pinId).firstOrNull;
     if (pin == null) return;
-    if (targetEpochIndex < 0 || targetEpochIndex >= state.epochs.length) return;
+    if (targetEraIndex < 0 || targetEraIndex >= state.eras.length) return;
     pushUndo(state);
 
     final copy = pin.copyWith(id: _uuid.v4());
-    final updatedEpochs = List<MapEpoch>.from(state.epochs);
-    final target = updatedEpochs[targetEpochIndex];
-    updatedEpochs[targetEpochIndex] = target.copyWith(
+    final updatedEras = List<MapEra>.from(state.eras);
+    final target = updatedEras[targetEraIndex];
+    updatedEras[targetEraIndex] = target.copyWith(
       pins: [...target.pins, copy],
     );
-    state = state.copyWith(epochs: updatedEpochs);
+    state = state.copyWith(eras: updatedEras);
     _debouncedSave();
   }
 
-  /// Copies a TimelinePin from the active epoch to a target epoch (new UUID).
-  void copyTimelinePinToEpoch(String tpinId, int targetEpochIndex) {
-    _syncActiveEpoch();
+  /// Copies a TimelinePin from the active era to a target era (new UUID).
+  void copyTimelinePinToEra(String tpinId, int targetEraIndex) {
+    _syncActiveEra();
     final tpin =
         state.timelinePins.where((t) => t.id == tpinId).firstOrNull;
     if (tpin == null) return;
-    if (targetEpochIndex < 0 || targetEpochIndex >= state.epochs.length) return;
+    if (targetEraIndex < 0 || targetEraIndex >= state.eras.length) return;
     pushUndo(state);
 
     final copy = tpin.copyWith(id: _uuid.v4(), parentIds: []);
-    final updatedEpochs = List<MapEpoch>.from(state.epochs);
-    final target = updatedEpochs[targetEpochIndex];
-    updatedEpochs[targetEpochIndex] = target.copyWith(
+    final updatedEras = List<MapEra>.from(state.eras);
+    final target = updatedEras[targetEraIndex];
+    updatedEras[targetEraIndex] = target.copyWith(
       timelinePins: [...target.timelinePins, copy],
     );
-    state = state.copyWith(epochs: updatedEpochs);
+    state = state.copyWith(eras: updatedEras);
     _debouncedSave();
   }
 

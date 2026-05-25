@@ -18,6 +18,7 @@ const grpProperties = 'grp-properties';
 const grpProgression = 'grp-progression';
 const grpSpellcasting = 'grp-spellcasting';
 const grpFeatures = 'grp-features';
+const grpMaps = 'grp-maps';
 
 /// Two-column Identity + Lookup-Meta groups used by every Tier-0 row.
 List<FieldGroup> lookupGroups() => const [

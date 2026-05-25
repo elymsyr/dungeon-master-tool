@@ -44,6 +44,7 @@ Future<
   WidgetRef ref,
   List<String> paths, {
   bool transientFallback = false,
+  MediaKind? overrideKind,
 }) async {
   if (ref.read(authProvider) == null) {
     return (
@@ -81,7 +82,7 @@ Future<
       );
     }
     scopeId = packageName;
-    kind = MediaKind.packageEntityImage;
+    kind = overrideKind ?? MediaKind.packageEntityImage;
   } else {
     // World entity image — only eager-upload for an online world.
     final worldId =
@@ -97,7 +98,7 @@ Future<
       );
     }
     scopeId = worldId;
-    kind = MediaKind.worldEntityImage;
+    kind = overrideKind ?? MediaKind.worldEntityImage;
     pushWorldId = worldId;
   }
 

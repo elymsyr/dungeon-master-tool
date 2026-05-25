@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
 
-/// Horizontal scroll bar showing epoch segments separated by waypoints.
-class EpochScrollBar extends StatefulWidget {
-  final List<MapEpoch> epochs;
-  final List<EpochWaypoint> waypoints;
-  final int activeEpochIndex;
-  final List<String> epochNames;
+/// Horizontal scroll bar showing era segments separated by waypoints.
+class EraScrollBar extends StatefulWidget {
+  final List<MapEra> eras;
+  final List<EraWaypoint> waypoints;
+  final int activeEraIndex;
+  final List<String> eraNames;
   final DmToolColors palette;
-  final ValueChanged<int> onSwitchEpoch;
+  final ValueChanged<int> onSwitchEra;
   final void Function(int insertIndex) onAddWaypoint;
   final void Function(int wpIndex) onDeleteWaypoint;
   final void Function(int wpIndex) onRenameWaypoint;
@@ -18,14 +18,14 @@ class EpochScrollBar extends StatefulWidget {
   final String endLabel;
   final void Function(String startLabel, String endLabel)? onRenameBoundary;
 
-  const EpochScrollBar({
+  const EraScrollBar({
     super.key,
-    required this.epochs,
+    required this.eras,
     required this.waypoints,
-    required this.activeEpochIndex,
-    required this.epochNames,
+    required this.activeEraIndex,
+    required this.eraNames,
     required this.palette,
-    required this.onSwitchEpoch,
+    required this.onSwitchEra,
     required this.onAddWaypoint,
     required this.onDeleteWaypoint,
     required this.onRenameWaypoint,
@@ -35,10 +35,10 @@ class EpochScrollBar extends StatefulWidget {
   });
 
   @override
-  State<EpochScrollBar> createState() => _EpochScrollBarState();
+  State<EraScrollBar> createState() => _EraScrollBarState();
 }
 
-class _EpochScrollBarState extends State<EpochScrollBar> {
+class _EraScrollBarState extends State<EraScrollBar> {
   int? _hoveredSegment;
   int? _hoveredWaypoint;
 
@@ -76,11 +76,11 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
           }),
           child: CustomPaint(
             size: const Size(_barWidth, _barHeight),
-            painter: _EpochScrollPainter(
-              epochs: widget.epochs,
+            painter: _EraScrollPainter(
+              eras: widget.eras,
               waypoints: widget.waypoints,
-              activeIndex: widget.activeEpochIndex,
-              epochNames: widget.epochNames,
+              activeIndex: widget.activeEraIndex,
+              eraNames: widget.eraNames,
               palette: widget.palette,
               hoveredSegment: _hoveredSegment,
               hoveredWaypoint: _hoveredWaypoint,
@@ -105,14 +105,14 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
     return List.generate(count, (i) => _trackStart + segmentWidth * (i + 1));
   }
 
-  /// Returns the epoch segment index for a given x position.
+  /// Returns the era segment index for a given x position.
   int? _segmentAtX(double x) {
     if (x < _trackStart || x > _trackEnd) return null;
     final wpXs = _waypointXPositions();
     for (int i = 0; i < wpXs.length; i++) {
       if (x < wpXs[i]) return i;
     }
-    return widget.epochs.length - 1;
+    return widget.eras.length - 1;
   }
 
   /// Returns the waypoint index if x is close to a waypoint marker.
@@ -144,7 +144,7 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
     final segIdx = _segmentAtX(pos.dx);
     if (segIdx == null) return;
 
-    widget.onSwitchEpoch(segIdx);
+    widget.onSwitchEra(segIdx);
   }
 
   /// Returns 'start' or 'end' if x is near an endpoint marker.
@@ -287,11 +287,11 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
 // Painter
 // ---------------------------------------------------------------------------
 
-class _EpochScrollPainter extends CustomPainter {
-  final List<MapEpoch> epochs;
-  final List<EpochWaypoint> waypoints;
+class _EraScrollPainter extends CustomPainter {
+  final List<MapEra> eras;
+  final List<EraWaypoint> waypoints;
   final int activeIndex;
-  final List<String> epochNames;
+  final List<String> eraNames;
   final DmToolColors palette;
   final int? hoveredSegment;
   final int? hoveredWaypoint;
@@ -302,11 +302,11 @@ class _EpochScrollPainter extends CustomPainter {
   final String startLabel;
   final String endLabel;
 
-  _EpochScrollPainter({
-    required this.epochs,
+  _EraScrollPainter({
+    required this.eras,
     required this.waypoints,
     required this.activeIndex,
-    required this.epochNames,
+    required this.eraNames,
     required this.palette,
     required this.hoveredSegment,
     required this.hoveredWaypoint,
@@ -336,7 +336,7 @@ class _EpochScrollPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final trackLength = trackEnd - trackStart;
-    final segCount = epochs.length;
+    final segCount = eras.length;
     final wpCount = waypoints.length;
 
     // Waypoint x positions (evenly spaced)
@@ -397,9 +397,9 @@ class _EpochScrollPainter extends CustomPainter {
       _drawWaypoint(canvas, wpXs[i], trackY, waypoints[i], isHovered);
     }
 
-    // Draw epoch name for active segment
-    if (activeIndex >= 0 && activeIndex < epochNames.length) {
-      final name = epochNames[activeIndex];
+    // Draw era name for active segment
+    if (activeIndex >= 0 && activeIndex < eraNames.length) {
+      final name = eraNames[activeIndex];
       final tp = TextPainter(
         text: TextSpan(
           text: name,
@@ -434,7 +434,7 @@ class _EpochScrollPainter extends CustomPainter {
   }
 
   void _drawWaypoint(
-      Canvas canvas, double x, double y, EpochWaypoint wp, bool isHovered) {
+      Canvas canvas, double x, double y, EraWaypoint wp, bool isHovered) {
     // Circle
     canvas.drawCircle(
       Offset(x, y),
@@ -471,10 +471,10 @@ class _EpochScrollPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _EpochScrollPainter old) =>
+  bool shouldRepaint(covariant _EraScrollPainter old) =>
       old.activeIndex != activeIndex ||
       old.hoveredSegment != hoveredSegment ||
       old.hoveredWaypoint != hoveredWaypoint ||
-      old.epochs != epochs ||
+      old.eras != eras ||
       old.waypoints != waypoints;
 }
