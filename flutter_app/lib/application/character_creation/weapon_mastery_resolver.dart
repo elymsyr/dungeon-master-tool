@@ -21,7 +21,7 @@ int resolveWeaponMasteryCountAt({
   var best = 0;
   for (final e in entities.values) {
     if (e.categorySlug != 'feat') continue;
-    if (!_isAutoGranted(e, classNames, level)) continue;
+    if (!_isAutoGranted(e, classNames, level, entities)) continue;
 
     final effects = e.fields['effects'];
     if (effects is! List) continue;
@@ -37,14 +37,19 @@ int resolveWeaponMasteryCountAt({
   return best;
 }
 
-bool _isAutoGranted(Entity feat, Set<String> sources, int level) {
+bool _isAutoGranted(Entity feat, Set<String> sources, int level,
+    Map<String, Entity> entities) {
   final auto = feat.fields['auto_granted_by'];
   if (auto is! List) return false;
   for (final row in auto) {
     if (row is! Map) continue;
     final sourceRef = row['source_ref'];
     String? srcName;
-    if (sourceRef is Map) srcName = sourceRef['name']?.toString();
+    if (sourceRef is Map) {
+      srcName = sourceRef['name']?.toString();
+    } else if (sourceRef is String) {
+      srcName = entities[sourceRef]?.name;
+    }
     final atLvlRaw = row['at_level'];
     final atLvl = atLvlRaw is int ? atLvlRaw : int.tryParse('$atLvlRaw');
     if (srcName == null || atLvl == null) continue;
