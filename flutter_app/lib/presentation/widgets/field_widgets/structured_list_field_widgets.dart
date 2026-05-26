@@ -312,6 +312,7 @@ class _MiniRelationField extends StatelessWidget {
                     context: context,
                     ref: ref!,
                     allowedTypes: allowedTypes,
+                    includeBuiltinSrd: true,
                   );
                   if (result != null && result.isNotEmpty) {
                     onChanged(result.first);
@@ -383,6 +384,7 @@ class _MiniRelationListField extends StatelessWidget {
                     ref: ref!,
                     allowedTypes: allowedTypes,
                     multiSelect: true,
+                    includeBuiltinSrd: true,
                   );
                   if (result != null && result.isNotEmpty) {
                     final merged = {...values, ...result}.toList();
@@ -2056,6 +2058,7 @@ class _RelationListChips extends StatelessWidget {
                         ref: ref!,
                         allowedTypes: allowedTypes,
                         excludeIds: values,
+                        includeBuiltinSrd: true,
                       );
                       if (result != null && result.isNotEmpty) {
                         onChanged([...values, result.first]);

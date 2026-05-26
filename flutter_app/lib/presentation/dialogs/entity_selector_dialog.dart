@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/entity_provider.dart';
+import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
 /// [allowedTypes]: sadece bu kategorideki entity'ler gösterilir (null=tümü).
 /// [multiSelect]: true ise birden fazla seçim, false ise tek seçim.
+/// [includeBuiltinSrd]: true ise bundled SRD 5.2.1 Core rows (longsword vb.)
+///   campaign entity map'ine eklenir. Karakter sayfası relation field'larında
+///   true geçilmeli; map/session/mindmap picker'ları default false bırakır
+///   (yoksa ~7K SRD satırı liste'ye düşer).
 /// Döndürülen: seçilen entity ID'leri listesi.
 Future<List<String>?> showEntitySelectorDialog({
   required BuildContext context,
@@ -17,6 +22,7 @@ Future<List<String>?> showEntitySelectorDialog({
   List<String>? allowedTypes,
   bool multiSelect = false,
   List<String> excludeIds = const [],
+  bool includeBuiltinSrd = false,
 }) async {
   return showDialog<List<String>>(
     context: context,
@@ -25,6 +31,7 @@ Future<List<String>?> showEntitySelectorDialog({
       allowedTypes: allowedTypes,
       multiSelect: multiSelect,
       excludeIds: excludeIds,
+      includeBuiltinSrd: includeBuiltinSrd,
     ),
   );
 }
@@ -34,12 +41,14 @@ class _EntitySelectorDialog extends StatefulWidget {
   final List<String>? allowedTypes;
   final bool multiSelect;
   final List<String> excludeIds;
+  final bool includeBuiltinSrd;
 
   const _EntitySelectorDialog({
     required this.ref,
     this.allowedTypes,
     this.multiSelect = false,
     this.excludeIds = const [],
+    this.includeBuiltinSrd = false,
   });
 
   @override
@@ -61,12 +70,28 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   List<Entity> _buildBaseList() {
     final entities = widget.ref.read(entityProvider);
     final out = <Entity>[];
+    final campaignKeys = <String>{};
     for (final e in entities.values) {
       if (_excludeSet.contains(e.id)) continue;
       if (_allowedSet != null && !_allowedSet.contains(e.categorySlug)) {
         continue;
       }
       out.add(e);
+      if (widget.includeBuiltinSrd) {
+        campaignKeys.add('${e.categorySlug}::${e.name.toLowerCase()}');
+      }
+    }
+    if (widget.includeBuiltinSrd) {
+      final builtin = widget.ref.read(builtinSrdEntitiesProvider);
+      for (final e in builtin.values) {
+        if (_excludeSet.contains(e.id)) continue;
+        if (_allowedSet != null && !_allowedSet.contains(e.categorySlug)) {
+          continue;
+        }
+        final key = '${e.categorySlug}::${e.name.toLowerCase()}';
+        if (campaignKeys.contains(key)) continue;
+        out.add(e);
+      }
     }
     out.sort((a, b) => a.name.compareTo(b.name));
     return List<Entity>.unmodifiable(out);
@@ -187,8 +212,15 @@ class EntityNameText extends ConsumerWidget {
     // F2: scoped to the one entity's name. Avoids full-map watch — the
     // text only rebuilds when this specific entity's name flips.
     final name = ref.watch(entityProvider.select((m) => m[entityId]?.name));
+    // Fallback: char-sheet relation fields may reference bundled SRD rows
+    // (e.g. picked Longsword) that never land in entityProvider. Resolve
+    // those via the in-memory SRD map instead of rendering a raw UUID.
+    final resolved = name ??
+        ref.watch(
+          builtinSrdEntitiesProvider.select((m) => m[entityId]?.name),
+        );
     return Text(
-      name ?? entityId,
+      resolved ?? entityId,
       style: style,
       overflow: TextOverflow.ellipsis,
     );
