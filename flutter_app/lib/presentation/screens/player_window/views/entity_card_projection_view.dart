@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/screen_type.dart';
 import '../../../../domain/entities/projection/entity_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
@@ -71,17 +72,29 @@ class _EntityCardProjectionViewState extends State<EntityCardProjectionView>
                   const SizedBox(height: 8),
                   Container(height: 1.5, color: _headingRed),
                   const SizedBox(height: 20),
-                  // Body
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: _RightColumn(snap: snap)),
-                      if (snap.imagePaths.isNotEmpty) ...[
-                        const SizedBox(width: 32),
-                        _Portrait(path: snap.imagePaths.first),
+                  // Body. On phone the 360x480 portrait crushes the info
+                  // column, so stack image-on-top centered and let the fields
+                  // use full width below.
+                  if (isPhone(context) && snap.imagePaths.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(child: _Portrait(path: snap.imagePaths.first)),
+                        const SizedBox(height: 20),
+                        _RightColumn(snap: snap),
                       ],
-                    ],
-                  ),
+                    )
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _RightColumn(snap: snap)),
+                        if (snap.imagePaths.isNotEmpty) ...[
+                          const SizedBox(width: 32),
+                          _Portrait(path: snap.imagePaths.first),
+                        ],
+                      ],
+                    ),
                 ],
               ),
             ),
