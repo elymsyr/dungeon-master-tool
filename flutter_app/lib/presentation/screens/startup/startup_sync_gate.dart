@@ -10,6 +10,7 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
+import '../../../application/services/beta_enter_merge_service.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../application/services/world_reconciler.dart';
@@ -59,6 +60,13 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     if (ref.read(authProvider) == null) return;
     try {
       if (ref.read(isBetaActiveProvider)) {
+        // Same ordering as `_runSequence`: merge local→cloud first so cloud
+        // catchup can't wipe local rows via stale-row pulls (PR-B1 gate).
+        try {
+          await ref.read(betaEnterMergeServiceProvider)?.merge();
+        } catch (e) {
+          debugPrint('deferred beta-enter merge error: $e');
+        }
         await ref.read(cloudCatchupServiceProvider).runAll();
         ref.read(personalMirrorApplierProvider);
         try {
@@ -137,6 +145,17 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     }
 
     if (ref.read(isBetaActiveProvider)) {
+      // First-time beta enter: push local-owned content to cloud BEFORE any
+      // cloud→local applier runs. The PR-B1 wipe guard skips destructive pulls
+      // until the sentinel is set, so this must complete before the catchup +
+      // reconcile + bootstrap pipeline below to actually transfer the data
+      // forward.
+      _setMessage('Securing your local data...');
+      try {
+        await ref.read(betaEnterMergeServiceProvider)?.merge();
+      } catch (e) {
+        debugPrint('startup beta-enter merge error: $e');
+      }
       _setMessage('Syncing packages and characters...');
       try {
         await ref.read(cloudCatchupServiceProvider).runAll();

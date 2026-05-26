@@ -11,8 +11,11 @@ import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/app_database.dart' show WorldsCompanion, PackagesCompanion;
 import '../../data/database/database_provider.dart';
+import '../services/beta_enter_gate.dart';
+import '../services/beta_enter_merge_service.dart';
 import '../services/beta_exit_cleanup_service.dart';
 import '../services/beta_exit_preserve_service.dart';
+import '../services/sync_telemetry.dart' show SyncTelemetry, syncTelemetryProvider;
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
@@ -210,6 +213,7 @@ class BetaNotifier extends StateNotifier<BetaState> {
       state = const BetaState.signedOut();
       return;
     }
+    final wasActive = state.isActive;
     state = state.copyWith(loading: true, error: null);
     try {
       final rows = await guardedNetwork(
@@ -221,8 +225,10 @@ class BetaNotifier extends StateNotifier<BetaState> {
         state = state.copyWith(loading: false);
         return;
       }
+      final nowActive = (row['is_active'] as bool?) ?? false;
+      final justBecameActive = !wasActive && nowActive;
       state = BetaState(
-        isActive: (row['is_active'] as bool?) ?? false,
+        isActive: nowActive,
         slotCap: (row['slot_cap'] as num?)?.toInt() ?? 90,
         slotsRemaining: (row['slots_remaining'] as num?)?.toInt() ?? 0,
         slotNumber: (row['slot_number'] as num?)?.toInt(),
@@ -236,6 +242,14 @@ class BetaNotifier extends StateNotifier<BetaState> {
         requestMessage: row['request_message'] as String?,
         loading: false,
       );
+      // In-session false→true transition (admin just approved while the app
+      // is running). Fire the local-wins merge before any CDC-driven cloud→
+      // local applier can run for the newly granted beta scope. Fire-and-
+      // forget; the startup gate covers the cold-restart case separately.
+      if (justBecameActive) {
+        // ignore: discarded_futures, unawaited_futures
+        _runEnterMerge();
+      }
     } catch (e, st) {
       if (isOfflineError(e)) {
         debugPrint('beta refresh skipped: offline');
@@ -244,6 +258,18 @@ class BetaNotifier extends StateNotifier<BetaState> {
         debugPrint('beta refresh error: $e\n$st');
         state = state.copyWith(loading: false, error: e.toString());
       }
+    }
+  }
+
+  /// In-session false→true transition handler. Triggers the local-wins merge
+  /// so that local content created BEFORE admin approval is pushed to cloud
+  /// before any cloud→local applier runs and (combined with PR-B1 wipe guards)
+  /// is never destroyed by a stale cloud row.
+  Future<void> _runEnterMerge() async {
+    try {
+      await _ref.read(betaEnterMergeServiceProvider)?.merge();
+    } catch (e, st) {
+      debugPrint('in-session beta-enter merge error: $e\n$st');
     }
   }
 
@@ -335,6 +361,25 @@ class BetaNotifier extends StateNotifier<BetaState> {
         return false;
       }
 
+      // If any row failed to hydrate, abort BEFORE the destructive RPC fires.
+      // User retries — better to stay in beta than to nuke data we couldn't
+      // safely mirror locally first.
+      if (preserved != null && preserved.hasFailures) {
+        final msg =
+            'Could not back up ${preserved.failedIds.length} item(s) before '
+            'leaving beta. Stayed in beta — please retry.';
+        debugPrint('leave_beta aborted: ${preserved.failedIds.join(", ")}');
+        try {
+          final telemetry = _ref.read(syncTelemetryProvider);
+          for (var i = 0; i < preserved.failedIds.length; i++) {
+            await telemetry.incrementCounter(
+                SyncTelemetry.betaExitPreserveFailed);
+          }
+        } catch (_) {/* ignore */}
+        state = state.copyWith(loading: false, error: msg);
+        return false;
+      }
+
       // 2. + 3. — `beta_purge_with_cleanup` Edge Function: leave_beta RPC +
       // Supabase Storage `{userId}/` sweep + R2 `{userId}/` + transient
       // sweep. Tek noktada atomik temizlik. Edge Function 4xx/5xx olursa
@@ -374,6 +419,16 @@ class BetaNotifier extends StateNotifier<BetaState> {
       // bayrakları + cloud push timestamp'leri stale kalır — burada düşür.
       if (ok && preserved != null) {
         await _reconcileAfterLeave(preserved);
+      }
+
+      // Clear the first-enter sentinel so a future re-enter re-runs the
+      // local-wins merge against potentially-new local content.
+      if (ok) {
+        try {
+          await _ref.read(betaEnterGateProvider).clear(userId);
+        } catch (e) {
+          debugPrint('leave_beta clear enter-gate error: $e');
+        }
       }
 
       await refresh();

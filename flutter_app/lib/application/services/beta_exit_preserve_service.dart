@@ -75,6 +75,7 @@ class BetaExitPreserveService {
     final uid = ref.read(authProvider)?.uid;
     if (uid == null) return const PreserveResult.empty();
     final owned = await _fetchOwnedSnapshot(uid);
+    final failedIds = <String>[];
 
     // Hydrate worlds that have no local mirror yet.
     final localWorldIds = (await db.worldsDao.getAll()).map((w) => w.id).toSet();
@@ -84,6 +85,7 @@ class BetaExitPreserveService {
           await _hydrateWorld(w);
         } catch (e, st) {
           debugPrint('BetaExitPreserve hydrate world ${w.id} error: $e\n$st');
+          failedIds.add('world:${w.id}');
         }
       }
     }
@@ -98,6 +100,7 @@ class BetaExitPreserveService {
           await _hydrateOrphanCharacter(c);
         } catch (e, st) {
           debugPrint('BetaExitPreserve hydrate char ${c.id} error: $e\n$st');
+          failedIds.add('char:${c.id}');
         }
       }
     }
@@ -109,6 +112,7 @@ class BetaExitPreserveService {
       await applier?.bootstrap();
     } catch (e) {
       debugPrint('BetaExitPreserve personal bootstrap error: $e');
+      failedIds.add('personal_bootstrap');
     }
 
     // Arm CDC delete guards so the imminent leave_beta cascade doesn't purge
@@ -124,6 +128,7 @@ class BetaExitPreserveService {
       worldIds: owned.worlds.map((w) => w.id).toList(growable: false),
       orphanCharIds: owned.orphanChars.map((c) => c.id).toList(growable: false),
       personalPackageNames: owned.personalPackageNames,
+      failedIds: List.unmodifiable(failedIds),
     );
   }
 
@@ -440,16 +445,25 @@ class PreserveResult {
     required this.worldIds,
     required this.orphanCharIds,
     required this.personalPackageNames,
+    this.failedIds = const <String>[],
   });
 
   const PreserveResult.empty()
       : worldIds = const <String>[],
         orphanCharIds = const <String>[],
-        personalPackageNames = const <String>[];
+        personalPackageNames = const <String>[],
+        failedIds = const <String>[];
 
   final List<String> worldIds;
   final List<String> orphanCharIds;
   final List<String> personalPackageNames;
+
+  /// Rows that failed to hydrate locally. Tagged as `world:<id>`,
+  /// `char:<id>`, or a free-form scope (`personal_bootstrap`). Caller uses
+  /// [hasFailures] to abort the destructive `leave_beta` RPC.
+  final List<String> failedIds;
+
+  bool get hasFailures => failedIds.isNotEmpty;
 }
 
 class _OwnedSnapshot {

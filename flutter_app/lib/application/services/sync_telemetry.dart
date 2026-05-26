@@ -38,6 +38,12 @@ class SyncTelemetry {
   static const String cacheHit = 'cache_hit';
   static const String cacheMiss = 'cache_miss';
 
+  // Beta enter/exit data-preservation counters (PR-B6). Each event increments
+  // the counter bucket; investigate production via [summaryFor].
+  static const String betaEnterMergeCompleted = 'beta_enter_merge_completed';
+  static const String betaEnterMergeFailed = 'beta_enter_merge_failed';
+  static const String betaExitPreserveFailed = 'beta_exit_preserve_failed_rows';
+
   /// Latency sample ekle — bucketize edip aggregate'e ekler.
   Future<void> recordLatency(String metric, int ms) async {
     try {
