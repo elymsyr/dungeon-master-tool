@@ -5,11 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../data/database/database_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/role_provider.dart';
+import 'beta_enter_gate.dart';
 import 'personal_sync_service.dart';
 import 'world_mirror_applier.dart';
 import 'world_mirror_service.dart';
@@ -68,6 +70,20 @@ class PersonalMirrorApplier {
     _bootstrappedFor = auth.uid;
     final client = Supabase.instance.client;
     final repo = ref.read(packageRepositoryProvider);
+    // Beta-enter wipe guard: PackageRepositoryImpl._saveToDb full-replaces
+    // package entities. Until first-enter merge runs, do NOT overwrite local
+    // packages that already exist — stale cloud rows would wipe offline work.
+    // Cloud-only packages (no local copy) still pull safely.
+    final betaEnterCompleted =
+        await ref.read(betaEnterGateProvider).isCompleted(auth.uid);
+    Set<String> localPkgNames = const <String>{};
+    if (!betaEnterCompleted) {
+      try {
+        final db = ref.read(appDatabaseProvider);
+        final rows = await db.packagesDao.getAll();
+        localPkgNames = rows.map((p) => p.name).toSet();
+      } catch (_) {/* ignore — fall through with empty set */}
+    }
     try {
       final rows = await client
           .from('personal_packages')
@@ -79,6 +95,11 @@ class PersonalMirrorApplier {
         final name = row['package_name'] as String?;
         final state = row['state_json'];
         if (name == null || state is! String) continue;
+        if (!betaEnterCompleted && localPkgNames.contains(name)) {
+          debugPrint(
+              'PersonalMirrorApplier: skip package bootstrap "$name" — beta-enter gate unset');
+          continue;
+        }
         try {
           final decoded = jsonDecode(state);
           if (decoded is! Map<String, dynamic>) continue;

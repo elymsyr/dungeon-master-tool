@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/world_mirror_provider.dart';
+import 'beta_enter_gate.dart';
 import 'image_upload_helper.dart';
 import 'media_bundler.dart';
 import 'world_mirror_service.dart';
@@ -82,6 +83,15 @@ class WorldReconciler {
     var pushed = 0;
     final mirror = _ref.read(worldMirrorServiceProvider);
 
+    // Beta-enter wipe guard: until BetaEnterMergeService has run successfully
+    // on this device, treat any "cloud is newer than local" branch as untrusted
+    // and skip the destructive cloud→local pull (see beta_enter_gate.dart for
+    // rationale). Cloud-only inserts and local-only pushes remain safe.
+    final uid = _ref.read(authProvider)?.uid;
+    final betaEnterCompleted = uid != null
+        ? await _ref.read(betaEnterGateProvider).isCompleted(uid)
+        : true;
+
     for (final row in cloudRows) {
       final worldId = row['id'] as String;
       final worldName = (row['world_name'] as String?) ?? worldId;
@@ -113,6 +123,14 @@ class WorldReconciler {
           (cloudUpdated == null || local.updatedAt!.isAfter(cloudUpdated));
 
       if (cloudWins) {
+        if (!betaEnterCompleted) {
+          // Hotfix gate: a stale cloud row from a prior beta period would
+          // wipe local content via WorldRepositoryImpl._saveToDb (full-replace
+          // entities). Skip pull entirely until first-enter merge completes.
+          debugPrint(
+              'WorldReconciler: skip pull for $worldId — beta-enter gate unset');
+          continue;
+        }
         final ok = await _pullToLocal(
           worldId: worldId,
           worldName: local.name,

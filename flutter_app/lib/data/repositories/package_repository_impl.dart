@@ -419,14 +419,24 @@ class PackageRepositoryImpl implements PackageRepository {
       // Entities — full replace strategy. F5 (row-level personal pkg) routes
       // per-mutation through [saveEntity]; this bulk path stays as the
       // import/restore safety net.
-      await _db.packagesDao.deleteEntitiesByPackage(packageId);
-      final entities = data['entities'] as Map<String, dynamic>? ?? {};
-      if (entities.isNotEmpty) {
-        final companions = entities.entries.map((e) {
-          final m = Map<String, dynamic>.from(e.value as Map);
-          return _packageEntityCompanion(packageId, e.key, m);
-        }).toList();
-        await _db.packagesDao.upsertEntities(companions);
+      //
+      // Beta-enter wipe defense (PR-B5): payloads that don't carry the
+      // `entities` key are treated as metadata-only saves and the existing
+      // entity rows survive. Cloud catchup / personal mirror bootstrap can
+      // both call here with an entities-less state_json after granular row
+      // migration; the old "always replace" path wiped the user's offline
+      // entities. Trash restore + package import still pass `entities` (even
+      // empty) and get the original full-replace behavior.
+      if (data.containsKey('entities')) {
+        await _db.packagesDao.deleteEntitiesByPackage(packageId);
+        final entities = data['entities'] as Map<String, dynamic>? ?? {};
+        if (entities.isNotEmpty) {
+          final companions = entities.entries.map((e) {
+            final m = Map<String, dynamic>.from(e.value as Map);
+            return _packageEntityCompanion(packageId, e.key, m);
+          }).toList();
+          await _db.packagesDao.upsertEntities(companions);
+        }
       }
 
       // Schema — also full replace.

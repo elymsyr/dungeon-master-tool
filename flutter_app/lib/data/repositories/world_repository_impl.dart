@@ -543,17 +543,27 @@ class WorldRepositoryImpl implements CampaignRepository {
       // synthesiser and never persist. EntityNotifier edits drop the flag
       // (its `_entityToMap` produces a fresh map), so an edited built-in
       // entry naturally writes through and forks at the same synth id.
-      await _db.worldEntitiesDao.deleteByWorld(worldId);
-      final entities = data['entities'] as Map<String, dynamic>? ?? {};
-      if (entities.isNotEmpty) {
-        final companions = <WorldEntitiesCompanion>[];
-        for (final e in entities.entries) {
-          final m = Map<String, dynamic>.from(e.value as Map);
-          if (m[synthFlagKey] == true) continue;
-          companions.add(_entityCompanion(worldId, e.key, m));
-        }
-        if (companions.isNotEmpty) {
-          await _db.worldEntitiesDao.upsertAll(companions);
+      //
+      // Beta-enter wipe defense (PR-B5): a payload that does NOT contain the
+      // `entities` key is treated as "metadata-only save" — DO NOT delete the
+      // existing rows. The cloud reconciler / preserve hydrators strip the
+      // entities key from world_state because they're carried per-row through
+      // granular tables; passing such a payload here used to wipe the world.
+      // Trash restore, package import, and explicit re-save call sites still
+      // pass the `entities` key (even if empty) and get full-replace semantics.
+      if (data.containsKey('entities')) {
+        await _db.worldEntitiesDao.deleteByWorld(worldId);
+        final entities = data['entities'] as Map<String, dynamic>? ?? {};
+        if (entities.isNotEmpty) {
+          final companions = <WorldEntitiesCompanion>[];
+          for (final e in entities.entries) {
+            final m = Map<String, dynamic>.from(e.value as Map);
+            if (m[synthFlagKey] == true) continue;
+            companions.add(_entityCompanion(worldId, e.key, m));
+          }
+          if (companions.isNotEmpty) {
+            await _db.worldEntitiesDao.upsertAll(companions);
+          }
         }
       }
     });

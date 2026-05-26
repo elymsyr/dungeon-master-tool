@@ -12,6 +12,7 @@ import '../../data/network/network_providers.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'beta_enter_gate.dart';
 import 'image_upload_helper.dart';
 
 /// App-start cloud catch-up. For each cloud_backup row of type
@@ -87,11 +88,24 @@ class CloudCatchupService {
               raw is String ? DateTime.tryParse(raw) : null;
         } catch (_) {/* ignore */}
       }
+      // Beta-enter wipe guard: PackageRepositoryImpl._saveToDb full-replaces
+      // package entities on every save(name, data) call. Until the first-enter
+      // merge has run, skip pulls for packages that already exist locally;
+      // their offline content would be wiped by an empty/stale cloud row.
+      final uid = _ref.read(authProvider)?.uid;
+      final betaEnterCompleted = uid != null
+          ? await _ref.read(betaEnterGateProvider).isCompleted(uid)
+          : true;
       var pulled = false;
       for (final meta in metas) {
         final name = meta.itemName;
         final localAt = localUpdates[name];
         if (localAt != null && !meta.createdAt.isAfter(localAt)) continue;
+        if (!betaEnterCompleted && localUpdates.containsKey(name)) {
+          debugPrint(
+              'CloudCatchupService: skip package pull "$name" — beta-enter gate unset');
+          continue;
+        }
         try {
           final fresh = await repo.downloadBackup(meta.id);
           await packageRepo.save(name, fresh);
