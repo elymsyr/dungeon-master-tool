@@ -614,6 +614,52 @@ List<Map<String, dynamic>> srdClassFeats() => [
         description:
             'You know cantrips and prepare spells from the Druid spell list. Wisdom is your spellcasting ability; you can use a Druidic Focus.',
       ),
+      // Primal Order — Druid L1 mutex pick mirroring Cleric Divine Order.
+      // Wizard's proficiencies step lists both via the
+      // `feat-category: Primal Order` lookup; pick is stored as a feat id on
+      // the PC so the existing proficiency_grant pass auto-applies the
+      // extra weapon/armor categories.
+      packEntity(
+        slug: 'feat',
+        name: 'Primal Order: Warden',
+        description:
+            'You gain proficiency with Martial weapons and Medium armor training.',
+        attributes: {
+          'category_ref': lookup('feat-category', 'Primal Order'),
+          'prerequisite': 'Druid — Primal Order Feature',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': [
+            effect('proficiency_grant',
+                targetKind: 'weapon_category',
+                targetRef: lookup('weapon-category', 'Martial')),
+            effect('proficiency_grant',
+                targetKind: 'armor_category',
+                targetRef: lookup('armor-category', 'Medium')),
+          ],
+          'benefits':
+              '**Martial Weapons.** Gain proficiency with Martial weapons.\n\n'
+              '**Medium Armor Training.** Gain Medium Armor training.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Primal Order: Magician',
+        description:
+            'You learn one extra Druid cantrip and add your Wisdom modifier to one Arcana or Nature ability check per Short Rest.',
+        attributes: {
+          'category_ref': lookup('feat-category', 'Primal Order'),
+          'prerequisite': 'Druid — Primal Order Feature',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': [
+            effect('cantrip_count_bonus', value: 1),
+          ],
+          'benefits':
+              '**Extra Cantrip.** You learn one extra Druid cantrip (pick from the cantrip picker).\n\n'
+              '**Knowledge Lore.** When you make an Arcana or Nature check, add your Wisdom modifier; usable once per Short Rest.',
+        },
+      ),
       _cf(
         name: 'Wild Shape',
         className: 'Druid',

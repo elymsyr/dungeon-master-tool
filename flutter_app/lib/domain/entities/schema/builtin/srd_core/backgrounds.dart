@@ -162,6 +162,9 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('skill', 'Athletics'),
             lookup('skill', 'Intimidation'),
           ],
+          // SRD 5.2.1 p. 83: Soldier picks one Gaming Set variant. The wizard
+          // surfaces this as a variant picker rather than a fixed grant.
+          'granted_tool_variant_group': 'gaming_set',
           'starting_gold_gp': 14,
           'gold_alternative_gp': 50,
           'equipment_choice_groups': [

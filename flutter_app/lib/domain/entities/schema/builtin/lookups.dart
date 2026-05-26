@@ -1500,6 +1500,7 @@ Tier0CategoryBuild _featCategoryCategory(String schemaId, String now) =>
         'Origin', 'General', 'Fighting Style', 'Epic Boon',
         'Class Feature', 'Subclass Feature', 'Species Feature',
         'Divine Order',
+        'Primal Order',
         // Feature-option pickers — generic mechanism for subclass features
         // whose SRD prose presents a 1-of-N choice (Hunter Ranger picks,
         // Fiend Warlock options, etc.). Filtered by category name in

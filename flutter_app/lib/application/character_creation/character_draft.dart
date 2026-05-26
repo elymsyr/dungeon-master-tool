@@ -71,8 +71,28 @@ abstract class CharacterDraft with _$CharacterDraft {
     @Default([]) List<String> toolChoiceIds,
 
     /// Language IDs picked from the active campaign's `language` lookups.
-    /// Cap = background's `granted_language_count`.
+    /// Cap = `OriginConstants.standardLanguageChoiceCount` (SRD 2024 p. 19
+    /// places the +2 standard languages on the origin step, not background).
     @Default([]) List<String> languageChoiceIds,
+
+    /// Class-granted bonus language picks (e.g. Rogue's Thieves' Cant
+    /// feature grants +1 language of choice from any tier). Stored separately
+    /// from origin picks so the cap can be reset when class changes.
+    @Default([]) List<String> bonusLanguageChoiceIds,
+
+    /// Weapon Mastery weapon IDs picked at creation. Cap = SRD per-class
+    /// initial count (Barb 2, Fighter 3, Paladin/Ranger/Rogue 2). Filtered
+    /// by the class's `weapon_mastery_filter`.
+    @Default([]) List<String> weaponMasteryChoiceIds,
+
+    /// Soldier-style background tool variant pick (e.g. one Gaming Set
+    /// variant). Active when `background.granted_tool_variant_group` is set.
+    String? backgroundToolVariantId,
+
+    /// Cleric Divine Order / Druid Primal Order — the chosen mutex feat id.
+    /// Picking adds the feat to `feat_ids`; the feat's proficiency_grant
+    /// effects auto-apply via the resolver.
+    String? l1OrderChoiceId,
 
     /// Cantrip spell IDs (spell entities where `level == 0`). Cap derived
     /// from the class's `cantrips_known_by_level` or fallback by caster
