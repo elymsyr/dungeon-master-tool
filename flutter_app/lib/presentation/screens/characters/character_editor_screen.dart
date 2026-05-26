@@ -1901,6 +1901,7 @@ class _CharacterEditorScreenState
     required Map<String, Entity> entities,
     String? targetClassId,
     bool isNewClass = false,
+    bool commitOnSkip = false,
   }) async {
     final fromLvl = from is int
         ? from
@@ -1908,8 +1909,14 @@ class _CharacterEditorScreenState
     final toLvl = to is int
         ? to
         : (to is String ? int.tryParse(to) : null);
-    if (fromLvl == null || toLvl == null) return;
-    if (toLvl <= fromLvl) return;
+    if (fromLvl == null || toLvl == null) {
+      if (commitOnSkip) _mutate(base);
+      return;
+    }
+    if (toLvl <= fromLvl) {
+      if (commitOnSkip) _mutate(base);
+      return;
+    }
 
     String? firstId(Iterable<String> keys) {
       for (final k in keys) {
@@ -1950,7 +1957,10 @@ class _CharacterEditorScreenState
       subclassEntity: subclassEntity,
       entities: entities,
     );
-    if (!plan.isLevelUp) return;
+    if (!plan.isLevelUp) {
+      if (commitOnSkip) _mutate(base);
+      return;
+    }
 
     // CON snapshot — needed so the dialog's auto HP delta folds in the
     // CON modifier consistently with SRD §1.5. We no longer need the full
@@ -2447,7 +2457,6 @@ class _CharacterEditorScreenState
     final nextCharacter = character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     );
-    _mutate(nextCharacter);
     await _maybeRunLevelUp(
       from: prevClassLevel,
       to: nextClassLevel,
@@ -2455,6 +2464,7 @@ class _CharacterEditorScreenState
       entities: entities,
       targetClassId: targetClassId,
       isNewClass: isNewClass,
+      commitOnSkip: true,
     );
   }
 

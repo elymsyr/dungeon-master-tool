@@ -159,18 +159,10 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     final hint = palette?.sidebarLabelSecondary ?? Theme.of(context).hintColor;
     final plan = widget.plan;
 
-    // Any exit path (barrier tap, system back, X icon) commits the level
-    // up — the user explicitly requested "dialog kapandığında ya da
-    // apply denildiğinde direkt uygulansın" and asked for the Skip
-    // button to go away. PopScope synthesizes the pop with the apply
-    // result so a back-gesture matches the Apply button.
-    return PopScope<LevelUpResult>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        Navigator.of(context).pop(_applyResult);
-      },
-      child: AlertDialog(
+    // Only the Apply button commits. Barrier tap / system back / X icon
+    // dismiss without applying — the level bump is discarded and the
+    // character state stays untouched.
+    return AlertDialog(
       title: Text('Level Up: ${plan.fromLevel} → ${plan.toLevel}'),
       content: SizedBox(
         width: _kLevelUpDialogWidth,
@@ -252,12 +244,15 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
         ),
       ),
       actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(LevelUpResult.skipped),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_applyResult),
           child: const Text('Apply'),
         ),
       ],
-      ),
     );
   }
 
