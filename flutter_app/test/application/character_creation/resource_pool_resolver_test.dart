@@ -225,6 +225,117 @@ void main() {
       );
     });
 
+    test('evaluates paladin_level_x5 when classLevels provided', () {
+      final paladin = _class('Paladin');
+      final feat = _feat(
+        id: 'feat-loh',
+        name: 'Lay on Hands',
+        autoGrantedBy: [_grantBy('Paladin', 1)],
+        effects: const [
+          {
+            'kind': 'resource_pool_grant',
+            'payload': {
+              'pool_ref': {
+                'slug': 'resource-pool',
+                'name': 'pool:lay_on_hands_hp',
+              },
+              'recharge': 'long_rest',
+              'count_formula': 'paladin_level_x5',
+            },
+          },
+        ],
+      );
+      expect(
+        resolveResourcePoolsAt(
+          classEntity: paladin,
+          subclassEntity: null,
+          level: 5,
+          entities: {feat.id: feat, paladin.id: paladin},
+          classLevels: {paladin.id: 5},
+        ),
+        {'pool:lay_on_hands_hp': 25},
+      );
+    });
+
+    test('evaluates monk_level for Ki / Focus Points', () {
+      final monk = _class('Monk');
+      final feat = _feat(
+        id: 'feat-ki',
+        name: 'Focus Points',
+        autoGrantedBy: [_grantBy('Monk', 2)],
+        effects: const [
+          {
+            'kind': 'resource_pool_grant',
+            'payload': {
+              'pool_ref': {
+                'slug': 'resource-pool',
+                'name': 'pool:focus_points',
+              },
+              'recharge': 'short_rest',
+              'count_formula': 'monk_level',
+            },
+          },
+        ],
+      );
+      expect(
+        resolveResourcePoolsAt(
+          classEntity: monk,
+          subclassEntity: null,
+          level: 3,
+          entities: {feat.id: feat, monk.id: monk},
+          classLevels: {monk.id: 3},
+        ),
+        {'pool:focus_points': 3},
+      );
+    });
+
+    test('evaluates cha_mod_min_1 with ability score, clamps at 1', () {
+      final cleric = _class('Cleric');
+      final feat = _feat(
+        id: 'feat-cd',
+        name: 'Channel Divinity',
+        autoGrantedBy: [_grantBy('Cleric', 1)],
+        effects: const [
+          {
+            'kind': 'resource_pool_grant',
+            'payload': {
+              'pool_ref': {
+                'slug': 'resource-pool',
+                'name': 'pool:channel_divinity',
+              },
+              'recharge': 'short_rest',
+              'count_formula': 'cha_mod_min_1',
+            },
+          },
+        ],
+      );
+      final entities = {feat.id: feat, cleric.id: cleric};
+
+      expect(
+        resolveResourcePoolsAt(
+          classEntity: cleric,
+          subclassEntity: null,
+          level: 1,
+          entities: entities,
+          abilities: const {'CHA': 16},
+          classLevels: {cleric.id: 1},
+        ),
+        {'pool:channel_divinity': 3},
+      );
+
+      expect(
+        resolveResourcePoolsAt(
+          classEntity: cleric,
+          subclassEntity: null,
+          level: 1,
+          entities: entities,
+          abilities: const {'CHA': 10},
+          classLevels: {cleric.id: 1},
+        ),
+        {'pool:channel_divinity': 1},
+      );
+    });
+
     test('keeps the larger value when two effects target the same pool', () {
       final cls = _feat(
         id: 'feat-base',

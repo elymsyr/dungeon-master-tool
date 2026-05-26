@@ -352,6 +352,8 @@ LevelUpPlan planLevelUp({
   required Entity? classEntity,
   required Entity? subclassEntity,
   Map<String, Entity> entities = const {},
+  Map<String, int> abilities = const {},
+  Map<String, int> classLevels = const {},
 }) {
   final clampedFrom = fromLevel.clamp(0, 20);
   final clampedTo = toLevel.clamp(0, 20);
@@ -574,16 +576,47 @@ LevelUpPlan planLevelUp({
       subclassEntity: subclassEntity,
       level: clampedFrom,
       entities: entities,
+      abilities: abilities,
+      classLevels: _classLevelsForLevel(
+        baseline: classLevels,
+        targetClassId: classEntity?.id,
+        level: clampedFrom,
+      ),
     ),
     newResourcePools: resolveResourcePoolsAt(
       classEntity: classEntity,
       subclassEntity: subclassEntity,
       level: clampedTo,
       entities: entities,
+      abilities: abilities,
+      classLevels: _classLevelsForLevel(
+        baseline: classLevels,
+        targetClassId: classEntity?.id,
+        level: clampedTo,
+      ),
     ),
     prevExtraAttackCount: prevExtra,
     newExtraAttackCount: newExtra,
     prevWeaponMasteryCount: prevMastery,
     newWeaponMasteryCount: newMastery,
   );
+}
+
+/// Build a `classLevels` snapshot where [targetClassId] is forced to [level],
+/// preserving every other class's level from [baseline]. Lets the planner ask
+/// the formula evaluator for prev-side and new-side counts off the same
+/// baseline (e.g. Paladin 4 → 5 gets Lay on Hands 20 then 25).
+Map<String, int> _classLevelsForLevel({
+  required Map<String, int> baseline,
+  required String? targetClassId,
+  required int level,
+}) {
+  if (targetClassId == null) return baseline;
+  final out = Map<String, int>.from(baseline);
+  if (level <= 0) {
+    out.remove(targetClassId);
+  } else {
+    out[targetClassId] = level;
+  }
+  return out;
 }

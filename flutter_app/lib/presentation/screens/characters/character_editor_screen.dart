@@ -1956,6 +1956,8 @@ class _CharacterEditorScreenState
       classEntity: classEntity,
       subclassEntity: subclassEntity,
       entities: entities,
+      abilities: _readAbilityScores(base),
+      classLevels: _readClassLevels(base),
     );
     if (!plan.isLevelUp) {
       if (commitOnSkip) _mutate(base);

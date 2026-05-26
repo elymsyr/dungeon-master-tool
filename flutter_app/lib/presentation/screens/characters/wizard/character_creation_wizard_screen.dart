@@ -1274,6 +1274,8 @@ Map<String, dynamic> buildSeedFields({
       classEntity: characterClass,
       subclassEntity: subclassEntity,
       entities: entities,
+      abilities: stat,
+      classLevels: {characterClass.id: draft.level},
     );
     final pending = pendingChoicesFromPlan(
       plan: creationPlan,

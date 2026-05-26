@@ -1,6 +1,7 @@
 import '../entities/character.dart';
 import '../entities/character/effective_character.dart';
 import '../entities/entity.dart';
+import 'count_formula.dart';
 
 /// Pure-function read-time resolver. Walks a [Character]'s raw choices
 /// (`class_levels`, `subclass_id`, `feat_ids`, `equipment_choices`) and the
@@ -500,7 +501,7 @@ class CharacterResolver {
               ? Map<String, dynamic>.from(eff['payload'] as Map)
               : <String, dynamic>{};
           final scaledMax = evalScalesWith(eff['scales_with']);
-          final formulaMax = _evalCountFormula(
+          final formulaMax = evalCountFormula(
             payload['count_formula']?.toString(),
             abilities: abilities,
             classLevels: classLevels,
@@ -1255,92 +1256,6 @@ class CharacterResolver {
     return _resolveRef(eff['target_ref'], all);
   }
 
-  /// Resolve a `count_formula` token (e.g. `wis_mod_min_1`, `monk_level`,
-  /// `paladin_level_x5`) to an integer using the PC's abilities and class
-  /// levels. Returns null when the token is unknown so the caller can fall
-  /// back to other count sources (scaled tables, raw payload count).
-  static int? _evalCountFormula(
-    String? token, {
-    required Map<String, int> abilities,
-    required Map<String, int> classLevels,
-    required Map<String, Entity> entitiesById,
-  }) {
-    if (token == null || token.isEmpty) return null;
-    int mod(String ab) => ((abilities[ab] ?? 10) - 10) >> 1;
-    int classLevel(String name) {
-      for (final entry in classLevels.entries) {
-        final e = entitiesById[entry.key];
-        if (e == null) continue;
-        if (e.name.toLowerCase() == name.toLowerCase()) return entry.value;
-      }
-      return 0;
-    }
-
-    switch (token.toLowerCase()) {
-      case 'str_mod':
-        return mod('STR');
-      case 'dex_mod':
-        return mod('DEX');
-      case 'con_mod':
-        return mod('CON');
-      case 'int_mod':
-        return mod('INT');
-      case 'wis_mod':
-        return mod('WIS');
-      case 'cha_mod':
-        return mod('CHA');
-      case 'str_mod_min_1':
-        return mod('STR') < 1 ? 1 : mod('STR');
-      case 'dex_mod_min_1':
-        return mod('DEX') < 1 ? 1 : mod('DEX');
-      case 'con_mod_min_1':
-        return mod('CON') < 1 ? 1 : mod('CON');
-      case 'int_mod_min_1':
-        return mod('INT') < 1 ? 1 : mod('INT');
-      case 'wis_mod_min_1':
-        return mod('WIS') < 1 ? 1 : mod('WIS');
-      case 'cha_mod_min_1':
-        return mod('CHA') < 1 ? 1 : mod('CHA');
-      case 'barbarian_level':
-        return classLevel('Barbarian');
-      case 'bard_level':
-        return classLevel('Bard');
-      case 'cleric_level':
-        return classLevel('Cleric');
-      case 'druid_level':
-        return classLevel('Druid');
-      case 'fighter_level':
-        return classLevel('Fighter');
-      case 'monk_level':
-        return classLevel('Monk');
-      case 'paladin_level':
-        return classLevel('Paladin');
-      case 'paladin_level_x5':
-        return classLevel('Paladin') * 5;
-      case 'ranger_level':
-        return classLevel('Ranger');
-      case 'rogue_level':
-        return classLevel('Rogue');
-      case 'sorcerer_level':
-        return classLevel('Sorcerer');
-      case 'warlock_level':
-        return classLevel('Warlock');
-      case 'wizard_level':
-        return classLevel('Wizard');
-      case 'character_level':
-        return classLevels.values.fold<int>(0, (a, b) => a + b);
-      case 'pb':
-      case 'proficiency_bonus':
-        final lvl = classLevels.values.fold<int>(0, (a, b) => a + b);
-        if (lvl >= 17) return 6;
-        if (lvl >= 13) return 5;
-        if (lvl >= 9) return 4;
-        if (lvl >= 5) return 3;
-        return 2;
-    }
-    return null;
-  }
-
   static Map<String, dynamic> _modifierAsEffect(Map<String, dynamic> m) {
     // Re-shape grantedModifiers row into effect kinds the resolver knows.
     final kind = (m['kind'] ?? '').toString();
@@ -1356,6 +1271,13 @@ class CharacterResolver {
       case 'spell_grant':
       case 'cantrip_grant':
       case 'ability_score_bonus':
+      case 'sense_grant':
+      case 'truesight_grant':
+      case 'blindsight_grant':
+      case 'condition_immunity_grant':
+      case 'damage_resistance_grant':
+      case 'damage_immunity_grant':
+      case 'damage_vulnerability_grant':
         // already same kind name
         break;
       default:

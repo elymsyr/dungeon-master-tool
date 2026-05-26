@@ -1,4 +1,5 @@
 import '../../domain/entities/entity.dart';
+import '../../domain/services/count_formula.dart';
 
 /// Pure resolver for class resource pools (Rage uses, Bardic Inspiration,
 /// Channel Divinity, Ki / Focus Points, Wild Shape, Lay on Hands, etc.).
@@ -7,13 +8,11 @@ import '../../domain/entities/entity.dart';
 /// and resolves a max value at [level] from either:
 ///
 ///   1. `scales_with.table` — uses the entry with the highest `lvl ≤ level`
-///   2. `payload.count` literal — fallback when no table is given
-///
-/// `count_formula` (e.g., `'cha_mod_min_1'`, `'paladin_level_x5'`,
-/// `'monk_level'`) is intentionally **not** evaluated yet — those pools
-/// require ability-score / class-level context the planner doesn't carry.
-/// Such effects are skipped so the caller can leave the value blank
-/// until formula evaluation lands.
+///   2. `payload.count_formula` — evaluated via [evalCountFormula] when
+///      `abilities` / `classLevels` are supplied (e.g. `paladin_level_x5`,
+///      `monk_level`, `cha_mod_min_1`). Skipped when context is empty so
+///      planner-only callers fall through to the literal `count`.
+///   3. `payload.count` literal — final fallback.
 ///
 /// Returns a map of `pool_ref.name` → max count. Empty when no class is
 /// supplied or no feats apply at this level.
@@ -22,6 +21,8 @@ Map<String, int> resolveResourcePoolsAt({
   required Entity? subclassEntity,
   required int level,
   required Map<String, Entity> entities,
+  Map<String, int> abilities = const {},
+  Map<String, int> classLevels = const {},
 }) {
   if (level < 1) return const {};
   final classNames = <String>{};
@@ -47,7 +48,14 @@ Map<String, int> resolveResourcePoolsAt({
       final poolName = poolRef['name']?.toString();
       if (poolName == null || poolName.isEmpty) continue;
 
-      final value = _resolveValue(eff, payload, level);
+      final value = _resolveValue(
+        eff,
+        payload,
+        level,
+        abilities: abilities,
+        classLevels: classLevels,
+        entities: entities,
+      );
       if (value == null) continue;
       // If multiple effects grant the same pool (e.g. base + subclass
       // upgrade), keep the larger value so the player isn't downgraded.
@@ -81,7 +89,14 @@ bool _isAutoGranted(Entity feat, Set<String> sources, int level,
   return false;
 }
 
-int? _resolveValue(Map eff, Map payload, int level) {
+int? _resolveValue(
+  Map eff,
+  Map payload,
+  int level, {
+  required Map<String, int> abilities,
+  required Map<String, int> classLevels,
+  required Map<String, Entity> entities,
+}) {
   final scales = eff['scales_with'];
   if (scales is Map) {
     final table = scales['table'];
@@ -103,6 +118,15 @@ int? _resolveValue(Map eff, Map payload, int level) {
       }
       if (best != null) return best;
     }
+  }
+  if (abilities.isNotEmpty || classLevels.isNotEmpty) {
+    final formulaMax = evalCountFormula(
+      payload['count_formula']?.toString(),
+      abilities: abilities,
+      classLevels: classLevels,
+      entitiesById: entities,
+    );
+    if (formulaMax != null) return formulaMax;
   }
   final countRaw = payload['count'];
   if (countRaw is int) return countRaw;
