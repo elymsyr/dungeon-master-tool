@@ -734,5 +734,7 @@
   "profileMenuEditProfile": "Modifier le profil",
   "profileMenuSettings": "Paramètres",
   "profileMenuAdminPanel": "Panneau Admin",
-  "profileMenuReportBug": "Signaler un bug"
+  "profileMenuReportBug": "Signaler un bug",
+  "profileMenuSupport": "Soutenir",
+  "profileMenuSupportBody": "Si l'outil te plaît, tu peux soutenir le développement via les canaux ci-dessous. Merci !"
 }

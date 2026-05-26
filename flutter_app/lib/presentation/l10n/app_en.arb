@@ -736,5 +736,7 @@
   "profileMenuEditProfile": "Edit Profile",
   "profileMenuSettings": "Settings",
   "profileMenuAdminPanel": "Admin Panel",
-  "profileMenuReportBug": "Report a bug"
+  "profileMenuReportBug": "Report a bug",
+  "profileMenuSupport": "Support",
+  "profileMenuSupportBody": "If you enjoy the tool, you can support development through any of the channels below. Thank you!"
 }

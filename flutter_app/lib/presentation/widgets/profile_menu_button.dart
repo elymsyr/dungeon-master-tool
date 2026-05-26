@@ -9,6 +9,7 @@ import '../../application/providers/profile_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
+import '../dialogs/support_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import 'profile_avatar.dart';
@@ -74,6 +75,8 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/profile/me?edit=1');
           case 'settings':
             ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex;
+          case 'support':
+            SupportDialog.show(context);
           case 'admin':
             context.push('/admin');
           case 'bug_report':
@@ -105,6 +108,14 @@ class ProfileMenuButton extends ConsumerWidget {
             const Icon(Icons.settings_outlined, size: 18),
             const SizedBox(width: 12),
             Text(l10n.profileMenuSettings, style: TextStyle(color: palette.tabActiveText)),
+          ]),
+        ),
+        PopupMenuItem<String>(
+          value: 'support',
+          child: Row(children: [
+            const Icon(Icons.favorite_outline, size: 18),
+            const SizedBox(width: 12),
+            Text(l10n.profileMenuSupport, style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         if (isAdmin)

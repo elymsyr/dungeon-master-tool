@@ -734,5 +734,7 @@
   "profileMenuEditProfile": "Profili Düzenle",
   "profileMenuSettings": "Ayarlar",
   "profileMenuAdminPanel": "Yönetici Paneli",
-  "profileMenuReportBug": "Hata bildir"
+  "profileMenuReportBug": "Hata bildir",
+  "profileMenuSupport": "Destek",
+  "profileMenuSupportBody": "Aracı beğendiysen aşağıdaki kanallardan birinden destek olabilirsin. Teşekkürler!"
 }
