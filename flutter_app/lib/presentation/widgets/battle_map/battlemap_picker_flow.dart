@@ -18,25 +18,47 @@ Future<void> openBattlemapPicker(
   WidgetRef ref,
   BattleMapNotifier notifier,
 ) async {
-  final source = await showModalBottomSheet<_PickerSource>(
+  final box = context.findRenderObject() as RenderBox?;
+  final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+  RelativeRect position;
+  if (box != null && overlay != null) {
+    final topLeft = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final bottomRight = box.localToGlobal(
+      box.size.bottomRight(Offset.zero),
+      ancestor: overlay,
+    );
+    position = RelativeRect.fromLTRB(
+      topLeft.dx,
+      bottomRight.dy,
+      overlay.size.width - bottomRight.dx,
+      overlay.size.height - bottomRight.dy,
+    );
+  } else {
+    position = const RelativeRect.fromLTRB(0, 0, 0, 0);
+  }
+  final source = await showMenu<_PickerSource>(
     context: context,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.folder_open),
-            title: const Text('From device'),
-            onTap: () => Navigator.pop(ctx, _PickerSource.device),
-          ),
-          ListTile(
-            leading: const Icon(Icons.place_outlined),
-            title: const Text('From location battlemaps'),
-            onTap: () => Navigator.pop(ctx, _PickerSource.location),
-          ),
-        ],
+    position: position,
+    items: const [
+      PopupMenuItem(
+        value: _PickerSource.device,
+        child: ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.folder_open),
+          title: Text('From device'),
+        ),
       ),
-    ),
+      PopupMenuItem(
+        value: _PickerSource.location,
+        child: ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.place_outlined),
+          title: Text('From location battlemaps'),
+        ),
+      ),
+    ],
   );
   if (source == null || !context.mounted) return;
 

@@ -13,8 +13,10 @@ import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
+import '../../domain/entities/schema/field_group.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/value_objects/media_kind.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
@@ -63,9 +65,18 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
       var schema = WorldSchema.fromJson(
         Map<String, dynamic>.from(rawSource),
       );
+      var dirty = false;
       final migrated = _migrateStaleEnumRelations(schema);
       if (migrated != null) {
         schema = migrated;
+        dirty = true;
+      }
+      final mapPatched = _migrateLocationMapFields(schema);
+      if (mapPatched != null) {
+        schema = mapPatched;
+        dirty = true;
+      }
+      if (dirty) {
         if (data != null) {
           final serialized = deepCopyJson(schema.toJson());
           data['world_schema'] = serialized;
@@ -107,6 +118,99 @@ const Map<String, List<String>> _staleEnumToRelation = {
   'armor_trainings': ['armor-category'],
   'weapon_proficiency_specifics': ['weapon'],
 };
+
+/// Adds `map`, `map_per_era`, `battlemaps` fields + `grp-maps` group to the
+/// location category for legacy worlds whose cached `world_schema` predates
+/// the location-maps feature. Idempotent.
+WorldSchema? _migrateLocationMapFields(WorldSchema schema) {
+  const grpMaps = 'grp-maps';
+  var dirty = false;
+  final newCats = <EntityCategorySchema>[];
+  for (final cat in schema.categories) {
+    if (cat.slug != 'location') {
+      newCats.add(cat);
+      continue;
+    }
+    final keys = {for (final f in cat.fields) f.fieldKey};
+    final hasMap = keys.contains('map');
+    final hasPerEra = keys.contains('map_per_era');
+    final hasBattlemaps = keys.contains('battlemaps');
+    final hasGroup = cat.fieldGroups.any((g) => g.groupId == grpMaps);
+    if (hasMap && hasPerEra && hasBattlemaps && hasGroup) {
+      newCats.add(cat);
+      continue;
+    }
+    final now = DateTime.now().toUtc().toIso8601String();
+    var nextOrder = cat.fields.fold<int>(
+      -1,
+      (m, f) => f.orderIndex > m ? f.orderIndex : m,
+    );
+    final newFields = List<FieldSchema>.from(cat.fields);
+    FieldSchema mk({
+      required String key,
+      required String label,
+      required FieldType type,
+      bool isList = false,
+      int gridSpan = 1,
+    }) {
+      nextOrder += 1;
+      return FieldSchema(
+        fieldId: _uuid.v4(),
+        categoryId: cat.categoryId,
+        fieldKey: key,
+        label: label,
+        fieldType: type,
+        isBuiltin: true,
+        groupId: grpMaps,
+        gridColumnSpan: gridSpan,
+        isList: isList,
+        mediaKindWire: MediaKind.battleMap.wireName,
+        orderIndex: nextOrder,
+        createdAt: now,
+        updatedAt: now,
+      );
+    }
+
+    if (!hasMap) {
+      newFields.add(mk(key: 'map', label: 'Map', type: FieldType.image));
+    }
+    if (!hasPerEra) {
+      newFields.add(mk(
+        key: 'map_per_era',
+        label: 'Map per Era',
+        type: FieldType.imagePerEra,
+        gridSpan: 2,
+      ));
+    }
+    if (!hasBattlemaps) {
+      newFields.add(mk(
+        key: 'battlemaps',
+        label: 'Battlemaps',
+        type: FieldType.image,
+        isList: true,
+        gridSpan: 2,
+      ));
+    }
+    final newGroups = List<FieldGroup>.from(cat.fieldGroups);
+    if (!hasGroup) {
+      newGroups.add(FieldGroup(
+        groupId: grpMaps,
+        name: 'Maps',
+        gridColumns: 1,
+        orderIndex: newGroups.isEmpty
+            ? 0
+            : newGroups.map((g) => g.orderIndex).reduce(
+                  (a, b) => a > b ? a : b,
+                ) +
+                1,
+      ));
+    }
+    newCats.add(cat.copyWith(fields: newFields, fieldGroups: newGroups));
+    dirty = true;
+  }
+  if (!dirty) return null;
+  return schema.copyWith(categories: newCats);
+}
 
 WorldSchema? _migrateStaleEnumRelations(WorldSchema schema) {
   var dirty = false;

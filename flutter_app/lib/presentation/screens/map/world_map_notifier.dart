@@ -216,6 +216,27 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   final ValueNotifier<String?> hoveredLocationPinId =
       ValueNotifier<String?>(null);
 
+  /// Delayed-close timer for the location pin preview card — keeps the card
+  /// alive while the mouse transits the gap between the pin and the card.
+  Timer? _locationHoverCloseTimer;
+
+  void setLocationPinHover(String? pinId) {
+    _locationHoverCloseTimer?.cancel();
+    hoveredLocationPinId.value = pinId;
+  }
+
+  void scheduleClearLocationPinHover({String? onlyIfId}) {
+    _locationHoverCloseTimer?.cancel();
+    _locationHoverCloseTimer = Timer(const Duration(milliseconds: 220), () {
+      if (onlyIfId != null && hoveredLocationPinId.value != onlyIfId) return;
+      hoveredLocationPinId.value = null;
+    });
+  }
+
+  void cancelClearLocationPinHover() {
+    _locationHoverCloseTimer?.cancel();
+  }
+
   // Viewport size for fit-to-image calculations
   Size _viewportSize = Size.zero;
 
@@ -250,6 +271,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     cullTick.dispose();
     hoveredTimelinePinId.dispose();
     hoveredLocationPinId.dispose();
+    _locationHoverCloseTimer?.cancel();
     disposeUndoRedo();
     super.dispose();
   }
@@ -563,7 +585,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       final existing = state.eras[index].locationMaps[locId];
       state = state.copyWith(
         activeEraIndex: index,
-        imagePath: _resolveLocationMapImage(loc),
+        imagePath: _resolveLocationMapImage(loc, eraIndexOverride: index),
         pins: existing?.pins ?? const [],
         timelinePins: existing?.timelinePins ?? const [],
       );
@@ -581,12 +603,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     return _ref.read(entityProvider)[id];
   }
 
-  String _resolveLocationMapImage(Entity? loc) {
+  String _resolveLocationMapImage(Entity? loc, {int? eraIndexOverride}) {
     if (loc == null) return '';
     final perEra = loc.fields['map_per_era'];
-    final activeEra = state.eras.isNotEmpty &&
-            state.activeEraIndex < state.eras.length
-        ? state.eras[state.activeEraIndex]
+    final idx = eraIndexOverride ?? state.activeEraIndex;
+    final activeEra = state.eras.isNotEmpty && idx < state.eras.length
+        ? state.eras[idx]
         : null;
     if (perEra is Map && activeEra != null) {
       final v = perEra[activeEra.id];
@@ -813,8 +835,15 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     _debouncedSave();
   }
 
-  /// Deletes a waypoint and merges its adjacent eras.
-  void deleteWaypoint(int wpIndex, EraMergeStrategy strategy) {
+  /// Deletes a waypoint and merges its adjacent eras. Top-level world map
+  /// pins use [rootStrategy]; every location whose drilled map has pins in
+  /// either side accepts its own [EraMergeStrategy] via [locationStrategies]
+  /// (missing key defaults to merge).
+  void deleteWaypoint(
+    int wpIndex, {
+    required EraMergeStrategy rootStrategy,
+    Map<String, EraMergeStrategy> locationStrategies = const {},
+  }) {
     if (wpIndex < 0 || wpIndex >= state.waypoints.length) return;
     pushUndo(state);
     _syncActiveEra();
@@ -825,25 +854,75 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final leftEra = state.eras[leftIdx];
     final rightEra = state.eras[rightIdx];
 
-    MapEra merged;
-    switch (strategy) {
+    // Root world map merge.
+    final String mergedImagePath;
+    final List<MapPin> mergedRootPins;
+    final List<TimelinePin> mergedRootTimeline;
+    switch (rootStrategy) {
       case EraMergeStrategy.merge:
-        merged = MapEra(
-          id: _uuid.v4(),
-          imagePath: leftEra.imagePath.isNotEmpty
-              ? leftEra.imagePath
-              : rightEra.imagePath,
-          pins: [...leftEra.pins, ..._clonePins(rightEra.pins)],
-          timelinePins: [
-            ...leftEra.timelinePins,
-            ..._cloneTimelinePins(rightEra.timelinePins),
-          ],
-        );
+        mergedImagePath = leftEra.imagePath.isNotEmpty
+            ? leftEra.imagePath
+            : rightEra.imagePath;
+        mergedRootPins = [...leftEra.pins, ..._clonePins(rightEra.pins)];
+        mergedRootTimeline = [
+          ...leftEra.timelinePins,
+          ..._cloneTimelinePins(rightEra.timelinePins),
+        ];
       case EraMergeStrategy.keepLeft:
-        merged = leftEra.copyWith(id: _uuid.v4());
+        mergedImagePath = leftEra.imagePath;
+        mergedRootPins = leftEra.pins;
+        mergedRootTimeline = leftEra.timelinePins;
       case EraMergeStrategy.keepRight:
-        merged = rightEra.copyWith(id: _uuid.v4());
+        mergedImagePath = rightEra.imagePath;
+        mergedRootPins = rightEra.pins;
+        mergedRootTimeline = rightEra.timelinePins;
     }
+
+    // Per-location merge.
+    final allLocIds = <String>{
+      ...leftEra.locationMaps.keys,
+      ...rightEra.locationMaps.keys,
+    };
+    final mergedLocationMaps = <String, LocationMapData>{};
+    for (final locId in allLocIds) {
+      final strat = locationStrategies[locId] ?? EraMergeStrategy.merge;
+      final leftData = leftEra.locationMaps[locId];
+      final rightData = rightEra.locationMaps[locId];
+      LocationMapData? chosen;
+      switch (strat) {
+        case EraMergeStrategy.merge:
+          final pins = [
+            ...(leftData?.pins ?? const <MapPin>[]),
+            ..._clonePins(rightData?.pins ?? const <MapPin>[]),
+          ];
+          final timelinePins = [
+            ...(leftData?.timelinePins ?? const <TimelinePin>[]),
+            ..._cloneTimelinePins(
+                rightData?.timelinePins ?? const <TimelinePin>[]),
+          ];
+          if (pins.isEmpty && timelinePins.isEmpty) {
+            chosen = null;
+          } else {
+            chosen = LocationMapData(pins: pins, timelinePins: timelinePins);
+          }
+        case EraMergeStrategy.keepLeft:
+          chosen = leftData;
+        case EraMergeStrategy.keepRight:
+          chosen = rightData;
+      }
+      if (chosen != null &&
+          (chosen.pins.isNotEmpty || chosen.timelinePins.isNotEmpty)) {
+        mergedLocationMaps[locId] = chosen;
+      }
+    }
+
+    final merged = MapEra(
+      id: _uuid.v4(),
+      imagePath: mergedImagePath,
+      pins: mergedRootPins,
+      timelinePins: mergedRootTimeline,
+      locationMaps: mergedLocationMaps,
+    );
 
     final updatedEras = List<MapEra>.from(state.eras)
       ..removeAt(rightIdx)
@@ -1115,6 +1194,14 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // -------------------------------------------------------------------------
   // Pin CRUD
   // -------------------------------------------------------------------------
+
+  /// Returns true when [entityId] is the location currently drilled into
+  /// (or an ancestor in the drill chain) — pinning it would open a recursive
+  /// drill loop. Call sites snackbar + skip when true.
+  bool isRecursiveSelfPin(String? entityId) {
+    if (entityId == null) return false;
+    return state.locationStack.contains(entityId);
+  }
 
   String addPin(
     Offset canvasPos, {

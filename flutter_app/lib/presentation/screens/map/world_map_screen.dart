@@ -724,14 +724,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             return Positioned(
               left: pin.x + 12,
               top: pin.y - 24,
-              child: LocationPinPreviewCard(
-                location: entity,
-                mapRef: mapRef,
-                palette: palette,
-                onDrillIn: () {
-                  notifier.hoveredLocationPinId.value = null;
-                  notifier.drillIntoLocation(entity.id);
-                },
+              child: MouseRegion(
+                onEnter: (_) => notifier.cancelClearLocationPinHover(),
+                onExit: (_) => notifier.scheduleClearLocationPinHover(
+                  onlyIfId: hoveredId,
+                ),
+                child: LocationPinPreviewCard(
+                  location: entity,
+                  mapRef: mapRef,
+                  palette: palette,
+                  onDrillIn: () {
+                    notifier.setLocationPinHover(null);
+                    notifier.drillIntoLocation(entity.id);
+                  },
+                ),
               ),
             );
           },
@@ -867,6 +873,17 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             content: Text(
               '${entity.name} (${entity.categorySlug}) is not allowed on the world map',
             ),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (notifier.isRecursiveSelfPin(entityId)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Can't pin a location inside its own map"),
           ),
         );
       }
@@ -1036,6 +1053,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       context: context,
       ref: ref,
       allowedTypes: allowedSlugs.isEmpty ? null : allowedSlugs,
+      // Filter ancestors / self → recursive drill chain would loop.
+      excludeIds: ref.read(worldMapProvider).locationStack,
     );
     if (result == null || result.isEmpty) return;
 
@@ -1043,6 +1062,17 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final entities = ref.read(entityProvider);
     final entity = entities[entityId];
     if (entity == null) return;
+
+    if (notifier.isRecursiveSelfPin(entityId)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Can't pin a location inside its own map"),
+          ),
+        );
+      }
+      return;
+    }
 
     final pinType = _pinTypeFromCategorySlug(entity.categorySlug);
     notifier.addPin(
@@ -1271,13 +1301,25 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   ) {
     final mapState = ref.read(worldMapProvider);
     final label = mapState.waypoints[wpIndex].label;
-    showDialog<EraMergeStrategy>(
+    final leftEra = mapState.eras[wpIndex];
+    final rightEra = mapState.eras[wpIndex + 1];
+    final entities = ref.read(entityProvider);
+    showDialog<DeleteWaypointResult>(
       context: context,
-      builder: (ctx) =>
-          DeleteWaypointDialog(palette: palette, waypointLabel: label),
-    ).then((strategy) {
-      if (strategy == null) return;
-      notifier.deleteWaypoint(wpIndex, strategy);
+      builder: (ctx) => DeleteWaypointDialog(
+        palette: palette,
+        waypointLabel: label,
+        leftEra: leftEra,
+        rightEra: rightEra,
+        entities: entities,
+      ),
+    ).then((result) {
+      if (result == null) return;
+      notifier.deleteWaypoint(
+        wpIndex,
+        rootStrategy: result.root,
+        locationStrategies: result.perLocation,
+      );
     });
   }
 
@@ -1446,7 +1488,9 @@ class _DraggablePinState extends State<_DraggablePin> {
       // Right-click always = context menu.
       onTapUp: (d) {
         if (isLocation) {
-          hovered.value = hovered.value == pin.id ? null : pin.id;
+          widget.notifier.setLocationPinHover(
+            hovered.value == pin.id ? null : pin.id,
+          );
         } else {
           _showContextMenu(context, d.globalPosition);
         }
@@ -1507,13 +1551,13 @@ class _DraggablePinState extends State<_DraggablePin> {
     );
 
     if (isLocation) {
-      // Desktop hover: enter → show preview, exit → hide (unless mobile tap
-      // already pinned it). Card visibility owned by hoveredLocationPinId.
+      // Desktop hover with delayed close — the gap between pin and card is
+      // bridged by a timer; the card's own MouseRegion cancels the timer
+      // when the mouse arrives, so the card stays open.
       gesture = MouseRegion(
-        onEnter: (_) => hovered.value = pin.id,
-        onExit: (_) {
-          if (hovered.value == pin.id) hovered.value = null;
-        },
+        onEnter: (_) => widget.notifier.setLocationPinHover(pin.id),
+        onExit: (_) =>
+            widget.notifier.scheduleClearLocationPinHover(onlyIfId: pin.id),
         child: gesture,
       );
     }
