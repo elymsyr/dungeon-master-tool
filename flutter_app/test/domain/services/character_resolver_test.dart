@@ -871,6 +871,46 @@ void main() {
       expect(pool['recharge'], 'long_rest');
     });
 
+    test('Drow Superior Darkvision overrides base 60ft to 120ft', () {
+      final darkvision = _e(
+        id: 'sense_darkvision',
+        slug: 'sense',
+        name: 'Darkvision',
+        fields: {'default_range_ft': 60},
+      );
+      final elf = _e(
+        id: 'species_elf',
+        slug: 'species',
+        name: 'Elf',
+        fields: {
+          'granted_senses': ['sense_darkvision'],
+          'subspecies_options': [
+            {
+              'name': 'Drow',
+              'granted_modifiers': [
+                {
+                  'kind': 'sense_grant',
+                  'target_kind': 'sense',
+                  'target_ref': 'sense_darkvision',
+                  'payload': {'range_ft': 120},
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_elf',
+        'subspecies_id': 'Drow',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        elf.id: elf,
+        darkvision.id: darkvision,
+      });
+      expect(eff.senseEntityIds, contains('sense_darkvision'));
+      expect(eff.senseRanges['sense_darkvision'], 120);
+    });
+
     test('subspecies_id with no matching row is a no-op', () {
       final elf = _e(
         id: 'species_elf',
