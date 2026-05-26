@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v9.1.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v9.2.0--beta-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
@@ -65,7 +65,7 @@ Build a setting, then bring it to the table.
 
 - **Mind Map** — Infinite canvas, Bezier connections, workspaces, undo/redo.
 - **World Map** — Pin system with location data, fog of war, timeline metadata per pin.
-- **Era Timeline** — Track historical eras and waypoints; pin events to specific points in time.
+- **Era Timeline** — Track historical eras and waypoints; pin events to specific points in time. Drill into any location for nested pins and a per-era map image.
 - **Entity System** — Schema-driven cards with 16 field widget types (text, markdown, image, stat block, dice roller, and more).
 - **Templates & Packages** — Built-in D&D 5e schema, user-defined templates, full import/export.
 
@@ -78,7 +78,7 @@ Works fully offline. Join the beta to sync your worlds across devices and share 
 Run a session without breaking flow.
 
 - **Combat Tracker** — Initiative, HP, conditions, turn management, automatic event log.
-- **Battle Map** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war.
+- **Battle Map** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war. Reuse already-uploaded location battlemaps without re-uploading.
 - **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, save state across sessions.
 - **Soundpad** — Layered audio, gapless loops, volume fade, custom themes.
 - **PDF Viewer** — Page navigation and zoom for your reference docs.

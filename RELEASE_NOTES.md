@@ -1,5 +1,51 @@
 # Release Notes
 
+## Dungeon Master Tool v9.2.0 — Era Timeline Overhaul, Per-Location Maps, Beta Merge Hardening (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v9.1.0. World map era timeline becomes a full drill-in system: each location can carry its own nested pin/timeline data per era, with a fresh background image per era resolved straight off the location entity. Beta-enter no longer overwrites offline-only work with stale cloud rows — a dedicated merge service pushes local content cloud-first on first enter, gated by a per-user sentinel. Level-up dialog stops auto-committing on dismiss. Entity card stops crushing the name field next to the portrait on phones. Battle map background can be reused from a location's already-uploaded `battlemaps` field without re-uploading to R2.
+
+### Highlights
+
+#### World map & timeline
+
+- **Epoch → Era rename, drill-in nested maps** — `MapEpoch` / `EpochWaypoint` renamed to `MapEra` / `EraWaypoint`. New `LocationMapData` holds per-location nested pin + timeline collections inside each era, so a location entity can have its own zoomed-in map with its own pins per era. Background image for the nested view comes from the location entity's `map_per_era[eraId]` (falls back to `map`), keeping image storage on the entity instead of duplicated in map state.
+- **New `imagePerEra` field type** — Schema-driven image-per-era widget on location entities. DM uploads a different map image for each era and the world map picks the right one automatically when entering the era. New `_FB.image` / `_FB.imagePerEra` schema helpers with `mediaKindWire` plumbed through, so per-era map images count under the correct media quota kind.
+- **Per-scope merge strategy on waypoint delete** — `DeleteWaypointDialog` now lists every scope that holds pin data (root world map + each location whose drilled map has pins in either era) so the DM picks merge / keep-left / keep-right independently per scope instead of forcing one strategy across the whole world.
+- **Map breadcrumb + location pin preview** — New `map_breadcrumb_bar` and `location_pin_preview_card` widgets surface the current era + drill path and give pins a hover/tap preview before entering. `era_scroll_bar` replaces the old `epoch_scroll_bar`.
+- **Battle map "From location" picker** — New `battlemap_picker_flow` lets the DM pick a battle map background from either a fresh device file *or* a location entity's `battlemaps` field. Location refs skip re-upload because they are already `dmt-asset://` refs counted under `MediaKind.battleMap`; `applyMapImage` is shared between the two sources so reused refs flow through the same decode/state pipeline.
+
+#### Characters
+
+- **Level-up dialog stops auto-committing on dismiss** — Previously any exit path (barrier tap, system back, X icon) committed the level up via `PopScope.onPopInvokedWithResult`. Now only the **Apply** button commits; barrier tap / back gesture / new **Cancel** button discard the staged choices and leave the character untouched.
+- **Entity selector picks up bundled SRD rows** — Char-sheet relation fields (inventory, equipment) couldn't pick from the bundled SRD 5.2.1 Core rows (longsword, leather armor, …) because those rows live in the in-memory `builtinSrdEntitiesProvider`, not `entityProvider`. New `includeBuiltinSrd: true` flag merges them in for char-sheet pickers (map/session/mindmap pickers default to false to keep the ~7K SRD rows out of those lists). `EntityNameText` also falls back to the SRD map, so previously-picked SRD rows render with their real name instead of a raw UUID.
+- **Entity card mobile layout** — On phones, the portrait gallery now stacks above the name/subtitle/description column instead of sitting beside it. The 200 px portrait was crushing the name field on narrow screens; tablet+ layouts are unchanged. The same vertical-stack pattern lands in the projection view.
+
+#### Sync, beta & storage
+
+- **Beta-enter merge service (PR-B1..B6)** — First-time beta-enter on a device used to race the cloud appliers: a stale cloud row from a prior beta session could land before local writes and silently wipe offline work (the "Aleseus" content-loss case). New `BetaEnterMergeService` pushes every piece of owned local content (worlds + their granular tables, orphan characters, personal packages) to the cloud *before* any cloud→local applier runs, with **local-wins** conflict policy on first enter. Gated by a per-user `BetaEnterGate` sentinel; `leaveBeta` clears the sentinel so a re-enter re-runs the merge.
+- **Wipe guards in cloud appliers** — `CloudCatchupService`, `PersonalMirrorApplier`, `WorldReconciler` and the world / package repositories now consult the gate and skip applying empty/stale cloud snapshots while a merge is pending, so a partial sync race can no longer publish empty defaults that fan out to other devices.
+- **`_saveToDb` merge-mode** — Repository save paths honour the gate too, shallow-merging cloud-derived rows onto local state during the merge window instead of overwriting.
+- **`StartupSyncGate` reconciles before splash closes** — Already shipped in v9.1.0 for the worlds tab; v9.2.0 extends it to invalidate hub list providers after merge so a fresh sign-in lands on a populated hub without a manual refresh.
+- **Migration 068 — beta quota actually at 100 MB** — `062_double_media_limits.sql` updated the wrong function (`get_beta_quota_bytes`) while every real caller reads `beta_user_quota_bytes()`, so the admin panel and storage checks were stuck at 50 MB. Migration 068 fixes `beta_user_quota_bytes()` to return 100 MB and drops the orphan function.
+
+### Upgrade notes
+
+- **App version bump:** `9.1.0` → `9.2.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **Cloud migration:** `068_fix_beta_quota_100mb.sql` — required to surface the correct 100 MB quota in the admin panel and storage checks. No data change beyond the function body.
+- **No new Edge Function or Worker deploys** required for this release; v9.1.0's `beta_purge_with_cleanup` deploy is still the gate for full R2 + Supabase Storage cleanup on beta exit / admin revoke.
+- **Stored map data** is forward-compatible: the JSON keys for `MapEra` / `EraWaypoint` / `LocationMapData` are new; old `MapEpoch` / `EpochWaypoint` worlds still load via the rename.
+
+### Known issues
+
+- Carry-over from v9.1.0: full WYSIWYG custom-content editors still deferred; remaining SRD effect gaps (Drow 120 ft superior darkvision, Tier-4 combat-tracker-dependent effects); D7 Drift v12 round-trip test harness pending.
+- `imagePerEra` field type is only wired into the location entity schema; custom packages cannot yet declare their own per-era image fields through the JSON editor.
+
+---
+
 ## Dungeon Master Tool v9.1.0 — Cross-Device Sync Hardening, Storage Cleanup, Map Persistence (Beta)
 
 **Release date:** May 2026
