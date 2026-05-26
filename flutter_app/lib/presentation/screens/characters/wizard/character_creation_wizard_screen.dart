@@ -10,6 +10,8 @@ import '../../../../application/character_creation/ability_score_method.dart';
 import '../../../../application/character_creation/ability_score_validator.dart';
 import '../../../../application/character_creation/character_draft.dart';
 import '../../../../application/character_creation/character_draft_notifier.dart';
+import '../../../../application/character_creation/origin_constants.dart';
+import '../../../../application/character_creation/weapon_mastery_resolver.dart';
 import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/entity_provider.dart';
@@ -499,11 +501,9 @@ class _CharacterCreationWizardScreenState
 
     final classEntity =
         draft.classId == null ? null : entities[draft.classId];
-    final background =
-        draft.backgroundId == null ? null : entities[draft.backgroundId];
     final skillCap = intField(classEntity, 'skill_proficiency_choice_count');
     final toolCap = intField(classEntity, 'tool_proficiency_count');
-    final languageCap = intField(background, 'granted_language_count');
+    const languageCap = OriginConstants.standardLanguageChoiceCount;
     final skillOptionsCount =
         listField(classEntity, 'skill_proficiency_options').length;
     final toolOptionsCount =
@@ -524,10 +524,24 @@ class _CharacterCreationWizardScreenState
         draft.toolChoiceIds.length > toolCap) {
       return 'Pick at most $toolCap class tool(s).';
     }
-    if (languageCap > 0 &&
-        languageOptionsCount > 0 &&
+    if (languageOptionsCount > 0 &&
         draft.languageChoiceIds.length > languageCap) {
-      return 'Pick at most $languageCap language(s).';
+      return 'Pick at most $languageCap origin language(s).';
+    }
+    // Weapon Mastery cap at L1 — computed from auto-granted class feats.
+    if (classEntity != null) {
+      final subclassEntity =
+          draft.subclassId == null ? null : entities[draft.subclassId];
+      final masteryCap = resolveWeaponMasteryCountAt(
+        classEntity: classEntity,
+        subclassEntity: subclassEntity,
+        level: draft.level,
+        entities: entities,
+      );
+      if (masteryCap > 0 &&
+          draft.weaponMasteryChoiceIds.length > masteryCap) {
+        return 'Pick at most $masteryCap weapon master${masteryCap == 1 ? 'y' : 'ies'}.';
+      }
     }
     return null;
   }
@@ -764,6 +778,10 @@ Map<String, dynamic> buildSeedFields({
   out['feat_ids'] = [
     if (background?.fields['origin_feat_ref'] is String)
       background!.fields['origin_feat_ref'] as String,
+    // Cleric Divine Order / Druid Primal Order are stored as feats so the
+    // resolver's proficiency_grant pass applies the weapon/armor bonuses.
+    if (draft.l1OrderChoiceId != null && draft.l1OrderChoiceId!.isNotEmpty)
+      draft.l1OrderChoiceId!,
     ...draft.featIds,
   ];
   // Mirror onto the visible `feats` relation list so the card renders them.
@@ -870,15 +888,77 @@ Map<String, dynamic> buildSeedFields({
       ],
     };
   }
+  final classGrantedToolIds = <String>[
+    if (characterClass != null)
+      for (final v in (characterClass.fields['granted_tool_refs'] is List
+              ? characterClass.fields['granted_tool_refs'] as List
+              : const []))
+        if (v is String) v,
+  ];
   appendIds(
     const ['tool_proficiencies'],
     [
       ...draft.toolChoiceIds,
       for (final id in featToolIds)
         if (!draft.toolChoiceIds.contains(id)) id,
+      // Class-granted tools (Druid Herbalism Kit, Rogue Thieves' Tools).
+      ...classGrantedToolIds,
+      // Soldier-style background variant pick (e.g. one Gaming Set type).
+      if (draft.backgroundToolVariantId != null &&
+          draft.backgroundToolVariantId!.isNotEmpty)
+        draft.backgroundToolVariantId!,
     ],
   );
-  appendIds(const ['language_refs', 'languages'], draft.languageChoiceIds);
+  appendIds(
+    const ['language_refs', 'languages'],
+    [
+      ...draft.languageChoiceIds,
+      ...draft.bonusLanguageChoiceIds,
+    ],
+  );
+  // Weapon Mastery picks — `weapon_masteries` is consumed by the editor + the
+  // attack pipeline. Wizard didn't populate it before, so masteries had to be
+  // resolved post-creation via the pending dialog. Now writes inline picks.
+  if (draft.weaponMasteryChoiceIds.isNotEmpty) {
+    appendIds(const ['weapon_masteries'], draft.weaponMasteryChoiceIds);
+    // Also mirror onto the resolver-input side so editor can read without
+    // going through the player category.
+    final existing = (out['weapon_masteries'] is List)
+        ? List<String>.from(out['weapon_masteries'] as List)
+        : <String>[];
+    for (final id in draft.weaponMasteryChoiceIds) {
+      if (!existing.contains(id)) existing.add(id);
+    }
+    out['weapon_masteries'] = existing;
+  }
+  // Class-derived proficiency lists (weapon categories + armor trainings).
+  // Mirrors CharacterResolver Pass 8's read-time merge so the PC entity carries
+  // the lists too — opening the card in the editor shows them without needing
+  // to re-run the resolver. Resolver still merges at runtime as a safety net.
+  if (characterClass != null) {
+    final orderFeatEntity = (draft.l1OrderChoiceId != null &&
+            draft.l1OrderChoiceId!.isNotEmpty)
+        ? entities[draft.l1OrderChoiceId]
+        : null;
+    List<String> stringList(Object? v) =>
+        v is List ? v.whereType<String>().toList() : const <String>[];
+    final weaponCats = ProficienciesStep.mergeProficiencyRefs(
+      base: stringList(characterClass.fields['weapon_proficiency_categories']),
+      featEffects: orderFeatEntity?.fields['effects'],
+      targetKind: 'weapon_category',
+    );
+    final armorCats = ProficienciesStep.mergeProficiencyRefs(
+      base: stringList(characterClass.fields['armor_training_refs']),
+      featEffects: orderFeatEntity?.fields['effects'],
+      targetKind: 'armor_category',
+    );
+    if (weaponCats.isNotEmpty) {
+      appendIds(const ['weapon_proficiency_categories'], weaponCats);
+    }
+    if (armorCats.isNotEmpty) {
+      appendIds(const ['armor_trainings'], armorCats);
+    }
+  }
   // PC schema's spell list is `spells_known` with hasEquip-style per-row
   // "prepared" flag. Cantrips have no slot cost so we flag them prepared by
   // default; chosen prepared spells get the same. The widget parses both
@@ -1250,10 +1330,32 @@ Map<String, dynamic> buildSeedFields({
               ).toMap(),
             );
           }
+        case PendingChoiceKind.weaponMastery:
+          // Wizard's proficiencies step resolves masteries inline. Persist
+          // only the unfilled remainder so the editor's pending panel can
+          // pick up the slack when the player skipped the picker.
+          final remaining =
+              (p.count - draft.weaponMasteryChoiceIds.length).clamp(0, p.count);
+          if (remaining > 0) {
+            seededPending.add(
+              newPendingChoice(
+                kind: p.kind,
+                level: p.level,
+                classId: p.classId,
+                classLabel: p.classLabel,
+                count: remaining,
+              ).toMap(),
+            );
+          }
+        case PendingChoiceKind.divineOrder:
+          // Wizard resolves the L1 Order pick (Cleric/Druid) inline. Skip
+          // the pending entry when the user picked one.
+          if (draft.l1OrderChoiceId == null ||
+              draft.l1OrderChoiceId!.isEmpty) {
+            seededPending.add(p.toMap());
+          }
         case PendingChoiceKind.asiOrFeat:
         case PendingChoiceKind.fightingStyle:
-        case PendingChoiceKind.weaponMastery:
-        case PendingChoiceKind.divineOrder:
         case PendingChoiceKind.featureOption:
         case PendingChoiceKind.skillProficiency:
         case PendingChoiceKind.toolProficiency:
@@ -1349,22 +1451,60 @@ Map<String, dynamic> buildSeedFields({
       ).toMap());
     }
   }
-  if (background != null) {
-    final languageCap = intOf(background.fields['granted_language_count']);
+  // Origin-side language picks (SRD 2024 p. 19): every character picks 2
+  // languages from the Standard list. Unfilled slots get persisted as a
+  // pending entry so the editor can resolve later.
+  {
+    const languageCap = OriginConstants.standardLanguageChoiceCount;
     final languageOptions =
         entities.values.where((e) => e.categorySlug == 'language').length;
-    if (languageCap > 0 && languageOptions > 0) {
+    if (languageOptions > 0) {
       final remaining =
           (languageCap - draft.languageChoiceIds.length).clamp(0, languageCap);
       if (remaining > 0) {
         seededPending.add(newPendingChoice(
           kind: PendingChoiceKind.languages,
           level: draft.level,
-          classId: background.id,
-          classLabel: background.name,
+          classLabel: 'Origin',
           count: remaining,
         ).toMap());
       }
+    }
+  }
+  // Class-bonus language picks (e.g. Rogue's Thieves' Cant feature grants
+  // +1 language of choice from any tier).
+  if (characterClass != null) {
+    final bonusCap = _classBonusLanguageCap(characterClass);
+    if (bonusCap > 0) {
+      final remaining = (bonusCap - draft.bonusLanguageChoiceIds.length)
+          .clamp(0, bonusCap);
+      if (remaining > 0) {
+        seededPending.add(newPendingChoice(
+          kind: PendingChoiceKind.languages,
+          level: draft.level,
+          classId: characterClass.id,
+          classLabel: characterClass.name,
+          count: remaining,
+        ).toMap());
+      }
+    }
+  }
+  // Background-style variant tool pick (e.g. Soldier Gaming Set type). When
+  // declared on the background but unfilled, surface as a tool-proficiency
+  // pending entry so the editor's resolver can prompt.
+  if (background != null) {
+    final variantGroup =
+        background.fields['granted_tool_variant_group']?.toString() ?? '';
+    if (variantGroup.isNotEmpty &&
+        (draft.backgroundToolVariantId == null ||
+            draft.backgroundToolVariantId!.isEmpty)) {
+      seededPending.add(newPendingChoice(
+        kind: PendingChoiceKind.toolProficiency,
+        level: draft.level,
+        classId: background.id,
+        classLabel: background.name,
+        count: 1,
+      ).toMap());
     }
   }
 
@@ -1443,6 +1583,16 @@ Map<String, dynamic> buildSeedFields({
   }
 
   return out;
+}
+
+/// SRD 5.2.1 class-granted bonus language count at L1. Rogue's Thieves' Cant
+/// feature grants +1 language of choice from any tier; other classes don't
+/// grant a creation-time pick. Druid's Druidic is auto-applied via
+/// `granted_languages` on the class entity (no pick required), so it
+/// returns 0 here.
+int _classBonusLanguageCap(Entity classEntity) {
+  if (classEntity.name == 'Rogue') return 1;
+  return 0;
 }
 
 /// Parse hit die spec like "d8", "1d10", "8" → integer faces. Defaults to 8.

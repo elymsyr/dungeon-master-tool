@@ -891,6 +891,9 @@ class CharacterResolver {
       for (final s in _readRefList(cls.fields['saving_throw_refs'], entitiesById)) {
         if (!saves.contains(s)) saves.add(s);
       }
+      for (final t in _readRefList(cls.fields['granted_tool_refs'], entitiesById)) {
+        if (!tools.contains(t)) tools.add(t);
+      }
       final wcats = cls.fields['weapon_proficiency_categories'];
       if (wcats is List) {
         for (final v in wcats) {

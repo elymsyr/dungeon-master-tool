@@ -32,17 +32,22 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
         classId: id,
         subclassId: null,
         // Skill/tool/spell choices are class-scoped — switching class
-        // invalidates them.
+        // invalidates them. Weapon Mastery picks and L1 Order pick are also
+        // class-scoped (count, filter, and feat options all depend on the
+        // chosen class), as is the Rogue/Druid bonus-language slot.
         skillChoiceIds: const [],
         toolChoiceIds: const [],
         cantripIds: const [],
         preparedSpellIds: const [],
+        weaponMasteryChoiceIds: const [],
+        bonusLanguageChoiceIds: const [],
+        l1OrderChoiceId: null,
       );
   void setBackground(String? id) => state = state.copyWith(
         backgroundId: id,
-        // Language picks are sized by background's
-        // `granted_language_count` — reset on background swap.
-        languageChoiceIds: const [],
+        // Background tool variant pick (e.g. Soldier Gaming Set variant)
+        // belongs to the chosen background — reset on swap.
+        backgroundToolVariantId: null,
       );
   void setSubclass(String? id) => state = state.copyWith(subclassId: id);
 
@@ -97,6 +102,34 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
 
   void clearLanguageChoices() =>
       state = state.copyWith(languageChoiceIds: const []);
+
+  void toggleBonusLanguageChoice(String id, {required int cap}) {
+    final ids = [...state.bonusLanguageChoiceIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(bonusLanguageChoiceIds: ids);
+  }
+
+  void toggleWeaponMasteryChoice(String id, {required int cap}) {
+    final ids = [...state.weaponMasteryChoiceIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(weaponMasteryChoiceIds: ids);
+  }
+
+  void setBackgroundToolVariant(String? variantId) =>
+      state = state.copyWith(backgroundToolVariantId: variantId);
+
+  void setL1OrderChoice(String? featId) =>
+      state = state.copyWith(l1OrderChoiceId: featId);
 
   void toggleCantrip(String id, {required int cap}) {
     final ids = [...state.cantripIds];
