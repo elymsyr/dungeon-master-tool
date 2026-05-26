@@ -1,5 +1,34 @@
 # Release Notes
 
+## Dungeon Master Tool v9.3.0 — Class Tool Proficiencies, Weapon Mastery Picker Fix, Silent Auto-Grant Resolver Bugs (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.3.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v9.2.0. SRD 5.2.1 class tool proficiencies are finally wired through (Bard / Druid / Monk / Rogue), and three character-creation resolvers — Weapon Mastery, Extra Attack, resource pool grants (Rage, Bardic Inspiration, Ki, …) — get a silent-failure fix that had been hiding **all** auto-granted class effects on built-in SRD content. Net effect: Barbarian / Fighter / Paladin / Ranger / Rogue L1 now show the Weapon Mastery picker, Fighter L5 shows the correct extra-attack count, and Rage / Bardic Inspiration / Ki uses populate on the PC card instead of staying blank.
+
+### Highlights
+
+#### Characters & SRD
+
+- **Class tool proficiencies (SRD §1.5)** — Four classes finally pick up the tool proficiencies the SRD grants them. Bard L1 picker offers all musical instruments (cap 3), Monk L1 picker offers artisan's tools + musical instruments (cap 1), Druid L1 auto-grants Herbalism Kit, Rogue L1 auto-grants Thieves' Tools. Wizard step already had the picker UI; the data side was empty on every class until now. Resolver `Pass 8` extended to walk class-side `granted_tool_refs` (previously background-only). Wizard `buildSeedFields()` extended to seed class granted tools so the PC entity's `tool_proficiencies` list opens populated.
+- **Weapon Mastery picker now appears for Barbarian / Fighter / Paladin / Ranger / Rogue at L1** — Two layered bugs were hiding the picker. (1) `_passesMasteryFilter` in [proficiencies_step.dart](flutter_app/lib/presentation/screens/characters/wizard/steps/proficiencies_step.dart) only handled Map-shape `category_ref`; the SRD pack-build's `_resolveRefs` rewrites `{_ref, name}` placeholders to String UUIDs before the resolver ever sees them, so every weapon failed the filter → `masteryWeaponIds` was empty → picker hidden. Filter now accepts either shape. (2) Even with the filter fixed, `masteryCap` was still 0 because the resolver's `_isAutoGranted` check matched only Map-shape `source_ref` — same shape mismatch, same silent failure.
+- **Silent auto-grant resolver bug fixed across 3 resolvers** — `weapon_mastery_resolver`, `extra_attack_resolver`, and `resource_pool_resolver` all carried the same Map-only `source_ref` check, so every class auto-grant on built-in SRD content was invisible. The pack-build's two-pass `_resolveRefs` pipeline turns `{_ref, name}` placeholders into String UUIDs; resolvers now look up entities by UUID in addition to the legacy Map form. Side-effect fixes: Fighter L5 / L11 / L20 Extra Attack count now resolves to 2 / 3 / 4 as it should, and resource pools (Rage uses, Bardic Inspiration, Channel Divinity, Ki / Focus Points, Wild Shape, Lay on Hands, …) populate on the PC card at the right levels instead of staying blank until manual edit.
+
+### Upgrade notes
+
+- **App version bump:** `9.2.0` → `9.3.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No new cloud migrations.** Pure client-side data + resolver fixes.
+- **Existing characters are unaffected** until they are re-resolved (level-up, edit, re-open). The tool proficiency picker only fires on character creation; existing PCs without the granted tools can add them manually via the editor.
+
+### Known issues
+
+- Carry-over from v9.2.0: full WYSIWYG custom-content editors still deferred; remaining SRD effect gaps (Drow 120 ft superior darkvision, Tier-4 combat-tracker-dependent effects); D7 Drift v12 round-trip test harness pending.
+- `count_formula` resource pool grants (e.g. Paladin Lay on Hands `paladin_level_x5`, Monk Ki `monk_level`, Cleric Channel Divinity `cha_mod_min_1`) are still skipped — they need ability-score / class-level formula evaluation the planner doesn't carry yet.
+
+---
+
 ## Dungeon Master Tool v9.2.0 — Era Timeline Overhaul, Per-Location Maps, Beta Merge Hardening (Beta)
 
 **Release date:** May 2026
