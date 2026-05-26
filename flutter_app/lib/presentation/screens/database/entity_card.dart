@@ -346,34 +346,30 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     }
     final cardTheme = _cachedCardTheme!;
 
-    final children = <Widget>[
-      // === HEADER: portrait (top-left) | name + subtitle + desc + source/tags (right) ===
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (hasPortrait || !widget.readOnly) ...[
-            _PortraitGallery(
-              images: [
-                if (entity.imagePath.isNotEmpty) entity.imagePath,
-                ...entity.images,
-              ],
-              entityName: entity.name,
-              readOnly: widget.readOnly,
-              palette: palette,
-              onImagesChanged: (newImages) {
-                ref
-                    .read(entityProvider.notifier)
-                    .update(entity.copyWith(imagePath: '', images: newImages));
-              },
-              onIndexChanged: (i) =>
-                  setState(() => _currentImageIndex = i),
-            ),
-            const SizedBox(width: 16),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+    final showPortraitSlot = hasPortrait || !widget.readOnly;
+    final portrait = showPortraitSlot
+        ? _PortraitGallery(
+            images: [
+              if (entity.imagePath.isNotEmpty) entity.imagePath,
+              ...entity.images,
+            ],
+            entityName: entity.name,
+            readOnly: widget.readOnly,
+            palette: palette,
+            onImagesChanged: (newImages) {
+              ref
+                  .read(entityProvider.notifier)
+                  .update(entity.copyWith(imagePath: '', images: newImages));
+            },
+            onIndexChanged: (i) => setState(() => _currentImageIndex = i),
+          )
+        : null;
+    // On phones, stacking image-on-top frees up horizontal room for the name
+    // field, which otherwise gets crushed next to the 200px portrait.
+    final stackHeaderVertical = isPhone(context) && portrait != null;
+    final infoColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
                 // Name + project button row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,13 +495,34 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           .read(entityProvider)[widget.entityId]!
                           .copyWith(tags: tags),
                     );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          },
+        ),
+      ],
+    );
+
+    final children = <Widget>[
+      // === HEADER: portrait + name/subtitle/desc/source. Row on tablet+,
+      // image-on-top Column on phone so the name field has room to breathe.
+      if (stackHeaderVertical)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: portrait),
+            const SizedBox(height: 12),
+            infoColumn,
+          ],
+        )
+      else
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (portrait != null) ...[
+              portrait,
+              const SizedBox(width: 16),
+            ],
+            Expanded(child: infoColumn),
+          ],
+        ),
 
       const SizedBox(height: 16),
 
