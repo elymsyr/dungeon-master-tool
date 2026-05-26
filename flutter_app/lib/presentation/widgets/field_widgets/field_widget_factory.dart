@@ -1415,6 +1415,7 @@ class _RelationFieldWidget extends StatelessWidget {
                   context: context,
                   ref: ref!,
                   allowedTypes: schema.validation.allowedTypes,
+                  includeBuiltinSrd: true,
                 );
                 if (result != null && result.isNotEmpty) {
                   onChanged(result.first);
@@ -2165,6 +2166,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                         allowedTypes: schema.validation.allowedTypes,
                         multiSelect: true,
                         excludeIds: existingIds,
+                        includeBuiltinSrd: true,
                       );
                       if (result != null) {
                         for (final id in result) {
@@ -2566,6 +2568,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
                 allowedTypes: schema.validation.allowedTypes,
                 multiSelect: true,
                 excludeIds: ids,
+                includeBuiltinSrd: true,
               );
               if (result != null && result.isNotEmpty) {
                 onChanged([...ids, ...result]);
