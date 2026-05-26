@@ -433,7 +433,11 @@ class ProficienciesStep extends ConsumerWidget {
   ) {
     final isMelee = weapon.fields['is_melee'] == true;
     final categoryRef = weapon.fields['category_ref'];
-    final catId = categoryRef is Map ? categoryRef['id']?.toString() : null;
+    final catId = categoryRef is String
+        ? categoryRef
+        : (categoryRef is Map
+            ? (categoryRef['id'] ?? categoryRef['_ref'])?.toString()
+            : null);
     final catName = catId == null ? '' : (entities[catId]?.name ?? '');
     final isSimple = catName.startsWith('Simple');
     final isMartial = catName.startsWith('Martial');
