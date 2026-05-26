@@ -42,7 +42,7 @@ class MapBreadcrumbBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.uiFloatingBg,
         border: Border.all(color: palette.uiFloatingBorder),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: palette.cbr,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -68,7 +68,7 @@ class MapBreadcrumbBar extends StatelessWidget {
     if (onTap == null) return text;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.cbr,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: text,
