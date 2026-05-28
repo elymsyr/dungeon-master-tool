@@ -1,5 +1,39 @@
 # Release Notes
 
+## Dungeon Master Tool v9.4.0 — Thirteen New Themes, Google Fonts Per-Theme, Dynamic App Version, Heartbeat Service Refactor (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v9.3.0. Theme catalog nearly doubles: 13 new palettes ship alongside `google_fonts` integration so themes can pin their own typeface. `appVersion` is now resolved at runtime from the bundled pubspec via `package_info_plus`, so the admin heartbeat always reflects the real installed build instead of a hand-edited constant. Heartbeat itself moves out of `main.dart` into a dedicated service that pings on boot, on every `signedIn` / `tokenRefreshed` / `userUpdated` auth event, and on a 15-minute foreground timer (paused while backgrounded).
+
+### Highlights
+
+#### Theming
+
+- **13 new theme palettes** — `obsidian` (volcanic glass, near-black slate + crimson edge), `sunset` (coral + amber on smoky plum), `nord` (arctic polar night + frost cyan), `rose` (cream pink + magenta pill chips, light theme), `neon` (cyberpunk hot magenta + cyan on near-black), `terminal` (green-on-black CRT), `scroll` (warm parchment + ink, light theme), `terra` (earthy clay), `goldenrod` (heraldic gold + ivory), `jade` (deep jade + bone), `vapor` (synthwave purple/pink), `mono` (pure greyscale), `carmine` (oxblood + cream). Brings the in-app palette picker count from 11 to 24.
+- **Google Fonts per theme (`fontFamily`)** — `DmToolColors` gains an optional `fontFamily` field. When set, the theme builder resolves the family via `google_fonts` instead of falling back to the binary `useSerif` toggle, so palettes can ship distinct typefaces (e.g. monospace for `terminal` / `mono`, condensed serif for `scroll`).
+
+#### Admin telemetry
+
+- **Dynamic `appVersion` via `package_info_plus`** — `appVersion` was a hand-edited `const String` in `constants.dart`; every release required a code edit just to keep the admin panel honest. New `initAppVersion()` resolves the bundled pubspec version (Android/iOS/desktop) or the web build's `info.json` and overwrites the fallback before Supabase init, so `user_heartbeat` RPC carries the real installed build on the first ping.
+- **`HeartbeatService` refactor** — Old inline `user_heartbeat` RPC in `_initSupabase()` only fired once at boot, missed late sign-ins, and would have paged the radio on backgrounded mobile sessions. New singleton `HeartbeatService` (instance API: `start()` / `stop()` / `send()`) subscribes to the Supabase auth stream and re-pings on `signedIn` / `tokenRefreshed` / `userUpdated`, runs a 15-min foreground timer via `WidgetsBinding` lifecycle observer, and cancels the timer when the app is paused/inactive so it doesn't wake the network for an idle heartbeat. `profiles.last_active_at` / `app_version` / `platform` stay populated across long sessions, late auth, and token refresh boundaries.
+
+### Upgrade notes
+
+- **App version bump:** `9.3.0` → `9.4.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No new cloud migrations.** Pure client-side theme + telemetry work.
+- **New runtime deps:** `google_fonts: ^6.2.1`, `package_info_plus: ^8.0.2`. `flutter pub get` required after upgrade.
+- **`appVersion` is no longer `const`** — Code that imported it expecting a compile-time constant must treat it as a mutable `String` populated by `initAppVersion()` during bootstrap.
+
+### Known issues
+
+- Carry-over from v9.3.0: full WYSIWYG custom-content editors still deferred; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+- Google Fonts at runtime fetch on first use when a system copy is not bundled; first launch on a fresh install may briefly render the fallback family before the network resolve completes.
+
+---
+
 ## Dungeon Master Tool v9.3.0 — Class Tool Proficiencies, Weapon Mastery Picker Fix, Silent Auto-Grant Resolver Bugs, Drow 120 ft Darkvision, Formula-Driven Resource Pools (Beta)
 
 **Release date:** May 2026
