@@ -16,8 +16,9 @@ import 'application/providers/ui_state_provider.dart';
 import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
-import 'core/constants.dart' show appVersion;
+import 'core/constants.dart' show initAppVersion;
 import 'core/services/log_buffer.dart';
+import 'data/services/heartbeat_service.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
     as screencast_entry;
@@ -165,6 +166,11 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       final uiStateNotifier = UiStateNotifier();
       final uiStateLoad = _initUiState(uiStateNotifier);
 
+      // Heartbeat (admin panel `last_active_at` / `app_version` / `platform`)
+      // reads `appVersion`; resolve it from pubspec via PackageInfo before
+      // Supabase init so the first RPC carries the real installed build.
+      final appVersionLoad = initAppVersion();
+
       // SoLoud is lazy: only soundpad_engine.dart touches it, and that fires
       // when the user opens the soundpad — well after first paint. Pushing it
       // off the critical path saves up to 3s of cold-start when the audio
@@ -182,7 +188,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       // - UiState: theme + locale must be loaded before render to avoid a
       //   visible flicker as the app re-themes itself.
       await Future.wait<void>([
-        _initSupabase(),
+        appVersionLoad.then((_) => _initSupabase()),
         _initWindowManager(),
         uiStateLoad,
       ]);
@@ -202,20 +208,11 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         url: SupabaseConfig.url,
         anonKey: SupabaseConfig.anonKey,
       ).timeout(const Duration(seconds: 3));
-      // Fire-and-forget: updates profiles.last_active_at + app_version +
-      // platform (migration 023). beta_participants.last_active_at also
-      // bumped if user is in beta.
-      if (Supabase.instance.client.auth.currentUser != null) {
-        unawaited(
-          Supabase.instance.client
-              .rpc('user_heartbeat', params: {
-                'p_app_version': appVersion,
-                'p_platform': kIsWeb ? 'web' : Platform.operatingSystem,
-              })
-              .then<void>((_) {})
-              .catchError((_) {}),
-        );
-      }
+      // Drives profiles.last_active_at / app_version / platform updates
+      // (migration 023). Fires now (existing session), on every signedIn /
+      // tokenRefreshed event (handles late sign-in after boot), and on a
+      // 15-min foreground timer (long sessions stay marked active).
+      HeartbeatService.instance.start();
     } catch (e, st) {
       LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
       debugPrint('Supabase init failed – online features disabled: $e');

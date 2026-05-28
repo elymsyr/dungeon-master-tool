@@ -62,6 +62,9 @@ dependencies:
   # Network connectivity status (SyncEngine wake-on-online — PR-SYNC-1)
   connectivity_plus: ^6.0.5
 
+  # Runtime app version (pubspec → admin heartbeat)
+  package_info_plus: ^8.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
