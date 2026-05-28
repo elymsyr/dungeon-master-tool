@@ -113,6 +113,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final double buttonPaddingV;
   final bool useBorders;
   final bool useSerif;
+  final String? fontFamily;  // Google Fonts family; overrides useSerif when set
   final Color primaryBtnBg;
   final Color primaryBtnText;
   final Color actionBtnBg;
@@ -202,6 +203,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     this.buttonPaddingV = 4,
     this.useBorders = true,
     this.useSerif = false,
+    this.fontFamily,
     this.primaryBtnBg = const Color(0xFF1565C0),
     this.primaryBtnText = Colors.white,
     this.actionBtnBg = const Color(0xFFF9A825),
@@ -294,6 +296,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     double? buttonPaddingV,
     bool? useBorders,
     bool? useSerif,
+    String? fontFamily,
     Color? primaryBtnBg,
     Color? primaryBtnText,
     Color? actionBtnBg,
@@ -380,6 +383,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       buttonPaddingV: buttonPaddingV ?? this.buttonPaddingV,
       useBorders: useBorders ?? this.useBorders,
       useSerif: useSerif ?? this.useSerif,
+      fontFamily: fontFamily ?? this.fontFamily,
       primaryBtnBg: primaryBtnBg ?? this.primaryBtnBg,
       primaryBtnText: primaryBtnText ?? this.primaryBtnText,
       actionBtnBg: actionBtnBg ?? this.actionBtnBg,
@@ -471,6 +475,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       buttonPaddingV: t < 0.5 ? buttonPaddingV : other.buttonPaddingV,
       useBorders: t < 0.5 ? useBorders : other.useBorders,
       useSerif: t < 0.5 ? useSerif : other.useSerif,
+      fontFamily: t < 0.5 ? fontFamily : other.fontFamily,
       primaryBtnBg: Color.lerp(primaryBtnBg, other.primaryBtnBg, t)!,
       primaryBtnText: Color.lerp(primaryBtnText, other.primaryBtnText, t)!,
       actionBtnBg: Color.lerp(actionBtnBg, other.actionBtnBg, t)!,

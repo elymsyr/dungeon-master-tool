@@ -33,6 +33,9 @@ dependencies:
   # Routing
   go_router: ^14.8.1
 
+  # Fonts
+  google_fonts: ^6.2.1
+
   # UI
   cupertino_icons: ^1.0.8
   window_manager: ^0.4.3
