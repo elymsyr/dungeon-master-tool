@@ -15,6 +15,7 @@ import '../services/beta_enter_gate.dart';
 import '../services/beta_enter_merge_service.dart';
 import '../services/beta_exit_cleanup_service.dart';
 import '../services/beta_exit_preserve_service.dart';
+import '../services/beta_loss_gate.dart';
 import '../services/sync_telemetry.dart' show SyncTelemetry, syncTelemetryProvider;
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
@@ -22,9 +23,10 @@ import 'connectivity_provider.dart';
 import 'online_worlds_provider.dart';
 import 'personal_online_provider.dart';
 import 'role_provider.dart';
+import 'world_mirror_provider.dart';
 
 /// Beta program state — ilk 90 kullanıcıya açık, 100 MB / kullanıcı cloud
-/// save quota'sı. 7 gün inaktif olanların slot'u otomatik serbest bırakılır.
+/// save quota'sı. 14 gün inaktif olanların slot'u otomatik serbest bırakılır.
 /// Sunucu otoritedir (RLS + trigger); burası yalnızca UX gate'i ve UI kaynağı.
 @immutable
 class BetaState {
@@ -36,7 +38,7 @@ class BetaState {
   final DateTime? lastActiveAt;
   final int usedBytes;
   final int quotaBytes;         // sunucudan gelir (100 MB mirror)
-  final int inactivityDays;     // 7
+  final int inactivityDays;     // 14
   final bool requestPending;    // admin onayı bekleyen istek var mı
   final DateTime? requestedAt;
   final String? requestMessage;
@@ -52,7 +54,7 @@ class BetaState {
     this.lastActiveAt,
     this.usedBytes = 0,
     this.quotaBytes = 100 * 1024 * 1024,
-    this.inactivityDays = 7,
+    this.inactivityDays = 14,
     this.requestPending = false,
     this.requestedAt,
     this.requestMessage,
@@ -138,6 +140,11 @@ class BetaNotifier extends StateNotifier<BetaState> {
   String? _rtUid;
   Timer? _rtDebounce;
 
+  /// True while the voluntary [leaveBeta] flow runs, so the `wasActive →
+  /// !nowActive` transition it triggers via its trailing [refresh] does NOT
+  /// also fire the involuntary-exit handler (which would double-run preserve).
+  bool _leaving = false;
+
   BetaNotifier(this._ref) : super(const BetaState.initial()) {
     _authSub = _ref.listen<AuthState?>(
       authProvider,
@@ -147,6 +154,10 @@ class BetaNotifier extends StateNotifier<BetaState> {
           state = const BetaState.signedOut();
         } else {
           _ensureRealtime(next.uid);
+          // Warm the involuntary-loss sentinel cache so applier
+          // `isMarkedSync` works on cold start before any CDC delete runs.
+          // ignore: discarded_futures, unawaited_futures
+          _ref.read(betaLossGateProvider).hydrate(next.uid);
           refresh();
         }
       },
@@ -227,6 +238,7 @@ class BetaNotifier extends StateNotifier<BetaState> {
       }
       final nowActive = (row['is_active'] as bool?) ?? false;
       final justBecameActive = !wasActive && nowActive;
+      final justLostBeta = wasActive && !nowActive;
       state = BetaState(
         isActive: nowActive,
         slotCap: (row['slot_cap'] as num?)?.toInt() ?? 90,
@@ -236,7 +248,7 @@ class BetaNotifier extends StateNotifier<BetaState> {
         lastActiveAt: _parseTs(row['last_active_at']),
         usedBytes: (row['used_bytes'] as num?)?.toInt() ?? 0,
         quotaBytes: (row['quota_bytes'] as num?)?.toInt() ?? (100 * 1024 * 1024),
-        inactivityDays: (row['inactivity_days'] as num?)?.toInt() ?? 7,
+        inactivityDays: (row['inactivity_days'] as num?)?.toInt() ?? 14,
         requestPending: (row['request_pending'] as bool?) ?? false,
         requestedAt: _parseTs(row['requested_at']),
         requestMessage: row['request_message'] as String?,
@@ -249,6 +261,14 @@ class BetaNotifier extends StateNotifier<BetaState> {
       if (justBecameActive) {
         // ignore: discarded_futures, unawaited_futures
         _runEnterMerge();
+      }
+      // Involuntary beta loss (server inactivity sweep or admin revoke). The
+      // voluntary leaveBeta() flow runs its own preserve, so skip when
+      // _leaving. Fire-and-forget — protects the owner's local Drift data
+      // before/as the server-side cascade DELETE CDC events arrive.
+      if (justLostBeta && !_leaving) {
+        // ignore: discarded_futures, unawaited_futures
+        _runInvoluntaryExit();
       }
     } catch (e, st) {
       if (isOfflineError(e)) {
@@ -266,10 +286,91 @@ class BetaNotifier extends StateNotifier<BetaState> {
   /// before any cloud→local applier runs and (combined with PR-B1 wipe guards)
   /// is never destroyed by a stale cloud row.
   Future<void> _runEnterMerge() async {
+    // Re-granted beta: clear the involuntary-loss sentinel so owned-content
+    // CDC deletes resume normal purge behaviour again.
+    final uid = _ref.read(authProvider)?.uid;
+    if (uid != null) {
+      try {
+        await _ref.read(betaLossGateProvider).clear(uid);
+      } catch (e) {
+        debugPrint('beta-enter clear loss-gate error: $e');
+      }
+    }
     try {
       await _ref.read(betaEnterMergeServiceProvider)?.merge();
     } catch (e, st) {
       debugPrint('in-session beta-enter merge error: $e\n$st');
+    }
+  }
+
+  /// Involuntary beta loss handler (inactivity sweep / admin revoke). Unlike
+  /// voluntary [leaveBeta], the user isn't driving this — the server already
+  /// purged their cloud rows (or is about to via cascade). We can only protect
+  /// the LOCAL Drift copy of content the user OWNS:
+  ///   1. Set a durable per-uid sentinel FIRST — appliers consult it (plus an
+  ///      owner_id == uid check) to skip purge/trash on incoming CDC deletes,
+  ///      closing the realtime race and surviving cold-start replay.
+  ///   2. Enumerate owned worlds / chars / personal packages from LOCAL Drift
+  ///      (cloud may already be gone) and flip them to offline-only via the
+  ///      shared [_reconcileAfterLeave] path.
+  ///   3. Arm the per-id 60s guards for the warm realtime window too.
+  ///   4. Best-effort hydrate of any still-surviving cloud rows (never aborts).
+  Future<void> _runInvoluntaryExit() async {
+    final uid = _ref.read(authProvider)?.uid;
+    if (uid == null) return;
+    try {
+      // 1. Durable sentinel first (mark() updates the in-memory cache before
+      // its await, so concurrent CDC events already observe the guard).
+      await _ref.read(betaLossGateProvider).mark(uid);
+
+      // 2. Enumerate LOCAL owned content.
+      final db = _ref.read(appDatabaseProvider);
+      final ownedWorldIds = (await db.worldsDao.getAll())
+          .where((w) => w.ownerId == uid)
+          .map((w) => w.id)
+          .toList(growable: false);
+      final ownedCharIds = (await db.worldCharactersDao.getAllChars())
+          .where((c) => c.ownerId == uid)
+          .map((c) => c.id)
+          .toList(growable: false);
+      final pkgNames =
+          _ref.read(personalOnlinePackageNamesProvider).toList(growable: false);
+
+      // 3. Arm per-id guards for the warm window.
+      final mirror = _ref.read(worldMirrorServiceProvider);
+      if (mirror != null) {
+        for (final id in ownedWorldIds) {
+          mirror.registerExpectedUnpublish(id);
+        }
+        for (final id in ownedCharIds) {
+          mirror.registerExpectedCharDelete(id);
+        }
+      }
+
+      // 4. Flip everything to offline-only (reuse voluntary reconcile).
+      await _reconcileAfterLeave(PreserveResult(
+        worldIds: ownedWorldIds,
+        orphanCharIds: ownedCharIds,
+        personalPackageNames: pkgNames,
+      ));
+
+      // 5. Best-effort hydrate of any cloud rows that still exist. Never abort
+      // on failure — the loss already happened server-side.
+      try {
+        await _ref.read(betaExitPreserveServiceProvider)?.preserve();
+      } catch (e) {
+        debugPrint('involuntary exit preserve (best-effort) error: $e');
+      }
+
+      // 6. Clear the enter-gate so a future re-grant re-runs the local-wins
+      // merge against current local content.
+      try {
+        await _ref.read(betaEnterGateProvider).clear(uid);
+      } catch (e) {
+        debugPrint('involuntary exit clear enter-gate error: $e');
+      }
+    } catch (e, st) {
+      debugPrint('involuntary beta exit error: $e\n$st');
     }
   }
 
@@ -348,6 +449,9 @@ class BetaNotifier extends StateNotifier<BetaState> {
     if (!_canCallRpc) return false;
     final userId = _ref.read(authProvider)?.uid;
     if (userId == null) return false;
+    // Suppress the involuntary-exit handler for the duration of this voluntary
+    // flow (including its trailing refresh()), which has its own preserve.
+    _leaving = true;
     state = state.copyWith(loading: true, error: null);
     try {
       // 1. Hydrate + arm guards. Ağ hatası halinde caller fırlat dialog'da
@@ -437,6 +541,8 @@ class BetaNotifier extends StateNotifier<BetaState> {
       debugPrint('leave_beta error: $e\n$st');
       state = state.copyWith(loading: false, error: e.toString());
       return false;
+    } finally {
+      _leaving = false;
     }
   }
 

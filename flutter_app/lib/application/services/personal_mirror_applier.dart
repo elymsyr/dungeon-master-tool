@@ -12,6 +12,7 @@ import '../providers/online_worlds_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/role_provider.dart';
 import 'beta_enter_gate.dart';
+import 'beta_loss_gate.dart';
 import 'personal_sync_service.dart';
 import 'world_mirror_applier.dart';
 import 'world_mirror_service.dart';
@@ -193,6 +194,9 @@ class PersonalMirrorApplier {
         // purge'ü atla. Cleanup + guard temizliği world kanalı applier'ına
         // ait (handleExpectedUnpublish); burada çift cleanup yapma.
         if (mirror.isExpectedUnpublish(worldId)) break;
+        // Involuntary beta loss: I own this world but lost beta (inactivity
+        // sweep / admin revoke) — keep the local copy as offline, don't purge.
+        if (await _ownsWorldAndLostBeta(worldId)) break;
         // Local mirror'ı temizle — başka cihazda leave/kick edildikse bu
         // cihazda ölü dünya kalmasın.
         try {
@@ -202,6 +206,23 @@ class PersonalMirrorApplier {
         }
       default:
         return;
+    }
+  }
+
+  /// Involuntary beta loss preserve: while the per-uid sentinel is set, a CDC
+  /// membership DELETE for a world the user OWNS must keep the local mirror as
+  /// offline instead of purging. Scoped to `ownerId == uid` so normal
+  /// non-owner kicks still purge.
+  Future<bool> _ownsWorldAndLostBeta(String worldId) async {
+    final uid = ref.read(authProvider)?.uid;
+    if (uid == null || !ref.read(betaLossGateProvider).isMarkedSync(uid)) {
+      return false;
+    }
+    try {
+      final w = await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
+      return w != null && w.ownerId == uid;
+    } catch (_) {
+      return false;
     }
   }
 }
