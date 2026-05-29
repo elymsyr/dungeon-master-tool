@@ -1,5 +1,38 @@
 # Release Notes
 
+## Dungeon Master Tool v9.5.0 — Admin Broadcast Notifications, Involuntary Beta-Loss Data Guard, 14-Day Inactivity Window (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v9.5.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v9.4.0. Adds an admin-to-everyone broadcast notification system with interactive content, hardens the beta program against silent data loss when access is lost involuntarily, and doubles the beta inactivity grace period from 7 to 14 days.
+
+### Highlights
+
+#### Notifications
+
+- **Admin broadcast notifications** — Admins compose a notification (title + ordered content blocks) from a new "Notifications" admin tab and publish it to every user. Three block types: `markdown` (rendered rich text), `poll` (single- or multi-select question), and `input` (free-text prompt, multiline by default). Backed by new `notifications`, `notification_responses`, and `notification_reads` tables (migration 069). Writes go only through `SECURITY DEFINER` RPCs; RLS lets every user read published notifications while clients cannot write directly.
+- **Inbox + unread badge** — A notification icon button with an unread-count badge sits in the hub. Users open an inbox dialog to read notifications and answer polls / inputs inline; one response row per user per notification, upsert-on-edit. Read tracking drives the badge.
+- **Admin response viewer** — Admins open a per-notification responses dialog to see aggregated poll tallies and individual free-text answers. `notifications` + `notification_responses` are added to the realtime publication so the inbox and the response viewer update live.
+
+#### Beta program
+
+- **Involuntary beta-loss data guard (`BetaLossGate`)** — When a user loses beta access *involuntarily* (server-side inactivity sweep or admin revoke) rather than via the voluntary exit flow, the server-side cascade DELETE events arriving over realtime (or replayed on cold start) would previously wipe the owner's offline Drift copy of their own worlds. A per-user sentinel now marks the involuntary-loss state and makes CDC DELETE appliers skip purge/trash for rows the user *owns* (`owner_id == uid`). Worlds the user merely plays in (non-owner) are still purged normally on membership removal. Set the instant a `wasActive && !nowActive` transition is detected; cleared on successful beta re-enter.
+- **Inactivity window 7 → 14 days** — `beta_inactivity_days()` now returns 14 (migration 070). The single `CREATE OR REPLACE` flows through both the daily `sweep_inactive_beta()` purge cutoff and the client-facing `get_beta_status().inactivity_days`; sweep scope, cron, and RPCs are otherwise unchanged.
+
+### Upgrade notes
+
+- **App version bump:** `9.4.0` → `9.5.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **New cloud migrations:** `069_notifications.sql` (notification tables + RLS + RPCs + realtime publication) and `070_beta_inactivity_14d.sql` (inactivity threshold). Apply via Supabase Dashboard → SQL Editor before / alongside the client rollout.
+- **Pure additive schema.** Existing tables and data are unaffected.
+
+### Known issues
+
+- Carry-over from v9.4.0: full WYSIWYG custom-content editors still deferred; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v9.4.0 — Thirteen New Themes, Google Fonts Per-Theme, Dynamic App Version, Heartbeat Service Refactor (Beta)
 
 **Release date:** May 2026
