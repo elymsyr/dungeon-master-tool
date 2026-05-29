@@ -13,6 +13,7 @@ import 'audit_log_tab.dart';
 import 'beta_requests_tab.dart';
 import 'bug_reports_tab.dart';
 import 'content_moderation_tab.dart';
+import 'notifications_admin_tab.dart';
 import 'restricted_users_tab.dart';
 
 /// Admin paneli — PillTabBar ile 4 sekme: Dashboard / Users / Banned / Storage.
@@ -62,6 +63,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
           const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
           const PillTab(id: 'beta_requests', icon: Icons.science_outlined, label: 'Beta Requests'),
+          const PillTab(id: 'notifications', icon: Icons.campaign_outlined, label: 'Notifications'),
           const PillTab(id: 'content', icon: Icons.forum_outlined, label: 'Content'),
           const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
           const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
@@ -85,6 +87,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
             break;
           case 'beta_requests':
             content = const BetaRequestsTab();
+            break;
+          case 'notifications':
+            content = const NotificationsAdminTab();
             break;
           case 'content':
             content = const ContentModerationTab();

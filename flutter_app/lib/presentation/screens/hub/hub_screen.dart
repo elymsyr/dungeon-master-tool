@@ -21,6 +21,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/help_icon_button.dart';
+import '../../widgets/notification_icon_button.dart';
 import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/profile_menu_button.dart';
 import '../../widgets/save_sync_indicator.dart';
@@ -349,6 +350,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         actions: [
           const VersionIndicatorButton(),
           const SaveSyncIndicator(compact: true),
+          const NotificationIconButton(),
           HelpIconButton(title: help.title, body: help.body),
           // Bug report duplicates the entry inside the profile menu — keep
           // the desktop/tablet shortcut, hide on phone where space is tight.

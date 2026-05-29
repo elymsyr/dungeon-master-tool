@@ -25,6 +25,7 @@ import 'fetch_queue.dart';
 import 'reference_indexer.dart';
 import '../../data/database/util/builtin_synth.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'beta_loss_gate.dart';
 import 'package_import_service.dart';
 import 'package_sync_service.dart';
 import 'pending_write_buffer.dart';
@@ -602,7 +603,8 @@ class WorldMirrorApplier {
         // leave_beta / Make Offline: parent world unpublish guard'ında veya
         // orphan char delete guard'ında ise lokal kopyayı koru.
         if ((wid != null && mirror.isExpectedUnpublish(wid)) ||
-            mirror.isExpectedCharDelete(id)) {
+            mirror.isExpectedCharDelete(id) ||
+            _ownsAndLostBeta(oldRecord['owner_id'] as String?)) {
           return;
         }
         if (wid != null) {
@@ -793,6 +795,12 @@ class WorldMirrorApplier {
       await _campaign.handleExpectedUnpublish(e.worldId);
       return;
     }
+    // Involuntary beta loss: I own this world but lost beta (inactivity sweep
+    // / admin revoke). Keep the local copy as offline instead of purging.
+    if (await _ownsWorldAndLostBeta(e.worldId)) {
+      await _campaign.handleExpectedUnpublish(e.worldId);
+      return;
+    }
     // DM cross-device: DM on device A deleted the world → server cascade
     // dropped my membership row here on device B. Soft-delete (trash) so
     // the user can still restore. Player path stays as hard purge.
@@ -823,6 +831,32 @@ class WorldMirrorApplier {
   Future<void> purgeLocalWorld(String worldId) =>
       _campaign.purgeWorldById(worldId);
 
+  /// Involuntary beta loss preserve: while the per-uid sentinel is set, a CDC
+  /// DELETE of content the user OWNS must NOT purge the local copy — the server
+  /// purged the cloud rows (inactivity sweep / admin revoke) but the offline
+  /// Drift copy is now authoritative. Scoped strictly to `ownerId == uid` so a
+  /// normal non-owner player being removed from a world is still purged.
+  bool _ownsAndLostBeta(String? ownerId) {
+    final uid = ref.read(authProvider)?.uid;
+    if (uid == null || ownerId == null || ownerId != uid) return false;
+    return ref.read(betaLossGateProvider).isMarkedSync(uid);
+  }
+
+  /// Worlds/members DELETE events may not carry `owner_id` (default REPLICA
+  /// IDENTITY), so resolve ownership from the still-present local mirror.
+  Future<bool> _ownsWorldAndLostBeta(String worldId) async {
+    final uid = ref.read(authProvider)?.uid;
+    if (uid == null || !ref.read(betaLossGateProvider).isMarkedSync(uid)) {
+      return false;
+    }
+    try {
+      final w = await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
+      return w != null && w.ownerId == uid;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
     if (e.eventType == PostgresChangeEvent.delete) {
       final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
@@ -831,6 +865,12 @@ class WorldMirrorApplier {
       // verisini tutmak istiyor. Purge'ü atla; yalnızca online-state
       // cleanup yap → dünya normal bir offline dünyaya dönsün.
       if (mirror.isExpectedUnpublish(worldId)) {
+        await _campaign.handleExpectedUnpublish(worldId);
+        return;
+      }
+      // Involuntary beta loss: owner lost beta (inactivity sweep / admin
+      // revoke). Preserve the local mirror as offline instead of purging.
+      if (await _ownsWorldAndLostBeta(worldId)) {
         await _campaign.handleExpectedUnpublish(worldId);
         return;
       }
