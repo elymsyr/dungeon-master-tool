@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../application/providers/soundpack_catalog_provider.dart';
 import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
@@ -15,6 +16,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
 import '../../widgets/profile_avatar.dart';
+import '../../widgets/soundpack_catalog_view.dart';
 import 'social_shell.dart';
 
 /// Marketplace — tüm kullanıcıların public shared_items'ları. Tip, dil ve
@@ -62,9 +64,18 @@ class _MarketplaceFeed extends ConsumerWidget {
     final entries = ref.watch(marketplaceProvider);
     final filters = ref.watch(marketplaceFiltersProvider);
 
+    // Soundpacks are a curated GitHub catalog, not Supabase listings — so this
+    // type renders the catalog view and skips the listing feed + tag/language
+    // filters (which don't apply).
+    final isSoundpack = filters.type == 'soundpack';
+
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
       onRefresh: () async {
+        if (isSoundpack) {
+          ref.invalidate(soundpackCatalogProvider);
+          return;
+        }
         invalidateCachePrefix('marketplace:');
         ref.invalidate(marketplaceProvider);
       },
@@ -73,8 +84,14 @@ class _MarketplaceFeed extends ConsumerWidget {
         children: [
           _FilterBar(filters: filters, palette: palette),
           const SizedBox(height: 12),
-          _SecondaryFilterRow(filters: filters, palette: palette),
-          const SizedBox(height: 20),
+          if (!isSoundpack) ...[
+            _SecondaryFilterRow(filters: filters, palette: palette),
+            const SizedBox(height: 20),
+          ] else
+            const SizedBox(height: 8),
+          if (isSoundpack)
+            const SoundpackCatalogView()
+          else
           entries.when(
             skipLoadingOnRefresh: true,
             loading: () => const Padding(
@@ -134,6 +151,7 @@ class _FilterBar extends ConsumerWidget {
       ('template', l10n.filterTemplates),
       ('package', l10n.filterPackages),
       ('character', l10n.filterCharacters),
+      ('soundpack', l10n.filterSoundpacks),
     ];
     return Wrap(
       spacing: 8,
