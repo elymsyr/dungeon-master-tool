@@ -80,7 +80,7 @@ Run a session without breaking flow.
 - **Combat Tracker** — Initiative, HP, conditions, turn management, automatic event log.
 - **Battle Map** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war. Reuse already-uploaded location battlemaps without re-uploading.
 - **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, save state across sessions.
-- **Soundpad** — Layered audio, gapless loops, volume fade, custom themes.
+- **Soundpad** — Layered audio, gapless loops, volume fade, custom themes. Download ready-made **soundpacks** (music themes, ambience, SFX) from the in-app catalog — browse them under Marketplace → Soundpacks or in Settings.
 - **PDF Viewer** — Page navigation and zoom for your reference docs.
 - **Dice Roller** — d4 through d100.
 

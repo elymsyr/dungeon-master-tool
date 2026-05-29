@@ -1,5 +1,30 @@
 # Release Notes
 
+## Unreleased — Soundpack Marketplace
+
+**No version bump.** Additive client feature on top of v9.5.0; no schema, migration, or dependency changes.
+
+Adds a curated **Soundpack** catalog so users can download ready-made audio into the existing Soundpad instead of starting from empty asset folders. No user sharing yet — the catalog is a read-only list fetched from a manifest hosted in the GitHub repo, so new packs can be added without an app release.
+
+### Highlights
+
+- **Soundpacks marketplace item** — A new **Soundpacks** filter in the Marketplace tab and a "Download soundpacks" section in Settings → Soundpad both render the catalog. Each pack shows name, description, size, and a **Get → Downloading… → Installed** action.
+- **Two pack kinds** — `theme` packs install as a self-contained theme folder (`theme.yaml` + audio) under the soundpad root and are auto-discovered by `loadAllThemes`; `library` packs download ambience/SFX audio and merge their entries into `soundpad_library.yaml`. Downloaded music themes, ambience, and SFX appear in the Soundpad sidebar immediately (theme/library providers are invalidated on install).
+- **Catalog source** — Manifest at `soundpacks/manifest.json` in the repo lists each pack (`id`, `kind`, `name`, `baseUrl`, `files`, optional `entries`). The bundled launch catalog ships three music themes (Samurai, Medieval Meditation, Salute), four ambience packs (Rain, Crowd, Fireplace, Dungeon), and three SFX packs (Sword Slice, Arrow Swish, Door Creak).
+- **Resilient fetch** — Downloads use the native `HttpClient` with a path-traversal guard and atomic `.tmp`→rename writes; a failed download rolls back its files. A missing manifest (404) shows an empty catalog rather than a false "you're offline" state, which is reserved for genuine network failures.
+
+### Upgrade notes
+
+- **No app version change**, no local DB migration, no new cloud migrations, no new dependencies.
+- The soundpack catalog requires `soundpacks/manifest.json` to be present on the repo's default branch; the referenced audio already lives under `assets/soundpad/`.
+
+### Known limitations
+
+- No publishing/sharing of user soundpacks (curated catalog only).
+- No in-catalog uninstall; remove installed themes from the Soundpad sidebar as before.
+
+---
+
 ## Dungeon Master Tool v9.5.0 — Admin Broadcast Notifications, Involuntary Beta-Loss Data Guard, 14-Day Inactivity Window (Beta)
 
 **Release date:** May 2026
