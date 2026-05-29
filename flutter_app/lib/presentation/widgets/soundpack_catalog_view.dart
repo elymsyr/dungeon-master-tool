@@ -64,7 +64,11 @@ class _SoundpackCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    final installed = ref.watch(installedSoundpackIdsProvider).contains(pack.id);
+    final installedIds = ref.watch(installedSoundpackIdsProvider);
+    final installed = pack.kind == SoundpackKind.library
+        ? pack.entries.isNotEmpty &&
+            pack.entries.every((e) => installedIds.contains(e.id))
+        : installedIds.contains(pack.id);
     final status = ref.watch(
         soundpackDownloadProvider.select((m) => m[pack.id])) ??
         const SoundpackDownloadStatus();
@@ -79,7 +83,7 @@ class _SoundpackCard extends ConsumerWidget {
               color: palette.featureCardAccent.withValues(alpha: 0.12),
               borderRadius: palette.br,
             ),
-            child: Icon(Icons.library_music_outlined,
+            child: Icon(_iconForPack(pack),
                 size: 22, color: palette.featureCardAccent),
           ),
           const SizedBox(width: 12),
@@ -192,6 +196,14 @@ class _SoundpackCard extends ConsumerWidget {
       child: Text(isError ? l10n.soundpackRetry : l10n.soundpackGet,
           style: const TextStyle(fontSize: 12)),
     );
+  }
+
+  static IconData _iconForPack(SoundpackCatalogEntry pack) {
+    if (pack.kind == SoundpackKind.theme) return Icons.music_note;
+    final cats = pack.entries.map((e) => e.category).toSet();
+    if (cats.length == 1 && cats.first == 'ambience') return Icons.water;
+    if (cats.length == 1 && cats.first == 'sfx') return Icons.graphic_eq;
+    return Icons.library_music_outlined;
   }
 
   static String _humanSize(int bytes) {

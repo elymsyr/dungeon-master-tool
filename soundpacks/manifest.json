@@ -3,6 +3,7 @@
   "packs": [
     {
       "id": "samurai",
+      "kind": "theme",
       "name": "Samurai",
       "description": "Driving samurai battle music with a layered intensity track.",
       "author": "DMT",
@@ -16,6 +17,7 @@
     },
     {
       "id": "meditation",
+      "kind": "theme",
       "name": "Medieval Meditation",
       "description": "Calm medieval ambience that escalates into a dark boss combat state.",
       "author": "DMT",
@@ -33,6 +35,7 @@
     },
     {
       "id": "salute",
+      "kind": "theme",
       "name": "Salute",
       "description": "Ceremonial march theme with three intensity layers.",
       "author": "DMT",
@@ -44,6 +47,116 @@
         "120_salute_2.wav"
       ],
       "sizeBytes": 4299161
+    },
+    {
+      "id": "amb-rain",
+      "kind": "library",
+      "name": "Rain (Ambience)",
+      "description": "Looping rainfall ambience.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "ambience/rain/rain-0.wav",
+        "ambience/rain/rain-1.wav"
+      ],
+      "entries": [
+        { "category": "ambience", "id": "rain", "name": "Rain", "file": "ambience/rain" }
+      ],
+      "sizeBytes": 20832614
+    },
+    {
+      "id": "amb-crowd",
+      "kind": "library",
+      "name": "Crowd (Ambience)",
+      "description": "Murmuring crowd / tavern ambience.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "ambience/crowd/crowd-0.wav",
+        "ambience/crowd/crowd-1.wav"
+      ],
+      "entries": [
+        { "category": "ambience", "id": "crowd", "name": "Crowd", "file": "ambience/crowd" }
+      ],
+      "sizeBytes": 50378908
+    },
+    {
+      "id": "amb-fireplace",
+      "kind": "library",
+      "name": "Fireplace (Ambience)",
+      "description": "Crackling fireplace loop.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "ambience/fireplace/fireplace-0.wav"
+      ],
+      "entries": [
+        { "category": "ambience", "id": "fireplace", "name": "Fireplace", "file": "ambience/fireplace" }
+      ],
+      "sizeBytes": 31776334
+    },
+    {
+      "id": "amb-dungeon",
+      "kind": "library",
+      "name": "Dungeon (Ambience)",
+      "description": "Dark dungeon drone ambience.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "ambience/dungeon/dungeon-0.wav"
+      ],
+      "entries": [
+        { "category": "ambience", "id": "dungeon", "name": "Dungeon", "file": "ambience/dungeon" }
+      ],
+      "sizeBytes": 2785102
+    },
+    {
+      "id": "sfx-sword",
+      "kind": "library",
+      "name": "Sword Slice (SFX)",
+      "description": "Sword slice hit effects.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "sfx/sword-slice/sword-slice-2-393845.wav",
+        "sfx/sword-slice/sword-slice-393847.wav"
+      ],
+      "entries": [
+        { "category": "sfx", "id": "sword_hit", "name": "Sword Slice", "file": "sfx/sword-slice" }
+      ],
+      "sizeBytes": 778396
+    },
+    {
+      "id": "sfx-arrow",
+      "kind": "library",
+      "name": "Arrow Swish (SFX)",
+      "description": "Arrow swish / woosh effect.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "sfx/arrow-swish/arrow-swish-06040.wav"
+      ],
+      "entries": [
+        { "category": "sfx", "id": "arrow_woosh", "name": "Arrow Swish", "file": "sfx/arrow-swish" }
+      ],
+      "sizeBytes": 188494
+    },
+    {
+      "id": "sfx-door",
+      "kind": "library",
+      "name": "Door Creak (SFX)",
+      "description": "Creaking door open / close effects.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/",
+      "files": [
+        "sfx/door-creaking/door-creaking.wav",
+        "sfx/door-creaking/door-creaking-metal-closing.wav",
+        "sfx/door-creaking/door-creaking-open-and-close-102380.wav"
+      ],
+      "entries": [
+        { "category": "sfx", "id": "door_creak", "name": "Door Creak", "file": "sfx/door-creaking" }
+      ],
+      "sizeBytes": 2340586
     }
   ]
 }

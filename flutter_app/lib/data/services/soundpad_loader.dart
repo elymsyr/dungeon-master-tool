@@ -122,6 +122,51 @@ class SoundpadLoader {
     });
   }
 
+  /// Birden çok ambience/sfx entry'sini library YAML'ına ekler (downloaded
+  /// library soundpack'leri için). Aynı kategori içinde aynı id varsa
+  /// üzerine yazar. [entries]: `[{'category','id','name','file'}, ...]`.
+  static Future<(bool, String)> mergeLibraryEntries(
+    String soundpadRoot,
+    List<Map<String, String>> entries,
+  ) async {
+    if (entries.isEmpty) return (true, 'No entries');
+    final libraryFile = File(p.join(soundpadRoot, 'soundpad_library.yaml'));
+    Map<String, dynamic> data = {'ambience': [], 'sfx': [], 'shortcuts': {}};
+
+    if (await libraryFile.exists()) {
+      try {
+        final raw = await libraryFile.readAsString();
+        final loaded = loadYaml(raw) as YamlMap?;
+        if (loaded != null) data = _yamlToMap(loaded);
+      } catch (e) {
+        _log.e('Error reading library for merge: $e');
+      }
+    }
+    data['ambience'] ??= [];
+    data['sfx'] ??= [];
+
+    for (final entry in entries) {
+      final String category = entry['category'] ?? '';
+      if (category != 'ambience' && category != 'sfx') continue;
+      final list = (data[category] as List?) ?? [];
+      // Aynı id'yi at, yenisini ekle (idempotent re-install).
+      list.removeWhere((item) => item is Map && item['id'] == entry['id']);
+      list.add({
+        'id': entry['id'],
+        'name': entry['name'],
+        'file': entry['file'],
+      });
+      data[category] = list;
+    }
+
+    try {
+      await _writeLibraryYaml(libraryFile, data);
+      return (true, 'Entries merged');
+    } catch (e) {
+      return (false, 'YAML merge failed: $e');
+    }
+  }
+
   /// Ses ID'sini library YAML'ından kaldırır.
   static Future<(bool, String)> removeFromLibrary(
     String soundpadRoot,

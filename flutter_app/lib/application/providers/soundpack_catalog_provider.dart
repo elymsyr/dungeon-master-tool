@@ -120,9 +120,16 @@ final soundpackDownloadProvider = StateNotifierProvider<
   (ref) => SoundpackDownloadNotifier(ref),
 );
 
-/// Set of installed soundpack/theme ids (derived from loaded themes). Used by
-/// the catalog view to show "Installed" instead of "Get".
+/// Set of installed ids — loaded theme ids plus ambience/SFX library entry
+/// ids. Used by the catalog view to show "Installed" instead of "Get":
+/// a theme pack is installed when its id is present; a library pack when all
+/// of its entry ids are present.
 final installedSoundpackIdsProvider = Provider<Set<String>>((ref) {
   final themes = ref.watch(soundpadThemesProvider).valueOrNull;
-  return themes?.keys.toSet() ?? const {};
+  final library = ref.watch(soundpadLibraryProvider).valueOrNull;
+  return {
+    ...?themes?.keys,
+    ...?library?.ambience.map((a) => a.id),
+    ...?library?.sfx.map((s) => s.id),
+  };
 });
