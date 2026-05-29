@@ -25,7 +25,6 @@ import '../../dialogs/theme_builder_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
-import '../../widgets/soundpack_catalog_view.dart';
 
 class SettingsTab extends ConsumerStatefulWidget {
   const SettingsTab({super.key});
@@ -548,13 +547,6 @@ class _SoundLibrarySection extends ConsumerWidget {
         ),
 
         const SizedBox(height: 16),
-
-        // --- DOWNLOAD SOUNDPACKS (curated GitHub catalog) ---
-        _sectionHeader(l10n.soundpackSectionTitle, Icons.library_music_outlined, palette),
-        const SizedBox(height: 8),
-        const SoundpackCatalogView(),
-
-        const SizedBox(height: 20),
 
         // --- THEMES ---
         _sectionHeader(l10n.soundpadThemes, Icons.music_note, palette),

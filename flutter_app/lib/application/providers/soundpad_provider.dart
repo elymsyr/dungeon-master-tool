@@ -156,6 +156,12 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
       return;
     }
 
+    // _themes normalde listener ile seed edilir; bir ordering regression'a
+    // karşı provider'dan güncel değeri de dene.
+    if (_themes.isEmpty) {
+      final fresh = _ref.read(soundpadThemesProvider).valueOrNull;
+      if (fresh != null) _themes = fresh;
+    }
     final theme = _themes[themeId];
     if (theme == null) return;
 
@@ -311,13 +317,16 @@ final soundpadStateProvider = StateNotifierProvider<SoundpadNotifier, SoundpadSt
   final root = ref.watch(soundpadRootProvider);
   final notifier = SoundpadNotifier(engine, root, ref, ref.read(eventBusProvider));
 
-  // Library ve themes yüklendiğinde notifier'a aktar
+  // Library ve themes yüklendiğinde notifier'a aktar. fireImmediately: true —
+  // notifier provider zaten çözülmüşken oluşturulursa (örn. mobilde soundpad
+  // sekmesi sonradan açılınca) listener'ın mevcut değeri kaçırmaması için.
+  // Aksi halde _themes boş kalır ve selectTheme sessizce no-op olur.
   ref.listen(soundpadLibraryProvider, (_, asyncLib) {
-    asyncLib.whenData((lib) => notifier.setLibrary(lib));
-  });
+    asyncLib.whenData(notifier.setLibrary);
+  }, fireImmediately: true);
   ref.listen(soundpadThemesProvider, (_, asyncThemes) {
-    asyncThemes.whenData((themes) => notifier.setThemes(themes));
-  });
+    asyncThemes.whenData(notifier.setThemes);
+  }, fireImmediately: true);
 
   return notifier;
 });
