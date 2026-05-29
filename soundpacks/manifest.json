@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "id": "samurai",
+      "name": "Samurai",
+      "description": "Driving samurai battle music with a layered intensity track.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/samurai/",
+      "files": [
+        "theme.yaml",
+        "170_samurai_0.wav",
+        "170_samurai_1.wav"
+      ],
+      "sizeBytes": 11534336
+    },
+    {
+      "id": "meditation",
+      "name": "Medieval Meditation",
+      "description": "Calm medieval ambience that escalates into a dark boss combat state.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/meditation/",
+      "files": [
+        "theme.yaml",
+        "meditation_130_12_0.wav",
+        "meditation_130_12_1.wav",
+        "meditation_130_12_2.wav",
+        "140_dark_boss_0.wav",
+        "140_dark_boss_1.wav",
+        "140_dark_boss_2.wav"
+      ],
+      "sizeBytes": 14680064
+    },
+    {
+      "id": "salute",
+      "name": "Salute",
+      "description": "Ceremonial march theme with three intensity layers.",
+      "author": "DMT",
+      "baseUrl": "https://raw.githubusercontent.com/elymsyr/dungeon-master-tool/main/assets/soundpad/salute/",
+      "files": [
+        "theme.yaml",
+        "120_salute_0.wav",
+        "120_salute_1.wav",
+        "120_salute_2.wav"
+      ],
+      "sizeBytes": 4299161
+    }
+  ]
+}

@@ -9,6 +9,13 @@ String appVersion = '9.5.0';
 const String appProcess = 'beta';
 String get appReleaseTag => '$appProcess-v$appVersion';
 const String githubRepo = 'elymsyr/dungeon-master-tool';
+
+/// Curated soundpack catalog manifest, hosted in the GitHub repo. The app
+/// fetches this JSON to list downloadable soundpacks (no user sharing yet).
+/// New packs can be added by editing the repo, no app release needed.
+const String soundpackManifestUrl =
+    'https://raw.githubusercontent.com/$githubRepo/main/soundpacks/manifest.json';
+
 const String apiBaseUrl = 'https://www.dnd5eapi.co/api';
 const String open5eBaseUrl = 'https://api.open5e.com/v1';
 

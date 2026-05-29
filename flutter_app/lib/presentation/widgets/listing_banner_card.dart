@@ -116,6 +116,7 @@ IconData iconForListingType(String itemType) => switch (itemType) {
       'template' => Icons.description_outlined,
       'package' => Icons.inventory_2_outlined,
       'character' => Icons.person,
+      'soundpack' => Icons.library_music_outlined,
       'gameListing' => Icons.groups_outlined,
       _ => Icons.folder_outlined,
     };
@@ -125,6 +126,7 @@ String labelForListingType(L10n l10n, String itemType) => switch (itemType) {
       'template' => l10n.itemTypeTemplate,
       'package' => l10n.itemTypePackage,
       'character' => l10n.itemTypeCharacter,
+      'soundpack' => l10n.itemTypeSoundpack,
       _ => l10n.itemTypeGeneric,
     };
 
