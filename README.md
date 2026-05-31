@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v9.5.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v10.0.0--beta-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
@@ -55,7 +55,7 @@ Planned for upcoming releases — order not final, scope may shift between patch
 - **Built-in D&D 5e package visuals** — Cover art, monster/species/class portraits, equipment icons, and spell glyphs bundled with the SRD core pack so default content stops looking like raw text.
 - **More online storage for users** — Larger per-account quota for counted cloud media and selectable retention tiers; current beta cap is intentionally conservative (portraits, covers and live session media already sync free of quota).
 - **Deeper D&D 5e implementation** — Close remaining SRD gaps (Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills, missing `auto_granted_by` metadata), automate more class/subclass effects, and finish bidirectional sync of mechanical resolutions across devices.
-- **Full custom-content editors** — WYSIWYG editors for schemas, templates, and packages so creators stop hand-editing JSON.
+- **Full custom-content editors** — The rule/effect authoring editor has landed; WYSIWYG editors for schemas, templates, and packages are still in progress so creators stop hand-editing JSON.
 
 ---
 
@@ -68,6 +68,7 @@ Build a setting, then bring it to the table.
 - **Era Timeline** — Track historical eras and waypoints; pin events to specific points in time. Drill into any location for nested pins and a per-era map image.
 - **Entity System** — Schema-driven cards with 16 field widget types (text, markdown, image, stat block, dice roller, and more).
 - **Templates & Packages** — Built-in D&D 5e schema, user-defined templates, full import/export.
+- **Rule & Effect Editor** — Catalog-driven editor for authoring feat/feature mechanics (effect kind + target + per-rule params + predicates/scaling/activation), with non-blocking validation warnings. DM-editable core rule constants (ASI levels, HP-per-hit-die, AC base/shield, proficiency-bonus breakpoints) per template.
 
 Works fully offline. Join the beta to sync your worlds across devices and share them with collaborators.
 

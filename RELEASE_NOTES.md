@@ -1,5 +1,50 @@
 # Release Notes
 
+## Dungeon Master Tool v10.0.0 — Rule & Effect Authoring Engine, Feat Effects That Actually Apply, Editable Core Rules (Beta)
+
+**Release date:** May 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v10.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Major release. Custom content gets its first real authoring surface: a catalog-driven **Rule & Effect editor** replaces hand-editing the `effects` JSON, and the numeric rules that were hardcoded in the resolver (ASI levels, HP-per-hit-die, AC constants, proficiency-bonus progression) become a **per-template, DM-editable config**. On the consumption side, feats now actually *apply their effect* whether granted at level-up or added by hand — the long-standing "I took the feat but nothing changed" class of bug is closed for ability-score, proficiency, and choice-bearing feats. Plus the Marketplace "All" tab finally shows soundpacks, and admin-broadcast notifications stop overwriting earlier answers when a notification has multiple poll/input blocks.
+
+### Highlights
+
+#### Rule & effect authoring (new)
+
+- **Catalog-driven Rule Catalog (`RuleDefinition` / `RuleCatalog`)** — Every effect `kind` the resolver understands is now declared as a named, introspectable `RuleDefinition` (label, description, category, authorable params, accepted target kinds, capability flags, `applied` vs `deferred` status). A debug-only drift guard cross-checks `CharacterResolver.knownEffectKinds` against the catalog at startup, so the declared and executable surfaces can never silently diverge. The catalog is pure code-declared data — never persisted into the schema, never hashed by `computeWorldSchemaContentHash`.
+- **Guided feat-effect editor (`_FeatEffectRow`)** — The feat/feature effect list field is now a structured editor instead of raw JSON: an effect-kind dropdown, a target-kind dropdown filtered to what the rule accepts, per-rule param inputs (int / string / bool / enum / relation / ability-list / dice), and full predicate / scales-with / activation sub-editors that surface only for rules that support them. Legacy/unknown kinds degrade gracefully to a bare Value field so existing content never becomes uneditable.
+- **Non-blocking authoring validation (`validateEffectRow`)** — High-confidence warnings (no/unknown rule, a target kind the rule doesn't accept, an unknown predicate, a missing required param) render inline as the author edits. Warnings never block save or mutate data — conservative capability flags don't nag on valid SRD content.
+- **Editable core rules (`RuleConfig`)** — The proficiency-bonus progression, the hit-die→HP table, the ASI/feat levels, and the AC base/shield constants move out of hardcode into a template-scoped `RuleConfig`, threaded as a value param through `CharacterResolver` and `planLevelUp`. `RuleConfig.dnd5eDefaults` reproduces the old hardcoded values byte-for-byte, so a world with no override resolves identically; a world only diverges when a DM writes `metadata['rule_config']`, which is also the correct moment for the template content-hash to change. Value-equal, so an override that round-trips to the same numbers doesn't churn provider rebuilds.
+
+#### Characters & SRD — feats now apply their effect
+
+- **Manually-added feats reach the resolver** — The resolver enumerates feats from `feat_ids`, but a manual edit of the Feats relation field only wrote `feats`, so a hand-added feat was mechanically invisible (no ASI, no proficiency, no picks). Manual edits now mirror `feats` → `feat_ids`, seed the same follow-on Pending Choices a level-up pick would (skill / expertise / feat-ASI / `choice_group`), and prune recorded picks + pendings for any removed feat so no ghost bonuses linger.
+- **Feat ASI honors your chosen ability** — Ability-bump feats (Moderately Armored, Lightly Armored, the Ability Score Improvement feat, Resilient, …) were applied by a resolver heuristic that always bumped the *first* eligible ability, ignoring the pick. The exact pick is now recorded (`feat_asi_choices`, keyed by feat id) and applied verbatim by the resolver; the heuristic remains only as the fallback for old/unresolved characters, so there is no double-count and no regression.
+- **Plain ASI no longer masked on modern characters** — A plain Ability Score Improvement wrote to `stat_block`/per-ability keys, but a character with a populated `base_abilities` displays via the resolver, which seeds only from `base_abilities` — so the bump was invisible. Plain ASI now also folds into `base_abilities` (guarded to non-empty maps only, so legacy characters keep their raw-write fallback intact).
+- **Armor / weapon proficiency grants surfaced** — Feats like Moderately Armored (Medium Armor + Shields) now show their granted armor/weapon proficiencies read-only in the Resolved Grants card, alongside the existing skill/tool-proficiency, HP, and initiative rows.
+- **Shared follow-on seeding (`seedFeatFollowOns`)** — Level-up and manual-add now route through one helper, so the two paths can't drift on what a taken feat prompts for.
+
+#### Marketplace & notifications
+
+- **"All" tab shows soundpacks** — The Marketplace "All" view now merges the Supabase listing feed with the soundpack catalog, so curated soundpacks are no longer hidden behind their dedicated tab. Pull-to-refresh invalidates both sources; an empty listing feed yields to the catalog instead of an empty state.
+- **Notification multi-block answers preserved** — In a broadcast notification with several poll/input blocks, the detail dialog captured `myAnswers` once at construction, so submitting one block overwrote answers from the others. The dialog now watches the live notification provider and merges against the freshest answer map, so each block's submission accumulates correctly.
+
+### Upgrade notes
+
+- **App version bump:** `9.5.0` → `10.0.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No new cloud migrations.** Pure client-side work (rules engine + resolver/editor changes + UI fixes).
+- **No new runtime dependencies.** `flutter pub get` not required for new packages.
+- **Existing characters/worlds are unaffected** until re-resolved. The default `RuleConfig` matches the previously-hardcoded values exactly, so nothing changes for a world that never edits its rule config. Feats resolved *before* this release keep their old heuristic ability until re-resolved (no migration) — only new picks are honored.
+
+### Known issues
+
+- Feat-ASI honoring applies to newly-recorded picks; characters who resolved an ability-bump feat under an older build keep the first-eligible-ability heuristic until the feat is re-resolved.
+- The rule/effect editor covers feat/feature effect rows; full WYSIWYG editors for schemas, templates, and packages are still in progress.
+- Carry-over from v9.5.0: no publishing/sharing of user soundpacks (curated catalog only); Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v9.5.0 — Soundpack Marketplace, Admin Broadcast Notifications, Involuntary Beta-Loss Data Guard, 14-Day Inactivity Window (Beta)
 
 **Release date:** May 2026
