@@ -686,6 +686,8 @@ class ResolvedGrantsCard extends StatelessWidget {
     final initChips = initiative != 0
         ? <String>['${initiative > 0 ? '+' : ''}$initiative initiative']
         : const <String>[];
+    final armorProf = effective.proficiencies.armorCategoryIds;
+    final weaponProf = effective.proficiencies.weaponCategoryIds;
     if (senses.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
@@ -706,7 +708,9 @@ class ResolvedGrantsCard extends StatelessWidget {
         hpChips.isEmpty &&
         initChips.isEmpty &&
         extraSkillProfIds.isEmpty &&
-        extraToolProfIds.isEmpty) {
+        extraToolProfIds.isEmpty &&
+        armorProf.isEmpty &&
+        weaponProf.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -734,6 +738,8 @@ class ResolvedGrantsCard extends StatelessWidget {
             _textChipRow('Initiative', initChips, Colors.lightGreen),
             _chipRow('Skill Prof.', extraSkillProfIds, Colors.lime),
             _chipRow('Tool Prof.', extraToolProfIds, Colors.brown),
+            _chipRow('Armor Prof.', armorProf, Colors.blueGrey),
+            _chipRow('Weapon Prof.', weaponProf, Colors.orange),
             _chipRow('Resistances', res, Colors.green),
             _chipRow('Immunities', imm, Colors.blue),
             _chipRow('Vulnerabilities', vuln, Colors.deepOrange),

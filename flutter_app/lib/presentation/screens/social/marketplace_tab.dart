@@ -68,6 +68,9 @@ class _MarketplaceFeed extends ConsumerWidget {
     // type renders the catalog view and skips the listing feed + tag/language
     // filters (which don't apply).
     final isSoundpack = filters.type == 'soundpack';
+    // The "All" tab merges the Supabase listing feed with the soundpack catalog
+    // so soundpacks aren't hidden behind their dedicated tab.
+    final isAll = filters.type == 'all';
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
@@ -76,6 +79,7 @@ class _MarketplaceFeed extends ConsumerWidget {
           ref.invalidate(soundpackCatalogProvider);
           return;
         }
+        if (isAll) ref.invalidate(soundpackCatalogProvider);
         invalidateCachePrefix('marketplace:');
         ref.invalidate(marketplaceProvider);
       },
@@ -108,6 +112,9 @@ class _MarketplaceFeed extends ConsumerWidget {
                   ),
             data: (items) {
               if (items.isEmpty) {
+                // In "All" the catalog below carries content — skip the empty
+                // state so soundpacks still show.
+                if (isAll) return const SizedBox.shrink();
                 return SocialEmptyState(
                   icon: Icons.storefront_outlined,
                   title: l10n.marketplaceEmpty,
@@ -131,6 +138,10 @@ class _MarketplaceFeed extends ConsumerWidget {
               );
             },
           ),
+          if (isAll) ...[
+            const SizedBox(height: 8),
+            const SoundpackCatalogView(),
+          ],
         ],
       ),
     );
