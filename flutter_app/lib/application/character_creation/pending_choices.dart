@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../domain/entities/entity.dart';
 import 'level_up_planner.dart';
 
 /// Categories of interactive level-up decisions that can be deferred.
@@ -165,6 +166,59 @@ PendingChoice newPendingChoice({
       sourceEntityId: sourceEntityId,
       featureName: featureName,
     );
+
+/// Scan [feats]' `choice_group` effects and emit one [PendingChoice]
+/// (kind `featChoice`) per under-filled group, so the player is prompted to
+/// resolve each pick (Skilled's 3 skills/tools, Magic Initiate's cantrips +
+/// spell, …).
+///
+/// [existingFeatChoices] maps `<featId>:<groupId>` → comma-joined picked ids;
+/// a group already fully picked is skipped and the emitted `count` is only the
+/// remaining picks. `ability` pick_kind is skipped — feat ASI is handled by the
+/// `asi_amount` / featAsi path, and the resolver dialog has no ability picker.
+///
+/// Shared by the creation wizard (commit) and the editor level-up flow so the
+/// two never drift. Callers map the result to `.toMap()` (wizard, into the
+/// seeded `pending_choices`) or merge the [PendingChoice]s as follow-ons
+/// (editor).
+List<PendingChoice> seedFeatChoicePendings({
+  required List<Entity> feats,
+  required Map<String, String> existingFeatChoices,
+  required int level,
+}) {
+  final out = <PendingChoice>[];
+  for (final feat in feats) {
+    final effects = feat.fields['effects'];
+    if (effects is! List) continue;
+    for (final row in effects) {
+      if (row is! Map) continue;
+      if (row['kind'] != 'choice_group') continue;
+      final payload = row['payload'];
+      if (payload is! Map) continue;
+      final groupId = payload['group_id']?.toString() ?? '';
+      if (groupId.isEmpty) continue;
+      final pickKind = payload['pick_kind']?.toString() ?? 'enum';
+      if (pickKind == 'ability') continue;
+      final pick = payload['pick'] is int ? payload['pick'] as int : 1;
+      final storageKey = '${feat.id}:$groupId';
+      final raw = existingFeatChoices[storageKey] ?? '';
+      final pickedCount =
+          raw.isEmpty ? 0 : raw.split(',').where((s) => s.isNotEmpty).length;
+      final remaining = (pick - pickedCount).clamp(0, pick);
+      if (remaining <= 0) continue;
+      final label = payload['label']?.toString() ?? groupId;
+      out.add(newPendingChoice(
+        kind: PendingChoiceKind.featChoice,
+        level: level,
+        classLabel: feat.name,
+        featureName: label,
+        count: remaining,
+        sourceEntityId: feat.id,
+      ));
+    }
+  }
+  return out;
+}
 
 /// Translate a level-up [plan] into the set of pending decisions the
 /// player will need to make later. Callers pass [classId]/[classLabel]

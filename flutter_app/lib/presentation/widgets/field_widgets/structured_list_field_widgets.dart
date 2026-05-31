@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/rule_catalog_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/entities/schema/rules/rule_definition.dart';
+import '../../../domain/entities/schema/rules/rule_validator.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 
 /// Typed structured-list editors for the 4 list FieldTypes:
@@ -227,6 +230,7 @@ Widget _miniEnum({
   required bool readOnly,
   required ValueChanged<String?> onChanged,
   double width = 140,
+  String Function(String)? display,
 }) {
   return SizedBox(
     width: width,
@@ -244,10 +248,40 @@ Widget _miniEnum({
       items: options
           .map((o) => DropdownMenuItem(
                 value: o,
-                child: Text(o, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                child: Text(display?.call(o) ?? o,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis),
               ))
           .toList(),
       onChanged: readOnly ? null : onChanged,
+    ),
+  );
+}
+
+Widget _miniBool({
+  required String label,
+  required bool value,
+  required bool readOnly,
+  required ValueChanged<bool> onChanged,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(top: 4),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: Checkbox(
+            value: value,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onChanged: readOnly ? null : (b) => onChanged(b ?? false),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 11)),
+      ],
     ),
   );
 }
@@ -834,6 +868,33 @@ const _modifierKinds = [
   'feature_text',
 ];
 
+/// Curated kind set for the legacy `granted_modifiers` editor — only the
+/// simple value/target grant kinds whose catalog entry is `resolverStatus:
+/// applied` (i.e. the resolver actually applies them). Authoring a kind the
+/// resolver ignores would silently do nothing, which is the bug this list
+/// closes. Richer kinds (predicates/payload/scaling) live on the catalog-driven
+/// `rule_effects` editor instead. Each entry is cross-checked against the live
+/// catalog at build time (`catalog.contains`) before it is offered.
+const _modifierCatalogKinds = [
+  'ability_score_bonus',
+  'ac_bonus',
+  'speed_bonus',
+  'hp_bonus_flat',
+  'hp_bonus_per_level',
+  'initiative_bonus',
+  'passive_score_bonus',
+  'proficiency_grant',
+  'expertise_grant',
+  'language_grant',
+  'sense_grant',
+  'spell_grant',
+  'cantrip_grant',
+  'damage_resistance',
+  'damage_immunity',
+  'damage_vulnerability',
+  'condition_immunity_grant',
+];
+
 const _modifierTargetKinds = [
   '',
   'ability',
@@ -903,18 +964,19 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
   ],
   'Lucky (feat)': [
     {
-      'kind': 'feature_text',
+      // Narrative only — luck points have no resolver-applied kind.
+      'kind': null,
       'target_kind': null,
       'target_ref': null,
       'value': 3,
       'scaling': '',
       'condition_ref': null,
-      'notes': 'Lucky: 3 luck points / long rest, reroll 1 d20',
+      'notes': 'Lucky: 3 luck points / long rest, reroll 1 d20 (track manually)',
     },
   ],
   'Magic Initiate: cantrip + 1st': [
     {
-      'kind': 'spell_known_grant',
+      'kind': 'cantrip_grant',
       'target_kind': 'spell',
       'target_ref': null,
       'value': null,
@@ -923,7 +985,7 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
       'notes': 'Cantrip from chosen list',
     },
     {
-      'kind': 'spell_known_grant',
+      'kind': 'spell_grant',
       'target_kind': 'spell',
       'target_ref': null,
       'value': null,
@@ -932,13 +994,13 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
       'notes': '1st-level spell from chosen list',
     },
     {
-      'kind': 'spell_at_will_grant',
+      'kind': 'spell_grant',
       'target_kind': 'spell',
       'target_ref': null,
       'value': 1,
       'scaling': '',
       'condition_ref': null,
-      'notes': '1×/long rest cast of 1st-level without slot',
+      'notes': '1×/long rest cast of 1st-level without slot (track manually)',
     },
   ],
   'Darkvision 60 ft': [
@@ -954,7 +1016,7 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
   ],
   'Fire resistance': [
     {
-      'kind': 'resistance_grant',
+      'kind': 'damage_resistance',
       'target_kind': 'damage-type',
       'target_ref': 'damage-type-fire',
       'value': null,
@@ -965,7 +1027,7 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
   ],
   'Poison immunity + advantage': [
     {
-      'kind': 'immunity_grant',
+      'kind': 'damage_immunity',
       'target_kind': 'damage-type',
       'target_ref': 'damage-type-poison',
       'value': null,
@@ -974,13 +1036,15 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
       'notes': 'Immunity to poison damage',
     },
     {
-      'kind': 'condition_save_advantage',
+      // No resolver-applied kind for save-advantage-vs-condition yet — keep
+      // as a narrative note (kind null = no mechanical effect; track manually).
+      'kind': null,
       'target_kind': 'condition',
       'target_ref': 'condition-poisoned',
       'value': null,
       'scaling': '',
       'condition_ref': 'condition-poisoned',
-      'notes': 'Advantage on saves vs being poisoned',
+      'notes': 'Advantage on saves vs being poisoned (track manually)',
     },
   ],
   'Heavy Armor Master': [
@@ -994,13 +1058,14 @@ const _modifierPresets = <String, List<Map<String, dynamic>>>{
       'notes': 'HAM: +1 STR',
     },
     {
-      'kind': 'damage_bonus',
+      // No resolver-applied flat-damage-reduction kind yet — narrative note.
+      'kind': null,
       'target_kind': 'damage-type',
       'target_ref': null,
-      'value': -2,
+      'value': -3,
       'scaling': 'flat',
       'condition_ref': null,
-      'notes': 'While wearing heavy armor: reduce bludg/pierc/slash by 2 (negative = reduction)',
+      'notes': 'While wearing heavy armor: reduce bludg/pierc/slash by 3 (track manually)',
     },
   ],
 };
@@ -1085,6 +1150,28 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
       buildRow: (i, row, onRowChanged) {
         final targetKind = row['target_kind'] as String?;
         final allowed = _allowedTypesForTargetKind(targetKind);
+        // Catalog is the single registry. Read (not watch): static for the
+        // card's lifetime; falls back to the legacy const lists when no ref
+        // (read-only projection views).
+        final catalog = ref?.read(ruleCatalogProvider);
+        final kind = row['kind'] as String?;
+        // Offer only curated kinds the catalog actually knows; union the row's
+        // stored kind so a legacy/dropped value is never silently hidden.
+        final baseKinds = catalog == null
+            ? _modifierKinds
+            : _modifierCatalogKinds.where(catalog.contains).toList();
+        final kindOptions =
+            (kind != null && kind.isNotEmpty && !baseKinds.contains(kind))
+                ? [...baseKinds, kind]
+                : baseKinds;
+        // Target-kind options from the selected rule's declared targets when
+        // it names any, else the legacy union list (kinds that take no target
+        // keep the historical picker for back-compat).
+        final declaredTargets =
+            (catalog != null && kind != null) ? (catalog[kind]?.allowedTargetKinds ?? const <String>[]) : const <String>[];
+        final targetKindOptions = declaredTargets.isNotEmpty
+            ? <String>{'', ...declaredTargets}.toList()
+            : _modifierTargetKinds;
         return Wrap(
           spacing: 8,
           runSpacing: 4,
@@ -1092,16 +1179,17 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
           children: [
             _miniEnum(
               label: 'Kind',
-              value: row['kind'] as String?,
-              options: _modifierKinds,
+              value: kind,
+              options: kindOptions,
               readOnly: readOnly,
+              display: (k) => catalog?.labelFor(k) ?? k,
               onChanged: (v) => onRowChanged({...row, 'kind': v}),
               width: 220,
             ),
             _miniEnum(
               label: 'Target Kind',
               value: targetKind,
-              options: _modifierTargetKinds,
+              options: targetKindOptions,
               readOnly: readOnly,
               onChanged: (v) {
                 // Reset target_ref when target_kind changes since allowed types differ.
@@ -1599,6 +1687,11 @@ class FeatEffectListFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = _coerceRows(value);
+    // Catalog is the single source of truth for the kind / target-kind options.
+    // Read (not watch): `ref` here is the host card's WidgetRef and the catalog
+    // is static for the card's lifetime. Falls back to the historical const
+    // lists when no ref is available (e.g. read-only projection views).
+    final catalog = ref?.read(ruleCatalogProvider);
     return _StructuredListShell(
       schema: schema,
       rows: rows,
@@ -1610,41 +1703,141 @@ class FeatEffectListFieldWidget extends StatelessWidget {
         'target_ref': null,
         'value': null,
       },
-      buildRow: (i, row, onRowChanged) {
-        final targetKind = row['target_kind'] as String?;
-        final allowed = _allowedTypesForTargetKind(
-          targetKind == '' ? null : targetKind,
-        );
-        final preds = row['predicates'];
-        final predCount = (preds is List) ? preds.length : 0;
-        final hasScales = row['scales_with'] is Map;
-        final hasActivation = row['activation'] is Map;
-        final hasPayload = row['payload'] is Map;
-        return Wrap(
+      buildRow: (i, row, onRowChanged) => _FeatEffectRow(
+        catalog: catalog,
+        row: row,
+        entities: entities,
+        ref: ref,
+        readOnly: readOnly,
+        onChanged: onRowChanged,
+      ),
+    );
+  }
+}
+
+/// One authorable feat-effect row: kind + target + per-rule params, plus the
+/// full predicate / scales-with / activation sub-editors driven by the rule's
+/// declared capability flags. Replaces the old MVP read-only badges.
+class _FeatEffectRow extends StatelessWidget {
+  final RuleCatalog? catalog;
+  final Map<String, dynamic> row;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<Map<String, dynamic>> onChanged;
+
+  const _FeatEffectRow({
+    required this.catalog,
+    required this.row,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  Map<String, dynamic> _without(String key) {
+    final m = {...row}..remove(key);
+    return m;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final kind = row['kind'] as String?;
+    final rule = (catalog != null && kind != null) ? catalog![kind] : null;
+    final targetKind = row['target_kind'] as String?;
+    final allowed =
+        _allowedTypesForTargetKind(targetKind == '' ? null : targetKind);
+
+    // Kind options ← catalog, unioning any current value so a legacy /
+    // not-yet-declared kind is never silently dropped from the row.
+    final baseKinds = catalog?.kinds.toList() ?? _featEffectKinds;
+    final kindOptions =
+        (kind != null && kind.isNotEmpty && !baseKinds.contains(kind))
+            ? [...baseKinds, kind]
+            : baseKinds;
+
+    // Target-kind dropdown is hidden for rules that take no target (e.g.
+    // ac_bonus), unless the row already carries one (never hide data).
+    final ruleTargets = rule?.allowedTargetKinds ?? const <String>[];
+    final showTargetKind = catalog == null ||
+        rule == null ||
+        ruleTargets.isNotEmpty ||
+        (targetKind != null && targetKind.isNotEmpty);
+    final baseTargets = catalog?.targetKindsFor(kind) ?? _featEffectTargetKinds;
+    final targetOptions = <String>{
+      '',
+      ...baseTargets,
+      if (targetKind != null && targetKind.isNotEmpty) targetKind,
+    }.toList();
+
+    // Nested-shape gating: show a sub-editor when the rule supports it (edit
+    // mode) or when the row already carries that data (any mode).
+    final preds = _coerceRows(row['predicates']);
+    final showPreds =
+        (!readOnly && (rule?.supportsPredicates ?? false)) || preds.isNotEmpty;
+    final scales =
+        row['scales_with'] is Map ? Map<String, dynamic>.from(row['scales_with']) : null;
+    final showScales =
+        (!readOnly && (rule?.supportsScaling ?? false)) || scales != null;
+    final activation =
+        row['activation'] is Map ? Map<String, dynamic>.from(row['activation']) : null;
+    final showActivation =
+        (!readOnly && (rule?.supportsActivation ?? false)) || activation != null;
+
+    // Undeclared payload keys (data we can't author yet) — surface as a badge
+    // so the author knows the row carries extra structure that is preserved.
+    final payload =
+        row['payload'] is Map ? Map<String, dynamic>.from(row['payload']) : const {};
+    final declaredPayloadKeys = <String>{
+      for (final p in rule?.params ?? const <RuleParamSpec>[])
+        if (p.location == RuleParamLocation.payload) p.key,
+    };
+    final extraPayloadKeys =
+        payload.keys.where((k) => !declaredPayloadKeys.contains(k)).toList();
+
+    // Non-blocking authoring warnings (bad target kind, unknown predicate,
+    // missing required param). Only when a real kind is set, to avoid nagging
+    // on a freshly-added empty row.
+    final issues = (catalog != null && kind != null && kind.isNotEmpty)
+        ? validateEffectRow(row, catalog!)
+        : const <RuleIssue>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
           spacing: 8,
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            if (issues.isNotEmpty)
+              Tooltip(
+                message: issues.map((e) => '• ${e.message}').join('\n'),
+                child: const Icon(Icons.warning_amber_rounded,
+                    size: 18, color: Colors.orange),
+              ),
             _miniEnum(
               label: 'Kind',
-              value: row['kind'] as String?,
-              options: _featEffectKinds,
+              value: kind,
+              options: kindOptions,
               readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'kind': v}),
+              onChanged: (v) => onChanged({...row, 'kind': v}),
               width: 240,
+              display: (k) => catalog?.labelFor(k) ?? k,
             ),
-            _miniEnum(
-              label: 'Target Kind',
-              value: targetKind,
-              options: _featEffectTargetKinds,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({
-                ...row,
-                'target_kind': v == '' ? null : v,
-                'target_ref': null,
-              }),
-              width: 140,
-            ),
+            if (showTargetKind)
+              _miniEnum(
+                label: 'Target Kind',
+                value: targetKind,
+                options: targetOptions,
+                readOnly: readOnly,
+                onChanged: (v) => onChanged({
+                  ...row,
+                  'target_kind': v == '' ? null : v,
+                  'target_ref': null,
+                }),
+                width: 140,
+              ),
             if (allowed.isNotEmpty)
               _MiniRelationField(
                 label: 'Target',
@@ -1655,23 +1848,616 @@ class FeatEffectListFieldWidget extends StatelessWidget {
                 entities: entities,
                 ref: ref,
                 readOnly: readOnly,
-                onChanged: (v) => onRowChanged({...row, 'target_ref': v}),
+                onChanged: (v) => onChanged({...row, 'target_ref': v}),
               ),
-            _miniInt(
-              label: 'Value',
-              value: row['value'] is int ? row['value'] as int : null,
+            ..._paramInputs(rule),
+            if (extraPayloadKeys.isNotEmpty)
+              _badge('payload: ${extraPayloadKeys.join(", ")}', Colors.brown),
+          ],
+        ),
+        if (rule?.description.isNotEmpty == true && !readOnly)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, left: 2),
+            child: Text(
+              rule!.description,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.outline,
+                  fontStyle: FontStyle.italic),
+            ),
+          ),
+        if (showPreds)
+          _PredicateEditor(
+            predicateKinds: catalog?.predicateKinds ?? const [],
+            preds: preds,
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (list) => onChanged(
+                list.isEmpty ? _without('predicates') : {...row, 'predicates': list}),
+          ),
+        if (showScales)
+          _ScalesWithEditor(
+            scales: scales,
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (m) =>
+                onChanged(m == null ? _without('scales_with') : {...row, 'scales_with': m}),
+          ),
+        if (showActivation)
+          _ActivationEditor(
+            activation: activation,
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (m) =>
+                onChanged(m == null ? _without('activation') : {...row, 'activation': m}),
+          ),
+      ],
+    );
+  }
+
+  /// Inline param inputs for the selected rule (top-level `value` + payload
+  /// params). Legacy/unknown kinds keep the bare Value field; undeclared
+  /// payload keys are preserved by always spreading the existing payload.
+  List<Widget> _paramInputs(RuleDefinition? rule) {
+    final out = <Widget>[];
+    final payload =
+        row['payload'] is Map ? Map<String, dynamic>.from(row['payload']) : <String, dynamic>{};
+
+    void writePayload(String key, Object? v) {
+      final p = {...payload};
+      if (v == null || (v is String && v.isEmpty) || (v is List && v.isEmpty)) {
+        p.remove(key);
+      } else {
+        p[key] = v;
+      }
+      onChanged(p.isEmpty ? _without('payload') : {...row, 'payload': p});
+    }
+
+    RuleParamSpec? valueParam;
+    for (final p in rule?.params ?? const <RuleParamSpec>[]) {
+      if (p.location == RuleParamLocation.topLevel && p.key == 'value') {
+        valueParam = p;
+      }
+    }
+
+    if (valueParam != null) {
+      out.add(_paramWidget(
+          valueParam, row['value'], (v) => onChanged({...row, 'value': v})));
+    } else if (rule == null || row['value'] != null) {
+      // Preserve / allow editing of a bare value on legacy or unknown rows.
+      out.add(_miniInt(
+        label: 'Value',
+        value: row['value'] is int ? row['value'] as int : null,
+        readOnly: readOnly,
+        onChanged: (v) => onChanged({...row, 'value': v}),
+        width: 70,
+      ));
+    }
+
+    for (final p in rule?.params ?? const <RuleParamSpec>[]) {
+      if (p.location == RuleParamLocation.payload) {
+        out.add(_paramWidget(p, payload[p.key], (v) => writePayload(p.key, v)));
+      } else if (p.location == RuleParamLocation.topLevel && p.key != 'value') {
+        out.add(_paramWidget(p, row[p.key], (v) {
+          onChanged(v == null ? _without(p.key) : {...row, p.key: v});
+        }));
+      }
+    }
+    return out;
+  }
+
+  Widget _paramWidget(
+      RuleParamSpec spec, Object? value, ValueChanged<Object?> write) {
+    return switch (spec.type) {
+      RuleParamType.int_ => _miniInt(
+          label: spec.label,
+          value: value is int ? value : null,
+          readOnly: readOnly,
+          onChanged: write,
+          width: 80,
+        ),
+      RuleParamType.bool_ => _miniBool(
+          label: spec.label,
+          value: value == true,
+          readOnly: readOnly,
+          onChanged: write,
+        ),
+      RuleParamType.enumChoice => _miniEnum(
+          label: spec.label,
+          value: value?.toString(),
+          options: ['', ...spec.enumOptions],
+          readOnly: readOnly,
+          onChanged: (v) => write(v == null || v.isEmpty ? null : v),
+          width: 140,
+        ),
+      RuleParamType.relation => _MiniRelationField(
+          label: spec.label,
+          value: value is String ? value : null,
+          allowedTypes: spec.relationAllowedTypes,
+          entities: entities,
+          ref: ref,
+          readOnly: readOnly,
+          onChanged: write,
+        ),
+      RuleParamType.abilityList => _miniText(
+          label: spec.label,
+          value: value is List ? value.join(',') : '',
+          readOnly: readOnly,
+          width: 150,
+          onChanged: (s) {
+            final list = s
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+            write(list.isEmpty ? null : list);
+          },
+        ),
+      RuleParamType.string_ || RuleParamType.dice => _miniText(
+          label: spec.label,
+          value: value?.toString() ?? '',
+          readOnly: readOnly,
+          width: 150,
+          onChanged: (s) => write(s.isEmpty ? null : s),
+        ),
+    };
+  }
+}
+
+/// Compact bordered section used by the nested feat-effect sub-editors.
+Widget _nestedBox({
+  required BuildContext context,
+  required String title,
+  required bool readOnly,
+  VoidCallback? onAdd,
+  VoidCallback? onClear,
+  required List<Widget> children,
+}) {
+  final outline = Theme.of(context).colorScheme.outline;
+  return Container(
+    margin: const EdgeInsets.only(top: 6),
+    padding: const EdgeInsets.fromLTRB(8, 2, 4, 6),
+    decoration: BoxDecoration(
+      border: Border.all(color: outline.withValues(alpha: 0.4)),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(title,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: outline)),
+            const Spacer(),
+            if (!readOnly && onClear != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 16),
+                tooltip: 'Clear',
+                visualDensity: VisualDensity.compact,
+                onPressed: onClear,
+              ),
+            if (!readOnly && onAdd != null)
+              IconButton(
+                icon: const Icon(Icons.add, size: 16),
+                tooltip: 'Add',
+                visualDensity: VisualDensity.compact,
+                onPressed: onAdd,
+              ),
+          ],
+        ),
+        ...children,
+      ],
+    ),
+  );
+}
+
+/// Editor for an effect row's `predicates: [{kind, args}]` (AND-combined).
+class _PredicateEditor extends StatelessWidget {
+  final List<String> predicateKinds;
+  final List<Map<String, dynamic>> preds;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<List<Map<String, dynamic>>> onChanged;
+
+  const _PredicateEditor({
+    required this.predicateKinds,
+    required this.preds,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  static const _fallbackKinds = [
+    'class_level_at_least', 'equipped_armor_kind', 'equipped_shield',
+    'has_proficiency', 'has_state', 'has_condition', 'target_has_condition',
+    'not_incapacitated',
+  ];
+
+  void _write(int i, Map<String, dynamic> next) {
+    final l = [...preds];
+    l[i] = next;
+    onChanged(l);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final kinds = predicateKinds.isEmpty ? _fallbackKinds : predicateKinds;
+    return _nestedBox(
+      context: context,
+      title: 'Predicates — all must pass',
+      readOnly: readOnly,
+      onAdd: () =>
+          onChanged([...preds, {'kind': null, 'args': <String, dynamic>{}}]),
+      children: [
+        if (preds.isEmpty)
+          Text('No predicates',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.outline)),
+        for (var i = 0; i < preds.length; i++) _row(context, kinds, i),
+      ],
+    );
+  }
+
+  Widget _row(BuildContext context, List<String> kinds, int i) {
+    final p = preds[i];
+    final kind = p['kind'] as String?;
+    final args = p['args'] is Map
+        ? Map<String, dynamic>.from(p['args'])
+        : <String, dynamic>{};
+    final kindOptions =
+        (kind != null && kind.isNotEmpty && !kinds.contains(kind))
+            ? [...kinds, kind]
+            : kinds;
+    void writeArgs(Map<String, dynamic> a) => _write(i, {...p, 'args': a});
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _miniEnum(
+            label: 'Predicate',
+            value: kind,
+            options: kindOptions,
+            readOnly: readOnly,
+            onChanged: (v) =>
+                _write(i, {...p, 'kind': v, 'args': <String, dynamic>{}}),
+            width: 210,
+          ),
+          ..._argInputs(kind, args, writeArgs),
+          if (!readOnly)
+            IconButton(
+              icon: const Icon(Icons.close, size: 14),
+              tooltip: 'Remove',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => onChanged([...preds]..removeAt(i)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _argInputs(
+      String? kind, Map<String, dynamic> args, ValueChanged<Map<String, dynamic>> writeArgs) {
+    String? refArg() {
+      final v = args['ref'] ?? args['state_ref'] ?? args['condition_ref'];
+      return v is String ? v : null;
+    }
+
+    switch (kind) {
+      case 'class_level_at_least':
+        return [
+          _MiniRelationField(
+            label: 'Class',
+            value: args['class_ref'] is String ? args['class_ref'] as String : null,
+            allowedTypes: const ['class'],
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs({...args, 'class_ref': v}),
+          ),
+          _miniInt(
+            label: 'Level',
+            value: args['level'] is int ? args['level'] as int : null,
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs({...args, 'level': v}),
+            width: 70,
+          ),
+        ];
+      case 'equipped_armor_kind':
+        return [
+          _miniEnum(
+            label: 'Value',
+            value: args['value']?.toString(),
+            options: const ['none', 'light', 'medium', 'heavy', 'not_heavy', 'not_none'],
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs({...args, 'value': v}),
+            width: 130,
+          ),
+        ];
+      case 'equipped_shield':
+        return [
+          _miniEnum(
+            label: 'Value',
+            value: args['value']?.toString(),
+            options: const ['any', 'true', 'false'],
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs({...args, 'value': v}),
+            width: 100,
+          ),
+        ];
+      case 'has_state':
+        return [
+          _MiniRelationField(
+            label: 'State',
+            value: refArg(),
+            allowedTypes: const ['character-state'],
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs(v == null ? <String, dynamic>{} : {'ref': v}),
+          ),
+        ];
+      case 'has_condition':
+      case 'target_has_condition':
+        return [
+          _MiniRelationField(
+            label: 'Condition',
+            value: refArg(),
+            allowedTypes: const ['condition'],
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (v) => writeArgs(v == null ? <String, dynamic>{} : {'ref': v}),
+          ),
+        ];
+      case 'not_incapacitated':
+      case null:
+        return const [];
+      default:
+        return [
+          _miniText(
+            label: 'Value',
+            value: args['value']?.toString() ?? '',
+            readOnly: readOnly,
+            width: 130,
+            onChanged: (s) =>
+                writeArgs(s.isEmpty ? <String, dynamic>{} : {...args, 'value': s}),
+          ),
+        ];
+    }
+  }
+}
+
+/// Editor for an effect row's `scales_with: {kind, class_ref?, table:[{lvl,v}]}`.
+class _ScalesWithEditor extends StatelessWidget {
+  final Map<String, dynamic>? scales;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<Map<String, dynamic>?> onChanged;
+
+  const _ScalesWithEditor({
+    required this.scales,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final base = scales ?? const {'kind': 'class_level'};
+    final kind = base['kind']?.toString() ?? 'class_level';
+    final table = _coerceRows(base['table']);
+    void write(Map<String, dynamic> next) => onChanged(next);
+    return _nestedBox(
+      context: context,
+      title: 'Scales with level (largest row ≤ level wins)',
+      readOnly: readOnly,
+      onClear: scales == null ? null : () => onChanged(null),
+      onAdd: () => write({
+        ...base,
+        'kind': kind,
+        'table': [...table, {'lvl': 1, 'v': 1}],
+      }),
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _miniEnum(
+              label: 'By',
+              value: kind,
+              options: const ['class_level', 'character_level'],
               readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'value': v}),
+              onChanged: (v) => write({...base, 'kind': v ?? 'class_level'}),
+              width: 160,
+            ),
+            if (kind == 'class_level' || kind == 'class_level_table')
+              _MiniRelationField(
+                label: 'Class',
+                value: base['class_ref'] is String ? base['class_ref'] as String : null,
+                allowedTypes: const ['class'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (v) => write({...base, 'class_ref': v}),
+              ),
+          ],
+        ),
+        if (table.isEmpty)
+          Text('No table rows',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.outline)),
+        for (var i = 0; i < table.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Wrap(
+              spacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _miniInt(
+                  label: 'Lvl',
+                  value: table[i]['lvl'] is int ? table[i]['lvl'] as int : null,
+                  readOnly: readOnly,
+                  onChanged: (v) {
+                    final t = [...table];
+                    t[i] = {...t[i], 'lvl': v};
+                    write({...base, 'table': t});
+                  },
+                  width: 70,
+                ),
+                _miniInt(
+                  label: 'Value',
+                  value: table[i]['v'] is int ? table[i]['v'] as int : null,
+                  readOnly: readOnly,
+                  onChanged: (v) {
+                    final t = [...table];
+                    t[i] = {...t[i], 'v': v};
+                    write({...base, 'table': t});
+                  },
+                  width: 80,
+                ),
+                if (!readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 14),
+                    tooltip: 'Remove',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      final t = [...table]..removeAt(i);
+                      write({...base, 'table': t});
+                    },
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Editor for an effect row's `activation: {action_type, uses{count,per},
+/// triggers_state_ref}`. Combat-tracker metadata — no resolve-time effect.
+/// Unknown keys (duration, end_conditions) are preserved by spreading.
+class _ActivationEditor extends StatelessWidget {
+  final Map<String, dynamic>? activation;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<Map<String, dynamic>?> onChanged;
+
+  const _ActivationEditor({
+    required this.activation,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final base = activation ?? <String, dynamic>{};
+    final uses = base['uses'] is Map
+        ? Map<String, dynamic>.from(base['uses'])
+        : <String, dynamic>{};
+    void write(Map<String, dynamic> next) => onChanged(next);
+    void writeUses(Map<String, dynamic> u) {
+      final next = {...base};
+      if (u.isEmpty) {
+        next.remove('uses');
+      } else {
+        next['uses'] = u;
+      }
+      write(next);
+    }
+
+    return _nestedBox(
+      context: context,
+      title: 'Activation (action economy)',
+      readOnly: readOnly,
+      onClear: activation == null ? null : () => onChanged(null),
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _miniEnum(
+              label: 'Action',
+              value: base['action_type']?.toString(),
+              options: const [
+                'action', 'bonus_action', 'reaction', 'free', 'no_action', 'passive'
+              ],
+              readOnly: readOnly,
+              onChanged: (v) => write({...base, 'action_type': v}),
+              width: 150,
+            ),
+            _miniInt(
+              label: 'Uses',
+              value: uses['count'] is int ? uses['count'] as int : null,
+              readOnly: readOnly,
+              onChanged: (v) {
+                final u = {...uses};
+                if (v == null) {
+                  u.remove('count');
+                } else {
+                  u['count'] = v;
+                }
+                writeUses(u);
+              },
               width: 70,
             ),
-            // Read-only badges for nested shapes the MVP editor can't author yet.
-            if (predCount > 0) _badge('predicates×$predCount', Colors.deepPurple),
-            if (hasScales) _badge('scales_with', Colors.teal),
-            if (hasActivation) _badge('activation', Colors.indigo),
-            if (hasPayload) _badge('payload', Colors.brown),
+            _miniEnum(
+              label: 'Per',
+              value: uses['per']?.toString(),
+              options: const ['', 'short_rest', 'long_rest'],
+              readOnly: readOnly,
+              onChanged: (v) {
+                final u = {...uses};
+                if (v == null || v.isEmpty) {
+                  u.remove('per');
+                } else {
+                  u['per'] = v;
+                }
+                writeUses(u);
+              },
+              width: 130,
+            ),
+            _MiniRelationField(
+              label: 'Triggers State',
+              value: base['triggers_state_ref'] is String
+                  ? base['triggers_state_ref'] as String
+                  : null,
+              allowedTypes: const ['character-state'],
+              entities: entities,
+              ref: ref,
+              readOnly: readOnly,
+              onChanged: (v) {
+                final next = {...base};
+                if (v == null) {
+                  next.remove('triggers_state_ref');
+                } else {
+                  next['triggers_state_ref'] = v;
+                }
+                write(next);
+              },
+            ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 }

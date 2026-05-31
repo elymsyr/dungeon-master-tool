@@ -54,7 +54,7 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
   final schema = WorldSchema(
     schemaId: schemaId,
     name: 'D&D 5e (SRD 5.2.1)',
-    version: '2.3.0',
+    version: '2.4.0',
     baseSystem: 'dnd5e',
     description:
         'Built-in D&D 5e template aligned with SRD 5.2.1 (CC-BY-4.0). '

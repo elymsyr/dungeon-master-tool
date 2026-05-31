@@ -385,6 +385,9 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   // subset is granted (e.g. Barbarian multiclass = shields + martial weapons,
   // not full Barbarian proficiencies).
   fb.markdown('multiclass_granted_proficiencies', 'Multiclass Granted Proficiencies', g: grpProgression);
+  // Typed rule effects applied while the class is held (always-on; gate by
+  // level with a `class_level_at_least` predicate). Empty by default.
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpFeatures);
 
   return _mk(
     schemaId: schemaId,
@@ -414,6 +417,7 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   fb.integer('bonus_skill_pick_count', 'Bonus Skill Picks at Grant', min: 0, max: 6);
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpFeatures);
 
   return _mk(
     schemaId: schemaId,
@@ -466,6 +470,7 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('granted_spell_refs', 'Innate Spells', const ['spell'], isList: true, g: grpTraitsActions);
   fb.relation('granted_cantrip_refs', 'Innate Cantrips', const ['spell'], isList: true, g: grpTraitsActions);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpTraitsActions);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields
   // available at the species level — folded by CharacterResolver when the
@@ -516,6 +521,7 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   fb.integer('starting_gold_gp', 'Starting Gold (gp)', min: 0);
   fb.integer('gold_alternative_gp', 'Gold Alternative (gp)', min: 0,
       help: 'Choose this gp instead of default_inventory_refs');
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpIdentity);
 
   return _mk(
     schemaId: schemaId,
@@ -667,6 +673,7 @@ EntityCategorySchema _weaponCategory(String schemaId, String now, int orderIndex
   fb.relation('ammunition_type_ref', 'Ammunition Type', const ['ammunition'], g: grpProperties);
   fb.floatF('cost_gp', 'Cost (gp)', required_: true, min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', required_: true, min: 0, g: grpCostWeight);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpProperties);
 
   return _mk(
     schemaId: schemaId,
@@ -702,6 +709,7 @@ EntityCategorySchema _armorCategory(String schemaId, String now, int orderIndex)
   fb.integer('doff_time_minutes', 'Doff (min)', required_: true, min: 0);
   fb.floatF('cost_gp', 'Cost (gp)', required_: true, min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', required_: true, min: 0, g: grpCostWeight);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpIdentity);
 
   return _mk(
     schemaId: schemaId,
@@ -948,6 +956,7 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
   );
   fb.text('command_word', 'Command Word');
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpRules);
   fb.markdown('effects', 'Effects (narrative)', required_: true, g: grpRules);
   fb.integer('cost_gp', 'Cost (gp)', min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', min: 0, g: grpCostWeight);
@@ -1075,6 +1084,7 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
     'Other',
   ]);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpRules);
   fb.markdown('description', 'Description (narrative)', g: grpRules);
   fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
   // Player-facing? Narrative class/species traits are auto-granted and should
@@ -1083,9 +1093,9 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
   fb.boolean('chooseable', 'Player-Chooseable',
       defaultValue: false, g: grpIdentity);
   // Inverse edge of class.granted_trait_refs / species.granted_trait_refs /
-  // background.granted_trait_refs. Resolver does NOT walk trait effects (traits
-  // are narrative-only); the auto-grant walker only adds the trait to the
-  // character's Features list for display.
+  // background.granted_trait_refs. The auto-grant walker adds the trait to the
+  // character's Features list; the resolver also applies the trait's typed
+  // `rule_effects` (legacy `granted_modifiers` stays display-only).
   fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
 
   return _mk(

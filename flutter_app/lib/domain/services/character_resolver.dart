@@ -1,6 +1,7 @@
 import '../entities/character.dart';
 import '../entities/character/effective_character.dart';
 import '../entities/entity.dart';
+import '../entities/schema/rules/rule_config.dart';
 import 'count_formula.dart';
 
 /// Pure-function read-time resolver. Walks a [Character]'s raw choices
@@ -11,14 +12,47 @@ import 'count_formula.dart';
 /// Stateless. Safe to call on every read. Not memoized at this layer; wrap
 /// with a Riverpod `Provider.family` for caching.
 class CharacterResolver {
+  /// Effect `kind`s with a real `applyEffect` case below. Hand-mirrored from
+  /// the switch — the Rule Catalog must declare a superset of this set, which
+  /// a debug assert in `ruleCatalogProvider` enforces so the declared
+  /// (editor/validation) surface never drops a kind the resolver applies.
+  static const Set<String> knownEffectKinds = {
+    'class_level_grant', 'ability_score_bonus', 'ac_bonus', 'speed_bonus',
+    'hp_bonus_per_level', 'hp_bonus_flat', 'hp_max_bonus_total',
+    'initiative_bonus', 'proficiency_grant', 'language_grant', 'spell_grant',
+    'cantrip_grant', 'spell_always_prepared', 'damage_resistance',
+    'damage_immunity', 'damage_vulnerability', 'condition_immunity_grant',
+    'sense_grant', 'truesight_grant', 'blindsight_grant', 'expertise_grant',
+    'temp_hp_grant', 'granted_action_grant', 'granted_bonus_action_grant',
+    'granted_reaction_grant', 'unarmored_ac_formula', 'extra_attack_count',
+    'extra_attack_bump', 'crit_range_extend', 'resource_pool_grant',
+    'state_grant', 'recovery_grant', 'slot_recovery_short_rest',
+    'concentration_advantage', 'concentration_immune_to_damage_break',
+    'reaction_attack_grant', 'reaction_damage_reduction',
+    'reaction_negate_via_save',
+    'opportunity_attack_immunity_when_disengage_redundant',
+    'enemy_cant_disengage_oa', 'oa_stops_movement', 'damage_reduction_flat',
+    'ignore_cover', 'ignore_long_range_disadvantage', 'advantage_on',
+    'disadvantage_on', 'extra_damage_on_attack', 'reroll_damage', 'reroll_d20',
+    'attack_bonus_typed', 'damage_bonus_typed',
+    'half_proficiency_to_unproficient_checks', 'passive_score_bonus',
+    'reliable_talent', 'min_die_value', 'swim_speed_equals_speed',
+    'climb_speed_equals_speed', 'fly_speed', 'walk_on_liquid',
+    'magical_unarmed_strikes', 'damage_type_override',
+    'spellcasting_ability_to_damage', 'cantrip_count_bonus',
+    'spell_cast_from_item', 'weapon_mastery_grant',
+    'weapon_mastery_count_bonus', 'expertise_count', 'choice_group',
+  };
+
   /// Resolve [pc] against the campaign-wide entity map [entitiesById].
   ///
   /// Missing references are silently dropped and surfaced in
   /// [EffectiveCharacter.warnings] for debug display.
   static EffectiveCharacter resolve(
     Character pc,
-    Map<String, Entity> entitiesById,
-  ) {
+    Map<String, Entity> entitiesById, {
+    RuleConfig config = RuleConfig.dnd5eDefaults,
+  }) {
     final fields = pc.entity.fields;
     final warnings = <String>[];
 
@@ -885,6 +919,50 @@ class CharacterResolver {
       }
     }
 
+    // ── 8b. Pass 5b: entity-level `rule_effects` ──────────────────────────
+    // The uniform `rule_effects` (featEffectList) field now lives on every
+    // rule-bearing category (class, subclass, species, background, trait,
+    // magic-item, weapon, armor) alongside feat's own `effects`. A distinct
+    // key avoids colliding with magic-item/spell's existing narrative
+    // `effects`. The field is new, so it is empty on all existing SRD content
+    // — applying it here is purely additive and changes nothing until a user
+    // authors a rule. Class/subclass flat effects apply while the class is
+    // held; granted-trait effects apply when the trait is granted; item
+    // effects apply while equipped.
+    void applyEntityEffects(Entity? e, String source) {
+      if (e == null) return;
+      for (final eff in _readMapList(e.fields['rule_effects'])) {
+        applyEffect(eff, source);
+      }
+    }
+
+    for (final cid in classLevels.keys) {
+      final ce = entitiesById[cid];
+      applyEntityEffects(ce, 'class:${ce?.name ?? cid}');
+    }
+    if (subclassId != null) {
+      final sub = entitiesById[subclassId];
+      applyEntityEffects(sub, 'subclass:${sub?.name ?? subclassId}');
+    }
+    if (raceId != null) {
+      final sp = entitiesById[raceId];
+      applyEntityEffects(sp, 'species:${sp?.name ?? raceId}');
+    }
+    if (backgroundId != null) {
+      final bg = entitiesById[backgroundId];
+      applyEntityEffects(bg, 'background:${bg?.name ?? backgroundId}');
+    }
+    for (final tid in autoGrantedTraitIds) {
+      final tr = entitiesById[tid];
+      applyEntityEffects(tr, 'trait:${tr?.name ?? tid}');
+    }
+    for (final row in _iterEquippedInventory(fields)) {
+      final id = _resolveRef(row, entitiesById);
+      if (id == null) continue;
+      final item = entitiesById[id];
+      applyEntityEffects(item, 'item:${item?.name ?? id}');
+    }
+
     // ── 8. Class proficiency grants (saves + weapon/armor categories) ──
     for (final classId in classLevels.keys) {
       final cls = entitiesById[classId];
@@ -1040,6 +1118,7 @@ class CharacterResolver {
         abilities: abilities,
         acBonus: acBonus,
         unarmoredFormulas: unarmoredFormulas,
+        config: config,
       ),
       armorNotes: armorNotes,
       speedBonus: speedBonus,
@@ -1132,8 +1211,10 @@ class CharacterResolver {
     required Map<String, int> abilities,
     required int acBonus,
     required List<Map<String, dynamic>> unarmoredFormulas,
+    required RuleConfig config,
   }) {
-    final dex = ((abilities['DEX'] ?? 10) - 10) >> 1;
+    final shield = config.acShieldBonus;
+    final dex = config.abilityModifier(abilities['DEX'] ?? 10);
     final hasShield = _hasEquippedShield(fields, entitiesById);
     final armor = _equippedArmor(fields, entitiesById);
     if (armor != null) {
@@ -1148,28 +1229,28 @@ class CharacterResolver {
       } else {
         dexContrib = dex;
       }
-      return base + dexContrib + (hasShield ? 2 : 0) + acBonus;
+      return base + dexContrib + (hasShield ? shield : 0) + acBonus;
     }
-    // Unarmored: SRD default 10 + Dex; replaced by the highest matching
+    // Unarmored: SRD default base + Dex; replaced by the highest matching
     // unarmored_ac_formula (Barbarian, Monk, Draconic Sorcerer). Shield is
     // additive when the formula allows it (Barbarian yes, Monk no).
-    var best = 10 + dex + (hasShield ? 2 : 0);
+    var best = config.acUnarmoredBase + dex + (hasShield ? shield : 0);
     for (final f in unarmoredFormulas) {
       final payload = f['payload'];
       if (payload is! Map) continue;
       final baseRaw = payload['base'];
-      final base = baseRaw is int ? baseRaw : 10;
+      final base = baseRaw is int ? baseRaw : config.acUnarmoredBase;
       final mods = payload['ability_mods'];
       var sum = base;
       if (mods is List) {
         for (final m in mods) {
           if (m is String) {
-            sum += ((abilities[m] ?? 10) - 10) >> 1;
+            sum += config.abilityModifier(abilities[m] ?? 10);
           }
         }
       }
       final shieldAllowed = payload['shield_allowed'] == true;
-      final withShield = sum + (hasShield && shieldAllowed ? 2 : 0);
+      final withShield = sum + (hasShield && shieldAllowed ? shield : 0);
       if (withShield > best) best = withShield;
     }
     return best + acBonus;

@@ -1,4 +1,5 @@
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/schema/rules/rule_config.dart';
 import 'caster_progression.dart';
 import 'extra_attack_resolver.dart';
 import 'resource_pool_resolver.dart';
@@ -227,39 +228,15 @@ int effectiveHpDelta({
   return raw + plan.levelsGained * conModifier;
 }
 
-/// SRD §1 proficiency bonus by level. Matches `ClassLevelUpTable.profBonusFor`
-/// — kept here so the planner has no UI import.
-int proficiencyBonusFor(int level) {
-  if (level >= 17) return 6;
-  if (level >= 13) return 5;
-  if (level >= 9) return 4;
-  if (level >= 5) return 3;
-  return 2;
-}
+/// SRD §1 proficiency bonus by level. Thin default-config wrapper kept for
+/// legacy callers; per-world overrides flow through `planLevelUp(config:)`.
+int proficiencyBonusFor(int level) =>
+    RuleConfig.dnd5eDefaults.proficiencyBonusFor(level);
 
-/// Fixed HP gained per level after L1: average of the die rounded up
-/// (d6→4, d8→5, d10→6, d12→7). Returns 0 for unknown / malformed input
-/// — the dialog renders "—" so the user can still apply other deltas.
-int fixedHpFor(String? hitDie) {
-  switch (hitDie) {
-    case 'd6':
-      return 4;
-    case 'd8':
-      return 5;
-    case 'd10':
-      return 6;
-    case 'd12':
-      return 7;
-    default:
-      return 0;
-  }
-}
-
-/// SRD §1: Ability Score Improvement (or feat) is granted at the listed
-/// levels for nearly every class. Captured here rather than scanning the
-/// class's `features` text so the dialog flag works even when the schema
-/// row omits the ASI feature entry.
-const _asiOrFeatLevels = {4, 8, 12, 16, 19};
+/// Fixed HP gained per level after L1 (d6→4, d8→5, d10→6, d12→7); 0 for
+/// unknown input. Thin default-config wrapper — see [RuleConfig.hpPerLevelFor].
+int fixedHpFor(String? hitDie) =>
+    RuleConfig.dnd5eDefaults.hpPerLevelFor(hitDie);
 
 /// Cumulative feature-option pickers. Each (class, feature) maps level →
 /// number of picks gained at that level. Drives Sorcerer Metamagic and
@@ -354,13 +331,14 @@ LevelUpPlan planLevelUp({
   Map<String, Entity> entities = const {},
   Map<String, int> abilities = const {},
   Map<String, int> classLevels = const {},
+  RuleConfig config = RuleConfig.dnd5eDefaults,
 }) {
   final clampedFrom = fromLevel.clamp(0, 20);
   final clampedTo = toLevel.clamp(0, 20);
   final hitDie = classEntity?.fields['hit_die'] as String?;
 
   final levelsGained = (clampedTo - clampedFrom).clamp(0, 20);
-  final hpDelta = levelsGained * fixedHpFor(hitDie);
+  final hpDelta = levelsGained * config.hpPerLevelFor(hitDie);
 
   final newFeatures = <LevelGain>[
     ..._featuresInRange(
@@ -383,7 +361,7 @@ LevelUpPlan planLevelUp({
 
   var asi = false;
   for (var l = clampedFrom + 1; l <= clampedTo; l++) {
-    if (_asiOrFeatLevels.contains(l)) asi = true;
+    if (config.isAsiLevel(l)) asi = true;
   }
 
   // Extra Attack: prefer the resolver (SRD class feats declare the count
@@ -554,8 +532,8 @@ LevelUpPlan planLevelUp({
     toLevel: clampedTo,
     hpDelta: hpDelta,
     hitDie: hitDie,
-    prevProfBonus: proficiencyBonusFor(clampedFrom < 1 ? 1 : clampedFrom),
-    newProfBonus: proficiencyBonusFor(clampedTo < 1 ? 1 : clampedTo),
+    prevProfBonus: config.proficiencyBonusFor(clampedFrom < 1 ? 1 : clampedFrom),
+    newProfBonus: config.proficiencyBonusFor(clampedTo < 1 ? 1 : clampedTo),
     newFeatures: newFeatures,
     isAsiOrFeatLevel: asi,
     isExtraAttackLevel: extra,
