@@ -15,6 +15,7 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
+import 'rule_config_provider.dart';
 import '../services/builtin_srd_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
@@ -1066,7 +1067,8 @@ final effectiveCharacterProvider =
     final campaign = ref.watch(entityProvider);
     entities = campaign.isEmpty ? builtin : {...builtin, ...campaign};
   }
-  return CharacterResolver.resolve(pc, entities);
+  return CharacterResolver.resolve(pc, entities,
+      config: ref.watch(ruleConfigProvider));
 });
 
 /// Player kategorisi field'ları için default değer üretir.

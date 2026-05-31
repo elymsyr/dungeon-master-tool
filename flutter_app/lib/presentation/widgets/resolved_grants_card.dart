@@ -15,6 +15,17 @@ class ResolvedGrantsCard extends StatelessWidget {
   final Map<String, Entity> entities;
   final DmToolColors palette;
 
+  /// Character level — drives the per-level HP bonus note (Tough +2/level).
+  final int characterLevel;
+
+  /// Resolver-granted skill / tool proficiency ids that are NOT already
+  /// checked on the editable proficiency table (e.g. a feat's direct
+  /// `proficiency_grant` effect that never wrote back to `skills.rows`).
+  /// Pre-diffed by the caller so the card surfaces only the otherwise-hidden
+  /// grants instead of duplicating the whole proficiency list.
+  final List<String> extraSkillProfIds;
+  final List<String> extraToolProfIds;
+
   /// Remaining-uses map for granted resource pools, keyed by entity id
   /// (e.g. innate spell id). Missing keys default to pool max.
   final Map<String, int> poolRemaining;
@@ -38,6 +49,9 @@ class ResolvedGrantsCard extends StatelessWidget {
     required this.effective,
     required this.entities,
     required this.palette,
+    this.characterLevel = 1,
+    this.extraSkillProfIds = const [],
+    this.extraToolProfIds = const [],
     this.poolRemaining = const {},
     this.onPoolRemainingChanged,
     this.spellSlotsRemaining,
@@ -174,6 +188,67 @@ class ResolvedGrantsCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Generic label + plain-text chips row (values aren't entity ids). Used for
+  /// the HP / initiative bonus notes. Hidden when [chips] is empty.
+  Widget _textChipRow(String label, List<String> chips, Color chipColor) {
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+          for (final c in chips)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: chipColor.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: chipColor.withValues(alpha: 0.4),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                c,
+                style: TextStyle(fontSize: 12, color: palette.srdInk),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Compose the feat HP-bonus note chips from the per-level + flat bonuses.
+  /// Empty when the character carries no feat HP bonus.
+  List<String> _hpBonusChips() {
+    final perLevel = effective.hpBonusPerLevel;
+    final flat = effective.hpBonusFlat;
+    final total = perLevel * characterLevel + flat;
+    if (total == 0) return const [];
+    final sign = total > 0 ? '+' : '';
+    if (perLevel != 0 && flat != 0) {
+      return ['$sign$total max HP ($flat + $perLevel/level × $characterLevel)'];
+    }
+    if (perLevel != 0) {
+      return ['$sign$total max HP ($perLevel/level × $characterLevel)'];
+    }
+    return ['$sign$total max HP'];
   }
 
   /// Render temp-HP grant sources as text rows — `source — formula (trigger)`.
@@ -606,6 +681,11 @@ class ResolvedGrantsCard extends StatelessWidget {
     final freeCast = effective.freeCastSpellIds;
     final ritualBook = effective.ritualBookSpellIds;
     final activeConditions = effective.activeConditionIds;
+    final hpChips = _hpBonusChips();
+    final initiative = effective.initiativeBonus;
+    final initChips = initiative != 0
+        ? <String>['${initiative > 0 ? '+' : ''}$initiative initiative']
+        : const <String>[];
     if (senses.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
@@ -622,7 +702,11 @@ class ResolvedGrantsCard extends StatelessWidget {
         unarmoredFormulas.isEmpty &&
         freeCast.isEmpty &&
         ritualBook.isEmpty &&
-        activeConditions.isEmpty) {
+        activeConditions.isEmpty &&
+        hpChips.isEmpty &&
+        initChips.isEmpty &&
+        extraSkillProfIds.isEmpty &&
+        extraToolProfIds.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -646,6 +730,10 @@ class ResolvedGrantsCard extends StatelessWidget {
             const SizedBox(height: 8),
             _chipRow('Senses', senses, Colors.indigo, withRange: true),
             _extraSpeedsRow(extraSpeeds, Colors.lightBlue),
+            _textChipRow('HP Bonus', hpChips, Colors.pink),
+            _textChipRow('Initiative', initChips, Colors.lightGreen),
+            _chipRow('Skill Prof.', extraSkillProfIds, Colors.lime),
+            _chipRow('Tool Prof.', extraToolProfIds, Colors.brown),
             _chipRow('Resistances', res, Colors.green),
             _chipRow('Immunities', imm, Colors.blue),
             _chipRow('Vulnerabilities', vuln, Colors.deepOrange),

@@ -2,25 +2,19 @@
 /// Skills/saving throws presetleri, proficiency bonus tablosu, ability listesi.
 library;
 
+import 'rules/rule_config.dart';
+
 /// D&D 5e ability kısaltmaları (ProficiencyTable row.ability için).
 const kDnd5eAbilities = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
-/// Proficiency bonus by character level (1–20).
-/// L1–4: +2, L5–8: +3, L9–12: +4, L13–16: +5, L17–20: +6.
-int proficiencyBonusForLevel(int level) {
-  if (level <= 0) return 2;
-  if (level >= 17) return 6;
-  if (level >= 13) return 5;
-  if (level >= 9) return 4;
-  if (level >= 5) return 3;
-  return 2;
-}
+/// Proficiency bonus by character level (1–20). Delegates to the single
+/// [RuleConfig] source so the sheet, wizard and planner never diverge.
+int proficiencyBonusForLevel(int level) =>
+    RuleConfig.dnd5eDefaults.proficiencyBonusFor(level < 1 ? 1 : level);
 
-/// `ability_mod = floor((score - 10) / 2)`.
-int abilityModifier(int score) {
-  final diff = score - 10;
-  return (diff < 0 && diff.isOdd) ? (diff ~/ 2) - 1 : diff ~/ 2;
-}
+/// `ability_mod = floor((score - 10) / 2)`. Delegates to [RuleConfig].
+int abilityModifier(int score) =>
+    RuleConfig.dnd5eDefaults.abilityModifier(score);
 
 /// Tek bir proficiency-table satırı (skill / saving throw).
 /// Preset olarak gömülür; kullanıcı değer girdiğinde bu satırlar üstüne

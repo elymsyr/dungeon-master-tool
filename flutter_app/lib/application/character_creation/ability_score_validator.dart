@@ -1,3 +1,4 @@
+import '../../domain/entities/schema/rules/rule_config.dart';
 import 'ability_score_method.dart';
 
 /// Pure validator for ability score assignments. No I/O, no UI, no Riverpod —
@@ -84,7 +85,7 @@ class AbilityScoreValidator {
   }
 }
 
-/// Pure SRD ability modifier: floor((score - 10) / 2). Negative scores allowed.
-int abilityModifier(int score) {
-  return ((score - 10) / 2).floor();
-}
+/// Pure SRD ability modifier: floor((score - 10) / 2). Delegates to the single
+/// [RuleConfig] source. Negative scores allowed.
+int abilityModifier(int score) =>
+    RuleConfig.dnd5eDefaults.abilityModifier(score);

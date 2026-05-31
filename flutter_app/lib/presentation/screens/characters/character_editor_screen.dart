@@ -17,6 +17,7 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/connectivity_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
@@ -36,6 +37,7 @@ import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/character/effective_character.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
@@ -1069,11 +1071,17 @@ class _CharacterEditorScreenState
     final entities = _readEntitiesFor(character);
     final remaining = _readGrantedPoolRemaining(character);
     final (slotsMax, slotsRemaining) = _readSpellSlotsState(character);
+    final level = _asInt(character.entity.fields['level'], 1);
+    final (extraSkillProfIds, extraToolProfIds) =
+        _extraResolvedProficiencies(character, effective, entities);
     return [
       ResolvedGrantsCard(
         effective: effective,
         entities: entities,
         palette: palette,
+        characterLevel: level,
+        extraSkillProfIds: extraSkillProfIds,
+        extraToolProfIds: extraToolProfIds,
         poolRemaining: remaining,
         onPoolRemainingChanged: _writeGrantedPoolRemaining,
         spellSlotsMax: slotsMax,
@@ -1081,6 +1089,44 @@ class _CharacterEditorScreenState
         onSpellSlotsRemainingChanged: _writeSpellSlotsRemaining,
       ),
     ];
+  }
+
+  /// Resolver-granted skill / tool proficiencies that aren't already checked
+  /// on the editable proficiency table — i.e. grants from a feat's direct
+  /// `proficiency_grant` effect that never wrote back to `skills.rows` /
+  /// `tool_proficiencies`. Diffing here keeps the ResolvedGrantsCard from
+  /// re-listing the profs the player already sees in the table.
+  (List<String>, List<String>) _extraResolvedProficiencies(
+    Character character,
+    EffectiveCharacter effective,
+    Map<String, Entity> entities,
+  ) {
+    final fields = character.entity.fields;
+    // Skill table stores proficiency by skill NAME on each row.
+    final profSkillNames = <String>{};
+    final skillsRaw = fields['skills'];
+    if (skillsRaw is Map && skillsRaw['rows'] is List) {
+      for (final row in skillsRaw['rows'] as List) {
+        if (row is! Map) continue;
+        if (row['proficient'] != true) continue;
+        final name = row['name'];
+        if (name is String && name.isNotEmpty) profSkillNames.add(name);
+      }
+    }
+    final extraSkills = <String>[
+      for (final id in effective.proficiencies.skillIds)
+        if (entities[id]?.name case final n?
+            when n.isNotEmpty && !profSkillNames.contains(n))
+          id,
+    ];
+    // Tool proficiencies are stored as a flat id list.
+    final toolRaw = fields['tool_proficiencies'];
+    final profToolIds = toolRaw is List ? toolRaw.whereType<String>().toSet() : const <String>{};
+    final extraTools = <String>[
+      for (final id in effective.proficiencies.toolIds)
+        if (!profToolIds.contains(id)) id,
+    ];
+    return (extraSkills, extraTools);
   }
 
   /// Reads the PC's `spell_slots` field into (max, remaining) maps. Returns
@@ -1314,6 +1360,7 @@ class _CharacterEditorScreenState
     PendingChoice? followOnFeatSkillPick;
     PendingChoice? followOnFeatExpertisePick;
     PendingChoice? followOnFeatAsi;
+    final featChoiceFollowOns = <PendingChoice>[];
     if (featId != null && featId.isNotEmpty) {
       final list = updated['feat_ids'];
       final next = list is List
@@ -1373,6 +1420,44 @@ class _CharacterEditorScreenState
           classLabel: choice.classLabel,
           sourceEntityId: featId,
         );
+      }
+      // Choice-bearing feats (Skilled, Magic Initiate, …) carry their picks as
+      // `choice_group` effects, not typed scalar fields. Queue one featChoice
+      // pending per under-filled group so a feat taken at level-up prompts its
+      // picks too — mirrors the creation wizard. The picks fold onto raw fields
+      // (skills.rows, tool_proficiencies, spells_known) when the pending is
+      // resolved.
+      if (featEntity != null) {
+        final existingFc = <String, String>{};
+        final fcRaw = updated['feat_choices'];
+        if (fcRaw is Map) {
+          fcRaw.forEach((k, v) {
+            if (k is String) existingFc[k] = v?.toString() ?? '';
+          });
+        }
+        // Idempotency: don't re-queue a group that already has a featChoice
+        // pending for this (feat, group label).
+        final existingFeatChoiceKeys = <String>{};
+        final pcRaw = updated['pending_choices'];
+        if (pcRaw is List) {
+          for (final p in pcRaw) {
+            if (p is! Map) continue;
+            if (p['kind'] != PendingChoiceKind.featChoice.wire) continue;
+            existingFeatChoiceKeys
+                .add('${p['source_entity_id']}|${p['feature_name']}');
+          }
+        }
+        for (final p in seedFeatChoicePendings(
+          feats: [featEntity],
+          existingFeatChoices: existingFc,
+          level: choice.level,
+        )) {
+          if (existingFeatChoiceKeys
+              .contains('${p.sourceEntityId}|${p.featureName}')) {
+            continue;
+          }
+          featChoiceFollowOns.add(p);
+        }
       }
     }
 
@@ -1598,6 +1683,7 @@ class _CharacterEditorScreenState
       ?followOnFeatSkillPick,
       ?followOnFeatExpertisePick,
       ?followOnFeatAsi,
+      ...featChoiceFollowOns,
     ];
     if (followOns.isNotEmpty) {
       final raw = updated['pending_choices'];
@@ -1832,7 +1918,8 @@ class _CharacterEditorScreenState
       combatStatsLevel = rawLevel is int
           ? rawLevel
           : (rawLevel is String ? int.tryParse(rawLevel) : null);
-      final ec = CharacterResolver.resolve(character, entities);
+      final ec = CharacterResolver.resolve(character, entities,
+          config: ref.read(ruleConfigProvider));
       combatStatsAc = ec.armorClass;
       combatStatsArmorNotes = ec.armorNotes;
     }
@@ -1958,6 +2045,7 @@ class _CharacterEditorScreenState
       entities: entities,
       abilities: _readAbilityScores(base),
       classLevels: _readClassLevels(base),
+      config: ref.read(ruleConfigProvider),
     );
     if (!plan.isLevelUp) {
       if (commitOnSkip) _mutate(base);
@@ -3463,8 +3551,9 @@ class _StatChipsHeader extends ConsumerWidget {
     final entities = useCampaign
         ? <String, Entity>{...builtin, ...ref.read(entityProvider)}
         : builtin;
-    final effectiveAc =
-        CharacterResolver.resolve(character, entities).armorClass;
+    final effectiveAc = CharacterResolver.resolve(character, entities,
+            config: ref.read(ruleConfigProvider))
+        .armorClass;
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(

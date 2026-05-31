@@ -16,12 +16,14 @@ import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/entity_provider.dart';
 import '../../../../application/providers/role_provider.dart';
+import '../../../../application/providers/rule_config_provider.dart';
 import '../../../../application/providers/template_provider.dart';
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
 import '../../../../domain/entities/schema/dnd5e_constants.dart'
     show kDnd5eSkills, kDnd5eSavingThrows;
 import '../../../../domain/entities/schema/entity_category_schema.dart';
+import '../../../../domain/entities/schema/rules/rule_config.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/perf/image_cache_size.dart';
@@ -599,6 +601,7 @@ class _CharacterCreationWizardScreenState
       final featContributions =
           deriveFeatChoiceContributions(draft, entities);
       final seed = buildSeedFields(
+        config: ref.read(ruleConfigProvider),
         draft: draft,
         playerCat: playerCat,
         race: lookup(draft.raceId),
@@ -648,6 +651,7 @@ Map<String, dynamic> buildSeedFields({
   required Entity? background,
   FeatChoiceContributions? featContributions,
   Map<String, Entity> entities = const {},
+  RuleConfig config = RuleConfig.dnd5eDefaults,
 }) {
   final featBumps = featContributions?.abilityBumps ?? const <String, int>{};
   // SRD 2024 p.83: background ASIs (`draft.racialBonuses`) flow through the
@@ -1276,6 +1280,7 @@ Map<String, dynamic> buildSeedFields({
       entities: entities,
       abilities: stat,
       classLevels: {characterClass.id: draft.level},
+      config: config,
     );
     final pending = pendingChoicesFromPlan(
       plan: creationPlan,
@@ -1523,37 +1528,15 @@ Map<String, dynamic> buildSeedFields({
     for (final id in draft.featIds) {
       if (!activeFeatIds.contains(id)) activeFeatIds.add(id);
     }
-    for (final featId in activeFeatIds) {
-      final feat = entities[featId];
-      if (feat == null) continue;
-      final effects = feat.fields['effects'];
-      if (effects is! List) continue;
-      for (final row in effects) {
-        if (row is! Map) continue;
-        if (row['kind'] != 'choice_group') continue;
-        final payload = row['payload'];
-        if (payload is! Map) continue;
-        final groupId = payload['group_id']?.toString() ?? '';
-        if (groupId.isEmpty) continue;
-        final pickKind = payload['pick_kind']?.toString() ?? 'enum';
-        if (pickKind == 'ability') continue;
-        final pick = payload['pick'] is int ? payload['pick'] as int : 1;
-        final storageKey = '$featId:$groupId';
-        final raw = draft.originFeatChoices[storageKey] ?? '';
-        final pickedCount =
-            raw.isEmpty ? 0 : raw.split(',').where((s) => s.isNotEmpty).length;
-        final remaining = (pick - pickedCount).clamp(0, pick);
-        if (remaining <= 0) continue;
-        final label = payload['label']?.toString() ?? groupId;
-        seededPending.add(newPendingChoice(
-          kind: PendingChoiceKind.featChoice,
-          level: draft.level,
-          classLabel: feat.name,
-          featureName: label,
-          count: remaining,
-          sourceEntityId: featId,
-        ).toMap());
-      }
+    final activeFeats = <Entity>[
+      for (final id in activeFeatIds) ?entities[id],
+    ];
+    for (final p in seedFeatChoicePendings(
+      feats: activeFeats,
+      existingFeatChoices: draft.originFeatChoices,
+      level: draft.level,
+    )) {
+      seededPending.add(p.toMap());
     }
   }
 
