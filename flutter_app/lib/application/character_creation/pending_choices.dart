@@ -220,6 +220,69 @@ List<PendingChoice> seedFeatChoicePendings({
   return out;
 }
 
+int _intField(Object? v) {
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  if (v is String) return int.tryParse(v) ?? 0;
+  return 0;
+}
+
+/// Emit every follow-on [PendingChoice] a single [feat] requires once taken:
+/// `skillProficiency` (`bonus_skill_pick_count`), `expertise`
+/// (`bonus_expertise_pick_count`), `featAsi` (`asi_amount > 0`, sourced to the
+/// feat so the resolver can record the pick), plus the `featChoice` pendings
+/// from [seedFeatChoicePendings] (Skilled / Magic Initiate `choice_group`s).
+///
+/// Shared by the editor's level-up resolution and its manual feat-field edit
+/// path so the two never drift. [existingFeatChoices] maps
+/// `<featId>:<groupId>` → comma-joined picked ids (passed straight through to
+/// [seedFeatChoicePendings] for remaining-pick math).
+List<PendingChoice> seedFeatFollowOns({
+  required Entity feat,
+  required int level,
+  String? classId,
+  String? classLabel,
+  required Map<String, String> existingFeatChoices,
+}) {
+  final out = <PendingChoice>[];
+  final skillPickCount = _intField(feat.fields['bonus_skill_pick_count']);
+  if (skillPickCount > 0) {
+    out.add(newPendingChoice(
+      kind: PendingChoiceKind.skillProficiency,
+      level: level,
+      classId: classId,
+      classLabel: classLabel,
+      count: skillPickCount,
+    ));
+  }
+  final expertisePickCount = _intField(feat.fields['bonus_expertise_pick_count']);
+  if (expertisePickCount > 0) {
+    out.add(newPendingChoice(
+      kind: PendingChoiceKind.expertise,
+      level: level,
+      classId: classId,
+      classLabel: classLabel,
+      count: expertisePickCount,
+    ));
+  }
+  final asiAmount = _intField(feat.fields['asi_amount']);
+  if (asiAmount > 0) {
+    out.add(newPendingChoice(
+      kind: PendingChoiceKind.featAsi,
+      level: level,
+      classId: classId,
+      classLabel: classLabel,
+      sourceEntityId: feat.id,
+    ));
+  }
+  out.addAll(seedFeatChoicePendings(
+    feats: [feat],
+    existingFeatChoices: existingFeatChoices,
+    level: level,
+  ));
+  return out;
+}
+
 /// Translate a level-up [plan] into the set of pending decisions the
 /// player will need to make later. Callers pass [classId]/[classLabel]
 /// so the editor panel can label each badge ("Wizard L4: ASI or Feat").

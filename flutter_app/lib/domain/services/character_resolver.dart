@@ -65,6 +65,11 @@ class CharacterResolver {
     final subspeciesId = _readNullableString(fields['subspecies_id']);
     final backgroundId = _readNullableString(fields['background_id']);
     final baseAbilities = _readIntMap(fields['base_abilities']);
+    // Per-feat recorded ASI ability picks: `{featId: {ABBR: amount}}`. When a
+    // feat with `asi_amount > 0` has a recorded pick the resolver applies it
+    // verbatim (honoring the user's choice) instead of the first-option
+    // heuristic. Absent → heuristic fallback (legacy / not-yet-resolved).
+    final featAsiChoices = fields['feat_asi_choices'];
 
     // ── 2. Pass 1: feat class_level_grant (one pass per feat occurrence).
     // Each feat in `feat_ids` is applied exactly once. Repeatable feats
@@ -683,17 +688,34 @@ class CharacterResolver {
           ? feat.fields['asi_max_score'] as int
           : 20;
       if (asiAmount > 0) {
-        // Heuristic: bump first option ability that isn't already capped.
-        final opts = _readMapList(feat.fields['asi_ability_options']);
-        for (final opt in opts) {
-          final name = opt['name'];
-          if (name is! String) continue;
-          final abbrev = _abilityAbbrev(name);
-          if (abbrev == null) continue;
-          final cur = abilities[abbrev] ?? 10;
-          if (cur + asiAmount <= asiMax) {
-            abilities[abbrev] = cur + asiAmount;
-            break;
+        final recorded =
+            (featAsiChoices is Map) ? featAsiChoices[fid] : null;
+        if (recorded is Map && recorded.isNotEmpty) {
+          // Honor the user's recorded pick(s) for this feat (cap-aware).
+          const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+          recorded.forEach((k, v) {
+            if (k is! String) return;
+            final abbrev = _abilityAbbrev(k) ?? k.toUpperCase();
+            if (!valid.contains(abbrev)) return;
+            final amt = _intOf(v);
+            if (amt == 0) return;
+            final cur = abilities[abbrev] ?? 10;
+            final next = cur + amt;
+            abilities[abbrev] = next > asiMax ? asiMax : next;
+          });
+        } else {
+          // Heuristic: bump first option ability that isn't already capped.
+          final opts = _readMapList(feat.fields['asi_ability_options']);
+          for (final opt in opts) {
+            final name = opt['name'];
+            if (name is! String) continue;
+            final abbrev = _abilityAbbrev(name);
+            if (abbrev == null) continue;
+            final cur = abilities[abbrev] ?? 10;
+            if (cur + asiAmount <= asiMax) {
+              abilities[abbrev] = cur + asiAmount;
+              break;
+            }
           }
         }
       }

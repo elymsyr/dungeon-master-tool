@@ -242,7 +242,14 @@ class _NotificationDetailDialog extends ConsumerWidget {
     Map<String, dynamic> value,
   ) async {
     final ds = ref.read(notificationsDataSourceProvider);
-    final answers = Map<String, dynamic>.from(notification.myAnswers ?? const {});
+    // Read the freshest answers from the provider, not the captured copy, so
+    // accumulated submissions from other blocks are preserved.
+    final live = ref.read(notificationsProvider).valueOrNull?.firstWhere(
+          (n) => n.id == notification.id,
+          orElse: () => notification,
+        );
+    final answers =
+        Map<String, dynamic>.from(live?.myAnswers ?? notification.myAnswers ?? const {});
     answers[blockId] = value;
     try {
       await ds.submit(notification.id, answers);
@@ -260,8 +267,8 @@ class _NotificationDetailDialog extends ConsumerWidget {
     }
   }
 
-  List<int> _pollInitial(String blockId) {
-    final raw = notification.myAnswers?[blockId];
+  List<int> _pollInitial(AppNotification n, String blockId) {
+    final raw = n.myAnswers?[blockId];
     final choice = (raw is Map ? raw['choice'] : null);
     if (choice is List) {
       return choice.whereType<num>().map((e) => e.toInt()).toList();
@@ -269,8 +276,8 @@ class _NotificationDetailDialog extends ConsumerWidget {
     return const [];
   }
 
-  String _inputInitial(String blockId) {
-    final raw = notification.myAnswers?[blockId];
+  String _inputInitial(AppNotification n, String blockId) {
+    final raw = n.myAnswers?[blockId];
     final text = (raw is Map ? raw['text'] : null);
     return text?.toString() ?? '';
   }
@@ -278,6 +285,15 @@ class _NotificationDetailDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    // Watch the live notification so myAnswers reflects prior submissions;
+    // the constructor copy is captured once and would otherwise stay stale,
+    // causing each block submit to overwrite earlier answers.
+    final notification = ref.watch(notificationsProvider).valueOrNull?.firstWhere(
+              (n) => n.id == this.notification.id,
+              orElse: () => this.notification,
+            ) ??
+        this.notification;
 
     final blockWidgets = <Widget>[];
     for (final b in notification.blocks) {
@@ -287,14 +303,14 @@ class _NotificationDetailDialog extends ConsumerWidget {
         case PollBlock():
           blockWidgets.add(PollBlockView(
             block: b,
-            initial: _pollInitial(b.id),
+            initial: _pollInitial(notification, b.id),
             onSubmit: (choice) =>
                 _submitBlock(context, ref, b.id, {'choice': choice}),
           ));
         case InputBlock():
           blockWidgets.add(InputBlockView(
             block: b,
-            initial: _inputInitial(b.id),
+            initial: _inputInitial(notification, b.id),
             onSubmit: (text) =>
                 _submitBlock(context, ref, b.id, {'text': text}),
           ));

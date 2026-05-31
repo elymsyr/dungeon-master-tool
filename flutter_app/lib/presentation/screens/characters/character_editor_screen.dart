@@ -1353,14 +1353,50 @@ class _CharacterEditorScreenState
         }
       }
       if (nextStat != null) updated['stat_block'] = nextStat;
+
+      if (choice.kind == PendingChoiceKind.featAsi &&
+          choice.sourceEntityId != null &&
+          choice.sourceEntityId!.isNotEmpty) {
+        // Record the exact feat-ASI pick (`{featId: {ABBR: amount}}`) so the
+        // resolver applies it verbatim instead of its first-option heuristic.
+        // Kept alongside the raw writes above, which remain the legacy-char
+        // fallback; the two display paths are mutually exclusive on
+        // `hasBaseAbilities`, so there is no double-count.
+        final raw = updated['feat_asi_choices'];
+        final map =
+            raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+        final fid = choice.sourceEntityId!;
+        final prev = map[fid];
+        final rec =
+            prev is Map ? Map<String, dynamic>.from(prev) : <String, dynamic>{};
+        for (final entry in bumps.entries) {
+          rec[entry.key.toUpperCase()] = entry.value;
+        }
+        map[fid] = rec;
+        updated['feat_asi_choices'] = map;
+      } else if (choice.kind != PendingChoiceKind.featAsi) {
+        // Plain ASI (non-feat): fold into `base_abilities` too — the resolver's
+        // sole ability base — but only when it is already populated, so we
+        // never seed a partial map on a legacy character (which displays via
+        // the raw stat_block fallback and would otherwise default the rest to
+        // 10). Plain ASI is not a resolver effect, so this is applied once.
+        final baseRaw = updated['base_abilities'];
+        if (baseRaw is Map && baseRaw.isNotEmpty) {
+          final base = Map<String, dynamic>.from(baseRaw);
+          for (final entry in bumps.entries) {
+            final abbr = entry.key.toUpperCase();
+            base[abbr] = _asInt(base[abbr], 10) + entry.value;
+          }
+          updated['base_abilities'] = base;
+        }
+      }
     }
 
-    // Feat / Fighting Style — append to feat_ids + visible feats list.
+    // Feat — append to feat_ids + visible feats list, then queue the feat's
+    // follow-on picks (skill / expertise / ASI / choice_group) via the shared
+    // `seedFeatFollowOns` helper so level-up and manual-add never drift.
     final featId = resolution.featId;
-    PendingChoice? followOnFeatSkillPick;
-    PendingChoice? followOnFeatExpertisePick;
-    PendingChoice? followOnFeatAsi;
-    final featChoiceFollowOns = <PendingChoice>[];
+    final featFollowOns = <PendingChoice>[];
     if (featId != null && featId.isNotEmpty) {
       final list = updated['feat_ids'];
       final next = list is List
@@ -1380,53 +1416,8 @@ class _CharacterEditorScreenState
       });
       if (!shown) featsList.add(featId);
       updated['feats'] = featsList;
-      // Scan chosen feat for follow-on `bonus_skill_pick_count` (e.g. Skill
-      // Expert). Queue a skillProficiency pending choice when present so the
-      // player picks the N skills on the spot — mirrors the subclass-pick
-      // hook used for Lore L3.
-      final ents = _readEntitiesFor(character);
-      final featEntity = ents[featId];
-      final skillPickCount =
-          _asInt(featEntity?.fields['bonus_skill_pick_count']);
-      if (skillPickCount > 0) {
-        followOnFeatSkillPick = newPendingChoice(
-          kind: PendingChoiceKind.skillProficiency,
-          level: choice.level,
-          classId: choice.classId,
-          classLabel: choice.classLabel,
-          count: skillPickCount,
-        );
-      }
-      final expertisePickCount =
-          _asInt(featEntity?.fields['bonus_expertise_pick_count']);
-      if (expertisePickCount > 0) {
-        followOnFeatExpertisePick = newPendingChoice(
-          kind: PendingChoiceKind.expertise,
-          level: choice.level,
-          classId: choice.classId,
-          classLabel: choice.classLabel,
-          count: expertisePickCount,
-        );
-      }
-      // Feat-side ASI sub-pick. Triggers for any feat with `asi_amount > 0`
-      // when taken via the asiOrFeat resolution path — Resilient (also grants
-      // save prof), Skill Expert, Epic Boons, and most General feats.
-      final featAsiAmount = _asInt(featEntity?.fields['asi_amount']);
-      if (featAsiAmount > 0) {
-        followOnFeatAsi = newPendingChoice(
-          kind: PendingChoiceKind.featAsi,
-          level: choice.level,
-          classId: choice.classId,
-          classLabel: choice.classLabel,
-          sourceEntityId: featId,
-        );
-      }
-      // Choice-bearing feats (Skilled, Magic Initiate, …) carry their picks as
-      // `choice_group` effects, not typed scalar fields. Queue one featChoice
-      // pending per under-filled group so a feat taken at level-up prompts its
-      // picks too — mirrors the creation wizard. The picks fold onto raw fields
-      // (skills.rows, tool_proficiencies, spells_known) when the pending is
-      // resolved.
+
+      final featEntity = _readEntitiesFor(character)[featId];
       if (featEntity != null) {
         final existingFc = <String, String>{};
         final fcRaw = updated['feat_choices'];
@@ -1435,28 +1426,20 @@ class _CharacterEditorScreenState
             if (k is String) existingFc[k] = v?.toString() ?? '';
           });
         }
-        // Idempotency: don't re-queue a group that already has a featChoice
-        // pending for this (feat, group label).
-        final existingFeatChoiceKeys = <String>{};
-        final pcRaw = updated['pending_choices'];
-        if (pcRaw is List) {
-          for (final p in pcRaw) {
-            if (p is! Map) continue;
-            if (p['kind'] != PendingChoiceKind.featChoice.wire) continue;
-            existingFeatChoiceKeys
-                .add('${p['source_entity_id']}|${p['feature_name']}');
-          }
-        }
-        for (final p in seedFeatChoicePendings(
-          feats: [featEntity],
-          existingFeatChoices: existingFc,
+        // Idempotency: don't re-queue a featChoice / featAsi pending that
+        // already exists for this (feat, group).
+        final existingKeys = _existingFollowOnKeys(updated['pending_choices']);
+        for (final p in seedFeatFollowOns(
+          feat: featEntity,
           level: choice.level,
+          classId: choice.classId,
+          classLabel: choice.classLabel,
+          existingFeatChoices: existingFc,
         )) {
-          if (existingFeatChoiceKeys
-              .contains('${p.sourceEntityId}|${p.featureName}')) {
-            continue;
-          }
-          featChoiceFollowOns.add(p);
+          final key = _followOnKey(p);
+          if (key != null && existingKeys.contains(key)) continue;
+          if (key != null) existingKeys.add(key);
+          featFollowOns.add(p);
         }
       }
     }
@@ -1680,10 +1663,7 @@ class _CharacterEditorScreenState
     _removePendingFromMap(updated, choice.id);
     final followOns = <PendingChoice>[
       ?followOnSkillPick,
-      ?followOnFeatSkillPick,
-      ?followOnFeatExpertisePick,
-      ?followOnFeatAsi,
-      ...featChoiceFollowOns,
+      ...featFollowOns,
     ];
     if (followOns.isNotEmpty) {
       final raw = updated['pending_choices'];
@@ -1696,6 +1676,145 @@ class _CharacterEditorScreenState
       }
       updated['pending_choices'] = next;
     }
+    _mutate(character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    ));
+  }
+
+  /// Dedup keys for follow-on pendings that carry a `source_entity_id`
+  /// (`featChoice`, `featAsi`). Skill / expertise pendings have no source and
+  /// are intentionally excluded so distinct feats don't collide.
+  Set<String> _existingFollowOnKeys(Object? pendingRaw) {
+    final out = <String>{};
+    if (pendingRaw is List) {
+      for (final p in pendingRaw) {
+        if (p is! Map) continue;
+        final src = p['source_entity_id'];
+        if (src is! String || src.isEmpty) continue;
+        out.add('${p['kind']}|$src|${p['feature_name'] ?? ''}');
+      }
+    }
+    return out;
+  }
+
+  String? _followOnKey(PendingChoice p) {
+    final src = p.sourceEntityId;
+    if (src == null || src.isEmpty) return null;
+    return '${p.kind.wire}|$src|${p.featureName ?? ''}';
+  }
+
+  /// Manual edit of the Feats relation field. Mirrors `feats` → `feat_ids`
+  /// (the resolver reads only `feat_ids`), seeds the same follow-on pendings a
+  /// level-up feat pick would, and prunes recorded picks / pendings for any
+  /// removed feat so no ghost bonuses linger.
+  void _applyManualFeatsChange(
+    Character character,
+    Object? newValue,
+    Map<String, Entity> entities,
+  ) {
+    final updated = Map<String, dynamic>.from(character.entity.fields);
+    updated['feats'] = newValue;
+
+    final newIds = <String>[];
+    if (newValue is List) {
+      for (final row in newValue) {
+        if (row is String && row.isNotEmpty) {
+          if (!newIds.contains(row)) newIds.add(row);
+        } else if (row is Map) {
+          final id = row['id'];
+          if (id is String && id.isNotEmpty && !newIds.contains(id)) {
+            newIds.add(id);
+          }
+        }
+      }
+    }
+    final prevIds = <String>{};
+    final prevRaw = character.entity.fields['feat_ids'];
+    if (prevRaw is List) prevIds.addAll(prevRaw.whereType<String>());
+    updated['feat_ids'] = newIds;
+
+    final addedIds = newIds.where((id) => !prevIds.contains(id)).toList();
+    final removedIds = prevIds.where((id) => !newIds.contains(id)).toList();
+
+    if (removedIds.isNotEmpty) {
+      final fac = updated['feat_asi_choices'];
+      if (fac is Map) {
+        final m = Map<String, dynamic>.from(fac);
+        for (final id in removedIds) {
+          m.remove(id);
+        }
+        if (m.isEmpty) {
+          updated.remove('feat_asi_choices');
+        } else {
+          updated['feat_asi_choices'] = m;
+        }
+      }
+      final fc = updated['feat_choices'];
+      if (fc is Map) {
+        final m = Map<String, dynamic>.from(fc);
+        m.removeWhere((k, _) =>
+            removedIds.any((id) => k == id || k.startsWith('$id:')));
+        if (m.isEmpty) {
+          updated.remove('feat_choices');
+        } else {
+          updated['feat_choices'] = m;
+        }
+      }
+      final pcRaw = updated['pending_choices'];
+      if (pcRaw is List) {
+        final kept = <Map<String, dynamic>>[];
+        for (final p in pcRaw) {
+          if (p is! Map) continue;
+          final src = p['source_entity_id'];
+          if (src is String && removedIds.contains(src)) continue;
+          kept.add(Map<String, dynamic>.from(p));
+        }
+        if (kept.isEmpty) {
+          updated.remove('pending_choices');
+        } else {
+          updated['pending_choices'] = kept;
+        }
+      }
+    }
+
+    if (addedIds.isNotEmpty) {
+      final level = _asInt(updated['level'], 1);
+      final existingFc = <String, String>{};
+      final fcRaw = updated['feat_choices'];
+      if (fcRaw is Map) {
+        fcRaw.forEach((k, v) {
+          if (k is String) existingFc[k] = v?.toString() ?? '';
+        });
+      }
+      final existingKeys = _existingFollowOnKeys(updated['pending_choices']);
+      final seeded = <PendingChoice>[];
+      for (final id in addedIds) {
+        final feat = entities[id];
+        if (feat == null) continue;
+        for (final p in seedFeatFollowOns(
+          feat: feat,
+          level: level,
+          existingFeatChoices: existingFc,
+        )) {
+          final key = _followOnKey(p);
+          if (key != null && existingKeys.contains(key)) continue;
+          if (key != null) existingKeys.add(key);
+          seeded.add(p);
+        }
+      }
+      if (seeded.isNotEmpty) {
+        final pcRaw = updated['pending_choices'];
+        final next = pcRaw is List
+            ? List<Map<String, dynamic>>.from(
+                pcRaw.whereType<Map>().map((m) => Map<String, dynamic>.from(m)))
+            : <Map<String, dynamic>>[];
+        for (final p in seeded) {
+          next.add(p.toMap());
+        }
+        updated['pending_choices'] = next;
+      }
+    }
+
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));
@@ -1929,6 +2048,13 @@ class _CharacterEditorScreenState
       value: value,
       readOnly: _readOnly,
       onChanged: (v) {
+        // Manual edit of the Feats relation field needs the same mechanical
+        // follow-up the level-up path does (mirror feat_ids + seed pendings),
+        // else manually-added feats never reach the resolver.
+        if (f.fieldKey == 'feats') {
+          _applyManualFeatsChange(character, v, entities);
+          return;
+        }
         final updatedFields = {
           ...character.entity.fields,
           f.fieldKey: v,
