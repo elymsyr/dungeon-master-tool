@@ -14,6 +14,13 @@ final firstPartyCatalogServiceProvider =
 final assetsPackInstallerProvider = Provider<AssetsPackInstaller>(
     (ref) => AssetsPackInstaller(ref.read(packageRepositoryProvider)));
 
+/// Whether the bundled Open5e packs ship in this build (BB-1). False in normal
+/// production builds (packs excluded from pubspec to drop ~32MB) — the admin
+/// installer toggle is hidden when this is false. Cached so the rootBundle
+/// probe runs once.
+final assetsPacksAvailableProvider = FutureProvider<bool>(
+    (ref) => ref.read(assetsPackInstallerProvider).isAvailable());
+
 /// Official package catalog: R2 manifest → bundled fallback. The service
 /// degrades to the bundled catalog when offline, so this never surfaces an
 /// offline error — the cards render (and install from bundled assets) offline.

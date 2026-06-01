@@ -90,7 +90,13 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
-    - assets/open5e_packs/
+    # BB-1: the Open5e import packs (~32MB) are EXCLUDED from production builds.
+    # Their only consumer is the admin "Install bundled asset packs" toggle,
+    # which is hidden unless the packs are present (see assetsPackInstaller
+    # .isAvailable / assetsPacksAvailableProvider). A maintainer who needs the
+    # in-app installer uncomments the line below and rebuilds (the dev/admin
+    # build); normal releases ship ~32MB smaller.
+    # - assets/open5e_packs/
     # First-party "Official Content" catalog index (offline fallback for the
     # R2-hosted catalog). Per-type subdirs (world/character/template/sound) get
     # their own line here once hand-authored payloads are added.

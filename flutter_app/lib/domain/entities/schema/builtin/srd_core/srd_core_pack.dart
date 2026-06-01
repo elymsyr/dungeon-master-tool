@@ -33,6 +33,12 @@ const srdAttribution =
 const srdLicense = 'CC-BY-4.0';
 const srdSourceTag = 'SRD 5.2.1';
 
+/// Version of the hand-authored SRD core content. Bump on any content
+/// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
+/// Hoisted to a top-level const so the bootstrap can compare against the
+/// stored DB version WITHOUT building the full ~2000-entity pack first.
+const srdCorePackVersion = '1.0.1';
+
 /// Output of [buildSrdCorePack]. `entities` is keyed by the freshly minted
 /// UUID, value is the wire-format package entity (see `_helpers.packEntity`).
 class SrdCorePack {
@@ -149,7 +155,7 @@ SrdCorePack buildSrdCorePack() {
     'attribution': srdAttribution,
     'license': srdLicense,
     'source': srdSourceTag,
-    'pack_version': '1.0.1',
+    'pack_version': srdCorePackVersion,
   };
 
   return SrdCorePack(entities: entities, metadata: metadata);

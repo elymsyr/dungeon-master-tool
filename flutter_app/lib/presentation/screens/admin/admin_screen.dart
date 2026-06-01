@@ -149,6 +149,10 @@ class _DashboardTab extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final showAssetsPacks =
         ref.watch(uiStateProvider.select((s) => s.showAssetsPacks));
+    // BB-1: only offer the bundled-assets installer when the (dev/admin-only)
+    // Open5e packs actually ship in this build — hidden in normal prod builds.
+    final assetsPacksAvailable =
+        ref.watch(assetsPacksAvailableProvider).valueOrNull ?? false;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -173,26 +177,29 @@ class _DashboardTab extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        _AdminCard(
-          padding: EdgeInsets.zero,
-          child: SwitchListTile(
-            value: showAssetsPacks,
-            onChanged: (v) => _toggleAssetsPacks(context, ref, v),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-            title: Text('Install bundled asset packs',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText)),
-            subtitle: Text(
-                'Install the shipped assets/ content packs locally (tagged '
-                '"(assets)") to inspect and compare against published versions.',
-                style: TextStyle(
-                    fontSize: 11, color: palette.sidebarLabelSecondary)),
+        if (assetsPacksAvailable) ...[
+          const SizedBox(height: 12),
+          _AdminCard(
+            padding: EdgeInsets.zero,
+            child: SwitchListTile(
+              value: showAssetsPacks,
+              onChanged: (v) => _toggleAssetsPacks(context, ref, v),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              title: Text('Install bundled asset packs',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              subtitle: Text(
+                  'Install the shipped assets/ content packs locally (tagged '
+                  '"(assets)") to inspect and compare against published '
+                  'versions.',
+                  style: TextStyle(
+                      fontSize: 11, color: palette.sidebarLabelSecondary)),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

@@ -583,6 +583,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     WorldMapNotifier notifier,
     WorldMapState mapState,
   ) {
+    // UI-4: build the empty-map placeholder once and reuse it for the
+    // resolving-placeholder, error-fallback and no-image slots instead of
+    // constructing the same subtree two or three times per canvas rebuild.
+    final emptyPlaceholder = _buildEmptyMapPlaceholder(palette);
     // F1: Transform isolated in ValueListenableBuilder's `builder` slot;
     //     pin Stack lives in the `child` slot so it's built once per outer
     //     rebuild instead of every viewTransform tick.
@@ -620,13 +624,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   fit: BoxFit.none,
                   cacheWidth: 4096,
                   cacheHeight: 4096,
-                  placeholder: _buildEmptyMapPlaceholder(palette),
-                  errorWidget: _buildEmptyMapPlaceholder(palette),
+                  placeholder: emptyPlaceholder,
+                  errorWidget: emptyPlaceholder,
                 ),
               ),
             )
           else
-            _buildEmptyMapPlaceholder(palette),
+            emptyPlaceholder,
 
           // F2/F3: viewport-culled pin + painter layer. Rebuilds at
           //        cullTick (gesture-END / discrete zoom), not on every
