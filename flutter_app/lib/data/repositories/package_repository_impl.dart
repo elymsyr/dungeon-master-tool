@@ -30,19 +30,20 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<List<PackageInfo>> getPackageInfoList() async {
+    // DB-2: 3 lightweight queries instead of 1 + 2N — count entities via a
+    // grouped count and project only schema names, so we never materialise the
+    // ~1000-1500 SRD rows (or the big schema JSON blobs) just to display a list.
     final rows = await _db.packagesDao.getAll();
-    final out = <PackageInfo>[];
-    for (final pkg in rows) {
-      final schemas = await _db.packagesDao.getSchemas(pkg.id);
-      final entities = await _db.packagesDao.getEntities(pkg.id);
-      out.add(PackageInfo(
-        name: pkg.name,
-        templateName:
-            schemas.isNotEmpty ? schemas.first.name : '',
-        entityCount: entities.length,
-      ));
-    }
-    return out;
+    final counts = await _db.packagesDao.countEntitiesByPackage();
+    final schemaNames = await _db.packagesDao.firstSchemaNameByPackage();
+    return [
+      for (final pkg in rows)
+        PackageInfo(
+          name: pkg.name,
+          templateName: schemaNames[pkg.id] ?? '',
+          entityCount: counts[pkg.id] ?? 0,
+        ),
+    ];
   }
 
   @override
@@ -303,13 +304,10 @@ class PackageRepositoryImpl implements PackageRepository {
 
   // --- Internal helpers ---
 
-  Future<Package?> _findByName(String name) async {
-    final all = await _db.packagesDao.getAll();
-    for (final p in all) {
-      if (p.name == name) return p;
-    }
-    return null;
-  }
+  // SS-1/DB-3: use the indexed name lookup instead of getAll() + linear scan
+  // (which materialised every package's full stateJson blob on each call).
+  Future<Package?> _findByName(String name) =>
+      _db.packagesDao.getByName(name);
 
   Future<Map<String, dynamic>> _loadFromDb(String packageId) async {
     final pkg = await _db.packagesDao.getById(packageId);

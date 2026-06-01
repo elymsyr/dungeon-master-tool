@@ -56,6 +56,22 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
       (select(packageSchemas)..where((t) => t.packageId.equals(packageId)))
           .get();
 
+  /// First schema name per package, projecting ONLY id+name — avoids pulling
+  /// the big categories/encounter JSON blobs just to show a template name
+  /// in the package list (DB-2).
+  Future<Map<String, String>> firstSchemaNameByPackage() async {
+    final rows = await (selectOnly(packageSchemas)
+          ..addColumns([packageSchemas.packageId, packageSchemas.name]))
+        .get();
+    final out = <String, String>{};
+    for (final r in rows) {
+      final pid = r.read(packageSchemas.packageId);
+      if (pid == null) continue;
+      out.putIfAbsent(pid, () => r.read(packageSchemas.name) ?? '');
+    }
+    return out;
+  }
+
   Future<void> upsertSchema(PackageSchemasCompanion row) =>
       into(packageSchemas).insertOnConflictUpdate(row);
 
@@ -68,6 +84,32 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
   Future<List<PackageEntity>> getEntities(String packageId) =>
       (select(packageEntities)..where((t) => t.packageId.equals(packageId)))
           .get();
+
+  /// Count entities for one package without materialising rows — used by the
+  /// SRD bootstrap gate (CS-1) instead of `getEntities(id).isNotEmpty`.
+  Future<int> countEntities(String packageId) async {
+    final countExp = packageEntities.id.count();
+    final row = await (selectOnly(packageEntities)
+          ..addColumns([countExp])
+          ..where(packageEntities.packageId.equals(packageId)))
+        .getSingleOrNull();
+    return row?.read(countExp) ?? 0;
+  }
+
+  /// Entity count per package in one grouped query — avoids materialising
+  /// every row just to call `.length` (DB-2). Packages with zero entities are
+  /// simply absent from the map.
+  Future<Map<String, int>> countEntitiesByPackage() async {
+    final countExp = packageEntities.id.count();
+    final rows = await (selectOnly(packageEntities)
+          ..addColumns([packageEntities.packageId, countExp])
+          ..groupBy([packageEntities.packageId]))
+        .get();
+    return {
+      for (final r in rows)
+        r.read(packageEntities.packageId)!: r.read(countExp) ?? 0,
+    };
+  }
 
   Stream<List<PackageEntity>> watchEntities(String packageId) =>
       (select(packageEntities)..where((t) => t.packageId.equals(packageId)))

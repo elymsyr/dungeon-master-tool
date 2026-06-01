@@ -345,13 +345,9 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   // ── Internal helpers ─────────────────────────────────────────────────────
 
-  Future<World?> _findByName(String name) async {
-    final all = await _db.worldsDao.getAll();
-    for (final w in all) {
-      if (w.worldName == name) return w;
-    }
-    return null;
-  }
+  // SS-1/DB-3: use the indexed name lookup instead of getAll() + linear scan
+  // on every debounced row write (12 call sites).
+  Future<World?> _findByName(String name) => _db.worldsDao.getByName(name);
 
   Future<Map<String, dynamic>> _loadFromDb(String worldId) async {
     final world = await _db.worldsDao.getById(worldId);
