@@ -1,5 +1,43 @@
 # Release Notes
 
+## Dungeon Master Tool v10.1.0 — Official Content Channel, Open5e Import Pipeline (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v10.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v10.0.0. Adds an app-owned **Official Content** channel: a curated catalog of first-party packages served from a public Cloudflare R2 endpoint and surfaced inside the Marketplace, with a bundled offline fallback so the packs install without a network. Behind it sits a new offline **Open5e import pipeline** that maps the Open5e API into shareable, chargen-wired packages — 22 packs (≈31 MB) covering 3,540 monsters, 1,955 spells, 2,319 magic items, and full character-creation data (26 classes, 125 subclasses, 63 species, 58 backgrounds, 91 feats). No DB changes; the catalog is read-only on the client and admin-gated on write.
+
+### Highlights
+
+#### Official Content channel (new)
+
+- **First-party catalog served from R2** — New Cloudflare Worker `catalog/*` routes: public `GET` (per-IP hourly rate limit, `manifest.json` short-cached, versioned payloads cached hard/immutable) and `Bearer ADMIN_TOKEN`-gated `PUT`/`DELETE` for publishing and retiring versions. Objects live under the `catalog/` R2 prefix as `catalog/{type}/{slug}@{ver}.json.gz`.
+- **Read path with offline fallback (`FirstPartyCatalogService`)** — Resolves the catalog online (R2 manifest → gzipped payload) and degrades to the bundled `assets/first_party/manifest.json` when the worker URL is unset, offline, or a fetch fails. Unlike the soundpack service it never surfaces an offline error — official packs stay installable without a network.
+- **Marketplace surface (`OfficialPackagesCatalogView`)** — The Marketplace **All** and **Packages** tabs render the official catalog below the Supabase listings, each entry with an Install / Installing… / Installed action. Pull-to-refresh invalidates the catalog; an empty Supabase feed yields to the catalog instead of an empty state.
+- **Publish CLI (`tool/catalog_publish`)** — `build_catalog.dart` assembles `assets/first_party/manifest.json` from the bundled packs; `publish_catalog.dart` uploads manifest + payloads to the worker behind the admin token.
+- **Admin asset-pack installer** — A dashboard toggle installs/removes the shipped `assets/open5e_packs/` content locally (stamped `metadata.installed_from = 'assets'`, tagged "(assets)" in the package list) so a maintainer can inspect the bundled content and diff it against a published version.
+
+#### Open5e import pipeline (new)
+
+- **Offline import tool (`tool/open5e_import`)** — Maps the Open5e dataset into the app's package/entity schema: dedicated mappers for monsters, spells, magic items, and chargen (classes/subclasses/species/backgrounds/feats), plus normalization, a cross-pack reference graph (`softRef`), and a monster-mapper sanity-check harness.
+- **22 shareable packages (≈31 MB)** — Bundled under `assets/open5e_packs/` with a manifest: 1,955 spells, 3,540 monsters, 2,319 magic items, 26 classes, 125 subclasses, 63 species, 58 backgrounds, 91 feats across SRD 2014/2024, A5E, Kobold Press, Tome of Beasts, and more. Chargen content is wired to typed mechanics (subclass→parent, caster kind, species resistances/skills/spells, feat prereqs, background origin feats); an `unmapped_report.json` records source fields with no mechanical target.
+
+### Upgrade notes
+
+- **App version bump:** `10.0.0` → `10.1.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No new cloud (Supabase) migrations.**
+- **Worker deploy required for online catalog:** `wrangler deploy` to publish the `catalog/*` routes; set `CATALOG_GET_LIMIT_PER_HOUR` (optional, default 600). Without the deploy, official packs still install from the bundled fallback.
+- **Catalog publish is admin-only** — `tool/catalog_publish/bin/publish_catalog.dart` requires the worker `ADMIN_TOKEN`.
+- **Bundle size** — The bundled Open5e packs add ≈31 MB to the app; production builds should weigh shipping the full bundled fallback vs. relying on the R2 catalog.
+
+### Known issues
+
+- **Official catalog publish pending** — Bundled packs ship and install locally; the R2-published catalog awaits worker deploy and licensing sign-off for full Open5e content distribution.
+- Carry-over from v10.0.0: full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v10.0.0 — Rule & Effect Authoring Engine, Feat Effects That Actually Apply, Editable Core Rules (Beta)
 
 **Release date:** May 2026
