@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/first_party_catalog_provider.dart';
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/soundpack_catalog_provider.dart';
@@ -15,6 +16,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
+import '../../widgets/official_packages_catalog_view.dart';
 import '../../widgets/profile_avatar.dart';
 import '../../widgets/soundpack_catalog_view.dart';
 import 'social_shell.dart';
@@ -71,6 +73,10 @@ class _MarketplaceFeed extends ConsumerWidget {
     // The "All" tab merges the Supabase listing feed with the soundpack catalog
     // so soundpacks aren't hidden behind their dedicated tab.
     final isAll = filters.type == 'all';
+    // "All" and "Packages" also surface the first-party (R2) official packages
+    // catalog below the Supabase package listings.
+    final isPackage = filters.type == 'package';
+    final showOfficialPackages = isAll || isPackage;
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
@@ -80,6 +86,7 @@ class _MarketplaceFeed extends ConsumerWidget {
           return;
         }
         if (isAll) ref.invalidate(soundpackCatalogProvider);
+        if (showOfficialPackages) ref.invalidate(firstPartyCatalogProvider);
         invalidateCachePrefix('marketplace:');
         ref.invalidate(marketplaceProvider);
       },
@@ -112,9 +119,11 @@ class _MarketplaceFeed extends ConsumerWidget {
                   ),
             data: (items) {
               if (items.isEmpty) {
-                // In "All" the catalog below carries content — skip the empty
-                // state so soundpacks still show.
-                if (isAll) return const SizedBox.shrink();
+                // In "All"/"Packages" the catalog below carries content — skip
+                // the empty state so soundpacks / official packages still show.
+                if (isAll || showOfficialPackages) {
+                  return const SizedBox.shrink();
+                }
                 return SocialEmptyState(
                   icon: Icons.storefront_outlined,
                   title: l10n.marketplaceEmpty,
@@ -138,6 +147,10 @@ class _MarketplaceFeed extends ConsumerWidget {
               );
             },
           ),
+          if (showOfficialPackages) ...[
+            const SizedBox(height: 8),
+            const OfficialPackagesCatalogView(),
+          ],
           if (isAll) ...[
             const SizedBox(height: 8),
             const SoundpackCatalogView(),
