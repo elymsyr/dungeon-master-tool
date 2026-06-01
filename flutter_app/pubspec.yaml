@@ -91,6 +91,10 @@ flutter:
     - assets/app_icon_transparent.png
     - assets/profanity/
     - assets/open5e_packs/
+    # First-party "Official Content" catalog index (offline fallback for the
+    # R2-hosted catalog). Per-type subdirs (world/character/template/sound) get
+    # their own line here once hand-authored payloads are added.
+    - assets/first_party/
 
 flutter_launcher_icons:
   android: true

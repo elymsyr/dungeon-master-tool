@@ -1,0 +1,429 @@
+{
+  "catalog_version": "2026-06-01",
+  "entries": [
+    {
+      "item_type": "package",
+      "slug": "open5e-a5e-ag",
+      "title": "Adventurer's Guide",
+      "version": "1.0.0",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 371,
+        "class": 1,
+        "subclass": 3,
+        "background": 21,
+        "feat": 59
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
+      "r2_path": "package/open5e-a5e-ag@1.0.0.json.gz",
+      "size_bytes": 1014511
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-a5e-ddg",
+      "title": "Dungeon Delver’s Guide",
+      "version": "1.0.0",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "background": 4
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-a5e-ddg.pkg.json",
+      "r2_path": "package/open5e-a5e-ddg@1.0.0.json.gz",
+      "size_bytes": 23469
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-a5e-gpg",
+      "title": "Gate Pass Gazette",
+      "version": "1.0.0",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "background": 2
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-a5e-gpg.pkg.json",
+      "r2_path": "package/open5e-a5e-gpg@1.0.0.json.gz",
+      "size_bytes": 15241
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-a5e-mm",
+      "title": "Monstrous Menagerie",
+      "version": "1.0.0",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 832,
+        "creature-action": 1683,
+        "monster": 586
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-a5e-mm.pkg.json",
+      "r2_path": "package/open5e-a5e-mm@1.0.0.json.gz",
+      "size_bytes": 3291763
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-bfrd",
+      "title": "Black Flag SRD",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "cc-by-40",
+      "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 776,
+        "creature-action": 1339,
+        "monster": 360,
+        "class": 1,
+        "subclass": 1
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-bfrd.pkg.json",
+      "r2_path": "package/open5e-bfrd@1.0.0.json.gz",
+      "size_bytes": 2202922
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-ccdx",
+      "title": "Creature Codex",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 921,
+        "creature-action": 1149,
+        "monster": 356
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-ccdx.pkg.json",
+      "r2_path": "package/open5e-ccdx@1.0.0.json.gz",
+      "size_bytes": 2560473
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-deepm",
+      "title": "Deep Magic for 5th Edition",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 515
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-deepm.pkg.json",
+      "r2_path": "package/open5e-deepm@1.0.0.json.gz",
+      "size_bytes": 1152356
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-deepmx",
+      "title": "Deep Magic Extended",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 64
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-deepmx.pkg.json",
+      "r2_path": "package/open5e-deepmx@1.0.0.json.gz",
+      "size_bytes": 121826
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-kp",
+      "title": "Kobold Press Compilation",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 31
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-kp.pkg.json",
+      "r2_path": "package/open5e-kp@1.0.0.json.gz",
+      "size_bytes": 72053
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-open5e",
+      "title": "Open5e Originals",
+      "version": "1.0.0",
+      "publisher": "Open5e",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 2,
+        "subclass": 16,
+        "species": 1,
+        "background": 2
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
+      "r2_path": "package/open5e-open5e@1.0.0.json.gz",
+      "size_bytes": 156083
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-open5e-2024",
+      "title": "Open5e Originals",
+      "version": "1.0.0",
+      "publisher": "Open5e",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2024",
+      "is_srd_overlap": false,
+      "counts": {
+        "subclass": 1
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-open5e-2024.pkg.json",
+      "r2_path": "package/open5e-open5e-2024@1.0.0.json.gz",
+      "size_bytes": 8023
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-spells-that-dont-suck",
+      "title": "Spells That Don't Suck",
+      "version": "1.0.0",
+      "publisher": "SoMany Robots",
+      "license": "cc-by-40",
+      "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 180
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-spells-that-dont-suck.pkg.json",
+      "r2_path": "package/open5e-spells-that-dont-suck@1.0.0.json.gz",
+      "size_bytes": 491918
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-srd-2014",
+      "title": "System Reference Document 5.1",
+      "version": "1.0.0",
+      "publisher": "Wizards of the Coast",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": true,
+      "counts": {
+        "trait": 424,
+        "creature-action": 708,
+        "monster": 325,
+        "spell": 319,
+        "magic-item": 499,
+        "class": 12,
+        "subclass": 12,
+        "species": 13,
+        "background": 1,
+        "feat": 1
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-srd-2014.pkg.json",
+      "r2_path": "package/open5e-srd-2014@1.0.0.json.gz",
+      "size_bytes": 3527565
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-srd-2024",
+      "title": "System Reference Document 5.2",
+      "version": "1.0.0",
+      "publisher": "Wizards of the Coast",
+      "license": "cc-by-40",
+      "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
+      "game_system": "5e-2024",
+      "is_srd_overlap": true,
+      "counts": {
+        "trait": 253,
+        "creature-action": 905,
+        "monster": 330,
+        "spell": 339,
+        "magic-item": 757,
+        "class": 12,
+        "subclass": 12,
+        "species": 9,
+        "background": 4,
+        "feat": 17
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-srd-2024.pkg.json",
+      "r2_path": "package/open5e-srd-2024@1.0.0.json.gz",
+      "size_bytes": 3881301
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-tdcs",
+      "title": "Tal'dorei Campaign Setting",
+      "version": "1.0.0",
+      "publisher": "Green Ronin",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 11,
+        "creature-action": 10,
+        "monster": 4,
+        "subclass": 4,
+        "background": 5,
+        "feat": 1
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-tdcs.pkg.json",
+      "r2_path": "package/open5e-tdcs@1.0.0.json.gz",
+      "size_bytes": 90305
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-tob",
+      "title": "Tome of Beasts",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1039,
+        "creature-action": 1303,
+        "monster": 391
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-tob.pkg.json",
+      "r2_path": "package/open5e-tob@1.0.0.json.gz",
+      "size_bytes": 2921476
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-tob-2023",
+      "title": "Tome of Beasts 1 (2023 Edition)",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1021,
+        "creature-action": 1658,
+        "monster": 408
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-tob-2023.pkg.json",
+      "r2_path": "package/open5e-tob-2023@1.0.0.json.gz",
+      "size_bytes": 3299444
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-tob2",
+      "title": "Tome of Beasts 2",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1014,
+        "creature-action": 1209,
+        "monster": 383
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-tob2.pkg.json",
+      "r2_path": "package/open5e-tob2@1.0.0.json.gz",
+      "size_bytes": 2800815
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-tob3",
+      "title": "Tome of Beasts 3",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 812,
+        "creature-action": 291,
+        "monster": 397
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-tob3.pkg.json",
+      "r2_path": "package/open5e-tob3@1.0.0.json.gz",
+      "size_bytes": 1905417
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-toh",
+      "title": "Tome of Heroes",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 91,
+        "subclass": 76,
+        "species": 40,
+        "background": 19,
+        "feat": 13
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
+      "r2_path": "package/open5e-toh@1.0.0.json.gz",
+      "size_bytes": 1178038
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-vom",
+      "title": "Vault of Magic",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "magic-item": 1063
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-vom.pkg.json",
+      "r2_path": "package/open5e-vom@1.0.0.json.gz",
+      "size_bytes": 1983667
+    },
+    {
+      "item_type": "package",
+      "slug": "open5e-wz",
+      "title": "Warlock Zine",
+      "version": "1.0.0",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 43
+      },
+      "bundled_asset": "assets/open5e_packs/open5e-wz.pkg.json",
+      "r2_path": "package/open5e-wz@1.0.0.json.gz",
+      "size_bytes": 108231
+    }
+  ]
+}

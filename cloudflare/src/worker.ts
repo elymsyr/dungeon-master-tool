@@ -28,8 +28,11 @@ export interface Env {
   USER_QUOTA_BYTES: string;
   DOWNLOAD_LIMIT_PER_HOUR: string;
   UPLOAD_LIMIT_PER_HOUR: string;
-  // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep gate.
+  // wrangler secret put ADMIN_TOKEN — /admin/* + /transient/evict-sweep +
+  // /catalog/* write gate.
   ADMIN_TOKEN?: string;
+  // First-party catalog public-GET per-IP hourly limit (default 600).
+  CATALOG_GET_LIMIT_PER_HOUR?: string;
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -62,6 +65,7 @@ const ALLOWED_MIME_EXACT = new Set<string>([
 ]);
 
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
+const CATALOG_PATH_REGEX = /^\/catalog\/(.+)$/;
 const SHA256_HEX_REGEX = /^[0-9a-f]{64}$/i;
 
 // Cloud backup (template/world/package) için son 4MB rezerve.
@@ -95,6 +99,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === '/admin/purge-user') {
     return handleAdminPurgeUser(request, env);
+  }
+
+  // First-party content catalog — public read, admin-gated write.
+  const catalogMatch = url.pathname.match(CATALOG_PATH_REGEX);
+  if (catalogMatch) {
+    return handleCatalog(request, env, decodeURIComponent(catalogMatch[1]));
   }
 
   const match = url.pathname.match(ASSET_PATH_REGEX);
@@ -314,6 +324,95 @@ async function handleDelete(
     return jsonResponse(403, { error: 'prefix_mismatch' });
   }
   await env.R2_BUCKET.delete(r2Key);
+  return jsonResponse(200, { ok: true, key: r2Key });
+}
+
+// ── First-party content catalog ───────────────────────────────────────────────
+// GET    /catalog/{key} → PUBLIC (no JWT). Official content is world-readable.
+// PUT    /catalog/{key} → Bearer ADMIN_TOKEN. The publish CLI uploads here.
+// DELETE /catalog/{key} → Bearer ADMIN_TOKEN. Retire an old version.
+// Objects live under the `catalog/` R2 prefix. Payloads are immutable versioned
+// (`catalog/{type}/{slug}@{ver}.json.gz`) so only `manifest.json` is short-cached.
+async function handleCatalog(
+  request: Request,
+  env: Env,
+  catalogKey: string,
+): Promise<Response> {
+  if (
+    catalogKey.includes('..') ||
+    catalogKey.startsWith('/') ||
+    catalogKey.includes('//')
+  ) {
+    return jsonResponse(400, { error: 'invalid_key' });
+  }
+  const r2Key = `catalog/${catalogKey}`;
+
+  switch (request.method) {
+    case 'GET':
+      return handleCatalogGet(request, env, catalogKey, r2Key);
+    case 'PUT':
+      if (!checkAdminAuth(request, env)) {
+        return jsonResponse(401, { error: 'admin_auth_required' });
+      }
+      return handleCatalogPut(request, env, r2Key);
+    case 'DELETE':
+      if (!checkAdminAuth(request, env)) {
+        return jsonResponse(401, { error: 'admin_auth_required' });
+      }
+      await env.R2_BUCKET.delete(r2Key);
+      return jsonResponse(200, { ok: true, key: r2Key });
+    default:
+      return jsonResponse(405, { error: 'method_not_allowed' });
+  }
+}
+
+async function handleCatalogGet(
+  request: Request,
+  env: Env,
+  catalogKey: string,
+  r2Key: string,
+): Promise<Response> {
+  // Per-IP rate limit — a public endpoint must not be hammerable. Generous:
+  // browsing + installing a catalog issues many GETs.
+  const ip = request.headers.get('CF-Connecting-IP') ?? 'anon';
+  const limit = parseInt(env.CATALOG_GET_LIMIT_PER_HOUR ?? '600', 10) || 600;
+  const rl = await checkRateLimit(env.RATE_KV, `ip:${ip}`, 'cat', limit);
+  if (!rl.allowed) {
+    return rateLimitedResponse(rl.limit, rl.resetInSeconds);
+  }
+
+  const object = await env.R2_BUCKET.get(r2Key);
+  if (!object) {
+    return jsonResponse(404, { error: 'catalog_object_not_found' });
+  }
+  const headers = new Headers(CORS_HEADERS);
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  // The manifest changes on republish → short TTL; versioned payloads are
+  // immutable → cache hard at the edge.
+  headers.set(
+    'Cache-Control',
+    catalogKey === 'manifest.json'
+      ? 'public, max-age=120'
+      : 'public, max-age=31536000, immutable',
+  );
+  return new Response(object.body, { status: 200, headers });
+}
+
+async function handleCatalogPut(
+  request: Request,
+  env: Env,
+  r2Key: string,
+): Promise<Response> {
+  if (!request.body) {
+    return jsonResponse(400, { error: 'empty_body' });
+  }
+  const contentType =
+    request.headers.get('Content-Type') ?? 'application/octet-stream';
+  await env.R2_BUCKET.put(r2Key, request.body, {
+    httpMetadata: { contentType },
+    customMetadata: { catalog: 'true' },
+  });
   return jsonResponse(200, { ok: true, key: r2Key });
 }
 

@@ -9,7 +9,7 @@
 // read olur; yine de >1k aktif kullanıcıda Workers Paid plana geçilmelidir.
 // ============================================================================
 
-export type RateLimitType = 'dl' | 'ul';
+export type RateLimitType = 'dl' | 'ul' | 'cat';
 
 export interface RateLimitResult {
   allowed: boolean;
