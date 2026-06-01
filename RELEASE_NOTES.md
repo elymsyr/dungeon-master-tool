@@ -22,6 +22,12 @@ Patch release on top of v10.0.0. Adds an app-owned **Official Content** channel:
 - **Offline import tool (`tool/open5e_import`)** — Maps the Open5e dataset into the app's package/entity schema: dedicated mappers for monsters, spells, magic items, and chargen (classes/subclasses/species/backgrounds/feats), plus normalization, a cross-pack reference graph (`softRef`), and a monster-mapper sanity-check harness.
 - **22 shareable packages (≈31 MB)** — Bundled under `assets/open5e_packs/` with a manifest: 1,955 spells, 3,540 monsters, 2,319 magic items, 26 classes, 125 subclasses, 63 species, 58 backgrounds, 91 feats across SRD 2014/2024, A5E, Kobold Press, Tome of Beasts, and more. Chargen content is wired to typed mechanics (subclass→parent, caster kind, species resistances/skills/spells, feat prereqs, background origin feats); an `unmapped_report.json` records source fields with no mechanical target.
 
+#### Performance & build (new)
+
+- **Editor & sync hot paths** — The character editor resolves a sheet once per frame instead of twice per keystroke, and the effective-character recompute no longer re-runs on every unrelated world-entity edit. Warm cold-starts skip the full SRD pack rebuild via a version-gated bootstrap; the package list and per-row saves use indexed lookups + count queries instead of full-table scans, and the sync layer skips redundant asset-ref diffs.
+- **Leaner builds** — The ≈31 MB Open5e packs are now excluded from release builds (loaded from a debug build for the admin installer). Mobile image-cache cap lowered for lower-RAM devices.
+- **Perf probe** — In-memory frame + save-latency histograms in debug/profile builds (no-op in release).
+
 ### Upgrade notes
 
 - **App version bump:** `10.0.0` → `10.1.0`.
@@ -29,7 +35,7 @@ Patch release on top of v10.0.0. Adds an app-owned **Official Content** channel:
 - **No new cloud (Supabase) migrations.**
 - **Worker deploy required for online catalog:** `wrangler deploy` to publish the `catalog/*` routes; set `CATALOG_GET_LIMIT_PER_HOUR` (optional, default 600). Without the deploy, official packs still install from the bundled fallback.
 - **Catalog publish is admin-only** — `tool/catalog_publish/bin/publish_catalog.dart` requires the worker `ADMIN_TOKEN`.
-- **Bundle size** — The bundled Open5e packs add ≈31 MB to the app; production builds should weigh shipping the full bundled fallback vs. relying on the R2 catalog.
+- **Bundle size** — The Open5e packs (≈31 MB) are excluded from release builds; the admin asset-pack installer reads them from a `flutter run` (debug) build instead, so production ships leaner.
 
 ### Known issues
 
