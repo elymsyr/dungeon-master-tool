@@ -1,7 +1,7 @@
 name: dungeon_master_tool
 description: "D&D Dungeon Master Tool — Schema-driven campaign management for tabletop RPGs."
 publish_to: 'none'
-version: 10.0.0
+version: 10.1.0
 
 environment:
   sdk: ^3.11.4
@@ -90,6 +90,11 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
+    - assets/open5e_packs/
+    # First-party "Official Content" catalog index (offline fallback for the
+    # R2-hosted catalog). Per-type subdirs (world/character/template/sound) get
+    # their own line here once hand-authored payloads are added.
+    - assets/first_party/
 
 flutter_launcher_icons:
   android: true

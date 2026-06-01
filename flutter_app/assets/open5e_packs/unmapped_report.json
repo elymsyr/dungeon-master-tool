@@ -1,0 +1,684 @@
+{
+  "size": [
+    {
+      "value": "titanic  (Titanic Dragon Turtle)",
+      "count": 1
+    },
+    {
+      "value": "titanic  (Titanic Kraken)",
+      "count": 1
+    }
+  ],
+  "language": [
+    {
+      "value": "void-speech  (Young Void Dragon)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Shoggoth)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Adult Void Dragon)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Ancient Void Dragon)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Aridni)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Bone Swarm)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Deep One)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Deep One Archimandrite)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Dorreq)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Krake Spawn)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Likho)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Mamura)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Mi-Go)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Nichny)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Qwyllion)",
+      "count": 2
+    },
+    {
+      "value": "thieves-cant  (Rat King)",
+      "count": 2
+    },
+    {
+      "value": "thieves-cant  (Ratfolk Rogue)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Selang)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Shadow Beast)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Umbral Vampire)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Void Dragon Wyrmling)",
+      "count": 2
+    },
+    {
+      "value": "void-speech  (Folk Of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Eater Of Dust (Yakat-Shi))",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Golmana)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Herald Of Blood)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Serpentfolk of Yig)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Servant of Yig)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Wind Demon)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Husk Demon)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Aboleth, Nihilith)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Satarre)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ahu-Nixta)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ghast of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Hierophant Lich)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Hound of Tindalos)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Zoog)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Spider Of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Star Spawn Of Cthulhu)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Nalusa Falaya)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Deep One Hybrid Priest)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Rattok)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Deep One Priest)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Herald of Blood)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Nihileth)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Spider of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Star Spawn of Cthulhu)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Voidling)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Zombie, Voidclaw)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ahu-Nixta Drudge)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Astral Devourer)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Aurora Horribilis)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Avulzor)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Boneshard Wraith)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Broodmother of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Destroyer)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Dimensional Shambler)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Greater Ghast of Leng)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Helashruu)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Herald of the Void)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Kaveph)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Mystic)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ophidiotaur)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ophio Fungus)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Parzz'val)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Spawn of Hriggala)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Vangsluagh)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Derro, Voidwarped)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ogre, Void Blessed)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Thripper)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Umbral Shambler)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Void Knight)",
+      "count": 1
+    },
+    {
+      "value": "void-speech  (Ahu-Nixta Cataphract)",
+      "count": 1
+    }
+  ],
+  "alignment": [
+    {
+      "value": "any alignment  (Mage)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Dhampir)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Dhampir Commander)",
+      "count": 1
+    },
+    {
+      "value": "any alignment (as its patron deity)  (Dvarapala)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Enchanter)",
+      "count": 1
+    },
+    {
+      "value": "any alignment (as its creator deity)  (Eye of the Gods)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Ghost Dragon)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Hierophant Lich)",
+      "count": 1
+    },
+    {
+      "value": "chaotic neutral or chaotic evil  (Kappa)",
+      "count": 1
+    },
+    {
+      "value": "any evil  (Kuunganisha)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Lady in White)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Living Star)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Pact Lich)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Phantom)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Ratfolk Warlock)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Acolyte)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Archmage)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Assassin)",
+      "count": 1
+    },
+    {
+      "value": "any non-lawful alignment  (Bandit)",
+      "count": 1
+    },
+    {
+      "value": "any non-lawful alignment  (Bandit Captain)",
+      "count": 1
+    },
+    {
+      "value": "any chaotic alignment  (Berserker)",
+      "count": 1
+    },
+    {
+      "value": "neutral good (50%) or neutral evil (50%)  (Cloud Giant)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Commoner)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Cult Fanatic)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Cultist)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Druid)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Ghost)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Gladiator)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Guard)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Half-Red Dragon Veteran)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Knight)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Lich)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Alchemist Archer)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Noble)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Priest)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Scout)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Spy)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Thug)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Tribal Warrior)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Veteran)",
+      "count": 1
+    },
+    {
+      "value": "any non-lawful  (Bandit Lord)",
+      "count": 1
+    },
+    {
+      "value": "any evil  (Devilbound Gnomish Prince)",
+      "count": 1
+    },
+    {
+      "value": "chaotic  (Duskthorn Dryad)",
+      "count": 1
+    },
+    {
+      "value": "any  (Dwarven Ringmage)",
+      "count": 1
+    },
+    {
+      "value": "chaotic good or chaotic neutral  (Elvish Veteran Archer)",
+      "count": 1
+    },
+    {
+      "value": "lawful neutral or evil  (Emerald Order Cult Leader)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Fext)",
+      "count": 1
+    },
+    {
+      "value": "good  (Temple Dog)",
+      "count": 1
+    },
+    {
+      "value": "neutral evil (50%) lawful evil (50%)  (Thursir Giant)",
+      "count": 1
+    },
+    {
+      "value": "any chaotic  (Wolf Reaver Dwarf)",
+      "count": 1
+    },
+    {
+      "value": "Any Non-Lawful Alignment  (Bandit Lord)",
+      "count": 1
+    },
+    {
+      "value": "Any Alignment  (Beheaded Vengeful Spirit)",
+      "count": 1
+    },
+    {
+      "value": "Any Lawful Alignment  (City Watch Captain)",
+      "count": 1
+    },
+    {
+      "value": "Any Evil  (Devilbound Gnome)",
+      "count": 1
+    },
+    {
+      "value": "Any Alignment  (Dwarven Ringmage)",
+      "count": 1
+    },
+    {
+      "value": "Any Alignment  (Elvish Veteran Archer)",
+      "count": 1
+    },
+    {
+      "value": "Lawful Neutral or Lawful Evil  (Emerald Order Cult Leader)",
+      "count": 1
+    },
+    {
+      "value": "Any Alignment  (Fext)",
+      "count": 1
+    },
+    {
+      "value": "Titan)  (Hraesvelgr)",
+      "count": 1
+    },
+    {
+      "value": "Shapechanger)  (Nkosi)",
+      "count": 1
+    },
+    {
+      "value": "Shapechanger)  (Nkosi Pridelord)",
+      "count": 1
+    },
+    {
+      "value": "Any Evil Alignment  (Pact Vampire)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Tuberkith)",
+      "count": 1
+    },
+    {
+      "value": "Neutral Evil (50%) or Lawful Evil (50%)  (Thursir)",
+      "count": 1
+    },
+    {
+      "value": "Any Alignment  (Witchlight)",
+      "count": 1
+    },
+    {
+      "value": "Any Chaotic Alignment  (Wolf Reaver Dwarf)",
+      "count": 1
+    },
+    {
+      "value": "any good  (Aviere)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Derro Explorer)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Derro Guard)",
+      "count": 1
+    },
+    {
+      "value": "any lawful alignment  (Fane Spirit)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Ghul)",
+      "count": 1
+    },
+    {
+      "value": "any evil  (Hantu Penanggal)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Initiate of the Elder Elementals)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Knight Ab-errant)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (One-Horned Ogre)",
+      "count": 1
+    },
+    {
+      "value": "any evil alignment  (Virtuoso Lich)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Avestruzii)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Avestruzii Champion)",
+      "count": 1
+    },
+    {
+      "value": "chaotic neutral or chaotic good  (Dokkaebi)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Dwarf, Firecracker)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Gullkin)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Gullkin Hunter)",
+      "count": 1
+    },
+    {
+      "value": "any alignment (as its deity)  (Hippopotamus, Sacred)",
+      "count": 1
+    },
+    {
+      "value": "non-lawful  (Jinnborn Air Pirate)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Npc: Apostle)",
+      "count": 1
+    },
+    {
+      "value": "any non-good  (Npc: Breathstealer)",
+      "count": 1
+    },
+    {
+      "value": "any non-good alignment  (Npc: Cultist Psychophant)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Npc: Field Commander)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Npc: First Servant)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Npc: Merchant Captain)",
+      "count": 1
+    },
+    {
+      "value": "any alignment  (Npc: Warlock Of The Genie Lord)",
+      "count": 1
+    },
+    {
+      "value": "any  (Phoenixborn)",
+      "count": 1
+    },
+    {
+      "value": "any  (Phoenixborn Sorcerer)",
+      "count": 1
+    },
+    {
+      "value": "any alignment (as its creator deity)  (Truant Devourer)",
+      "count": 1
+    },
+    {
+      "value": "Any Good  (Temple Dog)",
+      "count": 1
+    }
+  ]
+}

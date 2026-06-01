@@ -68,6 +68,11 @@ class UiState {
   // First-launch onboarding: welcome/beta dialog shown once.
   final bool welcomeSeen;
 
+  // Admin-only: install the bundled `assets/` content packs locally (tagged
+  // "(assets)") so a maintainer can inspect/compare them against published
+  // versions. Toggled from the admin dashboard.
+  final bool showAssetsPacks;
+
   const UiState({
     this.mainTabIndex = 0,
     this.sidebarOpen = true,
@@ -95,6 +100,7 @@ class UiState {
     this.volume = 1.0,
     this.autoLocalSave = true,
     this.welcomeSeen = false,
+    this.showAssetsPacks = false,
   });
 
   UiState copyWith({
@@ -124,6 +130,7 @@ class UiState {
     double? volume,
     bool? autoLocalSave,
     bool? welcomeSeen,
+    bool? showAssetsPacks,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -156,6 +163,7 @@ class UiState {
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
+      showAssetsPacks: showAssetsPacks ?? this.showAssetsPacks,
     );
   }
 
@@ -186,6 +194,7 @@ class UiState {
     'volume': volume,
     'autoLocalSave': autoLocalSave,
     'welcomeSeen': welcomeSeen,
+    'showAssetsPacks': showAssetsPacks,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -228,6 +237,7 @@ class UiState {
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,
+      showAssetsPacks: json['showAssetsPacks'] as bool? ?? false,
     );
   }
 }
