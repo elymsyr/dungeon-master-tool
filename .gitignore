@@ -5,6 +5,7 @@
 key.properties
 
 .env
+open5e-api-staging
 supabase/.temp
 supabase/.branches
 **/node_modulees/
