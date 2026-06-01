@@ -90,6 +90,7 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
+    - assets/open5e_packs/
 
 flutter_launcher_icons:
   android: true

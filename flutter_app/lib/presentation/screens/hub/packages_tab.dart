@@ -8,6 +8,7 @@ import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
+import '../../../application/services/open5e_pack_installer.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -52,6 +53,109 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     if (!mounted) return;
     ref.invalidate(packageListProvider);
     setState(() => _refreshing = false);
+  }
+
+  /// Lists the bundled Open5e content packs and installs the chosen one as a
+  /// local personal package (then it can be made online / published).
+  Future<void> _openOpen5eDialog() async {
+    final installer = Open5ePackInstaller(ref.read(packageRepositoryProvider));
+    final packs = await installer.available();
+    if (!mounted) return;
+    if (packs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No Open5e packs bundled in this build.')),
+      );
+      return;
+    }
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Open5e Content Packs'),
+        content: SizedBox(
+          width: 420,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: packs.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 6),
+            itemBuilder: (_, i) {
+              final p = packs[i];
+              final summary = p.counts.entries
+                  .map((e) => '${e.value} ${e.key}')
+                  .join(' · ');
+              return Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: palette.featureCardBg,
+                  borderRadius: palette.br,
+                  border: Border.all(color: palette.featureCardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13)),
+                          const SizedBox(height: 2),
+                          Text('${p.publisher} · ${p.license.toUpperCase()}',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: palette.sidebarLabelSecondary)),
+                          Text(summary,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: palette.sidebarLabelSecondary)),
+                        ],
+                      ),
+                    ),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.download, size: 16),
+                      label: const Text('Install'),
+                      onPressed: () => _installOpen5ePack(ctx, installer, p),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _installOpen5ePack(
+      BuildContext dialogCtx, Open5ePackInstaller installer, Open5ePackInfo p) async {
+    Navigator.pop(dialogCtx);
+    String? error;
+    try {
+      await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'open5e-install:${p.packageName}',
+        'Installing ${p.title}…',
+        () => installer.install(p),
+      );
+    } catch (e) {
+      error = '$e';
+      debugPrint('Open5e install error: $e');
+    }
+    if (!mounted) return;
+    ref.invalidate(packageListProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error == null
+            ? 'Installed "${p.title}" (${p.totalEntities} entities)'
+            : 'Install failed: $error'),
+      ),
+    );
   }
 
   @override
@@ -110,6 +214,19 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                           : const Icon(Icons.refresh, size: 16),
                     ),
                   );
+                  final open5eBtn = Tooltip(
+                    message: 'Install Open5e content packs',
+                    child: OutlinedButton(
+                      onPressed: _openOpen5eDialog,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        minimumSize: const Size(32, 32),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Icon(Icons.public, size: 16),
+                    ),
+                  );
                   final addBtn = OutlinedButton(
                     onPressed: _openCreatePackageDialog,
                     style: OutlinedButton.styleFrom(
@@ -124,6 +241,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     children: [
                       Expanded(child: title),
                       marketBtn,
+                      const SizedBox(width: 4),
+                      open5eBtn,
                       const SizedBox(width: 4),
                       refreshBtn,
                       const SizedBox(width: 4),
