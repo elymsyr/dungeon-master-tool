@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/perf_probe.dart';
+
 /// Tipe göre debounce penceresi. Aynı (kind, key) için ardışık schedule
 /// timer'ı reset eder; tek fire'da en son closure çalışır. Settings
 /// patch'leri için key'i (örn. `"settings:$worldId:combat_state"`) ile
@@ -14,10 +16,12 @@ enum WriteKind {
   /// 750ms — HP/AC/level/CR/sayısal stat.
   shortNumber,
 
-  /// 1500ms — name, source, single-line identifier.
+  /// 800ms — name, source, single-line identifier. (SS-5: was 1500ms; trimmed
+  /// so the "saved" indicator clears faster. Re-validate against PerfProbe
+  /// `save_commit_ms` buckets before tuning further.)
   shortText,
 
-  /// 2000ms — description, dm_notes, multi-line text.
+  /// 1200ms — description, dm_notes, multi-line text. (SS-5: was 2000ms.)
   longText,
 
   /// 1000ms — tags, pdfs, images, linked refs.
@@ -40,8 +44,8 @@ enum WriteKind {
 
   Duration get window => switch (this) {
         shortNumber => const Duration(milliseconds: 750),
-        shortText => const Duration(milliseconds: 1500),
-        longText => const Duration(milliseconds: 2000),
+        shortText => const Duration(milliseconds: 800),
+        longText => const Duration(milliseconds: 1200),
         listEdit => const Duration(milliseconds: 1000),
         spatial => const Duration(milliseconds: 1000),
         combatTick => const Duration(milliseconds: 500),
@@ -173,8 +177,15 @@ class PendingWriteBuffer {
       _pending.keys.where((k) => k.startsWith(prefix));
 
   void _run(FutureOr<void> Function() action) {
+    // Phase 0 — time actual write execution (the fast-save signal), no-op in
+    // release. Synchronous writes stop immediately; async writes stop on
+    // completion below.
+    final sw = PerfProbe.instance.start();
     final result = action();
-    if (result is! Future) return;
+    if (result is! Future) {
+      PerfProbe.instance.stop(PerfProbe.saveCommit, sw);
+      return;
+    }
     // Uçuştaki yazımı izle — flush()/flushPrefix() tamamlanmasını bekler.
     final Future<void> tracked = result.then<void>((_) {}).catchError(
       (Object e, StackTrace st) {
@@ -182,7 +193,10 @@ class PendingWriteBuffer {
       },
     );
     _inFlight.add(tracked);
-    tracked.whenComplete(() => _inFlight.remove(tracked));
+    tracked.whenComplete(() {
+      PerfProbe.instance.stop(PerfProbe.saveCommit, sw);
+      _inFlight.remove(tracked);
+    });
   }
 }
 

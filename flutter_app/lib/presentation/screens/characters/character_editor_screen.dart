@@ -36,6 +36,7 @@ import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/services/perf_probe.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character/effective_character.dart';
 import '../../../domain/entities/character_ext.dart';
@@ -165,6 +166,13 @@ class _CharacterEditorScreenState
   /// schedules autosave. All edits (name, desc, tags, portrait, fields)
   /// should go through this.
   void _mutate(Character next) {
+    // Phase 0 — time keystroke → committed frame (no-op in release).
+    final probe = PerfProbe.instance.start();
+    if (probe != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => PerfProbe.instance.stop(PerfProbe.editorKeystroke, probe),
+      );
+    }
     final prev = _working;
     setState(() => _working = next);
     _undoBaseline ??= prev;
@@ -584,6 +592,21 @@ class _CharacterEditorScreenState
     _syncIfNotFocused(
         _dmNotesController, _dmNotesFocus, character.entity.dmNotes);
 
+    // UI-1: resolve the effective character ONCE per build and thread the
+    // derived armour values into BOTH the combat-stats tile and the header
+    // stat-chips, instead of re-running the ~1500-line CharacterResolver in
+    // each (twice per keystroke). Resolved against the live working copy
+    // (entities via _readEntitiesFor) so unsaved equip toggles stay fresh —
+    // effectiveCharacterProvider only sees the persisted copy and lags behind
+    // (see the in-tile notes at ~2037 and the header notes at ~3680).
+    final resolved = CharacterResolver.resolve(
+      character,
+      _readEntitiesFor(character),
+      config: ref.read(ruleConfigProvider),
+    );
+    final effectiveAc = resolved.armorClass;
+    final armorNotes = resolved.armorNotes;
+
     final baseTheme = Theme.of(context);
     final cardTheme = palette.cardBorderlessInputs
         ? baseTheme.copyWith(
@@ -616,12 +639,13 @@ class _CharacterEditorScreenState
                 child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _entityHeader(palette, character, template),
+                  _entityHeader(palette, character, template, effectiveAc),
                   const SizedBox(height: 12),
                   _renderRestActions(palette, character),
                   const SizedBox(height: 16),
                   ..._renderResolvedGrants(palette, character),
-                  ..._renderSchemaFields(palette, playerCat, character),
+                  ..._renderSchemaFields(
+                      palette, playerCat, character, effectiveAc, armorNotes),
                   ..._renderLevelUpTable(palette, character),
                   const SizedBox(height: 8),
                   EntityCardSectionHeading(
@@ -676,8 +700,8 @@ class _CharacterEditorScreenState
   /// EntityCard-style header — square portrait left, big serif red name +
   /// italic subtitle (template · world) + red rule + markdown description +
   /// tags row on the right.
-  Widget _entityHeader(
-      DmToolColors palette, Character c, WorldSchema template) {
+  Widget _entityHeader(DmToolColors palette, Character c, WorldSchema template,
+      int effectiveAc) {
     final entity = c.entity;
     // E2: drop synchronous `File.existsSync()` from the build path. The
     // ImageProvider stat-cache + `errorBuilder` already handle the
@@ -836,7 +860,8 @@ class _CharacterEditorScreenState
               // Resolve race/class names via `.select` so the strip only
               // rebuilds when those two specific names flip. RepaintBoundary
               // isolates the strip from descriptor edits above.
-              _StatChipsHeader(character: c, palette: palette),
+              _StatChipsHeader(
+                  character: c, palette: palette, effectiveAc: effectiveAc),
             ],
           ),
         ),
@@ -963,8 +988,9 @@ class _CharacterEditorScreenState
 
   /// EntityCard-style schema render — ungrouped fields under a "Properties"
   /// heading, grouped fields wrapped in a collapsible card per group.
-  List<Widget> _renderSchemaFields(
-      DmToolColors palette, EntityCategorySchema cat, Character character) {
+  List<Widget> _renderSchemaFields(DmToolColors palette,
+      EntityCategorySchema cat, Character character,
+      int effectiveAc, List<String> armorNotes) {
     final fieldsByGroup = <String?, List<FieldSchema>>{};
     for (final f in cat.fields) {
       if (_hiddenCharacterFieldKeys.contains(f.fieldKey)) continue;
@@ -984,7 +1010,9 @@ class _CharacterEditorScreenState
       widgets.add(const SizedBox(height: 8));
       widgets.add(Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: ungrouped.map((f) => _fieldTile(f, character)).toList(),
+        children: ungrouped
+            .map((f) => _fieldTile(f, character, effectiveAc, armorNotes))
+            .toList(),
       ));
     }
 
@@ -998,7 +1026,7 @@ class _CharacterEditorScreenState
       // reads `subspecies_id` from PC fields).
       final children = <Widget>[];
       for (final f in list) {
-        children.add(_fieldTile(f, character));
+        children.add(_fieldTile(f, character, effectiveAc, armorNotes));
         if (f.fieldKey == 'species_ref') {
           children.add(_subspeciesPickerTile(character));
         }
@@ -2016,7 +2044,8 @@ class _CharacterEditorScreenState
     );
   }
 
-  Widget _fieldTile(FieldSchema f, Character character) {
+  Widget _fieldTile(FieldSchema f, Character character, int effectiveAc,
+      List<String> armorNotes) {
     final value = character.entity.fields[f.fieldKey];
     // Resolve relation refs against the active campaign (world-bound
     // character) or the bundled SRD map (worldless character). Either
@@ -2037,10 +2066,10 @@ class _CharacterEditorScreenState
       combatStatsLevel = rawLevel is int
           ? rawLevel
           : (rawLevel is String ? int.tryParse(rawLevel) : null);
-      final ec = CharacterResolver.resolve(character, entities,
-          config: ref.read(ruleConfigProvider));
-      combatStatsAc = ec.armorClass;
-      combatStatsArmorNotes = ec.armorNotes;
+      // UI-1: AC + armour notes resolved ONCE in _buildCardBody and passed in,
+      // instead of re-running the full resolver here per build.
+      combatStatsAc = effectiveAc;
+      combatStatsArmorNotes = armorNotes;
     }
 
     final tile = FieldWidgetFactory.create(
@@ -3638,7 +3667,14 @@ class _CharacterOnlineToggle extends ConsumerWidget {
 class _StatChipsHeader extends ConsumerWidget {
   final Character character;
   final DmToolColors palette;
-  const _StatChipsHeader({required this.character, required this.palette});
+
+  /// UI-1: AC resolved once by the editor and passed in, so this strip no
+  /// longer re-runs the full resolver (UI-2: nor spreads the whole SRD map).
+  final int effectiveAc;
+  const _StatChipsHeader(
+      {required this.character,
+      required this.palette,
+      required this.effectiveAc});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -3668,18 +3704,10 @@ class _StatChipsHeader extends ConsumerWidget {
     // rows. Render the compact variant and allow horizontal scroll so chips
     // can extend off-screen instead of pushing layout around.
     final isPhone = getScreenType(context) == ScreenType.phone;
-    // Resolve AC off the live working `character` so equipping armor
-    // refreshes the chip immediately. `effectiveCharacterProvider` only sees
-    // the persisted copy and lags behind unsaved equip toggles. Campaign
-    // entities read (not watched) — this widget already rebuilds on every
-    // editor `_mutate`, which is when inventory actually changes.
-    final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final entities = useCampaign
-        ? <String, Entity>{...builtin, ...ref.read(entityProvider)}
-        : builtin;
-    final effectiveAc = CharacterResolver.resolve(character, entities,
-            config: ref.read(ruleConfigProvider))
-        .armorClass;
+    // UI-1/UI-2: AC comes from the single resolve in _buildCardBody (against
+    // the live working copy, so equip toggles stay fresh). This strip no longer
+    // re-runs the ~1500-line resolver nor spreads the full builtin SRD map on
+    // every editor `_mutate`.
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(

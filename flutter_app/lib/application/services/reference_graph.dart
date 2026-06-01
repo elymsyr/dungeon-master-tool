@@ -134,6 +134,15 @@ class ReferenceGraph {
     required Iterable<RefSlot> newRefs,
     String? worldId,
   }) async {
+    // SS-6 fast path: the new snapshot carries no asset refs — the common case
+    // for text-only entities/characters on every debounced save + inbound CDC.
+    // Skip the diff transaction + per-row upsert loop; just clear any refs the
+    // owner previously had (removeRefsForOwner is a single SELECT + DELETE and
+    // returns the removed URIs for the orphan check).
+    if (newRefs.isEmpty) {
+      final removed = await removeRefsForOwner(ownerTable, ownerId);
+      return DiffResult(added: const {}, removed: removed.toSet());
+    }
     final old = await refsForOwner(ownerTable, ownerId);
     final oldSet = {
       for (final r in old) '${r.uri}|${r.ownerField}': r,

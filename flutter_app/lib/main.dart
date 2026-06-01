@@ -18,6 +18,7 @@ import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
 import 'core/constants.dart' show initAppVersion;
 import 'core/services/log_buffer.dart';
+import 'core/services/perf_probe.dart';
 import 'data/services/heartbeat_service.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
@@ -45,13 +46,18 @@ void main(List<String> args) async {
   // global error hook for uncaught async errors instead.
   WidgetsFlutterBinding.ensureInitialized();
   LogBuffer.install();
+  // Phase 0 — frame build/raster histograms (no-op in release).
+  PerfProbe.instance.hookFrameTimings();
 
   // M5: ImageCache tavanını açıkça belirle (varsayılan 100MB / 1000 girdi).
   // Büyük world map + token + pin görselleri uzun oturumda öngörülebilir bir
   // sınırda kalsın — sınırsız büyüme yerine kontrollü cap.
+  // MEDIA-7: mobil cihazlarda daha düşük tavan — düşük-RAM Android/iOS'ta
+  // OOM-kill baskısını azalt (büyük battle-map görselleri MEDIA-1 ile birlikte).
+  final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
   PaintingBinding.instance.imageCache
-    ..maximumSizeBytes = 128 << 20
-    ..maximumSize = 1500;
+    ..maximumSizeBytes = (isMobile ? 80 : 128) << 20
+    ..maximumSize = isMobile ? 800 : 1500;
 
   // appDatabaseProvider re-creates AppDatabase when activeUserIdProvider
   // flips (sign-in/out). Old instance is disposed (close()) but Drift's

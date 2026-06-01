@@ -89,15 +89,15 @@ class ProjectionThumbChip extends StatelessWidget {
     if (item is ImageProjection) {
       final paths = (item as ImageProjection).filePaths;
       if (paths.isNotEmpty) {
-        final file = File(paths.first);
-        if (file.existsSync()) {
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            cacheWidth: 220,
-            errorBuilder: (_, _, _) => _iconFallback(palette),
-          );
-        }
+        // MEDIA-6: skip the synchronous File.existsSync() stat on the build
+        // path — errorBuilder already falls back to the icon when the file is
+        // missing, so the stat was pure per-rebuild overhead.
+        return Image.file(
+          File(paths.first),
+          fit: BoxFit.cover,
+          cacheWidth: 220,
+          errorBuilder: (_, _, _) => _iconFallback(palette),
+        );
       }
     }
     return _iconFallback(palette);
