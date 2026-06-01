@@ -54,6 +54,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     setState(() => _refreshing = false);
   }
 
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -175,9 +176,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             packageMetadataProvider(info.name)
                                 .select((a) => a.valueOrNull ?? const <String, dynamic>{}),
                           );
+                          final isAssets =
+                              meta['installed_from'] == 'assets';
                           final subtitle = isBuiltin
                               ? 'Built-in · ${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}'
-                              : '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}';
+                              : isAssets
+                                  ? '(assets) · ${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}'
+                                  : '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}';
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () =>

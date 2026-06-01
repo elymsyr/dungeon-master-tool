@@ -1,0 +1,318 @@
+{
+  "packs": [
+    {
+      "asset": "open5e-a5e-ag.pkg.json",
+      "package_name": "open5e-a5e-ag",
+      "title": "Adventurer's Guide",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 371,
+        "class": 1,
+        "subclass": 3,
+        "background": 21,
+        "feat": 59
+      }
+    },
+    {
+      "asset": "open5e-a5e-ddg.pkg.json",
+      "package_name": "open5e-a5e-ddg",
+      "title": "Dungeon Delver’s Guide",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "background": 4
+      }
+    },
+    {
+      "asset": "open5e-a5e-gpg.pkg.json",
+      "package_name": "open5e-a5e-gpg",
+      "title": "Gate Pass Gazette",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "background": 2
+      }
+    },
+    {
+      "asset": "open5e-a5e-mm.pkg.json",
+      "package_name": "open5e-a5e-mm",
+      "title": "Monstrous Menagerie",
+      "publisher": "EN Publishing",
+      "license": "ogl-10a",
+      "game_system": "a5e",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 832,
+        "creature-action": 1683,
+        "monster": 586
+      }
+    },
+    {
+      "asset": "open5e-bfrd.pkg.json",
+      "package_name": "open5e-bfrd",
+      "title": "Black Flag SRD",
+      "publisher": "Kobold Press",
+      "license": "cc-by-40",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 776,
+        "creature-action": 1339,
+        "monster": 360,
+        "class": 1,
+        "subclass": 1
+      }
+    },
+    {
+      "asset": "open5e-ccdx.pkg.json",
+      "package_name": "open5e-ccdx",
+      "title": "Creature Codex",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 921,
+        "creature-action": 1149,
+        "monster": 356
+      }
+    },
+    {
+      "asset": "open5e-deepm.pkg.json",
+      "package_name": "open5e-deepm",
+      "title": "Deep Magic for 5th Edition",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 515
+      }
+    },
+    {
+      "asset": "open5e-deepmx.pkg.json",
+      "package_name": "open5e-deepmx",
+      "title": "Deep Magic Extended",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 64
+      }
+    },
+    {
+      "asset": "open5e-kp.pkg.json",
+      "package_name": "open5e-kp",
+      "title": "Kobold Press Compilation",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 31
+      }
+    },
+    {
+      "asset": "open5e-open5e.pkg.json",
+      "package_name": "open5e-open5e",
+      "title": "Open5e Originals",
+      "publisher": "Open5e",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 2,
+        "subclass": 16,
+        "species": 1,
+        "background": 2
+      }
+    },
+    {
+      "asset": "open5e-open5e-2024.pkg.json",
+      "package_name": "open5e-open5e-2024",
+      "title": "Open5e Originals",
+      "publisher": "Open5e",
+      "license": "ogl-10a",
+      "game_system": "5e-2024",
+      "is_srd_overlap": false,
+      "counts": {
+        "subclass": 1
+      }
+    },
+    {
+      "asset": "open5e-spells-that-dont-suck.pkg.json",
+      "package_name": "open5e-spells-that-dont-suck",
+      "title": "Spells That Don't Suck",
+      "publisher": "SoMany Robots",
+      "license": "cc-by-40",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 180
+      }
+    },
+    {
+      "asset": "open5e-srd-2014.pkg.json",
+      "package_name": "open5e-srd-2014",
+      "title": "System Reference Document 5.1",
+      "publisher": "Wizards of the Coast",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": true,
+      "counts": {
+        "trait": 424,
+        "creature-action": 708,
+        "monster": 325,
+        "spell": 319,
+        "magic-item": 499,
+        "class": 12,
+        "subclass": 12,
+        "species": 13,
+        "background": 1,
+        "feat": 1
+      }
+    },
+    {
+      "asset": "open5e-srd-2024.pkg.json",
+      "package_name": "open5e-srd-2024",
+      "title": "System Reference Document 5.2",
+      "publisher": "Wizards of the Coast",
+      "license": "cc-by-40",
+      "game_system": "5e-2024",
+      "is_srd_overlap": true,
+      "counts": {
+        "trait": 253,
+        "creature-action": 905,
+        "monster": 330,
+        "spell": 339,
+        "magic-item": 757,
+        "class": 12,
+        "subclass": 12,
+        "species": 9,
+        "background": 4,
+        "feat": 17
+      }
+    },
+    {
+      "asset": "open5e-tdcs.pkg.json",
+      "package_name": "open5e-tdcs",
+      "title": "Tal'dorei Campaign Setting",
+      "publisher": "Green Ronin",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 11,
+        "creature-action": 10,
+        "monster": 4,
+        "subclass": 4,
+        "background": 5,
+        "feat": 1
+      }
+    },
+    {
+      "asset": "open5e-tob.pkg.json",
+      "package_name": "open5e-tob",
+      "title": "Tome of Beasts",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1039,
+        "creature-action": 1303,
+        "monster": 391
+      }
+    },
+    {
+      "asset": "open5e-tob-2023.pkg.json",
+      "package_name": "open5e-tob-2023",
+      "title": "Tome of Beasts 1 (2023 Edition)",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1021,
+        "creature-action": 1658,
+        "monster": 408
+      }
+    },
+    {
+      "asset": "open5e-tob2.pkg.json",
+      "package_name": "open5e-tob2",
+      "title": "Tome of Beasts 2",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 1014,
+        "creature-action": 1209,
+        "monster": 383
+      }
+    },
+    {
+      "asset": "open5e-tob3.pkg.json",
+      "package_name": "open5e-tob3",
+      "title": "Tome of Beasts 3",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "trait": 812,
+        "creature-action": 291,
+        "monster": 397
+      }
+    },
+    {
+      "asset": "open5e-toh.pkg.json",
+      "package_name": "open5e-toh",
+      "title": "Tome of Heroes",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 91,
+        "subclass": 76,
+        "species": 40,
+        "background": 19,
+        "feat": 13
+      }
+    },
+    {
+      "asset": "open5e-vom.pkg.json",
+      "package_name": "open5e-vom",
+      "title": "Vault of Magic",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "magic-item": 1063
+      }
+    },
+    {
+      "asset": "open5e-wz.pkg.json",
+      "package_name": "open5e-wz",
+      "title": "Warlock Zine",
+      "publisher": "Kobold Press",
+      "license": "ogl-10a",
+      "game_system": "5e-2014",
+      "is_srd_overlap": false,
+      "counts": {
+        "spell": 43
+      }
+    }
+  ]
+}
