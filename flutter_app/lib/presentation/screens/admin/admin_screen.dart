@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/admin_provider.dart';
+import '../../../application/providers/first_party_catalog_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/package_provider.dart';
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/format_bytes.dart';
 import '../../../core/utils/relative_time.dart';
 import '../../../core/utils/screen_type.dart';
@@ -137,12 +141,14 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
-class _DashboardTab extends StatelessWidget {
+class _DashboardTab extends ConsumerWidget {
   const _DashboardTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final showAssetsPacks =
+        ref.watch(uiStateProvider.select((s) => s.showAssetsPacks));
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -167,8 +173,61 @@ class _DashboardTab extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        _AdminCard(
+          padding: EdgeInsets.zero,
+          child: SwitchListTile(
+            value: showAssetsPacks,
+            onChanged: (v) => _toggleAssetsPacks(context, ref, v),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+            title: Text('Install bundled asset packs',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText)),
+            subtitle: Text(
+                'Install the shipped assets/ content packs locally (tagged '
+                '"(assets)") to inspect and compare against published versions.',
+                style: TextStyle(
+                    fontSize: 11, color: palette.sidebarLabelSecondary)),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _toggleAssetsPacks(
+    BuildContext context,
+    WidgetRef ref,
+    bool on,
+  ) async {
+    // Flip the persisted flag first so the switch reflects the new state.
+    ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+          showAssetsPacks: on,
+        ));
+    final installer = ref.read(assetsPackInstallerProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final count = await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'assets-packs-toggle',
+        on ? 'Installing asset packs…' : 'Removing asset packs…',
+        () => on ? installer.installAll() : installer.uninstallAll(),
+      );
+      ref.invalidate(packageListProvider);
+      messenger.showSnackBar(SnackBar(
+        content: Text(on
+            ? 'Installed $count asset pack(s).'
+            : 'Removed $count asset pack(s).'),
+      ));
+    } catch (e) {
+      // Roll the flag back so it doesn't claim a state we failed to reach.
+      ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+            showAssetsPacks: !on,
+          ));
+      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
   }
 }
 
