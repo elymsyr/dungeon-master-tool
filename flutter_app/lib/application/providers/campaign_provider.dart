@@ -453,10 +453,15 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     //
     // `worldRoleProvider` is worldId-keyed, depends only on authProvider (no
     // campaign dependency → no circular provider graph), and swallows errors
-    // internally → WorldRole.none on failure. `.future` is awaited so the
-    // gate is reliable on the first settings write after world-open, before
-    // any roster has bootstrapped.
-    final role = await _ref.read(worldRoleProvider(worldId).future);
+    // internally → WorldRole.none on failure.
+    //
+    // SS-7: prefer the cached synchronous role so the common path (role already
+    // resolved on world-open) doesn't suspend the combat/settings fire on a
+    // network/RLS query before the cloud enqueue. Fall back to the async read
+    // only when the role hasn't loaded yet (rare: settings edited immediately
+    // on world-open) so a DM's first push is never silently dropped.
+    final role = _ref.read(worldRoleProvider(worldId)).valueOrNull ??
+        await _ref.read(worldRoleProvider(worldId).future);
     if (role != WorldRole.dm) return;
     // Build the full settings_json mirror (everything except typed top
     // keys and `entities`) so the cloud row contains the post-merge state.

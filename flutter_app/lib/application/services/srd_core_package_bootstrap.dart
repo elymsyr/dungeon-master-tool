@@ -34,25 +34,26 @@ class SrdCorePackageBootstrap {
     final key = identityHashCode(_db);
     if (_installedFor.contains(key)) return 0;
 
-    // Defense-in-depth: if a previous session already materialised the pack
-    // in this DB, skip work without relying solely on the in-memory set.
-    final pack = buildSrdCorePack();
-    final codeVersion = pack.metadata['pack_version'] as String?;
-
+    // CS-1: cheap gate FIRST — compare the stored DB version against the code
+    // const WITHOUT building the ~2000-entity pack. Warm-DB returning users
+    // (the common cold-start case) short-circuit here, skipping the full SRD
+    // parse + recursive ref-resolution that used to run on every boot.
     final existingRow = await _findByName(srdCorePackageName);
     if (existingRow != null) {
-      final entities = await _db.packagesDao.getEntities(existingRow.id);
       // Skip only when the seeded copy is non-empty AND its pack_version
       // matches the code. A version bump (content fix / new rows) falls
       // through to the delete-and-replace path below so existing installs
-      // pick up the change without a manual reinstall.
-      if (entities.isNotEmpty &&
-          _storedPackVersion(existingRow) == codeVersion) {
+      // pick up the change without a manual reinstall. `countEntities` avoids
+      // materialising every row just to check non-empty.
+      final count = await _db.packagesDao.countEntities(existingRow.id);
+      if (count > 0 && _storedPackVersion(existingRow) == srdCorePackVersion) {
         _installedFor.add(key);
         return 0;
       }
     }
 
+    // (Re)seed genuinely needed — only now pay for the full pack + schema build.
+    final pack = buildSrdCorePack();
     final build = generateBuiltinDnd5eV2Schema();
     final schema = build.schema;
 
@@ -176,13 +177,8 @@ class SrdCorePackageBootstrap {
     return null;
   }
 
-  Future<Package?> _findByName(String name) async {
-    final all = await _db.packagesDao.getAll();
-    for (final p in all) {
-      if (p.name == name) return p;
-    }
-    return null;
-  }
+  Future<Package?> _findByName(String name) =>
+      _db.packagesDao.getByName(name);
 
   static void resetInstallGate() {
     _installedFor.clear();

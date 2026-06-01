@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io' show File;
 
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../domain/repositories/package_repository.dart';
@@ -17,6 +19,14 @@ class AssetsPackInstaller {
 
   static const _manifestAsset = 'assets/open5e_packs/manifest.json';
   static const _assetDir = 'assets/open5e_packs';
+
+  /// Whether the bundled Open5e packs are present in THIS build (BB-1). The
+  /// 32MB packs are excluded from the default pubspec asset set, so normal
+  /// production builds return false here and the admin UI hides the installer.
+  /// A maintainer who needs the in-app installer uncomments the
+  /// `assets/open5e_packs/` line in pubspec.yaml and rebuilds — that build then
+  /// bundles the packs and this returns true.
+  Future<bool> isAvailable() async => (await _tryLoad(_manifestAsset)) != null;
 
   /// Install every bundled pack. Idempotent — `save()` upserts by name.
   /// Returns the number of packs installed.
@@ -64,6 +74,19 @@ class AssetsPackInstaller {
     try {
       return await rootBundle.loadString(asset);
     } catch (_) {
+      // BB-1 debug fallback: the 32MB packs are excluded from the bundle, so
+      // rootBundle misses them. A `flutter run` (debug) on desktop has cwd =
+      // project root, so read them straight off disk — this is what makes the
+      // admin installer + its checkbox appear under `flutter run --debug`
+      // without re-bloating release builds (release has no on-disk packs).
+      if (kDebugMode && !kIsWeb) {
+        try {
+          final f = File(asset);
+          if (await f.exists()) return await f.readAsString();
+        } catch (_) {
+          // Not on disk / no filesystem access — fall through to null.
+        }
+      }
       return null;
     }
   }

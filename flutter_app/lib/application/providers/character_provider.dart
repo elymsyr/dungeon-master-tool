@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -748,12 +749,13 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     await _repo.save(bumped);
     final list = [...(state.valueOrNull ?? const <Character>[])];
     final idx = list.indexWhere((c) => c.id == bumped.id);
-    if (idx >= 0) {
-      list[idx] = bumped;
-    } else {
-      list.insert(0, bumped);
-    }
-    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    if (idx >= 0) list.removeAt(idx);
+    // RP-3/SS-4: bumped.updatedAt is now() — the most recent — so it belongs at
+    // the front of the updatedAt-desc list. Splice it there (O(n)) instead of a
+    // full O(n log n) re-sort on every debounced save. The list stays sorted
+    // because update() is the only mutator and always front-inserts the bump;
+    // sortedCharactersProvider still sorts defensively for display.
+    list.insert(0, bumped);
     state = AsyncValue.data(list);
     _syncPush(bumped);
   }
@@ -1064,8 +1066,18 @@ final effectiveCharacterProvider =
   if (pc.worldId == null) {
     entities = builtin;
   } else {
-    final campaign = ref.watch(entityProvider);
-    entities = campaign.isEmpty ? builtin : {...builtin, ...campaign};
+    // RP-1: subscribe only to add/remove (length) and read the map lazily via
+    // CombinedMapView, instead of ref.watch(entityProvider) + a full spread —
+    // so editing ANY world entity no longer re-runs the ~1500-line resolver
+    // for every resolved character (e.g. the open editor's grants card).
+    // Mirrors the editor's _readEntitiesFor; campaign-first so authored
+    // overrides win over builtin. Per-keystroke field edits mutate values in
+    // place without changing map.length, so they don't trigger a recompute.
+    ref.watch(entityProvider.select((m) => m.length));
+    final campaign = ref.read(entityProvider);
+    entities = campaign.isEmpty
+        ? builtin
+        : CombinedMapView<String, Entity>([campaign, builtin]);
   }
   return CharacterResolver.resolve(pc, entities,
       config: ref.watch(ruleConfigProvider));
@@ -1144,17 +1156,42 @@ final combatCharactersProvider = Provider<List<Character>>((ref) {
         ref.watch(worldCharactersProvider(worldId)).valueOrNull ?? const [];
     for (final r in rows) {
       if (out.containsKey(r.id)) continue;
-      try {
-        final decoded = jsonDecode(r.payloadJson);
-        if (decoded is Map<String, dynamic>) {
-          out[r.id] = Character.fromJson(decoded).copyWith(
-            worldId: r.worldId,
-            ownerId: r.ownerId,
-          );
-        }
-      } catch (_) {/* malformed row — skip */}
+      // RP-6: reuse the previously decoded Character when the row's updatedAt
+      // is unchanged, so sync churn (worldCharactersProvider re-emitting on
+      // every CDC tick) doesn't re-run jsonDecode + Character.fromJson for
+      // rows that didn't actually change. Returns identical instances for
+      // unchanged rows → downstream identity checks stay stable.
+      final decoded = _decodeWorldCharRow(r);
+      if (decoded != null) out[r.id] = decoded;
     }
+    _pruneWorldCharCache(rows.map((r) => r.id).toSet());
   }
 
   return out.values.toList(growable: false);
 });
+
+/// RP-6 decode memo: row id → (updatedAt, decoded Character).
+final Map<String, ({DateTime updatedAt, Character char})>
+    _decodedWorldCharCache = {};
+
+Character? _decodeWorldCharRow(WorldCharacterRow r) {
+  final cached = _decodedWorldCharCache[r.id];
+  if (cached != null && cached.updatedAt == r.updatedAt) return cached.char;
+  try {
+    final decoded = jsonDecode(r.payloadJson);
+    if (decoded is Map<String, dynamic>) {
+      final char = Character.fromJson(decoded)
+          .copyWith(worldId: r.worldId, ownerId: r.ownerId);
+      _decodedWorldCharCache[r.id] = (updatedAt: r.updatedAt, char: char);
+      return char;
+    }
+  } catch (_) {/* malformed row — skip */}
+  return null;
+}
+
+/// Drop cache entries for rows no longer present (world switch / char removal)
+/// so the memo stays bounded by the active world's roster.
+void _pruneWorldCharCache(Set<String> liveIds) {
+  if (_decodedWorldCharCache.length <= liveIds.length) return;
+  _decodedWorldCharCache.removeWhere((id, _) => !liveIds.contains(id));
+}
