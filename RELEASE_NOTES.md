@@ -1,5 +1,44 @@
 # Release Notes
 
+## Dungeon Master Tool v10.2.0 — Marketplace Contents Preview, Official Package Details & Banner Art (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v10.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v10.1.0. Makes the Marketplace tell you what an item *contains* before you download it: publishing now captures a compact content summary (template name + per-category entity counts and names) stored on the listing, which drives a richer card and a new preview dialog — no full-payload fetch required. The Official Content channel gains a parallel details dialog and ships banner art that downloads from the CDN and becomes the installed package's local cover. One bug fix: publishing no longer silently no-ops when the client-side beta flag is stale.
+
+### Highlights
+
+#### Marketplace contents preview (new)
+
+- **Publish-time content summary (`buildListingContentSummary`)** — On publish, a single builder walks the world/package payload (`entities` grouped by `world_schema` category) into a compact `{template, categories:[{slug, name, count, names, overflow}]}` summary. Name lists are capped (500/category) with the surplus reported as `overflow`; characters and schema-less payloads summarise to `null`. Stored alongside a `template_name` column so the card subtitle and preview don't pull the gzip payload.
+- **Marketplace preview dialog + richer cards** — A new preview dialog renders the captured summary as collapsed per-category sections (counts + names), and the listing tile (`MarketplaceListingTile`) surfaces template name and totals on the card. Both degrade gracefully on pre-existing listings that have `NULL` summary columns.
+- **Migration 071 — two read-only listing columns** — `marketplace_listings.template_name` (TEXT) and `content_summary` (JSONB), captured at publish time. `publish_listing_snapshot` recreated with two appended optional params (`p_template_name`, `p_content_summary`); still beta-gated server-side. Old listings keep `NULL` and backfill on re-publish; the immutability trigger needs no change.
+
+#### Official Content channel
+
+- **Official package details dialog (`OfficialPackageDialog`)** — A first-party-catalog parallel to the marketplace preview: opened from an official card's Get button (or tap), it shows pills (template / license / version), per-category entity counts from `CatalogEntry.counts`, and installs through the `firstPartyInstallProvider` state machine.
+- **Banner art → local cover** — Official banners now ship as JPEG (`{worker}/catalog/banners/<slug>.jpg`); the bundled built-in template + SRD-package banners switch PNG → JPG (~20× smaller). At install, `FirstPartyCatalogService.fetchBanner` downloads the banner and `CoverImageBundler.restore` materialises it as the local package cover, so the Packages tab shows the same art. Missing/offline banners degrade silently.
+- **Upload helper (`cloudflare/upload_banners.sh`)** — Script to push the banner set to the R2 worker under `catalog/banners/`.
+
+#### Fixes
+
+- **Publish no longer silently no-ops on stale beta flag** — The publish path used a client-side `isBetaActiveProvider` pre-check that could be stale-false (async / offline refresh), swallowing the publish with no error. Removed: the `publish_listing_snapshot` RPC is the authoritative beta gate (migration 057), and any `42501 beta membership required` now surfaces through the dialog's catch instead of a silent return.
+
+### Upgrade notes
+
+- **App version bump:** `10.1.0` → `10.2.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **Cloud migration:** `071_marketplace_listing_summary.sql` — adds the two read-only listing columns and recreates `publish_listing_snapshot` with the two new optional params. Apply via Supabase Dashboard → SQL Editor. Pure additive; existing listings keep `NULL` and backfill on re-publish.
+- **Banner upload (optional):** run `cloudflare/upload_banners.sh` to publish official banner art to the R2 worker. Without it, official packs still install (banner just absent).
+
+### Known issues
+
+- **Content summary backfills on re-publish only** — Listings published before migration 071 show no contents breakdown until re-published.
+- Carry-over from v10.1.0: official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v10.1.0 — Official Content Channel, Open5e Import Pipeline (Beta)
 
 **Release date:** June 2026
