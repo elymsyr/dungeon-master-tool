@@ -90,10 +90,7 @@ class _EmptyCard extends StatelessWidget {
         child: Text(
           'No templates available.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: palette.sidebarLabelSecondary,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
         ),
       ),
     );
@@ -120,57 +117,72 @@ class _TemplateTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(12),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: palette.featureCardBg,
         borderRadius: palette.br,
         border: Border.all(color: palette.featureCardBorder),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.description, color: palette.featureCardAccent, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+          // Banner cover (built-in D&D 5e template art); collapses if the
+          // asset is missing.
+          Image.asset(
+            'assets/first_party/banners/dnd5e-template.png',
+            height: 100,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  schema.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        schema.name,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: palette.tabActiveText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${schema.categories.length} categories · $totalFields fields',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary,
+                        ),
+                      ),
+                      if (schema.description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          schema.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: palette.sidebarLabelSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${schema.categories.length} categories · $totalFields fields',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: palette.sidebarLabelSecondary,
-                  ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: onView,
+                  icon: const Icon(Icons.visibility, size: 16),
+                  label: const Text('View'),
                 ),
-                if (schema.description.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    schema.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: palette.sidebarLabelSecondary,
-                    ),
-                  ),
-                ],
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: onView,
-            icon: const Icon(Icons.visibility, size: 16),
-            label: const Text('View'),
           ),
         ],
       ),

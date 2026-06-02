@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/first_party_catalog_provider.dart';
+import '../../data/services/first_party_catalog_service.dart'
+    show officialBannerUrl;
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../dialogs/official_package_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -84,6 +86,7 @@ class _OfficialPackageCard extends StatelessWidget {
           description: '',
           tags: const [],
           coverImagePath: '',
+          coverNetworkUrl: officialBannerUrl(entry.slug),
           isSelected: false,
           palette: palette,
           layout: MetadataTileLayout.topBanner,
