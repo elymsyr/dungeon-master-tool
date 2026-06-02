@@ -13,9 +13,9 @@ import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
 import '../services/asset_ref_resolver.dart';
 import '../services/cover_image_bundler.dart';
+import '../services/listing_content_summary.dart';
 import '../services/marketplace_cover_encoder.dart';
 import 'auth_provider.dart';
-import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'connectivity_provider.dart';
 import 'character_provider.dart';
@@ -94,21 +94,18 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     List<String> tags = const [],
     String? changelog,
   }) async {
-    // Publishing to the marketplace is beta-gated (the `publish_listing_snapshot`
-    // RPC enforces this server-side too — migration 057). Fail fast with a
-    // friendly message instead of letting the RPC raise.
-    if (!_ref.read(isBetaActiveProvider)) {
-      state = AsyncValue.error(
-        'Beta membership is required to publish to the marketplace.',
-        StackTrace.current,
-      );
-      return null;
-    }
+    // Publishing is beta-gated, but the gate is enforced authoritatively by the
+    // `publish_listing_snapshot` RPC (migration 057). The client-side
+    // `isBetaActiveProvider` can be stale-false (it refreshes async / offline),
+    // which previously made publish *silently* no-op. So no client pre-check:
+    // let the RPC decide and surface any '42501 beta membership required' error
+    // through the dialog's catch.
     state = const AsyncValue.loading();
     try {
       final payload = await _loadPayload(itemType, localId);
       final hash = computePayloadContentHash(payload);
       final coverB64 = await _readLocalCoverBase64(itemType, localId);
+      final summary = buildListingContentSummary(payload);
 
       final remote = _ref.read(marketplaceListingsRemoteDsProvider);
       final listing = await remote.publishSnapshot(
@@ -121,6 +118,8 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         contentHash: hash,
         payload: payload,
         coverImageB64: coverB64,
+        templateName: summary?['template'] as String?,
+        contentSummary: summary,
       );
 
       await _ref.read(marketplaceLinksLocalDsProvider).addOwnedListingId(

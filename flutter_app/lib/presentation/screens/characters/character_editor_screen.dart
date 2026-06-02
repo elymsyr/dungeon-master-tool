@@ -27,6 +27,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/package_source_entities.dart';
 import '../../../application/services/entity_media_cleanup_service.dart';
 import '../../../application/services/marketplace_cover_sync_service.dart';
 import '../../../application/services/image_upload_helper.dart';
@@ -2633,9 +2634,36 @@ class _CharacterEditorScreenState
   /// E1: returns a lazy `CombinedMapView` instead of spreading both
   /// maps into a fresh `{}` per call. Reads are O(1); 20+ field tiles
   /// hitting this helper no longer allocate one 7 K-entry map each.
+  /// Standalone content packages stamped on a built-in character at
+  /// creation (`source_packages` field). Empty for legacy / world chars.
+  List<String> _sourcePackagesOf(Character character) {
+    final raw = character.entity.fields['source_packages'];
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+    }
+    return const [];
+  }
+
   Map<String, Entity> _readEntitiesFor(Character character) {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    if (character.worldId == null) return builtin;
+    if (character.worldId == null) {
+      // Built-in characters may have been created against standalone
+      // packages — re-resolve those so species/class/spell refs outside the
+      // bundled pack still render. Packages still loading contribute nothing
+      // yet; the watch re-runs when each future settles.
+      final pkgNames = _sourcePackagesOf(character);
+      if (pkgNames.isEmpty) return builtin;
+      final maps = <Map<String, Entity>>[];
+      for (final name in pkgNames) {
+        final m = ref.watch(packageEntitiesProvider(name)).valueOrNull;
+        if (m != null && m.isNotEmpty) maps.add(m);
+      }
+      if (maps.isEmpty) return builtin;
+      // Packages first so they win id collisions, builtin as the base.
+      return UnmodifiableMapView<String, Entity>(
+        CombinedMapView<String, Entity>([...maps, builtin]),
+      );
+    }
     final activeWorldId =
         ref.watch(activeCampaignIdProvider).valueOrNull;
     if (activeWorldId != character.worldId) return builtin;

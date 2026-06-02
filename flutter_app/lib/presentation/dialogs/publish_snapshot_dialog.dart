@@ -56,7 +56,7 @@ class _PublishSnapshotDialogState
   late final TextEditingController _titleCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _changelogCtrl;
-  String? _language;
+  String? _language = 'en';
   List<String> _tags = const [];
   bool _busy = false;
 
@@ -80,9 +80,6 @@ class _PublishSnapshotDialogState
     final l10n = L10n.of(context)!;
     final missing = <String>[];
     if (_titleCtrl.text.trim().isEmpty) missing.add(l10n.publishDialogTitleLabel);
-    if (_descCtrl.text.trim().isEmpty) {
-      missing.add(l10n.publishDialogDescriptionLabel);
-    }
     if (_language == null || _language!.isEmpty) {
       missing.add(l10n.publishDialogLanguageLabel);
     }
@@ -102,7 +99,9 @@ class _PublishSnapshotDialogState
             itemType: widget.itemType,
             localId: widget.localId,
             title: _titleCtrl.text.trim(),
-            description: _descCtrl.text.trim(),
+            description: _descCtrl.text.trim().isEmpty
+                ? null
+                : _descCtrl.text.trim(),
             language: _language,
             tags: _tags,
             changelog: _changelogCtrl.text.trim().isEmpty

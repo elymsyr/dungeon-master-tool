@@ -21,6 +21,8 @@ class MarketplaceListing {
     required this.createdAt,
     this.ownerUsername,
     this.coverImageB64,
+    this.templateName,
+    this.contentSummary,
   });
 
   final String id;
@@ -50,6 +52,16 @@ class MarketplaceListing {
   /// preview without extra fetches. Null when the local item had no cover.
   final String? coverImageB64;
 
+  /// Template (world_schema) name captured at publish time. Shown on the
+  /// marketplace card subtitle. Null for items without a schema (characters)
+  /// or for listings published before this field existed.
+  final String? templateName;
+
+  /// Per-category entity counts + capped name lists captured at publish time
+  /// (see `buildListingContentSummary`). Drives the preview dialog's contents
+  /// breakdown without downloading the payload. Null when unavailable.
+  final Map<String, dynamic>? contentSummary;
+
   MarketplaceListing copyWith({
     int? downloadCount,
     String? ownerUsername,
@@ -70,6 +82,8 @@ class MarketplaceListing {
       createdAt: createdAt,
       ownerUsername: ownerUsername ?? this.ownerUsername,
       coverImageB64: coverImageB64,
+      templateName: templateName,
+      contentSummary: contentSummary,
     );
   }
 }

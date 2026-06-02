@@ -110,6 +110,14 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
+                  if (listing.templateName != null &&
+                      listing.templateName!.isNotEmpty)
+                    _KvPill(
+                      icon: Icons.dashboard_customize_outlined,
+                      label:
+                          '${l10n.marketplaceTemplateLabel}: ${listing.templateName}',
+                      palette: palette,
+                    ),
                   if (listing.language != null)
                     _KvPill(
                       icon: Icons.language,
@@ -121,6 +129,7 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
+              _ContentsSection(listing: listing, palette: palette),
               _KvRow(
                 label: l10n.marketplaceDownloadCount(listing.downloadCount),
                 icon: Icons.download_outlined,
@@ -178,6 +187,109 @@ class MarketplacePreviewDialog extends ConsumerWidget {
           label: Text(downloading ? l10n.marketplaceDownloading : l10n.marketplaceDownload),
         ),
       ],
+    );
+  }
+}
+
+/// Per-category contents breakdown driven by `listing.contentSummary`. Each
+/// category is a collapsed (closed) tile showing its count; expanding reveals
+/// the entity names (capped, with a "+N more" footer). Renders nothing when
+/// the listing carries no summary (old listings / characters).
+class _ContentsSection extends StatelessWidget {
+  final MarketplaceListing listing;
+  final DmToolColors palette;
+  const _ContentsSection({required this.listing, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final summary = listing.contentSummary;
+    final categories = summary?['categories'];
+    if (categories is! List || categories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.marketplaceContentsLabel,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: palette.featureCardBg,
+            border: Border.all(color: palette.featureCardBorder),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (final c in categories)
+                if (c is Map) _CategoryTile(data: c, palette: palette),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  final Map<dynamic, dynamic> data;
+  final DmToolColors palette;
+  const _CategoryTile({required this.data, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final name = (data['name'] as String?) ?? (data['slug'] as String?) ?? '?';
+    final count = (data['count'] as num?)?.toInt() ?? 0;
+    final names = (data['names'] as List?)?.whereType<String>().toList() ??
+        const <String>[];
+    final overflow = (data['overflow'] as num?)?.toInt() ?? 0;
+
+    return Theme(
+      // Strip the default ExpansionTile dividers so stacked tiles read as one
+      // grouped list.
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        title: Text(
+          '$name  ($count)',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: palette.tabActiveText,
+          ),
+        ),
+        children: [
+          if (names.isNotEmpty)
+            Text(
+              names.join(' · '),
+              style: TextStyle(fontSize: 12, height: 1.4, color: palette.tabText),
+            ),
+          if (overflow > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              l10n.marketplaceMoreEntities(overflow),
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

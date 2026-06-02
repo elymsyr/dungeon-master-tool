@@ -6,6 +6,7 @@ import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../character_creation/character_draft_notifier.dart';
 import '../providers/entity_provider.dart';
 import 'package_import_service.dart';
+import 'package_source_entities.dart';
 
 /// In-memory materialization of the bundled SRD 5.2.1 content pack:
 /// Tier-0 lookups (abilities, skills, damage types, conditions, …) plus
@@ -139,7 +140,14 @@ final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
     characterDraftProvider.select((d) => d.worldName),
   );
   final builtin = ref.watch(builtinSrdEntitiesProvider);
-  if (world.isEmpty) return builtin;
+  if (world.isEmpty) {
+    // Built-in + selected standalone packages mode. No world picked, so the
+    // bundled SRD is the base and any ticked packages layer on top.
+    final packages = ref.watch(
+      characterDraftProvider.select((d) => d.sourcePackages),
+    );
+    return mergeBuiltinWithPackages(ref, builtin, packages);
+  }
   final campaign = ref.watch(entityProvider);
   if (campaign.isEmpty) return builtin;
   // Dedupe by (categorySlug, name): when a world was created by importing
