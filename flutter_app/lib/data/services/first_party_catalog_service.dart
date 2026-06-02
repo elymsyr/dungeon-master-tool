@@ -14,6 +14,16 @@ import '../../domain/entities/catalog/catalog_entry.dart';
 const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
 const String _bundledManifest = 'assets/first_party/manifest.json';
 
+/// Public R2 URL for an official package's card banner
+/// (`{worker}/catalog/banners/<slug>.png`), or null when no worker is
+/// configured. Banners are NOT bundled (only the built-in template/package
+/// covers are) — they download from the cloud, so offline cards fall back to
+/// the icon cover. Upload via `cloudflare/upload_banners.sh`.
+String? officialBannerUrl(String slug) =>
+    (_workerBaseUrl.isEmpty || slug.isEmpty)
+        ? null
+        : '$_workerBaseUrl/catalog/banners/$slug.png';
+
 /// Reads the first-party content catalog (official packages) from the R2 worker
 /// (`{worker}/catalog/*`), falling back to the bundled `assets/first_party/`
 /// source when offline, the worker URL is unset, or a fetch fails. This is the

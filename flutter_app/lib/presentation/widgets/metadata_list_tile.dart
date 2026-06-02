@@ -40,6 +40,17 @@ class MetadataListTile extends StatelessWidget {
   /// over [coverImagePath] when both are set.
   final String? coverImageB64;
 
+  /// Flutter bundle asset path for the cover (e.g. official catalog banners,
+  /// built-in template/package banners). Takes priority over
+  /// [coverImagePath]/[coverImageB64]; rendered via [Image.asset] with an icon
+  /// fallback when the asset is missing.
+  final String? coverAssetPath;
+
+  /// Remote cover URL (e.g. official catalog banners served from R2). Rendered
+  /// via [Image.network] with an icon fallback while loading / on error. Used
+  /// after [coverAssetPath] and before the b64/asset-ref sources.
+  final String? coverNetworkUrl;
+
   final bool isSelected;
   final DmToolColors palette;
   final VoidCallback onSettings;
@@ -77,6 +88,8 @@ class MetadataListTile extends StatelessWidget {
     required this.tags,
     required this.coverImagePath,
     this.coverImageB64,
+    this.coverAssetPath,
+    this.coverNetworkUrl,
     required this.isSelected,
     required this.palette,
     required this.onSettings,
@@ -91,7 +104,10 @@ class MetadataListTile extends StatelessWidget {
   // AssetRefImage local/cloud/public ref'leri çözer; çözülemezse fallback
   // (errorWidget) gösterilir — varlık kontrolü artık render sırasında yapılır.
   bool get _hasImage =>
-      coverImagePath.isNotEmpty || (coverImageB64?.isNotEmpty ?? false);
+      (coverAssetPath?.isNotEmpty ?? false) ||
+      (coverNetworkUrl?.isNotEmpty ?? false) ||
+      coverImagePath.isNotEmpty ||
+      (coverImageB64?.isNotEmpty ?? false);
 
   /// Decoded base64 cover bytes, or null when absent / malformed.
   Uint8List? get _coverBytes {
@@ -107,6 +123,26 @@ class MetadataListTile extends StatelessWidget {
   /// Cover image source resolution: base64 blob first (marketplace), else the
   /// asset ref (native hub lists). Returns [fallback] when neither resolves.
   Widget _coverImage({required int cacheWidth, required Widget fallback}) {
+    final asset = coverAssetPath;
+    if (asset != null && asset.isNotEmpty) {
+      return Image.asset(
+        asset,
+        fit: BoxFit.cover,
+        cacheWidth: cacheWidth,
+        errorBuilder: (_, _, _) => fallback,
+      );
+    }
+    final url = coverNetworkUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        cacheWidth: cacheWidth,
+        errorBuilder: (_, _, _) => fallback,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : fallback,
+      );
+    }
     final bytes = _coverBytes;
     if (bytes != null) {
       return Image.memory(

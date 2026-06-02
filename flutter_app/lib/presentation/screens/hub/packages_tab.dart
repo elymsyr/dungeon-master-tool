@@ -215,6 +215,9 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                     .toList(),
                                 coverImagePath:
                                     (meta['cover_image_path'] as String?) ?? '',
+                                coverAssetPath: isBuiltin
+                                    ? 'assets/first_party/banners/dnd5e-package-builtin.png'
+                                    : null,
                                 isSelected: isSelected,
                                 palette: palette,
                                 layout: MetadataTileLayout.topBanner,

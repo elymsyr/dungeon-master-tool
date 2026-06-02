@@ -101,6 +101,11 @@ flutter:
     # R2-hosted catalog). Per-type subdirs (world/character/template/sound) get
     # their own line here once hand-authored payloads are added.
     - assets/first_party/
+    # Only the built-in template + built-in SRD package banners are bundled.
+    # Official package banners are NOT bundled — they download from R2
+    # (`{worker}/catalog/banners/<slug>.png`, see cloudflare/upload_banners.sh).
+    - assets/first_party/banners/dnd5e-template.png
+    - assets/first_party/banners/dnd5e-package-builtin.png
 
 flutter_launcher_icons:
   android: true
