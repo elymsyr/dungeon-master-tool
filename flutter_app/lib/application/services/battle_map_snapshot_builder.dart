@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui show instantiateImageCodec;
 
@@ -7,6 +8,7 @@ import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
 import '../../domain/value_objects/creature_size.dart';
+import '../../domain/value_objects/map_shape.dart';
 import '../providers/character_provider.dart' show kPlayerCategorySlugs;
 
 /// Builds a [BattleMapSnapshot] from a live [Encounter] + the entity map.
@@ -146,6 +148,7 @@ class BattleMapSnapshotBuilder {
       feetPerCell: encounter.feetPerCell,
       diagonalRule: encounter.diagonalRule,
       sceneVectorJson: encounter.sceneVectorJson,
+      shapes: _parseShapes(encounter.sceneVectorJson),
       showAllHp: encounter.showAllHp,
       hideTokenHud: encounter.hideTokenHud,
       tokenSize: encounter.tokenSize,
@@ -153,6 +156,44 @@ class BattleMapSnapshotBuilder {
       tokens: tokens,
       turnIndex: encounter.turnIndex,
     );
+  }
+
+  /// Parses the encounter's versioned scene blob into projected shapes,
+  /// filtering the GM layer out send-side (it must never reach a player) —
+  /// the same discipline as the hidden-token filter above.
+  static List<ShapeSnapshot> _parseShapes(String sceneVectorJson) {
+    if (sceneVectorJson.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(sceneVectorJson);
+      if (decoded is! Map) return const [];
+      final list = decoded['shapes'];
+      if (list is! List) return const [];
+      final out = <ShapeSnapshot>[];
+      for (final e in list) {
+        if (e is! Map) continue;
+        final s = MapShape.fromJson(e.cast<String, dynamic>());
+        if (s.layer == ShapeLayer.gm) continue;
+        final flat = <double>[];
+        for (final p in s.points) {
+          flat
+            ..add(p.dx)
+            ..add(p.dy);
+        }
+        out.add(ShapeSnapshot(
+          kind: s.kind.index,
+          layer: s.layer.index,
+          points: flat,
+          colorHex: s.colorHex,
+          strokeWidth: s.strokeWidth,
+          filled: s.filled,
+          text: s.text,
+          fontSize: s.fontSize,
+        ));
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
   }
 
   /// Reads the background image at [mapPath] and returns its pixel

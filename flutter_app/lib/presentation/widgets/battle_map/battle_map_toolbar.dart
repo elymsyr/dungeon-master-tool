@@ -5,9 +5,11 @@ import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/value_objects/grid_distance.dart';
+import '../../../domain/value_objects/map_shape.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
+import 'draw_tools_button.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -19,6 +21,7 @@ typedef _ToolbarState = ({
   int feetPerCell,
   int tokenSize,
   int diagonalRule,
+  ShapeLayer activeLayer,
   int canvasWidth,
   int canvasHeight,
 });
@@ -47,6 +50,7 @@ class BattleMapToolbar extends ConsumerWidget {
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
       diagonalRule: s.diagonalRule,
+      activeLayer: s.activeLayer,
       canvasWidth: s.canvasWidth,
       canvasHeight: s.canvasHeight,
     )));
@@ -56,6 +60,7 @@ class BattleMapToolbar extends ConsumerWidget {
       color: palette.tabBg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildRow1(context, ref, palette, tb, notifier),
           Divider(height: 1, color: palette.sidebarDivider),
@@ -222,56 +227,30 @@ class BattleMapToolbar extends ConsumerWidget {
   // -------------------------------------------------------------------------
 
   Widget _buildRow2(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
-    return SizedBox(
-      height: 36,
-      child: Row(
+    // Wrap (not Row) so the tools flow to a second line when the window is too
+    // narrow instead of overflowing.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Wrap(
+        spacing: 2,
+        runSpacing: 4,
+        alignment: WrapAlignment.start,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const SizedBox(width: 4),
-          // Tool buttons
           _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: 'Navigate', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.ruler, icon: Icons.straighten, tooltip: 'Ruler', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.circle, icon: Icons.radio_button_unchecked, tooltip: 'Circle', mapState: mapState, notifier: notifier, palette: palette),
-          // AoE templates
-          _ToolButton(tool: BattleMapTool.aoeCone, icon: Icons.change_history, tooltip: 'Cone (AoE)', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.aoeLine, icon: Icons.horizontal_rule, tooltip: 'Line (AoE)', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.aoeCircle, icon: Icons.lens, tooltip: 'Sphere (AoE)', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.aoeSquare, icon: Icons.square, tooltip: 'Cube (AoE)', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.aoeSector, icon: Icons.pie_chart_outline, tooltip: 'Sector — drag radius, then drag angle', mapState: mapState, notifier: notifier, palette: palette),
-          _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: 'Erase — drag over rulers/AoE/drawings to delete', mapState: mapState, notifier: notifier, palette: palette),
+          // All measure / AoE / shape tools merged into one picker button.
+          DrawToolsButton(activeTool: mapState.activeTool, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: 'Erase — drag over rulers/AoE/shapes/drawings to delete', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: 'Draw', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: 'Add Fog', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: 'Erase Fog', mapState: mapState, notifier: notifier, palette: palette),
-          // Separator
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
-          // Fog actions
-          _ToolbarButton(
-            icon: Icons.cloud_queue,
-            tooltip: 'Fill Fog',
-            palette: palette,
-            onPressed: () async { await notifier.fillFog(); },
-          ),
-          _ToolbarButton(
-            icon: Icons.wb_sunny_outlined,
-            tooltip: 'Clear Fog',
-            palette: palette,
-            onPressed: () async { await notifier.clearFog(); },
-          ),
-          // Separator
+          _ToolbarButton(icon: Icons.cloud_queue, tooltip: 'Fill Fog', palette: palette, onPressed: () async { await notifier.fillFog(); }),
+          _ToolbarButton(icon: Icons.wb_sunny_outlined, tooltip: 'Clear Fog', palette: palette, onPressed: () async { await notifier.clearFog(); }),
           Container(width: 1, height: 24, color: palette.sidebarDivider, margin: const EdgeInsets.symmetric(horizontal: 6)),
-          // Draw actions
-          _ToolbarButton(
-            icon: Icons.cleaning_services_outlined,
-            tooltip: 'Clear Drawing',
-            palette: palette,
-            onPressed: notifier.clearAnnotation,
-          ),
-          _ToolbarButton(
-            icon: Icons.straighten_outlined,
-            tooltip: 'Clear Marks',
-            palette: palette,
-            onPressed: notifier.clearMeasurements,
-          ),
-          const Spacer(),
+          _ToolbarButton(icon: Icons.cleaning_services_outlined, tooltip: 'Clear Drawing', palette: palette, onPressed: notifier.clearAnnotation),
+          _ToolbarButton(icon: Icons.straighten_outlined, tooltip: 'Clear Marks', palette: palette, onPressed: notifier.clearMeasurements),
+          _ToolbarButton(icon: Icons.format_shapes_outlined, tooltip: 'Clear Shapes', palette: palette, onPressed: notifier.clearShapes),
         ],
       ),
     );
@@ -282,13 +261,17 @@ class BattleMapToolbar extends ConsumerWidget {
   // -------------------------------------------------------------------------
 
   Widget _buildRow3(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
-    return SizedBox(
-      height: 36,
-      child: Row(
+    return Padding(
+      // Wrap (not Row) so groups flow to a second line when too narrow.
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const SizedBox(width: 8),
           // Grid toggle
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 width: 20,
@@ -305,24 +288,28 @@ class BattleMapToolbar extends ConsumerWidget {
               Text('Grid', style: TextStyle(fontSize: 12, color: palette.tabText)),
             ],
           ),
-          const SizedBox(width: 12),
           // Grid columns x rows
-          Text('Grid:', style: TextStyle(fontSize: 12, color: palette.tabText)),
-          const SizedBox(width: 4),
-          _DoubleSpinBox(
-            value: mapState.canvasWidth / mapState.gridSize,
-            min: 1,
-            max: 200,
-            palette: palette,
-            onChanged: (cols) => notifier.setGridColumns(cols),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Grid:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              const SizedBox(width: 4),
+              _DoubleSpinBox(
+                value: mapState.canvasWidth / mapState.gridSize,
+                min: 1,
+                max: 200,
+                palette: palette,
+                onChanged: (cols) => notifier.setGridColumns(cols),
+              ),
+              Text(
+                ' x ${(mapState.canvasHeight / mapState.gridSize).toStringAsFixed(1)}',
+                style: TextStyle(fontSize: 11, color: palette.tabText.withValues(alpha: 0.6)),
+              ),
+            ],
           ),
-          Text(
-            ' x ${(mapState.canvasHeight / mapState.gridSize).toStringAsFixed(1)}',
-            style: TextStyle(fontSize: 11, color: palette.tabText.withValues(alpha: 0.6)),
-          ),
-          const SizedBox(width: 12),
           // Snap toggle
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 width: 20,
@@ -339,28 +326,106 @@ class BattleMapToolbar extends ConsumerWidget {
               Text('Snap', style: TextStyle(fontSize: 12, color: palette.tabText)),
             ],
           ),
-          const SizedBox(width: 12),
           // Feet per cell
-          Text('Ft/cell:', style: TextStyle(fontSize: 12, color: palette.tabText)),
-          const SizedBox(width: 4),
-          _SpinBox(
-            value: mapState.feetPerCell,
-            min: 1,
-            max: 100,
-            palette: palette,
-            onChanged: notifier.setFeetPerCell,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Ft/cell:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              const SizedBox(width: 4),
+              _SpinBox(
+                value: mapState.feetPerCell,
+                min: 1,
+                max: 100,
+                palette: palette,
+                onChanged: notifier.setFeetPerCell,
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
           // Diagonal counting rule
-          Text('Diag:', style: TextStyle(fontSize: 12, color: palette.tabText)),
-          const SizedBox(width: 4),
-          _DiagonalRuleSelector(
-            value: mapState.diagonalRule,
-            palette: palette,
-            onChanged: notifier.setDiagonalRule,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Diag:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              const SizedBox(width: 4),
+              _DiagonalRuleSelector(
+                value: mapState.diagonalRule,
+                palette: palette,
+                onChanged: notifier.setDiagonalRule,
+              ),
+            ],
           ),
-          const Spacer(),
+          // Shape layer (Phase 6) — which layer new shapes land on.
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Layer:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              const SizedBox(width: 4),
+              _ShapeLayerSelector(
+                value: mapState.activeLayer,
+                palette: palette,
+                onChanged: notifier.setActiveLayer,
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shape layer selector (Background / Object / GM) — Phase 6
+// ---------------------------------------------------------------------------
+
+class _ShapeLayerSelector extends StatelessWidget {
+  final ShapeLayer value;
+  final DmToolColors palette;
+  final void Function(ShapeLayer) onChanged;
+
+  const _ShapeLayerSelector({
+    required this.value,
+    required this.palette,
+    required this.onChanged,
+  });
+
+  static String _label(ShapeLayer l) {
+    switch (l) {
+      case ShapeLayer.background:
+        return 'Background';
+      case ShapeLayer.object:
+        return 'Object';
+      case ShapeLayer.gm:
+        return 'GM only';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.sidebarDivider),
+        borderRadius: palette.br,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: value.index,
+          isDense: true,
+          dropdownColor: palette.tabBg,
+          style: TextStyle(fontSize: 12, color: palette.tabText),
+          items: [
+            for (final l in ShapeLayer.values)
+              DropdownMenuItem(
+                value: l.index,
+                child: Text(_label(l),
+                    style: TextStyle(fontSize: 12, color: palette.tabText)),
+              ),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(shapeLayerFromInt(v));
+          },
+        ),
       ),
     );
   }
@@ -433,12 +498,15 @@ class _ToolbarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: palette.br,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Icon(icon, size: 18, color: palette.tabText),
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: palette.br,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Icon(icon, size: 18, color: palette.tabText),
+        ),
       ),
     );
   }
@@ -468,20 +536,23 @@ class _ToolButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = mapState.activeTool == tool;
-    return InkWell(
-      onTap: () => notifier.setTool(tool),
-      borderRadius: palette.br,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-        decoration: BoxDecoration(
-          color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-          borderRadius: palette.br,
-          border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
-        ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: isActive ? palette.tabIndicator : palette.tabText,
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: () => notifier.setTool(tool),
+        borderRadius: palette.br,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+          decoration: BoxDecoration(
+            color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
+            borderRadius: palette.br,
+            border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isActive ? palette.tabIndicator : palette.tabText,
+          ),
         ),
       ),
     );

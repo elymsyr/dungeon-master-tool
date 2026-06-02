@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../domain/value_objects/grid_distance.dart';
+import '../../../domain/value_objects/map_shape.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battle_map_notifier.dart';
 import 'render/aoe_render.dart';
@@ -48,7 +49,8 @@ class BattleMapPainter extends CustomPainter {
     required this.isDmView,
     required this.notifier,
     required ValueNotifier<int> strokeTick,
-  }) : super(repaint: Listenable.merge([viewTransform, strokeTick]));
+    required ValueNotifier<int> shapeTick,
+  }) : super(repaint: Listenable.merge([viewTransform, strokeTick, shapeTick]));
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -64,6 +66,10 @@ class BattleMapPainter extends CustomPainter {
 
     // Layer 2: Grid (viewport-clipped)
     if (mapState.gridVisible) _paintGrid(canvas, size, vt);
+
+    // Layer 2.5: Background-layer vector shapes (canvas-space, under
+    // annotation/fog/tokens). Object + GM shapes draw in the foreground painter.
+    _paintBackgroundShapes(canvas);
 
     // Layer 3: Annotation
     _paintAnnotation(canvas, size, vt);
@@ -408,10 +414,100 @@ class BattleMapPainter extends CustomPainter {
     tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
   }
 
+  // ---------------------------------------------------------------------------
+  // Vector shapes (Phase 6) — background layer only. Drawn INSIDE the view
+  // transform (canvas-space), so the transform scales stroke/font for free
+  // (scaleFactor = 1). Object + GM layers are drawn screen-space by
+  // [BattleMapForegroundPainter], above the token widgets.
+  // ---------------------------------------------------------------------------
+
+  void _paintBackgroundShapes(Canvas canvas) {
+    final bg = [
+      for (final s in mapState.shapes)
+        if (s.layer == ShapeLayer.background) s,
+    ];
+    if (bg.isEmpty) return;
+    paintShapeList(canvas, bg, (p) => p, 1.0, _aoeFill, _aoeStroke);
+  }
+
   @override
   bool shouldRepaint(BattleMapPainter old) {
     // View transform and stroke tick are handled by the repaint Listenable,
     // so we only check state changes that require a full repaint.
     return old.mapState != mapState || old.isDmView != isDmView;
   }
+}
+
+/// Draws a list of vector shapes. [project] maps each canvas-space vertex to
+/// the target space (identity inside the DM transform; `_toScreen` /
+/// `dx+x*scale` screen-space); [scaleFactor] scales stroke width + font size
+/// (1 when a canvas transform already scales, else the view scale). Reuses the
+/// caller's [fill]/[stroke] Paints.
+void paintShapeList(
+  Canvas canvas,
+  Iterable<MapShape> shapes,
+  Offset Function(Offset) project,
+  double scaleFactor,
+  Paint fill,
+  Paint stroke,
+) {
+  for (final s in shapes) {
+    drawVectorShape(
+      canvas,
+      kind: s.kind,
+      pts: [for (final p in s.points) project(p)],
+      color: hexToColor(s.colorHex),
+      filled: s.filled,
+      strokeWidth: s.strokeWidth * scaleFactor,
+      text: s.text,
+      fontSize: (s.fontSize ?? 14) * scaleFactor,
+      fill: fill,
+      stroke: stroke,
+    );
+  }
+}
+
+/// DM-only foreground painter: object + GM vector shapes + the live shape draft,
+/// drawn in screen-space ABOVE the token widget layer (so object shapes sit
+/// over tokens, matching the player's single-canvas z-order). GM shapes are
+/// never sent to a player, so showing them here is DM-only by construction.
+class BattleMapForegroundPainter extends CustomPainter {
+  final BattleMapState mapState;
+  final ValueNotifier<ViewTransform> viewTransform;
+  final BattleMapNotifier notifier;
+
+  final Paint _fill = Paint()..style = PaintingStyle.fill;
+  final Paint _stroke = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+
+  BattleMapForegroundPainter({
+    required this.mapState,
+    required this.viewTransform,
+    required this.notifier,
+    required ValueNotifier<int> shapeTick,
+  }) : super(repaint: Listenable.merge([viewTransform, shapeTick]));
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final vt = viewTransform.value;
+    Offset project(Offset p) => p * vt.scale + vt.panOffset;
+
+    final fg = [
+      for (final s in mapState.shapes)
+        if (s.layer != ShapeLayer.background) s,
+    ];
+    if (fg.isNotEmpty) {
+      paintShapeList(canvas, fg, project, vt.scale, _fill, _stroke);
+    }
+    // Live draft on top (read at paint-time, like in-progress strokes).
+    final draft = notifier.currentShapeDraft;
+    if (draft != null) {
+      paintShapeList(canvas, [draft], project, vt.scale, _fill, _stroke);
+    }
+  }
+
+  @override
+  bool shouldRepaint(BattleMapForegroundPainter old) =>
+      old.mapState != mapState;
 }

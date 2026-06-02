@@ -10,6 +10,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/creature_size.dart';
+import '../../../domain/value_objects/map_shape.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -99,15 +100,16 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 }
               },
               child: GestureDetector(
-              // Navigate tool: scale gesture handles both pan and pinch-zoom
+              // Navigate tool: scale gesture handles pan + pinch-zoom, and a
+              // single-finger drag that starts on a text label moves it.
               onScaleStart: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? notifier.onScaleStart
+                  ? (d) => _onNavScaleStart(d, notifier)
                   : null,
               onScaleUpdate: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? notifier.onScaleUpdate
+                  ? (d) => _onNavScaleUpdate(d, notifier)
                   : null,
               onScaleEnd: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
-                  ? (_) => notifier.onScaleEnd()
+                  ? (_) => _onNavScaleEnd(notifier)
                   : null,
 
               // Drawing tools: pan gesture
@@ -121,12 +123,12 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                   ? (_) => _handlePanEnd(notifier, activeTool)
                   : null,
 
-              // Navigate: tap to delete measurement at point
-              onTapUp: activeTool == BattleMapTool.navigate
-                  ? (details) {
-                      final canvas = notifier.screenToCanvas(details.localPosition);
-                      notifier.deleteMeasurementAt(canvas);
-                    }
+              // Tap-driven tools: navigate (delete mark), text (place label
+              // via dialog).
+              onTapUp: (activeTool == BattleMapTool.navigate ||
+                      activeTool == BattleMapTool.text)
+                  ? (details) =>
+                      _handleTapUp(details.localPosition, notifier, activeTool)
                   : null,
 
               child: ClipRect(
@@ -146,6 +148,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                             mapState: mapState,
                             viewTransform: notifier.viewTransform,
                             strokeTick: notifier.strokeTick,
+                            shapeTick: notifier.shapeTick,
                             palette: palette,
                             isDmView: true,
                             notifier: notifier,
@@ -156,6 +159,28 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
                     // Token layer — Transform wrapper applies canvas→screen projection
                     _buildTokenLayer(palette, notifier),
+
+                    // Foreground vector shapes (object + GM layers + live draft),
+                    // drawn ABOVE the tokens so object shapes sit over them
+                    // (matches the player's z-order). IgnorePointer so it never
+                    // steals token / canvas gestures.
+                    Consumer(builder: (context, ref, _) {
+                      final mapState =
+                          ref.watch(battleMapProvider(widget.encounterId));
+                      return IgnorePointer(
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            size: canvasSize,
+                            painter: BattleMapForegroundPainter(
+                              mapState: mapState,
+                              viewTransform: notifier.viewTransform,
+                              notifier: notifier,
+                              shapeTick: notifier.shapeTick,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -324,6 +349,41 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // Gesture dispatch for drawing tools
   // -------------------------------------------------------------------------
 
+  // Label drag (navigate tool): set while a single-finger drag that began on a
+  // text label is repositioning it instead of panning the map.
+  String? _draggingLabelId;
+  Offset _lastDragCanvas = Offset.zero;
+
+  void _onNavScaleStart(ScaleStartDetails d, BattleMapNotifier notifier) {
+    final canvas = notifier.screenToCanvas(d.localFocalPoint);
+    final id = notifier.hitTextLabel(canvas);
+    if (id != null) {
+      _draggingLabelId = id;
+      _lastDragCanvas = canvas;
+      return;
+    }
+    notifier.onScaleStart(d);
+  }
+
+  void _onNavScaleUpdate(ScaleUpdateDetails d, BattleMapNotifier notifier) {
+    if (_draggingLabelId != null) {
+      final canvas = notifier.screenToCanvas(d.localFocalPoint);
+      notifier.moveShapeBy(_draggingLabelId!, canvas - _lastDragCanvas);
+      _lastDragCanvas = canvas;
+      return;
+    }
+    notifier.onScaleUpdate(d);
+  }
+
+  void _onNavScaleEnd(BattleMapNotifier notifier) {
+    if (_draggingLabelId != null) {
+      _draggingLabelId = null;
+      notifier.commitShapeMove();
+      return;
+    }
+    notifier.onScaleEnd();
+  }
+
   void _handlePanStart(Offset localPos, BattleMapNotifier notifier, BattleMapTool activeTool) {
     final canvas = notifier.screenToCanvas(localPos);
     switch (activeTool) {
@@ -345,6 +405,12 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         // pixel-clears the legacy annotation bitmap (baked-in old drawings).
         notifier.eraseMarksAt(canvas);
         notifier.startAnnotationStroke(canvas, erase: true);
+      case BattleMapTool.rect:
+        notifier.startShapeDraft(canvas, ShapeKind.rect);
+      case BattleMapTool.line:
+        notifier.startShapeDraft(canvas, ShapeKind.line);
+      case BattleMapTool.text:
+        break; // tap-driven (handled in onTapUp)
       case BattleMapTool.navigate:
         break;
     }
@@ -369,6 +435,11 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       case BattleMapTool.eraseMark:
         notifier.eraseMarksAt(canvas);
         notifier.continueAnnotationStroke(canvas);
+      case BattleMapTool.rect:
+      case BattleMapTool.line:
+        notifier.updateShapeDraft(canvas);
+      case BattleMapTool.text:
+        break; // tap-driven
       case BattleMapTool.navigate:
         break;
     }
@@ -392,9 +463,62 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       case BattleMapTool.eraseMark:
         await notifier
             .commitEraseStroke(); // DM-cosmetic bitmap clear; vector deletes already synced live
+      case BattleMapTool.rect:
+      case BattleMapTool.line:
+        notifier.commitShapeDraft();
+      case BattleMapTool.text:
+        break; // tap-driven
       case BattleMapTool.navigate:
         break;
     }
+  }
+
+  /// Tap handler for the tap-driven tools. Navigate deletes the nearest mark;
+  /// polygon appends a vertex (closing when tapping near the first); text opens
+  /// a dialog and places a label at the tapped point.
+  Future<void> _handleTapUp(
+      Offset localPos, BattleMapNotifier notifier, BattleMapTool activeTool) async {
+    final canvas = notifier.screenToCanvas(localPos);
+    switch (activeTool) {
+      case BattleMapTool.navigate:
+        notifier.deleteMeasurementAt(canvas);
+      case BattleMapTool.text:
+        final text = await _showTextShapeDialog();
+        if (!mounted || text == null || text.trim().isEmpty) return;
+        notifier.addTextShape(canvas, text);
+      default:
+        break;
+    }
+  }
+
+  /// Single-field dialog for the text-label tool. Returns the entered string,
+  /// or null if cancelled / empty.
+  Future<String?> _showTextShapeDialog() {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add label'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 1,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(hintText: 'Label text'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
   }
 
   // -------------------------------------------------------------------------

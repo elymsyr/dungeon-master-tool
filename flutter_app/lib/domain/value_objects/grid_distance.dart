@@ -135,3 +135,25 @@ Rect aoeSquareRect(Offset start, Offset end) {
   final top = dy >= 0 ? start.dy : start.dy - side;
   return Rect.fromLTWH(left, top, side, side);
 }
+
+// ---------------------------------------------------------------------------
+// Generic vector-shape geometry (Phase 6). Pure, space-agnostic — callers pass
+// already-projected points so both painters build identical vertices.
+// ---------------------------------------------------------------------------
+
+/// Axis-aligned rectangle from two opposite corners (any space).
+Path rectPath(Offset a, Offset b) => Path()..addRect(Rect.fromPoints(a, b));
+
+/// Polyline through [points] (any space). When [closed] (and >2 points) the
+/// last vertex joins back to the first (polygon); otherwise it stays open
+/// (multi-segment line). Empty input yields an empty path.
+Path polygonPath(List<Offset> points, {bool closed = true}) {
+  final path = Path();
+  if (points.isEmpty) return path;
+  path.moveTo(points.first.dx, points.first.dy);
+  for (final p in points.skip(1)) {
+    path.lineTo(p.dx, p.dy);
+  }
+  if (closed && points.length > 2) path.close();
+  return path;
+}

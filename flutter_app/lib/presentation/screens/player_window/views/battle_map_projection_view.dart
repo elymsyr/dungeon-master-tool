@@ -11,6 +11,7 @@ import '../../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../../domain/value_objects/grid_distance.dart';
+import '../../../../domain/value_objects/map_shape.dart';
 import '../../../widgets/asset_ref_image.dart';
 import '../../battle_map/render/aoe_render.dart';
 
@@ -342,6 +343,39 @@ class _BattleMapProjectionPainter extends CustomPainter {
         canvas.drawLine(Offset(gx0, y), Offset(gx1, y), gridPaint);
       }
     }
+
+    // Vector shapes (Phase 6). Background-layer shapes draw here (under tokens
+    // + fog); object-layer shapes draw after the measurements (over both). GM
+    // shapes never reach the player. Points are baked to screen-space like
+    // strokes; stroke/font sizes are scaled to match the DM.
+    final shapeFill = Paint()..style = PaintingStyle.fill;
+    final shapeStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = compact ? 1.2 : 2;
+    void drawShapesLayer(bool background) {
+      for (final s in snapshot.shapes) {
+        if ((s.layer == 0) != background) continue; // 0 = background
+        final pts = <Offset>[];
+        for (var i = 0; i + 1 < s.points.length; i += 2) {
+          pts.add(
+              Offset(dx + s.points[i] * scale, dy + s.points[i + 1] * scale));
+        }
+        drawVectorShape(
+          canvas,
+          kind: shapeKindFromInt(s.kind),
+          pts: pts,
+          color: _hexColor(s.colorHex),
+          filled: s.filled,
+          strokeWidth: s.strokeWidth * scale,
+          text: s.text,
+          fontSize: (s.fontSize ?? 14) * scale,
+          fill: shapeFill,
+          stroke: shapeStroke,
+        );
+      }
+    }
+
+    drawShapesLayer(true); // background — under tokens
 
     // 3. Tokens — drawn BEFORE fog so the fog actually hides hidden tokens.
     final activeIdx = snapshot.turnIndex;
@@ -681,6 +715,8 @@ class _BattleMapProjectionPainter extends CustomPainter {
           }
       }
     }
+
+    drawShapesLayer(false); // object — over tokens + fog + measurements
 
     canvas.restore(); // matches the save() + clipRect at the start
   }

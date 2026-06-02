@@ -64,6 +64,12 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
                   TokenSnapshot.fromJson((e as Map).cast<String, dynamic>()))
               .toList()
           : null,
+      shapes: patch.containsKey('shapes')
+          ? (patch['shapes'] as List)
+              .map((e) =>
+                  ShapeSnapshot.fromJson((e as Map).cast<String, dynamic>()))
+              .toList()
+          : null,
       turnIndex: patch['turnIndex'] as int?,
       tokenSize: patch['tokenSize'] as int?,
       tokenSizeMultipliers: patch['tokenSizeMultipliers'] is Map

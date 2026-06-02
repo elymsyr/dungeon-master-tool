@@ -116,6 +116,7 @@ class ProjectionOutputOnline extends ProjectionOutput {
 
     final isHeavy = patch.containsKey('strokes') ||
         patch.containsKey('measurements') ||
+        patch.containsKey('shapes') ||
         patch.containsKey('fogDataBase64');
     final debounce = isHeavy ? _slowBmDebounce : _fastBmDebounce;
     _bmCoalesceTimer?.cancel();
