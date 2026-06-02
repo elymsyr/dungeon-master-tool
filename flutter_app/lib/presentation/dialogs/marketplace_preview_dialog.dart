@@ -97,7 +97,7 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: palette.featureCardBg,
                     border: Border.all(color: palette.featureCardBorder),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: palette.chr,
                   ),
                   child: Text(
                     listing.changelog!,
@@ -204,6 +204,17 @@ class _ContentsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final summary = listing.contentSummary;
+
+    // Worlds list their imported packages (with marketplace links) instead of
+    // every entity. Falls back to the category breakdown when the world has no
+    // imported packs (or it's a package/character listing).
+    if (listing.itemType == 'world') {
+      final packages = summary?['packages'];
+      if (packages is List && packages.isNotEmpty) {
+        return _PackagesSection(packages: packages, palette: palette);
+      }
+    }
+
     final categories = summary?['categories'];
     if (categories is! List || categories.isEmpty) {
       return const SizedBox.shrink();
@@ -225,7 +236,7 @@ class _ContentsSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: palette.featureCardBg,
             border: Border.all(color: palette.featureCardBorder),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: palette.chr,
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -237,6 +248,105 @@ class _ContentsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
       ],
+    );
+  }
+}
+
+/// World contents as a list of imported packages. Each package that is itself
+/// published on the marketplace becomes a link that opens its preview dialog
+/// (stacked on top); packages not on the marketplace render as plain text.
+class _PackagesSection extends ConsumerWidget {
+  final List<dynamic> packages;
+  final DmToolColors palette;
+  const _PackagesSection({required this.packages, required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
+    final byName =
+        ref.watch(packageListingsByNameProvider).valueOrNull ?? const {};
+
+    final rows = <Widget>[];
+    for (final p in packages) {
+      if (p is! Map) continue;
+      final name = (p['name'] as String?)?.trim() ?? '';
+      if (name.isEmpty) continue;
+      rows.add(_PackageRow(
+        name: name,
+        listing: byName[name.toLowerCase()],
+        palette: palette,
+      ));
+    }
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.marketplaceContentsLabel,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: palette.featureCardBg,
+            border: Border.all(color: palette.featureCardBorder),
+            borderRadius: palette.chr,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: rows),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
+class _PackageRow extends StatelessWidget {
+  final String name;
+  final MarketplaceListing? listing;
+  final DmToolColors palette;
+  const _PackageRow({
+    required this.name,
+    required this.listing,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final linkable = listing != null;
+    final color = linkable ? palette.featureCardAccent : palette.tabActiveText;
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Icon(Icons.inventory_2_outlined,
+              size: 16,
+              color: linkable
+                  ? palette.featureCardAccent
+                  : palette.sidebarLabelSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w500, color: color),
+            ),
+          ),
+          if (linkable)
+            Icon(Icons.open_in_new, size: 14, color: palette.featureCardAccent),
+        ],
+      ),
+    );
+    if (!linkable) return row;
+    return InkWell(
+      onTap: () =>
+          MarketplacePreviewDialog.show(context, listing: listing!),
+      child: row,
     );
   }
 }
@@ -306,7 +416,7 @@ class _KvPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.chr,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Row(

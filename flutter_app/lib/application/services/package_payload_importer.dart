@@ -24,7 +24,6 @@ class PackagePayloadImporter {
     required String installedFrom,
     Map<String, dynamic>? extraMetadata,
   }) async {
-    final packageName = payload['package_name'] as String;
     final entities = (payload['entities'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final metadata = <String, dynamic>{
@@ -32,6 +31,14 @@ class PackagePayloadImporter {
       ...?extraMetadata,
       'installed_from': installedFrom,
     };
+
+    // Prefer the human title (`metadata.title`, e.g. "Adventurer's Guide") as
+    // the local package name; the payload's `package_name` is the machine slug
+    // (`open5e-a5e-ag`). Fall back to the slug when no title is present.
+    final title = (metadata['title'] as String?)?.trim();
+    final packageName = (title != null && title.isNotEmpty)
+        ? title
+        : payload['package_name'] as String;
 
     final schema = generateBuiltinDnd5eV2Schema().schema;
     await _repo.save(packageName, {

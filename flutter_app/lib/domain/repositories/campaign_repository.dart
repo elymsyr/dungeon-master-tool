@@ -10,6 +10,11 @@ abstract class CampaignRepository {
   /// Kampanya verisini yükle (ID veya isim ile).
   Future<Map<String, dynamic>> load(String campaignName);
 
+  /// [campaignName]'e import edilmiş paketler (id, name, version). World'ün
+  /// yoksa boş döner. Yayınlanan bir world'ün marketplace kartında import
+  /// edilen paketleri özetlemek için kullanılır.
+  Future<List<Map<String, String>>> installedPackages(String campaignName);
+
   /// Kampanya verisini kaydet.
   Future<void> save(String campaignName, Map<String, dynamic> data);
 

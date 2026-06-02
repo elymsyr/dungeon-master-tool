@@ -61,6 +61,23 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
+  Future<List<Map<String, String>>> installedPackages(
+      String campaignName) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) return const [];
+    final rows = await _db.installedPackagesDao.getByWorld(existing.id);
+    return [
+      for (final r in rows)
+        if (r.packageName.isNotEmpty)
+          {
+            'id': r.packageId,
+            'name': r.packageName,
+            'version': r.packageVersion,
+          },
+    ];
+  }
+
+  @override
   Future<void> save(String campaignName, Map<String, dynamic> data) async {
     final existing = await _findByName(campaignName);
     if (existing != null) {
