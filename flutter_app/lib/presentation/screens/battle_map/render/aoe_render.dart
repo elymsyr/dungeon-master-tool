@@ -4,7 +4,15 @@
 // coordinate/transform/label/fog/grid/token logic — those stayed per-painter
 // (they drifted on purpose). This module exists only to delete the duplicated
 // hex→Color memo + fill/stroke draw that both painters carried verbatim.
-import 'dart:ui';
+//
+// Phase 6 adds the shared vector-shape draw (`drawVectorShape` / `drawShapeLabel`)
+// — both painters project their own points (DM canvas-space or `_toScreen`,
+// player baked `dx + x*scale`) and pass already-scaled stroke/font sizes, so the
+// geometry + paint stay identical across surfaces while the transforms drift.
+import 'package:flutter/material.dart';
+
+import '../../../../domain/value_objects/grid_distance.dart';
+import '../../../../domain/value_objects/map_shape.dart';
 
 /// Cross-painter hex→Color memo. Replaces the painters' previously-separate
 /// `_aoeColorCache` (DM) and `_hexCache` (player) — identical bodies, now one
@@ -42,4 +50,74 @@ void drawAoeShape(
   canvas.drawPath(path, fill);
   stroke.color = color;
   canvas.drawPath(path, stroke);
+}
+
+/// Draws one Phase 6 vector shape. [pts] are ALREADY projected to the target
+/// space (DM canvas/screen, player baked); [strokeWidth] + [fontSize] are
+/// ALREADY scaled by the caller's transform. Reuses the caller's [fill]/[stroke]
+/// Paints (DM instance fields, player per-`paint()` locals). Text shapes route
+/// to [drawShapeLabel].
+void drawVectorShape(
+  Canvas canvas, {
+  required ShapeKind kind,
+  required List<Offset> pts,
+  required Color color,
+  required bool filled,
+  required double strokeWidth,
+  String? text,
+  double? fontSize,
+  required Paint fill,
+  required Paint stroke,
+}) {
+  switch (kind) {
+    case ShapeKind.rect:
+      if (pts.length < 2) return;
+      _strokeOrFill(canvas, rectPath(pts[0], pts[1]), color, filled, strokeWidth,
+          fill, stroke);
+    case ShapeKind.line:
+      if (pts.length < 2) return;
+      stroke
+        ..color = color
+        ..strokeWidth = strokeWidth;
+      canvas.drawLine(pts[0], pts[1], stroke);
+    case ShapeKind.polygon:
+      if (pts.length < 2) return;
+      _strokeOrFill(canvas, polygonPath(pts, closed: pts.length > 2), color,
+          filled && pts.length > 2, strokeWidth, fill, stroke);
+    case ShapeKind.text:
+      if (pts.isEmpty || text == null || text.isEmpty) return;
+      drawShapeLabel(canvas, pts.first, text, color, fontSize ?? 14);
+  }
+}
+
+void _strokeOrFill(Canvas canvas, Path path, Color color, bool filled,
+    double strokeWidth, Paint fill, Paint stroke) {
+  if (filled) {
+    fill.color = color.withValues(alpha: 0.25);
+    canvas.drawPath(path, fill);
+  }
+  stroke
+    ..color = color
+    ..strokeWidth = strokeWidth;
+  canvas.drawPath(path, stroke);
+}
+
+/// Draws a shape's text label anchored top-left at [at] (already projected),
+/// at the already-scaled [fontSize], with the standard black shadow used by the
+/// other map labels.
+void drawShapeLabel(
+    Canvas canvas, Offset at, String text, Color color, double fontSize) {
+  final tp = TextPainter(
+    text: TextSpan(
+      text: text,
+      style: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w600,
+        shadows: const [Shadow(blurRadius: 3, color: Colors.black)],
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  tp.paint(canvas, at);
 }

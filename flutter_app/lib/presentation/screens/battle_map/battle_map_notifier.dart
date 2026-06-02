@@ -18,6 +18,7 @@ import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/grid_distance.dart';
+import '../../../domain/value_objects/map_shape.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../widgets/quota_snackbar.dart';
 
@@ -41,7 +42,21 @@ enum BattleMapTool {
   aoeSector,
   // Drag-eraser for measurements/AoE — delete marks the pointer crosses.
   eraseMark,
+  // Vector shape tools (Phase 6) — geometric annotations stored in the
+  // encounter's scene blob on background/object/GM layers. rect/line are
+  // single-drag; text is tap→dialog.
+  rect,
+  line,
+  text,
 }
+
+/// True for the geometric vector-shape tools (Phase 6). These do NOT use the
+/// measurement pipeline or the `battleMapToolToTypeString` maps — they own a
+/// separate `_shapeDraft` + `shapes` list.
+bool isShapeTool(BattleMapTool t) =>
+    t == BattleMapTool.rect ||
+    t == BattleMapTool.line ||
+    t == BattleMapTool.text;
 
 /// True for the AoE template tools (filled shapes that ride the measurement
 /// pipeline). Used to branch origin-snap + fill-color stamping.
@@ -200,6 +215,13 @@ class BattleMapState {
   final MeasurementMark? activeMeasurement;
   final List<MeasurementMark> persistentMeasurements;
 
+  // Vector shapes (Phase 6) — committed geometric annotations. The in-progress
+  // draft lives on the notifier (mutable, like the current stroke), not here.
+  final List<MapShape> shapes;
+
+  /// Layer that newly drawn shapes are placed on (background / object / GM).
+  final ShapeLayer activeLayer;
+
   // Token positions (combatantId → canvas-space Offset)
   final Map<String, Offset> tokenPositions;
 
@@ -231,6 +253,8 @@ class BattleMapState {
     this.fogDraftPoints = const [],
     this.activeMeasurement,
     this.persistentMeasurements = const [],
+    this.shapes = const [],
+    this.activeLayer = ShapeLayer.object,
     this.tokenPositions = const {},
     this.gridSize = 50,
     this.gridVisible = false,
@@ -255,6 +279,8 @@ class BattleMapState {
     List<Offset>? fogDraftPoints,
     MeasurementMark? activeMeasurement,
     List<MeasurementMark>? persistentMeasurements,
+    List<MapShape>? shapes,
+    ShapeLayer? activeLayer,
     Map<String, Offset>? tokenPositions,
     int? gridSize,
     bool? gridVisible,
@@ -284,6 +310,8 @@ class BattleMapState {
       fogDraftPoints: fogDraftPoints ?? this.fogDraftPoints,
       activeMeasurement: clearActiveMeasurement ? null : (activeMeasurement ?? this.activeMeasurement),
       persistentMeasurements: persistentMeasurements ?? this.persistentMeasurements,
+      shapes: shapes ?? this.shapes,
+      activeLayer: activeLayer ?? this.activeLayer,
       tokenPositions: tokenPositions ?? this.tokenPositions,
       gridSize: gridSize ?? this.gridSize,
       gridVisible: gridVisible ?? this.gridVisible,
@@ -322,6 +350,19 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   // Lightweight repaint signal for in-progress annotation strokes.
   final ValueNotifier<int> strokeTick = ValueNotifier<int>(0);
+
+  // Lightweight repaint signal for in-progress / committed vector shapes
+  // (Phase 6). Both painters listen so a draft updates without a Riverpod
+  // rebuild, exactly like `strokeTick`.
+  final ValueNotifier<int> shapeTick = ValueNotifier<int>(0);
+
+  // In-progress vector shape (rect/line drag, or a growing polygon) — mutable,
+  // NOT in state. Painted live from the notifier; committed into `state.shapes`.
+  MapShape? _shapeDraft;
+  MapShape? get currentShapeDraft => _shapeDraft;
+  static int _shapeIdSeq = 0;
+  String _newShapeId() =>
+      's${DateTime.now().microsecondsSinceEpoch}_${_shapeIdSeq++}';
 
   // In-progress annotation stroke — mutable, NOT in state
   Path? _currentPath;
@@ -393,6 +434,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     viewTransform.removeListener(_persistView);
     viewTransform.dispose();
     strokeTick.dispose();
+    shapeTick.dispose();
     super.dispose();
   }
 
@@ -546,10 +588,19 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
             ))
         .toList();
 
+    // Vector shapes — filter the GM layer out send-side (it must NEVER reach a
+    // player), mirroring the erase-stroke skip above.
+    final shapeSnaps = <ShapeSnapshot>[];
+    for (final s in state.shapes) {
+      if (s.layer == ShapeLayer.gm) continue;
+      shapeSnaps.add(_toShapeSnapshot(s));
+    }
+
     _ref.read(projectionControllerProvider.notifier).updateBattleMapDrawings(
           itemId: proj.id,
           strokes: strokeSnaps,
           measurements: measurementSnaps,
+          shapes: shapeSnaps,
           tokenSize: state.tokenSize,
           tokenSizeMultipliers: state.tokenSizeMultipliers,
           gridVisible: state.gridVisible,
@@ -599,6 +650,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       'a': e.annotationData?.length ?? 0,
       'ms': e.measurementsData ?? '',
       'st': e.strokesData ?? '',
+      'sv': e.sceneVectorJson,
       'g': '${e.gridSize}/${e.gridVisible}/${e.gridSnap}/${e.feetPerCell}/${e.diagonalRule}',
       'hp': e.showAllHp,
       'hud': e.hideTokenHud,
@@ -710,6 +762,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         }
       } catch (_) {}
     }
+    // Vector shapes (Phase 6) — parsed from the versioned scene blob.
+    final shapes = _parseSceneShapes(encounter.sceneVectorJson);
     // Assign default positions for combatants without saved positions
     var col = 0;
     var row = 0;
@@ -725,6 +779,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       tokenPositions: positions,
       persistentMeasurements: measurements,
       strokes: strokes,
+      shapes: shapes,
     );
 
     if (!mounted) return;
@@ -847,6 +902,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       _awaitingSectorAngle = false;
       state = state.copyWith(activeTool: tool, clearActiveMeasurement: true);
       return;
+    }
+    // Drop an in-progress shape draft so it doesn't linger when switching tools.
+    if (_shapeDraft != null) {
+      _shapeDraft = null;
+      shapeTick.value++;
     }
     state = state.copyWith(activeTool: tool);
   }
@@ -1287,7 +1347,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void eraseMarksAt(Offset canvasPoint) {
     final marks = state.persistentMeasurements;
     final strokes = state.strokes;
-    if (marks.isEmpty && strokes.isEmpty) return;
+    final shapes = state.shapes;
+    if (marks.isEmpty && strokes.isEmpty && shapes.isEmpty) return;
     final keptMarks = [
       for (final m in marks)
         if (!_markHit(m, canvasPoint)) m,
@@ -1300,12 +1361,18 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       for (final s in strokes)
         if (!_strokeHit(s, canvasPoint)) s,
     ];
+    final keptShapes = [
+      for (final s in shapes)
+        if (!_shapeHit(s, canvasPoint)) s,
+    ];
     final changed = keptMarks.length != marks.length ||
-        keptStrokes.length != strokes.length;
+        keptStrokes.length != strokes.length ||
+        keptShapes.length != shapes.length;
     if (!changed) return;
     state = state.copyWith(
       persistentMeasurements: keptMarks,
       strokes: keptStrokes,
+      shapes: keptShapes,
     );
     // Coalesce: mark dirty and flush sync+autosave once at pan-end
     // (commitEraseStroke) rather than re-arming the timers on every pan sample.
@@ -1359,6 +1426,204 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     var t = ((p.dx - a.dx) * ab.dx + (p.dy - a.dy) * ab.dy) / len2;
     t = t.clamp(0.0, 1.0);
     return (p - Offset(a.dx + ab.dx * t, a.dy + ab.dy * t)).distance;
+  }
+
+  // -------------------------------------------------------------------------
+  // Vector shapes (Phase 6) — rect/line (drag) + polygon (multi-tap) + text
+  // (tap→dialog). Stored in `state.shapes`, persisted into the encounter's
+  // `sceneVectorJson` blob, projected to players via `ShapeSnapshot`.
+  // -------------------------------------------------------------------------
+
+  /// Layer that newly drawn shapes land on.
+  void setActiveLayer(ShapeLayer layer) {
+    if (layer == state.activeLayer) return;
+    state = state.copyWith(activeLayer: layer);
+  }
+
+  /// rect/line — begin a single-drag draft. Origin snaps to grid when Snap is on.
+  void startShapeDraft(Offset pt, ShapeKind kind) {
+    final origin = state.gridSnap ? _snapToGrid(pt) : pt;
+    _shapeDraft = MapShape(
+      id: _newShapeId(),
+      kind: kind,
+      layer: state.activeLayer,
+      points: [origin, origin],
+      colorHex: defaultShapeColorHex(state.activeLayer),
+    );
+    shapeTick.value++;
+  }
+
+  /// rect/line — drag the far point.
+  void updateShapeDraft(Offset pt) {
+    final d = _shapeDraft;
+    if (d == null) return;
+    final p = state.gridSnap ? _snapToGrid(pt) : pt;
+    _shapeDraft = d.copyWith(points: [d.points.first, p]);
+    shapeTick.value++;
+  }
+
+  /// rect/line — commit the draft (drops a zero-size tap).
+  void commitShapeDraft() {
+    final d = _shapeDraft;
+    _shapeDraft = null;
+    if (d == null) return;
+    if (d.points.length < 2 || (d.points[1] - d.points.first).distance < 2) {
+      shapeTick.value++;
+      return;
+    }
+    _addShape(d);
+  }
+
+  /// text — place a label at [pt] from a dialog's [text] entry.
+  void addTextShape(Offset pt, String text, {double? fontSize}) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    final p = state.gridSnap ? _snapToGrid(pt) : pt;
+    _addShape(MapShape(
+      id: _newShapeId(),
+      kind: ShapeKind.text,
+      layer: state.activeLayer,
+      points: [p],
+      colorHex: defaultShapeColorHex(state.activeLayer),
+      text: trimmed,
+      fontSize: fontSize ?? (state.gridSize * 0.4),
+    ));
+  }
+
+  void _addShape(MapShape shape) {
+    state = state.copyWith(shapes: [...state.shapes, shape]);
+    shapeTick.value++;
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
+  /// Clear all committed shapes (toolbar "Clear Marks" extends to shapes too).
+  void clearShapes() {
+    if (state.shapes.isEmpty && _shapeDraft == null) return;
+    _shapeDraft = null;
+    state = state.copyWith(shapes: const []);
+    shapeTick.value++;
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
+  /// Topmost text label whose box contains [canvasPoint] — drives drag-to-move
+  /// in the navigate tool. Only text labels are movable (so dragging anywhere
+  /// else still pans the map).
+  String? hitTextLabel(Offset canvasPoint) {
+    for (var i = state.shapes.length - 1; i >= 0; i--) {
+      final s = state.shapes[i];
+      if (s.kind == ShapeKind.text && _shapeHit(s, canvasPoint)) return s.id;
+    }
+    return null;
+  }
+
+  /// Live-translate every vertex of shape [id] by [delta] (canvas-space) while
+  /// dragging. Repaints via `shapeTick`; persist/project on [commitShapeMove].
+  void moveShapeBy(String id, Offset delta) {
+    if (delta == Offset.zero) return;
+    final updated = [
+      for (final s in state.shapes)
+        if (s.id == id)
+          s.copyWith(points: [for (final p in s.points) p + delta])
+        else
+          s,
+    ];
+    state = state.copyWith(shapes: updated);
+    shapeTick.value++;
+  }
+
+  /// Flush a finished label drag to persistence + the projection.
+  void commitShapeMove() {
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
+  /// True when [p] (canvas-space) touches shape [s]'s geometry — drives the
+  /// drag-eraser. Filled shapes use containment; stroked shapes a proximity
+  /// band; text a bounding box around the anchor.
+  bool _shapeHit(MapShape s, Offset p) {
+    const th = 12.0;
+    switch (s.kind) {
+      case ShapeKind.rect:
+        if (s.points.length < 2) return false;
+        final r = Rect.fromPoints(s.points[0], s.points[1]);
+        if (s.filled) return r.contains(p);
+        return r.inflate(th).contains(p) && !r.deflate(th).contains(p);
+      case ShapeKind.line:
+        if (s.points.length < 2) return false;
+        return _distToSegment(p, s.points[0], s.points[1]) <=
+            th + s.strokeWidth / 2;
+      case ShapeKind.polygon:
+        if (s.points.length < 2) return false;
+        if (s.filled && s.points.length >= 3) {
+          return polygonPath(s.points, closed: true).contains(p);
+        }
+        for (var i = 0; i + 1 < s.points.length; i++) {
+          if (_distToSegment(p, s.points[i], s.points[i + 1]) <= th) return true;
+        }
+        if (s.points.length >= 3 &&
+            _distToSegment(p, s.points.last, s.points.first) <= th) {
+          return true;
+        }
+        return false;
+      case ShapeKind.text:
+        if (s.points.isEmpty) return false;
+        final fs = s.fontSize ?? 16;
+        final w = ((s.text?.length ?? 1) * fs * 0.6).clamp(fs, 4000.0);
+        final anchor = s.points.first; // top-left, matches drawShapeLabel
+        // Pad a little so small labels are easy to grab.
+        return Rect.fromLTWH(anchor.dx, anchor.dy, w, fs * 1.4)
+            .inflate(6)
+            .contains(p);
+    }
+  }
+
+  /// Parses the encounter scene blob `{"v":1,"shapes":[...]}` into shapes.
+  static List<MapShape> _parseSceneShapes(String sceneVectorJson) {
+    if (sceneVectorJson.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(sceneVectorJson);
+      if (decoded is! Map) return const [];
+      final list = decoded['shapes'];
+      if (list is! List) return const [];
+      return [
+        for (final e in list)
+          if (e is Map) MapShape.fromJson(e.cast<String, dynamic>()),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Serializes committed shapes to the versioned scene blob (`''` when empty).
+  String _sceneVectorJson() {
+    if (state.shapes.isEmpty) return '';
+    return jsonEncode({
+      'v': 1,
+      'shapes': [for (final s in state.shapes) s.toJson()],
+    });
+  }
+
+  /// Maps a committed [MapShape] to its projected [ShapeSnapshot] (GM shapes
+  /// are filtered out before this is called).
+  static ShapeSnapshot _toShapeSnapshot(MapShape s) {
+    final flat = <double>[];
+    for (final p in s.points) {
+      flat
+        ..add(p.dx)
+        ..add(p.dy);
+    }
+    return ShapeSnapshot(
+      kind: s.kind.index,
+      layer: s.layer.index,
+      points: flat,
+      colorHex: s.colorHex,
+      strokeWidth: s.strokeWidth,
+      filled: s.filled,
+      text: s.text,
+      fontSize: s.fontSize,
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -1567,6 +1832,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
                 width: s.width,
               ).toJson(),
           ]);
+    // Vector shapes → versioned scene blob `{"v":1,"shapes":[...]}`. Empty
+    // string when there are no shapes. (Shapes are the only scene content in
+    // Phase 6; walls/lights will add sibling keys later.)
+    final sceneVectorJson = _sceneVectorJson();
     final tokenPosMap = <String, dynamic>{};
     for (final entry in state.tokenPositions.entries) {
       tokenPosMap[entry.key] = {'x': entry.value.dx, 'y': entry.value.dy};
@@ -1580,6 +1849,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       annotationData: annotB64,
       measurementsData: measurementsJson,
       strokesData: strokesJson,
+      sceneVectorJson: sceneVectorJson,
     );
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,

@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../domain/value_objects/grid_distance.dart';
+import '../../../domain/value_objects/map_shape.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
+import 'draw_tools_button.dart';
 
 typedef _ToolbarState = ({
   BattleMapTool activeTool,
@@ -18,6 +20,7 @@ typedef _ToolbarState = ({
   int feetPerCell,
   int tokenSize,
   int diagonalRule,
+  ShapeLayer activeLayer,
 });
 
 /// Mobile battle map toolbar — persistent mini bar at the bottom with an
@@ -40,6 +43,7 @@ class BattleMapMobileToolbar extends ConsumerWidget {
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
       diagonalRule: s.diagonalRule,
+      activeLayer: s.activeLayer,
     )));
     final notifier = ref.read(battleMapProvider(encounterId).notifier);
 
@@ -220,6 +224,7 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
       diagonalRule: s.diagonalRule,
+      activeLayer: s.activeLayer,
     )));
     final notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
 
@@ -311,13 +316,8 @@ class _ToolsTab extends StatelessWidget {
             runSpacing: 6,
             children: [
               _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: 'Navigate', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.ruler, icon: Icons.straighten, label: 'Ruler', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.circle, icon: Icons.radio_button_unchecked, label: 'Circle', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.aoeCone, icon: Icons.change_history, label: 'Cone', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.aoeLine, icon: Icons.horizontal_rule, label: 'Line', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.aoeCircle, icon: Icons.lens, label: 'Sphere', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.aoeSquare, icon: Icons.square, label: 'Cube', tb: tb, notifier: notifier, palette: palette),
-              _SheetToolButton(tool: BattleMapTool.aoeSector, icon: Icons.pie_chart_outline, label: 'Sector', tb: tb, notifier: notifier, palette: palette),
+              // All measure / AoE / shape tools merged into one picker button.
+              DrawToolsButton(activeTool: tb.activeTool, notifier: notifier, palette: palette, compact: true),
               _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: 'Erase', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: 'Draw', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: 'Add Fog', tb: tb, notifier: notifier, palette: palette),
@@ -327,16 +327,49 @@ class _ToolsTab extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(height: 1, color: palette.sidebarDivider),
           const SizedBox(height: 8),
-          // Action buttons row
-          Row(
+          // Action buttons — wrap so the shape actions don't overflow on narrow
+          // phones.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _SheetActionButton(icon: Icons.cloud_queue, label: 'Fill Fog', palette: palette, onTap: () async { await notifier.fillFog(); }),
-              const SizedBox(width: 8),
               _SheetActionButton(icon: Icons.wb_sunny_outlined, label: 'Clear Fog', palette: palette, onTap: () async { await notifier.clearFog(); }),
-              const SizedBox(width: 8),
               _SheetActionButton(icon: Icons.cleaning_services_outlined, label: 'Clear Draw', palette: palette, onTap: notifier.clearAnnotation),
-              const SizedBox(width: 8),
               _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Marks', palette: palette, onTap: notifier.clearMeasurements),
+              _SheetActionButton(icon: Icons.format_shapes_outlined, label: 'Clear Shapes', palette: palette, onTap: notifier.clearShapes),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Shape layer (Phase 6) — which layer new shapes land on.
+          Row(
+            children: [
+              Text('Shape layer:',
+                  style: TextStyle(fontSize: 13, color: palette.tabText)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: palette.sidebarDivider),
+                  borderRadius: palette.br,
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: tb.activeLayer.index,
+                    isDense: true,
+                    dropdownColor: palette.tabBg,
+                    style: TextStyle(fontSize: 13, color: palette.tabText),
+                    items: const [
+                      DropdownMenuItem(value: 0, child: Text('Background')),
+                      DropdownMenuItem(value: 1, child: Text('Object')),
+                      DropdownMenuItem(value: 2, child: Text('GM only')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) notifier.setActiveLayer(shapeLayerFromInt(v));
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
         ],

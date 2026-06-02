@@ -445,6 +445,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     required String itemId,
     required List<StrokeSnapshot> strokes,
     required List<MeasurementSnapshot> measurements,
+    required List<ShapeSnapshot> shapes,
     required int tokenSize,
     required Map<String, double> tokenSizeMultipliers,
     required bool gridVisible,
@@ -465,6 +466,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     final newSnap = current.snapshot.copyWith(
       strokes: strokes,
       measurements: measurements,
+      shapes: shapes,
       tokenSize: tokenSize,
       tokenSizeMultipliers: tokenSizeMultipliers,
       gridVisible: gridVisible,
@@ -486,6 +488,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     _pushBattleMapPatch(itemId, {
       'strokes': strokes.map((s) => s.toJson()).toList(),
       'measurements': measurements.map((m) => m.toJson()).toList(),
+      'shapes': shapes.map((s) => s.toJson()).toList(),
       'tokenSize': tokenSize,
       'tokenSizeMultipliers': tokenSizeMultipliers,
       'gridVisible': gridVisible,

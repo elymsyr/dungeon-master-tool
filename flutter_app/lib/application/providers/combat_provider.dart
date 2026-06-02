@@ -851,6 +851,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     String? annotationData,
     String? measurementsData,
     String? strokesData,
+    String? sceneVectorJson,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
@@ -858,6 +859,9 @@ class CombatNotifier extends StateNotifier<CombatState>
       annotationData: annotationData,
       measurementsData: measurementsData,
       strokesData: strokesData,
+      // Vector scene blob (Phase 6 shapes; future walls/lights). Null = leave
+      // unchanged; '' clears it; a non-empty string replaces it.
+      sceneVectorJson: sceneVectorJson ?? enc.sceneVectorJson,
     ));
     _saveAndNotify();
   }

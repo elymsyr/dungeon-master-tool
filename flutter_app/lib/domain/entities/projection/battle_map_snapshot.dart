@@ -60,6 +60,11 @@ class BattleMapSnapshot {
   /// measurements are NOT projected — only commit-time state.
   final List<MeasurementSnapshot> measurements;
 
+  /// Committed vector shapes (Phase 6 — rect/line/polygon/text on the
+  /// background/object layers). GM-layer shapes are filtered out on the DM
+  /// send side, so this list never carries a DM-only shape.
+  final List<ShapeSnapshot> shapes;
+
   /// What part of the canvas the player should display, expressed as a
   /// rect in **normalized** 0..1 canvas coordinates `(left, top, w, h)`.
   /// `null` means "fit the entire canvas to the player viewport".
@@ -87,6 +92,7 @@ class BattleMapSnapshot {
     this.turnIndex = -1,
     this.strokes = const [],
     this.measurements = const [],
+    this.shapes = const [],
     this.viewportNormalized,
   });
 
@@ -108,6 +114,7 @@ class BattleMapSnapshot {
     int? turnIndex,
     List<StrokeSnapshot>? strokes,
     List<MeasurementSnapshot>? measurements,
+    List<ShapeSnapshot>? shapes,
     NormalizedRect? viewportNormalized,
     bool clearViewport = false,
     bool clearFog = false,
@@ -130,6 +137,7 @@ class BattleMapSnapshot {
       turnIndex: turnIndex ?? this.turnIndex,
       strokes: strokes ?? this.strokes,
       measurements: measurements ?? this.measurements,
+      shapes: shapes ?? this.shapes,
       viewportNormalized: clearViewport
           ? null
           : (viewportNormalized ?? this.viewportNormalized),
@@ -142,7 +150,9 @@ class BattleMapSnapshot {
   ///   yapar, ama yeni write'lar v2 hedefler.
   /// - v3: additive `sceneVectorJson` (vector scene blob). Tolerant — older
   ///   rows/clients omit it and `fromJson` defaults to ''.
-  static const int schemaVersion = 3;
+  /// - v4: additive `shapes` (typed vector shapes — Phase 6). Tolerant —
+  ///   older rows/clients omit it and `fromJson` defaults to `[]`.
+  static const int schemaVersion = 4;
 
   Map<String, dynamic> toJson() => {
         '_v': schemaVersion,
@@ -165,6 +175,7 @@ class BattleMapSnapshot {
           'strokes': strokes.map((s) => s.toJson()).toList(),
         if (measurements.isNotEmpty)
           'measurements': measurements.map((m) => m.toJson()).toList(),
+        if (shapes.isNotEmpty) 'shapes': shapes.map((s) => s.toJson()).toList(),
         if (viewportNormalized != null)
           'viewportNormalized': viewportNormalized!.toJson(),
       };
@@ -201,6 +212,11 @@ class BattleMapSnapshot {
       measurements: (json['measurements'] as List?)
               ?.map((e) => MeasurementSnapshot.fromJson(
                   (e as Map).cast<String, dynamic>()))
+              .toList() ??
+          const [],
+      shapes: (json['shapes'] as List?)
+              ?.map((e) =>
+                  ShapeSnapshot.fromJson((e as Map).cast<String, dynamic>()))
               .toList() ??
           const [],
       viewportNormalized: json['viewportNormalized'] != null
@@ -285,6 +301,57 @@ class MeasurementSnapshot {
       sweepDeg: (json['s'] as num?)?.toDouble(),
     );
   }
+}
+
+/// JSON-clean vector shape (Phase 6). Mirrors `MapShape` minus the GM layer
+/// (filtered out before projection). [kind]/[layer] are stable enum indexes
+/// (`ShapeKind` / `ShapeLayer`); [points] is a flat `[x0,y0,...]` canvas-space
+/// list. [text]/[fontSize] are populated only for the text kind.
+class ShapeSnapshot {
+  final int kind;
+  final int layer;
+  final List<double> points;
+  final String colorHex;
+  final double strokeWidth;
+  final bool filled;
+  final String? text;
+  final double? fontSize;
+
+  const ShapeSnapshot({
+    required this.kind,
+    required this.layer,
+    required this.points,
+    this.colorHex = '#ffca28',
+    this.strokeWidth = 2,
+    this.filled = false,
+    this.text,
+    this.fontSize,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'k': kind,
+        'l': layer,
+        'p': points,
+        'c': colorHex,
+        'w': strokeWidth,
+        if (filled) 'f': true,
+        if (text != null) 't': text,
+        if (fontSize != null) 'fs': fontSize,
+      };
+
+  factory ShapeSnapshot.fromJson(Map<String, dynamic> json) => ShapeSnapshot(
+        kind: (json['k'] as num?)?.toInt() ?? 0,
+        layer: (json['l'] as num?)?.toInt() ?? 1,
+        points: (json['p'] as List?)
+                ?.map((e) => (e as num).toDouble())
+                .toList() ??
+            const [],
+        colorHex: json['c'] as String? ?? '#ffca28',
+        strokeWidth: (json['w'] as num?)?.toDouble() ?? 2,
+        filled: json['f'] as bool? ?? false,
+        text: json['t'] as String?,
+        fontSize: (json['fs'] as num?)?.toDouble(),
+      );
 }
 
 /// JSON-clean rect in normalized 0..1 coordinates. Used for cross-isolate
