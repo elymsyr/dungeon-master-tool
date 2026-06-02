@@ -209,7 +209,7 @@ class StrokeSnapshot {
 
 /// JSON-clean measurement / AoE template. Two endpoints in canvas space
 /// (origin → far point). [type] is `'ruler'`, `'circle'`, or an AoE shape
-/// (`'cone'`/`'line'`/`'aoeCircle'`/`'square'`). [colorHex] is the AoE fill
+/// (`'cone'`/`'line'`/`'aoeCircle'`/`'square'`/`'sector'`). [colorHex] is the AoE fill
 /// color — null for plain rulers/circles (painted with their fixed colors).
 class MeasurementSnapshot {
   final String type;

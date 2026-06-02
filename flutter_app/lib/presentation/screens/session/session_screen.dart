@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/character_provider.dart';
@@ -1600,6 +1601,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           controller: durationController,
           autofocus: true,
           keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(labelText: l10n.sessionDurationHint),
           onSubmitted: (_) {
             submit();
@@ -1611,7 +1613,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           FilledButton(onPressed: () {
             submit();
             Navigator.pop(ctx);
-          }, child: Text(l10n.sessionAddCustom)),
+          }, child: Text(l10n.btnAdd)),
         ],
       ),
     ).whenComplete(() {

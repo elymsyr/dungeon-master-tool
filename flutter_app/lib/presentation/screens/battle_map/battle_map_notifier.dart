@@ -321,6 +321,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Color _currentColor = Colors.red;
   double _currentWidth = 4.0;
   bool _currentIsErase = false;
+  // Set by eraseMarksAt on every pan sample that deletes a mark/stroke; flushed
+  // once (sync + autosave) at pan-end in commitEraseStroke instead of per sample.
+  bool _eraseDirty = false;
 
   // Scale gesture tracking
   double _scaleBase = 1.0;
@@ -1043,17 +1046,32 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   /// Commits an in-progress ERASE drag (the mark-eraser tool). Vector strokes
-  /// crossed during the drag are already whole-deleted live via [eraseMarksAt].
-  /// This bakes the erase path into the legacy annotation BITMAP (the only way
-  /// to remove drawings that were flattened before the vector migration) and
-  /// discards the transient stroke — it is NOT kept as a vector stroke.
+  /// crossed during the drag are already whole-deleted live via [eraseMarksAt],
+  /// and THOSE deletes propagate to players (the projection ships vector
+  /// strokes). This additionally bakes the erase path into the legacy
+  /// annotation BITMAP, which clears pre-vector-migration flattened art on the
+  /// DM canvas only — that bitmap is never sent to the player projection (the
+  /// snapshot ships strokes/measurements/fog, not annotationImage), so this
+  /// step is DM-cosmetic. The transient stroke is discarded, not kept.
   Future<void> commitEraseStroke() async {
+    // Flush the coalesced eraseMarksAt dirty state exactly once. Runs in BOTH
+    // exit paths so a vector-only erase (no annotation bitmap to bake) still
+    // syncs + persists its deletions.
+    void flush() {
+      if (_eraseDirty) {
+        _eraseDirty = false;
+        _scheduleDrawingsSync();
+        _debouncedAutoSave();
+      }
+    }
+
     final pts = List<Offset>.from(_currentRawPoints);
     _currentPath = null;
     _currentRawPoints.clear();
     if (pts.isEmpty || state.annotationImage == null) {
       // Nothing baked to clear — vector deletes already happened live.
       strokeTick.value++;
+      flush();
       return;
     }
     final w = _canvasWidth;
@@ -1081,15 +1099,24 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         ..strokeJoin = StrokeJoin.round,
     );
     canvas.restore();
-    final newImg = await recorder.endRecording().toImage(w, h);
+    final pic = recorder.endRecording();
+    final newImg = await pic.toImage(w, h);
+    pic.dispose();
     if (!mounted) {
+      newImg.dispose();
+      return;
+    }
+    // Bail if the annotation image was replaced during the await (e.g. a CDC
+    // catch-up ran init()/syncFromEncounter and set a fresh annotationImage).
+    // Disposing/clobbering it now would leak the new image and revert the erase
+    // to stale baked content ("erase comes back").
+    if (!identical(state.annotationImage, old)) {
       newImg.dispose();
       return;
     }
     old.dispose();
     state = state.copyWith(annotationImage: newImg);
-    _scheduleDrawingsSync();
-    _debouncedAutoSave();
+    flush();
   }
 
   void clearAnnotation() {
@@ -1266,8 +1293,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       persistentMeasurements: keptMarks,
       strokes: keptStrokes,
     );
-    _scheduleDrawingsSync();
-    _debouncedAutoSave();
+    // Coalesce: mark dirty and flush sync+autosave once at pan-end
+    // (commitEraseStroke) rather than re-arming the timers on every pan sample.
+    _eraseDirty = true;
   }
 
   /// True when [p] (canvas-space) is within the stroke's polyline (proximity
@@ -1443,6 +1471,17 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       feetPerCell: state.feetPerCell,
       diagonalRule: state.diagonalRule,
     );
+    // updateGridSettings republishes activeEncounter synchronously. Restamp the
+    // fingerprint from it so the listener-driven syncFromEncounter does NOT
+    // re-run init() for our own grid write — re-init re-decodes bg/fog/annot and
+    // re-encodes+pushes the full fog PNG over IPC on every spinbox step. A
+    // genuinely different remote encounter still differs in fingerprint and
+    // re-inits normally. The setters' own _scheduleDrawingsSync() already
+    // pushes grid/diagonal to the projection without touching fog.
+    final enc = _ref.read(combatProvider).activeEncounter;
+    if (enc != null && enc.id == encounterId) {
+      _stampFingerprint(enc);
+    }
   }
 
   // -------------------------------------------------------------------------

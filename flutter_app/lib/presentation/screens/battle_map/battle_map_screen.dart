@@ -390,7 +390,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       case BattleMapTool.aoeSector:
         notifier.commitMeasurement();
       case BattleMapTool.eraseMark:
-        await notifier.commitEraseStroke(); // bake bitmap clear (vector already deleted live)
+        await notifier
+            .commitEraseStroke(); // DM-cosmetic bitmap clear; vector deletes already synced live
       case BattleMapTool.navigate:
         break;
     }

@@ -242,6 +242,12 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// viewports (mobile second-screen).
   final bool compact;
 
+  /// Memoize hex→Color across ALL _hexColor callsites (tokens, strokes, AoE)
+  /// so int.parse + string-alloc runs once per distinct hex, not once per
+  /// shape/token per frame. Tiny bounded key set; static so it survives the
+  /// per-snapshot painter reconstruction.
+  static final Map<String, Color> _hexCache = {};
+
   _BattleMapProjectionPainter({
     required this.snapshot,
     required this.bgImage,
@@ -597,16 +603,19 @@ class _BattleMapProjectionPainter extends CustomPainter {
       return d / snapshot.gridSize * snapshot.feetPerCell;
     }
 
+    // Reusable Paints for AoE shapes — mutated per shape to avoid two fresh
+    // Paint() allocations per AoE mark per frame (fill + stroke keep distinct
+    // styles).
+    final aoeFill = Paint()..style = PaintingStyle.fill;
+    final aoeStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = compact ? 1.2 : 2;
     void drawAoe(Path path, String? colorHex, Offset labelAt, String label) {
       final color = _hexColor(colorHex ?? '#ff9800');
-      canvas.drawPath(path, Paint()..color = color.withValues(alpha: 0.25));
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = color
-          ..strokeWidth = compact ? 1.2 : 2
-          ..style = PaintingStyle.stroke,
-      );
+      aoeFill.color = color.withValues(alpha: 0.25);
+      canvas.drawPath(path, aoeFill);
+      aoeStroke.color = color;
+      canvas.drawPath(path, aoeStroke);
       drawFeetLabel(labelAt, label, color);
     }
 
@@ -677,20 +686,36 @@ class _BattleMapProjectionPainter extends CustomPainter {
           drawAoe(Path()..addRect(rect), m.colorHex, rect.topCenter, '$feet ft');
         case 'sector':
           final rFeet = geoFeet(m.x1, m.y1, m.x2, m.y2).round();
-          final sweep = m.sweepDeg ?? 90.0;
-          drawAoe(aoeSectorPath(p1, p2, sweep), m.colorHex, p2,
-              'r = $rFeet ft, ${sweep.round()}°');
+          if (m.sweepDeg == null) {
+            // Stage 1 preview — stroke-only circle + radius guide line, matching
+            // the DM painter so a null-sweep sector renders the same on both.
+            final color = _hexColor(m.colorHex ?? '#ff9800');
+            final r = (p2 - p1).distance;
+            aoeStroke
+              ..color = color.withValues(alpha: 0.5)
+              ..strokeWidth = compact ? 1.0 : 1.5;
+            canvas.drawCircle(p1, r, aoeStroke);
+            aoeStroke
+              ..color = color
+              ..strokeWidth = compact ? 1.2 : 2;
+            canvas.drawLine(p1, p2, aoeStroke);
+            drawFeetLabel(p2 - const Offset(0, 12), 'r = $rFeet ft', color);
+          } else {
+            final sweep = m.sweepDeg!;
+            drawAoe(aoeSectorPath(p1, p2, sweep), m.colorHex, p2,
+                'r = $rFeet ft, ${sweep.round()}°');
+          }
       }
     }
 
     canvas.restore(); // matches the save() + clipRect at the start
   }
 
-  Color _hexColor(String hex) {
-    var clean = hex.replaceFirst('#', '');
-    if (clean.length == 6) clean = 'FF$clean';
-    return Color(int.parse(clean, radix: 16));
-  }
+  Color _hexColor(String hex) => _hexCache.putIfAbsent(hex, () {
+        var clean = hex.replaceFirst('#', '');
+        if (clean.length == 6) clean = 'FF$clean';
+        return Color(int.parse(clean, radix: 16));
+      });
 
   @override
   bool shouldRepaint(covariant _BattleMapProjectionPainter old) {
