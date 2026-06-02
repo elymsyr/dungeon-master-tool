@@ -22,7 +22,7 @@ const String _bundledManifest = 'assets/first_party/manifest.json';
 String? officialBannerUrl(String slug) =>
     (_workerBaseUrl.isEmpty || slug.isEmpty)
         ? null
-        : '$_workerBaseUrl/catalog/banners/$slug.png';
+        : '$_workerBaseUrl/catalog/banners/$slug.jpg';
 
 /// Reads the first-party content catalog (official packages) from the R2 worker
 /// (`{worker}/catalog/*`), falling back to the bundled `assets/first_party/`
@@ -85,6 +85,19 @@ class FirstPartyCatalogService {
       throw StateError('Catalog payload unavailable: ${entry.slug}');
     }
     return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  /// Download an official package's banner JPEG from R2, or null when no worker
+  /// is configured / offline / missing. Used at install time to materialise the
+  /// banner as the local package cover.
+  Future<Uint8List?> fetchBanner(String slug) async {
+    final url = officialBannerUrl(slug);
+    if (url == null) return null;
+    try {
+      return Uint8List.fromList(await _getBytes(Uri.parse(url)));
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<String?> _tryBundled(String asset) async {

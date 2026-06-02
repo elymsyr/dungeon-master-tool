@@ -40,4 +40,4 @@ final ruleCatalogProvider = Provider<RuleCatalog>((ref) {
     default:
       return _dnd5eCatalog;
   }
-});
+}, dependencies: [worldSchemaProvider]);

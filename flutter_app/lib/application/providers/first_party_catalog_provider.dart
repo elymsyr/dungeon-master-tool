@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_paths.dart';
 import '../../data/services/first_party_catalog_service.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../services/assets_pack_installer.dart';
+import '../services/cover_image_bundler.dart';
 import '../services/package_payload_importer.dart';
 import 'package_provider.dart';
 
@@ -61,14 +65,31 @@ class FirstPartyInstallNotifier
     _set(entry.slug,
         const CatalogInstallStatus(phase: CatalogInstallPhase.installing));
     try {
-      final payload =
-          await _ref.read(firstPartyCatalogServiceProvider).fetchPayload(entry);
+      final service = _ref.read(firstPartyCatalogServiceProvider);
+      final payload = await service.fetchPayload(entry);
       final importer =
           PackagePayloadImporter(_ref.read(packageRepositoryProvider));
+
+      // Also install the card banner: download from R2 and materialise it as
+      // the local package cover so the Packages tab shows the same art.
+      final extra = <String, dynamic>{'catalog_version': entry.version};
+      final bannerBytes = await service.fetchBanner(entry.slug);
+      if (bannerBytes != null) {
+        final coverPath = await CoverImageBundler.restore(
+          metadata: {
+            'cover_image_data': base64Encode(bannerBytes),
+            'cover_image_ext': '.jpg',
+          },
+          destDir: AppPaths.packagesDir,
+          itemId: entry.slug,
+        );
+        if (coverPath != null) extra['cover_image_path'] = coverPath;
+      }
+
       await importer.install(
         payload,
         installedFrom: 'official',
-        extraMetadata: {'catalog_version': entry.version},
+        extraMetadata: extra,
       );
       _ref.invalidate(packageListProvider);
       _set(entry.slug,

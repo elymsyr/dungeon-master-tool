@@ -19,12 +19,12 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")/../flutter_app/assets/first_party/banners" && pwd)"
 count=0
-for f in "$DIR"/*.png; do
+for f in "$DIR"/*.jpg; do
   name="$(basename "$f")"
   printf 'PUT catalog/banners/%s ... ' "$name"
   curl -fsS -X PUT \
     -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-    -H "Content-Type: image/png" \
+    -H "Content-Type: image/jpeg" \
     --data-binary "@${f}" \
     "${DMT_WORKER_URL%/}/catalog/banners/${name}" >/dev/null
   echo "ok"
