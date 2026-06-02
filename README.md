@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v10.2.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v11.0.0--beta-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
@@ -51,7 +51,7 @@
 
 Planned for upcoming releases — order not final, scope may shift between patch and minor versions.
 
-- **Better battle map system** — Smoother large-grid performance, snap-to-grid tokens with stat-block previews, line-of-sight + dynamic vision, measurement modes (cone/line/sphere), and animated AoE overlays.
+- **Better battle map system** — The VTT upgrade has landed: snap-to-grid tokens, creature-size auto-scaling, 5e diagonal measurement rules, AoE templates (cone/line/sphere/cube/sector), and vector shape annotations. Still planned: smoother large-grid performance, stat-block token previews, and line-of-sight + dynamic vision.
 - **Built-in D&D 5e package visuals** — Cover art, monster/species/class portraits, equipment icons, and spell glyphs bundled with the SRD core pack so default content stops looking like raw text.
 - **More online storage for users** — Larger per-account quota for counted cloud media and selectable retention tiers; current beta cap is intentionally conservative (portraits, covers and live session media already sync free of quota).
 - **Deeper D&D 5e implementation** — Close remaining SRD gaps (Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills, missing `auto_granted_by` metadata), automate more class/subclass effects, and finish bidirectional sync of mechanical resolutions across devices.
@@ -79,7 +79,7 @@ Works fully offline. Join the beta to sync your worlds across devices and share 
 Run a session without breaking flow.
 
 - **Combat Tracker** — Initiative, HP, conditions, turn management, automatic event log.
-- **Battle Map** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war. Reuse already-uploaded location battlemaps without re-uploading.
+- **Battle Map (VTT)** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war. **Creature-size auto-scaling** sizes tokens to their D&D footprint (Large 2×2, Huge 3×3…). **5e diagonal measurement** with Euclidean / 5-10-5 (DMG) / 5-5-5 (PHB) rules, mirrored to player distance labels. **AoE templates** — cone, line, sphere, cube, and sector wedges with fill colors, persistent across reload. **Vector annotations** — rectangles, lines, and text labels on background / object / GM-only layers, each individually deletable. **Per-player projection controls** — Show All HP, Hide Token HUD, hidden tokens (DM-only), and DM viewport sync so players mirror your zoom/pan without letterboxing. Reuse already-uploaded location battlemaps without re-uploading.
 - **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, save state across sessions.
 - **Soundpad** — Layered audio, gapless loops, volume fade, custom themes. Download ready-made **soundpacks** (music themes, ambience, SFX) from the in-app catalog — browse them under Marketplace → Soundpacks or in Settings.
 - **PDF Viewer** — Page navigation and zoom for your reference docs.

@@ -5,7 +5,7 @@ const String appName = 'Dungeon Master Tool';
 // from the bundled pubspec version (Android/iOS/desktop) or the web build's
 // info.json, so a `flutter build` automatically reflects the new version
 // without hand-editing this file.
-String appVersion = '10.2.0';
+String appVersion = '11.0.0';
 const String appProcess = 'beta';
 String get appReleaseTag => '$appProcess-v$appVersion';
 const String githubRepo = 'elymsyr/dungeon-master-tool';
