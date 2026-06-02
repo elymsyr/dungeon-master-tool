@@ -811,6 +811,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     Map<String, dynamic>? tokenPositions,
     Map<String, double>? tokenSizeMultipliers,
     int? tokenSize,
+    List<String>? hiddenTokenIds,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
@@ -818,7 +819,29 @@ class CombatNotifier extends StateNotifier<CombatState>
       tokenPositions: tokenPositions ?? enc.tokenPositions,
       tokenSizeMultipliers: tokenSizeMultipliers ?? enc.tokenSizeMultipliers,
       tokenSize: tokenSize ?? enc.tokenSize,
+      hiddenTokenIds: hiddenTokenIds ?? enc.hiddenTokenIds,
     ));
+    _saveAndNotify();
+  }
+
+  /// Toggle a token's player-visibility. Hidden tokens are filtered out of the
+  /// player projection entirely (see [BattleMapSnapshotBuilder]) and render
+  /// ghosted on the DM map. Affects the active encounter.
+  void toggleTokenHidden(String combatantId) {
+    final enc = state.activeEncounter;
+    if (enc == null) return;
+    final hidden = List<String>.from(enc.hiddenTokenIds);
+    if (hidden.contains(combatantId)) {
+      hidden.remove(combatantId);
+    } else {
+      hidden.add(combatantId);
+    }
+    _updateEncounter(enc.copyWith(hiddenTokenIds: hidden));
+    final c = enc.combatants.firstWhere(
+      (c) => c.id == combatantId,
+      orElse: () => Combatant(id: combatantId, name: 'Token'),
+    );
+    _log('${c.name} ${hidden.contains(combatantId) ? 'hidden from' : 'revealed to'} players');
     _saveAndNotify();
   }
 

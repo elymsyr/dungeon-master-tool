@@ -34,6 +34,10 @@ abstract class Encounter with _$Encounter {
     @Default(false) bool gridVisible,
     @Default(false) bool gridSnap,
     @Default(5) int feetPerCell,
+    /// Combatant ids whose tokens are hidden from players. Hidden tokens are
+    /// filtered out of the player projection entirely (never sent), and render
+    /// ghosted on the DM map so the DM can still see + move them.
+    @Default([]) List<String> hiddenTokenIds,
     String? fogData,
     String? annotationData,
     String? measurementsData,

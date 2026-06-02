@@ -6,6 +6,7 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../../domain/value_objects/creature_size.dart';
 import '../providers/character_provider.dart' show kPlayerCategorySlugs;
 
 /// Builds a [BattleMapSnapshot] from a live [Encounter] + the entity map.
@@ -47,9 +48,18 @@ class BattleMapSnapshotBuilder {
     }
 
     final tokens = <TokenSnapshot>[];
+    // Per-token size multiplier sent to players. A manual resize wins; else the
+    // creature's 5e size drives a grid-anchored footprint (`cells × gridSize /
+    // tokenSize`), so the player renders the same whole-cell footprint as the
+    // DM with no painter change and no size data leaked (just a number).
+    final tokenSizeMultsDouble = <String, double>{};
     var col = 0;
     var row = 0;
     for (final c in encounter.combatants) {
+      // Hidden tokens are DM-only — never enter the player projection. Filter
+      // on the send side (not the player renderer) so a hidden token's
+      // position/HP/name never reaches the player at all.
+      if (encounter.hiddenTokenIds.contains(c.id)) continue;
       // Resolve position from encounter.tokenPositions or default grid
       double x;
       double y;
@@ -85,6 +95,13 @@ class BattleMapSnapshotBuilder {
       final isPlayer = entity != null &&
           kPlayerCategorySlugs.contains(entity.categorySlug);
 
+      final manualMult = encounter.tokenSizeMultipliers[c.id];
+      final cells = tokenCellSpan(entity, entities);
+      tokenSizeMultsDouble[c.id] = manualMult ??
+          (encounter.tokenSize > 0
+              ? cells * encounter.gridSize / encounter.tokenSize
+              : cells);
+
       tokens.add(TokenSnapshot(
         id: c.id,
         name: c.name,
@@ -118,11 +135,6 @@ class BattleMapSnapshotBuilder {
         }).toList(),
       ));
     }
-
-    final tokenSizeMultsDouble = <String, double>{};
-    encounter.tokenSizeMultipliers.forEach((k, v) {
-      tokenSizeMultsDouble[k] = v;
-    });
 
     return BattleMapSnapshot(
       mapPath: encounter.mapPath,

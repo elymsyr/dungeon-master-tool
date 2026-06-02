@@ -418,6 +418,87 @@ class _BattleMapProjectionPainter extends CustomPainter {
           );
         }
       }
+
+      // Combat HUD — name + HP bar below, condition count above. HP bar is
+      // only drawn for player-controlled tokens (monster HP stays hidden,
+      // mirroring the `???` rule in the initiative sidebar). Drawn inside the
+      // token loop (before fog) so hidden tokens' HUD is masked too.
+      if (!compact) {
+        final hudGap = tokenRadius * 0.18 + 2;
+        var below = cy + tokenRadius + hudGap;
+
+        if (t.isPlayer && t.maxHp > 0) {
+          final ratio = (t.hp / t.maxHp).clamp(0.0, 1.0);
+          final barW = tokenRadius * 1.8;
+          final barH = (tokenRadius * 0.18).clamp(2.0, 7.0);
+          final barRect =
+              Rect.fromCenter(center: Offset(cx, below + barH / 2), width: barW, height: barH);
+          final rr = RRect.fromRectAndRadius(barRect, Radius.circular(barH));
+          canvas.drawRRect(rr, Paint()..color = Colors.black.withValues(alpha: 0.6));
+          final fillW = barW * ratio;
+          final fillRect = Rect.fromLTWH(barRect.left, barRect.top, fillW, barH);
+          canvas.save();
+          canvas.clipRRect(rr);
+          canvas.drawRect(
+            fillRect,
+            Paint()
+              ..color = ratio > 0.66
+                  ? const Color(0xFF66BB6A)
+                  : ratio > 0.33
+                      ? const Color(0xFFFFCA28)
+                      : const Color(0xFFE53935),
+          );
+          canvas.restore();
+          below += barH + 2;
+        }
+
+        // Name label
+        if (t.name.isNotEmpty) {
+          final fontSize = (tokenRadius * 0.4).clamp(7.0, 18.0);
+          final tp = TextPainter(
+            text: TextSpan(
+              text: t.name,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w700,
+                shadows: const [Shadow(blurRadius: 3, color: Colors.black)],
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+            maxLines: 1,
+            ellipsis: '…',
+          )..layout(maxWidth: tokenRadius * 4);
+          tp.paint(canvas, Offset(cx - tp.width / 2, below));
+        }
+
+        // Condition count badge — top-right corner.
+        if (t.conditions.isNotEmpty) {
+          final badgeR = (tokenRadius * 0.32).clamp(6.0, 16.0);
+          final bc = Offset(cx + tokenRadius * 0.62, cy - tokenRadius * 0.62);
+          canvas.drawCircle(bc, badgeR, Paint()..color = const Color(0xFF7B1FA2));
+          canvas.drawCircle(
+            bc,
+            badgeR,
+            Paint()
+              ..color = Colors.black54
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1,
+          );
+          final tp = TextPainter(
+            text: TextSpan(
+              text: '${t.conditions.length}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: badgeR * 1.1,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          tp.paint(canvas, Offset(bc.dx - tp.width / 2, bc.dy - tp.height / 2));
+        }
+      }
     }
 
     // 4. Fog — drawn after tokens so hidden tokens actually disappear

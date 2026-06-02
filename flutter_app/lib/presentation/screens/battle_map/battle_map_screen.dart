@@ -8,6 +8,8 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/entities/session.dart';
+import '../../../domain/value_objects/creature_size.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -216,6 +218,23 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     return palette.tokenBorderNeutral;
   }
 
+  /// Token size multiplier for a combatant. A manual resize (an explicit entry
+  /// in [BattleMapState.tokenSizeMultipliers]) always wins; otherwise the
+  /// creature's 5e size drives a grid-anchored footprint — `cells × gridSize /
+  /// tokenSize`, so the rendered px (`tokenSize × multiplier`) equals exactly
+  /// `cells × gridSize` and snaps to whole grid cells regardless of the global
+  /// token-size slider. Falls back to Medium (1 cell) when size is unknown.
+  double _effectiveSizeMultiplier(
+    String combatantId,
+    String? entityId,
+    BattleMapState s,
+  ) {
+    final manual = s.tokenSizeMultipliers[combatantId];
+    if (manual != null) return manual;
+    final cells = tokenCellSpan(_entityFor(entityId), ref.read(entityProvider));
+    return s.tokenSize > 0 ? cells * s.gridSize / s.tokenSize : cells;
+  }
+
   Widget _buildTokenLayer(DmToolColors palette, BattleMapNotifier notifier) {
     final encounter = ref.watch(combatProvider.select((s) => s.activeEncounter));
     if (encounter == null) return const SizedBox.shrink();
@@ -273,12 +292,15 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               return TokenWidget(
                 key: ValueKey('token_${c.id}'),
                 combatant: c,
-                tokenSize: (mapState.tokenSize * (mapState.tokenSizeMultipliers[c.id] ?? 1.0)).round(),
+                tokenSize: (mapState.tokenSize *
+                        _effectiveSizeMultiplier(c.id, c.entityId, mapState))
+                    .round(),
                 isActive: index == encounter.turnIndex,
                 canvasPosition: pos,
                 viewTransform: notifier.viewTransform,
                 borderColor: _categoryColor(c.entityId, palette),
                 imagePath: _entityImagePath(c.entityId),
+                hidden: encounter.hiddenTokenIds.contains(c.id),
                 palette: palette,
                 onDragStart: () => setState(() => _tokenDragActive = true),
                 onDragEnd: (id, finalCanvasPos) {
@@ -288,7 +310,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                   if (mapState.gridSnap) notifier.snapTokenToGrid(id);
                   notifier.persistTokenPositions();
                 },
-                onResizeRequested: (id) => _showResizeDialog(id, mapState, notifier),
+                onContextMenu: (id) => _showTokenMenu(id, mapState, notifier),
               );
             }),
           ],
@@ -350,11 +372,141 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 
   // -------------------------------------------------------------------------
+  // Token context menu (damage / heal / hide / resize)
+  // -------------------------------------------------------------------------
+
+  void _showTokenMenu(
+    String id,
+    BattleMapState mapState,
+    BattleMapNotifier notifier,
+  ) {
+    var amount = 5;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          // Read the notifier FRESH on every rebuild/press — never capture it.
+          // combatProvider rebuilds on campaignRevisionProvider bumps (a CDC
+          // echo from our own save fires one), disposing the old notifier; a
+          // captured reference would throw "used after dispose".
+          final enc = ref.read(combatProvider).activeEncounter;
+          Combatant? c;
+          if (enc != null) {
+            for (final x in enc.combatants) {
+              if (x.id == id) {
+                c = x;
+                break;
+              }
+            }
+          }
+          if (c == null) return const SizedBox.shrink();
+          final hidden = enc!.hiddenTokenIds.contains(id);
+
+          void quick(int delta) {
+            ref.read(combatProvider.notifier).modifyHp(id, delta);
+            setLocal(() {});
+          }
+
+          return AlertDialog(
+            title: Text(c.name, overflow: TextOverflow.ellipsis),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'HP  ${c.hp} / ${c.maxHp}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: '$amount',
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Amount',
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (v) => amount = int.tryParse(v)?.abs() ?? 0,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: () => quick(-amount),
+                        child: const Text('Damage'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: () => quick(amount),
+                        child: const Text('Heal'),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ref.read(combatProvider.notifier).toggleTokenHidden(id);
+                          setLocal(() {});
+                        },
+                        icon: Icon(
+                          hidden ? Icons.visibility : Icons.visibility_off,
+                        ),
+                        label: Text(hidden ? 'Reveal' : 'Hide'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showResizeDialog(id, mapState, notifier);
+                        },
+                        icon: const Icon(Icons.aspect_ratio),
+                        label: const Text('Resize'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Token resize dialog
   // -------------------------------------------------------------------------
 
   void _showResizeDialog(String id, BattleMapState mapState, BattleMapNotifier notifier) {
-    var multiplier = mapState.tokenSizeMultipliers[id] ?? 1.0;
+    // Seed from the effective multiplier so a Large creature opens showing its
+    // auto ~2× footprint rather than 1×.
+    String? entityId;
+    final enc = ref.read(combatProvider).activeEncounter;
+    if (enc != null) {
+      for (final c in enc.combatants) {
+        if (c.id == id) {
+          entityId = c.entityId;
+          break;
+        }
+      }
+    }
+    var multiplier = _effectiveSizeMultiplier(id, entityId, mapState);
 
     showDialog<void>(
       context: context,
