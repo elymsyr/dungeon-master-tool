@@ -22,6 +22,10 @@ class BattleMapSnapshot {
   final bool gridVisible;
   final int feetPerCell;
 
+  /// 5e diagonal counting rule (index into `DiagonalRule.values`, 0 =
+  /// euclidean). Mirrored so player distance labels match the DM's.
+  final int diagonalRule;
+
   /// Token sizing.
   final int tokenSize;
   final Map<String, double> tokenSizeMultipliers;
@@ -58,6 +62,7 @@ class BattleMapSnapshot {
     this.gridSize = 50,
     this.gridVisible = false,
     this.feetPerCell = 5,
+    this.diagonalRule = 0,
     this.tokenSize = 50,
     this.tokenSizeMultipliers = const {},
     this.tokens = const [],
@@ -75,6 +80,7 @@ class BattleMapSnapshot {
     int? gridSize,
     bool? gridVisible,
     int? feetPerCell,
+    int? diagonalRule,
     int? tokenSize,
     Map<String, double>? tokenSizeMultipliers,
     List<TokenSnapshot>? tokens,
@@ -93,6 +99,7 @@ class BattleMapSnapshot {
       gridSize: gridSize ?? this.gridSize,
       gridVisible: gridVisible ?? this.gridVisible,
       feetPerCell: feetPerCell ?? this.feetPerCell,
+      diagonalRule: diagonalRule ?? this.diagonalRule,
       tokenSize: tokenSize ?? this.tokenSize,
       tokenSizeMultipliers: tokenSizeMultipliers ?? this.tokenSizeMultipliers,
       tokens: tokens ?? this.tokens,
@@ -120,6 +127,7 @@ class BattleMapSnapshot {
         'gridSize': gridSize,
         'gridVisible': gridVisible,
         'feetPerCell': feetPerCell,
+        if (diagonalRule != 0) 'diagonalRule': diagonalRule,
         'tokenSize': tokenSize,
         'tokenSizeMultipliers': tokenSizeMultipliers,
         'tokens': tokens.map((t) => t.toJson()).toList(),
@@ -141,6 +149,7 @@ class BattleMapSnapshot {
       gridSize: json['gridSize'] as int? ?? 50,
       gridVisible: json['gridVisible'] as bool? ?? false,
       feetPerCell: json['feetPerCell'] as int? ?? 5,
+      diagonalRule: json['diagonalRule'] as int? ?? 0,
       tokenSize: json['tokenSize'] as int? ?? 50,
       tokenSizeMultipliers:
           (json['tokenSizeMultipliers'] as Map?)?.map(
@@ -198,14 +207,20 @@ class StrokeSnapshot {
       );
 }
 
-/// JSON-clean ruler/circle measurement. Two endpoints in canvas space.
+/// JSON-clean measurement / AoE template. Two endpoints in canvas space
+/// (origin → far point). [type] is `'ruler'`, `'circle'`, or an AoE shape
+/// (`'cone'`/`'line'`/`'aoeCircle'`/`'square'`). [colorHex] is the AoE fill
+/// color — null for plain rulers/circles (painted with their fixed colors).
 class MeasurementSnapshot {
-  /// `'ruler'` or `'circle'`.
   final String type;
   final double x1;
   final double y1;
   final double x2;
   final double y2;
+  final String? colorHex;
+
+  /// Sector sweep angle in degrees (`'sector'` type only); null otherwise.
+  final double? sweepDeg;
 
   const MeasurementSnapshot({
     required this.type,
@@ -213,12 +228,16 @@ class MeasurementSnapshot {
     required this.y1,
     required this.x2,
     required this.y2,
+    this.colorHex,
+    this.sweepDeg,
   });
 
   Map<String, dynamic> toJson() => {
         't': type,
         'a': [x1, y1],
         'b': [x2, y2],
+        if (colorHex != null) 'c': colorHex,
+        if (sweepDeg != null) 's': sweepDeg,
       };
 
   factory MeasurementSnapshot.fromJson(Map<String, dynamic> json) {
@@ -230,6 +249,8 @@ class MeasurementSnapshot {
       y1: a[1],
       x2: b[0],
       y2: b[1],
+      colorHex: json['c'] as String?,
+      sweepDeg: (json['s'] as num?)?.toDouble(),
     );
   }
 }

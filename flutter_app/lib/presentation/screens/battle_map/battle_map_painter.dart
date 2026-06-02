@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../domain/value_objects/grid_distance.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battle_map_notifier.dart';
 
@@ -241,6 +242,7 @@ class BattleMapPainter extends CustomPainter {
   // ---------------------------------------------------------------------------
 
   void _paintMeasurements(Canvas canvas, ViewTransform vt) {
+    final rule = diagonalRuleFromInt(mapState.diagonalRule);
     final all = [
       ...mapState.persistentMeasurements,
       if (mapState.activeMeasurement != null) mapState.activeMeasurement!,
@@ -249,10 +251,54 @@ class BattleMapPainter extends CustomPainter {
     for (final m in all) {
       final sStart = _toScreen(m.start, vt);
       final sEnd = _toScreen(m.end, vt);
-      if (m.type == BattleMapTool.ruler) {
-        _drawRuler(canvas, sStart, sEnd, vt);
-      } else {
-        _drawCircle(canvas, sStart, sEnd, vt);
+      switch (m.type) {
+        case BattleMapTool.ruler:
+          _drawRuler(canvas, sStart, sEnd, m, rule);
+        case BattleMapTool.circle:
+          _drawCircle(canvas, sStart, sEnd, m, rule);
+        case BattleMapTool.aoeCone:
+          _drawAoeShape(canvas, aoeConePath(sStart, sEnd), m,
+              labelAt: sEnd, feet: _geoFeet(m.start, m.end));
+        case BattleMapTool.aoeLine:
+          _drawAoeShape(
+              canvas, aoeLinePath(sStart, sEnd, mapState.gridSize * vt.scale), m,
+              labelAt: sEnd, feet: _geoFeet(m.start, m.end));
+        case BattleMapTool.aoeCircle:
+          final r = (sEnd - sStart).distance;
+          _drawAoeShape(canvas, Path()..addOval(Rect.fromCircle(center: sStart, radius: r)), m,
+              labelAt: Offset(sStart.dx, sStart.dy - r - 12),
+              feet: _geoFeet(m.start, m.end),
+              radiusLabel: true);
+        case BattleMapTool.aoeSquare:
+          final rect = aoeSquareRect(sStart, sEnd);
+          _drawAoeShape(canvas, Path()..addRect(rect), m,
+              labelAt: rect.topCenter, feet: _geoSideFeet(m.start, m.end));
+        case BattleMapTool.aoeSector:
+          final rFeet = _geoFeet(m.start, m.end);
+          if (m.sweepDeg == null) {
+            // Stage 1 preview — radius guide line + full-circle outline.
+            final color = _aoeColor(m);
+            final r = (sEnd - sStart).distance;
+            canvas.drawCircle(
+                sStart,
+                r,
+                Paint()
+                  ..color = color.withValues(alpha: 0.5)
+                  ..strokeWidth = 1.5
+                  ..style = PaintingStyle.stroke);
+            canvas.drawLine(sStart, sEnd,
+                Paint()..color = color..strokeWidth = 2);
+            _drawLabel(canvas, sEnd - const Offset(0, 12),
+                'r = ${rFeet.toStringAsFixed(0)} ft');
+          } else {
+            _drawAoeShape(canvas, aoeSectorPath(sStart, sEnd, m.sweepDeg!), m,
+                labelAt: sEnd,
+                feet: rFeet,
+                labelOverride:
+                    'r = ${rFeet.toStringAsFixed(0)} ft, ${m.sweepDeg!.toStringAsFixed(0)}°');
+          }
+        default:
+          break;
       }
     }
   }
@@ -260,7 +306,54 @@ class BattleMapPainter extends CustomPainter {
   Offset _toScreen(Offset canvasPt, ViewTransform vt) =>
       canvasPt * vt.scale + vt.panOffset;
 
-  void _drawRuler(Canvas canvas, Offset s, Offset e, ViewTransform vt) {
+  /// Euclidean size of a canvas-space segment in feet — used for AoE template
+  /// labels (5e measures templates by geometry, not grid movement).
+  double _geoFeet(Offset a, Offset b) {
+    if (mapState.gridSize <= 0) return 0;
+    return (b - a).distance / mapState.gridSize * mapState.feetPerCell;
+  }
+
+  /// Axis-aligned side length of a canvas-space drag in feet (cube/square).
+  double _geoSideFeet(Offset a, Offset b) {
+    if (mapState.gridSize <= 0) return 0;
+    final side = math.max((b.dx - a.dx).abs(), (b.dy - a.dy).abs());
+    return side / mapState.gridSize * mapState.feetPerCell;
+  }
+
+  Color _aoeColor(MeasurementMark m) {
+    final hex = m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800';
+    var clean = hex.replaceFirst('#', '');
+    if (clean.length == 6) clean = 'FF$clean';
+    return Color(int.parse(clean, radix: 16));
+  }
+
+  void _drawAoeShape(
+    Canvas canvas,
+    Path path,
+    MeasurementMark m, {
+    required Offset labelAt,
+    required double feet,
+    bool radiusLabel = false,
+    String? labelOverride,
+  }) {
+    final color = _aoeColor(m);
+    canvas.drawPath(path, Paint()..color = color.withValues(alpha: 0.25));
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke,
+    );
+    final label = labelOverride ??
+        (radiusLabel
+            ? 'r = ${feet.toStringAsFixed(0)} ft'
+            : '${feet.toStringAsFixed(0)} ft');
+    _drawLabel(canvas, labelAt - const Offset(0, 8), label);
+  }
+
+  void _drawRuler(
+      Canvas canvas, Offset s, Offset e, MeasurementMark m, DiagonalRule rule) {
     final linePaint = Paint()
       ..color = const Color(0xFFFFDC32)
       ..strokeWidth = 2.5
@@ -270,14 +363,18 @@ class BattleMapPainter extends CustomPainter {
     canvas.drawCircle(s, 4, Paint()..color = const Color(0xFFFFDC32));
     canvas.drawCircle(e, 4, Paint()..color = const Color(0xFFFFDC32));
 
-    final dist = (e - s).distance / vt.scale;
-    final squares = dist / mapState.gridSize;
-    final feet = squares * mapState.feetPerCell;
+    final feet = gridDistanceFeet(m.start, m.end,
+        gridSize: mapState.gridSize.toDouble(),
+        feetPerCell: mapState.feetPerCell.toDouble(),
+        rule: rule);
+    final squares =
+        mapState.feetPerCell > 0 ? feet / mapState.feetPerCell : 0.0;
     final label = '${feet.toStringAsFixed(0)} ft (${squares.toStringAsFixed(1)} sq)';
     _drawLabel(canvas, (s + e) / 2 - const Offset(0, 14), label);
   }
 
-  void _drawCircle(Canvas canvas, Offset center, Offset edge, ViewTransform vt) {
+  void _drawCircle(
+      Canvas canvas, Offset center, Offset edge, MeasurementMark m, DiagonalRule rule) {
     final r = (edge - center).distance;
     final paint = Paint()
       ..color = const Color(0xFF50C8FF)
@@ -287,8 +384,10 @@ class BattleMapPainter extends CustomPainter {
     canvas.drawCircle(center, r, paint);
     canvas.drawCircle(center, 4, Paint()..color = const Color(0xFF50C8FF));
 
-    final rCanvas = r / vt.scale;
-    final feet = (rCanvas / mapState.gridSize) * mapState.feetPerCell;
+    final feet = gridDistanceFeet(m.start, m.end,
+        gridSize: mapState.gridSize.toDouble(),
+        feetPerCell: mapState.feetPerCell.toDouble(),
+        rule: rule);
     _drawLabel(canvas, center - Offset(0, r + 16), 'r = ${feet.toStringAsFixed(0)} ft');
   }
 

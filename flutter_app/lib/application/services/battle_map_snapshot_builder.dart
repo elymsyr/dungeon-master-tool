@@ -144,6 +144,7 @@ class BattleMapSnapshotBuilder {
       gridSize: encounter.gridSize,
       gridVisible: encounter.gridVisible,
       feetPerCell: encounter.feetPerCell,
+      diagonalRule: encounter.diagonalRule,
       tokenSize: encounter.tokenSize,
       tokenSizeMultipliers: tokenSizeMultsDouble,
       tokens: tokens,

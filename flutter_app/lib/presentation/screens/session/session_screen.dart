@@ -1475,14 +1475,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _showAddConditionDialog(String combatantId) {
     final nameController = TextEditingController();
-    final durationController = TextEditingController();
 
-    // Find condition entities (those with conditionStats field)
+    // Find condition categories. The legacy schema marks them with a
+    // `condition_stats` field, but the builtin v2 schema models `condition` as
+    // a Tier-0 lookup WITHOUT that field — so also match well-known condition
+    // slugs, else builtin conditions never show up in the picker.
+    const knownConditionSlugs = {'condition', 'conditions'};
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
     final conditionSlugs = <String>{};
     for (final cat in schema.categories) {
-      if (cat.fields.any((f) => f.fieldKey == cfg.conditionStatsFieldKey)) {
+      if (knownConditionSlugs.contains(cat.slug) ||
+          cat.fields.any((f) => f.fieldKey == cfg.conditionStatsFieldKey)) {
         conditionSlugs.add(cat.slug);
       }
     }
@@ -1525,8 +1529,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           label: Text(e.name, style: const TextStyle(fontSize: 10)),
                           visualDensity: VisualDensity.compact,
                           onPressed: () {
-                            ref.read(combatProvider.notifier).addCondition(combatantId, e.name, defaultDuration, entityId: e.id);
                             Navigator.pop(ctx);
+                            _showConditionDurationDialog(combatantId, e.name,
+                                defaultDuration, entityId: e.id);
                           },
                         );
                       }).toList(),
@@ -1537,10 +1542,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 const Divider(),
                 const SizedBox(height: 8),
               ],
-              // Custom condition
-              TextField(controller: nameController, decoration: InputDecoration(labelText: l10n.sessionCustomCondition), autofocus: conditionEntities.isEmpty),
-              const SizedBox(height: 8),
-              TextField(controller: durationController, decoration: InputDecoration(labelText: l10n.sessionDurationHint), keyboardType: TextInputType.number),
+              // Custom condition — duration asked in a follow-up dialog.
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: l10n.sessionCustomCondition),
+                autofocus: conditionEntities.isEmpty,
+                onSubmitted: (_) {
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) return;
+                  Navigator.pop(ctx);
+                  _showConditionDurationDialog(combatantId, name, null);
+                },
+              ),
             ],
           ),
         ),
@@ -1549,13 +1562,59 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           FilledButton(onPressed: () {
             final name = nameController.text.trim();
             if (name.isEmpty) return;
-            ref.read(combatProvider.notifier).addCondition(combatantId, name, int.tryParse(durationController.text));
             Navigator.pop(ctx);
+            _showConditionDurationDialog(combatantId, name, null);
           }, child: Text(l10n.sessionAddCustom)),
         ],
       ),
     ).whenComplete(() {
       nameController.dispose();
+    });
+  }
+
+  /// Second-step dialog: asks the condition's duration (rounds) after a
+  /// condition is picked or a custom name is entered. Empty = indefinite.
+  void _showConditionDurationDialog(
+    String combatantId,
+    String name,
+    int? initialDuration, {
+    String? entityId,
+  }) {
+    final durationController =
+        TextEditingController(text: initialDuration?.toString() ?? '');
+    final l10n = L10n.of(context)!;
+    void submit() {
+      ref.read(combatProvider.notifier).addCondition(
+            combatantId,
+            name,
+            int.tryParse(durationController.text.trim()),
+            entityId: entityId,
+          );
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(name, style: const TextStyle(fontSize: 14)),
+        content: TextField(
+          controller: durationController,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: l10n.sessionDurationHint),
+          onSubmitted: (_) {
+            submit();
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
+          FilledButton(onPressed: () {
+            submit();
+            Navigator.pop(ctx);
+          }, child: Text(l10n.sessionAddCustom)),
+        ],
+      ),
+    ).whenComplete(() {
       durationController.dispose();
     });
   }

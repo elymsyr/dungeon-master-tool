@@ -446,6 +446,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     required int gridSize,
     required int feetPerCell,
     required String? fogDataBase64,
+    int diagonalRule = 0,
     bool includeFog = false,
   }) {
     final current = state.items
@@ -462,6 +463,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       gridVisible: gridVisible,
       gridSize: gridSize,
       feetPerCell: feetPerCell,
+      diagonalRule: diagonalRule,
       fogDataBase64: includeFog ? fogDataBase64 : null,
       clearFog: includeFog && fogDataBase64 == null,
     );
@@ -480,6 +482,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       'gridVisible': gridVisible,
       'gridSize': gridSize,
       'feetPerCell': feetPerCell,
+      'diagonalRule': diagonalRule,
       if (includeFog) 'fogDataBase64': fogDataBase64,
     });
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/projection_provider.dart';
+import '../../../domain/value_objects/grid_distance.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
@@ -14,6 +15,7 @@ typedef _ToolbarState = ({
   int gridSize,
   int feetPerCell,
   int tokenSize,
+  int diagonalRule,
 });
 
 /// Mobile battle map toolbar — persistent mini bar at the bottom with an
@@ -33,6 +35,7 @@ class BattleMapMobileToolbar extends ConsumerWidget {
       gridSize: s.gridSize,
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
+      diagonalRule: s.diagonalRule,
     )));
     final notifier = ref.read(battleMapProvider(encounterId).notifier);
 
@@ -210,6 +213,7 @@ class _FullBottomSheetState extends ConsumerState<_FullBottomSheet>
       gridSize: s.gridSize,
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
+      diagonalRule: s.diagonalRule,
     )));
     final notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
 
@@ -295,7 +299,7 @@ class _ToolsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tool grid — 6 tools in a row
+          // Tool grid — wraps across rows
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -303,6 +307,12 @@ class _ToolsTab extends StatelessWidget {
               _SheetToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, label: 'Navigate', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.ruler, icon: Icons.straighten, label: 'Ruler', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.circle, icon: Icons.radio_button_unchecked, label: 'Circle', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.aoeCone, icon: Icons.change_history, label: 'Cone', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.aoeLine, icon: Icons.horizontal_rule, label: 'Line', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.aoeCircle, icon: Icons.lens, label: 'Sphere', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.aoeSquare, icon: Icons.square, label: 'Cube', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.aoeSector, icon: Icons.pie_chart_outline, label: 'Sector', tb: tb, notifier: notifier, palette: palette),
+              _SheetToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, label: 'Erase', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, label: 'Draw', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, label: 'Add Fog', tb: tb, notifier: notifier, palette: palette),
               _SheetToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, label: 'Erase Fog', tb: tb, notifier: notifier, palette: palette),
@@ -320,7 +330,7 @@ class _ToolsTab extends StatelessWidget {
               const SizedBox(width: 8),
               _SheetActionButton(icon: Icons.cleaning_services_outlined, label: 'Clear Draw', palette: palette, onTap: notifier.clearAnnotation),
               const SizedBox(width: 8),
-              _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Rulers', palette: palette, onTap: notifier.clearMeasurements),
+              _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Marks', palette: palette, onTap: notifier.clearMeasurements),
             ],
           ),
         ],
@@ -386,6 +396,33 @@ class _GridTab extends StatelessWidget {
             max: 100,
             palette: palette,
             onChanged: notifier.setFeetPerCell,
+          ),
+          const SizedBox(height: 12),
+          // Diagonal counting rule
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Diagonal Rule',
+                  style: TextStyle(fontSize: 13, color: palette.tabText)),
+              DropdownButton<int>(
+                value: diagonalRuleFromInt(tb.diagonalRule).index,
+                isDense: true,
+                dropdownColor: palette.tabBg,
+                style: TextStyle(fontSize: 13, color: palette.tabText),
+                items: [
+                  for (final r in DiagonalRule.values)
+                    DropdownMenuItem(
+                      value: r.index,
+                      child: Text(diagonalRuleLabel(r),
+                          style: TextStyle(
+                              fontSize: 13, color: palette.tabText)),
+                    ),
+                ],
+                onChanged: (v) {
+                  if (v != null) notifier.setDiagonalRule(v);
+                },
+              ),
+            ],
           ),
         ],
       ),
