@@ -32,6 +32,19 @@ class BattleMapPainter extends CustomPainter {
   final bool isDmView;
   final BattleMapNotifier notifier;
 
+  // Reusable Paints for AoE shapes — fill + stroke keep distinct styles, mutated
+  // per shape to avoid two fresh Paint() allocations per AoE mark per frame in
+  // the measurement loop (mirrors the strokePaint reuse in _paintAnnotation).
+  final Paint _aoeFill = Paint()..style = PaintingStyle.fill;
+  final Paint _aoeStroke = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+
+  // Memoize hex→Color so int.parse + string-alloc runs once per distinct hex
+  // string, not once per shape per frame. Key set is tiny/bounded (the default
+  // AoE colors + any user-chosen). Static so it survives painter reconstruction.
+  static final Map<String, Color> _aoeColorCache = {};
+
   BattleMapPainter({
     required this.mapState,
     required this.viewTransform,
@@ -279,15 +292,14 @@ class BattleMapPainter extends CustomPainter {
             // Stage 1 preview — radius guide line + full-circle outline.
             final color = _aoeColor(m);
             final r = (sEnd - sStart).distance;
-            canvas.drawCircle(
-                sStart,
-                r,
-                Paint()
-                  ..color = color.withValues(alpha: 0.5)
-                  ..strokeWidth = 1.5
-                  ..style = PaintingStyle.stroke);
-            canvas.drawLine(sStart, sEnd,
-                Paint()..color = color..strokeWidth = 2);
+            _aoeStroke
+              ..color = color.withValues(alpha: 0.5)
+              ..strokeWidth = 1.5;
+            canvas.drawCircle(sStart, r, _aoeStroke);
+            _aoeStroke
+              ..color = color
+              ..strokeWidth = 2;
+            canvas.drawLine(sStart, sEnd, _aoeStroke);
             _drawLabel(canvas, sEnd - const Offset(0, 12),
                 'r = ${rFeet.toStringAsFixed(0)} ft');
           } else {
@@ -322,9 +334,11 @@ class BattleMapPainter extends CustomPainter {
 
   Color _aoeColor(MeasurementMark m) {
     final hex = m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800';
-    var clean = hex.replaceFirst('#', '');
-    if (clean.length == 6) clean = 'FF$clean';
-    return Color(int.parse(clean, radix: 16));
+    return _aoeColorCache.putIfAbsent(hex, () {
+      var clean = hex.replaceFirst('#', '');
+      if (clean.length == 6) clean = 'FF$clean';
+      return Color(int.parse(clean, radix: 16));
+    });
   }
 
   void _drawAoeShape(
@@ -337,14 +351,12 @@ class BattleMapPainter extends CustomPainter {
     String? labelOverride,
   }) {
     final color = _aoeColor(m);
-    canvas.drawPath(path, Paint()..color = color.withValues(alpha: 0.25));
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke,
-    );
+    _aoeFill.color = color.withValues(alpha: 0.25);
+    canvas.drawPath(path, _aoeFill);
+    _aoeStroke
+      ..color = color
+      ..strokeWidth = 2;
+    canvas.drawPath(path, _aoeStroke);
     final label = labelOverride ??
         (radiusLabel
             ? 'r = ${feet.toStringAsFixed(0)} ft'
