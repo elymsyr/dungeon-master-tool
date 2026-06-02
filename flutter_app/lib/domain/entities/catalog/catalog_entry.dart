@@ -14,6 +14,12 @@ class CatalogEntry {
   final String publisher;
   final String license;
   final String attribution;
+
+  /// Ruleset/system the package targets (e.g. "5e-2014", "5e-2024", "a5e").
+  /// Shown on the card as the template name — the official equivalent of a
+  /// user listing's `world_schema.name`. Empty when the manifest omits it.
+  final String gameSystem;
+
   final Map<String, int> counts;
   final String r2Path;
   final String bundledAsset;
@@ -27,6 +33,7 @@ class CatalogEntry {
     required this.publisher,
     required this.license,
     required this.attribution,
+    required this.gameSystem,
     required this.counts,
     required this.r2Path,
     required this.bundledAsset,
@@ -43,6 +50,7 @@ class CatalogEntry {
         publisher: j['publisher'] as String? ?? '',
         license: j['license'] as String? ?? '',
         attribution: j['attribution'] as String? ?? '',
+        gameSystem: j['game_system'] as String? ?? '',
         counts: ((j['counts'] as Map?) ?? const {})
             .map((k, v) => MapEntry(k.toString(), (v as num).toInt())),
         r2Path: j['r2_path'] as String? ?? '',

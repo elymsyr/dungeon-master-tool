@@ -147,10 +147,9 @@ class _MarketplaceFeed extends ConsumerWidget {
               );
             },
           ),
-          if (showOfficialPackages) ...[
-            const SizedBox(height: 8),
-            const OfficialPackagesCatalogView(),
-          ],
+          // Official (first-party) packages flow inline right after the
+          // user-shared listings — same card look, no separate section.
+          if (showOfficialPackages) const OfficialPackagesCatalogView(),
           if (isAll) ...[
             const SizedBox(height: 8),
             const SoundpackCatalogView(),

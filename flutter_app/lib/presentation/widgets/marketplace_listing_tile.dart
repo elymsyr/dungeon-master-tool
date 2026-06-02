@@ -111,7 +111,7 @@ class _BannerTile extends StatelessWidget {
           isSelected: false,
           palette: palette,
           layout: MetadataTileLayout.topBanner,
-          trailingBadges: [
+          topLeftOverlay: [
             _TypeBadge(
               label: labelForListingType(l10n, listing.itemType),
               palette: palette,
@@ -242,9 +242,12 @@ class _GetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     return FilledButton(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
+        backgroundColor: palette.featureCardAccent,
+        foregroundColor: Colors.white,
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

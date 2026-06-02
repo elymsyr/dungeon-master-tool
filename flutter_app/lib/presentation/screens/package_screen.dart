@@ -152,6 +152,10 @@ class _PackageAsCampaignRepo implements CampaignRepository {
       _packageNotifier.data ?? {};
 
   @override
+  Future<List<Map<String, String>>> installedPackages(String name) async =>
+      const [];
+
+  @override
   Future<void> save(String name, Map<String, dynamic> data) =>
       _packageNotifier.save();
 

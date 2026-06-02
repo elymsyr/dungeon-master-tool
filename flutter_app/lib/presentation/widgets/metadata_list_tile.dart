@@ -25,6 +25,12 @@ class MetadataListTile extends StatelessWidget {
   final IconData icon;
   final String name;
   final String subtitle;
+
+  /// Optional widget rendered inline before the [subtitle] text (same row).
+  /// Used by official catalog cards to put a verified checkmark where user
+  /// cards show the `@username`. Null → subtitle renders as a plain text line.
+  final Widget? subtitleLeading;
+
   final String description;
   final List<String> tags;
   final String coverImagePath;
@@ -51,6 +57,11 @@ class MetadataListTile extends StatelessWidget {
   /// Used for role/online status indicators on world cards.
   final List<Widget> topRightOverlay;
 
+  /// Badges overlaid on the top-LEFT corner of the cover (topBanner layout).
+  /// Marketplace cards put the item-type pill here so it sits on the banner
+  /// instead of crowding the title row.
+  final List<Widget> topLeftOverlay;
+
   /// Custom trailing widget that replaces the gear settings button. Used by
   /// surfaces that need a popup menu (sidebar / world character rows) in the
   /// same slot the main character tab uses for settings.
@@ -61,6 +72,7 @@ class MetadataListTile extends StatelessWidget {
     required this.icon,
     required this.name,
     required this.subtitle,
+    this.subtitleLeading,
     required this.description,
     required this.tags,
     required this.coverImagePath,
@@ -72,6 +84,7 @@ class MetadataListTile extends StatelessWidget {
     this.trailingBadges = const [],
     this.infoChips,
     this.topRightOverlay = const [],
+    this.topLeftOverlay = const [],
     this.trailingControl,
   });
 
@@ -150,19 +163,29 @@ class MetadataListTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        topRightOverlay.isEmpty
+        (topRightOverlay.isEmpty && topLeftOverlay.isEmpty)
             ? _topCover()
             : Stack(
                 children: [
                   _topCover(),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: topRightOverlay,
+                  if (topLeftOverlay.isNotEmpty)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: topLeftOverlay,
+                      ),
                     ),
-                  ),
+                  if (topRightOverlay.isNotEmpty)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: topRightOverlay,
+                      ),
+                    ),
                 ],
               ),
         Padding(
@@ -251,12 +274,29 @@ class MetadataListTile extends StatelessWidget {
         ),
         if (subtitle.isNotEmpty) ...[
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(
-                fontSize: 11, color: palette.sidebarLabelSecondary),
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (subtitleLeading != null)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                subtitleLeading!,
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                        fontSize: 11, color: palette.sidebarLabelSecondary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              subtitle,
+              style: TextStyle(
+                  fontSize: 11, color: palette.sidebarLabelSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
         ],
         if (description.isNotEmpty) ...[
           const SizedBox(height: 4),

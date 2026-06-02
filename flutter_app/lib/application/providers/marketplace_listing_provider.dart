@@ -67,6 +67,28 @@ final userMarketplaceListingsProvider =
   );
 });
 
+/// All current package listings keyed by lowercased title, used to link a
+/// world's imported packages to their marketplace entry (the marketplace has
+/// no name search, so we fetch + match client-side). Empty when Supabase is
+/// unconfigured / signed out / offline.
+final packageListingsByNameProvider =
+    FutureProvider<Map<String, MarketplaceListing>>((ref) async {
+  if (!SupabaseConfig.isConfigured) return const {};
+  if (ref.watch(authProvider) == null) return const {};
+  final listings = await cachedFetch(
+    ref: ref,
+    cacheKey: 'packageListingsByName',
+    ttl: const Duration(minutes: 5),
+    fetch: () => guardedNetwork(
+      ref,
+      () => ref
+          .read(marketplaceListingsRemoteDsProvider)
+          .listAllCurrent(itemType: 'package'),
+    ),
+  );
+  return {for (final l in listings) l.title.trim().toLowerCase(): l};
+});
+
 /// Reader-side: the marketplace_source metadata of a downloaded local copy,
 /// if any. Used by settings panels to render the "imported from marketplace"
 /// badge.
@@ -106,6 +128,16 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       final hash = computePayloadContentHash(payload);
       final coverB64 = await _readLocalCoverBase64(itemType, localId);
       final summary = buildListingContentSummary(payload);
+
+      // For worlds, surface the imported packages (id/name/version) on the
+      // listing so the preview lists packs instead of every entity. The
+      // built-in SRD core pack is excluded by the repository.
+      if (itemType == 'world' && summary != null) {
+        final packages = await _ref
+            .read(campaignRepositoryProvider)
+            .installedPackages(localId);
+        if (packages.isNotEmpty) summary['packages'] = packages;
+      }
 
       final remote = _ref.read(marketplaceListingsRemoteDsProvider);
       final listing = await remote.publishSnapshot(
