@@ -869,6 +869,8 @@ class CombatNotifier extends StateNotifier<CombatState>
     required bool gridSnap,
     required int feetPerCell,
     int? diagonalRule,
+    bool? showAllHp,
+    bool? hideTokenHud,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
@@ -877,6 +879,8 @@ class CombatNotifier extends StateNotifier<CombatState>
       gridSnap: gridSnap,
       feetPerCell: feetPerCell,
       diagonalRule: diagonalRule ?? enc.diagonalRule,
+      showAllHp: showAllHp ?? enc.showAllHp,
+      hideTokenHud: hideTokenHud ?? enc.hideTokenHud,
     ));
     _saveAndNotify();
   }

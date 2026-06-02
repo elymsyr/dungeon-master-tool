@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battle_map_notifier.dart';
+import 'render/aoe_render.dart';
 
 /// CustomPainter rendering all battle map layers:
 /// 1. Background (map image or dark fill)
@@ -39,11 +40,6 @@ class BattleMapPainter extends CustomPainter {
   final Paint _aoeStroke = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 2;
-
-  // Memoize hex→Color so int.parse + string-alloc runs once per distinct hex
-  // string, not once per shape per frame. Key set is tiny/bounded (the default
-  // AoE colors + any user-chosen). Static so it survives painter reconstruction.
-  static final Map<String, Color> _aoeColorCache = {};
 
   BattleMapPainter({
     required this.mapState,
@@ -332,14 +328,11 @@ class BattleMapPainter extends CustomPainter {
     return side / mapState.gridSize * mapState.feetPerCell;
   }
 
-  Color _aoeColor(MeasurementMark m) {
-    final hex = m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800';
-    return _aoeColorCache.putIfAbsent(hex, () {
-      var clean = hex.replaceFirst('#', '');
-      if (clean.length == 6) clean = 'FF$clean';
-      return Color(int.parse(clean, radix: 16));
-    });
-  }
+  // Per-tool default color resolved caller-side, then shared memoized parse.
+  // Keep the default here (NOT in hexToColor) so DM/player null-colorHex AoEs
+  // stay intentionally distinct (player uses a literal '#ff9800').
+  Color _aoeColor(MeasurementMark m) =>
+      hexToColor(m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800');
 
   void _drawAoeShape(
     Canvas canvas,
@@ -350,13 +343,9 @@ class BattleMapPainter extends CustomPainter {
     bool radiusLabel = false,
     String? labelOverride,
   }) {
-    final color = _aoeColor(m);
-    _aoeFill.color = color.withValues(alpha: 0.25);
-    canvas.drawPath(path, _aoeFill);
-    _aoeStroke
-      ..color = color
-      ..strokeWidth = 2;
-    canvas.drawPath(path, _aoeStroke);
+    // Restore stroke width 2 — the sector stage-1 preview mutates it to 1.5.
+    _aoeStroke.strokeWidth = 2;
+    drawAoeShape(canvas, path, _aoeColor(m), _aoeFill, _aoeStroke);
     final label = labelOverride ??
         (radiusLabel
             ? 'r = ${feet.toStringAsFixed(0)} ft'

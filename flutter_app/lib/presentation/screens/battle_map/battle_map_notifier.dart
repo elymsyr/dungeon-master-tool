@@ -207,6 +207,8 @@ class BattleMapState {
   final int gridSize;
   final bool gridVisible;
   final bool gridSnap;
+  final bool showAllHp;
+  final bool hideTokenHud;
   final int feetPerCell;
   final int tokenSize;
   final Map<String, double> tokenSizeMultipliers;
@@ -233,6 +235,8 @@ class BattleMapState {
     this.gridSize = 50,
     this.gridVisible = false,
     this.gridSnap = false,
+    this.showAllHp = false,
+    this.hideTokenHud = false,
     this.feetPerCell = 5,
     this.tokenSize = 50,
     this.tokenSizeMultipliers = const {},
@@ -255,6 +259,8 @@ class BattleMapState {
     int? gridSize,
     bool? gridVisible,
     bool? gridSnap,
+    bool? showAllHp,
+    bool? hideTokenHud,
     int? feetPerCell,
     int? tokenSize,
     Map<String, double>? tokenSizeMultipliers,
@@ -282,6 +288,8 @@ class BattleMapState {
       gridSize: gridSize ?? this.gridSize,
       gridVisible: gridVisible ?? this.gridVisible,
       gridSnap: gridSnap ?? this.gridSnap,
+      showAllHp: showAllHp ?? this.showAllHp,
+      hideTokenHud: hideTokenHud ?? this.hideTokenHud,
       feetPerCell: feetPerCell ?? this.feetPerCell,
       tokenSize: tokenSize ?? this.tokenSize,
       tokenSizeMultipliers: tokenSizeMultipliers ?? this.tokenSizeMultipliers,
@@ -548,6 +556,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           gridSize: state.gridSize,
           feetPerCell: state.feetPerCell,
           diagonalRule: state.diagonalRule,
+          showAllHp: state.showAllHp,
+          hideTokenHud: state.hideTokenHud,
           fogDataBase64: fogB64,
           includeFog: includeFog,
         );
@@ -590,6 +600,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       'ms': e.measurementsData ?? '',
       'st': e.strokesData ?? '',
       'g': '${e.gridSize}/${e.gridVisible}/${e.gridSnap}/${e.feetPerCell}/${e.diagonalRule}',
+      'hp': e.showAllHp,
+      'hud': e.hideTokenHud,
     });
   }
 
@@ -619,6 +631,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       gridSize: encounter.gridSize,
       gridVisible: encounter.gridVisible,
       gridSnap: encounter.gridSnap,
+      showAllHp: encounter.showAllHp,
+      hideTokenHud: encounter.hideTokenHud,
       feetPerCell: encounter.feetPerCell,
       tokenSize: encounter.tokenSize,
       tokenSizeMultipliers: Map<String, double>.from(encounter.tokenSizeMultipliers),
@@ -1434,6 +1448,22 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _persistGridSettings();
   }
 
+  /// Reveal monster/NPC HP to players (bar on map + numeric in sidebar) on
+  /// every projection output. Persisted on the encounter; default off.
+  void setShowAllHp(bool v) {
+    state = state.copyWith(showAllHp: v);
+    _persistGridSettings();
+    _scheduleDrawingsSync();
+  }
+
+  /// Hide the HP bar + condition badge under tokens on the player projection
+  /// (name stays). Persisted on the encounter; default off.
+  void setHideTokenHud(bool v) {
+    state = state.copyWith(hideTokenHud: v);
+    _persistGridSettings();
+    _scheduleDrawingsSync();
+  }
+
   void setGridSize(int size) {
     state = state.copyWith(gridSize: size.clamp(10, 300));
     _persistGridSettings();
@@ -1468,6 +1498,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       gridSize: state.gridSize,
       gridVisible: state.gridVisible,
       gridSnap: state.gridSnap,
+      showAllHp: state.showAllHp,
+      hideTokenHud: state.hideTokenHud,
       feetPerCell: state.feetPerCell,
       diagonalRule: state.diagonalRule,
     );

@@ -26,6 +26,21 @@ class BattleMapSnapshot {
   /// euclidean). Mirrored so player distance labels match the DM's.
   final int diagonalRule;
 
+  /// Versioned vector scene blob (walls / lights / AoE / shapes / text —
+  /// VTT Phases 3/4/6). Empty = no scene. Carried from `Encounter` so the
+  /// player can render the scene client-side. Phase 0 only transports it;
+  /// nothing reads it yet.
+  final String sceneVectorJson;
+
+  /// When true, monster/NPC HP is revealed to players (HP bar on the map +
+  /// numeric in the initiative sidebar). Default false → only `isPlayer`
+  /// tokens show HP. Set by the DM's "Show all HP" toggle.
+  final bool showAllHp;
+
+  /// When true, the HP bar + condition badge under each token are not drawn
+  /// (name stays). Set by the DM's "Clean tokens" toggle.
+  final bool hideTokenHud;
+
   /// Token sizing.
   final int tokenSize;
   final Map<String, double> tokenSizeMultipliers;
@@ -63,6 +78,9 @@ class BattleMapSnapshot {
     this.gridVisible = false,
     this.feetPerCell = 5,
     this.diagonalRule = 0,
+    this.sceneVectorJson = '',
+    this.showAllHp = false,
+    this.hideTokenHud = false,
     this.tokenSize = 50,
     this.tokenSizeMultipliers = const {},
     this.tokens = const [],
@@ -81,6 +99,9 @@ class BattleMapSnapshot {
     bool? gridVisible,
     int? feetPerCell,
     int? diagonalRule,
+    String? sceneVectorJson,
+    bool? showAllHp,
+    bool? hideTokenHud,
     int? tokenSize,
     Map<String, double>? tokenSizeMultipliers,
     List<TokenSnapshot>? tokens,
@@ -100,6 +121,9 @@ class BattleMapSnapshot {
       gridVisible: gridVisible ?? this.gridVisible,
       feetPerCell: feetPerCell ?? this.feetPerCell,
       diagonalRule: diagonalRule ?? this.diagonalRule,
+      sceneVectorJson: sceneVectorJson ?? this.sceneVectorJson,
+      showAllHp: showAllHp ?? this.showAllHp,
+      hideTokenHud: hideTokenHud ?? this.hideTokenHud,
       tokenSize: tokenSize ?? this.tokenSize,
       tokenSizeMultipliers: tokenSizeMultipliers ?? this.tokenSizeMultipliers,
       tokens: tokens ?? this.tokens,
@@ -116,7 +140,9 @@ class BattleMapSnapshot {
   /// - v1: ham filesystem path veya AssetRef (mixed).
   /// - v2: yalnız AssetRef. Player tarafı v1'i okur ve resolver fallback
   ///   yapar, ama yeni write'lar v2 hedefler.
-  static const int schemaVersion = 2;
+  /// - v3: additive `sceneVectorJson` (vector scene blob). Tolerant — older
+  ///   rows/clients omit it and `fromJson` defaults to ''.
+  static const int schemaVersion = 3;
 
   Map<String, dynamic> toJson() => {
         '_v': schemaVersion,
@@ -128,6 +154,9 @@ class BattleMapSnapshot {
         'gridVisible': gridVisible,
         'feetPerCell': feetPerCell,
         if (diagonalRule != 0) 'diagonalRule': diagonalRule,
+        if (sceneVectorJson.isNotEmpty) 'sceneVectorJson': sceneVectorJson,
+        if (showAllHp) 'showAllHp': showAllHp,
+        if (hideTokenHud) 'hideTokenHud': hideTokenHud,
         'tokenSize': tokenSize,
         'tokenSizeMultipliers': tokenSizeMultipliers,
         'tokens': tokens.map((t) => t.toJson()).toList(),
@@ -150,6 +179,9 @@ class BattleMapSnapshot {
       gridVisible: json['gridVisible'] as bool? ?? false,
       feetPerCell: json['feetPerCell'] as int? ?? 5,
       diagonalRule: json['diagonalRule'] as int? ?? 0,
+      sceneVectorJson: json['sceneVectorJson'] as String? ?? '',
+      showAllHp: json['showAllHp'] as bool? ?? false,
+      hideTokenHud: json['hideTokenHud'] as bool? ?? false,
       tokenSize: json['tokenSize'] as int? ?? 50,
       tokenSizeMultipliers:
           (json['tokenSizeMultipliers'] as Map?)?.map(

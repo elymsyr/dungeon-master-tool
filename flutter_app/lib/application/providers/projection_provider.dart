@@ -378,6 +378,9 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       canvasWidth: snapshot.canvasWidth,
       canvasHeight: snapshot.canvasHeight,
       mapPath: snapshot.mapPath,
+      // Carry the vector scene blob from the encounter so it survives this
+      // tokens-only merge (Phase 0 transport — nothing renders it yet).
+      sceneVectorJson: snapshot.sceneVectorJson,
     );
 
     // Local state update — no full push.
@@ -393,6 +396,8 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     _pushBattleMapPatch(itemId, {
       'tokens': snapshot.tokens.map((t) => t.toJson()).toList(),
       'turnIndex': snapshot.turnIndex,
+      if (snapshot.sceneVectorJson.isNotEmpty)
+        'sceneVectorJson': snapshot.sceneVectorJson,
     });
   }
 
@@ -448,6 +453,8 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     required String? fogDataBase64,
     int diagonalRule = 0,
     bool includeFog = false,
+    bool showAllHp = false,
+    bool hideTokenHud = false,
   }) {
     final current = state.items
         .whereType<BattleMapProjection>()
@@ -464,6 +471,8 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       gridSize: gridSize,
       feetPerCell: feetPerCell,
       diagonalRule: diagonalRule,
+      showAllHp: showAllHp,
+      hideTokenHud: hideTokenHud,
       fogDataBase64: includeFog ? fogDataBase64 : null,
       clearFog: includeFog && fogDataBase64 == null,
     );
@@ -483,6 +492,8 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       'gridSize': gridSize,
       'feetPerCell': feetPerCell,
       'diagonalRule': diagonalRule,
+      'showAllHp': showAllHp,
+      'hideTokenHud': hideTokenHud,
       if (includeFog) 'fogDataBase64': fogDataBase64,
     });
   }
