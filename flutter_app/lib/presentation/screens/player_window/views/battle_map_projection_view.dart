@@ -12,6 +12,7 @@ import '../../../../domain/entities/projection/projection_item.dart';
 import '../../../../domain/value_objects/asset_ref.dart';
 import '../../../../domain/value_objects/grid_distance.dart';
 import '../../../widgets/asset_ref_image.dart';
+import '../../battle_map/render/aoe_render.dart';
 
 /// Player-window view of a battle map. Receives a [BattleMapSnapshot] over
 /// IPC, decodes the background and fog images on demand, and renders them
@@ -207,7 +208,9 @@ class _BattleMapProjectionViewState
     return RepaintBoundary(
       child: ColoredBox(
         color: Colors.black,
-        child: isCompact
+        // Sidebar shows only when "Clean tokens" is on — info lives in the
+        // sidebar OR under tokens, never both. Narrow viewports never show it.
+        child: (isCompact || !snap.hideTokenHud)
             ? canvas
             : Row(
                 children: [
@@ -241,12 +244,6 @@ class _BattleMapProjectionPainter extends CustomPainter {
   /// When true, render strokes thinner and labels smaller for narrow
   /// viewports (mobile second-screen).
   final bool compact;
-
-  /// Memoize hex→Color across ALL _hexColor callsites (tokens, strokes, AoE)
-  /// so int.parse + string-alloc runs once per distinct hex, not once per
-  /// shape/token per frame. Tiny bounded key set; static so it survives the
-  /// per-snapshot painter reconstruction.
-  static final Map<String, Color> _hexCache = {};
 
   _BattleMapProjectionPainter({
     required this.snapshot,
@@ -427,14 +424,15 @@ class _BattleMapProjectionPainter extends CustomPainter {
       }
 
       // Combat HUD — name + HP bar below, condition count above. HP bar is
-      // only drawn for player-controlled tokens (monster HP stays hidden,
-      // mirroring the `???` rule in the initiative sidebar). Drawn inside the
+      // drawn for player-controlled tokens, plus monster/NPC tokens when the
+      // DM's "Show all HP" toggle (snapshot.showAllHp) is on — mirroring the
+      // `???`-vs-numeric rule in the initiative sidebar. Drawn inside the
       // token loop (before fog) so hidden tokens' HUD is masked too.
       if (!compact) {
         final hudGap = tokenRadius * 0.18 + 2;
         var below = cy + tokenRadius + hudGap;
 
-        if (t.isPlayer && t.maxHp > 0) {
+        if ((t.isPlayer || snapshot.showAllHp) && t.maxHp > 0 && !snapshot.hideTokenHud) {
           final ratio = (t.hp / t.maxHp).clamp(0.0, 1.0);
           final barW = tokenRadius * 1.8;
           final barH = (tokenRadius * 0.18).clamp(2.0, 7.0);
@@ -479,31 +477,10 @@ class _BattleMapProjectionPainter extends CustomPainter {
           tp.paint(canvas, Offset(cx - tp.width / 2, below));
         }
 
-        // Condition count badge — top-right corner.
-        if (t.conditions.isNotEmpty) {
-          final badgeR = (tokenRadius * 0.32).clamp(6.0, 16.0);
-          final bc = Offset(cx + tokenRadius * 0.62, cy - tokenRadius * 0.62);
-          canvas.drawCircle(bc, badgeR, Paint()..color = const Color(0xFF7B1FA2));
-          canvas.drawCircle(
-            bc,
-            badgeR,
-            Paint()
-              ..color = Colors.black54
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1,
-          );
-          final tp = TextPainter(
-            text: TextSpan(
-              text: '${t.conditions.length}',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: badgeR * 1.1,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          tp.paint(canvas, Offset(bc.dx - tp.width / 2, bc.dy - tp.height / 2));
+        // Condition chip strip — centered above the token, mirroring the DM
+        // view (3-letter abbrev + ·duration, max 5, then a +N overflow chip).
+        if (t.conditions.isNotEmpty && !snapshot.hideTokenHud) {
+          _drawConditionChips(canvas, t, cx, cy, tokenRadius);
         }
       }
     }
@@ -612,10 +589,7 @@ class _BattleMapProjectionPainter extends CustomPainter {
       ..strokeWidth = compact ? 1.2 : 2;
     void drawAoe(Path path, String? colorHex, Offset labelAt, String label) {
       final color = _hexColor(colorHex ?? '#ff9800');
-      aoeFill.color = color.withValues(alpha: 0.25);
-      canvas.drawPath(path, aoeFill);
-      aoeStroke.color = color;
-      canvas.drawPath(path, aoeStroke);
+      drawAoeShape(canvas, path, color, aoeFill, aoeStroke);
       drawFeetLabel(labelAt, label, color);
     }
 
@@ -711,11 +685,78 @@ class _BattleMapProjectionPainter extends CustomPainter {
     canvas.restore(); // matches the save() + clipRect at the start
   }
 
-  Color _hexColor(String hex) => _hexCache.putIfAbsent(hex, () {
-        var clean = hex.replaceFirst('#', '');
-        if (clean.length == 6) clean = 'FF$clean';
-        return Color(int.parse(clean, radix: 16));
-      });
+  Color _hexColor(String hex) => hexToColor(hex);
+
+  /// 3-letter condition abbreviation, matching the DM view's `_ConditionStrip`.
+  static String _abbrev(String name) {
+    if (name.isEmpty) return '?';
+    return name.length <= 3
+        ? name.toUpperCase()
+        : name.substring(0, 3).toUpperCase();
+  }
+
+  /// Draws the condition chips centered just above the token, mirroring the
+  /// DM `_ConditionStrip` (abbrev + ·duration, max 5, +N overflow). Single
+  /// horizontal row — the canvas has no Wrap, so we measure + center manually.
+  void _drawConditionChips(
+      Canvas canvas, TokenSnapshot t, double cx, double cy, double tokenRadius) {
+    const maxChips = 5;
+    final shown = t.conditions.take(maxChips).toList();
+    final overflow = t.conditions.length - shown.length;
+    final fontSize = (tokenRadius * 0.32).clamp(6.0, 14.0);
+    final padH = fontSize * 0.35;
+    final padV = fontSize * 0.15;
+    final gap = (tokenRadius * 0.08).clamp(1.0, 4.0);
+
+    // Build label TextPainters for each chip first to measure total width.
+    final labels = <String>[
+      for (final c in shown)
+        c.turns != null ? '${_abbrev(c.name)}·${c.turns}' : _abbrev(c.name),
+      if (overflow > 0) '+$overflow',
+    ];
+    final painters = <TextPainter>[];
+    for (final label in labels) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontSize: fontSize,
+            height: 1.0,
+            fontWeight: FontWeight.w700,
+            color: Colors.white, // conditionText
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      painters.add(tp);
+    }
+
+    final chipH = painters.first.height + padV * 2;
+    var totalW = 0.0;
+    for (final tp in painters) {
+      totalW += tp.width + padH * 2;
+    }
+    totalW += gap * (painters.length - 1);
+
+    // Baseline: sit just above the token circle.
+    final top = cy - tokenRadius - gap - chipH;
+    var x = cx - totalW / 2;
+    final bgPaint = Paint()..color = const Color(0xFF5C6BC0).withValues(alpha: 0.92);
+    final borderPaint = Paint()
+      ..color = Colors.black54
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
+    for (final tp in painters) {
+      final chipW = tp.width + padH * 2;
+      final rect = Rect.fromLTWH(x, top, chipW, chipH);
+      final rr = RRect.fromRectAndRadius(rect, Radius.circular(fontSize * 0.5));
+      canvas.drawRRect(rr, bgPaint);
+      canvas.drawRRect(rr, borderPaint);
+      tp.paint(canvas, Offset(x + padH, top + padV));
+      x += chipW + gap;
+    }
+  }
 
   @override
   bool shouldRepaint(covariant _BattleMapProjectionPainter old) {
@@ -798,6 +839,7 @@ class _InitiativeSidePanel extends StatelessWidget {
                         key: ValueKey(tokens[i].id),
                         token: tokens[i],
                         isActive: i == activeIdx,
+                        showAllHp: snapshot.showAllHp,
                       );
                     },
                   ),
@@ -853,12 +895,19 @@ class _PanelHeader extends StatelessWidget {
 class _InitiativeRow extends StatelessWidget {
   final TokenSnapshot token;
   final bool isActive;
-  const _InitiativeRow({super.key, required this.token, required this.isActive});
+  final bool showAllHp;
+  const _InitiativeRow({
+    super.key,
+    required this.token,
+    required this.isActive,
+    this.showAllHp = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final hpText = token.isPlayer ? '${token.hp} / ${token.maxHp}' : '???';
-    final hpRatio = token.isPlayer && token.maxHp > 0
+    final showHp = token.isPlayer || showAllHp;
+    final hpText = showHp ? '${token.hp} / ${token.maxHp}' : '???';
+    final hpRatio = showHp && token.maxHp > 0
         ? (token.hp / token.maxHp).clamp(0.0, 1.0)
         : null;
 
@@ -919,7 +968,7 @@ class _InitiativeRow extends StatelessWidget {
                 Text(
                   hpText,
                   style: TextStyle(
-                    color: token.isPlayer
+                    color: showHp
                         ? (hpRatio != null && hpRatio < 0.34
                             ? _ddBlood
                             : _ddSage)

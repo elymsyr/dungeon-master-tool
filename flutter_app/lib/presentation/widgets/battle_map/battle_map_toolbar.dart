@@ -13,6 +13,8 @@ typedef _ToolbarState = ({
   BattleMapTool activeTool,
   bool gridVisible,
   bool gridSnap,
+  bool showAllHp,
+  bool hideTokenHud,
   int gridSize,
   int feetPerCell,
   int tokenSize,
@@ -39,6 +41,8 @@ class BattleMapToolbar extends ConsumerWidget {
       activeTool: s.activeTool,
       gridVisible: s.gridVisible,
       gridSnap: s.gridSnap,
+      showAllHp: s.showAllHp,
+      hideTokenHud: s.hideTokenHud,
       gridSize: s.gridSize,
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
@@ -127,6 +131,52 @@ class BattleMapToolbar extends ConsumerWidget {
           _ProjectionLockButton(
             encounterId: encounterId,
             palette: palette,
+          ),
+          const SizedBox(width: 8),
+          // Show all HP — reveal monster/NPC HP to players on every projection
+          // output (cast / online share / second window). Default off.
+          Tooltip(
+            message: 'Show monster/NPC HP to players',
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: mapState.showAllHp,
+                    onChanged: (v) => notifier.setShowAllHp(v ?? false),
+                    activeColor: palette.tabIndicator,
+                    side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text('Show HP', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Clean tokens — hide HP bar + condition badge under tokens on the
+          // player projection (name stays). Default off.
+          Tooltip(
+            message: 'Hide HP bar + conditions under tokens',
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: mapState.hideTokenHud,
+                    onChanged: (v) => notifier.setHideTokenHud(v ?? false),
+                    activeColor: palette.tabIndicator,
+                    side: BorderSide(color: palette.tabText.withValues(alpha: 0.5)),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text('Clean tokens', style: TextStyle(fontSize: 12, color: palette.tabText)),
+              ],
+            ),
           ),
           const SizedBox(width: 12),
           // Token size label

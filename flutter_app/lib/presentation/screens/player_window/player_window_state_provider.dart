@@ -74,6 +74,9 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
       gridSize: patch['gridSize'] as int?,
       feetPerCell: patch['feetPerCell'] as int?,
       diagonalRule: patch['diagonalRule'] as int?,
+      showAllHp: patch['showAllHp'] as bool?,
+      hideTokenHud: patch['hideTokenHud'] as bool?,
+      sceneVectorJson: patch['sceneVectorJson'] as String?,
       fogDataBase64: patch['fogDataBase64'] as String?,
       clearFog: patch.containsKey('fogDataBase64') && patch['fogDataBase64'] == null,
       viewportNormalized: patch.containsKey('viewportNormalized') &&
