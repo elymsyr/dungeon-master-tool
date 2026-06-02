@@ -1,5 +1,57 @@
 # Release Notes
 
+## Dungeon Master Tool v11.0.0 — Battle Map Becomes a VTT: AoE Templates, 5e Diagonals, Creature-Size Tokens, Vector Annotations (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v11.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Major release. The battle map graduates into a proper **VTT**. Five feature areas land together: area-of-effect templates (cone / line / sphere / cube / sector), 5e diagonal measurement rules, creature-size token auto-scaling, vector shape annotations on layered surfaces, and a set of per-player projection controls (Show All HP, Hide Token HUD, hidden DM-only tokens, DM-driven viewport sync). Everything renders identically on the DM canvas and the projected player view through a shared geometry core, and the projection snapshot schema bumps to v4 (additive, backward-compatible). No DB migrations — new encounter state rides the existing `combat_state` JSON.
+
+### Highlights
+
+#### AoE templates (new)
+
+- **Five 5e template shapes** — Cone, line, sphere (circle), cube (square), and sector (pie wedge), driven by pure geometry functions (`aoeConePath`, `aoeLinePath`, `aoeSectorPath`, `aoeSquareRect`) in the new `grid_distance.dart` so the DM painter and the player painter build identical vertices. Sectors place in two stages: drag radius, then drag the sweep angle (defaults to a 90° wedge).
+- **Persistent, colored, projected** — Templates carry a fill color (`MeasurementMark.colorHex` / `sweepDeg`), persist across reload, and stream to every connected player. Origins snap to the grid intersection when grid-snap is on.
+
+#### 5e diagonal measurement (new)
+
+- **Three diagonal rules (`DiagonalRule`)** — `euclidean` (default, `√(dx²+dy²)`), `fiveTenFive` (DMG alternating 5/10 ft, `max + floor(min/2)`), and `fiveFiveFive` (PHB Chebyshev, all squares 5 ft). DM picks from a toolbar dropdown (Euclid / 5-10-5 / 5-5-5).
+- **Labels match on the player view** — `gridDistanceFeet()` is the single distance calculator for ruler, circle, and AoE labels on both the DM canvas and the projection; the chosen rule rides the snapshot (`diagonalRule`) so player distance labels agree with the DM's.
+
+#### Creature-size token auto-scaling (new)
+
+- **Tokens size to their D&D footprint** — New `CreatureSize` value object (tiny → gargantuan) and `tokenCellSpan()` resolve a token's grid span (Tiny 0.5, Medium 1, Large 2, Huge 3, Gargantuan 4). `BattleMapSnapshotBuilder` computes per-token `tokenSizeMultipliers` so a Huge creature renders 3×3 with no manual resize — a DM-set manual multiplier still wins when present.
+- **Three storage forms resolved** — `creatureSizeName()` reads a plain enum string, a UUID `size_ref` relation, or an unresolved `{_lookup:'size', name:…}` seed placeholder, falling back to Medium.
+
+#### Vector shape annotations (new)
+
+- **Rectangles, lines, text labels (`MapShape` / `ShapeKind`)** — Drawn on three layers (`ShapeLayer`: background under fog/tokens, object over tokens, **gm** DM-only). GM-layer shapes are filtered out **on the send side** and never reach players. Each shape carries its own color, stroke width, fill flag; text labels carry font size and are drag-to-move with the navigate tool.
+- **Individually deletable, individually persisted** — Shapes serialize to a versioned scene blob (`{"v":1,"shapes":[…]}`, `sceneVectorJson`) and pen strokes now persist as their own `strokesData` vector JSON instead of being baked into the annotation bitmap, so every stroke and shape stays separately erasable across reload. The drag-eraser (`eraseMarksAt`) removes any stroke, shape, or measurement the pointer crosses.
+- **Merged draw-tools picker (`DrawToolsButton`)** — A single toolbar button opens a grid popup of all 10 draw/measure/AoE/shape tools; the button icon tracks the last-used tool.
+
+#### Per-player projection controls (new)
+
+- **Show All HP** — DM toggle reveals monster/NPC HP (bar on the map + numeric in the initiative sidebar) to players; off by default.
+- **Hide Token HUD** — Suppresses the HP bar and condition badge under tokens on the player projection for a cleaner board when the sidebar already carries the info.
+- **Hidden DM-only tokens** — `hiddenTokenIds` ghosts a token on the DM map and omits it entirely from the player view (not merely dimmed).
+- **Viewport sync** — The DM's zoom/pan streams to players as a `NormalizedRect` (0..1 coords) at ~30 Hz; players mirror the DM's framing with no letterbox padding. Drawings/fog/grid stream on a separate ~80 Hz throttle, with fog re-encoded only when dirty.
+
+### Upgrade notes
+
+- **App version bump:** `10.2.0` → `11.0.0`.
+- **Local DB:** schema v12, unchanged. No client migration. New encounter fields (`diagonalRule`, `sceneVectorJson`, `showAllHp`, `hideTokenHud`, `hiddenTokenIds`, `strokesData`) ride the existing `combat_state` JSON — no Drift columns.
+- **No new cloud (Supabase) migrations.** Pure client-side VTT work.
+- **Projection snapshot v4** — The `shapes` field is additive and tolerant; older clients/rows omit it and default to `[]`. Mixed-version tables (DM on v11, player on an older build) degrade gracefully.
+- **Existing encounters are unaffected** — Diagonal rule defaults to Euclidean (the previous behavior); no shapes/AoE until the DM draws them.
+
+### Known issues
+
+- **Shape color picker** — Shapes use a per-layer default color in v1; a per-shape color picker is not wired yet.
+- Carry-over from v10.2.0: smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v10.2.0 — Marketplace Contents Preview, Official Package Details & Banner Art (Beta)
 
 **Release date:** June 2026
