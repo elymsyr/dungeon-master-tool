@@ -24,6 +24,7 @@ import '../social/messages_tab.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/connection_error_view.dart';
 import '../../widgets/listing_banner_card.dart';
+import '../../widgets/marketplace_listing_tile.dart';
 import '../../widgets/pill_tab_bar.dart';
 import '../../widgets/profile_avatar.dart';
 
@@ -588,7 +589,7 @@ class _UserItemsTab extends ConsumerWidget {
                 constraints: const BoxConstraints(maxWidth: 540),
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: ListingBannerCard.marketplace(
+                  child: MarketplaceListingTile(
                     listing: items[i],
                     onTap: () => MarketplacePreviewDialog.show(
                       context,

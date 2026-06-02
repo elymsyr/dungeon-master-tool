@@ -14,10 +14,12 @@ import '../../../../application/character_creation/origin_constants.dart';
 import '../../../../application/character_creation/weapon_mastery_resolver.dart';
 import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
-import '../../../../application/providers/entity_provider.dart';
+import '../../../../application/providers/package_provider.dart';
 import '../../../../application/providers/role_provider.dart';
 import '../../../../application/providers/rule_config_provider.dart';
 import '../../../../application/providers/template_provider.dart';
+import '../../../../application/services/srd_core_package_bootstrap.dart'
+    show srdCorePackageName;
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
 import '../../../../domain/entities/schema/dnd5e_constants.dart'
@@ -108,13 +110,7 @@ class _CharacterCreationWizardScreenState
   /// Entity source the wizard reads from. Active campaign's entities when
   /// the user picked a world, otherwise the bundled SRD map so race /
   /// class / background pickers stay populated without any DB write.
-  Map<String, Entity> _wizardEntities() {
-    final draft = ref.read(characterDraftProvider);
-    final builtin = ref.read(builtinSrdEntitiesProvider);
-    if (draft.worldName.isEmpty) return builtin;
-    final campaign = ref.read(entityProvider);
-    return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
-  }
+  Map<String, Entity> _wizardEntities() => ref.read(wizardEntitiesProvider);
 
   Future<void> _activateWorld(String name) async {
     if (_lastActivatedWorld == name) return;
@@ -610,6 +606,12 @@ class _CharacterCreationWizardScreenState
         featContributions: featContributions,
         entities: entities,
       );
+      // Stamp the chosen standalone packages so the editor can re-resolve
+      // species/class/spell refs that live outside the built-in pack. Only
+      // set in built-in mode — world-bound chars resolve via the campaign.
+      if (resolvedWorldId == null && draft.sourcePackages.isNotEmpty) {
+        seed['source_packages'] = List<String>.from(draft.sourcePackages);
+      }
 
       final created =
           await ref.read(characterListProvider.notifier).create(
@@ -1704,7 +1706,7 @@ class _IdentityStep extends StatelessWidget {
                   initialValue: pickerValue,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: 'World / Package',
+                    labelText: 'World',
                     suffixIcon: activatingWorld
                         ? const Padding(
                             padding: EdgeInsets.all(8),
@@ -1750,6 +1752,8 @@ class _IdentityStep extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _SourcePackagePicker(draft: draft, notifier: notifier),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -1813,6 +1817,120 @@ class _IdentityStep extends StatelessWidget {
         ),
         if (draft.level > 1) _HigherLevelStartPanel(level: draft.level),
       ],
+    );
+  }
+}
+
+/// Content-source picker shown on the Identity step. The built-in SRD pack
+/// is always active (rendered as a locked chip); the player may additionally
+/// tick any installed standalone packages as extra entity sources. Picking a
+/// World above clears these (and vice-versa) — see [CharacterDraftNotifier].
+class _SourcePackagePicker extends ConsumerWidget {
+  final CharacterDraft draft;
+  final CharacterDraftNotifier notifier;
+
+  const _SourcePackagePicker({required this.draft, required this.notifier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    // A world overrides package sources — disable the picker while one is set.
+    final worldActive = draft.worldName.isNotEmpty;
+    final packagesAsync = ref.watch(packageListProvider);
+    final selected = draft.sourcePackages.toSet();
+
+    final addonNames = packagesAsync.maybeWhen(
+      data: (list) => list
+          .map((p) => p.name)
+          .where((n) => n != srdCorePackageName)
+          .toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+      orElse: () => const <String>[],
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.cbr,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.inventory_2_outlined,
+                  size: 14, color: palette.tabActiveText),
+              const SizedBox(width: 6),
+              Text(
+                'Content Sources',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            worldActive
+                ? 'A world is selected above — its content is used. Clear the '
+                    'world (pick "Built-in SRD") to add packages instead.'
+                : 'Built-in SRD is always available. Tick extra packages to '
+                    'add their species, classes, spells and more.',
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              // Built-in pack — always on, not togglable.
+              const FilterChip(
+                label: Text('Built-in SRD'),
+                selected: true,
+                onSelected: null,
+                avatar: Icon(Icons.lock, size: 14),
+              ),
+              ...addonNames.map((name) {
+                final isOn = selected.contains(name);
+                return FilterChip(
+                  label: Text(name),
+                  selected: isOn,
+                  onSelected: worldActive
+                      ? null
+                      : (on) {
+                          final next = {...selected};
+                          if (on) {
+                            next.add(name);
+                          } else {
+                            next.remove(name);
+                          }
+                          notifier.setSourcePackages(next.toList());
+                        },
+                );
+              }),
+            ],
+          ),
+          if (!worldActive && addonNames.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'No extra packages installed. Add one in the Packages tab.',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

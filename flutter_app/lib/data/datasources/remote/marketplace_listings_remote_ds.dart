@@ -41,6 +41,8 @@ class MarketplaceListingsRemoteDataSource {
     required String contentHash,
     required Map<String, dynamic> payload,
     String? coverImageB64,
+    String? templateName,
+    Map<String, dynamic>? contentSummary,
   }) async {
     final uid = _userId;
     final listingId = _uuid.v4();
@@ -58,20 +60,38 @@ class MarketplaceListingsRemoteDataSource {
           ),
         );
 
+    final params = <String, dynamic>{
+      'p_listing_id': listingId,
+      'p_item_type': itemType,
+      'p_title': title,
+      'p_description': description,
+      'p_language': language,
+      'p_tags': tags,
+      'p_changelog': changelog,
+      'p_content_hash': contentHash,
+      'p_payload_path': path,
+      'p_size_bytes': gz.length,
+      'p_cover_image_b64': coverImageB64,
+      'p_template_name': templateName,
+      'p_content_summary': contentSummary,
+    };
     try {
-      await _client.rpc('publish_listing_snapshot', params: {
-        'p_listing_id': listingId,
-        'p_item_type': itemType,
-        'p_title': title,
-        'p_description': description,
-        'p_language': language,
-        'p_tags': tags,
-        'p_changelog': changelog,
-        'p_content_hash': contentHash,
-        'p_payload_path': path,
-        'p_size_bytes': gz.length,
-        'p_cover_image_b64': coverImageB64,
-      });
+      try {
+        await _client.rpc('publish_listing_snapshot', params: params);
+      } on PostgrestException catch (e) {
+        // Migration 071 (template_name / content_summary params) may not be
+        // deployed yet — PostgREST then can't resolve the 13-arg overload.
+        // Fall back to the legacy signature so publishing still works; the
+        // extra metadata is simply omitted until the migration is applied.
+        if (_isMissingFunctionSignature(e)) {
+          final legacy = Map<String, dynamic>.from(params)
+            ..remove('p_template_name')
+            ..remove('p_content_summary');
+          await _client.rpc('publish_listing_snapshot', params: legacy);
+        } else {
+          rethrow;
+        }
+      }
     } catch (e) {
       // Roll back the orphaned blob if the DB insert failed.
       try {
@@ -204,7 +224,19 @@ class MarketplaceListingsRemoteDataSource {
       createdAt: parseIsoOrNow(row['created_at']),
       ownerUsername: profile?['username'] as String?,
       coverImageB64: row['cover_image_b64'] as String?,
+      templateName: row['template_name'] as String?,
+      contentSummary: (row['content_summary'] as Map?)?.cast<String, dynamic>(),
     );
+  }
+
+  /// True when a PostgREST error means the requested RPC overload doesn't
+  /// exist (function/params not found) — i.e. the new-signature migration is
+  /// not deployed yet, so the legacy call should be retried.
+  bool _isMissingFunctionSignature(PostgrestException e) {
+    if (e.code == 'PGRST202') return true;
+    final m = e.message.toLowerCase();
+    return m.contains('could not find the function') ||
+        m.contains('publish_listing_snapshot');
   }
 
   List<String> _readTags(Object? raw) {

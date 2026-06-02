@@ -15,7 +15,7 @@ import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/connection_error_view.dart';
-import '../../widgets/listing_banner_card.dart';
+import '../../widgets/marketplace_listing_tile.dart';
 import '../../widgets/official_packages_catalog_view.dart';
 import '../../widgets/profile_avatar.dart';
 import '../../widgets/soundpack_catalog_view.dart';
@@ -135,7 +135,7 @@ class _MarketplaceFeed extends ConsumerWidget {
                   for (final e in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: ListingBannerCard.marketplace(
+                      child: MarketplaceListingTile(
                         listing: e,
                         onTap: () => MarketplacePreviewDialog.show(
                           context,

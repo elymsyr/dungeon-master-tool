@@ -24,6 +24,14 @@ abstract class CharacterDraft with _$CharacterDraft {
     /// orphan (creation will refuse to commit until set).
     @Default('') String worldName,
 
+    /// Content packages selected as extra entity sources when NO world is
+    /// picked (`worldName == ''`). The built-in SRD pack is always active
+    /// and implicit; these names layer on top. Mutually exclusive with
+    /// [worldName] — picking a world clears this list and vice-versa.
+    /// Persisted onto the committed character (`source_packages` field) so
+    /// the editor can re-resolve the same entities later.
+    @Default([]) List<String> sourcePackages,
+
     /// Template the wizard authors against — must contain a Player
     /// category. Resolved up-front by the launcher so the wizard never
     /// renders without one.

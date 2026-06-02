@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../domain/value_objects/asset_ref.dart';
@@ -25,6 +28,12 @@ class MetadataListTile extends StatelessWidget {
   final String description;
   final List<String> tags;
   final String coverImagePath;
+
+  /// Base64-encoded cover bytes — used by marketplace listings whose covers
+  /// live as inline blobs rather than local/cloud asset refs. Takes priority
+  /// over [coverImagePath] when both are set.
+  final String? coverImageB64;
+
   final bool isSelected;
   final DmToolColors palette;
   final VoidCallback onSettings;
@@ -55,6 +64,7 @@ class MetadataListTile extends StatelessWidget {
     required this.description,
     required this.tags,
     required this.coverImagePath,
+    this.coverImageB64,
     required this.isSelected,
     required this.palette,
     required this.onSettings,
@@ -67,7 +77,39 @@ class MetadataListTile extends StatelessWidget {
 
   // AssetRefImage local/cloud/public ref'leri çözer; çözülemezse fallback
   // (errorWidget) gösterilir — varlık kontrolü artık render sırasında yapılır.
-  bool get _hasImage => coverImagePath.isNotEmpty;
+  bool get _hasImage =>
+      coverImagePath.isNotEmpty || (coverImageB64?.isNotEmpty ?? false);
+
+  /// Decoded base64 cover bytes, or null when absent / malformed.
+  Uint8List? get _coverBytes {
+    final b64 = coverImageB64;
+    if (b64 == null || b64.isEmpty) return null;
+    try {
+      return base64Decode(b64);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Cover image source resolution: base64 blob first (marketplace), else the
+  /// asset ref (native hub lists). Returns [fallback] when neither resolves.
+  Widget _coverImage({required int cacheWidth, required Widget fallback}) {
+    final bytes = _coverBytes;
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        cacheWidth: cacheWidth,
+        errorBuilder: (_, _, _) => fallback,
+      );
+    }
+    return AssetRefImage(
+      ref: AssetRef(coverImagePath),
+      fit: BoxFit.cover,
+      cacheWidth: cacheWidth,
+      errorWidget: fallback,
+    );
+  }
 
   static const double _leftCoverWidth = 96;
   static const double _topCoverHeight = 120;
@@ -156,12 +198,7 @@ class MetadataListTile extends StatelessWidget {
     return Container(
       width: _leftCoverWidth,
       decoration: BoxDecoration(border: border),
-      child: AssetRefImage(
-        ref: AssetRef(coverImagePath),
-        fit: BoxFit.cover,
-        cacheWidth: 300,
-        errorWidget: fallback,
-      ),
+      child: _coverImage(cacheWidth: 300, fallback: fallback),
     );
   }
 
@@ -187,12 +224,7 @@ class MetadataListTile extends StatelessWidget {
       height: _topCoverHeight,
       decoration: BoxDecoration(border: border),
       width: double.infinity,
-      child: AssetRefImage(
-        ref: AssetRef(coverImagePath),
-        fit: BoxFit.cover,
-        cacheWidth: 1200,
-        errorWidget: fallback,
-      ),
+      child: _coverImage(cacheWidth: 1200, fallback: fallback),
     );
   }
 
