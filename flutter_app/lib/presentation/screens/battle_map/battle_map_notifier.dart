@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -16,6 +17,7 @@ import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../widgets/quota_snackbar.dart';
 
@@ -23,7 +25,97 @@ import '../../widgets/quota_snackbar.dart';
 // Tool enum
 // ---------------------------------------------------------------------------
 
-enum BattleMapTool { navigate, ruler, circle, draw, fogAdd, fogErase }
+enum BattleMapTool {
+  navigate,
+  ruler,
+  circle,
+  draw,
+  fogAdd,
+  fogErase,
+  // AoE templates — share the measurement lifecycle (origin→far point).
+  aoeCone,
+  aoeLine,
+  aoeCircle,
+  aoeSquare,
+  // Sector ("kesik daire") — two-stage: drag radius, then drag angle.
+  aoeSector,
+  // Drag-eraser for measurements/AoE — delete marks the pointer crosses.
+  eraseMark,
+}
+
+/// True for the AoE template tools (filled shapes that ride the measurement
+/// pipeline). Used to branch origin-snap + fill-color stamping.
+bool isAoeTool(BattleMapTool t) =>
+    t == BattleMapTool.aoeCone ||
+    t == BattleMapTool.aoeLine ||
+    t == BattleMapTool.aoeCircle ||
+    t == BattleMapTool.aoeSquare ||
+    t == BattleMapTool.aoeSector;
+
+/// Default sector sweep (degrees) shown after the radius is set, before the
+/// DM adjusts the angle in stage 2.
+const double kDefaultSectorSweepDeg = 90;
+
+/// Default fill/stroke color (hex) for each AoE shape. Returns null for the
+/// plain ruler/circle measurement tools, which keep their hardcoded colors.
+String? defaultAoeColorHex(BattleMapTool t) {
+  switch (t) {
+    case BattleMapTool.aoeCone:
+      return '#ff7043'; // deep orange
+    case BattleMapTool.aoeLine:
+      return '#ffca28'; // amber
+    case BattleMapTool.aoeCircle:
+      return '#42a5f5'; // blue
+    case BattleMapTool.aoeSquare:
+      return '#ab47bc'; // purple
+    case BattleMapTool.aoeSector:
+      return '#26c6da'; // teal
+    default:
+      return null;
+  }
+}
+
+/// Total, lossless mapping `BattleMapTool → persisted type string`. Replaces
+/// the old binary `circle?'circle':'ruler'` ternary so AoE subtypes survive
+/// the JSON / snapshot round-trip instead of degrading to ruler.
+String battleMapToolToTypeString(BattleMapTool t) {
+  switch (t) {
+    case BattleMapTool.circle:
+      return 'circle';
+    case BattleMapTool.aoeCone:
+      return 'cone';
+    case BattleMapTool.aoeLine:
+      return 'line';
+    case BattleMapTool.aoeCircle:
+      return 'aoeCircle';
+    case BattleMapTool.aoeSquare:
+      return 'square';
+    case BattleMapTool.aoeSector:
+      return 'sector';
+    default:
+      return 'ruler';
+  }
+}
+
+/// Inverse of [battleMapToolToTypeString]. Unknown strings → ruler.
+BattleMapTool battleMapToolFromTypeString(String? s) {
+  switch (s) {
+    case 'circle':
+      return BattleMapTool.circle;
+    case 'cone':
+      return BattleMapTool.aoeCone;
+    case 'line':
+      return BattleMapTool.aoeLine;
+    case 'aoeCircle':
+      return BattleMapTool.aoeCircle;
+    case 'square':
+      return BattleMapTool.aoeSquare;
+    case 'sector':
+      return BattleMapTool.aoeSector;
+    default:
+      return BattleMapTool.ruler;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Supporting data classes
@@ -49,16 +141,26 @@ class DrawStroke {
 }
 
 class MeasurementMark {
-  final BattleMapTool type; // ruler or circle
+  final BattleMapTool type; // ruler, circle, or an AoE template tool
   final Offset start;
   final Offset end;
   final bool isPersistent;
+
+  /// Fill/stroke color (hex) for AoE templates. Null for plain ruler/circle
+  /// measurements, which paint with their fixed yellow/cyan.
+  final String? colorHex;
+
+  /// Sector sweep angle in degrees (aoeSector only). Null while the radius is
+  /// still being set in stage 1, or for non-sector marks.
+  final double? sweepDeg;
 
   const MeasurementMark({
     required this.type,
     required this.start,
     required this.end,
     this.isPersistent = false,
+    this.colorHex,
+    this.sweepDeg,
   });
 }
 
@@ -109,6 +211,10 @@ class BattleMapState {
   final int tokenSize;
   final Map<String, double> tokenSizeMultipliers;
 
+  /// 5e diagonal counting rule for distance labels. Index into
+  /// `DiagonalRule.values` (0 = euclidean, the default).
+  final int diagonalRule;
+
   // Canvas dimensions (from background image or default)
   final int canvasWidth;
   final int canvasHeight;
@@ -130,6 +236,7 @@ class BattleMapState {
     this.feetPerCell = 5,
     this.tokenSize = 50,
     this.tokenSizeMultipliers = const {},
+    this.diagonalRule = 0,
     this.canvasWidth = 2048,
     this.canvasHeight = 2048,
   });
@@ -151,6 +258,7 @@ class BattleMapState {
     int? feetPerCell,
     int? tokenSize,
     Map<String, double>? tokenSizeMultipliers,
+    int? diagonalRule,
     int? canvasWidth,
     int? canvasHeight,
     // Sentinel for nullable clears
@@ -177,6 +285,7 @@ class BattleMapState {
       feetPerCell: feetPerCell ?? this.feetPerCell,
       tokenSize: tokenSize ?? this.tokenSize,
       tokenSizeMultipliers: tokenSizeMultipliers ?? this.tokenSizeMultipliers,
+      diagonalRule: diagonalRule ?? this.diagonalRule,
       canvasWidth: canvasWidth ?? this.canvasWidth,
       canvasHeight: canvasHeight ?? this.canvasHeight,
     );
@@ -239,6 +348,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // `fogDataBase64` at all — saving 100s of KB of JSON serialization on
   // every stroke / measurement edit.
   bool _fogDirtyForProjection = false;
+
+  /// True between a sector's stage-1 (radius) commit and its stage-2 (angle)
+  /// commit, so the lifecycle methods adjust the sweep instead of the radius.
+  bool _awaitingSectorAngle = false;
 
   BattleMapNotifier(this.encounterId, this._ref)
       : super(const BattleMapState()) {
@@ -412,11 +525,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
     final measurementSnaps = state.persistentMeasurements
         .map((m) => MeasurementSnapshot(
-              type: m.type == BattleMapTool.circle ? 'circle' : 'ruler',
+              type: battleMapToolToTypeString(m.type),
               x1: m.start.dx,
               y1: m.start.dy,
               x2: m.end.dx,
               y2: m.end.dy,
+              colorHex: m.colorHex,
+              sweepDeg: m.sweepDeg,
             ))
         .toList();
 
@@ -429,6 +544,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           gridVisible: state.gridVisible,
           gridSize: state.gridSize,
           feetPerCell: state.feetPerCell,
+          diagonalRule: state.diagonalRule,
           fogDataBase64: fogB64,
           includeFog: includeFog,
         );
@@ -441,6 +557,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     return '#${r.toRadixString(16).padLeft(2, '0')}'
         '${g.toRadixString(16).padLeft(2, '0')}'
         '${b.toRadixString(16).padLeft(2, '0')}';
+  }
+
+  static Color _colorFromHex(String hex) {
+    var clean = hex.replaceFirst('#', '');
+    if (clean.length == 6) clean = 'FF$clean';
+    return Color(int.parse(clean, radix: 16));
   }
 
   // -------------------------------------------------------------------------
@@ -463,7 +585,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       'f': e.fogData?.length ?? 0,
       'a': e.annotationData?.length ?? 0,
       'ms': e.measurementsData ?? '',
-      'g': '${e.gridSize}/${e.gridVisible}/${e.gridSnap}/${e.feetPerCell}',
+      'st': e.strokesData ?? '',
+      'g': '${e.gridSize}/${e.gridVisible}/${e.gridSnap}/${e.feetPerCell}/${e.diagonalRule}',
     });
   }
 
@@ -496,6 +619,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       feetPerCell: encounter.feetPerCell,
       tokenSize: encounter.tokenSize,
       tokenSizeMultipliers: Map<String, double>.from(encounter.tokenSizeMultipliers),
+      diagonalRule: encounter.diagonalRule,
       mapPath: encounter.mapPath,
     );
 
@@ -522,9 +646,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           for (final m in list) {
             if (m is! Map) continue;
             measurements.add(MeasurementMark(
-              type: m['type'] == 'circle'
-                  ? BattleMapTool.circle
-                  : BattleMapTool.ruler,
+              type: battleMapToolFromTypeString(m['type'] as String?),
               start: Offset(
                 (m['x1'] as num?)?.toDouble() ?? 0,
                 (m['y1'] as num?)?.toDouble() ?? 0,
@@ -534,6 +656,38 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
                 (m['y2'] as num?)?.toDouble() ?? 0,
               ),
               isPersistent: true,
+              colorHex: m['c'] as String?,
+              sweepDeg: (m['s'] as num?)?.toDouble(),
+            ));
+          }
+        }
+      } catch (_) {}
+    }
+    // Pen strokes — vector JSON (array of StrokeSnapshot). Reload as individual
+    // DrawStrokes so each stays deletable; NOT baked into annotationData.
+    final strokes = <DrawStroke>[];
+    final rawStrokes = encounter.strokesData;
+    if (rawStrokes != null && rawStrokes.isNotEmpty) {
+      try {
+        final list = jsonDecode(rawStrokes);
+        if (list is List) {
+          for (final e in list) {
+            if (e is! Map) continue;
+            final snap = StrokeSnapshot.fromJson(e.cast<String, dynamic>());
+            if (snap.points.length < 4) continue;
+            final pts = <Offset>[];
+            for (var i = 0; i + 1 < snap.points.length; i += 2) {
+              pts.add(Offset(snap.points[i], snap.points[i + 1]));
+            }
+            final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+            for (final p in pts.skip(1)) {
+              path.lineTo(p.dx, p.dy);
+            }
+            strokes.add(DrawStroke(
+              path: path,
+              color: _colorFromHex(snap.colorHex),
+              width: snap.width,
+              rawPoints: pts,
             ));
           }
         }
@@ -553,6 +707,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     s = s.copyWith(
       tokenPositions: positions,
       persistentMeasurements: measurements,
+      strokes: strokes,
     );
 
     if (!mounted) return;
@@ -578,6 +733,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       canvasHeight: bg?.height ?? 2048,
     );
     _stampFingerprint(encounter);
+
+    // Push rehydrated drawings (strokes/measurements/fog) to any live
+    // projection so a reopen mirrors them to players even without a fresh edit.
+    _fogDirtyForProjection = true;
+    _scheduleDrawingsSync();
 
     // First time we open this encounter's battle map — auto-fit the
     // background to the viewport so the user doesn't see the top-left
@@ -664,6 +824,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // -------------------------------------------------------------------------
 
   void setTool(BattleMapTool tool) {
+    // Abandon a half-placed sector (radius set, angle pending) when switching
+    // tools so it doesn't linger as a ghost wedge.
+    if (_awaitingSectorAngle) {
+      _awaitingSectorAngle = false;
+      state = state.copyWith(activeTool: tool, clearActiveMeasurement: true);
+      return;
+    }
     state = state.copyWith(activeTool: tool);
   }
 
@@ -875,11 +1042,62 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _debouncedAutoSave();
   }
 
+  /// Commits an in-progress ERASE drag (the mark-eraser tool). Vector strokes
+  /// crossed during the drag are already whole-deleted live via [eraseMarksAt].
+  /// This bakes the erase path into the legacy annotation BITMAP (the only way
+  /// to remove drawings that were flattened before the vector migration) and
+  /// discards the transient stroke — it is NOT kept as a vector stroke.
+  Future<void> commitEraseStroke() async {
+    final pts = List<Offset>.from(_currentRawPoints);
+    _currentPath = null;
+    _currentRawPoints.clear();
+    if (pts.isEmpty || state.annotationImage == null) {
+      // Nothing baked to clear — vector deletes already happened live.
+      strokeTick.value++;
+      return;
+    }
+    final w = _canvasWidth;
+    final h = _canvasHeight;
+    final old = state.annotationImage!;
+    final recorder = ui.PictureRecorder();
+    final bounds = Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble());
+    final canvas = Canvas(recorder, bounds);
+    // saveLayer wraps BOTH the base image and the clear path, so the clear
+    // actually subtracts from the baked pixels (the old flatten drew the image
+    // OUTSIDE the layer — that was the bug that made erases reappear).
+    canvas.saveLayer(bounds, Paint());
+    canvas.drawImage(old, Offset.zero, Paint());
+    final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+    for (final p in pts.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..blendMode = ui.BlendMode.clear
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _currentWidth
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+    canvas.restore();
+    final newImg = await recorder.endRecording().toImage(w, h);
+    if (!mounted) {
+      newImg.dispose();
+      return;
+    }
+    old.dispose();
+    state = state.copyWith(annotationImage: newImg);
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
   void clearAnnotation() {
     _currentPath = null;
     _currentRawPoints.clear();
     state = state.copyWith(strokes: [], clearAnnotationImage: true);
     _scheduleDrawingsSync();
+    _debouncedAutoSave(); // persist the cleared state (else it survives reload)
   }
 
   /// Expose in-progress path for painter
@@ -893,11 +1111,19 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // -------------------------------------------------------------------------
 
   void startMeasurement(Offset pt) {
+    final tool = state.activeTool;
+    // Stage 2 of a sector: the radius is locked; the second drag only sets the
+    // angle, so keep the pending mark and let updateMeasurement adjust sweep.
+    if (tool == BattleMapTool.aoeSector && _awaitingSectorAngle) return;
+    // AoE origins snap to the nearest grid intersection (when Snap is on) so
+    // templates sit cleanly on the grid; rulers stay freeform.
+    final origin = (isAoeTool(tool) && state.gridSnap) ? _snapToGrid(pt) : pt;
     state = state.copyWith(
       activeMeasurement: MeasurementMark(
-        type: state.activeTool,
-        start: pt,
-        end: pt,
+        type: tool,
+        start: origin,
+        end: origin,
+        colorHex: defaultAoeColorHex(tool),
       ),
     );
   }
@@ -905,19 +1131,72 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void updateMeasurement(Offset pt) {
     final m = state.activeMeasurement;
     if (m == null) return;
+    // Sector stage 2: center + radius fixed; the cursor's angular offset from
+    // the radius direction sets the (symmetric) sweep.
+    if (m.type == BattleMapTool.aoeSector && _awaitingSectorAngle) {
+      final base = m.end - m.start;
+      final cur = pt - m.start;
+      if (base.distance < 0.01 || cur.distance < 0.01) return;
+      final baseAng = math.atan2(base.dy, base.dx);
+      final curAng = math.atan2(cur.dy, cur.dx);
+      var diff = (curAng - baseAng).abs() % (2 * math.pi);
+      if (diff > math.pi) diff = 2 * math.pi - diff;
+      final sweep = (diff * 180 / math.pi * 2).clamp(1.0, 360.0);
+      state = state.copyWith(
+        activeMeasurement: MeasurementMark(
+          type: m.type,
+          start: m.start,
+          end: m.end,
+          colorHex: m.colorHex,
+          sweepDeg: sweep,
+        ),
+      );
+      return;
+    }
     state = state.copyWith(
-      activeMeasurement: MeasurementMark(type: m.type, start: m.start, end: pt),
+      activeMeasurement: MeasurementMark(
+        type: m.type,
+        start: m.start,
+        end: pt,
+        colorHex: m.colorHex,
+        sweepDeg: m.sweepDeg,
+      ),
     );
   }
 
   void commitMeasurement() {
     final m = state.activeMeasurement;
     if (m == null) return;
+    // Sector stage 1 → don't persist yet; lock the radius, show a default
+    // wedge, and wait for the angle drag (stage 2).
+    if (m.type == BattleMapTool.aoeSector && !_awaitingSectorAngle) {
+      // Ignore a zero-radius tap (no drag happened).
+      if ((m.end - m.start).distance < 1) {
+        state = state.copyWith(clearActiveMeasurement: true);
+        return;
+      }
+      _awaitingSectorAngle = true;
+      state = state.copyWith(
+        activeMeasurement: MeasurementMark(
+          type: m.type,
+          start: m.start,
+          end: m.end,
+          colorHex: m.colorHex,
+          sweepDeg: kDefaultSectorSweepDeg,
+        ),
+      );
+      return;
+    }
+    if (m.type == BattleMapTool.aoeSector) {
+      _awaitingSectorAngle = false;
+    }
     final persistent = MeasurementMark(
       type: m.type,
       start: m.start,
       end: m.end,
       isPersistent: true,
+      colorHex: m.colorHex,
+      sweepDeg: m.sweepDeg,
     );
     state = state.copyWith(
       persistentMeasurements: [...state.persistentMeasurements, persistent],
@@ -959,6 +1238,85 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       _scheduleDrawingsSync();
       _debouncedAutoSave();
     }
+  }
+
+  /// Drag-eraser: removes every persistent measurement / AoE template whose
+  /// geometry the pointer [canvasPoint] crosses. Called continuously while the
+  /// erase tool is dragged, so passing over a shape deletes it on contact.
+  void eraseMarksAt(Offset canvasPoint) {
+    final marks = state.persistentMeasurements;
+    final strokes = state.strokes;
+    if (marks.isEmpty && strokes.isEmpty) return;
+    final keptMarks = [
+      for (final m in marks)
+        if (!_markHit(m, canvasPoint)) m,
+    ];
+    // Also drop any committed pen stroke the pointer crosses. Whole-stroke
+    // delete (not pixel erase) so the change propagates to players via the
+    // shrunken `strokes` list. (Strokes already flattened into the annotation
+    // bitmap on a prior reload aren't vector anymore — can't be removed here.)
+    final keptStrokes = [
+      for (final s in strokes)
+        if (!_strokeHit(s, canvasPoint)) s,
+    ];
+    final changed = keptMarks.length != marks.length ||
+        keptStrokes.length != strokes.length;
+    if (!changed) return;
+    state = state.copyWith(
+      persistentMeasurements: keptMarks,
+      strokes: keptStrokes,
+    );
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
+  /// True when [p] (canvas-space) is within the stroke's polyline (proximity
+  /// band scaled by the pen width).
+  bool _strokeHit(DrawStroke s, Offset p) {
+    final pts = s.rawPoints;
+    if (pts.isEmpty) return false;
+    final th = 12.0 + s.width / 2;
+    if (pts.length == 1) return (p - pts.first).distance <= th;
+    for (var i = 0; i + 1 < pts.length; i++) {
+      if (_distToSegment(p, pts[i], pts[i + 1]) <= th) return true;
+    }
+    return false;
+  }
+
+  /// True when [p] (canvas-space) touches mark [m]'s geometry. Lines use a
+  /// proximity band; filled AoE shapes use path containment; the circle ruler
+  /// uses its ring, the filled sphere its interior.
+  bool _markHit(MeasurementMark m, Offset p) {
+    const th = 12.0;
+    switch (m.type) {
+      case BattleMapTool.ruler:
+        return _distToSegment(p, m.start, m.end) <= th;
+      case BattleMapTool.circle:
+        final r = (m.end - m.start).distance;
+        return ((p - m.start).distance - r).abs() <= th;
+      case BattleMapTool.aoeCircle:
+        return (p - m.start).distance <= (m.end - m.start).distance;
+      case BattleMapTool.aoeCone:
+        return aoeConePath(m.start, m.end).contains(p);
+      case BattleMapTool.aoeLine:
+        return aoeLinePath(m.start, m.end, state.gridSize.toDouble()).contains(p);
+      case BattleMapTool.aoeSquare:
+        return aoeSquareRect(m.start, m.end).contains(p);
+      case BattleMapTool.aoeSector:
+        return aoeSectorPath(m.start, m.end, m.sweepDeg ?? kDefaultSectorSweepDeg)
+            .contains(p);
+      default:
+        return false;
+    }
+  }
+
+  static double _distToSegment(Offset p, Offset a, Offset b) {
+    final ab = b - a;
+    final len2 = ab.dx * ab.dx + ab.dy * ab.dy;
+    if (len2 == 0) return (p - a).distance;
+    var t = ((p.dx - a.dx) * ab.dx + (p.dy - a.dy) * ab.dy) / len2;
+    t = t.clamp(0.0, 1.0);
+    return (p - Offset(a.dx + ab.dx * t, a.dy + ab.dy * t)).distance;
   }
 
   // -------------------------------------------------------------------------
@@ -1067,6 +1425,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _scheduleDrawingsSync();
   }
 
+  /// 5e diagonal counting rule (index into `DiagonalRule.values`). Drives the
+  /// distance labels on rulers/circles DM-side and projects to players.
+  void setDiagonalRule(int rule) {
+    state = state.copyWith(diagonalRule: rule);
+    _persistGridSettings();
+    _scheduleDrawingsSync();
+  }
+
   void _persistGridSettings() {
     if (!mounted) return;
     _ref.read(combatProvider.notifier).updateGridSettings(
@@ -1075,6 +1441,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       gridVisible: state.gridVisible,
       gridSnap: state.gridSnap,
       feetPerCell: state.feetPerCell,
+      diagonalRule: state.diagonalRule,
     );
   }
 
@@ -1106,13 +1473,29 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         ? null
         : jsonEncode(state.persistentMeasurements
             .map((m) => {
-                  'type': m.type == BattleMapTool.circle ? 'circle' : 'ruler',
+                  'type': battleMapToolToTypeString(m.type),
                   'x1': m.start.dx,
                   'y1': m.start.dy,
                   'x2': m.end.dx,
                   'y2': m.end.dy,
+                  if (m.colorHex != null) 'c': m.colorHex,
+                  if (m.sweepDeg != null) 's': m.sweepDeg,
                 })
             .toList());
+    // Pen strokes as vector JSON (reuse StrokeSnapshot's p/c/w encoding — the
+    // same shape the projection sends). Skip erase + degenerate strokes.
+    final keepStrokes =
+        state.strokes.where((s) => !s.isErase && s.rawPoints.length >= 2);
+    final strokesJson = keepStrokes.isEmpty
+        ? null
+        : jsonEncode([
+            for (final s in keepStrokes)
+              StrokeSnapshot(
+                points: [for (final p in s.rawPoints) ...[p.dx, p.dy]],
+                colorHex: _colorToHex(s.color),
+                width: s.width,
+              ).toJson(),
+          ]);
     final tokenPosMap = <String, dynamic>{};
     for (final entry in state.tokenPositions.entries) {
       tokenPosMap[entry.key] = {'x': entry.value.dx, 'y': entry.value.dy};
@@ -1125,6 +1508,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       fogData: fogB64,
       annotationData: annotB64,
       measurementsData: measurementsJson,
+      strokesData: strokesJson,
     );
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
@@ -1148,45 +1532,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     return base64Encode(byteData.buffer.asUint8List());
   }
 
+  /// Encodes ONLY the legacy/imported annotation bitmap. Pen strokes are no
+  /// longer baked here — they persist as vector JSON via `strokesData` so each
+  /// stays individually deletable across reload. (Baking strokes broke
+  /// whole-stroke erase: once flattened they lost identity and reappeared.)
   Future<String?> _annotationToBase64() async {
-    // Flatten strokes to image if any, otherwise use existing annotationImage
-    if (state.strokes.isEmpty) {
-      final img = state.annotationImage;
-      if (img == null) return null;
-      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return null;
-      return base64Encode(byteData.buffer.asUint8List());
-    }
-
-    final w = _canvasWidth;
-    final h = _canvasHeight;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()));
-
-    // Base annotation image
-    if (state.annotationImage != null) {
-      canvas.drawImage(state.annotationImage!, Offset.zero, Paint());
-    }
-
-    // Committed strokes
-    canvas.saveLayer(Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()), Paint());
-    for (final stroke in state.strokes) {
-      canvas.drawPath(
-        stroke.path,
-        Paint()
-          ..color = stroke.isErase ? Colors.transparent : stroke.color
-          ..blendMode = stroke.isErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
-          ..strokeWidth = stroke.width
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-    canvas.restore();
-
-    final img = await recorder.endRecording().toImage(w, h);
+    final img = state.annotationImage;
+    if (img == null) return null;
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    img.dispose();
     if (byteData == null) return null;
     return base64Encode(byteData.buffer.asUint8List());
   }

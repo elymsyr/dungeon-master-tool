@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../domain/entities/projection/projection_item.dart';
+import '../../../domain/value_objects/grid_distance.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'battlemap_picker_flow.dart';
@@ -15,6 +16,7 @@ typedef _ToolbarState = ({
   int gridSize,
   int feetPerCell,
   int tokenSize,
+  int diagonalRule,
   int canvasWidth,
   int canvasHeight,
 });
@@ -40,6 +42,7 @@ class BattleMapToolbar extends ConsumerWidget {
       gridSize: s.gridSize,
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
+      diagonalRule: s.diagonalRule,
       canvasWidth: s.canvasWidth,
       canvasHeight: s.canvasHeight,
     )));
@@ -178,6 +181,13 @@ class BattleMapToolbar extends ConsumerWidget {
           _ToolButton(tool: BattleMapTool.navigate, icon: Icons.pan_tool_outlined, tooltip: 'Navigate', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.ruler, icon: Icons.straighten, tooltip: 'Ruler', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.circle, icon: Icons.radio_button_unchecked, tooltip: 'Circle', mapState: mapState, notifier: notifier, palette: palette),
+          // AoE templates
+          _ToolButton(tool: BattleMapTool.aoeCone, icon: Icons.change_history, tooltip: 'Cone (AoE)', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.aoeLine, icon: Icons.horizontal_rule, tooltip: 'Line (AoE)', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.aoeCircle, icon: Icons.lens, tooltip: 'Sphere (AoE)', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.aoeSquare, icon: Icons.square, tooltip: 'Cube (AoE)', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.aoeSector, icon: Icons.pie_chart_outline, tooltip: 'Sector — drag radius, then drag angle', mapState: mapState, notifier: notifier, palette: palette),
+          _ToolButton(tool: BattleMapTool.eraseMark, icon: Icons.auto_fix_normal, tooltip: 'Erase — drag over rulers/AoE/drawings to delete', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.draw, icon: Icons.edit_outlined, tooltip: 'Draw', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogAdd, icon: Icons.cloud, tooltip: 'Add Fog', mapState: mapState, notifier: notifier, palette: palette),
           _ToolButton(tool: BattleMapTool.fogErase, icon: Icons.cloud_off, tooltip: 'Erase Fog', mapState: mapState, notifier: notifier, palette: palette),
@@ -207,7 +217,7 @@ class BattleMapToolbar extends ConsumerWidget {
           ),
           _ToolbarButton(
             icon: Icons.straighten_outlined,
-            tooltip: 'Clear Rulers',
+            tooltip: 'Clear Marks',
             palette: palette,
             onPressed: notifier.clearMeasurements,
           ),
@@ -290,8 +300,65 @@ class BattleMapToolbar extends ConsumerWidget {
             palette: palette,
             onChanged: notifier.setFeetPerCell,
           ),
+          const SizedBox(width: 12),
+          // Diagonal counting rule
+          Text('Diag:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+          const SizedBox(width: 4),
+          _DiagonalRuleSelector(
+            value: mapState.diagonalRule,
+            palette: palette,
+            onChanged: notifier.setDiagonalRule,
+          ),
           const Spacer(),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diagonal rule selector (Euclid / 5-10-5 / 5-5-5)
+// ---------------------------------------------------------------------------
+
+class _DiagonalRuleSelector extends StatelessWidget {
+  final int value;
+  final DmToolColors palette;
+  final void Function(int) onChanged;
+
+  const _DiagonalRuleSelector({
+    required this.value,
+    required this.palette,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rule = diagonalRuleFromInt(value);
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.sidebarDivider),
+        borderRadius: palette.br,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: rule.index,
+          isDense: true,
+          dropdownColor: palette.tabBg,
+          style: TextStyle(fontSize: 12, color: palette.tabText),
+          items: [
+            for (final r in DiagonalRule.values)
+              DropdownMenuItem(
+                value: r.index,
+                child: Text(diagonalRuleLabel(r),
+                    style: TextStyle(fontSize: 12, color: palette.tabText)),
+              ),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
       ),
     );
   }

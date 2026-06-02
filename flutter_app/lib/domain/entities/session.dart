@@ -34,6 +34,9 @@ abstract class Encounter with _$Encounter {
     @Default(false) bool gridVisible,
     @Default(false) bool gridSnap,
     @Default(5) int feetPerCell,
+    /// 5e diagonal counting rule (index into `DiagonalRule.values`, 0 =
+    /// euclidean). Rides combat_state JSON — no Drift column.
+    @Default(0) int diagonalRule,
     /// Combatant ids whose tokens are hidden from players. Hidden tokens are
     /// filtered out of the player projection entirely (never sent), and render
     /// ghosted on the DM map so the DM can still see + move them.
@@ -41,6 +44,11 @@ abstract class Encounter with _$Encounter {
     String? fogData,
     String? annotationData,
     String? measurementsData,
+    /// Pen-tool strokes as vector JSON (array of `StrokeSnapshot.toJson()`).
+    /// Replaces baking strokes into `annotationData` so each stroke keeps its
+    /// identity and stays individually deletable across reload. `annotationData`
+    /// now only holds legacy/imported bitmap art.
+    String? strokesData,
     String? encounterLayoutId,
   }) = _Encounter;
 

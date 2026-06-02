@@ -850,12 +850,14 @@ class CombatNotifier extends StateNotifier<CombatState>
     String? fogData,
     String? annotationData,
     String? measurementsData,
+    String? strokesData,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
       fogData: fogData,
       annotationData: annotationData,
       measurementsData: measurementsData,
+      strokesData: strokesData,
     ));
     _saveAndNotify();
   }
@@ -866,6 +868,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     required bool gridVisible,
     required bool gridSnap,
     required int feetPerCell,
+    int? diagonalRule,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
@@ -873,6 +876,7 @@ class CombatNotifier extends StateNotifier<CombatState>
       gridVisible: gridVisible,
       gridSnap: gridSnap,
       feetPerCell: feetPerCell,
+      diagonalRule: diagonalRule ?? enc.diagonalRule,
     ));
     _saveAndNotify();
   }

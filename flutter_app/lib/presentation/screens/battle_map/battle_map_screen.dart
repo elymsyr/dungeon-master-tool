@@ -334,7 +334,17 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         notifier.startAnnotationStroke(canvas);
       case BattleMapTool.ruler:
       case BattleMapTool.circle:
+      case BattleMapTool.aoeCone:
+      case BattleMapTool.aoeLine:
+      case BattleMapTool.aoeCircle:
+      case BattleMapTool.aoeSquare:
+      case BattleMapTool.aoeSector:
         notifier.startMeasurement(canvas);
+      case BattleMapTool.eraseMark:
+        // Whole-delete vector strokes/marks crossed + start an erase path that
+        // pixel-clears the legacy annotation bitmap (baked-in old drawings).
+        notifier.eraseMarksAt(canvas);
+        notifier.startAnnotationStroke(canvas, erase: true);
       case BattleMapTool.navigate:
         break;
     }
@@ -350,7 +360,15 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         notifier.continueAnnotationStroke(canvas);
       case BattleMapTool.ruler:
       case BattleMapTool.circle:
+      case BattleMapTool.aoeCone:
+      case BattleMapTool.aoeLine:
+      case BattleMapTool.aoeCircle:
+      case BattleMapTool.aoeSquare:
+      case BattleMapTool.aoeSector:
         notifier.updateMeasurement(canvas);
+      case BattleMapTool.eraseMark:
+        notifier.eraseMarksAt(canvas);
+        notifier.continueAnnotationStroke(canvas);
       case BattleMapTool.navigate:
         break;
     }
@@ -365,7 +383,14 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         notifier.endAnnotationStroke();
       case BattleMapTool.ruler:
       case BattleMapTool.circle:
+      case BattleMapTool.aoeCone:
+      case BattleMapTool.aoeLine:
+      case BattleMapTool.aoeCircle:
+      case BattleMapTool.aoeSquare:
+      case BattleMapTool.aoeSector:
         notifier.commitMeasurement();
+      case BattleMapTool.eraseMark:
+        await notifier.commitEraseStroke(); // bake bitmap clear (vector already deleted live)
       case BattleMapTool.navigate:
         break;
     }
