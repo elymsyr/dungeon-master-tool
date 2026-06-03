@@ -598,6 +598,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (widget.entities.isEmpty) return const [];
     final classId = widget.choice.classId;
     if (classId == null || classId.isEmpty) return const [];
+    final className = widget.entities[classId]?.name.toLowerCase();
     final maxLvl = widget.choice.maxSpellLevel;
     final out = <Entity>[];
     for (final e in widget.entities.values) {
@@ -608,9 +609,13 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       if (lvl == null) continue;
       if (cantripOnly && lvl != 0) continue;
       if (!cantripOnly && (lvl < 1 || lvl > maxLvl)) continue;
+      // SRD spells link by UUID (`class_refs`); imported packs carry the bare
+      // class name in `tags`. Accept either so packaged spells appear on level-up.
       final refs = f['class_refs'];
-      if (refs is! List) continue;
-      if (!refs.contains(classId)) continue;
+      final byRef = refs is List && refs.contains(classId);
+      final byTag = className != null &&
+          e.tags.any((t) => t.toLowerCase() == className);
+      if (!byRef && !byTag) continue;
       if (widget.existingSpellIds.contains(e.id)) continue;
       out.add(e);
     }

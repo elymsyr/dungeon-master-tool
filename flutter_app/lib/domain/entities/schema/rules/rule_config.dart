@@ -12,6 +12,25 @@
 /// cascade provider rebuilds.
 library;
 
+/// Canonicalize a raw `hit_die` field to the `"dN"` form the [RuleConfig]
+/// HP table is keyed by. Accepts int faces (`8` → `"d8"`), `"d8"`/`"D8"`,
+/// `"1d10"` (→ `"d10"`) or a bare `"8"`. Returns null when unparseable.
+///
+/// Built-in SRD classes store `"d8"`; imported (Open5e) packs store the int
+/// `8` — both must resolve identically, so always normalize before lookup.
+String? canonicalHitDie(Object? raw) {
+  if (raw is int) return 'd$raw';
+  if (raw is String) {
+    final m = RegExp(r'd?(\d+)', caseSensitive: false).firstMatch(raw.trim());
+    if (m != null) return 'd${m.group(1)}';
+  }
+  return null;
+}
+
+/// Integer faces of a hit die (`"d8"`/`8`/`"1d8"` → `8`), or 0 when unknown.
+int hitDieFaces(Object? raw) =>
+    int.tryParse(canonicalHitDie(raw)?.substring(1) ?? '') ?? 0;
+
 class RuleConfig {
   /// Levels at which an Ability Score Improvement / feat is granted.
   final List<int> asiLevels;

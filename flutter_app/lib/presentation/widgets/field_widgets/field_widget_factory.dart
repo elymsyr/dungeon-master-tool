@@ -48,6 +48,19 @@ String resolveRelationId(dynamic value, Map<String, Entity>? entities) {
 }
 
 /// Short subtitle for a related entity, surfaced under the chip name in
+/// Chargen "meta" relations whose linked entities carry long, folded
+/// descriptions (e.g. a packaged class's full feature dump). The relation-list
+/// widget skips the inline description for these — the name plus the
+/// `· Class`/`· Background` subtitle already identifies them, and the full text
+/// belongs on the entity's own card, not crammed under the character's field.
+const Set<String> _noInlineDescCats = {
+  'class',
+  'subclass',
+  'species',
+  'background',
+  'feat',
+};
+
 /// relation list fields. Lets readers scan a relation without opening
 /// the linked card. Slug-specific — falls back to category label / null.
 String? _relationSubtitle(Entity e) {
@@ -2202,7 +2215,10 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               final itemId = item['id']?.toString() ?? '';
 
               final linkedEntity = entities?[itemId];
-              final description = linkedEntity?.description ?? '';
+              final description = (linkedEntity != null &&
+                      !_noInlineDescCats.contains(linkedEntity.categorySlug))
+                  ? linkedEntity.description
+                  : '';
               // Indent description to align with the entity name (past the
               // equip toggle only — name leads the row now that the link
               // icon is gone).

@@ -335,7 +335,9 @@ LevelUpPlan planLevelUp({
 }) {
   final clampedFrom = fromLevel.clamp(0, 20);
   final clampedTo = toLevel.clamp(0, 20);
-  final hitDie = classEntity?.fields['hit_die'] as String?;
+  // Imported packs store hit_die as an int (8); SRD stores "d8". Normalize
+  // so a raw int never throws an `as String?` cast at character create/level-up.
+  final hitDie = canonicalHitDie(classEntity?.fields['hit_die']);
 
   final levelsGained = (clampedTo - clampedFrom).clamp(0, 20);
   final hpDelta = levelsGained * config.hpPerLevelFor(hitDie);

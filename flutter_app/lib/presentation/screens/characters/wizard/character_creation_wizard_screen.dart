@@ -28,6 +28,8 @@ import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/rules/rule_config.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../widgets/expandable_markdown.dart';
+import '../../../widgets/source_badge.dart';
 import '../../../widgets/perf/image_cache_size.dart';
 import '../../../../application/character_creation/caster_progression.dart';
 import '../../../../application/character_creation/level_up_planner.dart';
@@ -1584,17 +1586,8 @@ int _classBonusLanguageCap(Entity classEntity) {
 
 /// Parse hit die spec like "d8", "1d10", "8" → integer faces. Defaults to 8.
 int _parseHitDie(dynamic raw) {
-  if (raw is int) return raw;
-  if (raw is String) {
-    final lower = raw.toLowerCase().trim();
-    final match = RegExp(r'd(\d+)').firstMatch(lower);
-    if (match != null) {
-      return int.tryParse(match.group(1) ?? '') ?? 8;
-    }
-    final n = int.tryParse(lower);
-    if (n != null) return n;
-  }
-  return 8;
+  final n = hitDieFaces(raw);
+  return n == 0 ? 8 : n;
 }
 
 // ── Step widgets ──────────────────────────────────────────────────────────
@@ -2132,7 +2125,7 @@ class _RaceStep extends ConsumerWidget {
               dense: true,
               title: Text(opt['name']?.toString() ?? ''),
               subtitle: (opt['description']?.toString().isNotEmpty ?? false)
-                  ? Text(opt['description']!.toString())
+                  ? ExpandableMarkdown(data: opt['description']!.toString())
                   : null,
             ),
         ],
@@ -2222,14 +2215,16 @@ class _EntityPickStep extends ConsumerWidget {
               // ignore: deprecated_member_use
               onChanged: onChanged,
               dense: true,
-              title: Text(e.name),
+              title: Row(
+                children: [
+                  Flexible(child: Text(e.name)),
+                  const SizedBox(width: 6),
+                  Flexible(child: SourceBadge(e.source)),
+                ],
+              ),
               subtitle: e.description.isEmpty
                   ? null
-                  : Text(
-                      e.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  : ExpandableMarkdown(data: e.description),
             )),
       ],
     );

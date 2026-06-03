@@ -8,6 +8,8 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import '../../../../widgets/expandable_markdown.dart';
+import '../../../../widgets/source_badge.dart';
 
 /// Wizard step that lets spellcasting classes pick their starting
 /// cantrips and prepared/known spells. Hidden (renders an empty notice)
@@ -61,8 +63,13 @@ class SpellsStep extends ConsumerWidget {
     // W4: pull the slug-filtered + name-sorted list from the cached family
     // instead of re-running `entities.values.where(...)` per build.
     final allSpells = ref.watch(entitiesByCategoryProvider('spell'));
-    final classSpells =
-        allSpells.where((e) => _classRefs(e).contains(draft.classId));
+    // SRD spells link to a class by UUID (`class_refs`); imported (Open5e)
+    // packs instead carry the bare class *name* in `tags` (["Wizard"]). Match
+    // either so packaged spells aren't silently filtered out.
+    final className = classEntity.name.toLowerCase();
+    final classSpells = allSpells.where((e) =>
+        _classRefs(e).contains(draft.classId) ||
+        e.tags.any((t) => t.toLowerCase() == className));
     final cantrips = classSpells.where((e) => _level(e) == 0).toList();
     final leveled = classSpells
         .where((e) => _level(e) >= 1 && _level(e) <= maxSpellLevel)
@@ -344,7 +351,7 @@ class _SpellRow extends StatelessWidget {
                             ),
                           ),
                         ),
-                      Expanded(
+                      Flexible(
                         child: Text(
                           entity.name,
                           style: TextStyle(
@@ -356,11 +363,14 @@ class _SpellRow extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      Flexible(child: SourceBadge(entity.source)),
+                      const Spacer(),
                     ],
                   ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    MarkdownBody(
+                    ExpandableMarkdown(
                       data: description,
                       styleSheet:
                           MarkdownStyleSheet.fromTheme(Theme.of(context))
