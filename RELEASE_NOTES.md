@@ -1,5 +1,58 @@
 # Release Notes
 
+## Dungeon Master Tool v11.2.0 — Official-Pack Characters Resolve Everywhere, Typed Feat Prerequisites, Email Confirmation Fix, RPC Security Hardening (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v11.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v11.1.0. Closes the loop opened in v11.1.0: a character built from an **official / imported package** now resolves its packaged refs on **every card surface**, not just inside the wizard — the editor, header stat chips, and resolver all layer the character's `source_packages` on top of the bundled SRD through one shared helper, so worldless official-content characters stop rendering empty header chips and count-but-empty granted fields. Feat prerequisites graduate to **typed `prereq_clauses`** (ability-OR, spellcasting, armor/weapon proficiency) honored in both the wizard and the level-up resolver, and the Open5e importer now emits those clauses plus feat ASI bumps, conservative feat effect grants, and structured background equipment choices. Two infrastructure fixes ride along: **email confirmation** moves to a hosted `token_hash` page (the old PKCE `?code=` link never confirmed), and migrations **072/073** pin function `search_path` and strip anon `EXECUTE` from every `SECURITY DEFINER` RPC. No local DB migrations; the Open5e packs are rebuilt with subspecies reclassification reflected in the manifest counts.
+
+### Highlights
+
+#### Official-pack characters resolve on every surface
+
+- **One shared package-layering helper (`layerCharacterPackages` / `sourcePackagesOf`)** — A worldless character built from an official package stamps its `source_packages` on the PC entity, but only the editor's private helper re-layered them — the resolver, header chips, and stat strip still resolved against bundled SRD alone, so packaged species/class/subclass/feat refs dereferenced to nothing. Lifted into `package_source_entities.dart` and wired through `effectiveCharacterProvider`, `readCharacterEntities` (header chips), and the editor's `_readEntitiesFor`, so all card surfaces layer the character's packages on top of the campaign/SRD base identically. Packages still loading contribute nothing yet; each `watch` re-runs when its future settles.
+- **No raw UUIDs leak onto the sheet** — `ResolvedGrantsCard._nameOf` now maps an unresolved entity id that *looks like a UUID* to "Unknown" instead of printing the raw `xxxxxxxx-…` string (official content that hasn't loaded). Synthetic ids (`pool:rage_uses`, …) aren't UUIDs, so they still pass through for prettifying.
+- **Entity pickers surface package + SRD options with their source** — Char-sheet relation fields pass the character's package entities to `showEntitySelectorDialog` as `extraEntities`, merged on top of campaign + bundled SRD and **deduped by `(slug, name)`** so an option picked from an official pack at creation stays addable afterward. Each row's subtitle now shows the source (`spell · System Reference Document 5.2`) so duplicate-named rows are distinguishable.
+
+#### Typed feat prerequisites (`prereq_clauses`)
+
+- **Resolver gates on the full clause set** — The pending-choice feat picker (wizard *and* level-up) now prefers a feat's typed `prereq_clauses` over the flat single-ability fields: `ability_min` with an **OR** option list ("Strength **or** Dexterity 13"), `character_level`, `spellcasting`, `armor_proficiency`, and `weapon_proficiency` (simple/martial/any). Unknown / `other` clauses never block (display-only). The editor resolves the live working copy first, so eligibility reflects current proficiencies and spellcasting, not just ability scores. Built-in feats without clauses fall back to the legacy ability + level fields unchanged.
+- **Importer emits the clauses** — `_parseFeatPrereq` now captures an OR/AND/comma ability group sharing one minimum ("Strength or Dexterity 13+") and keeps **every** option, plus character-level, spellcasting, and armor/weapon proficiency gates, alongside the back-compat flat fields.
+
+#### Open5e importer — feat ASI, effects, background equipment
+
+- **Feat ASI bumps parsed (`asi_amount` / `asi_max_score` / `asi_ability_options`)** — Both SRD-2024 ("Increase your X or Y score by N, to a maximum of M") and A5e ("Your X or Y score increases by N…") phrasings, plus "increase one ability score of your choice" (all six), so half-feats actually offer their ability bump.
+- **Conservative feat effect grants** — `_parseFeatEffects` emits only high-confidence unconditional grants the resolver knows: armor/shield `proficiency_grant`, flat `speed_bonus`, and Tough-style `hp_bonus_per_level`. Grant parsers read the benefit text **without** the prerequisite line, so "proficiency with Light armor" as a *prereq* is never misread as a *granted* proficiency.
+- **Background equipment A/B prose → structured choice** — SRD-2024 backgrounds ship starting gear as `"*Choose A or B:* (A) <items>, N GP; or (B) 50 GP"` prose; `_parseEquipmentChoiceProse` turns it into pickable `equipment_choice_groups` (gold always captured; items become a hard `ref` only when they resolve in-pack, so the build stays safe) instead of losing it to a note.
+
+#### Wizard & editor polish
+
+- **Choice-less granted feats shown read-only** — Origin feats with no sub-choice (Alert, Tough, …) used to leave the feats step blank ("No sub-choices needed"). They now render a read-only `_GrantedFeatCard` with name, source badge, and collapsible description, so the player sees what they received. The expensive ~7 K-entry bucket cache is only built when an interactive picker actually needs it.
+- **Level-up table collapsed by default** — The 20-row class level-up table in the editor and the wizard's subclass step is now wrapped in a new `ExpandableSection` ("Show level-up table"), so reference detail no longer dominates the step.
+
+#### Email confirmation & RPC hardening
+
+- **Email confirmation via hosted page** — Email sign-up confirmation used the default PKCE `?code=` link, whose `code_verifier` lives only in the app instance that called `signUp` — so the emailed link (landing on a browser / `localhost:3000`) could never complete confirmation. Confirmation now goes through a hosted static page using `token_hash` + `verifyOtp` (server-verifiable, no `code_verifier`), which works on every platform with no deep-link / URL-scheme registration. The OAuth/auth redirect scheme is also lifted into one `_authRedirect` constant. Setup steps in `docs/email_confirmation_setup.md`.
+- **Migration 072 — pin `search_path`** — Ten functions flagged by the Supabase security linter (`function_search_path_mutable`) get `SET search_path = public, pg_temp`. Bodies and `SECURITY` attributes unchanged; idempotent.
+- **Migration 073 — revoke anon `EXECUTE`** — Strips anonymous `EXECUTE` from every `public` `SECURITY DEFINER` RPC. 072's `REVOKE … FROM anon` was a no-op (anon inherits the default `PUBLIC` grant), so 073 revokes from `PUBLIC` after explicitly re-granting the captured `authenticated` / `service_role` access — anon closes, everything else keeps today's access. Deliberate pre-login RPCs (`is_beta_active`, `get_beta_status`, `whoami`) are allowlisted. Defense-in-depth: admin RPCs already self-guard with `is_admin()`.
+
+### Upgrade notes
+
+- **App version bump:** `11.1.0` → `11.2.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **Cloud migrations:** `072_security_hardening.sql` then `073_revoke_anon_execute.sql` — apply in order via Supabase Dashboard → SQL Editor. Permission-only; no function bodies change, no data change, both idempotent.
+- **Email confirmation requires the hosted confirm page** — Deploy `confirm/index.html` to the user-pages site and point the Supabase email template at `token_hash` per `docs/email_confirmation_setup.md`. Until then, email sign-up confirmation stays broken (OAuth sign-in is unaffected).
+- **Open5e packs rebuilt** — Bundled `assets/open5e_packs/*.pkg.json` regenerated with feat ASI/effects/prereq clauses, background equipment groups, and subspecies reclassification (manifest counts now split `species` / `subspecies`). Re-install a pack to pick up the richer feat/background data; existing installs keep working.
+- **Existing characters are unaffected** until re-resolved. Worldless official-content characters render their packaged refs immediately on reopen (no migration); packaged feat prerequisites/ASI apply on the next wizard or level-up pass.
+
+### Known issues
+
+- **Feat effect parsing is conservative** — Only unconditional armor/shield/speed/Tough-HP grants are emitted; conditional, PB-scaling, or "of your choice" benefits stay in the folded narrative.
+- Carry-over from v11.1.0: subspecies reclassification on legacy packs is heuristic (keys on the `*Subspecies of X.*` prefix); shape color picker is per-layer; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v11.1.0 — Imported-Pack Chargen, First-Class Subspecies, Hub Filters (Beta)
 
 **Release date:** June 2026
