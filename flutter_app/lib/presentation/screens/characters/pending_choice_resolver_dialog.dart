@@ -105,6 +105,9 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
   Set<String> existingToolIds = const {},
   Set<String> existingLanguageIds = const {},
   Map<String, String> featChoices = const {},
+  bool hasSpellcasting = false,
+  Set<String> proficientArmorCategories = const {},
+  Set<String> proficientWeaponClasses = const {},
 }) {
   return showDialog<PendingChoiceResolution>(
     context: context,
@@ -119,6 +122,9 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
       existingToolIds: existingToolIds,
       existingLanguageIds: existingLanguageIds,
       featChoices: featChoices,
+      hasSpellcasting: hasSpellcasting,
+      proficientArmorCategories: proficientArmorCategories,
+      proficientWeaponClasses: proficientWeaponClasses,
     ),
   );
 }
@@ -135,6 +141,13 @@ class _ResolverDialog extends StatefulWidget {
   final Set<String> existingLanguageIds;
   final Map<String, String> featChoices;
 
+  /// Typed feat-prerequisite context (B1). Used by [_computeEligibleFeats] to
+  /// gate feats whose `prereq_clauses` require spellcasting or armor/weapon
+  /// proficiency. Names are lowercased; weapon classes are `simple`/`martial`.
+  final bool hasSpellcasting;
+  final Set<String> proficientArmorCategories;
+  final Set<String> proficientWeaponClasses;
+
   const _ResolverDialog({
     required this.choice,
     required this.entities,
@@ -146,6 +159,9 @@ class _ResolverDialog extends StatefulWidget {
     required this.existingToolIds,
     required this.existingLanguageIds,
     required this.featChoices,
+    this.hasSpellcasting = false,
+    this.proficientArmorCategories = const {},
+    this.proficientWeaponClasses = const {},
   });
 
   @override
@@ -482,26 +498,30 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       final auto = fields['auto_granted_by'];
       if (auto is List && auto.isNotEmpty) continue;
       if (_isFightingStyleFeat(e)) continue;
-      final minLvl = fields['prereq_min_character_level'];
-      if (minLvl is int && minLvl > widget.choice.level) continue;
-      // Ability prerequisite (e.g. "Wisdom 13"). `prereq_ability_ref` resolves
-      // to the ability entity; map its name back to the STR/…/CHA key the
-      // score map uses and hide the feat when the score falls short.
-      final minScore = fields['prereq_min_score'];
-      if (minScore is int) {
-        final abilId =
-            resolveEntityRef(fields['prereq_ability_ref'], widget.entities);
-        final abilName = abilId == null ? null : widget.entities[abilId]?.name;
-        final abbrev = abilName == null
-            ? null
-            : _abilityLabels.entries
-                .firstWhere((m) => m.value == abilName,
-                    orElse: () => const MapEntry('', ''))
-                .key;
-        if (abbrev != null &&
-            abbrev.isNotEmpty &&
-            (widget.abilityScores[abbrev] ?? 10) < minScore) {
-          continue;
+      // Prefer the typed `prereq_clauses` (B1) when present — they model
+      // OR-of-abilities, spellcasting, and armor/weapon proficiency that the
+      // flat fields can't. Fall back to the legacy single-ability + level
+      // fields for built-in feats / un-upgraded packs.
+      final clauses = fields['prereq_clauses'];
+      if (clauses is List && clauses.isNotEmpty) {
+        if (!_passesPrereqClauses(clauses)) continue;
+      } else {
+        final minLvl = fields['prereq_min_character_level'];
+        if (minLvl is int && minLvl > widget.choice.level) continue;
+        // Ability prerequisite (e.g. "Wisdom 13"). `prereq_ability_ref`
+        // resolves to the ability entity; map its name back to the STR/…/CHA
+        // key the score map uses and hide the feat when the score falls short.
+        final minScore = fields['prereq_min_score'];
+        if (minScore is int) {
+          final abilId =
+              resolveEntityRef(fields['prereq_ability_ref'], widget.entities);
+          final abilName =
+              abilId == null ? null : widget.entities[abilId]?.name;
+          final abbrev = _abbrevForAbility(abilName);
+          if (abbrev != null &&
+              (widget.abilityScores[abbrev] ?? 10) < minScore) {
+            continue;
+          }
         }
       }
       final repeatable = fields['repeatable'] == true;
@@ -510,6 +530,68 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return List<Entity>.unmodifiable(out);
+  }
+
+  /// STR/…/CHA key for an ability's full name (`Strength` → `STR`), or null.
+  String? _abbrevForAbility(String? name) {
+    if (name == null) return null;
+    for (final entry in _abilityLabels.entries) {
+      if (entry.value == name) return entry.key;
+    }
+    return null;
+  }
+
+  /// Evaluate typed `prereq_clauses` (ALL-of). Unknown / `other` clauses never
+  /// block (display-only). `ability_min` passes if ANY listed ability meets the
+  /// score (OR semantics — "Strength or Dexterity 13").
+  bool _passesPrereqClauses(List<dynamic> clauses) {
+    for (final raw in clauses) {
+      if (raw is! Map) continue;
+      switch (raw['type']) {
+        case 'character_level':
+          final min = raw['min_level'];
+          if (min is int && min > widget.choice.level) return false;
+        case 'ability_min':
+          final min = raw['min_score'];
+          final opts = raw['ability_options'];
+          if (min is! int || opts is! List || opts.isEmpty) break;
+          var anyMet = false;
+          for (final o in opts) {
+            final id = resolveEntityRef(o, widget.entities);
+            final name = (id == null ? null : widget.entities[id]?.name) ??
+                (o is Map ? o['name'] as String? : null);
+            final abbrev = _abbrevForAbility(name);
+            if (abbrev != null && (widget.abilityScores[abbrev] ?? 10) >= min) {
+              anyMet = true;
+              break;
+            }
+          }
+          if (!anyMet) return false;
+        case 'spellcasting':
+          if (!widget.hasSpellcasting) return false;
+        case 'armor_proficiency':
+          var name = (raw['category'] as String?)?.toLowerCase();
+          if (name == null) {
+            final id = resolveEntityRef(raw['category_ref'], widget.entities);
+            name = id == null ? null : widget.entities[id]?.name.toLowerCase();
+          }
+          if (name != null &&
+              !widget.proficientArmorCategories.contains(name)) {
+            return false;
+          }
+        case 'weapon_proficiency':
+          final wc = (raw['weapon_class'] as String?)?.toLowerCase();
+          if (wc == null) break;
+          if (wc == 'any') {
+            if (widget.proficientWeaponClasses.isEmpty) return false;
+          } else if (!widget.proficientWeaponClasses.contains(wc)) {
+            return false;
+          }
+        default:
+          break; // 'other' / unknown → never blocks
+      }
+    }
+    return true;
   }
 
   List<Entity> _computeFightingStyleFeats() {

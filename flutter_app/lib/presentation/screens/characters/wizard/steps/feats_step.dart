@@ -68,30 +68,26 @@ class FeatsStep extends ConsumerWidget {
       final groups = _readChoiceGroups(feat);
       if (groups.isNotEmpty) featGroups[feat] = groups;
     }
+    // Feats granted with no sub-choice (most L1 origin feats: Alert, Tough, …).
+    // They need no picker, but should still be shown read-only so the step
+    // isn't confusingly blank — the feat IS applied, there's just nothing to
+    // pick.
+    final choicelessFeats =
+        feats.where((f) => !featGroups.containsKey(f)).toList();
 
-    if (featGroups.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          'No sub-choices needed for the active feats.',
-          style: TextStyle(color: palette.sidebarLabelSecondary),
-        ),
-      );
-    }
-
-    // Materialize entity buckets once per build instead of per group. The
-    // skill / tool / spell base lists are pulled from the cached family
-    // provider (sorted, identity-stable until the entity map changes), so
-    // the factory below only has to bucket what each feat needs — no full
-    // 7 K-entry scan per render (W5).
-    final cache = _FeatsCache.from(
-      entities,
-      featGroups.values,
-      skills: ref.watch(entitiesByCategoryProvider('skill')),
-      tools: ref.watch(entitiesByCategoryProvider('tool')),
-      spells: ref.watch(entitiesByCategoryProvider('spell')),
-      classes: ref.watch(entitiesByCategoryProvider('class')),
-    );
+    // Only build the (relatively expensive) bucket cache when an interactive
+    // picker actually needs it. The category watches stay inside this branch so
+    // a choice-less step doesn't subscribe to the ~7 K-entry buckets.
+    final cache = featGroups.isEmpty
+        ? null
+        : _FeatsCache.from(
+            entities,
+            featGroups.values,
+            skills: ref.watch(entitiesByCategoryProvider('skill')),
+            tools: ref.watch(entitiesByCategoryProvider('tool')),
+            spells: ref.watch(entitiesByCategoryProvider('spell')),
+            classes: ref.watch(entitiesByCategoryProvider('class')),
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -103,9 +99,11 @@ class FeatsStep extends ConsumerWidget {
             draft: draft,
             notifier: notifier,
             entities: entities,
-            cache: cache,
+            cache: cache!,
             palette: palette,
           ),
+        for (final feat in choicelessFeats)
+          _GrantedFeatCard(feat: feat, palette: palette),
       ],
     );
   }
@@ -155,6 +153,55 @@ List<String> _splitChoiceValue(String? v) {
 }
 
 String _joinChoiceValue(List<String> ids) => ids.join(',');
+
+/// Read-only card for a feat that was granted automatically (e.g. a
+/// background's origin feat) but has no sub-choices to resolve. Shows the
+/// feat name, its source, and a collapsible description so the player can see
+/// what they received instead of an empty step.
+class _GrantedFeatCard extends StatelessWidget {
+  final Entity feat;
+  final DmToolColors palette;
+
+  const _GrantedFeatCard({required this.feat, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    feat.name,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                SourceBadge(feat.source),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Granted automatically — no choices to make.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+            ),
+            if (feat.description.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              ExpandableMarkdown(data: feat.description),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Per-build entity lookup tables built from the active feats' choice
 /// groups. Avoids walking `entities.values` once per chip-picker — instead

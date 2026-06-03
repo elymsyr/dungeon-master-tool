@@ -58,3 +58,6 @@ build/
 *.rpm
 *.snap
 *.AppImage
+
+# Separate GitHub Pages repo (elymsyr.github.io) — has its own git remote, do not embed
+/elymsyr.github.io/

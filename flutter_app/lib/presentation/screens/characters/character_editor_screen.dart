@@ -59,6 +59,7 @@ import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/class_level_up_table.dart';
+import '../../widgets/expandable_section.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
@@ -1330,6 +1331,31 @@ class _CharacterEditorScreenState
       }
     }
 
+    // Typed feat-prerequisite context (B1: prereq_clauses). Resolve the live
+    // working copy so feat eligibility reflects current proficiencies +
+    // spellcasting, not just ability scores.
+    final resolved = CharacterResolver.resolve(
+      character,
+      entities,
+      config: ref.read(ruleConfigProvider),
+    );
+    String? lowerName(String id) => entities[id]?.name.toLowerCase();
+    final proficientArmorCategories = resolved.proficiencies.armorCategoryIds
+        .map(lowerName)
+        .whereType<String>()
+        .toSet();
+    final proficientWeaponClasses = resolved.proficiencies.weaponCategoryIds
+        .map(lowerName)
+        .whereType<String>()
+        .toSet();
+    final hasSpellcasting = resolved.grantedSpellIds.isNotEmpty ||
+        resolved.grantedCantripIds.isNotEmpty ||
+        existingSpellIds.isNotEmpty ||
+        resolved.classLevels.keys.any((cid) {
+          final ck = entities[cid]?.fields['caster_kind'];
+          return ck is String && ck.isNotEmpty && ck.toLowerCase() != 'none';
+        });
+
     final resolution = await showPendingChoiceResolver(
       context,
       choice: choice,
@@ -1342,6 +1368,9 @@ class _CharacterEditorScreenState
       existingToolIds: existingToolIds,
       existingLanguageIds: existingLanguageIds,
       featChoices: featChoices,
+      hasSpellcasting: hasSpellcasting,
+      proficientArmorCategories: proficientArmorCategories,
+      proficientWeaponClasses: proficientWeaponClasses,
     );
     if (!mounted || resolution == null) return;
 
@@ -1934,10 +1963,19 @@ class _CharacterEditorScreenState
       const SizedBox(height: 16),
       EntityCardSectionHeading(title: 'Level Up Table', palette: palette),
       const SizedBox(height: 8),
-      ClassLevelUpTable(
-        classEntity: classEntity,
-        subclassEntity: subclassEntity,
-        currentLevel: level,
+      // Collapsed by default — reference detail, kept consistent with the
+      // wizard's subclass step.
+      ExpandableSection(
+        collapsedLabel: 'Show level-up table',
+        expandedLabel: 'Hide level-up table',
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: ClassLevelUpTable(
+            classEntity: classEntity,
+            subclassEntity: subclassEntity,
+            currentLevel: level,
+          ),
+        ),
       ),
     ];
   }
@@ -2677,48 +2715,31 @@ class _CharacterEditorScreenState
   /// E1: returns a lazy `CombinedMapView` instead of spreading both
   /// maps into a fresh `{}` per call. Reads are O(1); 20+ field tiles
   /// hitting this helper no longer allocate one 7 K-entry map each.
-  /// Standalone content packages stamped on a built-in character at
-  /// creation (`source_packages` field). Empty for legacy / world chars.
-  List<String> _sourcePackagesOf(Character character) {
-    final raw = character.entity.fields['source_packages'];
-    if (raw is List) {
-      return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
-    }
-    return const [];
-  }
-
   Map<String, Entity> _readEntitiesFor(Character character) {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    if (character.worldId == null) {
-      // Built-in characters may have been created against standalone
-      // packages — re-resolve those so species/class/spell refs outside the
-      // bundled pack still render. Packages still loading contribute nothing
-      // yet; the watch re-runs when each future settles.
-      final pkgNames = _sourcePackagesOf(character);
-      if (pkgNames.isEmpty) return builtin;
-      final maps = <Map<String, Entity>>[];
-      for (final name in pkgNames) {
-        final m = ref.watch(packageEntitiesProvider(name)).valueOrNull;
-        if (m != null && m.isNotEmpty) maps.add(m);
+    Map<String, Entity> base = builtin;
+    if (character.worldId != null) {
+      final activeWorldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+      if (activeWorldId == character.worldId) {
+        // Subscribe only to add/remove (length changes). Per-keystroke field
+        // edits mutate values in place without changing map.length, so this
+        // helper no longer triggers a 20+ tile rebuild cascade. Linked-entity
+        // value freshness handled at the specific tile level if needed.
+        ref.watch(entityProvider.select((m) => m.length));
+        final campaign = ref.read(entityProvider);
+        if (campaign.isNotEmpty) {
+          base = CombinedMapView<String, Entity>([campaign, builtin]);
+        }
       }
-      if (maps.isEmpty) return builtin;
-      // Packages first so they win id collisions, builtin as the base.
-      return UnmodifiableMapView<String, Entity>(
-        CombinedMapView<String, Entity>([...maps, builtin]),
-      );
     }
-    final activeWorldId =
-        ref.watch(activeCampaignIdProvider).valueOrNull;
-    if (activeWorldId != character.worldId) return builtin;
-    // Subscribe only to add/remove (length changes). Per-keystroke field
-    // edits mutate values in place without changing map.length, so this
-    // helper no longer triggers a 20+ tile rebuild cascade. Linked-entity
-    // value freshness handled at the specific tile level if needed.
-    ref.watch(entityProvider.select((m) => m.length));
-    final campaign = ref.read(entityProvider);
-    if (campaign.isEmpty) return builtin;
-    return UnmodifiableMapView<String, Entity>(
-      CombinedMapView<String, Entity>([campaign, builtin]),
+    // Layer standalone source packages so species/class/spell refs outside the
+    // bundled pack still render. Packages still loading contribute nothing yet;
+    // the watch re-runs when each future settles. Shared with the resolver and
+    // header chips so all card surfaces resolve identically.
+    return layerCharacterPackages(
+      base,
+      sourcePackagesOf(character),
+      (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
     );
   }
 

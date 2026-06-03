@@ -63,6 +63,12 @@ class AuthNotifier extends StateNotifier<AuthState?> {
   final Ref _ref;
   StreamSubscription<AuthState?>? _sub;
 
+  /// Deep-link scheme the OS routes back into the app. Used for both OAuth
+  /// callbacks and email-confirmation redirects. Registered on Android/iOS
+  /// (manifest / Info.plist) and desktop (per-OS scheme registration).
+  static const String _authRedirect =
+      'com.elymsyr.dungeonmastertool://auth-callback';
+
   void _init() {
     if (!SupabaseConfig.isConfigured) return;
 
@@ -173,6 +179,10 @@ class AuthNotifier extends StateNotifier<AuthState?> {
   /// to verify their email before a session is established.
   Future<String?> signUp(String email, String password) async {
     try {
+      // Email confirmation is handled by a hosted web page (token_hash +
+      // verifyOtp), not a deep link — so no emailRedirectTo here. After
+      // confirming in the browser the user returns and signs in. See
+      // docs/email_confirmation_setup.md.
       await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
@@ -224,11 +234,9 @@ class AuthNotifier extends StateNotifier<AuthState?> {
   /// the Supabase dashboard), the user gets a clear error message.
   Future<String?> _signInWithOAuthMobile(OAuthProvider provider) async {
     try {
-      const redirectUrl = 'com.elymsyr.dungeonmastertool://auth-callback';
-
       final res = await Supabase.instance.client.auth.getOAuthSignInUrl(
         provider: provider,
-        redirectTo: redirectUrl,
+        redirectTo: _authRedirect,
       );
 
       // Listen for the auth result BEFORE launching the browser so we never

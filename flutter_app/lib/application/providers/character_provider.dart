@@ -18,6 +18,7 @@ import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import 'rule_config_provider.dart';
 import '../services/builtin_srd_entities.dart';
+import '../services/package_source_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
@@ -1062,9 +1063,9 @@ final effectiveCharacterProvider =
   // characters merge the campaign on top so authored overrides win, with
   // builtin filling in any Tier-0 lookup the campaign hasn't seeded.
   final builtin = ref.watch(builtinSrdEntitiesProvider);
-  final Map<String, Entity> entities;
+  final Map<String, Entity> base;
   if (pc.worldId == null) {
-    entities = builtin;
+    base = builtin;
   } else {
     // RP-1: subscribe only to add/remove (length) and read the map lazily via
     // CombinedMapView, instead of ref.watch(entityProvider) + a full spread —
@@ -1075,10 +1076,19 @@ final effectiveCharacterProvider =
     // place without changing map.length, so they don't trigger a recompute.
     ref.watch(entityProvider.select((m) => m.length));
     final campaign = ref.read(entityProvider);
-    entities = campaign.isEmpty
+    base = campaign.isEmpty
         ? builtin
         : CombinedMapView<String, Entity>([campaign, builtin]);
   }
+  // Layer the character's standalone source packages on top so official-package
+  // refs (species/class/subclass/feats/grants) dereference here the same way
+  // the wizard resolved them — otherwise worldless chars built from official
+  // content render empty header chips and count-but-empty granted fields.
+  final entities = layerCharacterPackages(
+    base,
+    sourcePackagesOf(pc),
+    (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
+  );
   return CharacterResolver.resolve(pc, entities,
       config: ref.watch(ruleConfigProvider));
 });
