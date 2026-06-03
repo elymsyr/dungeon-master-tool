@@ -1,6 +1,7 @@
 import '../entities/character.dart';
 import '../entities/character/effective_character.dart';
 import '../entities/entity.dart';
+import 'entity_ref.dart';
 import '../entities/schema/rules/rule_config.dart';
 import 'count_formula.dart';
 
@@ -741,6 +742,21 @@ class CharacterResolver {
       if (sp != null) {
         speedBonus += 0; // species speed_ft is the BASE speed, not a bonus
         final speciesSource = 'species:${sp.name}';
+        // Innate alternate movement speeds carried as absolute feet on the
+        // species (packaged Open5e species + any homebrew). Effects also feed
+        // `extraSpeeds`; keep the larger value per mode.
+        const speedModeByField = {
+          'speed_fly_ft': 'fly',
+          'speed_swim_ft': 'swim',
+          'speed_climb_ft': 'climb',
+          'speed_burrow_ft': 'burrow',
+        };
+        speedModeByField.forEach((field, mode) {
+          final v = sp.fields[field];
+          if (v is int && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
+            extraSpeeds[mode] = v;
+          }
+        });
         final modifiers = _readMapList(sp.fields['granted_modifiers']);
         for (final m in modifiers) {
           applyEffect(_modifierAsEffect(m), speciesSource);
@@ -1214,12 +1230,8 @@ class CharacterResolver {
     Map<String, Entity> all,
     String slug,
     String name,
-  ) {
-    for (final e in all.values) {
-      if (e.categorySlug == slug && e.name == name) return e.id;
-    }
-    return null;
-  }
+  ) =>
+      findEntityIdByName(all, slug, name);
 
   /// Compute the PC's armor class from equipped armor + Dex (capped by
   /// armor row), shield bonus, generic `ac_bonus` effects, and any
@@ -1343,17 +1355,10 @@ class CharacterResolver {
     }
   }
 
-  static String? _resolveRef(Object? raw, Map<String, Entity> all) {
-    if (raw is String) return all.containsKey(raw) ? raw : null;
-    if (raw is Map) {
-      final slug = raw['_ref'] ?? raw['slug'];
-      final name = raw['name'];
-      if (slug is String && name is String) {
-        return _findEntityIdByName(all, slug, name);
-      }
-    }
-    return null;
-  }
+  // Ref resolution lives in `entity_ref.dart` so the chargen/level-up
+  // selection UI resolves the same softRef envelopes this resolver does.
+  static String? _resolveRef(Object? raw, Map<String, Entity> all) =>
+      resolveEntityRef(raw, all);
 
   static String? _refIdFor(Map<String, dynamic> eff, Map<String, Entity> all) {
     return _resolveRef(eff['target_ref'], all);

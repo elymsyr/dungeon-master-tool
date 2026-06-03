@@ -6,6 +6,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../../domain/services/entity_ref.dart';
 import '../../../../widgets/class_level_up_table.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
@@ -37,7 +38,7 @@ class SubclassStep extends ConsumerWidget {
     final allSubclasses = ref.watch(entitiesByCategoryProvider('subclass'));
     final subclasses = [
       for (final e in allSubclasses)
-        if (_parentClassId(e) == draft.classId) e,
+        if (_parentClassId(e, entities) == draft.classId) e,
     ];
     if (subclasses.isEmpty) {
       return const Padding(
@@ -111,11 +112,11 @@ class SubclassStep extends ConsumerWidget {
     );
   }
 
-  static String? _parentClassId(Entity e) {
-    final v = e.fields['parent_class_ref'];
-    if (v is String && v.isNotEmpty) return v;
-    return null;
-  }
+  // `parent_class_ref` is a plain id for in-pack/built-in parents but a softRef
+  // `{slug, name}` Map when the base class lives in another pack (toh/a5e
+  // subclasses). Resolve both so packaged subclasses list under their class.
+  static String? _parentClassId(Entity e, Map<String, Entity> entities) =>
+      resolveEntityRef(e.fields['parent_class_ref'], entities);
 
   static int _grantedAtLevel(Entity e) {
     final v = e.fields['granted_at_level'];

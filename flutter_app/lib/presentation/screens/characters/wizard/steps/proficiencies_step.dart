@@ -7,6 +7,7 @@ import '../../../../../application/character_creation/origin_constants.dart';
 import '../../../../../application/character_creation/weapon_mastery_resolver.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import 'skill_mod_helper.dart';
 
@@ -282,8 +283,10 @@ class ProficienciesStep extends ConsumerWidget {
                 cap: masteryCap),
             palette: palette,
             suffixForId: (id) {
-              final ref = entities[id]?.fields['mastery_ref'];
-              final masteryId = ref is Map ? ref['id']?.toString() : null;
+              // mastery_ref resolves to a weapon-mastery id String at runtime;
+              // resolve it (the old Map-only read left every suffix blank).
+              final masteryId =
+                  resolveEntityRef(entities[id]?.fields['mastery_ref'], entities);
               if (masteryId == null) return null;
               return entities[masteryId]?.name;
             },
@@ -342,8 +345,11 @@ class ProficienciesStep extends ConsumerWidget {
     final out = <Entity>[];
     for (final e in entities.values) {
       if (e.categorySlug != 'feat') continue;
-      final ref = e.fields['category_ref'];
-      final catId = ref is Map ? ref['id']?.toString() : null;
+      // `category_ref` resolves to a Tier-0 feat-category id String at runtime
+      // (a `_lookup` becomes a UUID at load for both built-in and packaged
+      // feats). resolveEntityRef accepts that String — and any softRef Map —
+      // where the old `ref['id']` Map-read silently matched nothing.
+      final catId = resolveEntityRef(e.fields['category_ref'], entities);
       if (catId == null) continue;
       if (entities[catId]?.name != categoryName) continue;
       out.add(e);
@@ -368,8 +374,9 @@ class ProficienciesStep extends ConsumerWidget {
       // (e.g. 'Gaming Set') doesn't — exclude it.
       final variantRef = e.fields['variant_of_ref'];
       if (variantRef == null) continue;
-      final catRef = e.fields['category_ref'];
-      final catId = catRef is Map ? catRef['id']?.toString() : null;
+      // Same as _featsByCategory: category_ref is a resolved id String at
+      // runtime, so resolve it instead of the old (always-null) Map-read.
+      final catId = resolveEntityRef(e.fields['category_ref'], entities);
       if (catId == null) continue;
       if (entities[catId]?.name != categoryName) continue;
       out.add(e);
