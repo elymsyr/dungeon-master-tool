@@ -28,6 +28,7 @@ void main() {
   _checkSpells(docs);
   _checkMagicItems(docs);
   _checkChargen(docs);
+  _checkChargenGrants(docs);
 
   if (_failures > 0) {
     print('FAILED: $_failures check(s)');
@@ -233,6 +234,92 @@ void _checkMagicItems(List<SourceDoc> docs) {
       (blade['rarity_ref'] as Map)['name'] == 'Rare');
   check('every item has a category',
       items.every((m) => (m['attributes'] as Map)['magic_category_ref'] != null));
+}
+
+/// B1/B2/B3: typed feat prerequisites, feat auto-grants, and background
+/// equipment parsed from the upgraded SRD-2024 / A5e formats.
+void _checkChargenGrants(List<SourceDoc> docs) {
+  print('Char-build grants (SRD 5.2 / A5e):');
+
+  PackBuilder buildChargen(SourceDoc doc) {
+    final pack = PackBuilder(doc.packageName);
+    mapBackgrounds(
+      pack: pack,
+      norm: _norm,
+      source: doc.title,
+      backgrounds: loadFixtures(doc.v2File('Background.json')),
+      benefits: loadFixtures(doc.v2File('BackgroundBenefit.json')),
+    );
+    mapFeats(
+      pack: pack,
+      norm: _norm,
+      source: doc.title,
+      feats: loadFixtures(doc.v2File('Feat.json')),
+      benefits: loadFixtures(doc.v2File('FeatBenefit.json')),
+    );
+    return pack;
+  }
+
+  final srd = buildChargen(docs.firstWhere((d) => d.slug == 'srd-2024'));
+  check('srd-2024 chargen: no unresolved refs (${srd.resolveRefs().length})',
+      srd.resolveRefs().isEmpty);
+
+  Map attrsOf(PackBuilder p, String type, String name) =>
+      _ofType(p, type).firstWhere((e) => e['name'] == name)['attributes'] as Map;
+
+  // B1: OR-of-abilities prereq keeps BOTH options (was losing the first).
+  final grappler = attrsOf(srd, 'feat', 'Grappler');
+  check('Grappler prereq_clauses has ability_min Str+Dex', () {
+    final clauses = (grappler['prereq_clauses'] as List?) ?? const [];
+    final ab = clauses.cast<Map>().firstWhere(
+        (c) => c['type'] == 'ability_min',
+        orElse: () => const {});
+    final opts = ((ab['ability_options'] as List?) ?? const [])
+        .map((o) => (o as Map)['name'])
+        .toSet();
+    return ab['min_score'] == 13 && opts.containsAll({'Strength', 'Dexterity'});
+  }());
+  // B2: ASI benefit emitted as typed scalars the resolver applies.
+  check('Grappler asi_amount=1 + options Str/Dex', () {
+    final opts = ((grappler['asi_ability_options'] as List?) ?? const [])
+        .map((o) => (o as Map)['name'])
+        .toSet();
+    return grappler['asi_amount'] == 1 &&
+        grappler['asi_max_score'] == 20 &&
+        opts.containsAll({'Strength', 'Dexterity'});
+  }());
+  // B1: spellcasting prerequisite typed as a clause.
+  check('a spellcasting-prereq feat exists', () {
+    return _ofType(srd, 'feat').any((f) {
+      final clauses = ((f['attributes'] as Map)['prereq_clauses'] as List?) ??
+          const [];
+      return clauses.cast<Map>().any((c) => c['type'] == 'spellcasting');
+    });
+  }());
+  // B3: SRD-2024 background equipment parsed into a pickable A/B group + gold.
+  final acolyte = attrsOf(srd, 'background', 'Acolyte');
+  check('Acolyte equipment_choice_groups A/B with 50 GP option', () {
+    final groups = (acolyte['equipment_choice_groups'] as List?) ?? const [];
+    if (groups.isEmpty) return false;
+    final opts = ((groups.first as Map)['options'] as List).cast<Map>();
+    final ids = opts.map((o) => o['option_id']).toSet();
+    final b = opts.firstWhere((o) => o['option_id'] == 'B',
+        orElse: () => const {});
+    return ids.containsAll({'A', 'B'}) && b['gold_gp'] == 50;
+  }());
+
+  // B2: A5e armor-training benefit emitted as a proficiency_grant effect.
+  final a5e = buildChargen(docs.firstWhere((d) => d.slug == 'a5e-ag'));
+  check('a5e-ag: no unresolved refs (${a5e.resolveRefs().length})',
+      a5e.resolveRefs().isEmpty);
+  check('an a5e feat emits an armor proficiency_grant effect', () {
+    return _ofType(a5e, 'feat').any((f) {
+      final effects = ((f['attributes'] as Map)['effects'] as List?) ?? const [];
+      return effects.cast<Map>().any((e) =>
+          e['kind'] == 'proficiency_grant' &&
+          e['target_kind'] == 'armor_category');
+    });
+  }());
 }
 
 void _checkChargen(List<SourceDoc> docs) {

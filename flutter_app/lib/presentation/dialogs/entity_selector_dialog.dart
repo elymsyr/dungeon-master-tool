@@ -16,6 +16,10 @@ import '../theme/dm_tool_colors.dart';
 ///   true geçilmeli; map/session/mindmap picker'ları default false bırakır
 ///   (yoksa ~7K SRD satırı liste'ye düşer).
 /// Döndürülen: seçilen entity ID'leri listesi.
+/// [extraEntities]: additional source rows merged on top of the campaign +
+///   bundled SRD maps, deduped by (slug, name). Character-sheet pickers pass
+///   the character's standalone-package entities here so options picked from
+///   official packages at creation remain addable post-creation.
 Future<List<String>?> showEntitySelectorDialog({
   required BuildContext context,
   required WidgetRef ref,
@@ -23,6 +27,7 @@ Future<List<String>?> showEntitySelectorDialog({
   bool multiSelect = false,
   List<String> excludeIds = const [],
   bool includeBuiltinSrd = false,
+  List<Entity> extraEntities = const [],
 }) async {
   return showDialog<List<String>>(
     context: context,
@@ -32,6 +37,7 @@ Future<List<String>?> showEntitySelectorDialog({
       multiSelect: multiSelect,
       excludeIds: excludeIds,
       includeBuiltinSrd: includeBuiltinSrd,
+      extraEntities: extraEntities,
     ),
   );
 }
@@ -42,6 +48,7 @@ class _EntitySelectorDialog extends StatefulWidget {
   final bool multiSelect;
   final List<String> excludeIds;
   final bool includeBuiltinSrd;
+  final List<Entity> extraEntities;
 
   const _EntitySelectorDialog({
     required this.ref,
@@ -49,6 +56,7 @@ class _EntitySelectorDialog extends StatefulWidget {
     this.multiSelect = false,
     this.excludeIds = const [],
     this.includeBuiltinSrd = false,
+    this.extraEntities = const [],
   });
 
   @override
@@ -68,31 +76,29 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   late final List<Entity> _baseList = _buildBaseList();
 
   List<Entity> _buildBaseList() {
-    final entities = widget.ref.read(entityProvider);
     final out = <Entity>[];
-    final campaignKeys = <String>{};
-    for (final e in entities.values) {
-      if (_excludeSet.contains(e.id)) continue;
-      if (_allowedSet != null && !_allowedSet.contains(e.categorySlug)) {
-        continue;
-      }
-      out.add(e);
-      if (widget.includeBuiltinSrd) {
-        campaignKeys.add('${e.categorySlug}::${e.name.toLowerCase()}');
-      }
-    }
-    if (widget.includeBuiltinSrd) {
-      final builtin = widget.ref.read(builtinSrdEntitiesProvider);
-      for (final e in builtin.values) {
+    final seenKeys = <String>{}; // (slug::name) — collapse cross-source dupes
+    void consider(Iterable<Entity> src, {required bool dedupe}) {
+      for (final e in src) {
         if (_excludeSet.contains(e.id)) continue;
         if (_allowedSet != null && !_allowedSet.contains(e.categorySlug)) {
           continue;
         }
         final key = '${e.categorySlug}::${e.name.toLowerCase()}';
-        if (campaignKeys.contains(key)) continue;
+        if (dedupe && seenKeys.contains(key)) continue;
         out.add(e);
+        seenKeys.add(key);
       }
     }
+
+    // Campaign first (authored content wins), then bundled SRD, then the
+    // character's standalone packages — each deduped against what came before.
+    consider(widget.ref.read(entityProvider).values, dedupe: false);
+    if (widget.includeBuiltinSrd) {
+      consider(widget.ref.read(builtinSrdEntitiesProvider).values,
+          dedupe: true);
+    }
+    consider(widget.extraEntities, dedupe: true);
     out.sort((a, b) => a.name.compareTo(b.name));
     return List<Entity>.unmodifiable(out);
   }
@@ -169,7 +175,15 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
                             decoration: BoxDecoration(color: palette.tabText, shape: BoxShape.circle),
                           ),
                           title: Text(entity.name, style: const TextStyle(fontSize: 13)),
-                          subtitle: Text(entity.categorySlug, style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+                          subtitle: Text(
+                            entity.source.isEmpty
+                                ? entity.categorySlug
+                                : '${entity.categorySlug} · ${entity.source}',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: palette.sidebarLabelSecondary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           trailing: isSelected ? Icon(Icons.check, size: 16, color: palette.tabIndicator) : null,
                           onTap: () {
                             if (widget.multiSelect) {

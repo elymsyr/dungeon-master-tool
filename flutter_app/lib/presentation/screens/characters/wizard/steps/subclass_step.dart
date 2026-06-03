@@ -9,6 +9,7 @@ import '../../../../../domain/entities/entity.dart';
 import '../../../../../domain/services/entity_ref.dart';
 import '../../../../widgets/class_level_up_table.dart';
 import '../../../../widgets/expandable_markdown.dart';
+import '../../../../widgets/expandable_section.dart';
 import '../../../../widgets/source_badge.dart';
 
 /// Subclass picker. Always shown when the chosen class has at least one
@@ -102,10 +103,19 @@ class SubclassStep extends ConsumerWidget {
           ),
         if (classEntity != null && subclassEntity != null) ...[
           const SizedBox(height: 12),
-          ClassLevelUpTable(
-            classEntity: classEntity,
-            subclassEntity: subclassEntity,
-            currentLevel: draft.level,
+          // Collapsed by default — the 20-row table is reference detail, not a
+          // decision the player makes here, so it shouldn't dominate the step.
+          ExpandableSection(
+            collapsedLabel: 'Show level-up table',
+            expandedLabel: 'Hide level-up table',
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ClassLevelUpTable(
+                classEntity: classEntity,
+                subclassEntity: subclassEntity,
+                currentLevel: draft.level,
+              ),
+            ),
           ),
         ],
       ],

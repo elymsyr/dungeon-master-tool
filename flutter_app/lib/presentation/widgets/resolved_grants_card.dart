@@ -59,7 +59,18 @@ class ResolvedGrantsCard extends StatelessWidget {
     this.onSpellSlotsRemainingChanged,
   });
 
-  String _nameOf(String id) => entities[id]?.name ?? id;
+  static final _uuidRe = RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+
+  String _nameOf(String id) {
+    final e = entities[id];
+    if (e != null) return e.name;
+    // Unresolved entity ref (e.g. official-package content that hasn't loaded
+    // yet) — don't leak a raw UUID onto the sheet. Synthetic ids (`pool:…`,
+    // etc.) aren't UUIDs, so they still pass through for prettifying.
+    if (_uuidRe.hasMatch(id)) return 'Unknown';
+    return id;
+  }
 
   /// Pretty display name for resource-pool entities whose canonical names use
   /// snake_case `pool:` prefixes (e.g. `pool:rage_uses` → "Rage Uses"). Other

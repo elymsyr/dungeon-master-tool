@@ -131,7 +131,7 @@
       "counts": {
         "spell": 2,
         "subclass": 16,
-        "species": 1,
+        "subspecies": 1,
         "background": 2
       }
     },
@@ -175,7 +175,8 @@
         "magic-item": 499,
         "class": 12,
         "subclass": 12,
-        "species": 13,
+        "species": 9,
+        "subspecies": 4,
         "background": 1,
         "feat": 1
       }
@@ -285,7 +286,8 @@
       "counts": {
         "spell": 91,
         "subclass": 76,
-        "species": 40,
+        "subspecies": 29,
+        "species": 11,
         "background": 19,
         "feat": 13
       }

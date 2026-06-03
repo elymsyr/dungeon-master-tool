@@ -408,27 +408,179 @@ int? _numberWord(String text) {
   return null;
 }
 
-/// Structured feat prerequisite gates parsed from the raw `prerequisite` text:
-/// `[Ability] N` → `prereq_ability_ref` + `prereq_min_score`; `Nth level` /
-/// `(character) level N` → `prereq_min_character_level`.
+const _allAbilities = [
+  'Strength',
+  'Dexterity',
+  'Constitution',
+  'Intelligence',
+  'Wisdom',
+  'Charisma',
+];
+const _abilityAlt =
+    'Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma';
+
+/// Structured feat prerequisite gates parsed from the raw `prerequisite` text.
+/// Keeps the legacy single-valued flat fields (`prereq_ability_ref`,
+/// `prereq_min_score`, `prereq_min_character_level`, `prereq_requires_spellcasting`)
+/// for back-compat AND emits a richer `prereq_clauses` list (ALL-of) the
+/// resolver dialog validates: `ability_min` (with an `ability_options` LIST so
+/// "Strength or Dexterity 13" keeps both), `character_level`, `spellcasting`,
+/// `armor_proficiency`, `weapon_proficiency`. Unmodelable prose is left in the
+/// raw `prerequisite` text (never blocks).
 void _parseFeatPrereq(
     Normalizer norm, String prereq, String context, Map<String, dynamic> attrs) {
-  final am = RegExp(
-          r'(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+(\d+)',
-          caseSensitive: false)
-      .firstMatch(prereq);
-  if (am != null) {
-    final r = norm.lookupRef('ability', titleCase(am.group(1)!), context: context);
-    if (r != null) {
-      attrs['prereq_ability_ref'] = r;
-      attrs['prereq_min_score'] = int.parse(am.group(2)!);
+  final clauses = <Map<String, dynamic>>[];
+
+  // Ability gate — capture an OR/AND/comma group sharing one minimum score
+  // ("Strength or Dexterity 13+") and keep every option, not just the first.
+  final abilGroup = RegExp(
+    '((?:$_abilityAlt)(?:\\s*(?:,|or|/|and)\\s*(?:$_abilityAlt))*)\\s+(\\d+)',
+    caseSensitive: false,
+  ).firstMatch(prereq);
+  if (abilGroup != null) {
+    final names = RegExp(_abilityAlt, caseSensitive: false)
+        .allMatches(abilGroup.group(1)!)
+        .map((m) => titleCase(m.group(0)!))
+        .toList();
+    final score = int.parse(abilGroup.group(2)!);
+    final options = [for (final n in names) lookup('ability', n)];
+    if (options.isNotEmpty) {
+      attrs['prereq_ability_ref'] = options.first; // legacy single-valued
+      attrs['prereq_min_score'] = score;
+      clauses.add({
+        'type': 'ability_min',
+        'ability_options': options,
+        'min_score': score,
+      });
     }
   }
+
+  // Character level gate.
   final lm = RegExp(r'(?:character\s+)?level\s+(\d+)', caseSensitive: false)
           .firstMatch(prereq) ??
       RegExp(r'(\d+)(?:st|nd|rd|th)\s+level', caseSensitive: false)
           .firstMatch(prereq);
-  if (lm != null) attrs['prereq_min_character_level'] = int.parse(lm.group(1)!);
+  if (lm != null) {
+    final lvl = int.parse(lm.group(1)!);
+    attrs['prereq_min_character_level'] = lvl;
+    clauses.add({'type': 'character_level', 'min_level': lvl});
+  }
+
+  // Spellcasting gate ("Spellcasting Feature" / "the ability to cast at least
+  // one spell").
+  if (RegExp(
+          r'spellcasting feature|ability to cast (?:at least one|a) spell|cast at least one spell',
+          caseSensitive: false)
+      .hasMatch(prereq)) {
+    attrs['prereq_requires_spellcasting'] = true;
+    clauses.add({'type': 'spellcasting'});
+  }
+
+  // Armor proficiency gate(s).
+  for (final m in RegExp(r'proficiency with (Light|Medium|Heavy)\s+armor',
+          caseSensitive: false)
+      .allMatches(prereq)) {
+    final cat = titleCase(m.group(1)!);
+    clauses.add({
+      'type': 'armor_proficiency',
+      'category_ref': lookup('armor-category', cat),
+      'category': cat,
+    });
+  }
+
+  // Weapon proficiency gate.
+  final wm = RegExp(
+          r'proficiency with (?:a |at least one )?(martial|simple)\s+weapon',
+          caseSensitive: false)
+      .firstMatch(prereq);
+  if (wm != null) {
+    clauses.add({
+      'type': 'weapon_proficiency',
+      'weapon_class': wm.group(1)!.toLowerCase(),
+    });
+  }
+
+  if (clauses.isNotEmpty) attrs['prereq_clauses'] = clauses;
+}
+
+/// Feat ASI benefit → `asi_amount` / `asi_max_score` / `asi_ability_options`
+/// (each a `{_lookup: ability, name}` so the resolver's `opt['name']` read
+/// works). Handles both SRD-2024 ("Increase your X or Y score by N, to a
+/// maximum of M") and A5e ("Your X or Y score increases by N…") phrasings, plus
+/// "increase one ability score of your choice by N" (all six abilities). "Of
+/// your choice" within a named subset is rare in feats and folds to narrative.
+({int amount, int maxScore, List<Map<String, String>> options})? _parseFeatAsi(
+    String desc) {
+  final named = RegExp(
+    '(?:increase your|your)\\s+'
+    '((?:$_abilityAlt)(?:\\s*(?:,|or|/|and)\\s*(?:$_abilityAlt))*)'
+    '\\s+scores?\\s+(?:increases?\\s+)?by\\s+(\\d+)'
+    '(?:[^.]*?maximum of\\s+(\\d+))?',
+    caseSensitive: false,
+  ).firstMatch(desc);
+  if (named != null) {
+    final names = RegExp(_abilityAlt, caseSensitive: false)
+        .allMatches(named.group(1)!)
+        .map((m) => titleCase(m.group(0)!))
+        .toList();
+    final options = [for (final n in names) lookup('ability', n)];
+    if (options.isNotEmpty) {
+      return (
+        amount: int.parse(named.group(2)!),
+        maxScore: named.group(3) != null ? int.parse(named.group(3)!) : 20,
+        options: options,
+      );
+    }
+  }
+  final any = RegExp(
+    r'increase one ability score (?:of your choice )?by\s+(\d+)'
+    r'(?:[^.]*?maximum of\s+(\d+))?',
+    caseSensitive: false,
+  ).firstMatch(desc);
+  if (any != null) {
+    return (
+      amount: int.parse(any.group(1)!),
+      maxScore: any.group(2) != null ? int.parse(any.group(2)!) : 20,
+      options: [for (final n in _allAbilities) lookup('ability', n)],
+    );
+  }
+  return null;
+}
+
+/// Feat benefit grants → `effects` entries matching the resolver's known kinds
+/// (see `CharacterResolver.knownEffectKinds`). Conservative: only emits the
+/// high-confidence, unconditional grants — armor proficiency, flat speed bonus,
+/// and Tough-style per-level HP. Conditional / PB-scaling / "of your choice"
+/// benefits stay in the folded narrative (honest source limits).
+List<Map<String, dynamic>> _parseFeatEffects(String desc) {
+  final out = <Map<String, dynamic>>[];
+  for (final m in RegExp(
+          r'(?:training with|proficiency with|gain)\s+(Light|Medium|Heavy)\s+armor',
+          caseSensitive: false)
+      .allMatches(desc)) {
+    out.add(effect('proficiency_grant',
+        targetKind: 'armor_category',
+        targetRef: lookup('armor-category', titleCase(m.group(1)!))));
+  }
+  if (RegExp(r'(?:training with|proficiency with|gain)\b[^.]{0,24}\bshields?\b',
+          caseSensitive: false)
+      .hasMatch(desc)) {
+    out.add(effect('proficiency_grant',
+        targetKind: 'armor_category',
+        targetRef: lookup('armor-category', 'Shield')));
+  }
+  final sp = RegExp(r'\bspeed increases by\s+(\d+)\s*(?:feet|ft)\b',
+          caseSensitive: false)
+      .firstMatch(desc);
+  if (sp != null) {
+    out.add(effect('speed_bonus', value: int.parse(sp.group(1)!)));
+  }
+  if (RegExp(r'hit point maximum increases by[^.]*twice your[^.]*level',
+          caseSensitive: false)
+      .hasMatch(desc)) {
+    out.add(effect('hp_bonus_per_level', value: 2));
+  }
+  return out;
 }
 
 /// Innate alternate speeds from a trait. Skips conditional/temporary grants
@@ -473,6 +625,86 @@ void _parseAltSpeeds(String desc, Map<String, int> out) {
     spells.add(titleCase(m.group(1)!));
   }
   return (cantrips: cantrips.toList(), spells: spells.toList());
+}
+
+/// Parse an Open5e background `equipment` benefit row into structured
+/// `equipment_choice_groups`. Only the SRD-2024 A/B choice format is handled —
+/// `"*Choose A or B:* (A) <items>, N GP; or (B) 50 GP"` — so the wizard renders
+/// a pickable card and the commit flow grants the picked items + gold. Legacy
+/// fixed-kit prose (no A/B) returns null and stays in the description note.
+///
+/// Build-safety: only items that resolve to an in-pack entity become a hard
+/// `ref` (an unresolved `_ref` would fail `build_packs`). Unresolved item names
+/// remain visible in the option `label`; gold is always captured.
+List<Map<String, dynamic>>? _parseEquipmentChoiceProse(
+    PackBuilder pack, String desc) {
+  final text = desc.trim();
+  final hasAB = RegExp(r'\(A\)').hasMatch(text) && RegExp(r'\(B\)').hasMatch(text);
+  if (!hasAB) return null;
+  final options = <Map<String, dynamic>>[];
+  final reOpt = RegExp(r'\(([A-Z])\)\s*(.*?)(?=;?\s*or\s+\([A-Z]\)|$)',
+      caseSensitive: false, dotAll: true);
+  for (final m in reOpt.allMatches(text)) {
+    final id = m.group(1)!.toUpperCase();
+    final body = m.group(2)!.trim().replaceAll(RegExp(r'[;.\s]+$'), '');
+    if (body.isEmpty) continue;
+    options.add(_equipOptionFromBody(pack, id, body));
+  }
+  if (options.length < 2) return null;
+  return [
+    eqGroup(
+      groupId: 'bg-equipment',
+      label: 'Starting Equipment',
+      options: options,
+    ),
+  ];
+}
+
+/// One `eqOption` from a comma-separated equipment list: trailing `N GP` →
+/// `gold_gp`; each item gets a leading quantity + parenthetical note stripped
+/// and is emitted as a ref only when it resolves in-pack.
+Map<String, dynamic> _equipOptionFromBody(
+    PackBuilder pack, String id, String body) {
+  int? gold;
+  final gm = RegExp(r'(\d+)\s*gp\b', caseSensitive: false).firstMatch(body);
+  if (gm != null) gold = int.parse(gm.group(1)!);
+  final items = <Map<String, dynamic>>[];
+  for (var part in body.split(RegExp(r',|\band\b', caseSensitive: false))) {
+    part = part.trim();
+    if (part.isEmpty) continue;
+    if (RegExp(r'^\d+\s*gp$', caseSensitive: false).hasMatch(part)) continue;
+    var qty = 1;
+    final qm = RegExp(r'^(\d+)\s+(.*)$').firstMatch(part);
+    if (qm != null) {
+      qty = int.parse(qm.group(1)!);
+      part = qm.group(2)!.trim();
+    }
+    final name = part.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+    if (name.isEmpty) continue;
+    final slug = _resolveItemSlug(pack, name);
+    if (slug != null) items.add(eqItem(slug, name, qty: qty));
+  }
+  return eqOption(
+    optionId: id,
+    label: body.replaceAll(RegExp(r'\s+'), ' ').trim(),
+    items: items,
+    goldGp: gold,
+  );
+}
+
+/// First content slug under which [name] exists in the pack, or null. Lets the
+/// equipment parser emit a build-safe `ref` only for resolvable item names.
+String? _resolveItemSlug(PackBuilder pack, String name) {
+  for (final slug in const [
+    'weapon',
+    'armor',
+    'tool',
+    'adventuring-gear',
+    'magic-item',
+  ]) {
+    if (pack.has(slug, name)) return slug;
+  }
+  return null;
 }
 
 /// Text of a `**Label:**` line in a class Proficiencies feature, or null.
@@ -615,6 +847,16 @@ void mapBackgrounds({
     if (featText != null && featText.isNotEmpty) {
       attrs['origin_feat_ref'] = softRef('feat', featText);
     }
+    // Starting equipment — SRD-2024 backgrounds ship an A/B choice as prose;
+    // parse it into structured groups so the wizard renders a pickable card and
+    // the picked items + gold are granted (instead of lost to the prose note).
+    final equipText = descOfType('equipment');
+    if (equipText != null) {
+      final groups = _parseEquipmentChoiceProse(pack, equipText);
+      if (groups != null && groups.isNotEmpty) {
+        attrs['equipment_choice_groups'] = groups;
+      }
+    }
 
     _addUnique(pack, slug: 'background', name: name, source: source,
         description: desc, tags: const [], attributes: attrs);
@@ -637,23 +879,36 @@ void mapFeats({
     final name = (f['name'] as String?)?.trim();
     if (name == null || name.isEmpty) continue;
     final prereq = (f['prerequisite'] as String?)?.trim() ?? '';
-    var head = (f['desc'] as String?)?.trim() ?? '';
+    final rawDesc = (f['desc'] as String?)?.trim() ?? '';
+    var head = rawDesc;
     if (prereq.isNotEmpty) head = '**Prerequisite:** $prereq\n\n$head';
     final kids = byParent[f['_pk'].toString()] ?? const <Fixture>[];
     final desc = _fold(head, kids);
+    // Benefit text WITHOUT the prerequisite line — grant parsers must not read
+    // a prereq ("proficiency with Light Armor") as a granted proficiency.
+    final benefitText = _fold(rawDesc, kids);
     final attrs = <String, dynamic>{'description': desc, 'repeatable': false};
     final type = (f['type'] as String?)?.trim();
     if (type != null && type.isNotEmpty) {
       final ref = norm.lookupRef('feat-category', type, context: name);
       if (ref != null) attrs['category_ref'] = ref;
     }
-    // D6: prerequisite — keep the raw text and parse the structured gates the
-    // schema models (single ability+score, character level). Multi-ability "or"
-    // prereqs keep only the first ability (the field is single-valued).
+    // Prerequisite — keep the raw text and parse the structured gates
+    // (`prereq_clauses` + legacy flat fields).
     if (prereq.isNotEmpty) {
       attrs['prerequisite'] = prereq;
       _parseFeatPrereq(norm, prereq, name, attrs);
     }
+    // Auto-grants — ASI bumps + a conservative set of unconditional effects, so
+    // the resolver applies them instead of leaving everything in prose.
+    final asi = _parseFeatAsi(benefitText);
+    if (asi != null) {
+      attrs['asi_amount'] = asi.amount;
+      attrs['asi_max_score'] = asi.maxScore;
+      attrs['asi_ability_options'] = asi.options;
+    }
+    final effects = _parseFeatEffects(benefitText);
+    if (effects.isNotEmpty) attrs['effects'] = effects;
     _addUnique(pack, slug: 'feat', name: name, source: source,
         description: desc, tags: const [], attributes: attrs);
   }

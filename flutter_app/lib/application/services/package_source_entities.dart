@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/database_provider.dart';
+import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import 'builtin_srd_entities.dart';
 import 'package_import_service.dart';
@@ -68,6 +70,41 @@ List<String> _decodeStringList(String json) {
   final v = jsonDecode(json);
   if (v is List) return v.map((e) => e.toString()).toList();
   return const [];
+}
+
+/// Package names a committed character was built against. Persisted on the PC
+/// entity's `source_packages` field by the wizard so the editor/card can
+/// re-resolve refs that live outside the bundled SRD pack.
+List<String> sourcePackagesOf(Character character) {
+  final raw = character.entity.fields['source_packages'];
+  if (raw is List) {
+    return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+  }
+  return const [];
+}
+
+/// Layers a character's installed [packageNames] on top of [base] (packages
+/// win id collisions). [readPackage] returns the loaded entity map for a
+/// package name, or null while its future is still in flight — callers must
+/// `watch` so they re-run when those settle. Shared by every card-side path
+/// (resolver, stat chips, editor) so official-package refs dereference
+/// everywhere the wizard already resolved them. Returns [base] unchanged when
+/// the character has no source packages or none have loaded yet.
+Map<String, Entity> layerCharacterPackages(
+  Map<String, Entity> base,
+  List<String> packageNames,
+  Map<String, Entity>? Function(String name) readPackage,
+) {
+  if (packageNames.isEmpty) return base;
+  final maps = <Map<String, Entity>>[];
+  for (final name in packageNames) {
+    final m = readPackage(name);
+    if (m != null && m.isNotEmpty) maps.add(m);
+  }
+  if (maps.isEmpty) return base;
+  return UnmodifiableMapView<String, Entity>(
+    CombinedMapView<String, Entity>([...maps, base]),
+  );
 }
 
 /// Merges the built-in SRD map with every package in [packageNames], packages

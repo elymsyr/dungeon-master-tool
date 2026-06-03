@@ -7,6 +7,7 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
+import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
@@ -243,11 +244,22 @@ String resolveOwnerLabelById(
 /// when the character's world is open, otherwise the bundled SRD pack.
 Map<String, Entity> readCharacterEntities(WidgetRef ref, Character character) {
   final builtin = ref.watch(builtinSrdEntitiesProvider);
-  if (character.worldId == null) return builtin;
-  final activeId = ref.watch(activeCampaignIdProvider).valueOrNull;
-  if (activeId != character.worldId) return builtin;
-  final campaign = ref.watch(entityProvider);
-  return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
+  Map<String, Entity> base = builtin;
+  if (character.worldId != null) {
+    final activeId = ref.watch(activeCampaignIdProvider).valueOrNull;
+    if (activeId == character.worldId) {
+      final campaign = ref.watch(entityProvider);
+      base = mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
+    }
+  }
+  // Layer the character's standalone source packages so official-package
+  // species/class/subclass refs resolve in the header chips (issue: blank
+  // chips for worldless chars built from official content).
+  return layerCharacterPackages(
+    base,
+    sourcePackagesOf(character),
+    (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
+  );
 }
 
 /// Compact chip strip rendering [characterStatLines]. Used by the editor
