@@ -47,6 +47,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/services/character_resolver.dart';
+import '../../../domain/services/entity_ref.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../../core/utils/screen_type.dart';
@@ -1954,23 +1955,63 @@ class _CharacterEditorScreenState
     if (raceId == null) return const SizedBox.shrink();
     final species = entities[raceId];
     if (species == null) return const SizedBox.shrink();
-    final raw = species.fields['subspecies_options'];
-    if (raw is! List || raw.isEmpty) return const SizedBox.shrink();
 
-    final options = <String>[];
-    for (final r in raw) {
-      if (r is Map) {
+    // Choices: first-class `subspecies` entities linked via parent_species_ref
+    // (value = entity id), plus any legacy nested `subspecies_options` rows not
+    // already represented (value = option name).
+    final choices = <({String value, String label})>[];
+    final seenNames = <String>{};
+    for (final e in entities.values) {
+      if (e.categorySlug != 'subspecies') continue;
+      if (resolveEntityRef(e.fields['parent_species_ref'], entities) != raceId) {
+        continue;
+      }
+      choices.add((value: e.id, label: e.name));
+      seenNames.add(e.name);
+    }
+    final raw = species.fields['subspecies_options'];
+    if (raw is List) {
+      for (final r in raw) {
+        if (r is! Map) continue;
         final n = r['name'];
-        if (n is String && n.isNotEmpty && !options.contains(n)) {
-          options.add(n);
+        if (n is String && n.isNotEmpty && !seenNames.contains(n)) {
+          choices.add((value: n, label: n));
+          seenNames.add(n);
         }
       }
     }
-    if (options.isEmpty) return const SizedBox.shrink();
+    if (choices.isEmpty) return const SizedBox.shrink();
+    choices.sort(
+        (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
 
     final current = character.entity.fields['subspecies_id'];
-    final currentStr =
-        current is String && current.isNotEmpty ? current : null;
+    var currentStr = current is String && current.isNotEmpty ? current : null;
+    // Migrate a legacy stored value (option / legacy name) to the matching
+    // entity id so the dropdown preselects it.
+    if (currentStr != null && !choices.any((c) => c.value == currentStr)) {
+      for (final e in entities.values) {
+        if (e.categorySlug != 'subspecies') continue;
+        if (resolveEntityRef(e.fields['parent_species_ref'], entities) !=
+            raceId) {
+          continue;
+        }
+        if (e.name == currentStr ||
+            e.fields['legacy_subspecies_key']?.toString() == currentStr) {
+          currentStr = e.id;
+          break;
+        }
+      }
+    }
+    String? currentLabel;
+    if (currentStr != null) {
+      currentLabel = currentStr;
+      for (final c in choices) {
+        if (c.value == currentStr) {
+          currentLabel = c.label;
+          break;
+        }
+      }
+    }
     final palette = Theme.of(context).extension<DmToolColors>();
 
     return Padding(
@@ -1996,7 +2037,7 @@ class _CharacterEditorScreenState
           Expanded(
             child: _readOnly
                 ? Text(
-                    currentStr ?? '—',
+                    currentLabel ?? '—',
                     style: TextStyle(
                       fontSize: 13,
                       color: palette?.srdInk ??
@@ -2004,8 +2045,9 @@ class _CharacterEditorScreenState
                     ),
                   )
                 : DropdownButtonFormField<String?>(
-                    initialValue:
-                        options.contains(currentStr) ? currentStr : null,
+                    initialValue: choices.any((c) => c.value == currentStr)
+                        ? currentStr
+                        : null,
                     isDense: true,
                     isExpanded: true,
                     iconSize: 18,
@@ -2022,10 +2064,11 @@ class _CharacterEditorScreenState
                         child:
                             Text('(None)', overflow: TextOverflow.ellipsis),
                       ),
-                      for (final o in options)
+                      for (final c in choices)
                         DropdownMenuItem<String?>(
-                          value: o,
-                          child: Text(o, overflow: TextOverflow.ellipsis),
+                          value: c.value,
+                          child:
+                              Text(c.label, overflow: TextOverflow.ellipsis),
                         ),
                     ],
                     onChanged: (v) {
@@ -3742,6 +3785,12 @@ class _StatChipsHeader extends ConsumerWidget {
           character,
           raceName: resolve(ids.raceId),
           className: resolve(ids.classId),
+          subspeciesName: () {
+            final raw = character.entity.fields['subspecies_id'];
+            if (raw is! String || raw.isEmpty) return '';
+            final n = resolve(raw);
+            return n == '—' ? '' : n;
+          }(),
           effectiveAc: effectiveAc,
           ownerLabel: resolveCharacterOwnerLabel(ref, character),
         ),

@@ -6,6 +6,7 @@ import 'auth_provider.dart';
 import 'builtin_package_provider.dart';
 import 'entity_provider.dart';
 import 'entity_share_provider.dart';
+import 'installed_packages_provider.dart';
 import 'role_provider.dart';
 
 /// Aktif worlddeki entity'lerin, current user'a görünür olanlarını döner.
@@ -13,8 +14,10 @@ import 'role_provider.dart';
 /// Kurallar:
 ///   - DM (veya online olmayan/role=none): tüm entity'ler görünür.
 ///   - Player:
-///       1) Built-in pack'e linked entity'ler otomatik görünür (SRD core).
-///       2) entity_shares'te (shared_with=me VEYA NULL) kaydı olanlar görünür.
+///       1) Bu world'e kurulu HERHANGİ bir package'a linked entity'ler otomatik
+///          görünür (built-in SRD + custom/official add-on packages).
+///       2) entity_shares'te (shared_with=me VEYA NULL) kaydı olan homebrew
+///          (linked=false) entity'ler görünür.
 ///     (Character'a referans gönderen entity'ler de görünmeli ama
 ///     referenced_entity_ids tracking PR-O6.5'te eklenecek.)
 ///
@@ -26,6 +29,7 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
     currentWorldRoleProvider,
     activeCampaignIdProvider,
     builtinPackageIdProvider,
+    installedWorldPackageIdsProvider,
   ],
   (ref) {
     final all = ref.watch(entityProvider);
@@ -45,20 +49,26 @@ final visibleEntityProvider = Provider<Map<String, Entity>>(
     final sharesAsync = ref.watch(worldEntitySharesProvider(worldId));
     final shares = sharesAsync.valueOrNull ?? const [];
     final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
+    final installedPackageIds =
+        ref.watch(installedWorldPackageIdsProvider(worldId)).valueOrNull ??
+            const <String>{};
 
     final allowedIds = <String>{};
+    // Homebrew (linked == false) yalnızca entity_shares ile görünür.
     for (final s in shares) {
       if (s.sharedWith == null || s.sharedWith == auth.uid) {
         allowedIds.add(s.entityId);
       }
     }
-    // Built-in entity'leri otomatik allow et.
-    if (builtinPackId != null) {
-      for (final entry in all.entries) {
-        final e = entry.value;
-        if (e.linked && e.packageId == builtinPackId) {
-          allowedIds.add(entry.key);
-        }
+    // Bu world'e kurulu herhangi bir package'ın linked entity'lerini otomatik
+    // allow et (built-in SRD + custom/official add-on packages). builtinPackId
+    // ekstra güvence: pack link'i best-effort kurulduğu için ayrıca tutulur.
+    for (final entry in all.entries) {
+      final e = entry.value;
+      if (!e.linked || e.packageId == null) continue;
+      if (e.packageId == builtinPackId ||
+          installedPackageIds.contains(e.packageId)) {
+        allowedIds.add(entry.key);
       }
     }
     if (allowedIds.isEmpty) return const <String, Entity>{};

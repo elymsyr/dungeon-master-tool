@@ -117,6 +117,12 @@
 
   "hubBtnMarketplace": "Marktplatz",
   "hubTooltipRefresh": "Aus Cloud aktualisieren",
+  "hubTooltipFilter": "Filter",
+  "hubFilterTitle": "Filter",
+  "hubFilterClear": "Filter löschen",
+  "hubFilterApply": "Anwenden",
+  "hubFilterEmpty": "Nichts zu filtern",
+  "hubFilterNoResults": "Keine Einträge entsprechen dem Filter",
   "hubErrorGeneric": "Fehler: {error}",
   "@hubErrorGeneric": { "placeholders": { "error": { "type": "String" } } },
 

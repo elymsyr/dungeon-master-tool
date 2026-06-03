@@ -117,6 +117,12 @@
 
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",
+  "hubTooltipFilter": "Filtrele",
+  "hubFilterTitle": "Filtrele",
+  "hubFilterClear": "Filtreyi temizle",
+  "hubFilterApply": "Uygula",
+  "hubFilterEmpty": "Filtrelenecek bir şey yok",
+  "hubFilterNoResults": "Filtreyle eşleşen öğe yok",
   "hubErrorGeneric": "Hata: {error}",
   "@hubErrorGeneric": { "placeholders": { "error": { "type": "String" } } },
 

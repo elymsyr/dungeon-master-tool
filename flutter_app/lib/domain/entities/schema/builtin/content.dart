@@ -15,6 +15,7 @@ const tier1Slugs = <String>[
   'class',
   'subclass',
   'species',
+  'subspecies',
   'background',
   'feat',
   'spell',
@@ -62,6 +63,7 @@ List<EntityCategorySchema> buildTier1Content({
     _classCategory(schemaId, now, i++),
     _subclassCategory(schemaId, now, i++),
     _speciesCategory(schemaId, now, i++),
+    _subspeciesCategory(schemaId, now, i++),
     _backgroundCategory(schemaId, now, i++),
     _featCategory(schemaId, now, i++),
     _spellCategory(schemaId, now, i++),
@@ -492,6 +494,60 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
       FieldGroup(groupId: grpResistances, name: 'Resistances & Immunities', gridColumns: 2, orderIndex: 3),
       FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 4),
       FieldGroup(groupId: grpRules, name: 'Lineage Options', gridColumns: 1, orderIndex: 5),
+    ],
+    orderIndex: orderIndex,
+    now: now,
+  );
+}
+
+EntityCategorySchema _subspeciesCategory(String schemaId, String now, int orderIndex) {
+  final catId = _uuid.v4();
+  final fb = _FB(catId, now);
+  // Parent link — the analogue of subclass.parent_class_ref. A subspecies is a
+  // leaf scoped to one species; chargen narrows the picker by this ref.
+  fb.relation('parent_species_ref', 'Parent Species', const ['species'], required_: true);
+  // Identity overrides (optional — subspecies inherit the parent's by default).
+  fb.relation('size_ref', 'Size', const ['size']);
+  fb.relation('creature_type_ref', 'Creature Type', const ['creature-type']);
+  fb.integer('speed_ft', 'Walking Speed (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_burrow_ft', 'Burrow (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120, g: grpCombat);
+  // Senses & Languages.
+  fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true, g: grpSensesLanguages);
+  fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true, g: grpSensesLanguages);
+  // Damage / condition resistance & immunity grid.
+  fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
+  // Traits + actions + skill proficiency grants + the modifier DSL — the same
+  // grant shape as Species, so CharacterResolver folds them identically.
+  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_spell_refs', 'Innate Spells', const ['spell'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_cantrip_refs', 'Innate Cantrips', const ['spell'], isList: true, g: grpTraitsActions);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
+  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpTraitsActions);
+
+  return _mk(
+    schemaId: schemaId,
+    categoryId: catId,
+    name: 'Subspecies',
+    slug: 'subspecies',
+    color: '#26a69a',
+    icon: 'diversity_2',
+    fields: fb.out,
+    groups: const [
+      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
+      FieldGroup(groupId: grpSensesLanguages, name: 'Senses & Languages', gridColumns: 2, orderIndex: 2),
+      FieldGroup(groupId: grpResistances, name: 'Resistances & Immunities', gridColumns: 2, orderIndex: 3),
+      FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 4),
     ],
     orderIndex: orderIndex,
     now: now,

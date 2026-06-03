@@ -22,6 +22,7 @@ import 'auth_provider.dart';
 import 'character_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
+import 'package_provider.dart';
 import 'role_provider.dart';
 import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
@@ -119,6 +120,19 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
     ));
   }
   return infos;
+});
+
+/// worldId → set of attached package names (from the `world_packages`
+/// junction). Backs the hub Worlds-tab "filter by package" dimension.
+final worldPackageNamesProvider =
+    FutureProvider<Map<String, Set<String>>>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  final rows = await db.worldPackagesDao.getAll();
+  final map = <String, Set<String>>{};
+  for (final r in rows) {
+    (map[r.worldId] ??= <String>{}).add(r.packageName);
+  }
+  return map;
 });
 
 /// Resolves a worldId to its local campaign name, pulling the world from
@@ -757,6 +771,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   void _afterWorldRemoved(String worldId) {
     _ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
     refreshWorldCaches(worldId);
+    // World leave/purge may have removed materialized packages from the local
+    // library — refresh the standalone package list.
+    _ref.invalidate(packageListProvider);
   }
 
   /// Make Offline yolu: cloud `worlds`/`world_members` satırları kasıtlı

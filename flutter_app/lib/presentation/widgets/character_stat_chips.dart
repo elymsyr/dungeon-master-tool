@@ -63,6 +63,13 @@ CharacterRaceClassIds characterRaceClassIds(Character character) {
   );
 }
 
+/// True when [s] looks like a generated entity id (UUID) rather than a
+/// human-readable name — used to avoid rendering a raw id when a subspecies
+/// can't be resolved to its entity.
+bool _looksLikeId(String s) => RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    ).hasMatch(s);
+
 List<CharacterStatLine> characterStatLines(
   Character character,
   Map<String, Entity> entities, {
@@ -74,10 +81,18 @@ List<CharacterStatLine> characterStatLines(
       ids.raceId == null ? '—' : (entities[ids.raceId]?.name ?? '—');
   final className =
       ids.classId == null ? '—' : (entities[ids.classId]?.name ?? '—');
+  // `subspecies_id` holds the subspecies entity id (new model) or, for legacy
+  // saves, the option name. Resolve the entity name; fall back to the raw value
+  // only when it's a readable name, never a bare id.
+  final subRaw = character.entity.fields['subspecies_id'];
+  final subspeciesName = subRaw is String && subRaw.isNotEmpty
+      ? (entities[subRaw]?.name ?? (_looksLikeId(subRaw) ? '' : subRaw))
+      : '';
   return characterStatLinesWithNames(
     character,
     raceName: raceName,
     className: className,
+    subspeciesName: subspeciesName,
     effectiveAc: effectiveAc,
     ownerLabel: ownerLabel,
   );
@@ -91,6 +106,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
   Character character, {
   required String raceName,
   required String className,
+  String subspeciesName = '',
   int? effectiveAc,
   String? ownerLabel,
 }) {
@@ -136,9 +152,15 @@ List<CharacterStatLine> characterStatLinesWithNames(
   var level = asInt(fields['level']);
   if (level == 0 && combatLevel != null) level = combatLevel;
 
-  final subspeciesRaw = fields['subspecies_id'];
-  final subspeciesName =
-      subspeciesRaw is String && subspeciesRaw.isNotEmpty ? subspeciesRaw : '';
+  // Prefer the resolved name passed in; else fall back to the raw stored value
+  // only when it's a readable name (legacy saves), never a bare entity id.
+  var subspeciesLabel = subspeciesName;
+  if (subspeciesLabel.isEmpty) {
+    final raw = fields['subspecies_id'];
+    if (raw is String && raw.isNotEmpty && !_looksLikeId(raw)) {
+      subspeciesLabel = raw;
+    }
+  }
 
   return [
     CharacterStatLine(
@@ -151,11 +173,11 @@ List<CharacterStatLine> characterStatLinesWithNames(
       label: 'Species',
       value: raceName,
     ),
-    if (subspeciesName.isNotEmpty)
+    if (subspeciesLabel.isNotEmpty)
       CharacterStatLine(
         icon: Icons.diversity_3,
         label: 'Ancestry',
-        value: subspeciesName,
+        value: subspeciesLabel,
       ),
     CharacterStatLine(
       icon: Icons.shield_moon_outlined,

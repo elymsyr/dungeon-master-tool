@@ -160,6 +160,43 @@ class AppDatabase extends _$AppDatabase {
           for (final stmt in _sideTablesDDL) {
             await customStatement(stmt);
           }
+          // One-time repair: promote legacy `species` rows that are actually
+          // subspecies. Older packs (and built-in pre-migration installs) marked
+          // a subrace only with a "*Subspecies of X.*" description prefix and
+          // categorised it as `species`. New packs ship slug `subspecies` +
+          // `parent_species_ref`, and the ingest path fixes re-installs — this
+          // catches packs already on disk. Parent name is parsed from the marker
+          // and injected as a runtime softRef. Gated via migration_progress so
+          // package_entities is scanned at most once; best-effort.
+          try {
+            final done = await customSelect(
+              "SELECT 1 FROM migration_progress WHERE "
+              "migration_name = 'subspecies_reclassify_v1' AND completed = 1",
+            ).get();
+            if (done.isEmpty) {
+              await customStatement(
+                "UPDATE package_entities SET "
+                "category_slug = 'subspecies', "
+                "fields_json = json_set("
+                "  CASE WHEN json_valid(fields_json) THEN fields_json ELSE '{}' END, "
+                "  '\$.parent_species_ref', "
+                "  json_object('slug', 'species', 'name', "
+                "    trim(substr(description, 16, instr(description, '.*') - 16)))) "
+                "WHERE category_slug = 'species' "
+                "AND description LIKE '*Subspecies of %' "
+                "AND instr(description, '.*') > 16 "
+                "AND json_extract("
+                "  CASE WHEN json_valid(fields_json) THEN fields_json ELSE '{}' END, "
+                "  '\$.parent_species_ref') IS NULL",
+              );
+              await customStatement(
+                "INSERT OR REPLACE INTO migration_progress "
+                "(migration_name, world_id, completed, updated_at) "
+                "VALUES ('subspecies_reclassify_v1', '', 1, ?)",
+                [DateTime.now().millisecondsSinceEpoch],
+              );
+            }
+          } catch (_) {}
           // PR-D8 cleanup: 30-day Drift trash retention (replaces v11 FS
           // _cleanupTrash). Best-effort — purge errors don't block open.
           try {

@@ -1179,37 +1179,49 @@ Map<String, dynamic> buildSeedFields({
       draft.subclassId == null ? null : entities[draft.subclassId];
   absorbGrants(subclassEntity);
 
-  // Subspecies / ancestry — `subspecies_id` carries the picked option's
-  // *name*. Find the matching row in `subspecies_options` and absorb the
-  // same granted_*_refs fields the species top-level uses.
+  // Subspecies / ancestry — `subspecies_id` carries the picked subspecies
+  // entity id (new model) or, for legacy data, the option name. Resolve the
+  // first-class `subspecies` entity (mirroring CharacterResolver) and absorb
+  // its grants; else fall back to a nested `subspecies_options` row.
   if (draft.subspeciesId != null && draft.subspeciesId!.isNotEmpty && race != null) {
-    final raw = race.fields['subspecies_options'];
-    if (raw is List) {
-      for (final row in raw) {
-        if (row is! Map) continue;
-        if (row['name']?.toString() != draft.subspeciesId) continue;
-        // Wrap the row in a synthetic Entity so absorbGrants can reuse the
-        // same `copyListFrom(src, fromKey, toKeys)` walker.
-        final syntheticFields = <String, dynamic>{};
-        for (final entry in row.entries) {
-          syntheticFields[entry.key.toString()] = entry.value;
+    final key = draft.subspeciesId!;
+    Entity? sub = entities[key];
+    if (sub == null || sub.categorySlug != 'subspecies') {
+      sub = null;
+      for (final e in entities.values) {
+        if (e.categorySlug != 'subspecies') continue;
+        if (resolveEntityRef(e.fields['parent_species_ref'], entities) !=
+            race.id) {
+          continue;
         }
-        final syn = Entity(
-          id: '__subspecies__',
-          name: row['name']?.toString() ?? '',
-          categorySlug: 'species',
-          source: 'srd',
-          description: '',
-          images: const [],
-          imagePath: '',
-          tags: const [],
-          dmNotes: '',
-          pdfs: const [],
-          locationId: null,
-          fields: syntheticFields,
-        );
-        absorbGrants(syn);
-        break;
+        if (e.name == key ||
+            e.fields['legacy_subspecies_key']?.toString() == key) {
+          sub = e;
+          break;
+        }
+      }
+    }
+    if (sub != null) {
+      absorbGrants(sub);
+    } else {
+      final raw = race.fields['subspecies_options'];
+      if (raw is List) {
+        for (final row in raw) {
+          if (row is! Map) continue;
+          if (row['name']?.toString() != key) continue;
+          // Wrap the row in a synthetic Entity so absorbGrants can reuse the
+          // same `copyListFrom(src, fromKey, toKeys)` walker.
+          final syntheticFields = <String, dynamic>{
+            for (final entry in row.entries) entry.key.toString(): entry.value,
+          };
+          absorbGrants(Entity(
+            id: '__subspecies__',
+            name: row['name']?.toString() ?? '',
+            categorySlug: 'species',
+            fields: syntheticFields,
+          ));
+          break;
+        }
       }
     }
   }
@@ -2104,7 +2116,7 @@ class _RaceStep extends ConsumerWidget {
     final entities = ref.watch(wizardEntitiesProvider);
     final raceEntity =
         draft.raceId == null ? null : entities[draft.raceId];
-    final options = _subspeciesOptions(raceEntity);
+    final choices = _subspeciesChoices(raceEntity, entities);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2115,38 +2127,63 @@ class _RaceStep extends ConsumerWidget {
           selectedId: draft.raceId,
           onChanged: notifier.setRace,
         ),
-        if (options.isNotEmpty) ...[
+        if (choices.isNotEmpty) ...[
           const SizedBox(height: 12),
           Text(
             _subspeciesPickerLabel(raceEntity),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          for (final opt in options)
+          for (final c in choices)
             RadioListTile<String?>(
-              value: opt['name']?.toString(),
+              value: c.id,
               // ignore: deprecated_member_use
               groupValue: draft.subspeciesId,
               // ignore: deprecated_member_use
               onChanged: notifier.setSubspecies,
               dense: true,
-              title: Text(opt['name']?.toString() ?? ''),
-              subtitle: (opt['description']?.toString().isNotEmpty ?? false)
-                  ? ExpandableMarkdown(data: opt['description']!.toString())
-                  : null,
+              title: Text(c.title),
+              subtitle: c.description.isEmpty
+                  ? null
+                  : ExpandableMarkdown(data: c.description),
             ),
         ],
       ],
     );
   }
 
-  static List<Map<String, dynamic>> _subspeciesOptions(Entity? e) {
-    if (e == null) return const [];
-    final raw = e.fields['subspecies_options'];
-    if (raw is! List) return const [];
-    return [
-      for (final r in raw)
-        if (r is Map) Map<String, dynamic>.from(r),
-    ];
+  /// Subspecies choices for [species]: first-class `subspecies` entities linked
+  /// via `parent_species_ref` (the new model — value is the entity id), plus any
+  /// legacy nested `subspecies_options` rows not already represented (value is
+  /// the option name). Sorted by display name.
+  static List<({String id, String title, String description})> _subspeciesChoices(
+      Entity? species, Map<String, Entity> entities) {
+    if (species == null) return const [];
+    final out = <({String id, String title, String description})>[];
+    final seen = <String>{};
+    for (final e in entities.values) {
+      if (e.categorySlug != 'subspecies') continue;
+      if (resolveEntityRef(e.fields['parent_species_ref'], entities) !=
+          species.id) {
+        continue;
+      }
+      out.add((id: e.id, title: e.name, description: e.description));
+      seen.add(e.name);
+    }
+    final raw = species.fields['subspecies_options'];
+    if (raw is List) {
+      for (final r in raw) {
+        if (r is! Map) continue;
+        final name = r['name']?.toString() ?? '';
+        if (name.isEmpty || seen.contains(name)) continue;
+        out.add((
+          id: name,
+          title: name,
+          description: r['description']?.toString() ?? '',
+        ));
+      }
+    }
+    out.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    return out;
   }
 
   static String _subspeciesPickerLabel(Entity? e) {

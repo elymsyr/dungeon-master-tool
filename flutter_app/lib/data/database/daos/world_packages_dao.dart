@@ -17,6 +17,10 @@ class WorldPackagesDao extends DatabaseAccessor<AppDatabase>
   Future<List<WorldPackage>> getByWorld(String worldId) =>
       (select(worldPackages)..where((t) => t.worldId.equals(worldId))).get();
 
+  /// Every world↔package link row. Used by the hub Worlds-tab filter to build
+  /// a worldId→packageNames map without an N+1 per-world query.
+  Future<List<WorldPackage>> getAll() => select(worldPackages).get();
+
   Stream<List<WorldPackage>> watchByWorld(String worldId) =>
       (select(worldPackages)..where((t) => t.worldId.equals(worldId)))
           .watch()

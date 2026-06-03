@@ -228,13 +228,19 @@ void mapSpecies({
     final subOf = subParent(s);
     final tags = <String>[];
     var head = (s['desc'] as String?)?.trim() ?? '';
+    String? parentSpecies;
     if (subOf != null) {
-      final parent = titleCase(_lastSegment(subOf));
-      tags.add(parent);
-      head = '*Subspecies of $parent.*\n\n$head';
+      parentSpecies = titleCase(_lastSegment(subOf));
+      tags.add(parentSpecies);
+      head = '*Subspecies of $parentSpecies.*\n\n$head';
     }
     final desc = _fold(head, kids);
     final attrs = <String, dynamic>{'description': desc};
+    // Subspecies → first-class `subspecies` entity linked to its parent via a
+    // cross-pack softRef (the base species may live in another pack).
+    if (parentSpecies != null) {
+      attrs['parent_species_ref'] = softRef('species', parentSpecies);
+    }
     final ct = norm.lookupRef('creature-type', 'Humanoid', context: name);
     if (ct != null) attrs['creature_type_ref'] = ct;
     final st = stats[pk]!;
@@ -322,8 +328,8 @@ void mapSpecies({
     put('granted_cantrip_refs', cantripRefs);
     altSpeeds.forEach((k, v) => attrs[k] = v);
 
-    _addUnique(pack, slug: 'species', name: name, source: source,
-        description: desc, tags: tags, attributes: attrs);
+    _addUnique(pack, slug: subOf != null ? 'subspecies' : 'species', name: name,
+        source: source, description: desc, tags: tags, attributes: attrs);
   }
 }
 

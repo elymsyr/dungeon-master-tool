@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/package_provider.dart';
@@ -12,10 +13,12 @@ import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../domain/entities/package_info.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -54,12 +57,32 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     setState(() => _refreshing = false);
   }
 
+  /// Applies the active template filter to [all]. Single source of truth for
+  /// both the ListView and the index-based Load/Copy/Delete handlers.
+  List<PackageInfo> _applyFilter(List<PackageInfo> all, HubFilter filter) {
+    if (filter.templates.isEmpty) return all;
+    return all
+        .where((info) =>
+            filter.templates.contains(normalizeTemplateName(info.templateName)))
+        .toList();
+  }
+
+  /// Filtered package list as seen by the UI right now.
+  List<PackageInfo> _currentFiltered() {
+    final all = ref.read(packageListProvider).valueOrNull ?? const [];
+    return _applyFilter(all, ref.read(packagesFilterProvider));
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final packageList = ref.watch(packageListProvider);
+    final filter = ref.watch(packagesFilterProvider);
+    final allPackages = packageList.valueOrNull ?? const <PackageInfo>[];
+    final templateOptions = <String>{
+      for (final p in allPackages) normalizeTemplateName(p.templateName)
+    }.toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -126,6 +149,22 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       Expanded(child: title),
                       marketBtn,
                       const SizedBox(width: 4),
+                      HubFilterButton(
+                        totalSelected: filter.totalSelected,
+                        sections: [
+                          FilterSection(
+                            label: l10n.filterTemplates,
+                            options: templateOptions,
+                            selected: filter.templates,
+                          ),
+                        ],
+                        onChanged: (sel) {
+                          ref.read(packagesFilterProvider.notifier).state =
+                              HubFilter(templates: sel[0]);
+                          setState(() => _selectedIndex = -1);
+                        },
+                      ),
+                      const SizedBox(width: 4),
                       refreshBtn,
                       const SizedBox(width: 4),
                       addBtn,
@@ -141,7 +180,9 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
 
               // Paket listesi
               packageList.when(
-                data: (packages) => packages.isEmpty
+                data: (packages) {
+                  final filtered = _applyFilter(packages, filter);
+                  return filtered.isEmpty
                     ? Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -151,7 +192,9 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         ),
                         child: Center(
                           child: Text(
-                            l10n.noPackages,
+                            packages.isEmpty
+                                ? l10n.noPackages
+                                : l10n.hubFilterNoResults,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: palette.sidebarLabelSecondary,
@@ -162,10 +205,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: packages.length,
+                        itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 4),
                         itemBuilder: (context, index) {
-                          final info = packages[index];
+                          final info = filtered[index];
                           final isSelected = index == _selectedIndex;
                           final isBuiltin = info.name == srdCorePackageName;
                           // H5: narrow watch to `valueOrNull` only. The
@@ -227,7 +270,8 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             ),
                           );
                         },
-                      ),
+                      );
+                },
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Text('Error: $e'),
@@ -242,9 +286,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     child: FilledButton.icon(
                       onPressed: _selectedIndex >= 0
                           ? () {
-                              final packages =
-                                  ref.read(packageListProvider).valueOrNull ??
-                                      [];
+                              final packages = _currentFiltered();
                               if (_selectedIndex < packages.length) {
                                 _loadPackage(packages[_selectedIndex].name);
                               }
@@ -392,7 +434,9 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   }
 
   Future<void> _copyPackage() async {
-    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    final packages = _currentFiltered();
+    // Collision detection must consider ALL packages, not just the filtered view.
+    final allPackages = ref.read(packageListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= packages.length) return;
     final source = packages[_selectedIndex].name;
 
@@ -402,7 +446,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         ? '$source (Copy)'
         : '$source (Copy)';
     final existingNames =
-        packages.map((p) => p.name).toSet();
+        allPackages.map((p) => p.name).toSet();
     var n = 2;
     while (existingNames.contains(dest)) {
       dest = '$source (Copy $n)';
@@ -469,13 +513,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   }
 
   bool _isBuiltinSelected() {
-    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    final packages = _currentFiltered();
     if (_selectedIndex < 0 || _selectedIndex >= packages.length) return false;
     return packages[_selectedIndex].name == srdCorePackageName;
   }
 
   Future<void> _deletePackage() async {
-    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    final packages = _currentFiltered();
     if (_selectedIndex < 0 || _selectedIndex >= packages.length) return;
     final name = packages[_selectedIndex].name;
     final l10n = L10n.of(context)!;

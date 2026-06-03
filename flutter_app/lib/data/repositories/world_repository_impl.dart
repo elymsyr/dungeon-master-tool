@@ -445,6 +445,15 @@ class WorldRepositoryImpl implements CampaignRepository {
     final templateOriginalHash = world.templateOriginalHash;
     if (schemaSnapshot != null) {
       worldSchemaMap = Map<String, dynamic>.from(schemaSnapshot);
+      // Self-heal: a built-in world's stored schema snapshot predates newer
+      // built-in categories (e.g. the `subspecies` category added 2026-06).
+      // Overlay any built-in category missing from the snapshot so existing
+      // worlds surface it without a per-world migration; user/custom (Tier-2)
+      // categories in the snapshot are preserved. Snapshot stays untouched on
+      // disk — refreshed naturally next time the schema is saved.
+      if (templateId == builtinDnd5eV2SchemaId) {
+        worldSchemaMap = _overlayMissingBuiltinCategories(worldSchemaMap);
+      }
     }
 
     // Granular `world_map_data` Drift row — source-of-truth for map_data.
@@ -508,6 +517,45 @@ class WorldRepositoryImpl implements CampaignRepository {
       if (mapDataOverride != null) 'map_data': mapDataOverride,
       if (sessionsOverride != null) 'sessions': sessionsOverride,
     };
+  }
+
+  /// Built-in category JSON, keyed by build, cached once (the generator is
+  /// deterministic except for timestamps). Used by the load-time overlay.
+  static List<Map<String, dynamic>>? _builtinCategoryJsonCache;
+
+  static List<Map<String, dynamic>> _builtinCategoryJson() {
+    final cached = _builtinCategoryJsonCache;
+    if (cached != null) return cached;
+    final schemaMap =
+        deepCopyJson(generateBuiltinDnd5eV2Schema().schema.toJson())
+            as Map<String, dynamic>;
+    final cats = schemaMap['categories'];
+    final out = <Map<String, dynamic>>[
+      if (cats is List)
+        for (final c in cats)
+          if (c is Map) Map<String, dynamic>.from(c),
+    ];
+    return _builtinCategoryJsonCache = out;
+  }
+
+  /// Append any built-in category absent (by slug) from [snapshot]'s category
+  /// list, preserving existing/custom categories and their order.
+  Map<String, dynamic> _overlayMissingBuiltinCategories(
+      Map<String, dynamic> snapshot) {
+    final cats = snapshot['categories'];
+    if (cats is! List) return snapshot;
+    final present = <String>{
+      for (final c in cats)
+        if (c is Map && c['slug'] is String) c['slug'] as String,
+    };
+    final additions = [
+      for (final c in _builtinCategoryJson())
+        if (c['slug'] is String && !present.contains(c['slug'])) c,
+    ];
+    if (additions.isEmpty) return snapshot;
+    final merged = Map<String, dynamic>.from(snapshot);
+    merged['categories'] = [...cats, ...additions];
+    return merged;
   }
 
   Future<void> _saveToDb(
@@ -584,11 +632,29 @@ class WorldRepositoryImpl implements CampaignRepository {
 
   Future<void> _purgeWorld(String worldId) async {
     await _db.transaction(() async {
+      // Capture this world's package links BEFORE removing them so we can
+      // purge orphaned materialized package rows (Req 3 lifecycle).
+      final pkgLinks = await _db.installedPackagesDao.getByWorld(worldId);
       await _db.worldEntitiesDao.deleteByWorld(worldId);
       await _db.worldSettingsDao.deleteByWorld(worldId);
       await _db.worldMapDataDao.deleteByWorld(worldId);
       await _db.worldSessionsDao.deleteByWorld(worldId);
       await _db.installedPackagesDao.deleteByWorld(worldId);
+      // After this world's links are gone, drop any materialized package whose
+      // only home was this world. Standalone installs leave NO installed_packages
+      // link, so they never appear here; built-in SRD is name-guarded; packages
+      // still linked in another world survive (countWorldsForPackage > 0).
+      for (final link in pkgLinks) {
+        if (link.packageName == srdCorePackageName) continue;
+        if (await _db.installedPackagesDao
+                .countWorldsForPackage(link.packageId) >
+            0) {
+          continue;
+        }
+        await _db.packagesDao.deleteEntitiesByPackage(link.packageId);
+        await _db.packagesDao.deleteSchemasByPackage(link.packageId);
+        await _db.packagesDao.deletePackage(link.packageId);
+      }
       await _db.entitySharesDao.deleteByWorld(worldId);
       await _db.worldMembersDao.deleteByWorld(worldId);
       await _db.worldInvitesDao.deleteByWorld(worldId);
