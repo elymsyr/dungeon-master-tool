@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v11.0.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v11.1.0--beta-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
@@ -96,7 +96,7 @@ Run a session without breaking flow.
 
 Roll up a character, then take it anywhere.
 
-- **Character Creation Wizard** — SRD-driven: species, class, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, traits.
+- **Character Creation Wizard** — SRD-driven: species, subspecies/lineage, class, subclass, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, traits. Works with imported (Open5e) packs too — packaged subclasses, origin feats, spell lists, and feat prerequisites resolve into the wizard, and every option shows its source.
 - **Level-Up Planner** — Auto-applies HP, proficiency bonus, hit dice. Queues ASI/feat, fighting styles, subclass, spell choices as **Pending Choices** you resolve inline.
 - **Multiclass** — Full SRD prereq checks (AND/OR ability gates) with human-readable rejection reasons. Multiclass caster slot math built in.
 - **Weapon Mastery** — Auto-grants mastery slots per class/subclass; takes the max across overlapping feats.

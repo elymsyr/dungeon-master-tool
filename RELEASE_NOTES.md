@@ -1,5 +1,56 @@
 # Release Notes
 
+## Dungeon Master Tool v11.1.0 — Imported-Pack Chargen, First-Class Subspecies, Hub Filters (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v11.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release on top of v11.0.0. Closes the gap between the **Open5e import pipeline** (shipped in v10.1.0) and the **character creation wizard**: packaged content — subclasses, origin feats, spell lists, weapon masteries, feat prerequisites — now resolves into chargen instead of being silently dropped. The cause was a single shape mismatch: built-in SRD content stores resolved entity-id strings, while imported packs store cross-pack `softRef` envelopes (`{slug, name}`) the wizard's `is String` reads ignored. One shared resolver (`entity_ref.dart`) now reads both everywhere. **Subspecies** become a first-class category (subclass-parity), the hub gains **list filters**, and the Open5e build tool recovers spell→class linkage missing from the v2 dataset. No DB migrations; the local schema self-heals the new category at load.
+
+### Highlights
+
+#### Imported-pack chargen now resolves packaged content
+
+- **One ref resolver across the wizard (`entity_ref.dart`)** — Lifted `CharacterResolver`'s three-envelope resolution (plain id string · `{_ref, name}` · `softRef {slug, name}`) into a shared `resolveEntityRef` / `findEntityIdByName`. Every wizard + level-up site that read only `is String` (subclass `parent_class_ref`, background `origin_feat_ref`, `mastery_ref`, feat `category_ref`/`variant_of_ref`) now resolves softRefs too, so packaged content stops vanishing. Name matching is qualifier-tolerant (`"Magic Initiate (Cleric)"` → `"Magic Initiate"`) and O(1) via an Expando-cached `(slug,name)→id` index keyed on the entity map.
+- **Spells match by class tag, not just UUID** — SRD spells link to a class by `class_refs` UUID; imported packs instead carry the bare class name in `tags` (`["Wizard"]`). The spells step, the creation-time feat spell-list picker, and the level-up `_featChoiceOptions` (Magic Initiate, etc.) now accept **either** (`byRef || byTag`), so packaged spell lists populate.
+- **Feat ability prerequisites enforced** — Pending-choice feat options now honor `prereq_min_score` + `prereq_ability_ref`, mapping the ability entity back to its STR…CHA key and hiding feats the character doesn't qualify for.
+- **Source labels + expandable descriptions** — New `SourceBadge` shows where each chargen option came from (e.g. "System Reference Document 5.2", "Adventurer's Guide") next to feats, spells, and subclasses. New `ExpandableMarkdown` collapses long packaged descriptions to a 2-line plain-text preview (markdown stripped, no leaking `###`) and expands into a fixed-height scroll box at the same font size. Relation-list fields skip the inline description dump for class/subclass/species/background/feat chips.
+- **Unstructured background equipment surfaced** — Imported backgrounds carry no `equipment_choice_groups` — their starting gear lives only as prose. The equipment step now extracts the description's `### …Equipment…` section into an info card so the player adds it by hand instead of losing it silently.
+- **Int-faced hit dice normalized (`canonicalHitDie`)** — Built-in classes store `"d8"`; imported packs store the int `8`. Both now canonicalize to `"dN"` before the HP-table lookup so packaged classes compute HP correctly.
+
+#### First-class subspecies
+
+- **`subspecies` category (subclass-parity)** — Subspecies/lineage becomes its own entity category with a `parent_species_ref` (the analogue of `subclass.parent_class_ref`), wired through the resolver, wizard picker, and editor. The character entity carries a matching `subspecies_id`.
+- **Legacy reclassification on import** — Older packs emitted subraces as `species` entities marked only by a `*Subspecies of X.*` description prefix. The package installer now promotes those to `subspecies` and synthesizes the parent softRef; new packs already ship slug `subspecies` + `parent_species_ref`, so it's a no-op for them.
+- **World schema self-heal** — A built-in world whose stored schema snapshot predates the `subspecies` category now overlays any missing built-in category at load (custom/Tier-2 categories preserved, snapshot untouched on disk), so existing worlds surface it without a per-world migration.
+
+#### Hub list filters
+
+- **Filter worlds / packages / characters** — A header filter button opens a multi-section dialog: worlds filter by template + attached package, packages by template, characters by template + world. Within a dimension selections OR; across dimensions they AND. A badge shows the active count; selection is in-memory (resets on restart). Backed by a new `worldPackageNamesProvider` (world→package-name set from the `world_packages` junction) and an `installedWorldPackageIdsProvider` stream.
+
+#### Species innate movement speeds
+
+- **Fly / swim / climb / burrow** — The resolver now reads absolute `speed_fly_ft` / `speed_swim_ft` / `speed_climb_ft` / `speed_burrow_ft` carried on a species (packaged Open5e species + homebrew), keeping the larger value per mode against any effect-granted speed.
+
+#### Open5e build tool — spell class linkage recovered
+
+- **v1 `dnd_class` fallback index** — The Open5e v2 fixtures leave `Spell.classes` empty for most 3rd-party docs (KP / ToH / Warlock / A5E), so those spells shipped with no class link. `build_packs.dart` now indexes each `v1/<doc>/Spell.json`'s comma-string `dnd_class` by spell name, with a doc-scoped overlay (verified by spell-count parity) over a canonical-SRD-first global fallback, and `mapSpells` recovers the class tags when v2 has none (alias-fixed: `Sorceror` → `Sorcerer`). All 8 Open5e packs rebuilt with populated spell class tags.
+
+### Upgrade notes
+
+- **App version bump:** `11.0.0` → `11.1.0`.
+- **Local DB:** schema v12, unchanged. No client migration. The `subspecies` built-in category self-heals onto existing built-in worlds at load.
+- **No new cloud (Supabase) migrations.** Pure client + build-tool work.
+- **Open5e packs rebuilt** — The bundled `assets/open5e_packs/*.pkg.json` are regenerated with spell class tags (and subspecies reclassification on install). Re-install a pack to pick up the new spell links; existing installs keep working.
+- **Existing characters are unaffected** until re-resolved. Packaged subclasses / origin feats / spell picks become selectable on the next pass through the wizard or level-up.
+
+### Known issues
+
+- **Subspecies reclassification is heuristic on legacy packs** — Promotion keys on the `*Subspecies of X.*` description prefix; a legacy subrace lacking that marker stays a plain `species` until the pack is rebuilt.
+- Carry-over from v11.0.0: shape color picker is per-layer (no per-shape picker); smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v11.0.0 — Battle Map Becomes a VTT: AoE Templates, 5e Diagonals, Creature-Size Tokens, Vector Annotations (Beta)
 
 **Release date:** June 2026
