@@ -6,6 +6,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
@@ -117,8 +118,10 @@ class FeatsStep extends ConsumerWidget {
   ) {
     final ids = <String>[];
     final bg = draft.backgroundId == null ? null : entities[draft.backgroundId];
-    final originRef = bg?.fields['origin_feat_ref'];
-    if (originRef is String && originRef.isNotEmpty) ids.add(originRef);
+    // Built-in backgrounds store a resolved feat id; packaged ones store a
+    // softRef `{slug, name}`. Resolve both so the origin feat is offered.
+    final originId = resolveEntityRef(bg?.fields['origin_feat_ref'], entities);
+    if (originId != null) ids.add(originId);
     for (final id in draft.featIds) {
       if (!ids.contains(id)) ids.add(id);
     }
@@ -244,10 +247,18 @@ class _FeatsCache {
       for (final e in spells) {
         final lvl = e.fields['level'];
         if (lvl is! int || !spellLevels.contains(lvl)) continue;
+        // SRD spells link to classes by UUID (`class_refs`); imported packs
+        // carry the bare class name in `tags` instead. Accept either so
+        // packaged spells show in creation-time feat spell-list picks (Magic
+        // Initiate, etc.) — mirrors the level-up path
+        // (pending_choice_resolver_dialog `_featChoiceOptions`, `byRef||byTag`).
         final refs = e.fields['class_refs'];
-        if (refs is! List) continue;
+        final refList = refs is List ? refs : const [];
         for (final entry in classIdsByName.entries) {
-          if (!refs.contains(entry.value)) continue;
+          final byRef = refList.contains(entry.value);
+          final byTag =
+              e.tags.any((t) => t.toLowerCase() == entry.key.toLowerCase());
+          if (!byRef && !byTag) continue;
           spellsByKey
               .putIfAbsent('${entry.key}|$lvl', () => <Entity>[])
               .add(e);

@@ -22,6 +22,7 @@ import '../../../../application/services/srd_core_package_bootstrap.dart'
     show srdCorePackageName;
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
+import '../../../../domain/services/entity_ref.dart';
 import '../../../../domain/entities/schema/dnd5e_constants.dart'
     show kDnd5eSkills, kDnd5eSavingThrows;
 import '../../../../domain/entities/schema/entity_category_schema.dart';
@@ -783,9 +784,12 @@ Map<String, dynamic> buildSeedFields({
   out['subspecies_id'] = draft.subspeciesId ?? '';
   out['background_id'] = draft.backgroundId ?? '';
   out['subclass_id'] = draft.subclassId ?? '';
+  // Origin feat: built-in stores a resolved id, packaged stores a softRef
+  // `{slug, name}` — resolve both so packaged backgrounds grant their feat.
+  final originFeatId =
+      resolveEntityRef(background?.fields['origin_feat_ref'], entities);
   out['feat_ids'] = [
-    if (background?.fields['origin_feat_ref'] is String)
-      background!.fields['origin_feat_ref'] as String,
+    ?originFeatId,
     // Cleric Divine Order / Druid Primal Order are stored as feats so the
     // resolver's proficiency_grant pass applies the weapon/armor bonuses.
     if (draft.l1OrderChoiceId != null && draft.l1OrderChoiceId!.isNotEmpty)
@@ -1525,9 +1529,11 @@ Map<String, dynamic> buildSeedFields({
   // resolver dialog re-reads the group definition off the feat entity.
   {
     final activeFeatIds = <String>[];
-    final bgOrigin = background?.fields['origin_feat_ref'];
-    if (bgOrigin is String && bgOrigin.isNotEmpty) {
-      activeFeatIds.add(bgOrigin);
+    // Resolve the origin feat (plain id for built-in, softRef Map for packaged).
+    final bgOriginId =
+        resolveEntityRef(background?.fields['origin_feat_ref'], entities);
+    if (bgOriginId != null) {
+      activeFeatIds.add(bgOriginId);
     }
     for (final id in draft.featIds) {
       if (!activeFeatIds.contains(id)) activeFeatIds.add(id);

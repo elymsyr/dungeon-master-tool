@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../application/character_creation/pending_choices.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/services/entity_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// Payload the editor mutates onto the character when the player resolves
@@ -483,6 +484,26 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       if (_isFightingStyleFeat(e)) continue;
       final minLvl = fields['prereq_min_character_level'];
       if (minLvl is int && minLvl > widget.choice.level) continue;
+      // Ability prerequisite (e.g. "Wisdom 13"). `prereq_ability_ref` resolves
+      // to the ability entity; map its name back to the STR/…/CHA key the
+      // score map uses and hide the feat when the score falls short.
+      final minScore = fields['prereq_min_score'];
+      if (minScore is int) {
+        final abilId =
+            resolveEntityRef(fields['prereq_ability_ref'], widget.entities);
+        final abilName = abilId == null ? null : widget.entities[abilId]?.name;
+        final abbrev = abilName == null
+            ? null
+            : _abilityLabels.entries
+                .firstWhere((m) => m.value == abilName,
+                    orElse: () => const MapEntry('', ''))
+                .key;
+        if (abbrev != null &&
+            abbrev.isNotEmpty &&
+            (widget.abilityScores[abbrev] ?? 10) < minScore) {
+          continue;
+        }
+      }
       final repeatable = fields['repeatable'] == true;
       if (!repeatable && widget.existingFeatIds.contains(e.id)) continue;
       out.add(e);
@@ -561,9 +582,12 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     for (final e in widget.entities.values) {
       if (e.categorySlug != 'subclass') continue;
       if (classId != null && classId.isNotEmpty) {
-        final parent = e.fields['parent_class_ref'];
+        // `parent_class_ref` is a plain id in-pack, or a softRef `{slug, name}`
+        // when the base class lives in another pack/built-in. Resolve both; a
+        // softRef carries no `id` key, so the old `parent['id']` read left every
+        // packaged subclass unfiltered.
         final parentId =
-            parent is String ? parent : (parent is Map ? parent['id']?.toString() : null);
+            resolveEntityRef(e.fields['parent_class_ref'], widget.entities);
         if (parentId != null && parentId != classId) continue;
       }
       out.add(e);
