@@ -6,6 +6,7 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import '../../../../widgets/expandable_markdown.dart';
 
 /// Aggregates `equipment_choice_groups` from the chosen class, subclass and
 /// background, then renders one card per group with selectable options.
@@ -50,7 +51,12 @@ class EquipmentStep extends ConsumerWidget {
     collect(draft.subclassId, 'Subclass');
     collect(draft.backgroundId, 'Background');
 
-    if (groups.isEmpty) {
+    // Imported (Open5e) backgrounds carry no structured `equipment_choice_groups`
+    // — their starting equipment lives only as prose in the description. Surface
+    // it here so the player can add it by hand instead of losing it silently.
+    final bgNote = _backgroundEquipmentNote(entities);
+
+    if (groups.isEmpty && bgNote == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text('No equipment choices required for this build.'),
@@ -67,7 +73,92 @@ class EquipmentStep extends ConsumerWidget {
             onPicked: (optionId) =>
                 notifier.setEquipmentChoice(g.storageKey, optionId),
           ),
+        ?bgNote,
       ],
+    );
+  }
+
+  /// Info card for a background whose equipment isn't structured (no
+  /// `equipment_choice_groups`). Prefers the description's equipment section,
+  /// falling back to the whole description. Returns null when nothing to show.
+  Widget? _backgroundEquipmentNote(Map<String, Entity> entities) {
+    final bg = entities[draft.backgroundId];
+    if (bg == null) return null;
+    final raw = bg.fields['equipment_choice_groups'];
+    if (raw is List && raw.isNotEmpty) return null; // structured path handles it
+    final desc = bg.description.trim();
+    if (desc.isEmpty) return null;
+    final prose = _equipmentSection(desc) ?? desc;
+    return _EquipmentProseNote(sourceName: bg.name, prose: prose);
+  }
+}
+
+/// Extract the `### …Equipment…` section (heading + body up to the next
+/// heading) from a folded background description, or null when absent.
+String? _equipmentSection(String desc) {
+  final lines = desc.split('\n');
+  final headingRe = RegExp(r'^\s{0,3}#{1,6}\s');
+  final eqRe = RegExp(r'^\s{0,3}#{1,6}\s.*equipment', caseSensitive: false);
+  var start = -1;
+  for (var i = 0; i < lines.length; i++) {
+    if (eqRe.hasMatch(lines[i])) {
+      start = i;
+      break;
+    }
+  }
+  if (start < 0) return null;
+  final buf = <String>[lines[start]];
+  for (var i = start + 1; i < lines.length; i++) {
+    if (headingRe.hasMatch(lines[i])) break;
+    buf.add(lines[i]);
+  }
+  final out = buf.join('\n').trim();
+  return out.isEmpty ? null : out;
+}
+
+class _EquipmentProseNote extends StatelessWidget {
+  final String sourceName;
+  final String prose;
+
+  const _EquipmentProseNote({required this.sourceName, required this.prose});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline,
+                    size: 16, color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Background equipment (from $sourceName)',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "This package doesn't provide pickable equipment — add these "
+              'manually after creation.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            ExpandableMarkdown(data: prose),
+          ],
+        ),
+      ),
     );
   }
 }

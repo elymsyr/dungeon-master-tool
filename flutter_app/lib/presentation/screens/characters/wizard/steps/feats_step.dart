@@ -7,6 +7,8 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import '../../../../widgets/expandable_markdown.dart';
+import '../../../../widgets/source_badge.dart';
 import 'skill_mod_helper.dart';
 
 /// Wizard step that surfaces per-feat sub-choices.
@@ -297,17 +299,26 @@ class _FeatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            feat.name,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: palette.tabActiveText,
-            ),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  feat.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(child: SourceBadge(feat.source)),
+              const Spacer(),
+            ],
           ),
           if (feat.description.isNotEmpty) ...[
             const SizedBox(height: 4),
-            MarkdownBody(
+            ExpandableMarkdown(
               data: feat.description,
               styleSheet:
                   MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(

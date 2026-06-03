@@ -7,6 +7,8 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../widgets/class_level_up_table.dart';
+import '../../../../widgets/expandable_markdown.dart';
+import '../../../../widgets/source_badge.dart';
 
 /// Subclass picker. Always shown when the chosen class has at least one
 /// subclass entity referencing it via `parent_class_ref`. Selection is
@@ -151,7 +153,7 @@ class _SubclassRow extends StatelessWidget {
       dense: true,
       title: Row(
         children: [
-          Expanded(
+          Flexible(
             child: Text(
               entity.name,
               style: locked
@@ -159,6 +161,9 @@ class _SubclassRow extends StatelessWidget {
                   : null,
             ),
           ),
+          const SizedBox(width: 6),
+          Flexible(child: SourceBadge(entity.source)),
+          const Spacer(),
           if (locked)
             Padding(
               padding: const EdgeInsets.only(left: 8),
@@ -175,7 +180,7 @@ class _SubclassRow extends StatelessWidget {
       ),
       subtitle: entity.description.isEmpty
           ? null
-          : MarkdownBody(
+          : ExpandableMarkdown(
               data: entity.description,
               styleSheet:
                   MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(

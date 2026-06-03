@@ -40,6 +40,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/services/perf_probe.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character/effective_character.dart';
+import '../../../domain/entities/schema/rules/rule_config.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
@@ -2609,10 +2610,9 @@ class _CharacterEditorScreenState
     final classId = firstId(const ['class_refs', 'class_']);
     if (classId == null) return 0;
     final classEntity = entities[classId];
-    final die = classEntity?.fields['hit_die'];
-    if (die is! String) return 0;
-    final m = RegExp(r'd(\d+)').firstMatch(die);
-    return m == null ? 0 : int.tryParse(m.group(1)!) ?? 0;
+    // Packs store hit_die as int (8); SRD as "d8". hitDieFaces handles both —
+    // the old `die is! String` guard silently returned 0 HP for packaged classes.
+    return hitDieFaces(classEntity?.fields['hit_die']);
   }
 
   int _conModifier(Character character) {
