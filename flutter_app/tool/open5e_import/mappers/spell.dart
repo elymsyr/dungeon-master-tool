@@ -16,11 +16,16 @@ import '../refgraph.dart';
 const _schoolAlias = {'transformation': 'Transmutation'};
 
 /// Map all spells in a document into [pack].
+///
+/// [v1ClassByName] maps `spellNameLower → v1 dnd_class` string and is used to
+/// recover class linkage for spells whose v2 `classes` field is empty (true for
+/// most 3rd-party docs — KP/ToH/Warlock/A5E). See `bin/build_packs.dart`.
 void mapSpells({
   required PackBuilder pack,
   required Normalizer norm,
   required String source,
   required List<Fixture> spells,
+  Map<String, String> v1ClassByName = const {},
 }) {
   for (final s in spells) {
     final name = (s['name'] as String?)?.trim();
@@ -91,8 +96,13 @@ void mapSpells({
       attrs['attack_type'] = (range.$2 ?? 0) > 5 ? 'Ranged' : 'Melee';
     }
 
-    // Classes → tags (descriptive; not inter-entity refs).
-    final tags = _classTags((s['classes'] as List?)?.cast<String>() ?? const []);
+    // Classes → tags (descriptive; not inter-entity refs). v2 carries the
+    // linkage in `classes`; when empty (most 3rd-party docs) fall back to the
+    // v1 `dnd_class` string indexed by spell name.
+    final v2classes = (s['classes'] as List?)?.cast<String>() ?? const [];
+    final tags = v2classes.isNotEmpty
+        ? _classTags(v2classes)
+        : _classTagsFromV1(v1ClassByName[name.toLowerCase()]);
 
     pack.add(packEntity(
       slug: 'spell',
@@ -195,6 +205,26 @@ List<String> _classTags(List<String> classes) {
   for (final c in classes) {
     final base = c.contains('_') ? c.substring(c.lastIndexOf('_') + 1) : c;
     final name = titleCase(base);
+    if (name.isNotEmpty && seen.add(name)) out.add(name);
+  }
+  return out;
+}
+
+/// Known v1 `dnd_class` misspellings/aliases → canonical class name so the
+/// app's class-name match (`spell.tags` ↔ class name) lands.
+const _v1ClassFix = {'Sorceror': 'Sorcerer'};
+
+/// `'Druid, Ranger, Sorceror, Wizard'` → `['Druid','Ranger','Sorcerer','Wizard']`
+/// (deduped, ordered). Recovers class tags from the v1 comma-string when v2 has
+/// none. Non-class tokens (e.g. 'Ritual Caster') pass through harmlessly — they
+/// simply match no class.
+List<String> _classTagsFromV1(String? dndClass) {
+  if (dndClass == null || dndClass.trim().isEmpty) return const [];
+  final seen = <String>{};
+  final out = <String>[];
+  for (final part in dndClass.split(',')) {
+    var name = titleCase(part.trim());
+    name = _v1ClassFix[name] ?? name;
     if (name.isNotEmpty && seen.add(name)) out.add(name);
   }
   return out;
