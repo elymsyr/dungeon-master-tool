@@ -40,6 +40,15 @@ void main(List<String> args) {
   final results = <PackResult>[];
   var hadError = false;
 
+  // v1 `Spell.dnd_class` index — the v2 fixtures leave `Spell.classes` empty for
+  // most 3rd-party docs, so spells ship with no class link. v1 still carries the
+  // comma-string class list per spell name; index it as a fallback for mapSpells.
+  final v1ByDoc = _v1ClassIndex(dataRoot);
+  final v1Global = <String, String>{};
+  for (final pref in _v1GlobalPref) {
+    v1ByDoc[pref]?.forEach((k, v) => v1Global.putIfAbsent(k, () => v));
+  }
+
   print('Open5e import — ${docs.length} document(s), data=$dataRoot');
   for (final doc in docs) {
     final pack = PackBuilder(doc.packageName);
@@ -56,11 +65,19 @@ void main(List<String> args) {
       );
     }
     if (doc.hasSpells) {
+      // Doc-scoped v1 link overlays the global fallback so cross-edition name
+      // collisions (e.g. Acid Arrow) resolve to this document's class list.
+      final mapped = _v1DocForV2[doc.slug];
+      final v1ForDoc = <String, String>{
+        ...v1Global,
+        if (mapped != null && v1ByDoc[mapped] != null) ...v1ByDoc[mapped]!,
+      };
       mapSpells(
         pack: pack,
         norm: norm,
         source: doc.title,
         spells: loadFixtures(doc.v2File('Spell.json')),
+        v1ClassByName: v1ForDoc,
       );
     }
     if (doc.hasMagicItems) {
@@ -147,6 +164,56 @@ Map<String, String> _parseArgs(List<String> args) {
   for (var i = 0; i < args.length - 1; i++) {
     final a = args[i];
     if (a.startsWith('--')) out[a.substring(2)] = args[i + 1];
+  }
+  return out;
+}
+
+/// v2 document slug → the v1 document slug that holds its `Spell.dnd_class`
+/// linkage. Verified by spell-count parity (wz=warlock 43, a5e-ag=a5e 371,
+/// toh=toh 91, …). srd-2024/spells-that-dont-suck already carry v2 classes.
+const _v1DocForV2 = {
+  'deepm': 'dmag',
+  'deepmx': 'dmag-e',
+  'toh': 'toh',
+  'kp': 'kp',
+  'wz': 'warlock',
+  'a5e-ag': 'a5e',
+  'open5e': 'o5e',
+  'srd-2014': 'wotc-srd',
+};
+
+/// Preference order for the cross-doc global fallback (canonical SRD lists win
+/// when a spell name isn't found in its own document's v1 index).
+const _v1GlobalPref = [
+  'wotc-srd',
+  'o5e',
+  'a5e',
+  'dmag',
+  'dmag-e',
+  'toh',
+  'kp',
+  'warlock',
+];
+
+/// Build `v1doc → { spellNameLower → dnd_class }` from every `v1/<doc>/Spell.json`
+/// under [dataRoot]. Used to recover class tags absent from the v2 fixtures.
+Map<String, Map<String, String>> _v1ClassIndex(String dataRoot) {
+  final out = <String, Map<String, String>>{};
+  final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
+  if (!v1.existsSync()) return out;
+  for (final ent in v1.listSync().whereType<Directory>()) {
+    final slug = ent.path.split(Platform.pathSeparator).last;
+    final spells = loadFixtures('${ent.path}${Platform.pathSeparator}Spell.json');
+    if (spells.isEmpty) continue;
+    final m = <String, String>{};
+    for (final s in spells) {
+      final name = (s['name'] as String?)?.trim();
+      final dc = (s['dnd_class'] as String?)?.trim();
+      if (name != null && name.isNotEmpty && dc != null && dc.isNotEmpty) {
+        m[name.toLowerCase()] = dc;
+      }
+    }
+    if (m.isNotEmpty) out[slug] = m;
   }
   return out;
 }

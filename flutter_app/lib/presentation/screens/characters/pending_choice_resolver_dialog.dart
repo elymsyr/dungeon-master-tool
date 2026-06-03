@@ -1035,9 +1035,14 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           if (e.categorySlug != 'spell') continue;
           final lvl = e.fields['level'];
           if (lvl is! int || lvl != level) continue;
+          // SRD spells link by UUID (`class_refs`); imported packs carry the
+          // bare class name in `tags`. Accept either so packaged spells appear
+          // in feat spell-list choices (e.g. Magic Initiate).
           final refs = e.fields['class_refs'];
-          if (refs is! List) continue;
-          if (!refs.contains(classId)) continue;
+          final byRef = refs is List && refs.contains(classId);
+          final byTag =
+              e.tags.any((t) => t.toLowerCase() == listValue.toLowerCase());
+          if (!byRef && !byTag) continue;
           out.add(_FeatChoiceOption(
               id: e.id, label: e.name, description: e.description));
         }
