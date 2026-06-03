@@ -9,6 +9,7 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/role_provider.dart';
@@ -22,6 +23,7 @@ import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/character_stat_chips.dart';
+import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -81,6 +83,20 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     return c.ownerId == selfUid;
   }
 
+  /// Matches a character against the active template/world filter. World is
+  /// matched by display label (world names are unique; orphan label distinct).
+  bool _matchesFilter(Character c, HubFilter filter, L10n l10n) {
+    if (filter.templates.isNotEmpty &&
+        !filter.templates.contains(normalizeTemplateName(c.templateName))) {
+      return false;
+    }
+    if (filter.worlds.isNotEmpty &&
+        !filter.worlds.contains(_worldLabel(c, l10n))) {
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -104,6 +120,18 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     }
 
     final charactersAsync = ref.watch(characterListProvider);
+    final filter = ref.watch(charactersFilterProvider);
+    final selfUid = ref.watch(authProvider)?.uid;
+    final owned = ref
+        .watch(sortedCharactersProvider)
+        .where((c) => _isOwned(c, selfUid))
+        .toList();
+    final templateOptions = <String>{
+      for (final c in owned) normalizeTemplateName(c.templateName)
+    }.toList();
+    final worldOptions = <String>{
+      for (final c in owned) _worldLabel(c, l10n)
+    }.toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -139,6 +167,27 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       visualDensity: VisualDensity.compact,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  HubFilterButton(
+                    totalSelected: filter.totalSelected,
+                    sections: [
+                      FilterSection(
+                        label: l10n.filterTemplates,
+                        options: templateOptions,
+                        selected: filter.templates,
+                      ),
+                      FilterSection(
+                        label: l10n.filterWorlds,
+                        options: worldOptions,
+                        selected: filter.worlds,
+                      ),
+                    ],
+                    onChanged: (sel) {
+                      ref.read(charactersFilterProvider.notifier).state =
+                          HubFilter(templates: sel[0], worlds: sel[1]);
+                      _selectedIndex.value = -1;
+                    },
                   ),
                   const SizedBox(width: 4),
                   Tooltip(
@@ -178,14 +227,13 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
               charactersAsync.when(
                 data: (all) {
-                  // H3: sort hoisted to provider — cached until the list
-                  // identity changes. `all` parameter retained to keep
-                  // the AsyncValue.when type contract; we use the
-                  // provider's cached result instead.
-                  final sortedAll = ref.watch(sortedCharactersProvider);
-                  final selfUid = ref.watch(authProvider)?.uid;
-                  final sorted =
-                      sortedAll.where((c) => _isOwned(c, selfUid)).toList();
+                  // H3: sort hoisted to provider via `owned` (computed at the
+                  // top of build from sortedCharactersProvider + ownership).
+                  // `all` parameter retained to keep the AsyncValue.when type
+                  // contract; we use the cached `owned` list instead.
+                  final sorted = owned
+                      .where((c) => _matchesFilter(c, filter, l10n))
+                      .toList();
                   if (sorted.isEmpty) {
                     return Container(
                       padding: const EdgeInsets.all(24),
@@ -197,7 +245,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       ),
                       child: Center(
                         child: Text(
-                          l10n.charactersEmpty,
+                          owned.isEmpty
+                              ? l10n.charactersEmpty
+                              : l10n.hubFilterNoResults,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: palette.sidebarLabelSecondary,
@@ -284,7 +334,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               ValueListenableBuilder<int>(
                 valueListenable: _selectedIndex,
                 builder: (context, selectedIdx, _) {
-                final list = _visibleList();
+                final list = _visibleList(l10n);
                 final selected =
                     (selectedIdx >= 0 && selectedIdx < list.length)
                         ? list[selectedIdx]
@@ -407,10 +457,14 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   /// Own-only view. Char tab shows characters whose owner is the signed-in
   /// user (or, pre-auth, the local fallback). Action buttons share this
   /// output with the list builder so selection indices line up.
-  List<Character> _visibleList() {
+  List<Character> _visibleList(L10n l10n) {
     final sorted = ref.read(sortedCharactersProvider);
     final selfUid = ref.read(authProvider)?.uid;
-    return sorted.where((c) => _isOwned(c, selfUid)).toList();
+    final filter = ref.read(charactersFilterProvider);
+    return sorted
+        .where((c) => _isOwned(c, selfUid))
+        .where((c) => _matchesFilter(c, filter, l10n))
+        .toList();
   }
 
   String _subInfo(Character c, L10n l10n) {
@@ -438,7 +492,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   ///     hard delete since the row is now ownerless+worldless.
   Future<void> _releaseOrDeleteSelected() async {
     final l10n = L10n.of(context)!;
-    final list = _visibleList();
+    final list = _visibleList(l10n);
     final idx = _selectedIndex.value;
     if (idx < 0 || idx >= list.length) return;
     final c = list[idx];

@@ -2474,11 +2474,17 @@ Widget _badge(String label, Color color) => Container(
     );
 
 // ─────────────────────────────────────────────────────────────────────────
-// autoGrantSources — {source: 'class'|'subclass'|'species'|'background',
-//                     source_ref, at_level?, choice_required?}
+// autoGrantSources — {source: 'class'|'subclass'|'species'|'subspecies'|
+//                     'background', source_ref, at_level?, choice_required?}
 // ─────────────────────────────────────────────────────────────────────────
 
-const _autoGrantSources = ['class', 'subclass', 'species', 'background'];
+const _autoGrantSources = [
+  'class',
+  'subclass',
+  'species',
+  'subspecies',
+  'background',
+];
 
 class AutoGrantSourcesFieldWidget extends StatelessWidget {
   final FieldSchema schema;

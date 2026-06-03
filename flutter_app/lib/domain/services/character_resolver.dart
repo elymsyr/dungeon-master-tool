@@ -740,177 +740,124 @@ class CharacterResolver {
     if (raceId != null) {
       final sp = entitiesById[raceId];
       if (sp != null) {
-        speedBonus += 0; // species speed_ft is the BASE speed, not a bonus
         final speciesSource = 'species:${sp.name}';
-        // Innate alternate movement speeds carried as absolute feet on the
-        // species (packaged Open5e species + any homebrew). Effects also feed
-        // `extraSpeeds`; keep the larger value per mode.
-        const speedModeByField = {
-          'speed_fly_ft': 'fly',
-          'speed_swim_ft': 'swim',
-          'speed_climb_ft': 'climb',
-          'speed_burrow_ft': 'burrow',
-        };
-        speedModeByField.forEach((field, mode) {
-          final v = sp.fields[field];
-          if (v is int && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
-            extraSpeeds[mode] = v;
+        // Apply every grant carried by a species-shaped fields map — the
+        // species entity itself, a chosen subspecies entity, or (legacy) a
+        // nested subspecies_options row. All three share the same field set,
+        // so the application is factored once.
+        void applyGrantsFrom(Map<String, dynamic> f, String src) {
+          // Innate alternate movement speeds carried as absolute feet; keep the
+          // larger value per mode (effects also feed `extraSpeeds`).
+          const speedModeByField = {
+            'speed_fly_ft': 'fly',
+            'speed_swim_ft': 'swim',
+            'speed_climb_ft': 'climb',
+            'speed_burrow_ft': 'burrow',
+          };
+          speedModeByField.forEach((field, mode) {
+            final v = f[field];
+            if (v is int && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
+              extraSpeeds[mode] = v;
+            }
+          });
+          for (final m in _readMapList(f['granted_modifiers'])) {
+            applyEffect(_modifierAsEffect(m), src);
           }
-        });
-        final modifiers = _readMapList(sp.fields['granted_modifiers']);
-        for (final m in modifiers) {
-          applyEffect(_modifierAsEffect(m), speciesSource);
+          for (final s in _readRefList(f['granted_senses'], entitiesById)) {
+            if (!senses.contains(s)) senses.add(s);
+            noteSource(s, src);
+          }
+          for (final r in _readRefList(f['granted_damage_resistances'], entitiesById)) {
+            if (!damageRes.contains(r)) damageRes.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_damage_immunities'], entitiesById)) {
+            if (!damageImmunities.contains(r)) damageImmunities.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_damage_vulnerabilities'], entitiesById)) {
+            if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_condition_immunities'], entitiesById)) {
+            if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
+            noteSource(r, src);
+          }
+          for (final l in _readRefList(f['granted_languages'], entitiesById)) {
+            if (!languages.contains(l)) languages.add(l);
+          }
+          for (final sk in _readRefList(f['granted_skill_proficiencies'], entitiesById)) {
+            if (!skills.contains(sk)) skills.add(sk);
+          }
+          for (final t in _readRefList(f['trait_refs'], entitiesById)) {
+            if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
+            noteSource(t, src);
+          }
+          for (final a in _readRefList(f['granted_action_refs'], entitiesById)) {
+            if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final a in _readRefList(f['granted_bonus_action_refs'], entitiesById)) {
+            if (!grantedBonusActionIds.contains(a)) grantedBonusActionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final a in _readRefList(f['granted_reaction_refs'], entitiesById)) {
+            if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final sp_ in _readRefList(f['granted_spell_refs'], entitiesById)) {
+            if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
+            noteSource(sp_, src);
+          }
+          for (final sp_ in _readRefList(f['granted_cantrip_refs'], entitiesById)) {
+            if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
+            noteSource(sp_, src);
+          }
+          _applyLevelGatedSpells(
+            rows: _readMapList(f['granted_spells_at_level']),
+            totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
+            entitiesById: entitiesById,
+            grantedSpellIds: grantedSpellIds,
+            grantedCantripIds: grantedCantripIds,
+            resourcePools: resourcePools,
+            noteSource: (id) => noteSource(id, src),
+          );
         }
-        for (final s in _readRefList(sp.fields['granted_senses'], entitiesById)) {
-          if (!senses.contains(s)) senses.add(s);
-          noteSource(s, speciesSource);
-        }
-        for (final r in _readRefList(sp.fields['granted_damage_resistances'], entitiesById)) {
-          if (!damageRes.contains(r)) damageRes.add(r);
-          noteSource(r, speciesSource);
-        }
-        for (final r in _readRefList(sp.fields['granted_damage_immunities'], entitiesById)) {
-          if (!damageImmunities.contains(r)) damageImmunities.add(r);
-          noteSource(r, speciesSource);
-        }
-        for (final r in _readRefList(sp.fields['granted_damage_vulnerabilities'], entitiesById)) {
-          if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
-          noteSource(r, speciesSource);
-        }
-        for (final r in _readRefList(sp.fields['granted_condition_immunities'], entitiesById)) {
-          if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
-          noteSource(r, speciesSource);
-        }
-        for (final l in _readRefList(sp.fields['granted_languages'], entitiesById)) {
-          if (!languages.contains(l)) languages.add(l);
-        }
-        for (final sk in _readRefList(sp.fields['granted_skill_proficiencies'], entitiesById)) {
-          if (!skills.contains(sk)) skills.add(sk);
-        }
-        for (final t in _readRefList(sp.fields['trait_refs'], entitiesById)) {
-          if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
-          noteSource(t, speciesSource);
-        }
-        for (final a in _readRefList(sp.fields['granted_action_refs'], entitiesById)) {
-          if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
-          noteSource(a, speciesSource);
-        }
-        for (final a in _readRefList(sp.fields['granted_bonus_action_refs'], entitiesById)) {
-          if (!grantedBonusActionIds.contains(a)) grantedBonusActionIds.add(a);
-          noteSource(a, speciesSource);
-        }
-        for (final a in _readRefList(sp.fields['granted_reaction_refs'], entitiesById)) {
-          if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
-          noteSource(a, speciesSource);
-        }
-        for (final sp_ in _readRefList(sp.fields['granted_spell_refs'], entitiesById)) {
-          if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
-          noteSource(sp_, speciesSource);
-        }
-        for (final sp_ in _readRefList(sp.fields['granted_cantrip_refs'], entitiesById)) {
-          if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
-          noteSource(sp_, speciesSource);
-        }
-        _applyLevelGatedSpells(
-          rows: _readMapList(sp.fields['granted_spells_at_level']),
-          totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
-          entitiesById: entitiesById,
-          grantedSpellIds: grantedSpellIds,
-          grantedCantripIds: grantedCantripIds,
-          resourcePools: resourcePools,
-          noteSource: (id) => noteSource(id, speciesSource),
-        );
 
-        // Subspecies / lineage row — fold the matching entry's grants in
-        // the same way as the top-level species fields. Looks up by name
-        // because subspecies rows are scoped to the species entity and
-        // don't have stable global IDs.
+        applyGrantsFrom(sp.fields, speciesSource);
+
+        // Subspecies — a first-class `subspecies` entity (preferred) or, for
+        // legacy data, a nested `subspecies_options` row. `subspeciesId` may be
+        // the entity id (new selections), the entity name, or the original
+        // option name (saves predating the field→entity migration), matched via
+        // `legacy_subspecies_key`.
         if (subspeciesId != null && subspeciesId.isNotEmpty) {
-          final options = _readMapList(sp.fields['subspecies_options']);
-          for (final row in options) {
-            if (row['name']?.toString() != subspeciesId) continue;
-            final subSource = 'subspecies:${sp.name}/$subspeciesId';
-            final subMods = _readMapList(row['granted_modifiers']);
-            for (final m in subMods) {
-              applyEffect(_modifierAsEffect(m), subSource);
-            }
-            for (final s in _readRefList(row['granted_senses'], entitiesById)) {
-              if (!senses.contains(s)) senses.add(s);
-              noteSource(s, subSource);
-            }
-            for (final r in _readRefList(
-                row['granted_damage_resistances'], entitiesById)) {
-              if (!damageRes.contains(r)) damageRes.add(r);
-              noteSource(r, subSource);
-            }
-            for (final r in _readRefList(
-                row['granted_damage_immunities'], entitiesById)) {
-              if (!damageImmunities.contains(r)) damageImmunities.add(r);
-              noteSource(r, subSource);
-            }
-            for (final r in _readRefList(
-                row['granted_damage_vulnerabilities'], entitiesById)) {
-              if (!damageVulnerabilities.contains(r)) {
-                damageVulnerabilities.add(r);
+          Entity? sub = entitiesById[subspeciesId];
+          if (sub == null || sub.categorySlug != 'subspecies') {
+            sub = null;
+            for (final e in entitiesById.values) {
+              if (e.categorySlug != 'subspecies') continue;
+              if (_resolveRef(e.fields['parent_species_ref'], entitiesById) !=
+                  raceId) {
+                continue;
               }
-              noteSource(r, subSource);
-            }
-            for (final r in _readRefList(
-                row['granted_condition_immunities'], entitiesById)) {
-              if (!conditionImmunities.contains(r)) {
-                conditionImmunities.add(r);
+              if (e.name == subspeciesId ||
+                  e.fields['legacy_subspecies_key']?.toString() ==
+                      subspeciesId) {
+                sub = e;
+                break;
               }
-              noteSource(r, subSource);
             }
-            for (final l in _readRefList(row['granted_languages'], entitiesById)) {
-              if (!languages.contains(l)) languages.add(l);
+          }
+          if (sub != null) {
+            applyGrantsFrom(sub.fields, 'subspecies:${sp.name}/${sub.name}');
+          } else {
+            // Legacy fallback: nested subspecies_options row matched by name.
+            for (final row in _readMapList(sp.fields['subspecies_options'])) {
+              if (row['name']?.toString() != subspeciesId) continue;
+              applyGrantsFrom(row, 'subspecies:${sp.name}/$subspeciesId');
+              break;
             }
-            for (final sk in _readRefList(
-                row['granted_skill_proficiencies'], entitiesById)) {
-              if (!skills.contains(sk)) skills.add(sk);
-            }
-            for (final t in _readRefList(row['trait_refs'], entitiesById)) {
-              if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
-              noteSource(t, subSource);
-            }
-            for (final a in _readRefList(
-                row['granted_action_refs'], entitiesById)) {
-              if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
-              noteSource(a, subSource);
-            }
-            for (final a in _readRefList(
-                row['granted_bonus_action_refs'], entitiesById)) {
-              if (!grantedBonusActionIds.contains(a)) {
-                grantedBonusActionIds.add(a);
-              }
-              noteSource(a, subSource);
-            }
-            for (final a in _readRefList(
-                row['granted_reaction_refs'], entitiesById)) {
-              if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
-              noteSource(a, subSource);
-            }
-            for (final sp_ in _readRefList(
-                row['granted_spell_refs'], entitiesById)) {
-              if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
-              noteSource(sp_, subSource);
-            }
-            for (final sp_ in _readRefList(
-                row['granted_cantrip_refs'], entitiesById)) {
-              if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
-              noteSource(sp_, subSource);
-            }
-            _applyLevelGatedSpells(
-              rows: _readMapList(row['granted_spells_at_level']),
-              totalLevel:
-                  classLevels.values.fold<int>(0, (a, b) => a + b),
-              entitiesById: entitiesById,
-              grantedSpellIds: grantedSpellIds,
-              grantedCantripIds: grantedCantripIds,
-              resourcePools: resourcePools,
-              noteSource: (id) => noteSource(id, subSource),
-            );
-            break;
           }
         }
       }

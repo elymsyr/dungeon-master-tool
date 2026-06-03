@@ -1211,7 +1211,7 @@ class WorldMirrorApplier {
     String stateJson,
   ) async {
     if (packageName.isEmpty || stateJson.isEmpty || stateJson == '{}') return;
-    try {
+    Future<void> attempt() async {
       final decoded = await _decodeJsonMaybeOffload(stateJson);
       if (decoded is! Map<String, dynamic>) return;
       final repo = ref.read(packageRepositoryProvider);
@@ -1238,8 +1238,23 @@ class WorldMirrorApplier {
       );
       ref.invalidate(packageListProvider);
       _bumpRevision();
-    } catch (err, st) {
-      debugPrint('_materializeSharedPackageLocally error: $err\n$st');
+    }
+
+    // Retry once: a transient decode/DB error otherwise leaves the player
+    // without the package until the next `update` CDC.
+    for (var i = 0; i < 2; i++) {
+      try {
+        await attempt();
+        return;
+      } catch (err, st) {
+        if (i == 0 && !_disposed) {
+          debugPrint('_materializeSharedPackageLocally retry after: $err');
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+          if (!_disposed) continue;
+        }
+        debugPrint('_materializeSharedPackageLocally error: $err\n$st');
+        return;
+      }
     }
   }
 

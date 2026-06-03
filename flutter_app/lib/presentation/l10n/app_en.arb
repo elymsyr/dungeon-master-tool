@@ -119,6 +119,12 @@
 
   "hubBtnMarketplace": "Marketplace",
   "hubTooltipRefresh": "Refresh from cloud",
+  "hubTooltipFilter": "Filter",
+  "hubFilterTitle": "Filter",
+  "hubFilterClear": "Clear filter",
+  "hubFilterApply": "Apply",
+  "hubFilterEmpty": "Nothing to filter",
+  "hubFilterNoResults": "No items match the filter",
   "hubErrorGeneric": "Error: {error}",
   "@hubErrorGeneric": { "placeholders": { "error": { "type": "String" } } },
 

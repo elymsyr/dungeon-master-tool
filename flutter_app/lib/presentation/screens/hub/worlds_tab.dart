@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/world_membership_provider.dart';
@@ -22,6 +24,7 @@ import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
 import '../../widgets/online_world_section.dart';
 import 'social_tab.dart';
@@ -62,7 +65,39 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (!mounted) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
+    ref.invalidate(worldPackageNamesProvider);
     setState(() => _refreshing = false);
+  }
+
+  /// Applies the active template/package filter to [all]. Single source of
+  /// truth for both the ListView and the index-based Load/Delete handlers.
+  List<CampaignInfo> _applyFilter(
+    List<CampaignInfo> all,
+    HubFilter filter,
+    Map<String, Set<String>> worldPkgs,
+  ) {
+    if (filter.isEmpty) return all;
+    return all.where((info) {
+      if (filter.templates.isNotEmpty &&
+          !filter.templates.contains(normalizeTemplateName(info.templateName))) {
+        return false;
+      }
+      if (filter.packages.isNotEmpty) {
+        final pkgs = worldPkgs[info.id] ?? const <String>{};
+        if (!pkgs.any(filter.packages.contains)) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  /// Filtered campaign list as seen by the UI right now — read from providers
+  /// so the Load/Delete handlers index into the same list the user sees.
+  List<CampaignInfo> _currentFiltered() {
+    final all = ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    final filter = ref.read(worldsFilterProvider);
+    final worldPkgs =
+        ref.read(worldPackageNamesProvider).valueOrNull ?? const {};
+    return _applyFilter(all, filter, worldPkgs);
   }
 
   @override
@@ -70,6 +105,17 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final campaignInfoList = ref.watch(campaignInfoListProvider);
+    final filter = ref.watch(worldsFilterProvider);
+    final worldPkgs =
+        ref.watch(worldPackageNamesProvider).valueOrNull ??
+            const <String, Set<String>>{};
+    final allCampaigns = campaignInfoList.valueOrNull ?? const <CampaignInfo>[];
+    final templateOptions = <String>{
+      for (final c in allCampaigns) normalizeTemplateName(c.templateName)
+    }.toList();
+    final packageOptions = <String>{
+      for (final s in worldPkgs.values) ...s
+    }.toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -116,6 +162,29 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     ),
                   ],
                   const SizedBox(width: 4),
+                  HubFilterButton(
+                    totalSelected: filter.totalSelected,
+                    sections: [
+                      FilterSection(
+                        label: l10n.filterTemplates,
+                        options: templateOptions,
+                        selected: filter.templates,
+                      ),
+                      FilterSection(
+                        label: l10n.filterPackages,
+                        options: packageOptions,
+                        selected: filter.packages,
+                      ),
+                    ],
+                    onChanged: (sel) {
+                      ref.read(worldsFilterProvider.notifier).state = HubFilter(
+                        templates: sel[0],
+                        packages: sel[1],
+                      );
+                      setState(() => _selectedIndex = -1);
+                    },
+                  ),
+                  const SizedBox(width: 4),
                   Tooltip(
                     message: l10n.hubTooltipRefresh,
                     child: OutlinedButton(
@@ -150,7 +219,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
               // Kampanya listesi
               campaignInfoList.when(
-                data: (campaigns) => campaigns.isEmpty
+                data: (campaigns) {
+                  final filtered = _applyFilter(campaigns, filter, worldPkgs);
+                  return filtered.isEmpty
                     ? Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -160,7 +231,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                         ),
                         child: Center(
                           child: Text(
-                            l10n.worldsEmpty(AppPaths.worldsDir),
+                            campaigns.isEmpty
+                                ? l10n.worldsEmpty(AppPaths.worldsDir)
+                                : l10n.hubFilterNoResults,
                             textAlign: TextAlign.center,
                             style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
                           ),
@@ -169,10 +242,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: campaigns.length,
+                        itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 4),
                         itemBuilder: (context, index) {
-                          final info = campaigns[index];
+                          final info = filtered[index];
                           final isSelected = index == _selectedIndex;
                           final metaAsync =
                               ref.watch(campaignMetadataProvider(info.name));
@@ -233,7 +306,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                             ),
                           );
                         },
-                      ),
+                      );
+                },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Text(l10n.hubErrorGeneric(e.toString())),
               ),
@@ -247,7 +321,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     child: FilledButton.icon(
                       onPressed: _selectedIndex >= 0
                           ? () {
-                              final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+                              final campaigns = _currentFiltered();
                               if (_selectedIndex < campaigns.length) _loadCampaign(campaigns[_selectedIndex].name);
                             }
                           : null,
@@ -385,7 +459,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
   Future<void> _deleteWorld() async {
     final l10n = L10n.of(context)!;
-    final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+    final campaigns = _currentFiltered();
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
     final name = campaigns[_selectedIndex].name;
     final worldId = campaigns[_selectedIndex].id;
@@ -495,6 +569,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     ref.invalidate(currentWorldRoleProvider);
     ref.invalidate(worldRoleProvider(worldId));
     await ref.read(activeCampaignProvider.notifier).purge(name);
+    ref.invalidate(packageListProvider);
   }
 
   Future<void> _loadCampaign(String name) async {

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
+import '../../application/providers/package_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
@@ -360,6 +361,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           .purge(widget.campaignName);
       ref.invalidate(campaignListProvider);
       ref.invalidate(campaignInfoListProvider);
+      ref.invalidate(packageListProvider);
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(

@@ -245,27 +245,50 @@ class PackageRepositoryImpl implements PackageRepository {
     ));
   }
 
+  /// Matches the importer's "*Subspecies of {Parent}.*" description prefix.
+  static final _subspeciesMarker = RegExp(r'^\*Subspecies of (.+?)\.\*');
+
   PackageEntitiesCompanion _packageEntityCompanion(
     String packageId,
     String entityId,
     Map<String, dynamic> m,
   ) {
+    var slug =
+        (m['type'] as String? ?? 'npc').toLowerCase().replaceAll(' ', '-');
+    final description = m['description'] as String? ?? '';
+    final rawAttrs = m['attributes'];
+    var attributes =
+        rawAttrs is Map ? Map<String, dynamic>.from(rawAttrs) : <String, dynamic>{};
+    // Reclassify legacy subspecies: older packs emitted subraces as `species`
+    // entities marked only by the "*Subspecies of X.*" prefix. Promote them to
+    // the first-class `subspecies` category and synthesize the parent softRef so
+    // the package browser & chargen treat them correctly. New packs already ship
+    // slug `subspecies` + `parent_species_ref`, so this is a no-op for them.
+    if (slug == 'species' &&
+        attributes['parent_species_ref'] == null) {
+      final match = _subspeciesMarker.firstMatch(description.trimLeft());
+      if (match != null) {
+        slug = 'subspecies';
+        attributes['parent_species_ref'] = {
+          'slug': 'species',
+          'name': match.group(1)!.trim(),
+        };
+      }
+    }
     return PackageEntitiesCompanion.insert(
       id: entityId,
       packageId: packageId,
-      categorySlug: (m['type'] as String? ?? 'npc')
-          .toLowerCase()
-          .replaceAll(' ', '-'),
+      categorySlug: slug,
       name: m['name'] as String? ?? 'Unknown',
       source: Value(m['source'] as String? ?? ''),
-      description: Value(m['description'] as String? ?? ''),
+      description: Value(description),
       imagePath: Value(m['image_path'] as String? ?? ''),
       imagesJson: Value(jsonEncode(m['images'] ?? [])),
       tagsJson: Value(jsonEncode(m['tags'] ?? [])),
       dmNotes: Value(m['dm_notes'] as String? ?? ''),
       pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
       locationId: Value(m['location_id'] as String?),
-      fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+      fieldsJson: Value(jsonEncode(attributes)),
     );
   }
 

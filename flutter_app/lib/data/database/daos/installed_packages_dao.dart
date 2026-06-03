@@ -37,4 +37,15 @@ class InstalledPackagesDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteByWorld(String worldId) =>
       (delete(installedPackages)..where((t) => t.worldId.equals(worldId)))
           .go();
+
+  /// Number of worlds (across ALL worlds) that still link [packageId]. Used to
+  /// decide whether a materialized package row is safe to purge on world leave.
+  Future<int> countWorldsForPackage(String packageId) async {
+    final c = installedPackages.worldId.count();
+    final row = await (selectOnly(installedPackages)
+          ..addColumns([c])
+          ..where(installedPackages.packageId.equals(packageId)))
+        .getSingleOrNull();
+    return row?.read(c) ?? 0;
+  }
 }
