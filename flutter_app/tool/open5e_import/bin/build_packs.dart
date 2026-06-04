@@ -51,6 +51,14 @@ void main(List<String> args) {
 
   print('Open5e import — ${docs.length} document(s), data=$dataRoot');
   for (final doc in docs) {
+    // Skip the Wizards-of-the-Coast SRD documents (SRD 5.1 / 5.2). The app
+    // ships its hand-authored built-in "SRD 5.2.1" Core pack instead, so
+    // emitting these would duplicate that content. Discovery still surfaces
+    // them (the import QA checks map them), they're just never written/shipped.
+    if (doc.isSrdOverlap) {
+      print('  – ${doc.packageName}: skipped (SRD overlap; built-in pack ships this)');
+      continue;
+    }
     final pack = PackBuilder(doc.packageName);
 
     if (doc.hasCreatures) {
@@ -146,7 +154,8 @@ void main(List<String> args) {
     print('  ✓ ${doc.packageName}: $summary  → $outDir/${doc.packageName}.pkg.json');
   }
 
-  writeManifest(results, outDir);
+  final merged = mergeOpen5eOriginals(results, outDir, rev);
+  writeManifest(merged, outDir);
   final report = norm.unmapped.toJson();
   writeUnmappedReport(report, outDir);
   if (norm.unmapped.isEmpty) {

@@ -47,6 +47,45 @@ PackResult assemblePack({
   return PackResult(doc, payload, counts);
 }
 
+/// Open5e ships its homebrew "Originals" content as two separate source
+/// documents — `open5e` (5e-2014) and `open5e-2024` (5e-2024). We present them
+/// as a single "Open5e Originals" package. This folds the `open5e-open5e-2024`
+/// result into `open5e-open5e` (recomputing counts), deletes the secondary
+/// asset, and returns [results] with the secondary entry removed. No-op if
+/// either pack is absent.
+List<PackResult> mergeOpen5eOriginals(
+    List<PackResult> results, String outDir, String rev) {
+  PackResult? primary, secondary;
+  for (final r in results) {
+    if (r.doc.packageName == 'open5e-open5e') primary = r;
+    if (r.doc.packageName == 'open5e-open5e-2024') secondary = r;
+  }
+  if (primary == null || secondary == null) return results;
+
+  final merged = <String, dynamic>{
+    ...(primary.payload['entities'] as Map).cast<String, dynamic>(),
+    ...(secondary.payload['entities'] as Map).cast<String, dynamic>(),
+  };
+  final remerged = assemblePack(
+    doc: primary.doc,
+    entities: merged,
+    sourceDataRev: rev,
+  );
+  writePack(remerged, outDir);
+
+  // Drop the now-folded secondary asset so it never ships standalone.
+  final stale = File('$outDir/${secondary.doc.packageName}.pkg.json');
+  if (stale.existsSync()) stale.deleteSync();
+
+  return [
+    for (final r in results)
+      if (r.doc.packageName == 'open5e-open5e')
+        remerged
+      else if (r.doc.packageName != 'open5e-open5e-2024')
+        r,
+  ];
+}
+
 void writePack(PackResult r, String outDir) {
   final dir = Directory(outDir);
   if (!dir.existsSync()) dir.createSync(recursive: true);

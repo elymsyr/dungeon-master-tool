@@ -130,21 +130,9 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 2,
-        "subclass": 16,
+        "subclass": 17,
         "subspecies": 1,
         "background": 2
-      }
-    },
-    {
-      "asset": "open5e-open5e-2024.pkg.json",
-      "package_name": "open5e-open5e-2024",
-      "title": "Open5e Originals",
-      "publisher": "Open5e",
-      "license": "ogl-10a",
-      "game_system": "5e-2024",
-      "is_srd_overlap": false,
-      "counts": {
-        "subclass": 1
       }
     },
     {
@@ -157,49 +145,6 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 180
-      }
-    },
-    {
-      "asset": "open5e-srd-2014.pkg.json",
-      "package_name": "open5e-srd-2014",
-      "title": "System Reference Document 5.1",
-      "publisher": "Wizards of the Coast",
-      "license": "ogl-10a",
-      "game_system": "5e-2014",
-      "is_srd_overlap": true,
-      "counts": {
-        "trait": 424,
-        "creature-action": 708,
-        "monster": 325,
-        "spell": 319,
-        "magic-item": 499,
-        "class": 12,
-        "subclass": 12,
-        "species": 9,
-        "subspecies": 4,
-        "background": 1,
-        "feat": 1
-      }
-    },
-    {
-      "asset": "open5e-srd-2024.pkg.json",
-      "package_name": "open5e-srd-2024",
-      "title": "System Reference Document 5.2",
-      "publisher": "Wizards of the Coast",
-      "license": "cc-by-40",
-      "game_system": "5e-2024",
-      "is_srd_overlap": true,
-      "counts": {
-        "trait": 253,
-        "creature-action": 905,
-        "monster": 330,
-        "spell": 339,
-        "magic-item": 757,
-        "class": 12,
-        "subclass": 12,
-        "species": 9,
-        "background": 4,
-        "feat": 17
       }
     },
     {
