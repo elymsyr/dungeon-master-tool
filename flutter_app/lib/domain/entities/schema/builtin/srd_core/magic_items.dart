@@ -48,565 +48,2816 @@ Map<String, dynamic> _mi({
 }
 
 List<Map<String, dynamic>> srdMagicItems() => [
-      _mi(
-        name: 'Bag of Holding',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'Utilize',
-        weightLb: 15,
-        effects:
-            'This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, regardless of its contents. Retrieving an item from the bag requires a Utilize action.\n\n'
-                'If the bag is overloaded, pierced, or torn, it ruptures and is destroyed; its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth, unharmed; the bag must be put right before it can be used again. Placing a bag of holding inside an extradimensional space (Bag of Holding, Portable Hole, Handy Haversack) immediately destroys both items and opens a gate to the Astral Plane.',
-      ),
-      _mi(
-        name: 'Cloak of Protection',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'You gain a +1 bonus to AC and saving throws while you wear this cloak.',
-      ),
-      _mi(
-        name: 'Boots of Elvenkind',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'None',
-        effects:
-            'While you wear these boots, your steps make no sound, regardless of the surface you are moving across. You also have Advantage on Dexterity (Stealth) checks that rely on moving silently.',
-      ),
-      _mi(
-        name: 'Potion of Healing',
-        category: 'Potions',
-        rarity: 'Common',
-        requiresAttunement: false,
-        activation: 'Consumable',
-        weightLb: 0.5,
-        costGp: 50,
-        effects:
-            'You regain 2d4 + 2 HP when you drink this potion. The potion\'s red liquid glimmers when agitated.',
-      ),
-      _mi(
-        name: 'Potion of Greater Healing',
-        category: 'Potions',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'Consumable',
-        weightLb: 0.5,
-        effects: 'You regain 4d4 + 4 HP when you drink this potion.',
-      ),
-      _mi(
-        name: 'Wand of Magic Missiles',
-        category: 'Wands',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'Magic Action',
-        maxCharges: 7,
-        chargeRegain: '1d6+1 daily at dawn',
-        effects:
-            'This wand has 7 charges. While holding it, you can use a Magic action to expend 1 or more of its charges to cast Magic Missile from it. For 1 charge, cast the level 1 version. You can increase the slot level by one for each additional charge expended.\n\n'
-                'The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20. On a 1, the wand crumbles into ashes and is destroyed.',
-      ),
-      _mi(
-        name: 'Ring of Protection',
-        category: 'Rings',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'You gain a +1 bonus to AC and saving throws while wearing this ring.',
-      ),
-      _mi(
-        name: 'Ring of Spell Storing',
-        category: 'Rings',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'Magic Action',
-        effects:
-            'This ring stores spells cast into it, holding them until the attuned wearer uses them. The ring can store up to 5 levels worth of spells at a time. When found, it contains 1d6 − 1 levels of stored spells chosen by the GM.\n\n'
-                'Any creature can cast a spell of level 1–5 into the ring by touching it. The spell has no effect; it is stored. If the ring can\'t hold the spell, it is expended without effect. The wearer can cast a stored spell using its spell save DC, slot level, and spell attack bonus. Casting it from the ring requires no Material components, removes it from the ring, and frees up its capacity.',
-      ),
-      _mi(
-        name: 'Staff of Healing',
-        category: 'Staffs',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        attunementPrereq: 'Bard, Cleric, or Druid',
-        activation: 'Magic Action',
-        maxCharges: 10,
-        chargeRegain: '1d6+4 daily at dawn',
-        effects:
-            'This staff has 10 charges. While holding it, you can use a Magic action to expend 1 or more of its charges to cast one of the following spells from it, using your spell save DC and spellcasting ability:\n\n'
-                '• Cure Wounds (1 charge per spell level, up to level 4)\n'
-                '• Lesser Restoration (2 charges)\n'
-                '• Mass Cure Wounds (5 charges)\n\n'
-                'The staff regains 1d6 + 4 expended charges daily at dawn. If you expend the last charge, roll a d20. On a 1, the staff vanishes in a flash of light, lost forever.',
-      ),
-      _mi(
-        name: 'Sword of Sharpness',
-        category: 'Weapons',
-        rarity: 'Very Rare',
-        requiresAttunement: true,
-        activation: 'None',
-        baseItemSlug: 'weapon',
-        baseItemName: 'Longsword',
-        effects:
-            'When you attack an object with this magic Slashing weapon and hit, maximize your weapon damage dice against the target.\n\n'
-                'When you attack a creature with this weapon and roll a 20 on the attack roll, that target takes an extra 4d6 Slashing damage. Then roll another d20. If you roll a 20, you lop off one of the target\'s limbs, with the effect of such loss determined by the GM. If the creature has no limb to sever, you lop off a portion of its body instead.\n\n'
-                'In addition, you can speak the sword\'s command word to cause the blade to shed Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. Speaking the command word again or sheathing the sword puts out the light.',
-      ),
-      _mi(
-        name: 'Plate Armor of Etherealness',
-        category: 'Armor',
-        rarity: 'Legendary',
-        requiresAttunement: true,
-        activation: 'Magic Action',
-        baseItemSlug: 'armor',
-        baseItemName: 'Plate Armor',
-        effects:
-            'While wearing this armor, you can speak its command word as a Magic action to gain the effect of the Etherealness spell, which lasts for 10 minutes or until you use the action to speak the command word again. This property can\'t be used again until the next dawn.',
-      ),
-      _mi(
-        name: 'Vorpal Sword',
-        category: 'Weapons',
-        rarity: 'Legendary',
-        requiresAttunement: true,
-        activation: 'None',
-        baseItemSlug: 'weapon',
-        baseItemName: 'Greatsword',
-        effects:
-            'You gain a +3 bonus to attack and damage rolls made with this magic weapon. In addition, the weapon ignores Resistance to Slashing damage.\n\n'
-                'When you attack a creature that has at least one head with this weapon and roll a 20 on the attack roll, you cut off one of the creature\'s heads. The creature dies if it can\'t survive without the lost head. A creature is immune to this effect if it has Legendary Actions, lacks or doesn\'t need a head, or the GM decides that the creature is too big for its head to be cut off. Otherwise you can decapitate it with this attack.',
-      ),
+  _mi(
+    name: 'Bag of Holding',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    weightLb: 15,
+    effects:
+        'This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, regardless of its contents. Retrieving an item from the bag requires a Utilize action.\n\n'
+        'If the bag is overloaded, pierced, or torn, it ruptures and is destroyed; its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth, unharmed; the bag must be put right before it can be used again. Placing a bag of holding inside an extradimensional space (Bag of Holding, Portable Hole, Handy Haversack) immediately destroys both items and opens a gate to the Astral Plane.',
+  ),
+  _mi(
+    name: 'Cloak of Protection',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You gain a +1 bonus to AC and saving throws while you wear this cloak.',
+  ),
+  _mi(
+    name: 'Boots of Elvenkind',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While you wear these boots, your steps make no sound, regardless of the surface you are moving across. You also have Advantage on Dexterity (Stealth) checks that rely on moving silently.',
+  ),
+  _mi(
+    name: 'Potion of Healing',
+    category: 'Potions',
+    rarity: 'Common',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    costGp: 50,
+    effects:
+        'You regain 2d4 + 2 HP when you drink this potion. The potion\'s red liquid glimmers when agitated.',
+  ),
+  _mi(
+    name: 'Potion of Greater Healing',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects: 'You regain 4d4 + 4 HP when you drink this potion.',
+  ),
+  _mi(
+    name: 'Wand of Magic Missiles',
+    category: 'Wands',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can use a Magic action to expend 1 or more of its charges to cast Magic Missile from it. For 1 charge, cast the level 1 version. You can increase the slot level by one for each additional charge expended.\n\n'
+        'The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20. On a 1, the wand crumbles into ashes and is destroyed.',
+  ),
+  _mi(
+    name: 'Ring of Protection',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You gain a +1 bonus to AC and saving throws while wearing this ring.',
+  ),
+  _mi(
+    name: 'Ring of Spell Storing',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'This ring stores spells cast into it, holding them until the attuned wearer uses them. The ring can store up to 5 levels worth of spells at a time. When found, it contains 1d6 − 1 levels of stored spells chosen by the GM.\n\n'
+        'Any creature can cast a spell of level 1–5 into the ring by touching it. The spell has no effect; it is stored. If the ring can\'t hold the spell, it is expended without effect. The wearer can cast a stored spell using its spell save DC, slot level, and spell attack bonus. Casting it from the ring requires no Material components, removes it from the ring, and frees up its capacity.',
+  ),
+  _mi(
+    name: 'Staff of Healing',
+    category: 'Staffs',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Bard, Cleric, or Druid',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'This staff has 10 charges. While holding it, you can use a Magic action to expend 1 or more of its charges to cast one of the following spells from it, using your spell save DC and spellcasting ability:\n\n'
+        '• Cure Wounds (1 charge per spell level, up to level 4)\n'
+        '• Lesser Restoration (2 charges)\n'
+        '• Mass Cure Wounds (5 charges)\n\n'
+        'The staff regains 1d6 + 4 expended charges daily at dawn. If you expend the last charge, roll a d20. On a 1, the staff vanishes in a flash of light, lost forever.',
+  ),
+  _mi(
+    name: 'Sword of Sharpness',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Longsword',
+    effects:
+        'When you attack an object with this magic Slashing weapon and hit, maximize your weapon damage dice against the target.\n\n'
+        'When you attack a creature with this weapon and roll a 20 on the attack roll, that target takes an extra 4d6 Slashing damage. Then roll another d20. If you roll a 20, you lop off one of the target\'s limbs, with the effect of such loss determined by the GM. If the creature has no limb to sever, you lop off a portion of its body instead.\n\n'
+        'In addition, you can speak the sword\'s command word to cause the blade to shed Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. Speaking the command word again or sheathing the sword puts out the light.',
+  ),
+  _mi(
+    name: 'Plate Armor of Etherealness',
+    category: 'Armor',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    baseItemSlug: 'armor',
+    baseItemName: 'Plate Armor',
+    effects:
+        'While wearing this armor, you can speak its command word as a Magic action to gain the effect of the Etherealness spell, which lasts for 10 minutes or until you use the action to speak the command word again. This property can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Vorpal Sword',
+    category: 'Weapons',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Greatsword',
+    effects:
+        'You gain a +3 bonus to attack and damage rolls made with this magic weapon. In addition, the weapon ignores Resistance to Slashing damage.\n\n'
+        'When you attack a creature that has at least one head with this weapon and roll a 20 on the attack roll, you cut off one of the creature\'s heads. The creature dies if it can\'t survive without the lost head. A creature is immune to this effect if it has Legendary Actions, lacks or doesn\'t need a head, or the GM decides that the creature is too big for its head to be cut off. Otherwise you can decapitate it with this attack.',
+  ),
 
-      // ─── Apparel ─────────────────────────────────────────────────────────
-      _mi(
-        name: 'Cloak of Elvenkind',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: true,
-        activation: 'Magic Action',
-        effects:
-            'While you wear this cloak with its hood up, Wisdom (Perception) checks made to see you have Disadvantage, and you have Advantage on Dexterity (Stealth) checks made to hide, as the cloak\'s color shifts to camouflage you. Pulling the hood up or down requires a Magic action.',
-      ),
-      _mi(
-        name: 'Bracers of Defense',
-        category: 'Wondrous Items',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'While wearing these bracers, you gain a +2 bonus to AC if you are wearing no armor and aren\'t using a Shield.',
-      ),
-      _mi(
-        name: 'Gauntlets of Ogre Power',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'Your Strength score is 19 while you wear these gauntlets. They have no effect on you if your Strength is 19 or higher without them.',
-      ),
-      _mi(
-        name: 'Goggles of Night',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'None',
-        effects:
-            'While wearing these dark lenses, you have Darkvision out to a range of 60 feet. If you already have Darkvision, the goggles increase its range by 60 feet.',
-      ),
-      _mi(
-        name: 'Headband of Intellect',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'Your Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is 19 or higher without it.',
-      ),
-      _mi(
-        name: 'Boots of Speed',
-        category: 'Wondrous Items',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'Bonus Action',
-        effects:
-            'While you wear these boots, you can take a Bonus Action to click the boots\' heels together. While the heels are clicked together, your Speed is doubled, and any creature that makes an Opportunity Attack against you has Disadvantage on the attack roll. The effect ends when you click the heels together again as a Bonus Action or after 10 minutes have passed. Once the boots have been used for a total of 10 minutes, they can\'t be used again until the next dawn.',
-      ),
-      _mi(
-        name: 'Winged Boots',
-        category: 'Wondrous Items',
-        rarity: 'Uncommon',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'While you wear these boots, you have a Fly Speed equal to your Walk Speed. You can use the boots to fly for up to 4 hours, all at once or in several shorter flights. Each use of the boots in flight uses a minimum of 1 minute. If you are flying when the boots\' last minute of flight is used, you descend at a rate of 30 feet per round until you land.\n\nThe boots regain 2 hours of flying capability for every 12 hours they aren\'t in use.',
-      ),
-      _mi(
-        name: 'Belt of Giant Strength (Hill)',
-        category: 'Wondrous Items',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'While wearing this belt, your Strength score is 21. The item has no effect on you if your Strength is already 21 or higher without it.',
-      ),
-      _mi(
-        name: 'Amulet of Health',
-        category: 'Wondrous Items',
-        rarity: 'Rare',
-        requiresAttunement: true,
-        activation: 'None',
-        effects:
-            'Your Constitution score is 19 while you wear this amulet. It has no effect on you if your Constitution is 19 or higher without it.',
-      ),
+  // ─── Apparel ─────────────────────────────────────────────────────────
+  _mi(
+    name: 'Cloak of Elvenkind',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While you wear this cloak with its hood up, Wisdom (Perception) checks made to see you have Disadvantage, and you have Advantage on Dexterity (Stealth) checks made to hide, as the cloak\'s color shifts to camouflage you. Pulling the hood up or down requires a Magic action.',
+  ),
+  _mi(
+    name: 'Bracers of Defense',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing these bracers, you gain a +2 bonus to AC if you are wearing no armor and aren\'t using a Shield.',
+  ),
+  _mi(
+    name: 'Gauntlets of Ogre Power',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'Your Strength score is 19 while you wear these gauntlets. They have no effect on you if your Strength is 19 or higher without them.',
+  ),
+  _mi(
+    name: 'Goggles of Night',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While wearing these dark lenses, you have Darkvision out to a range of 60 feet. If you already have Darkvision, the goggles increase its range by 60 feet.',
+  ),
+  _mi(
+    name: 'Headband of Intellect',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'Your Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is 19 or higher without it.',
+  ),
+  _mi(
+    name: 'Boots of Speed',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'While you wear these boots, you can take a Bonus Action to click the boots\' heels together. While the heels are clicked together, your Speed is doubled, and any creature that makes an Opportunity Attack against you has Disadvantage on the attack roll. The effect ends when you click the heels together again as a Bonus Action or after 10 minutes have passed. Once the boots have been used for a total of 10 minutes, they can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Winged Boots',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear these boots, you have a Fly Speed equal to your Walk Speed. You can use the boots to fly for up to 4 hours, all at once or in several shorter flights. Each use of the boots in flight uses a minimum of 1 minute. If you are flying when the boots\' last minute of flight is used, you descend at a rate of 30 feet per round until you land.\n\nThe boots regain 2 hours of flying capability for every 12 hours they aren\'t in use.',
+  ),
+  _mi(
+    name: 'Belt of Giant Strength (Hill)',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, your Strength score is 21. The item has no effect on you if your Strength is already 21 or higher without it.',
+  ),
+  _mi(
+    name: 'Amulet of Health',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'Your Constitution score is 19 while you wear this amulet. It has no effect on you if your Constitution is 19 or higher without it.',
+  ),
 
-      // ─── +N weapons & armor ─────────────────────────────────────────────
-      _mi(
-        name: 'Weapon, +1',
-        category: 'Weapons',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'None',
-        effects:
-            'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. Any Simple or Martial weapon can be made into a +1 weapon.',
-      ),
-      _mi(
-        name: 'Armor, +1',
-        category: 'Armor',
-        rarity: 'Rare',
-        requiresAttunement: false,
-        activation: 'None',
-        effects:
-            'You have a +1 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +1 armor.',
-      ),
-      _mi(
-        name: 'Shield, +1',
-        category: 'Armor',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'None',
-        effects:
-            'While holding this Shield, you have a +1 bonus to Armor Class, in addition to the Shield\'s normal bonus to AC.',
-      ),
+  // ─── +N weapons & armor ─────────────────────────────────────────────
+  _mi(
+    name: 'Weapon, +1',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. Any Simple or Martial weapon can be made into a +1 weapon.',
+  ),
+  _mi(
+    name: 'Armor, +1',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +1 armor.',
+  ),
+  _mi(
+    name: 'Shield, +1',
+    category: 'Armor',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have a +1 bonus to Armor Class, in addition to the Shield\'s normal bonus to AC.',
+  ),
 
-      // ─── Common potions / scrolls ───────────────────────────────────────
-      _mi(
-        name: 'Potion of Climbing',
-        category: 'Potions',
-        rarity: 'Common',
-        requiresAttunement: false,
-        activation: 'Consumable',
-        weightLb: 0.5,
-        costGp: 50,
-        effects:
-            'When you drink this potion, you gain a Climb Speed equal to your Walk Speed for 1 hour. During this time, you have Advantage on Strength (Athletics) checks made to climb. The potion is separated into brown, silver, and gray layers resembling bands of stone. Shaking the bottle fails to mix the colors.',
-      ),
-      _mi(
-        name: 'Potion of Fire Breath',
-        category: 'Potions',
-        rarity: 'Uncommon',
-        requiresAttunement: false,
-        activation: 'Consumable',
-        weightLb: 0.5,
-        effects:
-            'After you drink this potion, you can take a Bonus Action to exhale fire at a creature within 30 feet of yourself. The creature must succeed on a DC 13 Dexterity save or take 4d6 Fire damage. The effect ends after you exhale fire three times or when 1 hour has passed.\n\nThe potion\'s orange liquid flickers, and smoke wafts from its opening.',
-      ),
-      _mi(
-        name: 'Spell Scroll',
-        category: 'Scrolls',
-        rarity: 'Common',
-        requiresAttunement: false,
-        activation: 'Magic Action',
-        effects:
-            'A Spell Scroll bears the words of a single spell, written in a mystical cipher. If the spell is on your spell list, you can cast it from the scroll without having to provide any Material components. Otherwise the scroll is unintelligible.\n\nIf the spell is of a level higher than you can normally cast, you must make an ability check using your spellcasting ability to determine whether you cast it successfully (DC = 10 + spell\'s level). On a failed check, the spell disappears with no other effect.\n\nOnce the spell is cast, the words on the scroll fade and the scroll itself crumbles to dust. The level of the spell on the scroll determines its rarity, save DC, attack bonus, and gold value (Cantrip = Common, Level 1 = Common, Level 2-3 = Uncommon, Level 4-5 = Rare, Level 6-7 = Very Rare, Level 8-9 = Legendary).',
-      ),
+  // ─── Common potions / scrolls ───────────────────────────────────────
+  _mi(
+    name: 'Potion of Climbing',
+    category: 'Potions',
+    rarity: 'Common',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    costGp: 50,
+    effects:
+        'When you drink this potion, you gain a Climb Speed equal to your Walk Speed for 1 hour. During this time, you have Advantage on Strength (Athletics) checks made to climb. The potion is separated into brown, silver, and gray layers resembling bands of stone. Shaking the bottle fails to mix the colors.',
+  ),
+  _mi(
+    name: 'Potion of Fire Breath',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'After you drink this potion, you can take a Bonus Action to exhale fire at a creature within 30 feet of yourself. The creature must succeed on a DC 13 Dexterity save or take 4d6 Fire damage. The effect ends after you exhale fire three times or when 1 hour has passed.\n\nThe potion\'s orange liquid flickers, and smoke wafts from its opening.',
+  ),
+  _mi(
+    name: 'Spell Scroll',
+    category: 'Scrolls',
+    rarity: 'Common',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A Spell Scroll bears the words of a single spell, written in a mystical cipher. If the spell is on your spell list, you can cast it from the scroll without having to provide any Material components. Otherwise the scroll is unintelligible.\n\nIf the spell is of a level higher than you can normally cast, you must make an ability check using your spellcasting ability to determine whether you cast it successfully (DC = 10 + spell\'s level). On a failed check, the spell disappears with no other effect.\n\nOnce the spell is cast, the words on the scroll fade and the scroll itself crumbles to dust. The level of the spell on the scroll determines its rarity, save DC, attack bonus, and gold value (Cantrip = Common, Level 1 = Common, Level 2-3 = Uncommon, Level 4-5 = Rare, Level 6-7 = Very Rare, Level 8-9 = Legendary).',
+  ),
 
-      // ─── More potions ───────────────────────────────────────────────────
-      _mi(name: 'Potion of Animal Friendship', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you can cast the Animal Friendship spell (save DC 13) for 1 hour at will. Agitating this muddy liquid brings little bits into view: a fish scale, a hummingbird tongue, a cat claw, or a squirrel hair.'),
-      _mi(name: 'Potion of Diminution', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you gain the "reduce" effect of the Enlarge/Reduce spell for 10 minutes (no Concentration required). The potion\'s red liquid contains a tiny bit of pickled doppelganger ear.'),
-      _mi(name: 'Potion of Flying', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you gain a Fly Speed equal to your Walk Speed for 1 hour and can hover. If you are in the air when the potion wears off, you fall unless you have some other means of staying aloft. The potion\'s clear liquid floats at the top of its container and has cloudy white impurities drifting in it.'),
-      _mi(name: 'Potion of Gaseous Form', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you gain the effect of the Gaseous Form spell for 1 hour (no Concentration required) or until you end the effect as a Bonus Action.'),
-      _mi(name: 'Potion of Giant Strength (Hill)', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, your Strength score becomes 21 for 1 hour. The potion has no effect on you if your Strength is already 21 or higher. The transparent liquid contains floating bits of fingernails, hair, and brown spots.'),
-      _mi(name: 'Potion of Heroism', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'For 1 hour after drinking it, you gain 10 Temporary Hit Points that last for 1 hour. For the same duration, you are under the effect of the Bless spell (no Concentration required). This blue potion bubbles and steams as if boiling.'),
-      _mi(name: 'Potion of Invisibility', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'The potion\'s container looks empty but feels as though it holds liquid. When you drink it, you have the Invisible condition for 1 hour. Anything you wear or carry is also Invisible as long as it is on your person. The effect ends early if you attack or cast a spell.'),
-      _mi(name: 'Potion of Mind Reading', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you gain the effect of the Detect Thoughts spell (save DC 13). The potion\'s dense, purple liquid has an ovoid cloud of pink floating in it.'),
-      _mi(name: 'Potion of Poison', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, isCursed: true, effects: 'This concoction looks, smells, and tastes like a Potion of Healing or other beneficial potion. However, it is actually poison masked by illusion magic. An Identify spell reveals its true nature. If you drink it, you take 3d6 Poison damage and must succeed on a DC 13 Con save or have the Poisoned condition. At the end of each of your turns, you can repeat the save, taking 3d6 Poison damage on a fail or ending the effect on a success.'),
-      _mi(name: 'Potion of Speed', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'When you drink this potion, you gain the effect of the Haste spell for 1 minute (no Concentration required). The potion\'s yellow fluid is streaked with black and swirls on its own.'),
-      _mi(name: 'Potion of Water Breathing', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', weightLb: 0.5, effects: 'You can breathe underwater for 1 hour after drinking this potion. Its cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it.'),
-      _mi(name: 'Oil of Slipperiness', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Utilize', weightLb: 0.5, effects: 'This sticky black unguent is thick and heavy in the container, but it flows quickly when poured. The oil can cover a Medium or smaller creature, along with the equipment it\'s wearing and carrying (one additional vial is required for each size category above Medium). Applying the oil takes 10 minutes. The affected creature then gains the effect of a Freedom of Movement spell for 8 hours.'),
-      _mi(name: 'Oil of Sharpness', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Utilize', weightLb: 0.5, effects: 'This clear, gelatinous oil sparkles with tiny, ultrathin silver shards. The oil can coat one Slashing or Piercing weapon or up to 5 pieces of Slashing or Piercing ammunition. Applying the oil takes 1 minute. For 1 hour, the coated item is magical and has a +3 bonus to attack and damage rolls.'),
+  // ─── More potions ───────────────────────────────────────────────────
+  _mi(
+    name: 'Potion of Animal Friendship',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you can cast the Animal Friendship spell (save DC 13) for 1 hour at will. Agitating this muddy liquid brings little bits into view: a fish scale, a hummingbird tongue, a cat claw, or a squirrel hair.',
+  ),
+  _mi(
+    name: 'Potion of Diminution',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you gain the "reduce" effect of the Enlarge/Reduce spell for 10 minutes (no Concentration required). The potion\'s red liquid contains a tiny bit of pickled doppelganger ear.',
+  ),
+  _mi(
+    name: 'Potion of Flying',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you gain a Fly Speed equal to your Walk Speed for 1 hour and can hover. If you are in the air when the potion wears off, you fall unless you have some other means of staying aloft. The potion\'s clear liquid floats at the top of its container and has cloudy white impurities drifting in it.',
+  ),
+  _mi(
+    name: 'Potion of Gaseous Form',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you gain the effect of the Gaseous Form spell for 1 hour (no Concentration required) or until you end the effect as a Bonus Action.',
+  ),
+  _mi(
+    name: 'Potion of Giant Strength (Hill)',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, your Strength score becomes 21 for 1 hour. The potion has no effect on you if your Strength is already 21 or higher. The transparent liquid contains floating bits of fingernails, hair, and brown spots.',
+  ),
+  _mi(
+    name: 'Potion of Heroism',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'For 1 hour after drinking it, you gain 10 Temporary Hit Points that last for 1 hour. For the same duration, you are under the effect of the Bless spell (no Concentration required). This blue potion bubbles and steams as if boiling.',
+  ),
+  _mi(
+    name: 'Potion of Invisibility',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'The potion\'s container looks empty but feels as though it holds liquid. When you drink it, you have the Invisible condition for 1 hour. Anything you wear or carry is also Invisible as long as it is on your person. The effect ends early if you attack or cast a spell.',
+  ),
+  _mi(
+    name: 'Potion of Mind Reading',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you gain the effect of the Detect Thoughts spell (save DC 13). The potion\'s dense, purple liquid has an ovoid cloud of pink floating in it.',
+  ),
+  _mi(
+    name: 'Potion of Poison',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    isCursed: true,
+    effects:
+        'This concoction looks, smells, and tastes like a Potion of Healing or other beneficial potion. However, it is actually poison masked by illusion magic. An Identify spell reveals its true nature. If you drink it, you take 3d6 Poison damage and must succeed on a DC 13 Con save or have the Poisoned condition. At the end of each of your turns, you can repeat the save, taking 3d6 Poison damage on a fail or ending the effect on a success.',
+  ),
+  _mi(
+    name: 'Potion of Speed',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'When you drink this potion, you gain the effect of the Haste spell for 1 minute (no Concentration required). The potion\'s yellow fluid is streaked with black and swirls on its own.',
+  ),
+  _mi(
+    name: 'Potion of Water Breathing',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    weightLb: 0.5,
+    effects:
+        'You can breathe underwater for 1 hour after drinking this potion. Its cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it.',
+  ),
+  _mi(
+    name: 'Oil of Slipperiness',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    weightLb: 0.5,
+    effects:
+        'This sticky black unguent is thick and heavy in the container, but it flows quickly when poured. The oil can cover a Medium or smaller creature, along with the equipment it\'s wearing and carrying (one additional vial is required for each size category above Medium). Applying the oil takes 10 minutes. The affected creature then gains the effect of a Freedom of Movement spell for 8 hours.',
+  ),
+  _mi(
+    name: 'Oil of Sharpness',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    weightLb: 0.5,
+    effects:
+        'This clear, gelatinous oil sparkles with tiny, ultrathin silver shards. The oil can coat one Slashing or Piercing weapon or up to 5 pieces of Slashing or Piercing ammunition. Applying the oil takes 1 minute. For 1 hour, the coated item is magical and has a +3 bonus to attack and damage rolls.',
+  ),
 
-      // ─── Apparel & accessories ──────────────────────────────────────────
-      _mi(name: 'Cloak of Resistance', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'You have Resistance to one damage type chosen at the time the cloak is created (Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder).'),
-      _mi(name: 'Cloak of the Bat', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this cloak, you have Advantage on Dex (Stealth) checks. In an area of Dim Light or Darkness, you can grip the edges of the cloak with both hands and use it to fly at a Speed of 40 feet. If you ever fail to grip the cloak\'s edges, or you are no longer in Dim Light or Darkness, you lose this Fly Speed. While wearing the cloak in an area of Dim Light or Darkness, you can take a Magic action to cast Polymorph on yourself, transforming into a Bat. While in this form you retain your Intelligence, Wisdom, and Charisma scores.'),
-      _mi(name: 'Cloak of Displacement', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'While you wear this cloak, it projects an illusion that makes you appear to be standing in a place near your actual location. The illusion makes attack rolls against you have Disadvantage. If you take damage, the property ceases to function until the start of your next turn. This property is suppressed while you have the Incapacitated condition, are Restrained, or otherwise can\'t move.'),
-      _mi(name: 'Hat of Disguise', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this hat, you can take a Magic action to cast the Disguise Self spell from it at will. The spell ends if the hat is removed.'),
-      _mi(name: 'Helm of Telepathy', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this helm, you can take a Magic action to cast the Detect Thoughts spell (save DC 13) from it. As long as you maintain Concentration on the spell, you can use the helm to send a telepathic message to anyone you focus your thoughts on. A target who can understand a language can reply telepathically. Once you cast the spell from the helm, it can\'t be cast again from it until the next dawn.'),
-      _mi(name: 'Periapt of Wound Closure', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While you wear this pendant, you stabilize whenever you have the Unconscious condition and are at 0 HP. In addition, whenever you roll a Hit Die to regain HP, double the number of HP it restores.'),
-      _mi(name: 'Bag of Beans', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Utilize', effects: 'Inside this heavy cloth bag are 3d4 dry beans. You can take a Magic action to remove a bean and throw it up to 10 feet. After 1 minute, the bean produces a magical effect determined by rolling on a table provided in the SRD (effects range from a useful Treant to a calamitous earthquake). If you dump the bag\'s contents on the ground, the beans burst forth in a 30-foot-radius eruption.'),
-      _mi(name: 'Bag of Tricks (Gray)', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'This ordinary-looking bag, made from gray cloth, appears empty. Reaching inside, however, retrieves a small fuzzy object. You can take a Magic action to pull the object from the bag and throw it up to 20 feet. When the object lands, it transforms into a creature determined by rolling a d8 (Weasel, Giant Rat, Badger, Boar, Panther, Giant Badger, Dire Wolf, Giant Elk). The creature is friendly to you and your companions, and acts on your turn. The creature exists for 1 hour, until it drops to 0 HP, or until you dismiss it. The bag has 3 charges, regaining 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Brooch of Shielding', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing this brooch, you have Resistance to Force damage and Immunity to damage from the Magic Missile spell.'),
-      _mi(name: 'Decanter of Endless Water', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'This stoppered flask sloshes when shaken, as if it contains water. The flask weighs 2 pounds. You can take a Magic action to remove the stopper and speak one of three command words: "Stream" produces 1 gallon of water per turn for as long as you speak the word; "Fountain" produces 5 gallons of water in a 5-foot-long stream; "Geyser" produces 30 gallons in a 30-foot-long, 1-foot-wide stream that knocks down creatures of Large size or smaller (DC 13 Strength save or be pushed 5 feet and knocked Prone).'),
-      _mi(name: 'Driftglobe', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'This small sphere of thick glass weighs 1 pound. While within 60 feet of it, you can speak its command word to cast the Daylight spell from it. The spell ends when you use a Bonus Action to repeat the command word or when the driftglobe is covered. You can also speak another command word to cause the driftglobe to rise into the air and float no more than 5 feet off the ground. The globe hovers in this way until you or another creature grasps it.'),
-      _mi(name: 'Eyes of Charming', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: 'all daily at dawn', effects: 'These crystal lenses fit over the eyes. They have 3 charges. While wearing them, you can take a Magic action to expend 1 charge to cast the Charm Person spell (save DC 13) on a Humanoid within 30 feet of you. The lenses regain all expended charges daily at dawn.'),
-      _mi(name: 'Eyes of the Eagle', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'These crystal lenses fit over the eyes. While wearing them, you have Advantage on Wisdom (Perception) checks that rely on sight. In conditions of clear visibility, you can make out details of even extremely distant creatures and objects as small as 2 feet across.'),
-      _mi(name: 'Figurine of Wondrous Power (Bronze Griffon)', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'This bronze statuette of a griffon can become a real griffon for 6 hours, with statistics matching that creature. The figurine reverts to a statue when it drops to 0 HP or when its owner uses an action to speak the command word again. Once used, can\'t be used again until 5 days have passed.'),
-      _mi(name: 'Gem of Brightness', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', maxCharges: 50, effects: 'This prism has 50 charges. While you are holding it, you can take a Magic action to speak one of three command words to cause one of the following effects. The gem can\'t be recharged. *Light:* Speaking the first command word causes the gem to shed Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. *Bright Beam:* Speaking the second command word expends 1 charge and causes the gem to fire a brilliant beam of light at one creature within 60 feet of you. The creature must succeed on a DC 15 Con save or have the Blinded condition for 1 minute. *Blinding Cone:* Speaking the third command word expends 5 charges and causes the gem to flare with blinding light in a 30-foot Cone originating from it. Each creature in the Cone must make the same saving throw.'),
-      _mi(name: 'Horn of Blasting', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'You can take a Magic action to blow this horn, which emits a thunderous blast in a 30-foot Cone. Each creature in the Cone must make a DC 15 Con save: 5d6 Thunder damage and Deafened 1 minute on a fail, half damage on a success. A creature made of inorganic material such as stone, crystal, or metal has Disadvantage on this save. A nonmagical object that isn\'t worn or carried also takes the damage if in the Cone. Once the horn has been used, it can\'t be used again until the next dawn. If you blow the horn 4 or more times before the next dawn, there is a 20% chance that it explodes, dealing 10d6 Force damage to you.'),
-      _mi(name: 'Immovable Rod', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', weightLb: 2, effects: 'This flat iron rod has a button on one end. You can take a Magic action to press the button, which causes the rod to become magically fixed in place. Until you or another creature takes a Magic action to push the button again, the rod doesn\'t move, even if it is defying gravity. The rod can hold up to 8,000 pounds of weight. More weight causes the rod to deactivate and fall.'),
-      _mi(name: 'Lantern of Revealing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'While lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Invisible creatures and objects are visible as long as they are in the lantern\'s Bright Light. You can take a Bonus Action to lower the hood, reducing the light to Dim Light in a 5-foot radius.'),
-      _mi(name: 'Necklace of Adaptation', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing this necklace, you can breathe normally in any environment, and you have Advantage on saving throws made against harmful gases and vapors (such as Cloudkill and Stinking Cloud effects, inhaled poisons, and the breath weapons of some dragons).'),
-      _mi(name: 'Necklace of Fireballs', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'This necklace has 1d6 + 3 beads hanging from it. You can take a Magic action to detach a bead and throw it up to 60 feet away. When it reaches the end of its trajectory, the bead detonates as a level 3 Fireball spell (save DC 15). You can hurl multiple beads, or even the whole necklace, as one action. When you do so, increase the level of the Fireball by 1 for each bead beyond the first.'),
-      _mi(name: 'Pearl of Power', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, attunementPrereq: 'A spellcaster', activation: 'Bonus Action', effects: 'While this pearl is on your person, you can take a Bonus Action to speak the pearl\'s command word and regain one expended spell slot of up to level 3. Once you have used the pearl, it can\'t be used again until the next dawn.'),
-      _mi(name: 'Quiver of Ehlonna', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Utilize', effects: 'Each of the three compartments of this quiver connects to an extradimensional space that allows the quiver to hold numerous items while never weighing more than 2 pounds. The shortest compartment can hold up to sixty arrows, javelins, or similar objects. The midsize compartment holds up to eighteen objects of similar size, such as bows. The longest compartment holds up to six long objects, such as bows, quarterstaves, or spears.'),
-      _mi(name: 'Robe of Eyes', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'This robe is adorned with eyelike patterns. While you wear the robe, you gain the following benefits: you can see in all directions and have Advantage on Wisdom (Perception) checks that rely on sight; you have Darkvision out to a range of 120 feet; you can see Invisible creatures and objects, as well as into the Ethereal Plane, out to 120 feet. The robe\'s eyes can\'t be closed or averted. Although you can close or avert your own eyes, you are never considered to do so while wearing this robe.'),
-      _mi(name: 'Robe of Stars', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'This black or dark blue robe is embroidered with small white or silver stars. You gain a +1 bonus to saving throws while you wear it. Six stars on the front are particularly large. While wearing the robe, you can take a Magic action to pull off one of the stars and use it to cast Magic Missile as a level 5 spell. Daily at dusk, 1d6 stars regenerate. While wearing the robe, you can use a Magic action to enter the Astral Plane along with everything you wear and carry; the robe and any items it contains accompany you. You can stay there for up to 12 hours per day.'),
-      _mi(name: 'Robe of the Archmagi', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Sorcerer, Warlock, or Wizard', activation: 'None', effects: 'This elegant garment is made from exquisite cloth of white, gray, or black and adorned with silvery runes. The robe\'s color corresponds to the alignment for which the item was created: white for good, gray for neutral, and black for evil. You can\'t attune to a robe of the archmagi that doesn\'t correspond to your alignment. Wearing the robe gives you: AC 15 + your Dex modifier (no armor required); Advantage on saving throws against spells and other magical effects; +2 bonus to spell save DC and spell attack rolls.'),
-      _mi(name: 'Robe of Useful Items', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'This robe has cloth patches of various items on it. The robe has two of each of the following: Dagger, Bullseye Lantern (with full oil), Steel Mirror, 10-foot pole, Hempen Rope (50 feet, coiled), and Sack. The GM might allow other patches to be created. The wearer can detach a patch as an action; the patch becomes the actual item it depicts.'),
-      _mi(name: 'Slippers of Spider Climbing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While you wear these light shoes, you can move up, down, and across vertical surfaces and upside down along ceilings, while leaving your hands free. You have a Climb Speed equal to your Walk Speed. However, the slippers don\'t allow you to move this way on a slippery surface, such as one covered by ice or oil.'),
-      _mi(name: 'Stone of Good Luck (Luckstone)', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While this polished agate is on your person, you gain a +1 bonus to ability checks and saving throws.'),
-      _mi(name: 'Wand of Fireballs', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'A spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast the Fireball spell (save DC 15) from it. For 1 charge, you cast the level 3 version. You can increase the spell\'s level by 1 for each additional charge expended. The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20. On a 1, the wand crumbles into ashes and is destroyed.'),
-      _mi(name: 'Wand of Lightning Bolts', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'A spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast the Lightning Bolt spell (save DC 15) from it. For 1 charge, you cast the level 3 version. You can increase the spell\'s level by 1 for each additional charge expended.'),
-      _mi(name: 'Wand of the War Mage, +1', category: 'Wands', rarity: 'Uncommon', requiresAttunement: true, attunementPrereq: 'A spellcaster', activation: 'None', effects: 'While holding this wand, you gain a bonus to spell attack rolls determined by the wand\'s rarity (+1 Uncommon, +2 Rare, +3 Very Rare). In addition, you ignore Half Cover when making a spell attack.'),
-      _mi(name: 'Wand of Web', category: 'Wands', rarity: 'Uncommon', requiresAttunement: true, attunementPrereq: 'A spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 of its charges to cast the Web spell (save DC 15) from it.'),
-      _mi(name: 'Staff of Fire', category: 'Staffs', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Druid, Sorcerer, Warlock, or Wizard', activation: 'Magic Action', maxCharges: 10, chargeRegain: '1d6+4 daily at dawn', effects: 'You have Resistance to Fire damage while you hold this staff. The staff has 10 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast Burning Hands (1 charge), Fireball (3 charges), or Wall of Fire (4 charges). The staff regains 1d6 + 4 expended charges daily at dawn.'),
-      _mi(name: 'Staff of Frost', category: 'Staffs', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Druid, Sorcerer, Warlock, or Wizard', activation: 'Magic Action', maxCharges: 10, chargeRegain: '1d6+4 daily at dawn', effects: 'You have Resistance to Cold damage while you hold this staff. The staff has 10 charges. While holding it, you can take a Magic action to expend 1 or more charges to cast Cone of Cold (5 charges), Fog Cloud (1 charge), Ice Storm (4 charges), or Wall of Ice (4 charges).'),
-      _mi(name: 'Staff of the Magi', category: 'Staffs', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Sorcerer, Warlock, or Wizard', activation: 'Magic Action', maxCharges: 50, chargeRegain: '4d6+2 daily at dawn', effects: 'This iron-shod, hardwood staff is decorated with carvings depicting many forms of magic. While holding the staff, you have Advantage on saving throws against spells. You can also take a Reaction to absorb a spell of level 8 or lower that targets only you and not an area, and gain spell slots from it. The staff has 50 charges, used to cast various potent spells (Fireball, Ice Storm, Lightning Bolt, Wall of Fire, Web, Detect Magic, Enlarge/Reduce, Light, Mage Hand, Flaming Sphere, Invisibility, Knock, Passwall, Plane Shift, Telekinesis, Pyrotechnics).'),
-      _mi(name: 'Ring of Three Wishes', category: 'Rings', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, effects: 'While wearing this ring, you can take a Magic action to expend 1 of its 3 charges to cast the Wish spell from it. The ring becomes nonmagical when you use the last charge.'),
-      _mi(name: 'Ring of Free Action', category: 'Rings', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'While you wear this ring, Difficult Terrain doesn\'t cost you extra movement. In addition, magic can neither reduce your Speed nor cause you to be Paralyzed or Restrained.'),
-      _mi(name: 'Ring of Invisibility', category: 'Rings', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this ring, you can take a Magic action to have the Invisible condition. You remain Invisible until the ring is removed, until you attack or cast a spell, or until you take a Bonus Action to become visible again.'),
-      _mi(name: 'Ring of Mind Shielding', category: 'Rings', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing this ring, you are immune to magic that allows other creatures to read your thoughts, determine whether you are lying, know your alignment, or know your creature type. Creatures can communicate telepathically with you only if you allow it. You can take a Magic action to imprint your soul into the ring before you die. If you have any unfinished business in life, your soul inhabits the ring and remains until your business is concluded.'),
-      _mi(name: 'Ring of Regeneration', category: 'Rings', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'While wearing this ring, you regain 1d6 HP every 10 minutes, provided that you have at least 1 HP. If you lose a body part, the ring causes the missing part to regrow and return to full functionality after 1d6 + 1 days if you have at least 1 HP the whole time.'),
-      _mi(name: 'Ring of Resistance', category: 'Rings', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'You have Resistance to one damage type while wearing this ring. The damage type is determined by the gem in the ring (Pearl=Acid, Tourmaline=Cold, Garnet=Fire, Citrine=Force, Sapphire=Lightning, Jet=Necrotic, Amethyst=Poison, Jade=Psychic, Topaz=Radiant, Spinel=Thunder).'),
+  // ─── Apparel & accessories ──────────────────────────────────────────
+  _mi(
+    name: 'Cloak of Resistance',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have Resistance to one damage type chosen at the time the cloak is created (Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder).',
+  ),
+  _mi(
+    name: 'Cloak of the Bat',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this cloak, you have Advantage on Dex (Stealth) checks. In an area of Dim Light or Darkness, you can grip the edges of the cloak with both hands and use it to fly at a Speed of 40 feet. If you ever fail to grip the cloak\'s edges, or you are no longer in Dim Light or Darkness, you lose this Fly Speed. While wearing the cloak in an area of Dim Light or Darkness, you can take a Magic action to cast Polymorph on yourself, transforming into a Bat. While in this form you retain your Intelligence, Wisdom, and Charisma scores.',
+  ),
+  _mi(
+    name: 'Cloak of Displacement',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear this cloak, it projects an illusion that makes you appear to be standing in a place near your actual location. The illusion makes attack rolls against you have Disadvantage. If you take damage, the property ceases to function until the start of your next turn. This property is suppressed while you have the Incapacitated condition, are Restrained, or otherwise can\'t move.',
+  ),
+  _mi(
+    name: 'Hat of Disguise',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this hat, you can take a Magic action to cast the Disguise Self spell from it at will. The spell ends if the hat is removed.',
+  ),
+  _mi(
+    name: 'Helm of Telepathy',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this helm, you can take a Magic action to cast the Detect Thoughts spell (save DC 13) from it. As long as you maintain Concentration on the spell, you can use the helm to send a telepathic message to anyone you focus your thoughts on. A target who can understand a language can reply telepathically. Once you cast the spell from the helm, it can\'t be cast again from it until the next dawn.',
+  ),
+  _mi(
+    name: 'Periapt of Wound Closure',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear this pendant, you stabilize whenever you have the Unconscious condition and are at 0 HP. In addition, whenever you roll a Hit Die to regain HP, double the number of HP it restores.',
+  ),
+  _mi(
+    name: 'Bag of Beans',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'Inside this heavy cloth bag are 3d4 dry beans. You can take a Magic action to remove a bean and throw it up to 10 feet. After 1 minute, the bean produces a magical effect determined by rolling on a table provided in the SRD (effects range from a useful Treant to a calamitous earthquake). If you dump the bag\'s contents on the ground, the beans burst forth in a 30-foot-radius eruption.',
+  ),
+  _mi(
+    name: 'Bag of Tricks (Gray)',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This ordinary-looking bag, made from gray cloth, appears empty. Reaching inside, however, retrieves a small fuzzy object. You can take a Magic action to pull the object from the bag and throw it up to 20 feet. When the object lands, it transforms into a creature determined by rolling a d8 (Weasel, Giant Rat, Badger, Boar, Panther, Giant Badger, Dire Wolf, Giant Elk). The creature is friendly to you and your companions, and acts on your turn. The creature exists for 1 hour, until it drops to 0 HP, or until you dismiss it. The bag has 3 charges, regaining 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Brooch of Shielding',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this brooch, you have Resistance to Force damage and Immunity to damage from the Magic Missile spell.',
+  ),
+  _mi(
+    name: 'Decanter of Endless Water',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This stoppered flask sloshes when shaken, as if it contains water. The flask weighs 2 pounds. You can take a Magic action to remove the stopper and speak one of three command words: "Stream" produces 1 gallon of water per turn for as long as you speak the word; "Fountain" produces 5 gallons of water in a 5-foot-long stream; "Geyser" produces 30 gallons in a 30-foot-long, 1-foot-wide stream that knocks down creatures of Large size or smaller (DC 13 Strength save or be pushed 5 feet and knocked Prone).',
+  ),
+  _mi(
+    name: 'Driftglobe',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This small sphere of thick glass weighs 1 pound. While within 60 feet of it, you can speak its command word to cast the Daylight spell from it. The spell ends when you use a Bonus Action to repeat the command word or when the driftglobe is covered. You can also speak another command word to cause the driftglobe to rise into the air and float no more than 5 feet off the ground. The globe hovers in this way until you or another creature grasps it.',
+  ),
+  _mi(
+    name: 'Eyes of Charming',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: 'all daily at dawn',
+    effects:
+        'These crystal lenses fit over the eyes. They have 3 charges. While wearing them, you can take a Magic action to expend 1 charge to cast the Charm Person spell (save DC 13) on a Humanoid within 30 feet of you. The lenses regain all expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Eyes of the Eagle',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'These crystal lenses fit over the eyes. While wearing them, you have Advantage on Wisdom (Perception) checks that rely on sight. In conditions of clear visibility, you can make out details of even extremely distant creatures and objects as small as 2 feet across.',
+  ),
+  _mi(
+    name: 'Figurine of Wondrous Power (Bronze Griffon)',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This bronze statuette of a griffon can become a real griffon for 6 hours, with statistics matching that creature. The figurine reverts to a statue when it drops to 0 HP or when its owner uses an action to speak the command word again. Once used, can\'t be used again until 5 days have passed.',
+  ),
+  _mi(
+    name: 'Gem of Brightness',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 50,
+    effects:
+        'This prism has 50 charges. While you are holding it, you can take a Magic action to speak one of three command words to cause one of the following effects. The gem can\'t be recharged. *Light:* Speaking the first command word causes the gem to shed Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. *Bright Beam:* Speaking the second command word expends 1 charge and causes the gem to fire a brilliant beam of light at one creature within 60 feet of you. The creature must succeed on a DC 15 Con save or have the Blinded condition for 1 minute. *Blinding Cone:* Speaking the third command word expends 5 charges and causes the gem to flare with blinding light in a 30-foot Cone originating from it. Each creature in the Cone must make the same saving throw.',
+  ),
+  _mi(
+    name: 'Horn of Blasting',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'You can take a Magic action to blow this horn, which emits a thunderous blast in a 30-foot Cone. Each creature in the Cone must make a DC 15 Con save: 5d6 Thunder damage and Deafened 1 minute on a fail, half damage on a success. A creature made of inorganic material such as stone, crystal, or metal has Disadvantage on this save. A nonmagical object that isn\'t worn or carried also takes the damage if in the Cone. Once the horn has been used, it can\'t be used again until the next dawn. If you blow the horn 4 or more times before the next dawn, there is a 20% chance that it explodes, dealing 10d6 Force damage to you.',
+  ),
+  _mi(
+    name: 'Immovable Rod',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    weightLb: 2,
+    effects:
+        'This flat iron rod has a button on one end. You can take a Magic action to press the button, which causes the rod to become magically fixed in place. Until you or another creature takes a Magic action to push the button again, the rod doesn\'t move, even if it is defying gravity. The rod can hold up to 8,000 pounds of weight. More weight causes the rod to deactivate and fall.',
+  ),
+  _mi(
+    name: 'Lantern of Revealing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Invisible creatures and objects are visible as long as they are in the lantern\'s Bright Light. You can take a Bonus Action to lower the hood, reducing the light to Dim Light in a 5-foot radius.',
+  ),
+  _mi(
+    name: 'Necklace of Adaptation',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this necklace, you can breathe normally in any environment, and you have Advantage on saving throws made against harmful gases and vapors (such as Cloudkill and Stinking Cloud effects, inhaled poisons, and the breath weapons of some dragons).',
+  ),
+  _mi(
+    name: 'Necklace of Fireballs',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This necklace has 1d6 + 3 beads hanging from it. You can take a Magic action to detach a bead and throw it up to 60 feet away. When it reaches the end of its trajectory, the bead detonates as a level 3 Fireball spell (save DC 15). You can hurl multiple beads, or even the whole necklace, as one action. When you do so, increase the level of the Fireball by 1 for each bead beyond the first.',
+  ),
+  _mi(
+    name: 'Pearl of Power',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    attunementPrereq: 'A spellcaster',
+    activation: 'Bonus Action',
+    effects:
+        'While this pearl is on your person, you can take a Bonus Action to speak the pearl\'s command word and regain one expended spell slot of up to level 3. Once you have used the pearl, it can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Quiver of Ehlonna',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'Each of the three compartments of this quiver connects to an extradimensional space that allows the quiver to hold numerous items while never weighing more than 2 pounds. The shortest compartment can hold up to sixty arrows, javelins, or similar objects. The midsize compartment holds up to eighteen objects of similar size, such as bows. The longest compartment holds up to six long objects, such as bows, quarterstaves, or spears.',
+  ),
+  _mi(
+    name: 'Robe of Eyes',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'This robe is adorned with eyelike patterns. While you wear the robe, you gain the following benefits: you can see in all directions and have Advantage on Wisdom (Perception) checks that rely on sight; you have Darkvision out to a range of 120 feet; you can see Invisible creatures and objects, as well as into the Ethereal Plane, out to 120 feet. The robe\'s eyes can\'t be closed or averted. Although you can close or avert your own eyes, you are never considered to do so while wearing this robe.',
+  ),
+  _mi(
+    name: 'Robe of Stars',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'This black or dark blue robe is embroidered with small white or silver stars. You gain a +1 bonus to saving throws while you wear it. Six stars on the front are particularly large. While wearing the robe, you can take a Magic action to pull off one of the stars and use it to cast Magic Missile as a level 5 spell. Daily at dusk, 1d6 stars regenerate. While wearing the robe, you can use a Magic action to enter the Astral Plane along with everything you wear and carry; the robe and any items it contains accompany you. You can stay there for up to 12 hours per day.',
+  ),
+  _mi(
+    name: 'Robe of the Archmagi',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Sorcerer, Warlock, or Wizard',
+    activation: 'None',
+    effects:
+        'This elegant garment is made from exquisite cloth of white, gray, or black and adorned with silvery runes. The robe\'s color corresponds to the alignment for which the item was created: white for good, gray for neutral, and black for evil. You can\'t attune to a robe of the archmagi that doesn\'t correspond to your alignment. Wearing the robe gives you: AC 15 + your Dex modifier (no armor required); Advantage on saving throws against spells and other magical effects; +2 bonus to spell save DC and spell attack rolls.',
+  ),
+  _mi(
+    name: 'Robe of Useful Items',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This robe has cloth patches of various items on it. The robe has two of each of the following: Dagger, Bullseye Lantern (with full oil), Steel Mirror, 10-foot pole, Hempen Rope (50 feet, coiled), and Sack. The GM might allow other patches to be created. The wearer can detach a patch as an action; the patch becomes the actual item it depicts.',
+  ),
+  _mi(
+    name: 'Slippers of Spider Climbing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear these light shoes, you can move up, down, and across vertical surfaces and upside down along ceilings, while leaving your hands free. You have a Climb Speed equal to your Walk Speed. However, the slippers don\'t allow you to move this way on a slippery surface, such as one covered by ice or oil.',
+  ),
+  _mi(
+    name: 'Stone of Good Luck (Luckstone)',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While this polished agate is on your person, you gain a +1 bonus to ability checks and saving throws.',
+  ),
+  _mi(
+    name: 'Wand of Fireballs',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'A spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast the Fireball spell (save DC 15) from it. For 1 charge, you cast the level 3 version. You can increase the spell\'s level by 1 for each additional charge expended. The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20. On a 1, the wand crumbles into ashes and is destroyed.',
+  ),
+  _mi(
+    name: 'Wand of Lightning Bolts',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'A spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast the Lightning Bolt spell (save DC 15) from it. For 1 charge, you cast the level 3 version. You can increase the spell\'s level by 1 for each additional charge expended.',
+  ),
+  _mi(
+    name: 'Wand of the War Mage, +1',
+    category: 'Wands',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    attunementPrereq: 'A spellcaster',
+    activation: 'None',
+    effects:
+        'While holding this wand, you gain a bonus to spell attack rolls determined by the wand\'s rarity (+1 Uncommon, +2 Rare, +3 Very Rare). In addition, you ignore Half Cover when making a spell attack.',
+  ),
+  _mi(
+    name: 'Wand of Web',
+    category: 'Wands',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    attunementPrereq: 'A spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can take a Magic action to expend 1 of its charges to cast the Web spell (save DC 15) from it.',
+  ),
+  _mi(
+    name: 'Staff of Fire',
+    category: 'Staffs',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Druid, Sorcerer, Warlock, or Wizard',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'You have Resistance to Fire damage while you hold this staff. The staff has 10 charges. While holding it, you can take a Magic action to expend 1 or more of its charges to cast Burning Hands (1 charge), Fireball (3 charges), or Wall of Fire (4 charges). The staff regains 1d6 + 4 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Staff of Frost',
+    category: 'Staffs',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Druid, Sorcerer, Warlock, or Wizard',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'You have Resistance to Cold damage while you hold this staff. The staff has 10 charges. While holding it, you can take a Magic action to expend 1 or more charges to cast Cone of Cold (5 charges), Fog Cloud (1 charge), Ice Storm (4 charges), or Wall of Ice (4 charges).',
+  ),
+  _mi(
+    name: 'Staff of the Magi',
+    category: 'Staffs',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Sorcerer, Warlock, or Wizard',
+    activation: 'Magic Action',
+    maxCharges: 50,
+    chargeRegain: '4d6+2 daily at dawn',
+    effects:
+        'This iron-shod, hardwood staff is decorated with carvings depicting many forms of magic. While holding the staff, you have Advantage on saving throws against spells. You can also take a Reaction to absorb a spell of level 8 or lower that targets only you and not an area, and gain spell slots from it. The staff has 50 charges, used to cast various potent spells (Fireball, Ice Storm, Lightning Bolt, Wall of Fire, Web, Detect Magic, Enlarge/Reduce, Light, Mage Hand, Flaming Sphere, Invisibility, Knock, Passwall, Plane Shift, Telekinesis, Pyrotechnics).',
+  ),
+  _mi(
+    name: 'Ring of Three Wishes',
+    category: 'Rings',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    effects:
+        'While wearing this ring, you can take a Magic action to expend 1 of its 3 charges to cast the Wish spell from it. The ring becomes nonmagical when you use the last charge.',
+  ),
+  _mi(
+    name: 'Ring of Free Action',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear this ring, Difficult Terrain doesn\'t cost you extra movement. In addition, magic can neither reduce your Speed nor cause you to be Paralyzed or Restrained.',
+  ),
+  _mi(
+    name: 'Ring of Invisibility',
+    category: 'Rings',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this ring, you can take a Magic action to have the Invisible condition. You remain Invisible until the ring is removed, until you attack or cast a spell, or until you take a Bonus Action to become visible again.',
+  ),
+  _mi(
+    name: 'Ring of Mind Shielding',
+    category: 'Rings',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this ring, you are immune to magic that allows other creatures to read your thoughts, determine whether you are lying, know your alignment, or know your creature type. Creatures can communicate telepathically with you only if you allow it. You can take a Magic action to imprint your soul into the ring before you die. If you have any unfinished business in life, your soul inhabits the ring and remains until your business is concluded.',
+  ),
+  _mi(
+    name: 'Ring of Regeneration',
+    category: 'Rings',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this ring, you regain 1d6 HP every 10 minutes, provided that you have at least 1 HP. If you lose a body part, the ring causes the missing part to regrow and return to full functionality after 1d6 + 1 days if you have at least 1 HP the whole time.',
+  ),
+  _mi(
+    name: 'Ring of Resistance',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have Resistance to one damage type while wearing this ring. The damage type is determined by the gem in the ring (Pearl=Acid, Tourmaline=Cold, Garnet=Fire, Citrine=Force, Sapphire=Lightning, Jet=Necrotic, Amethyst=Poison, Jade=Psychic, Topaz=Radiant, Spinel=Thunder).',
+  ),
 
-      // ─── Weapons & armor ────────────────────────────────────────────────
-      _mi(name: 'Dragon Slayer', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', baseItemSlug: 'weapon', baseItemName: 'Longsword', effects: 'You gain a +1 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Dragon with this weapon, the Dragon takes an extra 3d6 damage of the weapon\'s type. For the purpose of this weapon, "Dragon" refers to any creature with the Dragon creature type.'),
-      _mi(name: 'Flame Tongue', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'Bonus Action', baseItemSlug: 'weapon', baseItemName: 'Longsword', effects: 'You can take a Bonus Action to speak this magic sword\'s command word, causing flames to erupt from the blade. These flames shed Bright Light in a 40-foot radius and Dim Light for an additional 40 feet. While the sword is ablaze, it deals an extra 2d6 Fire damage to any target it hits. The flames last until you use a Bonus Action to speak the command word again or until you drop or sheathe the sword.'),
-      _mi(name: 'Frost Brand', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', baseItemSlug: 'weapon', baseItemName: 'Longsword', effects: 'When you hit with an attack using this magic sword, the target takes an extra 1d6 Cold damage. In addition, while you hold the sword, you have Resistance to Fire damage. In freezing temperatures, the sword sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. When you draw this weapon, you can extinguish all nonmagical flames within 30 feet.'),
-      _mi(name: 'Holy Avenger', category: 'Weapons', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Paladin', activation: 'None', baseItemSlug: 'weapon', baseItemName: 'Longsword', effects: 'You gain a +3 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Fiend or an Undead with it, that creature takes an extra 2d10 Radiant damage. While you hold the drawn sword, it creates an aura in a 10-foot radius around you. You and all Celestials, Fey, and Humanoids in the aura have Advantage on saving throws against spells and other magical effects. If the sword has 17 or more levels, the aura\'s radius increases to 30 feet.'),
-      _mi(name: 'Adamantine Armor', category: 'Armor', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', baseItemSlug: 'armor', baseItemName: 'Plate Armor', effects: 'This suit of armor is reinforced with adamantine, one of the hardest substances in existence. While wearing it, any Critical Hit against you becomes a normal hit.'),
-      _mi(name: 'Mithral Armor', category: 'Armor', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', baseItemSlug: 'armor', baseItemName: 'Half Plate Armor', effects: 'Mithral is a light, flexible metal. A mithral chain shirt or breastplate can be worn under normal clothes. If the armor normally imposes Disadvantage on Dex (Stealth) checks or has a Strength requirement, the mithral version of the armor doesn\'t.'),
-      _mi(name: 'Armor of Resistance', category: 'Armor', rarity: 'Rare', requiresAttunement: true, activation: 'None', baseItemSlug: 'armor', baseItemName: 'Chain Mail', effects: 'You have Resistance to one type of damage while you wear this armor. The damage type is determined by the GM or the armor\'s creator (Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder).'),
-      _mi(name: 'Glamoured Studded Leather', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'Bonus Action', baseItemSlug: 'armor', baseItemName: 'Studded Leather Armor', effects: 'While wearing this armor, you gain a +1 bonus to AC. You can also speak the armor\'s command word as a Bonus Action to cause it to assume the appearance of a normal set of clothing or some other kind of armor. You decide what it looks like, including color, style, and accessories, but the armor retains its normal bulk and weight. The illusory appearance lasts until you use this property again or remove the armor.'),
+  // ─── Weapons & armor ────────────────────────────────────────────────
+  _mi(
+    name: 'Dragon Slayer',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Longsword',
+    effects:
+        'You gain a +1 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Dragon with this weapon, the Dragon takes an extra 3d6 damage of the weapon\'s type. For the purpose of this weapon, "Dragon" refers to any creature with the Dragon creature type.',
+  ),
+  _mi(
+    name: 'Flame Tongue',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Longsword',
+    effects:
+        'You can take a Bonus Action to speak this magic sword\'s command word, causing flames to erupt from the blade. These flames shed Bright Light in a 40-foot radius and Dim Light for an additional 40 feet. While the sword is ablaze, it deals an extra 2d6 Fire damage to any target it hits. The flames last until you use a Bonus Action to speak the command word again or until you drop or sheathe the sword.',
+  ),
+  _mi(
+    name: 'Frost Brand',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Longsword',
+    effects:
+        'When you hit with an attack using this magic sword, the target takes an extra 1d6 Cold damage. In addition, while you hold the sword, you have Resistance to Fire damage. In freezing temperatures, the sword sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. When you draw this weapon, you can extinguish all nonmagical flames within 30 feet.',
+  ),
+  _mi(
+    name: 'Holy Avenger',
+    category: 'Weapons',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Paladin',
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Longsword',
+    effects:
+        'You gain a +3 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Fiend or an Undead with it, that creature takes an extra 2d10 Radiant damage. While you hold the drawn sword, it creates an aura in a 10-foot radius around you. You and all Celestials, Fey, and Humanoids in the aura have Advantage on saving throws against spells and other magical effects. If the sword has 17 or more levels, the aura\'s radius increases to 30 feet.',
+  ),
+  _mi(
+    name: 'Adamantine Armor',
+    category: 'Armor',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    baseItemSlug: 'armor',
+    baseItemName: 'Plate Armor',
+    effects:
+        'This suit of armor is reinforced with adamantine, one of the hardest substances in existence. While wearing it, any Critical Hit against you becomes a normal hit.',
+  ),
+  _mi(
+    name: 'Mithral Armor',
+    category: 'Armor',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    baseItemSlug: 'armor',
+    baseItemName: 'Half Plate Armor',
+    effects:
+        'Mithral is a light, flexible metal. A mithral chain shirt or breastplate can be worn under normal clothes. If the armor normally imposes Disadvantage on Dex (Stealth) checks or has a Strength requirement, the mithral version of the armor doesn\'t.',
+  ),
+  _mi(
+    name: 'Armor of Resistance',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'armor',
+    baseItemName: 'Chain Mail',
+    effects:
+        'You have Resistance to one type of damage while you wear this armor. The damage type is determined by the GM or the armor\'s creator (Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder).',
+  ),
+  _mi(
+    name: 'Glamoured Studded Leather',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Bonus Action',
+    baseItemSlug: 'armor',
+    baseItemName: 'Studded Leather Armor',
+    effects:
+        'While wearing this armor, you gain a +1 bonus to AC. You can also speak the armor\'s command word as a Bonus Action to cause it to assume the appearance of a normal set of clothing or some other kind of armor. You decide what it looks like, including color, style, and accessories, but the armor retains its normal bulk and weight. The illusory appearance lasts until you use this property again or remove the armor.',
+  ),
 
-      // ─── Artifacts & legendary wonders ──────────────────────────────────
-      _mi(name: 'Apparatus of the Crab', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'This iron barrel has a hatch at one end. When the hatch is open, up to two Medium creatures can fit inside. Ten levers are arranged in two rows: levers move the apparatus across the floor or through water in the directions assigned to each. The apparatus is a Large object with AC 20, HP 200, and Immunity to Poison and Psychic damage.'),
-      _mi(name: 'Cube of Force', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 36, chargeRegain: '1d20 daily at dawn', effects: 'This cube is about an inch across. Each face has a distinct marking. The cube has 36 charges and regains 1d20 expended charges daily at dawn. As a Magic action, you can press one face of the cube and expend charges to create an invisible barrier of force in the shape of a 15-foot Cube around you. The barrier blocks creatures, objects, and spells in various combinations depending on the face pressed (1-6 charges).'),
-      _mi(name: 'Crystal Ball', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'The typical crystal ball is about 6 inches in diameter. While touching it, you can cast Scrying (DC 17) with it. Variants exist: Crystal Ball of Mind Reading (cast Detect Thoughts on creatures observed), Crystal Ball of Telepathy (Sending), Crystal Ball of True Seeing (cast on yourself).'),
-      _mi(name: 'Deck of Many Things', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A deck of small ivory or vellum cards. Drawing a card invokes its magic. Outcomes range from boons (gain XP, gain magic items, raise an ally) to disasters (lose all wealth, banish to another plane, become enemies of a powerful being). Once drawn, you must keep the result; some cards trigger immediately, others can be saved for later.'),
-      _mi(name: 'Eye of Vecna', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, isCursed: true, activation: 'Magic Action', effects: 'In place of your right eye is a withered, dead-looking orb that grants Truesight up to 30 feet, casts Clairvoyance (1/day, no Concentration), Crown of Madness (1/day), Disintegrate (1/day), Dominate Monster (1/day, save DC 18), Eyebite (1/day). The Eye is sentient and tries to corrupt its bearer.'),
-      _mi(name: 'Hand of Vecna', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, isCursed: true, activation: 'Magic Action', effects: 'In place of your left hand is a withered, mummified appendage. While attached, it grants +4 STR, immunity to Poison damage, and access to Finger of Death (1/day, save DC 18), Sleep (1/day), Slow (1/day, save DC 18), and Teleport (1/day).'),
-      _mi(name: 'Tome of Clear Thought', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book contains memory and logic exercises that take 48 hours to complete. After completing the exercises, your Intelligence score and Intelligence maximum each increase by 2, to a maximum of 24. The book then loses its magic but retains its mundane value.'),
-      _mi(name: 'Tome of Leadership and Influence', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book contains tales of charisma and influence. After 48 hours of study over no more than 6 days, your Charisma score and Charisma maximum each increase by 2, to a maximum of 24. The book then loses its magic.'),
-      _mi(name: 'Tome of Understanding', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book contains exercises in intuition and insight. After 48 hours of study over no more than 6 days, your Wisdom score and Wisdom maximum each increase by 2, to a maximum of 24. The book then loses its magic.'),
-      _mi(name: 'Manual of Bodily Health', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book describes physical exercises. After 48 hours of training over no more than 6 days, your Constitution score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.'),
-      _mi(name: 'Manual of Gainful Exercise', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book describes weight-training and combat conditioning. After 48 hours of training over no more than 6 days, your Strength score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.'),
-      _mi(name: 'Manual of Quickness of Action', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'This book describes coordination and balance training. After 48 hours of training over no more than 6 days, your Dexterity score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.'),
-      _mi(name: 'Mantle of Spell Resistance', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'You have Advantage on saving throws against spells while wearing this cloak.'),
-      _mi(name: 'Iron Bands of Bilarro', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'This rusty iron sphere fits in the palm of your hand. As a Magic action while holding it, you can target a Huge or smaller creature within 60 feet, requiring a ranged attack roll (+5 to hit). On a hit, iron bands wrap the target, giving it the Restrained condition until you take a Bonus Action to release it or 24 hours pass.'),
-      _mi(name: 'Mirror of Life Trapping', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Special', effects: 'When this mirror is hung and a creature comes within 30 feet that can see itself in the mirror, the mirror traps the creature in an extradimensional cell unless it succeeds on a DC 15 Charisma save. The mirror has 15 such cells.'),
-      _mi(name: 'Sphere of Annihilation', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A 2-foot-diameter ball of absolute, magical darkness. Any matter that touches the sphere — but not extradimensional space — is instantly erased. The sphere is stationary; you can attempt a DC 25 Intelligence (Arcana) check to control its movement up to 60 feet on your turn.'),
-      _mi(name: 'Talisman of Pure Good', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'a creature of good alignment', activation: 'Reaction', effects: 'A creature of evil alignment that touches the talisman takes 6d6 Radiant damage. While wearing it, you gain a +2 bonus to all saving throws. The talisman has 7 charges; you can expend a charge as a Reaction when you fail a saving throw to succeed instead.'),
-      _mi(name: 'Talisman of Ultimate Evil', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'a creature of evil alignment', activation: 'Reaction', effects: 'A creature of good alignment that touches the talisman takes 8d6 Necrotic damage. While wearing it, you gain a +2 bonus to all saving throws. The talisman has 6 charges; spend a charge as a Reaction to succeed on a failed save.'),
-      _mi(name: 'Wings of Flying', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Bonus Action', effects: 'While wearing this cloak, you can take a Bonus Action to cause it to transform into a pair of bat wings or bird wings on your back. The wings last for 1 hour or until you take a Bonus Action to make them disappear. The wings give you a Fly Speed of 60 feet.'),
-      _mi(name: 'Boots of Levitation', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing these boots, you can take a Magic action to cast Levitate on yourself at will.'),
-      _mi(name: 'Bracers of Archery', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing these bracers, you have proficiency with the Longbow and Shortbow, and you gain a +2 bonus to damage rolls on ranged attacks made with such weapons.'),
-      _mi(name: 'Cape of the Mountebank', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Bonus Action', effects: 'This cape smells faintly of brimstone. While wearing it, you can take a Bonus Action to cast Dimension Door from the cape. This property can\'t be used again until the next dawn. When you disappear, you leave behind a cloud of smoke, and you appear in a similar cloud of smoke at your destination.'),
-      _mi(name: 'Demon Armor', category: 'Armor', rarity: 'Very Rare', requiresAttunement: true, isCursed: true, activation: 'None', baseItemSlug: 'armor', baseItemName: 'Plate Armor', effects: 'While wearing this armor, you gain a +1 bonus to AC, and you can understand and speak Abyssal. In addition, the armor\'s gauntlets turn unarmed strikes with your hands into magical attacks; on a hit, you deal 1d8 Slashing damage.'),
-      _mi(name: 'Dimensional Shackles', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'You can take a Magic action to place these shackles on an Incapacitated creature. The shackles adjust to fit Small to Large creatures. They can\'t be teleported or otherwise removed by extradimensional means while attached. While wearing them, the creature can\'t use any method of extradimensional movement.'),
-      _mi(name: 'Folding Boat', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A wooden box about 12 inches long. Speak the command word, and the box unfolds into a 10-foot rowboat (or 24-foot ship with another command word). Speaking a third command word folds it back to a box.'),
-      _mi(name: 'Belt of Giant Strength (Stone)', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'While wearing this belt, your Strength score changes to 23. The item has no effect on you if your Strength without the belt is equal to or greater than 23.'),
-      _mi(name: 'Belt of Giant Strength (Frost/Fire)', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'While wearing this belt, your Strength score changes to 25. The item has no effect on you if your Strength without the belt is equal to or greater than 25.'),
-      _mi(name: 'Belt of Giant Strength (Cloud)', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'None', effects: 'While wearing this belt, your Strength score changes to 27. The item has no effect on you if your Strength without the belt is equal to or greater than 27.'),
-      _mi(name: 'Belt of Giant Strength (Storm)', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'None', effects: 'While wearing this belt, your Strength score changes to 29. The item has no effect on you if your Strength without the belt is equal to or greater than 29.'),
-      _mi(name: 'Helm of Brilliance', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'This dazzling helm is set with 1d10 diamonds, 2d10 rubies, 3d10 fire opals, and 4d10 opals. While wearing it, you gain Daylight (1/day, no Concentration), Fireball (DC 18, expends a fire opal), Prismatic Spray (1/day, expends a diamond), Wall of Fire (DC 18, no Concentration, expends a ruby).'),
-      _mi(name: 'Helm of Teleportation', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This helm has 3 charges. While wearing it, you can expend 1 charge as a Magic action to cast Teleport from it. The helm regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Robe of Scintillating Colors', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This robe has 3 charges, and it regains 1d3 expended charges daily at dawn. While you wear it, you can take a Magic action and expend 1 charge to cause the garment to display a swirling pattern of dazzling colors until the end of your next turn. During this time, the robe sheds Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Creatures that can see you have Disadvantage on attack rolls against you. In addition, any creature in the Bright Light that can see you when the robe\'s power is activated must succeed on a DC 15 Wisdom save or have the Stunned condition until the effect ends.'),
-      _mi(name: 'Robe of the Magi', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard', activation: 'None', effects: 'This elegant garment grants the following benefits while you wear it: Advantage on saving throws against spells and other magical effects, +2 bonus to AC and to saving throws, +2 bonus to spell save DCs and spell attack rolls.'),
-      _mi(name: 'Mirror of Mental Prowess', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'A 4-foot-tall mirror. While touching it, you can take a Magic action to cast Detect Thoughts on yourself, gain the benefit of a Scrying spell once per day, or step through the mirror to a location you have seen, exiting through any other Mirror of Mental Prowess.'),
-      _mi(name: 'Carpet of Flying', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'You can speak the carpet\'s command word as a Magic action to make the carpet hover and fly. The carpet\'s Fly Speed depends on its size: 3×5 ft (Fly 80, capacity 200 lb), 4×6 ft (Fly 60, 400 lb), 5×7 ft (Fly 40, 600 lb), 6×9 ft (Fly 30, 800 lb).'),
-      _mi(name: 'Mantle of the Champion', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'While wearing this cloak, you have Advantage on Strength saving throws and Charisma (Performance) checks.'),
-      _mi(name: 'Necklace of Prayer Beads', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Cleric, Druid, or Paladin', activation: 'Bonus Action', effects: 'This necklace has 1d4 + 2 magic beads. Each bead is one of the following kinds: Bead of Blessing (Bless, no Concentration, 1/day), Bead of Curing (Cure Wounds, level 2, 2/day), Bead of Favor (Greater Restoration, 1/day), Bead of Karma (Wisdom +4 for 10 min, 1/day), Bead of Smiting (Branding Smite, level 5, 1/day), Bead of Summons (summon a celestial CR 4 or lower, 1/week), Bead of Wind Walking (Wind Walk, 1/day).'),
-      _mi(name: 'Restorative Ointment', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'A jar holds 1d4 + 1 doses. As a Magic action, you can apply a dose: it heals 2d8 + 2 HP and ends the Diseased and Poisoned conditions on the target. Or you can spread a dose on a weapon or piece of ammunition: the next attack with that weapon deals an extra 2d8 Radiant damage if it hits.'),
+  // ─── Artifacts & legendary wonders ──────────────────────────────────
+  _mi(
+    name: 'Apparatus of the Crab',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This iron barrel has a hatch at one end. When the hatch is open, up to two Medium creatures can fit inside. Ten levers are arranged in two rows: levers move the apparatus across the floor or through water in the directions assigned to each. The apparatus is a Large object with AC 20, HP 200, and Immunity to Poison and Psychic damage.',
+  ),
+  _mi(
+    name: 'Cube of Force',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 36,
+    chargeRegain: '1d20 daily at dawn',
+    effects:
+        'This cube is about an inch across. Each face has a distinct marking. The cube has 36 charges and regains 1d20 expended charges daily at dawn. As a Magic action, you can press one face of the cube and expend charges to create an invisible barrier of force in the shape of a 15-foot Cube around you. The barrier blocks creatures, objects, and spells in various combinations depending on the face pressed (1-6 charges).',
+  ),
+  _mi(
+    name: 'Crystal Ball',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'The typical crystal ball is about 6 inches in diameter. While touching it, you can cast Scrying (DC 17) with it. Variants exist: Crystal Ball of Mind Reading (cast Detect Thoughts on creatures observed), Crystal Ball of Telepathy (Sending), Crystal Ball of True Seeing (cast on yourself).',
+  ),
+  _mi(
+    name: 'Deck of Many Things',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A deck of small ivory or vellum cards. Drawing a card invokes its magic. Outcomes range from boons (gain XP, gain magic items, raise an ally) to disasters (lose all wealth, banish to another plane, become enemies of a powerful being). Once drawn, you must keep the result; some cards trigger immediately, others can be saved for later.',
+  ),
+  _mi(
+    name: 'Eye of Vecna',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'Magic Action',
+    effects:
+        'In place of your right eye is a withered, dead-looking orb that grants Truesight up to 30 feet, casts Clairvoyance (1/day, no Concentration), Crown of Madness (1/day), Disintegrate (1/day), Dominate Monster (1/day, save DC 18), Eyebite (1/day). The Eye is sentient and tries to corrupt its bearer.',
+  ),
+  _mi(
+    name: 'Hand of Vecna',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'Magic Action',
+    effects:
+        'In place of your left hand is a withered, mummified appendage. While attached, it grants +4 STR, immunity to Poison damage, and access to Finger of Death (1/day, save DC 18), Sleep (1/day), Slow (1/day, save DC 18), and Teleport (1/day).',
+  ),
+  _mi(
+    name: 'Tome of Clear Thought',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book contains memory and logic exercises that take 48 hours to complete. After completing the exercises, your Intelligence score and Intelligence maximum each increase by 2, to a maximum of 24. The book then loses its magic but retains its mundane value.',
+  ),
+  _mi(
+    name: 'Tome of Leadership and Influence',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book contains tales of charisma and influence. After 48 hours of study over no more than 6 days, your Charisma score and Charisma maximum each increase by 2, to a maximum of 24. The book then loses its magic.',
+  ),
+  _mi(
+    name: 'Tome of Understanding',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book contains exercises in intuition and insight. After 48 hours of study over no more than 6 days, your Wisdom score and Wisdom maximum each increase by 2, to a maximum of 24. The book then loses its magic.',
+  ),
+  _mi(
+    name: 'Manual of Bodily Health',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book describes physical exercises. After 48 hours of training over no more than 6 days, your Constitution score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.',
+  ),
+  _mi(
+    name: 'Manual of Gainful Exercise',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book describes weight-training and combat conditioning. After 48 hours of training over no more than 6 days, your Strength score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.',
+  ),
+  _mi(
+    name: 'Manual of Quickness of Action',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'This book describes coordination and balance training. After 48 hours of training over no more than 6 days, your Dexterity score and maximum each increase by 2, to a maximum of 24. The book then loses its magic.',
+  ),
+  _mi(
+    name: 'Mantle of Spell Resistance',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have Advantage on saving throws against spells while wearing this cloak.',
+  ),
+  _mi(
+    name: 'Iron Bands of Bilarro',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This rusty iron sphere fits in the palm of your hand. As a Magic action while holding it, you can target a Huge or smaller creature within 60 feet, requiring a ranged attack roll (+5 to hit). On a hit, iron bands wrap the target, giving it the Restrained condition until you take a Bonus Action to release it or 24 hours pass.',
+  ),
+  _mi(
+    name: 'Mirror of Life Trapping',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Special',
+    effects:
+        'When this mirror is hung and a creature comes within 30 feet that can see itself in the mirror, the mirror traps the creature in an extradimensional cell unless it succeeds on a DC 15 Charisma save. The mirror has 15 such cells.',
+  ),
+  _mi(
+    name: 'Sphere of Annihilation',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A 2-foot-diameter ball of absolute, magical darkness. Any matter that touches the sphere — but not extradimensional space — is instantly erased. The sphere is stationary; you can attempt a DC 25 Intelligence (Arcana) check to control its movement up to 60 feet on your turn.',
+  ),
+  _mi(
+    name: 'Talisman of Pure Good',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'a creature of good alignment',
+    activation: 'Reaction',
+    effects:
+        'A creature of evil alignment that touches the talisman takes 6d6 Radiant damage. While wearing it, you gain a +2 bonus to all saving throws. The talisman has 7 charges; you can expend a charge as a Reaction when you fail a saving throw to succeed instead.',
+  ),
+  _mi(
+    name: 'Talisman of Ultimate Evil',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'a creature of evil alignment',
+    activation: 'Reaction',
+    effects:
+        'A creature of good alignment that touches the talisman takes 8d6 Necrotic damage. While wearing it, you gain a +2 bonus to all saving throws. The talisman has 6 charges; spend a charge as a Reaction to succeed on a failed save.',
+  ),
+  _mi(
+    name: 'Wings of Flying',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'While wearing this cloak, you can take a Bonus Action to cause it to transform into a pair of bat wings or bird wings on your back. The wings last for 1 hour or until you take a Bonus Action to make them disappear. The wings give you a Fly Speed of 60 feet.',
+  ),
+  _mi(
+    name: 'Boots of Levitation',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing these boots, you can take a Magic action to cast Levitate on yourself at will.',
+  ),
+  _mi(
+    name: 'Bracers of Archery',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing these bracers, you have proficiency with the Longbow and Shortbow, and you gain a +2 bonus to damage rolls on ranged attacks made with such weapons.',
+  ),
+  _mi(
+    name: 'Cape of the Mountebank',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Bonus Action',
+    effects:
+        'This cape smells faintly of brimstone. While wearing it, you can take a Bonus Action to cast Dimension Door from the cape. This property can\'t be used again until the next dawn. When you disappear, you leave behind a cloud of smoke, and you appear in a similar cloud of smoke at your destination.',
+  ),
+  _mi(
+    name: 'Demon Armor',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'None',
+    baseItemSlug: 'armor',
+    baseItemName: 'Plate Armor',
+    effects:
+        'While wearing this armor, you gain a +1 bonus to AC, and you can understand and speak Abyssal. In addition, the armor\'s gauntlets turn unarmed strikes with your hands into magical attacks; on a hit, you deal 1d8 Slashing damage.',
+  ),
+  _mi(
+    name: 'Dimensional Shackles',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'You can take a Magic action to place these shackles on an Incapacitated creature. The shackles adjust to fit Small to Large creatures. They can\'t be teleported or otherwise removed by extradimensional means while attached. While wearing them, the creature can\'t use any method of extradimensional movement.',
+  ),
+  _mi(
+    name: 'Folding Boat',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A wooden box about 12 inches long. Speak the command word, and the box unfolds into a 10-foot rowboat (or 24-foot ship with another command word). Speaking a third command word folds it back to a box.',
+  ),
+  _mi(
+    name: 'Belt of Giant Strength (Stone)',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, your Strength score changes to 23. The item has no effect on you if your Strength without the belt is equal to or greater than 23.',
+  ),
+  _mi(
+    name: 'Belt of Giant Strength (Frost/Fire)',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, your Strength score changes to 25. The item has no effect on you if your Strength without the belt is equal to or greater than 25.',
+  ),
+  _mi(
+    name: 'Belt of Giant Strength (Cloud)',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, your Strength score changes to 27. The item has no effect on you if your Strength without the belt is equal to or greater than 27.',
+  ),
+  _mi(
+    name: 'Belt of Giant Strength (Storm)',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, your Strength score changes to 29. The item has no effect on you if your Strength without the belt is equal to or greater than 29.',
+  ),
+  _mi(
+    name: 'Helm of Brilliance',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'This dazzling helm is set with 1d10 diamonds, 2d10 rubies, 3d10 fire opals, and 4d10 opals. While wearing it, you gain Daylight (1/day, no Concentration), Fireball (DC 18, expends a fire opal), Prismatic Spray (1/day, expends a diamond), Wall of Fire (DC 18, no Concentration, expends a ruby).',
+  ),
+  _mi(
+    name: 'Helm of Teleportation',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This helm has 3 charges. While wearing it, you can expend 1 charge as a Magic action to cast Teleport from it. The helm regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Robe of Scintillating Colors',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This robe has 3 charges, and it regains 1d3 expended charges daily at dawn. While you wear it, you can take a Magic action and expend 1 charge to cause the garment to display a swirling pattern of dazzling colors until the end of your next turn. During this time, the robe sheds Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. Creatures that can see you have Disadvantage on attack rolls against you. In addition, any creature in the Bright Light that can see you when the robe\'s power is activated must succeed on a DC 15 Wisdom save or have the Stunned condition until the effect ends.',
+  ),
+  _mi(
+    name: 'Robe of the Magi',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard',
+    activation: 'None',
+    effects:
+        'This elegant garment grants the following benefits while you wear it: Advantage on saving throws against spells and other magical effects, +2 bonus to AC and to saving throws, +2 bonus to spell save DCs and spell attack rolls.',
+  ),
+  _mi(
+    name: 'Mirror of Mental Prowess',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'A 4-foot-tall mirror. While touching it, you can take a Magic action to cast Detect Thoughts on yourself, gain the benefit of a Scrying spell once per day, or step through the mirror to a location you have seen, exiting through any other Mirror of Mental Prowess.',
+  ),
+  _mi(
+    name: 'Carpet of Flying',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'You can speak the carpet\'s command word as a Magic action to make the carpet hover and fly. The carpet\'s Fly Speed depends on its size: 3×5 ft (Fly 80, capacity 200 lb), 4×6 ft (Fly 60, 400 lb), 5×7 ft (Fly 40, 600 lb), 6×9 ft (Fly 30, 800 lb).',
+  ),
+  _mi(
+    name: 'Mantle of the Champion',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this cloak, you have Advantage on Strength saving throws and Charisma (Performance) checks.',
+  ),
+  _mi(
+    name: 'Necklace of Prayer Beads',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Cleric, Druid, or Paladin',
+    activation: 'Bonus Action',
+    effects:
+        'This necklace has 1d4 + 2 magic beads. Each bead is one of the following kinds: Bead of Blessing (Bless, no Concentration, 1/day), Bead of Curing (Cure Wounds, level 2, 2/day), Bead of Favor (Greater Restoration, 1/day), Bead of Karma (Wisdom +4 for 10 min, 1/day), Bead of Smiting (Branding Smite, level 5, 1/day), Bead of Summons (summon a celestial CR 4 or lower, 1/week), Bead of Wind Walking (Wind Walk, 1/day).',
+  ),
+  _mi(
+    name: 'Restorative Ointment',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A jar holds 1d4 + 1 doses. As a Magic action, you can apply a dose: it heals 2d8 + 2 HP and ends the Diseased and Poisoned conditions on the target. Or you can spread a dose on a weapon or piece of ammunition: the next attack with that weapon deals an extra 2d8 Radiant damage if it hits.',
+  ),
 
-      // ─── Gap closure: missing SRD 5.2.1 items ─────────────────────────────
-      // Ammunition / Armor / Weapon bonus variants
-      _mi(name: 'Ammunition, +1', category: 'Weapons', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'You have a +1 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.'),
-      _mi(name: 'Ammunition, +2', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.'),
-      _mi(name: 'Ammunition, +3', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.'),
-      _mi(name: 'Ammunition of Slaying', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'Magic ammunition meant to slay creatures of a particular type (chosen at creation). When such a creature takes damage from this ammunition, it makes a DC 17 Constitution save, taking 6d10 extra Force damage on a failed save (half on success). After dealing extra damage, the ammunition becomes nonmagical.'),
-      _mi(name: 'Armor, +2', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +2 armor.'),
-      _mi(name: 'Armor, +3', category: 'Armor', rarity: 'Legendary', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +3 armor.'),
-      _mi(name: 'Shield, +2', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have a +2 bonus to AC, in addition to the Shield\'s normal bonus to AC.'),
-      _mi(name: 'Shield, +3', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have a +3 bonus to AC, in addition to the Shield\'s normal bonus to AC.'),
-      _mi(name: 'Weapon, +2', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon.'),
-      _mi(name: 'Weapon, +3', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon.'),
-      _mi(name: 'Armor of Invulnerability', category: 'Armor', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'You have Resistance to nonmagical damage while you wear this armor. Additionally, you can take a Magic action to gain Immunity to nonmagical damage for 10 minutes or until you are no longer wearing the armor. Once used, this property can\'t be used again until the next dawn.'),
-      _mi(name: 'Armor of Vulnerability', category: 'Armor', rarity: 'Rare', requiresAttunement: true, isCursed: true, activation: 'None', effects: 'You have Resistance to one of these damage types: Bludgeoning, Piercing, or Slashing. The GM chooses or randomly determines the type. Curse: this armor is cursed, a fact revealed only when an Identify spell is cast on it or you attune to it. Once attuned, you have Vulnerability to two of the three damage types from which you don\'t have Resistance. Removing it requires a Remove Curse spell.'),
-      _mi(name: 'Animated Shield', category: 'Armor', rarity: 'Very Rare', requiresAttunement: true, activation: 'Bonus Action', effects: 'While holding this Shield, you can take a Bonus Action to cause it to animate. The Shield leaps into the air and hovers in your space to protect you, leaving your hands free. The Shield remains animate for 1 minute, until you take a Bonus Action to end this effect, or until you die or have the Incapacitated condition.'),
-      // Amulets
-      _mi(name: 'Amulet of the Planes', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this amulet, you can take a Magic action to name a location that you are familiar with on another plane of existence. Then make a DC 15 Intelligence (Arcana) check. On a success, you cast Plane Shift. On a fail, you and each creature within 15 feet of you travel to a random destination determined by rolling on the planar table.'),
-      // Bags / Beads
-      _mi(name: 'Bag of Devouring', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, isCursed: true, activation: 'None', effects: 'This bag superficially resembles a Bag of Holding but is a feeding orifice for a gigantic extradimensional creature. Anything fully inside is swallowed: small living items take 2d6 Acid damage; non-living matter is destroyed. The bag can hold up to 64 cubic feet of matter; once a Medium creature or 30 cubic feet of matter is placed inside, the bag swallows the contents and transports them to a random plane of existence; the bag is destroyed in the process.'),
-      _mi(name: 'Bag of Tricks (Rust)', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'Reaching into this empty bag, you find a small, fuzzy object. The bag weighs 1/2 pound. Once per turn, you can take a Magic action to pull a fuzzy object from the bag and throw it up to 20 feet. The object becomes a creature determined by rolling 1d8 on the rust bag table (Rat, Owl, Mastiff, Goat, Giant Goat, Giant Boar, Lion, Brown Bear). The bag can\'t be used again until the next dawn.'),
-      _mi(name: 'Bag of Tricks (Tan)', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'Reaching into this empty bag, you find a small, fuzzy object. The bag weighs 1/2 pound. Once per turn, you can take a Magic action to pull a fuzzy object from the bag and throw it up to 20 feet. The object becomes a creature determined by rolling 1d8 on the tan bag table (Jackal, Ape, Baboon, Axe Beak, Black Bear, Giant Weasel, Giant Hyena, Tiger). The bag can\'t be used again until the next dawn.'),
-      _mi(name: 'Bead of Force', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Utilize', effects: 'A Tiny black sphere. You can take a Utilize action to throw it up to 60 feet. It detonates on impact and is destroyed. Each creature in a 10-foot Emanation makes a DC 15 Dexterity save: 5d4 Force damage on a fail (half on success). A sphere of Force then encloses the area for 1 minute, blocking passage and effects.'),
-      _mi(name: 'Bead of Nourishment', category: 'Wondrous Items', rarity: 'Common', requiresAttunement: false, activation: 'Consumable', effects: 'This flavorless, gel-like bead dissolves on your tongue and provides as much nourishment as 1 day of rations.'),
-      // Belts
-      _mi(name: 'Belt of Dwarvenkind', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'While wearing this belt, you gain: +2 bonus to Constitution (max 20); Advantage on Charisma (Persuasion) checks made to interact with dwarves; Darkvision 60 ft; understand, speak, and read Dwarvish; 50% chance each dawn of growing a full beard if capable, or a thicker beard if you already have one.'),
-      // Boots / Bowl / Bracers / Broom / Brooch
-      _mi(name: 'Boots of Striding and Springing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While you wear these boots, your Walk Speed becomes 30 feet, unless your Walking Speed is higher, and your Speed isn\'t reduced if you are encumbered or wearing Heavy Armor. In addition, you can jump three times the normal distance, though you can\'t jump farther than your remaining Speed would allow.'),
-      _mi(name: 'Boots of the Winterlands', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While you wear these furred boots, you gain: Resistance to Cold damage; ignore Difficult Terrain created by ice or snow; tolerate temperatures as low as −50°F without ill effect; treat any nonmagical surface to walk on as if it were dry and free of ice and snow.'),
-      _mi(name: 'Bowl of Commanding Water Elementals', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'While the bowl contains at least 1 gallon of water, you can take a Magic action to speak the bowl\'s command word and summon a Water Elemental, as if you cast Conjure Elemental. The bowl can\'t be used this way again until the next dawn.'),
-      _mi(name: 'Broom of Flying', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'This wooden broom weighs 3 pounds. As a Magic action, you can speak its command word; it then hovers beneath you and can be ridden. It has a Fly Speed of 50 feet, can carry up to 400 pounds (with reduced speed at higher loads), and stops hovering on command or when it travels more than 1 mile from you.'),
-      // Capes / Censers / Chimes / Circlets / Cloaks
-      _mi(name: 'Censer of Controlling Air Elementals', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'While incense is burning in this censer, you can take a Magic action to speak the censer\'s command word and summon an Air Elemental, as if you cast Conjure Elemental. The censer can\'t be used this way again until the next dawn.'),
-      _mi(name: 'Chime of Opening', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', maxCharges: 10, effects: 'A hollow metal tube with 10 charges. As a Magic action, you can hold it up and strike it while pointing at an object that can be opened (door, lid, lock, etc.) within 120 feet. The chime emits a clear tone, and one lock or latch on the object opens unless the sound can\'t reach it. If no locks remain, the object opens. The chime is destroyed once it expends its 10 charges.'),
-      _mi(name: 'Circlet of Blasting', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'While wearing this circlet, you can take a Magic action to cast Scorching Ray (level 2) from it, with all four rays. The circlet can\'t be used this way again until the next dawn.'),
-      _mi(name: 'Cloak of Invisibility', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', maxCharges: 2, chargeRegain: '1d2 daily at dawn', effects: 'While wearing this cloak, you can pull its hood over your head as a Magic action to gain the Invisible condition. While the hood remains over your head, you remain Invisible. You can take a Magic action to lower the hood and end your Invisibility, or you can take 2 hours of Invisibility before having to remove the cloak; the cloak can be used for a total of 2 hours of Invisibility, all at once or in several uses, before needing to recharge.'),
-      // Crystal Ball variants / Cube / Cubic
-      _mi(name: 'Crystal Ball of Mind Reading', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'A Crystal Ball that also lets you cast Detect Thoughts (DC 17) on a creature you can see in the ball\'s sensor area while using the Scrying spell from it.'),
-      _mi(name: 'Crystal Ball of Telepathy', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'A Crystal Ball that lets you communicate telepathically with a creature you can see in the ball\'s sensor area while using the Scrying spell from it. You can also use a Magic action to cast Suggestion (DC 17) telepathically through the ball; the target gets Advantage on the save if it is hostile to you.'),
-      _mi(name: 'Cubic Gate', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'A cube 3 inches across, with each face keyed to a different plane of existence (one face is the Material Plane). The cube has 3 charges. As a Magic action, you can press one face and expend 1 charge to cast Plane Shift, sending you to that face\'s plane, or expend 2 charges to cast Gate, opening a portal to a location on that plane. The cube regains 1d3 charges daily at dawn.'),
-      // Dancing / Deck / Defender
-      _mi(name: 'Dancing Sword', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, activation: 'Bonus Action', effects: 'You can take a Bonus Action to toss this magic sword into the air and speak the command word. The sword then hovers in your space and attacks one creature within 5 feet on each of your turns, using your attack roll and ability modifier. The sword has 4 rounds of independent action; after that, it falls to your space, or you can grasp it before it falls. While the sword hovers, you can\'t attack with it.'),
-      _mi(name: 'Deck of Illusions', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'A box holds 34 parchment cards. As a Magic action, you can pull a random card and toss it up to 30 feet from you. An illusion of a creature appears in an unoccupied space within 5 feet of where the card lands. The illusion lasts until dispelled. Anything in physical contact with the illusion reveals it to be an illusion. Otherwise, the illusion can act and appear convincing.'),
-      _mi(name: 'Defender', category: 'Weapons', rarity: 'Legendary', requiresAttunement: true, activation: 'None', effects: 'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon. The first time you attack with the sword on each of your turns, you can transfer some or all of the sword\'s bonus to your AC, instead of using the bonus on attacks that turn. The chosen bonus lasts until the start of your next turn or until you are no longer holding the sword.'),
-      // Dragon Orb / Dragon Scale Mail
-      _mi(name: 'Dragon Orb', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d4+3 daily at dawn', effects: 'An orb associated with one type of dragon (Black, Blue, Brass, Bronze, Copper, Gold, Green, Red, Silver, or White). It has 7 charges. While holding it, you can take a Magic action to expend 1 charge to attempt to summon any dragon of the orb\'s type within 40 miles, or expend 1+ charges to cast spells: Cure Wounds (level 5, 3 charges), Daylight (1 charge), Death Ward (2 charges), or Scrying (3 charges).'),
-      _mi(name: 'Dragon Scale Mail', category: 'Armor', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'Made of the scales of one kind of dragon. While wearing it, you have +1 bonus to AC, Resistance to one damage type determined by the kind of dragon, and Advantage on saves vs Frightful Presence and breath weapons of dragons. As a Magic action, you can sense distance and direction to closest dragon within 30 miles of the same type as the armor, once per dawn.'),
-      // Dust x3
-      _mi(name: 'Dust of Disappearance', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'A small packet containing dust resembling fine sand. As a Magic action, you can sprinkle the contents over yourself or another creature within reach. The creature has the Invisible condition for 2d4 minutes; the duration is the same for all creatures sprinkled at once. The dust is consumed.'),
-      _mi(name: 'Dust of Dryness', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Utilize', effects: 'A small packet contains 1d6 + 4 pinches of dust. As a Utilize action, you can sprinkle a pinch on water to absorb up to a 15-foot Cube of water, turning it into a marble-size pellet. To free the water, take a Utilize action to break the pellet, releasing the water as a 15-foot Cube. The pinch is consumed.'),
-      _mi(name: 'Dust of Sneezing and Choking', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, isCursed: true, activation: 'Utilize', effects: 'A small packet of dust resembles Dust of Disappearance. Cursed: when used, the dust fills a 30-foot Cube. Each creature in the Cube must succeed on a DC 15 Constitution save or have the Incapacitated condition while it sneezes uncontrollably for 1 minute. A creature can repeat the save at the end of each of its turns; the duration ends if it succeeds.'),
-      // Dwarven items
-      _mi(name: 'Dwarven Plate', category: 'Armor', rarity: 'Very Rare', requiresAttunement: false, activation: 'Reaction', effects: 'While wearing this armor, you have a +2 bonus to AC. In addition, you can use your Reaction when you are subjected to an effect that would move you against your will: you can negate the forced movement.'),
-      _mi(name: 'Dwarven Thrower', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Dwarf or has the Dwarven Toughness feature', activation: 'None', effects: 'You have +3 bonus to attack rolls and damage rolls made with this magic weapon. The weapon has the Thrown property with normal range 20 ft and long range 60 ft. When you hit with a thrown attack, the weapon deals 1d8 extra damage (2d8 if Giant). Immediately after the attack, the weapon flies back to your hand.'),
-      // Efficient / Efreeti / Elixir / Elven
-      _mi(name: 'Efficient Quiver', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Utilize', effects: 'Each of three compartments can hold weighted contents: short compartment up to sixty arrows/bolts; long compartment up to eighteen arrows/javelins/staves; large compartment up to six up-to-6-foot weapons (bows, glaives). The quiver weighs 2 pounds regardless of contents. Drawing requires the same time as drawing from a regular quiver.'),
-      _mi(name: 'Efreeti Bottle', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A brass bottle weighing 1 pound. When you take a Magic action to remove its stopper, a cloud of thick smoke flows out, and an Efreeti appears within 30 feet. The first time the bottle is opened, the GM rolls 1d100 to determine its mood: hostile, asks 3 tasks, grants 3 wishes, or other. After 1 hour, the Efreeti returns to the bottle. The bottle can\'t be used again for 24 hours.'),
-      _mi(name: 'Elixir of Health', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, it ends the Blinded, Deafened, Diseased, Paralyzed, and Poisoned conditions on you, and it ends any effect reducing your HP maximum.'),
-      _mi(name: 'Elven Chain', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You gain a +1 bonus to AC while wearing this armor. You are considered proficient with this armor even if you lack proficiency with Medium armor.'),
-      // Eyes
-      _mi(name: 'Eyes of Minute Seeing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'These crystal lenses fit over the eyes. While wearing them, you can see much better than normal at distances of 1 foot or less. You have Advantage on Intelligence (Investigation) checks that rely on sight while searching an area or studying an object within that range.'),
-      // Feather / Gem / Giant Slayer
-      _mi(name: 'Feather Token', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A tiny feather token created with one of these properties (chosen at creation): Anchor (renders ship immovable for 1 day), Bird (becomes Roc for 6 hours), Fan (creates a wind), Swan Boat (becomes a swan-shaped boat), Tree (grows into an oak tree), Whip (becomes a whip for 1 hour). Each token has a one-time use; the token disappears when its effect ends.'),
-      _mi(name: 'Gem of Seeing', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This gem has 3 charges. As a Magic action, you can expend 1 charge to gain Truesight out to 120 feet for 10 minutes. The gem regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Giant Slayer', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Giant with it, the Giant takes an extra 2d6 damage of the weapon\'s type and must succeed on a DC 15 Strength save or fall Prone.'),
-      // Gloves x3
-      _mi(name: 'Gloves of Missile Snaring', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Reaction', effects: 'These gloves seem to almost meld into your hands when you don them. When a ranged weapon attack hits you while you wear them, you can use your Reaction to reduce the damage by 1d10 + your Dexterity modifier, provided you have a free hand. If you reduce the damage to 0, you can catch the missile if it is small enough to be held in one hand and you have a free hand.'),
-      _mi(name: 'Gloves of Swimming and Climbing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing these gloves, climbing doesn\'t cost extra movement and you have Advantage on Strength (Athletics) checks made to swim or climb.'),
-      _mi(name: 'Gloves of Thievery', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'These gloves are invisible while worn. While wearing them, you have a +5 bonus to Dexterity (Sleight of Hand) checks and Dexterity checks made to pick locks.'),
-      // Hammer / Handy / Hat / Helm
-      _mi(name: 'Hammer of Thunderbolts', category: 'Weapons', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'must wear Belt of Giant Strength and Gauntlets of Ogre Power', activation: 'None', effects: 'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon. While you are attuned and wearing both required items, your Strength score increases by 4 and can exceed 20 (max 30). When you hit a Giant with the hammer, the Giant must succeed on a DC 17 Constitution save or die. Additionally, you can roll 1 of the hammer\'s charges (max 5) to make the attack a Critical Hit and unleash a thunderclap heard within 300 feet.'),
-      _mi(name: 'Handy Haversack', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Utilize', weightLb: 5, effects: 'This backpack has a central pouch and two side pouches, each a separate extradimensional space. Side pouches each hold up to 20 pounds, not exceeding 2 cubic feet. Central pouch holds 80 pounds, not exceeding 8 cubic feet. The pack always weighs 5 pounds. As a Utilize action, you can place or retrieve items, and the most desired item rises to the top.'),
-      _mi(name: 'Hat of Many Spells', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', effects: 'While wearing this hat, you can take a Magic action to randomly produce one of the following effects (roll 1d100): produces a coin, evokes a brilliant light, casts Magic Missile, casts Mage Hand, casts Stinking Cloud, casts Web, casts Polymorph (DC 17), and many more. The hat can be used 1d6 times per day; once it has been used the maximum number of times, it disappears in a shower of sparks.'),
-      _mi(name: 'Helm of Comprehending Languages', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'While wearing this helm, you can take a Magic action to cast Comprehend Languages from it.'),
-      _mi(name: 'Horn of Valhalla', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'You can take a Magic action to blow this horn. In response, warrior spirits from the Valhalla appear within 60 feet of you. They use the stat block of a Berserker (Silver), Veteran (Brass), Champion (Bronze), or Knight (Iron). The spirits remain for 1 hour, after which they disappear. The horn can\'t be used this way again until 7 days have passed. Some horns require attunement to a class to use.'),
-      _mi(name: 'Horseshoes of Speed', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'These iron horseshoes come in a set of four. While all four are affixed to the hooves of a horse or similar creature, the creature\'s Speed increases by 30 feet, both while it carries a rider and while it doesn\'t. Affixing requires 10 minutes.'),
-      // Instant / Ioun / Iron / Luck
-      _mi(name: 'Instant Fortress', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A 1-inch metal cube. As a Magic action, you can speak the command word and toss the cube to the ground within 10 feet. The cube transforms into a 20-foot-square, 30-foot-tall adamantine fortress with arrow slits, battlements, and a single locked iron door. Speaking another command word turns it back into a cube.'),
-      _mi(name: 'Ioun Stone', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'These dusty crystals are always found floating in the air. As a Magic action, you can release the stone to orbit your head at a distance of 1d3 feet, granting you a benefit (Absorption: store spells; Agility: Dex +2 max 20; Awareness: Advantage on Initiative; Fortitude: Con +2 max 20; Greater Absorption: store spells; Insight: Wis +2 max 20; Intellect: Int +2 max 20; Leadership: Cha +2 max 20; Mastery: +1 PB; Protection: +1 AC; Regeneration: 15 HP/hour out of combat; Reserve: store spells; Strength: Str +2 max 20; Sustenance: no need to eat or drink). The stone has AC 24 and 10 HP and Resistance to all damage; it can be grasped by another creature.'),
-      _mi(name: 'Iron Flask', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A flask wrapped in heavy iron with a brass stopper. The flask can capture a creature: as a Magic action while standing within 60 feet of a creature, you can speak the flask\'s command word, requiring the target to make a DC 17 Wisdom save. On a fail, the creature is trapped in the flask. Once a creature is trapped, the flask can\'t be used again until the trapped creature is released. As a Magic action, you can speak a different command word to release a trapped creature.'),
-      _mi(name: 'Luck Blade', category: 'Weapons', rarity: 'Legendary', requiresAttunement: true, activation: 'Reaction', maxCharges: 4, effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. While the sword is on your person, you have +1 bonus to saving throws. If you fail a save, you can use your Reaction to reroll. Additionally, the sword has 1d4 - 1 charges; while holding it, you can expend 1 charge to cast Wish from it. The sword can\'t be used to cast Wish again until the next dawn.'),
-      // Maces
-      _mi(name: 'Mace of Disruption', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'When you hit a Fiend or an Undead with this magic weapon, that creature takes an extra 2d6 Radiant damage. If the target has 25 HP or fewer after taking this damage, it must succeed on a DC 15 Wisdom save or be destroyed. While you hold this mace, it sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet.'),
-      _mi(name: 'Mace of Smiting', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. The bonus increases to +3 against Constructs. When you roll a 20 on the d20 for an attack roll with this mace against a Construct, the target takes an extra 2d6 Bludgeoning damage; if the target is a Golem, the target must succeed on a DC 17 Constitution save or be destroyed.'),
-      _mi(name: 'Mace of Terror', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This magic weapon has 3 charges. As a Magic action, you can expend 1 charge and brandish the weapon. Each creature of your choice within 30 feet must succeed on a DC 15 Wisdom save or have the Frightened condition for 1 minute. The mace regains 1d3 expended charges daily at dawn.'),
-      // Manual / Marvelous / Medallion
-      _mi(name: 'Manual of Golems', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A tome containing information needed to make a particular Golem (Clay, Flesh, Iron, or Stone). To create the Golem, you must spend the time, gold, and raw materials specified by the manual. Once construction completes, the manual is consumed. Only a creature attuned to the manual can use it.'),
-      _mi(name: 'Marvelous Pigments', category: 'Wondrous Items', rarity: 'Very Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'Typically found in 1d4 pots, these pigments allow you to create three-dimensional objects by painting them. Each pot contains enough pigment to cover a 1,000-square-foot surface. Painting an object takes 10 minutes per 1,000 square feet. Painted objects are real but not living; you can\'t paint a creature or magic item.'),
-      _mi(name: 'Medallion of Thoughts', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This medallion has 3 charges. While wearing it, you can expend 1 charge as a Magic action to cast Detect Thoughts (DC 13) from it. The medallion regains 1d3 expended charges daily at dawn.'),
-      // Nine Lives / Oathbow / Oil / Periapts / Philter / Pipes / Portable
-      _mi(name: 'Nine Lives Stealer', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. The weapon has 1d8 + 1 charges. When you score a Critical Hit against a creature with fewer than 100 HP, it must succeed on a DC 15 Constitution save or die. The sword loses 1 charge if the creature dies. When the sword has no charges remaining, it loses this property.'),
-      _mi(name: 'Oathbow', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'When you nock an arrow on this bow, it whispers in Elvish, "Swift defeat to my enemies." When you use this bow to attack a creature you have sworn vengeance against (Bonus Action declaration), the bow\'s ammunition deals an extra 3d6 Piercing damage. After you take this oath, you have Disadvantage on attack rolls with weapons other than this bow until the target drops to 0 HP or you take a Long Rest. While the oath is in effect, you have Advantage on attack rolls with this bow against the sworn enemy.'),
-      _mi(name: 'Oil of Etherealness', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', effects: 'A flask contains enough oil for one use. You can take 10 minutes to apply the oil to your body and absorbed equipment. For 1 hour, the effects of the Etherealness spell apply to you. Spreading the oil on creatures larger than Medium requires more time and oil.'),
-      _mi(name: 'Periapt of Health', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'You are Immune to contracting any Disease while you wear this pendant. If you are already Diseased when you don it, the effects of the disease are suppressed until you take it off.'),
-      _mi(name: 'Periapt of Proof against Poison', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'While you wear this delicate silver chain with a brilliant-cut black gem, poisons have no effect on you. You are Immune to the Poisoned condition and have Immunity to Poison damage.'),
-      _mi(name: 'Philter of Love', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', effects: 'The next time you see a creature within 10 minutes after drinking this philter, you become Charmed by that creature for 1 hour. If the creature is of a species and gender you are normally attracted to, you regard it as your true love while Charmed. The potion\'s rose-hued, effervescent liquid contains one easy-to-miss bubble shaped like a heart.'),
-      _mi(name: 'Pipes of Haunting', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This pipe set has 3 charges. As a Magic action, you can play and expend 1 charge to create an eerie, spellbinding tune. Each creature within 30 feet that hears must succeed on a DC 15 Wisdom save or have the Frightened condition (of you) for 1 minute. The pipes regain 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Pipes of the Sewers', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', effects: 'While attuned, ordinary rats and Giant Rats within 300 feet are friendly to you. As a Magic action while playing the pipes, you can attempt to summon swarms of rats: roll 1d20, and if the result is 10+, you summon 1d4 Swarms of Rats; if 5 or less, all rats within range attack you. The summoned rats are Friendly to you for 1 hour.'),
-      _mi(name: 'Portable Hole', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Utilize', effects: 'A 6-foot-diameter circle of black cloth. As a Utilize action, you can unfold the hole and place it on a horizontal surface, where it forms a 10-foot-deep extradimensional pit. The pit holds 28 cubic feet of contents. As a Utilize action, you can fold the hole. Living creatures inside have 10 minutes of air. Placing the hole inside another extradimensional space immediately destroys both items and opens a gate to the Astral Plane.'),
-      // Potions
-      _mi(name: 'Potion of Clairvoyance', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, you gain the effect of the Clairvoyance spell. An eyeball bobs in this yellowish liquid but vanishes when the potion is opened.'),
-      _mi(name: 'Potion of Growth', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, you gain the "enlarge" effect of the Enlarge/Reduce spell for 1d4 hours (no Concentration required). The red liquid in this potion expands and contracts continually.'),
-      _mi(name: 'Potion of Longevity', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, your physical age is reduced by 1d6 + 6 years, to a minimum of 13 years. Each subsequent time you drink a Potion of Longevity, there is a cumulative 10 percent chance that you instead age by 1d6 + 6 years.'),
-      _mi(name: 'Potion of Resistance', category: 'Potions', rarity: 'Uncommon', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, you have Resistance to one type of damage for 1 hour. The GM chooses the type or determines it randomly: Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder.'),
-      _mi(name: 'Potion of Vitality', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', effects: 'When you drink this potion, it removes any Exhaustion levels you have and ends any effect reducing your HP maximum. For 24 hours, you regain the maximum number of HP from any Hit Die you spend.'),
-      _mi(name: 'Potion of Supreme Healing', category: 'Potions', rarity: 'Very Rare', requiresAttunement: false, activation: 'Consumable', effects: 'You regain 10d4 + 20 HP when you drink this potion.'),
-      _mi(name: 'Potion of Superior Healing', category: 'Potions', rarity: 'Rare', requiresAttunement: false, activation: 'Consumable', effects: 'You regain 8d4 + 8 HP when you drink this potion.'),
-      // Quarterstaff / Rings
-      _mi(name: 'Quarterstaff of the Acrobat', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. While holding it, you have a +1 bonus to AC. As a Bonus Action, you can shorten or lengthen the staff between 6 inches and 6 feet. While shorter than 6 feet, you have Advantage on Acrobatics and Athletics checks made with the staff. The staff has the Finesse property regardless of size.'),
-      _mi(name: 'Ring of Animal Influence', category: 'Rings', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This ring has 3 charges. As a Magic action, you can expend 1 charge to cast one of the following spells from it: Animal Friendship (DC 13), Fear (DC 13, only against beasts having Intelligence of 3 or lower), or Speak with Animals. The ring regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Ring of Djinni Summoning', category: 'Rings', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this ring, you can take a Magic action to summon a particular Djinni from the Elemental Plane of Air. The Djinni appears in an unoccupied space within 120 feet of you. It remains for as long as you concentrate (up to 1 hour) or until it drops to 0 HP. It then returns to its plane. The ring can\'t be used again for 24 hours; if the Djinni is killed, it can\'t be used again, period.'),
-      _mi(name: 'Ring of Elemental Command', category: 'Rings', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', maxCharges: 5, chargeRegain: '1d4+1 daily at dawn', effects: 'A ring linked to one elemental plane (Air, Earth, Fire, Water). It has 5 charges. While wearing it, you have Advantage on attack rolls vs elementals of that plane and they have Disadvantage vs you; you understand its language; and you can expend charges to cast spells (varies by plane: e.g., Air ring casts Chain Lightning 7 charges, Gust of Wind 2; Fire ring Burning Hands 1, Fireball 3, Wall of Fire 4). Other benefits as elemental affinity grows.'),
-      _mi(name: 'Ring of Evasion', category: 'Rings', rarity: 'Rare', requiresAttunement: true, activation: 'Reaction', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This ring has 3 charges. When you fail a Dexterity saving throw while wearing it, you can use your Reaction to expend 1 charge to succeed instead. The ring regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Ring of Feather Falling', category: 'Rings', rarity: 'Rare', requiresAttunement: true, activation: 'Reaction', effects: 'When you fall while wearing this ring, you descend 60 feet per round and take no damage from falling.'),
-      _mi(name: 'Ring of Shooting Stars', category: 'Rings', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'must be worn outdoors at night', activation: 'Magic Action', maxCharges: 6, chargeRegain: '1d6 daily at dusk', effects: 'This ring has 6 charges. While wearing it outdoors at night, you can expend charges to use these properties: Faerie Fire (1 charge), Ball Lightning (2 charges, four light motes), Shooting Stars (1-3 charges, each charge launches a star dealing 5d4 Fire damage), and Light (no charge cost).'),
-      _mi(name: 'Ring of Spell Turning', category: 'Rings', rarity: 'Legendary', requiresAttunement: true, activation: 'Reaction', effects: 'While wearing this ring, you have Advantage on saves vs spells. If you succeed on the save against a spell of level 7 or lower that targets only you (not an area), the spell has no effect on you and instead targets the caster, using the slot level, save DC, attack bonus, and ability modifier of the caster.'),
-      _mi(name: 'Ring of Swimming', category: 'Rings', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'You have a Swim Speed of 40 feet while wearing this ring.'),
-      _mi(name: 'Ring of Telekinesis', category: 'Rings', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'While wearing this ring, you can take a Magic action to cast Telekinesis from it (no Concentration required for the ring\'s casting; it lasts 10 minutes).'),
-      _mi(name: 'Ring of the Ram', category: 'Rings', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This ring has 3 charges. While wearing it, you can take a Magic action to expend 1 to 3 charges to attack one creature you can see within 60 feet. The ring produces the spectral force of a ram\'s head; make a ranged attack roll with +7 attack bonus. On a hit, for each charge spent, the target takes 2d10 Force damage and is pushed 5 feet. Alternatively, expend 1-3 charges to attempt to break a non-magic object you can see within 60 feet not being held; ring\'s Strength check (each charge expended grants +5 to roll vs DC 25 Strength).'),
-      // Rods
-      _mi(name: 'Rod of Absorption', category: 'Rods', rarity: 'Very Rare', requiresAttunement: true, activation: 'Reaction', effects: 'While holding this rod, you can use your Reaction to absorb a spell that targets only you and not an area. The absorbed spell\'s effect is canceled, and the spell\'s energy (not the spell itself) is stored in the rod. The energy has the same level as the spell when it was cast. The rod can absorb and store up to 50 levels of energy over the course of its existence. Once absorbed, the rod can\'t absorb more energy beyond 50 levels.'),
-      _mi(name: 'Rod of Alertness', category: 'Rods', rarity: 'Very Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'A flanged metal rod 1 foot long with multiple uses: Advantage on Wisdom (Perception) and Initiative; cast Detect Evil and Good, Detect Magic, Detect Poison and Disease, or See Invisibility (as Magic action); plant the rod in the ground and command it to alert (10-foot radius for 8 hours), occupant gain Heroes\' Feast and Magic Circle effects.'),
-      _mi(name: 'Rod of Lordly Might', category: 'Rods', rarity: 'Legendary', requiresAttunement: true, activation: 'Bonus Action', effects: 'A 1-foot rod with six buttons. Functions as +3 magic Mace dealing extra 2d6 Force damage. As a Bonus Action, press a button to transform: button 1 = mace; 2 = Flame Tongue (longsword) for 10 min; 3 = Battleaxe +3 with Vorpal-style for 10 min; 4 = climbing pole 50 ft; 5 = battering ram (+10 Strength check); 6 = compass-like indicator showing direction and stairs.'),
-      _mi(name: 'Rod of Resurrection', category: 'Rods', rarity: 'Legendary', requiresAttunement: true, attunementPrereq: 'Cleric, Druid, or Paladin', activation: 'Magic Action', maxCharges: 5, chargeRegain: '1 charge daily at dawn', effects: 'The rod has 5 charges. While holding it, you can take a Magic action to expend 1 charge to cast Heal from it, or 5 charges to cast Resurrection. The rod regains 1 expended charge daily at dawn. If the rod is reduced to 0 charges, roll a d20: on a 1, the rod disappears.'),
-      _mi(name: 'Rod of Rulership', category: 'Rods', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', effects: 'You can take a Magic action to present the rod and command obedience. Each creature of your choice within 120 feet must succeed on a DC 15 Wisdom save or have the Charmed condition for 8 hours. While Charmed, the creature regards you as its trusted leader; it doesn\'t obey suicidal commands, and the spell ends if you or your companions harm it. Once used, the rod can\'t be used again until the next dawn.'),
-      _mi(name: 'Rod of Security', category: 'Rods', rarity: 'Very Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'While holding this rod, you can take a Magic action to be transported with up to 199 willing others to a paradise demiplane. There, every creature is unaffected by the natural elements, doesn\'t need food or water, and ages slowly. Each creature can stay up to 200 days divided by the number of creatures (rounded down). The rod can\'t be used again for 10 days.'),
-      // Ropes / Scarab / Scimitar / Sending / Sentinel / Shield variants / Sovereign / Spellguard / Staff
-      _mi(name: 'Rope of Climbing', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'A 60-foot length of silk rope. As a Magic action, you can hold one end and command the rope to animate. The rope can hold up to 3,000 pounds. As a Magic action, the holder can command the rope to anchor itself, climb up or down, knot itself, or unknot. A spoken command makes the rope drop or coil itself.'),
-      _mi(name: 'Rope of Entanglement', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'A 30-foot rope that lashes out at a target. As a Magic action, you can speak the rope\'s command word and target a creature within 20 feet. The target makes a DC 15 Dexterity save; on a failure, it has the Restrained condition until the rope is commanded to release the target or until the rope takes 50 slashing damage (AC 20). On a success, the rope returns to your hand.'),
-      _mi(name: 'Scarab of Protection', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Reaction', maxCharges: 12, effects: 'If you hold this beetle-shaped medallion in hand for 1 round, an inscription appears on its surface revealing magical nature. It grants you two benefits while held or worn: Advantage on saves vs spells; the scarab has 12 charges, and if you fail a save vs Necromancy or vs an Undead\'s attack/feature, you can use your Reaction to expend 1 charge and turn the failed save into a success. The scarab crumbles to powder when reduced to 0 charges.'),
-      _mi(name: 'Scimitar of Speed', category: 'Weapons', rarity: 'Very Rare', requiresAttunement: true, activation: 'Bonus Action', effects: 'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. In addition, you can take a Bonus Action on each of your turns to make one attack with the scimitar.'),
-      _mi(name: 'Sending Stones', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'Sending Stones come in pairs, each smooth stone with matching markings. While you touch one stone, you can take a Magic action to cast the Sending spell from it. The target is the creature touching the matching stone. Once the spell is cast, the pair can\'t be used to cast Sending again until the next dawn. If one of the stones in a pair is destroyed, the other becomes nonmagical.'),
-      _mi(name: 'Sentinel Shield', category: 'Armor', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have Advantage on Initiative rolls and Wisdom (Perception) checks. The Shield is emblazoned with a symbol of an eye.'),
-      _mi(name: 'Shield of Missile Attraction', category: 'Armor', rarity: 'Rare', requiresAttunement: true, isCursed: true, activation: 'None', effects: 'While holding this Shield, you have Resistance to damage from ranged weapon attacks. Curse: this Shield is cursed, revealed when you become attuned. While attuned, you have Disadvantage on saves against ranged spell attacks, and whenever an attacker within 60 feet of you makes a ranged attack against a target other than you, you must use your Reaction to become the target instead. The curse can be removed only by a Remove Curse spell.'),
-      _mi(name: 'Shield of the Cavalier', category: 'Armor', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'While holding this Shield, you have a +1 bonus to AC, in addition to the Shield\'s normal bonus to AC. As a Reaction when a creature you can see misses you with a melee attack, you can attempt to deflect the attack: the attacker takes Bludgeoning damage equal to your Strength modifier (minimum of 1).'),
-      _mi(name: 'Sovereign Glue', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A milky-white gummy substance in a small jar holding up to 1 ounce, enough to bond two surfaces of up to one square foot. The bond holds permanently and can\'t be undone except with Universal Solvent, Oil of Etherealness, or a Wish spell. Glue takes 1 minute to set.'),
-      _mi(name: 'Spellguard Shield', category: 'Armor', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', effects: 'While holding this Shield, you have Advantage on saving throws against spells and other magical effects, and spell attacks have Disadvantage against you.'),
-      // Staffs
-      _mi(name: 'Staff of Charming', category: 'Staffs', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', maxCharges: 10, chargeRegain: '1d8+2 daily at dawn', effects: 'While holding this staff, you can use it as a spellcasting focus and expend charges to cast spells: Charm Person (1 charge, DC 17), Command (1 charge, DC 17), or Comprehend Languages (1 charge). You can also use a Reaction when targeted by Charm Person or Command spell to expend 1 charge to gain Advantage on the save.'),
-      _mi(name: 'Staff of Power', category: 'Staffs', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Sorcerer, Warlock, or Wizard', activation: 'Magic Action', maxCharges: 20, chargeRegain: '2d8+4 daily at dawn', effects: 'A magic Quarterstaff that grants +2 bonus to AC, attack rolls, and saves while held. The staff has 20 charges. As a Magic action, you can expend charges to cast spells: Cone of Cold (5 charges), Fireball (5), Globe of Invulnerability (6), Hold Monster (5), Levitate (2), Lightning Bolt (5), Magic Missile (1), Ray of Enfeeblement (1), or Wall of Force (5). You can also break the staff to release stored energy: a 30-foot Sphere centered on you deals 16 × charges remaining damage to all creatures except you.'),
-      _mi(name: 'Staff of Striking', category: 'Staffs', rarity: 'Very Rare', requiresAttunement: true, activation: 'None', maxCharges: 10, chargeRegain: '1d6+4 daily at dawn', effects: 'A magic Quarterstaff with 10 charges. While held, it provides +3 bonus to attack rolls and damage rolls. When you hit with a melee attack using this staff, you can expend up to 3 of its charges; for each charge expended, the target takes an extra 1d6 Force damage.'),
-      _mi(name: 'Staff of Swarming Insects', category: 'Staffs', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard', activation: 'Magic Action', maxCharges: 10, chargeRegain: '1d6+4 daily at dawn', effects: 'This staff has 10 charges. While holding it, you can use it as a spellcasting focus and expend charges to cast Giant Insect (4 charges) or Insect Plague (5 charges). The staff also conjures a 10-foot-radius cloud of insects (1 charge): each creature of your choice in the area takes 2d4 Piercing damage and must succeed on a Constitution save or have the Poisoned condition.'),
-      _mi(name: 'Staff of the Python', category: 'Staffs', rarity: 'Uncommon', requiresAttunement: true, attunementPrereq: 'Cleric, Druid, or Warlock', activation: 'Magic Action', effects: 'You can take a Magic action to speak the staff\'s command word and throw it on the ground within 10 feet. The staff transforms into a Giant Constrictor Snake under your control. The snake reverts to staff form when you take a Magic action to speak the command word again or when reduced to 0 HP.'),
-      _mi(name: 'Staff of the Woodlands', category: 'Staffs', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Druid', activation: 'Magic Action', maxCharges: 10, chargeRegain: '1d6+4 daily at dawn', effects: 'This wooden staff has 10 charges and grants +2 bonus to spell attack rolls while attuned. As a Magic action, you can expend charges to cast spells: Animal Friendship (1 charge), Awaken (5), Barkskin (2), Locate Animals or Plants (2), Speak with Animals (1), Speak with Plants (3), or Wall of Thorns (6). You can also use a Magic action to plant the staff: it transforms into a tree (60 ft tall, 5 ft diameter) for 24 hours.'),
-      _mi(name: 'Staff of Withering', category: 'Staffs', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Cleric, Druid, or Warlock', activation: 'None', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'A magic Quarterstaff with 3 charges. When you hit a creature with a melee attack using the staff, you can expend 1 charge to deal an extra 2d10 Necrotic damage. The target must succeed on a DC 15 Constitution save or have Disadvantage on Strength-based attack rolls and Strength saves for 1 hour.'),
-      // Stone / Sun / Sword / Talisman / Thunderous / Trident / Universal / Vicious
-      _mi(name: 'Stone of Controlling Earth Elementals', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'While the stone is touching the ground, you can take a Magic action to speak its command word and summon an Earth Elemental, as if you cast Conjure Elemental. The stone can\'t be used this way again until the next dawn.'),
-      _mi(name: 'Sun Blade', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'Bonus Action', effects: 'When you grasp the hilt and take a Bonus Action, a 3-foot blade of pure light springs forth. The Sun Blade is a magic Longsword granting +2 bonus to attack rolls and damage rolls and deals Radiant damage instead of Slashing. When you hit an Undead, it takes an extra 1d8 Radiant damage. The blade emits Bright Light in a 15-foot radius and Dim Light for an additional 15 feet (you can dim it as a Bonus Action).'),
-      _mi(name: 'Sword of Life Stealing', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'When you score a Critical Hit on a target other than a Construct or Undead with this magic weapon, the target takes an extra 3d6 Necrotic damage, and you regain HP equal to the extra damage dealt. The HP gained doesn\'t exceed your HP maximum.'),
-      _mi(name: 'Sword of Wounding', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, activation: 'None', effects: 'Hit Points lost to this weapon\'s damage can be regained only through a Short or Long Rest, rather than by means of magic. Once per turn, when you hit a creature with this weapon, you can wound the target. At the start of each of the wounded creature\'s turns, it takes 1d4 Necrotic damage for each time you\'ve wounded it. The creature can repeat the save at the end of each of its turns; on a successful save, all wounds are removed.'),
-      _mi(name: 'Talisman of the Sphere', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: true, activation: 'Magic Action', effects: 'When you make an Intelligence (Arcana) check to control a Sphere of Annihilation while holding this talisman, you have Advantage on the check. While in physical contact with a Sphere of Annihilation, you can take a Magic action to levitate the sphere up to 10 feet (your Intelligence (Arcana) check made to control it).'),
-      _mi(name: 'Thunderous Greatclub', category: 'Weapons', rarity: 'Uncommon', requiresAttunement: false, activation: 'Bonus Action', effects: 'A magic Greatclub that deals an extra 1d6 Thunder damage on a hit. As a Bonus Action, you can attempt a thunderous slam against a creature you can see within 30 feet: the target makes a DC 13 Strength save or is pushed 10 feet and takes 1d6 Thunder damage. Use of this property recharges 1d6 times daily at dawn.'),
-      _mi(name: 'Trident of Fish Command', category: 'Weapons', rarity: 'Uncommon', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This magic Trident has 3 charges. While you carry it, you can take a Magic action and expend 1 charge to cast Dominate Beast (DC 15) on a Beast that has an innate Swim Speed. The Trident regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Universal Solvent', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A tube containing milky liquid with an alcohol smell, enough for one use. As a Magic action, you can pour the contents on a surface, instantly dissolving up to 1 square foot of adhesive (including Sovereign Glue).'),
-      _mi(name: 'Vicious Weapon', category: 'Weapons', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'When you score a Critical Hit with this magic weapon, the target takes an extra 2d6 damage of the weapon\'s type.'),
-      // Wands
-      _mi(name: 'Wand of Binding', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges, used for the following effects: Spells. While holding it, you can expend charges to cast Hold Monster (5 charges, DC 17) or Hold Person (2 charges, DC 17). Reaction. When you fail a save against an enchantment spell that targets only you, you can use your Reaction to expend 1 charge to gain Advantage on the saving throw.'),
-      _mi(name: 'Wand of Enemy Detection', category: 'Wands', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This wand has 3 charges. While holding it, you can take a Magic action and expend 1 charge to speak its command word: for the next 1 minute, you know the direction of the nearest creature hostile to you within 60 feet, but not its distance. The wand can detect hostiles in nearby spaces, hidden, behind cover, or magically Disguised. The effect ends if you stop holding the wand.'),
-      _mi(name: 'Wand of Fear', category: 'Wands', rarity: 'Rare', requiresAttunement: true, activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges, used as follows: Command. As a Magic action while holding the wand, expend 1 charge to command another creature within 5 feet (DC 15 Wisdom save or Frightened of you for 1 minute). Cone of Fear. As a Magic action, expend 2 charges to cause each creature in a 60-foot Cone (DC 15 save) to be Frightened for 1 minute.'),
-      _mi(name: 'Wand of Magic Detection', category: 'Wands', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', maxCharges: 3, chargeRegain: '1d3 daily at dawn', effects: 'This wand has 3 charges. While holding it, you can take a Magic action and expend 1 charge to cast Detect Magic from it. The wand regains 1d3 expended charges daily at dawn.'),
-      _mi(name: 'Wand of Paralysis', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can take a Magic action and expend 1 charge to release a thin blue ray at one creature you can see within 60 feet. The target must succeed on a DC 15 Constitution save or have the Paralyzed condition for 1 minute. The target can repeat the save at the end of each of its turns, ending the effect on a success.'),
-      _mi(name: 'Wand of Polymorph', category: 'Wands', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can expend 1 charge to cast Polymorph (DC 17) from it. The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20: on a 1, the wand crumbles into ashes and is destroyed.'),
-      _mi(name: 'Wand of the War Mage, +2', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'None', effects: 'While holding this wand, you have a +2 bonus to spell attack rolls. You ignore Half Cover when making spell attacks.'),
-      _mi(name: 'Wand of the War Mage, +3', category: 'Wands', rarity: 'Very Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'None', effects: 'While holding this wand, you have a +3 bonus to spell attack rolls. You ignore Half Cover when making spell attacks.'),
-      _mi(name: 'Wand of Wonder', category: 'Wands', rarity: 'Rare', requiresAttunement: true, attunementPrereq: 'Spellcaster', activation: 'Magic Action', maxCharges: 7, chargeRegain: '1d6+1 daily at dawn', effects: 'This wand has 7 charges. While holding it, you can expend 1 charge as a Magic action to choose a target within 120 feet (or roll a d100 for a random target). Then roll a d100 to determine the wand\'s effect: Slow (DC 15 Wisdom), Faerie Fire, Stinking Cloud, Heavy Rain, Stinking Cloud, Animal Conjuration, Healing 4d6, Lightning Bolt, Stunning Bolt, Tree Growth, Fireball, Invisibility, Leaves Burst, Banana Spawn, Conjure Sounds, Plant Growth, Reduced Size, Stone-to-Flesh, Banishment, Random Polymorph, etc. (random table; effects vary).'),
-      // Weapon of Warning / Well of Many Worlds / Wind Fan
-      _mi(name: 'Weapon of Warning', category: 'Weapons', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'This magic weapon warns you of danger. While holding it, you have Advantage on Initiative rolls. You and any companions within 30 feet of you can\'t be Surprised, except when Incapacitated by something other than nonmagical sleep. The weapon magically awakens you and your companions within range if any of you are sleeping naturally when combat begins.'),
-      _mi(name: 'Well of Many Worlds', category: 'Wondrous Items', rarity: 'Legendary', requiresAttunement: false, activation: 'Magic Action', effects: 'A fine black cloth that unfolds into a 6-foot-diameter circle. As a Magic action, you can place it on a horizontal surface, where it forms a two-way portal to another world or plane of existence. Each time you use it, the destination is random unless you set the destination by spending 1 hour focused on a specific known plane. Closing the portal requires lifting the cloth.'),
-      _mi(name: 'Wind Fan', category: 'Wondrous Items', rarity: 'Uncommon', requiresAttunement: false, activation: 'Magic Action', effects: 'While holding this fan, you can take a Magic action to cast Gust of Wind (DC 13) from it. Once used, the fan can\'t be used again until the next dawn. There is a 20 percent chance that a strong wind blows the fan apart and it is destroyed.'),
-      _mi(name: 'Berserker Axe', category: 'Weapons', rarity: 'Rare', requiresAttunement: true, isCursed: true, activation: 'None', effects: 'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. While attuned, your HP maximum increases by 1 for each level you have. Curse: while attuned, you have Disadvantage on attack rolls with weapons other than this axe, unless no foe is within 60 feet of you that you can see or hear. Whenever a creature damages you while you are wielding the axe, you must succeed on a DC 15 Wisdom save or go berserk: until the start of your next turn, you must take the Attack action against the creature nearest to you.'),
+  // ─── Gap closure: missing SRD 5.2.1 items ─────────────────────────────
+  // Ammunition / Armor / Weapon bonus variants
+  _mi(
+    name: 'Ammunition, +1',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.',
+  ),
+  _mi(
+    name: 'Ammunition, +2',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +2 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.',
+  ),
+  _mi(
+    name: 'Ammunition, +3',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +3 bonus to attack rolls and damage rolls made with this magic ammunition. Once it hits a target, the ammunition is no longer magical. Typically sold in quantities of ten or twenty pieces.',
+  ),
+  _mi(
+    name: 'Ammunition of Slaying',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'Magic ammunition meant to slay creatures of a particular type (chosen at creation). When such a creature takes damage from this ammunition, it makes a DC 17 Constitution save, taking 6d10 extra Force damage on a failed save (half on success). After dealing extra damage, the ammunition becomes nonmagical.',
+  ),
+  _mi(
+    name: 'Armor, +2',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +2 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +2 armor.',
+  ),
+  _mi(
+    name: 'Armor, +3',
+    category: 'Armor',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +3 bonus to Armor Class while wearing this magic armor. Any Light, Medium, or Heavy armor can be made into +3 armor.',
+  ),
+  _mi(
+    name: 'Shield, +2',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have a +2 bonus to AC, in addition to the Shield\'s normal bonus to AC.',
+  ),
+  _mi(
+    name: 'Shield, +3',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have a +3 bonus to AC, in addition to the Shield\'s normal bonus to AC.',
+  ),
+  _mi(
+    name: 'Weapon, +2',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon.',
+  ),
+  _mi(
+    name: 'Weapon, +3',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon.',
+  ),
+  _mi(
+    name: 'Armor of Invulnerability',
+    category: 'Armor',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'You have Resistance to nonmagical damage while you wear this armor. Additionally, you can take a Magic action to gain Immunity to nonmagical damage for 10 minutes or until you are no longer wearing the armor. Once used, this property can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Armor of Vulnerability',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'None',
+    effects:
+        'You have Resistance to one of these damage types: Bludgeoning, Piercing, or Slashing. The GM chooses or randomly determines the type. Curse: this armor is cursed, a fact revealed only when an Identify spell is cast on it or you attune to it. Once attuned, you have Vulnerability to two of the three damage types from which you don\'t have Resistance. Removing it requires a Remove Curse spell.',
+  ),
+  _mi(
+    name: 'Animated Shield',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'While holding this Shield, you can take a Bonus Action to cause it to animate. The Shield leaps into the air and hovers in your space to protect you, leaving your hands free. The Shield remains animate for 1 minute, until you take a Bonus Action to end this effect, or until you die or have the Incapacitated condition.',
+  ),
+  // Amulets
+  _mi(
+    name: 'Amulet of the Planes',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this amulet, you can take a Magic action to name a location that you are familiar with on another plane of existence. Then make a DC 15 Intelligence (Arcana) check. On a success, you cast Plane Shift. On a fail, you and each creature within 15 feet of you travel to a random destination determined by rolling on the planar table.',
+  ),
+  // Bags / Beads
+  _mi(
+    name: 'Bag of Devouring',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    isCursed: true,
+    activation: 'None',
+    effects:
+        'This bag superficially resembles a Bag of Holding but is a feeding orifice for a gigantic extradimensional creature. Anything fully inside is swallowed: small living items take 2d6 Acid damage; non-living matter is destroyed. The bag can hold up to 64 cubic feet of matter; once a Medium creature or 30 cubic feet of matter is placed inside, the bag swallows the contents and transports them to a random plane of existence; the bag is destroyed in the process.',
+  ),
+  _mi(
+    name: 'Bag of Tricks (Rust)',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'Reaching into this empty bag, you find a small, fuzzy object. The bag weighs 1/2 pound. Once per turn, you can take a Magic action to pull a fuzzy object from the bag and throw it up to 20 feet. The object becomes a creature determined by rolling 1d8 on the rust bag table (Rat, Owl, Mastiff, Goat, Giant Goat, Giant Boar, Lion, Brown Bear). The bag can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Bag of Tricks (Tan)',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'Reaching into this empty bag, you find a small, fuzzy object. The bag weighs 1/2 pound. Once per turn, you can take a Magic action to pull a fuzzy object from the bag and throw it up to 20 feet. The object becomes a creature determined by rolling 1d8 on the tan bag table (Jackal, Ape, Baboon, Axe Beak, Black Bear, Giant Weasel, Giant Hyena, Tiger). The bag can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Bead of Force',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'A Tiny black sphere. You can take a Utilize action to throw it up to 60 feet. It detonates on impact and is destroyed. Each creature in a 10-foot Emanation makes a DC 15 Dexterity save: 5d4 Force damage on a fail (half on success). A sphere of Force then encloses the area for 1 minute, blocking passage and effects.',
+  ),
+  _mi(
+    name: 'Bead of Nourishment',
+    category: 'Wondrous Items',
+    rarity: 'Common',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'This flavorless, gel-like bead dissolves on your tongue and provides as much nourishment as 1 day of rations.',
+  ),
+  // Belts
+  _mi(
+    name: 'Belt of Dwarvenkind',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this belt, you gain: +2 bonus to Constitution (max 20); Advantage on Charisma (Persuasion) checks made to interact with dwarves; Darkvision 60 ft; understand, speak, and read Dwarvish; 50% chance each dawn of growing a full beard if capable, or a thicker beard if you already have one.',
+  ),
+  // Boots / Bowl / Bracers / Broom / Brooch
+  _mi(
+    name: 'Boots of Striding and Springing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear these boots, your Walk Speed becomes 30 feet, unless your Walking Speed is higher, and your Speed isn\'t reduced if you are encumbered or wearing Heavy Armor. In addition, you can jump three times the normal distance, though you can\'t jump farther than your remaining Speed would allow.',
+  ),
+  _mi(
+    name: 'Boots of the Winterlands',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While you wear these furred boots, you gain: Resistance to Cold damage; ignore Difficult Terrain created by ice or snow; tolerate temperatures as low as −50°F without ill effect; treat any nonmagical surface to walk on as if it were dry and free of ice and snow.',
+  ),
+  _mi(
+    name: 'Bowl of Commanding Water Elementals',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While the bowl contains at least 1 gallon of water, you can take a Magic action to speak the bowl\'s command word and summon a Water Elemental, as if you cast Conjure Elemental. The bowl can\'t be used this way again until the next dawn.',
+  ),
+  _mi(
+    name: 'Broom of Flying',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'This wooden broom weighs 3 pounds. As a Magic action, you can speak its command word; it then hovers beneath you and can be ridden. It has a Fly Speed of 50 feet, can carry up to 400 pounds (with reduced speed at higher loads), and stops hovering on command or when it travels more than 1 mile from you.',
+  ),
+  // Capes / Censers / Chimes / Circlets / Cloaks
+  _mi(
+    name: 'Censer of Controlling Air Elementals',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While incense is burning in this censer, you can take a Magic action to speak the censer\'s command word and summon an Air Elemental, as if you cast Conjure Elemental. The censer can\'t be used this way again until the next dawn.',
+  ),
+  _mi(
+    name: 'Chime of Opening',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 10,
+    effects:
+        'A hollow metal tube with 10 charges. As a Magic action, you can hold it up and strike it while pointing at an object that can be opened (door, lid, lock, etc.) within 120 feet. The chime emits a clear tone, and one lock or latch on the object opens unless the sound can\'t reach it. If no locks remain, the object opens. The chime is destroyed once it expends its 10 charges.',
+  ),
+  _mi(
+    name: 'Circlet of Blasting',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this circlet, you can take a Magic action to cast Scorching Ray (level 2) from it, with all four rays. The circlet can\'t be used this way again until the next dawn.',
+  ),
+  _mi(
+    name: 'Cloak of Invisibility',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 2,
+    chargeRegain: '1d2 daily at dawn',
+    effects:
+        'While wearing this cloak, you can pull its hood over your head as a Magic action to gain the Invisible condition. While the hood remains over your head, you remain Invisible. You can take a Magic action to lower the hood and end your Invisibility, or you can take 2 hours of Invisibility before having to remove the cloak; the cloak can be used for a total of 2 hours of Invisibility, all at once or in several uses, before needing to recharge.',
+  ),
+  // Crystal Ball variants / Cube / Cubic
+  _mi(
+    name: 'Crystal Ball of Mind Reading',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'A Crystal Ball that also lets you cast Detect Thoughts (DC 17) on a creature you can see in the ball\'s sensor area while using the Scrying spell from it.',
+  ),
+  _mi(
+    name: 'Crystal Ball of Telepathy',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'A Crystal Ball that lets you communicate telepathically with a creature you can see in the ball\'s sensor area while using the Scrying spell from it. You can also use a Magic action to cast Suggestion (DC 17) telepathically through the ball; the target gets Advantage on the save if it is hostile to you.',
+  ),
+  _mi(
+    name: 'Cubic Gate',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'A cube 3 inches across, with each face keyed to a different plane of existence (one face is the Material Plane). The cube has 3 charges. As a Magic action, you can press one face and expend 1 charge to cast Plane Shift, sending you to that face\'s plane, or expend 2 charges to cast Gate, opening a portal to a location on that plane. The cube regains 1d3 charges daily at dawn.',
+  ),
+  // Dancing / Deck / Defender
+  _mi(
+    name: 'Dancing Sword',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'You can take a Bonus Action to toss this magic sword into the air and speak the command word. The sword then hovers in your space and attacks one creature within 5 feet on each of your turns, using your attack roll and ability modifier. The sword has 4 rounds of independent action; after that, it falls to your space, or you can grasp it before it falls. While the sword hovers, you can\'t attack with it.',
+  ),
+  _mi(
+    name: 'Deck of Illusions',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A box holds 34 parchment cards. As a Magic action, you can pull a random card and toss it up to 30 feet from you. An illusion of a creature appears in an unoccupied space within 5 feet of where the card lands. The illusion lasts until dispelled. Anything in physical contact with the illusion reveals it to be an illusion. Otherwise, the illusion can act and appear convincing.',
+  ),
+  _mi(
+    name: 'Defender',
+    category: 'Weapons',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon. The first time you attack with the sword on each of your turns, you can transfer some or all of the sword\'s bonus to your AC, instead of using the bonus on attacks that turn. The chosen bonus lasts until the start of your next turn or until you are no longer holding the sword.',
+  ),
+  // Dragon Orb / Dragon Scale Mail
+  _mi(
+    name: 'Dragon Orb',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d4+3 daily at dawn',
+    effects:
+        'An orb associated with one type of dragon (Black, Blue, Brass, Bronze, Copper, Gold, Green, Red, Silver, or White). It has 7 charges. While holding it, you can take a Magic action to expend 1 charge to attempt to summon any dragon of the orb\'s type within 40 miles, or expend 1+ charges to cast spells: Cure Wounds (level 5, 3 charges), Daylight (1 charge), Death Ward (2 charges), or Scrying (3 charges).',
+  ),
+  _mi(
+    name: 'Dragon Scale Mail',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'Made of the scales of one kind of dragon. While wearing it, you have +1 bonus to AC, Resistance to one damage type determined by the kind of dragon, and Advantage on saves vs Frightful Presence and breath weapons of dragons. As a Magic action, you can sense distance and direction to closest dragon within 30 miles of the same type as the armor, once per dawn.',
+  ),
+  // Dust x3
+  _mi(
+    name: 'Dust of Disappearance',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A small packet containing dust resembling fine sand. As a Magic action, you can sprinkle the contents over yourself or another creature within reach. The creature has the Invisible condition for 2d4 minutes; the duration is the same for all creatures sprinkled at once. The dust is consumed.',
+  ),
+  _mi(
+    name: 'Dust of Dryness',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'A small packet contains 1d6 + 4 pinches of dust. As a Utilize action, you can sprinkle a pinch on water to absorb up to a 15-foot Cube of water, turning it into a marble-size pellet. To free the water, take a Utilize action to break the pellet, releasing the water as a 15-foot Cube. The pinch is consumed.',
+  ),
+  _mi(
+    name: 'Dust of Sneezing and Choking',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    isCursed: true,
+    activation: 'Utilize',
+    effects:
+        'A small packet of dust resembles Dust of Disappearance. Cursed: when used, the dust fills a 30-foot Cube. Each creature in the Cube must succeed on a DC 15 Constitution save or have the Incapacitated condition while it sneezes uncontrollably for 1 minute. A creature can repeat the save at the end of each of its turns; the duration ends if it succeeds.',
+  ),
+  // Dwarven items
+  _mi(
+    name: 'Dwarven Plate',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Reaction',
+    effects:
+        'While wearing this armor, you have a +2 bonus to AC. In addition, you can use your Reaction when you are subjected to an effect that would move you against your will: you can negate the forced movement.',
+  ),
+  _mi(
+    name: 'Dwarven Thrower',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Dwarf or has the Dwarven Toughness feature',
+    activation: 'None',
+    effects:
+        'You have +3 bonus to attack rolls and damage rolls made with this magic weapon. The weapon has the Thrown property with normal range 20 ft and long range 60 ft. When you hit with a thrown attack, the weapon deals 1d8 extra damage (2d8 if Giant). Immediately after the attack, the weapon flies back to your hand.',
+  ),
+  // Efficient / Efreeti / Elixir / Elven
+  _mi(
+    name: 'Efficient Quiver',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'Each of three compartments can hold weighted contents: short compartment up to sixty arrows/bolts; long compartment up to eighteen arrows/javelins/staves; large compartment up to six up-to-6-foot weapons (bows, glaives). The quiver weighs 2 pounds regardless of contents. Drawing requires the same time as drawing from a regular quiver.',
+  ),
+  _mi(
+    name: 'Efreeti Bottle',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A brass bottle weighing 1 pound. When you take a Magic action to remove its stopper, a cloud of thick smoke flows out, and an Efreeti appears within 30 feet. The first time the bottle is opened, the GM rolls 1d100 to determine its mood: hostile, asks 3 tasks, grants 3 wishes, or other. After 1 hour, the Efreeti returns to the bottle. The bottle can\'t be used again for 24 hours.',
+  ),
+  _mi(
+    name: 'Elixir of Health',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, it ends the Blinded, Deafened, Diseased, Paralyzed, and Poisoned conditions on you, and it ends any effect reducing your HP maximum.',
+  ),
+  _mi(
+    name: 'Elven Chain',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You gain a +1 bonus to AC while wearing this armor. You are considered proficient with this armor even if you lack proficiency with Medium armor.',
+  ),
+  // Eyes
+  _mi(
+    name: 'Eyes of Minute Seeing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'These crystal lenses fit over the eyes. While wearing them, you can see much better than normal at distances of 1 foot or less. You have Advantage on Intelligence (Investigation) checks that rely on sight while searching an area or studying an object within that range.',
+  ),
+  // Feather / Gem / Giant Slayer
+  _mi(
+    name: 'Feather Token',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A tiny feather token created with one of these properties (chosen at creation): Anchor (renders ship immovable for 1 day), Bird (becomes Roc for 6 hours), Fan (creates a wind), Swan Boat (becomes a swan-shaped boat), Tree (grows into an oak tree), Whip (becomes a whip for 1 hour). Each token has a one-time use; the token disappears when its effect ends.',
+  ),
+  _mi(
+    name: 'Gem of Seeing',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This gem has 3 charges. As a Magic action, you can expend 1 charge to gain Truesight out to 120 feet for 10 minutes. The gem regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Giant Slayer',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. When you hit a Giant with it, the Giant takes an extra 2d6 damage of the weapon\'s type and must succeed on a DC 15 Strength save or fall Prone.',
+  ),
+  // Gloves x3
+  _mi(
+    name: 'Gloves of Missile Snaring',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    effects:
+        'These gloves seem to almost meld into your hands when you don them. When a ranged weapon attack hits you while you wear them, you can use your Reaction to reduce the damage by 1d10 + your Dexterity modifier, provided you have a free hand. If you reduce the damage to 0, you can catch the missile if it is small enough to be held in one hand and you have a free hand.',
+  ),
+  _mi(
+    name: 'Gloves of Swimming and Climbing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing these gloves, climbing doesn\'t cost extra movement and you have Advantage on Strength (Athletics) checks made to swim or climb.',
+  ),
+  _mi(
+    name: 'Gloves of Thievery',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'These gloves are invisible while worn. While wearing them, you have a +5 bonus to Dexterity (Sleight of Hand) checks and Dexterity checks made to pick locks.',
+  ),
+  // Hammer / Handy / Hat / Helm
+  _mi(
+    name: 'Hammer of Thunderbolts',
+    category: 'Weapons',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq:
+        'must wear Belt of Giant Strength and Gauntlets of Ogre Power',
+    activation: 'None',
+    effects:
+        'You have a +3 bonus to attack rolls and damage rolls made with this magic weapon. While you are attuned and wearing both required items, your Strength score increases by 4 and can exceed 20 (max 30). When you hit a Giant with the hammer, the Giant must succeed on a DC 17 Constitution save or die. Additionally, you can roll 1 of the hammer\'s charges (max 5) to make the attack a Critical Hit and unleash a thunderclap heard within 300 feet.',
+  ),
+  _mi(
+    name: 'Handy Haversack',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    weightLb: 5,
+    effects:
+        'This backpack has a central pouch and two side pouches, each a separate extradimensional space. Side pouches each hold up to 20 pounds, not exceeding 2 cubic feet. Central pouch holds 80 pounds, not exceeding 8 cubic feet. The pack always weighs 5 pounds. As a Utilize action, you can place or retrieve items, and the most desired item rises to the top.',
+  ),
+  _mi(
+    name: 'Hat of Many Spells',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    effects:
+        'While wearing this hat, you can take a Magic action to randomly produce one of the following effects (roll 1d100): produces a coin, evokes a brilliant light, casts Magic Missile, casts Mage Hand, casts Stinking Cloud, casts Web, casts Polymorph (DC 17), and many more. The hat can be used 1d6 times per day; once it has been used the maximum number of times, it disappears in a shower of sparks.',
+  ),
+  _mi(
+    name: 'Helm of Comprehending Languages',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this helm, you can take a Magic action to cast Comprehend Languages from it.',
+  ),
+  _mi(
+    name: 'Horn of Valhalla',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'You can take a Magic action to blow this horn. In response, warrior spirits from the Valhalla appear within 60 feet of you. They use the stat block of a Berserker (Silver), Veteran (Brass), Champion (Bronze), or Knight (Iron). The spirits remain for 1 hour, after which they disappear. The horn can\'t be used this way again until 7 days have passed. Some horns require attunement to a class to use.',
+  ),
+  _mi(
+    name: 'Horseshoes of Speed',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'These iron horseshoes come in a set of four. While all four are affixed to the hooves of a horse or similar creature, the creature\'s Speed increases by 30 feet, both while it carries a rider and while it doesn\'t. Affixing requires 10 minutes.',
+  ),
+  // Instant / Ioun / Iron / Luck
+  _mi(
+    name: 'Instant Fortress',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A 1-inch metal cube. As a Magic action, you can speak the command word and toss the cube to the ground within 10 feet. The cube transforms into a 20-foot-square, 30-foot-tall adamantine fortress with arrow slits, battlements, and a single locked iron door. Speaking another command word turns it back into a cube.',
+  ),
+  _mi(
+    name: 'Ioun Stone',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'These dusty crystals are always found floating in the air. As a Magic action, you can release the stone to orbit your head at a distance of 1d3 feet, granting you a benefit (Absorption: store spells; Agility: Dex +2 max 20; Awareness: Advantage on Initiative; Fortitude: Con +2 max 20; Greater Absorption: store spells; Insight: Wis +2 max 20; Intellect: Int +2 max 20; Leadership: Cha +2 max 20; Mastery: +1 PB; Protection: +1 AC; Regeneration: 15 HP/hour out of combat; Reserve: store spells; Strength: Str +2 max 20; Sustenance: no need to eat or drink). The stone has AC 24 and 10 HP and Resistance to all damage; it can be grasped by another creature.',
+  ),
+  _mi(
+    name: 'Iron Flask',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A flask wrapped in heavy iron with a brass stopper. The flask can capture a creature: as a Magic action while standing within 60 feet of a creature, you can speak the flask\'s command word, requiring the target to make a DC 17 Wisdom save. On a fail, the creature is trapped in the flask. Once a creature is trapped, the flask can\'t be used again until the trapped creature is released. As a Magic action, you can speak a different command word to release a trapped creature.',
+  ),
+  _mi(
+    name: 'Luck Blade',
+    category: 'Weapons',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    maxCharges: 4,
+    effects:
+        'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. While the sword is on your person, you have +1 bonus to saving throws. If you fail a save, you can use your Reaction to reroll. Additionally, the sword has 1d4 - 1 charges; while holding it, you can expend 1 charge to cast Wish from it. The sword can\'t be used to cast Wish again until the next dawn.',
+  ),
+  // Maces
+  _mi(
+    name: 'Mace of Disruption',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'When you hit a Fiend or an Undead with this magic weapon, that creature takes an extra 2d6 Radiant damage. If the target has 25 HP or fewer after taking this damage, it must succeed on a DC 15 Wisdom save or be destroyed. While you hold this mace, it sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet.',
+  ),
+  _mi(
+    name: 'Mace of Smiting',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. The bonus increases to +3 against Constructs. When you roll a 20 on the d20 for an attack roll with this mace against a Construct, the target takes an extra 2d6 Bludgeoning damage; if the target is a Golem, the target must succeed on a DC 17 Constitution save or be destroyed.',
+  ),
+  _mi(
+    name: 'Mace of Terror',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This magic weapon has 3 charges. As a Magic action, you can expend 1 charge and brandish the weapon. Each creature of your choice within 30 feet must succeed on a DC 15 Wisdom save or have the Frightened condition for 1 minute. The mace regains 1d3 expended charges daily at dawn.',
+  ),
+  // Manual / Marvelous / Medallion
+  _mi(
+    name: 'Manual of Golems',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A tome containing information needed to make a particular Golem (Clay, Flesh, Iron, or Stone). To create the Golem, you must spend the time, gold, and raw materials specified by the manual. Once construction completes, the manual is consumed. Only a creature attuned to the manual can use it.',
+  ),
+  _mi(
+    name: 'Marvelous Pigments',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'Typically found in 1d4 pots, these pigments allow you to create three-dimensional objects by painting them. Each pot contains enough pigment to cover a 1,000-square-foot surface. Painting an object takes 10 minutes per 1,000 square feet. Painted objects are real but not living; you can\'t paint a creature or magic item.',
+  ),
+  _mi(
+    name: 'Medallion of Thoughts',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This medallion has 3 charges. While wearing it, you can expend 1 charge as a Magic action to cast Detect Thoughts (DC 13) from it. The medallion regains 1d3 expended charges daily at dawn.',
+  ),
+  // Nine Lives / Oathbow / Oil / Periapts / Philter / Pipes / Portable
+  _mi(
+    name: 'Nine Lives Stealer',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. The weapon has 1d8 + 1 charges. When you score a Critical Hit against a creature with fewer than 100 HP, it must succeed on a DC 15 Constitution save or die. The sword loses 1 charge if the creature dies. When the sword has no charges remaining, it loses this property.',
+  ),
+  _mi(
+    name: 'Oathbow',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'When you nock an arrow on this bow, it whispers in Elvish, "Swift defeat to my enemies." When you use this bow to attack a creature you have sworn vengeance against (Bonus Action declaration), the bow\'s ammunition deals an extra 3d6 Piercing damage. After you take this oath, you have Disadvantage on attack rolls with weapons other than this bow until the target drops to 0 HP or you take a Long Rest. While the oath is in effect, you have Advantage on attack rolls with this bow against the sworn enemy.',
+  ),
+  _mi(
+    name: 'Oil of Etherealness',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'A flask contains enough oil for one use. You can take 10 minutes to apply the oil to your body and absorbed equipment. For 1 hour, the effects of the Etherealness spell apply to you. Spreading the oil on creatures larger than Medium requires more time and oil.',
+  ),
+  _mi(
+    name: 'Periapt of Health',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'You are Immune to contracting any Disease while you wear this pendant. If you are already Diseased when you don it, the effects of the disease are suppressed until you take it off.',
+  ),
+  _mi(
+    name: 'Periapt of Proof against Poison',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While you wear this delicate silver chain with a brilliant-cut black gem, poisons have no effect on you. You are Immune to the Poisoned condition and have Immunity to Poison damage.',
+  ),
+  _mi(
+    name: 'Philter of Love',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'The next time you see a creature within 10 minutes after drinking this philter, you become Charmed by that creature for 1 hour. If the creature is of a species and gender you are normally attracted to, you regard it as your true love while Charmed. The potion\'s rose-hued, effervescent liquid contains one easy-to-miss bubble shaped like a heart.',
+  ),
+  _mi(
+    name: 'Pipes of Haunting',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This pipe set has 3 charges. As a Magic action, you can play and expend 1 charge to create an eerie, spellbinding tune. Each creature within 30 feet that hears must succeed on a DC 15 Wisdom save or have the Frightened condition (of you) for 1 minute. The pipes regain 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Pipes of the Sewers',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While attuned, ordinary rats and Giant Rats within 300 feet are friendly to you. As a Magic action while playing the pipes, you can attempt to summon swarms of rats: roll 1d20, and if the result is 10+, you summon 1d4 Swarms of Rats; if 5 or less, all rats within range attack you. The summoned rats are Friendly to you for 1 hour.',
+  ),
+  _mi(
+    name: 'Portable Hole',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'A 6-foot-diameter circle of black cloth. As a Utilize action, you can unfold the hole and place it on a horizontal surface, where it forms a 10-foot-deep extradimensional pit. The pit holds 28 cubic feet of contents. As a Utilize action, you can fold the hole. Living creatures inside have 10 minutes of air. Placing the hole inside another extradimensional space immediately destroys both items and opens a gate to the Astral Plane.',
+  ),
+  // Potions
+  _mi(
+    name: 'Potion of Clairvoyance',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, you gain the effect of the Clairvoyance spell. An eyeball bobs in this yellowish liquid but vanishes when the potion is opened.',
+  ),
+  _mi(
+    name: 'Potion of Growth',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, you gain the "enlarge" effect of the Enlarge/Reduce spell for 1d4 hours (no Concentration required). The red liquid in this potion expands and contracts continually.',
+  ),
+  _mi(
+    name: 'Potion of Longevity',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, your physical age is reduced by 1d6 + 6 years, to a minimum of 13 years. Each subsequent time you drink a Potion of Longevity, there is a cumulative 10 percent chance that you instead age by 1d6 + 6 years.',
+  ),
+  _mi(
+    name: 'Potion of Resistance',
+    category: 'Potions',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, you have Resistance to one type of damage for 1 hour. The GM chooses the type or determines it randomly: Acid, Cold, Fire, Force, Lightning, Necrotic, Poison, Psychic, Radiant, or Thunder.',
+  ),
+  _mi(
+    name: 'Potion of Vitality',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects:
+        'When you drink this potion, it removes any Exhaustion levels you have and ends any effect reducing your HP maximum. For 24 hours, you regain the maximum number of HP from any Hit Die you spend.',
+  ),
+  _mi(
+    name: 'Potion of Supreme Healing',
+    category: 'Potions',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects: 'You regain 10d4 + 20 HP when you drink this potion.',
+  ),
+  _mi(
+    name: 'Potion of Superior Healing',
+    category: 'Potions',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Consumable',
+    effects: 'You regain 8d4 + 8 HP when you drink this potion.',
+  ),
+  // Quarterstaff / Rings
+  _mi(
+    name: 'Quarterstaff of the Acrobat',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. While holding it, you have a +1 bonus to AC. As a Bonus Action, you can shorten or lengthen the staff between 6 inches and 6 feet. While shorter than 6 feet, you have Advantage on Acrobatics and Athletics checks made with the staff. The staff has the Finesse property regardless of size.',
+  ),
+  _mi(
+    name: 'Ring of Animal Influence',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This ring has 3 charges. As a Magic action, you can expend 1 charge to cast one of the following spells from it: Animal Friendship (DC 13), Fear (DC 13, only against beasts having Intelligence of 3 or lower), or Speak with Animals. The ring regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Ring of Djinni Summoning',
+    category: 'Rings',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this ring, you can take a Magic action to summon a particular Djinni from the Elemental Plane of Air. The Djinni appears in an unoccupied space within 120 feet of you. It remains for as long as you concentrate (up to 1 hour) or until it drops to 0 HP. It then returns to its plane. The ring can\'t be used again for 24 hours; if the Djinni is killed, it can\'t be used again, period.',
+  ),
+  _mi(
+    name: 'Ring of Elemental Command',
+    category: 'Rings',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 5,
+    chargeRegain: '1d4+1 daily at dawn',
+    effects:
+        'A ring linked to one elemental plane (Air, Earth, Fire, Water). It has 5 charges. While wearing it, you have Advantage on attack rolls vs elementals of that plane and they have Disadvantage vs you; you understand its language; and you can expend charges to cast spells (varies by plane: e.g., Air ring casts Chain Lightning 7 charges, Gust of Wind 2; Fire ring Burning Hands 1, Fireball 3, Wall of Fire 4). Other benefits as elemental affinity grows.',
+  ),
+  _mi(
+    name: 'Ring of Evasion',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This ring has 3 charges. When you fail a Dexterity saving throw while wearing it, you can use your Reaction to expend 1 charge to succeed instead. The ring regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Ring of Feather Falling',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    effects:
+        'When you fall while wearing this ring, you descend 60 feet per round and take no damage from falling.',
+  ),
+  _mi(
+    name: 'Ring of Shooting Stars',
+    category: 'Rings',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'must be worn outdoors at night',
+    activation: 'Magic Action',
+    maxCharges: 6,
+    chargeRegain: '1d6 daily at dusk',
+    effects:
+        'This ring has 6 charges. While wearing it outdoors at night, you can expend charges to use these properties: Faerie Fire (1 charge), Ball Lightning (2 charges, four light motes), Shooting Stars (1-3 charges, each charge launches a star dealing 5d4 Fire damage), and Light (no charge cost).',
+  ),
+  _mi(
+    name: 'Ring of Spell Turning',
+    category: 'Rings',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    effects:
+        'While wearing this ring, you have Advantage on saves vs spells. If you succeed on the save against a spell of level 7 or lower that targets only you (not an area), the spell has no effect on you and instead targets the caster, using the slot level, save DC, attack bonus, and ability modifier of the caster.',
+  ),
+  _mi(
+    name: 'Ring of Swimming',
+    category: 'Rings',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects: 'You have a Swim Speed of 40 feet while wearing this ring.',
+  ),
+  _mi(
+    name: 'Ring of Telekinesis',
+    category: 'Rings',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this ring, you can take a Magic action to cast Telekinesis from it (no Concentration required for the ring\'s casting; it lasts 10 minutes).',
+  ),
+  _mi(
+    name: 'Ring of the Ram',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This ring has 3 charges. While wearing it, you can take a Magic action to expend 1 to 3 charges to attack one creature you can see within 60 feet. The ring produces the spectral force of a ram\'s head; make a ranged attack roll with +7 attack bonus. On a hit, for each charge spent, the target takes 2d10 Force damage and is pushed 5 feet. Alternatively, expend 1-3 charges to attempt to break a non-magic object you can see within 60 feet not being held; ring\'s Strength check (each charge expended grants +5 to roll vs DC 25 Strength).',
+  ),
+  // Rods
+  _mi(
+    name: 'Rod of Absorption',
+    category: 'Rods',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    effects:
+        'While holding this rod, you can use your Reaction to absorb a spell that targets only you and not an area. The absorbed spell\'s effect is canceled, and the spell\'s energy (not the spell itself) is stored in the rod. The energy has the same level as the spell when it was cast. The rod can absorb and store up to 50 levels of energy over the course of its existence. Once absorbed, the rod can\'t absorb more energy beyond 50 levels.',
+  ),
+  _mi(
+    name: 'Rod of Alertness',
+    category: 'Rods',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'A flanged metal rod 1 foot long with multiple uses: Advantage on Wisdom (Perception) and Initiative; cast Detect Evil and Good, Detect Magic, Detect Poison and Disease, or See Invisibility (as Magic action); plant the rod in the ground and command it to alert (10-foot radius for 8 hours), occupant gain Heroes\' Feast and Magic Circle effects.',
+  ),
+  _mi(
+    name: 'Rod of Lordly Might',
+    category: 'Rods',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'A 1-foot rod with six buttons. Functions as +3 magic Mace dealing extra 2d6 Force damage. As a Bonus Action, press a button to transform: button 1 = mace; 2 = Flame Tongue (longsword) for 10 min; 3 = Battleaxe +3 with Vorpal-style for 10 min; 4 = climbing pole 50 ft; 5 = battering ram (+10 Strength check); 6 = compass-like indicator showing direction and stairs.',
+  ),
+  _mi(
+    name: 'Rod of Resurrection',
+    category: 'Rods',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    attunementPrereq: 'Cleric, Druid, or Paladin',
+    activation: 'Magic Action',
+    maxCharges: 5,
+    chargeRegain: '1 charge daily at dawn',
+    effects:
+        'The rod has 5 charges. While holding it, you can take a Magic action to expend 1 charge to cast Heal from it, or 5 charges to cast Resurrection. The rod regains 1 expended charge daily at dawn. If the rod is reduced to 0 charges, roll a d20: on a 1, the rod disappears.',
+  ),
+  _mi(
+    name: 'Rod of Rulership',
+    category: 'Rods',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'You can take a Magic action to present the rod and command obedience. Each creature of your choice within 120 feet must succeed on a DC 15 Wisdom save or have the Charmed condition for 8 hours. While Charmed, the creature regards you as its trusted leader; it doesn\'t obey suicidal commands, and the spell ends if you or your companions harm it. Once used, the rod can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Rod of Security',
+    category: 'Rods',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While holding this rod, you can take a Magic action to be transported with up to 199 willing others to a paradise demiplane. There, every creature is unaffected by the natural elements, doesn\'t need food or water, and ages slowly. Each creature can stay up to 200 days divided by the number of creatures (rounded down). The rod can\'t be used again for 10 days.',
+  ),
+  // Ropes / Scarab / Scimitar / Sending / Sentinel / Shield variants / Sovereign / Spellguard / Staff
+  _mi(
+    name: 'Rope of Climbing',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A 60-foot length of silk rope. As a Magic action, you can hold one end and command the rope to animate. The rope can hold up to 3,000 pounds. As a Magic action, the holder can command the rope to anchor itself, climb up or down, knot itself, or unknot. A spoken command makes the rope drop or coil itself.',
+  ),
+  _mi(
+    name: 'Rope of Entanglement',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A 30-foot rope that lashes out at a target. As a Magic action, you can speak the rope\'s command word and target a creature within 20 feet. The target makes a DC 15 Dexterity save; on a failure, it has the Restrained condition until the rope is commanded to release the target or until the rope takes 50 slashing damage (AC 20). On a success, the rope returns to your hand.',
+  ),
+  _mi(
+    name: 'Scarab of Protection',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Reaction',
+    maxCharges: 12,
+    effects:
+        'If you hold this beetle-shaped medallion in hand for 1 round, an inscription appears on its surface revealing magical nature. It grants you two benefits while held or worn: Advantage on saves vs spells; the scarab has 12 charges, and if you fail a save vs Necromancy or vs an Undead\'s attack/feature, you can use your Reaction to expend 1 charge and turn the failed save into a success. The scarab crumbles to powder when reduced to 0 charges.',
+  ),
+  _mi(
+    name: 'Scimitar of Speed',
+    category: 'Weapons',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'You have a +2 bonus to attack rolls and damage rolls made with this magic weapon. In addition, you can take a Bonus Action on each of your turns to make one attack with the scimitar.',
+  ),
+  _mi(
+    name: 'Sending Stones',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'Sending Stones come in pairs, each smooth stone with matching markings. While you touch one stone, you can take a Magic action to cast the Sending spell from it. The target is the creature touching the matching stone. Once the spell is cast, the pair can\'t be used to cast Sending again until the next dawn. If one of the stones in a pair is destroyed, the other becomes nonmagical.',
+  ),
+  _mi(
+    name: 'Sentinel Shield',
+    category: 'Armor',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have Advantage on Initiative rolls and Wisdom (Perception) checks. The Shield is emblazoned with a symbol of an eye.',
+  ),
+  _mi(
+    name: 'Shield of Missile Attraction',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have Resistance to damage from ranged weapon attacks. Curse: this Shield is cursed, revealed when you become attuned. While attuned, you have Disadvantage on saves against ranged spell attacks, and whenever an attacker within 60 feet of you makes a ranged attack against a target other than you, you must use your Reaction to become the target instead. The curse can be removed only by a Remove Curse spell.',
+  ),
+  _mi(
+    name: 'Shield of the Cavalier',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have a +1 bonus to AC, in addition to the Shield\'s normal bonus to AC. As a Reaction when a creature you can see misses you with a melee attack, you can attempt to deflect the attack: the attacker takes Bludgeoning damage equal to your Strength modifier (minimum of 1).',
+  ),
+  _mi(
+    name: 'Sovereign Glue',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A milky-white gummy substance in a small jar holding up to 1 ounce, enough to bond two surfaces of up to one square foot. The bond holds permanently and can\'t be undone except with Universal Solvent, Oil of Etherealness, or a Wish spell. Glue takes 1 minute to set.',
+  ),
+  _mi(
+    name: 'Spellguard Shield',
+    category: 'Armor',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While holding this Shield, you have Advantage on saving throws against spells and other magical effects, and spell attacks have Disadvantage against you.',
+  ),
+  // Staffs
+  _mi(
+    name: 'Staff of Charming',
+    category: 'Staffs',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d8+2 daily at dawn',
+    effects:
+        'While holding this staff, you can use it as a spellcasting focus and expend charges to cast spells: Charm Person (1 charge, DC 17), Command (1 charge, DC 17), or Comprehend Languages (1 charge). You can also use a Reaction when targeted by Charm Person or Command spell to expend 1 charge to gain Advantage on the save.',
+  ),
+  _mi(
+    name: 'Staff of Power',
+    category: 'Staffs',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Sorcerer, Warlock, or Wizard',
+    activation: 'Magic Action',
+    maxCharges: 20,
+    chargeRegain: '2d8+4 daily at dawn',
+    effects:
+        'A magic Quarterstaff that grants +2 bonus to AC, attack rolls, and saves while held. The staff has 20 charges. As a Magic action, you can expend charges to cast spells: Cone of Cold (5 charges), Fireball (5), Globe of Invulnerability (6), Hold Monster (5), Levitate (2), Lightning Bolt (5), Magic Missile (1), Ray of Enfeeblement (1), or Wall of Force (5). You can also break the staff to release stored energy: a 30-foot Sphere centered on you deals 16 × charges remaining damage to all creatures except you.',
+  ),
+  _mi(
+    name: 'Staff of Striking',
+    category: 'Staffs',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'A magic Quarterstaff with 10 charges. While held, it provides +3 bonus to attack rolls and damage rolls. When you hit with a melee attack using this staff, you can expend up to 3 of its charges; for each charge expended, the target takes an extra 1d6 Force damage.',
+  ),
+  _mi(
+    name: 'Staff of Swarming Insects',
+    category: 'Staffs',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'This staff has 10 charges. While holding it, you can use it as a spellcasting focus and expend charges to cast Giant Insect (4 charges) or Insect Plague (5 charges). The staff also conjures a 10-foot-radius cloud of insects (1 charge): each creature of your choice in the area takes 2d4 Piercing damage and must succeed on a Constitution save or have the Poisoned condition.',
+  ),
+  _mi(
+    name: 'Staff of the Python',
+    category: 'Staffs',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    attunementPrereq: 'Cleric, Druid, or Warlock',
+    activation: 'Magic Action',
+    effects:
+        'You can take a Magic action to speak the staff\'s command word and throw it on the ground within 10 feet. The staff transforms into a Giant Constrictor Snake under your control. The snake reverts to staff form when you take a Magic action to speak the command word again or when reduced to 0 HP.',
+  ),
+  _mi(
+    name: 'Staff of the Woodlands',
+    category: 'Staffs',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Druid',
+    activation: 'Magic Action',
+    maxCharges: 10,
+    chargeRegain: '1d6+4 daily at dawn',
+    effects:
+        'This wooden staff has 10 charges and grants +2 bonus to spell attack rolls while attuned. As a Magic action, you can expend charges to cast spells: Animal Friendship (1 charge), Awaken (5), Barkskin (2), Locate Animals or Plants (2), Speak with Animals (1), Speak with Plants (3), or Wall of Thorns (6). You can also use a Magic action to plant the staff: it transforms into a tree (60 ft tall, 5 ft diameter) for 24 hours.',
+  ),
+  _mi(
+    name: 'Staff of Withering',
+    category: 'Staffs',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Cleric, Druid, or Warlock',
+    activation: 'None',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'A magic Quarterstaff with 3 charges. When you hit a creature with a melee attack using the staff, you can expend 1 charge to deal an extra 2d10 Necrotic damage. The target must succeed on a DC 15 Constitution save or have Disadvantage on Strength-based attack rolls and Strength saves for 1 hour.',
+  ),
+  // Stone / Sun / Sword / Talisman / Thunderous / Trident / Universal / Vicious
+  _mi(
+    name: 'Stone of Controlling Earth Elementals',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While the stone is touching the ground, you can take a Magic action to speak its command word and summon an Earth Elemental, as if you cast Conjure Elemental. The stone can\'t be used this way again until the next dawn.',
+  ),
+  _mi(
+    name: 'Sun Blade',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Bonus Action',
+    effects:
+        'When you grasp the hilt and take a Bonus Action, a 3-foot blade of pure light springs forth. The Sun Blade is a magic Longsword granting +2 bonus to attack rolls and damage rolls and deals Radiant damage instead of Slashing. When you hit an Undead, it takes an extra 1d8 Radiant damage. The blade emits Bright Light in a 15-foot radius and Dim Light for an additional 15 feet (you can dim it as a Bonus Action).',
+  ),
+  _mi(
+    name: 'Sword of Life Stealing',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'When you score a Critical Hit on a target other than a Construct or Undead with this magic weapon, the target takes an extra 3d6 Necrotic damage, and you regain HP equal to the extra damage dealt. The HP gained doesn\'t exceed your HP maximum.',
+  ),
+  _mi(
+    name: 'Sword of Wounding',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'Hit Points lost to this weapon\'s damage can be regained only through a Short or Long Rest, rather than by means of magic. Once per turn, when you hit a creature with this weapon, you can wound the target. At the start of each of the wounded creature\'s turns, it takes 1d4 Necrotic damage for each time you\'ve wounded it. The creature can repeat the save at the end of each of its turns; on a successful save, all wounds are removed.',
+  ),
+  _mi(
+    name: 'Talisman of the Sphere',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'When you make an Intelligence (Arcana) check to control a Sphere of Annihilation while holding this talisman, you have Advantage on the check. While in physical contact with a Sphere of Annihilation, you can take a Magic action to levitate the sphere up to 10 feet (your Intelligence (Arcana) check made to control it).',
+  ),
+  _mi(
+    name: 'Thunderous Greatclub',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Bonus Action',
+    effects:
+        'A magic Greatclub that deals an extra 1d6 Thunder damage on a hit. As a Bonus Action, you can attempt a thunderous slam against a creature you can see within 30 feet: the target makes a DC 13 Strength save or is pushed 10 feet and takes 1d6 Thunder damage. Use of this property recharges 1d6 times daily at dawn.',
+  ),
+  _mi(
+    name: 'Trident of Fish Command',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This magic Trident has 3 charges. While you carry it, you can take a Magic action and expend 1 charge to cast Dominate Beast (DC 15) on a Beast that has an innate Swim Speed. The Trident regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Universal Solvent',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A tube containing milky liquid with an alcohol smell, enough for one use. As a Magic action, you can pour the contents on a surface, instantly dissolving up to 1 square foot of adhesive (including Sovereign Glue).',
+  ),
+  _mi(
+    name: 'Vicious Weapon',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'When you score a Critical Hit with this magic weapon, the target takes an extra 2d6 damage of the weapon\'s type.',
+  ),
+  // Wands
+  _mi(
+    name: 'Wand of Binding',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges, used for the following effects: Spells. While holding it, you can expend charges to cast Hold Monster (5 charges, DC 17) or Hold Person (2 charges, DC 17). Reaction. When you fail a save against an enchantment spell that targets only you, you can use your Reaction to expend 1 charge to gain Advantage on the saving throw.',
+  ),
+  _mi(
+    name: 'Wand of Enemy Detection',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This wand has 3 charges. While holding it, you can take a Magic action and expend 1 charge to speak its command word: for the next 1 minute, you know the direction of the nearest creature hostile to you within 60 feet, but not its distance. The wand can detect hostiles in nearby spaces, hidden, behind cover, or magically Disguised. The effect ends if you stop holding the wand.',
+  ),
+  _mi(
+    name: 'Wand of Fear',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges, used as follows: Command. As a Magic action while holding the wand, expend 1 charge to command another creature within 5 feet (DC 15 Wisdom save or Frightened of you for 1 minute). Cone of Fear. As a Magic action, expend 2 charges to cause each creature in a 60-foot Cone (DC 15 save) to be Frightened for 1 minute.',
+  ),
+  _mi(
+    name: 'Wand of Magic Detection',
+    category: 'Wands',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This wand has 3 charges. While holding it, you can take a Magic action and expend 1 charge to cast Detect Magic from it. The wand regains 1d3 expended charges daily at dawn.',
+  ),
+  _mi(
+    name: 'Wand of Paralysis',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can take a Magic action and expend 1 charge to release a thin blue ray at one creature you can see within 60 feet. The target must succeed on a DC 15 Constitution save or have the Paralyzed condition for 1 minute. The target can repeat the save at the end of each of its turns, ending the effect on a success.',
+  ),
+  _mi(
+    name: 'Wand of Polymorph',
+    category: 'Wands',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can expend 1 charge to cast Polymorph (DC 17) from it. The wand regains 1d6 + 1 expended charges daily at dawn. If you expend the wand\'s last charge, roll a d20: on a 1, the wand crumbles into ashes and is destroyed.',
+  ),
+  _mi(
+    name: 'Wand of the War Mage, +2',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'None',
+    effects:
+        'While holding this wand, you have a +2 bonus to spell attack rolls. You ignore Half Cover when making spell attacks.',
+  ),
+  _mi(
+    name: 'Wand of the War Mage, +3',
+    category: 'Wands',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'None',
+    effects:
+        'While holding this wand, you have a +3 bonus to spell attack rolls. You ignore Half Cover when making spell attacks.',
+  ),
+  _mi(
+    name: 'Wand of Wonder',
+    category: 'Wands',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    attunementPrereq: 'Spellcaster',
+    activation: 'Magic Action',
+    maxCharges: 7,
+    chargeRegain: '1d6+1 daily at dawn',
+    effects:
+        'This wand has 7 charges. While holding it, you can expend 1 charge as a Magic action to choose a target within 120 feet (or roll a d100 for a random target). Then roll a d100 to determine the wand\'s effect: Slow (DC 15 Wisdom), Faerie Fire, Stinking Cloud, Heavy Rain, Stinking Cloud, Animal Conjuration, Healing 4d6, Lightning Bolt, Stunning Bolt, Tree Growth, Fireball, Invisibility, Leaves Burst, Banana Spawn, Conjure Sounds, Plant Growth, Reduced Size, Stone-to-Flesh, Banishment, Random Polymorph, etc. (random table; effects vary).',
+  ),
+  // Weapon of Warning / Well of Many Worlds / Wind Fan
+  _mi(
+    name: 'Weapon of Warning',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'This magic weapon warns you of danger. While holding it, you have Advantage on Initiative rolls. You and any companions within 30 feet of you can\'t be Surprised, except when Incapacitated by something other than nonmagical sleep. The weapon magically awakens you and your companions within range if any of you are sleeping naturally when combat begins.',
+  ),
+  _mi(
+    name: 'Well of Many Worlds',
+    category: 'Wondrous Items',
+    rarity: 'Legendary',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'A fine black cloth that unfolds into a 6-foot-diameter circle. As a Magic action, you can place it on a horizontal surface, where it forms a two-way portal to another world or plane of existence. Each time you use it, the destination is random unless you set the destination by spending 1 hour focused on a specific known plane. Closing the portal requires lifting the cloth.',
+  ),
+  _mi(
+    name: 'Wind Fan',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While holding this fan, you can take a Magic action to cast Gust of Wind (DC 13) from it. Once used, the fan can\'t be used again until the next dawn. There is a 20 percent chance that a strong wind blows the fan apart and it is destroyed.',
+  ),
+  _mi(
+    name: 'Berserker Axe',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    isCursed: true,
+    activation: 'None',
+    effects:
+        'You have a +1 bonus to attack rolls and damage rolls made with this magic weapon. While attuned, your HP maximum increases by 1 for each level you have. Curse: while attuned, you have Disadvantage on attack rolls with weapons other than this axe, unless no foe is within 60 feet of you that you can see or hear. Whenever a creature damages you while you are wielding the axe, you must succeed on a DC 15 Wisdom save or go berserk: until the start of your next turn, you must take the Attack action against the creature nearest to you.',
+  ),
 
-      // ─── Gap closure batch 2: missed SRD 5.2.1 entries ────────────────────
-      _mi(name: 'Mariner\'s Armor', category: 'Armor', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'While wearing this armor, you have a Swim Speed equal to your Speed. In addition, whenever you start your turn underwater with 0 HP, the armor causes you to rise 60 feet toward the surface. The armor is decorated with fish and shell motifs.'),
-      _mi(name: 'Brazier of Commanding Fire Elementals', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'Magic Action', effects: 'While a fire burns in this brass brazier, you can take a Magic action to speak the brazier\'s command word and summon a Fire Elemental, as if you had cast Conjure Elemental. The brazier can\'t be used this way again until the next dawn. The brazier weighs 5 pounds.'),
-      _mi(name: 'Periapt of Proof Against Poison', category: 'Wondrous Items', rarity: 'Rare', requiresAttunement: false, activation: 'None', effects: 'While wearing this delicate silver chain with a teardrop-shaped pendant, you have Immunity to the Poisoned condition and Immunity to Poison damage.'),
-      _mi(name: 'Ring of Warmth', category: 'Rings', rarity: 'Uncommon', requiresAttunement: true, activation: 'None', effects: 'While wearing this ring, you have Resistance to Cold damage. In addition, you and everything you wear and carry are unharmed by temperatures as low as −50°F.'),
-      _mi(name: 'Ring of Water Walking', category: 'Rings', rarity: 'Uncommon', requiresAttunement: false, activation: 'None', effects: 'While wearing this ring, you can stand on and move across any liquid surface as if it were solid ground.'),
-    ];
+  // ─── Gap closure batch 2: missed SRD 5.2.1 entries ────────────────────
+  _mi(
+    name: 'Mariner\'s Armor',
+    category: 'Armor',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While wearing this armor, you have a Swim Speed equal to your Speed. In addition, whenever you start your turn underwater with 0 HP, the armor causes you to rise 60 feet toward the surface. The armor is decorated with fish and shell motifs.',
+  ),
+  _mi(
+    name: 'Brazier of Commanding Fire Elementals',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'While a fire burns in this brass brazier, you can take a Magic action to speak the brazier\'s command word and summon a Fire Elemental, as if you had cast Conjure Elemental. The brazier can\'t be used this way again until the next dawn. The brazier weighs 5 pounds.',
+  ),
+  _mi(
+    name: 'Periapt of Proof Against Poison',
+    category: 'Wondrous Items',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While wearing this delicate silver chain with a teardrop-shaped pendant, you have Immunity to the Poisoned condition and Immunity to Poison damage.',
+  ),
+  _mi(
+    name: 'Ring of Warmth',
+    category: 'Rings',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this ring, you have Resistance to Cold damage. In addition, you and everything you wear and carry are unharmed by temperatures as low as −50°F.',
+  ),
+  _mi(
+    name: 'Ring of Water Walking',
+    category: 'Rings',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'While wearing this ring, you can stand on and move across any liquid surface as if it were solid ground.',
+  ),
+  // ─── SRD 5.2.1 gap closure (ported from SRD pack on removal) ──────────
+  _mi(
+    name: 'Amulet of Proof against Detection and Location',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this amulet, you can\'t be targeted by Divination spells or perceived through magical scrying sensors unless you allow it.',
+  ),
+  _mi(
+    name: 'Arrow-Catching Shield',
+    category: 'Armor',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'armor',
+    baseItemName: 'Shield',
+    effects:
+        'You gain a +2 bonus to Armor Class against ranged attack rolls while you wield this Shield. This bonus is in addition to the Shield\'s normal bonus to AC. Whenever an attacker makes a ranged attack roll against a target within 5 feet of you, you can take a Reaction to become the target of the attack instead.',
+  ),
+  _mi(
+    name: 'Candle of Invocation',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'This candle\'s magic is activated when the candle is lit, which requires a Magic action. After burning for 4 hours, the candle is destroyed. You can snuff it out early for use at a later time. Deduct the time it burned in increments of 1 minute from its total burn time.\n\n'
+        'While lit, the candle sheds Dim Light in a 30-foot radius. While you are within that light, you have Advantage on D20 Tests. In addition, a Cleric or Druid in the light can cast level 1 spells they have prepared without expending spell slots.\n\n'
+        'Alternatively, when you light the candle for the first time, you can cast *Gate* with it. Doing so destroys the candle. The portal created by the spell links to a particular Outer Plane chosen by the GM or determined by rolling on the following table.\n\n'
+        '| 1d100 | Outer Plane    |\n|-------|----------------|\n| 01–05 | Abyss          |\n| 06–10 | Acheron        |\n| 11–17 | Arborea        |\n| 18–25 | Arcadia        |\n| 26–33 | Beastlands     |\n| 34–41 | Bytopia        |\n| 42–46 | Carceri        |\n| 47–54 | Elysium        |\n| 55–59 | Gehenna        |\n| 60–64 | Hades          |\n| 65–69 | Limbo          |\n| 70–77 | Mechanus       |\n| 78–85 | Mount Celestia |\n| 86–90 | Nine Hells     |\n| 91–95 | Pandemonium    |\n| 96–00 | Ysgard         |',
+  ),
+  _mi(
+    name: 'Cloak of Arachnida',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'This fine garment is made of black silk interwoven with faint, silvery threads. While wearing it, you gain the following benefits. Poison Resistance. You have Resistance to Poison damage. Spider Climb. You have a Climb Speed equal to your Speed and can move up, down, and across vertical surfaces and along ceilings, while leaving your hands free. Spider Walk. You can\'t be caught in webs of any sort and can move through webs as if they were Difficult Terrain. Web. You can cast Web (save DC 13). The web created by the spell fills twice its normal area. Once used, this property can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Cloak of the Manta Ray',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this cloak, you can breathe underwater, and you have a Swim Speed of 60 feet.',
+  ),
+  _mi(
+    name: 'Dagger of Venom',
+    category: 'Weapons',
+    rarity: 'Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Dagger',
+    effects:
+        'You gain a +1 bonus to attack rolls and damage rolls made with this magic weapon. You can take a Bonus Action to magically coat the blade with poison. The poison remains for 1 minute or until an attack using this weapon hits a creature. That creature must succeed on a DC 15 Constitution saving throw or take 2d10 Poison damage and have the Poisoned condition for 1 minute. The weapon can\'t be used this way again until the next dawn.',
+  ),
+  _mi(
+    name: 'Elemental Gem',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Utilize',
+    effects:
+        'This gem contains a mote of elemental energy. When you take a Utilize action to break the gem, an elemental is summoned (see "Monsters" for its stat block), and the gem ceases to be magical. The elemental appears in an unoccupied space as close to the broken gem as possible, understands your languages, obeys your commands, and takes its turn immediately after you on your Initiative count. The elemental disappears after 1 hour, when it dies, or when you dismiss it as a Bonus Action. The type of gem determines the elemental, as shown in the following table.\n\n'
+        '| Gem            | Summoned Elemental |\n|----------------|--------------------|\n| Blue sapphire  | Air Elemental      |\n| Emerald        | Water Elemental    |\n| Red corundum   | Fire Elemental     |\n| Yellow diamond | Earth Elemental    |',
+  ),
+  _mi(
+    name: 'Eversmoking Bottle',
+    category: 'Wondrous Items',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    effects:
+        'As a Magic action, you can open or close this bottle. Opening the bottle causes thick smoke to billow out, forming a cloud that fills a 60-foot Emanation originating from the bottle. The area within the smoke is Heavily Obscured. Each minute the bottle remains open, the size of the Emanation increases by 10 feet until it reaches its maximum size of 120 feet. Closing the bottle causes the cloud to become fixed in place until it disperses after 10 minutes. A strong wind (such as that created by the Gust of Wind spell) disperses the cloud after 1 minute.',
+  ),
+  _mi(
+    name: 'Horseshoes of a Zephyr',
+    category: 'Wondrous Items',
+    rarity: 'Very Rare',
+    requiresAttunement: false,
+    activation: 'None',
+    effects:
+        'These horseshoes come in a set of four. As a Magic action, you can touch one of the horseshoes to the hoof of a horse or similar creature, whereupon the horseshoe affixes itself to the hoof. Removing a horseshoe also takes a Magic action. While all four shoes are affixed to the hooves of a horse or similar creature, they allow the creature to move normally while floating 4 inches above a surface. This effect means the creature can cross or stand above nonsolid or unstable surfaces, such as water or lava. The creature leaves no tracks and ignores Difficult Terrain. In addition, the creature can travel for up to 12 hours a day without gaining Exhaustion levels from extended travel.',
+  ),
+  _mi(
+    name: 'Javelin of Lightning',
+    category: 'Weapons',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Javelin',
+    effects:
+        'Each time you make an attack roll with this magic weapon and hit, you can have it deal Lightning damage instead of Piercing damage. Lightning Bolt. When you throw this weapon at a target no farther than 120 feet from you, you can forgo making a ranged attack roll and instead turn the weapon into a bolt of lightning. This bolt forms a 5-foot-wide Line between you and the target. The target and each other creature in the Line (excluding you) makes a DC 13 Dexterity saving throw, taking 4d6 Lightning damage on a failed save or half as much damage on a successful one. Immediately after dealing this damage, the weapon reappears in your hand. This property can\'t be used again until the next dawn.',
+  ),
+  _mi(
+    name: 'Ring of Jumping',
+    category: 'Rings',
+    rarity: 'Uncommon',
+    requiresAttunement: true,
+    activation: 'None',
+    effects:
+        'While wearing this ring, you can cast Jump from it, but can target only yourself when you do so.',
+  ),
+  _mi(
+    name: 'Ring of X-ray Vision',
+    category: 'Rings',
+    rarity: 'Rare',
+    requiresAttunement: true,
+    activation: 'Magic Action',
+    effects:
+        'While wearing this ring, you can take a Magic action to gain X-ray vision with a range of 30 feet for 1 minute. To you, solid objects within that radius appear transparent and don\'t prevent light from passing through them. The vision can penetrate 1 foot of stone, 1 inch of common metal, or up to 3 feet of wood or dirt. Thicker substances or a thin sheet of lead block the vision. Whenever you use the ring again before taking a Long Rest, you must succeed on a DC 15 Constitution saving throw or gain 1 Exhaustion level.',
+  ),
+  _mi(
+    name: 'Staff of Thunder and Lightning',
+    category: 'Staffs',
+    rarity: 'Very Rare',
+    requiresAttunement: true,
+    activation: 'None',
+    baseItemSlug: 'weapon',
+    baseItemName: 'Quarterstaff',
+    effects:
+        'This staff can be wielded as a magic Quarterstaff that grants a +2 bonus to attack rolls and damage rolls made with it. It also has the following additional properties. Once one of these properties is used, it can\'t be used again until the next dawn. Lightning. When you hit with a melee attack using the staff, you can cause the target to take an extra 2d6 Lightning damage (no action required). Thunder. When you hit with a melee attack using the staff, you can cause the staff to emit a crack of thunder audible out to 300 feet (no action required). The target you hit must succeed on a DC 17 Constitution saving throw or have the Stunned condition until the end of your next turn. Thunder and Lightning. Immediately after you hit with a melee attack using the staff, you can take a Bonus Action to use the Lightning and Thunder properties (see above) at the same time. Doing so doesn\'t expend the daily use of those properties, only the use of this one. Lightning Strike. You can take a Magic action to cause a bolt of lightning to leap from the staff\'s tip in a Line that is 5 feet wide and 120 feet long. Each creature in that Line makes a DC 17 Dexterity saving throw, taking 9d6 Lightning damage on a failed save or half as much damage on a successful one. Thunderclap. You can take a Magic action to cause the staff to produce a thunderclap audible out to 600 feet. Every creature within a 60-foot Emanation originating from you makes a DC 17 Constitution saving throw. On a failed save, a creature takes 2d6 Thunder damage and has the Deafened condition for 1 minute. On a successful save, a creature takes half as much damage only.',
+  ),
+  _mi(
+    name: 'Wand of Secrets',
+    category: 'Wands',
+    rarity: 'Uncommon',
+    requiresAttunement: false,
+    activation: 'Magic Action',
+    maxCharges: 3,
+    chargeRegain: '1d3 daily at dawn',
+    effects:
+        'This wand has 3 charges and regains 1d3 expended charges daily at dawn. While holding it, you can take a Magic action to expend 1 charge, and if a secret door or trap is within 60 feet of you, the wand pulses and points at the one nearest to you.',
+  ),
+];

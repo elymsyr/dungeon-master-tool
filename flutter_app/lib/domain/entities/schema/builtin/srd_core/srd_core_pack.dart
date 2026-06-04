@@ -38,7 +38,7 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.0.2';
+const srdCorePackVersion = '1.0.3';
 
 /// Output of [buildSrdCorePack]. `entities` is keyed by the freshly minted
 /// UUID, value is the wire-format package entity (see `_helpers.packEntity`).

@@ -20,7 +20,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
       "r2_path": "package/open5e-a5e-ag@1.0.0.json.gz",
-      "size_bytes": 1014511
+      "size_bytes": 1027103
     },
     {
       "item_type": "package",
@@ -130,7 +130,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepm.pkg.json",
       "r2_path": "package/open5e-deepm@1.0.0.json.gz",
-      "size_bytes": 1152356
+      "size_bytes": 1164350
     },
     {
       "item_type": "package",
@@ -147,7 +147,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepmx.pkg.json",
       "r2_path": "package/open5e-deepmx@1.0.0.json.gz",
-      "size_bytes": 121826
+      "size_bytes": 121868
     },
     {
       "item_type": "package",
@@ -164,7 +164,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-kp.pkg.json",
       "r2_path": "package/open5e-kp@1.0.0.json.gz",
-      "size_bytes": 72053
+      "size_bytes": 72474
     },
     {
       "item_type": "package",
@@ -178,30 +178,13 @@
       "is_srd_overlap": false,
       "counts": {
         "spell": 2,
-        "subclass": 16,
-        "species": 1,
+        "subclass": 17,
+        "subspecies": 1,
         "background": 2
       },
       "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
       "r2_path": "package/open5e-open5e@1.0.0.json.gz",
-      "size_bytes": 156083
-    },
-    {
-      "item_type": "package",
-      "slug": "open5e-open5e-2024",
-      "title": "Open5e Originals",
-      "version": "1.0.0",
-      "publisher": "Open5e",
-      "license": "ogl-10a",
-      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
-      "game_system": "5e-2024",
-      "is_srd_overlap": false,
-      "counts": {
-        "subclass": 1
-      },
-      "bundled_asset": "assets/open5e_packs/open5e-open5e-2024.pkg.json",
-      "r2_path": "package/open5e-open5e-2024@1.0.0.json.gz",
-      "size_bytes": 8023
+      "size_bytes": 163562
     },
     {
       "item_type": "package",
@@ -219,58 +202,6 @@
       "bundled_asset": "assets/open5e_packs/open5e-spells-that-dont-suck.pkg.json",
       "r2_path": "package/open5e-spells-that-dont-suck@1.0.0.json.gz",
       "size_bytes": 491918
-    },
-    {
-      "item_type": "package",
-      "slug": "open5e-srd-2014",
-      "title": "System Reference Document 5.1",
-      "version": "1.0.0",
-      "publisher": "Wizards of the Coast",
-      "license": "ogl-10a",
-      "attribution": "This work includes material taken from the System Reference Document 5.1 (\"SRD 5.1\") and other Open Game Content distributed by Open5e (https://open5e.com), licensed under the Open Game License 1.0a. The original publisher of this material retains all rights; redistribution is permitted under the terms of the OGL 1.0a.",
-      "game_system": "5e-2014",
-      "is_srd_overlap": true,
-      "counts": {
-        "trait": 424,
-        "creature-action": 708,
-        "monster": 325,
-        "spell": 319,
-        "magic-item": 499,
-        "class": 12,
-        "subclass": 12,
-        "species": 13,
-        "background": 1,
-        "feat": 1
-      },
-      "bundled_asset": "assets/open5e_packs/open5e-srd-2014.pkg.json",
-      "r2_path": "package/open5e-srd-2014@1.0.0.json.gz",
-      "size_bytes": 3527565
-    },
-    {
-      "item_type": "package",
-      "slug": "open5e-srd-2024",
-      "title": "System Reference Document 5.2",
-      "version": "1.0.0",
-      "publisher": "Wizards of the Coast",
-      "license": "cc-by-40",
-      "attribution": "This work includes material distributed by Open5e (https://open5e.com) under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode).",
-      "game_system": "5e-2024",
-      "is_srd_overlap": true,
-      "counts": {
-        "trait": 253,
-        "creature-action": 905,
-        "monster": 330,
-        "spell": 339,
-        "magic-item": 757,
-        "class": 12,
-        "subclass": 12,
-        "species": 9,
-        "background": 4,
-        "feat": 17
-      },
-      "bundled_asset": "assets/open5e_packs/open5e-srd-2024.pkg.json",
-      "r2_path": "package/open5e-srd-2024@1.0.0.json.gz",
-      "size_bytes": 3881301
     },
     {
       "item_type": "package",
@@ -383,13 +314,14 @@
       "counts": {
         "spell": 91,
         "subclass": 76,
-        "species": 40,
+        "subspecies": 29,
+        "species": 11,
         "background": 19,
         "feat": 13
       },
       "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
       "r2_path": "package/open5e-toh@1.0.0.json.gz",
-      "size_bytes": 1178038
+      "size_bytes": 1183628
     },
     {
       "item_type": "package",
@@ -423,7 +355,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-wz.pkg.json",
       "r2_path": "package/open5e-wz@1.0.0.json.gz",
-      "size_bytes": 108231
+      "size_bytes": 109052
     }
   ]
 }
