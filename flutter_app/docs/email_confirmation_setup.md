@@ -46,8 +46,14 @@ remote — it is **not** part of this repo).
 - **Site URL**: set to `https://elymsyr.github.io`
   (this becomes `{{ .SiteURL }}` in the email template, so the confirm link
   resolves to `https://elymsyr.github.io/confirm/...`).
-- **Redirect URLs**: the `com.elymsyr.dungeonmastertool://auth-callback` entry is
-  for OAuth — leave it. No new entry needed for email confirmation.
+- **Redirect URLs**: both entries are for OAuth — leave them. No new entry needed
+  for email confirmation.
+  - `com.elymsyr.dungeonmastertool://auth-callback` — mobile (Android/iOS) deep
+    link.
+  - `http://localhost:*/auth/callback` — desktop (Windows/Linux/macOS). The desktop
+    flow binds a local HTTP server on a **random** port, so the `*` wildcard is
+    required; without it Supabase falls back to the Site URL and sign-in lands on
+    `https://elymsyr.github.io/?code=...` instead of returning to the app.
 
 ## 3. Supabase dashboard — Confirm-signup email template
 
