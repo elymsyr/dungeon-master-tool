@@ -33,15 +33,21 @@ void mapCreatures({
 
   for (final c in creatures) {
     final pk = c['_pk'].toString();
-    final cname = (c['name'] as String?)?.trim() ?? 'Unknown';
+    final cname = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
 
     // ── Build child trait entities + collect refs ──
     final traitRefs = <Map<String, String>>[];
     for (final t in traitsByCreature[pk] ?? const <Fixture>[]) {
+      final cleaned = _cleanChildName(
+        (t['name'] as String?)?.trim() ?? 'Trait',
+        (t['desc'] as String?)?.trim() ?? '',
+        'trait',
+      );
+      if (cleaned == null) continue; // spurious mis-segmented row → drop, no ref.
       final name = _ensureChild(
         pack: pack,
         childNameByHash: childNameByHash,
-        baseName: (t['name'] as String?)?.trim() ?? 'Trait',
+        baseName: cleaned,
         creatureName: cname,
         row: _traitRow(t, source),
       );
@@ -61,11 +67,17 @@ void mapCreatures({
                 (x) => true,
                 orElse: () => null,
               );
+      final cleaned = _cleanChildName(
+        (a['name'] as String?)?.trim() ?? 'Action',
+        (a['desc'] as String?)?.trim() ?? '',
+        'creature-action',
+      );
+      if (cleaned == null) continue; // spurious mis-segmented row → drop, no ref.
       final row = _actionRow(a, attack, source, norm);
       final name = _ensureChild(
         pack: pack,
         childNameByHash: childNameByHash,
-        baseName: (a['name'] as String?)?.trim() ?? 'Action',
+        baseName: cleaned,
         creatureName: cname,
         row: row,
       );
@@ -146,6 +158,137 @@ String _contentHash(Map<String, dynamic> row) {
     sb..write('|')..write(k)..write('=')..write(attrs[k]);
   }
   return sb.toString();
+}
+
+// ── Name sanitization ──────────────────────────────────────────────────────
+// Open5e's upstream scraper mis-segments some creature stat blocks: numbered
+// option lists, roll tables, tiered effects, and flavor paragraphs become
+// separate CreatureAction/CreatureTrait rows whose `name` is junk (e.g. "1",
+// "1-4: Arm", "9 Tentacle Arms Melee Weapon Attack: …", "Second Roar: <effect>",
+// "An acolyte is a priest in training…"). We copy names verbatim, so the junk
+// surfaces as nonsensical entity-card titles. These helpers salvage a clean
+// title where possible and drop the truly-spurious phantom rows.
+
+/// Words kept lowercase mid-title when re-casing an Npc monster name.
+const _smallWords = {
+  'a', 'an', 'and', 'as', 'at', 'by', 'for', 'from',
+  'in', 'of', 'on', 'or', 'the', 'to', 'with',
+};
+
+/// Clean a `monster` name. Strips the upstream "Npc: " prefix and lowercases
+/// title small-words ("Npc: Warlock Of The Genie Lord" → "Warlock of the Genie
+/// Lord"); preserves hyphens and existing casing ("Npc: Frost-Afflicted" →
+/// "Frost-Afflicted"). Non-Npc names pass through unchanged.
+String _cleanMonsterName(String raw) {
+  final n = raw.trim();
+  final m = RegExp(r'^npc\s*:\s*(.+)$', caseSensitive: false).firstMatch(n);
+  if (m == null) return n;
+  final words = m.group(1)!.trim().split(RegExp(r'\s+'));
+  return [
+    for (var i = 0; i < words.length; i++)
+      (i > 0 && _smallWords.contains(words[i].toLowerCase()))
+          ? words[i].toLowerCase()
+          : words[i],
+  ].join(' ');
+}
+
+/// Sanitize a monster child (trait / creature-action) name. Returns the cleaned
+/// name, or `null` meaning "drop this row" — the caller then skips adding a ref
+/// so no orphan ships. [desc] salvages a title for purely-numeric names.
+String? _cleanChildName(String baseName, String desc, String type) {
+  var n = baseName.trim();
+  if (n.isEmpty) return null;
+
+  // 0. Drop a single trailing sentence period ("Multiattack." → "Multiattack").
+  if (n.endsWith('.') && !n.endsWith('..')) {
+    n = n.substring(0, n.length - 1).trimRight();
+  }
+
+  // 1. Roll-table range row: "1-4: Arm" / "5-6: Head" → "Arm" / "Head".
+  final range = RegExp(r'^\d+\s*[-–]\s*\d+\s*:\s*(.+)$').firstMatch(n);
+  if (range != null) n = range.group(1)!.trim();
+
+  // 2. Purely-numeric name ("1", "2", …): recover the bold label from the desc
+  //    ("Charm Hex. The target…" → "Charm Hex"); drop if nothing recoverable.
+  if (RegExp(r'^\d+$').hasMatch(n)) return _leadingLabel(desc);
+
+  // 3. Leading list-count: "1 Bat Head", "9 Tentacle Arms Melee Weapon Attack:…"
+  //    → strip the count, then cut any stat-block attack clause that leaked in.
+  final count = RegExp(r'^\d+\s+(\S.*)$').firstMatch(n);
+  if (count != null) n = _truncateAtAttackClause(count.group(1)!.trim());
+
+  // 4. "Label: effect sentence" → "Label" (gated; leaves "Curse: Mummy Rot",
+  //    "Variant: …", "Relentless (Recharge: …)" untouched).
+  n = _maybeColonLabel(n) ?? n;
+
+  // 5. Spurious full-sentence fragment (flavor / preamble / orphaned rule) → drop.
+  if (_looksLikeSentenceFragment(n)) return null;
+
+  return n;
+}
+
+/// First sentence of [desc] when it reads like a bold label ("Charm Hex.",
+/// "Blood Choke Curse."). Null when there's no short title to recover.
+String? _leadingLabel(String desc) {
+  final d = desc.trim();
+  if (d.isEmpty) return null;
+  final dot = d.indexOf('.');
+  final label = (dot >= 0 ? d.substring(0, dot) : d).trim();
+  if (label.isEmpty || label.length > 40) return null;
+  if (label.split(RegExp(r'\s+')).length > 6) return null;
+  return label;
+}
+
+final _attackClause = RegExp(
+    r'\s+(?:Melee|Ranged)\s+(?:Weapon|Spell)\s+Attack:.*$',
+    caseSensitive: false);
+
+/// "Tentacle Arms Melee Weapon Attack: +5 to hit…" → "Tentacle Arms".
+String _truncateAtAttackClause(String s) =>
+    s.replaceAll(_attackClause, '').trim();
+
+final _colonBody = RegExp(
+    r'\b(the|a|an|is|are|takes|creature|target|fails|saving|becomes|regains|cannot)\b',
+    caseSensitive: false);
+
+/// When [n] is "Label: effect sentence", return "Label"; otherwise null
+/// (leave the name as-is). Only a top-level colon (before any "(") counts, the
+/// label must be a short title, and the body must read like an effect sentence —
+/// so "Curse: Mummy Rot" and "Variant: Devil Summoning" are left untouched.
+String? _maybeColonLabel(String n) {
+  final paren = n.indexOf('(');
+  final colon = n.indexOf(':');
+  if (colon < 0) return null;
+  if (paren >= 0 && colon > paren) return null; // colon lives inside parens
+  final label = n.substring(0, colon).trim();
+  final body = n.substring(colon + 1).trim();
+  if (label.isEmpty || label.length > 32) return null;
+  if (label.split(RegExp(r'\s+')).length > 5) return null;
+  if (RegExp(r'^(the|a|an|if|while|when)\b', caseSensitive: false)
+      .hasMatch(label)) {
+    return null;
+  }
+  final bodyIsSentence = body.length >= 20 && _colonBody.hasMatch(body);
+  return bodyIsSentence ? label : null;
+}
+
+/// True only for clearly-spurious full-sentence names (mis-split flavor,
+/// legendary-action preamble, or orphaned rule continuations). Conservative:
+/// real titles like "Scholar of the Ages", "Versatility of the Elder
+/// Elementals", "Keen Hearing and Smell" have ≤2 lowercase-initial words and
+/// pass through. A title's only lowercase words are articles/prepositions; a
+/// mis-split sentence carries ≥4 lowercase-initial words.
+bool _looksLikeSentenceFragment(String n) {
+  final core = n.replaceAll(RegExp(r'\s*\([^()]*\)\s*$'), '').trim();
+  if (RegExp(r'\blegendary actions?\b', caseSensitive: false).hasMatch(core)) {
+    return true; // "The aboleth can take 2 legendary actions" preamble.
+  }
+  if (RegExp(r'[.!?]\s+\S').hasMatch(core)) return true; // multiple sentences.
+  final words = core.split(RegExp(r'\s+'));
+  final lower = words.where((w) => RegExp(r'^[a-z]').hasMatch(w)).length;
+  if (lower >= 4) return true;
+  if (core.length > 45 && words.length >= 7) return true;
+  return false;
 }
 
 Map<String, dynamic> _traitRow(Fixture t, String source) {
@@ -240,7 +383,7 @@ Map<String, dynamic> _monsterRow({
   required List<Map<String, String>> legendaryRefs,
   required List<Map<String, String>> lairRefs,
 }) {
-  final name = (c['name'] as String?)?.trim() ?? 'Unknown';
+  final name = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
   final stats = {
     'STR': _int(c['ability_score_strength']) ?? 10,
     'DEX': _int(c['ability_score_dexterity']) ?? 10,

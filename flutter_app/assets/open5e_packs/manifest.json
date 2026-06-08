@@ -49,8 +49,8 @@
       "game_system": "a5e",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 832,
-        "creature-action": 1683,
+        "trait": 829,
+        "creature-action": 1657,
         "monster": 586
       }
     },
@@ -80,7 +80,7 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 921,
-        "creature-action": 1149,
+        "creature-action": 1148,
         "monster": 356
       }
     },

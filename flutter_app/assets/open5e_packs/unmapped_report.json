@@ -301,7 +301,7 @@
   ],
   "alignment": [
     {
-      "value": "any alignment  (Mage)",
+      "value": "neutral evil (50%) lawful evil (50%)  (Thursir Giant)",
       "count": 1
     },
     {
@@ -361,106 +361,6 @@
       "count": 1
     },
     {
-      "value": "any alignment  (Acolyte)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Archmage)",
-      "count": 1
-    },
-    {
-      "value": "any non-good alignment  (Assassin)",
-      "count": 1
-    },
-    {
-      "value": "any non-lawful alignment  (Bandit)",
-      "count": 1
-    },
-    {
-      "value": "any non-lawful alignment  (Bandit Captain)",
-      "count": 1
-    },
-    {
-      "value": "any chaotic alignment  (Berserker)",
-      "count": 1
-    },
-    {
-      "value": "neutral good (50%) or neutral evil (50%)  (Cloud Giant)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Commoner)",
-      "count": 1
-    },
-    {
-      "value": "any non-good alignment  (Cult Fanatic)",
-      "count": 1
-    },
-    {
-      "value": "any non-good alignment  (Cultist)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Druid)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Ghost)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Gladiator)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Guard)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Half-Red Dragon Veteran)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Knight)",
-      "count": 1
-    },
-    {
-      "value": "any evil alignment  (Lich)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Alchemist Archer)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Noble)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Priest)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Scout)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Spy)",
-      "count": 1
-    },
-    {
-      "value": "any non-good alignment  (Thug)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Tribal Warrior)",
-      "count": 1
-    },
-    {
-      "value": "any alignment  (Veteran)",
-      "count": 1
-    },
-    {
       "value": "any non-lawful  (Bandit Lord)",
       "count": 1
     },
@@ -493,7 +393,7 @@
       "count": 1
     },
     {
-      "value": "neutral evil (50%) lawful evil (50%)  (Thursir Giant)",
+      "value": "any alignment  (Alchemist Archer)",
       "count": 1
     },
     {
@@ -549,7 +449,7 @@
       "count": 1
     },
     {
-      "value": "any alignment  (Tuberkith)",
+      "value": "Any Good  (Temple Dog)",
       "count": 1
     },
     {
@@ -581,7 +481,7 @@
       "count": 1
     },
     {
-      "value": "any evil alignment  (Ghul)",
+      "value": "any alignment  (Tuberkith)",
       "count": 1
     },
     {
@@ -637,31 +537,31 @@
       "count": 1
     },
     {
-      "value": "any alignment  (Npc: Apostle)",
+      "value": "any alignment  (Apostle)",
       "count": 1
     },
     {
-      "value": "any non-good  (Npc: Breathstealer)",
+      "value": "any non-good  (Breathstealer)",
       "count": 1
     },
     {
-      "value": "any non-good alignment  (Npc: Cultist Psychophant)",
+      "value": "any non-good alignment  (Cultist Psychophant)",
       "count": 1
     },
     {
-      "value": "any alignment  (Npc: Field Commander)",
+      "value": "any alignment  (Field Commander)",
       "count": 1
     },
     {
-      "value": "any alignment  (Npc: First Servant)",
+      "value": "any alignment  (First Servant)",
       "count": 1
     },
     {
-      "value": "any alignment  (Npc: Merchant Captain)",
+      "value": "any alignment  (Merchant Captain)",
       "count": 1
     },
     {
-      "value": "any alignment  (Npc: Warlock Of The Genie Lord)",
+      "value": "any alignment  (Warlock of the Genie Lord)",
       "count": 1
     },
     {
@@ -677,7 +577,7 @@
       "count": 1
     },
     {
-      "value": "Any Good  (Temple Dog)",
+      "value": "any evil alignment  (Ghul)",
       "count": 1
     }
   ]
