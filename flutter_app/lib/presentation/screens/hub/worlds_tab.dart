@@ -24,6 +24,7 @@ import '../../../domain/value_objects/media_kind.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/banner_metrics.dart';
 import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
 import '../../widgets/online_world_section.dart';
@@ -122,7 +123,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: const BoxConstraints(maxWidth: kCardMaxWidth),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

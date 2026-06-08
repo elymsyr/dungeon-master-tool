@@ -14,15 +14,23 @@ import '../../domain/entities/catalog/catalog_entry.dart';
 const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
 const String _bundledManifest = 'assets/first_party/manifest.json';
 
+/// Cache-bust version for banner art. The worker serves banners with
+/// `Cache-Control: immutable, max-age=1y` under a stable key, so re-uploading
+/// new art to the same slug would otherwise keep serving the cached old image
+/// for a year. Bump this whenever banners are re-cropped/re-uploaded so the
+/// `?v=` query becomes a fresh edge + client cache key.
+const int kBannerAssetVersion = 2;
+
 /// Public R2 URL for an official package's card banner
-/// (`{worker}/catalog/banners/<slug>.png`), or null when no worker is
+/// (`{worker}/catalog/banners/<slug>.jpg?v=N`), or null when no worker is
 /// configured. Banners are NOT bundled (only the built-in template/package
 /// covers are) — they download from the cloud, so offline cards fall back to
-/// the icon cover. Upload via `cloudflare/upload_banners.sh`.
+/// the icon cover. Upload via `cloudflare/upload_banners.sh`, then bump
+/// [kBannerAssetVersion].
 String? officialBannerUrl(String slug) =>
     (_workerBaseUrl.isEmpty || slug.isEmpty)
         ? null
-        : '$_workerBaseUrl/catalog/banners/$slug.jpg';
+        : '$_workerBaseUrl/catalog/banners/$slug.jpg?v=$kBannerAssetVersion';
 
 /// Reads the first-party content catalog (official packages) from the R2 worker
 /// (`{worker}/catalog/*`), falling back to the bundled `assets/first_party/`
