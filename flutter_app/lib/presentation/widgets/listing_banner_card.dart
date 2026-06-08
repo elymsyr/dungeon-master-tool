@@ -10,6 +10,7 @@ import '../../domain/entities/game_listing.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'banner_metrics.dart';
 
 /// Hub `MetadataListTile.topBanner` desenine paralel — marketplace ve game
 /// listings kartları artık her yerde aynı banner yapıyı kullanır.
@@ -144,7 +145,7 @@ Widget _bannerCover({
     }
   }
   return Container(
-    height: 120,
+    height: kBannerCoverHeight,
     decoration: BoxDecoration(
       color: palette.featureCardBg,
       border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
@@ -156,8 +157,8 @@ Widget _bannerCover({
             bytes,
             fit: BoxFit.cover,
             width: double.infinity,
-            height: 120,
-            cacheHeight: 240,
+            height: kBannerCoverHeight,
+            cacheHeight: kBannerCoverCacheHeight,
             errorBuilder: (_, _, _) => Icon(
               icon,
               size: 48,

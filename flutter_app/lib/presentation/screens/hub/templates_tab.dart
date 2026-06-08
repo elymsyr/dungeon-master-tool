@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/banner_metrics.dart';
 
 /// Read-only templates browser. Lists the built-in D&D 5e schema with a
 /// "View" button that opens the inspector. Templates are no longer
@@ -130,7 +131,7 @@ class _TemplateTile extends StatelessWidget {
           // asset is missing.
           Image.asset(
             'assets/first_party/banners/dnd5e-template.jpg',
-            height: 100,
+            height: kBannerCoverHeight,
             width: double.infinity,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),

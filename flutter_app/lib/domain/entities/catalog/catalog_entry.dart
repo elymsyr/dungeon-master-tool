@@ -25,6 +25,11 @@ class CatalogEntry {
   final String bundledAsset;
   final int sizeBytes;
 
+  /// Banner artwork attribution from `banner-credits.yaml`, baked into the
+  /// manifest by the catalog builder. Both null when the slug has no credit.
+  final String? bannerCreditCreator;
+  final String? bannerCreditLink;
+
   const CatalogEntry({
     required this.itemType,
     required this.slug,
@@ -38,6 +43,8 @@ class CatalogEntry {
     required this.r2Path,
     required this.bundledAsset,
     required this.sizeBytes,
+    this.bannerCreditCreator,
+    this.bannerCreditLink,
   });
 
   int get totalEntities => counts.values.fold(0, (a, b) => a + b);
@@ -56,5 +63,8 @@ class CatalogEntry {
         r2Path: j['r2_path'] as String? ?? '',
         bundledAsset: j['bundled_asset'] as String? ?? '',
         sizeBytes: (j['size_bytes'] as num?)?.toInt() ?? 0,
+        bannerCreditCreator:
+            (j['banner_credit'] as Map?)?['creator'] as String?,
+        bannerCreditLink: (j['banner_credit'] as Map?)?['link'] as String?,
       );
 }
