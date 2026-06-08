@@ -129,12 +129,15 @@ class _TemplateTile extends StatelessWidget {
         children: [
           // Banner cover (built-in D&D 5e template art); collapses if the
           // asset is missing.
-          Image.asset(
-            'assets/first_party/banners/dnd5e-template.jpg',
-            height: kBannerCoverHeight,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          AspectRatio(
+            aspectRatio: kBannerCoverAspect,
+            child: Image.asset(
+              'assets/first_party/banners/dnd5e-template.jpg',
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(12),

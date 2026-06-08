@@ -7,7 +7,7 @@ carry stray EXIF rotation or alpha. This script, in place:
 
   * honors then strips EXIF orientation (some are phone screenshots),
   * flattens any alpha onto black (one .jpg is actually a PNG with RGBA),
-  * center-crops to EXACTLY TARGET_RATIO (3:2) whenever the aspect deviates
+  * center-crops to EXACTLY TARGET_RATIO (5:3) whenever the aspect deviates
     by more than 0.005 (so every banner ends up the same shape; cards display
     them at one fixed height with BoxFit.cover and no edge-crop),
   * downscales to <=1400px wide (never upscales),
@@ -24,10 +24,10 @@ import sys
 
 from PIL import Image, ImageOps
 
-TARGET_RATIO = 1.5   # 3:2 banner shape
+TARGET_RATIO = 2.0     # 2:1 banner shape (matches kBannerCoverAspect)
 RATIO_EPS = 0.005    # crop to exact ratio when |ratio - TARGET_RATIO| exceeds this
 MAX_W = 1400
-QUALITY = 88
+QUALITY = 100
 OVERSIZED = 300 * 1024
 
 BANNER_DIR = os.path.join(os.path.dirname(__file__), "..",

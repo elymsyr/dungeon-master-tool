@@ -162,7 +162,6 @@ class MetadataListTile extends StatelessWidget {
   }
 
   static const double _leftCoverWidth = 96;
-  static const double _topCoverHeight = kBannerCoverHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +266,6 @@ class MetadataListTile extends StatelessWidget {
       bottom: BorderSide(color: palette.featureCardBorder),
     );
     final fallback = Container(
-      height: _topCoverHeight,
       decoration: BoxDecoration(
         color: palette.featureCardBg,
         border: border,
@@ -279,12 +277,17 @@ class MetadataListTile extends StatelessWidget {
               ? palette.featureCardAccent
               : palette.sidebarLabelSecondary),
     );
-    if (!_hasImage) return fallback;
-    return Container(
-      height: _topCoverHeight,
-      decoration: BoxDecoration(border: border),
-      width: double.infinity,
-      child: _coverImage(cacheWidth: 1200, fallback: fallback),
+    if (!_hasImage) {
+      return AspectRatio(aspectRatio: kBannerCoverAspect, child: fallback);
+    }
+    return AspectRatio(
+      aspectRatio: kBannerCoverAspect,
+      child: Container(
+        decoration: BoxDecoration(border: border),
+        width: double.infinity,
+        child: _coverImage(
+            cacheWidth: kBannerCoverCacheWidth, fallback: fallback),
+      ),
     );
   }
 
