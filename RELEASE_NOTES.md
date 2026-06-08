@@ -1,5 +1,55 @@
 # Release Notes
 
+## Dungeon Master Tool v12.0.0 — SRD Content Consolidation, Unified Banner Art, Open5e Import Quality, Final Anon Lockdown (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v12.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Major release. The bundled D&D 5e content gets a **consolidation pass**: the redundant standalone SRD 5.1 / 5.2 Open5e packs are dropped (the built-in `srd_core` already covers ~99% of them via the 2024 renames + generic base items), the two Open5e "Originals" packs merge into one, and the 14 magic items + 7 spells that were only available in those packs are **ported into the built-in `srd_core` pack** (now **v1.0.3**) so nothing is lost. Card banner art is rebuilt around a **single shared 5:2 geometry** so worlds, packages, templates, marketplace, and game-listing cards all render banners identically on mobile and desktop, with re-cropped/optimized source art and per-banner attribution. The Open5e importer gets two quality fixes — **monster entity-name sanitization** and **chargen rule-mechanic wiring** that was silently dropping feat/background effects — and migration **074** closes the last anonymous attack surface flagged by the Supabase linter. No local DB migrations.
+
+### Highlights
+
+#### SRD content consolidation (`srd_core` v1.0.3)
+
+- **Redundant SRD packs dropped** — The standalone Open5e SRD 5.1 and SRD 5.2 packs are removed; the built-in `srd_core` pack already reproduces ~99% of their content through the 2024 entity renames and generic base items, so shipping them as separate installable packs was duplication. The two Open5e "Originals" packs are merged into a single pack.
+- **14 magic items + 7 spells ported into the built-in pack** — Gaps that previously lived only in the now-dropped packs are folded into `srd_core` (bumped to **v1.0.3**): Amulet of Proof against Detection and Location, Arrow-Catching Shield, Candle of Invocation, Cloak of Arachnida, Cloak of the Manta Ray, Dagger of Venom, Elemental Gem, Eversmoking Bottle, Horseshoes of a Zephyr, Javelin of Lightning, Ring of Jumping, Ring of X-ray Vision, Staff of Thunder and Lightning, and Wand of Secrets, plus seven missing spells. 2014-only content is intentionally not carried over.
+
+#### Unified banner art
+
+- **One shared banner geometry (`banner_metrics`)** — World / package / template / marketplace / game-listing cards previously each computed their own banner box (some fixed-height, some cover-cropped), so the same art rendered differently per surface. A new shared `kBannerCoverAspect` (5:2), `kBannerCoverCacheWidth`, and `kCardMaxWidth` make every top-banner surface use one fixed `AspectRatio` box with `cacheWidth`-bounded decode, so source banners (cropped to 5:2) display in full with no edge-crop, identical on mobile and desktop.
+- **Re-cropped & optimized source art** — The first-party banner set is re-cropped to 5:2 and recompressed (`optimize_banners.py`, `crop_banners_gui.py`), the official 2024 banner is added, and the dropped SRD 5.1/5.2 banners are removed. A `banner-credits.yaml` records per-banner attribution.
+
+#### Open5e import quality
+
+- **Monster entity-name sanitization** — Upstream Open5e v2 splits some stat blocks (numbered option lists, roll tables, tiered effects, flavor paragraphs) into phantom action/trait rows whose `name` is junk, which shipped as nonsensical card titles ("1", "1-4: Arm", "Npc: Warlock Of The Genie Lord", "An acolyte is a priest in training…"). New `_cleanChildName` / `_cleanMonsterName` strip the `Npc:` prefix and lowercase title small-words, recover a bold label from the description for purely-numeric names, strip leading list-counts and leaked attack clauses, reduce "Label: effect sentence" to the label, and drop truly-spurious fragments (the parent skips the ref so no orphan ships). Re-scan of residual-bad names = 0; no monster loses all its actions; 0 dangling refs. Packs `a5e-mm`, `ccdx`, `tob`, `tob3` regenerated.
+- **Chargen rule-mechanics wiring** — The importer left several build mechanics in prose the runtime already consumes, so feats/backgrounds silently dropped their effects:
+  - **Background floating ASI** — A5E "+1 to X and one other ability score" emitted only `[X]`; the resolver gates `background_asi` by that list and dropped the floating pick. Widened to all six abilities for the "one other" phrasing (27 backgrounds, e.g. Acolyte).
+  - **Feat ASI of-your-choice** — `_parseFeatAsi` now also matches "An ability score of your choice increases by N" / "Choose one ability score … increases by N" (Destiny's Call, Tenacious) → `asi_amount` + all-six options.
+  - **Feat skill/tool choices** — new `_parseFeatChoiceGroups` emits a `skill_or_tool` `choice_group` for "choose N skills/tools" (Skillful, Crafting Expert), which `seedFeatChoicePendings` turns into a pick prompt; a negative lookahead keeps A5E subsystems and per-use combat "choose" out.
+  - **Skill-proficiency prerequisites** — parsed into a `skill_proficiency` prereq clause (Floriographer, Part of the Pack); junk `*N/A*` prerequisites stripped. The resolver dialog gets a matching `skill_proficiency` case in `_passesPrereqClauses` (OR semantics, reuses `existingSkillNames`).
+  - Packs `a5e-ag`, `a5e-ddg`, `a5e-gpg`, `tdcs`, `toh` regenerated. `monster_mapper_check` green; build 0 unresolved refs; analyze clean.
+
+#### Security — final anon lockdown (migration 074)
+
+- **Internal helper locked to definer-internal calls** — `_assert_admin_rate_limit()` is only ever called from inside other `SECURITY DEFINER` RPCs (where the EXECUTE check is against the function *owner*), so all client-role EXECUTE is revoked. Drops it from linter rule 0029.
+- **Anon beta oracles closed** — 073 left `is_beta_active(uuid)` and `get_beta_status()` on `anon` as "pre-login required", but the code disproves that — both are only called after sign-in, and no anon RLS path reaches them. `is_beta_active(uuid)` was a per-uuid "is this user a beta member?" oracle (ids leak from community posts/listings) and `get_beta_status()` leaked the free-slot count to everyone. Anon EXECUTE revoked; `authenticated` / `service_role` preserved, so real users are unaffected. Linter rule 0028 (anon) → 0. Bodies unchanged, grants-only, idempotent.
+
+### Upgrade notes
+
+- **App version bump:** `11.2.0` → `12.0.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **Cloud migration:** `074_lock_internal_helper.sql` — permission-only (REVOKE), no function bodies change, idempotent. Apply via Supabase Dashboard → SQL Editor. Apply after `072` / `073` if those have not been run yet.
+- **Bundled packs rebuilt** — `srd_core` is now v1.0.3 (the ported magic items/spells); the redundant SRD 5.1/5.2 Open5e packs and one duplicate Originals pack are gone, and the regenerated Open5e packs carry the sanitized monster names + wired feat/background mechanics. Re-install a pack to pick up the richer data; existing installs keep working.
+- **Existing characters/worlds are unaffected** until re-resolved. Ported magic items/spells are immediately available in pickers; wired feat/background mechanics apply on the next wizard or level-up pass.
+
+### Known issues
+
+- **2014-only SRD content dropped intentionally** — Content unique to the 5.1 (2014) packs that has no 2024 analogue is not carried into `srd_core`.
+- **Monster-name recovery is heuristic** — Sanitization keys on description bold labels / list markers; an upstream row with no recoverable label is dropped rather than renamed.
+- Carry-over from v11.2.0: feat effect parsing stays conservative (unconditional armor/shield/speed/Tough-HP grants only); subspecies reclassification on legacy packs is heuristic; shape color picker is per-layer; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
 ## Dungeon Master Tool v11.2.0 — Official-Pack Characters Resolve Everywhere, Typed Feat Prerequisites, Email Confirmation Fix, RPC Security Hardening (Beta)
 
 **Release date:** June 2026

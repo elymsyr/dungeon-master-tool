@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v11.2.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v12.0.0--beta-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?style=flat-square&logo=dart" />
@@ -125,7 +125,7 @@ Everything core works fully offline. Online features (sync, sharing, marketplace
 - **Browse & Download** — Filter by type, language, tags. Atomic download counters; built-in vs. community sections.
 - **Contents Preview** — See what a world or package holds *before* downloading. A publish-time content summary (template name + per-category entity counts and names) drives a preview dialog and richer cards — no need to pull the full payload to know what's inside.
 - **Integrity** — Database-enforced immutability on core metadata prevents silent edits post-publish.
-- **Official Content** — A curated, app-owned catalog of first-party packages served from a public CDN. Surfaces under Marketplace → All / Packages with a details dialog and an Install action; works offline via a bundled fallback manifest. Banner art downloads from the CDN and is materialised as the local package cover on install. Includes Open5e-sourced content — 22 packages spanning thousands of monsters, spells, magic items, and full chargen data (classes, subclasses, species, backgrounds, feats).
+- **Official Content** — A curated, app-owned catalog of first-party packages served from a public CDN. Surfaces under Marketplace → All / Packages with a details dialog and an Install action; works offline via a bundled fallback manifest. Banner art downloads from the CDN and is materialised as the local package cover on install. Includes Open5e-sourced content — 19 packages spanning thousands of monsters, spells, magic items, and full chargen data (classes, subclasses, species, backgrounds, feats).
 
 ---
 
