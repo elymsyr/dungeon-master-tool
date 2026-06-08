@@ -19,8 +19,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:yaml/yaml.dart';
+
 const _open5eDir = 'assets/open5e_packs';
 const _firstPartyDir = 'assets/first_party';
+const _bannerCreditsFile =
+    'assets/first_party/banners/banner-credits.yaml';
 const _catalogVersion = '2026-06-01';
 
 void main(List<String> args) {
@@ -32,9 +36,21 @@ void main(List<String> args) {
     exit(2);
   }
 
+  final credits = _bannerCredits(root);
   final entries = <Map<String, dynamic>>[];
   entries.addAll(_packageEntries(root, open5eManifest));
   entries.addAll(_handAuthoredEntries(root));
+  // Attach banner artwork attribution (creator + source link) to every entry
+  // whose slug has a credit in banner-credits.yaml, so the install dialog can
+  // surface a clickable image credit.
+  var credited = 0;
+  for (final e in entries) {
+    final c = credits[e['slug']];
+    if (c != null) {
+      e['banner_credit'] = c;
+      credited++;
+    }
+  }
 
   final out = <String, dynamic>{
     'catalog_version': _catalogVersion,
@@ -51,6 +67,29 @@ void main(List<String> args) {
   print('Wrote ${file.path}');
   print('  ${entries.length} entr(ies): '
       '${byType.entries.map((e) => "${e.value} ${e.key}").join(", ")}');
+  print('  $credited with banner credit');
+}
+
+/// Parse `banner-credits.yaml` into `slug -> {creator, link}`. Returns empty
+/// when the file is missing so the catalog still builds without it.
+Map<String, Map<String, String>> _bannerCredits(String root) {
+  final file = File('$root/$_bannerCreditsFile');
+  if (!file.existsSync()) return const {};
+  final doc = loadYaml(file.readAsStringSync());
+  final credits = (doc is YamlMap ? doc['credits'] : null);
+  if (credits is! YamlMap) return const {};
+  final out = <String, Map<String, String>>{};
+  credits.forEach((slug, info) {
+    if (info is! YamlMap) return;
+    final link = info['link']?.toString().trim() ?? '';
+    final creator = info['creator']?.toString().trim() ?? '';
+    if (link.isEmpty && creator.isEmpty) return;
+    out[slug.toString()] = {
+      if (creator.isNotEmpty) 'creator': creator,
+      if (link.isNotEmpty) 'link': link,
+    };
+  });
+  return out;
 }
 
 /// One `package` catalog entry per Open5e pack, sourced from its `*.pkg.json`

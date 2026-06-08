@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/first_party_catalog_provider.dart';
 import '../../application/providers/package_provider.dart';
@@ -155,6 +156,15 @@ class OfficialPackageDialog extends ConsumerWidget {
                 label: '${(entry.sizeBytes / 1024).toStringAsFixed(1)} KB',
                 palette: palette,
               ),
+              if (entry.bannerCreditLink != null &&
+                  entry.bannerCreditLink!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _BannerCredit(
+                  creator: entry.bannerCreditCreator,
+                  link: entry.bannerCreditLink!,
+                  palette: palette,
+                ),
+              ],
             ],
           ),
         ),
@@ -236,6 +246,53 @@ class _Pill extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(label, style: TextStyle(fontSize: 11, color: palette.tabText)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tappable banner artwork attribution (creator + source link) sourced from
+/// `banner-credits.yaml`. Opens the source page in the browser.
+class _BannerCredit extends StatelessWidget {
+  final String? creator;
+  final String link;
+  final DmToolColors palette;
+  const _BannerCredit({
+    required this.creator,
+    required this.link,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCreator =
+        creator != null && creator!.isNotEmpty && creator != 'unknown';
+    final label = hasCreator ? 'Banner art: $creator' : 'Banner art source';
+    return InkWell(
+      onTap: () => launchUrl(Uri.parse(link),
+          mode: LaunchMode.externalApplication),
+      child: Row(
+        children: [
+          Icon(Icons.image_outlined,
+              size: 14, color: palette.sidebarLabelSecondary),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.featureCardAccent,
+                decoration: TextDecoration.underline,
+                decorationColor: palette.featureCardAccent,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.open_in_new,
+              size: 12, color: palette.featureCardAccent),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
 import 'asset_ref_image.dart';
+import 'banner_metrics.dart';
 
 /// Cover + name + description + tags içeren shared list satırı.
 /// Hub tab'larında (Characters / Worlds / Packages / Templates) kullanılır.
@@ -161,7 +162,7 @@ class MetadataListTile extends StatelessWidget {
   }
 
   static const double _leftCoverWidth = 96;
-  static const double _topCoverHeight = 120;
+  static const double _topCoverHeight = kBannerCoverHeight;
 
   @override
   Widget build(BuildContext context) {

@@ -20,7 +20,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
       "r2_path": "package/open5e-a5e-ag@1.0.0.json.gz",
-      "size_bytes": 1027103
+      "size_bytes": 1027103,
+      "banner_credit": {
+        "creator": "liuzishan",
+        "link": "https://www.magnific.com/free-photo/two-travelers-discovered-ruins-ancient-city-dense-forest-3d-illustration_15174550.htm#fromView=author&page=1&position=11&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
+      }
     },
     {
       "item_type": "package",
@@ -37,7 +41,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ddg.pkg.json",
       "r2_path": "package/open5e-a5e-ddg@1.0.0.json.gz",
-      "size_bytes": 23469
+      "size_bytes": 23469,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://fistfulofmeeples.wordpress.com/wp-content/uploads/2020/11/gauntlgrym.png"
+      }
     },
     {
       "item_type": "package",
@@ -54,7 +62,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-gpg.pkg.json",
       "r2_path": "package/open5e-a5e-gpg@1.0.0.json.gz",
-      "size_bytes": 15241
+      "size_bytes": 15241,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.goodfon.com/fantasy/wallpaper-nikolai-lebedev-kingdom-of-ashland-art.html"
+      }
     },
     {
       "item_type": "package",
@@ -73,7 +85,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-mm.pkg.json",
       "r2_path": "package/open5e-a5e-mm@1.0.0.json.gz",
-      "size_bytes": 3291763
+      "size_bytes": 3291763,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.polygon.com/24172797/dnd-dungeons-dragons-core-rulebook-cover-art-gallery-phb-dmg-mm/"
+      }
     },
     {
       "item_type": "package",
@@ -94,7 +110,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-bfrd.pkg.json",
       "r2_path": "package/open5e-bfrd@1.0.0.json.gz",
-      "size_bytes": 2202922
+      "size_bytes": 2202922,
+      "banner_credit": {
+        "creator": "liuzishan",
+        "link": "https://www.magnific.com/free-photo/digital-painting-ancient-warships-traveling-rough-seas_14402173.htm#fromView=author&page=2&position=29&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
+      }
     },
     {
       "item_type": "package",
@@ -113,7 +133,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-ccdx.pkg.json",
       "r2_path": "package/open5e-ccdx@1.0.0.json.gz",
-      "size_bytes": 2560473
+      "size_bytes": 2560473,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.belloflostsouls.net/wp-content/uploads/2024/08/dnd-dungeons-dragson-5.5e-monster-manual-skeletons-header.jpg"
+      }
     },
     {
       "item_type": "package",
@@ -130,7 +154,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepm.pkg.json",
       "r2_path": "package/open5e-deepm@1.0.0.json.gz",
-      "size_bytes": 1164350
+      "size_bytes": 1164350,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.gamepur.com/guides/how-one-dnd-has-changed-the-wizard-class"
+      }
     },
     {
       "item_type": "package",
@@ -147,7 +175,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-deepmx.pkg.json",
       "r2_path": "package/open5e-deepmx@1.0.0.json.gz",
-      "size_bytes": 121868
+      "size_bytes": 121868,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.polygon.com/dnd-dungeons-dragons-circle-magic-spells-best-use/"
+      }
     },
     {
       "item_type": "package",
@@ -164,7 +196,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-kp.pkg.json",
       "r2_path": "package/open5e-kp@1.0.0.json.gz",
-      "size_bytes": 72474
+      "size_bytes": 72474,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://nerdarchy.com/surprise-entertain-and-terrify-5e-dd-heroes-with-tome-of-beasts-2-from-kobold-press/"
+      }
     },
     {
       "item_type": "package",
@@ -184,7 +220,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
       "r2_path": "package/open5e-open5e@1.0.0.json.gz",
-      "size_bytes": 163562
+      "size_bytes": 163562,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://screenrant.com/dnd-best-free-adventures/"
+      }
     },
     {
       "item_type": "package",
@@ -201,7 +241,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-spells-that-dont-suck.pkg.json",
       "r2_path": "package/open5e-spells-that-dont-suck@1.0.0.json.gz",
-      "size_bytes": 491918
+      "size_bytes": 491918,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.thegamer.com/dungeons-dragons-underrated-spells-uses/"
+      }
     },
     {
       "item_type": "package",
@@ -223,7 +267,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tdcs.pkg.json",
       "r2_path": "package/open5e-tdcs@1.0.0.json.gz",
-      "size_bytes": 90305
+      "size_bytes": 90305,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.dndspeak.com/wp-content/uploads/2022/02/art-city-town-paint-painting-fantastic-deviantart-fantasy-wo.jpg"
+      }
     },
     {
       "item_type": "package",
@@ -242,7 +290,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob.pkg.json",
       "r2_path": "package/open5e-tob@1.0.0.json.gz",
-      "size_bytes": 2921476
+      "size_bytes": 2921476,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://drawyourweapon.com/dungeons-and-dragons-art/"
+      }
     },
     {
       "item_type": "package",
@@ -261,7 +313,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob-2023.pkg.json",
       "r2_path": "package/open5e-tob-2023@1.0.0.json.gz",
-      "size_bytes": 3299444
+      "size_bytes": 3299444,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.belloflostsouls.net/2024/11/dd-monster-manual-previews-hidden-in-the-free-adventures.html"
+      }
     },
     {
       "item_type": "package",
@@ -280,7 +336,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob2.pkg.json",
       "r2_path": "package/open5e-tob2@1.0.0.json.gz",
-      "size_bytes": 2800815
+      "size_bytes": 2800815,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://arstechnica.com/gaming/2016/02/reviewed-dungeons-dragons-5th-edition/"
+      }
     },
     {
       "item_type": "package",
@@ -299,7 +359,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob3.pkg.json",
       "r2_path": "package/open5e-tob3@1.0.0.json.gz",
-      "size_bytes": 1905417
+      "size_bytes": 1905417,
+      "banner_credit": {
+        "creator": "unknown",
+        "link": "https://www.belloflostsouls.net/wp-content/uploads/2025/07/Dnd-gelatinous-cube-2025-e1753770574655.jpg"
+      }
     },
     {
       "item_type": "package",
@@ -321,7 +385,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
       "r2_path": "package/open5e-toh@1.0.0.json.gz",
-      "size_bytes": 1183628
+      "size_bytes": 1183628,
+      "banner_credit": {
+        "creator": "liuzishan",
+        "link": "https://www.magnific.com/free-photo/challenger-stands-front-spooky-castle-illustration_14402210.htm#fromView=search&page=1&position=11&uuid=37bc4aac-de5b-4771-b758-f3ced966bee5&query=Dnd+art"
+      }
     },
     {
       "item_type": "package",
@@ -338,7 +406,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-vom.pkg.json",
       "r2_path": "package/open5e-vom@1.0.0.json.gz",
-      "size_bytes": 1983667
+      "size_bytes": 1983667,
+      "banner_credit": {
+        "creator": "liuzishan",
+        "link": "https://www.magnific.com/free-photo/wizard-dark-dungeon-illustration_14402228.htm#fromView=search&page=1&position=4&uuid=13bf4f9f-f40a-411d-94a7-969d828be57f&query=tomb+of+monsters+dnd+art"
+      }
     },
     {
       "item_type": "package",
@@ -355,7 +427,11 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-wz.pkg.json",
       "r2_path": "package/open5e-wz@1.0.0.json.gz",
-      "size_bytes": 109052
+      "size_bytes": 109052,
+      "banner_credit": {
+        "creator": "liuzishan",
+        "link": "https://www.magnific.com/free-photo/terrible-fantasy-scenes-digital-illustrations_14541107.htm"
+      }
     }
   ]
 }
