@@ -500,7 +500,37 @@ void _parseFeatPrereq(
     });
   }
 
+  // Skill proficiency gate — "Proficiency in the X skill" or "Proficiency in one
+  // of the following skills: A, B, C" (OR semantics: any one satisfies). Enforced
+  // by the resolver dialog's `_passesPrereqClauses` skill_proficiency case.
+  final skillNames = <Map<String, String>>[];
+  for (final m in RegExp(r'proficiency in the\s+([A-Za-z ]+?)\s+skill',
+          caseSensitive: false)
+      .allMatches(prereq)) {
+    skillNames.addAll(_refListFromText(norm, 'skill', m.group(1)!, ci: true));
+  }
+  final listSkill =
+      RegExp(r'following skills?:\s*([A-Za-z ,]+)', caseSensitive: false)
+          .firstMatch(prereq);
+  if (listSkill != null) {
+    skillNames
+        .addAll(_refListFromText(norm, 'skill', listSkill.group(1)!, ci: true));
+  }
+  if (skillNames.isNotEmpty) {
+    clauses.add({
+      'type': 'skill_proficiency',
+      'skill_options': _dedupeByName(skillNames),
+    });
+  }
+
   if (clauses.isNotEmpty) attrs['prereq_clauses'] = clauses;
+}
+
+/// A prerequisite string that carries no real gate ("*N/A*", "N/A", "-", "—",
+/// "None", "*"). Punctuation/markup is stripped before the emptiness check.
+bool _isJunkPrereq(String s) {
+  final t = s.replaceAll(RegExp(r'[*_\s/.—–-]'), '').toLowerCase();
+  return t.isEmpty || t == 'na' || t == 'none' || t == 'nil';
 }
 
 /// Feat ASI benefit → `asi_amount` / `asi_max_score` / `asi_ability_options`
@@ -544,6 +574,39 @@ void _parseFeatPrereq(
       options: [for (final n in _allAbilities) lookup('ability', n)],
     );
   }
+  // "An/one ability score of your choice increases by N" (Destiny's Call) — the
+  // player picks which ability at the featAsi prompt; all six are options.
+  final choiceIncr = RegExp(
+    r'(?:an|one)\s+ability score\s+of your choice\s+increases?\s+by\s+(\d+)'
+    r'(?:[^.]*?maximum of\s+(\d+))?',
+    caseSensitive: false,
+  ).firstMatch(desc);
+  if (choiceIncr != null) {
+    return (
+      amount: int.parse(choiceIncr.group(1)!),
+      maxScore:
+          choiceIncr.group(2) != null ? int.parse(choiceIncr.group(2)!) : 20,
+      options: [for (final n in _allAbilities) lookup('ability', n)],
+    );
+  }
+  // "Choose one ability score. The chosen ability score increases by N…"
+  // (Tenacious) — split across two sentences, so confirm the pick clause and the
+  // increase clause separately before emitting the same all-six ASI.
+  if (RegExp(r'choose\s+(?:one|an)\s+ability score\b', caseSensitive: false)
+      .hasMatch(desc)) {
+    final incr = RegExp(
+      r'(?:chosen\s+ability\s+score|that\s+(?:ability\s+)?score|ability\s+score)'
+      r'\s+increases?\s+by\s+(\d+)(?:[^.]*?maximum of\s+(\d+))?',
+      caseSensitive: false,
+    ).firstMatch(desc);
+    if (incr != null) {
+      return (
+        amount: int.parse(incr.group(1)!),
+        maxScore: incr.group(2) != null ? int.parse(incr.group(2)!) : 20,
+        options: [for (final n in _allAbilities) lookup('ability', n)],
+      );
+    }
+  }
   return null;
 }
 
@@ -581,6 +644,38 @@ List<Map<String, dynamic>> _parseFeatEffects(String desc) {
     out.add(effect('hp_bonus_per_level', value: 2));
   }
   return out;
+}
+
+/// Feat benefit "choose N skills/tools of your choice" → a `choice_group`
+/// effect the resolver dialog renders as a skill/tool picker (matches the
+/// built-in Skilled feat). Fires only on an explicit build grant — a number
+/// word directly before `skills`/`tools`. Per-use "choose" (a die / a target /
+/// to do X) never matches (no number+noun), and weapon/language picks have no
+/// runtime `pick_kind`, so they stay in the folded prose.
+List<Map<String, dynamic>> _parseFeatChoiceGroups(String desc) {
+  final m = RegExp(
+    r'(?:choose|gain proficiency (?:in|with)|proficiency (?:in|with)|gain)\s+'
+    r'(\w+)\s+(?:skills?|tools?)\b'
+    // Reject A5E subsystems that read as "<N> skill tricks / specialties / …"
+    // (skill/tool followed by another noun) — those aren't proficiency picks.
+    r'(?!\s+(?:trick|knack|tradition|specialt|lesson|die|dice))',
+    caseSensitive: false,
+  ).firstMatch(desc);
+  if (m == null) return const [];
+  final pick = _numberWord(m.group(1)!);
+  if (pick == null || pick < 1) return const [];
+  return [
+    {
+      'kind': 'choice_group',
+      'payload': {
+        'group_id': 'skills',
+        'label': 'Skills & Tools',
+        'prompt': 'Choose proficiencies',
+        'pick_kind': 'skill_or_tool',
+        'pick': pick,
+      },
+    },
+  ];
 }
 
 /// Innate alternate speeds from a trait. Skips conditional/temporary grants
@@ -826,11 +921,23 @@ void mapBackgrounds({
     }
     final abilText = descOfType('ability_score');
     if (abilText != null) {
-      final abilities = _refListFromText(norm, 'ability', abilText);
+      final named = _refListFromText(norm, 'ability', abilText);
+      // A5E phrasing "+1 to X and one other ability score" grants the named +1
+      // plus a floating +1 to any other ability. The resolver gates
+      // `background_asi` by `ability_score_options` (character_resolver.dart),
+      // so a single-named option silently drops the player's floating pick —
+      // widen to all six abilities. SRD-2024's three-named distribution stays.
+      final floating = RegExp(
+        r'one\s+other\s+abilit|another\s+abilit|other\s+ability\s+score',
+        caseSensitive: false,
+      ).hasMatch(abilText);
+      final abilities = floating
+          ? [for (final n in _allAbilities) lookup('ability', n)]
+          : named;
       if (abilities.isNotEmpty) {
         attrs['ability_score_options'] = abilities;
         // SRD-2024 p.83: three offered abilities → player picks +2/+1 or +1/+1/+1.
-        if (abilities.length >= 3) {
+        if (!floating && abilities.length >= 3) {
           attrs['asi_distribution_options'] = ['+2/+1', '+1/+1/+1'];
         }
       }
@@ -878,7 +985,10 @@ void mapFeats({
   for (final f in feats) {
     final name = (f['name'] as String?)?.trim();
     if (name == null || name.isEmpty) continue;
-    final prereq = (f['prerequisite'] as String?)?.trim() ?? '';
+    var prereq = (f['prerequisite'] as String?)?.trim() ?? '';
+    // Junk prerequisites ("*N/A*", "N/A", "-", "None") aren't real gates — drop
+    // them so they neither render a "Prerequisite: N/A" line nor block.
+    if (_isJunkPrereq(prereq)) prereq = '';
     final rawDesc = (f['desc'] as String?)?.trim() ?? '';
     var head = rawDesc;
     if (prereq.isNotEmpty) head = '**Prerequisite:** $prereq\n\n$head';
@@ -907,7 +1017,10 @@ void mapFeats({
       attrs['asi_max_score'] = asi.maxScore;
       attrs['asi_ability_options'] = asi.options;
     }
-    final effects = _parseFeatEffects(benefitText);
+    final effects = [
+      ..._parseFeatEffects(benefitText),
+      ..._parseFeatChoiceGroups(benefitText),
+    ];
     if (effects.isNotEmpty) attrs['effects'] = effects;
     _addUnique(pack, slug: 'feat', name: name, source: source,
         description: desc, tags: const [], attributes: attrs);

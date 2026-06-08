@@ -587,6 +587,21 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           } else if (!widget.proficientWeaponClasses.contains(wc)) {
             return false;
           }
+        case 'skill_proficiency':
+          // OR semantics — proficiency in ANY one of the listed skills satisfies.
+          final opts = raw['skill_options'];
+          if (opts is! List || opts.isEmpty) break;
+          var anyMet = false;
+          for (final o in opts) {
+            final id = resolveEntityRef(o, widget.entities);
+            final name = (id == null ? null : widget.entities[id]?.name) ??
+                (o is Map ? o['name'] as String? : null);
+            if (name != null && widget.existingSkillNames.contains(name)) {
+              anyMet = true;
+              break;
+            }
+          }
+          if (!anyMet) return false;
         default:
           break; // 'other' / unknown → never blocks
       }
