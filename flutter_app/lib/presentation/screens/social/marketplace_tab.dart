@@ -14,6 +14,7 @@ import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/banner_metrics.dart';
 import '../../widgets/connection_error_view.dart';
 import '../../widgets/marketplace_listing_tile.dart';
 import '../../widgets/official_packages_catalog_view.dart';
@@ -90,7 +91,10 @@ class _MarketplaceFeed extends ConsumerWidget {
         invalidateCachePrefix('marketplace:');
         ref.invalidate(marketplaceProvider);
       },
-      child: ListView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: kCardMaxWidth),
+          child: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           _FilterBar(filters: filters, palette: palette),
@@ -155,6 +159,8 @@ class _MarketplaceFeed extends ConsumerWidget {
             const SoundpackCatalogView(),
           ],
         ],
+          ),
+        ),
       ),
     );
   }

@@ -144,32 +144,34 @@ Widget _bannerCover({
       bytes = null;
     }
   }
-  return Container(
-    height: kBannerCoverHeight,
-    decoration: BoxDecoration(
-      color: palette.featureCardBg,
-      border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
-    ),
-    alignment: Alignment.center,
-    clipBehavior: Clip.antiAlias,
-    child: bytes != null
-        ? Image.memory(
-            bytes,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: kBannerCoverHeight,
-            cacheHeight: kBannerCoverCacheHeight,
-            errorBuilder: (_, _, _) => Icon(
+  return AspectRatio(
+    aspectRatio: kBannerCoverAspect,
+    child: Container(
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
+      ),
+      alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
+      child: bytes != null
+          ? Image.memory(
+              bytes,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              cacheWidth: kBannerCoverCacheWidth,
+              errorBuilder: (_, _, _) => Icon(
+                icon,
+                size: 48,
+                color: palette.featureCardAccent,
+              ),
+            )
+          : Icon(
               icon,
               size: 48,
               color: palette.featureCardAccent,
             ),
-          )
-        : Icon(
-            icon,
-            size: 48,
-            color: palette.featureCardAccent,
-          ),
+    ),
   );
 }
 
