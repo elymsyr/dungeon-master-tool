@@ -22,6 +22,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/banner_metrics.dart';
 import '../../widgets/character_stat_chips.dart';
 import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -138,7 +139,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: const BoxConstraints(maxWidth: kCardMaxWidth),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

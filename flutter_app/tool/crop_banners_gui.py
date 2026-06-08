@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Interactive banner cropper — pick the crop yourself, ratio stays locked.
 
-Opens each first-party banner in turn and shows a fixed-aspect (2:1) crop box
+Opens each first-party banner in turn and shows a fixed-aspect (5:2) crop box
 over it. You position/size the box; the ratio never changes. On save the box
 is cropped from the ORIGINAL pixels, downscaled to <=1400px wide, and written
 back in place as JPEG q88 (same output contract as optimize_banners.py).
@@ -25,9 +25,9 @@ import tkinter as tk
 
 from PIL import Image, ImageTk
 
-TARGET_RATIO = 2 / 1          # width / height (matches kBannerCoverAspect)
+TARGET_RATIO = 5 / 2          # width / height (matches kBannerCoverAspect)
 MAX_W = 1400
-QUALITY = 88
+QUALITY = 100
 VIEW_MAX = (1100, 760)        # max on-screen image size
 
 BANNER_DIR = os.path.join(os.path.dirname(__file__), "..",
@@ -192,7 +192,7 @@ def main():
         print("no banners found", file=sys.stderr)
         sys.exit(1)
     root = tk.Tk()
-    root.title("banner cropper (2:1 locked)")
+    root.title("banner cropper (5:2 locked)")
     Cropper(root, paths)
     root.mainloop()
 
