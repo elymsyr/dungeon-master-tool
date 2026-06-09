@@ -1,2414 +1,680 @@
-# Entity Audit Log
+# Entity Audit Log — Official & Built-in Packages
 
-> Automated System Architecture Inspection of the **SRD 5.2.1 Core** built-in/official package
-> (`flutter_app/lib/domain/entities/schema/builtin/srd_core/`), the only official + built-in
-> content pack shipped by the app. Generated read-only against branch `list`.
->
-> **Entities reviewed: 2341.** Each line records the data-structure / mechanics verdict
-> against the three inspection criteria (Unimplemented Prerequisites · Missing Mechanics ·
-> Poor Data Structure). "Clean" = well-structured with mechanics applied (or correctly
-> narrative-by-design). See `system_mechanics_roadmap.md` for the system-wide rollup.
+> Automated System Architecture Inspector · audit date **2026-06-09** · branch `list`
 
-## Equipment — Weapons (`weapons.dart`)
+## Scope & Methodology
 
-- **Club** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Dagger** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Greatclub** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Handaxe** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Javelin** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Light Hammer** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Mace** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Quarterstaff** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Sickle** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Spear** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Dart** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Light Crossbow** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Shortbow** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Sling** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Battleaxe** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Flail** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Glaive** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Greataxe** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Greatsword** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Halberd** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Lance** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Longsword** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Maul** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Morningstar** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Pike** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Rapier** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Scimitar** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Shortsword** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Trident** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Warhammer** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **War Pick** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Whip** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Blowgun** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Hand Crossbow** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Heavy Crossbow** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Longbow** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Musket** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
-- **Pistol** — Clean — fully typed weapon row (category, damage dice/type, properties, mastery, cost, weight, range). Weapon Mastery resolved by `weapon_mastery_resolver`.
+Two package sources were inspected:
 
-## Equipment — Armor (`armor.dart`)
+1. **Built-in SRD 5.2.1 Core pack** — hand-authored in-code at `flutter_app/lib/domain/entities/schema/builtin/srd_core/` (the structural exemplar; ~488 `packEntity` rows + ~341 spells + ~287 magic items).
+2. **19 official / bundled Open5e packages** — `flutter_app/assets/open5e_packs/*.pkg.json`, also published through the first-party catalog `flutter_app/assets/first_party/manifest.json`. **20,712 entity cards total.**
 
-- **Padded Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Leather Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Studded Leather Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Hide Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Chain Shirt** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Scale Mail** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Breastplate** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Half Plate Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Ring Mail** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Chain Mail** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Splint Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Plate Armor** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
-- **Shield** — Clean — fully typed armor row (base AC, Dex rule, STR requirement, stealth, don/doff). STR-req & stealth enforced by resolver Pass 11.
+Every **character-build entity** (`class`, `subclass`, `species`, `subspecies`, `background`, `feat` — 270 cards) is enumerated individually below with its specific findings. The **reference-content entities** (`spell`, `monster`, `trait`, `creature-action`, `magic-item`, `adventuring-gear` — 20,442 cards) share one identical data shape per type, so they are audited as a class: each pack lists the per-type count, the systematic finding that applies uniformly to every card of that type, and representative card names. "Clean" = correctly typed *and* mechanically wired.
 
-## Equipment — Ammunition (`ammunition.dart`)
+---
 
-- **Arrows** — Clean — typed ammunition row.
-- **Bolts** — Clean — typed ammunition row.
-- **Bullets, Firearm** — Clean — typed ammunition row.
-- **Bullets, Sling** — Clean — typed ammunition row.
-- **Needles** — Clean — typed ammunition row.
+## Built-in: SRD 5.2.1 Core pack (in-code)
 
-## Equipment — Adventuring Gear (`gear.dart`)
+This pack is the **structural reference** — feats carry `category_ref`, typed `prereq_*` fields, `asi_*` gates, and (for 18 of 62 feats) real `effects` Effect-DSL arrays (e.g. *Magic Initiate*, *Skilled* use `choice_group`). Findings:
 
-- **Acid** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Alchemist's Fire** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Antitoxin** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Backpack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Ball Bearings** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Barrel** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Basket** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Bedroll** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Bell** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Blanket** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Block and Tackle** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Book** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Bottle, Glass** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Bucket** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Caltrops** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Candle** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Case, Crossbow Bolt** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Case, Map or Scroll** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Chain** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Chest** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Climber's Kit** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Clothes, Fine** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Clothes, Traveler's** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Component Pouch** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Costume** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Crowbar** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Burglar's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Diplomat's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Dungeoneer's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Entertainer's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Explorer's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Flask** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Grappling Hook** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Healer's Kit** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Holy Water** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Hunting Trap** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Ink** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Ink Pen** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Jug** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Ladder** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Lamp** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Lantern, Bullseye** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Lantern, Hooded** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Lock** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Magnifying Glass** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Manacles** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Map** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Mirror** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Net** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Oil** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Paper** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Parchment** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Perfume** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Poison, Basic** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Pole** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Pot, Iron** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Potion of Healing** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Pouch** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Priest's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Quiver** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Ram, Portable** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Rations** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Robe** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Rope** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Sack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Scholar's Pack** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Shovel** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Signal Whistle** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Spell Scroll (Cantrip)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Spell Scroll (Level 1)** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Spikes, Iron** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Spyglass** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **String** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Tent** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Tinderbox** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Torch** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Vial** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Waterskin** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Saddle, Exotic** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Saddle, Military** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Saddle, Riding** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Feed** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Stabling** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Crystal** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Orb** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Rod** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Staff (Arcane Focus)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Wand (Arcane Focus)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Sprig of Mistletoe** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Wooden Staff (Druidic Focus)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Yew Wand** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Amulet (Holy Symbol)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Emblem (Holy Symbol)** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Reliquary** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Chalk** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Fishing Tackle** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Hammer** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Hourglass** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Mess Kit** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Pick, Miner's** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Piton** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Scale, Merchant's** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Sealing Wax** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Signet Ring** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Soap** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Spellbook** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Whetstone** — Clean — typed gear row (cost, weight, container/utility metadata).
+- **Text-only benefits (44 / 62 feats):** *Alert*, *Savage Attacker*, *Archery* (+2 ranged attack), *Defense* (+1 AC), and 40 others describe numeric/active benefits in the `benefits` markdown with **no `effects` entry**, so those bonuses are not folded into `EffectiveCharacter`.
+- **OR-ability prerequisite not fully enforced:** *Grappler* ("Strength or Dexterity 13+") sets `prereq_min_score: 13` but cannot set a single `prereq_ability_ref` for an OR — the clause-based `prereq_clauses` mechanism that the UI *can* evaluate is authored by **zero** content rows.
+- **Leveled subclass/class features** default to level 1 (no `granted_at_level`).
+- **Spells/magic items** are generated via `_spell()` / `_mi()` helpers with typed metadata but prose effect bodies (same effect-automation gap as the Open5e spells/items below).
 
-## Equipment — Tools (`tools.dart`)
+---
 
-- **Alchemist's Supplies** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Brewer's Supplies** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Calligrapher's Supplies** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Carpenter's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Cartographer's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Cobbler's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Cook's Utensils** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Glassblower's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Jeweler's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Leatherworker's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Mason's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Painter's Supplies** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Potter's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Smith's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Tinker's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Weaver's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Woodcarver's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Disguise Kit** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Forgery Kit** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Herbalism Kit** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Navigator's Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Poisoner's Kit** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Thieves' Tools** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Gaming Set** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Dice Set** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Dragonchess Set** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Playing Card Set** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Three-Dragon Ante Set** — Clean — typed gear row (cost, weight, container/utility metadata).
-- **Bagpipes** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Drum** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Dulcimer** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Flute** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Horn** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Lute** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Lyre** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Pan Flute** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Shawm** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
-- **Viol** — Active-use rule in prose `utilize_description` (DC/damage/save text not a structured, triggerable effect — Missing Mechanics for the active use); item metadata otherwise structured.
+## open5e-a5e-ag — Adventurer's Guide
 
-## Equipment — Mounts (`mounts.dart`)
+*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
+Counts: adventuring-gear 44, background 21, class 1, feat 59, spell 371, subclass 3
 
-- **Camel** — Clean — typed mount/beast row.
-- **Elephant** — Clean — typed mount/beast row.
-- **Draft Horse** — Clean — typed mount/beast row.
-- **Riding Horse** — Clean — typed mount/beast row.
-- **Mastiff** — Clean — typed mount/beast row.
-- **Mule** — Clean — typed mount/beast row.
-- **Pony** — Clean — typed mount/beast row.
-- **Warhorse** — Clean — typed mount/beast row.
+### class (1)
 
-## Equipment — Vehicles (`vehicles.dart`)
+- **Marshal** — Hit die, saving throws, proficiencies and caster kind are typed; **leveled class features and spell lists remain freeform prose with no level field**, so per-level feature granting is unsupported. `primary_ability_ref` empty → multiclass entry prereq cannot be enforced.
 
-- **Carriage** — Clean — typed vehicle row.
-- **Cart** — Clean — typed vehicle row.
-- **Chariot** — Clean — typed vehicle row.
-- **Sled** — Clean — typed vehicle row.
-- **Wagon** — Clean — typed vehicle row.
-- **Galley** — Clean — typed vehicle row.
-- **Keelboat** — Clean — typed vehicle row.
-- **Longship** — Clean — typed vehicle row.
-- **Rowboat** — Clean — typed vehicle row.
-- **Sailing Ship** — Clean — typed vehicle row.
-- **Warship** — Clean — typed vehicle row.
-- **Airship** — Clean — typed vehicle row.
+### subclass (3)
 
-## Equipment — Equipment Packs (`packs.dart`)
+- **Gambling General** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Swift Strategist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Talented Tactician** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
 
-- **Burglar's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Diplomat's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Dungeoneer's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Entertainer's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Explorer's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Priest's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
-- **Scholar's Pack** — Clean — typed equipment pack (contents resolved via `ref`).
+### background (21)
 
-## Classes (`classes.dart`)
+- **Acolyte** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Artisan** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Charlatan** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Criminal** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Cultist** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Entertainer** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Exile** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Farmer** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Folk Hero** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Gambler** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Guard** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Guildmember** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Hermit** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Marauder** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Noble** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Outlander** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Sage** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Sailor** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Soldier** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Trader** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Urchin** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
 
-- **Barbarian** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Bard** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Cleric** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Druid** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Fighter** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Monk** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Paladin** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Ranger** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Rogue** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Sorcerer** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Warlock** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
-- **Wizard** — Clean — fully typed (hit die, save/skill/weapon/armor profs, caster kind, multiclass prerequisite ENFORCED, starting-equipment choice groups, leveled features delivered as auto-granted feats).
+### feat (59)
 
-## Subclasses (`subclasses.dart`)
+- **Ace Driver** — Prerequisite is narrative text only ("Proficiency with a type of vehicle") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Athletic** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Attentive** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Battle Caster** — Prerequisite is narrative text only ("Requires the ability to cast at least one spell of 1st-level or higher") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Brutal Attack** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Bull Rush** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Combat Thievery** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Covert Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Crafting Expert** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Crossbow Expertise** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Deadeye** — Prerequisite parsed to structured field(s) and enforced ("8th level or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Deflector** — Prerequisite parsed to structured field(s) and enforced ("Dexterity 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Destiny’s Call** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Dual-Wielding Expert** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Dungeoneer** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Empathic** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Fear Breaker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Fortunate** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Guarded Warrior** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Hardy Adventurer** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Heavily Outfitted** — Prerequisite is narrative text only ("Proficiency with medium armor") → **not enforced** at selection (no `prereq_*` structured field). Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Heavy Armor Expertise** — Prerequisite is narrative text only ("Proficiency with heavy armor") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Heraldic Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Idealistic Leader** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Intuitive** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Keen Intellect** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Lightly Outfitted** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Linguistics Expert** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Martial Scholar** — Prerequisite is narrative text only ("Proficiency with at least one martial weapon") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Medium Armor Expert** — Prerequisite is narrative text only ("Proficiency with medium armor") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Moderately Outfitted** — Prerequisite is narrative text only ("Proficiency with light armor") → **not enforced** at selection (no `prereq_*` structured field). Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Monster Hunter** — Prerequisite parsed to structured field(s) and enforced ("Proficiency with Survival, 8th level or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Mounted Warrior** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Mystical Talent** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Natural Warrior** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Physician** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Polearm Savant** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Power Caster** — Prerequisite is narrative text only ("The ability to cast at least one spell") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Powerful Attacker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Primordial Caster** — Prerequisite is narrative text only ("The ability to cast at least one spell") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Rallying Speaker** — Prerequisite parsed to structured field(s) and enforced ("Charisma 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Resonant Bond** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Rite Master** — Prerequisite parsed to structured field(s) and enforced ("Intelligence or Wisdom 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Shield Focus** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Skillful** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Skirmisher** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Spellbreaker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Stalwart** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Stealth Expert** — Prerequisite parsed to structured field(s) and enforced ("Dexterity 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Street Fighter** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Surgical Combatant** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Survivor** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Swift Combatant** — Prerequisite parsed to structured field(s) and enforced ("8th level or higher"). Proficiency-choice effect wired; remaining benefit prose unmodeled.
+- **Tactical Support** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Tenacious** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Thespian** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Weapons Specialist** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Well-Heeled** — Prerequisite is narrative text only ("Prestige rating of 2 or higher") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Woodcraft Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
 
-- **Path of the Berserker** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **College of Lore** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Life Domain** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Circle of the Land** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Champion** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Warrior of the Open Hand** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Oath of Devotion** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Hunter** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Thief** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Draconic Sorcery** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Fiend Patron** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
-- **Evoker** — Clean — typed `features` list with `granted_at_level` (gated by parent-class level). Some feature riders (extra dice, conditional triggers) carried as prose/`trait` refs — narrative only.
+### spell (371) — audited as a class
 
-## Species (`species.dart`)
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Accelerando*, *Acid Arrow*, *Acid Splash*, *Aid*, *Air Wave*, …
 
-- **Dragonborn** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Dwarf** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Elf** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Gnome** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Goliath** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Halfling** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Human** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Orc** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
-- **Tiefling** — Clean — typed grants (size, speed, senses, damage resistances, trait/action refs).
+### adventuring-gear (44) — audited as a class
 
-## Subspecies (`subspecies.dart`)
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Holy Symbol*, *Common Clothes*, *Robe*, *Prayer Book*, *Prayer Wheel*, …
 
-- **${c.$1} Dragonborn** — Clean — first-class subspecies entity with typed grants.
-- **Hill Dwarf** — Clean — first-class subspecies entity with typed grants.
-- **Mountain Dwarf** — Clean — first-class subspecies entity with typed grants.
-- **Drow** — Clean — first-class subspecies entity with typed grants.
-- **High Elf** — Clean — first-class subspecies entity with typed grants.
-- **Wood Elf** — Clean — first-class subspecies entity with typed grants.
-- **Forest Gnome** — Clean — first-class subspecies entity with typed grants.
-- **Rock Gnome** — Clean — first-class subspecies entity with typed grants.
-- **Cloud Giant** — Clean — first-class subspecies entity with typed grants.
-- **Fire Giant** — Clean — first-class subspecies entity with typed grants.
-- **Frost Giant** — Clean — first-class subspecies entity with typed grants.
-- **Hill Giant** — Clean — first-class subspecies entity with typed grants.
-- **Stone Giant** — Clean — first-class subspecies entity with typed grants.
-- **Storm Giant** — Clean — first-class subspecies entity with typed grants.
-- **Lightfoot Halfling** — Clean — first-class subspecies entity with typed grants.
-- **Stout Halfling** — Clean — first-class subspecies entity with typed grants.
-- **Standard Human** — Clean — first-class subspecies entity with typed grants.
-- **Half-Orc** — Clean — first-class subspecies entity with typed grants.
-- **Abyssal Tiefling** — Clean — first-class subspecies entity with typed grants.
-- **Chthonic Tiefling** — Clean — first-class subspecies entity with typed grants.
-- **Infernal Tiefling** — Clean — first-class subspecies entity with typed grants.
+---
 
-## Backgrounds (`backgrounds.dart`)
+## open5e-a5e-ddg — Dungeon Delver’s Guide
 
-- **Acolyte** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Criminal** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Sage** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Soldier** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Artisan** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Charlatan** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Entertainer** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Farmer** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Guard** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Guide** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Hermit** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Merchant** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Noble** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Sailor** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Scribe** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
-- **Wayfarer** — Clean — typed ASI options + distribution, skill/tool grants, origin feat ref, starting gold + equipment choice groups.
+*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
+Counts: adventuring-gear 9, background 4
 
-## Feats — General / Origin / Fighting Style / Epic Boon (`feats.dart`)
+### background (4)
 
-- **Alert** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Magic Initiate** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Savage Attacker** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Skilled** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Ability Score Improvement** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Grappler** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Archery** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Defense** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Great Weapon Fighting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Two-Weapon Fighting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of Combat Prowess** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of Dimensional Travel** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of Fate** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of Irresistible Offense** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of Spell Recall** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Boon of the Night Spirit** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Boon of Truesight** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Crafter** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Healer** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Lucky** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Musician** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Tavern Brawler** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Tough** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Athlete** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Charger** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Crossbow Expert** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Defensive Duelist** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Dual Wielder** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Durable** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Elemental Adept** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Fey-Touched** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Great Weapon Master** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Heavy Armor Master** — UNENFORCED PREREQUISITE: "Level 4+; proficiency with Heavy Armor" — armor/shield proficiency requirement is narrative-only; the feat-eligibility filter checks only level, ability score and spellcasting. All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Inspiring Leader** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Keen Mind** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Lightly Armored** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mage Slayer** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Martial Adept** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Medium Armor Master** — UNENFORCED PREREQUISITE: "Level 4+; proficiency with Medium Armor" — armor/shield proficiency requirement is narrative-only; the feat-eligibility filter checks only level, ability score and spellcasting. All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Mobile** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Moderately Armored** — UNENFORCED PREREQUISITE: "Level 4+; proficiency with Light Armor" — armor/shield proficiency requirement is narrative-only; the feat-eligibility filter checks only level, ability score and spellcasting. Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mounted Combatant** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Observant** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Polearm Master** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Resilient** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Ritual Caster** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Sentinel** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Shadow-Touched** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sharpshooter** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Shield Master** — UNENFORCED PREREQUISITE: "Level 4+; proficiency with Shields" — armor/shield proficiency requirement is narrative-only; the feat-eligibility filter checks only level, ability score and spellcasting. All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Skill Expert** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Spell Sniper** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Telekinetic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Telepathic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **War Caster** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Weapon Master** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Blind Fighting** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Dueling** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Interception** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Protection** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Thrown Weapon Fighting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Unarmed Fighting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
+- **Deep Hunter** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Dungeon Robber** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Escapee from Below** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Imposter** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
 
-## Feats — Class & Subclass Features, Feature-Options (`feats_class.dart`)
+### adventuring-gear (9) — audited as a class
 
-- **Rage** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Unarmored Defense (Barbarian)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Weapon Mastery (Barbarian)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Danger Sense** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Reckless Attack** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Primal Knowledge** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Extra Attack (Barbarian)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fast Movement** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Feral Instinct** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Instinctive Pounce** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Brutal Strike** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Relentless Rage** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Improved Brutal Strike** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Persistent Rage** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Improved Brutal Strike (II)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Indomitable Might** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Primal Champion** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Bardic Inspiration** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Bard Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Expertise (Bard)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Jack of All Trades** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Font of Inspiration** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Countercharm** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Expertise (Bard II)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Magical Secrets** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Bardic Inspiration (d10)** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Words of Creation** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Bardic Inspiration (d12)** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Superior Bardic Inspiration** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Cleric Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Divine Order: Protector** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Divine Order: Thaumaturge** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Channel Divinity** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sear Undead** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Blessed Strikes** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Divine Intervention** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Improved Blessed Strikes** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Greater Divine Intervention** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Druid Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Primal Order: Warden** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Primal Order: Magician** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Wild Shape** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Wild Companion** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Wild Resurgence** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Improved Elemental Fury** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Beast Spells** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Archdruid** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Second Wind** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Weapon Mastery (Fighter)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Action Surge** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Tactical Mind** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Extra Attack (Fighter)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Tactical Shift** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Indomitable** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Two Extra Attacks** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Studied Attacks** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Three Extra Attacks** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Martial Arts** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Unarmored Defense (Monk)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Monk's Focus** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Unarmored Movement** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Flurry of Blows** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Patient Defense** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Step of the Wind** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Deflect Attacks** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Slow Fall** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Stunning Strike** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Extra Attack (Monk)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Empowered Strikes** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Evasion (Monk)** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Acrobatic Movement** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Deflect Energy** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Perfect Focus** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Superior Defense** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Body and Mind** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Lay On Hands** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Paladin Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Weapon Mastery (Paladin)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Paladin's Smite** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Channel Divinity (Paladin)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Extra Attack (Paladin)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Faithful Steed** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Aura of Protection** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Abjure Foes** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Radiant Strikes** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Restoring Touch** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Aura Expansion** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Favored Enemy** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Ranger Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Weapon Mastery (Ranger)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Deft Explorer** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Roving** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Extra Attack (Ranger)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Expertise (Ranger II)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Tireless** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Relentless Hunter** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Nature's Veil** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Feral Senses** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Foe Slayer** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Expertise (Rogue)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sneak Attack** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Weapon Mastery (Rogue)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Cunning Action** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Steady Aim** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Cunning Strike** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Uncanny Dodge** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Evasion (Rogue)** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Reliable Talent** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Improved Cunning Strike** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Devious Strikes** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Slippery Mind** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Elusive** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Stroke of Luck** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sorcerer Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Innate Sorcery** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Font of Magic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sorcerous Restoration** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Sorcery Incarnate** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Arcane Apotheosis** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Pact Magic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Magical Cunning** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mystic Arcanum (Level 6 Spell)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mystic Arcanum (Level 7 Spell)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mystic Arcanum (Level 8 Spell)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Mystic Arcanum (Level 9 Spell)** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Eldritch Master** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Eldritch Resilience** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Wizard Spellcasting** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Ritual Adept** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Arcane Recovery** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Memorize Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Spell Mastery** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Signature Spells** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Frenzy** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Mindless Rage** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Retaliation** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Intimidating Presence** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Bonus Proficiencies (Lore)** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Cutting Words** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Magical Discoveries** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Peerless Skill** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Disciple of Life** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Channel Divinity: Preserve Life** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Blessed Healer** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Supreme Healing** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Circle Spells** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Land's Aid** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Natural Recovery** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Nature's Ward** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Nature's Sanctuary** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Improved Critical** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Remarkable Athlete** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Additional Fighting Style** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Superior Critical** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Survivor** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Open Hand Technique** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Wholeness of Body** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Fleet Step** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Quivering Palm** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Sacred Weapon** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Aura of Devotion** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Smite of Protection** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Holy Nimbus** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Hunter's Lore** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Hunter's Prey** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Defensive Tactics** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Superior Hunter's Defense** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Multiattack** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Hunter's Strategy** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Colossus Slayer** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Horde Breaker** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Hunter's Lore Option** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Escape the Horde** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Multiattack Defense** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Steel Will** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Volley** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Whirlwind Attack** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Evasion** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Stand Against the Tide** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Uncanny Dodge** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fast Hands** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Second-Story Work** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Supreme Sneak** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Use Magic Device** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Thief's Reflexes** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Resilience** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Draconic Spells** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Elemental Affinity** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Dragon Wings** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Dragon Companion** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Draconic Presence** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Dark One's Blessing** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Vigor** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Dark One's Own Luck** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Hurl Through Hell** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Evocation Savant** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Potent Cantrip** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Sculpt Spells** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Empowered Evocation** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Overchannel** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Careful Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Distant Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Empowered Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Extended Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Heightened Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Quickened Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Seeking Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Subtle Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Transmuted Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Twinned Spell** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Agonizing Blast** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Armor of Shadows** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Devil's Sight** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Eldritch Mind** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Eldritch Sight** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Eldritch Spear** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Fiendish Vigor** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Gaze of Two Minds** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Mask of Many Faces** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Misty Visions** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **One with Shadows** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Repelling Blast** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Pact of the Blade** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Pact of the Chain** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Pact of the Tome** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Ancestor — Acid** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Ancestor — Cold** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Ancestor — Fire** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Ancestor — Lightning** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Draconic Ancestor — Poison** — All benefits in prose `benefits`; no machine-readable `effects` — combat-time / action-economy mechanics unimplemented.
-- **Fiendish Resilience — Acid** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Bludgeoning** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Cold** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Fire** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Lightning** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Necrotic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Piercing** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Poison** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Psychic** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Radiant** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Slashing** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
-- **Fiendish Resilience — Thunder** — Has structured `effects`; any remaining combat-time / action-economy benefits in prose `benefits` are not enforced (no combat engine).
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Chalk*, *Traveler's Clothes*, *Hunting Traps*, *Cartographers' Tools*, *Miner's Pick*, …
 
-## Spells (`spells.dart`)
+---
 
-- **Acid Splash** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Chill Touch** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dancing Lights** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fire Bolt** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Light** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mage Hand** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mending** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Minor Illusion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Poison Spray** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Prestidigitation** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ray of Frost** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sacred Flame** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shocking Grasp** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Spare the Dying** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Thaumaturgy** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Burning Hands** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Charm Person** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Cure Wounds** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Detect Magic** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Healing Word** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hellish Rebuke** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mage Armor** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magic Missile** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shield** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sleep** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Thunderwave** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Aid** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hold Person** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Misty Step** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Scorching Ray** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Web** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Counterspell** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dispel Magic** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fireball** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fly** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Lightning Bolt** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Revivify** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Greater Invisibility** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Polymorph** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Cone of Cold** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hold Monster** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Raise Dead** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Disintegrate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Heal** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Finger of Death** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Teleport** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Power Word Stun** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sunburst** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Meteor Swarm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Power Word Kill** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Time Stop** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wish** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Bless** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Bane** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Command** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Faerie Fire** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Guiding Bolt** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Identify** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Protection from Evil and Good** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sanctuary** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Detect Evil and Good** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Detect Poison and Disease** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Disguise Self** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Speak with Animals** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Spiritual Weapon** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Silence** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mirror Image** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Invisibility** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **See Invisibility** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Suggestion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Levitate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Spike Growth** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Pass Without Trace** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Lesser Restoration** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Moonbeam** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Acid Arrow** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hypnotic Pattern** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Slow** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Haste** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Animate Dead** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Daylight** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Major Image** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sleet Storm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Banishment** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wall of Fire** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Confusion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Stoneskin** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wall of Force** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Greater Restoration** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mass Cure Wounds** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Scrying** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Telekinesis** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Cloudkill** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Druidcraft** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Eldritch Blast** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Guidance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Message** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Produce Flame** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Resistance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shillelagh** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **True Strike** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Vicious Mockery** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Animal Friendship** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Color Spray** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Divine Favor** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Goodberry** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Grease** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hunter's Mark** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Jump** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Longstrider** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Purify Food and Drink** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Silent Image** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hideous Laughter** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Alter Self** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Animal Messenger** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Arcane Lock** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Augury** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Blindness/Deafness** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Calm Emotions** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Continual Flame** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Darkness** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Detect Thoughts** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Enhance Ability** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Find Traps** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Gust of Wind** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Knock** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Locate Object** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magic Weapon** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Protection from Poison** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ray of Enfeeblement** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Rope Trick** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shatter** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Bestow Curse** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Clairvoyance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Create Food and Water** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fear** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Gaseous Form** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Glyph of Warding** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magic Circle** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mass Healing Word** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Phantom Steed** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Plant Growth** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Protection from Energy** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Remove Curse** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sending** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Speak with Dead** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Stinking Cloud** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Tongues** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Water Breathing** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wind Wall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Arcane Eye** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Black Tentacles** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Death Ward** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dimension Door** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Divination** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Faithful Hound** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fire Shield** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Freedom of Movement** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Guardian of Faith** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ice Storm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Locate Creature** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Phantasmal Killer** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Resilient Sphere** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Animate Objects** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Commune** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Elemental** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Contact Other Plane** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dispel Evil and Good** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Flame Strike** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Geas** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Insect Plague** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Legend Lore** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Modify Memory** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Passwall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Planar Binding** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Seeming** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Tree Stride** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wall of Stone** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Chain Lightning** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Circle of Death** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Eyebite** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Globe of Invulnerability** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Harm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Heroes' Feast** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magic Jar** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mass Suggestion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Move Earth** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sunbeam** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **True Seeing** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wall of Ice** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Celestial** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Delayed Blast Fireball** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Etherealness** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Forcecage** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Plane Shift** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Prismatic Spray** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Regenerate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Resurrection** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Reverse Gravity** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Symbol** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Antimagic Field** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Animal Shapes** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Control Weather** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Demiplane** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dominate Monster** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Earthquake** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Holy Aura** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Incendiary Cloud** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Maze** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mind Blank** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Telepathy** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Astral Projection** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Foresight** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Gate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Imprisonment** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mass Heal** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Prismatic Wall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shapechange** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Storm of Vengeance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **True Polymorph** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **True Resurrection** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Weird** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Find Familiar** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Find Steed** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Find the Path** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Antilife Shell** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Antipathy/Sympathy** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Animals** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Minor Elementals** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Woodland Beings** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Conjure Fey** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Divine Word** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dominate Beast** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dominate Person** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fire Storm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Flaming Sphere** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Flesh to Stone** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Forbiddance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Guards and Wards** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hallow** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Heat Metal** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hex** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magic Mouth** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mind Spike** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Arcane Sword** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Pass without Trace** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Planar Ally** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Power Word Heal** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Prayer of Healing** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Programmed Illusion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Project Image** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Reincarnate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Spirit Guardians** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wall of Thorns** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Water Walk** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Word of Recall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Zone of Truth** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Alarm** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Barkskin** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Beacon of Hope** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Befuddlement** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Blight** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Blink** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Blur** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Charm Monster** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Chromatic Orb** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Clone** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Commune with Nature** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Comprehend Languages** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Compulsion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Contagion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Control Water** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Create or Destroy Water** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Creation** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Darkvision** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dream** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Elementalism** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Enlarge/Reduce** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ensnaring Strike** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Entangle** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Enthrall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Expeditious Retreat** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fabricate** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **False Life** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Feather Fall** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Flame Blade** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Fog Cloud** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Freezing Sphere** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Gentle Repose** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Giant Insect** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Glibness** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Hallucinatory Terrain** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Heroism** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ice Knife** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Illusory Script** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Locate Animals or Plants** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Meld into Stone** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mirage Arcane** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Mislead** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Nondetection** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Private Sanctum** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Ray of Sickness** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, spell attack roll, condition application) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Secret Chest** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shield of Faith** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Simulacrum** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Speak with Plants** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Spider Climb** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Starry Wisp** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Stone Shape** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Telepathic Bond** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Teleportation Circle** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Tiny Hut** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Tsunami** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Unseen Servant** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Vitriolic Sphere** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Warding Bond** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Arcane Hand** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Aura of Life** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Awaken** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Divine Smite** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Searing Smite** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Shining Smite** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Summon Dragon** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sorcerous Burst** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Floating Disk** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Inflict Wounds** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Arcanist's Magic Aura** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Call Lightning** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Vampiric Touch** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, spell attack roll, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Blade Barrier** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Create Undead** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Irresistible Dance** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, condition application, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Wind Walk** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Magnificent Mansion** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Contingency** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dissonant Whispers** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (damage dice & higher-level scaling, saving throw / save-for-half) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Dragon's Breath** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Instant Summons** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Phantasmal Force** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (saving throw / save-for-half, concentration tracking) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Sequester** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
-- **Transport via Plants** — Metadata fully structured (level, school, casting time, range, components, duration, class refs, damage-type/save/condition refs). MISSING MECHANICS: the actual effect (utility/narrative effect) is described only in prose `description` — no machine-readable damage/healing/upcast/area model, so the spell does nothing mechanical when cast.
+## open5e-a5e-gpg — Gate Pass Gazette
 
-## Magic Items (`magic_items.dart`)
+*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
+Counts: adventuring-gear 10, background 2
 
-- **Bag of Holding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Cloak of Protection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Boots of Elvenkind** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Potion of Healing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Greater Healing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Wand of Magic Missiles** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Ring of Protection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Ring of Spell Storing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Staff of Healing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Sword of Sharpness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Plate Armor of Etherealness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Vorpal Sword** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cloak of Elvenkind** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Bracers of Defense** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Gauntlets of Ogre Power** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Goggles of Night** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Headband of Intellect** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Boots of Speed** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Winged Boots** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Giant Strength (Hill)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Amulet of Health** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Weapon, +1** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Armor, +1** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Shield, +1** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Potion of Climbing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Potion of Fire Breath** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Spell Scroll** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Animal Friendship** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Diminution** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Flying** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Gaseous Form** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Giant Strength (Hill)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Heroism** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Invisibility** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Mind Reading** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Poison** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Speed** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Water Breathing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Oil of Slipperiness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Oil of Sharpness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Cloak of Resistance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cloak of the Bat** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cloak of Displacement** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Hat of Disguise** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Helm of Telepathy** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Periapt of Wound Closure** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bag of Beans** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bag of Tricks (Gray)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Brooch of Shielding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Decanter of Endless Water** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Driftglobe** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Eyes of Charming** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Eyes of the Eagle** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Figurine of Wondrous Power (Bronze Griffon)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Gem of Brightness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Horn of Blasting** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Immovable Rod** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Lantern of Revealing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Necklace of Adaptation** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Necklace of Fireballs** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Pearl of Power** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Quiver of Ehlonna** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Robe of Eyes** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Robe of Stars** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Robe of the Archmagi** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Robe of Useful Items** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Slippers of Spider Climbing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Stone of Good Luck (Luckstone)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Wand of Fireballs** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of Lightning Bolts** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of the War Mage, +1** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of Web** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of Fire** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of Frost** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of the Magi** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Ring of Three Wishes** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Ring of Free Action** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Invisibility** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Mind Shielding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Regeneration** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Resistance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dragon Slayer** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Flame Tongue** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Frost Brand** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Holy Avenger** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Adamantine Armor** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mithral Armor** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Armor of Resistance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Glamoured Studded Leather** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Apparatus of the Crab** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Cube of Force** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Crystal Ball** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Deck of Many Things** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Eye of Vecna** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Hand of Vecna** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Tome of Clear Thought** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Tome of Leadership and Influence** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Tome of Understanding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Manual of Bodily Health** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Manual of Gainful Exercise** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Manual of Quickness of Action** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mantle of Spell Resistance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Iron Bands of Bilarro** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mirror of Life Trapping** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sphere of Annihilation** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Talisman of Pure Good** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Talisman of Ultimate Evil** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wings of Flying** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Boots of Levitation** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bracers of Archery** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cape of the Mountebank** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Demon Armor** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dimensional Shackles** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Folding Boat** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Giant Strength (Stone)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Giant Strength (Frost/Fire)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Giant Strength (Cloud)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Giant Strength (Storm)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Helm of Brilliance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Helm of Teleportation** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Robe of Scintillating Colors** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource.
-- **Robe of the Magi** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Mirror of Mental Prowess** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Carpet of Flying** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mantle of the Champion** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Necklace of Prayer Beads** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Restorative Ointment** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ammunition, +1** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ammunition, +2** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ammunition, +3** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ammunition of Slaying** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Armor, +2** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Armor, +3** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Shield, +2** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Shield, +3** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Weapon, +2** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Weapon, +3** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Armor of Invulnerability** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Armor of Vulnerability** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Animated Shield** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Amulet of the Planes** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bag of Devouring** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bag of Tricks (Rust)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bag of Tricks (Tan)** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bead of Force** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Bead of Nourishment** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Belt of Dwarvenkind** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Boots of Striding and Springing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Boots of the Winterlands** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Bowl of Commanding Water Elementals** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Broom of Flying** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Censer of Controlling Air Elementals** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Chime of Opening** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Circlet of Blasting** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Cloak of Invisibility** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Crystal Ball of Mind Reading** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Crystal Ball of Telepathy** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cubic Gate** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Dancing Sword** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Deck of Illusions** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Defender** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dragon Orb** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Dragon Scale Mail** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dust of Disappearance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Dust of Dryness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Dust of Sneezing and Choking** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Dwarven Plate** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dwarven Thrower** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Efficient Quiver** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Efreeti Bottle** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Elixir of Health** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Elven Chain** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Eyes of Minute Seeing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Feather Token** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Gem of Seeing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Giant Slayer** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Gloves of Missile Snaring** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Gloves of Swimming and Climbing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Gloves of Thievery** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Hammer of Thunderbolts** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Handy Haversack** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Hat of Many Spells** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Helm of Comprehending Languages** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Horn of Valhalla** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Horseshoes of Speed** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Instant Fortress** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ioun Stone** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Iron Flask** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Luck Blade** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource.
-- **Mace of Disruption** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mace of Smiting** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Mace of Terror** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Manual of Golems** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Marvelous Pigments** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Medallion of Thoughts** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Nine Lives Stealer** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Oathbow** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Oil of Etherealness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Periapt of Health** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Periapt of Proof against Poison** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Philter of Love** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Pipes of Haunting** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Pipes of the Sewers** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Portable Hole** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Clairvoyance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Growth** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Longevity** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Resistance** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Potion of Vitality** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Supreme Healing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Potion of Superior Healing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Quarterstaff of the Acrobat** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Ring of Animal Influence** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Ring of Djinni Summoning** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Elemental Command** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource.
-- **Ring of Evasion** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Ring of Feather Falling** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Shooting Stars** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Ring of Spell Turning** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Ring of Swimming** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Ring of Telekinesis** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of the Ram** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Rod of Absorption** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Rod of Alertness** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Rod of Lordly Might** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Rod of Resurrection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Rod of Rulership** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Rod of Security** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Rope of Climbing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Rope of Entanglement** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Scarab of Protection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource.
-- **Scimitar of Speed** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sending Stones** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sentinel Shield** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Shield of Missile Attraction** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Shield of the Cavalier** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Sovereign Glue** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Spellguard Shield** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Staff of Charming** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of Power** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of Striking** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Staff of Swarming Insects** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of the Python** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of the Woodlands** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Staff of Withering** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Stone of Controlling Earth Elementals** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sun Blade** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sword of Life Stealing** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Sword of Wounding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Talisman of the Sphere** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Thunderous Greatclub** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Trident of Fish Command** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Universal Solvent** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Vicious Weapon** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Wand of Binding** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of Enemy Detection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Wand of Fear** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Wand of Magic Detection** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
-- **Wand of Paralysis** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of Polymorph** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of the War Mage, +2** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of the War Mage, +3** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics). Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Wand of Wonder** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource. Attunement prerequisite is narrative-only (unenforced; attunement slot limit not modeled).
-- **Weapon of Warning** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Well of Many Worlds** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Wind Fan** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Berserker Axe** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Mariner's Armor** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Brazier of Commanding Fire Elementals** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Periapt of Proof Against Poison** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Warmth** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Ring of Water Walking** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Amulet of Proof against Detection and Location** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Arrow-Catching Shield** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Candle of Invocation** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cloak of Arachnida** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Cloak of the Manta Ray** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Dagger of Venom** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Confers a passive numeric/advantage benefit that is NOT applied to the character sheet (Missing Mechanics).
-- **Elemental Gem** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Eversmoking Bottle** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Horseshoes of a Zephyr** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Javelin of Lightning** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of Jumping** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Ring of X-ray Vision** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Staff of Thunder and Lightning** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL).
-- **Wand of Secrets** — POOR DATA STRUCTURE: entire rules text dumped into the single prose `effects`/`description` field (no per-effect DSL). Charges/uses not tracked as a resource.
+### background (2)
 
-## Monsters (`monsters.dart`)
+- **Cursed** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Haunted** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
 
-- **Aboleth** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Goblin Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Skeleton** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Zombie** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Red Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Lich** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Beholder** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Mind Flayer** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ogre** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Owlbear** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hobgoblin Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bandit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Giant Spider** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Kobold Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Orc** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gnoll** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bugbear Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Drow** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Werewolf** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Troll** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hydra** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Vampire** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Balor** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pit Fiend** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Air Elemental** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Earth Elemental** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Fire Elemental** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Water Elemental** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ghoul** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Wight** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Specter** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Animated Armor** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Stone Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hill Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Manticore** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Minotaur** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Basilisk** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cockatrice** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ettin** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Harpy** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Will-o'-Wisp** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Mummy** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Treant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Black Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Blue Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Green Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult White Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Chuul** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Otyugh** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Roper** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Nothic** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Dryad** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gargoyle** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Couatl** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sphinx** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Death Dog** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Knight** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Veteran** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gladiator** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Mage** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Priest** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cult Fanatic** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Spy** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Assassin** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Black Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Blue Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Brass Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bronze Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Copper Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gold Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Green Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Red Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Silver Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **White Dragon Wyrmling** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Black Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Blue Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Brass Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Bronze Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Copper Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Gold Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Green Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Red Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young Silver Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Young White Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Brass Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Bronze Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Copper Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Gold Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Adult Silver Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Black Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Blue Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Brass Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Bronze Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Copper Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Gold Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Green Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Red Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient Silver Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ancient White Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Archmage** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bandit Captain** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Berserker** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Commoner** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cultist** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cultist Fanatic** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Druid** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Guard** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Guard Captain** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hobgoblin Captain** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Noble** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pirate** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pirate Captain** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Priest Acolyte** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sahuagin Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Scout** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Warrior Infantry** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Warrior Veteran** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Tough** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Tough Boss** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bugbear Stalker** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Centaur Trooper** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Goblin Boss** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Goblin Minion** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gnoll Warrior** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Merfolk Skirmisher** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Merrow** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Lemure** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Imp** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bearded Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Barbed Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Chain Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bone Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Horned Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ice Devil** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Erinyes** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Quasit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Dretch** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Vrock** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hezrou** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Glabrezu** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Nalfeshnee** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Marilith** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Incubus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Succubus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Night Hag** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sea Hag** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Green Hag** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Dust Mephit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ice Mephit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Magma Mephit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Steam Mephit** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Magmin** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Azer Sentinel** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Djinni** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Efreeti** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Salamander** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Invisible Stalker** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cloud Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Fire Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Frost Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Storm Giant** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Shadow** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Wraith** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ghost** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ghast** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Mummy Lord** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Vampire Spawn** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Vampire Familiar** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ogre Zombie** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Minotaur Skeleton** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Warhorse Skeleton** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Swarm of Crawling Claws** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Werebear** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Wereboar** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Wererat** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Weretiger** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Animated Flying Sword** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Animated Rug of Smothering** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Clay Golem** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Flesh Golem** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Stone Golem** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Iron Golem** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Shield Guardian** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Homunculus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ankheg** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Awakened Shrub** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Awakened Tree** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Axe Beak** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Behir** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Black Pudding** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Blink Dog** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Bulette** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Chimera** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Cloaker** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Darkmantle** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Doppelganger** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Dragon Turtle** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Drider** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ettercap** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gelatinous Cube** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gibbering Mouther** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gorgon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Gray Ooze** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Grick** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Griffon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Grimlock** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Guardian Naga** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Half-Dragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hell Hound** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Hippogriff** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Kraken** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Lamia** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Medusa** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Mimic** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Minotaur of Baphomet** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Nightmare** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Ochre Jelly** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Oni** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pegasus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Phase Spider** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pseudodragon** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Purple Worm** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Rakshasa** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Remorhaz** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Roc** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Rust Monster** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Satyr** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Seahorse** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Shambling Mound** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Shrieker Fungus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Solar** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Planetar** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Deva** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sphinx of Lore** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sphinx of Valor** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sphinx of Wonder** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Spirit Naga** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Sprite** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Tarrasque** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Troll Limb** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Unicorn** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Violet Fungus** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Winter Wolf** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Worg** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Wyvern** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Xorn** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Banshee** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
-- **Pixie** — Clean — fully structured stat block (size/type/AC/HP/speeds/stat block/CR/senses/traits/actions by `ref`). Referenced trait & action *mechanics* resolve as narrative (not auto-enforced in the VTT combat tracker).
+### adventuring-gear (10) — audited as a class
 
-## Animals & Beasts (`animals.dart`)
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Days Of Rations*, *Person Tent*, *Traveler's Clothes*, *Days Worth Of Rations*, *Bell*, …
 
-- **Wolf** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Eagle** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Dire Wolf** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Tiger** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Lion** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Crocodile** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Boar** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Mastiff** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Riding Horse** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Cat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Rat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Rat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Hawk** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Eagle** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Owl** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Pony** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Camel** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Elephant** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Ape** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Constrictor Snake** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Constrictor Snake** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Frog** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Frog** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Centipede** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Lizard** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Polar Bear** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Warhorse** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Octopus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Brown Bear** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Tyrannosaurus Rex** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Triceratops** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Allosaurus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Pteranodon** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Plesiosaurus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Mammoth** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Rhinoceros** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Killer Whale** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Stirge** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Crab** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Octopus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Shark** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Hunter Shark** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Reef Shark** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Quipper** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Bats** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Insects** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Rats** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Quippers** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Vulture** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Ankylosaurus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Archelon** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Baboon** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Badger** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Bat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Black Bear** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Blood Hawk** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Crab** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Deer** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Draft Horse** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Elk** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Flying Snake** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Ape** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Badger** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Bat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Boar** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Crocodile** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Elk** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Fire Beetle** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Goat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Hyena** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Owl** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Scorpion** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Seahorse** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Spider** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Toad** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Venomous Snake** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Vulture** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Wasp** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Weasel** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Giant Wolf Spider** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Goat** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Hippopotamus** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Hyena** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Jackal** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Lizard** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Mule** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Panther** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Piranha** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Raven** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Saber-Toothed Tiger** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Scorpion** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Spider** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Venomous Snake** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Weasel** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Piranhas** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Ravens** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
-- **Swarm of Venomous Snakes** — Clean — structured stat block (same shape as monsters); trait/action mechanics narrative-only.
+---
 
-## Traits (`traits.dart`)
+## open5e-a5e-mm — Monstrous Menagerie
 
-- **Amphibious** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Legendary Resistance (3/Day)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Magic Resistance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Pack Tactics** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Keen Smell** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Keen Sight** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Keen Hearing** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sunlight Sensitivity** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spider Climb** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Web Sense** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Web Walker** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aggressive** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Brute** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reckless** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Flyby** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Standing Leap** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Undead Fortitude** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aboleth Telepathy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Eldritch Restoration** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Mucous Cloud** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Probing Telepathy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Legendary Resistance (3/Day, or 4/Day in Lair)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fire Aura** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spellcasting (Lich)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Rejuvenation** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Turn Resistance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Antimagic Cone** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Creature Sense** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Magic Resistance (MF)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Keen Sight and Smell** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Martial Advantage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Charge** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Hold Breath** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Pounce** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Running Leap** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Snow Camouflage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Drow)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fey Ancestry** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Shapechanger (Werewolf)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Regeneration** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Death Burst** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **False Appearance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Siege Monster** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Damage Transfer** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sure-Footed** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Druid)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Two Heads** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Wakeful** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Multiple Heads** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reactive Heads** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Acid Absorption** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Magic Weapons** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sneak Attack** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Cunning Action** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Evasion** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stone Camouflage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Earth Glide** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sunlight Hypersensitivity** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Demon)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Magic Resistance (Strong)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Demonic Restoration** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Devil's Sight** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Paralyzing Aura** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Amphibious (Dragon)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Ice Walk** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stench** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tentacles (Chuul)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sense Magic** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Limited Telepathy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tree Stride** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Speak with Beasts and Plants** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Speak with Plants** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **False Appearance (Gargoyle)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spider Climb (Roper)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aversion to Light** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tentacles** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Beast of Burden** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reckless Attacker** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Brave** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spell Resistance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Shielded Mind** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Inscrutable** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Multi-Headed (Hydra)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aura of the Dead** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spellcasting (Mage)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spellcasting (Priest)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spellcasting (Cult Fanatic)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Pack Tactics (Death Dog)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Two-Headed (Death Dog)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Blood Frenzy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Water Breathing** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Hold Breath (Crocodile)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Trampling Charge** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Beast Whisperer** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Swarm** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Echolocation** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Avoidance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Nine Lives Stealer** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Construct Nature** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Plant Camouflage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Frightful Presence** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Sphinx)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Flyby (Bat)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Nimble Escape** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Climb (Animal)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Burrow (Giant Badger)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stealth Master** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Death Burst (Fire Beetle)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Light (Fire Beetle)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Camouflage (Octopus)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Hold Breath (Octopus)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Underwater Camouflage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Ink Cloud** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Water Breathing (Animal)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Charge (Animal)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Mimicry** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Shapechanger (Werecreature)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Hooves (Trampling)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fear Aura** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Hag)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reactive** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Lightning Absorption** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fire Absorption** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Cold Absorption** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Treasure Sense** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Earth Walk** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Heated Body** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Lamia)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Steal Memories** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Blessed by Tyche** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Misty Escape** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Shapechanger (Vampire)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spider Climb (Vampire)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Vampire Weaknesses** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Rakshasa)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Limited Magic Immunity** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Air Form** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Earth Glide (Xorn)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stone Camouflage (Xorn)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Spellcasting (Pixie)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Immutable Form** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sunlight Sensitivity (Acute)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sphinx Spellcasting** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Whelm** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spell Storing (Lich)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Incorporeal Movement** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Divine Awareness** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Iron Scent** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Ooze Cube** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reflective Carapace** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tunneler** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Dwarven Resilience** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stonecunning** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Forge Wise** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Trance** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Keen Senses (Elf)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Elven Lineage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Halfling Lucky** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Naturally Stealthy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Brave** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Halfling Nimbleness** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Resourceful** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Skilled (Human)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Versatile (Human)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Gnomish Cunning** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Powerful Build** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Large Form** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Giant Ancestry** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Otherworldly Presence** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fiendish Legacy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Draconic Ancestry** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Damage Resistance (Dragonborn)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Unarmored Defense (Barbarian)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Unarmored Defense (Monk)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reckless Attack** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Danger Sense** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Weapon Mastery** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Jack of All Trades** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Expertise** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sneak Attack (Rogue)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Cunning Action (Rogue)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Martial Arts** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Arcane Recovery** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Spellcasting Focus** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Divine Order** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Druidic** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Pact Magic** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Eldritch Invocations** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Favored Enemy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Lay on Hands (Pool)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Innate Sorcery** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Dwarven Toughness** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fast Movement** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Feral Instinct** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Frenzy** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Mindless Rage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aura of Protection** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Aura of Courage** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Faithful Steed** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Paladin's Smite** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Radiant Strikes** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tactical Mind** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tactical Shift** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Indomitable** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Improved Critical** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Remarkable Athlete** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Heroic Warrior** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Deft Explorer** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Roving** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Hunter's Prey** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Defensive Tactics** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Tireless** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Cunning Strike** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Reliable Talent** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Slippery Mind** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Open Hand Technique** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Disciple of Life** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Blessed Healer** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Draconic Resilience** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Elemental Affinity** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Dragon Companion** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Dark One's Blessing** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Dark One's Own Luck** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Fiendish Resilience** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Sculpt Spells** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Magical Cunning** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Pact Boon** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Ritual Adept** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Scholar (Wizard)** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Uncanny Metabolism** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Land's Stride** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Nature's Ward** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Empowered Strikes** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Evasion** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Acrobatic Movement** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Perfect Focus** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Stunning Strike** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
-- **Heightened Focus** — Narrative-only — description prose with `trait_kind`; no machine-readable effect. Fine for monster flavor, but any numeric/conditional benefit it grants is not enforced (Missing Mechanics).
+*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
+Counts: creature-action 1657, monster 586, trait 829
 
-## Creature Actions (`creature_actions.dart`)
+### monster (586) — audited as a class
 
-- **Multiattack** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tentacle (Aboleth)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Psychic Drain** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tail Swipe** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Psychic Slash** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Scimitar (Goblin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortbow (Goblin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Nimble Escape** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Wolf)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Skeleton)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortbow (Skeleton)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Zombie)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Brown Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Brown Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Spider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Web (Giant Spider)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Rend (Adult Red Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fire Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Commanding Presence** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Frightful Presence** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tail Attack** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Eldritch Burst** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Paralyzing Touch** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Beholder)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Eye Rays** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Eye Ray (Lair)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tentacles** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mind Blast** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Extract Brain** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatclub** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Javelin (Ogre)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Owlbear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Owlbear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longsword (Hobgoblin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longbow (Hobgoblin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Scimitar (Bandit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Light Crossbow (Bandit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Giant Eagle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Dire Wolf)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Tiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Tiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Lion)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Crocodile)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tusk (Boar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Mastiff)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Riding Horse)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Dagger (Kobold)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sling (Kobold)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Orc)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Javelin (Orc)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Gnoll)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Gnoll)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Morningstar (Bugbear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Javelin (Bugbear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rapier (Drow)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hand Crossbow (Drow)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Werewolf)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Werewolf)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Troll)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Troll)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Hydra)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Vampire Bite** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Charm (Vampire)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Flame Whip (Balor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Lightning Sword (Balor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Pit Fiend)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Air Elemental)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Earth Elemental)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Touch (Fire Elemental)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Water Elemental)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Ghoul)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Ghoul)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Life Drain** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Life Drain (Specter)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Animated Armor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Constrict (Rug)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatclub (Stone Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Stone Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatclub (Hill Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Hill Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Manticore)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail Spike** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Minotaur)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Basilisk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Petrifying Gaze** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Cockatrice)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Battleaxe (Ettin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Morningstar (Ettin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Harpy)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Luring Song** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Shock** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rotting Fist** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Dreadful Glare** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Slam (Treant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Treant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Cat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Rat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Rat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Hawk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Pony)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Camel)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Stomp (Elephant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore (Elephant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Ape)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fist (Ape)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Ape)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Constrictor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Constrict (Constrictor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Snake)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Eagle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Owl)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Frog)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Frog)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Centipede)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Lizard)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Polar Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Polar Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Warhorse)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Velociraptor)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Octopus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Adult Black Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Adult Black Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Adult Black Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Acid Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Adult Blue Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Adult Blue Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Adult Blue Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Lightning Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Adult Green Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Adult Green Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Adult Green Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Poison Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Adult White Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Adult White Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Adult White Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Cold Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Wing Attack** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Frightful Presence (Dragon)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Pincer (Chuul)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Paralyzing Tentacles** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Otyugh)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tentacle (Otyugh)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Roper)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tendril (Roper)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Nothic)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rotting Gaze** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Weird Insight** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Vine Whip (Dryad)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fey Charm** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Gargoyle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Gargoyle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Couatl)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Constrict (Couatl)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Sphinx)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Roar (Sphinx)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Death Dog)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatsword (Knight)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Heavy Crossbow (Knight)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Leadership** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Longsword (Veteran)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Veteran)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Heavy Crossbow (Veteran)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Gladiator)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shield Bash** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Parry** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Arcane Burst** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mace (Priest)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Radiance of the Dawn** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Dagger (Fanatic)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Spy)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hand Crossbow (Spy)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Assassin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Light Crossbow (Assassin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (T-Rex)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (T-Rex)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore (Triceratops)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Stomp (Triceratops)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Allosaurus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Pteranodon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Plesiosaurus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore (Mammoth)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Stomp (Mammoth)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore (Rhinoceros)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Killer Whale)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Proboscis (Stirge)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Giant Crab)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tentacles (Giant Octopus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Shark)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Hunter Shark)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Reef Shark)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Quipper)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Bats)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Insects)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Rats)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Quippers)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Ankylosaurus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Archelon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Baboon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Badger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Bat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Black Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Black Bear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Blood Hawk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Crab)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Deer)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Draft Horse)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Elk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Elk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Flying Snake)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fist (Giant Ape)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Giant Ape)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Giant Badger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Bat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tusk (Giant Boar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Crocodile)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Giant Crocodile)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Giant Elk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Giant Elk)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Fire Beetle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Giant Goat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Hyena)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Giant Owl)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Giant Scorpion)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Giant Scorpion)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Seahorse)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Toad)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Venomous Snake)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Giant Vulture)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Giant Wasp)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Weasel)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Giant Wolf Spider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Goat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Hippopotamus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Hyena)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Jackal)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Lizard)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Mule)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Panther)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pounce (Panther)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Piranha)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Raven)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Saber-Toothed Tiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claw (Saber-Toothed Tiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Scorpion)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Spider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Venomous Snake)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Weasel)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Piranhas)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beaks (Swarm of Ravens)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bites (Swarm of Venomous Snakes)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rend (Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sleep Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Slowing Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Weakening Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Paralyzing Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Repulsion Breath** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Quarterstaff (Mage)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Quarterstaff (Archmage)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spellcasting (Archmage)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Scimitar (Bandit Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pistol (Bandit Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Berserker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Cudgel (Commoner)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sickle (Cultist)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sickle (Druid)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spellcasting (Druid NPC)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Spear (Guard)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Halberd (Guard Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Heavy Crossbow (Guard Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mace (Priest Acolyte)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longsword (Knight)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mace (Noble)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Tough)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatsword (Tough Boss)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Warrior Infantry)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longsword (Warrior Veteran)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Scimitar (Pirate)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rapier (Pirate Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longbow (Scout)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Scout)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Trident (Sahuagin Warrior)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Sahuagin Warrior)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Merfolk Skirmisher)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Harpoon (Merrow)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Merrow)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Trident (Bearded Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beard (Bearded Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Glaive (Barbed Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Barbed Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spiked Chain (Chain Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Bone Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Bone Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fork (Horned Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hurl Flame (Horned Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Ice Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Ice Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Ice Devil)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Lemure)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Imp)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Scourge (Erinyes)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longbow (Erinyes)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mace (Pit Fiend)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fireball (Pit Fiend)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Dretch)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Dretch)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Quasit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pincer (Glabrezu)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Hezrou)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Hezrou)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Marilith)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longsword (Marilith)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Nalfeshnee)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Nalfeshnee)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Vrock)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Vrock)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spores (Vrock)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Claws (Dust Mephit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Ice Mephit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Magma Mephit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Steam Mephit)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Cloud Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Cloud Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatsword (Fire Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Fire Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Frost Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rock (Frost Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Thunderous Greatsword (Storm Giant)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Lightning Strike (Storm Giant)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Withering Touch (Wraith)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Strength-Draining Touch (Shadow)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Rotting Fist (Mummy Lord)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spellcasting (Mummy Lord)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Claws (Vampire Spawn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Vampire Spawn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Vampire Familiar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Ghost)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Etherealness (Ghost)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Horrifying Visage (Ghost)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Ghast)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Ghast)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Ogre Zombie)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Shortsword (Minotaur Skeleton)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Warhorse Skeleton)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slams (Swarm of Crawling Claws)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Werebear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Werebear)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tusks (Wereboar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Wererat)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Weretiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Weretiger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Clay Golem)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Flesh Golem)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Stone Golem)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Iron Golem)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sword (Iron Golem)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Animated Flying Sword)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Smother (Animated Rug of Smothering)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Helmed Horror Shield Guardian)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Homunculus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Invisible Stalker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Magmin)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Azer Sentinel)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Ankheg)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Acid Spray (Ankheg)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Beak (Axe Beak)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Behir)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Lightning Breath (Behir)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Pseudopod (Black Pudding)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Blink Dog)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Teleport (Blink Dog)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Bulette)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pike (Centaur Trooper)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Centaur Trooper)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Chimera)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fire Breath (Chimera)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tail (Cloaker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Attach (Cloaker)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Tentacles (Darkmantle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Doppelganger)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Read Thoughts (Doppelganger)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Dragon Turtle)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Steam Breath (Dragon Turtle)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Claws (Drider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Web Bite (Drider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Ettercap)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Web (Ettercap)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Engulf (Gelatinous Cube)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bites (Gibbering Mouther)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Gnoll Warrior)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Goblin Boss Scimitar** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Goblin Minion Sickle** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Gore (Gorgon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Petrifying Breath (Gorgon)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Pseudopod (Gray Ooze)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Green Hag)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tentacles (Grick)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Griffon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Grimlock)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Guardian Naga)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spit Poison (Guardian Naga)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Spirit Naga)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Half-Dragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Breath Weapon (Half-Dragon)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Hell Hound)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Fire Breath (Hell Hound)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Beak (Hippogriff)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Longsword (Hobgoblin Captain)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tentacles (Kraken)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Lightning Storm (Kraken)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Claws (Lamia)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pseudopod (Mimic)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greataxe (Minotaur of Baphomet)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Night Hag)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Sea Hag)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Nightmare)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Pseudopod (Ochre Jelly)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Oni)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Pegasus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Phase Spider)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Pseudodragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Sting (Pseudodragon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Purple Worm)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail Stinger (Purple Worm)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Rakshasa)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Remorhaz)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Talons (Roc)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Rust Monster)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spear (Salamander)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Salamander)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Ram (Satyr)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Shambling Mound)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spores (Shrieker Fungus)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Slam (Solar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slaying Longbow (Solar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Mace (Planetar)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatsword (Deva)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Roar (Sphinx of Lore)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Shortbow (Sprite)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Succubus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Charm (Succubus)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Tarrasque)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Swallow (Tarrasque)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Slam (Troll Limb)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Hooves (Unicorn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Horn (Unicorn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Spores (Violet Fungus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Winter Wolf)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Cold Breath (Winter Wolf)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bite (Worg)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Wyvern)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Stinger (Wyvern)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Xorn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Xorn)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Awakened Tree)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Awakened Shrub)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Greatclub (Hobgoblin Captain Stalker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Morningstar (Bugbear Stalker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Scimitar (Djinni)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Scimitar (Efreeti)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Snake Hair (Medusa)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Petrifying Gaze (Medusa)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Scimitar (Incubus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Glaive (Oni)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Roc)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Seahorse)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Awakened Tree)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Bite (Cloaker)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Beak (Grick)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Stone Axe (Grimlock)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Griffon)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Hippogriff)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Slam (Shambling Mound)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Engulf (Shambling Mound)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Claw (Sphinx)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Claws (Sphinx of Wonder)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Touch (Sprite)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Wing Attack (Pegasus)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Tail (Wyvern)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Charm (Lamia)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Constrict (Spirit Naga)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Constrict (Guardian Naga)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Corrupting Touch (Banshee)** — Clean — structured attack (to-hit, damage dice/type, reach/range). Any save / condition rider in the prose `description` is not a structured effect (partial).
-- **Horrifying Visage (Banshee)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Wail (Banshee)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Superior Invisibility (Pixie)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Reel In (Roper)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Rage** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Second Wind** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Action Surge** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Bardic Inspiration** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Lay on Hands** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Divine Sense** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Channel Divinity** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Turn Undead** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Wild Shape** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Flurry of Blows** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Patient Defense** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Step of the Wind** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Hunter's Mark (Class)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Sorcery Points** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Eldritch Blast (Class Action)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Breath Weapon (Dragonborn)** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Relentless Endurance** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Adrenaline Rush** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Cloud's Jaunt** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Hill's Tumble** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Stone's Endurance** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Storm's Thunder** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Fire's Burn** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Frost's Chill** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Draconic Flight** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Cutting Words** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Retaliation** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Intimidating Presence** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Preserve Life** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Sacred Weapon** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Abjure Foes** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Wholeness of Body** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Land's Aid** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Nature's Sanctuary** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Dragon Wings** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Deflect Attacks** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Slow Fall** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Steady Aim** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Uncanny Dodge** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Fast Hands** — Action effect described only in prose `description` (no structured damage/save/condition fields).
-- **Cunning Action** — Action effect described only in prose `description` (no structured damage/save/condition fields).
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Aboleth*, *Aboleth Thrall*, *Abominable Snowman*, *Accursed Guardian Naga*, *Accursed Spirit Naga*, …
+
+### trait (829) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Amphibious*, *Innate Spellcasting*, *Sea Changed*, *Camouflage*, *Fire Fear*, …
+
+### creature-action (1657) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Baleful Charm*, *Move*, *Multiattack*, *Slimy Cloud*, *Soul Drain*, …
+
+---
+
+## open5e-bfrd — Black Flag SRD
+
+*Publisher: Kobold Press · License: cc-by-40 · System: 5e-2014*  
+Counts: class 1, creature-action 1339, monster 360, subclass 1, trait 776
+
+### class (1)
+
+- **Mechanist** — Hit die, saving throws, proficiencies and caster kind are typed; **leveled class features and spell lists remain freeform prose with no level field**, so per-level feature granting is unsupported. `primary_ability_ref` empty → multiclass entry prereq cannot be enforced.
+
+### subclass (1)
+
+- **Metallurgist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+
+### monster (360) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Aboleth*, *Acolyte*, *Adult Black Dragon*, *Adult Blue Dragon*, *Adult Brass Dragon*, …
+
+### trait (776) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Aberrant Resilience*, *Amphibious*, *Legendary Resistance (3/Day)*, *Probing Telepathy*, *Slime Pox*, …
+
+### creature-action (1339) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Detect*, *Multiattack*, *Psychic Bolt*, *Psychic Torrent*, *Slime Drain*, …
+
+---
+
+## open5e-ccdx — Creature Codex
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: creature-action 1148, monster 356, trait 921
+
+### monster (356) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Aatxe*, *Acid Ant*, *Adult Light Dragon*, *Adult Wasteland Dragon*, *Agnibarra*, …
+
+### trait (921) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Charge*, *Know Thoughts*, *Magic Resistance*, *Shapechanger*, *Explosive Death*, …
+
+### creature-action (1148) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Bulwark*, *Detect*, *Gore*, *Gore (Aatxe)*, *Paw the Earth*, …
+
+---
+
+## open5e-deepm — Deep Magic for 5th Edition
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: spell 515
+
+### spell (515) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Abhorrent Apparition*, *Accelerate*, *Acid Gate*, *Acid Rain*, *Adjust Position*, …
+
+---
+
+## open5e-deepmx — Deep Magic Extended
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: spell 64
+
+### spell (64) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Absolute Command*, *Amplify Ley Field*, *Animate Construct*, *Anomalous Object*, *Armored Heart*, …
+
+---
+
+## open5e-kp — Kobold Press Compilation
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: spell 31
+
+### spell (31) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Ambush*, *Blood Strike*, *Conjure Manabane Swarm*, *Curse of Formlessness*, *Delay Passing*, …
+
+---
+
+## open5e-open5e — Open5e Originals
+
+*Publisher: Open5e · License: ogl-10a · System: 5e-2014*  
+Counts: adventuring-gear 8, background 2, spell 2, subclass 17, subspecies 1
+
+### subclass (17)
+
+- **Abjurationist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Arcane Warrior** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of the Many** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Skalds** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Demise Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Eldritch Trickster** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Mischief Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oathless Betrayer** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **School of Abjuring and Warding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **School of Divining and Soothsaying** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **School of Illusions and Phantasms** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **School of Necrotic Arts** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Storm Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **The Ancient Fey Court** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **The Great Elder Thing** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of Shadowdancing** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Wyrd Magic** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+
+### subspecies (1)
+
+- **Stoor Halfling** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+
+### background (2)
+
+- **Con Artist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Scoundrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+
+### spell (2) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Eye bite*, *Ray of Sickness*
+
+### adventuring-gear (8) — audited as a class
+
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Fine Clothes*, *Disguise Kit*, *Tools For Your Typical Con*, *Pouch Containing*, *Bag Of 1000 Ball Bearings*, …
+
+---
+
+## open5e-spells-that-dont-suck — Spells That Don't Suck
+
+*Publisher: SoMany Robots · License: cc-by-40 · System: 5e-2014*  
+Counts: spell 180
+
+### spell (180) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Adaptation*, *Alter Weather*, *Animal Ally*, *Animal Transformation*, *Arcane Shelter*, …
+
+---
+
+## open5e-tdcs — Tal'dorei Campaign Setting
+
+*Publisher: Green Ronin · License: ogl-10a · System: 5e-2014*  
+Counts: adventuring-gear 13, background 5, creature-action 10, feat 1, monster 4, subclass 4, trait 11
+
+### subclass (4)
+
+- **Blood Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of the Juggernaut** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Runechild** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Cerulean Spirit** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+
+### background (5)
+
+- **Crime Syndicate Member** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Elemental Warden** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Fate-Touched** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Lyceum Student** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Recovered Cultist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+
+### feat (1)
+
+- **Rapid Drinker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+
+### adventuring-gear (13) — audited as a class
+
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Dark Common Clothes Including A Hood*, *Tools To Match Your Choice Of Tool Proficiency*, *Belt Pouch Containing 10g*, *Staff*, *Hunting Gear*, …
+
+### monster (4) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Firetamer*, *Skydancer*, *Stoneguard*, *Waverider*
+
+### trait (11) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Flameform*, *Spellcasting*, *Evasion*, *Flyby*, *Skysail*, …
+
+### creature-action (10) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Flamecharm*, *Scimitar*, *Multiattack*, *Skysail Staff*, *Slow Fall*, …
+
+---
+
+## open5e-tob — Tome of Beasts
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: creature-action 1303, monster 391, trait 1039
+
+### monster (391) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Aboleth, Nihilith*, *Abominable Beauty*, *Accursed Defiler*, *Adult Cave Dragon*, *Adult Flame Dragon*, …
+
+### trait (1039) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Dual State*, *Infecting Telepathy*, *Nihileth's Lair*, *Regional Effects*, *Undead Fortitude*, …
+
+### creature-action (1303) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Detect*, *Enslave*, *Form Swap*, *Multiattack*, *Psychic Drain*, …
+
+---
+
+## open5e-tob-2023 — Tome of Beasts 1 (2023 Edition)
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: creature-action 1658, monster 408, trait 1021
+
+### monster (408) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Abominable Beauty*, *Accursed Defiler*, *Adult Cave Dragon*, *Adult Flame Dragon*, *Adult Mithral Dragon*, …
+
+### trait (1021) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Burning Touch*, *Cursed Existence*, *Sand Shroud*, *Undead Nature*, *Darkness Aura*, …
+
+### creature-action (1658) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Blinding Gaze*, *Deafening Voice*, *Multiattack*, *Slam*, *Multiattack (Accursed Defiler)*, …
+
+---
+
+## open5e-tob2 — Tome of Beasts 2
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: creature-action 1209, monster 383, trait 1014
+
+### monster (383) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *A-mi-kuk*, *Aalpamac*, *Abbanith Giant*, *Adult Boreal Dragon*, *Adult Imperial Dragon*, …
+
+### trait (1014) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Fear of Fire*, *Hold Breath*, *Icy Slime*, *Amphibious*, *Distance Distortion Aura*, …
+
+### creature-action (1209) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Bite*, *Grasping Claw*, *Multiattack*, *Strangle*, *Bite (Aalpamac)*, …
+
+---
+
+## open5e-tob3 — Tome of Beasts 3
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: creature-action 291, monster 397, trait 812
+
+### monster (397) — audited as a class
+
+Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
+Representative cards: *Abaasy*, *Ahu-Nixta Mechanon*, *Akanka*, *Akkorokamui*, *Alabroza*, …
+
+### trait (812) — audited as a class
+
+Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
+Representative cards: *Armored Berserker*, *Dual Shields*, *Poor Depth Perception*, *Construct Nature*, *Critical Malfunction*, …
+
+### creature-action (291) — audited as a class
+
+Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
+Representative cards: *Iron Axe*, *Multiattack*, *Cast a Spell*, *Discern*, *Guardian's Grasp*, …
+
+---
+
+## open5e-toh — Tome of Heroes
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: adventuring-gear 75, background 19, feat 13, species 11, spell 91, subclass 76, subspecies 29
+
+### subclass (76)
+
+- **Ancient Dragons** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Animal Lords** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Beast Trainer** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Cantrip Adept** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Cat Burglar** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Chaplain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of Ash** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of Bees** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of Crystals** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of Sand** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of Wind** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of the Green** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Circle of the Shapeless** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Cold-Blooded** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Echoes** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Investigation** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Shadows** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Sincerity** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of Tactics** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **College of the Cat** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Courser Mage** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Dawn Blade** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Familiar Master** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Gravebinding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Grove Warden** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Haunted Warden** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Hungering** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Hunt Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Hunter in Darkness** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Legionary** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Mercy Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of Justice** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of Safeguarding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of the Elements** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of the Guardian** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of the Hearth** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Oath of the Plaguetouched** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Old Wood** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of Booming Magnificence** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of Hellfire** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of Mistwood** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of Thorns** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of the Dragon** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of the Herald** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Path of the Inner Eye** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Portal Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Primordial** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Pugilist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Radiant Pikeman** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Resonant Body** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Rifthopper** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Sapper** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **School of Liminality** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Serpent Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Shadow Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Smuggler** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Snake Speaker** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Soulspy** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Spear of the Weald** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Spellsmith** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Spore Sorcery** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Timeblade** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Tunnel Watcher** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Underfoot** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Vermin Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Wasteland Strider** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Wastelander** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of Concordant Motion** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Dragon** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Humble Elephant** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Still Waters** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Tipsy Monkey** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Unerring Arrow** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Way of the Wildcat** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Wind Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+- **Wyrdweaver** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+
+### species (11)
+
+- **Alseid** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Catfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Darakhul** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Derro** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Drow** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Erina** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Gearforged** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Minotaur** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Mushroomfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Satarre** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Shade** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+
+### subspecies (29)
+
+- **Acid Cap** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Bhain Kwai** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Boghaid** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Delver** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Derro Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Dragonborn Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Drow Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Dwarf Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Dwarf Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Elf/Shadow Fey Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Far-Touched** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Favored** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Fever-Bit** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Gnome Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Gnome Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Halfling Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Human Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Human/Half-Elf Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Kobold Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Kobold Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Malkin** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Morel** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Mutated** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Pantheran** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Purified** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Ravenfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Tiefling Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Trollkin Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+- **Uncorrupted** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
+
+### background (19)
+
+- **Court Servant** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Desert Runner** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Destined** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Diplomat** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Forest Dweller** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Former Adventurer** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Freebooter** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Gamekeeper** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Innkeeper** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Mercenary Company Scion** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Mercenary Recruit** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Monstrous Adoptee** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Mysterious Origins** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Northern Minstrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Occultist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Parfumier** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Scoundrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Sentry** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+- **Trophy Hunter** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+
+### feat (13)
+
+- **Boundless Reserves** — Prerequisite parsed to structured field(s) and enforced ("*Wisdom 13 or higher and the Ki class feature*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Diehard** — Prerequisite parsed to structured field(s) and enforced ("*Constitution 13 or higher*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Floriographer** — Prerequisite is narrative text only ("*Proficiency in one of the following skills: Arcana, History, or Nature*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Forest Denizen** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Friend of the Forest** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Giant Foe** — Prerequisite is narrative text only ("*A Small or smaller race*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Harrier** — Prerequisite is narrative text only ("*The Shadow Traveler shadow fey trait or the ability to cast the* misty step *spell*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Inner Resilience** — Prerequisite parsed to structured field(s) and enforced ("*Wisdom 13 or higher*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Part of the Pack** — Prerequisite is narrative text only ("*Proficiency in the Animal Handling skill*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Rimecaster** — Prerequisite is narrative text only ("*A race or background from a cold climate and the ability to cast at least one spell*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Sorcerous Vigor** — Prerequisite parsed to structured field(s) and enforced ("*Charisma 13 or higher and the Sorcery Points class feature*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Stalker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+- **Stunning Sniper** — Prerequisite is narrative text only ("*Proficiency with a ranged weapon*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
+
+### spell (91) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Ambush Chute*, *Armored Formation*, *Babble*, *Battle Mind*, *Beast Within*, …
+
+### adventuring-gear (75) — audited as a class
+
+Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
+Representative cards: *Artisan's Tools*, *Unique Piece Of Jewelry*, *Fine Clothes*, *Handcrafted Pipe*, *Belt Pouch*, …
+
+---
+
+## open5e-vom — Vault of Magic
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: magic-item 1063
+
+### magic-item (1063) — audited as a class
+
+**Poor data structure + unimplemented prerequisite:** the entire item ruleset is dumped into one free-text `effects` field; `requires_attunement` is a bare boolean and the *conditional* attunement clause ("by a spellcaster", "by a creature of good alignment") is absent from source, leaving the `attunement_prereq` schema field empty. No structured item bonuses (AC/attack/save) → no automation, no attunement-condition enforcement.  
+Representative cards: *Aberrant Agreement*, *Accursed Idol*, *Adamantine Spearbiter*, *Agile Breastplate*, *Agile Chain Mail*, …
+
+---
+
+## open5e-wz — Warlock Zine
+
+*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
+Counts: spell 43
+
+### spell (43) — audited as a class
+
+Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
+Representative cards: *Abrupt Hug*, *Avert Evil Eye*, *Bardo*, *Battle Chant*, *Bombardment of Stings*, …
+
+---
