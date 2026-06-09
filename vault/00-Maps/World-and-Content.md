@@ -20,6 +20,7 @@ tags: [moc]
 - [[world_schema]] · [[entity_category_schema]] · [[field_schema]] — schema model (73 categories, Tier-0/Tier-1).
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
 - [[bundled_packs_bootstrap]] — first-boot SRD install.
+- [[builtin_package_provider]] — SRD pack id + read-only SRD reference overlay (`srdReferenceEntitiesProvider`).
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.

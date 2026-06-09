@@ -122,6 +122,10 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
               () => ref.read(saveStateProvider.notifier).markDirty(),
               ref.read(eventBusProvider),
               ref.read(pendingWriteBufferProvider),
+              // Overlay the built-in SRD pack as read-only reference rows so
+              // empty category lists (conditions, damage types, ...) render in
+              // every package. The SRD package itself already owns them.
+              overlaySrdReference: packageName != srdCorePackageName,
             );
           },
         ),

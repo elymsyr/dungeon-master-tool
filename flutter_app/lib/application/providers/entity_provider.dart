@@ -22,6 +22,7 @@ import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
+import 'builtin_package_provider.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
@@ -266,9 +267,20 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// tekrar açarsa yeni bir kopya forklayabilir.
   final Map<String, String> _recentForks = {};
 
+  /// When true (package-screen scope only), the built-in SRD pack's entities
+  /// are overlaid into [state] as read-only reference rows. See
+  /// [_applyReferenceOverlay].
+  final bool _overlaySrdReference;
+
+  /// Ids of the SRD reference-overlay entities currently injected into
+  /// [state]. These never persist — every write path skips them.
+  final Set<String> _referenceEntityIds = {};
+
   EntityNotifier(
-      this._campaign, this._ref, this._onDirty, this._eventBus, this._buffer)
-      : super({}) {
+      this._campaign, this._ref, this._onDirty, this._eventBus, this._buffer,
+      {bool overlaySrdReference = false})
+      : _overlaySrdReference = overlaySrdReference,
+        super({}) {
     _loadFromCampaign();
     // Reload when the active campaign's data is mutated in-place
     // (cloud restore, template update). Not triggered on initial
@@ -297,6 +309,35 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       }
       if (changed) state = patched;
     });
+    // Package-screen reference overlay: inject the read-only built-in SRD
+    // entities so every package's category lists (conditions, damage types,
+    // spells, ...) render even when the package itself carries none. Loaded
+    // async from the installed SRD package; the listen re-applies once the
+    // future resolves. `_loadFromCampaign` above already applied a first pass
+    // (a no-op until the provider resolves), and re-applies on every reload.
+    if (_overlaySrdReference) {
+      _ref.listen(srdReferenceEntitiesProvider, (_, next) {
+        if (next.hasValue) _applyReferenceOverlay();
+      });
+    }
+  }
+
+  /// Merges the read-only built-in SRD reference entities on top of the
+  /// package-own [state]. Package-own rows win on id collision (overlay is
+  /// skipped for ids already present). Records injected ids in
+  /// [_referenceEntityIds] so persistence paths never write them back into the
+  /// package. No-op until [srdReferenceEntitiesProvider] resolves.
+  void _applyReferenceOverlay() {
+    final overlay = _ref.read(srdReferenceEntitiesProvider).valueOrNull;
+    if (overlay == null || overlay.isEmpty) return;
+    final next = Map<String, Entity>.from(state);
+    _referenceEntityIds.clear();
+    for (final entry in overlay.entries) {
+      if (next.containsKey(entry.key)) continue;
+      next[entry.key] = entry.value;
+      _referenceEntityIds.add(entry.key);
+    }
+    state = next;
   }
 
   String? get _campaignId => _campaign.data?['world_id'] as String?;
@@ -311,23 +352,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     for (final entry in raw.entries) {
       try {
         final map = Map<String, dynamic>.from(entry.value as Map);
-        entities[entry.key] = Entity(
-          id: entry.key,
-          name: (map['name'] as String?) ?? 'Unknown',
-          categorySlug: _resolveCategory(map),
-          source: (map['source'] as String?) ?? '',
-          description: (map['description'] as String?) ?? '',
-          images: _toStringList(map['images']),
-          imagePath: (map['image_path'] as String?) ?? '',
-          tags: _toStringList(map['tags']),
-          dmNotes: (map['dm_notes'] as String?) ?? '',
-          pdfs: _toStringList(map['pdfs']),
-          locationId: map['location_id'] as String?,
-          fields: _extractFields(map),
-          packageId: map['package_id'] as String?,
-          packageEntityId: map['package_entity_id'] as String?,
-          linked: (map['linked'] as bool?) ?? false,
-        );
+        entities[entry.key] = entityFromRaw(entry.key, map);
       } catch (e) {
         debugPrint('Entity parse error for ${entry.key}: $e');
       }
@@ -365,6 +390,11 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
 
     state = entities;
+
+    // `_loadFromCampaign` replaces `state` wholesale, so the read-only SRD
+    // reference overlay must be re-applied after every reload (initial mount,
+    // cloud restore, template update).
+    if (_overlaySrdReference) _applyReferenceOverlay();
   }
 
   void undo() {
@@ -582,6 +612,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// Returns false when the deletion was rejected (synth built-in entry
   /// — fork first by editing). UI layer should surface a snackbar.
   bool delete(String entityId) {
+    // Read-only SRD reference overlay isn't deletable — it has no package row
+    // and would just resurrect on the next reload from the overlay.
+    if (_referenceEntityIds.contains(entityId)) return false;
     // F2 reject-on-synth: built-in synth entries have no DB row; deleting
     // would resurrect on next load from the synthesizer. Force the user
     // to fork (edit) first, which removes the `_synth` flag and persists
@@ -659,6 +692,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     for (final entry in state.entries) {
       final entity = entry.value;
       if (_linkedCharacterIds.contains(entity.id)) continue;
+      if (_referenceEntityIds.contains(entity.id)) continue;
       raw[entry.key] = _entityToMap(entity);
     }
     data['entities'] = raw;
@@ -681,6 +715,8 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     final data = _campaign.data;
     if (data == null) return;
     if (_linkedCharacterIds.contains(entity.id)) return;
+    // Read-only SRD reference overlay never persists into the package.
+    if (_referenceEntityIds.contains(entity.id)) return;
     final raw = data['entities'];
     final Map<String, dynamic> entities;
     if (raw is Map<String, dynamic>) {
@@ -770,49 +806,74 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     };
   }
 
-  String _resolveCategory(Map<String, dynamic> map) {
-    final type = (map['type'] as String?) ?? 'npc';
-    return type.toLowerCase().replaceAll(' ', '-');
+}
+
+/// Parses a raw campaign/package entity map (the `{type, attributes, ...}` wire
+/// shape persisted in `entities`) into a typed [Entity]. Shared by
+/// [EntityNotifier._loadFromCampaign] and the SRD reference overlay
+/// ([srdReferenceEntitiesProvider]) so both produce identical objects.
+Entity entityFromRaw(String id, Map<String, dynamic> map) {
+  return Entity(
+    id: id,
+    name: (map['name'] as String?) ?? 'Unknown',
+    categorySlug: _resolveCategorySlug(map),
+    source: (map['source'] as String?) ?? '',
+    description: (map['description'] as String?) ?? '',
+    images: _rawStringList(map['images']),
+    imagePath: (map['image_path'] as String?) ?? '',
+    tags: _rawStringList(map['tags']),
+    dmNotes: (map['dm_notes'] as String?) ?? '',
+    pdfs: _rawStringList(map['pdfs']),
+    locationId: map['location_id'] as String?,
+    fields: _extractEntityFields(map),
+    packageId: map['package_id'] as String?,
+    packageEntityId: map['package_entity_id'] as String?,
+    linked: (map['linked'] as bool?) ?? false,
+  );
+}
+
+String _resolveCategorySlug(Map<String, dynamic> map) {
+  final type = (map['type'] as String?) ?? 'npc';
+  return type.toLowerCase().replaceAll(' ', '-');
+}
+
+List<String> _rawStringList(dynamic value) {
+  if (value is List) return value.map((e) => e.toString()).toList();
+  return [];
+}
+
+Map<String, dynamic> _extractEntityFields(Map<String, dynamic> map) {
+  final fields = <String, dynamic>{};
+
+  final attrs = map['attributes'];
+  if (attrs is Map) {
+    for (final e in attrs.entries) {
+      fields[e.key.toString()] = e.value;
+    }
   }
 
-  List<String> _toStringList(dynamic value) {
-    if (value is List) return value.map((e) => e.toString()).toList();
-    return [];
+  if (map.containsKey('stats')) fields['stat_block'] = map['stats'];
+  if (map.containsKey('combat_stats')) fields['combat_stats'] = map['combat_stats'];
+
+  for (final key in ['traits', 'actions', 'reactions', 'legendary_actions']) {
+    if (map.containsKey(key)) fields[key] = map[key];
   }
 
-  Map<String, dynamic> _extractFields(Map<String, dynamic> map) {
-    final fields = <String, dynamic>{};
+  if (map.containsKey('spells')) fields['spells'] = map['spells'];
+  if (map.containsKey('custom_spells')) fields['custom_spells'] = map['custom_spells'];
+  if (map.containsKey('equipment_ids')) fields['equipment_ids'] = map['equipment_ids'];
+  if (map.containsKey('inventory')) fields['inventory'] = map['inventory'];
 
-    final attrs = map['attributes'];
-    if (attrs is Map) {
-      for (final e in attrs.entries) {
-        fields[e.key.toString()] = e.value;
-      }
+  for (final key in [
+    'saving_throws', 'skills', 'damage_vulnerabilities', 'damage_resistances',
+    'damage_immunities', 'condition_immunities', 'proficiency_bonus', 'passive_perception',
+  ]) {
+    if (map.containsKey(key) && map[key] != null && map[key] != '') {
+      fields[key] = map[key];
     }
-
-    if (map.containsKey('stats')) fields['stat_block'] = map['stats'];
-    if (map.containsKey('combat_stats')) fields['combat_stats'] = map['combat_stats'];
-
-    for (final key in ['traits', 'actions', 'reactions', 'legendary_actions']) {
-      if (map.containsKey(key)) fields[key] = map[key];
-    }
-
-    if (map.containsKey('spells')) fields['spells'] = map['spells'];
-    if (map.containsKey('custom_spells')) fields['custom_spells'] = map['custom_spells'];
-    if (map.containsKey('equipment_ids')) fields['equipment_ids'] = map['equipment_ids'];
-    if (map.containsKey('inventory')) fields['inventory'] = map['inventory'];
-
-    for (final key in [
-      'saving_throws', 'skills', 'damage_vulnerabilities', 'damage_resistances',
-      'damage_immunities', 'condition_immunities', 'proficiency_bonus', 'passive_perception',
-    ]) {
-      if (map.containsKey(key) && map[key] != null && map[key] != '') {
-        fields[key] = map[key];
-      }
-    }
-
-    return fields;
   }
+
+  return fields;
 }
 
 final entityProvider =
