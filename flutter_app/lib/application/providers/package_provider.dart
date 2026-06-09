@@ -11,6 +11,7 @@ import '../../domain/repositories/package_repository.dart';
 import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
+import '../services/bundled_packs_bootstrap.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import '../../core/config/supabase_config.dart';
@@ -34,6 +35,19 @@ final srdCorePackageBootstrapProvider = FutureProvider<void>((ref) async {
   await SrdCorePackageBootstrap(db).ensureInstalled();
 });
 
+/// Debug-only: keep the bundled Open5e packs present + fresh in the local DB
+/// without depending on the admin "Install asset packs" toggle. Content-hash
+/// gated so a warm start is ~22 cheap no-op checks; a regen re-installs only
+/// the changed packs. No-op in release (BB-1: packs aren't on disk there — the
+/// R2 catalog is the delivery channel) — guarded so it never probes for absent
+/// assets.
+final bundledPacksBootstrapProvider = FutureProvider<void>((ref) async {
+  if (!kDebugMode) return;
+  final db = ref.watch(appDatabaseProvider);
+  final repo = ref.watch(packageRepositoryProvider);
+  await BundledPacksBootstrap(db, repo).ensureInstalled();
+});
+
 /// Otomatik SRD pack live-link auto-apply kaldırıldı (manuel save/sync
 /// modeli). Provider mevcut callsite'ları break etmesin diye no-op olarak
 /// duruyor; kullanıcı paketleri açıkça apply etmek isterse hub'da ayrı bir
@@ -46,6 +60,7 @@ final activeCampaignSyncProvider = FutureProvider<int>((ref) async {
 /// SRD content pack startup'ta install edilir, sonra listing fetch edilir.
 final packageListProvider = FutureProvider<List<PackageInfo>>((ref) async {
   await ref.watch(srdCorePackageBootstrapProvider.future);
+  await ref.watch(bundledPacksBootstrapProvider.future);
   return ref.watch(packageRepositoryProvider).getPackageInfoList();
 });
 

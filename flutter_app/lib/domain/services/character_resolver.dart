@@ -1032,7 +1032,10 @@ class CharacterResolver {
       final groups = _readMapList(src.fields['equipment_choice_groups']);
       for (final g in groups) {
         final groupId = g['group_id']?.toString() ?? '';
-        final pickedOption = equipmentChoices[groupId];
+        // Choices are stored scoped by source entity id (`$sourceId:$groupId`)
+        // so class + background picks with identical group_ids don't collide —
+        // mirror the key the wizard writes (equipment_step.dart storageKey).
+        final pickedOption = equipmentChoices['${src.id}:$groupId'];
         if (pickedOption == null) continue;
         final opts = _readMapList(g['options']);
         for (final o in opts) {
