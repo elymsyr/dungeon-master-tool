@@ -755,6 +755,123 @@ List<Map<String, dynamic>>? _parseEquipmentChoiceProse(
   ];
 }
 
+/// Fallback for non-A/B background equipment prose (A5E/Open5e fixed kits, e.g.
+/// "Holy symbol, common clothes, robe, a prayer book"): wrap the whole kit as a
+/// single-option `equipment_choice_group` so the wizard renders a pickable card
+/// (replacing the dead "add these manually" note) AND the commit flow grants
+/// every item to the PC's inventory — no manual adding.
+///
+/// A5E gear names mostly have no SRD catalog entity (153 distinct tokens, many
+/// one-off flavor like "pet monkey"), and the cross-pack built-in names diverge
+/// ("traveler's clothes" vs "Clothes, Traveler's"), so we can't ref existing
+/// items reliably. Instead each kit item that doesn't already resolve in-pack is
+/// **synthesised as a minimal `adventuring-gear` entity in this pack** and
+/// hard-referenced — build-safe (in-pack ref) and grantable. Synthesis is
+/// idempotent (PackBuilder.add dedupes by slug+name), so a token shared across
+/// backgrounds ("Common Clothes") yields one entity reused by all.
+List<Map<String, dynamic>>? _fixedEquipmentGroup(
+    PackBuilder pack, String source, String desc) {
+  final body = desc.trim().replaceAll(RegExp(r'[;.\s]+$'), '');
+  if (body.isEmpty) return null;
+  int? gold;
+  final gm = RegExp(r'(\d+)\s*gp\b', caseSensitive: false).firstMatch(body);
+  if (gm != null) gold = int.parse(gm.group(1)!);
+  final items = [
+    for (final it in _kitItems(body))
+      _synthGearRef(pack, source, it.name, it.qty),
+  ];
+  if (items.isEmpty && gold == null) return null;
+  return [
+    eqGroup(
+      groupId: 'bg-equipment',
+      label: 'Starting Equipment',
+      prompt: "Your background's starting equipment",
+      options: [
+        eqOption(
+          optionId: 'A',
+          label: body.replaceAll(RegExp(r'\s+'), ' ').trim(),
+          items: items,
+          goldGp: gold,
+        ),
+      ],
+    ),
+  ];
+}
+
+/// Resolve a kit item to an `eqItem` ref. Prefers an existing in-pack item
+/// (weapon/armor/tool/gear); otherwise synthesises a minimal `adventuring-gear`
+/// entity in [pack] so the hard ref always resolves at build + grants at commit.
+Map<String, dynamic> _synthGearRef(
+    PackBuilder pack, String source, String name, int qty) {
+  final existing = _resolveItemSlug(pack, name);
+  if (existing != null) return eqItem(existing, name, qty: qty);
+  if (!pack.has('adventuring-gear', name)) {
+    pack.add(packEntity(
+      slug: 'adventuring-gear',
+      name: name,
+      source: source,
+      attributes: const {
+        'cost_cp': 0,
+        'weight_lb': 0.0,
+        'consumable': false,
+        'is_focus': false,
+      },
+    ));
+  }
+  return eqItem('adventuring-gear', name, qty: qty);
+}
+
+/// Tokenise a background equipment kit prose into `(name, qty)` item rows.
+/// Splits on commas / "and" / "or" / ";", strips leading articles + quantity +
+/// "set of"/"pair of" wrappers + parentheticals + trailing punctuation, drops
+/// pure gold/number fragments, then title-cases. "X or Y" alternatives are all
+/// emitted (granted) — the parser has no notion of an intra-kit choice. Deduped.
+List<({String name, int qty})> _kitItems(String body) {
+  // Keep "1,000" intact across the comma split; normalise curly apostrophes.
+  var s = body.replaceAllMapped(RegExp(r'(\d),(\d)'), (m) => '${m[1]}${m[2]}');
+  s = s.replaceAll('’', "'");
+  // Drop parentheticals up-front — "(amulet or reliquary)" must not fragment on
+  // the comma/or split below — and strip embedded gold ("with 10 gp",
+  // "containing 5 gp", a bare "10 gp") so it never becomes a phantom item.
+  s = s.replaceAll(RegExp(r'\([^)]*\)'), ' ');
+  s = s.replaceAll(
+      RegExp(r'\b(?:with|containing)\b[^,;]*?\bgp\b', caseSensitive: false), ' ');
+  s = s.replaceAll(RegExp(r'\b\d+\s*gp\b', caseSensitive: false), ' ');
+  final out = <({String name, int qty})>[];
+  final seen = <String>{};
+  for (var seg in s.split(RegExp(r',|\band\b|\bor\b|;', caseSensitive: false))) {
+    seg = seg.replaceAll(RegExp(r'[.;:,]+\s*$'), '').trim();
+    if (seg.isEmpty) continue;
+    var qty = 1;
+    final qm = RegExp(r'^(\d+)\s+(.*)$').firstMatch(seg);
+    if (qm != null) {
+      qty = int.parse(qm.group(1)!);
+      seg = qm.group(2)!.trim();
+    }
+    seg = seg
+        .replaceFirst(
+            RegExp(r'^(a|an|one|your|the|some|several|of)\s+',
+                caseSensitive: false),
+            '')
+        .replaceFirst(
+            RegExp(r'^(set|pair|piece|type)\s+of\s+', caseSensitive: false), '')
+        .replaceFirst(
+            RegExp(r'\s+of your (choice|choosing)\b.*$', caseSensitive: false),
+            '')
+        .trim();
+    if (seg.length < 2) continue;
+    if (RegExp(r'^\d+\s*(gp|gold|sp|cp)?$', caseSensitive: false).hasMatch(seg)) {
+      continue;
+    }
+    if (RegExp(r'^(gp|gold|sp|cp)$', caseSensitive: false).hasMatch(seg)) {
+      continue;
+    }
+    final name = titleCase(seg);
+    if (seen.add(name.toLowerCase())) out.add((name: name, qty: qty));
+  }
+  return out;
+}
+
 /// One `eqOption` from a comma-separated equipment list: trailing `N GP` →
 /// `gold_gp`; each item gets a leading quantity + parenthetical note stripped
 /// and is emitted as a ref only when it resolves in-pack.
@@ -957,9 +1074,12 @@ void mapBackgrounds({
     // Starting equipment — SRD-2024 backgrounds ship an A/B choice as prose;
     // parse it into structured groups so the wizard renders a pickable card and
     // the picked items + gold are granted (instead of lost to the prose note).
+    // A5E/Open5e backgrounds instead ship a fixed kit (no A/B) — fall back to a
+    // single-option group so that gear is choosable + grantable too.
     final equipText = descOfType('equipment');
     if (equipText != null) {
-      final groups = _parseEquipmentChoiceProse(pack, equipText);
+      final groups = _parseEquipmentChoiceProse(pack, equipText) ??
+          _fixedEquipmentGroup(pack, source, equipText);
       if (groups != null && groups.isNotEmpty) {
         attrs['equipment_choice_groups'] = groups;
       }

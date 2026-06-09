@@ -184,7 +184,8 @@ void main() {
       );
       final pc = _pc(id: 'pc1', fields: {
         'class_levels': {'cls_barb': 1},
-        'equipment_choices': {'starting_kit': 'A'},
+        // Choices are stored scoped by source entity id (`$sourceId:$groupId`).
+        'equipment_choices': {'cls_barb:starting_kit': 'A'},
       });
       final eff = CharacterResolver.resolve(pc, {
         cls.id: cls,
@@ -192,6 +193,48 @@ void main() {
       });
       expect(eff.inventory.length, 1);
       expect(eff.inventory.first.entityId, 'w_greataxe');
+    });
+
+    test('background equipment_choice_groups pick lands in inventory', () {
+      final symbol =
+          _e(id: 'g_holy', slug: 'adventuring-gear', name: 'Holy Symbol');
+      final bg = _e(
+        id: 'bg_acolyte',
+        slug: 'background',
+        name: 'Acolyte',
+        fields: {
+          'equipment_choice_groups': [
+            {
+              'group_id': 'bg-equipment',
+              'label': 'Starting Equipment',
+              'options': [
+                {
+                  'option_id': 'A',
+                  'label': 'Holy Symbol',
+                  'items': [
+                    {
+                      'ref': {'_ref': 'adventuring-gear', 'name': 'Holy Symbol'},
+                      'quantity': 1,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'background_id': 'bg_acolyte',
+        // Scoped key — background group_id collides with class 'bg-equipment'
+        // only if unscoped, which is exactly the bug this guards.
+        'equipment_choices': {'bg_acolyte:bg-equipment': 'A'},
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        bg.id: bg,
+        symbol.id: symbol,
+      });
+      expect(eff.inventory.length, 1);
+      expect(eff.inventory.first.entityId, 'g_holy');
     });
 
     test('subclass features only apply when level >= granted_at_level', () {

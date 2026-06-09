@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/database_provider.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
+import '../providers/package_provider.dart';
 import 'builtin_srd_entities.dart';
 import 'package_import_service.dart';
 
@@ -35,6 +36,10 @@ Map<String, Map<String, String>> _tier0IndexFromBuiltin(
 final packageEntitiesProvider =
     FutureProvider.family<Map<String, Entity>, String>((ref, packageName) async {
   ref.keepAlive();
+  // Reconcile the bundled Open5e packs before reading — guarantees the wizard /
+  // editor see freshly-regenerated pack content (e.g. background equipment)
+  // even when nothing watched [packageListProvider] first. No-op in release.
+  await ref.watch(bundledPacksBootstrapProvider.future);
   final db = ref.watch(appDatabaseProvider);
   final builtin = ref.watch(builtinSrdEntitiesProvider);
   final pkg = await db.packagesDao.getByName(packageName);
