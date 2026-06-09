@@ -7,6 +7,7 @@ import '../../core/utils/deep_copy.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/package_info.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
@@ -357,29 +358,16 @@ class PackageRepositoryImpl implements PackageRepository {
       };
     }
 
-    // Reconstruct WorldSchema map from the package_schemas row.
-    Map<String, dynamic>? worldSchemaMap;
-    String? templateId;
-    String? templateHash;
-    String? templateOriginalHash;
-    if (schemaRow != null) {
-      worldSchemaMap = {
-        'schemaId': schemaRow.id,
-        'name': schemaRow.name,
-        'version': schemaRow.version,
-        'baseSystem': schemaRow.baseSystem,
-        'description': schemaRow.description,
-        'categories': jsonDecode(schemaRow.categoriesJson),
-        'encounterConfig': jsonDecode(schemaRow.encounterConfigJson),
-        'encounterLayouts': jsonDecode(schemaRow.encounterLayoutsJson),
-        'metadata': jsonDecode(schemaRow.metadataJson),
-        'createdAt': schemaRow.createdAt.toIso8601String(),
-        'updatedAt': schemaRow.updatedAt.toIso8601String(),
-      };
-      templateId = schemaRow.templateId;
-      templateHash = schemaRow.templateHash;
-      templateOriginalHash = schemaRow.templateOriginalHash;
-    }
+    // All packages share the built-in D&D 5e v2 template (SRD). The stored
+    // package_schemas row is ignored on purpose — the template always
+    // resolves to the live built-in schema so packages never drift or
+    // surface a "No template found" state.
+    final builtin = generateBuiltinDnd5eV2Schema().schema;
+    final worldSchemaMap =
+        deepCopyJson(builtin.toJson()) as Map<String, dynamic>;
+    const templateId = builtinDnd5eV2SchemaId;
+    final templateHash = schemaRow?.templateHash;
+    const templateOriginalHash = builtinDnd5eV2OriginalHash;
 
     // Unpack the stateJson sidecar (metadata, marketplace fields, etc.) so
     // callers see the dynamic state they wrote via save().
@@ -399,10 +387,10 @@ class PackageRepositoryImpl implements PackageRepository {
       'package_name': pkg.name,
       'created_at': pkg.createdAt.toIso8601String(),
       'entities': entitiesMap,
-      'world_schema': ?worldSchemaMap,
-      'template_id': ?templateId,
+      'world_schema': worldSchemaMap,
+      'template_id': templateId,
       'template_hash': ?templateHash,
-      'template_original_hash': ?templateOriginalHash,
+      'template_original_hash': templateOriginalHash,
     };
   }
 
