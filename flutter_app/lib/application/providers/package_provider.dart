@@ -21,6 +21,7 @@ import 'campaign_provider.dart' show campaignRevisionProvider;
 import 'cloud_backup_provider.dart';
 import 'personal_online_provider.dart';
 import 'sync_engine_provider.dart';
+import 'ui_state_provider.dart';
 import 'world_mirror_provider.dart';
 
 final packageRepositoryProvider = Provider<PackageRepository>(
@@ -43,6 +44,15 @@ final srdCorePackageBootstrapProvider = FutureProvider<void>((ref) async {
 /// assets.
 final bundledPacksBootstrapProvider = FutureProvider<void>((ref) async {
   if (!kDebugMode) return;
+  // Respect the admin "Install asset packs" toggle. Previously this ran on
+  // every debug launch regardless, so toggling the switch OFF didn't stick —
+  // the next launch silently re-installed the bundled Open5e packs and they
+  // reappeared in the package list. Gate on the flag so OFF means OFF; the
+  // admin toggle's `uninstallAll()` clears existing rows and they now stay
+  // gone. Watching the flag also refreshes the list the moment it flips.
+  final showAssetsPacks =
+      ref.watch(uiStateProvider.select((s) => s.showAssetsPacks));
+  if (!showAssetsPacks) return;
   final db = ref.watch(appDatabaseProvider);
   final repo = ref.watch(packageRepositoryProvider);
   await BundledPacksBootstrap(db, repo).ensureInstalled();
