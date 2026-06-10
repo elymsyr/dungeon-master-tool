@@ -106,6 +106,15 @@ flutter:
     # (`{worker}/catalog/banners/<slug>.png`, see cloudflare/upload_banners.sh).
     - assets/first_party/banners/dnd5e-template.jpg
     - assets/first_party/banners/dnd5e-package-builtin.jpg
+    # Built-in D&D 5e v3 Template (dynamic Template & Package architecture).
+    # The JSON is GENERATED, not hand-authored: run
+    #   dart run tool/export_builtin_template.dart
+    # to (re)materialize dnd5e_srd.template.json from
+    # generateBuiltinDnd5eTemplateV3(). BuiltinTemplateLoader loads it and, in
+    # debug, asserts the asset hash matches the generator (fails loudly if the
+    # asset is stale). If the asset is absent the loader falls back to the
+    # generator, so the dir may ship with only .gitkeep until the exporter runs.
+    - assets/templates/
 
 flutter_launcher_icons:
   android: true
