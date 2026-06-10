@@ -45,6 +45,22 @@ enum FieldType {
   subspeciesOptions,    // `List<{name, description, granted_senses, granted_damage_resistances, granted_damage_immunities, granted_damage_vulnerabilities, granted_condition_immunities, granted_languages, granted_skill_proficiencies, granted_action_refs, granted_bonus_action_refs, granted_reaction_refs, granted_trait_refs}>` — species lineage / subspecies option rows. Resolver matches by `name`, folds grants onto the PC.
   crCalculator,         // `{atk_bonus?: int, dpr_avg?: int, save_dc?: int}` — author-supplied inputs. Widget reads `ac` + `hp_average` from sibling fields and renders the SRD §1 / DMG p.273-275 defensive + offensive CR estimate.
   prereqClauses,        // List<{type, ...args}> — typed prerequisite clauses (ALL-of; option lists are OR). Types: character_level {min_level}, ability_min {ability_options[], min_score}, spellcasting, armor_proficiency {category|category_ref}, weapon_proficiency {weapon_class: simple|martial|any}, skill_proficiency {skill_options[]}, class_ref {class_options[], min_level?}, species_ref {species_options[]}, alignment_ref {alignment_options[]}, other (never blocks). Shared interpreter: rules/prereq_evaluator.dart — picker dialogs FILTER on it, CharacterResolver WARN-KEEPs (warning on the sheet, mechanics still apply).
+
+  // ── Template v3 field types (PR-1.2) ────────────────────────────────────
+  // Inert until PR-2.3 parameterizes the renderers. The values reuse the old
+  // wire-shapes verbatim (checkboxPouch=slot, pouchMatrix=spellSlotGrid,
+  // skillTree=proficiencyTable) so the 20k-card value migration is near-zero.
+  // Wire strings = these literal names; see docs/new_system/the-template-system.md §2.
+  abilityScoreTable, // Parameterized statBlock. typeConfig: {columns[{key,label}], modifierBase, modifierStep, publishAspects}. modifier = floor((score-base)/step). Built-in config reproduces today's (score-10)/2.
+  combatStatsTable,  // Parameterized combatStats. typeConfig: {visibleKeys[]}. Canonical keys fixed (hp, max_hp, ac, speed, level, initiative, xp) — structure not creator-editable. Publishes aspects level, ac, max_hp.
+  intPouch,          // {current, max} resource pair (rage, ki, charges, granted pouches). typeConfig.maxSource ∈ {fixed, levelTable, formula, manual}. Target of refill/empty/set_pouch_max rules.
+  checkboxPouch,     // {count, states[bool]} — BYTE-IDENTICAL wire to `slot` (death saves, hit dice, charges). typeConfig: {countSource, style: pips|checkboxes}. Refill/empty target.
+  pouchMatrix,       // {max:{row:n}, remaining:{row:n}} — BYTE-IDENTICAL wire to `spellSlotGrid`. typeConfig: {rowKeys[], rowLabelPrefix?, maxSource}. set_pouch_max target; per-row refill.
+  skillTree,         // rows {name, ability, proficient, expertise, misc} — BYTE-IDENTICAL wire to `proficiencyTable`. typeConfig: {abilityFieldKey, proficiencyBonusAspect, rowSeed, tiers[]}. Unifies saving throws AND skills. grant_proficiency target.
+  recordList,        // Generic typed table. typeConfig: {columns[{key,label,kind:text|int|float|dice|bool|enum|ref, allowedTypes?, options?}], preset?}. preset keeps a bespoke renderer (spell-effects, equipment-choices, subspecies-options, ranged-senses, prereq-clauses). choose/check_clauses data source.
+  levelMatrix,       // Map<level, Map<key,int>> generic level progression (rename target of spellSlotProgression). Feeds set_pouch_max / display.
+  levelUpTable,      // rows {level, description, grants[{ref,target}], choices[{choiceId,prompt,pick,optionRefs[],target}]}. typeConfig: {gate: class|character}. Drives level-up grants + pending choices; inverts old auto_granted_by edges into forward grants.
+  actionButton,      // level_up / short_rest / long_rest trigger. typeConfig: {action, placement?}. Label = FieldSchema.label (creator-editable); process fixed. Fires on_button rules declared on target pouch fields.
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
@@ -110,6 +126,22 @@ abstract class FieldSchema with _$FieldSchema {
     /// packageEntityImage). Schema layer'a `MediaKind` import'u sızdırmamak
     /// için string olarak saklanır; resolver `MediaKind.fromWireName` ile çevirir.
     @Default(null) String? mediaKindWire,
+    /// Template v3 — per-type parametric payload (replaces ad-hoc
+    /// `subFields`/`defaultValue` tricks). Raw map, validated lazily by the
+    /// editor/runtime to avoid a freezed explosion across ~10 type shapes.
+    /// Shapes per type: docs/new_system/the-template-system.md §2.3.
+    /// Absent on most fields; `includeIfNull: false` keeps it out of the
+    /// serialized JSON when null so pre-v3 content hashes byte-identically
+    /// (PR-1.2 is inert — nothing consumes this yet).
+    @JsonKey(includeIfNull: false)
+    @Default(null) Map<String, dynamic>? typeConfig,
+    /// Template v3 — rule attachments (closed set of 8 kinds × 6 triggers;
+    /// docs/new_system/the-template-system.md §4). Raw maps, validated
+    /// lazily. Absent/empty on most fields; `includeIfNull: false` keeps a
+    /// rule-free field's JSON (and therefore the content hash) inert until
+    /// rules actually land in Phase 3. Read as `rules ?? const []`.
+    @JsonKey(includeIfNull: false)
+    @Default(null) List<Map<String, dynamic>>? rules,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;
