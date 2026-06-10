@@ -1,680 +1,2797 @@
 # Entity Audit Log — Official & Built-in Packages
 
-> Automated System Architecture Inspector · audit date **2026-06-09** · branch `list`
+> Automated System Architecture Inspector · audit date **2026-06-10** · branch `list`
+> Companion roadmap: [`system_mechanics_roadmap.md`](system_mechanics_roadmap.md)
 
-## Scope & Methodology
+Findings use three codes from the Inspection Criteria: **[P]** unimplemented/unenforced prerequisite · **[M]** missing mechanic (rule described in text but no technical effect) · **[D]** poor data structure (content dumped in a general text field instead of dedicated fields). Entities with none are logged **Clean**.
 
-Two package sources were inspected:
+## Scope & method
 
-1. **Built-in SRD 5.2.1 Core pack** — hand-authored in-code at `flutter_app/lib/domain/entities/schema/builtin/srd_core/` (the structural exemplar; ~488 `packEntity` rows + ~341 spells + ~287 magic items).
-2. **19 official / bundled Open5e packages** — `flutter_app/assets/open5e_packs/*.pkg.json`, also published through the first-party catalog `flutter_app/assets/first_party/manifest.json`. **20,712 entity cards total.**
+Two content sources were inspected:
 
-Every **character-build entity** (`class`, `subclass`, `species`, `subspecies`, `background`, `feat` — 270 cards) is enumerated individually below with its specific findings. The **reference-content entities** (`spell`, `monster`, `trait`, `creature-action`, `magic-item`, `adventuring-gear` — 20,442 cards) share one identical data shape per type, so they are audited as a class: each pack lists the per-type count, the systematic finding that applies uniformly to every card of that type, and representative card names. "Clean" = correctly typed *and* mechanically wired.
+1. **Hand-authored SRD 5.2.1 Core pack** — Dart source under `flutter_app/lib/domain/entities/schema/builtin/srd_core/` (~488 `packEntity` rows + spell/item tables). This is the *reference-quality* pack: it populates the typed schema (`category_ref`, `prereq_*`, `asi_*`, `effects[]`, `granted_modifiers`). See the SRD section below for residual gaps.
+2. **19 official Open5e packages** — `flutter_app/assets/open5e_packs/*.pkg.json` (also fronted by `assets/first_party/manifest.json`). **20,712 entity cards.**
 
----
+"Implemented" is judged against the live engine: `character_resolver.dart` (68 Effect-DSL kinds), the `prereq_clauses` evaluator in `pending_choice_resolver_dialog.dart`, `multiclass_helper.dart`, and the schema in `content.dart`.
 
-## Built-in: SRD 5.2.1 Core pack (in-code)
-
-This pack is the **structural reference** — feats carry `category_ref`, typed `prereq_*` fields, `asi_*` gates, and (for 18 of 62 feats) real `effects` Effect-DSL arrays (e.g. *Magic Initiate*, *Skilled* use `choice_group`). Findings:
-
-- **Text-only benefits (44 / 62 feats):** *Alert*, *Savage Attacker*, *Archery* (+2 ranged attack), *Defense* (+1 AC), and 40 others describe numeric/active benefits in the `benefits` markdown with **no `effects` entry**, so those bonuses are not folded into `EffectiveCharacter`.
-- **OR-ability prerequisite not fully enforced:** *Grappler* ("Strength or Dexterity 13+") sets `prereq_min_score: 13` but cannot set a single `prereq_ability_ref` for an OR — the clause-based `prereq_clauses` mechanism that the UI *can* evaluate is authored by **zero** content rows.
-- **Leveled subclass/class features** default to level 1 (no `granted_at_level`).
-- **Spells/magic items** are generated via `_spell()` / `_mi()` helpers with typed metadata but prose effect bodies (same effect-automation gap as the Open5e spells/items below).
+**Enumeration policy.** Every chargen card (feat, background, class, subclass, species, subspecies) and every magic-item and spell is listed individually below. The **bestiary cohort** (2,885 monsters · 6,423 traits · 8,615 creature-actions = 17,923 cards) is audited at cohort level with representative samples and full counts: monster stat-blocks and attack actions are already fully structured, the per-card finding does not vary, and the prerequisite/feature criteria do not apply to NPC stat content. This is the one place individual enumeration is omitted, and it is called out explicitly in §9.
 
 ---
 
-## open5e-a5e-ag — Adventurer's Guide
+## Corpus inventory (Open5e packs)
 
-*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
-Counts: adventuring-gear 44, background 21, class 1, feat 59, spell 371, subclass 3
-
-### class (1)
-
-- **Marshal** — Hit die, saving throws, proficiencies and caster kind are typed; **leveled class features and spell lists remain freeform prose with no level field**, so per-level feature granting is unsupported. `primary_ability_ref` empty → multiclass entry prereq cannot be enforced.
-
-### subclass (3)
-
-- **Gambling General** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Swift Strategist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Talented Tactician** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-
-### background (21)
-
-- **Acolyte** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Artisan** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Charlatan** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Criminal** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Cultist** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Entertainer** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Exile** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Farmer** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Folk Hero** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Gambler** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Guard** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Guildmember** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Hermit** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Marauder** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Noble** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Outlander** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Sage** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Sailor** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Soldier** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Trader** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Urchin** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-
-### feat (59)
-
-- **Ace Driver** — Prerequisite is narrative text only ("Proficiency with a type of vehicle") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Athletic** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Attentive** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Battle Caster** — Prerequisite is narrative text only ("Requires the ability to cast at least one spell of 1st-level or higher") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Brutal Attack** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Bull Rush** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Combat Thievery** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Covert Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Crafting Expert** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Crossbow Expertise** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Deadeye** — Prerequisite parsed to structured field(s) and enforced ("8th level or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Deflector** — Prerequisite parsed to structured field(s) and enforced ("Dexterity 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Destiny’s Call** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Dual-Wielding Expert** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Dungeoneer** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Empathic** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Fear Breaker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Fortunate** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Guarded Warrior** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Hardy Adventurer** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Heavily Outfitted** — Prerequisite is narrative text only ("Proficiency with medium armor") → **not enforced** at selection (no `prereq_*` structured field). Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Heavy Armor Expertise** — Prerequisite is narrative text only ("Proficiency with heavy armor") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Heraldic Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Idealistic Leader** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Intuitive** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Keen Intellect** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Lightly Outfitted** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Linguistics Expert** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Martial Scholar** — Prerequisite is narrative text only ("Proficiency with at least one martial weapon") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Medium Armor Expert** — Prerequisite is narrative text only ("Proficiency with medium armor") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Moderately Outfitted** — Prerequisite is narrative text only ("Proficiency with light armor") → **not enforced** at selection (no `prereq_*` structured field). Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Monster Hunter** — Prerequisite parsed to structured field(s) and enforced ("Proficiency with Survival, 8th level or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Mounted Warrior** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Mystical Talent** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Natural Warrior** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Physician** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Polearm Savant** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Power Caster** — Prerequisite is narrative text only ("The ability to cast at least one spell") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Powerful Attacker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Primordial Caster** — Prerequisite is narrative text only ("The ability to cast at least one spell") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Rallying Speaker** — Prerequisite parsed to structured field(s) and enforced ("Charisma 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Resonant Bond** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Rite Master** — Prerequisite parsed to structured field(s) and enforced ("Intelligence or Wisdom 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Shield Focus** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Skillful** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Skirmisher** — Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Spellbreaker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Stalwart** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Stealth Expert** — Prerequisite parsed to structured field(s) and enforced ("Dexterity 13 or higher"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Street Fighter** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Surgical Combatant** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Survivor** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Swift Combatant** — Prerequisite parsed to structured field(s) and enforced ("8th level or higher"). Proficiency-choice effect wired; remaining benefit prose unmodeled.
-- **Tactical Support** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Tenacious** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Thespian** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Weapons Specialist** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Well-Heeled** — Prerequisite is narrative text only ("Prestige rating of 2 or higher") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Woodcraft Training** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-
-### spell (371) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Accelerando*, *Acid Arrow*, *Acid Splash*, *Aid*, *Air Wave*, …
-
-### adventuring-gear (44) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Holy Symbol*, *Common Clothes*, *Robe*, *Prayer Book*, *Prayer Wheel*, …
+| Category | Cards | Enumerated below |
+|---|--:|---|
+| feat | 73 | yes |
+| background | 53 | yes |
+| class | 2 | yes |
+| subclass | 101 | yes |
+| species | 11 | yes |
+| subspecies | 30 | yes |
+| magic-item | 1063 | yes |
+| spell | 1297 | yes |
+| monster | 2885 | cohort §7 |
+| trait | 6423 | cohort §7 |
+| creature-action | 8615 | cohort §7 |
+| **Total** | **20,712** | |
 
 ---
 
-## open5e-a5e-ddg — Dungeon Delver’s Guide
+## 1. Feats (73)
 
-*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
-Counts: adventuring-gear 9, background 4
+Engine supports rich feat prerequisites (`prereq_clauses` + legacy flat fields, enforced in the feat-selection dialog) and a 68-kind effect DSL. Findings: **5** feats carry a prerequisite as free text with no structured/enforced field **[P]**; **64** feats have no `effects[]` so their numeric/active benefits never reach the sheet **[M]**; the majority merge the prerequisite line and the benefit body into one `description` field **[D]**.
 
-### background (4)
+### Adventurer's Guide
+- **Ace Driver** — **[P]** unenforced prerequisite “Proficiency with a type of vehicle”; **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Athletic** — **[M]** benefits in prose, no `effects[]`
+- **Attentive** — **[M]** benefits in prose, no `effects[]`
+- **Battle Caster** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Brutal Attack** — **[M]** benefits in prose, no `effects[]`
+- **Bull Rush** — **[M]** benefits in prose, no `effects[]`
+- **Combat Thievery** — **[M]** benefits in prose, no `effects[]`
+- **Covert Training** — **[M]** benefits in prose, no `effects[]`
+- **Crafting Expert** — Clean
+- **Crossbow Expertise** — **[M]** benefits in prose, no `effects[]`
+- **Deadeye** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Deflector** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Destiny’s Call** — **[M]** benefits in prose, no `effects[]`
+- **Dual-Wielding Expert** — **[M]** benefits in prose, no `effects[]`
+- **Dungeoneer** — **[M]** benefits in prose, no `effects[]`
+- **Empathic** — **[M]** benefits in prose, no `effects[]`
+- **Fear Breaker** — **[M]** benefits in prose, no `effects[]`
+- **Fortunate** — **[M]** benefits in prose, no `effects[]`
+- **Guarded Warrior** — **[M]** benefits in prose, no `effects[]`
+- **Hardy Adventurer** — **[M]** benefits in prose, no `effects[]`
+- **Heavily Outfitted** — prereq enforced (structured); **[D]** prereq+body merged in one description field
+- **Heavy Armor Expertise** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Heraldic Training** — **[M]** benefits in prose, no `effects[]`
+- **Idealistic Leader** — **[M]** benefits in prose, no `effects[]`
+- **Intuitive** — **[M]** benefits in prose, no `effects[]`
+- **Keen Intellect** — **[M]** benefits in prose, no `effects[]`
+- **Lightly Outfitted** — Clean
+- **Linguistics Expert** — **[M]** benefits in prose, no `effects[]`
+- **Martial Scholar** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Medium Armor Expert** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Moderately Outfitted** — prereq enforced (structured); **[D]** prereq+body merged in one description field
+- **Monster Hunter** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Mounted Warrior** — **[M]** benefits in prose, no `effects[]`
+- **Mystical Talent** — **[M]** benefits in prose, no `effects[]`
+- **Natural Warrior** — Clean
+- **Physician** — **[M]** benefits in prose, no `effects[]`
+- **Polearm Savant** — **[M]** benefits in prose, no `effects[]`
+- **Power Caster** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Powerful Attacker** — **[M]** benefits in prose, no `effects[]`
+- **Primordial Caster** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Rallying Speaker** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Resonant Bond** — **[M]** benefits in prose, no `effects[]`
+- **Rite Master** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Shield Focus** — Clean
+- **Skillful** — Clean
+- **Skirmisher** — Clean
+- **Spellbreaker** — **[M]** benefits in prose, no `effects[]`
+- **Stalwart** — **[M]** benefits in prose, no `effects[]`
+- **Stealth Expert** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Street Fighter** — **[M]** benefits in prose, no `effects[]`
+- **Surgical Combatant** — **[M]** benefits in prose, no `effects[]`
+- **Survivor** — **[M]** benefits in prose, no `effects[]`
+- **Swift Combatant** — prereq enforced (structured); **[D]** prereq+body merged in one description field
+- **Tactical Support** — **[M]** benefits in prose, no `effects[]`
+- **Tenacious** — **[M]** benefits in prose, no `effects[]`
+- **Thespian** — **[M]** benefits in prose, no `effects[]`
+- **Weapons Specialist** — **[M]** benefits in prose, no `effects[]`
+- **Well-Heeled** — **[P]** unenforced prerequisite “Prestige rating of 2 or higher”; **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Woodcraft Training** — **[M]** benefits in prose, no `effects[]`
 
-- **Deep Hunter** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Dungeon Robber** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Escapee from Below** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Imposter** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+### Tal'dorei Campaign Setting
+- **Rapid Drinker** — **[M]** benefits in prose, no `effects[]`
 
-### adventuring-gear (9) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Chalk*, *Traveler's Clothes*, *Hunting Traps*, *Cartographers' Tools*, *Miner's Pick*, …
-
----
-
-## open5e-a5e-gpg — Gate Pass Gazette
-
-*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
-Counts: adventuring-gear 10, background 2
-
-### background (2)
-
-- **Cursed** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Haunted** — `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-
-### adventuring-gear (10) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Days Of Rations*, *Person Tent*, *Traveler's Clothes*, *Days Worth Of Rations*, *Bell*, …
-
----
-
-## open5e-a5e-mm — Monstrous Menagerie
-
-*Publisher: EN Publishing · License: ogl-10a · System: a5e*  
-Counts: creature-action 1657, monster 586, trait 829
-
-### monster (586) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Aboleth*, *Aboleth Thrall*, *Abominable Snowman*, *Accursed Guardian Naga*, *Accursed Spirit Naga*, …
-
-### trait (829) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Amphibious*, *Innate Spellcasting*, *Sea Changed*, *Camouflage*, *Fire Fear*, …
-
-### creature-action (1657) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Baleful Charm*, *Move*, *Multiattack*, *Slimy Cloud*, *Soul Drain*, …
-
----
-
-## open5e-bfrd — Black Flag SRD
-
-*Publisher: Kobold Press · License: cc-by-40 · System: 5e-2014*  
-Counts: class 1, creature-action 1339, monster 360, subclass 1, trait 776
-
-### class (1)
-
-- **Mechanist** — Hit die, saving throws, proficiencies and caster kind are typed; **leveled class features and spell lists remain freeform prose with no level field**, so per-level feature granting is unsupported. `primary_ability_ref` empty → multiclass entry prereq cannot be enforced.
-
-### subclass (1)
-
-- **Metallurgist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-
-### monster (360) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Aboleth*, *Acolyte*, *Adult Black Dragon*, *Adult Blue Dragon*, *Adult Brass Dragon*, …
-
-### trait (776) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Aberrant Resilience*, *Amphibious*, *Legendary Resistance (3/Day)*, *Probing Telepathy*, *Slime Pox*, …
-
-### creature-action (1339) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Detect*, *Multiattack*, *Psychic Bolt*, *Psychic Torrent*, *Slime Drain*, …
+### Tome of Heroes
+- **Boundless Reserves** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Diehard** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Floriographer** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Forest Denizen** — **[M]** benefits in prose, no `effects[]`
+- **Friend of the Forest** — **[M]** benefits in prose, no `effects[]`
+- **Giant Foe** — **[P]** unenforced prerequisite “*A Small or smaller race*”; **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Harrier** — **[P]** unenforced prerequisite “*The Shadow Traveler shadow fey trait or the ability to”; **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Inner Resilience** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Part of the Pack** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Rimecaster** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Sorcerous Vigor** — prereq enforced (structured); **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
+- **Stalker** — **[M]** benefits in prose, no `effects[]`
+- **Stunning Sniper** — **[P]** unenforced prerequisite “*Proficiency with a ranged weapon*”; **[M]** benefits in prose, no `effects[]`; **[D]** prereq+body merged in one description field
 
 ---
 
-## open5e-ccdx — Creature Codex
+## 2. Backgrounds (53)
 
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: creature-action 1148, monster 356, trait 921
+Backgrounds populate `granted_skill_refs`, `equipment_choice_groups`, and (mostly) `ability_score_options` / `granted_language_count`. Universal gaps: **no** `asi_distribution_options` (the +2/+1 vs +1/+1/+1 rule is unstructured) **[D/M]**, **no** `origin_feat_ref` (0/53 — the granted origin feat is never linked) **[M]**, and the background feature + advancement tables live entirely in `description` markdown **[D]**.
 
-### monster (356) — audited as a class
+### Adventurer's Guide
+- **Acolyte** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Artisan** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Charlatan** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Criminal** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Cultist** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Entertainer** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Exile** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Farmer** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Folk Hero** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Gambler** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Guard** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Guildmember** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Hermit** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Marauder** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Noble** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Outlander** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Sage** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Sailor** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Soldier** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Trader** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Urchin** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Aatxe*, *Acid Ant*, *Adult Light Dragon*, *Adult Wasteland Dragon*, *Agnibarra*, …
+### Dungeon Delver’s Guide
+- **Deep Hunter** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Dungeon Robber** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Escapee from Below** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Imposter** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
-### trait (921) — audited as a class
+### Gate Pass Gazette
+- **Cursed** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Haunted** — **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Charge*, *Know Thoughts*, *Magic Resistance*, *Shapechanger*, *Explosive Death*, …
+### Open5e Originals
+- **Con Artist** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Scoundrel** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
-### creature-action (1148) — audited as a class
+### Tal'dorei Campaign Setting
+- **Crime Syndicate Member** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Elemental Warden** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Fate-Touched** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Lyceum Student** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Recovered Cultist** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Bulwark*, *Detect*, *Gore*, *Gore (Aatxe)*, *Paw the Earth*, …
-
----
-
-## open5e-deepm — Deep Magic for 5th Edition
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: spell 515
-
-### spell (515) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Abhorrent Apparition*, *Accelerate*, *Acid Gate*, *Acid Rain*, *Adjust Position*, …
-
----
-
-## open5e-deepmx — Deep Magic Extended
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: spell 64
-
-### spell (64) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Absolute Command*, *Amplify Ley Field*, *Animate Construct*, *Anomalous Object*, *Armored Heart*, …
-
----
-
-## open5e-kp — Kobold Press Compilation
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: spell 31
-
-### spell (31) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Ambush*, *Blood Strike*, *Conjure Manabane Swarm*, *Curse of Formlessness*, *Delay Passing*, …
-
----
-
-## open5e-open5e — Open5e Originals
-
-*Publisher: Open5e · License: ogl-10a · System: 5e-2014*  
-Counts: adventuring-gear 8, background 2, spell 2, subclass 17, subspecies 1
-
-### subclass (17)
-
-- **Abjurationist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Arcane Warrior** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of the Many** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Skalds** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Demise Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Eldritch Trickster** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Mischief Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oathless Betrayer** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **School of Abjuring and Warding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **School of Divining and Soothsaying** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **School of Illusions and Phantasms** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **School of Necrotic Arts** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Storm Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **The Ancient Fey Court** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **The Great Elder Thing** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of Shadowdancing** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Wyrd Magic** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-
-### subspecies (1)
-
-- **Stoor Halfling** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-
-### background (2)
-
-- **Con Artist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Scoundrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-
-### spell (2) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Eye bite*, *Ray of Sickness*
-
-### adventuring-gear (8) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Fine Clothes*, *Disguise Kit*, *Tools For Your Typical Con*, *Pouch Containing*, *Bag Of 1000 Ball Bearings*, …
+### Tome of Heroes
+- **Court Servant** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Desert Runner** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Destined** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Diplomat** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Forest Dweller** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Former Adventurer** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Freebooter** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Gamekeeper** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Innkeeper** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Mercenary Company Scion** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Mercenary Recruit** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Monstrous Adoptee** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Mysterious Origins** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Northern Minstrel** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Occultist** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Parfumier** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Scoundrel** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Sentry** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
+- **Trophy Hunter** — **[D]** no `ability_score_options` (ASI in prose); **[M]** no `asi_distribution_options`; **[M]** no `origin_feat_ref`; **[D]** feature/advancement text in description
 
 ---
 
-## open5e-spells-that-dont-suck — Spells That Don't Suck
+## 3. Classes (2)
 
-*Publisher: SoMany Robots · License: cc-by-40 · System: 5e-2014*  
-Counts: spell 180
+Both classes structure proficiencies/hit-die/saves well, but leave the entire level progression in prose.
 
-### spell (180) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Adaptation*, *Alter Weather*, *Animal Ally*, *Animal Transformation*, *Arcane Shelter*, …
+- **Marshal** [Adventurer's Guide] — **[P]** no `primary_ability_ref` (multiclass-entry ability gate cannot fire); **[M]** no `features[]` (per-level progression in prose); **[P]** no multiclass prereq fields; **[D]** class features dumped in `description`
+- **Mechanist** [Black Flag SRD] — **[P]** no `primary_ability_ref` (multiclass-entry ability gate cannot fire); **[M]** no `features[]` (per-level progression in prose); **[P]** no multiclass prereq fields; **[D]** class features dumped in `description`
 
 ---
 
-## open5e-tdcs — Tal'dorei Campaign Setting
+## 4. Subclasses (101)
 
-*Publisher: Green Ronin · License: ogl-10a · System: 5e-2014*  
-Counts: adventuring-gear 13, background 5, creature-action 10, feat 1, monster 4, subclass 4, trait 11
+**Every** subclass is `description` + `parent_class_ref` only. None carry `granted_at_level`, `features[]` rows, or `rule_effects`, so the resolver cannot apply features at the correct level and no benefit reaches the sheet. Uniform finding: **[M]** leveled features unimplemented · **[D]** all content in one description field.
 
-### subclass (4)
+### Adventurer's Guide (3)
+- **Gambling General** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Swift Strategist** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Talented Tactician** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
 
-- **Blood Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of the Juggernaut** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Runechild** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Cerulean Spirit** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
+### Black Flag SRD (1)
+- **Metallurgist** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
 
-### background (5)
+### Open5e Originals (17)
+- **Arcane Warrior** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of the Many** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Skalds** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Demise Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Eldritch Trickster** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Mischief Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oathless Betrayer** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **School of Abjuring and Warding** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **School of Divining and Soothsaying** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **School of Illusions and Phantasms** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **School of Necrotic Arts** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Storm Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **The Ancient Fey Court** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **The Great Elder Thing** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of Shadowdancing** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Wyrd Magic** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Abjurationist** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
 
-- **Crime Syndicate Member** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Elemental Warden** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Fate-Touched** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Lyceum Student** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Recovered Cultist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
+### Tal'dorei Campaign Setting (4)
+- **Blood Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of the Juggernaut** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Runechild** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Cerulean Spirit** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
 
-### feat (1)
-
-- **Rapid Drinker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-
-### adventuring-gear (13) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Dark Common Clothes Including A Hood*, *Tools To Match Your Choice Of Tool Proficiency*, *Belt Pouch Containing 10g*, *Staff*, *Hunting Gear*, …
-
-### monster (4) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Firetamer*, *Skydancer*, *Stoneguard*, *Waverider*
-
-### trait (11) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Flameform*, *Spellcasting*, *Evasion*, *Flyby*, *Skysail*, …
-
-### creature-action (10) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Flamecharm*, *Scimitar*, *Multiattack*, *Skysail Staff*, *Slow Fall*, …
-
----
-
-## open5e-tob — Tome of Beasts
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: creature-action 1303, monster 391, trait 1039
-
-### monster (391) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Aboleth, Nihilith*, *Abominable Beauty*, *Accursed Defiler*, *Adult Cave Dragon*, *Adult Flame Dragon*, …
-
-### trait (1039) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Dual State*, *Infecting Telepathy*, *Nihileth's Lair*, *Regional Effects*, *Undead Fortitude*, …
-
-### creature-action (1303) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Detect*, *Enslave*, *Form Swap*, *Multiattack*, *Psychic Drain*, …
-
----
-
-## open5e-tob-2023 — Tome of Beasts 1 (2023 Edition)
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: creature-action 1658, monster 408, trait 1021
-
-### monster (408) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Abominable Beauty*, *Accursed Defiler*, *Adult Cave Dragon*, *Adult Flame Dragon*, *Adult Mithral Dragon*, …
-
-### trait (1021) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Burning Touch*, *Cursed Existence*, *Sand Shroud*, *Undead Nature*, *Darkness Aura*, …
-
-### creature-action (1658) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Blinding Gaze*, *Deafening Voice*, *Multiattack*, *Slam*, *Multiattack (Accursed Defiler)*, …
-
----
-
-## open5e-tob2 — Tome of Beasts 2
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: creature-action 1209, monster 383, trait 1014
-
-### monster (383) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *A-mi-kuk*, *Aalpamac*, *Abbanith Giant*, *Adult Boreal Dragon*, *Adult Imperial Dragon*, …
-
-### trait (1014) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Fear of Fire*, *Hold Breath*, *Icy Slime*, *Amphibious*, *Distance Distortion Aura*, …
-
-### creature-action (1209) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Bite*, *Grasping Claw*, *Multiattack*, *Strangle*, *Bite (Aalpamac)*, …
-
----
-
-## open5e-tob3 — Tome of Beasts 3
-
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: creature-action 291, monster 397, trait 812
-
-### monster (397) — audited as a class
-
-Reference statblock. Defensive/offensive numbers are typed, but mechanical behaviours (multiattack, recharge, save DCs, legendary/lair actions) are prose inside linked `creature-action`/`trait` cards. **No encounter-automation mechanic** — acceptable for a reference card, logged for completeness.  
-Representative cards: *Abaasy*, *Ahu-Nixta Mechanon*, *Akanka*, *Akkorokamui*, *Alabroza*, …
-
-### trait (812) — audited as a class
-
-Reference sub-card of a monster. The trait's rules text is a single prose field; no Effect DSL. Structurally clean as reference content.  
-Representative cards: *Armored Berserker*, *Dual Shields*, *Poor Depth Perception*, *Construct Nature*, *Critical Malfunction*, …
-
-### creature-action (291) — audited as a class
-
-Reference sub-card of a monster (attack/action). Attack rules are prose; no structured attack/damage automation. Structurally clean as reference content.  
-Representative cards: *Iron Axe*, *Multiattack*, *Cast a Spell*, *Discern*, *Guardian's Grasp*, …
+### Tome of Heroes (76)
+- **Ancient Dragons** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Animal Lords** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Beast Trainer** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Cantrip Adept** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Cat Burglar** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Chaplain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of Ash** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of Bees** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of Crystals** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of Sand** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of the Green** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of the Shapeless** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Circle of Wind** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Cold-Blooded** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Echoes** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Investigation** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Shadows** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Sincerity** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of Tactics** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **College of the Cat** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Courser Mage** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Dawn Blade** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Familiar Master** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Gravebinding** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Grove Warden** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Haunted Warden** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Hungering** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Hunt Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Hunter in Darkness** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Legionary** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Mercy Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of Justice** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of Safeguarding** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of the Elements** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of the Guardian** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of the Hearth** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Oath of the Plaguetouched** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Old Wood** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of Booming Magnificence** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of Hellfire** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of Mistwood** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of the Dragon** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of the Herald** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of the Inner Eye** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Path of Thorns** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Portal Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Primordial** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Pugilist** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Radiant Pikeman** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Resonant Body** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Rifthopper** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Sapper** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **School of Liminality** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Serpent Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Shadow Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Smuggler** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Snake Speaker** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Soulspy** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Spear of the Weald** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Spellsmith** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Spore Sorcery** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Timeblade** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Tunnel Watcher** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Underfoot** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Vermin Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Wasteland Strider** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Wastelander** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of Concordant Motion** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Dragon** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Humble Elephant** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Still Waters** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Tipsy Monkey** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Unerring Arrow** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Way of the Wildcat** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Wind Domain** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
+- **Wyrdweaver** — **[M]** no `granted_at_level`/`features[]`/`rule_effects`; **[D]** all leveled features in prose
 
 ---
 
-## open5e-toh — Tome of Heroes
+## 5. Species (11)
 
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: adventuring-gear 75, background 19, feat 13, species 11, spell 91, subclass 76, subspecies 29
+Ability modifiers, speeds, senses, resistances and languages are mostly structured (`granted_modifiers`, `speed_*`, `granted_senses`, `granted_damage_resistances`). Gap: **named racial traits are never linked** (`trait_refs` empty for all) and no `rule_effects`, so active/conditional traits (innate spells, special actions, riders) exist only as `description` prose **[M/D]**.
 
-### subclass (76)
-
-- **Ancient Dragons** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Animal Lords** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Beast Trainer** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Cantrip Adept** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Cat Burglar** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Chaplain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of Ash** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of Bees** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of Crystals** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of Sand** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of Wind** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of the Green** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Circle of the Shapeless** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Cold-Blooded** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Echoes** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Investigation** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Shadows** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Sincerity** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of Tactics** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **College of the Cat** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Courser Mage** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Dawn Blade** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Familiar Master** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Gravebinding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Grove Warden** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Haunted Warden** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Hungering** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Hunt Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Hunter in Darkness** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Legionary** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Mercy Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of Justice** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of Safeguarding** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of the Elements** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of the Guardian** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of the Hearth** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Oath of the Plaguetouched** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Old Wood** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of Booming Magnificence** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of Hellfire** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of Mistwood** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of Thorns** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of the Dragon** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of the Herald** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Path of the Inner Eye** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Portal Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Primordial** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Pugilist** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Radiant Pikeman** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Resonant Body** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Rifthopper** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Sapper** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **School of Liminality** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Serpent Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Shadow Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Smuggler** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Snake Speaker** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Soulspy** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Spear of the Weald** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Spellsmith** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Spore Sorcery** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Timeblade** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Tunnel Watcher** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Underfoot** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Vermin Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Wasteland Strider** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Wastelander** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of Concordant Motion** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Dragon** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Humble Elephant** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Still Waters** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Tipsy Monkey** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Unerring Arrow** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Way of the Wildcat** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Wind Domain** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-- **Wyrdweaver** — All mechanics dumped in one `description` field; only `parent_class_ref` is typed. Leveled features carry no `granted_at_level`, so the resolver applies every feature at level 1.
-
-### species (11)
-
-- **Alseid** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Catfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Darakhul** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Derro** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Drow** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Erina** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Gearforged** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Minotaur** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Mushroomfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Satarre** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Shade** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-
-### subspecies (29)
-
-- **Acid Cap** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Bhain Kwai** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Boghaid** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Delver** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Derro Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Dragonborn Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Drow Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Dwarf Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Dwarf Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Elf/Shadow Fey Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Far-Touched** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Favored** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Fever-Bit** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Gnome Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Gnome Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Halfling Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Human Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Human/Half-Elf Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Kobold Chassis** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Kobold Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Malkin** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Morel** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Mutated** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Pantheran** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Purified** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Ravenfolk** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Tiefling Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Trollkin Heritage** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-- **Uncorrupted** — Size/speed/senses/ASI partly typed where source traits exist; remaining traits (and any active racial mechanics) stay as folded prose with no Effect DSL.
-
-### background (19)
-
-- **Court Servant** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Desert Runner** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Destined** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Diplomat** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Forest Dweller** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Former Adventurer** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Freebooter** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Gamekeeper** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Innkeeper** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Mercenary Company Scion** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Mercenary Recruit** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Monstrous Adoptee** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Mysterious Origins** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Northern Minstrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Occultist** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Parfumier** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Scoundrel** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Sentry** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-- **Trophy Hunter** — `ability_score_options` empty — ASI grant not typed. `asi_distribution_options` empty — the +2/+1 vs +1/+1/+1 distribution rule is not enforced. Adventures/equipment/gold/feature text remains in the prose `description`.
-
-### feat (13)
-
-- **Boundless Reserves** — Prerequisite parsed to structured field(s) and enforced ("*Wisdom 13 or higher and the Ki class feature*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Diehard** — Prerequisite parsed to structured field(s) and enforced ("*Constitution 13 or higher*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Floriographer** — Prerequisite is narrative text only ("*Proficiency in one of the following skills: Arcana, History, or Nature*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Forest Denizen** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Friend of the Forest** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Giant Foe** — Prerequisite is narrative text only ("*A Small or smaller race*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Harrier** — Prerequisite is narrative text only ("*The Shadow Traveler shadow fey trait or the ability to cast the* misty step *spell*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Inner Resilience** — Prerequisite parsed to structured field(s) and enforced ("*Wisdom 13 or higher*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Part of the Pack** — Prerequisite is narrative text only ("*Proficiency in the Animal Handling skill*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Rimecaster** — Prerequisite is narrative text only ("*A race or background from a cold climate and the ability to cast at least one spell*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Sorcerous Vigor** — Prerequisite parsed to structured field(s) and enforced ("*Charisma 13 or higher and the Sorcery Points class feature*"). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Stalker** — Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-- **Stunning Sniper** — Prerequisite is narrative text only ("*Proficiency with a ranged weapon*") → **not enforced** at selection (no `prereq_*` structured field). Benefits in prose only — no Effect DSL entries, so the feat's mechanics are not applied to the sheet.
-
-### spell (91) — audited as a class
-
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Ambush Chute*, *Armored Formation*, *Babble*, *Battle Mind*, *Beast Within*, …
-
-### adventuring-gear (75) — audited as a class
-
-Typed cost/weight/consumable/`is_focus` fields. **Data gap:** `is_focus` is uniformly `false` and many cost/weight values are `0`, so spellcasting-focus and encumbrance validation cannot key off the data.  
-Representative cards: *Artisan's Tools*, *Unique Piece Of Jewelry*, *Fine Clothes*, *Handcrafted Pipe*, *Belt Pouch*, …
+### Tome of Heroes
+- **Alseid** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Catfolk** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Darakhul** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Derro** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Drow** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Erina** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Gearforged** — **[D]** no `granted_modifiers` (ASI/speed unstructured); **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Minotaur** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Mushroomfolk** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Satarre** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Shade** — **[D]** no `granted_modifiers` (ASI/speed unstructured); **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
 
 ---
 
-## open5e-vom — Vault of Magic
+## 6. Subspecies (30)
 
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: magic-item 1063
+Ability modifiers, speeds, senses, resistances and languages are mostly structured (`granted_modifiers`, `speed_*`, `granted_senses`, `granted_damage_resistances`). Gap: **named racial traits are never linked** (`trait_refs` empty for all) and no `rule_effects`, so active/conditional traits (innate spells, special actions, riders) exist only as `description` prose **[M/D]**.
 
-### magic-item (1063) — audited as a class
+### Open5e Originals
+- **Stoor Halfling** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
 
-**Poor data structure + unimplemented prerequisite:** the entire item ruleset is dumped into one free-text `effects` field; `requires_attunement` is a bare boolean and the *conditional* attunement clause ("by a spellcaster", "by a creature of good alignment") is absent from source, leaving the `attunement_prereq` schema field empty. No structured item bonuses (AC/attack/save) → no automation, no attunement-condition enforcement.  
-Representative cards: *Aberrant Agreement*, *Accursed Idol*, *Adamantine Spearbiter*, *Agile Breastplate*, *Agile Chain Mail*, …
+### Tome of Heroes
+- **Acid Cap** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Bhain Kwai** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Boghaid** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Delver** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Derro Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Dragonborn Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Drow Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Dwarf Chassis** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Dwarf Heritage** — **[D]** no `granted_modifiers` (ASI/speed unstructured); **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Elf/Shadow Fey Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Far-Touched** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Favored** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Fever-Bit** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Gnome Chassis** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Gnome Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Halfling Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Human Chassis** — **[D]** no `granted_modifiers` (ASI/speed unstructured); **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Human/Half-Elf Heritage** — **[D]** no `granted_modifiers` (ASI/speed unstructured); **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Kobold Chassis** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Kobold Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Malkin** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Morel** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Mutated** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Pantheran** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Purified** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Ravenfolk** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Tiefling Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Trollkin Heritage** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
+- **Uncorrupted** — **[M]** `trait_refs` empty (named traits unlinked); **[M]** no `rule_effects`; **[D]** special abilities in prose
 
 ---
 
-## open5e-wz — Warlock Zine
+## 7. Magic items (1,063)
 
-*Publisher: Kobold Press · License: ogl-10a · System: 5e-2014*  
-Counts: spell 43
+Schema defines structured attunement (`attunement_class_refs`, `attunement_species_refs`, `attunement_alignment_refs`, `attunement_spellcaster_only`, `attunement_min_ability_*`, `attunement_prereq`) plus `rule_effects`/`granted_modifiers`, `charges_max`, `charge_regain`. **The Vault-of-Magic import populates none of them.** Per-item findings are uniform:
 
-### spell (43) — audited as a class
+- **[D]** the entire ruleset is dumped into a single free-text `effects` **string** (1,063/1,063).
+- **[P]** structured attunement prerequisite **empty for every item** (0/1,063); the conditional clause ("requires attunement by a spellcaster / by a creature of good alignment") is stripped before it reaches the pack. 452 items set the bare `requires_attunement` boolean only.
+- **[M]** no `rule_effects`/`granted_modifiers` (0/1,063) → passive AC/attack/save/ability bonuses are never applied; `charges_max`/`charge_regain` unpopulated → no charge tracking.
 
-Rich metadata is typed (level, school, casting time, range, components, duration, concentration, `save_ability_ref`, `damage_type_refs`, `attack_type`). **Missing mechanic:** no damage-dice / effect-amount field and no structured *cast-at-higher-level* (upcast/scaling) field — the spell outcome lives only in the prose `description`, so damage rolls, save-for-half, and upcasting are not automated.  
-Representative cards: *Abrupt Hug*, *Avert Evil Eye*, *Bardo*, *Battle Chant*, *Bombardment of Stings*, …
+Per item below: **[D]** single-field effects · **[P]** attunement clause unstructured (where attuned) · **[M]** no applied effects.
+
+### Vault of Magic (1063)
+- **Aberrant Agreement** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Accursed Idol** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Adamantine Spearbiter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Agile Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Air Seed** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Akaasit Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Alabaster Salt Shaker** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Alchemical Lantern** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Alembic of Unmaking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Almanac of Common Wisdom** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Amulet of Memory** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Amulet of Sustaining Health** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Amulet of the Oracle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Amulet of Whirlwinds** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Anchor of Striking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Angelic Earrings** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Angry Hornet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Animated Abacus** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Animated Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ankh of Aten** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Anointing Mace** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Apron of the Eager Artisan** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Arcanaphage Stone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Armor of Cushioning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Armor of the Ngobou** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Arrow of Grabbing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Arrow of Unpleasant Herbs** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ash of the Ebon Birch** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ashes of the Fallen** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ashwood Wand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Asp's Kiss** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Aurochs Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Baba Yaga's Cinderskull** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Badger Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bag of Bramble Beasts** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bag of Traps** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bagpipes of Battle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Baleful Wardrums** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Band of Iron Thorns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Band of Restraint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bandana of Brachiation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bandana of Bravado** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Banner of the Fortunate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Battle Standard of Passage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bead of Exsanguination** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bear Paws** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bed of Spikes** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Belt of the Wilds** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Berserker's Kilt (Bear)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Berserker's Kilt (Elk)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Berserker's Kilt (Wolf)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Big Dipper** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Binding Oath** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bituminous Orb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Black and White Daggers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Black Dragon Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Black Honey Buckle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Black Phial** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blackguard's Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blackguard's Handaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blackguard's Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blacktooth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blade of Petals** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blade of the Dervish** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blade of the Temple Guardian** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blasphemous Writ** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blessed Pauper's Purse** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blinding Lantern** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blood Mark** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blood Pearl** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blood-Soaked Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blooddrinker Spear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Battleaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Blowgun** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Crossbow Hand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Crossbow Heavy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Crossbow Light** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Dart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Glaive** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Greataxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Halberd** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Handaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Javelin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Lance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Longbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Morningstar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Pike** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Shortbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Sickle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Spear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Trident** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Warpick** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodfuel Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodlink Potion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodpearl Bracelet (Gold)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodpearl Bracelet (Silver)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Chain-Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Chain-Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Half-Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Padded** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Ring-Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Scale-Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodprice Studded-Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bloodthirsty Battleaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Blowgun** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Crossbow Hand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Crossbow Heavy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Crossbow Light** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Dart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Glaive** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Greataxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Halberd** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Handaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Javelin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Lance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Longbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Morningstar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Pike** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Shortbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Sickle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Spear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Trident** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Warpick** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodthirsty Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bloodwhisper Cauldron** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bludgeon of Nightmares** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Blue Rose** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Blue Willow Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bone Skeleton Key** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bone Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bonebreaker Mace** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Book of Ebon Tides** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Book of Eibon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Book Shroud** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bookkeeper Inkpot** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bookmark of Eldritch Insight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Boots of Pouncing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Boots of Quaking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Boots of Solid Footing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Boots of the Grandmother** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Boots of the Swift Striker** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bottled Boat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bountiful Cauldron** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Box of Secrets** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Bracelet of the Fire Tender** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Braid Whip Clasp** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Brain Juice** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brass Clockwork Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brass Snake Ball** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Brawler's Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brawn Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brazen Band** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Brazen Bulwark** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Breaker Lance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Breastplate of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Breastplate of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Breastplate of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Breathing Reed** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Briarthorn Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Broken Fang Talisman** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Broom of Sweeping** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brotherhood of Fezzes** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Brown Honey Buckle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bubbling Retort** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Buckle of Blasting** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Bullseye Arrow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Burglar's Lock and Key** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Burning Skull** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Butter of Disbelief** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Buzzing Battleaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Greataxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Handaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Buzzing Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Candied Axe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Candle of Communion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Candle of Summoning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Candle of Visions** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Cap of Thorns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cape of Targeting** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Captain's Flag** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Captain's Goggles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Case of Preservation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Cataloguing Book** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Catalyst Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Celestial Charter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Celestial Sextant** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Censer of Dark Shadows** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Centaur Wrist-Wraps** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cephalopod Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ceremonial Sacrificial Knife** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Chain Mail of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chain Mail of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chain Mail of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chain Shirt of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chain Shirt of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chain Shirt of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chainbreaker Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chainbreaker Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chainbreaker Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chainbreaker Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chainbreaker Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chalice of Forbidden Ecstasies** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Chalk of Exodus** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chamrosh Salve** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Charlatan's Veneer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Charm of Restoration** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chieftain's Axe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Chillblain Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chillblain Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Chronomancer's Pocket Clock** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Cinch of the Wolfmother** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Circlet of Holly** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Circlet of Persuasion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Clacking Teeth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Clamor Bell** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clarifying Goggles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Cleaning Concoction** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Cloak of Coagulation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of Petals** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of Sails** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of Squirrels** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Bearfolk** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Eel** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Empire** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Inconspicuous Rake** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Ram** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of the Rat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cloak of Wicked Wings** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Gauntlet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Hand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Hare** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Clockwork Mace of Divinity** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Mynah Bird** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Clockwork Pendant** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Rogue Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Clockwork Spider Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Coffer of Memory** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Collar of Beast Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Comfy Slippers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Commander's Helm** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Commander's Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Commander's Visage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Commoner's Veneer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Communal Flute** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Companion's Broth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Constant Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Consuming Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Copper Skeleton Key** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Coral of Enchanted Colors** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Cordial of Understanding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Corpsehunter's Medallion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Countermelody Crystals** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Courtesan's Allure** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crab Gloves** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Crafter Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Craven's Heart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crawling Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Crimson Carpet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crimson Starfall Arrow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crocodile Hide Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crocodile Leather Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crook of the Flock** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Crown of the Pharaoh** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Crusader's Shield** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crystal Skeleton Key** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Crystal Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dagger of the Barbed Devil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dancing Caltrops** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dancing Floret** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dancing Ink** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dastardly Quill and Parchment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dawn Shard Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dawn Shard Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dawn Shard Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dawn Shard Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dawn Shard Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dawn Shard Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Deadfall Arrow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Death's Mirror** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Decoy Card** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Deepchill Orb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Defender Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Deserter's Boots** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Devil Shark Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Devilish Doubloon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Devil's Barb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Digger Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dimensional Net** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dirgeblade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dirk of Daring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Distracting Doubloon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Djinn Vessel** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Doppelganger Ointment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dragonstooth Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Draught of Ambrosia** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Draught of the Black Owl** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dread Scarab** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Dust of Desiccation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dust of Muffling** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Dust of the Dead** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Eagle Cape** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Earrings of the Agent** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Earrings of the Eclipse** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Earrings of the Storm Oyster** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ebon Shards** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Efficacious Eyewash** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Eldritch Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Elemental Wraps** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Elixir of Corruption** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Deep Slumber** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Focus** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Mimicry** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Oracular Delirium** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Spike Skin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of the Clear Mind** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of the Deep** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elixir of Wakefulness** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Elk Horn Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Encouraging Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Hide Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Leather Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Padded Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Encouraging Studded Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Enraging Ammunition** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ensnaring Ammunition** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Entrenching Mattock** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Everflowing Bowl** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Explosive Orb of Obfuscation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Exsanguinating Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Extract of Dual-Mindedness** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Eye of Horus** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Eye of the Golden God** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Eyes of the Outer Dark** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Eyes of the Portal Masters** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fanged Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Farhealing Bandages** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Farmer Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fear-Eater's Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Feather Token** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fellforged Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ferryman's Coins** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Feysworn Contract** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fiendish Charter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurehead of Prowess** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Amber Bee)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Basalt Cockatrice)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Coral Shark)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Hematite Aurochs)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Lapis Camel)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Marble Mistwolf)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Tin Dog)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Figurine of Wondrous Power (Violet Octopoid)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Firebird Feather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Flag of the Cursed Fleet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Flash Bullet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Flask of Epiphanies** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Fleshspurned Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Flood Charm** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Flute of Saurian Summoning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fly Whisk of Authority** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fog Stone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Forgefire Maul** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Forgefire Warhammer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fountmail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Freerunner Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Frost Pellet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Frostfire Lantern** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Frungilator** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Fulminar Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gale Javelin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Garments of Winter's Knight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gauntlet of the Iron Sphere** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gazebo of Shade and Shelter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Padded** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Barding Studded Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Dragon Horn** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghost Thread** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghoul Light** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghoulbane Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ghoulbane Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Giggling Orb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Girdle of Traveling Alchemy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Glamour Rings** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glass Wand of Leng** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Glazed Battleaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Greataxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Handaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Glazed Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Gliding Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Gloomflower Corsage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gloves of the Magister** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gloves of the Walking Shade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gnawing Spear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Goblin Shield** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Goggles of Firesight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Goggles of Shade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Golden Bolt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gorgon Scale** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Granny Wax** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grasping Cap** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Grasping Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Grasping Shield** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Reagent** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Padded** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grave Ward Studded Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Greater Potion of Troll Blood** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Greater Scroll of Conjuring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Greatsword of Fallen Saints** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Greatsword of Volsung** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Green Mantle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gremlin's Paw** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Grifter's Deck** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Grim Escutcheon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Gritless Grease** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hair Pick of Protection** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Half Plate of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Half Plate of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Half Plate of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hallowed Effigy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hallucinatory Dust** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hammer of Decrees** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hammer of Throwing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Handy Scroll Quiver** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hangman's Noose** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hardening Polish** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Harmonizing Instrument** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hat of Mental Acuity** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hazelwood Wand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Headdress of Majesty** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Headrest of the Cattle Queens** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Headscarf of the Oasis** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Healer Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Healthful Honeypot** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Heat Stone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Heliotrope Heart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Helm of the Slashing Fin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hewer's Draught** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hexen Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hidden Armament** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hide Armor of the Leaf** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hide Armor of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hide Armor of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hide Armor of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Holy Verdant Bat Droppings** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Honey Lamp** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Honey of the Warped Wildflowers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Honey Trap** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Honeypot of Awakening** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Howling Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Humble Cudgel of Temperance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Hunter's Charm (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hunter's Charm (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Hunter's Charm (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Iceblink Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Iceblink Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Iceblink Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Iceblink Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Iceblink Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impact Club** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impaling Lance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impaling Morningstar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impaling Pike** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impaling Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Impaling Warpick** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Incense of Recovery** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Interplanar Paint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ironskin Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ivy Crown of Prophecy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Jeweler's Anvil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Jungle Mess Kit** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Justicar's Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Keffiyeh of Serendipitous Escape** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Knockabout Billet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Kobold Firework** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Kraken Clutch Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Kyshaarth's Fang** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Labrys of the Raging Bull (Battleaxe)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Labrys of the Raging Bull (Greataxe)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Language Pyramid** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Lantern of Auspex** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lantern of Judgment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Lantern of Selective Illumination** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Larkmail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Last Chance Quiver** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Leaf-Bladed Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Leaf-Bladed Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Leaf-Bladed Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Leaf-Bladed Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Leaf-Bladed Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Least Scroll of Conjuring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Leather Armor of the Leaf** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Leather Armor of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Leather Armor of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Leather Armor of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Leonino Wings** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Lesser Scroll of Conjuring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lifeblood Gear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lightning Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Linguist's Cap** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Liquid Courage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Liquid Shadow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Living Juggernaut** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Living Stake** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lockbreaker** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Locket of Dragon Vitality** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Locket of Remembrance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Locksmith's Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lodestone Caltrops** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Longbow of Accuracy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Longsword of Fallen Saints** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Longsword of Volsung** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Loom of Fate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lucky Charm of the Monkey King** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Lucky Coin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Lucky Eyepatch** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Lupine Crown** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Luring Perfume** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Magma Mantle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Maiden's Tears** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mail of the Sword Master** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Manticore's Tail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mantle of Blood Vengeance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mantle of the Forest Lord** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mantle of the Lion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mantle of the Void** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Manual of Exercise** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Manual of the Lesser Golem** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Manual of Vine Golem** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mapping Ink** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Marvelous Clockwork Mallard** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Masher Basher** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mask of the Leaping Gazelle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mask of the War Chief** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Master Angler's Tackle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Matryoshka Dolls** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mayhem Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Medal of Valor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Memory Philter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mender's Mark** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Meteoric Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mindshatter Bombard** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Minor Minstrel** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mirror of Eavesdropping** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mirrored Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mirrored Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mirrored Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mnemonic Fob** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mock Box** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Molten Hellfire Breastplate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Chain Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Molten Hellfire Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mongrelmaker's Handbook** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Monkey's Paw of Fortune** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Moon Through the Trees** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Moonfield Lens** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Moonsteel Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Moonsteel Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mordant Battleaxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Glaive** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Greataxe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Halberd** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Sickle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mordant Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mountain Hewer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Mountaineer's Hand Crossbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mountaineer's Heavy Crossbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mountaineer's Light Crossbow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Half Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Padded** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Ring Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Scale Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Muffled Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mug of Merry Drinking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Murderous Bombard** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Mutineer's Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Nameless Cults** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Necromantic Ink** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Neutralizing Bead** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Nithing Pole** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Nullifier's Lexicon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Oakwood Wand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Octopus Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Oculi of the Ancestor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Odd Bodkin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Odorless Oil** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ogre's Pot** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Oil of Concussion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Oil of Defoliation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Oil of Extreme Bludgeoning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Oil of Numbing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Oil of Sharpening** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Oni Mask** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Oracle Charm** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Orb of Enthralling Patterns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Orb of Obfuscation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ouroboros Amulet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Pact Paper** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Padded Armor of the Leaf** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Padded Armor of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Padded Armor of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Padded Armor of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Parasol of Temperate Weather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Pavilion of Dreams** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Pearl of Diving** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Periapt of Eldritch Knowledge** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Periapt of Proof Against Lies** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Pestilent Spear** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Phase Mirror** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Phidjetz Spinner** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Philter of Luck** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Phoenix Ember** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Pick of Ice Breaking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Pipes of Madness** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Pistol of the Umbral Court** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Plate of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Plate of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Plate of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Plumb of the Elements** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Plunderer's Sea Chest** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Pocket Oasis** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Pocket Spark** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Poison Strand** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Potent Cure-All** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Air Breathing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Bad Taste** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Bouncing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Buoyancy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Dire Cleansing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Ebbing Strength** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Effulgence** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Empowering Truth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Freezing Fog** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Malleability** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Sand Form** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Skating** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Transparency** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Potion of Worg Form** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Prayer Mat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Primal Doom of Anguish** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Primal Doom of Pain** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Primal Doom of Rage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Primordial Scale** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Prospecting Compass** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Quick-Change Mirror** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Quill of Scribing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Quilted Bridge** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Radiance Bomb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Radiant Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Radiant Libram** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rain of Chaos** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rainbow Extract** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rapier of Fallen Saints** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ravager's Axe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Recondite Shield** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Recording Book** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Reef Splitter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Relocation Cable** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Resolute Bracer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Retribution Armor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Revenant's Shawl** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rift Orb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring Mail of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring Mail of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring Mail of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Arcane Adjustment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Bravado** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Deceiver's Warning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Dragon's Discernment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Featherweight Weapons** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Giant Mingling** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Hoarded Life** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Imperious Command** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Light's Comfort** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Night's Solace** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Powerful Summons** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Remembrance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Sealing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Shadows** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Small Mercies** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ring of Stored Vitality** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Dolphin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Frog** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Frost Knight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Grove's Guardian** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Jarl** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of the Water Dancer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Ring of Ursa** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **River Token** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Riverine Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Blade Bending** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Bubbles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Conveyance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Deflection** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Ghastly Might** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Hellish Grounding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Icicles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Reformation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Repossession** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Sacrificial Blessing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Sanguine Mastery** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Swarming Skulls** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of the Disciplinarian** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of the Infernal Realms** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of the Jester** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of the Mariner** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of the Wastes** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Thorns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rod of Underworld Navigation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Vapor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Verbatim** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rod of Warning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rogue's Aces** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Root of the World Tree** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rope Seed** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rowan Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rowdy's Club** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rowdy's Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Royal Jelly** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ruby Crusher** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Rug of Safe Haven** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Rust Monster Shell** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sacrificial Knife** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Saddle of the Cavalry Casters** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sanctuary Shell** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sand Arrow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sand Suit** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sandals of Sand Skating** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sandals of the Desert Wanderer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sanguine Lance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Satchel of Seawalking** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scale Mail of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scale Mail of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scale Mail of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scalehide Cream** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scarab of Rebirth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scarf of Deception** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scent Sponge** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scepter of Majesty** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scimitar of Fallen Saints** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scimitar of the Desert Winds** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scorn Pouch** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scorpion Feet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scoundrel's Gambit** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scourge of Devotion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scout's Coat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Screaming Skull** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scrimshaw Comb** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Scrimshaw Parrot** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scroll of Fabrication** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scroll of Treasure Finding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Scrolls of Correspondence** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sea Witch's Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Searing Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Second Wind** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Seelie Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Selket's Bracer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Seneschal's Gloves** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sentinel Portrait** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Serpent Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Serpentine Bracers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Serpent's Scales** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Serpent's Tooth** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shadow Tome** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shadowhound's Muzzle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shark Tooth Crown** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sharkskin Vest** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sheeshah of Revelations** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shepherd's Flail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shield of Gnawing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shield of Missile Reversal** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shield of the Fallen** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shifting Shirt** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shimmer Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shoes of the Shingled Canopy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shortbow of Accuracy** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Shortsword of Fallen Saints** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Shrutinandan Sitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sickle of Thorns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Siege Arrow** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Signaling Ammunition** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Signaling Compass** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Signet of the Magister** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Silver Skeleton Key** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Silver String** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Silvered Oar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Skald's Harp** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Skipstone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Skullcap of Deep Wisdom** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Slatelight Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sleep Pellet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Slick Cuirass** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Slimeblade Greatsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Slimeblade Longsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Slimeblade Rapier** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Slimeblade Scimitar** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Slimeblade Shortsword** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sling Stone of Screeching** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Slippers of the Cat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Slipshod Hammer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sloughide Bombard** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Smoking Plate of Heithmir** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Smuggler's Bag** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Smuggler's Coat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Snake Basket** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Soldra's Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Song-Saddle of the Khan** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Soul Bond Chalice** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Soul Jug** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spear of the North** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Spear of the Stilled Heart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Spear of the Western Whale** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Spearbiter** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spectral Blade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Spell Disruptor Horn** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spice Box of Zest** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spice Box Spoon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spider Grenade** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spider Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Splint of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Splint of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Splint of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Splinter Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Spyglass of Summoning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Binding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Camazotz** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Channeling** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Desolation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Staff of Dissolution** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Staff of Fate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Feathers** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Giantkin** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Ice and Fire** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Master Lu Po** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Midnight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Minor Curses** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Parzelon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Portals** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Scrying** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Spores** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Armada** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Artisan** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Cephalopod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Four Winds** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Lantern Bearer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Peaks** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Scion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Treant** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the Unhatched** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of the White Necromancer** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Staff of Thorns** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Voices** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Staff of Winter and Ice** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Standard of Divinity (Glaive)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Standard of Divinity (Halberd)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Standard of Divinity (Lance)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Standard of Divinity (Pike)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Steadfast Splint** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Stinger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Stolen Thunder** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Stone Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Stonechewer Gauntlets** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Stonedrift Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Storyteller's Pipe** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Studded Leather Armor of the Leaf** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Studded-Leather of Warding (+1)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Studded-Leather of Warding (+2)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Studded-Leather of Warding (+3)** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sturdy Crawling Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Sturdy Scroll Tube** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Stygian Crook** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Superior Potion of Troll Blood** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Supreme Potion of Troll Blood** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Survival Knife** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Swarmfoe Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Swarmfoe Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Swashing Plumage** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Sweet Nature** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Swolbold Wraps** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tactile Unguent** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tailor's Clasp** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Talisman of the Snow Queen** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Talking Tablets** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Talking Torches** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tamer's Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tarian Graddfeydd Ddraig** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Teapot of Soothing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tenebrous Flail of Screams** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tenebrous Mantle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Thirsting Scalpel** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Thirsting Thorn** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Thornish Nocturnal** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Three-Section Boots** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Throttler's Gauntlets** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Thunderous Kazoo** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tick Stop Watch** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Timeworn Timepiece** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tincture of Moonlit Blossom** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tipstaff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tome of Knowledge** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tonic for the Troubled Mind** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tonic of Blandness** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Toothsome Purse** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Torc of the Comet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Tracking Dart** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Treebleed Bucket** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Trident of the Vortex** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Trident of the Yearning Tide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Troll Skin Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Troll Skin Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Trollsblood Elixir** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Tyrant's Whip** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Umber Beans** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Umbral Band** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Umbral Chopper** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Umbral Lantern** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Umbral Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Undine Plate** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Unerring Dowsing Rod** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Unquiet Dagger** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Unseelie Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Valkyrie's Bite** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Vengeful Coat** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Venomous Fangs** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Verdant Elixir** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Verminous Snipsnaps** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Verses of Vengeance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Vessel of Deadly Venoms** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Vestments of the Bleak Shinobi** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Vial of Sunlight** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Vielle of Weirding and Warding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Vigilant Mug** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Vile Razor** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Void-Touched Buckler** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Voidskin Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Voidwalker** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Accompaniment** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Air Glyphs** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Bristles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Depth Detection** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Direction** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Drowning** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Extinguishing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Fermentation** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Flame Control** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Giggles** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Guidance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Harrowing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Ignition** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Plant Destruction** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Relieved Burdens** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Resistance** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Revealing** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of Tears** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wand of the Timekeeper** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Treasure Finding** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Vapors** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wand of Windows** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ward Against Wild Appetites** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Warding Icon** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Warlock's Aegis** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Warrior Shabti** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wave Chain Mail** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wayfarer's Candle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Web Arrows** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Webbed Staff** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Whip of Fangs** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Whispering Cloak** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Whispering Powder** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **White Ape Hide** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **White Ape Leather** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **White Dandelion** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **White Honey Buckle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Windwalker Boots** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wisp of the Void** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Witch Ward Bottle** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Witch's Brew** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wolf Brush** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wolfbite Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Worg Salve** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Worry Stone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Wraithstone** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Wrathful Vapors** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Zephyr Shield** — **[D]** single-field `effects` string; **[M]** no `rule_effects`
+- **Ziphian Eye Amulet** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
+- **Zipline Ring** — **[D]** single-field `effects` string; **[M]** no `rule_effects`; **[P]** `requires_attunement` true but no structured attunement prereq
 
 ---
+
+## 8. Spells (1,297)
+
+Spell **metadata** is well-typed (level, `school_ref`, casting time, range, components, `duration_*`, `save_ability_ref`, `damage_type_refs`, `attack_type`, concentration/ritual flags). Gaps are uniform:
+
+- **[M]** `effects[]` (the `spellEffectList` DSL) is empty for **all 1,297** spells; `at_higher_levels_text` structured table is unused → numeric resolution (dice, healing, scaling) lives only in `description` prose and is never automated.
+- **[D]** damage **type** is tagged (294 spells) but there is no structured damage-**dice** field, so the type tag cannot drive a roll.
+
+Per spell: **[M]** no `effects[]`/structured scaling — effect text is prose-only.
+
+### Adventurer's Guide (371)
+- **Accelerando** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Acid Arrow** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Acid Splash** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aid** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Air Wave** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Alarm** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Alter Self** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Altered Strike** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Angel Paradox** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Animal Friendship** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animal Messenger** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animal Shapes** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animate Dead** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animate Objects** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Antilife Shell** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Antimagic Field** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Antipathy/Sympathy** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Arcane Eye** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcane Hand** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Arcane Lock** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcane Muscles** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcane Riposte** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Arcane Sword** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcanist's Magic Aura** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aspect of the Moon** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Astral Projection** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Augury** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Awaken** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bane** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Banishment** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Barkskin** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Battlecry Ballad** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Beacon of Hope** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bestow Curse** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Tentacles** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blade Barrier** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bless** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blight** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blindness/Deafness** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blink** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blood-Writ Bargain** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blur** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Burning Hands** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Calculate** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Calculated Retribution** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Call Lightning** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Calm Emotions** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ceremony** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Chain Lightning** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Charm Monster** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Charm Person** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Chill Touch** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Circle of Death** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Circular Breathing** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Clairvoyance** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Clone** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Cloudkill** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cobra's Spit** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Color Spray** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Command** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Commune** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Commune with Nature** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Comprehend Languages** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Cone of Cold** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Confusion** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Conjure Animals** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Celestial** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Elemental** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Fey** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Minor Elementals** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Woodland Beings** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Contact Other Plane** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Contagion** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Contingency** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Continual Flame** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Control Water** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Control Weather** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Corpse Explosion** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Counterspell** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Create Food and Water** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Create or Destroy Water** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Create Undead** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Creation** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Crushing Haymaker** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cure Wounds** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dancing Lights** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Darklight** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Darkness** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Darkvision** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Daylight** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Deadweight** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Death Ward** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Delayed Blast Fireball** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Demiplane** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Evil and Good** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Magic** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Poison and Disease** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Thoughts** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dimension Door** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Disguise Self** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Disintegrate** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dispel Evil and Good** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dispel Magic** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Divination** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Divine Favor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Divine Word** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dominate Beast** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dominate Monster** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dominate Person** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dramatic Sting** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dream** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Druidcraft** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Earth Barrier** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Earthquake** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Eldritch Cube** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Enhance Ability** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Enlarge/Reduce** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Enrage Architecture** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Entangle** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Enthrall** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Etherealness** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Expeditious Retreat** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Eyebite** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fabricate** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Faerie Fire** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Faithful Hound** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **False Life** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fear** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Feather Fall** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Feeblemind** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Find Familiar** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Find Steed** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Find the Path** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Find Traps** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Finger of Death** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fire Bolt** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fire Shield** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fire Storm** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fireball** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Flame Blade** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flame Strike** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flaming Sphere** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Flesh to Stone** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flex** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Floating Disk** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fly** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fog Cloud** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Forbiddance** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Force of Will** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Force Punch** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Forcecage** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Foresight** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Forest Army** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Freedom of Movement** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Freezing Sphere** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Friends** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Gaseous Form** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gate** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Geas** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gentle Repose** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Giant Insect** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Glibness** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Globe of Invulnerability** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Glyph of Warding** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Goodberry** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Grapevine** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Grease** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Greater Invisibility** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Greater Restoration** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Guardian of Faith** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Guards and Wards** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Guidance** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Guiding Bolt** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Gust of Wind** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hallow** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hallucinatory Terrain** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Harm** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Harmonic Resonance** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Haste** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heal** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Healing Word** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Heart of Dis** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heat Metal** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heroes' Feast** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heroism** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hideous Laughter** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hold Monster** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hold Person** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Holy Aura** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hypnotic Pattern** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ice Storm** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Identify** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Illusory Script** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Imprisonment** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Incendiary Cloud** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Inescapable Malady** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Infernal Weapon** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Inflict Wounds** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Insect Plague** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Instant Summons** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Invigorated Strikes** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Invisibility** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Irresistible Dance** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Jump** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Knock** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Legend Lore** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lemure Transformation** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lesser Restoration** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Levitate** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Light** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lightning Bolt** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Locate Animals or Plants** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Locate Creature** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Locate Object** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Longstrider** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mage Armor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mage Hand** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Magic Circle** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Magic Jar** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Magic Missile** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Magic Mouth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Magic Weapon** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Magnificent Mansion** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Major Image** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Cure Wounds** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Heal** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Healing Word** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Suggestion** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Maze** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Meld Into Stone** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mending** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mental Grip** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Message** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Meteor Swarm** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mind Blank** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mindshield** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Minor Illusion** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mirage Arcane** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mirror Image** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mislead** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Misty Step** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Modify Memory** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Moonbeam** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Move Earth** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Nondetection** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pass Without Trace** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Passwall** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pestilence** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantasmal Killer** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantasmal Talons** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Phantom Steed** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Planar Ally** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Planar Binding** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Plane Shift** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Plant Growth** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Poison Skin** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Polymorph** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Power Word Kill** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Power Word Stun** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Prayer of Healing** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Prestidigitation** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Prismatic Spray** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Prismatic Wall** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Private Sanctum** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Produce Flame** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Programmed Illusion** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Project Image** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Protection from Energy** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Protection from Evil and Good** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Protection from Poison** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Purify Food and Drink** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Rage of the Meek** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Raise Dead** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Raise Hell** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ray of Enfeeblement** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ray of Frost** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Regenerate** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Reincarnate** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Remove Curse** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Resilient Sphere** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Resistance** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Resurrection** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Reverse Gravity** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Revivify** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Rope Trick** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sacred Flame** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sanctuary** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Scorching Ray** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Scrying** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Searing Equation** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Secret Chest** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **See Invisibility** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Seed Bomb** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Seeming** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sending** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sequester** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shapechange** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shatter** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shattering Barrage** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shield** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shield of Faith** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shillelagh** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shocking Grasp** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Silence** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Silent Image** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Simulacrum** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sleep** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sleet Storm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Slow** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Soulwrought Fists** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spare the Dying** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Speak with Animals** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Speak with Dead** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Speak with Plants** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spider Climb** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spike Growth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spirit Guardians** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spiritual Weapon** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sporesight** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Stinking Cloud** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stone Shape** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Stoneskin** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Storm Kick** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Storm of Vengeance** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Suggestion** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sunbeam** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sunburst** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Symbol** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tearful Sonnet** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Telekinesis** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Telepathic Bond** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Teleport** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Teleportation Circle** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thaumaturgy** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thunderwave** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Time Stop** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tiny Hut** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tongues** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Transport via Plants** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Traveler's Ward** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tree Stride** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **True Polymorph** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **True Resurrection** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **True Seeing** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **True Strike** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Unholy Star** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Unseen Servant** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Vampiric Touch** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Venomous Succor** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Vicious Mockery** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Fire** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Flesh** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Force** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Ice** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Stone** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Thorns** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Warding Bond** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Warrior's Instincts** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Water Breathing** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Water Walk** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Web** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Weird** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Whirlwind Kick** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wind Up** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wind Walk** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wind Wall** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wish** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Word of Recall** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wormway** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Writhing Transformation** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Zone of Truth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+### Deep Magic for 5th Edition (515)
+- **Abhorrent Apparition** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Accelerate** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Acid Gate** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Acid Rain** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Adjust Position** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Afflict Line** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Agonizing Mark** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Alchemical Form** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ale-dritch Blast** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ally Aegis** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Alone** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Alter Arrow’s Fortune** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Althea’s Travel Tent** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Amplify Gravity** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Analyze Device** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ancestor’s Strength** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anchoring Rope** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anchoring Rope (Reaction)** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ancient Shade** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Angelic Guardian** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Animate Ghoul** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animate Greater Undead** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animated Scroll** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anticipate Arcana** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anticipate Attack** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anticipate Weakness** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcane Sight** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **As You Were** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ashen Memories** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aspect of the Dragon** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aspect of the Serpent** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Aura of Protection or Destruction** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Auspicious Warning** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Avoid Grievous Injury** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Avronin’s Astral Assembly** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Awaken Object** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bad Timing** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Batsense** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Become Nightwing** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Beguiling Bet** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Benediction** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bestial Fury** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Binding Oath** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Biting Arrow** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bitter Chains** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Goat’s Blessing** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Black Hand** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Ribbons** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Sunshine** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Swan Storm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Well** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blade of my Brother** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blade of Wrath** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blazing Chariot** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bleating Call** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bleed** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bless the Dead** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blessed Halo** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blizzard** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood and Steel** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood Armor** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood Lure** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood Offering** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blood Puppet** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood Scarab** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood Spoor** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blood Tide** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blood to Acid** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bloodhound** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bloodshot** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bloody Hands** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bloody Smite** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bloom** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Boiling Blood** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Boiling Oil** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bolster Undead** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Booster Shot** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Boreas’s Breath** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bottled Arcana** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bottomless Stomach** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Breathtaking Wind** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Breeze Compass** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Brimstone Infusion** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Brittling** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Broken Charge** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **By the Light of the Moon** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **By the Light of the Watchful Moon** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Call Shadow Mastiff** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Calm of the Storm** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Candle’s Insight** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Carmello-Volta’s Irksome Preserves** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Catapult** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Catch the Breath** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Caustic Blood** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Caustic Torrent** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Caustic Touch** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Celebration** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Chains of the Goddess** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Chains of Torment** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Champion’s Weapon** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Chaotic Form** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Chaotic Vitality** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Chaotic World** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Chilling Words** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Chronal Lance** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Circle of Wind** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Clash of Glaciers** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Claws of Darkness** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Claws of the Earth Dragon** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Clearing the Field** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Cloak of Shadow** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Clockwork Bolt** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Closing In** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cobra Fangs** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Compelled Movement** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Compelling Fate** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Comprehend Wild Shape** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Confound Senses** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Conjure Fey Hound** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Forest Defender** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Greater Spectral Dead** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Minor Voidborn** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Scarab Swarm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Shadow Titan** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Spectral Dead** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Undead** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Voidborn** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Consult the Storm** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Converse With Dragon** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Costly Victory** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Create Ring Servant** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Create Thunderstaff** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Creeping Ice** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Crushing Curse** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Crushing Trample** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cure Beast** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Curse of Boreas** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Curse of Dust** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Curse of Incompetence** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Curse of the Grave** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Curse of Yig** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Curse Ring** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Cursed Gift** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cynophobia** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Daggerhawk** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dark Dementing** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dark Heraldry** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dark Maw** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dark Path** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Darkbolt** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dead Walking** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Deadly Sting** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Death God’s Touch** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Decay** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Decelerate** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Deep Breath** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Defile Healing** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Delay Potion** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Delayed Healing** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Demon Within** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Desiccating Breath** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Desolation** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Destructive Resonance** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Detect Dragons** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Deva’s Wings** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dimensional Shove** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Disquieting Gaze** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Disruptive Aura** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Distracting Divination** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Distraction Cascade** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of Blue Crystal** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of Consuming Fire** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Doom of Dancing Blades** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Doom of Disenchantment** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Doom of Serpent Coils** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of the Cracked Shield** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Doom of the Earthen Maw** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of the Slippery Rogue** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Douse Light** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Draconic Smite** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dragon Breath** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Dragon Roar** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Drown** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dryad’s Kiss** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Earthskimmer** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Earworm Melody** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Echoes of Steel** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ectoplasm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Eidetic Memory** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Eldritch Communion** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Elemental Horns** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Elemental Twist** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Emanation of Yoth** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Enchant Ring** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Encroaching Shadows** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Encrypt / Decrypt** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Endow Attribute** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Energy Absorption** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Energy Foreknowledge** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Enhance Greed** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Entomb** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Entropic Damage Field** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Essence Instability** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Evercold** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Exsanguinate** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Exsanguinating Cloud** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Extract Knowledge** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fault Line** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Feather Field** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Feather Travel** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fey Crown** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Find Kin** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fire Darts** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fire Under the Tongue** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Firewalk** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fist of Iron** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flame Wave** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Flesh to Paper** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flickering Fate** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fluctuating Alignment** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Flurry** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Forest Native** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Forest Sanctuary** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Foretell Distraction** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Form of the Gods** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Freeze Blood** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Freeze Potion** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Freezing Fog** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Frenzied Bolt** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Frostbite** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Frostbitten Fingers** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Frozen Razors** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Furious Hooves** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fusillade of Ice** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gear Barrage** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ghoul King’s Cloak** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Gird the Spirit** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Glacial Cascade** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Glacial Fog** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gliding Step** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Glimpse of the Void** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gloomwrought Barrier** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gluey Globule** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Glyph of Shifting** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Goat's Hoof Charm** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Going in Circles** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Gordolay’s Pleasant Aroma** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Grasp of the Tupilak** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Greater Maze** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Greater Seal of Sanctuary** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Green Decay** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Grudge Match** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Guest of Honor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Guiding Star** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hamstring** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hard Heart** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Harry** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Harrying Hounds** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Harsh Light of Summer’s Glare** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heart-Seeking Arrow** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Heart to Heart** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Heartache** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Heartstop** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Heartstrike** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Heavenly Crown** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hedren’s Birds of Clay** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hematomancy** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hero's Steel** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hide in One’s Shadow** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hoarfrost** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hobble** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hobble Mount** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Holy Ground** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hone Blade** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hunger of Leng** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hunter's Endurance** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hunting Stand** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ice Fortress** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ice Hammer** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ice Soldiers** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Icicle Daggers** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Icy Grasp of the Void** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Icy Manipulation** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ill-Fated Word** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Illuminate Spoor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Impending Ally** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Innocuous Aspect** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Insightful Maneuver** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Inspiring Speech** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Instant Fortification** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Instant Siege Weapon** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Instant Snare** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ire of the Mountain** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Iron Hand** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Kareef’s Entreaty** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Keening Wail** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Killing Fields** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Kiss of the Succubus** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Kobold’s Fury** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Labyrinth Mastery** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Labyrinthine Howl** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lacerate** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lair Sense** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Last Rays of the Dying Sun** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lava Stone** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lay to Rest** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Legend Killer** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Legion** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Legion of Rabid Squirrels** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lesser Maze** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Life Drain** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Life from Death** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Life Hack** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Life Sense** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Life Transference Arrow** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Litany of Sure Hands** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Living Shadows** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lock Armor** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Looping Trail** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lovesick** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Maddening Whispers** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Maim** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Malevolent Waves** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mammon’s Due** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mark Prey** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Hobble Mount** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mass Surge Dampener** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Maw of Needles** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Memento Mori** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mephitic Croak** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mind Exchange** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mire** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Misstep** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mist of Wonders** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Monstrous Empathy** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Moon Trap** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mosquito Bane** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mud Pack** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Negative Image** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Nether Weapon** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Night Terrors** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Nightfall** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Nip at the Heels** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Not Dead Yet** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Not This Day!** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Orb of Light** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Outflanking Boon** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Paragon of Chaos** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pendulum** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantom Dragon** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Pitfall** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Poisoned Volley** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Potency of the Pack** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Power Word Kneel** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Power Word Pain** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Primal Infusion** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Prismatic Ray** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Protection from the Void** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Protective Ice** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Puff of Smoke** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Pummelstone** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Pyroclasm** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Quick Time** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Quicken** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Quicksilver Mantle** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Quintessence** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Raid the Lair** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rain of Blades** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ray of Alchemical Negation** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ray of Life Suppression** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reaver Spirit** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reposition** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Reset** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reverberate** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Revive Beast** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Right the Stars** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ring Strike** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ring Ward** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Riptide** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rolling Thunder** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rotting Corpse** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Rune of Imprisonment** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Salt Lash** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sand Ship** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sanguine Horror** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Scale Rot** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Scentless** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Screaming Ray** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Scribe** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Scry Ambush** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sculpt Snow** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Seal of Sanctuary** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Searing Sun** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **See Beyond** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Seed of Destruction** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Seeping Death** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Seer’s Reaction** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Semblance of Dread** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shade** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Armor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Bite** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadow Blindness** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Hands** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadow Monsters** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadow Puppets** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadow Trove** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadows Brought to Light** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadowy Retribution** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shared Sacrifice** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sheen of Ice** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shifting the Odds** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shiver** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shroud of Death** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sidestep Arrow** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sign of Koth** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Silhouette** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sir Mittinz’s Move Curse** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sleep of the Deep** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Slippery Fingers** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Slither** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Snow Boulder** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Snow Fort** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Snowy Coat** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Song of the Forest** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Speak with Inanimate Object** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spin** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spinning Axes** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spiteful Weapon** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spur Mount** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Staff of Violet Fire** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stanch** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Starburst** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Starfall** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Starry Vision** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Star's Heart** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Steal Warmth** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Steam Blast** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Steam Whistle** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stench of Rot** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Storm of Wings** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sudden Dawn** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Summon Eldritch Servitor** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Summon Star** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Surge Dampener** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Surprise Blessing** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Symbol of Sorcery** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Talons of a Hungry Land** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Targeting Foreknowledge** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thin the Ice** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thousand Darts** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Throes of Ecstasy** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thunder Bolt** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thunderclap** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thunderous Charge** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thunderous Stampede** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thunderous Wave** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thunderstorm** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tidal Barrier** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Time in a Bottle** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Time Jump** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Time Loop** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Time Slippage** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Time Step** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Time Vortex** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Timely Distraction** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tireless** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tongue of Sand** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tongue Tied** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Torrent of Fire** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Touch of the Unliving** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tracer** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Treasure Chasm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tree Heal** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tree Running** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Tree Speak** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Trench** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Trick Question** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Triumph of Ice** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Twist the Skein** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Umbral Storm** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Uncontrollable Transformation** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Undermine Armor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Unholy Defiance** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Unleash Effigy** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Unluck On That** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Unseen Strangler** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Vine Trestle** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Visage of Madness** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Vital Mark** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Void Rift** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Void Strike** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Volley Shield** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Vomit Tentacles** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Voorish Sign** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Waft** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Walk the Twisted Path** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Walking Wall** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wall of Time** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Warning Shout** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Warp Mind and Matter** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Weapon of Blood** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Weiler’s Ward** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wild Shield** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wind Lash** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wind of the Hereafter** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wind Tunnel** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Winterdark** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Winter's Radiance** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wintry Glide** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Withered Sight** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wolfsong** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Word of Misfortune** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wresting Wind** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Writhing Arms** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Yellow Sign** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+### Deep Magic Extended (64)
+- **Absolute Command** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Amplify Ley Field** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animate Construct** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Anomalous Object** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Armored Heart** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Armored Shell** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Banshee Wail** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Beguiling Gift** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Borrowing** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Call the Hunter** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Circle of Devestation** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cloying Darkness** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cosmic Alignment** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cruor of Visions** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Extract Foyson** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Find the Flaw** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Gear Shield** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gift of Azathoth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Greater Ley Pulse** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gremlins** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Grinding Gears** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hearth Charm** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hellforging** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hod's Gift** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Imbue Spell** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Jotun's Jest** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Land Bond** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lesser Ley Pulse** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Disruption** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Energy Bolt** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Leech** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Sense** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ley Storm** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Surge** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ley Whip** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Loki's Gift** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Machine Sacrifice** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Machine Speech** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Machine's Load** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Blade Ward** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Repair Metal** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mechanical Union** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Molech's Blessing** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Move the Cosmic Wheel** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Overclock** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Power Word Restore** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Read Memory** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Repair Metal** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Risen Road** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Robe of Shards** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Realm Gateway** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shield of Star and Shadow** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Snowblind Stare** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Soothsayer's Shield** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Soul of the Machine** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sphere of Order** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spire of Stone** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Strength of the Underworld** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Summon Old One's Avatar** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tick Stop** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Timeless Engine** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Winding Key** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wotan's Rede** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Write Memory** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+
+### Kobold Press Compilation (31)
+- **Ambush** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blood Strike** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Manabane Swarm** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Curse of Formlessness** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Delay Passing** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of Ancient Decrepitude** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Doom of Voracity** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Feed the Worms** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Greater Ley Protection** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hirvsth's Call** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Incantation of Lies Made Truth** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Jeweled Fissure** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lesser Ley Protection** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ley Disturbance** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Locate Red Portal** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Moon's Respite** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Morphic Flux** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Open Red Portal** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Perun's Doom** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reset Red Portal** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sanguine Spear** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Scattered Images** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Seal Red Portal** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Selfish Wish** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Spawn** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow Tree** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shadow's Brand** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stigmata of the Red Goddess** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **The Black God's Blessing** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wield Soul** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Winged Spies** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+
+### Open5e Originals (2)
+- **Eye bite** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ray of Sickness** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+### Spells That Don't Suck (180)
+- **Adaptation** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Alter Weather** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animal Ally** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Animal Transformation** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Arcane Shelter** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcane Wall** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Arcanist's Sword** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Arctic Breath** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Assemble** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aura of Concealment** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Aura of Truth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Beast Perception** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Befriend Beast** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Befriend** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Benediction** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bewilder** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Black Ice** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blade Burst** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Blazing Blade** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Brilliance** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Burst of Flame** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Call for Aid** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Captivate** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Caustic Quarrel** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Circle of Protection** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Cold Snap** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Command Beast** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Command Objects** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Cone of Flame** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Confinement** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Beast Pack** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Herald** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Minor Fiends** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Corpse Puppets** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Corrosive Burst** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Curse of Weakness** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dazzle** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Death Ray** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Deflect** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Hazards** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Detect Otherworldly Influence** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Devil Binding** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Disrupting Smite** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Divine Temple** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Draining Bolt** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Drink Life** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dust Cyclone** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Earth Forming** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Earth Leash** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Earth Rumble** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Eldritch Armor** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Eldritch Rift** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Elemental Reflection** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Elemental Shield** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Enkindle** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Erudition** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ethereal Slip** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Expose Weakness** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Expulsion** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **False Death** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **False Foes** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fated Strike** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fearsome Visage** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fiery Blade** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fiery Quiver** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Find in Nature** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fireblast** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fleeting Portals** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Flickering Strikes** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Force Weapon** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Form of Fire** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Form of Ice** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Form of Stone** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Form of Water** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Form of Wind** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fortune** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Frost Shuriken** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ghost Lights** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Ghost Touch** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Glacial Orbs** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Glyph of Power** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Grave Call** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Great Wave** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hailstorm** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hallucination** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Holy Fire** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Imbue Element** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Impaling Spires** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Incinerate** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Inflict Disease** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Injunction** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Irradiate** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lashing Vine** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Life Drain** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lightning Beam** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lightning Leash** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lightning Tendril** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Luminous Smite** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lunar Beam** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Magic Fruit** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Magic Net** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Manipulate Earth** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Manipulate Fire** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Manipulate Water** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Manipulate Wind** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Martial Transformation** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mass Freeze** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mind Link** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Minor Drain** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Misdirection** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Misfortune** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Morph Earth** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Muddy Servant** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Nature's Fury** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Nature's Protection** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Necromantic Infusion** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Necromantic Storm** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Necrotic Sphere** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Oakenhide** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Petrify** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantasm** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantasmal Horror** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Phantasmal Nightmares** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Poison Fang** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Power Word Nap** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Prismatic Bolt** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Psychic Skewer** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Psychokinesis** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rain of Fire** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reanimation** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Reanimation, Greater** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Rejuvenation** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Riptide** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rot** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sacred Circle** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sacred Strikes** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Safekeeping** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Scintillant Blast** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Seal Away** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Secret Missive** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shape Winds** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shatter Mind** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Siphon Life** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sky Omen** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sonic Rift** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Soul Transfer** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sparking Shot** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Speak with Nature** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spectral Champion** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spell Glyph** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spirit Remnant** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Spreadshot** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stinging Insects** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stone Pact** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Stormcloud** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stream of Flame** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Summon Animal Spirit** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Summon Golem** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Summon Grave Spirit** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Symbol of Resilience** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Synaptic Shockwave** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Synaptic Spear** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Tempest** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Thought Wisp** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Thunder Burst** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Touch of Filth** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Twister** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Unbridled Fury** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Unearth Legend** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Unerring Sentry** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wall of Dust** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Warding Sigil** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Water Wall** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wayfinding** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Wellspring** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Whirling Blades** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Whirling Water** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Whirlpool** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Withering Field** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wound** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+### Tome of Heroes (91)
+- **Ambush Chute** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Armored Formation** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Babble** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Battle Mind** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Beast Within** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Betraying Bauble** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bloodlust** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Blunted Edge** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Bolster Fortifications** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bound Haze** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Burst Stone** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Butterfly Effect** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Calm Beasts** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Clear the Board** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Conjure Construct** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Conjure Spectral Allies** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Convey Inner Peace** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Crown of Thorns** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Damaging Intel** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Deadly Salvo** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Divine Retribution** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Dreamwine** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Emerald Eyes** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Enchanted Bloom** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Eruption** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Feint** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Fey Food** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fey-Touched Blade** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Forced Reposition** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Furious Wail** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Fuse Armor** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Gale** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Glare** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **High Ground** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Immolating Gibbet** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Inexorable Summons** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Instant Armored Vehicle** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Invested Champion** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Iron Gut** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Jagged Forcelance** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Jarring Growl** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Lance** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Less Fool, I** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Life Burst** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Lightless Torch** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Long Game** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Magma Spray** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mantle of the Brave** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Martyr's Rally** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mass Faerie Fire** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Misdirection** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mud** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Muted Foe** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Never Surrender** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Oathbound Implement** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Outmaneuver** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Oversized Paws** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pincer** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Piper's Lure** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Portal Jaunt** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Portal Trap** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Power Word Fling** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Power Word Rend** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reaper's Knell** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rebounding Bolt** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Repulsing Wall** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Retribution** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rockfall Ward** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sacrifice Pawn** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Sacrificial Healing** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Safe Transposition** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Secret Blind** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Shared Frenzy** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shocking Volley** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sightburst** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Silvershout** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Smelting Blast** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sneer** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spiked Barricade** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Spite** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Steam Gout** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Stone Aegis** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Stone Fetch** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sudden Slue** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Sudden Stampede** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Toadstool Ring** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Toothless Beast** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Trollish Charge** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Vine Carpet** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **War Horn** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Wild Hunt** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+### Warlock Zine (43)
+- **Abrupt Hug** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Avert Evil Eye** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bardo** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Battle Chant** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Bombardment of Stings** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Charming Aesthetics** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Child of Light and Darkness** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Commander's Pavilion** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Devouring Darkness** (lvl 9) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Door of the Far Traveler** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Eternal Echo** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Ethereal Stairs** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Exchanged Knowledge** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hedgehog Dozen** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Hypnagogia** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Hypnic Jerk** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Inconspicuous Facade** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **March of the Dead** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Mind Maze** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Mirror Realm** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Obfuscate Object** (lvl 0) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Order of Revenge** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pierce the Veil** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Pratfall** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Putrescent Faerie Circle** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Reassemble** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Reciprocating Portal** (lvl 3) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Remove Insulation** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Revenge's Eye** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Rise of the Green** (lvl 8) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Rive** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Shadow Adaptation** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Skull Road** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Storm of Axes** (lvl 4) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Subliminal Aversion** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Summon Clockwork Beast** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Suppress Regeneration** (lvl 1) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Threshold Slip** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Toxic Pollen** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Vagrant's Nondescript Cloak** (lvl 2) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Vengeful Panopy of the Ley Line Ignited** (lvl 6) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+- **Who Goes There?** (lvl 5) — **[M]** no `effects[]`/structured scaling; prose-only resolution (no save/damage tags either)
+- **Zymurgic Aura** (lvl 7) — **[M]** no `effects[]`/structured scaling; prose-only resolution
+
+---
+
+## 9. Bestiary cohort — monsters · traits · creature-actions (17,923)
+
+Audited at cohort level (see scope note). **Monsters (2,885):** fully structured stat blocks — `ac`, `hp_average`/`hp_dice`, `stat_block`, `cr`, `xp`, `proficiency_bonus`, speeds, senses, `resistance_refs`/`*_immunity_refs`, `save_bonuses`, `skill_bonuses`, and `*_refs` linking actions/traits/legendary actions. **Clean** on data structure.
+
+**Creature-actions (8,615):** the 3,549 that are attacks carry structured `attack_bonus`, `attack_kind`, `damage_dice`, `reach_ft`/`range_*` (3,471 with dice) — **Clean** for the to-hit/damage line. Residual **[M]**: save-based *rider* effects inside an attack (e.g. the disease on *Tentacle*) and all non-attack actions keep their effect in `description` prose only — no structured save-DC/condition automation.
+
+**Traits (6,423):** `trait_kind` + `description` prose. Passive numeric traits (e.g. innate resistance, Pack Tactics, regeneration) are not expressed as `granted_modifiers`/effects **[M/D]** — uniform across the cohort; acceptable for DM-facing stat content but not VTT-automatable.
+
+Representative samples: Aboleth Nihilith, Tentacle (attack), Dual State (trait) [Tome of Beasts]; full per-card enumeration omitted by policy.
+
+---
+
+## 10. Hand-authored SRD 5.2.1 Core pack — reference pack
+
+This in-code pack is the structural benchmark: feats populate `category_ref`/`prereq_*`/`asi_*` and use `effects[]` `choice_group` for spell/proficiency picks (e.g. *Magic Initiate*); classes/subclasses use `features[]`; species use `granted_modifiers`/`trait_refs`. Residual gaps observed (not blanket): some feats still describe a numeric benefit in `benefits` markdown instead of an effect kind — e.g. **Alert** (Initiative Proficiency → no `initiative_bonus`/`proficiency_grant` effect), and Fighting-Style/defensive feats whose flat bonuses stay in prose. These are **[M]** residuals, far fewer than in the Open5e corpus. Magic items and spells in the SRD pack share the corpus-wide **[M]** prose-resolution gap.
+
