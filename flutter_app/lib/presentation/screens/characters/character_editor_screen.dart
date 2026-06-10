@@ -60,6 +60,7 @@ import '../../widgets/app_icon_image.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/expandable_section.dart';
+import '../../widgets/prereq_warnings_banner.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
@@ -645,6 +646,10 @@ class _CharacterEditorScreenState
                 children: [
                   _entityHeader(palette, character, template, effectiveAc),
                   const SizedBox(height: 12),
+                  PrereqWarningsBanner(
+                    unmetPrerequisites: resolved.unmetPrerequisites,
+                    debugWarnings: resolved.warnings,
+                  ),
                   _renderRestActions(palette, character),
                   const SizedBox(height: 16),
                   ..._renderResolvedGrants(palette, character),
@@ -1371,6 +1376,13 @@ class _CharacterEditorScreenState
       hasSpellcasting: hasSpellcasting,
       proficientArmorCategories: proficientArmorCategories,
       proficientWeaponClasses: proficientWeaponClasses,
+      classLevels: resolved.classLevels,
+      speciesId: character.entity.fields['race_id'] is String
+          ? character.entity.fields['race_id'] as String
+          : null,
+      alignmentId: character.entity.fields['alignment_ref'] is String
+          ? character.entity.fields['alignment_ref'] as String
+          : null,
     );
     if (!mounted || resolution == null) return;
 

@@ -430,8 +430,17 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entities: entities,
         ref: ref,
+        entityFields: entityFields,
       ),
       FieldType.autoGrantSources => AutoGrantSourcesFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.prereqClauses => PrereqClausesFieldWidget(
         schema: schema,
         value: value,
         readOnly: readOnly,
@@ -2299,6 +2308,41 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                               padding: EdgeInsets.zero,
                             ),
                           ),
+                          // Attune toggle (rules engine PR-R4) — only on
+                          // items that require attunement. Warn-keep: the
+                          // toggle never blocks; slot-cap and restriction
+                          // violations surface on the sheet's prerequisite
+                          // banner. `when_attuned` rules fold only while on.
+                          if (linkedEntity?.fields['requires_attunement'] ==
+                              true)
+                            SizedBox(
+                              width: 28,
+                              child: IconButton(
+                                icon: Icon(
+                                  item['attuned'] == true
+                                      ? Icons.link
+                                      : Icons.link_off,
+                                  size: 16,
+                                  color: item['attuned'] == true
+                                      ? Theme.of(context).colorScheme.tertiary
+                                      : Theme.of(context).colorScheme.outline,
+                                ),
+                                tooltip: item['attuned'] == true
+                                    ? 'Attuned'
+                                    : 'Not attuned',
+                                onPressed: () {
+                                  items[i] = {
+                                    ...item,
+                                    'attuned': item['attuned'] != true,
+                                  };
+                                  onChanged(
+                                    _serializeItems(items, showEquip),
+                                  );
+                                },
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
                         ],
                         Expanded(
                           child: InkWell(

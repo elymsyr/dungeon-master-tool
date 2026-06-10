@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../application/character_creation/pending_choices.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/services/entity_ref.dart';
+import '../../../domain/services/rules/prereq_evaluator.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// Payload the editor mutates onto the character when the player resolves
@@ -108,6 +109,11 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
   bool hasSpellcasting = false,
   Set<String> proficientArmorCategories = const {},
   Set<String> proficientWeaponClasses = const {},
+  // Optional richer prereq context (class_ref / species_ref / alignment_ref
+  // clauses). Null = unknown — those clauses never block the candidate list.
+  Map<String, int>? classLevels,
+  String? speciesId,
+  String? alignmentId,
 }) {
   return showDialog<PendingChoiceResolution>(
     context: context,
@@ -125,6 +131,9 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
       hasSpellcasting: hasSpellcasting,
       proficientArmorCategories: proficientArmorCategories,
       proficientWeaponClasses: proficientWeaponClasses,
+      classLevels: classLevels,
+      speciesId: speciesId,
+      alignmentId: alignmentId,
     ),
   );
 }
@@ -148,6 +157,12 @@ class _ResolverDialog extends StatefulWidget {
   final Set<String> proficientArmorCategories;
   final Set<String> proficientWeaponClasses;
 
+  /// Richer prereq context — null means unknown, and the matching clause
+  /// types never block (see PrereqContext).
+  final Map<String, int>? classLevels;
+  final String? speciesId;
+  final String? alignmentId;
+
   const _ResolverDialog({
     required this.choice,
     required this.entities,
@@ -162,6 +177,9 @@ class _ResolverDialog extends StatefulWidget {
     this.hasSpellcasting = false,
     this.proficientArmorCategories = const {},
     this.proficientWeaponClasses = const {},
+    this.classLevels,
+    this.speciesId,
+    this.alignmentId,
   });
 
   @override
@@ -498,31 +516,16 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       final auto = fields['auto_granted_by'];
       if (auto is List && auto.isNotEmpty) continue;
       if (_isFightingStyleFeat(e)) continue;
-      // Prefer the typed `prereq_clauses` (B1) when present — they model
-      // OR-of-abilities, spellcasting, and armor/weapon proficiency that the
-      // flat fields can't. Fall back to the legacy single-ability + level
-      // fields for built-in feats / un-upgraded packs.
-      final clauses = fields['prereq_clauses'];
-      if (clauses is List && clauses.isNotEmpty) {
-        if (!_passesPrereqClauses(clauses)) continue;
-      } else {
-        final minLvl = fields['prereq_min_character_level'];
-        if (minLvl is int && minLvl > widget.choice.level) continue;
-        // Ability prerequisite (e.g. "Wisdom 13"). `prereq_ability_ref`
-        // resolves to the ability entity; map its name back to the STR/…/CHA
-        // key the score map uses and hide the feat when the score falls short.
-        final minScore = fields['prereq_min_score'];
-        if (minScore is int) {
-          final abilId =
-              resolveEntityRef(fields['prereq_ability_ref'], widget.entities);
-          final abilName =
-              abilId == null ? null : widget.entities[abilId]?.name;
-          final abbrev = _abbrevForAbility(abilName);
-          if (abbrev != null &&
-              (widget.abilityScores[abbrev] ?? 10) < minScore) {
-            continue;
-          }
-        }
+      // Shared prerequisite interpreter (rules/prereq_evaluator.dart) — the
+      // same clauses the resolver warn-keeps on. Typed `prereq_clauses` win;
+      // flat `prereq_*` fields are lowered otherwise. This also enforces the
+      // flat class/species/spellcasting prereqs the dialog historically
+      // ignored — an intended correctness tightening.
+      final clauses = effectivePrereqClauses(fields);
+      if (clauses.isNotEmpty &&
+          !evaluatePrereqClauses(clauses, _prereqContext, widget.entities)
+              .passed) {
+        continue;
       }
       final repeatable = fields['repeatable'] == true;
       if (!repeatable && widget.existingFeatIds.contains(e.id)) continue;
@@ -532,82 +535,20 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     return List<Entity>.unmodifiable(out);
   }
 
-  /// STR/…/CHA key for an ability's full name (`Strength` → `STR`), or null.
-  String? _abbrevForAbility(String? name) {
-    if (name == null) return null;
-    for (final entry in _abilityLabels.entries) {
-      if (entry.value == name) return entry.key;
-    }
-    return null;
-  }
-
-  /// Evaluate typed `prereq_clauses` (ALL-of). Unknown / `other` clauses never
-  /// block (display-only). `ability_min` passes if ANY listed ability meets the
-  /// score (OR semantics — "Strength or Dexterity 13").
-  bool _passesPrereqClauses(List<dynamic> clauses) {
-    for (final raw in clauses) {
-      if (raw is! Map) continue;
-      switch (raw['type']) {
-        case 'character_level':
-          final min = raw['min_level'];
-          if (min is int && min > widget.choice.level) return false;
-        case 'ability_min':
-          final min = raw['min_score'];
-          final opts = raw['ability_options'];
-          if (min is! int || opts is! List || opts.isEmpty) break;
-          var anyMet = false;
-          for (final o in opts) {
-            final id = resolveEntityRef(o, widget.entities);
-            final name = (id == null ? null : widget.entities[id]?.name) ??
-                (o is Map ? o['name'] as String? : null);
-            final abbrev = _abbrevForAbility(name);
-            if (abbrev != null && (widget.abilityScores[abbrev] ?? 10) >= min) {
-              anyMet = true;
-              break;
-            }
-          }
-          if (!anyMet) return false;
-        case 'spellcasting':
-          if (!widget.hasSpellcasting) return false;
-        case 'armor_proficiency':
-          var name = (raw['category'] as String?)?.toLowerCase();
-          if (name == null) {
-            final id = resolveEntityRef(raw['category_ref'], widget.entities);
-            name = id == null ? null : widget.entities[id]?.name.toLowerCase();
-          }
-          if (name != null &&
-              !widget.proficientArmorCategories.contains(name)) {
-            return false;
-          }
-        case 'weapon_proficiency':
-          final wc = (raw['weapon_class'] as String?)?.toLowerCase();
-          if (wc == null) break;
-          if (wc == 'any') {
-            if (widget.proficientWeaponClasses.isEmpty) return false;
-          } else if (!widget.proficientWeaponClasses.contains(wc)) {
-            return false;
-          }
-        case 'skill_proficiency':
-          // OR semantics — proficiency in ANY one of the listed skills satisfies.
-          final opts = raw['skill_options'];
-          if (opts is! List || opts.isEmpty) break;
-          var anyMet = false;
-          for (final o in opts) {
-            final id = resolveEntityRef(o, widget.entities);
-            final name = (id == null ? null : widget.entities[id]?.name) ??
-                (o is Map ? o['name'] as String? : null);
-            if (name != null && widget.existingSkillNames.contains(name)) {
-              anyMet = true;
-              break;
-            }
-          }
-          if (!anyMet) return false;
-        default:
-          break; // 'other' / unknown → never blocks
-      }
-    }
-    return true;
-  }
+  /// Prereq-evaluation snapshot of the character this dialog was opened for.
+  /// Built from widget params — same interpreter as the resolver's warn-keep
+  /// pass, so picker filtering and sheet warnings can't drift.
+  PrereqContext get _prereqContext => PrereqContext(
+        characterLevel: widget.choice.level,
+        abilityScores: widget.abilityScores,
+        hasSpellcasting: widget.hasSpellcasting,
+        proficientArmorCategoriesLower: widget.proficientArmorCategories,
+        proficientWeaponClassesLower: widget.proficientWeaponClasses,
+        proficientSkillNames: widget.existingSkillNames,
+        classLevelsById: widget.classLevels,
+        speciesId: widget.speciesId,
+        alignmentId: widget.alignmentId,
+      );
 
   List<Entity> _computeFightingStyleFeats() {
     if (widget.entities.isEmpty) return const [];

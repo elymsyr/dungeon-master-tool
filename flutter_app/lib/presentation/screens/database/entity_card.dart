@@ -24,6 +24,7 @@ import '../../../domain/value_objects/media_kind.dart';
 import '../../../domain/value_objects/asset_ref.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/asset_ref_image.dart';
+import '../../widgets/derived_rules_panel.dart';
 import '../../widgets/quota_snackbar.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
@@ -528,6 +529,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
       // === SCHEMA-DRIVEN FIELDS ===
       if (cat != null) ..._buildSchemaFields(entity, cat, palette),
+
+      // === COMPILED RULES (read-only; rules engine PR-R3) ===
+      if (DerivedRulesPanel.supports(entity.categorySlug))
+        DerivedRulesPanel(entity: entity, entities: ref.read(entityProvider)),
 
       const SizedBox(height: 8),
 

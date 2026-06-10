@@ -288,6 +288,16 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
+  void prereqClauses(String k, String l, {String g = grpIdentity}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.prereqClauses,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
   void statBlock(String k, String l, {String g = grpAbilityScores}) =>
       _base(
         key: k,
@@ -607,6 +617,14 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   fb.relation('prereq_species_refs', 'Prereq Species', const ['species'], isList: true, g: grpIdentity);
   fb.integer('prereq_min_character_level', 'Prereq Min Char Level', min: 1, max: 20, g: grpIdentity);
   fb.boolean('prereq_requires_spellcasting', 'Requires Spellcasting', g: grpIdentity);
+  // Typed prerequisite clauses (ALL-of; OR within option lists). Richer than
+  // the flat fields above — models "Strength or Dexterity 13", armor/weapon/
+  // skill proficiency gates. The Open5e importer has emitted this key on 22
+  // official feats since day one; declaring it closes the schema-integrity
+  // hole (roadmap 1.2). When present it takes precedence over the flat
+  // `prereq_*` fields (mirrors the picker dialog). Interpreted by
+  // rules/prereq_evaluator.dart: pickers filter, resolver warn-keeps.
+  fb.prereqClauses('prereq_clauses', 'Prerequisite Clauses (typed)', g: grpIdentity);
   fb.markdown('prerequisite', 'Prerequisite (narrative)', g: grpIdentity, span: 2);
   fb.boolean('repeatable', 'Repeatable', required_: true);
   fb.integer('repeatable_limit', 'Repeat Limit', min: 1, max: 20, help: 'null = unlimited');
@@ -983,10 +1001,14 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
   fb.relation('magic_category_ref', 'Category', const ['magic-item-category'], required_: true);
   fb.relation('rarity_ref', 'Rarity', const ['rarity'], required_: true);
   // Body slot for wearables (head/hands/finger/etc.). 'None' = non-wearable
-  // (wand, ioun stone, consumable). Resolver enforces max_equipped per slot.
+  // (wand, ioun stone, consumable). Informational — no per-slot equip cap is
+  // enforced anywhere (a previous comment claimed otherwise).
   fb.relation('body_slot_ref', 'Body Slot', const ['body-slot']);
   fb.boolean('requires_attunement', 'Requires Attunement', required_: true);
-  // Typed attunement gates.
+  // Typed attunement gates — compiled into a `prereq_to_attune` rule by
+  // RuleCompiler.compileAttunementPrereq (PR-R4): warn-keep on the sheet,
+  // confirm-style filtering in pickers. `attunement_prereq` narrative becomes
+  // a display-only clause.
   fb.relation('attunement_class_refs', 'Attunement: Classes', const ['class'],
       isList: true, g: grpProperties);
   fb.relation('attunement_species_refs', 'Attunement: Species', const ['species'],

@@ -78,6 +78,7 @@ RuleDefinition _r(
   String description, {
   List<RuleParamSpec> params = const [],
   List<String> allowedTargetKinds = const [],
+  List<String> allowedTriggers = const [],
   bool predicates = false,
   bool scaling = false,
   bool activation = false,
@@ -91,6 +92,7 @@ RuleDefinition _r(
       category: category,
       params: params,
       allowedTargetKinds: allowedTargetKinds,
+      allowedTriggers: allowedTriggers,
       supportsPredicates: predicates,
       supportsScaling: scaling,
       supportsActivation: activation,
@@ -391,6 +393,26 @@ RuleCatalog dnd5eRuleCatalog() {
     _r('choice_group', 'Choice Group', RuleCategory.meta,
         'A deferred player choice (pick N skills/spells/options).',
         payload: true, status: RuleResolverStatus.deferred),
+    // Constrained-choice descriptor (PR-R5) — `choice_group`'s richer
+    // successor: payload {group_id, label, pick_kind, pick, options?,
+    // distributions?}. Parsed by ChoiceSpec.fromEffectRow; pending-choice
+    // seeding + pick validation consume it. Same legacy wire accepted.
+    _r('choice_spec', 'Constrained Choice', RuleCategory.meta,
+        'Pick N of a set (or an ability distribution like +2/+1) — '
+        'preserved as data instead of degrading to the full option list.',
+        payload: true, status: RuleResolverStatus.deferred),
+    // Prereq-trigger rule: never folds stats. Carries `clauses`
+    // (rules/prereq_evaluator.dart vocabulary); the resolver warn-keeps,
+    // pickers filter. Only the three prereq triggers are selectable.
+    _r('prerequisite', 'Prerequisite', RuleCategory.meta,
+        'Requirement gate (warn-keep): clauses checked when the source is '
+        'granted / equipped / attuned; unmet → sheet warning.',
+        allowedTriggers: [
+          'prereq_to_grant',
+          'prereq_to_equip',
+          'prereq_to_attune',
+        ],
+        status: RuleResolverStatus.deferred),
   ];
 
   return RuleCatalog(

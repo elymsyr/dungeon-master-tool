@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../../domain/entities/entity.dart';
+import '../../domain/services/rules/choice_spec.dart';
 import 'level_up_planner.dart';
 
 /// Categories of interactive level-up decisions that can be deferred.
@@ -192,26 +193,22 @@ List<PendingChoice> seedFeatChoicePendings({
     if (effects is! List) continue;
     for (final row in effects) {
       if (row is! Map) continue;
-      if (row['kind'] != 'choice_group') continue;
-      final payload = row['payload'];
-      if (payload is! Map) continue;
-      final groupId = payload['group_id']?.toString() ?? '';
-      if (groupId.isEmpty) continue;
-      final pickKind = payload['pick_kind']?.toString() ?? 'enum';
-      if (pickKind == 'ability') continue;
-      final pick = payload['pick'] is int ? payload['pick'] as int : 1;
-      final storageKey = '${feat.id}:$groupId';
+      // Shared constrained-choice model (rules engine PR-R5) — parses both
+      // the legacy `choice_group` wire and the newer `choice_spec` kind.
+      final spec = ChoiceSpec.fromEffectRow(row);
+      if (spec == null) continue;
+      if (spec.pickKind == 'ability') continue; // handled by featAsi path
+      final storageKey = '${feat.id}:${spec.specId}';
       final raw = existingFeatChoices[storageKey] ?? '';
       final pickedCount =
           raw.isEmpty ? 0 : raw.split(',').where((s) => s.isNotEmpty).length;
-      final remaining = (pick - pickedCount).clamp(0, pick);
+      final remaining = (spec.pick - pickedCount).clamp(0, spec.pick);
       if (remaining <= 0) continue;
-      final label = payload['label']?.toString() ?? groupId;
       out.add(newPendingChoice(
         kind: PendingChoiceKind.featChoice,
         level: level,
         classLabel: feat.name,
-        featureName: label,
+        featureName: spec.label,
         count: remaining,
         sourceEntityId: feat.id,
       ));

@@ -16,6 +16,7 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
+import '../../domain/services/character_resolver_legacy.dart';
 import 'rule_config_provider.dart';
 import '../services/builtin_srd_entities.dart';
 import '../services/package_source_entities.dart';
@@ -1089,8 +1090,31 @@ final effectiveCharacterProvider =
     sourcePackagesOf(pc),
     (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
   );
-  return CharacterResolver.resolve(pc, entities,
-      config: ref.watch(ruleConfigProvider));
+  final config = ref.watch(ruleConfigProvider);
+  final result = CharacterResolver.resolve(pc, entities, config: config);
+  // PR-R2 parity harness: every character opened in a debug build is also
+  // resolved through the frozen pre-rules-engine resolver; ANY JSON diff
+  // throws immediately. Release builds strip this. Removed in PR-R7 once the
+  // assert has stayed silent across the parity matrix. Caveat: rows authored
+  // with the NEW `trigger`/`clauses` wire keys (when_attuned, prerequisite)
+  // intentionally diverge — the legacy resolver predates them; remove the
+  // assert before authoring such rows, or expect it to fire.
+  assert(() {
+    final legacy = LegacyCharacterResolver.resolve(pc, entities, config: config);
+    final a = jsonEncode(result.toJson());
+    final b = jsonEncode(legacy.toJson());
+    if (a != b) {
+      var at = 0;
+      while (at < a.length && at < b.length && a[at] == b[at]) {
+        at++;
+      }
+      final lo = (at - 60).clamp(0, a.length);
+      throw StateError(
+          'Resolver parity diff for ${pc.id} @$at:\n  new: ${a.substring(lo, (at + 60).clamp(0, a.length))}\n  old: ${b.substring(lo, (at + 60).clamp(0, b.length))}');
+    }
+    return true;
+  }());
+  return result;
 });
 
 /// Player kategorisi field'ları için default değer üretir.

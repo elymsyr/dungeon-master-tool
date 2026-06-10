@@ -102,6 +102,13 @@ class RuleDefinition {
   /// token authored in existing data ever becomes unselectable.
   final List<String> allowedTargetKinds;
 
+  /// Trigger wire-strings this rule may carry (`always_on`, `when_equipped`,
+  /// `prereq_to_attune`, ... — see `rules/rule_trigger.dart`). Empty ⇒ every
+  /// non-prereq trigger is selectable (the common case); prereq triggers are
+  /// only offered when declared, because prereq rules carry `clauses` instead
+  /// of folding stats.
+  final List<String> allowedTriggers;
+
   final bool supportsPredicates;
   final bool supportsScaling;
   final bool supportsActivation;
@@ -115,6 +122,7 @@ class RuleDefinition {
     required this.category,
     this.params = const [],
     this.allowedTargetKinds = const [],
+    this.allowedTriggers = const [],
     this.supportsPredicates = false,
     this.supportsScaling = false,
     this.supportsActivation = false,

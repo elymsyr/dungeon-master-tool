@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: chargen
-updated: 2026-06-09
+updated: 2026-06-10
 tags: [moc]
 ---
 
@@ -12,6 +12,9 @@ tags: [moc]
 
 ## Key Files
 - [[character_resolver]] — pure read-time resolver; applies 50+ effect kinds → [[effective_character]]. Core of [[Effect-DSL-Resolution]].
+- [[prereq_evaluator]] — shared prerequisite-clause interpreter (PR-R1): pickers filter, resolver warn-keeps (`UnmetPrerequisite` on sheet).
+- [[rule_compiler]] · [[bound_rule]] · [[rule_trigger]] — rules engine (PR-R2): field→rule compilation + 8-trigger taxonomy; see [[Rules-Engine-Triggers]].
+- [[choice_spec]] — constrained-choice descriptor (PR-R5): ASI distributions, pick-N skill/tool/language, feat choice groups.
 - [[entity_ref]] — hard (uuid) vs soft (slug+name) ref resolution. See [[Ref-Resolution-Hard-vs-Soft]].
 - [[level_up_planner]] — `planLevelUp` delta: HP, prof bonus, features, ASI/feat flags, slots, pools.
 - [[caster_progression]] — Full/Half/Pact spell tables (cantrips/known/prepared/slots).

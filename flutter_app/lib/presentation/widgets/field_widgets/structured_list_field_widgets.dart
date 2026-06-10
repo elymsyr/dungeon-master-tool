@@ -1674,6 +1674,10 @@ class FeatEffectListFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
 
+  /// Host card's full fields map — drives the `$field` dynamic-value picker
+  /// (PR-R3). Null disables the fixed⇄field toggle.
+  final Map<String, dynamic>? entityFields;
+
   const FeatEffectListFieldWidget({
     super.key,
     required this.schema,
@@ -1682,6 +1686,7 @@ class FeatEffectListFieldWidget extends StatelessWidget {
     required this.onChanged,
     this.entities,
     this.ref,
+    this.entityFields,
   });
 
   @override
@@ -1710,6 +1715,7 @@ class FeatEffectListFieldWidget extends StatelessWidget {
         ref: ref,
         readOnly: readOnly,
         onChanged: onRowChanged,
+        entityFields: entityFields,
       ),
     );
   }
@@ -1725,6 +1731,7 @@ class _FeatEffectRow extends StatelessWidget {
   final WidgetRef? ref;
   final bool readOnly;
   final ValueChanged<Map<String, dynamic>> onChanged;
+  final Map<String, dynamic>? entityFields;
 
   const _FeatEffectRow({
     required this.catalog,
@@ -1733,6 +1740,7 @@ class _FeatEffectRow extends StatelessWidget {
     required this.ref,
     required this.readOnly,
     required this.onChanged,
+    this.entityFields,
   });
 
   Map<String, dynamic> _without(String key) {
@@ -1799,7 +1807,7 @@ class _FeatEffectRow extends StatelessWidget {
     // missing required param). Only when a real kind is set, to avoid nagging
     // on a freshly-added empty row.
     final issues = (catalog != null && kind != null && kind.isNotEmpty)
-        ? validateEffectRow(row, catalog!)
+        ? validateEffectRow(row, catalog!, hostFields: entityFields)
         : const <RuleIssue>[];
 
     return Column(
@@ -1825,6 +1833,66 @@ class _FeatEffectRow extends StatelessWidget {
               width: 240,
               display: (k) => catalog?.labelFor(k) ?? k,
             ),
+            // Trigger picker (PR-R3). '' = no key = context default
+            // (when_equipped on items, always_on elsewhere — see
+            // rules/rule_trigger.dart). Prerequisite rules only offer the
+            // three prereq triggers.
+            _miniEnum(
+              label: 'Trigger',
+              value: row['trigger'] is String ? row['trigger'] as String : '',
+              options: kind == 'prerequisite'
+                  ? const [
+                      'prereq_to_grant',
+                      'prereq_to_equip',
+                      'prereq_to_attune',
+                    ]
+                  : (rule != null && rule.allowedTriggers.isNotEmpty)
+                      ? ['', ...rule.allowedTriggers]
+                      : const [
+                          '',
+                          'always_on',
+                          'when_granted',
+                          'when_level_up',
+                          'when_equipped',
+                          'when_attuned',
+                        ],
+              readOnly: readOnly,
+              onChanged: (v) {
+                final next = {...row};
+                if (v == null || v.isEmpty) {
+                  next.remove('trigger');
+                  next.remove('trigger_args');
+                } else {
+                  next['trigger'] = v;
+                  if (v != 'when_level_up') next.remove('trigger_args');
+                }
+                onChanged(next);
+              },
+              width: 150,
+              display: (t) => t.isEmpty ? '(default)' : t,
+            ),
+            if (row['trigger'] == 'when_level_up')
+              _miniInt(
+                label: 'At Level',
+                value: (row['trigger_args'] is Map &&
+                        (row['trigger_args'] as Map)['at_level'] is int)
+                    ? (row['trigger_args'] as Map)['at_level'] as int
+                    : null,
+                readOnly: readOnly,
+                onChanged: (v) {
+                  final args = row['trigger_args'] is Map
+                      ? Map<String, dynamic>.from(row['trigger_args'] as Map)
+                      : <String, dynamic>{};
+                  if (v == null) {
+                    args.remove('at_level');
+                  } else {
+                    args['at_level'] = v;
+                  }
+                  onChanged(args.isEmpty
+                      ? _without('trigger_args')
+                      : {...row, 'trigger_args': args});
+                },
+              ),
             if (showTargetKind)
               _miniEnum(
                 label: 'Target Kind',
@@ -1866,6 +1934,53 @@ class _FeatEffectRow extends StatelessWidget {
                   fontStyle: FontStyle.italic),
             ),
           ),
+        // Prerequisite rules: clause sub-editor (same vocabulary/widgets as
+        // the feat `prereq_clauses` field — shared interpreter in
+        // rules/prereq_evaluator.dart).
+        if (kind == 'prerequisite')
+          Builder(builder: (context) {
+            final clauses = _coerceRows(row['clauses']);
+            void writeClauses(List<Map<String, dynamic>> list) => onChanged(
+                list.isEmpty ? _without('clauses') : {...row, 'clauses': list});
+            return _nestedBox(
+              context: context,
+              title: 'Clauses (ALL must pass)',
+              readOnly: readOnly,
+              onAdd: () => writeClauses([...clauses, {'type': null}]),
+              onClear: clauses.isEmpty ? null : () => writeClauses(const []),
+              children: [
+                for (var i = 0; i < clauses.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _PrereqClauseRow(
+                            row: clauses[i],
+                            entities: entities,
+                            ref: ref,
+                            readOnly: readOnly,
+                            onChanged: (c) {
+                              final next = [...clauses];
+                              next[i] = c;
+                              writeClauses(next);
+                            },
+                          ),
+                        ),
+                        if (!readOnly)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 14),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () =>
+                                writeClauses([...clauses]..removeAt(i)),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          }),
         if (showPreds)
           _PredicateEditor(
             predicateKinds: catalog?.predicateKinds ?? const [],
@@ -1923,10 +2038,67 @@ class _FeatEffectRow extends StatelessWidget {
       }
     }
 
-    if (valueParam != null) {
+    // Dynamic field refs (PR-R3): `value: {"$field": "<key>"}` reads the
+    // host card's own field at resolve time. The swap icon toggles between a
+    // fixed number and a field pick (numeric fields of the host card).
+    final rawValue = row['value'];
+    final isFieldRef = rawValue is Map && rawValue.containsKey(r'$field');
+    final numericFieldKeys = entityFields == null
+        ? const <String>[]
+        : ([
+            for (final e in entityFields!.entries)
+              if (e.value is num) e.key,
+          ]..sort());
+
+    Widget fieldRefPicker() {
+      final current = (rawValue as Map)[r'$field']?.toString();
+      final options = {
+        if (current != null && current.isNotEmpty) current,
+        ...numericFieldKeys,
+      }.toList();
+      return _miniEnum(
+        label: 'Value ← field',
+        value: current,
+        options: options,
+        readOnly: readOnly,
+        onChanged: (v) => onChanged({
+          ...row,
+          'value': {r'$field': v},
+        }),
+        width: 180,
+      );
+    }
+
+    Widget swapIcon() => Tooltip(
+          message: isFieldRef ? 'Use a fixed value' : "Read from a card field",
+          child: InkWell(
+            onTap: () => onChanged(isFieldRef
+                ? ({...row}..remove('value'))
+                : {
+                    ...row,
+                    'value': {
+                      r'$field':
+                          numericFieldKeys.isEmpty ? '' : numericFieldKeys.first
+                    },
+                  }),
+            child: Icon(isFieldRef ? Icons.pin : Icons.data_object, size: 14),
+          ),
+        );
+
+    final showValueSlot =
+        valueParam != null || rule == null || row['value'] != null;
+    if (showValueSlot && isFieldRef) {
+      out.add(fieldRefPicker());
+      if (!readOnly) out.add(swapIcon());
+    } else if (valueParam != null) {
       out.add(_paramWidget(
           valueParam, row['value'], (v) => onChanged({...row, 'value': v})));
-    } else if (rule == null || row['value'] != null) {
+      if (!readOnly &&
+          valueParam.type == RuleParamType.int_ &&
+          numericFieldKeys.isNotEmpty) {
+        out.add(swapIcon());
+      }
+    } else if (showValueSlot) {
       // Preserve / allow editing of a bare value on legacy or unknown rows.
       out.add(_miniInt(
         label: 'Value',
@@ -1935,6 +2107,7 @@ class _FeatEffectRow extends StatelessWidget {
         onChanged: (v) => onChanged({...row, 'value': v}),
         width: 70,
       ));
+      if (!readOnly && numericFieldKeys.isNotEmpty) out.add(swapIcon());
     }
 
     for (final p in rule?.params ?? const <RuleParamSpec>[]) {
@@ -2877,6 +3050,350 @@ class _RelationListChips extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// prereqClauses — typed prerequisite clause rows (ALL-of; option lists OR).
+// Shape spec: FieldType.prereqClauses doc comment + rules/prereq_evaluator.dart.
+// Same rows are evaluated by the picker dialogs (filter) and the resolver
+// (warn-keep), so this editor is the single authoring surface for both.
+// ─────────────────────────────────────────────────────────────────────────
+
+const _prereqClauseTypes = [
+  'character_level',
+  'ability_min',
+  'spellcasting',
+  'armor_proficiency',
+  'weapon_proficiency',
+  'skill_proficiency',
+  'class_ref',
+  'species_ref',
+  'alignment_ref',
+  'other',
+];
+
+const _prereqClauseTypeLabels = {
+  'character_level': 'Character Level',
+  'ability_min': 'Ability Score (any of)',
+  'spellcasting': 'Spellcasting Feature',
+  'armor_proficiency': 'Armor Proficiency',
+  'weapon_proficiency': 'Weapon Proficiency',
+  'skill_proficiency': 'Skill Proficiency (any of)',
+  'class_ref': 'Class (any of)',
+  'species_ref': 'Species (any of)',
+  'alignment_ref': 'Alignment (any of)',
+  'other': 'Other (display only)',
+};
+
+class PrereqClausesFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const PrereqClausesFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _coerceRows(value);
+    return _StructuredListShell(
+      schema: schema,
+      rows: rows,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      makeEmptyRow: () => {'type': null},
+      buildRow: (i, row, onRowChanged) => _PrereqClauseRow(
+        row: row,
+        entities: entities,
+        ref: ref,
+        readOnly: readOnly,
+        onChanged: onRowChanged,
+      ),
+    );
+  }
+}
+
+class _PrereqClauseRow extends StatelessWidget {
+  final Map<String, dynamic> row;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<Map<String, dynamic>> onChanged;
+
+  const _PrereqClauseRow({
+    required this.row,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final type = row['type'] as String?;
+    // Union the current value so an unrecognized clause type authored by an
+    // importer never becomes unselectable (mirrors the effect-kind dropdown).
+    final typeOptions =
+        (type != null && type.isNotEmpty && !_prereqClauseTypes.contains(type))
+            ? [..._prereqClauseTypes, type]
+            : _prereqClauseTypes;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _miniEnum(
+          label: 'Requirement',
+          value: type,
+          options: typeOptions,
+          readOnly: readOnly,
+          // Type switch resets the per-type args — stale keys from the prior
+          // type would otherwise linger invisibly in the row map.
+          onChanged: (v) => onChanged({'type': v}),
+          width: 200,
+          display: (t) => _prereqClauseTypeLabels[t] ?? t,
+        ),
+        ...switch (type) {
+          'character_level' => [
+              _miniInt(
+                label: 'Min Level',
+                value: row['min_level'] is int ? row['min_level'] as int : null,
+                readOnly: readOnly,
+                onChanged: (v) => onChanged(
+                    v == null ? ({...row}..remove('min_level')) : {...row, 'min_level': v}),
+              ),
+            ],
+          'ability_min' => [
+              _miniInt(
+                label: 'Min Score',
+                value: row['min_score'] is int ? row['min_score'] as int : null,
+                readOnly: readOnly,
+                onChanged: (v) => onChanged(
+                    v == null ? ({...row}..remove('min_score')) : {...row, 'min_score': v}),
+              ),
+              _ClauseOptionListField(
+                label: 'Abilities',
+                values: row['ability_options'],
+                allowedTypes: const ['ability'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (list) => onChanged({...row, 'ability_options': list}),
+              ),
+            ],
+          'armor_proficiency' => [
+              _MiniRelationField(
+                label: 'Armor Category',
+                value: row['category_ref'] is String
+                    ? row['category_ref'] as String
+                    : null,
+                allowedTypes: const ['armor-category'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (v) {
+                  final next = {...row};
+                  if (v == null) {
+                    next.remove('category_ref');
+                    next.remove('category');
+                  } else {
+                    next['category_ref'] = v;
+                    // Keep the importer's name mirror — the evaluator prefers
+                    // `category`, falling back to resolving `category_ref`.
+                    final name = entities?[v]?.name;
+                    if (name != null) next['category'] = name;
+                  }
+                  onChanged(next);
+                },
+              ),
+            ],
+          'weapon_proficiency' => [
+              _miniEnum(
+                label: 'Weapon Class',
+                value: row['weapon_class'] as String?,
+                options: const ['simple', 'martial', 'any'],
+                readOnly: readOnly,
+                onChanged: (v) => onChanged({...row, 'weapon_class': v}),
+                width: 120,
+              ),
+            ],
+          'skill_proficiency' => [
+              _ClauseOptionListField(
+                label: 'Skills',
+                values: row['skill_options'],
+                allowedTypes: const ['skill'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (list) => onChanged({...row, 'skill_options': list}),
+              ),
+            ],
+          'class_ref' => [
+              _miniInt(
+                label: 'Min Class Lvl',
+                value: row['min_level'] is int ? row['min_level'] as int : null,
+                readOnly: readOnly,
+                onChanged: (v) => onChanged(
+                    v == null ? ({...row}..remove('min_level')) : {...row, 'min_level': v}),
+              ),
+              _ClauseOptionListField(
+                label: 'Classes',
+                values: row['class_options'],
+                allowedTypes: const ['class'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (list) => onChanged({...row, 'class_options': list}),
+              ),
+            ],
+          'species_ref' => [
+              _ClauseOptionListField(
+                label: 'Species',
+                values: row['species_options'],
+                allowedTypes: const ['species'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (list) =>
+                    onChanged({...row, 'species_options': list}),
+              ),
+            ],
+          'alignment_ref' => [
+              _ClauseOptionListField(
+                label: 'Alignments',
+                values: row['alignment_options'],
+                allowedTypes: const ['alignment'],
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (list) =>
+                    onChanged({...row, 'alignment_options': list}),
+              ),
+            ],
+          'other' => [
+              _miniText(
+                label: 'Note (never blocks)',
+                value: row['text'] is String ? row['text'] as String : '',
+                readOnly: readOnly,
+                onChanged: (v) => onChanged(
+                    v.isEmpty ? ({...row}..remove('text')) : {...row, 'text': v}),
+                width: 240,
+              ),
+            ],
+          _ => const <Widget>[],
+        },
+        if (type == 'spellcasting')
+          _badge('passes when the character can cast spells', Colors.teal),
+      ],
+    );
+  }
+}
+
+/// Chip list for a clause's OR-option refs. Tolerates the two wire shapes the
+/// data actually carries — entity-id `String`s (editor-authored) and
+/// `{_lookup/_ref, name}` maps (importer-authored) — and appends new picks as
+/// plain id strings. Existing map refs are preserved untouched on delete of
+/// other entries.
+class _ClauseOptionListField extends StatelessWidget {
+  final String label;
+  final dynamic values;
+  final List<String> allowedTypes;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<List<dynamic>> onChanged;
+
+  const _ClauseOptionListField({
+    required this.label,
+    required this.values,
+    required this.allowedTypes,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  List<dynamic> get _list => values is List ? List<dynamic>.from(values as List) : <dynamic>[];
+
+  String _displayName(dynamic v) {
+    if (v is String) return entities?[v]?.name ?? v;
+    if (v is Map) {
+      final n = v['name'];
+      if (n is String) return n;
+    }
+    return '?';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = _list;
+    return SizedBox(
+      width: 240,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: '$label (${list.length})',
+          isDense: true,
+          labelStyle: const TextStyle(fontSize: 11),
+        ),
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            for (var i = 0; i < list.length; i++)
+              Chip(
+                label: Text(
+                  _displayName(list[i]),
+                  style: const TextStyle(fontSize: 11),
+                ),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onDeleted: readOnly
+                    ? null
+                    : () => onChanged([...list]..removeAt(i)),
+              ),
+            if (!readOnly)
+              InkWell(
+                onTap: () async {
+                  if (ref == null) return;
+                  final result = await showEntitySelectorDialog(
+                    context: context,
+                    ref: ref!,
+                    allowedTypes: allowedTypes,
+                    includeBuiltinSrd: true,
+                  );
+                  if (result != null && result.isNotEmpty) {
+                    onChanged([...list, result.first]);
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 12),
+                      SizedBox(width: 2),
+                      Text('Add', style: TextStyle(fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

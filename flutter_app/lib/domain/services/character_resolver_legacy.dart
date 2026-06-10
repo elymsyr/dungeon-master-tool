@@ -4,11 +4,16 @@ import '../entities/entity.dart';
 import 'entity_ref.dart';
 import '../entities/schema/rules/rule_config.dart';
 import 'count_formula.dart';
-import 'rules/bound_rule.dart';
 import 'rules/prereq_evaluator.dart';
-import 'rules/rule_compiler.dart';
-import 'rules/rule_trigger.dart';
 
+/// FROZEN pre-rules-engine copy of the resolver (PR-R2 parity harness).
+///
+/// Verbatim snapshot taken before the RuleCompiler refactor. A debug-only
+/// assert in `effectiveCharacterProvider` resolves every opened character
+/// through BOTH resolvers and throws on any JSON diff, so every dev session
+/// is a free parity test. Never call from production code. Deleted in PR-R7
+/// once the assert has stayed silent across the manual parity matrix.
+///
 /// Pure-function read-time resolver. Walks a [Character]'s raw choices
 /// (`class_levels`, `subclass_id`, `feat_ids`, `equipment_choices`) and the
 /// referenced source entities, then folds them into an [EffectiveCharacter]
@@ -16,7 +21,7 @@ import 'rules/rule_trigger.dart';
 ///
 /// Stateless. Safe to call on every read. Not memoized at this layer; wrap
 /// with a Riverpod `Provider.family` for caching.
-class CharacterResolver {
+class LegacyCharacterResolver {
   /// Effect `kind`s with a real `applyEffect` case below. Hand-mirrored from
   /// the switch — the Rule Catalog must declare a superset of this set, which
   /// a debug assert in `ruleCatalogProvider` enforces so the declared
@@ -105,34 +110,11 @@ class CharacterResolver {
     }
 
     // ── 3. Pass 2: class + subclass features by level ──────────────────
-    // The RuleCompiler is the single field→rule interpreter (PR-R2): every
-    // pass below consumes its BoundRules instead of reading entity fields
-    // inline. Emission order mirrors the legacy pass bodies exactly — the
-    // frozen LegacyCharacterResolver + debug parity assert in
-    // `effectiveCharacterProvider` enforce byte-identical output.
-    final compiler = RuleCompiler(
-      entitiesById: entitiesById,
-      classLevels: classLevels,
-    );
-
     final activeFeatures = <ResolvedFeatureRow>[];
-    // Feature-row effect rules collected here apply at the legacy Pass-4
-    // position (after feats) so source-tagging + ordering stay identical.
-    final pendingFeatureRules = <BoundRule>[];
-
-    void collectFeatureRules(List<BoundRule> rules) {
-      for (final r in rules) {
-        if (r.effect['kind'] == 'feature_row') {
-          activeFeatures.add(ResolvedFeatureRow(
-            level: r.atLevel,
-            description: (r.effect['description'] ?? '').toString(),
-            sourceEntityId: r.sourceEntityId,
-          ));
-        } else {
-          pendingFeatureRules.add(r);
-        }
-      }
-    }
+    // Per row: the effect map plus a display source like
+    // `class:Barbarian` or `subclass:Berserker`. Pass 4 applies these via
+    // applyEffect so source-tagging flows through `noteSource`.
+    final pendingFeatureEffects = <({Map<String, dynamic> eff, String source})>[];
 
     for (final entry in classLevels.entries) {
       final classEntity = entitiesById[entry.key];
@@ -140,7 +122,12 @@ class CharacterResolver {
         warnings.add('Missing class entity ${entry.key}');
         continue;
       }
-      collectFeatureRules(compiler.compileFeatures(classEntity, entry.value));
+      _collectFeaturesByLevel(
+        classEntity,
+        entry.value,
+        activeFeatures,
+        pendingFeatureEffects,
+      );
     }
     if (subclassId != null) {
       final sub = entitiesById[subclassId];
@@ -161,7 +148,12 @@ class CharacterResolver {
             ? sub.fields['granted_at_level'] as int
             : 1;
         if (gateLevel >= grantedAt) {
-          collectFeatureRules(compiler.compileFeatures(sub, gateLevel));
+          _collectFeaturesByLevel(
+            sub,
+            gateLevel,
+            activeFeatures,
+            pendingFeatureEffects,
+          );
         }
       }
     }
@@ -518,14 +510,10 @@ class CharacterResolver {
           // Surface the grant for the sheet to render — actual write to PC
           // `temp_hp` is a runtime trigger (rest, kill, attack hit), not a
           // resolve-time decision.
-          // NOTE: the historical top-level `eff['trigger']` fallback was
-          // removed (PR-R2) — that key now carries the rule TRIGGER enum and
-          // would leak into this surface. All shipped rows carry the temp-HP
-          // trigger inside `payload`; the fallback was dead in practice.
           tempHpGrants.add(<String, dynamic>{
             'source': source,
             'formula': eff['payload'] is Map ? (eff['payload'] as Map)['formula'] : eff['formula'],
-            'trigger': eff['payload'] is Map ? (eff['payload'] as Map)['trigger'] : null,
+            'trigger': eff['payload'] is Map ? (eff['payload'] as Map)['trigger'] : eff['trigger'],
             'activation': eff['activation'],
           });
         case 'granted_action_grant':
@@ -695,147 +683,6 @@ class CharacterResolver {
       }
     }
 
-    // ── 4c. BoundRule apply wrapper ─────────────────────────────────────
-    // Single funnel for compiled rules. Internal compiler kinds (never
-    // authored) run their legacy-pass logic verbatim here; everything else
-    // flows through `applyEffect`. `noteSourceOverride` reproduces the
-    // legacy grant paths that recorded a source where applyEffect does not.
-    // Prereq-trigger rules never apply; when_attuned rules stay inert until
-    // the attunement runtime ships (PR-R4).
-    void applyBound(BoundRule r) {
-      if (r.trigger.isPrereq || r.trigger == RuleTrigger.whenAttuned) return;
-      // when_level_up gate: rules from `features[]` rows are pre-gated by
-      // the compiler (legacy parity), but explicit `rule_effects` rows with
-      // `trigger_args.at_level` gate here — by the gate class's level, or
-      // total character level when gate == 'character'.
-      if (r.trigger == RuleTrigger.whenLevelUp &&
-          r.atLevel > 0 &&
-          r.derivedFromField != 'features') {
-        final gateLevel = r.gateClassId != null
-            ? (classLevels[r.gateClassId] ?? 0)
-            : classLevels.values.fold<int>(0, (a, b) => a + b);
-        if (gateLevel < r.atLevel) return;
-      }
-      final eff = r.effect;
-      switch (eff['kind']) {
-        case 'feature_row':
-          break; // display row — consumed in Pass 2 collection
-        case 'prerequisite':
-          break; // safety net — prereq rules are bucketed, never applied
-        case 'trait_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null) {
-            if (!autoGrantedTraitIds.contains(id)) {
-              autoGrantedTraitIds.add(id);
-            }
-            noteSource(id, r.sourceLabel);
-          }
-        case 'alternate_speed':
-          final mode = eff['mode']?.toString() ?? '';
-          final v = _intOf(eff['value']);
-          if (mode.isNotEmpty && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
-            extraSpeeds[mode] = v;
-          }
-        case 'level_gated_spells':
-          _applyLevelGatedSpells(
-            rows: _readMapList(eff['rows']),
-            totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
-            entitiesById: entitiesById,
-            grantedSpellIds: grantedSpellIds,
-            grantedCantripIds: grantedCantripIds,
-            resourcePools: resourcePools,
-            noteSource: (id) => noteSource(id, r.sourceLabel),
-          );
-        case 'background_asi_apply':
-          // SRD 2024 p.83 background ASI — stored pick map applied gated by
-          // ability_score_options; out-of-list entries warn and drop; cap 20.
-          final payload = (eff['payload'] is Map)
-              ? Map<String, dynamic>.from(eff['payload'] as Map)
-              : const <String, dynamic>{};
-          final asi = _readIntMap(fields['background_asi']);
-          if (asi.isEmpty) break;
-          final allowed = <String>{};
-          for (final ref in _readRefList(
-              payload['ability_score_options'], entitiesById)) {
-            final name = entitiesById[ref]?.name ?? '';
-            final abbrev = _abilityAbbrev(name);
-            if (abbrev != null) allowed.add(abbrev);
-          }
-          for (final entry in asi.entries) {
-            final abbrev =
-                _abilityAbbrev(entry.key) ?? entry.key.toUpperCase();
-            const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
-            if (!valid.contains(abbrev)) continue;
-            if (allowed.isNotEmpty && !allowed.contains(abbrev)) {
-              warnings.add(
-                  'background_asi $abbrev not in ${payload['source_name']}.ability_score_options');
-              continue;
-            }
-            final cur = abilities[abbrev] ?? 10;
-            final next = cur + entry.value;
-            abilities[abbrev] = next > 20 ? 20 : next;
-          }
-        case 'feat_asi_apply':
-          // Typed scalar feat ASI: recorded pick verbatim (cap-aware), else
-          // first-uncapped-option heuristic. Once per feat occurrence —
-          // repeatable feats listed twice apply twice.
-          final payload = (eff['payload'] is Map)
-              ? Map<String, dynamic>.from(eff['payload'] as Map)
-              : const <String, dynamic>{};
-          final asiAmount = _intOf(payload['asi_amount']);
-          if (asiAmount <= 0) break;
-          final asiMax = (payload['asi_max_score'] is int)
-              ? payload['asi_max_score'] as int
-              : 20;
-          final fid = payload['feat_id'];
-          final recorded =
-              (featAsiChoices is Map) ? featAsiChoices[fid] : null;
-          if (recorded is Map && recorded.isNotEmpty) {
-            const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
-            recorded.forEach((k, v) {
-              if (k is! String) return;
-              final abbrev = _abilityAbbrev(k) ?? k.toUpperCase();
-              if (!valid.contains(abbrev)) return;
-              final amt = _intOf(v);
-              if (amt == 0) return;
-              final cur = abilities[abbrev] ?? 10;
-              final next = cur + amt;
-              abilities[abbrev] = next > asiMax ? asiMax : next;
-            });
-          } else {
-            final opts = _readMapList(payload['asi_ability_options']);
-            for (final opt in opts) {
-              final name = opt['name'];
-              if (name is! String) continue;
-              final abbrev = _abilityAbbrev(name);
-              if (abbrev == null) continue;
-              final cur = abilities[abbrev] ?? 10;
-              if (cur + asiAmount <= asiMax) {
-                abilities[abbrev] = cur + asiAmount;
-                break;
-              }
-            }
-          }
-        case 'proficiency_grant_raw':
-          // Verbatim-string proficiency lists (class weapon/armor categories)
-          // — the legacy pass never resolved these as refs; preserve that.
-          final v = eff['value']?.toString();
-          if (v == null || v.isEmpty) break;
-          switch (eff['target_kind']) {
-            case 'weapon_category':
-              if (!weaponCats.contains(v)) weaponCats.add(v);
-            case 'armor_category':
-              if (!armorCats.contains(v)) armorCats.add(v);
-          }
-        default:
-          applyEffect(eff, r.sourceLabel);
-          if (r.noteSourceOverride) {
-            final id = _refIdFor(eff, entitiesById);
-            if (id != null) noteSource(id, r.sourceLabel);
-          }
-      }
-    }
-
     // ── 5. Pass 3: feat effects (excluding level grants) ───────────────
     final allFeatIds = [...featIds, ...autoGrantedFeatIds];
     for (final fid in allFeatIds) {
@@ -844,17 +691,58 @@ class CharacterResolver {
         warnings.add('Missing feat entity $fid');
         continue;
       }
-      // Compiled order mirrors the legacy pass: scalar ASI, `effects` rows
-      // (`class_level_grant` no-ops — consumed in Pass 1), then legacy
-      // `granted_modifiers`.
-      for (final r in compiler.compileFeat(feat)) {
-        applyBound(r);
+      // ASI: typed scalar fields. Apply once per feat occurrence; if the feat
+      // is repeatable and listed multiple times we apply once each.
+      final asiAmount = _intOf(feat.fields['asi_amount']);
+      final asiMax = (feat.fields['asi_max_score'] is int)
+          ? feat.fields['asi_max_score'] as int
+          : 20;
+      if (asiAmount > 0) {
+        final recorded =
+            (featAsiChoices is Map) ? featAsiChoices[fid] : null;
+        if (recorded is Map && recorded.isNotEmpty) {
+          // Honor the user's recorded pick(s) for this feat (cap-aware).
+          const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+          recorded.forEach((k, v) {
+            if (k is! String) return;
+            final abbrev = _abilityAbbrev(k) ?? k.toUpperCase();
+            if (!valid.contains(abbrev)) return;
+            final amt = _intOf(v);
+            if (amt == 0) return;
+            final cur = abilities[abbrev] ?? 10;
+            final next = cur + amt;
+            abilities[abbrev] = next > asiMax ? asiMax : next;
+          });
+        } else {
+          // Heuristic: bump first option ability that isn't already capped.
+          final opts = _readMapList(feat.fields['asi_ability_options']);
+          for (final opt in opts) {
+            final name = opt['name'];
+            if (name is! String) continue;
+            final abbrev = _abilityAbbrev(name);
+            if (abbrev == null) continue;
+            final cur = abilities[abbrev] ?? 10;
+            if (cur + asiAmount <= asiMax) {
+              abilities[abbrev] = cur + asiAmount;
+              break;
+            }
+          }
+        }
+      }
+      final effects = _readMapList(feat.fields['effects']);
+      for (final eff in effects) {
+        applyEffect(eff, 'feat:${feat.name}');
+      }
+      // Legacy granted_modifiers DSL — apply if present.
+      final modifiers = _readMapList(feat.fields['granted_modifiers']);
+      for (final m in modifiers) {
+        applyEffect(_modifierAsEffect(m), 'feat:${feat.name}');
       }
     }
 
     // ── 6. Pass 4: feature-row effects (from class/subclass walk) ──────
-    for (final r in pendingFeatureRules) {
-      applyBound(r);
+    for (final row in pendingFeatureEffects) {
+      applyEffect(row.eff, row.source);
     }
 
     // ── 7. Pass 5: species + background grants ─────────────────────────
@@ -864,21 +752,88 @@ class CharacterResolver {
         final speciesSource = 'species:${sp.name}';
         // Apply every grant carried by a species-shaped fields map — the
         // species entity itself, a chosen subspecies entity, or (legacy) a
-        // nested subspecies_options row. All three share the same field set;
-        // the field→rule derivation lives in RuleCompiler.compileGrantsMap
-        // (legacy statement order preserved).
-        void applyGrantsFrom(
-            Map<String, dynamic> f, String src, String srcEntityId) {
-          for (final r in compiler.compileGrantsMap(
-            f,
-            sourceEntityId: srcEntityId,
-            sourceLabel: src,
-          )) {
-            applyBound(r);
+        // nested subspecies_options row. All three share the same field set,
+        // so the application is factored once.
+        void applyGrantsFrom(Map<String, dynamic> f, String src) {
+          // Innate alternate movement speeds carried as absolute feet; keep the
+          // larger value per mode (effects also feed `extraSpeeds`).
+          const speedModeByField = {
+            'speed_fly_ft': 'fly',
+            'speed_swim_ft': 'swim',
+            'speed_climb_ft': 'climb',
+            'speed_burrow_ft': 'burrow',
+          };
+          speedModeByField.forEach((field, mode) {
+            final v = f[field];
+            if (v is int && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
+              extraSpeeds[mode] = v;
+            }
+          });
+          for (final m in _readMapList(f['granted_modifiers'])) {
+            applyEffect(_modifierAsEffect(m), src);
           }
+          for (final s in _readRefList(f['granted_senses'], entitiesById)) {
+            if (!senses.contains(s)) senses.add(s);
+            noteSource(s, src);
+          }
+          for (final r in _readRefList(f['granted_damage_resistances'], entitiesById)) {
+            if (!damageRes.contains(r)) damageRes.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_damage_immunities'], entitiesById)) {
+            if (!damageImmunities.contains(r)) damageImmunities.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_damage_vulnerabilities'], entitiesById)) {
+            if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
+            noteSource(r, src);
+          }
+          for (final r in _readRefList(f['granted_condition_immunities'], entitiesById)) {
+            if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
+            noteSource(r, src);
+          }
+          for (final l in _readRefList(f['granted_languages'], entitiesById)) {
+            if (!languages.contains(l)) languages.add(l);
+          }
+          for (final sk in _readRefList(f['granted_skill_proficiencies'], entitiesById)) {
+            if (!skills.contains(sk)) skills.add(sk);
+          }
+          for (final t in _readRefList(f['trait_refs'], entitiesById)) {
+            if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
+            noteSource(t, src);
+          }
+          for (final a in _readRefList(f['granted_action_refs'], entitiesById)) {
+            if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final a in _readRefList(f['granted_bonus_action_refs'], entitiesById)) {
+            if (!grantedBonusActionIds.contains(a)) grantedBonusActionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final a in _readRefList(f['granted_reaction_refs'], entitiesById)) {
+            if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
+            noteSource(a, src);
+          }
+          for (final sp_ in _readRefList(f['granted_spell_refs'], entitiesById)) {
+            if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
+            noteSource(sp_, src);
+          }
+          for (final sp_ in _readRefList(f['granted_cantrip_refs'], entitiesById)) {
+            if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
+            noteSource(sp_, src);
+          }
+          _applyLevelGatedSpells(
+            rows: _readMapList(f['granted_spells_at_level']),
+            totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
+            entitiesById: entitiesById,
+            grantedSpellIds: grantedSpellIds,
+            grantedCantripIds: grantedCantripIds,
+            resourcePools: resourcePools,
+            noteSource: (id) => noteSource(id, src),
+          );
         }
 
-        applyGrantsFrom(sp.fields, speciesSource, sp.id);
+        applyGrantsFrom(sp.fields, speciesSource);
 
         // Subspecies — a first-class `subspecies` entity (preferred) or, for
         // legacy data, a nested `subspecies_options` row. `subspeciesId` may be
@@ -904,14 +859,12 @@ class CharacterResolver {
             }
           }
           if (sub != null) {
-            applyGrantsFrom(
-                sub.fields, 'subspecies:${sp.name}/${sub.name}', sub.id);
+            applyGrantsFrom(sub.fields, 'subspecies:${sp.name}/${sub.name}');
           } else {
             // Legacy fallback: nested subspecies_options row matched by name.
             for (final row in _readMapList(sp.fields['subspecies_options'])) {
               if (row['name']?.toString() != subspeciesId) continue;
-              applyGrantsFrom(
-                  row, 'subspecies:${sp.name}/$subspeciesId', sp.id);
+              applyGrantsFrom(row, 'subspecies:${sp.name}/$subspeciesId');
               break;
             }
           }
@@ -921,11 +874,41 @@ class CharacterResolver {
     if (backgroundId != null) {
       final bg = entitiesById[backgroundId];
       if (bg != null) {
-        // Skill/tool grants + the SRD 2024 background ASI (stored
-        // `background_asi` pick map gated by ability_score_options — the
-        // `background_asi_apply` wrapper case runs the legacy block).
-        for (final r in compiler.compileBackground(bg)) {
-          applyBound(r);
+        for (final s in _readRefList(bg.fields['granted_skill_refs'], entitiesById)) {
+          if (!skills.contains(s)) skills.add(s);
+        }
+        for (final t in _readRefList(bg.fields['granted_tool_refs'], entitiesById)) {
+          if (!tools.contains(t)) tools.add(t);
+        }
+        // SRD 2024 p.83: each background allows either +2/+1 to two abilities
+        // or +1/+1/+1 to three. PC stores the chosen distribution as
+        // `background_asi: {STR: 2, CON: 1}` — resolver bumps the abilities
+        // here. Total must be 3; resolver applies whatever is stored without
+        // re-validating, so the wizard/editor enforces the distribution rule.
+        // Bumps gated by ability_score_options when present; out-of-list
+        // entries are dropped with a warning. Cap at 20.
+        final asi = _readIntMap(fields['background_asi']);
+        if (asi.isNotEmpty) {
+          final allowed = <String>{};
+          for (final r in _readRefList(
+              bg.fields['ability_score_options'], entitiesById)) {
+            final name = entitiesById[r]?.name ?? '';
+            final abbrev = _abilityAbbrev(name);
+            if (abbrev != null) allowed.add(abbrev);
+          }
+          for (final entry in asi.entries) {
+            final abbrev = _abilityAbbrev(entry.key) ?? entry.key.toUpperCase();
+            const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+            if (!valid.contains(abbrev)) continue;
+            if (allowed.isNotEmpty && !allowed.contains(abbrev)) {
+              warnings.add(
+                  'background_asi $abbrev not in ${bg.name}.ability_score_options');
+              continue;
+            }
+            final cur = abilities[abbrev] ?? 10;
+            final next = cur + entry.value;
+            abilities[abbrev] = next > 20 ? 20 : next;
+          }
         }
       }
     }
@@ -935,14 +918,15 @@ class CharacterResolver {
     // rule-bearing category (class, subclass, species, background, trait,
     // magic-item, weapon, armor) alongside feat's own `effects`. A distinct
     // key avoids colliding with magic-item/spell's existing narrative
-    // `effects`. Rows route through the compiler so the new `trigger` key is
-    // honored: prereq rows never fold, `when_attuned` rows stay inert until
-    // PR-R4, everything else applies exactly as before (absent trigger =
-    // category default — when_equipped for items, always_on otherwise).
+    // `effects`. The field is new, so it is empty on all existing SRD content
+    // — applying it here is purely additive and changes nothing until a user
+    // authors a rule. Class/subclass flat effects apply while the class is
+    // held; granted-trait effects apply when the trait is granted; item
+    // effects apply while equipped.
     void applyEntityEffects(Entity? e, String source) {
       if (e == null) return;
-      for (final r in compiler.compileRuleEffects(e, source)) {
-        applyBound(r);
+      for (final eff in _readMapList(e.fields['rule_effects'])) {
+        applyEffect(eff, source);
       }
     }
 
@@ -972,44 +956,28 @@ class CharacterResolver {
       final item = entitiesById[id];
       applyEntityEffects(item, 'item:${item?.name ?? id}');
     }
-    // Attuned items (PR-R4): rows flagged `attuned: true`. Their
-    // `when_attuned` rules fold here (applyBound skips that trigger
-    // everywhere else); slot count + restriction gates are warn-keep,
-    // evaluated in the prerequisite pass below.
-    final attunedItemIds = <String>[];
-    for (final row in _iterAttunedInventory(fields)) {
-      final id = _resolveRef(row, entitiesById);
-      if (id == null) continue;
-      if (!attunedItemIds.contains(id)) attunedItemIds.add(id);
-      final item = entitiesById[id];
-      if (item == null) continue;
-      for (final r in compiler.compileRuleEffects(item, 'item:${item.name}')) {
-        if (r.trigger != RuleTrigger.whenAttuned) continue;
-        // Bypass applyBound's whenAttuned skip — this is the attuned bucket.
-        final eff = r.effect;
-        if (eff['kind'] == 'prerequisite') continue;
-        applyEffect(eff, r.sourceLabel);
-        if (r.noteSourceOverride) {
-          final nid = _refIdFor(eff, entitiesById);
-          if (nid != null) noteSource(nid, r.sourceLabel);
-        }
-      }
-    }
-    if (attunedItemIds.length > config.attunementSlots) {
-      warnings.add(
-          'Attuned to ${attunedItemIds.length} items — slot limit is ${config.attunementSlots}.');
-    }
 
     // ── 8. Class proficiency grants (saves + weapon/armor categories) ──
-    // Ref fields resolve as before; weapon/armor category lists are VERBATIM
-    // strings (never refs — `proficiency_grant_raw` preserves that legacy
-    // behavior). Subclasses grant no tools at this level (legacy parity).
     for (final classId in classLevels.keys) {
       final cls = entitiesById[classId];
       if (cls == null) continue;
-      for (final r
-          in compiler.compileTopLevelProficiencies(cls, 'class:${cls.name}')) {
-        applyBound(r);
+      for (final s in _readRefList(cls.fields['saving_throw_refs'], entitiesById)) {
+        if (!saves.contains(s)) saves.add(s);
+      }
+      for (final t in _readRefList(cls.fields['granted_tool_refs'], entitiesById)) {
+        if (!tools.contains(t)) tools.add(t);
+      }
+      final wcats = cls.fields['weapon_proficiency_categories'];
+      if (wcats is List) {
+        for (final v in wcats) {
+          if (v is String && !weaponCats.contains(v)) weaponCats.add(v);
+        }
+      }
+      final acats = cls.fields['armor_training_refs'];
+      if (acats is List) {
+        for (final v in acats) {
+          if (v is String && !armorCats.contains(v)) armorCats.add(v);
+        }
       }
     }
     // Subclass-level proficiency grants (some subclasses extend saves /
@@ -1019,9 +987,20 @@ class CharacterResolver {
     if (subclassId != null) {
       final sub = entitiesById[subclassId];
       if (sub != null) {
-        for (final r in compiler.compileTopLevelProficiencies(
-            sub, 'subclass:${sub.name}')) {
-          applyBound(r);
+        for (final s in _readRefList(sub.fields['saving_throw_refs'], entitiesById)) {
+          if (!saves.contains(s)) saves.add(s);
+        }
+        final wcats = sub.fields['weapon_proficiency_categories'];
+        if (wcats is List) {
+          for (final v in wcats) {
+            if (v is String && !weaponCats.contains(v)) weaponCats.add(v);
+          }
+        }
+        final acats = sub.fields['armor_training_refs'];
+        if (acats is List) {
+          for (final v in acats) {
+            if (v is String && !armorCats.contains(v)) armorCats.add(v);
+          }
         }
       }
     }
@@ -1175,59 +1154,15 @@ class CharacterResolver {
         if (!checkedFeatIds.add(fid)) continue; // repeatable: check once
         final feat = entitiesById[fid];
         if (feat == null) continue;
-        final prereqRule = compiler.compileFeatPrereq(feat);
-        if (prereqRule == null) continue;
-        final result =
-            evaluatePrereqClauses(prereqRule.clauses, ctx, entitiesById);
+        final clauses = effectivePrereqClauses(feat.fields);
+        if (clauses.isEmpty) continue;
+        final result = evaluatePrereqClauses(clauses, ctx, entitiesById);
         if (!result.passed) {
           unmetPrerequisites.add(UnmetPrerequisite(
             sourceEntityId: fid,
             sourceName: feat.name,
-            trigger: prereqRule.trigger.wire,
             failedClauses: result.failedDescriptions,
           ));
-        }
-      }
-      // Constrained-choice validation (PR-R5; roadmap 1.4, warning only):
-      // the stored background ASI pick map must match one of the background's
-      // declared distributions (+2/+1 or +1/+1/+1). Backgrounds without
-      // `asi_distribution_options` (all official packs) are unconstrained —
-      // no new warnings on imported content.
-      if (backgroundId != null) {
-        final bg = entitiesById[backgroundId];
-        final asi = _readIntMap(fields['background_asi']);
-        if (bg != null && asi.isNotEmpty) {
-          for (final spec
-              in compiler.compileChoiceSpecs(bg, RuleAttachment.background)) {
-            if (spec.pickKind != 'ability_distribution') continue;
-            if (!spec.matchesDistribution(asi)) {
-              warnings.add(
-                  'background_asi ${asi.values.toList()} does not match '
-                  '${bg.name}\'s allowed distributions');
-            }
-          }
-        }
-      }
-      // Attunement restriction gates (PR-R4): typed `attunement_*` fields +
-      // authored prereq_to_attune rule_effects rows, per attuned item.
-      for (final id in attunedItemIds) {
-        final item = entitiesById[id];
-        if (item == null) continue;
-        final gates = <BoundRule>[
-          ?compiler.compileAttunementPrereq(item),
-          for (final r in compiler.compileRuleEffects(item, 'item:${item.name}'))
-            if (r.trigger == RuleTrigger.prereqToAttune) r,
-        ];
-        for (final gate in gates) {
-          final result = evaluatePrereqClauses(gate.clauses, ctx, entitiesById);
-          if (!result.passed) {
-            unmetPrerequisites.add(UnmetPrerequisite(
-              sourceEntityId: id,
-              sourceName: item.name,
-              trigger: gate.trigger.wire,
-              failedClauses: result.failedDescriptions,
-            ));
-          }
         }
       }
     }
@@ -1288,15 +1223,41 @@ class CharacterResolver {
       freeCastSpellIds: _readStringList(fields['free_cast_spell_ids']),
       ritualBookSpellIds: _readStringList(fields['ritual_book_spell_ids']),
       activeConditionIds: _readStringList(fields['active_conditions']),
-      attunedItemIds: attunedItemIds,
-      attunementSlotsUsed: attunedItemIds.length,
-      attunementSlotsMax: config.attunementSlots,
       unmetPrerequisites: unmetPrerequisites,
       warnings: warnings,
     );
   }
 
   // ── helpers ───────────────────────────────────────────────────────────
+
+  static void _collectFeaturesByLevel(
+    Entity src,
+    int level,
+    List<ResolvedFeatureRow> out,
+    List<({Map<String, dynamic> eff, String source})> pendingEffects,
+  ) {
+    // `kind` mirrors the tags `applyEffect` callers already use elsewhere
+    // (`class:`, `subclass:`) so `cleanSource` strips them uniformly.
+    final kind = src.categorySlug == 'subclass' ? 'subclass' : 'class';
+    final source = '$kind:${src.name}';
+    final rows = _readMapList(src.fields['features']);
+    for (final r in rows) {
+      final lvl = (r['level'] is int) ? r['level'] as int : 1;
+      if (lvl > level) continue;
+      out.add(ResolvedFeatureRow(
+        level: lvl,
+        description: (r['description'] ?? '').toString(),
+        sourceEntityId: src.id,
+      ));
+      // Legacy inline effects on the row still applied for backwards compat
+      // during migration; new content delegates to `auto_granted_by` on the
+      // ref'd feat/trait entity, picked up in Pass 4b.
+      final effs = _readMapList(r['effects']);
+      for (final e in effs) {
+        pendingEffects.add((eff: e, source: source));
+      }
+    }
+  }
 
   static String? _findEntityIdByName(
     Map<String, Entity> all,
@@ -1427,21 +1388,6 @@ class CharacterResolver {
     }
   }
 
-  /// Iterate inventory rows flagged as attuned (PR-R4). The `attuned` key is
-  /// an additive wire extension — `{id, equipped, attuned?}`; rows without
-  /// it (all pre-R4 data) are simply not attuned.
-  static Iterable<Object?> _iterAttunedInventory(
-    Map<String, dynamic> fields,
-  ) sync* {
-    final raw = fields['inventory'];
-    if (raw is! List) return;
-    for (final row in raw) {
-      if (row is Map) {
-        if (row['attuned'] == true) yield row['id'];
-      }
-    }
-  }
-
   // Ref resolution lives in `entity_ref.dart` so the chargen/level-up
   // selection UI resolves the same softRef envelopes this resolver does.
   static String? _resolveRef(Object? raw, Map<String, Entity> all) =>
@@ -1449,6 +1395,37 @@ class CharacterResolver {
 
   static String? _refIdFor(Map<String, dynamic> eff, Map<String, Entity> all) {
     return _resolveRef(eff['target_ref'], all);
+  }
+
+  static Map<String, dynamic> _modifierAsEffect(Map<String, dynamic> m) {
+    // Re-shape grantedModifiers row into effect kinds the resolver knows.
+    final kind = (m['kind'] ?? '').toString();
+    final mapped = <String, dynamic>{...m};
+    switch (kind) {
+      case 'ac_bonus':
+      case 'speed_bonus':
+      case 'hp_bonus_flat':
+      case 'hp_bonus_per_level':
+      case 'initiative_bonus':
+      case 'proficiency_grant':
+      case 'language_grant':
+      case 'spell_grant':
+      case 'cantrip_grant':
+      case 'ability_score_bonus':
+      case 'sense_grant':
+      case 'truesight_grant':
+      case 'blindsight_grant':
+      case 'condition_immunity_grant':
+      case 'damage_resistance_grant':
+      case 'damage_immunity_grant':
+      case 'damage_vulnerability_grant':
+        // already same kind name
+        break;
+      default:
+        // Unknown legacy kinds get a synthetic "unhandled" tag; resolver warns.
+        mapped['kind'] = kind;
+    }
+    return mapped;
   }
 
   static List<String> _readStringList(Object? raw) {

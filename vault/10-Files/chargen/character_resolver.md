@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/character_resolver.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-06-10
 tags: [file]
 ---
 
@@ -48,9 +48,11 @@ Resolution runs as ordered passes inside `resolve`:
 11. **Armor-worn conditions** (`armorNotes`) — STR-requirement → `speedBonus -= 10`; untrained-armor warning; stealth disadvantage. `_equippedArmor` excludes shields (`category_ref` name contains "shield").
 12. **Pass 6 equipment** — `mergeChoiceGroups` resolves `equipment_choice_groups` against picks stored **scoped by source** (`$entityId:$groupId`), plus `default_inventory_refs`.
 13. **extraSpeeds sentinels** — `-1` means "equals walking speed" (`speed_ft` default 30 + speedBonus).
+14. **Pass 10 prerequisite validation (warn-keep, PR-R1)** — after ALL accumulators are final, each chosen feat's clauses ([[prereq_evaluator]] `effectivePrereqClauses`: typed `prereq_clauses` else lowered flat `prereq_*`) are evaluated against a `PrereqContext` built from the final state (abilities, total level, armor/weapon proficiency names, PC `skills` table + granted skill names, caster_kind/spell-list spellcasting inference, classLevels, race_id, alignment_ref). Failures append typed `UnmetPrerequisite` rows to `EffectiveCharacter.unmetPrerequisites` — mechanics are NOT rolled back; the editor's `PrereqWarningsBanner` renders them. Auto-granted feats are skipped (content-bestowed, no player gate).
 - AC (`_computeArmorClass`): armored = `base_ac + cappedDex + shield + acBonus`; unarmored = `max(acUnarmoredBase + Dex + shield, each unarmoredFormula's base + ability_mods (+shield if shield_allowed)) + acBonus`.
 - `grantSources` maps grant-id → ordered deduped clean source names (`cleanSource` strips `kind:` prefix; subspecies `Sp/Sub` → "Sub Sp").
 
 ## Notes
+- **PR-R2 rules-engine refactor (2026-06-10):** passes 2/3/4/5/5b/8 now consume [[rule_compiler]] BoundRules instead of reading entity fields inline; `applyBound` wrapper handles internal kinds (`trait_grant`, `alternate_speed`, `level_gated_spells`, `background_asi_apply`, `feat_asi_apply`, `proficiency_grant_raw`) and funnels the rest through `applyEffect`. Prereq + `when_attuned` rules never fold (PR-R4 activates attuned). `temp_hp_grant` no longer falls back to top-level `eff['trigger']` (key now carries the rule trigger). Parity vs frozen `character_resolver_legacy.dart` enforced by a debug assert in `effectiveCharacterProvider`.
 - Largest chargen file (~1460 LOC). The `applyEffect` switch is the single source of truth for which effect kinds are mechanically live vs reserved-for-later-passes (combat tracker, choice resolution, weapon pipeline).
 - Many memory entries touch this file: Drow 120ft sense range, count_formula resource pools, Berserker state-predicate conditional grants, subclass `at_level` gating, subspecies first-class category.

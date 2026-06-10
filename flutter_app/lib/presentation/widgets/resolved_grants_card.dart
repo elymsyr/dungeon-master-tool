@@ -765,6 +765,16 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Free Casts', freeCast, Colors.deepPurple),
             _chipRow('Ritual Book', ritualBook, Colors.brown),
             _chipRow('Active Conditions', activeConditions, Colors.redAccent),
+            // Attunement (rules engine PR-R4) — only once something is
+            // attuned; over-cap renders the count in warning orange.
+            if (effective.attunedItemIds.isNotEmpty)
+              _textChipRow(
+                'Attuned (${effective.attunementSlotsUsed}/${effective.attunementSlotsMax})',
+                [for (final id in effective.attunedItemIds) _nameOf(id)],
+                effective.attunementSlotsUsed > effective.attunementSlotsMax
+                    ? Colors.deepOrange
+                    : Colors.deepPurpleAccent,
+              ),
             if (pools.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(

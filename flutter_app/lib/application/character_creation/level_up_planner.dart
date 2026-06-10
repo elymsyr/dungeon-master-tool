@@ -1,5 +1,8 @@
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/rules/rule_config.dart';
+import '../../domain/services/rules/choice_spec.dart';
+import '../../domain/services/rules/rule_compiler.dart';
+import '../../domain/services/rules/rule_trigger.dart';
 import 'caster_progression.dart';
 import 'extra_attack_resolver.dart';
 import 'resource_pool_resolver.dart';
@@ -450,6 +453,29 @@ LevelUpPlan planLevelUp({
         final n = entry.value[l] ?? 0;
         for (var i = 0; i < n; i++) {
           featureOptionPicks.add(entry.key);
+        }
+      }
+    }
+  }
+
+  // Rules-engine path (PR-R6): `rule_effects` rows with
+  // `kind: choice_spec` + `trigger: when_level_up` queue feature-option
+  // picks as DATA — content can declare "pick 2 Metamagic at L2" without a
+  // hardcoded table. Purely additive: the name-based triggers and
+  // `_cumulativePickProgression` above stay as fallbacks for SRD content
+  // that predates the rule wire (no existing rows carry it).
+  if (entities.isNotEmpty) {
+    final compiler =
+        RuleCompiler(entitiesById: entities, classLevels: classLevels);
+    for (final src in [classEntity, subclassEntity]) {
+      if (src == null) continue;
+      for (final r in compiler.compileRuleEffects(src, src.name)) {
+        if (r.trigger != RuleTrigger.whenLevelUp) continue;
+        if (r.atLevel <= clampedFrom || r.atLevel > clampedTo) continue;
+        final spec = ChoiceSpec.fromEffectRow(r.effect);
+        if (spec == null) continue;
+        for (var i = 0; i < spec.pick; i++) {
+          featureOptionPicks.add(spec.label);
         }
       }
     }

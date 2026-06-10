@@ -1,7 +1,7 @@
 ---
 type: system
 domain: chargen
-updated: 2026-06-09
+updated: 2026-06-10
 tags: [system]
 ---
 
@@ -22,6 +22,7 @@ tags: [system]
 3. For each effect, check `predicates` (AND-combined) and `scalesWith` (class-level tables).
 4. Apply by `kind`: ability/AC/speed/HP bonus, proficiency, expertise, sense (e.g. Drow 120 ft darkvision), language/spell/cantrip grant, damage/condition immunity, extra_attack, crit_range, resource_pool (with `count_formula`), state grant, advantage/disadvantage, etc.
 5. Missing refs silently dropped → surfaced as warnings on [[effective_character]].
+6. **Prerequisite pass (PR-R1, warn-keep):** after folding, every chosen feat's prerequisite clauses ([[prereq_evaluator]]) are re-checked against the final state; failures become typed `UnmetPrerequisite` warnings on [[effective_character]] (mechanics stay applied). The same interpreter filters the feat picker, so the two surfaces can't drift.
 
 ## Key Constants / Invariants
 - Resolver is **stateless / pure** — safe to call per read; no side effects.

@@ -33,6 +33,28 @@ abstract class ResolvedFeatureRow with _$ResolvedFeatureRow {
       _$ResolvedFeatureRowFromJson(json);
 }
 
+/// One prerequisite the character no longer (or never) met for a grant it
+/// carries — a taken feat whose ability gate fails after a retroactive stat
+/// edit, an imported character assembled outside the picker, etc. Policy is
+/// WARN-KEEP: the grant's mechanics still apply; the sheet surfaces this so
+/// the table can adjudicate. Produced by the resolver's prerequisite pass
+/// via `rules/prereq_evaluator.dart`.
+@freezed
+abstract class UnmetPrerequisite with _$UnmetPrerequisite {
+  const factory UnmetPrerequisite({
+    required String sourceEntityId,
+    required String sourceName,
+    /// Which gate failed — wire string of the prereq trigger category
+    /// (`prereq_to_grant`, `prereq_to_equip`, `prereq_to_attune`).
+    @Default('prereq_to_grant') String trigger,
+    /// Human-readable failed requirements ("Strength 13", "Character level 4").
+    @Default([]) List<String> failedClauses,
+  }) = _UnmetPrerequisite;
+
+  factory UnmetPrerequisite.fromJson(Map<String, dynamic> json) =>
+      _$UnmetPrerequisiteFromJson(json);
+}
+
 /// Aggregated proficiency set after applying class/background/species/feat grants.
 @freezed
 abstract class ResolvedProficiencies with _$ResolvedProficiencies {
@@ -178,6 +200,16 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// Sheet surfaces them as chips so the player sees their status at a
     /// glance; combat tracker drives state-conditional grants off this list.
     @Default([]) List<String> activeConditionIds,
+    /// Magic items currently attuned (inventory rows with `attuned: true`,
+    /// resolved to entity ids). Their `when_attuned` rules are folded in.
+    @Default([]) List<String> attunedItemIds,
+    @Default(0) int attunementSlotsUsed,
+    /// Slot cap from RuleConfig (SRD: 3). Exceeding it is warn-keep.
+    @Default(3) int attunementSlotsMax,
+    /// Prerequisites the character carries grants for but does not currently
+    /// meet (WARN-KEEP policy — mechanics still applied). Rendered by the
+    /// editor's prerequisite warning banner.
+    @Default([]) List<UnmetPrerequisite> unmetPrerequisites,
     @Default([]) List<String> warnings,
   }) = _EffectiveCharacter;
 

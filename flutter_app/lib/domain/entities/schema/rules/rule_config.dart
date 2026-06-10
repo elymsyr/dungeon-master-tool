@@ -47,12 +47,18 @@ class RuleConfig {
   /// Levels at which proficiency bonus increases by 1 over the base of +2.
   final List<int> proficiencyBonusBreakpoints;
 
+  /// Maximum simultaneously attuned magic items (SRD: 3). Exceeding it is a
+  /// WARN-KEEP condition — the resolver still applies the rules and surfaces
+  /// a warning (rules engine PR-R4).
+  final int attunementSlots;
+
   const RuleConfig({
     required this.asiLevels,
     required this.hitDieToHp,
     required this.acUnarmoredBase,
     required this.acShieldBonus,
     required this.proficiencyBonusBreakpoints,
+    this.attunementSlots = 3,
   });
 
   /// The exact values previously hardcoded across `character_resolver`,
@@ -63,6 +69,7 @@ class RuleConfig {
     acUnarmoredBase: 10,
     acShieldBonus: 2,
     proficiencyBonusBreakpoints: [5, 9, 13, 17],
+    attunementSlots: 3,
   );
 
   /// SRD §1 proficiency bonus by level (2 → 6).
@@ -88,6 +95,7 @@ class RuleConfig {
         'ac_unarmored_base': acUnarmoredBase,
         'ac_shield_bonus': acShieldBonus,
         'proficiency_bonus_breakpoints': proficiencyBonusBreakpoints,
+        'attunement_slots': attunementSlots,
       };
 
   /// Lenient parse — any missing/malformed key falls back to [base].
@@ -110,6 +118,7 @@ class RuleConfig {
       proficiencyBonusBreakpoints: ints(
           json['proficiency_bonus_breakpoints'],
           base.proficiencyBonusBreakpoints),
+      attunementSlots: int_(json['attunement_slots'], base.attunementSlots),
     );
   }
 
@@ -121,7 +130,8 @@ class RuleConfig {
           _mapEq(hitDieToHp, other.hitDieToHp) &&
           acUnarmoredBase == other.acUnarmoredBase &&
           acShieldBonus == other.acShieldBonus &&
-          _listEq(proficiencyBonusBreakpoints, other.proficiencyBonusBreakpoints);
+          _listEq(proficiencyBonusBreakpoints, other.proficiencyBonusBreakpoints) &&
+          attunementSlots == other.attunementSlots;
 
   @override
   int get hashCode => Object.hash(
@@ -131,6 +141,7 @@ class RuleConfig {
         acUnarmoredBase,
         acShieldBonus,
         Object.hashAll(proficiencyBonusBreakpoints),
+        attunementSlots,
       );
 }
 
