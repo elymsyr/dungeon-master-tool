@@ -1,1735 +1,2612 @@
 # Entity Audit Log — Official & Built-in Packages
 
-> Automated System Architecture Inspector — detailed per-entity ledger.
-> Generated for the `dungeon-master-tool` D&D 5e app.
+> Automated System Architecture Inspector — detailed per-entity ledger for the
+> `dungeon-master-tool` D&D 5e app. Companion roadmap:
+> [`system_mechanics_roadmap.md`](system_mechanics_roadmap.md).
 
 ## Scope & method
 
-Two package sources were inspected:
+Two package sources were inspected.
 
 1. **Built-in pack — SRD 5.2.1 core** (hand-authored, the runtime's bootstrap
    content): `flutter_app/lib/domain/entities/schema/builtin/srd_core/`.
-   **~2,650 entity cards** across feats, class/subclass features, classes,
+   **~2,280 entity cards** across feats, class/subclass feature feats, classes,
    subclasses, species, subspecies, traits, backgrounds, spells, magic items,
-   mundane equipment, monsters, animals, and creature actions — **every card
-   is enumerated individually below.**
-2. **Official first-party catalog — Open5e packs** (machine-imported, shipped
-   as assets): `flutter_app/assets/open5e_packs/` — 19 packs, **20,712 cards**.
-   These are audited at the pack × category level (see the closing section):
-   their deficiencies are systematic and identical within each category, so an
-   exhaustive name-by-name transcription of 20k machine-generated rows would
-   add length without information. Counts are taken from `manifest.json`.
+   mundane equipment (weapons/armor/gear/tools/ammunition/packs), monsters,
+   animals, mounts, vehicles, and creature actions — **every card is enumerated
+   individually below.**
+
+   | Category | File(s) | Cards |
+   |---|---|---|
+   | Feats (player + class/subclass feature) | `feats.dart`, `feats_class.dart` | 248 |
+   | Spells | `spells.dart` | 341 |
+   | Magic items | `magic_items.dart` | 286 |
+   | Traits (species + monster) | `traits.dart` | 238 |
+   | Creature actions | `creature_actions.dart` | 528 |
+   | Monsters | `monsters.dart` | 248 |
+   | Animals / mounts / vehicles | `animals.dart` / `mounts.dart` / `vehicles.dart` | 117 |
+   | Classes / subclasses / species / subspecies | `classes/subclasses/species/subspecies.dart` | 54 |
+   | Backgrounds + mundane equipment | `backgrounds/weapons/armor/gear/tools/ammunition/packs.dart` | 224 |
+
+2. **Official first-party catalog — Open5e packs** (machine-imported, shipped as
+   assets): `flutter_app/assets/open5e_packs/` — **19 packs, 20,712 cards**.
+   These are audited at the **pack × category** level (final section): their
+   deficiencies are systematic and identical within each category, so an
+   exhaustive name-by-name transcription of 20k machine-generated rows would add
+   length without information. Counts are taken from `manifest.json`.
 
 ### Verdict legend
 - **Clean** — every described prerequisite sits in a typed field, every
   described mechanic has a matching typed `effects`/field entry, and nothing
   rules-bearing is stranded in a generic prose field.
-- Otherwise the specific defect is named per the three criteria:
-  *Unimplemented Prerequisite*, *Missing Mechanic*, *Poor Data Structure*.
+- Otherwise the specific defect(s) are named per the three inspection criteria:
+  **Unimplemented Prerequisite**, **Missing Mechanic**, **Poor Data Structure**.
 
 ### System ground-truth used for the verdicts
-- The resolver (`character_resolver.dart`) implements ~95 typed effect kinds.
-  Note three of them are reserved **no-ops**: `weapon_mastery_grant`,
-  `speed_bonus`, and the redundant OA-immunity kinds apply nothing.
-- There is **no typed spell-effect DSL** and **no typed magic-item-effect DSL**;
-  both store their functional rules as a markdown string.
-- Feat/multiclass prerequisites are surfaced only as **non-blocking warnings**;
+- The resolver (`flutter_app/lib/domain/services/character_resolver.dart`)
+  implements ~95 typed effect kinds. Most character-sheet kinds (ability/AC/HP/
+  speed/initiative bonuses, proficiencies, senses, resistances, spell/cantrip
+  grants, `choice_group`, `unarmored_ac_formula`, etc.) are applied directly.
+  **Correction vs prior audits:** `speed_bonus` **is** now applied (resolver
+  line 403) — it is no longer a no-op.
+- A cluster of **attack / weapon kinds are recognized-but-deferred markers** —
+  `extra_damage_on_attack`, `reroll_damage`, `attack_bonus_typed`,
+  `damage_bonus_typed`, `min_die_value`, `reliable_talent`, `passive_score_bonus`,
+  `half_proficiency_to_unproficient_checks`, `weapon_mastery_grant`,
+  `weapon_mastery_count_bonus`, `expertise_count`, `spell_cast_from_item`. The
+  resolver accepts them silently and defers them to a downstream combat-tracker /
+  weapon-attack / choice-resolution pass. They are **not** applied to the
+  character sheet by the resolver itself; whether the downstream consumer exists
+  determines if they ever take effect. They are flagged as **Missing Mechanic
+  (deferred — downstream consumer required)** where a card relies on them.
+- There is **no typed spell-effect DSL** and **no typed magic-item-effect DSL** —
+  both store 100% of their functional rules as a markdown string.
+- The **trait builder `_t()` has no `effects` channel at all** — every species
+  and monster trait is pure prose, so all racial/creature trait mechanics are
+  unenforced.
+- Feat / multiclass prerequisites are surfaced only as **non-blocking warnings**;
   the engine's more capable `prereq_clauses` eligibility gate is **never
-  populated** by any SRD-core card.
+  populated** by any SRD-core card. "X or Y" ability prereqs collapse to the
+  first ability (single-valued `prereq_ability_ref`).
+- **No structured level field** exists on class/subclass features, so L4+
+  progression is prose-only.
+
+### Aggregate verdict tally (built-in pack)
+Across the ~2,280 individually-enumerated built-in cards: **Clean ≈ 610**
+(predominantly armor, ammunition, spell foci, plain beasts/NPC stat blocks,
+mounts/vehicles, and well-wired subspecies + combat/AC/resource feats);
+**Missing Mechanic ≈ 1,160**; **Poor Data Structure ≈ 660**;
+**Unimplemented Prerequisite ≈ 60** (many cards carry more than one defect).
+The Clean cluster is dominated by *identity-only* cards that have no character-
+sheet mechanic to apply.
+
+---
+## Feats — Player + Class/Subclass Feature Feats (feats.dart, feats_class.dart — SRD 5.2.1)
+
+Note: ALL typed prereqs (prereq_ability_ref / prereq_min_score / prereq_min_character_level / prereq_requires_spellcasting) are WARNING-ONLY and non-blocking; the blocking `prereq_clauses` gate is never populated. Free-text prereqs (spellcasting, proficiency, "X or Y" ability) are unvalidated and "X or Y" abilities collapse to a single value. **Correction to the per-bullet wording below:** `speed_bonus` IS implemented (resolver line 403), so a bullet flagging a `speed_bonus`-only feature (Fast Movement, Mobile, Unarmored Movement, Roving) as Missing Mechanic should be read as Clean for the speed bump itself. `weapon_mastery_grant`, `weapon_mastery_count_bonus`, `expertise_count`, `extra_damage_on_attack`, `attack_bonus_typed`, `damage_bonus_typed`, `min_die_value`, `reroll_damage`, `reliable_talent`, `passive_score_bonus`, `half_proficiency_to_unproficient_checks` are **recognized-but-deferred markers** — the resolver accepts and `break`s them; they are applied (if at all) only by a downstream combat-tracker / weapon-attack pass, not the sheet resolver — so they are treated as Missing Mechanic (deferred) where a feat relies on them. The other custom kinds used below (`truesight_grant`, `blindsight_grant`, `walk_on_liquid`, `concentration_immune_to_damage_break`, `slot_recovery_short_rest`, `hp_max_bonus_total`, `damage_immunity`) are NOT in the implemented-kinds list → Missing Mechanic.
+
+### feats.dart
+
+- **Alert** — Poor Data Structure / Missing Mechanic: no featEffectList; Initiative Proficiency (a clean `initiative_bonus`/`proficiency_grant` candidate) and Initiative Swap dumped in prose only.
+- **Magic Initiate** — Near-clean structure: three `choice_group` rows model list/cantrips/level-1 spell pick. Gap: no `spell_always_prepared`/free-cast resource for the level-1 spell; "Spell Change" and once-per-LR free cast are prose-only. No prereq (correct).
+- **Savage Attacker** — Missing Mechanic / Poor Data Structure: reroll-weapon-damage benefit is prose-only; no `reroll_damage` effect despite that kind being implemented.
+- **Skilled** — Clean: one `choice_group` (skill_or_tool ×3) covers the entire benefit. No prereq.
+- **Ability Score Improvement** — Near-clean: typed ASI (amount 2, max 20) + prereq_min_character_level 4 (warning-only enforcement gap). No featEffectList needed.
+- **Grappler** — Unimplemented Prereq + Missing Mechanic: prereq "Strength or Dexterity 13+" stored only as prereq_min_score 13 with NO prereq_ability_ref (un-storable "X or Y") — warning-only and ambiguous. Typed ASI present, but Punch-and-Grab / Attack Advantage / Fast Wrestler are prose-only.
+- **Archery** — Missing Mechanic / Poor Data Structure: "+2 to Ranged attack rolls" is a textbook `attack_bonus_typed`, but no featEffectList; benefit prose-only. Prereq "Fighting Style Feature" free-text/unvalidated.
+- **Defense** — Clean (effects): `ac_bonus` +1 gated by `equipped_armor_kind: not_none` predicate. Prereq "Fighting Style Feature" free-text/unvalidated (acceptable for a style feat).
+- **Great Weapon Fighting** — Missing Mechanic / Poor Data Structure: treat-1/2-as-3 maps to `min_die_value` (implemented), but no featEffectList; prose-only. Prereq free-text.
+- **Two-Weapon Fighting** — Missing Mechanic / Poor Data Structure: off-hand ability-mod-to-damage is prose-only; no typed effect. Prereq free-text.
+- **Boon of Combat Prowess** — Poor Data Structure: typed ASI (max 30) + prereq_min_character_level 19 present, but Peerless Aim (turn-a-miss-into-hit) is prose-only, no typed effect. Level prereq warning-only.
+- **Boon of Dimensional Travel** — Poor Data Structure: ASI typed; Blink Steps teleport prose-only (no movement/teleport effect kind). Level prereq warning-only.
+- **Boon of Fate** — Poor Data Structure: ASI typed; Improve Fate (2d4 swing on a D20 Test) prose-only. Level prereq warning-only.
+- **Boon of Irresistible Offense** — Unimplemented Prereq (collapsed) + Missing Mechanic: ASI is Str-OR-Dex collapsed to one option; Overcome Defenses (ignore Resistance) and Overwhelming Strike (crit extra) prose-only. Level prereq warning-only.
+- **Boon of Spell Recall** — Poor Data Structure: ASI typed + prereq_requires_spellcasting true (warning-only) + prereq_min_character_level 19; Free Casting (1d4 slot refund) prose-only.
+- **Boon of the Night Spirit** — Mostly clean (effects): 11 `damage_resistance` rows gated by `has_state: in_dim_or_darkness` cover Shadowy Form correctly. Gap: Merge with Shadows (conditional Invisible bonus action) is prose-only. Level prereq warning-only.
+- **Boon of Truesight** — Missing Mechanic: uses `truesight_grant` kind which is NOT in the implemented list (sense grants use `sense_grant`); Truesight likely not applied. Level prereq warning-only.
+- **Crafter** — Near-clean for proficiency: `choice_group` (tool_category ×3 Artisan's Tools). Discount and Faster Crafting are non-mechanical/prose-only (acceptable). No prereq.
+- **Healer** — Poor Data Structure: no featEffectList; Battle Medic + Healing Surge entirely prose-only.
+- **Lucky** — Near-clean: `resource_pool_grant` (luck_points, count_formula pb, long_rest) models the pool. Advantage/Disadvantage spends are prose-only riders on the pool (acceptable). No prereq.
+- **Musician** — Near-clean: `choice_group` (tool_category ×3 instruments) for proficiency; Encouraging Song inspiration is prose-only. No prereq.
+- **Tavern Brawler** — Mixed: ASI modeled via `choice_group` (ability STR/CON ×1). Enhanced Unarmed Strike (1d4), Improvised Weapon proficiency, and Push are prose-only — Missing Mechanic. asi_ability_options use bare strings 'Strength'/'Constitution' (not lookup refs) unlike other feats — Poor Data Structure inconsistency.
+- **Tough** — Clean: `hp_bonus_per_level` value 2 exactly models the benefit. No prereq.
+- **Athlete** — Poor Data Structure: typed ASI (STR/DEX strings); Climbing/Jumping/Standing-Up all prose-only, no movement effects. Level prereq warning-only.
+- **Charger** — Missing Mechanic / Poor Data Structure: no featEffectList; entire charge attack/+2d8/push prose-only. Level prereq warning-only.
+- **Crossbow Expert** — Near prereq-clean: prereq_ability_ref Dexterity + prereq_min_score 13 + level 4 (all warning-only). Benefits (ignore loading, no melee disadvantage, bonus hand-crossbow attack) prose-only — Missing Mechanic.
+- **Defensive Duelist** — Same as above: typed Dex 13 prereq (warning-only); Parry reaction prose-only.
+- **Dual Wielder** — Missing Mechanic: typed ASI; +1 AC while dual-wielding is a clean conditional `ac_bonus` candidate but prose-only; bonus attack / drawing prose-only. Level prereq warning-only.
+- **Durable** — Missing Mechanic: ASI typed (CON); Advantage on Death Saves and Speedy Recovery prose-only. Level prereq warning-only.
+- **Elemental Adept** — Unimplemented Prereq + Missing Mechanic: prereq_requires_spellcasting true (warning-only); Energy Mastery (ignore resistance, treat 1 as 2) prose-only. Repeatable flag set.
+- **Fey-Touched** — Mostly clean: `spell_always_prepared` Misty Step is typed; the additional level-1 Divination/Enchantment spell + once-per-LR free cast are prose-only (partial). Level prereq warning-only.
+- **Great Weapon Master** — Missing Mechanic: ASI typed (STR); Cleaving Strike and Heavy Hitter (+1d12) prose-only. Level prereq warning-only.
+- **Heavy Armor Master** — Unimplemented Prereq + Missing Mechanic: "proficiency with Heavy Armor" is free-text-only (unvalidated); Damage Resistance (reduce B/P/S by PB) is a `damage_reduction_flat` candidate but prose-only.
+- **Inspiring Leader** — Near-clean: `temp_hp_grant` with formula character_level + CHA_mod models Speech. Typed Cha 13 prereq (warning-only).
+- **Keen Mind** — Missing Mechanic: ASI typed (INT); Perfect Recall PB-to-Int-checks prose-only. Level prereq warning-only.
+- **Lightly Armored** — Clean (effects): `proficiency_grant` armor_category Light. Typed ASI. Level prereq warning-only.
+- **Mage Slayer** — Missing Mechanic: ASI typed; Concentration Breaker and Guarded Mind prose-only. Level prereq warning-only.
+- **Martial Adept** — Missing Mechanic: ASI typed; Maneuvers and Superiority Die prose-only (no resource_pool_grant). Level prereq warning-only.
+- **Medium Armor Master** — Unimplemented Prereq + Missing Mechanic: "proficiency with Medium Armor" free-text-only; Stealth and Dex-bonus benefits prose-only.
+- **Mobile** — Missing Mechanic: ASI typed; Nimble (+10 Speed) would need `speed_bonus` (reserved no-op) anyway, plus Dash/OA benefits prose-only. Level prereq warning-only.
+- **Moderately Armored** — Unimplemented Prereq, otherwise clean grants: prereq "proficiency with Light Armor" free-text-only; two `proficiency_grant` rows (Medium + Shield) correctly typed. Typed ASI.
+- **Mounted Combatant** — Missing Mechanic: ASI typed (STR/DEX/WIS); all mounted benefits prose-only. Level prereq warning-only.
+- **Observant** — Missing Mechanic: ASI typed; +5 Passive Perception/Investigation is a clean `passive_score_bonus` candidate but prose-only; Quick Search/Lipreading prose-only. Level prereq warning-only.
+- **Polearm Master** — Missing Mechanic: ASI typed; bonus attack and reaction strike prose-only. Level prereq warning-only.
+- **Resilient** — Missing Mechanic / Poor Data Structure: relies on flag `grants_save_prof_from_asi: true` instead of a `saving_throw`/`proficiency_grant` effect row — no featEffectList; save proficiency not via implemented kind. Repeatable. Level prereq warning-only.
+- **Ritual Caster** — Unimplemented Prereq + Missing Mechanic: prereq "Intelligence or Wisdom 13+" un-storable "X or Y" (NO prereq_ability_ref/score stored — free-text only); Ritual Book entirely prose-only.
+- **Sentinel** — Missing Mechanic: ASI typed; Stop the Foe (OA sets speed 0 — `oa_stops_movement` candidate), bonus OAs, Distract the Foe all prose-only. Level prereq warning-only.
+- **Shadow-Touched** — Mostly clean: `spell_always_prepared` Invisibility typed; extra level-1 spell + free casts prose-only (partial). Level prereq warning-only.
+- **Sharpshooter** — Missing Mechanic: ASI typed; Long Range, ignore cover (`ignore_cover` candidate), Bullseye +1d10 all prose-only. Level prereq warning-only.
+- **Shield Master** — Unimplemented Prereq + Missing Mechanic: "proficiency with Shields" free-text-only; Shield Bash and Interpose Shield prose-only.
+- **Skill Expert** — Missing Mechanic / Poor Data Structure: uses flags `bonus_skill_pick_count: 1` and `bonus_expertise_pick_count: 1` instead of `skill`/`expertise_count` effect rows — no featEffectList. Typed ASI. Repeatable. Level prereq warning-only.
+- **Spell Sniper** — Unimplemented Prereq + Missing Mechanic: prereq_requires_spellcasting true (warning-only); Spell Range, ignore cover, and granted attack-cantrip all prose-only (no `cantrip_grant`).
+- **Telekinetic** — Mostly clean: `cantrip_grant` Mage Hand typed; Telekinetic Shove bonus-action prose-only (partial). Level prereq warning-only.
+- **Telepathic** — Mostly clean: `spell_always_prepared` Detect Thoughts typed; Telepathic Speech prose-only. Level prereq warning-only.
+- **War Caster** — Unimplemented Prereq + Missing Mechanic: prereq_requires_spellcasting true (warning-only); Concentration advantage (`advantage_on` save candidate) and Reactive Spell prose-only.
+- **Weapon Master** — Missing Mechanic: ASI typed; "proficiency with four weapons of choice" is a `choice_group`/`proficiency_grant` candidate but prose-only. Level prereq warning-only.
+- **Blind Fighting** — Missing Mechanic: uses `blindsight_grant` kind which is NOT implemented (sense grants use `sense_grant`); Blindsight likely not applied. No prereq.
+- **Dueling** — Missing Mechanic / Poor Data Structure: +2 damage with single one-handed weapon is a `damage_bonus_typed` candidate but prose-only, no featEffectList.
+- **Interception** — Missing Mechanic / Poor Data Structure: reduce ally's damage by 1d10+PB is a `reaction_damage_reduction` candidate but prose-only.
+- **Protection** — Missing Mechanic / Poor Data Structure: impose Disadvantage reaction prose-only; no `disadvantage_on` effect.
+- **Thrown Weapon Fighting** — Missing Mechanic / Poor Data Structure: +2 thrown-weapon damage is a `damage_bonus_typed` candidate but prose-only.
+- **Unarmed Fighting** — Missing Mechanic / Poor Data Structure: improved unarmed damage die / grapple damage entirely prose-only.
+
+### feats_class.dart
+
+- **Rage** — Missing Mechanic: 3 `damage_resistance` + 2 `advantage_on` (STR) + `resource_pool_grant` (scaling) are clean; BUT Rage Damage uses unimplemented `extra_damage_on_attack` (with scales_with) — bonus not applied. Activation block well-formed.
+- **Unarmored Defense (Barbarian)** — Clean: `unarmored_ac_formula` (10+DEX+CON, shield allowed) gated by `equipped_armor_kind: none`.
+- **Weapon Mastery (Barbarian)** — Clean: `weapon_mastery_count_bonus` value 2 (this kind IS implemented).
+- **Danger Sense** — Clean: `advantage_on` save DEX gated by `not_incapacitated`.
+- **Reckless Attack** — Clean: `advantage_on` attack STR gated by `state:reckless_attacking`; activation sets the state.
+- **Primal Knowledge** — Near-clean: `proficiency_grant` skill (no target → picker). Str-substitution-while-raging prose-only (minor).
+- **Extra Attack (Barbarian)** — Clean: `extra_attack_count` 2.
+- **Fast Movement** — Missing Mechanic: `speed_bonus` is a RESERVED NO-OP; +10 speed not applied.
+- **Feral Instinct** — Missing Mechanic: models Initiative advantage as `advantage_on` DEX check + `initiative_bonus` value 0 (zero bonus is a no-op); advantage-on-initiative not properly applied.
+- **Instinctive Pounce** — Poor Data Structure: no effects; prose-only movement rider (arguably non-mechanical).
+- **Brutal Strike** — Missing Mechanic: `extra_damage_on_attack` (1d10) unimplemented kind; not applied.
+- **Relentless Rage** — Poor Data Structure: no effects; drop-to-1-HP entirely prose-only.
+- **Improved Brutal Strike** — Poor Data Structure: no effects; prose-only (adds Brutal Strike options).
+- **Persistent Rage** — Poor Data Structure: no effects; prose-only.
+- **Improved Brutal Strike (II)** — Missing Mechanic: `extra_damage_on_attack` (2d10) unimplemented kind; not applied.
+- **Indomitable Might** — Poor Data Structure: no effects; treat-low-roll-as-Str prose-only.
+- **Primal Champion** — Clean: two `ability_score_bonus` rows (STR/CON +4, max 25).
+- **Bardic Inspiration** — Clean: `resource_pool_grant` (cha_mod_min_1, long_rest) + activation. Die-size scaling handled in later feats.
+- **Bard Spellcasting** — Poor Data Structure: narrative only, no effects (spellcasting wired elsewhere; acceptable for a marker feat).
+- **Expertise (Bard)** — Clean: `expertise_count` 2.
+- **Jack of All Trades** — Missing Mechanic: `half_proficiency_to_unproficient_checks` is NOT in the implemented list; not applied.
+- **Font of Inspiration** — Poor Data Structure: no effects; die upgrade + short-rest recharge prose-only.
+- **Countercharm** — Poor Data Structure: no effects; reaction reroll prose-only.
+- **Expertise (Bard II)** — Clean: `expertise_count` 2.
+- **Magical Secrets** — Poor Data Structure: no effects; spell-swap prose-only.
+- **Bardic Inspiration (d10)** — Poor Data Structure: no effects; die upgrade prose-only.
+- **Words of Creation** — Missing Mechanic: no effects; should grant `spell_always_prepared` (Power Word Heal/Kill) but prose-only.
+- **Bardic Inspiration (d12)** — Poor Data Structure: no effects; prose-only.
+- **Superior Bardic Inspiration** — Poor Data Structure: no effects; prose-only.
+- **Cleric Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Divine Order: Protector** — Clean: two `proficiency_grant` rows (Martial weapons + Heavy armor). Free-text prereq "Cleric — Divine Order Feature" (warning/unvalidated).
+- **Divine Order: Thaumaturge** — Mostly clean: `cantrip_count_bonus` 1 for the extra cantrip; the Wis-to-cleric-cantrip-damage rider is prose-only (Missing Mechanic). Free-text prereq.
+- **Channel Divinity** — Clean: `resource_pool_grant` with class-scaled count (2/3/4) + activation.
+- **Sear Undead** — Poor Data Structure: no effects; Radiant-on-Turn prose-only.
+- **Blessed Strikes** — Missing Mechanic: `extra_damage_on_attack` (1d8 Radiant) unimplemented kind; not applied.
+- **Divine Intervention** — Clean: `resource_pool_grant` (count 1, long_rest).
+- **Improved Blessed Strikes** — Missing Mechanic: `extra_damage_on_attack` (2d8) unimplemented kind; not applied.
+- **Greater Divine Intervention** — Poor Data Structure: no effects; prose-only.
+- **Druid Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Primal Order: Warden** — Clean: two `proficiency_grant` rows (Martial weapons + Medium armor). Free-text prereq.
+- **Primal Order: Magician** — Mostly clean: `cantrip_count_bonus` 1; Wis-to-Arcana/Nature rider prose-only (minor). Free-text prereq.
+- **Wild Shape** — Clean (resource): `resource_pool_grant` (count 2, short_rest) + activation. Form mechanics are inherently prose.
+- **Wild Companion** — Poor Data Structure: no effects; prose-only.
+- **Wild Resurgence** — Poor Data Structure: no effects; prose-only.
+- **Improved Elemental Fury** — Poor Data Structure: no effects; prose-only.
+- **Beast Spells** — Poor Data Structure: no effects; prose-only.
+- **Archdruid** — Poor Data Structure: no effects; prose-only.
+- **Second Wind** — Clean: `resource_pool_grant` scaled (2/3/4) + activation.
+- **Weapon Mastery (Fighter)** — Clean: `weapon_mastery_count_bonus` 3.
+- **Action Surge** — Clean: `resource_pool_grant` scaled (1/2) + activation.
+- **Tactical Mind** — Poor Data Structure: no effects; prose-only.
+- **Extra Attack (Fighter)** — Clean: `extra_attack_count` 2.
+- **Tactical Shift** — Poor Data Structure: no effects; prose-only.
+- **Indomitable** — Clean: `resource_pool_grant` scaled (1/2/3); reroll itself is prose rider.
+- **Two Extra Attacks** — Clean: `extra_attack_count` 3.
+- **Studied Attacks** — Poor Data Structure: no effects; prose-only.
+- **Three Extra Attacks** — Clean: `extra_attack_count` 4.
+- **Martial Arts** — Poor Data Structure: no effects; entire feature (Dex finesse, MA die, bonus unarmed) prose-only.
+- **Unarmored Defense (Monk)** — Clean: `unarmored_ac_formula` (10+DEX+WIS, no shield) with armor+shield predicates.
+- **Monk's Focus** — Clean: `resource_pool_grant` (count_formula monk_level, short_rest).
+- **Unarmored Movement** — Missing Mechanic: `speed_bonus` (reserved no-op) with scaling; speed not applied.
+- **Flurry of Blows** — Poor Data Structure: no effects; prose-only.
+- **Patient Defense** — Poor Data Structure: no effects; prose-only.
+- **Step of the Wind** — Poor Data Structure: no effects; prose-only.
+- **Deflect Attacks** — Poor Data Structure: no effects; reaction damage reduction prose-only.
+- **Slow Fall** — Poor Data Structure: no effects; prose-only.
+- **Stunning Strike** — Poor Data Structure: no effects; prose-only.
+- **Extra Attack (Monk)** — Clean: `extra_attack_count` 2.
+- **Empowered Strikes** — Clean: `magical_unarmed_strikes` (implemented).
+- **Evasion (Monk)** — Poor Data Structure: no effects; prose-only.
+- **Acrobatic Movement** — Missing Mechanic: `walk_on_liquid` kind NOT in implemented list; not applied.
+- **Deflect Energy** — Poor Data Structure: no effects; prose-only.
+- **Perfect Focus** — Poor Data Structure: no effects; prose-only.
+- **Superior Defense** — Poor Data Structure: no effects; resistance-to-all prose-only.
+- **Body and Mind** — Missing Mechanic: no effects; should be two `ability_score_bonus` rows (DEX/WIS +4) like Primal Champion but prose-only.
+- **Lay On Hands** — Clean: `resource_pool_grant` (count_formula paladin_level_x5, long_rest) + activation.
+- **Paladin Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Weapon Mastery (Paladin)** — Clean: `weapon_mastery_count_bonus` 2.
+- **Paladin's Smite** — Clean: `spell_always_prepared` Divine Smite; slot-expenditure rider is prose.
+- **Channel Divinity (Paladin)** — Clean: `resource_pool_grant` scaled (2/3).
+- **Extra Attack (Paladin)** — Clean: `extra_attack_count` 2.
+- **Faithful Steed** — Clean: `spell_always_prepared` Find Steed.
+- **Aura of Protection** — Missing Mechanic: no effects; Cha-mod-to-saves aura entirely prose-only (a signature mechanic left untyped).
+- **Abjure Foes** — Clean: `resource_pool_grant` (count 1).
+- **Radiant Strikes** — Missing Mechanic: `extra_damage_on_attack` (1d8 Radiant) unimplemented kind; not applied.
+- **Restoring Touch** — Poor Data Structure: no effects; prose-only.
+- **Aura Expansion** — Poor Data Structure: no effects; prose-only.
+- **Favored Enemy** — Clean: `spell_always_prepared` Hunter's Mark + `resource_pool_grant` (wis_mod_min_1).
+- **Ranger Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Weapon Mastery (Ranger)** — Clean: `weapon_mastery_count_bonus` 2.
+- **Deft Explorer** — Clean: `expertise_count` 1 + `language_grant`.
+- **Roving** — Missing Mechanic: `speed_bonus` (reserved no-op) — +5 speed not applied; `climb_speed_equals_speed` + `swim_speed_equals_speed` are implemented (partial).
+- **Extra Attack (Ranger)** — Clean: `extra_attack_count` 2.
+- **Expertise (Ranger II)** — Clean: `expertise_count` 2.
+- **Tireless** — Missing Mechanic: `resource_pool_grant` is clean, but `temp_hp_grant` here is a TRIGGERED magic-action grant (formula 1d8+WIS) — the temp_hp kind applies flat/at-rest, so the on-demand grant is effectively prose; Exhaustion reduction is prose-only.
+- **Relentless Hunter** — Missing Mechanic: `concentration_immune_to_damage_break` kind NOT in implemented list; not applied.
+- **Nature's Veil** — Poor Data Structure: no effects; prose-only.
+- **Feral Senses** — Poor Data Structure: no effects; prose-only.
+- **Foe Slayer** — Poor Data Structure: no effects; prose-only.
+- **Expertise (Rogue)** — Clean: `expertise_count` 2.
+- **Sneak Attack** — Missing Mechanic: scales_with is well-formed but `extra_damage_on_attack` is an unimplemented kind; Sneak Attack damage not applied by the resolver.
+- **Weapon Mastery (Rogue)** — Clean: `weapon_mastery_count_bonus` 2.
+- **Cunning Action** — Clean: `granted_bonus_action_grant` (Cunning Action).
+- **Steady Aim** — Poor Data Structure: no effects; prose-only.
+- **Cunning Strike** — Poor Data Structure: no effects; prose-only.
+- **Uncanny Dodge** — Poor Data Structure: no effects; reaction halve-damage prose-only.
+- **Evasion (Rogue)** — Poor Data Structure: no effects; prose-only.
+- **Reliable Talent** — Missing Mechanic: no effects; the implemented `reliable_talent` kind exists but is NOT used here — benefit prose-only.
+- **Improved Cunning Strike** — Poor Data Structure: no effects; prose-only.
+- **Devious Strikes** — Poor Data Structure: no effects; prose-only.
+- **Slippery Mind** — Clean: two `proficiency_grant` rows (WIS + CHA saving_throw).
+- **Elusive** — Poor Data Structure: no effects; prose-only (no-Advantage-vs-you not typed).
+- **Stroke of Luck** — Clean: `resource_pool_grant` (count 1); reroll is prose rider.
+- **Sorcerer Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Innate Sorcery** — Clean (resource): `resource_pool_grant` (cha_mod_min_1) + activation; the advantage/+1-DC riders are prose (Missing Mechanic for those riders).
+- **Font of Magic** — Clean: `resource_pool_grant` (count_formula sorcerer_level).
+- **Sorcerous Restoration** — Clean: `resource_pool_grant` (count 1, short_rest).
+- **Sorcery Incarnate** — Poor Data Structure: no effects; prose-only.
+- **Arcane Apotheosis** — Poor Data Structure: no effects; prose-only.
+- **Pact Magic** — Missing Mechanic: `resource_pool_grant` is clean, but `slot_recovery_short_rest` kind is NOT in the implemented list; short-rest slot recovery not applied.
+- **Magical Cunning** — Clean: `resource_pool_grant` (count 1).
+- **Mystic Arcanum (Level 6 Spell)** — Clean: `resource_pool_grant` (count 1); the granted level-6 spell itself is prose-only (no spell_grant).
+- **Mystic Arcanum (Level 7 Spell)** — Clean (resource); granted spell prose-only.
+- **Mystic Arcanum (Level 8 Spell)** — Clean (resource); granted spell prose-only.
+- **Mystic Arcanum (Level 9 Spell)** — Clean (resource); granted spell prose-only.
+- **Eldritch Master** — Clean: `resource_pool_grant` (count 1).
+- **Eldritch Resilience** — Poor Data Structure: no effects; prose-only.
+- **Wizard Spellcasting** — Poor Data Structure: marker feat, no effects (acceptable).
+- **Ritual Adept** — Poor Data Structure: no effects; prose-only.
+- **Arcane Recovery** — Clean: `resource_pool_grant` (count 1, long_rest).
+- **Memorize Spell** — Poor Data Structure: no effects; prose-only.
+- **Spell Mastery** — Poor Data Structure: no effects; prose-only.
+- **Signature Spells** — Poor Data Structure: no effects; prose-only.
+- **Frenzy** — Poor Data Structure: no effects; bonus-attack-while-raging + Exhaustion prose-only.
+- **Mindless Rage** — Clean: two `condition_immunity_grant` (Charmed/Frightened) gated by `state:raging`.
+- **Retaliation** — Poor Data Structure: no effects; reaction attack prose-only.
+- **Intimidating Presence** — Poor Data Structure: no effects; prose-only.
+- **Bonus Proficiencies (Lore)** — Missing Mechanic / Poor Data Structure: no effects; three skill proficiencies should be a `choice_group`/`proficiency_grant` but prose-only.
+- **Cutting Words** — Poor Data Structure: no effects; prose-only.
+- **Magical Discoveries** — Poor Data Structure: no effects; prose-only.
+- **Peerless Skill** — Poor Data Structure: no effects; prose-only.
+- **Disciple of Life** — Poor Data Structure: no effects; bonus-healing prose-only.
+- **Channel Divinity: Preserve Life** — Poor Data Structure: no effects; prose-only (consumes existing CD pool).
+- **Blessed Healer** — Poor Data Structure: no effects; prose-only.
+- **Supreme Healing** — Poor Data Structure: no effects; prose-only.
+- **Circle Spells** — Poor Data Structure: no effects; always-prepared land spells prose-only (no spell_always_prepared rows).
+- **Land's Aid** — Poor Data Structure: no effects; prose-only.
+- **Natural Recovery** — Poor Data Structure: no effects; prose-only.
+- **Nature's Ward** — Missing Mechanic: two `condition_immunity_grant` (Frightened/Poisoned) are clean, but `damage_immunity` (Poison) kind is NOT in the implemented list (only `damage_resistance` is); poison-damage immunity not applied.
+- **Nature's Sanctuary** — Poor Data Structure: no effects; prose-only.
+- **Improved Critical** — Clean: `crit_range_extend` threshold 19.
+- **Remarkable Athlete** — Poor Data Structure: no effects; half-PB-to-checks prose-only.
+- **Additional Fighting Style** — Poor Data Structure: no effects; prose-only.
+- **Superior Critical** — Clean: `crit_range_extend` threshold 18.
+- **Survivor** — Poor Data Structure: no effects; regen prose-only.
+- **Open Hand Technique** — Poor Data Structure: no effects; prose-only.
+- **Wholeness of Body** — Poor Data Structure: no effects; self-heal prose-only.
+- **Fleet Step** — Poor Data Structure: no effects; prose-only.
+- **Quivering Palm** — Poor Data Structure: no effects; prose-only.
+- **Sacred Weapon** — Poor Data Structure: no effects; prose-only.
+- **Aura of Devotion** — Clean: `condition_immunity_grant` (Charmed). (Aura radius/allies handling is prose, but the immunity is typed.)
+- **Smite of Protection** — Poor Data Structure: no effects; prose-only.
+- **Holy Nimbus** — Clean (resource): `resource_pool_grant` (count 1); damage aura is prose rider.
+- **Hunter's Lore** — Poor Data Structure: no effects; prose-only.
+- **Hunter's Prey** — Poor Data Structure: no effects; choice routed to feature-option feats (prose pointer).
+- **Defensive Tactics** — Poor Data Structure: no effects; choice routed to feature-option feats.
+- **Superior Hunter's Defense** — Poor Data Structure: no effects; choice routed to feature-option feats.
+- **Multiattack** — Poor Data Structure: no effects; choice routed to feature-option feats.
+- **Hunter's Strategy** — Poor Data Structure: no effects; prose-only.
+- **Colossus Slayer** (option) — Missing Mechanic / Poor Data Structure: `effects: []` empty; +1d8 prose-only. Free-text prereq.
+- **Horde Breaker** (option) — Poor Data Structure: `effects: []` empty; extra-attack prose-only. Free-text prereq.
+- **Hunter's Lore Option** — Poor Data Structure: `effects: []` empty; prose-only.
+- **Escape the Horde** (option) — Missing Mechanic: `effects: []` empty; OA-disadvantage is a `disadvantage_on` candidate but prose-only.
+- **Multiattack Defense** (option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Steel Will** (option) — Missing Mechanic: `effects: []` empty; advantage-vs-Frightened is an `advantage_on` save candidate but prose-only.
+- **Volley** (option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Whirlwind Attack** (option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Evasion** (Superior Hunter's Defense option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Stand Against the Tide** (option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Uncanny Dodge** (Superior Hunter's Defense option) — Poor Data Structure: `effects: []` empty; prose-only.
+- **Fast Hands** — Clean: `granted_bonus_action_grant` (Fast Hands).
+- **Second-Story Work** — Mostly clean: `climb_speed_equals_speed` typed; jump-distance bonus prose-only.
+- **Supreme Sneak** — Poor Data Structure: no effects; prose-only.
+- **Use Magic Device** — Poor Data Structure: no effects; prose-only.
+- **Thief's Reflexes** — Poor Data Structure: no effects; prose-only.
+- **Draconic Resilience** — Missing Mechanic: `hp_bonus_per_level` 1 and `unarmored_ac_formula` (13+DEX) are clean, but `hp_max_bonus_total` (value 3) is NOT an implemented kind; the flat +3 HP not applied.
+- **Draconic Spells** — Poor Data Structure: no effects; always-prepared list prose-only.
+- **Elemental Affinity** — Poor Data Structure: no effects; Cha-to-damage + resistance prose-only.
+- **Dragon Wings** — Mostly clean: `fly_speed` + `resource_pool_grant` (count 1) typed; 1-hour duration is prose.
+- **Dragon Companion** — Clean: `spell_always_prepared` Summon Dragon + `resource_pool_grant` (count 1).
+- **Draconic Presence** — Poor Data Structure: no effects; prose-only.
+- **Dark One's Blessing** — Missing Mechanic: `temp_hp_grant` here is a TRIGGERED on-kill grant (formula CHA+warlock_level); temp_hp kind applies flat/at-rest, so the triggered grant is effectively prose.
+- **Fiendish Vigor** (Fiend Patron L3) — Clean: `spell_always_prepared` False Life.
+- **Dark One's Own Luck** — Clean: `resource_pool_grant` (count 1); 1d10 reroll is prose rider.
+- **Fiendish Resilience** (feature) — Poor Data Structure: no effects; choice routed to per-damage-type option feats.
+- **Hurl Through Hell** — Clean: `resource_pool_grant` (count 1); banish/8d10 is prose rider.
+- **Evocation Savant** — Poor Data Structure: no effects; prose-only.
+- **Potent Cantrip** — Poor Data Structure: no effects; prose-only.
+- **Sculpt Spells** — Poor Data Structure: no effects; prose-only.
+- **Empowered Evocation** — Poor Data Structure: no effects; Int-to-damage prose-only.
+- **Overchannel** — Poor Data Structure: no effects; prose-only.
+- **Careful Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq "Sorcerer — Metamagic".
+- **Distant Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Empowered Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Extended Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Heightened Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Quickened Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Seeking Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Subtle Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Transmuted Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Twinned Spell** — Poor Data Structure: no effects; prose-only. Free-text prereq.
+- **Agonizing Blast** — Missing Mechanic + Unimplemented Prereq: no effects (Cha-to-EB-damage is a `damage_bonus_typed` candidate but prose-only); free-text prereq "Eldritch Blast cantrip" unvalidated.
+- **Armor of Shadows** — Poor Data Structure: no effects; at-will Mage Armor prose-only. Free-text prereq.
+- **Devil's Sight** — Missing Mechanic: no effects; darkvision-in-magical-darkness is a `sense_grant` candidate but prose-only. Free-text prereq.
+- **Eldritch Mind** — Missing Mechanic: no effects; Concentration advantage is an `advantage_on` save candidate but prose-only.
+- **Eldritch Sight** — Poor Data Structure: no effects; at-will Detect Magic prose-only.
+- **Eldritch Spear** — Poor Data Structure: no effects; prose-only. Free-text "Eldritch Blast cantrip" prereq unvalidated.
+- **Fiendish Vigor** (Invocation) — Poor Data Structure: no effects; at-will False Life prose-only.
+- **Gaze of Two Minds** — Poor Data Structure: no effects; prose-only.
+- **Mask of Many Faces** — Poor Data Structure: no effects; prose-only.
+- **Misty Visions** — Poor Data Structure: no effects; prose-only.
+- **One with Shadows** — Unimplemented Prereq + Poor Data Structure: no effects; free-text "Warlock 5" prereq unvalidated; prose-only.
+- **Repelling Blast** — Poor Data Structure: no effects; prose-only. Free-text "Eldritch Blast cantrip" prereq unvalidated.
+- **Pact of the Blade** — Unimplemented Prereq + Poor Data Structure: no effects; free-text "Warlock 3" prereq unvalidated; pact weapon prose-only.
+- **Pact of the Chain** — Unimplemented Prereq + Poor Data Structure: no effects; free-text "Warlock 3" prereq; prose-only.
+- **Pact of the Tome** — Missing Mechanic + Unimplemented Prereq: no effects; three cantrips should be `cantrip_count_bonus`/`choice_group` but prose-only; free-text "Warlock 3" prereq.
+- **Draconic Ancestor — Acid** — Missing Mechanic + Unimplemented Prereq: no effects; bonus prepared spells (spell_always_prepared candidates) prose-only; free-text "Draconic Sorcery 3" prereq unvalidated.
+- **Draconic Ancestor — Cold** — Same: no effects; bonus spells prose-only; free-text prereq.
+- **Draconic Ancestor — Fire** — Same: no effects; bonus spells prose-only; free-text prereq.
+- **Draconic Ancestor — Lightning** — Same: no effects; bonus spells prose-only; free-text prereq.
+- **Draconic Ancestor — Poison** — Same: no effects; bonus spells prose-only; free-text prereq.
+- **Fiendish Resilience — Acid** — Clean (effects): `damage_resistance` Acid. Free-text "Fiend Warlock 10" prereq unvalidated (Unimplemented Prereq).
+- **Fiendish Resilience — Bludgeoning** — Clean: `damage_resistance` Bludgeoning. Free-text prereq.
+- **Fiendish Resilience — Cold** — Clean: `damage_resistance` Cold. Free-text prereq.
+- **Fiendish Resilience — Fire** — Clean: `damage_resistance` Fire. Free-text prereq.
+- **Fiendish Resilience — Lightning** — Clean: `damage_resistance` Lightning. Free-text prereq.
+- **Fiendish Resilience — Necrotic** — Clean: `damage_resistance` Necrotic. Free-text prereq.
+- **Fiendish Resilience — Piercing** — Clean: `damage_resistance` Piercing. Free-text prereq.
+- **Fiendish Resilience — Poison** — Clean: `damage_resistance` Poison. Free-text prereq.
+- **Fiendish Resilience — Psychic** — Clean: `damage_resistance` Psychic. Free-text prereq.
+- **Fiendish Resilience — Radiant** — Clean: `damage_resistance` Radiant. Free-text prereq.
+- **Fiendish Resilience — Slashing** — Clean: `damage_resistance` Slashing. Free-text prereq.
+- **Fiendish Resilience — Thunder** — Clean: `damage_resistance` Thunder. Free-text prereq.
+## Spells (spells.dart — SRD 5.2.1)
+Systemic situation: the engine has no spell-effect DSL — `character_resolver.dart` never reads spell mechanics, so `saveAbility`/`attackType`/`damageTypes`/`conditions` are inert classification tags. Every spell with a functional rule (dice, DC, healing, scaling, area, on-fail/on-success branch) is therefore **Missing Mechanic + Poor Data Structure**: the real rules live only in `description` prose and nothing is rolled, computed, or applied. Verdicts below mark "Missing Mechanic" for any spell whose prose carries a numeric/functional effect, and "Poor Data Structure" universally; the rare non-mechanical utility/sensory spells with no numbers are "Poor Data Structure only" (still prose-dumped but nothing to compute).
+
+### Cantrips (Level 0)
+- **Acid Splash** — Missing Mechanic + Poor Data Structure: 1d6 Acid + Dex save DC + per-level cantrip scaling (5/11/17) all prose-only; `damageTypes`/`saveAbility` are inert tags, no two-target choice modeled.
+- **Chill Touch** — Missing Mechanic + Poor Data Structure: 1d8 Necrotic, no-heal rider, Undead-disadvantage clause, and scaling all prose; `attackType`/`damageTypes` inert.
+- **Dancing Lights** — Poor Data Structure: pure light/utility, no numeric effect; all behavior in prose.
+- **Fire Bolt** — Missing Mechanic + Poor Data Structure: 1d10 Fire, attack roll, ignite clause, scaling prose-only; tags inert.
+- **Light** — Poor Data Structure: utility light, no mechanic; prose-only.
+- **Mage Hand** — Poor Data Structure: utility, no mechanic; prose-only.
+- **Mending** — Poor Data Structure: utility repair, no mechanic; prose-only.
+- **Minor Illusion** — Missing Mechanic + Poor Data Structure: Investigation check vs spell DC unmodeled; prose-only.
+- **Poison Spray** — Missing Mechanic + Poor Data Structure: 1d12 Poison + Con save + scaling prose; tags inert.
+- **Prestidigitation** — Poor Data Structure: multi-mode utility, no mechanic; prose-only mode list (needs a cast-time choice).
+- **Ray of Frost** — Missing Mechanic + Poor Data Structure: 1d8 Cold + speed reduction + scaling prose; tags inert.
+- **Sacred Flame** — Missing Mechanic + Poor Data Structure: 1d8 Radiant + Dex save + cover-ignore + scaling prose; tags inert.
+- **Shocking Grasp** — Missing Mechanic + Poor Data Structure: 1d8 Lightning, metal-armor advantage, no-Reaction rider, scaling prose; tags inert.
+- **Spare the Dying** — Poor Data Structure: stabilize effect, no dice; prose-only.
+- **Thaumaturgy** — Poor Data Structure: multi-mode utility, no mechanic; prose-only.
+- **Druidcraft** — Poor Data Structure: utility, no mechanic; prose-only.
+- **Eldritch Blast** — Missing Mechanic + Poor Data Structure: 1d10 Force, multi-beam scaling (2/3/4 beams) prose; tags inert, beam-count choice unmodeled.
+- **Guidance** — Missing Mechanic + Poor Data Structure: +d4 ability-check buff prose-only, not applied.
+- **Message** — Poor Data Structure: utility communication; prose-only.
+- **Produce Flame** — Missing Mechanic + Poor Data Structure: 1d8 Fire attack + scaling + light prose; tags inert.
+- **Resistance** — Missing Mechanic + Poor Data Structure: +d4 save buff prose-only, not applied.
+- **Shillelagh** — Missing Mechanic + Poor Data Structure: d8 Force weapon buff / spellcasting-mod swap prose-only; not applied.
+- **True Strike** — Missing Mechanic + Poor Data Structure: weapon attack, Radiant swap, crit-die scaling prose; `attackType` set but no damageTypes, all inert.
+- **Vicious Mockery** — Missing Mechanic + Poor Data Structure: 1d6 Psychic + Wis save + attack-disadvantage + scaling prose; tags inert.
+- **Starry Wisp** — Missing Mechanic + Poor Data Structure: 1d8 Radiant attack + light + scaling prose; tags inert.
+- **Sorcerous Burst** — Missing Mechanic + Poor Data Structure: 1d8 (7 type choices) attack, on-8 bonus-die rule capped by mod, cantrip scaling prose; needs damage-type cast choice, all inert.
+- **Elementalism** — Poor Data Structure: minor elemental utility, no mechanic; prose-only.
+
+### Level 1
+- **Burning Hands** — Missing Mechanic + Poor Data Structure: 3d6 Fire, 15-ft Cone, Dex save half, +1d6/slot upcast all prose; tags inert.
+- **Charm Person** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + +1 target/slot prose; `conditions:[Charmed]` inert.
+- **Cure Wounds** — Missing Mechanic + Poor Data Structure: 2d8+mod heal + +2d8/slot — no typed heal field exists, healing prose-only.
+- **Detect Magic** — Poor Data Structure: sensory utility; prose-only (ritual/concentration typed).
+- **Healing Word** — Missing Mechanic + Poor Data Structure: 2d4+mod heal + upcast, no typed heal field, prose-only.
+- **Hellish Rebuke** — Missing Mechanic + Poor Data Structure: 2d10 Fire reaction, Dex save half, +1d10/slot prose; tags inert.
+- **Mage Armor** — Missing Mechanic + Poor Data Structure: base AC 13+Dex set-effect prose-only, not applied.
+- **Magic Missile** — Missing Mechanic + Poor Data Structure: 3×(1d4+1) Force auto-hit + +1 dart/slot prose; `damageTypes` inert, no attack/save (correct) but darts uncounted.
+- **Shield** — Missing Mechanic + Poor Data Structure: +5 AC reaction + Magic Missile immunity prose-only, not applied.
+- **Sleep** — Missing Mechanic + Poor Data Structure: 5-ft Emanation, Wis save, Incapacitated, +5ft/slot prose; condition inert.
+- **Thunderwave** — Missing Mechanic + Poor Data Structure: 2d8 Thunder, 15-ft Cube, Con save half + push + upcast prose; tags inert.
+- **Bless** — Missing Mechanic + Poor Data Structure: +d4 attack/save buff (3 targets, +1/slot) prose-only, not applied.
+- **Bane** — Missing Mechanic + Poor Data Structure: −d4 attack/save debuff, Cha save, prose-only; `saveAbility` inert.
+- **Command** — Missing Mechanic + Poor Data Structure: Wis save + forced action prose; save inert.
+- **Faerie Fire** — Missing Mechanic + Poor Data Structure: Dex save, attack-advantage grant, no-Invisible clause prose; save inert, no conditions tag.
+- **Guiding Bolt** — Missing Mechanic + Poor Data Structure: 4d6 Radiant attack + next-attack-advantage + +1d6/slot prose; tags inert.
+- **Identify** — Poor Data Structure: utility divination; prose-only (cost/ritual typed).
+- **Protection from Evil and Good** — Missing Mechanic + Poor Data Structure: disadvantage-vs-types + Charm/Fright/Possess immunity prose-only, not applied.
+- **Sanctuary** — Missing Mechanic + Poor Data Structure: Wis save vs targeting prose; save inert.
+- **Detect Evil and Good** — Poor Data Structure: sensory utility; prose-only.
+- **Detect Poison and Disease** — Poor Data Structure: sensory utility; prose-only.
+- **Disguise Self** — Missing Mechanic + Poor Data Structure: Study check vs spell DC unmodeled; prose-only.
+- **Speak with Animals** — Poor Data Structure: utility; prose-only.
+- **Animal Friendship** — Missing Mechanic + Poor Data Structure: Wis save + Charmed (Beast) prose; condition inert.
+- **Color Spray** — Missing Mechanic + Poor Data Structure: 6d10 HP-pool, ascending-HP targeting, Blinded prose; complex untyped, condition inert.
+- **Divine Favor** — Missing Mechanic + Poor Data Structure: +1d4 Radiant weapon rider prose-only; `damageTypes` inert.
+- **Goodberry** — Missing Mechanic + Poor Data Structure: 1 HP/berry heal + nourishment prose; no typed heal.
+- **Grease** — Missing Mechanic + Poor Data Structure: Dex save + Prone + difficult terrain prose; save/condition inert.
+- **Hunter's Mark** — Missing Mechanic + Poor Data Structure: +1d6 weapon damage rider + re-mark prose-only; no damageTypes, not applied.
+- **Jump** — Missing Mechanic + Poor Data Structure: triple jump buff prose-only, not applied.
+- **Longstrider** — Missing Mechanic + Poor Data Structure: +10 ft Speed buff prose-only, not applied.
+- **Purify Food and Drink** — Poor Data Structure: utility cleanse; prose-only.
+- **Silent Image** — Missing Mechanic + Poor Data Structure: Study check vs DC unmodeled; prose-only.
+- **Hideous Laughter** — Missing Mechanic + Poor Data Structure: Wis save + Prone + Incapacitated + Int<=4 immunity prose; conditions inert.
+- **Find Familiar** — Poor Data Structure: summon utility; prose-only.
+- **Hex** — Missing Mechanic + Poor Data Structure: +1d6 Necrotic rider + ability disadvantage prose-only; `damageTypes` inert.
+- **Alarm** — Poor Data Structure: utility ward; prose-only.
+- **Dissonant Whispers** — Missing Mechanic + Poor Data Structure: 3d6 Psychic, Wis save half + forced reaction-move prose; tags inert.
+- **Chromatic Orb** — Missing Mechanic + Poor Data Structure: 3d8 (6 type choice) attack + leap-on-doubles prose; needs damage-type cast choice, tags inert.
+- **Comprehend Languages** — Poor Data Structure: utility; prose-only.
+- **Create or Destroy Water** — Poor Data Structure: utility; prose-only.
+- **Ensnaring Strike** — Missing Mechanic + Poor Data Structure: Str save + Restrained + 1d6 Piercing/turn prose; tags inert.
+- **Entangle** — Missing Mechanic + Poor Data Structure: Str save + Restrained + difficult terrain prose; tags inert.
+- **Expeditious Retreat** — Missing Mechanic + Poor Data Structure: bonus-action Dash buff prose-only, not applied.
+- **False Life** — Missing Mechanic + Poor Data Structure: 1d4+4 Temp HP prose-only; no typed temp-HP field.
+- **Feather Fall** — Missing Mechanic + Poor Data Structure: fall-rate/no-damage effect prose-only.
+- **Fog Cloud** — Poor Data Structure: obscurement area; prose-only.
+- **Heroism** — Missing Mechanic + Poor Data Structure: Frightened immunity + Temp HP/turn prose-only, not applied.
+- **Ice Knife** — Missing Mechanic + Poor Data Structure: 1d10 Pierce attack + 2d6 Cold Dex-save burst prose; mixed attack+save, tags inert.
+- **Illusory Script** — Poor Data Structure: utility; prose-only.
+- **Ray of Sickness** — Missing Mechanic + Poor Data Structure: 2d8 Poison attack + Con save Poisoned prose; tags inert.
+- **Shield of Faith** — Missing Mechanic + Poor Data Structure: +2 AC buff prose-only, not applied.
+- **Floating Disk** — Poor Data Structure: utility; prose-only.
+- **Inflict Wounds** — Missing Mechanic + Poor Data Structure: 2d10 Necrotic Con-save half + +1d10/slot prose; tags inert (note: 2024 SRD now save-based, `attackType` correctly omitted).
+- **Divine Smite** — Missing Mechanic + Poor Data Structure: +2d8 (+1d8 vs Fiend/Undead) Radiant rider prose-only; conditional bonus unmodeled, `damageTypes` inert.
+- **Searing Smite** — Missing Mechanic + Poor Data Structure: +1d6 Fire + Con-save 1d6/turn DoT prose; tags inert.
+
+### Level 2
+- **Aid** — Missing Mechanic + Poor Data Structure: +5 Temp HP & +5 HP-max (3 targets, +5/slot) prose-only; no typed fields.
+- **Hold Person** — Missing Mechanic + Poor Data Structure: Wis save + Paralyzed + repeat-save + upcast prose; condition inert.
+- **Misty Step** — Missing Mechanic + Poor Data Structure: 30-ft teleport bonus action prose-only.
+- **Scorching Ray** — Missing Mechanic + Poor Data Structure: 3×2d6 Fire attacks + +1 ray/slot prose; tags inert.
+- **Web** — Missing Mechanic + Poor Data Structure: Dex save + Restrained, Str-check escape vs DC, difficult terrain prose; tags inert.
+- **Spiritual Weapon** — Missing Mechanic + Poor Data Structure: 1d8+mod Force melee attack + move/repeat + per-2-level scaling prose; tags inert.
+- **Silence** — Missing Mechanic + Poor Data Structure: Thunder immunity + Deafened + no-Verbal-casting prose-only; condition not tagged.
+- **Mirror Image** — Missing Mechanic + Poor Data Structure: 3 duplicates, d6 redirect table, duplicate AC prose-only; complex untyped.
+- **Invisibility** — Missing Mechanic + Poor Data Structure: Invisible condition + break-on-attack + upcast prose-only; no condition tag.
+- **See Invisibility** — Poor Data Structure: sensory utility; prose-only.
+- **Suggestion** — Missing Mechanic + Poor Data Structure: Wis save + compelled action prose; save inert.
+- **Levitate** — Missing Mechanic + Poor Data Structure: Con save + suspension prose; save inert.
+- **Spike Growth** — Missing Mechanic + Poor Data Structure: 2d4 Pierce/5ft + difficult terrain + Perception-vs-DC prose; `damageTypes` inert, no save.
+- **Pass Without Trace** — Missing Mechanic + Poor Data Structure: +10 Stealth buff + no-track prose-only, not applied.
+- **Lesser Restoration** — Missing Mechanic + Poor Data Structure: end one condition/disease prose-only; not applied.
+- **Moonbeam** — Missing Mechanic + Poor Data Structure: 2d10 Radiant Con-save half + Shapechanger disadvantage + cylinder + upcast prose; tags inert.
+- **Acid Arrow** — Missing Mechanic + Poor Data Structure: 4d4 + 2d4-next-turn Acid attack, half-on-miss, upcast prose; tags inert.
+- **Alter Self** — Poor Data Structure: multi-mode transform utility (1d6 natural-weapon damage) prose-only; needs mode choice.
+- **Animal Messenger** — Missing Mechanic + Poor Data Structure: Cha save prose; no save tag.
+- **Arcane Lock** — Poor Data Structure: utility lock; prose-only.
+- **Augury** — Poor Data Structure: divination utility (25% cumulative chance) prose-only.
+- **Blindness/Deafness** — Missing Mechanic + Poor Data Structure: Con save + Blinded/Deafened (choice) + repeat-save + upcast prose; conditions inert, choice unmodeled.
+- **Calm Emotions** — Missing Mechanic + Poor Data Structure: Cha save + suppress Charm/Fright or indifference prose; save inert.
+- **Continual Flame** — Poor Data Structure: utility light; prose-only.
+- **Darkness** — Poor Data Structure: obscurement area; prose-only.
+- **Detect Thoughts** — Missing Mechanic + Poor Data Structure: Wis save deep-probe prose; save inert.
+- **Enhance Ability** — Missing Mechanic + Poor Data Structure: 6-mode advantage/2d6-Temp-HP buff prose-only; needs mode choice, not applied.
+- **Find Traps** — Poor Data Structure: sensory utility; prose-only.
+- **Gust of Wind** — Missing Mechanic + Poor Data Structure: Str save + push + movement-cost prose; save inert.
+- **Knock** — Poor Data Structure: utility unlock; prose-only.
+- **Locate Object** — Poor Data Structure: divination utility; prose-only.
+- **Magic Weapon** — Missing Mechanic + Poor Data Structure: +1/+2/+3 weapon buff by slot prose-only, not applied.
+- **Protection from Poison** — Missing Mechanic + Poor Data Structure: neutralize + Poison resistance/advantage prose-only, not applied.
+- **Ray of Enfeeblement** — Missing Mechanic + Poor Data Structure: ranged attack + half-Str-damage debuff + Con-save end prose; tags inert.
+- **Rope Trick** — Poor Data Structure: utility extradimensional space; prose-only.
+- **Shatter** — Missing Mechanic + Poor Data Structure: 3d8 Thunder Con-save half + Construct disadvantage + upcast prose; tags inert.
+- **Find Steed** — Poor Data Structure: summon utility; prose-only.
+- **Barkskin** — Missing Mechanic + Poor Data Structure: AC floor 17 buff prose-only, not applied.
+- **Blur** — Missing Mechanic + Poor Data Structure: attack-disadvantage-vs-you buff prose-only, not applied.
+- **Darkvision** — Missing Mechanic + Poor Data Structure: grant 60ft darkvision buff prose-only, not applied.
+- **Enlarge/Reduce** — Missing Mechanic + Poor Data Structure: Con save + ±1d4 damage / size / Str effects prose; save inert, mode choice unmodeled.
+- **Enthrall** — Missing Mechanic + Poor Data Structure: Wis save + Perception disadvantage prose; save inert.
+- **Flame Blade** — Missing Mechanic + Poor Data Structure: 3d6 Fire melee attack + light prose; tags inert.
+- **Gentle Repose** — Poor Data Structure: utility preservation; prose-only.
+- **Heat Metal** — Missing Mechanic + Poor Data Structure: 2d8 Fire Con-save (per turn, no real save it's contact-based) prose; `saveAbility` set but mechanic prose-only, tags inert.
+- **Magic Mouth** — Poor Data Structure: utility trigger; prose-only.
+- **Mind Spike** — Missing Mechanic + Poor Data Structure: 3d8 Psychic Wis-save + location-sense prose; tags inert.
+- **Pass without Trace** (duplicate, Abjuration variant) — Missing Mechanic + Poor Data Structure: +10 Stealth buff prose-only; NOTE duplicate entry of Pass Without Trace.
+- **Prayer of Healing** — Missing Mechanic + Poor Data Structure: 5×(2d8+mod) heal prose-only; no typed heal.
+- **Spider Climb** — Missing Mechanic + Poor Data Structure: climb-speed/wall-walk buff prose-only, not applied.
+- **Warding Bond** — Missing Mechanic + Poor Data Structure: +1 AC/saves, resistance, shared-damage prose-only, not applied.
+- **Zone of Truth** — Missing Mechanic + Poor Data Structure: Cha save + no-lie prose; save inert.
+- **Flaming Sphere** — Missing Mechanic + Poor Data Structure: 2d6 Fire Dex-save half + move prose; tags inert.
+- **Locate Animals or Plants** — Poor Data Structure: divination utility; prose-only.
+- **Arcanist's Magic Aura** — Poor Data Structure: utility illusion; prose-only.
+- **Dragon's Breath** — Missing Mechanic + Poor Data Structure: 3d6 (5 type choice) Cone Dex-save half + upcast prose; needs type choice, tags inert.
+- **Phantasmal Force** — Missing Mechanic + Poor Data Structure: Int save + 2d8 Psychic/turn + Investigation-vs-DC prose; tags inert.
+
+### Level 3
+- **Counterspell** — Missing Mechanic + Poor Data Structure: Con save, 3d8 Force half, spell-disrupt on fail prose-only; no save/damage tags at all.
+- **Dispel Magic** — Missing Mechanic + Poor Data Structure: auto-dispel <=3, ability-check DC=10+level for 4+, upcast prose-only.
+- **Fireball** — Missing Mechanic + Poor Data Structure: 8d6 Fire, 20-ft Sphere, Dex save half, +1d6/slot prose; tags inert.
+- **Fly** — Missing Mechanic + Poor Data Structure: 60-ft Fly Speed + fall + +1 target/slot prose-only, not applied.
+- **Lightning Bolt** — Missing Mechanic + Poor Data Structure: 8d6 Lightning, 100-ft Line, Dex save half, +1d6/slot prose; tags inert.
+- **Revivify** — Missing Mechanic + Poor Data Structure: revive to 1 HP within 1 min + 300gp diamond cost (typed) prose; effect not applied.
+- **Hypnotic Pattern** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + Incapacitated + Speed 0 prose; conditions inert.
+- **Slow** — Missing Mechanic + Poor Data Structure: Wis save, halved speed, −2 AC/Dex, action limit, d20-spell-fizzle, repeat-save prose; complex untyped, save inert.
+- **Haste** — Missing Mechanic + Poor Data Structure: doubled speed, +2 AC, Dex advantage, extra action, lethargy crash prose-only, not applied.
+- **Animate Dead** — Missing Mechanic + Poor Data Structure: create Skeleton/Zombie, 24h control, +2 per slot prose-only.
+- **Daylight** — Poor Data Structure: light/dispel-darkness utility; prose-only.
+- **Major Image** — Missing Mechanic + Poor Data Structure: Study-vs-DC + sensory illusion prose-only.
+- **Sleet Storm** — Missing Mechanic + Poor Data Structure: Dex save Prone + Con-save concentration-break DC + obscure/terrain prose; `saveAbility` set, conditions/secondary save inert.
+- **Bestow Curse** — Missing Mechanic + Poor Data Structure: Wis save + 4-mode curse incl. +1d8 Necrotic prose; mode choice unmodeled, tags inert.
+- **Clairvoyance** — Poor Data Structure: sensory utility; prose-only.
+- **Create Food and Water** — Poor Data Structure: utility; prose-only.
+- **Fear** — Missing Mechanic + Poor Data Structure: Wis save + Frightened + drop-item + forced Dash + repeat-save prose; condition inert.
+- **Gaseous Form** — Missing Mechanic + Poor Data Structure: misty-cloud transform, resistances, advantages, fly prose-only, not applied.
+- **Glyph of Warding** — Missing Mechanic + Poor Data Structure: 3d8 (5-type) Dex-save trigger or stored Spell Glyph + Investigation-DC prose; no tags at all.
+- **Magic Circle** — Missing Mechanic + Poor Data Structure: type-gated no-enter/disadvantage/immunity + duration upcast prose-only, not applied.
+- **Mass Healing Word** — Missing Mechanic + Poor Data Structure: 6×(1d4+mod) heal + upcast prose-only; no typed heal.
+- **Phantom Steed** — Poor Data Structure: summon-mount utility; prose-only.
+- **Plant Growth** — Poor Data Structure: terrain utility (two modes) prose-only; mode choice unmodeled.
+- **Protection from Energy** — Missing Mechanic + Poor Data Structure: resistance to chosen damage type buff prose-only, not applied; mode choice unmodeled.
+- **Remove Curse** — Missing Mechanic + Poor Data Structure: end curses / break attunement prose-only.
+- **Sending** — Poor Data Structure: communication utility (5% cross-plane fail) prose-only.
+- **Speak with Dead** — Poor Data Structure: divination utility; prose-only.
+- **Stinking Cloud** — Missing Mechanic + Poor Data Structure: Con save + Poisoned + Incapacitated + immunity clause prose; `saveAbility` set, conditions inert.
+- **Tongues** — Poor Data Structure: utility; prose-only.
+- **Water Breathing** — Missing Mechanic + Poor Data Structure: grant water-breathing buff prose-only, not applied.
+- **Wind Wall** — Missing Mechanic + Poor Data Structure: 3d8 Bludgeoning Str-save half + projectile-deflect prose; tags inert.
+- **Conjure Animals** — Poor Data Structure: summon utility (slot-scaled groups) prose-only.
+- **Call Lightning** — Missing Mechanic + Poor Data Structure: 3d10 Lightning Dex-save half + repeat-bolt + +1d10/slot prose; tags inert.
+- **Vampiric Touch** — Missing Mechanic + Poor Data Structure: 3d6 Necrotic melee attack + self-heal half + repeat + upcast prose; tags inert, heal untyped.
+- **Beacon of Hope** — Missing Mechanic + Poor Data Structure: Wis/Death-save advantage + max-healing buff prose-only, not applied.
+- **Blink** — Missing Mechanic + Poor Data Structure: d6 ethereal-shift table prose-only.
+- **Nondetection** — Poor Data Structure: utility ward; prose-only.
+- **Meld into Stone** — Poor Data Structure: utility; prose-only.
+- **Speak with Plants** — Poor Data Structure: utility; prose-only.
+- **Spirit Guardians** — Missing Mechanic + Poor Data Structure: 3d8 Radiant/Necrotic Wis-save half + speed-halve Emanation prose; damage-type choice unmodeled, tags inert.
+- **Tiny Hut** — Poor Data Structure: utility dome; prose-only.
+- **Water Walk** — Missing Mechanic + Poor Data Structure: liquid-walk buff prose-only, not applied.
+
+### Level 4
+- **Greater Invisibility** — Missing Mechanic + Poor Data Structure: Invisible condition prose; `conditions:[Invisible]` inert, not applied.
+- **Polymorph** — Missing Mechanic + Poor Data Structure: Wis save + Beast transform + CR cap + revert-on-0HP prose; save inert.
+- **Banishment** — Missing Mechanic + Poor Data Structure: Cha save + banish + native/non-native branch + upcast prose; save inert.
+- **Wall of Fire** — Missing Mechanic + Poor Data Structure: 5d8 Fire Dex-save half + one-side recurring damage + upcast prose; tags inert.
+- **Confusion** — Missing Mechanic + Poor Data Structure: Wis save + d10 behavior table + repeat-save + radius upcast prose; save inert, no condition tag.
+- **Stoneskin** — Missing Mechanic + Poor Data Structure: BPS-nonmagical resistance buff prose-only, not applied.
+- **Arcane Eye** — Poor Data Structure: sensory utility; prose-only.
+- **Black Tentacles** — Missing Mechanic + Poor Data Structure: Dex save + 3d6 Bludgeoning + Restrained + Str/Dex-check escape prose; tags inert.
+- **Death Ward** — Missing Mechanic + Poor Data Structure: drop-to-1-HP / negate-kill trigger prose-only, not applied.
+- **Dimension Door** — Missing Mechanic + Poor Data Structure: 500-ft teleport + 4d6 Force on bad arrival prose-only; no damage tag.
+- **Divination** — Poor Data Structure: divination utility (25% fail) prose-only.
+- **Faithful Hound** — Missing Mechanic + Poor Data Structure: +5 attack / 4d8 Piercing watchdog + hidden-detect prose-only; no attack/damage tags.
+- **Fire Shield** — Missing Mechanic + Poor Data Structure: Fire/Cold resistance + 2d8 retaliation (mode choice) prose; `damageTypes` set, mechanic inert.
+- **Freedom of Movement** — Missing Mechanic + Poor Data Structure: ignore terrain / no Paralyze-Restrain / escape buff prose-only, not applied.
+- **Guardian of Faith** — Missing Mechanic + Poor Data Structure: 20 Radiant Dex-save half + 60-damage cap prose; tags inert, fixed damage value.
+- **Ice Storm** — Missing Mechanic + Poor Data Structure: 2d8 Bludgeoning + 4d6 Cold Dex-save half + terrain + Bludgeoning upcast prose; tags inert.
+- **Locate Creature** — Poor Data Structure: divination utility; prose-only.
+- **Phantasmal Killer** — Missing Mechanic + Poor Data Structure: Wis save + Frightened + 4d10 Psychic/turn + repeat-save prose; tags inert.
+- **Resilient Sphere** — Missing Mechanic + Poor Data Structure: Dex save + force-prison + roll-sphere prose; save inert.
+- **Banishment**/etc. covered. **Charm Monster** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + harm-ends prose; condition inert.
+- **Compulsion** — Missing Mechanic + Poor Data Structure: Wis save + forced movement direction prose; condition/save inert.
+- **Control Water** — Poor Data Structure: 4-mode terrain utility prose-only; mode choice unmodeled.
+- **Blight** — Missing Mechanic + Poor Data Structure: 8d8 Necrotic Con-save half + plant max-damage/disadvantage prose; tags inert.
+- **Conjure Minor Elementals** — Missing Mechanic + Poor Data Structure: 2d8 (4-type choice) aura damage prose; `damageTypes` set, mechanic inert, no save.
+- **Conjure Woodland Beings** — Poor Data Structure: summon utility; prose-only.
+- **Dominate Beast** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + telepathic control + repeat-save prose; condition inert.
+- **Fabricate** — Poor Data Structure: crafting utility; prose-only.
+- **Giant Insect** — Poor Data Structure: transform/summon utility; prose-only.
+- **Hallucinatory Terrain** — Poor Data Structure: illusion utility; prose-only.
+- **Private Sanctum** — Poor Data Structure: ward utility (multi-effect) prose-only.
+- **Secret Chest** — Poor Data Structure: utility (cost typed) prose-only.
+- **Stone Shape** — Poor Data Structure: utility; prose-only.
+- **Vitriolic Sphere** — Missing Mechanic + Poor Data Structure: 10d4 Acid + 5d4 next-turn Dex-save half prose; tags inert.
+- **Aura of Life** — Missing Mechanic + Poor Data Structure: Necrotic resistance + 0-HP-regen Emanation buff prose-only, not applied.
+- **Stoneskin** covered above.
+
+### Level 5
+- **Cone of Cold** — Missing Mechanic + Poor Data Structure: 8d8 Cold, 60-ft Cone, Con save half, freeze-on-death, +1d8/slot prose; tags inert.
+- **Hold Monster** — Missing Mechanic + Poor Data Structure: Wis save + Paralyzed + repeat-save + +1 target/slot prose; condition inert.
+- **Raise Dead** — Missing Mechanic + Poor Data Structure: revive 1 HP, 10-day limit, −4 penalty decay, 500gp diamond (typed) prose; not applied.
+- **Wall of Force** — Missing Mechanic + Poor Data Structure: impassable force wall, Disintegrate-only destroy prose-only.
+- **Greater Restoration** — Missing Mechanic + Poor Data Structure: remove exhaustion/charm/petrify/curse/score-reduction prose-only; mode choice unmodeled, not applied.
+- **Mass Cure Wounds** — Missing Mechanic + Poor Data Structure: 6×(3d8+mod) heal + upcast prose-only; no typed heal.
+- **Scrying** — Missing Mechanic + Poor Data Structure: Wis save (modified) + sensor prose; save inert.
+- **Telekinesis** — Missing Mechanic + Poor Data Structure: ability-vs-Str contest, move creature/object, Restrained prose-only; no condition tag, contest unmodeled.
+- **Cloudkill** — Missing Mechanic + Poor Data Structure: 5d8 Poison Con-save half + drifting cloud + upcast prose; tags inert.
+- **Animate Objects** — Missing Mechanic + Poor Data Structure: per-size AC/HP/attack stat tables (10 objects) prose-only; heavy stat-block dump in one string.
+- **Commune** — Poor Data Structure: divination utility (yes/no, 25% fail) prose-only.
+- **Conjure Elemental** — Poor Data Structure: summon utility (CR5) prose-only.
+- **Contact Other Plane** — Missing Mechanic + Poor Data Structure: Int save DC15 + 6d6 Psychic + Insanity on fail + 5 questions prose; `saveAbility` set, mechanic inert.
+- **Dispel Evil and Good** — Missing Mechanic + Poor Data Structure: disadvantage aura + Break Enchantment / Cha-save Dismissal prose-only; mode choice unmodeled.
+- **Flame Strike** — Missing Mechanic + Poor Data Structure: 4d6 Fire + 4d6 Radiant Dex-save half + split-upcast choice prose; tags inert, upcast choice unmodeled.
+- **Geas** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + 5d10 Psychic-on-defiance + duration upcast prose; tags inert.
+- **Insect Plague** — Missing Mechanic + Poor Data Structure: 4d10 Piercing Con-save half + obscure/terrain + re-entry + upcast prose; tags inert.
+- **Legend Lore** — Poor Data Structure: divination utility; prose-only.
+- **Modify Memory** — Missing Mechanic + Poor Data Structure: Wis save + Charmed/Incapacitated + memory edit prose; save inert, no condition tag.
+- **Passwall** — Poor Data Structure: utility passage; prose-only.
+- **Planar Binding** — Missing Mechanic + Poor Data Structure: Cha save + bind-to-service prose; save inert.
+- **Seeming** — Missing Mechanic + Poor Data Structure: Cha save (unwilling) + illusory appearance + Study-vs-DC prose; save inert.
+- **Tree Stride** — Poor Data Structure: teleport-utility; prose-only.
+- **Wall of Stone** — Missing Mechanic + Poor Data Structure: panel wall, AC15/30HP sections, permanence rule prose-only; object stats prose-dumped.
+- **Antilife Shell** — Missing Mechanic + Poor Data Structure: barrier vs living creatures prose-only, not applied.
+- **Contagion** — Missing Mechanic + Poor Data Structure: melee attack + Poisoned + 3-save disease (6 choices) prose; tags inert, disease choice unmodeled.
+- **Commune with Nature** — Poor Data Structure: divination utility (3 facts) prose-only.
+- **Creation** — Poor Data Structure: utility (material-dependent duration) prose-only.
+- **Dream** — Poor Data Structure: utility (Special range) prose-only.
+- **Mislead** — Missing Mechanic + Poor Data Structure: Invisible + illusory double prose; `conditions:[Invisible]` inert, not applied.
+- **Telepathic Bond** — Poor Data Structure: utility; prose-only.
+- **Teleportation Circle** — Poor Data Structure: utility teleport; prose-only.
+- **Awaken** — Missing Mechanic + Poor Data Structure: grant Int/speech + Charmed 30 days prose-only; not applied.
+- **Arcane Hand** — Missing Mechanic + Poor Data Structure: AC20/HP=yours hand, 4-mode (4d8 Force etc.) prose-only; mode choice unmodeled, stats prose-dumped.
+- **Reincarnate** — Poor Data Structure: utility (roll on table) prose-only.
+- **Blade Barrier** — Missing Mechanic + Poor Data Structure: 6d10 Force Dex-save half + cover/terrain wall prose; tags inert.
+- **Hallow** — Poor Data Structure: utility ward (resistance/benefit choices) prose-only.
+
+### Level 6
+- **Disintegrate** — Missing Mechanic + Poor Data Structure: 10d6+40 Force Dex-save (fail only), disintegrate-on-0, +3d6/slot prose; tags inert, no on-success branch.
+- **Heal** — Missing Mechanic + Poor Data Structure: 70 HP heal + condition cure + +10/slot prose-only; no typed heal.
+- **Chain Lightning** — Missing Mechanic + Poor Data Structure: 10d8 Lightning Dex-save half, 3-bolt jump + +1 bolt/slot prose; tags inert.
+- **Circle of Death** — Missing Mechanic + Poor Data Structure: 8d6 Necrotic Con-save half + +2d6/slot prose; tags inert.
+- **Eyebite** — Missing Mechanic + Poor Data Structure: Wis save + 3-mode (Asleep/Panicked/Sickened) prose; conditions inert, mode choice unmodeled.
+- **Globe of Invulnerability** — Missing Mechanic + Poor Data Structure: block <=5 spells + level upcast prose-only, not applied.
+- **Harm** — Missing Mechanic + Poor Data Structure: 14d6 Necrotic Con-save half + HP-max reduction prose; tags inert.
+- **Heroes' Feast** — Missing Mechanic + Poor Data Structure: disease/poison cure, immunities, Wis advantage, +2d10 HP-max buff prose-only, not applied.
+- **Magic Jar** — Missing Mechanic + Poor Data Structure: Cha save + possession + soul-swap prose; save inert.
+- **Mass Suggestion** — Missing Mechanic + Poor Data Structure: Wis save (12 targets) + compelled action prose; save inert.
+- **Move Earth** — Poor Data Structure: terrain utility; prose-only.
+- **Sunbeam** — Missing Mechanic + Poor Data Structure: 6d8 Radiant Con-save half + Blinded + recurring Line prose; tags inert.
+- **True Seeing** — Missing Mechanic + Poor Data Structure: Truesight/secret-door/ethereal buff prose-only, not applied.
+- **Wall of Ice** — Missing Mechanic + Poor Data Structure: 10d6 Cold Dex-save half + AC12/30HP sections + 5d6 frigid-air Con-save + upcast prose; tags inert, secondary save/stats prose-dumped.
+- **Find the Path** — Poor Data Structure: divination utility; prose-only.
+- **Conjure Fey** — Poor Data Structure: summon utility (CR6) prose-only.
+- **Flesh to Stone** — Missing Mechanic + Poor Data Structure: Con save + Restrained then 3-fail Petrified prose; conditions inert, multi-save sequence unmodeled.
+- **Forbiddance** — Missing Mechanic + Poor Data Structure: 5d10 Radiant/Necrotic ward + teleport-block prose; `damageTypes` partial (Radiant only), mechanic inert.
+- **Guards and Wards** — Poor Data Structure: multi-effect ward utility prose-only.
+- **Planar Ally** — Poor Data Structure: summon-negotiation utility prose-only.
+- **Programmed Illusion** — Poor Data Structure: illusion utility; prose-only.
+- **Wall of Thorns** — Missing Mechanic + Poor Data Structure: damage wall (Slashing/Piercing) Dex-save prose-only; `saveAbility`/`damageTypes` set but no dice in prose either (incomplete), mechanic inert.
+- **Word of Recall** — Poor Data Structure: teleport utility; prose-only.
+- **Create Undead** — Missing Mechanic + Poor Data Structure: 3 Ghouls control + slot-scaled undead types prose-only.
+- **Irresistible Dance** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + dance/disadvantage prose; condition inert.
+- **Wind Walk** — Missing Mechanic + Poor Data Structure: cloud-form fly + resistance buff prose-only, not applied.
+- **Contingency** — Poor Data Structure: stored-spell utility; prose-only.
+- **Instant Summons** — Poor Data Structure: utility recall; prose-only.
+- **Transport via Plants** — Poor Data Structure: teleport utility; prose-only.
+- **Freezing Sphere** — Missing Mechanic + Poor Data Structure: 10d6 Cold Con-save half + water-freeze prose; tags inert.
+
+### Level 7
+- **Finger of Death** — Missing Mechanic + Poor Data Structure: 7d8+30 Necrotic Con-save half + Zombie-on-kill prose; tags inert.
+- **Teleport** — Missing Mechanic + Poor Data Structure: familiarity-based accuracy table (mishap/off-target) prose-only; no roll table modeled.
+- **Etherealness** — Poor Data Structure: planar-shift utility; prose-only.
+- **Forcecage** — Missing Mechanic + Poor Data Structure: Cha save (teleport-escape) + Cage/Box prison prose; save inert, mode choice unmodeled.
+- **Plane Shift** — Missing Mechanic + Poor Data Structure: melee attack + Cha save banish OR group transport prose; tags inert, dual-mode unmodeled.
+- **Prismatic Spray** — Missing Mechanic + Poor Data Structure: Dex save + d8 ray table (10d6 various, Restrained, Blinded, plane-shift) prose; `saveAbility` set, no damageTypes, table unmodeled.
+- **Regenerate** — Missing Mechanic + Poor Data Structure: 4d8+15 heal + 1HP/turn regen + limb-restore prose-only; no typed heal.
+- **Resurrection** — Missing Mechanic + Poor Data Structure: full-HP revive + cure + 1000gp diamond (typed) prose; not applied.
+- **Reverse Gravity** — Missing Mechanic + Poor Data Structure: Dex save (grab) + upward fall prose; save inert.
+- **Symbol** — Missing Mechanic + Poor Data Structure: 8-mode glyph (10d10 Death etc.) prose-only; no tags, mode choice unmodeled.
+- **Conjure Celestial** — Poor Data Structure: summon utility (CR4 + upcast) prose-only.
+- **Delayed Blast Fireball** — Missing Mechanic + Poor Data Structure: 12d6 Fire Dex-save half + per-round +1d6 accumulation prose; tags inert.
+- **Divine Word** — Missing Mechanic + Poor Data Structure: Cha save + HP-threshold Deafen/Blind/Stun/kill + plane-banish prose; conditions inert, threshold logic unmodeled.
+- **Fire Storm** — Missing Mechanic + Poor Data Structure: 7d10 Fire Dex-save half + cube-arrangement prose; tags inert.
+- **Mirage Arcane** — Poor Data Structure: illusion utility; prose-only.
+- **Project Image** — Poor Data Structure: illusion utility; prose-only.
+- **Simulacrum** — Poor Data Structure: duplicate utility (half-HP copy) prose-only.
+- **Arcane Sword** — Missing Mechanic + Poor Data Structure: 3d10 Force melee attack + move/repeat prose; tags inert.
+- **Magnificent Mansion** — Poor Data Structure: extradimensional-dwelling utility prose-only.
+- **Sequester** — Poor Data Structure: utility (Invisible/suspend, damage-ends) prose-only.
+
+### Level 8
+- **Power Word Stun** — Missing Mechanic + Poor Data Structure: 150-HP-threshold Stunned + repeat Con-save prose; `conditions:[Stunned]` inert, threshold unmodeled.
+- **Sunburst** — Missing Mechanic + Poor Data Structure: 12d6 Radiant Con-save half + Blinded + Undead/Ooze disadvantage prose; tags inert.
+- **Antimagic Field** — Missing Mechanic + Poor Data Structure: suppress-all-magic field prose-only, not applied.
+- **Animal Shapes** — Poor Data Structure: mass-transform utility (CR4) prose-only.
+- **Control Weather** — Poor Data Structure: weather utility (3-axis) prose-only.
+- **Demiplane** — Poor Data Structure: utility door; prose-only.
+- **Dominate Monster** — Missing Mechanic + Poor Data Structure: Wis save + Charmed + telepathic control + repeat-save prose; condition inert.
+- **Earthquake** — Missing Mechanic + Poor Data Structure: Dex save Prone + Con-save concentration-break + terrain prose; `saveAbility`/conditions set, secondary save inert.
+- **Holy Aura** — Missing Mechanic + Poor Data Structure: save-advantage/attack-disadvantage aura + 10 Radiant + Con-save Blind retaliation prose; tags inert.
+- **Incendiary Cloud** — Missing Mechanic + Poor Data Structure: 10d8 Fire Dex-save half + drifting cloud + re-entry prose; tags inert.
+- **Maze** — Missing Mechanic + Poor Data Structure: banish + DC20 Int-check escape prose-only; no save tag.
+- **Mind Blank** — Missing Mechanic + Poor Data Structure: Psychic immunity + Charm/divination immunity buff prose-only, not applied.
+- **Telepathy** — Poor Data Structure: utility communication; prose-only.
+- **Befuddlement** — Missing Mechanic + Poor Data Structure: 10d12 Psychic Int-save + no-cast/comprehend debuff + 30-day repeat prose; tags inert.
+- **Clone** — Poor Data Structure: utility safeguard; prose-only (costs typed).
+- **Glibness** — Missing Mechanic + Poor Data Structure: Cha-roll-replace-15 + lie-detect immunity buff prose-only, not applied.
+- **Tsunami** — Missing Mechanic + Poor Data Structure: 6d10 Bludgeoning Str-save half + receding wall prose; tags inert.
+- **Antipathy/Sympathy** — Missing Mechanic + Poor Data Structure: Wis save + Frightened/Charmed (attract/repel) prose; conditions inert, mode choice unmodeled.
+
+### Level 9
+- **Meteor Swarm** — Missing Mechanic + Poor Data Structure: 20d6 Fire + 20d6 Bludgeoning Dex-save half, 4 spheres, single-overlap rule prose; tags inert.
+- **Power Word Kill** — Missing Mechanic + Poor Data Structure: 100-HP-threshold instant-kill prose-only; no mechanic, no tags.
+- **Time Stop** — Missing Mechanic + Poor Data Structure: 1d4+1 extra turns + affect-others-ends rule prose-only.
+- **Wish** — Missing Mechanic + Poor Data Structure: duplicate-any-<=8 spell / multi-mode effects / 1d10-per-level Necrotic backlash + 1d4-day lockout prose-only; massive untyped catch-all.
+- **Astral Projection** — Poor Data Structure: planar utility (costs typed) prose-only.
+- **Foresight** — Missing Mechanic + Poor Data Structure: no-Surprise + advantage-all + attack-disadvantage buff prose-only, not applied.
+- **Gate** — Poor Data Structure: portal/summon utility prose-only.
+- **Imprisonment** — Missing Mechanic + Poor Data Structure: Wis save + 5-mode binding prose; save inert, mode choice unmodeled.
+- **Mass Heal** — Missing Mechanic + Poor Data Structure: 700 HP distributed heal + cure prose-only; no typed heal.
+- **Prismatic Wall** — Missing Mechanic + Poor Data Structure: 7-layer wall, Con-save Blinded, per-color pass-through effects prose-only; tags absent, layer table unmodeled.
+- **Shapechange** — Poor Data Structure: transform utility (CR=level) prose-only.
+- **Storm of Vengeance** — Missing Mechanic + Poor Data Structure: Con-save Deafen + escalating per-round effects (1d6 Acid, lightning bolts, 2d6 hail) prose; many damageTypes tagged but inert, round-table unmodeled.
+- **True Polymorph** — Missing Mechanic + Poor Data Structure: Wis save + creature/object transform + permanence prose; save inert.
+- **True Resurrection** — Missing Mechanic + Poor Data Structure: full revive + new body + cure-all + 25000gp diamond (typed) prose; not applied.
+- **Weird** — Missing Mechanic + Poor Data Structure: Wis save + Frightened + 4d10 Psychic/turn + repeat-save prose; tags inert.
+- **Power Word Heal** — Missing Mechanic + Poor Data Structure: full-HP heal + condition removal + stand-on-Prone prose-only; no typed heal.
+- **Summon Dragon** — Poor Data Structure: summon utility (Draconic Spirit stat block) prose-only.
+
+### Data-issue notes (cross-cutting)
+- No healing spell (Cure Wounds, Healing Word, Aid, Heal, Mass Cure Wounds, Mass Heal, Power Word Heal, Goodberry, Regenerate, Prayer of Healing, Mass Healing Word) has any typed heal/temp-HP field; all amounts are prose-only.
+- Every cantrip with "Cantrip Upgrade" and every leveled spell with "Higher-Level Slot" carries scaling purely in prose — no typed scaling structure exists.
+- Variable-damage spells needing a cast-time element choice (Chromatic Orb, Sorcerous Burst, Dragon's Breath, Conjure Minor Elementals, Spirit Guardians, Protection from Energy) have damageTypes listing all options but no mechanism to record the chosen one.
+- Wall of Thorns has `saveAbility`/`damageTypes` set but the prose omits the actual damage dice — an incomplete-content defect on top of the systemic one.
+- Duplicate entry: "Pass Without Trace" (Abjuration, Self) appears twice (lines ~1182 and ~3692) with differing capitalization ("Pass without Trace").
+- "Heat Metal" sets `saveAbility: Constitution` but the SRD mechanic is contact-based damage, not a save — mis-tagged classification.
+## Magic Items (magic_items.dart — SRD 5.2.1)
+
+Systemic note: there is NO typed magic-item-effect DSL — `effects` is one prose string copied verbatim into the description and never read by the resolver, so every numeric bonus, score-set, resistance, speed/sense grant, temp-HP/heal, charge, and curse below is inert even where an equivalent feat effect kind already exists; `attunementPrereq` is free text and never validated; `isCursed`/`isSentient` are toothless bools.
+
+- **Bag of Holding** — Clean: pure inventory/extradimensional flavor, no character mechanic to type (capacity is GM-adjudicated).
+- **Cloak of Protection** — Missing Mechanic: +1 AC and +1 to all saves inert (maps to `ac_bonus`); attunement required but no prereq.
+- **Boots of Elvenkind** — Missing Mechanic: silent movement + Advantage on Stealth(move silently) prose-only, no typed advantage grant.
+- **Potion of Healing** — Missing Mechanic: 2d4+2 healing prose-only (no `temp_hp_grant`/heal kind applied).
+- **Potion of Greater Healing** — Missing Mechanic: 4d4+4 heal inert, prose-only.
+- **Wand of Magic Missiles** — Poor Data Structure: maxCharges/chargeRegain typed, but per-charge Magic Missile cast and consumption are prose-only; no spell-grant or charge-spend mechanic.
+- **Ring of Protection** — Missing Mechanic + Unimplemented Prerequisite: +1 AC and +1 saves inert (`ac_bonus`); attunement required, no prereq listed.
+- **Ring of Spell Storing** — Poor Data Structure: spell storage/cast entirely prose; no typed spell store or save-DC carry; attunement unmodeled.
+- **Staff of Healing** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Bard, Cleric, or Druid' free text/unvalidated; 10 charges typed but Cure Wounds/Lesser Restoration/Mass Cure Wounds spends prose-only.
+- **Sword of Sharpness** — Missing Mechanic: crit-20 extra 4d6 Slashing and light grant prose-only; attunement unmodeled.
+- **Plate Armor of Etherealness** — Missing Mechanic: Etherealness command-word activation prose-only; once-per-dawn not tracked; attunement unmodeled.
+- **Vorpal Sword** — Missing Mechanic: +3 attack/damage and resistance-ignore inert (no weapon-bonus kind); decapitation prose-only; attunement unmodeled.
+- **Cloak of Elvenkind** — Missing Mechanic: Disadvantage-to-see-you and Advantage-on-Stealth prose-only; attunement unmodeled.
+- **Bracers of Defense** — Missing Mechanic: +2 AC (no armor/shield) inert (`ac_bonus`); attunement, no prereq.
+- **Gauntlets of Ogre Power** — Missing Mechanic: sets Strength to 19 inert (maps to `ability_score_bonus`/score-set); attunement, no prereq.
+- **Goggles of Night** — Missing Mechanic: Darkvision 60 ft / +60 ft grant inert (`sense_grant`).
+- **Headband of Intellect** — Missing Mechanic: sets Intelligence to 19 inert (score-set kind exists for feats); attunement, no prereq.
+- **Boots of Speed** — Missing Mechanic: speed-doubling and Opportunity-Attack Disadvantage prose-only; 10-min budget untracked; attunement unmodeled.
+- **Winged Boots** — Missing Mechanic: Fly Speed = Walk Speed inert (`fly_speed`); 4-hour flight budget prose-only; attunement unmodeled.
+- **Belt of Giant Strength (Hill)** — Missing Mechanic: sets Strength to 21 inert (score-set); attunement, no prereq.
+- **Amulet of Health** — Missing Mechanic: sets Constitution to 19 inert (score-set, affects HP); attunement, no prereq.
+- **Weapon, +1** — Missing Mechanic: +1 attack/damage inert; no typed weapon-bonus, prose-only.
+- **Armor, +1** — Missing Mechanic: +1 AC inert (`ac_bonus`), prose-only.
+- **Shield, +1** — Missing Mechanic: +1 AC inert (`ac_bonus`), prose-only.
+- **Potion of Climbing** — Missing Mechanic: Climb Speed grant + Advantage on Athletics prose-only.
+- **Potion of Fire Breath** — Missing Mechanic: 4d6 Fire breath / DC 13 save action prose-only.
+- **Spell Scroll** — Poor Data Structure: spell-cast, level/DC scaling, and rarity table all dumped in prose; no typed spell reference.
+- **Potion of Animal Friendship** — Missing Mechanic: grants Animal Friendship cast (DC 13) prose-only.
+- **Potion of Diminution** — Missing Mechanic: Reduce effect prose-only, no size/stat modeling.
+- **Potion of Flying** — Missing Mechanic: Fly Speed = Walk Speed grant inert (`fly_speed`), prose-only.
+- **Potion of Gaseous Form** — Missing Mechanic: Gaseous Form grant prose-only.
+- **Potion of Giant Strength (Hill)** — Missing Mechanic: sets Strength to 21 for 1 hr inert (score-set), prose-only.
+- **Potion of Heroism** — Missing Mechanic: 10 temp HP (`temp_hp_grant`) + Bless effect both inert, prose-only.
+- **Potion of Invisibility** — Missing Mechanic: Invisible condition grant prose-only.
+- **Potion of Mind Reading** — Missing Mechanic: Detect Thoughts cast (DC 13) prose-only.
+- **Potion of Poison** — Missing Mechanic + cursed unmodeled: isCursed=true is toothless; 3d6 Poison + Poisoned condition prose-only; no trap/Identify modeling.
+- **Potion of Speed** — Missing Mechanic: Haste effect (1 min) prose-only.
+- **Potion of Water Breathing** — Missing Mechanic: water-breathing grant prose-only.
+- **Oil of Slipperiness** — Missing Mechanic: Freedom of Movement (8 hr) grant prose-only.
+- **Oil of Sharpness** — Missing Mechanic: +3 attack/damage weapon coating inert (weapon-bonus), prose-only.
+- **Cloak of Resistance** — Missing Mechanic: Resistance to a chosen damage type inert (`damage_resistance`); attunement, no prereq.
+- **Cloak of the Bat** — Missing Mechanic: Stealth Advantage, Fly Speed 40, Polymorph-to-bat all prose-only; attunement unmodeled.
+- **Cloak of Displacement** — Missing Mechanic: Disadvantage on attacks against you prose-only; suppression conditions untracked; attunement unmodeled.
+- **Hat of Disguise** — Missing Mechanic: at-will Disguise Self cast prose-only; attunement unmodeled.
+- **Helm of Telepathy** — Missing Mechanic: Detect Thoughts cast + telepathy prose-only; once-per-dawn untracked; attunement unmodeled.
+- **Periapt of Wound Closure** — Missing Mechanic: auto-stabilize and doubled Hit Die healing prose-only; attunement unmodeled.
+- **Bag of Beans** — Clean: random-table eruption is pure GM-adjudicated narrative, no character mechanic to type.
+- **Bag of Tricks (Gray)** — Poor Data Structure: 3-charge summon table prose-only; charges mentioned in text but maxCharges field not set.
+- **Brooch of Shielding** — Missing Mechanic: Resistance to Force + Immunity to Magic Missile inert (`damage_resistance`/immunity); attunement, no prereq.
+- **Decanter of Endless Water** — Clean: water production / DC 13 push is environmental GM-adjudicated, no character-sheet mechanic.
+- **Driftglobe** — Missing Mechanic: Daylight cast and hover prose-only (minor; mostly utility light).
+- **Eyes of Charming** — Poor Data Structure: 3 charges typed but Charm Person cast/spend prose-only; attunement unmodeled.
+- **Eyes of the Eagle** — Missing Mechanic: Advantage on sight-based Perception prose-only; attunement unmodeled.
+- **Figurine of Wondrous Power (Bronze Griffon)** — Clean: companion-summon is GM-run creature, no wearer mechanic; recharge prose-only but no typed field implied.
+- **Gem of Brightness** — Poor Data Structure: 50 charges typed but blind/beam/cone effects and DC saves prose-only.
+- **Horn of Blasting** — Missing Mechanic: 5d6 Thunder cone / DC 15 save / explosion risk prose-only.
+- **Immovable Rod** — Clean: physics/weight-anchor utility, no character mechanic to type.
+- **Lantern of Revealing** — Missing Mechanic: reveal-invisible aura prose-only (minor utility/sense).
+- **Necklace of Adaptation** — Missing Mechanic: breathe-anywhere + Advantage vs gases prose-only; attunement unmodeled.
+- **Necklace of Fireballs** — Missing Mechanic: detachable Fireball beads (DC 15) prose-only; bead count untyped.
+- **Pearl of Power** — Unimplemented Prerequisite + Missing Mechanic: prereq 'A spellcaster' unvalidated; spell-slot recovery prose-only; once-per-dawn untracked.
+- **Quiver of Ehlonna** — Clean: extradimensional storage utility, no character mechanic.
+- **Robe of Eyes** — Missing Mechanic: all-around sight, Darkvision 120 ft, see-invisible/ethereal all inert (`sense_grant`); attunement unmodeled.
+- **Robe of Stars** — Missing Mechanic: +1 saves inert; Magic Missile star casts and Astral travel prose-only; attunement unmodeled.
+- **Robe of the Archmagi** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Sorcerer, Warlock, or Wizard' AND alignment-match unvalidated; AC 15+Dex set, save Advantage, +2 spell DC/attack all inert.
+- **Robe of Useful Items** — Clean: patch-to-item conversion is inventory/GM narrative, no character mechanic.
+- **Slippers of Spider Climbing** — Missing Mechanic: Climb Speed = Walk Speed grant prose-only; attunement unmodeled.
+- **Stone of Good Luck (Luckstone)** — Missing Mechanic: +1 to ability checks and saves inert; attunement, no prereq.
+- **Wand of Fireballs** — Unimplemented Prerequisite + Poor Data Structure: prereq 'A spellcaster' unvalidated; 7 charges typed but Fireball cast/spend (DC 15) prose-only.
+- **Wand of Lightning Bolts** — Unimplemented Prerequisite + Poor Data Structure: prereq 'A spellcaster' unvalidated; 7 charges typed but Lightning Bolt cast/spend prose-only.
+- **Wand of the War Mage, +1** — Unimplemented Prerequisite + Missing Mechanic: prereq 'A spellcaster' unvalidated; +1 spell attack and ignore-half-cover inert.
+- **Wand of Web** — Unimplemented Prerequisite + Poor Data Structure: prereq 'A spellcaster' unvalidated; 7 charges typed but Web cast/spend prose-only.
+- **Staff of Fire** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Druid, Sorcerer, Warlock, or Wizard' unvalidated; Fire Resistance inert (`damage_resistance`); 10 charges typed, spell spends prose-only.
+- **Staff of Frost** — Unimplemented Prerequisite + Missing Mechanic: prereq unvalidated; Cold Resistance inert; 10 charges typed, spell spends prose-only.
+- **Staff of the Magi** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Sorcerer, Warlock, or Wizard' unvalidated; spell-save Advantage and absorb-reaction prose-only; 50 charges typed, spell list prose-only.
+- **Ring of Three Wishes** — Poor Data Structure: 3 charges typed (maxCharges=3) but Wish cast/spend prose-only; attunement unmodeled.
+- **Ring of Free Action** — Missing Mechanic: ignore Difficult Terrain + immunity to speed-reduction/Paralyzed/Restrained prose-only; attunement unmodeled.
+- **Ring of Invisibility** — Missing Mechanic: at-will Invisible condition prose-only; attunement unmodeled.
+- **Ring of Mind Shielding** — Missing Mechanic: immunity to mind-reading/alignment-detection prose-only; attunement unmodeled.
+- **Ring of Regeneration** — Missing Mechanic: 1d6 HP/10 min regen and limb regrowth prose-only (no heal-over-time kind); attunement unmodeled.
+- **Ring of Resistance** — Missing Mechanic: Resistance to gem-determined damage type inert (`damage_resistance`); attunement, no prereq.
+- **Dragon Slayer** — Missing Mechanic: +1 attack/damage and +3d6 vs Dragons inert; prose-only.
+- **Flame Tongue** — Missing Mechanic: +2d6 Fire on hit + light prose-only; attunement unmodeled.
+- **Frost Brand** — Missing Mechanic: +1d6 Cold on hit, Fire Resistance (`damage_resistance`), flame-extinguish all prose-only; attunement unmodeled.
+- **Holy Avenger** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Paladin' unvalidated; +3 attack/damage, +2d10 vs Fiend/Undead, save-Advantage aura all inert.
+- **Adamantine Armor** — Missing Mechanic: crit-to-normal-hit negation prose-only, no typed effect.
+- **Mithral Armor** — Missing Mechanic: removes Stealth Disadvantage / Str requirement prose-only, no typed armor-property override.
+- **Armor of Resistance** — Missing Mechanic: Resistance to chosen damage type inert (`damage_resistance`); attunement, no prereq.
+- **Glamoured Studded Leather** — Missing Mechanic: +1 AC inert (`ac_bonus`) plus cosmetic illusion prose-only.
+- **Apparatus of the Crab** — Clean: piloted vehicle/object stat block, no wearer character mechanic.
+- **Cube of Force** — Poor Data Structure: 36 charges typed but per-face barrier effects and charge spends prose-only; attunement unmodeled.
+- **Crystal Ball** — Missing Mechanic: Scrying (DC 17) cast and variants prose-only; attunement unmodeled.
+- **Deck of Many Things** — Clean: random-table boons/disasters are pure GM narrative, no typed mechanic.
+- **Eye of Vecna** — Missing Mechanic + cursed/sentient unmodeled: isCursed=true toothless and 'Eye is sentient' described but isSentient NOT set (false); Truesight grant + 1/day spell suite all prose-only; corruption unmodeled.
+- **Hand of Vecna** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; +4 STR (score) + Poison immunity + 1/day spell suite all inert/prose-only.
+- **Tome of Clear Thought** — Missing Mechanic: permanent Int +2 (max 24) inert; consumed-after-use prose-only.
+- **Tome of Leadership and Influence** — Missing Mechanic: permanent Cha +2 (max 24) inert, prose-only.
+- **Tome of Understanding** — Missing Mechanic: permanent Wis +2 (max 24) inert, prose-only.
+- **Manual of Bodily Health** — Missing Mechanic: permanent Con +2 (max 24) inert, prose-only.
+- **Manual of Gainful Exercise** — Missing Mechanic: permanent Str +2 (max 24) inert, prose-only.
+- **Manual of Quickness of Action** — Missing Mechanic: permanent Dex +2 (max 24) inert, prose-only.
+- **Mantle of Spell Resistance** — Missing Mechanic: Advantage on saves vs spells prose-only; attunement unmodeled.
+- **Iron Bands of Bilarro** — Missing Mechanic: ranged attack (+5) / Restrained condition prose-only.
+- **Mirror of Life Trapping** — Clean: trap-creature-in-cell is GM-run set-piece, no wearer mechanic.
+- **Sphere of Annihilation** — Clean: hazard object / DC 25 control check is GM-adjudicated, no character-sheet mechanic.
+- **Talisman of Pure Good** — Unimplemented Prerequisite + Missing Mechanic: prereq 'a creature of good alignment' unvalidated; +2 all saves and 7-charge save-reroll inert/prose-only.
+- **Talisman of Ultimate Evil** — Unimplemented Prerequisite + Missing Mechanic: prereq 'a creature of evil alignment' unvalidated; +2 all saves and 6-charge save-reroll inert/prose-only.
+- **Wings of Flying** — Missing Mechanic: Fly Speed 60 grant inert (`fly_speed`); 1-hour budget prose-only; attunement unmodeled.
+- **Boots of Levitation** — Missing Mechanic: at-will Levitate cast prose-only; attunement unmodeled.
+- **Bracers of Archery** — Missing Mechanic: Longbow/Shortbow proficiency + +2 ranged damage inert; attunement unmodeled.
+- **Cape of the Mountebank** — Missing Mechanic: Dimension Door cast prose-only; once-per-dawn untracked.
+- **Demon Armor** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; +1 AC inert (`ac_bonus`), Abyssal speech and 1d8 gauntlet strikes prose-only; attunement unmodeled.
+- **Dimensional Shackles** — Clean: restrains-a-captured-creature utility, no wearer character mechanic.
+- **Folding Boat** — Clean: vehicle transformation utility, no character mechanic.
+- **Belt of Giant Strength (Stone)** — Missing Mechanic: sets Strength to 23 inert (score-set); attunement, no prereq.
+- **Belt of Giant Strength (Frost/Fire)** — Missing Mechanic: sets Strength to 25 inert (score-set); attunement, no prereq.
+- **Belt of Giant Strength (Cloud)** — Missing Mechanic: sets Strength to 27 inert (score-set); attunement, no prereq.
+- **Belt of Giant Strength (Storm)** — Missing Mechanic: sets Strength to 29 inert (score-set); attunement, no prereq.
+- **Helm of Brilliance** — Missing Mechanic: gem-fueled spell suite (Daylight/Fireball/Prismatic Spray/Wall of Fire) prose-only; attunement unmodeled.
+- **Helm of Teleportation** — Poor Data Structure: 3 charges typed but Teleport cast/spend prose-only; attunement unmodeled.
+- **Robe of Scintillating Colors** — Poor Data Structure: 3 charges typed but attack-Disadvantage/Stun (DC 15) effect prose-only; attunement unmodeled.
+- **Robe of the Magi** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard' unvalidated; save-Advantage, +2 AC/saves, +2 spell DC/attack all inert.
+- **Mirror of Mental Prowess** — Missing Mechanic: Detect Thoughts/Scrying/portal casts prose-only; attunement unmodeled.
+- **Carpet of Flying** — Clean: vehicle Fly Speed is mount/object stat, not a wearer fly grant; no character mechanic.
+- **Mantle of the Champion** — Missing Mechanic: Advantage on Str saves and Performance prose-only; attunement unmodeled.
+- **Necklace of Prayer Beads** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Cleric, Druid, or Paladin' unvalidated; per-bead spell suite (Bless/Cure Wounds/etc.) prose-only.
+- **Restorative Ointment** — Missing Mechanic: 2d8+2 heal + condition cure / +2d8 Radiant weapon coating prose-only; dose count untyped.
+- **Ammunition, +1** — Missing Mechanic: +1 attack/damage inert, prose-only.
+- **Ammunition, +2** — Missing Mechanic: +2 attack/damage inert, prose-only.
+- **Ammunition, +3** — Missing Mechanic: +3 attack/damage inert, prose-only.
+- **Ammunition of Slaying** — Missing Mechanic: +6d10 Force vs target type / DC 17 save prose-only.
+- **Armor, +2** — Missing Mechanic: +2 AC inert (`ac_bonus`), prose-only.
+- **Armor, +3** — Missing Mechanic: +3 AC inert (`ac_bonus`), prose-only.
+- **Shield, +2** — Missing Mechanic: +2 AC inert (`ac_bonus`), prose-only.
+- **Shield, +3** — Missing Mechanic: +3 AC inert (`ac_bonus`), prose-only.
+- **Weapon, +2** — Missing Mechanic: +2 attack/damage inert, prose-only.
+- **Weapon, +3** — Missing Mechanic: +3 attack/damage inert, prose-only.
+- **Armor of Invulnerability** — Missing Mechanic: Resistance/Immunity to nonmagical damage inert (`damage_resistance`); attunement unmodeled.
+- **Armor of Vulnerability** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; Resistance to one B/P/S type + Vulnerability to two others inert; Remove Curse removal unmodeled.
+- **Animated Shield** — Missing Mechanic: hands-free animated shield AC and 1-min duration prose-only; attunement unmodeled.
+- **Amulet of the Planes** — Missing Mechanic: Plane Shift / DC 15 Arcana planar travel prose-only; attunement unmodeled.
+- **Bag of Devouring** — Clean: trap-object that destroys contents is GM narrative; isCursed=true toothless but no character-sheet mechanic to apply.
+- **Bag of Tricks (Rust)** — Clean: summon-creature table is GM-run companion, no wearer mechanic (once-per-dawn untracked but minor).
+- **Bag of Tricks (Tan)** — Clean: summon-creature table is GM-run companion, no wearer mechanic.
+- **Bead of Force** — Missing Mechanic: 5d4 Force / DC 15 save + Force sphere prose-only.
+- **Bead of Nourishment** — Clean: ration-equivalent nourishment, no character mechanic to type.
+- **Belt of Dwarvenkind** — Missing Mechanic: +2 Con (max 20) inert (score-bonus), Darkvision (`sense_grant`), Persuasion Advantage, language all prose-only; attunement unmodeled.
+- **Boots of Striding and Springing** — Missing Mechanic: Walk Speed 30 / encumbrance immunity / triple jump prose-only; attunement unmodeled.
+- **Boots of the Winterlands** — Missing Mechanic: Cold Resistance inert (`damage_resistance`) + terrain/temperature immunity prose-only; attunement unmodeled.
+- **Bowl of Commanding Water Elementals** — Clean: summon-elemental utility (GM-run creature), no wearer mechanic.
+- **Broom of Flying** — Clean: ridden vehicle Fly Speed (mount stat), not a wearer fly grant.
+- **Censer of Controlling Air Elementals** — Clean: summon-elemental utility, no wearer mechanic.
+- **Chime of Opening** — Poor Data Structure: 10 charges typed but open-lock effect/spend prose-only (utility; no character mechanic).
+- **Circlet of Blasting** — Missing Mechanic: Scorching Ray (lvl 2) cast prose-only; once-per-dawn untracked.
+- **Cloak of Invisibility** — Poor Data Structure: 2 charges typed but Invisible condition / 2-hour budget prose-only; attunement unmodeled.
+- **Crystal Ball of Mind Reading** — Missing Mechanic: Scrying + Detect Thoughts (DC 17) casts prose-only; attunement unmodeled.
+- **Crystal Ball of Telepathy** — Missing Mechanic: Scrying + telepathy + Suggestion (DC 17) prose-only; attunement unmodeled.
+- **Cubic Gate** — Poor Data Structure: 3 charges typed but Plane Shift/Gate casts and spends prose-only.
+- **Dancing Sword** — Missing Mechanic: hovering autonomous attacks prose-only; attunement unmodeled.
+- **Deck of Illusions** — Clean: illusion-creature cards are GM narrative, no character mechanic.
+- **Defender** — Missing Mechanic: +3 attack/damage with transferable AC bonus inert (no weapon/AC kind); attunement unmodeled.
+- **Dragon Orb** — Poor Data Structure: 7 charges typed but dragon-summon and spell casts (Cure Wounds/Scrying/etc.) prose-only; attunement unmodeled.
+- **Dragon Scale Mail** — Missing Mechanic: +1 AC (`ac_bonus`), elemental Resistance (`damage_resistance`), save-Advantage all inert/prose-only; attunement unmodeled.
+- **Dust of Disappearance** — Missing Mechanic: Invisible condition (2d4 min) grant prose-only.
+- **Dust of Dryness** — Clean: water-absorption environmental utility, no character mechanic.
+- **Dust of Sneezing and Choking** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; Incapacitated/DC 15 Con save effect prose-only.
+- **Dwarven Plate** — Missing Mechanic: +2 AC inert (`ac_bonus`) + forced-movement negation reaction prose-only.
+- **Dwarven Thrower** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Dwarf or has the Dwarven Toughness feature' (species/feature) unvalidated; +3 attack/damage, +1d8/2d8 thrown, return all inert/prose-only.
+- **Efficient Quiver** — Clean: extradimensional storage utility, no character mechanic.
+- **Efreeti Bottle** — Clean: summon-creature/wishes is GM-run, no wearer mechanic.
+- **Elixir of Health** — Missing Mechanic: cures multiple conditions + restores HP max prose-only.
+- **Elven Chain** — Missing Mechanic: +1 AC inert (`ac_bonus`) + auto-proficiency prose-only.
+- **Eyes of Minute Seeing** — Missing Mechanic: close-range Advantage on Investigation prose-only (minor sense grant).
+- **Feather Token** — Clean: one-shot conjured objects (anchor/boat/tree) are GM narrative, no character mechanic.
+- **Gem of Seeing** — Poor Data Structure: 3 charges typed but Truesight 120 ft grant/spend prose-only; attunement unmodeled.
+- **Giant Slayer** — Missing Mechanic: +1 attack/damage and +2d6/prone vs Giants inert/prose-only; attunement unmodeled.
+- **Gloves of Missile Snaring** — Missing Mechanic: reaction damage-reduction (1d10+Dex) prose-only; attunement unmodeled.
+- **Gloves of Swimming and Climbing** — Missing Mechanic: no-cost climb + Advantage on swim/climb prose-only; attunement unmodeled.
+- **Gloves of Thievery** — Missing Mechanic: +5 Sleight of Hand / lockpicking inert (skill-bonus), prose-only.
+- **Hammer of Thunderbolts** — Unimplemented Prerequisite + Missing Mechanic: prereq 'must wear Belt of Giant Strength and Gauntlets of Ogre Power' (item-dependency) unvalidated; +3 attack/damage, +4 Str (max 30), Giant-slay DC 17, charges all inert/prose-only.
+- **Handy Haversack** — Clean: extradimensional storage utility, no character mechanic.
+- **Hat of Many Spells** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 1d100 random spell table and 1d6/day uses prose-only.
+- **Helm of Comprehending Languages** — Missing Mechanic: Comprehend Languages cast prose-only (minor utility).
+- **Horn of Valhalla** — Clean: summon warrior-spirits is GM-run; attunement-to-class note prose-only but no wearer mechanic.
+- **Horseshoes of Speed** — Clean: mount Speed +30 (creature stat, not wearer); no character mechanic.
+- **Instant Fortress** — Clean: conjured-structure utility, no character mechanic.
+- **Ioun Stone** — Missing Mechanic: every variant's effect inert — ability +2 (score), +1 AC (`ac_bonus`), +1 PB, Initiative Advantage, regen 15 HP/hr all prose-only; attunement unmodeled.
+- **Iron Flask** — Clean: capture-a-creature trap is GM narrative, no wearer mechanic.
+- **Luck Blade** — Poor Data Structure + Missing Mechanic: +2 attack/damage and +1 saves inert; Wish charges typed in prose but maxCharges=4 set; save-reroll reaction prose-only; attunement unmodeled.
+- **Mace of Disruption** — Missing Mechanic: +2d6 Radiant vs Fiend/Undead + destroy DC 15 + light prose-only; attunement unmodeled.
+- **Mace of Smiting** — Missing Mechanic: +1 (+3 vs Constructs) attack/damage and crit destroy-Golem prose-only.
+- **Mace of Terror** — Poor Data Structure: 3 charges typed but Frightened DC 15 brandish effect/spend prose-only; attunement unmodeled.
+- **Manual of Golems** — Clean: golem-construction crafting tome, GM/downtime narrative; no wearer mechanic.
+- **Marvelous Pigments** — Clean: paint-real-objects crafting utility, no character mechanic.
+- **Medallion of Thoughts** — Poor Data Structure: 3 charges typed but Detect Thoughts (DC 13) cast/spend prose-only; attunement unmodeled.
+- **Nine Lives Stealer** — Missing Mechanic: +2 attack/damage and crit save-or-die (DC 15) inert; 1d8+1 charges in prose but maxCharges unset; attunement unmodeled.
+- **Oathbow** — Missing Mechanic: +3d6 vs sworn enemy, Advantage/Disadvantage swings all prose-only; attunement unmodeled.
+- **Oil of Etherealness** — Missing Mechanic: Etherealness (1 hr) grant prose-only.
+- **Periapt of Health** — Missing Mechanic: Disease immunity prose-only.
+- **Periapt of Proof against Poison** — Missing Mechanic: Poisoned-condition + Poison-damage immunity inert (`damage_resistance`/immunity), prose-only.
+- **Philter of Love** — Missing Mechanic: Charmed condition (1 hr) prose-only.
+- **Pipes of Haunting** — Poor Data Structure: 3 charges typed but Frightened DC 15 effect/spend prose-only.
+- **Pipes of the Sewers** — Clean: rat-summoning/befriending is GM-run creature control; no wearer mechanic; attunement unmodeled (minor).
+- **Portable Hole** — Clean: extradimensional storage utility, no character mechanic.
+- **Potion of Clairvoyance** — Missing Mechanic: Clairvoyance effect prose-only.
+- **Potion of Growth** — Missing Mechanic: Enlarge effect (1d4 hr) prose-only.
+- **Potion of Longevity** — Missing Mechanic: age reduction 1d6+6 yrs prose-only (no age stat modeled).
+- **Potion of Resistance** — Missing Mechanic: Resistance to one damage type (1 hr) inert (`damage_resistance`), prose-only.
+- **Potion of Vitality** — Missing Mechanic: removes Exhaustion + restores HP max + max Hit Die healing prose-only.
+- **Potion of Supreme Healing** — Missing Mechanic: 10d4+20 heal inert, prose-only.
+- **Potion of Superior Healing** — Missing Mechanic: 8d4+8 heal inert, prose-only.
+- **Quarterstaff of the Acrobat** — Missing Mechanic: +1 attack/damage and +1 AC inert; Finesse/length shift prose-only; attunement unmodeled.
+- **Ring of Animal Influence** — Poor Data Structure: 3 charges typed but Animal Friendship/Fear/Speak with Animals casts/spends prose-only.
+- **Ring of Djinni Summoning** — Clean: summon-creature is GM-run; no wearer character mechanic; attunement unmodeled (minor).
+- **Ring of Elemental Command** — Unimplemented attunement + Poor Data Structure: 5 charges typed but attack-Advantage vs elementals and spell suite prose-only; attunement unmodeled.
+- **Ring of Evasion** — Poor Data Structure: 3 charges typed but Dex-save-reroll reaction/spend prose-only; attunement unmodeled.
+- **Ring of Feather Falling** — Missing Mechanic: no-fall-damage reaction prose-only; attunement unmodeled.
+- **Ring of Shooting Stars** — Unimplemented Prerequisite + Poor Data Structure: prereq 'must be worn outdoors at night' (environmental) unvalidated; 6 charges typed but Faerie Fire/Ball Lightning/star effects prose-only.
+- **Ring of Spell Turning** — Missing Mechanic: spell-save Advantage + reflect-spell reaction prose-only; attunement unmodeled.
+- **Ring of Swimming** — Missing Mechanic: Swim Speed 40 grant prose-only (no swim-speed kind applied).
+- **Ring of Telekinesis** — Missing Mechanic: Telekinesis cast prose-only; attunement unmodeled.
+- **Ring of the Ram** — Poor Data Structure: 3 charges typed but +7 ranged attack / 2d10 Force / push effect prose-only; attunement unmodeled.
+- **Rod of Absorption** — Missing Mechanic: spell-absorption / 50-level energy store prose-only; attunement unmodeled.
+- **Rod of Alertness** — Missing Mechanic: Perception/Initiative Advantage + spell suite prose-only; attunement unmodeled.
+- **Rod of Lordly Might** — Missing Mechanic: +3 mace / +2d6 Force / six button transforms all prose-only; attunement unmodeled.
+- **Rod of Resurrection** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Cleric, Druid, or Paladin' unvalidated; 5 charges typed but Heal/Resurrection casts/spends prose-only.
+- **Rod of Rulership** — Missing Mechanic: Charmed DC 15 mass effect prose-only; once-per-dawn untracked; attunement unmodeled.
+- **Rod of Security** — Clean: demiplane retreat is GM narrative, no character-sheet mechanic.
+- **Rope of Climbing** — Clean: animated-rope utility, no character mechanic.
+- **Rope of Entanglement** — Missing Mechanic: Restrained DC 15 effect prose-only (minor; object-driven).
+- **Scarab of Protection** — Poor Data Structure: 12 charges typed but spell-save Advantage and Necromancy save-reroll reaction prose-only; attunement unmodeled.
+- **Scimitar of Speed** — Missing Mechanic: +2 attack/damage and Bonus Action attack inert/prose-only; attunement unmodeled.
+- **Sending Stones** — Missing Mechanic: Sending cast prose-only (minor utility).
+- **Sentinel Shield** — Missing Mechanic: Advantage on Initiative and Perception prose-only, no typed grant.
+- **Shield of Missile Attraction** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; ranged-attack Resistance (`damage_resistance`) and curse-redirect-reaction prose-only; Remove Curse removal unmodeled.
+- **Shield of the Cavalier** — Missing Mechanic: +1 AC inert (`ac_bonus`) + deflect-reaction prose-only.
+- **Sovereign Glue** — Clean: permanent-bond crafting utility, no character mechanic.
+- **Spellguard Shield** — Missing Mechanic: spell-save Advantage + spell-attack Disadvantage prose-only; attunement unmodeled.
+- **Staff of Charming** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 10 charges typed but Charm Person/Command casts and save-reaction prose-only.
+- **Staff of Power** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Sorcerer, Warlock, or Wizard' unvalidated; +2 AC/attack/saves inert; 20 charges typed, spell suite and break-burst prose-only.
+- **Staff of Striking** — Poor Data Structure + Missing Mechanic: +3 attack/damage inert; 10 charges typed but +1d6 Force/charge spend prose-only; attunement unmodeled.
+- **Staff of Swarming Insects** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard' unvalidated; 10 charges typed but Giant Insect/Insect Plague/cloud effects prose-only.
+- **Staff of the Python** — Unimplemented Prerequisite + Clean(ish): prereq 'Cleric, Druid, or Warlock' unvalidated; transform-to-snake is GM-run creature, no wearer mechanic. (Prereq only.)
+- **Staff of the Woodlands** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Druid' unvalidated; +2 spell attack inert; 10 charges typed, spell suite and tree-transform prose-only.
+- **Staff of Withering** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Cleric, Druid, or Warlock' unvalidated; 3 charges typed but +2d10 Necrotic and DC 15 debuff spend prose-only.
+- **Stone of Controlling Earth Elementals** — Clean: summon-elemental utility, no wearer mechanic.
+- **Sun Blade** — Missing Mechanic: +2 attack/damage, Radiant conversion, +1d8 vs Undead, light all prose-only; attunement unmodeled.
+- **Sword of Life Stealing** — Missing Mechanic: crit +3d6 Necrotic + self-heal prose-only; attunement unmodeled.
+- **Sword of Wounding** — Missing Mechanic: stacking 1d4 Necrotic wound + no-magic-healing prose-only; attunement unmodeled.
+- **Talisman of the Sphere** — Missing Mechanic: Advantage on Sphere control check + levitate prose-only; attunement unmodeled.
+- **Thunderous Greatclub** — Missing Mechanic: +1d6 Thunder on hit + slam DC 13 push prose-only; recharge prose-only.
+- **Trident of Fish Command** — Poor Data Structure: 3 charges typed but Dominate Beast (DC 15) cast/spend prose-only; attunement unmodeled.
+- **Universal Solvent** — Clean: adhesive-dissolving utility, no character mechanic.
+- **Vicious Weapon** — Missing Mechanic: crit +2d6 damage inert, prose-only.
+- **Wand of Binding** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 7 charges typed but Hold Monster/Hold Person casts and save-reaction prose-only.
+- **Wand of Enemy Detection** — Poor Data Structure: 3 charges typed but detect-hostile-direction effect/spend prose-only; attunement unmodeled.
+- **Wand of Fear** — Poor Data Structure: 7 charges typed but Command/Cone of Fear (DC 15) effects/spends prose-only; attunement unmodeled.
+- **Wand of Magic Detection** — Poor Data Structure: 3 charges typed but Detect Magic cast/spend prose-only.
+- **Wand of Paralysis** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 7 charges typed but Paralyzed DC 15 ray effect/spend prose-only.
+- **Wand of Polymorph** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 7 charges typed but Polymorph (DC 17) cast/spend prose-only.
+- **Wand of the War Mage, +2** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Spellcaster' unvalidated; +2 spell attack and ignore-half-cover inert.
+- **Wand of the War Mage, +3** — Unimplemented Prerequisite + Missing Mechanic: prereq 'Spellcaster' unvalidated; +3 spell attack and ignore-half-cover inert.
+- **Wand of Wonder** — Unimplemented Prerequisite + Poor Data Structure: prereq 'Spellcaster' unvalidated; 7 charges typed but random d100 effect table prose-only.
+- **Weapon of Warning** — Missing Mechanic: Initiative Advantage + can't-be-Surprised inert (no typed grant); attunement unmodeled.
+- **Well of Many Worlds** — Clean: planar-portal utility, no character-sheet mechanic.
+- **Wind Fan** — Missing Mechanic: Gust of Wind (DC 13) cast prose-only; destroy-chance untracked.
+- **Berserker Axe** — Missing Mechanic + cursed unmodeled: isCursed=true toothless; +1 attack/damage and +1 HP-max-per-level inert; berserk DC 15 Wis save and weapon-Disadvantage curse prose-only; attunement unmodeled.
+- **Mariner's Armor** — Missing Mechanic: Swim Speed = Speed grant + auto-rise-at-0-HP prose-only.
+- **Brazier of Commanding Fire Elementals** — Clean: summon-elemental utility, no wearer mechanic.
+- **Periapt of Proof Against Poison** — Missing Mechanic: Poisoned-condition + Poison-damage immunity inert (duplicate of the earlier Periapt; capitalization-variant duplicate entry), prose-only.
+- **Ring of Warmth** — Missing Mechanic: Cold Resistance inert (`damage_resistance`) + temperature immunity prose-only; attunement unmodeled.
+- **Ring of Water Walking** — Missing Mechanic: walk-on-liquid grant prose-only.
+- **Amulet of Proof against Detection and Location** — Missing Mechanic: Divination/scrying immunity prose-only; attunement unmodeled.
+- **Arrow-Catching Shield** — Missing Mechanic: +2 AC vs ranged inert (`ac_bonus`) + redirect-reaction prose-only; attunement unmodeled.
+- **Candle of Invocation** — Missing Mechanic: Advantage on D20 Tests in light + free level-1 spells + Gate cast all prose-only (incl. 1d100 plane table); attunement unmodeled.
+- **Cloak of Arachnida** — Missing Mechanic: Poison Resistance (`damage_resistance`), Climb Speed, web-immunity, Web cast all inert/prose-only; attunement unmodeled.
+- **Cloak of the Manta Ray** — Missing Mechanic: water-breathing + Swim Speed 60 grant prose-only; attunement unmodeled.
+- **Dagger of Venom** — Missing Mechanic: +1 attack/damage and 2d10 Poison / Poisoned (DC 15) coating prose-only.
+- **Elemental Gem** — Clean: summon-elemental one-shot (GM-run creature), no wearer mechanic.
+- **Eversmoking Bottle** — Clean: smoke/obscurement environmental utility, no character mechanic.
+- **Horseshoes of a Zephyr** — Clean: mount-movement (creature) utility, no wearer character mechanic.
+- **Javelin of Lightning** — Missing Mechanic: Lightning-damage conversion + 4d6 line (DC 13) prose-only.
+- **Ring of Jumping** — Missing Mechanic: Jump (self) cast prose-only; attunement unmodeled.
+- **Ring of X-ray Vision** — Missing Mechanic: X-ray vision grant + DC 15 Con Exhaustion risk prose-only; attunement unmodeled.
+- **Staff of Thunder and Lightning** — Missing Mechanic: +2 attack/damage and full Lightning/Thunder/Strike/Thunderclap suite (DC 17) all prose-only; per-property daily uses untracked; attunement unmodeled.
+- **Wand of Secrets** — Poor Data Structure: 3 charges typed but detect-door/trap effect/spend prose-only (utility; no character mechanic).
+## Traits (traits.dart — SRD 5.2.1)
+
+Systemic note: the `_t(...)` builder accepts only name/kind/description/source — there is **no `effects` parameter** and it never calls `effect()`. Therefore EVERY trait below is pure prose stored in `description`/`trait_kind`; NONE of the mechanics are enforced. Species and monsters reference these by name via `trait_refs`, so all racial/creature/class trait mechanics are unenforced. Nearly every entry is "Missing Mechanic + Poor Data Structure"; truly clean entries do not exist.
+
+- **Amphibious** — Missing Mechanic + Poor Data Structure; flavor-only (breathe air/water), no resolver kind exists or is needed; effectively narrative. DUPLICATE with "Amphibious (Dragon)".
+- **Legendary Resistance (3/Day)** — Missing Mechanic; needs-new-kind (limited-use auto-succeed-save with daily uses); not DSL-expressible today.
+- **Magic Resistance** — Missing Mechanic; DSL-expressible-today via save-advantage but the resolver lacks "advantage on saves vs spells" specifically — closest is `advantage_on` (checks only), so effectively needs-new-kind for saves-scope. DUPLICATE family with "Magic Resistance (MF)" / "Magic Resistance (Strong)" / "Spell Resistance".
+- **Pack Tactics** — Missing Mechanic; needs-new-kind (conditional advantage on attacks vs adjacent-ally target). DUPLICATE family with "Pack Tactics (Death Dog)".
+- **Keen Smell** — Missing Mechanic; DSL-expressible-today (`advantage_on` Perception/smell), but no effects channel.
+- **Keen Sight** — Missing Mechanic; DSL-expressible-today (`advantage_on`), no effects channel.
+- **Keen Hearing** — Missing Mechanic; DSL-expressible-today (`advantage_on`), no effects channel.
+- **Sunlight Sensitivity** — Missing Mechanic; needs-new-kind (conditional disadvantage while in sunlight). DUPLICATE family with "Sunlight Sensitivity (Acute)".
+- **Spider Climb** — Missing Mechanic; DSL-expressible-today via a climb/movement grant (no-op `speed_bonus` analog), no effects channel. DUPLICATE family with "Spider Climb (Roper)" / "Spider Climb (Vampire)".
+- **Web Sense** — Missing Mechanic; needs-new-kind (web location sense); not DSL-expressible.
+- **Web Walker** — Missing Mechanic; needs-new-kind (ignore web movement restriction); not DSL-expressible.
+- **Aggressive** — Missing Mechanic; needs-new-kind (bonus-action move toward hostile); not DSL-expressible.
+- **Brute** — Missing Mechanic; needs-new-kind (extra weapon damage die); not DSL-expressible.
+- **Reckless** — Missing Mechanic; needs-new-kind (self-advantage trade-off); not DSL-expressible. DUPLICATE family with "Reckless Attacker" / "Reckless Attack".
+- **Flyby** — Missing Mechanic; needs-new-kind (no OA when flying out of reach); not DSL-expressible. DUPLICATE family with "Flyby (Bat)".
+- **Standing Leap** — Missing Mechanic; needs-new-kind (jump distance override); not DSL-expressible.
+- **Undead Fortitude** — Missing Mechanic; needs-new-kind (death-save-to-1HP on drop); not DSL-expressible.
+- **Aboleth Telepathy** — Missing Mechanic; narrative-only telepathy; needs-new-kind if enforced; not DSL-expressible.
+- **Eldritch Restoration** — Missing Mechanic; narrative resurrection; needs-new-kind; not DSL-expressible.
+- **Mucous Cloud** — Missing Mechanic; needs-new-kind (contact-save disease aura); not DSL-expressible.
+- **Probing Telepathy** — Missing Mechanic; narrative-only; needs-new-kind; not DSL-expressible.
+- **Legendary Resistance (3/Day, or 4/Day in Lair)** — Missing Mechanic; needs-new-kind (limited-use auto-succeed with lair conditional). DUPLICATE family with "Legendary Resistance (3/Day)".
+- **Fire Aura** — Missing Mechanic; needs-new-kind (recurring emanation damage); not DSL-expressible. DUPLICATE family with "Heated Body" (touch-damage variant).
+- **Spellcasting (Lich)** — Missing Mechanic; needs-new-kind (innate/limited-use spellcasting wired to uses); `spell_grant` exists but at-will/X-per-day scheduling is unsupported.
+- **Rejuvenation** — Missing Mechanic; needs-new-kind (phylactery revival); not DSL-expressible.
+- **Turn Resistance** — Missing Mechanic; needs-new-kind (advantage on saves vs turn-undead, a saves-vs-effect scope); not DSL-expressible.
+- **Antimagic Cone** — Missing Mechanic; needs-new-kind (directional antimagic field); not DSL-expressible.
+- **Creature Sense** — Missing Mechanic; needs-new-kind (Int-detection sense); partial overlap with `sense_grant` but specialized; effectively needs-new-kind.
+- **Magic Resistance (MF)** — Missing Mechanic; needs-new-kind (advantage on saves vs spells). DUPLICATE family with "Magic Resistance".
+- **Keen Sight and Smell** — Missing Mechanic; DSL-expressible-today (`advantage_on`), no effects channel.
+- **Martial Advantage** — Missing Mechanic; needs-new-kind (conditional extra damage once/turn); not DSL-expressible.
+- **Charge** — Missing Mechanic; needs-new-kind (move-then-hit extra damage + prone save); not DSL-expressible. DUPLICATE family with "Charge (Animal)".
+- **Hold Breath** — Missing Mechanic; narrative-only; needs-new-kind; not DSL-expressible. DUPLICATE family with "Hold Breath (Crocodile)" / "Hold Breath (Octopus)".
+- **Pounce** — Missing Mechanic; needs-new-kind (charge + bonus bite); not DSL-expressible.
+- **Running Leap** — Missing Mechanic; needs-new-kind (jump override); not DSL-expressible.
+- **Snow Camouflage** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth in terrain), no effects channel.
+- **Innate Spellcasting (Drow)** — Missing Mechanic; needs-new-kind (innate spells wired to at-will/per-day uses); `spell_grant` lacks scheduling.
+- **Fey Ancestry** — Missing Mechanic; needs-new-kind (save-advantage-vs-Charmed + sleep immunity); `advantage_on` covers checks not saves-vs-condition.
+- **Shapechanger (Werewolf)** — Missing Mechanic; needs-new-kind (polymorph statblock swap); not DSL-expressible. DUPLICATE family with "Shapechanger (Werecreature)" / "Shapechanger (Vampire)".
+- **Regeneration** — Missing Mechanic; needs-new-kind (regeneration — explicitly absent from resolver); not DSL-expressible.
+- **Death Burst** — Missing Mechanic; needs-new-kind (on-death AoE save); not DSL-expressible. DUPLICATE family with "Death Burst (Fire Beetle)".
+- **False Appearance** — Missing Mechanic; needs-new-kind (object disguise); not DSL-expressible. DUPLICATE family with "False Appearance (Gargoyle)".
+- **Siege Monster** — Missing Mechanic; needs-new-kind (double damage to objects); not DSL-expressible.
+- **Damage Transfer** — Missing Mechanic; needs-new-kind (shared grapple damage); not DSL-expressible.
+- **Sure-Footed** — Missing Mechanic; needs-new-kind (advantage on Str/Dex saves vs prone, saves scope); not DSL-expressible via `advantage_on`.
+- **Innate Spellcasting (Druid)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Two Heads** — Missing Mechanic; needs-new-kind (advantage on saves vs many conditions + Perception); saves scope unsupported.
+- **Wakeful** — Missing Mechanic; narrative-only; needs-new-kind; not DSL-expressible.
+- **Multiple Heads** — Missing Mechanic; needs-new-kind (save advantage + per-head HP tracking); not DSL-expressible.
+- **Reactive Heads** — Missing Mechanic; needs-new-kind (extra reactions); not DSL-expressible.
+- **Acid Absorption** — Missing Mechanic; needs-new-kind (damage-type heal-instead); not DSL-expressible (inverse of `damage_resistance`). DUPLICATE family with Lightning/Fire/Cold Absorption.
+- **Magic Weapons** — Missing Mechanic; needs-new-kind (magical attacks + extra die); not DSL-expressible.
+- **Sneak Attack** — Missing Mechanic; needs-new-kind (conditional once/turn extra damage); not DSL-expressible. DUPLICATE family with "Sneak Attack (Rogue)".
+- **Cunning Action** — Missing Mechanic; needs-new-kind (bonus-action Dash/Disengage/Hide). DUPLICATE family with "Cunning Action (Rogue)".
+- **Evasion** — Missing Mechanic; needs-new-kind (Dex-save damage halving/negation); not DSL-expressible. DUPLICATE (exact name) with class "Evasion" — name-based `trait_refs` is ambiguous.
+- **Stone Camouflage** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth), no effects channel. DUPLICATE family with "Stone Camouflage (Xorn)".
+- **Earth Glide** — Missing Mechanic; needs-new-kind (burrow through earth); not DSL-expressible. DUPLICATE family with "Earth Glide (Xorn)".
+- **Sunlight Hypersensitivity** — Missing Mechanic; needs-new-kind (sunlight disadvantage + death); not DSL-expressible.
+- **Innate Spellcasting (Demon)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Magic Resistance (Strong)** — Missing Mechanic; needs-new-kind (advantage on saves vs spells/magic). DUPLICATE family with "Magic Resistance".
+- **Demonic Restoration** — Missing Mechanic; narrative revival; needs-new-kind; not DSL-expressible.
+- **Devil's Sight** — Missing Mechanic; DSL-expressible-today-ish via `sense_grant`/`darkvision` (see in magical darkness), but specialized; effectively needs-new-kind; no effects channel regardless.
+- **Paralyzing Aura** — Missing Mechanic; needs-new-kind (touch-save Paralyzed); not DSL-expressible.
+- **Amphibious (Dragon)** — Missing Mechanic; flavor-only; DUPLICATE of "Amphibious".
+- **Ice Walk** — Missing Mechanic; needs-new-kind (ignore ice difficult terrain + climb); not DSL-expressible.
+- **Stench** — Missing Mechanic; needs-new-kind (Con-save Poisoned aura); not DSL-expressible.
+- **Tentacles (Chuul)** — Missing Mechanic; needs-new-kind (on-hit drag + Poisoned/Paralyzed); not DSL-expressible.
+- **Sense Magic** — Missing Mechanic; needs-new-kind (detect-magic sense); partial `sense_grant` overlap but specialized.
+- **Limited Telepathy** — Missing Mechanic; narrative telepathy; needs-new-kind; not DSL-expressible.
+- **Tree Stride** — Missing Mechanic; needs-new-kind (tree teleport movement); not DSL-expressible.
+- **Speak with Beasts and Plants** — Missing Mechanic; narrative communication; needs-new-kind; not DSL-expressible.
+- **Speak with Plants** — Missing Mechanic; narrative-only; needs-new-kind; not DSL-expressible.
+- **False Appearance (Gargoyle)** — Missing Mechanic; needs-new-kind (statue disguise). DUPLICATE family with "False Appearance".
+- **Spider Climb (Roper)** — Missing Mechanic; DSL-expressible-today (climb/movement grant). DUPLICATE family with "Spider Climb".
+- **Aversion to Light** — Missing Mechanic; needs-new-kind (sunlight disadvantage); not DSL-expressible.
+- **Tentacles** — Missing Mechanic; needs-new-kind (grapple attack restriction + disease); not DSL-expressible. DUPLICATE family with "Tentacles (Chuul)".
+- **Beast of Burden** — Missing Mechanic; needs-new-kind (size-up for carry capacity); not DSL-expressible. Overlaps "Powerful Build".
+- **Reckless Attacker** — Missing Mechanic; needs-new-kind (self-advantage trade-off). DUPLICATE family with "Reckless" / "Reckless Attack".
+- **Brave** — Missing Mechanic; needs-new-kind (advantage on saves vs Frightened, saves scope). DUPLICATE (exact name) with species "Brave" — `trait_refs` ambiguity.
+- **Spell Resistance** — Missing Mechanic; needs-new-kind (advantage on saves vs spells/magic). DUPLICATE family with "Magic Resistance".
+- **Shielded Mind** — Missing Mechanic; needs-new-kind (scry/sense immunity); not DSL-expressible.
+- **Inscrutable** — Missing Mechanic; needs-new-kind (mind-reading/divination immunity); not DSL-expressible.
+- **Multi-Headed (Hydra)** — Missing Mechanic; needs-new-kind (save advantage while multi-headed). DUPLICATE family with "Multiple Heads" / "Two Heads".
+- **Aura of the Dead** — Missing Mechanic; needs-new-kind (fear aura radius); not DSL-expressible. Overlaps "Fear Aura".
+- **Spellcasting (Mage)** — Missing Mechanic; needs-new-kind (per-day spell scheduling).
+- **Spellcasting (Priest)** — Missing Mechanic; needs-new-kind (per-day spell scheduling).
+- **Spellcasting (Cult Fanatic)** — Missing Mechanic; needs-new-kind (per-day spell scheduling).
+- **Pack Tactics (Death Dog)** — Missing Mechanic; needs-new-kind (conditional attack advantage). DUPLICATE family with "Pack Tactics".
+- **Two-Headed (Death Dog)** — Missing Mechanic; needs-new-kind (save advantage). DUPLICATE family with "Two Heads".
+- **Blood Frenzy** — Missing Mechanic; needs-new-kind (advantage vs wounded target); not DSL-expressible.
+- **Water Breathing** — Missing Mechanic; narrative-only (underwater-only breathing); needs-new-kind. DUPLICATE family with "Water Breathing (Animal)".
+- **Hold Breath (Crocodile)** — Missing Mechanic; narrative-only. DUPLICATE family with "Hold Breath".
+- **Trampling Charge** — Missing Mechanic; needs-new-kind (charge + prone save + bonus stomp); not DSL-expressible.
+- **Beast Whisperer** — Missing Mechanic; narrative communication; needs-new-kind. Overlaps "Speak with Beasts and Plants".
+- **Swarm** — Missing Mechanic; needs-new-kind (space-sharing + no heal); not DSL-expressible.
+- **Echolocation** — Missing Mechanic; needs-new-kind (blindsight gated by Deafened); not DSL-expressible.
+- **Avoidance** — Missing Mechanic; needs-new-kind (save damage halving — like Evasion for all saves); not DSL-expressible.
+- **Nine Lives Stealer** — Missing Mechanic; needs-new-kind (phylactery on death); not DSL-expressible.
+- **Construct Nature** — Missing Mechanic; narrative (no air/food/sleep); needs-new-kind.
+- **Plant Camouflage** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth in vegetation), no effects channel.
+- **Frightful Presence** — Missing Mechanic; needs-new-kind (Wis-save Frightened aura with repeat saves); not DSL-expressible.
+- **Innate Spellcasting (Sphinx)** — Missing Mechanic; needs-new-kind (innate spells wired to uses). DUPLICATE family with "Sphinx Spellcasting".
+- **Flyby (Bat)** — Missing Mechanic; needs-new-kind (no OA when flying out). DUPLICATE family with "Flyby".
+- **Nimble Escape** — Missing Mechanic; needs-new-kind (bonus-action Disengage/Hide); not DSL-expressible. Overlaps "Cunning Action".
+- **Climb (Animal)** — Missing Mechanic; DSL-expressible-today via a movement/speed grant (climb speed), no effects channel.
+- **Burrow (Giant Badger)** — Missing Mechanic; DSL-expressible-today via movement-speed grant analog; effectively needs-new-kind for burrow speed; no effects channel.
+- **Stealth Master** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth in dim/dark), no effects channel.
+- **Death Burst (Fire Beetle)** — Missing Mechanic; needs-new-kind (on-death AoE save damage). DUPLICATE family with "Death Burst".
+- **Light (Fire Beetle)** — Missing Mechanic; needs-new-kind (light emission); not DSL-expressible.
+- **Camouflage (Octopus)** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth underwater). DUPLICATE family with "Underwater Camouflage".
+- **Hold Breath (Octopus)** — Missing Mechanic; narrative-only. DUPLICATE family with "Hold Breath".
+- **Underwater Camouflage** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth underwater). DUPLICATE family with "Camouflage (Octopus)".
+- **Ink Cloud** — Missing Mechanic; needs-new-kind (bonus-action obscuring cloud); not DSL-expressible.
+- **Water Breathing (Animal)** — Missing Mechanic; narrative-only. DUPLICATE family with "Water Breathing".
+- **Charge (Animal)** — Missing Mechanic; needs-new-kind (charge extra damage). DUPLICATE family with "Charge".
+- **Mimicry** — Missing Mechanic; needs-new-kind (sound mimic + Insight contest); not DSL-expressible.
+- **Shapechanger (Werecreature)** — Missing Mechanic; needs-new-kind (polymorph). DUPLICATE family with "Shapechanger (Werewolf)".
+- **Hooves (Trampling)** — Missing Mechanic; needs-new-kind (charge + prone); not DSL-expressible.
+- **Fear Aura** — Missing Mechanic; needs-new-kind (Wis-save Frightened aura); not DSL-expressible. Overlaps "Aura of the Dead".
+- **Innate Spellcasting (Hag)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Reactive** — Missing Mechanic; needs-new-kind (reaction every turn); not DSL-expressible.
+- **Lightning Absorption** — Missing Mechanic; needs-new-kind (damage-type heal-instead). DUPLICATE family with Acid/Fire/Cold Absorption.
+- **Fire Absorption** — Missing Mechanic; needs-new-kind (damage-type heal-instead). DUPLICATE family with Acid/Lightning/Cold Absorption.
+- **Cold Absorption** — Missing Mechanic; needs-new-kind (damage-type heal-instead). DUPLICATE family with Acid/Lightning/Fire Absorption.
+- **Treasure Sense** — Missing Mechanic; needs-new-kind (smell metals/gems sense); not DSL-expressible.
+- **Earth Walk** — Missing Mechanic; needs-new-kind (move through earth as difficult terrain); not DSL-expressible. Overlaps "Earth Glide".
+- **Heated Body** — Missing Mechanic; needs-new-kind (touch/melee Fire damage); not DSL-expressible.
+- **Innate Spellcasting (Lamia)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Steal Memories** — Missing Mechanic; narrative-only; needs-new-kind.
+- **Blessed by Tyche** — Missing Mechanic; needs-new-kind (limited-use auto-succeed save); like Legendary Resistance.
+- **Misty Escape** — Missing Mechanic; needs-new-kind (drop-to-0 transform); not DSL-expressible.
+- **Shapechanger (Vampire)** — Missing Mechanic; needs-new-kind (polymorph). DUPLICATE family with "Shapechanger (Werewolf)".
+- **Spider Climb (Vampire)** — Missing Mechanic; DSL-expressible-today (movement grant). DUPLICATE family with "Spider Climb".
+- **Vampire Weaknesses** — Missing Mechanic; needs-new-kind (multiple weakness conditions); not DSL-expressible. Also poor data structure (vague prose, ends with "etc.").
+- **Innate Spellcasting (Rakshasa)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Limited Magic Immunity** — Missing Mechanic; needs-new-kind (immune to spells ≤6th + save advantage); not DSL-expressible.
+- **Air Form** — Missing Mechanic; needs-new-kind (squeeze/enter spaces); not DSL-expressible.
+- **Earth Glide (Xorn)** — Missing Mechanic; needs-new-kind (burrow through earth). DUPLICATE family with "Earth Glide".
+- **Stone Camouflage (Xorn)** — Missing Mechanic; DSL-expressible-today (`advantage_on` Stealth). DUPLICATE family with "Stone Camouflage".
+- **Innate Spellcasting (Pixie)** — Missing Mechanic; needs-new-kind (innate spells wired to uses).
+- **Immutable Form** — Missing Mechanic; needs-new-kind (immune to form-altering); not DSL-expressible.
+- **Sunlight Sensitivity (Acute)** — Missing Mechanic; needs-new-kind (sunlight disadvantage). DUPLICATE family with "Sunlight Sensitivity".
+- **Sphinx Spellcasting** — Missing Mechanic; needs-new-kind (spell scheduling). DUPLICATE family with "Innate Spellcasting (Sphinx)". Also poor data structure (DC "scales with stat block").
+- **Whelm** — Missing Mechanic; needs-new-kind (drop-to-0 resurrect with uses); not DSL-expressible.
+- **Spell Storing (Lich)** — Missing Mechanic; needs-new-kind (store/cast spell); not DSL-expressible.
+- **Incorporeal Movement** — Missing Mechanic; needs-new-kind (move through objects + Force damage); not DSL-expressible.
+- **Divine Awareness** — Missing Mechanic; narrative (detect lies); needs-new-kind.
+- **Iron Scent** — Missing Mechanic; needs-new-kind (pinpoint ferrous metal sense); not DSL-expressible.
+- **Ooze Cube** — Missing Mechanic; needs-new-kind (engulf/cover/space); not DSL-expressible.
+- **Reflective Carapace** — Missing Mechanic; needs-new-kind (d6 spell reflection); not DSL-expressible.
+- **Tunneler** — Missing Mechanic; needs-new-kind (burrow through rock leaving tunnel); not DSL-expressible.
+- **Dwarven Resilience** — Missing Mechanic; DSL-expressible-today in part (`damage_resistance` Poison) but advantage-on-saves-vs-Poisoned needs-new-kind (saves-vs-condition scope); no effects channel. Note: comment says grants live on species fields, so this card is intentionally narrative — still Poor Data Structure for `trait_refs`.
+- **Stonecunning** — Missing Mechanic; needs-new-kind (bonus-action Tremorsense with PB uses); `sense_grant` exists but limited-use activation unsupported.
+- **Forge Wise** — Missing Mechanic; needs-new-kind (tool proficiency choice); not DSL-expressible.
+- **Trance** — Missing Mechanic; needs-new-kind (no-sleep + 4hr rest + proficiency); not DSL-expressible.
+- **Keen Senses (Elf)** — Missing Mechanic; needs-new-kind (skill proficiency choice); not DSL-expressible.
+- **Elven Lineage** — Missing Mechanic; needs-new-kind (sub-lineage selection + spells); not DSL-expressible. Poor data structure (defers to lineage).
+- **Halfling Lucky** — Missing Mechanic; needs-new-kind (reroll natural 1); not DSL-expressible.
+- **Naturally Stealthy** — Missing Mechanic; needs-new-kind (Hide behind larger creature); not DSL-expressible.
+- **Brave** (species) — Missing Mechanic; needs-new-kind (advantage on saves vs Frightened). DUPLICATE (exact name) with monster "Brave" — `trait_refs` ambiguity.
+- **Halfling Nimbleness** — Missing Mechanic; needs-new-kind (move through larger creatures' space); not DSL-expressible.
+- **Resourceful** — Missing Mechanic; needs-new-kind (Heroic Inspiration on Long Rest); not DSL-expressible.
+- **Skilled (Human)** — Missing Mechanic; needs-new-kind (three skill proficiencies); not DSL-expressible.
+- **Versatile (Human)** — Missing Mechanic; needs-new-kind (Origin feat grant); not DSL-expressible.
+- **Gnomish Cunning** — Missing Mechanic; needs-new-kind (advantage on Int/Wis/Cha saves, saves scope); `advantage_on` is checks-only.
+- **Powerful Build** — Missing Mechanic; needs-new-kind (size-up carry + grapple-escape advantage); not DSL-expressible. Overlaps "Beast of Burden".
+- **Large Form** — Missing Mechanic; needs-new-kind (size change + speed/advantage with PB uses); not DSL-expressible.
+- **Giant Ancestry** — Missing Mechanic; needs-new-kind (ancestry boon selection); not DSL-expressible. Poor data structure (defers to boon).
+- **Otherworldly Presence** — Missing Mechanic; needs-new-kind (cantrip grant with Cha key); `spell_grant` partial but ability override unsupported.
+- **Fiendish Legacy** — Missing Mechanic; needs-new-kind (legacy selection + resistance + spells); not DSL-expressible. Poor data structure (defers to legacy).
+- **Draconic Ancestry** — Missing Mechanic; needs-new-kind (ancestry selection driving breath + resistance); not DSL-expressible. Poor data structure (defers to ancestry).
+- **Damage Resistance (Dragonborn)** — Missing Mechanic; DSL-expressible-today via `damage_resistance` BUT the type is parameterized by ancestry (Unimplemented Prerequisite — depends on Draconic Ancestry choice); no effects channel.
+- **Unarmored Defense (Barbarian)** — Missing Mechanic; needs-new-kind (AC formula override); not DSL-expressible.
+- **Unarmored Defense (Monk)** — Missing Mechanic; needs-new-kind (AC formula override); not DSL-expressible. DUPLICATE family with "Unarmored Defense (Barbarian)".
+- **Reckless Attack** — Missing Mechanic; needs-new-kind (self-advantage trade-off). DUPLICATE family with "Reckless" / "Reckless Attacker".
+- **Danger Sense** — Missing Mechanic; needs-new-kind (advantage on Dex saves, saves scope); `advantage_on` is checks-only.
+- **Weapon Mastery** — Missing Mechanic; needs-new-kind (mastery property selection); not DSL-expressible.
+- **Jack of All Trades** — Missing Mechanic; needs-new-kind (half-PB to non-proficient checks); not DSL-expressible.
+- **Expertise** — Missing Mechanic; needs-new-kind (double PB on two skills); not DSL-expressible.
+- **Sneak Attack (Rogue)** — Missing Mechanic; needs-new-kind (conditional scaling extra damage). DUPLICATE family with "Sneak Attack".
+- **Cunning Action (Rogue)** — Missing Mechanic; needs-new-kind (bonus-action Dash/Disengage/Hide). DUPLICATE family with "Cunning Action".
+- **Martial Arts** — Missing Mechanic; needs-new-kind (Dex-for-attack + MA die + bonus strike); not DSL-expressible.
+- **Arcane Recovery** — Missing Mechanic; needs-new-kind (slot recovery on Short Rest); not DSL-expressible.
+- **Spellcasting Focus** — Missing Mechanic; needs-new-kind (focus replaces components); not DSL-expressible.
+- **Divine Order** — Missing Mechanic; needs-new-kind (role selection granting proficiencies/cantrip); not DSL-expressible.
+- **Druidic** — Missing Mechanic; narrative (secret language); needs-new-kind.
+- **Pact Magic** — Missing Mechanic; needs-new-kind (short-rest slot recovery spellcasting); not DSL-expressible.
+- **Eldritch Invocations** — Missing Mechanic; needs-new-kind (invocation selection); not DSL-expressible.
+- **Favored Enemy** — Missing Mechanic; needs-new-kind (free Hunter's Mark with PB uses); `spell_grant` partial but uses-scheduling unsupported.
+- **Lay on Hands (Pool)** — Missing Mechanic; needs-new-kind (healing pool with refresh); not DSL-expressible.
+- **Innate Sorcery** — Missing Mechanic; needs-new-kind (Sorcery Points + Metamagic); not DSL-expressible.
+- **Dwarven Toughness** — Missing Mechanic; needs-new-kind (HP-max-per-level bump); not DSL-expressible.
+- **Fast Movement** — Missing Mechanic; DSL-expressible-today via `speed_bonus` (currently a no-op in resolver), conditional on no-heavy-armor adds Unimplemented Prerequisite; no effects channel.
+- **Feral Instinct** — Missing Mechanic; needs-new-kind (advantage on Initiative); not DSL-expressible.
+- **Frenzy** — Missing Mechanic; needs-new-kind (conditional extra damage dice); not DSL-expressible.
+- **Mindless Rage** — Missing Mechanic; needs-new-kind (condition immunity while Raging); `condition_immunity_grant` exists but Rage-conditional unsupported.
+- **Aura of Protection** — Missing Mechanic; needs-new-kind (save bonus aura); not DSL-expressible.
+- **Aura of Courage** — Missing Mechanic; needs-new-kind (Frightened immunity aura); `condition_immunity_grant` partial but aura-scoped unsupported.
+- **Faithful Steed** — Missing Mechanic; needs-new-kind (free Find Steed once/Long Rest); `spell_grant` partial, uses unsupported.
+- **Paladin's Smite** — Missing Mechanic; needs-new-kind (free Divine Smite); `spell_grant` partial, uses unsupported.
+- **Radiant Strikes** — Missing Mechanic; needs-new-kind (once/turn extra Radiant damage); not DSL-expressible.
+- **Tactical Mind** — Missing Mechanic; needs-new-kind (Second Wind to boost check); not DSL-expressible.
+- **Tactical Shift** — Missing Mechanic; needs-new-kind (Second Wind move w/o OA); not DSL-expressible.
+- **Indomitable** — Missing Mechanic; needs-new-kind (reroll save with bonus, scaling uses); not DSL-expressible.
+- **Improved Critical** — Missing Mechanic; needs-new-kind (crit on 19-20); not DSL-expressible.
+- **Remarkable Athlete** — Missing Mechanic; needs-new-kind (Initiative/Athletics advantage + crit move); not DSL-expressible.
+- **Heroic Warrior** — Missing Mechanic; needs-new-kind (self Heroic Inspiration in combat); not DSL-expressible.
+- **Deft Explorer** — Missing Mechanic; needs-new-kind (Expertise + language); not DSL-expressible.
+- **Roving** — Missing Mechanic; DSL-expressible-today via `speed_bonus` (no-op) + climb/swim grant; effectively needs-new-kind for full effect; no effects channel.
+- **Hunter's Prey** — Missing Mechanic; needs-new-kind (Hunter feature option selection); not DSL-expressible.
+- **Defensive Tactics** — Missing Mechanic; needs-new-kind (Hunter option selection); not DSL-expressible.
+- **Tireless** — Missing Mechanic; DSL-expressible-today in part via `temp_hp_grant` BUT the Wis-mod-per-Long-Rest uses + Exhaustion reduction need-new-kind; no effects channel.
+- **Cunning Strike** — Missing Mechanic; needs-new-kind (Sneak Attack rider effects); not DSL-expressible.
+- **Reliable Talent** — Missing Mechanic; needs-new-kind (treat d20 ≤9 as 10); not DSL-expressible.
+- **Slippery Mind** — Missing Mechanic; needs-new-kind (Wis/Cha save proficiency); not DSL-expressible.
+- **Open Hand Technique** — Missing Mechanic; needs-new-kind (Flurry rider effects); not DSL-expressible.
+- **Disciple of Life** — Missing Mechanic; needs-new-kind (bonus healing on heal spell); not DSL-expressible.
+- **Blessed Healer** — Missing Mechanic; needs-new-kind (self-heal on healing others); not DSL-expressible.
+- **Draconic Resilience** — Missing Mechanic; needs-new-kind (HP-max bump + unarmored AC formula); not DSL-expressible.
+- **Elemental Affinity** — Missing Mechanic; DSL-expressible-today in part via `damage_resistance` (chosen type) BUT the +Cha damage rider needs-new-kind; Unimplemented Prerequisite (type choice); no effects channel.
+- **Dragon Companion** — Missing Mechanic; needs-new-kind (free Summon Dragon w/ Sorcery Point option); `spell_grant` partial, uses unsupported.
+- **Dark One's Blessing** — Missing Mechanic; DSL-expressible-today in part via `temp_hp_grant` BUT trigger-on-kill is needs-new-kind; no effects channel.
+- **Dark One's Own Luck** — Missing Mechanic; needs-new-kind (add 1d10 with Cha-mod uses); not DSL-expressible.
+- **Fiendish Resilience** — Missing Mechanic; DSL-expressible-today via `damage_resistance` (chosen type) but the rest-swappable choice adds Unimplemented Prerequisite; no effects channel.
+- **Sculpt Spells** — Missing Mechanic; needs-new-kind (allies auto-succeed vs Evocation); not DSL-expressible.
+- **Magical Cunning** — Missing Mechanic; needs-new-kind (Short Rest slot recovery, 1/Long Rest); not DSL-expressible.
+- **Pact Boon** — Missing Mechanic; needs-new-kind (boon selection); not DSL-expressible. Poor data structure (defers to boon).
+- **Ritual Adept** — Missing Mechanic; needs-new-kind (cast Ritual spells unprepared); not DSL-expressible.
+- **Scholar (Wizard)** — Missing Mechanic; needs-new-kind (Expertise in one skill); not DSL-expressible.
+- **Uncanny Metabolism** — Missing Mechanic; needs-new-kind (Initiative Focus refresh + heal); not DSL-expressible.
+- **Land's Stride** — Missing Mechanic; needs-new-kind (ignore plant difficult terrain); not DSL-expressible.
+- **Nature's Ward** — Missing Mechanic; DSL-expressible-today in part via `condition_immunity_grant` (Poisoned) + `damage_resistance` (land type) BUT the land-keyed type choice is Unimplemented Prerequisite; no effects channel.
+- **Empowered Strikes** — Missing Mechanic; needs-new-kind (unarmed magical + Force damage option); not DSL-expressible.
+- **Evasion** (class) — Missing Mechanic; needs-new-kind (Dex-save damage negation). DUPLICATE (exact name) with monster "Evasion" — `trait_refs` ambiguity.
+- **Acrobatic Movement** — Missing Mechanic; needs-new-kind (wall/liquid walking); not DSL-expressible.
+- **Perfect Focus** — Missing Mechanic; needs-new-kind (Initiative Focus refill); not DSL-expressible.
+- **Stunning Strike** — Missing Mechanic; needs-new-kind (Focus spend → Con save Stunned); not DSL-expressible.
+- **Heightened Focus** — Missing Mechanic; needs-new-kind (enhanced Focus options); not DSL-expressible.
+## Creature Actions (creature_actions.dart — SRD 5.2.1)
+
+Systemic note: the `_a(...)` model exposes ONE `damageDice` + ONE `damageType`, no spell refs, and a prose-only legendary/lair timing model — so every multi-component attack drops its secondary damage type, every "monster spellcasting" card is fully untyped, and many area/save effects (plus all Legendary/Lair cost/timing) live only in `description`. A `rechargeKind` enum split (`'Roll'` vs `'Recharge'` for the same "Recharge 5–6") is present.
+
+- **Multiattack** — Poor Data Structure: pure pointer ("mix is given in its stat block"); no typed attack composition. Not an attack itself.
+- **Tentacle (Aboleth)** — Poor Data Structure: DC 14 Con save + "cursed with Aboleth Tentacle Disease" rider is prose-only; `saveDc`/`saveAbility`/`conditions` all unset.
+- **Psychic Drain (Aboleth)** — Missing Mechanic: damage-dealing save/charm action but not flagged `isAttack`; "no longer charmed" effect prose-only, no save fields. Damage (8d8 Psychic) typed.
+- **Tail Swipe (Aboleth, Legendary)** — Clean attack, but Legendary cost/timing is prose-only (no typed cost model).
+- **Psychic Slash (Aboleth, Legendary)** — Missing Mechanic: auto-damage (4d8 Psychic) typed, but Legendary cost prose-only; no `isAttack` (correctly, auto-hit).
+- **Scimitar (Goblin)** — Clean.
+- **Shortbow (Goblin)** — Clean.
+- **Nimble Escape (Goblin)** — Clean (utility bonus action; Disengage/Hide, nothing typed needed).
+- **Bite (Wolf)** — Clean: damage + save DC 11 Str + Prone all typed.
+- **Shortsword (Skeleton)** — Clean.
+- **Shortbow (Skeleton)** — Clean.
+- **Slam (Zombie)** — Clean.
+- **Bite (Brown Bear)** — Clean.
+- **Claws (Brown Bear)** — Clean.
+- **Bite (Giant Spider)** — Missing Mechanic: secondary damage component untyped (9 (2d8) Poison lost); save DC 11 Con + Poisoned are typed.
+- **Web (Giant Spider)** — Poor Data Structure / inconsistency: `rechargeKind: 'Roll'` for "Recharge 5–6" (inconsistent vs dragon breaths using `'Recharge'`); save + Restrained typed; web-object AC/HP prose-only.
+- **Rend (Adult Red Dragon)** — Missing Mechanic: secondary damage component untyped (9 (2d8) Fire lost).
+- **Fire Breath (Adult Red Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Roll'` vs `'Recharge'` used elsewhere; also description says "Constitution" save while `saveAbility` is Dexterity (mismatch). Damage typed.
+- **Commanding Presence (Adult Red Dragon, Legendary)** — Missing Mechanic: monster spellcasting untyped (casts Command, no spell ref); Legendary cost prose-only. Save fields populated.
+- **Frightful Presence (Adult Red Dragon, Legendary)** — Poor Data Structure: save + Frightened typed, but Legendary cost prose-only.
+- **Tail Attack (Adult Red Dragon, Legendary)** — Clean attack; Legendary cost prose-only.
+- **Eldritch Burst (Lich)** — Poor Data Structure: typed damage (4d12 Force) but description "+12 ... 31 (4d12 + 5)" includes a +5 not in `damageDice`; melee-or-ranged duality flattened to one `attackKind`/range.
+- **Paralyzing Touch (Lich)** — Clean-ish: damage + DC 18 Con + Paralyzed typed (repeat-save detail prose-only but acceptable).
+- **Bite (Beholder)** — Clean (description "9 (2d6 + 2)" but `damageDice` is bare 2d6 — minor mismatch, no rules loss).
+- **Eye Rays (Beholder)** — Poor Data Structure: ten distinct rays, each with its own save DC/effect, entirely deferred to prose ("See the SRD beholder stat block"); nothing typed.
+- **Eye Ray (Lair) (Beholder, Legendary)** — Poor Data Structure: pointer to Eye Rays; Legendary/lair timing prose-only.
+- **Tentacles (Mind Flayer)** — Poor Data Structure: damage + DC 15 Int + Stunned typed, but Grappled condition + escape DC 15 prose-only (conditions list omits Grappled).
+- **Mind Blast (Mind Flayer)** — Poor Data Structure / inconsistency: `rechargeKind: 'Roll'`; save + damage + Stunned typed; recharge enum split.
+- **Extract Brain (Mind Flayer)** — Poor Data Structure: `isAttack: true` but no `attackBonus`/`attackKind`/`reach` set (all in prose); damage typed.
+- **Greatclub (Ogre)** — Clean.
+- **Javelin (Ogre)** — Clean (melee/ranged duality flattened to Ranged; minor).
+- **Beak (Owlbear)** — Clean.
+- **Claws (Owlbear)** — Clean.
+- **Longsword (Hobgoblin)** — Clean (versatile two-hand damage prose-only; minor).
+- **Longbow (Hobgoblin)** — Clean.
+- **Scimitar (Bandit)** — Clean.
+- **Light Crossbow (Bandit)** — Clean.
+- **Talons (Giant Eagle)** — Clean.
+- **Bite (Dire Wolf)** — Clean: damage + DC 13 Str + Prone typed.
+- **Bite (Tiger)** — Clean.
+- **Claws (Tiger)** — Clean.
+- **Bite (Lion)** — Clean.
+- **Bite (Crocodile)** — Clean: damage + Grappled typed (escape DC prose-only; minor).
+- **Tusk (Boar)** — Poor Data Structure: charge rider (+1d6, DC 11 Str save, Prone) entirely prose-only; no save/condition fields.
+- **Bite (Mastiff)** — Clean: damage + DC 11 Str + Prone typed.
+- **Hooves (Riding Horse)** — Clean.
+- **Dagger (Kobold)** — Clean (melee/ranged duality flattened; minor).
+- **Sling (Kobold)** — Clean.
+- **Greataxe (Orc)** — Clean.
+- **Javelin (Orc)** — Clean.
+- **Bite (Gnoll)** — Clean.
+- **Spear (Gnoll)** — Clean.
+- **Morningstar (Bugbear)** — Clean.
+- **Javelin (Bugbear)** — Clean.
+- **Rapier (Drow)** — Clean.
+- **Hand Crossbow (Drow)** — Poor Data Structure: DC 13 Con + Poisoned + Unconscious-on-fail-by-5 rider prose-only; `saveDc`/`saveAbility`/`conditions` unset despite a save being present.
+- **Bite (Werewolf)** — Poor Data Structure: save fields set (DC 12 Con) but lycanthropy-curse outcome prose-only and no condition; acceptable but rider untyped.
+- **Claws (Werewolf)** — Clean.
+- **Bite (Troll)** — Clean.
+- **Claws (Troll)** — Clean.
+- **Bite (Hydra)** — Clean (per-head note prose-only; minor).
+- **Vampire Bite** — Missing Mechanic: secondary damage component untyped (10 (3d6) Necrotic lost); plus HP-max drain / spawn-rising rider prose-only.
+- **Charm (Vampire)** — Clean: DC 17 Wis + Charmed typed.
+- **Flame Whip (Balor)** — Missing Mechanic: secondary damage untyped (10 (3d6) Fire lost).
+- **Lightning Sword (Balor)** — Missing Mechanic: secondary damage untyped (13 (3d8) Lightning lost).
+- **Bite (Pit Fiend)** — Poor Data Structure: Poisoned rider prose-only, no condition/save fields.
+- **Slam (Air Elemental)** — Clean.
+- **Slam (Earth Elemental)** — Clean.
+- **Touch (Fire Elemental)** — Poor Data Structure: ongoing burning (1d10 Fire/turn) rider prose-only.
+- **Slam (Water Elemental)** — Clean.
+- **Bite (Ghoul)** — Clean.
+- **Claws (Ghoul)** — Clean: damage + DC 10 Con + Paralyzed typed.
+- **Life Drain (Wight)** — Poor Data Structure: save fields set, but HP-max reduction effect prose-only (acceptable; no condition).
+- **Life Drain (Specter)** — Poor Data Structure: HP-max reduction prose-only; damage + save typed.
+- **Slam (Animated Armor)** — Clean.
+- **Constrict (Rug)** — Clean: damage + Grappled/Restrained typed.
+- **Greatclub (Stone Giant)** — Clean.
+- **Rock (Stone Giant)** — Poor Data Structure: DC 17 Str save + Prone rider prose-only; no save/condition fields.
+- **Greatclub (Hill Giant)** — Clean.
+- **Rock (Hill Giant)** — Clean.
+- **Bite (Manticore)** — Clean.
+- **Tail Spike (Manticore)** — Clean (three-spikes note prose-only; minor).
+- **Greataxe (Minotaur)** — Clean.
+- **Gore (Minotaur)** — Clean.
+- **Bite (Basilisk)** — Missing Mechanic: secondary damage untyped (7 (2d6) Poison lost).
+- **Petrifying Gaze (Basilisk)** — Clean: DC 12 Con + Restrained/Petrified typed (repeat-save prose-only; minor).
+- **Bite (Cockatrice)** — Poor Data Structure: DC 11 Con + Petrified typed but Restrained intermediate stage prose-only.
+- **Battleaxe (Ettin)** — Clean.
+- **Morningstar (Ettin)** — Clean.
+- **Claws (Harpy)** — Clean.
+- **Luring Song (Harpy)** — Clean: DC 11 Wis + Charmed typed (bonus-action sustain prose-only; minor).
+- **Shock (Will-o'-Wisp)** — Clean.
+- **Rotting Fist (Mummy)** — Missing Mechanic: secondary damage untyped (10 (3d6) Necrotic lost); mummy-rot curse prose-only; save typed.
+- **Dreadful Glare (Mummy)** — Clean: DC 12 Wis + Frightened/Paralyzed typed.
+- **Slam (Treant)** — Clean.
+- **Rock (Treant)** — Clean.
+- **Bite (Cat)** — Clean (damageDice '1').
+- **Bite (Rat)** — Clean.
+- **Bite (Giant Rat)** — Clean.
+- **Talons (Hawk)** — Clean.
+- **Bite (Pony)** — Clean.
+- **Bite (Camel)** — Clean.
+- **Stomp (Elephant)** — Clean (Prone-only restriction prose-only; minor).
+- **Gore (Elephant)** — Poor Data Structure: charge extra-damage (9 (2d8) Piercing) rider prose-only.
+- **Bite (Ape)** — Clean.
+- **Fist (Ape)** — Clean.
+- **Rock (Ape)** — Clean.
+- **Bite (Constrictor)** — Clean.
+- **Constrict (Constrictor)** — Clean: damage + Grappled/Restrained typed.
+- **Bite (Giant Snake)** — Missing Mechanic: secondary damage untyped (10 (3d6) Poison lost); save + Poisoned typed.
+- **Talons (Eagle)** — Clean.
+- **Bite (Owl)** — Clean.
+- **Bite (Frog)** — Clean.
+- **Bite (Giant Frog)** — Clean: damage + Grappled typed (Restrained prose-only; minor).
+- **Bite (Giant Centipede)** — Missing Mechanic: secondary damage untyped (10 (3d6) Poison lost); save + Poisoned typed.
+- **Bite (Giant Lizard)** — Clean.
+- **Bite (Polar Bear)** — Clean.
+- **Claws (Polar Bear)** — Clean.
+- **Hooves (Warhorse)** — Clean.
+- **Bite (Velociraptor)** — Clean.
+- **Bite (Octopus)** — Clean.
+- **Bite (Adult Black Dragon)** — Missing Mechanic: secondary damage untyped (4 (1d8) Acid lost).
+- **Claw (Adult Black Dragon)** — Clean.
+- **Tail (Adult Black Dragon, Legendary)** — Clean attack; Legendary cost prose-only.
+- **Acid Breath (Adult Black Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Recharge'` (vs `'Roll'` used by spider/mind flayer for same "Recharge 5–6"). Damage + save typed.
+- **Bite (Adult Blue Dragon)** — Missing Mechanic: secondary damage untyped (5 (1d10) Lightning lost).
+- **Claw (Adult Blue Dragon)** — Clean.
+- **Tail (Adult Blue Dragon, Legendary)** — Clean attack; Legendary cost prose-only.
+- **Lightning Breath (Adult Blue Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Recharge'`. Typed otherwise.
+- **Bite (Adult Green Dragon)** — Missing Mechanic: secondary damage untyped (7 (2d6) Poison lost).
+- **Claw (Adult Green Dragon)** — Clean.
+- **Tail (Adult Green Dragon, Legendary)** — Clean attack; Legendary cost prose-only.
+- **Poison Breath (Adult Green Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Recharge'`. Typed otherwise.
+- **Bite (Adult White Dragon)** — Missing Mechanic: secondary damage untyped (4 (1d8) Cold lost).
+- **Claw (Adult White Dragon)** — Clean.
+- **Tail (Adult White Dragon, Legendary)** — Clean attack; Legendary cost prose-only.
+- **Cold Breath (Adult White Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Recharge'`. Typed otherwise.
+- **Wing Attack (Dragon, Legendary)** — Poor Data Structure: save + damage + Prone typed but `actionType` labeled 'Legendary Action' with cost prose-only; condition Prone not in list.
+- **Frightful Presence (Dragon)** — Clean: DC 18 Wis + Frightened typed.
+- **Pincer (Chuul)** — Clean: damage + Grappled typed.
+- **Paralyzing Tentacles (Chuul)** — Clean: DC 13 Con + Poisoned/Paralyzed typed.
+- **Bite (Otyugh)** — Poor Data Structure: DC 15 Con typed but disease ("can't regain HP") effect prose-only; no condition.
+- **Tentacle (Otyugh)** — Clean: damage + Grappled typed.
+- **Bite (Roper)** — Clean.
+- **Tendril (Roper)** — Poor Data Structure: `damageDice: '0'` placeholder; pure-condition (Grappled/Restrained) attack with escape DC prose-only.
+- **Claw (Nothic)** — Clean.
+- **Rotting Gaze (Nothic)** — Clean: DC 12 Con + Necrotic damage typed.
+- **Weird Insight (Nothic)** — Clean: DC 12 Wis save typed (info-only effect, no damage).
+- **Vine Whip (Dryad)** — Clean.
+- **Fey Charm (Dryad)** — Clean: DC 14 Wis + Charmed typed.
+- **Bite (Gargoyle)** — Clean.
+- **Claws (Gargoyle)** — Clean.
+- **Bite (Couatl)** — Missing Mechanic: secondary damage untyped (12 (3d6+1) Poison lost); save + Poisoned/Unconscious typed.
+- **Constrict (Couatl)** — Clean: damage + Grappled/Restrained typed.
+- **Claws (Sphinx)** — Clean.
+- **Roar (Sphinx)** — Poor Data Structure: three sequential roar variants with distinct DCs/effects/damage (incl. 8d10 Thunder) compressed into prose; only one combined condition list + no damage fields.
+- **Bite (Death Dog)** — Poor Data Structure: DC 12 Con typed but disease HP-loss effect prose-only; no condition.
+- **Greatsword (Knight)** — Clean.
+- **Heavy Crossbow (Knight)** — Clean.
+- **Leadership (Knight)** — Clean (utility buff; usesPerDay typed).
+- **Longsword (Veteran)** — Clean (versatile prose-only; minor).
+- **Shortsword (Veteran)** — Clean.
+- **Heavy Crossbow (Veteran)** — Clean.
+- **Spear (Gladiator)** — Clean.
+- **Shield Bash (Gladiator)** — Clean: damage + DC 15 Str + Prone typed.
+- **Parry (Gladiator)** — Clean (reaction AC buff; nothing typed needed).
+- **Arcane Burst (Mage)** — Poor Data Structure: melee/ranged spell duality flattened; both reach and rangeNormal set on one `attackKind: 'Spell'`. Damage typed.
+- **Mace (Priest)** — Missing Mechanic: secondary damage untyped (5 (2d4) Radiant lost).
+- **Radiance of the Dawn (Priest)** — Clean: save + Radiant damage + usesPerDay typed.
+- **Dagger (Fanatic)** — Missing Mechanic: secondary damage untyped (3 (1d6) Necrotic lost).
+- **Shortsword (Spy)** — Clean.
+- **Hand Crossbow (Spy)** — Clean.
+- **Shortsword (Assassin)** — Missing Mechanic: secondary damage untyped (17 (5d6) Poison lost); save + Poisoned typed.
+- **Light Crossbow (Assassin)** — Missing Mechanic: secondary damage untyped (17 (5d6) Poison lost); save + Poisoned typed.
+- **Bite (T-Rex)** — Clean: damage + Grappled typed.
+- **Tail (T-Rex)** — Clean.
+- **Gore (Triceratops)** — Clean.
+- **Stomp (Triceratops)** — Clean (Prone-only restriction prose; minor).
+- **Bite (Allosaurus)** — Clean.
+- **Bite (Pteranodon)** — Clean.
+- **Bite (Plesiosaurus)** — Clean.
+- **Gore (Mammoth)** — Clean.
+- **Stomp (Mammoth)** — Clean.
+- **Gore (Rhinoceros)** — Clean.
+- **Bite (Killer Whale)** — Clean.
+- **Proboscis (Stirge)** — Poor Data Structure: attach + ongoing HP-drain rider prose-only.
+- **Claw (Giant Crab)** — Clean: damage + Grappled typed.
+- **Tentacles (Giant Octopus)** — Clean: damage + Grappled/Restrained typed.
+- **Bite (Giant Shark)** — Clean.
+- **Bite (Hunter Shark)** — Clean.
+- **Bite (Reef Shark)** — Clean.
+- **Bite (Quipper)** — Clean.
+- **Bites (Swarm of Bats)** — Clean (half-HP scaling prose; minor).
+- **Bites (Swarm of Insects)** — Clean.
+- **Bites (Swarm of Rats)** — Clean.
+- **Bites (Swarm of Quippers)** — Clean.
+- **Tail (Ankylosaurus)** — Poor Data Structure: DC 14 Str save + Prone rider prose-only; no save/condition fields.
+- **Bite (Archelon)** — Poor Data Structure: Grappled rider prose-only; no condition field.
+- **Bite (Baboon)** — Clean (1d4−1).
+- **Bite (Badger)** — Clean.
+- **Bite (Bat)** — Clean.
+- **Bite (Black Bear)** — Clean.
+- **Claws (Black Bear)** — Clean.
+- **Beak (Blood Hawk)** — Clean.
+- **Claws (Crab)** — Clean.
+- **Ram (Deer)** — Clean.
+- **Hooves (Draft Horse)** — Clean.
+- **Ram (Elk)** — Poor Data Structure: charge extra-damage + DC 12 Str save + Prone rider prose-only.
+- **Hooves (Elk)** — Clean.
+- **Bite (Flying Snake)** — Missing Mechanic: secondary damage untyped (7 (3d4) Poison lost on a 1-damage bite).
+- **Fist (Giant Ape)** — Clean.
+- **Rock (Giant Ape)** — Clean.
+- **Claw (Giant Badger)** — Clean.
+- **Bite (Giant Bat)** — Clean.
+- **Tusk (Giant Boar)** — Poor Data Structure: charge extra-damage (7 (2d6) Slashing) rider prose-only.
+- **Bite (Giant Crocodile)** — Poor Data Structure: Grappled rider (escape DC 16) prose-only; no condition field.
+- **Tail (Giant Crocodile)** — Poor Data Structure: Prone rider prose-only; no condition field.
+- **Ram (Giant Elk)** — Poor Data Structure: charge extra-damage + DC 14 Str save + Prone rider prose-only.
+- **Hooves (Giant Elk)** — Clean.
+- **Bite (Giant Fire Beetle)** — Clean.
+- **Ram (Giant Goat)** — Clean.
+- **Bite (Giant Hyena)** — Clean.
+- **Talons (Giant Owl)** — Clean.
+- **Sting (Giant Scorpion)** — Missing Mechanic: secondary save-damage untyped (DC 12 Con, 22 (4d10) Poison) entirely prose-only; no save/damage-secondary fields.
+- **Claw (Giant Scorpion)** — Poor Data Structure: Grappled rider prose-only; no condition field.
+- **Bite (Giant Seahorse)** — Poor Data Structure: charge extra-damage rider prose-only.
+- **Bite (Giant Toad)** — Missing Mechanic: secondary damage untyped (5 (2d4) Poison lost); Grappled/Restrained riders prose-only.
+- **Bite (Giant Venomous Snake)** — Missing Mechanic: secondary damage untyped (10 (3d6) Poison lost).
+- **Talons (Giant Vulture)** — Clean.
+- **Sting (Giant Wasp)** — Missing Mechanic: secondary damage untyped (14 (4d6) Poison lost); save + Poisoned prose-only.
+- **Bite (Giant Weasel)** — Clean.
+- **Bite (Giant Wolf Spider)** — Missing Mechanic: secondary damage untyped (7 (2d6) Poison lost); save + Poisoned prose-only.
+- **Ram (Goat)** — Clean.
+- **Bite (Hippopotamus)** — Clean.
+- **Bite (Hyena)** — Clean.
+- **Bite (Jackal)** — Clean.
+- **Bite (Lizard)** — Clean.
+- **Hooves (Mule)** — Clean.
+- **Bite (Panther)** — Clean.
+- **Pounce (Panther)** — Poor Data Structure: DC 12 Str save + Prone + bonus-attack rider prose-only.
+- **Bite (Piranha)** — Clean (half-HP scaling prose; minor).
+- **Beak (Raven)** — Clean.
+- **Bite (Saber-Toothed Tiger)** — Clean.
+- **Claw (Saber-Toothed Tiger)** — Clean.
+- **Sting (Scorpion)** — Missing Mechanic: secondary save-damage untyped (DC 9 Con, 4 (1d8) Poison) prose-only.
+- **Bite (Spider)** — Missing Mechanic: secondary damage untyped (2 (1d4) Poison lost).
+- **Bite (Venomous Snake)** — Missing Mechanic: secondary damage untyped (3 (1d6) Poison lost).
+- **Bite (Weasel)** — Clean.
+- **Bites (Swarm of Piranhas)** — Clean (half-HP scaling prose; minor).
+- **Beaks (Swarm of Ravens)** — Clean.
+- **Bites (Swarm of Venomous Snakes)** — Missing Mechanic: secondary damage untyped (14 (4d6) Poison lost alongside Piercing).
+- **Rend (Dragon, generic)** — Clean (scaling note prose-only; minor).
+- **Sleep Breath (Dragon)** — Poor Data Structure / inconsistency: `rechargeKind: 'Roll'`; no `rechargeMinRoll`-tied DC numeric mismatch; conditions typed, area/staged effect prose-only.
+- **Slowing Breath (Dragon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; speed/reaction effect prose-only, no conditions.
+- **Weakening Breath (Dragon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; Str-disadvantage effect prose-only.
+- **Paralyzing Breath (Dragon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; Paralyzed typed, no damage.
+- **Repulsion Breath (Dragon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; push + Prone, push distance prose-only.
+- **Quarterstaff (Mage)** — Clean.
+- **Quarterstaff (Archmage)** — Missing Mechanic: secondary damage untyped (18 (4d8) Force lost).
+- **Spellcasting (Archmage)** — Missing Mechanic: monster spellcasting untyped — full at-will/3-day/1-day spell list, save DC 17, +9 attack all in prose, zero spell refs.
+- **Scimitar (Bandit Captain)** — Clean.
+- **Pistol (Bandit Captain)** — Clean.
+- **Greataxe (Berserker)** — Clean.
+- **Cudgel (Commoner)** — Clean.
+- **Sickle (Cultist)** — Missing Mechanic: secondary damage untyped (3 (1d6) Necrotic lost).
+- **Sickle (Druid)** — Clean.
+- **Spellcasting (Druid NPC)** — Missing Mechanic: monster spellcasting untyped — spell list + DC 13 prose-only, no refs.
+- **Spear (Guard)** — Clean (versatile prose; minor).
+- **Halberd (Guard Captain)** — Clean.
+- **Heavy Crossbow (Guard Captain)** — Clean.
+- **Mace (Priest Acolyte)** — Clean.
+- **Longsword (Knight) [duplicate]** — Clean; note: duplicate of earlier Knight entry, different stats/versatile rider (potential ID collision in lookup-by-name).
+- **Mace (Noble)** — Clean.
+- **Spear (Tough)** — Clean.
+- **Greatsword (Tough Boss)** — Clean.
+- **Spear (Warrior Infantry)** — Clean.
+- **Longsword (Warrior Veteran)** — Clean.
+- **Scimitar (Pirate)** — Clean.
+- **Rapier (Pirate Captain)** — Clean.
+- **Longbow (Scout)** — Clean.
+- **Shortsword (Scout)** — Clean.
+- **Trident (Sahuagin Warrior)** — Clean (versatile prose; minor).
+- **Bite (Sahuagin Warrior)** — Clean.
+- **Spear (Merfolk Skirmisher)** — Clean.
+- **Harpoon (Merrow)** — Poor Data Structure: forced-pull rider prose-only (no typed effect, acceptable but movement-bearing).
+- **Bite (Merrow)** — Clean.
+- **Trident (Bearded Devil)** — Clean.
+- **Beard (Bearded Devil)** — Poor Data Structure: DC 12 Con + Poisoned typed (condition listed) but save fields (`saveDc`/`saveAbility`) NOT set — effect prose-only despite condition ref.
+- **Glaive (Barbed Devil)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost).
+- **Tail (Barbed Devil)** — Clean.
+- **Spiked Chain (Chain Devil)** — Clean: damage + Grappled/Restrained typed (escape DC prose; minor).
+- **Bite (Bone Devil)** — Clean.
+- **Sting (Bone Devil)** — Missing Mechanic: secondary damage untyped (17 (5d6) Poison lost); Poisoned condition listed but `saveDc`/`saveAbility` unset.
+- **Fork (Horned Devil)** — Clean.
+- **Hurl Flame (Horned Devil)** — Clean (ignite-object rider prose; minor).
+- **Bite (Ice Devil)** — Missing Mechanic: secondary damage untyped (10 (3d6) Cold lost).
+- **Spear (Ice Devil)** — Missing Mechanic: secondary damage untyped (10 (3d6) Cold lost).
+- **Tail (Ice Devil)** — Missing Mechanic: secondary damage untyped (10 (3d6) Cold lost).
+- **Sting (Lemure)** — Clean.
+- **Sting (Imp)** — Missing Mechanic: secondary damage untyped (10 (3d6) Poison lost).
+- **Scourge (Erinyes)** — Missing Mechanic: secondary damage untyped (22 (4d8+4) Fire lost).
+- **Longbow (Erinyes)** — Missing Mechanic: secondary damage untyped (27 (6d8) Poison lost); Poisoned condition listed but `saveDc`/`saveAbility` unset.
+- **Mace (Pit Fiend)** — Missing Mechanic: secondary damage untyped (21 (6d6) Fire lost).
+- **Fireball (Pit Fiend)** — Missing Mechanic: monster spellcasting untyped — cast as prose ("casts Fireball level 5"); save + damage typed but no spell ref.
+- **Bite (Dretch)** — Clean.
+- **Claws (Dretch)** — Clean.
+- **Claws (Quasit)** — Missing Mechanic: secondary damage untyped (7 (2d6) Poison lost).
+- **Pincer (Glabrezu)** — Poor Data Structure: Grappled condition listed but escape DC + conditional ("if pincer free") prose-only.
+- **Bite (Hezrou)** — Clean.
+- **Claws (Hezrou)** — Clean.
+- **Bite (Marilith)** — Clean.
+- **Longsword (Marilith)** — Clean.
+- **Bite (Nalfeshnee)** — Clean.
+- **Claws (Nalfeshnee)** — Clean.
+- **Beak (Vrock)** — Clean.
+- **Talons (Vrock)** — Clean.
+- **Spores (Vrock)** — Poor Data Structure: DC 14 Con + ongoing Poison damage in prose; Poisoned listed but `saveDc`/`saveAbility`/damage fields unset.
+- **Claws (Dust Mephit)** — Clean.
+- **Claws (Ice Mephit)** — Missing Mechanic: secondary damage untyped (2 (1d4) Cold lost).
+- **Claws (Magma Mephit)** — Missing Mechanic: secondary damage untyped (2 (1d4) Fire lost).
+- **Claws (Steam Mephit)** — Missing Mechanic: secondary damage untyped (2 (1d4) Fire lost).
+- **Greataxe (Cloud Giant)** — Clean.
+- **Rock (Cloud Giant)** — Clean.
+- **Greatsword (Fire Giant)** — Clean.
+- **Rock (Fire Giant)** — Clean.
+- **Greataxe (Frost Giant)** — Clean.
+- **Rock (Frost Giant)** — Clean.
+- **Thunderous Greatsword (Storm Giant)** — Missing Mechanic: secondary damage untyped (13 (3d8) Thunder lost).
+- **Lightning Strike (Storm Giant)** — Clean: save + Lightning damage + usesPerDay typed.
+- **Withering Touch (Wraith)** — Clean.
+- **Strength-Draining Touch (Shadow)** — Poor Data Structure: Strength-score-drain (1d4) effect prose-only.
+- **Rotting Fist (Mummy Lord)** — Missing Mechanic: secondary damage untyped (21 (6d6) Necrotic lost); DC 16 Con mummy-rot prose-only.
+- **Spellcasting (Mummy Lord)** — Missing Mechanic: monster spellcasting untyped — spell list + DC 17 prose-only, no refs.
+- **Claws (Vampire Spawn)** — Clean: damage + Grappled/Restrained typed.
+- **Bite (Vampire Spawn)** — Missing Mechanic: secondary damage untyped (7 (2d6) Necrotic lost).
+- **Bite (Vampire Familiar)** — Missing Mechanic: secondary damage untyped (5 (2d4) Necrotic lost).
+- **Slam (Ghost)** — Clean.
+- **Etherealness (Ghost)** — Clean (plane-shift utility; nothing typed needed).
+- **Horrifying Visage (Ghost)** — Clean: save + Psychic damage + Frightened typed.
+- **Bite (Ghast)** — Clean.
+- **Claws (Ghast)** — Poor Data Structure: DC 10 Con + Paralyzed — Paralyzed listed but `saveDc`/`saveAbility` unset.
+- **Slam (Ogre Zombie)** — Clean.
+- **Shortsword (Minotaur Skeleton)** — Clean.
+- **Hooves (Warhorse Skeleton)** — Clean.
+- **Slams (Swarm of Crawling Claws)** — Clean (half-HP scaling prose; minor).
+- **Bite (Werebear)** — Poor Data Structure: DC 14 Con lycanthropy rider prose-only; no save/condition fields.
+- **Claws (Werebear)** — Clean.
+- **Tusks (Wereboar)** — Poor Data Structure: DC 12 Con lycanthropy rider prose-only.
+- **Bite (Wererat)** — Poor Data Structure: DC 11 Con lycanthropy rider prose-only.
+- **Bite (Weretiger)** — Poor Data Structure: DC 13 Con lycanthropy rider prose-only.
+- **Claws (Weretiger)** — Clean.
+- **Slam (Clay Golem)** — Poor Data Structure: HP-max-reduction rider prose-only.
+- **Slam (Flesh Golem)** — Clean.
+- **Slam (Stone Golem)** — Clean.
+- **Slam (Iron Golem)** — Clean.
+- **Sword (Iron Golem)** — Clean.
+- **Bite (Animated Flying Sword)** — Clean.
+- **Smother (Animated Rug of Smothering)** — Clean: damage + Grappled/Blinded typed.
+- **Slam (Helmed Horror Shield Guardian)** — Clean.
+- **Bite (Homunculus)** — Poor Data Structure: DC 10 Con + Poisoned — condition listed but `saveDc`/`saveAbility` unset.
+- **Slam (Invisible Stalker)** — Clean.
+- **Sting (Magmin)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost).
+- **Slam (Azer Sentinel)** — Missing Mechanic: secondary damage untyped (3 (1d6) Fire lost).
+- **Bite (Ankheg)** — Missing Mechanic: secondary damage untyped (3 (1d6) Acid lost); Grappled rider prose-only.
+- **Acid Spray (Ankheg)** — Poor Data Structure: `rechargeKind: 'Long Rest'` (another enum variant); save + damage typed, but `damageDice` '5d10' mismatches prose "10 (3d6)".
+- **Beak (Axe Beak)** — Clean.
+- **Bite (Behir)** — Clean.
+- **Lightning Breath (Behir)** — Poor Data Structure / inconsistency: `rechargeKind: 'Roll'` (vs dragon `'Recharge'`). Damage + save typed.
+- **Pseudopod (Black Pudding)** — Missing Mechanic: secondary damage untyped (18 (4d8) Acid lost).
+- **Bite (Blink Dog)** — Clean.
+- **Teleport (Blink Dog)** — Clean (utility; nothing typed needed).
+- **Bite (Bulette)** — Clean.
+- **Pike (Centaur Trooper)** — Clean.
+- **Hooves (Centaur Trooper)** — Clean.
+- **Bite (Chimera)** — Clean.
+- **Fire Breath (Chimera)** — Poor Data Structure / inconsistency: `'Roll'` recharge. Typed otherwise.
+- **Tail (Cloaker)** — Clean.
+- **Attach (Cloaker)** — Poor Data Structure: grapple/blind/suffocate + escape DC 14 all prose-only; only Grappled/Blinded conditions listed, no save.
+- **Tentacles (Darkmantle)** — Clean: damage + Grappled typed (attach prose; minor).
+- **Bite (Doppelganger)** — Clean.
+- **Read Thoughts (Doppelganger)** — Clean (info/advantage utility; nothing typed needed).
+- **Bite (Dragon Turtle)** — Clean.
+- **Steam Breath (Dragon Turtle)** — Poor Data Structure / inconsistency: `'Roll'` recharge. Typed otherwise.
+- **Claws (Drider)** — Clean.
+- **Web Bite (Drider)** — Missing Mechanic: secondary damage untyped (9 (2d8) Poison lost).
+- **Bite (Ettercap)** — Missing Mechanic: secondary damage untyped (4 (1d8) Poison lost); DC 11 Con + Poisoned prose-only (condition listed, save unset).
+- **Web (Ettercap)** — Poor Data Structure: pure-condition ranged attack; Restrained + escape DC + web AC/HP prose-only, no save fields.
+- **Engulf (Gelatinous Cube)** — Clean: save + Acid damage + Restrained typed.
+- **Bites (Gibbering Mouther)** — Poor Data Structure: DC 10 Str + Prone — Prone listed but `saveDc`/`saveAbility` unset; also damageDice '4d6' vs prose "17 (4d6 + 3)" mismatch.
+- **Spear (Gnoll Warrior)** — Clean.
+- **Goblin Boss Scimitar** — Clean.
+- **Goblin Minion Sickle** — Clean.
+- **Gore (Gorgon)** — Clean.
+- **Petrifying Breath (Gorgon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; staged Restrained→Petrified typed as conditions, save typed.
+- **Pseudopod (Gray Ooze)** — Missing Mechanic: secondary damage untyped (7 (2d6) Acid lost); armor-penalty rider prose-only.
+- **Claws (Green Hag)** — Clean.
+- **Tentacles (Grick)** — Clean.
+- **Beak (Griffon)** — Clean.
+- **Claws (Grimlock)** — Clean.
+- **Spear (Guardian Naga)** — Missing Mechanic: secondary damage untyped (22 (5d8) Poison lost).
+- **Spit Poison (Guardian Naga)** — Clean (primary damage is Poison, single component).
+- **Bite (Spirit Naga)** — Missing Mechanic: secondary damage untyped (14 (4d6) Poison lost).
+- **Claws (Half-Dragon)** — Clean.
+- **Breath Weapon (Half-Dragon)** — Poor Data Structure / inconsistency: `'Roll'` recharge; `damageType` unset entirely ("depends on parent dragon"); save + dice typed but type missing.
+- **Bite (Hell Hound)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost).
+- **Fire Breath (Hell Hound)** — Poor Data Structure / inconsistency: `'Roll'` recharge. Typed otherwise.
+- **Beak (Hippogriff)** — Clean.
+- **Longsword (Hobgoblin Captain)** — Clean.
+- **Tentacles (Kraken)** — Clean: damage + Grappled/Restrained typed.
+- **Lightning Storm (Kraken)** — Poor Data Structure: save + Lightning damage typed but `isAttack`/area mechanics in prose; no `actionType` cost for what is a legendary-style action.
+- **Claws (Lamia)** — Clean.
+- **Pseudopod (Mimic)** — Clean: damage + Grappled typed (Adhered/object-form prose; minor).
+- **Greataxe (Minotaur of Baphomet)** — Clean.
+- **Bite (Night Hag)** — Clean.
+- **Bite (Sea Hag)** — Clean.
+- **Hooves (Nightmare)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost).
+- **Pseudopod (Ochre Jelly)** — Missing Mechanic: secondary damage untyped (3 (1d6) Acid lost).
+- **Claws (Oni)** — Clean.
+- **Hooves (Pegasus)** — Clean.
+- **Bite (Phase Spider)** — Missing Mechanic: secondary damage untyped (18 (4d8) Poison lost).
+- **Bite (Pseudodragon)** — Clean.
+- **Sting (Pseudodragon)** — Poor Data Structure: DC 11 Con + Poisoned — condition listed but `saveDc`/`saveAbility` unset.
+- **Bite (Purple Worm)** — Clean.
+- **Tail Stinger (Purple Worm)** — Missing Mechanic: secondary damage untyped (21 (6d6) Poison lost).
+- **Claws (Rakshasa)** — Missing Mechanic: secondary damage untyped (7 (2d6) Necrotic lost).
+- **Bite (Remorhaz)** — Missing Mechanic: secondary damage untyped (10 (3d6) Fire lost); Grappled/Restrained/Blinded typed.
+- **Talons (Roc)** — Clean.
+- **Bite (Rust Monster)** — Poor Data Structure: metal-corrosion rider prose-only (signature mechanic, no typed model).
+- **Spear (Salamander)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost).
+- **Tail (Salamander)** — Missing Mechanic: secondary damage untyped (7 (2d6) Fire lost); Grappled typed.
+- **Ram (Satyr)** — Clean.
+- **Bite (Shambling Mound)** — Clean: damage + Grappled/Restrained typed.
+- **Spores (Shrieker Fungus)** — Clean (reaction alarm; nothing typed needed).
+- **Slam (Solar)** — Missing Mechanic: secondary damage untyped (27 (6d8) Radiant lost).
+- **Slaying Longbow (Solar)** — Missing Mechanic: secondary damage untyped (27 (6d8) Radiant lost).
+- **Mace (Planetar)** — Missing Mechanic: secondary damage untyped (22 (5d8) Radiant lost).
+- **Greatsword (Deva)** — Missing Mechanic: secondary damage untyped (18 (4d8) Radiant lost).
+- **Roar (Sphinx of Lore)** — Poor Data Structure: variable curse roar, save + effect prose-only; no save fields, usesPerDay typed.
+- **Shortbow (Sprite)** — Poor Data Structure: DC 10 Con + Poisoned/sleep — condition listed but `saveDc`/`saveAbility` unset.
+- **Claws (Succubus)** — Clean.
+- **Charm (Succubus)** — Poor Data Structure: DC 15 Wis + Charmed — save fields typed, condition... condition listed; effective Clean (save+condition+usesPerDay all set).
+- **Bite (Tarrasque)** — Clean: damage + Grappled typed.
+- **Swallow (Tarrasque)** — Poor Data Structure: ongoing Acid damage (16d6/turn) in prose mismatches `damageDice` '8d6'; swallow mechanics prose-only.
+- **Slam (Troll Limb)** — Clean.
+- **Hooves (Unicorn)** — Clean.
+- **Horn (Unicorn)** — Missing Mechanic: secondary damage untyped (9 (2d8) Radiant lost).
+- **Spores (Violet Fungus)** — Poor Data Structure: damageDice '4d8' mismatches prose "4 (1d8)"; multi-pseudopod note prose-only.
+- **Bite (Winter Wolf)** — Clean.
+- **Cold Breath (Winter Wolf)** — Poor Data Structure / inconsistency: `'Roll'` recharge; also damageDice '6d8' vs prose "18 (4d8)" mismatch.
+- **Bite (Worg)** — Clean.
+- **Bite (Wyvern)** — Clean.
+- **Stinger (Wyvern)** — Missing Mechanic: secondary damage untyped (24 (7d6) Poison lost).
+- **Claws (Xorn)** — Clean.
+- **Bite (Xorn)** — Clean.
+- **Bite (Awakened Tree)** — Clean.
+- **Slam (Awakened Shrub)** — Clean.
+- **Greatclub (Hobgoblin Captain Stalker)** — Clean.
+- **Morningstar (Bugbear Stalker)** — Clean.
+- **Scimitar (Djinni)** — Missing Mechanic: secondary damage untyped (9 (2d8) Lightning/Thunder lost; also dual-type choice unrepresentable).
+- **Scimitar (Efreeti)** — Missing Mechanic: secondary damage untyped (9 (2d8) Fire lost).
+- **Snake Hair (Medusa)** — Missing Mechanic: secondary damage untyped (14 (4d6) Poison lost).
+- **Petrifying Gaze (Medusa)** — Clean: save + staged Restrained/Petrified typed.
+- **Scimitar (Incubus)** — Clean.
+- **Glaive (Oni)** — Missing Mechanic: secondary damage untyped (9 (2d8) Necrotic lost).
+- **Beak (Roc)** — Clean.
+- **Bite (Seahorse)** — Clean.
+- **Slam (Awakened Tree) [duplicate]** — Clean; duplicate name vs earlier Bite (Awakened Tree) family — potential lookup collision.
+- **Bite (Cloaker)** — Poor Data Structure: Grappled rider + escape DC prose-only beyond listed condition.
+- **Beak (Grick)** — Clean.
+- **Stone Axe (Grimlock)** — Clean.
+- **Claws (Griffon)** — Clean.
+- **Claws (Hippogriff)** — Clean.
+- **Slam (Shambling Mound)** — Clean.
+- **Engulf (Shambling Mound)** — Clean: save + Blinded/Restrained typed (suffocation prose; minor).
+- **Claw (Sphinx)** — Clean.
+- **Claws (Sphinx of Wonder)** — Missing Mechanic: secondary damage untyped (5 (2d4) Psychic lost).
+- **Touch (Sprite)** — Poor Data Structure: DC 10 Cha typed + Charmed/Frightened listed but effect ("or" choice) prose-only.
+- **Wing Attack (Pegasus)** — Clean.
+- **Tail (Wyvern)** — Missing Mechanic: secondary damage untyped (24 (7d6) Poison lost; "on save fail" but no save fields).
+- **Charm (Lamia)** — Clean: DC 13 Wis + Charmed typed.
+- **Constrict (Spirit Naga)** — Clean: damage + Grappled typed.
+- **Constrict (Guardian Naga)** — Clean: damage + Grappled typed.
+- **Corrupting Touch (Banshee)** — Clean.
+- **Horrifying Visage (Banshee)** — Clean: DC 13 Wis + Frightened typed (aging rider prose; minor).
+- **Wail (Banshee)** — Poor Data Structure: DC 13 Con typed + usesPerDay, but "reduced to 0 HP" / 3d6 Psychic outcome prose-only (no damage fields).
+- **Superior Invisibility (Pixie)** — Poor Data Structure: `actionType: 'Magic Action'` — non-standard action type (not in the documented enum set); utility, nothing typed needed.
+- **Reel In (Roper)** — Clean (forced-move bonus action; nothing typed needed).
+- **Rage** — Clean (PC class feature; descriptive bonus action, no typed combat math expected).
+- **Second Wind** — Poor Data Structure: heal + scaling uses + Short/Long Rest recharge all prose-only (`rechargeKind`/`usesPerDay` unset).
+- **Action Surge** — Poor Data Structure: `actionType: 'Free Action'` non-standard; rest-recharge prose-only.
+- **Bardic Inspiration** — Poor Data Structure: die-scaling + uses (Cha mod) prose-only.
+- **Lay on Hands** — Poor Data Structure: pool size (level×5) prose-only.
+- **Divine Sense** — Poor Data Structure: uses prose-only.
+- **Channel Divinity** — Poor Data Structure: scaling uses + rest recharge prose-only.
+- **Turn Undead** — Poor Data Structure: Wis save (DC = caster's) + Frightened in prose; no save/condition fields.
+- **Wild Shape** — Poor Data Structure: `actionType: 'Magic Action'` non-standard; uses/recharge prose-only.
+- **Flurry of Blows** — Clean (focus-cost feature; descriptive).
+- **Patient Defense** — Clean (descriptive bonus action).
+- **Step of the Wind** — Clean (descriptive bonus action).
+- **Hunter's Mark (Class)** — Missing Mechanic: spell/feature, extra 1d6 Force damage in prose; no damage fields, no spell ref.
+- **Sorcery Points** — Clean (resource toggle; descriptive).
+- **Eldritch Blast (Class Action)** — Missing Mechanic: spell attack with 1d10 Force in prose; `isAttack`/damage fields unset, no spell ref.
+- **Breath Weapon (Dragonborn)** — Poor Data Structure: `rechargeKind: 'Short or Long Rest'` (another enum variant); DC formula + scaling dice + variable damage type all prose-only.
+- **Relentless Endurance** — Clean (reaction; usesPerDay typed).
+- **Adrenaline Rush** — Poor Data Structure: temp-HP + PB-scaled uses prose-only.
+- **Cloud's Jaunt** — Poor Data Structure: PB-scaled uses prose-only.
+- **Hill's Tumble** — Poor Data Structure: Prone-on-hit + PB uses prose-only; no condition field.
+- **Stone's Endurance** — Clean (reaction damage reduction; descriptive).
+- **Storm's Thunder** — Missing Mechanic: 1d8 Thunder reactive damage in prose; no damage fields.
+- **Fire's Burn** — Missing Mechanic: 1d10 Fire on-hit rider in prose; no damage fields; `actionType: 'Free Action'` non-standard.
+- **Frost's Chill** — Missing Mechanic: 1d6 Cold + speed reduction in prose; no fields; Free Action non-standard.
+- **Draconic Flight** — Clean (flight utility; descriptive).
+- **Cutting Words** — Clean (reaction debuff; descriptive).
+- **Retaliation** — Clean (reaction melee; descriptive).
+- **Intimidating Presence** — Poor Data Structure: Wis save (DC 8+Str+PB) + Frightened in prose; no save/condition fields.
+- **Preserve Life** — Poor Data Structure: heal-pool (5×level) prose-only.
+- **Sacred Weapon** — Poor Data Structure: `actionType: 'Free Action'` non-standard; buff math prose-only.
+- **Abjure Foes** — Poor Data Structure: Wis save + Frightened in prose; no save/condition fields.
+- **Wholeness of Body** — Poor Data Structure: heal + Wis-mod uses prose-only.
+- **Land's Aid** — Poor Data Structure: Con save + 2d6 Necrotic/heal scaling prose-only; no save/damage fields.
+- **Nature's Sanctuary** — Clean (cover/resistance buff; descriptive).
+- **Dragon Wings** — Clean (flight utility; descriptive).
+- **Deflect Attacks** — Poor Data Structure: 1d10+Dex+level reduction + redirect Dex save all prose-only.
+- **Slow Fall** — Clean (reaction; descriptive).
+- **Steady Aim** — Clean (advantage bonus action; descriptive).
+- **Uncanny Dodge** — Clean (reaction halve damage; descriptive).
+- **Fast Hands** — Clean (utility bonus action; descriptive).
+- **Cunning Action** — Clean (Dash/Disengage/Hide; descriptive).
+## Monsters (monsters.dart — SRD 5.2.1)
+
+Systemic note: identity/stat fields (AC, HP, speeds, ability scores, CR, type, size, senses, immunities) are fully typed, but every special ability is deferred to prose-only `trait_refs` cards with no effects channel — so traits like Legendary Resistance, Magic Resistance, Pack Tactics, Undead Fortitude, Regeneration, Sunlight Sensitivity, shapechanging, and all monster spellcasting (Spellcasting/Innate Spellcasting cards with save DC + attack bonus, spells never even ref'd) are unenforced; legendary actions are frequently declared (`legendary_action_uses`) without `legendary_action_refs`, and there is no lair-action timing model.
+
+- **Aboleth** — Missing Mechanic: traits (Legendary Resistance 3/Day, Mucous Cloud, Probing Telepathy, Eldritch Restoration) prose-only/unenforced; legendary actions properly ref'd, no lair timing.
+- **Goblin Warrior** — Clean-ish: typed stat block; Nimble Escape bonus action is a typed ref, no special trait. Effectively Clean.
+- **Skeleton** — Clean: typed stat block, vulnerability/immunities typed, simple typed weapon attacks, no special traits.
+- **Zombie** — Missing Mechanic: Undead Fortitude trait prose-only/unenforced (no death-save-on-zero mechanic).
+- **Adult Red Dragon** — Missing Mechanic: Legendary Resistance trait + Fire Breath damage typing prose-only; legendary actions ref'd but "or 4/Day in Lair" and no lair-action timing model.
+- **Lich** — Missing Mechanic + declared-but-empty legendary: Spellcasting (Lich), Legendary Resistance, Rejuvenation, Turn Resistance all prose-only; `legendary_action_uses: 3` set with NO `legendary_action_refs`.
+- **Beholder** — Missing Mechanic: Antimagic Cone + Legendary Resistance prose-only; Eye Rays are prose; only one lair eye-ray legendary ref, no lair timing model.
+- **Mind Flayer** — Missing Mechanic: Magic Resistance + Creature Sense prose-only; Mind Blast save effect prose-only.
+- **Ogre** — Clean: typed stat block, simple typed weapon attacks, no special traits.
+- **Owlbear** — Clean-ish: only Keen Sight and Smell (passive perception flavor) trait; otherwise typed attacks. Effectively Clean.
+- **Hobgoblin Warrior** — Missing Mechanic: Martial Advantage trait (conditional bonus damage) prose-only/unenforced.
+- **Bandit** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Giant Spider** — Missing Mechanic: Spider Climb, Web Sense, Web Walker traits prose-only; Web restrain effect prose.
+- **Kobold Warrior** — Missing Mechanic: Pack Tactics + Sunlight Sensitivity traits prose-only/unenforced.
+- **Orc** — Missing Mechanic: Aggressive trait (bonus-action dash) prose-only/unenforced.
+- **Gnoll** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Bugbear Warrior** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Drow** — Missing Mechanic: Fey Ancestry, Sunlight Sensitivity, and Innate Spellcasting (Drow) traits prose-only; spells not ref'd.
+- **Werewolf** — Missing Mechanic: Shapechanger + Keen Hearing/Smell prose-only; nonmagical-damage immunity typed but lycanthrope shapechange unenforced.
+- **Troll** — Missing Mechanic: Regeneration trait prose-only/unenforced (no fire/acid stop-regen mechanic).
+- **Hydra** — Missing Mechanic: Multiple Heads, Reactive Heads, Wakeful, Hold Breath traits prose-only/unenforced (head-loss HP logic unmodeled).
+- **Vampire** — Missing Mechanic + declared-but-empty legendary: Legendary Resistance + Regeneration prose-only; `legendary_action_uses: 3` set with NO `legendary_action_refs`.
+- **Balor** — Missing Mechanic: Fire Aura, Magic Resistance (Strong), Demonic Restoration prose-only/unenforced; no legendary actions (correctly absent per SRD).
+- **Pit Fiend** — Missing Mechanic: Magic Resistance (Strong) prose-only; innate spellcasting/fear aura from prose unmodeled.
+- **Air Elemental** — Missing Mechanic: Air Form (implied) prose; otherwise typed. Mostly Clean but Whirlwind/air-form deferred to prose.
+- **Earth Elemental** — Missing Mechanic: Earth Glide + Siege Monster traits prose-only/unenforced.
+- **Fire Elemental** — Missing Mechanic: Fire Form / Heated Body (implied via touch) prose; immunities typed. Largely typed but ignite-on-touch unenforced.
+- **Water Elemental** — Clean-ish: immunities/condition immunities typed, simple typed slam; Whelm engulf deferred to prose. Borderline Clean.
+- **Ghoul** — Missing Mechanic: paralyzing-claw save effect prose-only (no trait card but action effect unenforced); otherwise typed. Borderline.
+- **Wight** — Missing Mechanic: Sunlight Sensitivity trait prose-only; Life Drain max-HP reduction unenforced.
+- **Specter** — Missing Mechanic: Incorporeal/Sunlight Sensitivity implied; Life Drain max-HP reduction unenforced. (Has no trait_refs but Life Drain effect prose-only.)
+- **Animated Armor** — Missing Mechanic: False Appearance trait prose-only/unenforced; otherwise typed construct.
+- **Stone Giant** — Missing Mechanic: Stone Camouflage trait prose-only/unenforced.
+- **Hill Giant** — Clean: typed stat block, simple typed weapon/rock attacks, no traits.
+- **Manticore** — Clean: typed stat block, typed attacks (tail spike), no traits.
+- **Minotaur** — Missing Mechanic: Charge trait (bonus damage on move) prose-only/unenforced.
+- **Basilisk** — Missing Mechanic: Petrifying Gaze save effect prose-only/unenforced (no trait card).
+- **Cockatrice** — Missing Mechanic: petrifying-bite save effect prose-only/unenforced.
+- **Ettin** — Missing Mechanic: Two Heads + Wakeful traits prose-only/unenforced.
+- **Harpy** — Missing Mechanic: Luring Song charm effect prose-only/unenforced.
+- **Will-o'-Wisp** — Missing Mechanic: Consume Life / Variable Illumination / incorporeal implied prose; immunities typed but special abilities unenforced.
+- **Mummy** — Missing Mechanic: Dreadful Glare fear + Rotting Fist disease (curse) save effects prose-only/unenforced.
+- **Treant** — Missing Mechanic: False Appearance + Siege Monster traits prose-only; Animate Trees ability unmodeled.
+- **Adult Black Dragon** — Missing Mechanic: Amphibious + Legendary Resistance prose-only; Acid Breath typing prose; legendary refs present but no lair timing.
+- **Adult Blue Dragon** — Missing Mechanic: Legendary Resistance prose-only; Lightning Breath typing prose; legendary refs present, no lair timing.
+- **Adult Green Dragon** — Missing Mechanic: Amphibious + Legendary Resistance prose-only; Poison Breath typing prose; legendary refs present, no lair timing.
+- **Adult White Dragon** — Missing Mechanic: Ice Walk + Legendary Resistance prose-only; Cold Breath typing prose; legendary refs present, no lair timing.
+- **Chuul** — Missing Mechanic: Amphibious + Sense Magic traits prose-only; Paralyzing Tentacles save effect prose.
+- **Otyugh** — Missing Mechanic: Tentacles grapple/disease effect prose-only/unenforced.
+- **Roper** — Missing Mechanic: False Appearance + Spider Climb traits prose-only; tendril grapple/reel effects prose.
+- **Nothic** — Missing Mechanic: Aversion to Light trait prose-only; Rotting Gaze/Weird Insight effects prose.
+- **Dryad** — Missing Mechanic: Magic Resistance, Speak with Beasts and Plants, Tree Stride traits + Fey Charm prose-only/unenforced.
+- **Gargoyle** — Missing Mechanic: False Appearance trait prose-only/unenforced.
+- **Couatl** — Missing Mechanic: Shielded Mind, Spell Resistance traits prose-only; innate spellcasting (prose) unmodeled.
+- **Sphinx** — Missing Mechanic: Inscrutable + Innate Spellcasting (Sphinx) traits prose-only; spells not ref'd. (Generic placeholder block.)
+- **Death Dog** — Missing Mechanic: Pack Tactics + Two-Headed traits prose-only/unenforced.
+- **Knight** — Missing Mechanic: Brave trait + Leadership bonus action prose-only/unenforced.
+- **Veteran** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Gladiator** — Missing Mechanic: Brave trait + Parry reaction prose-only/unenforced.
+- **Mage** — Missing Mechanic: Spellcasting (Mage) trait prose-only, spell list not ref'd.
+- **Priest** — Missing Mechanic: Spellcasting (Priest) trait prose-only, spell list not ref'd.
+- **Cult Fanatic** — Missing Mechanic: Spellcasting (Cult Fanatic) trait prose-only, spell list not ref'd.
+- **Spy** — Missing Mechanic: Cunning Action + Sneak Attack traits prose-only/unenforced.
+- **Assassin** — Missing Mechanic: Cunning Action, Evasion, Sneak Attack + Assassinate prose-only/unenforced.
+- **Black Dragon Wyrmling** — Missing Mechanic: Acid Breath damage typing prose-only; otherwise typed.
+- **Blue Dragon Wyrmling** — Missing Mechanic: Lightning Breath damage typing prose-only; otherwise typed.
+- **Brass Dragon Wyrmling** — Missing Mechanic: Fire/Sleep Breath effects prose-only; otherwise typed.
+- **Bronze Dragon Wyrmling** — Missing Mechanic: Lightning/Repulsion Breath effects prose-only; otherwise typed.
+- **Copper Dragon Wyrmling** — Missing Mechanic: Acid/Slowing Breath effects prose-only; otherwise typed.
+- **Gold Dragon Wyrmling** — Missing Mechanic: Fire/Weakening Breath effects prose-only; otherwise typed.
+- **Green Dragon Wyrmling** — Missing Mechanic: Poison Breath effect prose-only; otherwise typed.
+- **Red Dragon Wyrmling** — Missing Mechanic: Fire Breath damage typing prose-only; otherwise typed.
+- **Silver Dragon Wyrmling** — Missing Mechanic: Cold/Paralyzing Breath effects prose-only; otherwise typed.
+- **White Dragon Wyrmling** — Missing Mechanic: Cold Breath damage typing prose-only; otherwise typed.
+- **Young Black Dragon** — Missing Mechanic: Acid Breath typing prose-only; no legendary (correct for Young); otherwise typed.
+- **Young Blue Dragon** — Missing Mechanic: Lightning Breath typing prose-only; otherwise typed.
+- **Young Brass Dragon** — Missing Mechanic: Fire/Sleep Breath effects prose-only; otherwise typed.
+- **Young Bronze Dragon** — Missing Mechanic: Lightning/Repulsion Breath effects prose-only; otherwise typed.
+- **Young Copper Dragon** — Missing Mechanic: Acid/Slowing Breath effects prose-only; otherwise typed.
+- **Young Gold Dragon** — Missing Mechanic: Fire/Weakening Breath effects prose-only; otherwise typed.
+- **Young Green Dragon** — Missing Mechanic: Poison Breath effect prose-only; otherwise typed.
+- **Young Red Dragon** — Missing Mechanic: Fire Breath typing prose-only; otherwise typed.
+- **Young Silver Dragon** — Missing Mechanic: Cold/Paralyzing Breath effects prose-only; otherwise typed.
+- **Young White Dragon** — Missing Mechanic: Cold Breath typing prose-only; otherwise typed.
+- **Adult Brass Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`; breath typing prose.
+- **Adult Bronze Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Adult Copper Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Adult Gold Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Adult Silver Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Black Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Blue Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Brass Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Bronze Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Copper Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Gold Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Green Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Red Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient Silver Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Ancient White Dragon** — Declared-but-empty legendary + Missing Mechanic: Legendary Resistance prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Archmage** — Missing Mechanic: Magic Resistance + Spellcasting (Archmage) traits prose-only, spells not ref'd.
+- **Bandit Captain** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Berserker** — Missing Mechanic: Reckless trait (advantage tradeoff) prose-only/unenforced.
+- **Commoner** — Clean: minimal typed stat block, single typed attack, no traits.
+- **Cultist** — Clean: typed stat block, single typed attack, no traits.
+- **Cultist Fanatic** — Missing Mechanic: Spellcasting (Cult Fanatic) trait prose-only, spells not ref'd.
+- **Druid** — Missing Mechanic: Innate Spellcasting (Druid) + Spellcasting action prose-only, spells not ref'd.
+- **Guard** — Clean: typed stat block, single typed attack, no traits.
+- **Guard Captain** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Hobgoblin Captain** — Missing Mechanic: Martial Advantage trait prose-only/unenforced.
+- **Noble** — Clean: typed stat block, single typed attack, no traits.
+- **Pirate** — Clean: typed stat block, single typed attack, no traits.
+- **Pirate Captain** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Priest Acolyte** — Clean: typed stat block, single typed attack, no traits.
+- **Sahuagin Warrior** — Missing Mechanic: Blood Frenzy trait (advantage vs wounded) prose-only/unenforced.
+- **Scout** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Warrior Infantry** — Clean: typed stat block, single typed attack, no traits.
+- **Warrior Veteran** — Clean: typed stat block, single typed attack, no traits.
+- **Tough** — Clean: typed stat block, single typed attack, no traits.
+- **Tough Boss** — Clean: typed stat block, simple typed weapon attacks, no traits.
+- **Bugbear Stalker** — Missing Mechanic: Brute trait (extra weapon damage die) prose-only/unenforced.
+- **Centaur Trooper** — Missing Mechanic: Charge trait (bonus damage on charge) prose-only/unenforced.
+- **Goblin Boss** — Clean-ish: Nimble Escape typed bonus action; no special trait. Effectively Clean.
+- **Goblin Minion** — Clean: minimal typed stat block, single typed attack, no traits.
+- **Gnoll Warrior** — Clean: typed stat block, simple typed weapon/bite attacks, no traits.
+- **Merfolk Skirmisher** — Missing Mechanic: Water Breathing trait prose-only/unenforced.
+- **Merrow** — Missing Mechanic: Water Breathing trait prose-only; harpoon drag effect prose.
+- **Lemure** — Missing Mechanic: Devil's resistances typed, but Hellish Rejuvenation (implied) prose; largely typed. Borderline — immunities typed, no trait card. Effectively Clean.
+- **Imp** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; shapechanger/invisibility prose unmodeled.
+- **Bearded Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; Beard poison/disease save effects prose.
+- **Barbed Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only/unenforced.
+- **Chain Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; Unnerving Mask/animate-chains prose.
+- **Bone Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; Sting poison save effect prose.
+- **Horned Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; Hurl Flame effect prose.
+- **Ice Devil** — Missing Mechanic: Magic Resistance + Devil's Sight traits prose-only; cold-damage effects prose.
+- **Erinyes** — Missing Mechanic: Magic Resistance + Magic Weapons traits prose-only; longbow poison save prose.
+- **Quasit** — Missing Mechanic: Magic Resistance trait prose-only; shapechanger/invisibility/scare prose unmodeled.
+- **Dretch** — Clean-ish: immunities typed, simple typed attacks; Fetid Cloud absent here. Effectively Clean (no trait_refs).
+- **Vrock** — Missing Mechanic: Magic Resistance trait prose-only; Spores poison/Stunning Screech save effects prose.
+- **Hezrou** — Missing Mechanic: Magic Resistance + Stench traits prose-only/unenforced.
+- **Glabrezu** — Missing Mechanic: Magic Resistance trait prose-only; innate spellcasting prose unmodeled.
+- **Nalfeshnee** — Missing Mechanic: Magic Resistance trait prose-only; Horror Nimbus fear save prose.
+- **Marilith** — Missing Mechanic: Magic Resistance trait prose-only; Reactive/Parry/multiattack-tail prose unmodeled.
+- **Incubus** — Missing Mechanic: Charm + Draining Kiss save effects prose-only; shapechanger/etherealness prose unmodeled.
+- **Succubus** — Missing Mechanic: Charm + Draining Kiss save effects prose-only; shapechanger/etherealness prose unmodeled.
+- **Night Hag** — Missing Mechanic: Magic Resistance trait prose-only; innate spellcasting/Nightmare Haunting prose unmodeled.
+- **Sea Hag** — Missing Mechanic: Water Breathing trait prose-only; Horrific Appearance/Death Glare prose.
+- **Green Hag** — Missing Mechanic: Mimicry trait prose-only; innate spellcasting/illusory appearance prose unmodeled.
+- **Dust Mephit** — Missing Mechanic: Death Burst trait prose-only/unenforced; Blinding Breath prose.
+- **Ice Mephit** — Missing Mechanic: Death Burst trait prose-only; vulnerabilities typed; Frost Breath prose.
+- **Magma Mephit** — Missing Mechanic: Death Burst trait prose-only; Fire Breath prose.
+- **Steam Mephit** — Missing Mechanic: Death Burst trait prose-only; Steam Breath prose.
+- **Magmin** — Missing Mechanic: Death Burst + Heated Body traits prose-only/unenforced.
+- **Azer Sentinel** — Missing Mechanic: Heated Body + Magic Weapons traits prose-only/unenforced.
+- **Djinni** — Missing Mechanic: Magic Resistance trait prose-only; elemental/innate spellcasting/whirlwind prose unmodeled.
+- **Efreeti** — Missing Mechanic: Magic Resistance trait prose-only; innate spellcasting/elemental prose unmodeled.
+- **Salamander** — Missing Mechanic: Heated Body trait prose-only; constrict/heat effects prose; cold vulnerability typed.
+- **Invisible Stalker** — Missing Mechanic: Air Form trait prose-only; invisibility/faultless-tracker prose unmodeled.
+- **Cloud Giant** — Clean-ish: typed stat block, simple typed weapon/rock attacks, no trait_refs (innate spellcasting omitted). Effectively Clean.
+- **Fire Giant** — Clean: typed stat block, immunity typed, simple typed weapon/rock attacks, no traits.
+- **Frost Giant** — Clean: typed stat block, immunity typed, simple typed weapon/rock attacks, no traits.
+- **Storm Giant** — Missing Mechanic: Lightning Strike action effect prose-only; immunities typed, no trait_refs but special attack unenforced.
+- **Shadow** — Missing Mechanic: Sunlight Sensitivity (Acute) trait prose-only; Strength-Drain/incorporeal effect prose.
+- **Wraith** — Missing Mechanic: incorporeal (can_hover typed) but Withering Touch max-HP reduction / Create Specter unenforced; no trait_refs.
+- **Ghost** — Missing Mechanic: Etherealness, Horrifying Visage, Possession effects prose-only; incorporeal unmodeled.
+- **Ghast** — Missing Mechanic: Stench trait prose-only; Claws paralysis save effect prose.
+- **Mummy Lord** — Missing Mechanic + declared-but-empty legendary: Magic Resistance, Rejuvenation, Spellcasting prose-only; `legendary_action_uses: 3` with NO `legendary_action_refs`.
+- **Vampire Spawn** — Missing Mechanic: Spider Climb, Vampire Weaknesses, Regeneration traits prose-only/unenforced.
+- **Vampire Familiar** — Missing Mechanic: Spider Climb + Vampire Weaknesses traits prose-only/unenforced.
+- **Ogre Zombie** — Missing Mechanic: Undead Fortitude trait prose-only/unenforced.
+- **Minotaur Skeleton** — Clean: typed stat block, vulnerability/immunities typed, single typed attack, no traits.
+- **Warhorse Skeleton** — Clean: typed stat block, vulnerability/immunities typed, single typed attack, no traits.
+- **Swarm of Crawling Claws** — Missing Mechanic: Swarm trait prose-only/unenforced (no halved-damage/space-sharing model).
+- **Werebear** — Missing Mechanic: Shapechanger + Keen Smell traits prose-only; nonmagical-damage immunity typed but shapechange unenforced.
+- **Wereboar** — Missing Mechanic: Shapechanger + Charge traits prose-only/unenforced.
+- **Wererat** — Missing Mechanic: Shapechanger + Keen Smell traits prose-only/unenforced.
+- **Weretiger** — Missing Mechanic: Shapechanger, Pounce, Keen Sight and Smell traits prose-only/unenforced.
+- **Animated Flying Sword** — Missing Mechanic: Construct Nature + False Appearance traits prose-only/unenforced.
+- **Animated Rug of Smothering** — Missing Mechanic: Construct Nature, False Appearance, Damage Transfer traits prose-only; smother/grapple effect prose.
+- **Clay Golem** — Missing Mechanic: Magic Resistance, Acid Absorption, Immutable Form, Construct Nature traits prose-only; Haste/Berserk prose unmodeled.
+- **Flesh Golem** — Missing Mechanic: Lightning Absorption, Magic Resistance, Immutable Form traits prose-only; Berserk/Aversion to Fire prose.
+- **Stone Golem** — Missing Mechanic: Magic Resistance, Magic Weapons, Immutable Form traits prose-only; Slow action effect prose.
+- **Iron Golem** — Missing Mechanic: Magic Resistance, Magic Weapons, Fire Absorption, Immutable Form traits prose-only/unenforced.
+- **Shield Guardian** — Missing Mechanic: Construct Nature + Spell Storing traits prose-only; damage-share/regeneration to bound master unmodeled.
+- **Homunculus** — Missing Mechanic: Construct Nature trait prose-only; bite poison save effect prose.
+- **Ankheg** — Missing Mechanic: Acid Spray line save effect prose-only/unenforced (no trait card); bite grapple prose.
+- **Awakened Shrub** — Missing Mechanic: False Appearance trait prose-only; vulnerability/resistance typed.
+- **Awakened Tree** — Missing Mechanic: False Appearance trait prose-only; vulnerability/resistances typed.
+- **Axe Beak** — Clean: typed stat block, single typed beak attack, no traits.
+- **Behir** — Missing Mechanic: Lightning Breath line save + swallow/constrict effects prose-only; immunity typed, no trait_refs.
+- **Black Pudding** — Missing Mechanic: Amorphous/Corrosive Form/Split prose-only (no trait card); immunities typed but ooze mechanics unenforced.
+- **Blink Dog** — Missing Mechanic: Teleport action effect prose-only/unenforced.
+- **Bulette** — Missing Mechanic: Deadly Leap / burrow-ambush prose-only (no trait card); largely typed. Borderline.
+- **Chimera** — Missing Mechanic: Fire Breath save effect prose-only/unenforced (no trait card); three-head multiattack typed.
+- **Cloaker** — Missing Mechanic: Damage Transfer + False Appearance traits prose-only; Moan/Phantasms prose unmodeled.
+- **Darkmantle** — Missing Mechanic: Echolocation + False Appearance traits prose-only; Darkness/grapple prose.
+- **Doppelganger** — Missing Mechanic: Shapechanger trait + Read Thoughts/Surprise Attack prose-only/unenforced.
+- **Dragon Turtle** — Missing Mechanic: Steam Breath save effect prose-only (no trait card); resistances typed.
+- **Drider** — Missing Mechanic: Sunlight Sensitivity, Spider Climb, Web Walker traits prose-only; innate spellcasting prose.
+- **Ettercap** — Missing Mechanic: Spider Climb, Web Sense, Web Walker traits prose-only/unenforced.
+- **Gelatinous Cube** — Missing Mechanic: Ooze Cube trait + Engulf effect prose-only/unenforced.
+- **Gibbering Mouther** — Missing Mechanic: Gibbering/Aberrant Ground/madness save effects prose-only (no trait card).
+- **Gorgon** — Missing Mechanic: Trampling Charge trait + Petrifying Breath save effect prose-only/unenforced.
+- **Gray Ooze** — Missing Mechanic: Amorphous/Corrode Metal/False Appearance prose-only (no trait card); immunities typed.
+- **Grick** — Missing Mechanic: Stone Camouflage trait prose-only/unenforced.
+- **Griffon** — Missing Mechanic: Keen Sight trait prose-only/unenforced (flavor); otherwise typed. Borderline Clean.
+- **Grimlock** — Missing Mechanic: Stone Camouflage trait + blindsight/blind-beyond prose-only/unenforced.
+- **Guardian Naga** — Missing Mechanic: Rejuvenation trait prose-only; Spit Poison save + innate spellcasting prose unmodeled.
+- **Half-Dragon** — Missing Mechanic: Breath Weapon save effect prose-only (no trait card); otherwise typed.
+- **Hell Hound** — Missing Mechanic: Pack Tactics trait prose-only; Fire Breath save effect prose.
+- **Hippogriff** — Missing Mechanic: Keen Sight trait prose-only/unenforced (flavor); otherwise typed. Borderline Clean.
+- **Kraken** — Missing Mechanic + missing legendary: Legendary Resistance, Amphibious, Siege Monster traits prose-only; declares NO `legendary_action_uses`/`legendary_action_refs` despite being a legendary creature; no lair timing.
+- **Lamia** — Missing Mechanic: Innate Spellcasting (Lamia) trait prose-only; Intoxicating Touch/charm prose.
+- **Medusa** — Missing Mechanic: Petrifying Gaze save effect + snake-hair poison prose-only (no trait card).
+- **Mimic** — Missing Mechanic: Shapechanger + False Appearance traits prose-only; Adhesive/grapple prose.
+- **Minotaur of Baphomet** — Missing Mechanic: Charge trait prose-only/unenforced.
+- **Nightmare** — Missing Mechanic: Confer Fire Resistance / Ethereal Stride prose-only (no trait card); immunity typed.
+- **Ochre Jelly** — Missing Mechanic: Amorphous/Split/Lightning Absorption prose-only (no trait card); immunities typed.
+- **Oni** — Missing Mechanic: Regeneration trait prose-only; innate spellcasting/change-shape prose unmodeled.
+- **Pegasus** — Clean-ish: typed stat block, typed hooves/wing attacks, no trait_refs. Effectively Clean.
+- **Phase Spider** — Missing Mechanic: Spider Climb + Web Walker traits prose-only; Ethereal Jaunt/bite poison prose.
+- **Pseudodragon** — Missing Mechanic: Magic Resistance trait prose-only; Sting poison save + Keen Senses/Limited Telepathy prose.
+- **Purple Worm** — Missing Mechanic: Tunneler trait prose-only; Bite swallow + Tail Stinger poison save effects prose.
+- **Rakshasa** — Missing Mechanic: Innate Spellcasting + Limited Magic Immunity traits prose-only; spells/curse prose unmodeled.
+- **Remorhaz** — Missing Mechanic: Heated Body trait prose-only; Bite swallow effect prose.
+- **Roc** — Missing Mechanic: Keen Sight trait prose-only/unenforced (flavor); otherwise typed. Borderline Clean.
+- **Rust Monster** — Missing Mechanic: Iron Scent trait + corrode-metal bite effect prose-only/unenforced.
+- **Satyr** — Missing Mechanic: Magic Resistance trait prose-only/unenforced.
+- **Seahorse** — Missing Mechanic: Water Breathing trait prose-only/unenforced; otherwise trivial typed beast.
+- **Shambling Mound** — Missing Mechanic: Lightning Absorption trait prose-only; Engulf/grapple effect prose.
+- **Shrieker Fungus** — Missing Mechanic: Shriek (alarm) action effect prose-only/unenforced (no trait card).
+- **Solar** — Missing Mechanic + declared legendary without refs missing: Magic Resistance, Magic Weapons, Legendary Resistance, Divine Awareness traits prose-only; Slaying Longbow save effect prose; declares NO legendary_action fields despite legendary status.
+- **Planetar** — Missing Mechanic: Magic Resistance + Magic Weapons traits prose-only; innate spellcasting/Healing Touch prose unmodeled.
+- **Deva** — Missing Mechanic: Magic Resistance + Magic Weapons traits prose-only; innate spellcasting/change-shape prose unmodeled.
+- **Sphinx of Lore** — Missing Mechanic: Inscrutable, Magic Weapons, Sphinx Spellcasting traits prose-only; spells not ref'd; legendary fields absent.
+- **Sphinx of Valor** — Missing Mechanic: Inscrutable, Magic Weapons, Legendary Resistance traits prose-only; legendary fields absent despite legendary status.
+- **Sphinx of Wonder** — Missing Mechanic: Magic resistances typed; innate spellcasting (implied) prose; otherwise mostly typed. Borderline.
+- **Spirit Naga** — Missing Mechanic: Rejuvenation trait prose-only; bite poison + innate spellcasting prose unmodeled.
+- **Sprite** — Missing Mechanic: Heart Sight / shortbow-poison (sleep) save effects prose-only (no trait card).
+- **Tarrasque** — Missing Mechanic + missing legendary: Legendary Resistance, Magic Resistance, Magic Weapons, Reflective Carapace, Siege Monster traits prose-only; declares NO `legendary_action_uses`/`legendary_action_refs` despite legendary status; Swallow/Frightful Presence prose.
+- **Troll Limb** — Missing Mechanic: Regeneration trait prose-only/unenforced.
+- **Unicorn** — Missing Mechanic: Magic Resistance trait prose-only; innate spellcasting/Healing Touch/Teleport prose unmodeled.
+- **Violet Fungus** — Clean-ish: trivial typed stat block, single typed Spores attack, no trait_refs. Effectively Clean.
+- **Winter Wolf** — Missing Mechanic: Pack Tactics + Snow Camouflage traits prose-only; Cold Breath save effect prose.
+- **Worg** — Missing Mechanic: Keen Hearing trait prose-only/unenforced.
+- **Wyvern** — Missing Mechanic: Stinger poison save effect prose-only (no trait card); otherwise typed.
+- **Xorn** — Missing Mechanic: Earth Glide, Stone Camouflage, Treasure Sense traits prose-only/unenforced.
+- **Banshee** — Missing Mechanic: Incorporeal Movement trait prose-only; Wail (death save) / Horrifying Visage effects prose.
+- **Pixie** — Missing Mechanic: Innate Spellcasting (Pixie) + Magic Resistance traits prose-only; Superior Invisibility prose; spells not ref'd.
+## Animals, Mounts & Vehicles (animals.dart / mounts.dart / vehicles.dart — SRD 5.2.1)
+
+Note: Animals are monster stat blocks whose special abilities live in `trait_refs` to trait cards that carry NO effects channel — so Pack Tactics, Pounce, Charge, Keen senses, Spider Climb, Web Sense, Blood Frenzy, Swarm, etc. are all prose-only/unenforced (Missing Mechanic). Plain stat blocks with only typed identity fields + simple typed attacks (no trait_refs) are Clean. Mounts are pure typed identity rows (carry/speed/cost) and vehicles are pure typed speed/capacity/AC/HP rows — both Clean.
+
+### Animals
+- **Wolf** — Missing Mechanic: Pack Tactics, Keen Smell, Keen Hearing all in trait_refs, unenforced; identity + Bite typed.
+- **Giant Eagle** — Missing Mechanic: Keen Sight trait unenforced; rest (fly speed, Multiattack, Talons, language) typed.
+- **Dire Wolf** — Missing Mechanic: Pack Tactics, Keen Smell, Keen Hearing traits unenforced.
+- **Tiger** — Missing Mechanic: Pounce trait (knock prone + bonus attack rider) unenforced; Bite/Claws typed.
+- **Lion** — Missing Mechanic: Pack Tactics, Pounce, Keen Smell, Running Leap traits unenforced.
+- **Crocodile** — Missing Mechanic: Hold Breath trait unenforced; Bite/grapple typed only as action.
+- **Boar** — Missing Mechanic: Charge trait (extra damage + knock prone rider) unenforced.
+- **Mastiff** — Missing Mechanic: Keen Hearing, Keen Smell traits unenforced.
+- **Riding Horse** — Clean: identity fields + typed Hooves attack, no trait_refs.
+- **Cat** — Missing Mechanic: Keen Smell trait unenforced; otherwise trivial stat block.
+- **Rat** — Missing Mechanic: Keen Smell trait unenforced.
+- **Giant Rat** — Missing Mechanic: Keen Smell, Pack Tactics traits unenforced.
+- **Hawk** — Missing Mechanic: Keen Sight trait unenforced.
+- **Eagle** — Missing Mechanic: Keen Sight trait unenforced.
+- **Owl** — Missing Mechanic: Flyby, Keen Hearing, Keen Sight traits unenforced.
+- **Pony** — Clean: identity + typed Bite, no trait_refs.
+- **Camel** — Clean: identity + typed Bite, no trait_refs.
+- **Elephant** — Missing Mechanic: Charge, Siege Monster traits unenforced; Multiattack/Stomp/Gore typed.
+- **Ape** — Clean: identity + Multiattack/Fist/Rock typed, no trait_refs.
+- **Constrictor Snake** — Clean (typed-only): no trait_refs; Constrict grapple rider lives in action description (minor Poor Data Structure), Blindsight sense typed.
+- **Giant Constrictor Snake** — Clean (typed-only): no trait_refs; Constrict rider in action prose.
+- **Frog** — Missing Mechanic: Amphibious, Standing Leap traits unenforced.
+- **Giant Frog** — Missing Mechanic: Amphibious, Standing Leap traits unenforced; swallow rider in Bite prose.
+- **Giant Centipede** — Clean (typed-only): no trait_refs; Blindsight typed, venom rider in Bite prose.
+- **Giant Lizard** — Clean (typed-only): no trait_refs; Darkvision typed, Bite typed.
+- **Polar Bear** — Missing Mechanic: Keen Smell, Snow Camouflage traits unenforced.
+- **Warhorse** — Missing Mechanic: Charge trait unenforced; Hooves typed.
+- **Octopus** — Missing Mechanic: Hold Breath trait unenforced; ink/escape rider in Bite prose.
+- **Brown Bear** — Missing Mechanic: Keen Smell trait unenforced; Multiattack/Bite/Claws typed.
+- **Tyrannosaurus Rex** — Clean: no trait_refs; Multiattack/Bite/Tail typed.
+- **Triceratops** — Missing Mechanic: Trampling Charge trait unenforced; Gore/Stomp typed.
+- **Allosaurus** — Missing Mechanic: Pounce trait unenforced; Bite typed.
+- **Pteranodon** — Missing Mechanic: Flyby trait unenforced.
+- **Plesiosaurus** — Missing Mechanic: Hold Breath trait unenforced.
+- **Mammoth** — Missing Mechanic: Trampling Charge trait unenforced; Gore/Stomp typed.
+- **Rhinoceros** — Missing Mechanic: Charge trait unenforced.
+- **Killer Whale** — Missing Mechanic: Echolocation, Hold Breath, Keen Hearing traits unenforced; Blindsight typed.
+- **Stirge** — Clean (typed-only): no trait_refs; blood-drain attach rider buried in Proboscis action prose (minor Poor Data Structure).
+- **Giant Crab** — Missing Mechanic: Amphibious trait unenforced; grapple rider in Claw prose.
+- **Giant Octopus** — Missing Mechanic: Hold Breath, Water Breathing traits unenforced; grapple/ink rider in Tentacles prose.
+- **Giant Shark** — Missing Mechanic: Blood Frenzy (advantage vs wounded), Water Breathing traits unenforced.
+- **Hunter Shark** — Missing Mechanic: Blood Frenzy, Water Breathing traits unenforced.
+- **Reef Shark** — Missing Mechanic: Pack Tactics, Water Breathing traits unenforced.
+- **Quipper** — Missing Mechanic: Blood Frenzy, Water Breathing traits unenforced.
+- **Swarm of Bats** — Missing Mechanic: Echolocation, Keen Hearing, Swarm traits unenforced; note resistances + condition immunities ARE typed (partial coverage).
+- **Swarm of Insects** — Missing Mechanic: Swarm trait unenforced; resistances + condition immunities typed.
+- **Swarm of Rats** — Missing Mechanic: Keen Smell, Swarm traits unenforced; resistances + condition immunities typed.
+- **Swarm of Quippers** — Missing Mechanic: Blood Frenzy, Swarm, Water Breathing traits unenforced; resistances/immunities typed.
+- **Vulture** — Missing Mechanic: Keen Sight and Smell, Pack Tactics traits unenforced.
+- **Ankylosaurus** — Clean: no trait_refs; Tail typed.
+- **Archelon** — Missing Mechanic: Hold Breath trait unenforced; Bite typed.
+- **Baboon** — Missing Mechanic: Pack Tactics trait unenforced.
+- **Badger** — Missing Mechanic: Keen Smell trait unenforced.
+- **Bat** — Missing Mechanic: Echolocation, Keen Hearing traits unenforced.
+- **Black Bear** — Missing Mechanic: Keen Smell trait unenforced; Multiattack/Bite/Claws typed.
+- **Blood Hawk** — Missing Mechanic: Keen Sight, Pack Tactics traits unenforced.
+- **Crab** — Missing Mechanic: Amphibious trait unenforced; Blindsight typed.
+- **Deer** — Clean: no trait_refs; Ram typed.
+- **Draft Horse** — Missing Mechanic: Beast of Burden trait unenforced.
+- **Elk** — Clean: no trait_refs; Ram/Hooves typed (Ram knock-prone rider buried in action prose).
+- **Flying Snake** — Missing Mechanic: Flyby trait unenforced; venom rider in Bite prose.
+- **Giant Ape** — Clean: no trait_refs; Multiattack/Fist/Rock typed.
+- **Giant Badger** — Missing Mechanic: Keen Smell trait unenforced; Multiattack/Bite/Claw typed.
+- **Giant Bat** — Missing Mechanic: Echolocation, Keen Hearing traits unenforced.
+- **Giant Boar** — Missing Mechanic: Charge trait unenforced; Relentless typically also missing.
+- **Giant Crocodile** — Missing Mechanic: Hold Breath trait unenforced; Multiattack/Bite/Tail typed.
+- **Giant Elk** — Clean: no trait_refs; Ram/Hooves typed.
+- **Giant Fire Beetle** — Missing Mechanic: Light trait (10ft bright light emission) unenforced.
+- **Giant Goat** — Missing Mechanic: Charge, Sure-Footed traits unenforced.
+- **Giant Hyena** — Missing Mechanic: Reckless trait (advantage on attacks) unenforced.
+- **Giant Owl** — Missing Mechanic: Flyby, Keen Hearing, Keen Sight traits unenforced.
+- **Giant Scorpion** — Clean (typed-only): no trait_refs; Multiattack/Sting/Claw typed, Blindsight typed; sting venom + grapple riders in action prose.
+- **Giant Seahorse** — Missing Mechanic: Water Breathing, Charge traits unenforced.
+- **Giant Spider** — Missing Mechanic: Spider Climb, Web Sense, Web Walker traits unenforced; Web restrain rider in action prose.
+- **Giant Toad** — Missing Mechanic: Amphibious, Standing Leap traits unenforced; swallow rider in Bite prose.
+- **Giant Venomous Snake** — Clean (typed-only): no trait_refs; Blindsight typed, venom rider in Bite prose.
+- **Giant Vulture** — Missing Mechanic: Keen Sight and Smell, Pack Tactics traits unenforced; Multiattack/Beak/Talons typed.
+- **Giant Wasp** — Clean (typed-only): no trait_refs; paralyzing-sting rider in Sting action prose (Poor Data Structure).
+- **Giant Weasel** — Missing Mechanic: Keen Hearing, Keen Smell traits unenforced.
+- **Giant Wolf Spider** — Missing Mechanic: Spider Climb, Web Sense, Web Walker traits unenforced.
+- **Goat** — Missing Mechanic: Charge, Sure-Footed traits unenforced.
+- **Hippopotamus** — Missing Mechanic: Hold Breath trait unenforced.
+- **Hyena** — Missing Mechanic: Pack Tactics trait unenforced.
+- **Jackal** — Missing Mechanic: Keen Hearing, Keen Smell, Pack Tactics traits unenforced.
+- **Lizard** — Clean: no trait_refs; Darkvision typed, Bite typed.
+- **Mule** — Missing Mechanic: Beast of Burden, Sure-Footed traits unenforced.
+- **Panther** — Missing Mechanic: Keen Smell trait unenforced; Pounce delivered as action (knock-prone rider in prose).
+- **Piranha** — Missing Mechanic: Blood Frenzy, Water Breathing traits unenforced.
+- **Raven** — Missing Mechanic: Mimicry trait unenforced.
+- **Saber-Toothed Tiger** — Missing Mechanic: Keen Smell trait unenforced; Bite/Claw typed.
+- **Scorpion** — Clean (typed-only): no trait_refs; sting venom rider in Sting action prose.
+- **Spider** — Missing Mechanic: Spider Climb, Web Walker traits unenforced.
+- **Venomous Snake** — Clean (typed-only): no trait_refs; Blindsight typed, venom rider in Bite prose.
+- **Weasel** — Clean: no trait_refs; Darkvision typed, Bite typed.
+- **Swarm of Piranhas** — Missing Mechanic: Blood Frenzy, Swarm, Water Breathing traits unenforced; resistances/immunities typed.
+- **Swarm of Ravens** — Missing Mechanic: Swarm trait unenforced; resistances/immunities typed.
+- **Swarm of Venomous Snakes** — Missing Mechanic: Swarm trait unenforced; resistances/immunities typed; venom rider in Bites prose.
+
+### Mounts
+- **Camel** — Clean: typed carrying_capacity_lb / speed_ft / cost_gp / is_trained only.
+- **Elephant** — Clean: typed carry/speed/cost/trained.
+- **Draft Horse** — Clean: typed carry/speed/cost/trained.
+- **Riding Horse** — Clean: typed carry/speed/cost/trained.
+- **Mastiff** — Clean: typed carry/speed/cost/trained.
+- **Mule** — Clean: typed carry/speed/cost/trained.
+- **Pony** — Clean: typed carry/speed/cost/trained.
+- **Warhorse** — Clean: typed carry/speed/cost/trained.
+
+### Vehicles
+- **Carriage** — Clean: typed kind + cost_gp (land speed intentionally deferred to puller per SRD).
+- **Cart** — Clean: typed kind + cost_gp.
+- **Chariot** — Clean: typed kind + cost_gp.
+- **Sled** — Clean: typed kind + cost_gp.
+- **Wagon** — Clean: typed kind + cost_gp.
+- **Galley** — Clean: typed speed_mph/crew/cargo/AC/HP/damage_threshold/cost.
+- **Keelboat** — Clean: typed speed/crew/passengers/cargo/AC/HP/threshold/cost.
+- **Longship** — Clean: typed speed/crew/passengers/cargo/AC/HP/threshold/cost.
+- **Rowboat** — Clean: typed speed/crew/passengers/AC/HP/cost.
+- **Sailing Ship** — Clean: typed speed/crew/passengers/cargo/AC/HP/threshold/cost.
+- **Warship** — Clean: typed speed/crew/passengers/cargo/AC/HP/threshold/cost.
+- **Airship** — Clean: typed speed/crew/passengers/cargo/AC/HP/cost.
+## Classes, Subclasses, Species & Subspecies (classes/subclasses/species/subspecies.dart — SRD 5.2.1)
+
+Class/subclass features are authored as level-tagged rows whose grants (`granted_*_refs`) fold onto the PC, but there is no structured enforcement of level-gated progression past the L1–L3 grant window: L4+ rows (Extra Attack tiers, auras, smites, blessed strikes, riders) are prose-only. In-feature choices (orders, pact boon, invocations, metamagic, fighting style, hunter options, resistance type, high-elf cantrip) carry no `choice_group` binding, so the chosen branch grants nothing. Multiclass prereqs for the multi-ability martials pair two ability refs against one min_score under implicit AND where SRD wants OR (warning-only, and wrong). Species defer all racial traits to `trait_refs` (trait cards have no effects channel) so those mechanics are unenforced; subspecies, by contrast, DO carry real effects via `granted_damage_resistances` / `granted_cantrip_refs` / `granted_spells_at_level` / `granted_modifiers`, so color/legacy keying mostly works.
+
+### Classes
+- **Barbarian** — Missing Mechanic. Multiclass prereq OK (single Str ≥13). L1–L2 grants fire (Rage, Unarmored Defense, Weapon Mastery, Danger Sense, Reckless Attack). Prose-only past L3: Primal Knowledge, Extra Attack (L5), Brutal Strike + Forceful/Hamstring rider (L9), Relentless Rage, Improved Brutal Strike (L13/L17), Persistent Rage, Indomitable Might, Primal Champion (+4 Str/Con). Brutal Strike effect pick is unbound. No in-feature choice_group issues at L1.
+- **Bard** — Missing Mechanic. Multiclass prereq OK (single Cha ≥13). L1–L2 grants fire (Bardic Inspiration, Spellcasting, Expertise, Jack of All Trades). Prose-only past L3: Font of Inspiration, Countercharm, Expertise II (L9 — second pick unbound), Magical Secrets (any-list pick unbound), Bardic Inspiration die scaling (d10/d12), Words of Creation always-prepared spells, Superior Bardic Inspiration. L6 "Subclass feature" row is an empty stub.
+- **Cleric** — Poor Data Structure / Missing Mechanic. Multiclass prereq OK (single Wis ≥13). Divine Order (Protector vs Thaumaturge) is keyed by `l1_order_feat_category: 'Divine Order'` and a Divine Order trait grant but the branch choice has no `choice_group` binding — chosen order grants nothing mechanically (martial/heavy training or extra cantrip + Wis-to-damage). Prose-only past L3: Sear Undead, Blessed Strikes 1d8 on-hit/cantrip rider (L7), Divine Intervention, Improved Blessed Strikes 2d8 (L14), Greater Divine Intervention. Domain spells handled in subclass (see Life Domain).
+- **Druid** — Poor Data Structure / Missing Mechanic. Multiclass prereq OK (single Wis ≥13). Primal Order (Magician vs Warden) keyed by `l1_order_feat_category` but with NO grant ref and no `choice_group` — chosen branch (extra cantrip+Arcana/Nature vs martial+medium armor) grants nothing. Wild Shape granted; Wild Companion prose. Prose-only past L3: Wild Resurgence, Elemental Fury (Potent Spellcasting vs Primal Strike — unbound choice, L7), Improved Elemental Fury, Beast Spells, Archdruid.
+- **Fighter** — Unimplemented Prerequisite / Missing Mechanic. Multiclass prereq is the OR-vs-AND bug: Str + Dex paired against one min_score 13 under AND; SRD needs Str ≥13 OR Dex ≥13 (warning-only, and wrong). Fighting Style (L1) is prose: "Gain a Fighting Style feat" with no `choice_group` to pick/grant Archery/Defense/GWF/TWF. L1–L2 grants fire (Second Wind, Weapon Mastery, Action Surge, Tactical Mind). Prose-only past L3: Extra Attack tiers (2/3/4 at L5/11/20 — only L5 noted, none enforced), Tactical Shift, Indomitable scaling, Studied Attacks, Three Extra Attacks.
+- **Monk** — Unimplemented Prerequisite / Missing Mechanic. Multiclass prereq OR-vs-AND bug: Dex + Wis under one min_score 13 / AND; SRD wants Dex ≥13 OR Wis ≥13. Rich L1–L3 grants (Martial Arts, Unarmored Defense, Monk's Focus, Uncanny Metabolism, Deflect Attacks). Prose-only past L3: Slow Fall granted but Extra Attack (L5), Stunning Strike rider, Empowered Strikes, Evasion etc. are trait-granted yet die/level scaling unenforced; Deflect Energy (L13), Superior Defense, Body and Mind (+4 Dex/Wis) prose-only.
+- **Paladin** — Unimplemented Prerequisite / Missing Mechanic. Multiclass prereq OR-vs-AND bug: Str + Cha under one min_score 13 / AND; SRD wants Str ≥13 OR Cha ≥13. Fighting Style (L2) prose-only, no `choice_group`. Paladin's Smite trait granted but per-slot scaling (2d8 +1d8/level, max 5d8) unenforced. Aura of Protection (L6, Cha-mod save bonus) and Aura of Courage (L10) are trait-granted but the numeric aura/save-buff mechanic and 10→30 ft expansion (L18) are prose. Radiant Strikes on-hit +1d8 (L11) prose. Subclass capstone row (L20) is a stub.
+- **Ranger** — Unimplemented Prerequisite / Missing Mechanic. Multiclass prereq OR-vs-AND bug: Dex + Wis under one min_score 13 / AND; SRD wants Dex ≥13 OR Wis ≥13. Strong L1–L3 grants (Favored Enemy/Hunter's Mark, Spellcasting, Weapon Mastery, Deft Explorer, Roving). Fighting Style (L2) prose-only, no `choice_group`. Prose-only past L3: Extra Attack (L5), Expertise (L9 picks unbound), Tireless, Relentless Hunter, Nature's Veil, Feral Senses, Foe Slayer (die upgrade + bonus damage).
+- **Rogue** — Missing Mechanic. Multiclass prereq OK (single Dex ≥13). Excellent L1–L3 grants (Expertise, Sneak Attack, Cunning Action, Steady Aim). Cunning Strike (L5) trait granted but effect picks (Poison/Trip/Withdraw…) unbound; Uncanny Dodge granted (L5). Prose-only past L5: Sneak Attack die scaling, Improved/Devious Cunning Strike options, Reliable Talent (granted), Slippery Mind (granted), Elusive, Stroke of Luck.
+- **Sorcerer** — Poor Data Structure / Missing Mechanic. Multiclass prereq OK (single Cha ≥13). L1–L2 grants fire (Spellcasting, Innate Sorcery, Font of Magic). Metamagic (L2) is prose "Choose two Metamagic options" with no `choice_group` — chosen metamagics grant/enforce nothing; same for L10/L17 extra picks. Prose-only past L3: Sorcery Incarnate, Arcane Apotheosis. Note L5 Sorcerous Restoration mistakenly grants a duplicate 'Spellcasting Focus' trait.
+- **Warlock** — Poor Data Structure / Missing Mechanic. Multiclass prereq OK (single Cha ≥13). Eldritch Invocations (L1) and Pact Boon (L3, Blade/Chain/Tome) are each a single trait grant ('Eldritch Invocations' / 'Pact Boon') with NO `choice_group` — the specific invocations and the chosen boon grant nothing. Prose-only past L3: Mystic Arcanum L6–L9 (empty-description stubs at L5/7/9/11), Eldritch Master, Eldritch Resilience.
+- **Wizard** — Missing Mechanic. Multiclass prereq OK (single Int ≥13). L1–L2 grants fire (Spellcasting, Ritual Adept, Arcane Recovery, Scholar — note Scholar's Expertise-skill pick is a trait grant, choice unbound). Prose-only past L3: Memorize Spell, Spell Mastery (L18), Signature Spells (L20). Generally the lightest higher-level gap of the casters.
+
+### Subclasses
+- **Path of the Berserker** (Barbarian) — Missing Mechanic. L3 Frenzy granted; L6 Mindless Rage granted (trait + feat). Prose-only past L6: Retaliation reaction granted (L10) but Intimidating Presence (L14) granted; no in-feature choices. Frenzy/Brutal-Strike damage scaling unenforced.
+- **College of Lore** (Bard) — Poor Data Structure / Missing Mechanic. Bonus Proficiencies (L3, 3 skills) keyed via `bonus_skill_pick_count: 3` (surfaces as pending choice — OK) but the feature row itself is prose. Cutting Words granted (L3). Prose-only: Magical Discoveries (L6, any-list two-spell pick unbound), Peerless Skill (L14).
+- **Life Domain** (Cleric) — Missing Mechanic. Disciple of Life (L3) and Blessed Healer (L6) granted; Preserve Life Channel Divinity granted (L3). Domain Spells (L3) is prose only — the always-prepared scaling list (Bless, Cure Wounds, Aid, Beacon of Hope…) is NOT wired as granted spells, so it is unenforced. Supreme Healing (L17) prose.
+- **Circle of the Land** (Druid) — Missing Mechanic. Land's Aid granted (L3); Land's Stride, Nature's Ward, Nature's Sanctuary granted as traits/actions. Gap: Circle Forms (L3) prose; Nature's Ward (L10) resistance is keyed to "current land choice" but there is no land-type `choice_group`, so the chosen land's resistance/terrain is unbound.
+- **Champion** (Fighter) — Missing Mechanic. Improved Critical (19–20) and Remarkable Athlete granted at L3. Prose-only past L3: Additional Fighting Style (L7, no `choice_group`), Heroic Warrior granted (L10), Superior Critical 18–20 (L15 — crit-range change unenforced), Survivor (L18 regen).
+- **Warrior of the Open Hand** (Monk) — Missing Mechanic. Open Hand Technique granted (L3); Wholeness of Body granted (L6). Prose-only past L6: Fleet Step (L11), Quivering Palm (L17, 10d12). The three Open Hand effects (prone/push/disadvantage) ride inside one trait — per-strike effect not individually enforced but at least granted.
+- **Oath of Devotion** (Paladin) — Missing Mechanic. Sacred Weapon Channel Divinity granted (L3). Domain Spells (L3) prose only — always-prepared list not wired as granted spells. Prose-only past L3: Aura of Devotion (L7), Smite of Protection (L15), Holy Nimbus (L20). Aura mechanics unenforced as with parent class.
+- **Hunter** (Ranger) — Poor Data Structure / Missing Mechanic. Hunter's Prey (L3) and Defensive Tactics (L7) are single trait grants with NO `choice_group` — Colossus Slayer/Horde Breaker/Giant Killer and Escape/Multiattack Defense/Steel Will pick nothing. Multiattack (L11) and Superior Hunter's Defense (L15) prose-only, also unbound choices. Hunter's Lore (L3) prose.
+- **Thief** (Rogue) — Missing Mechanic. Fast Hands granted (L3); Second-Story Work prose (L3). Prose-only past L3: Supreme Sneak (L9), Use Magic Device (L13), Thief's Reflexes (L17, two turns). No in-feature choices; mostly clean structurally, just unenforced higher tiers.
+- **Draconic Sorcery** (Sorcerer) — Poor Data Structure / Missing Mechanic. Draconic Resilience granted (L3, but the HP-per-level + AC 13+Dex mechanic is trait-only). Draconic Spells (L3) prose — the damage-type pick from the Draconic Ancestors table has NO `choice_group`, so the chosen element and its bonus spells are unbound; Elemental Affinity (L6) depends on that same unbound type. Dragon Wings (L14), Dragon Companion (L18) granted.
+- **Fiend Patron** (Warlock) — Missing Mechanic. Dark One's Blessing (L3), Dark One's Own Luck (L6), Fiendish Resilience (L10) granted as traits. Fiend Spells (L3) prose — always-prepared list not wired. Fiendish Resilience's "choose a damage type" has no `choice_group`. Hurl Through Hell (L14) prose.
+- **Evoker** (Wizard) — Missing Mechanic. Sculpt Spells granted (L3); Evocation Savant prose (L3). Prose-only past L3: Potent Cantrip (L6), Empowered Evocation (L10), Overchannel (L14). No unbound choices; structurally clean, higher tiers unenforced.
+
+### Species
+- **Dragonborn** — Missing Mechanic. Darkvision granted via `granted_senses`; Breath Weapon action and Draconic Flight bonus action granted. But Draconic Ancestry and Damage Resistance (Dragonborn) ride `trait_refs` (no effects channel) — the resistance/breath damage TYPE is not keyed at the species level; it is correctly pushed down to the color subspecies (see below). Base breath weapon action has no element until subspecies chosen.
+- **Dwarf** — Missing Mechanic. Darkvision and Poison resistance ARE granted (senses + `granted_damage_resistances`). Dwarven Resilience, Dwarven Toughness (+HP/level), Stonecunning (tremorsense), Forge Wise all defer to `trait_refs` with no effects channel — toughness HP bonus and tremorsense are unenforced.
+- **Elf** — Missing Mechanic. Darkvision granted. Fey Ancestry (charm advantage/no-sleep), Trance, Keen Senses (Perception prof), and Elven Lineage are all `trait_refs` only — unenforced. Lineage is realized as separate subspecies entities (Drow/High Elf/Wood Elf) which DO carry effects.
+- **Gnome** — Missing Mechanic. Darkvision granted. Gnomish Cunning (advantage on Int/Wis/Cha saves) is `trait_refs` only — unenforced. Lineage magic lives in subspecies.
+- **Goliath** — Missing Mechanic / Poor Data Structure. No Darkvision (correct). Speed 35 set. Powerful Build, Large Form (L5+), and Giant Ancestry all `trait_refs` only — unenforced; Giant Ancestry's per-type boon is not chosen/keyed at species level (realized as the six Giant subspecies which carry the actions/reactions).
+- **Halfling** — Missing Mechanic. No Darkvision (correct). Halfling Lucky (reroll nat 1s), Naturally Stealthy, Brave (fear advantage), Halfling Nimbleness all `trait_refs` only — entirely unenforced.
+- **Human** — Missing Mechanic. Resourceful (Heroic Inspiration on Long Rest), Skilled (free skill), Versatile (Origin feat) all `trait_refs` only — the bonus skill and Origin feat are NOT surfaced as pending choices, so unenforced. (Standard Human subspecies provides the legacy +1-all instead.)
+- **Orc** — Missing Mechanic. Darkvision granted; Adrenaline Rush bonus action and Relentless Endurance reaction granted. Powerful Build defers to `trait_refs` — carry/grapple sizing unenforced (minor).
+- **Tiefling** — Missing Mechanic. Darkvision granted. Otherworldly Presence and Fiendish Legacy are `trait_refs` only at species level; the actual resistance + innate spells are keyed per legacy subspecies (Abyssal/Chthonic/Infernal), which carry real grants.
+
+### Subspecies
+- **Black/Blue/Brass/Bronze/Copper/Gold/Green/Red/Silver/White Dragonborn** (10) — Clean (data) / Missing Mechanic (action wiring). Each correctly keys its element via `granted_damage_resistances` (Acid/Lightning/Fire/Lightning/Acid/Fire/Poison/Fire/Cold/Cold) — so resistance per color IS enforced. Gap: the breath-weapon ACTION lives on the parent species and is not re-keyed to the color's damage type, so breath damage type is not bound to the subspecies even though resistance is.
+- **Hill Dwarf** — Clean. Grants `hp_bonus_per_level` modifier + Insight proficiency (real effects). Legacy 5.1 ancestry, properly wired.
+- **Mountain Dwarf** — Clean. Grants `hp_bonus_flat` +2 modifier. Properly wired.
+- **Drow** — Clean (mostly). Grants 120 ft Darkvision via `sense_grant` modifier, Dancing Lights cantrip, and level-gated Faerie Fire (L3) / Darkness (L5) spells. Effects channel present.
+- **High Elf** — Poor Data Structure. Grants Detect Magic (L3) / Misty Step (L5) spells, but the signature High-Elf Wizard CANTRIP choice (L1, swappable) is described in prose only with NO `granted_cantrip_refs` and no `choice_group` — the chosen cantrip grants nothing.
+- **Wood Elf** — Clean. Grants `speed_bonus` +5, Druidcraft cantrip, Longstrider (L3) / Pass without Trace (L5). Properly wired.
+- **Forest Gnome** — Clean (partial). Grants Minor Illusion cantrip. Speak with Small Beasts is prose only (unenforced, minor).
+- **Rock Gnome** — Clean (partial). Grants Mending + Prestidigitation cantrips (Tinker). Artificer's Lore double-proficiency is prose only (unenforced, minor).
+- **Cloud Giant** — Clean. Grants Cloud's Jaunt bonus action. Properly wired.
+- **Fire Giant** — Clean. Grants Fire's Burn action (1d10 Fire on hit). Properly wired.
+- **Frost Giant** — Clean. Grants Frost's Chill action (1d6 Cold + speed reduction). Properly wired.
+- **Hill Giant** — Clean. Grants Hill's Tumble reaction (knock prone). Properly wired.
+- **Stone Giant** — Clean. Grants Stone's Endurance reaction (d12+Con damage reduction). Properly wired.
+- **Storm Giant** — Clean. Grants Storm's Thunder reaction (1d8 Thunder). Properly wired.
+- **Lightfoot Halfling** — Clean. Grants Stealth proficiency (legacy 5.1). Properly wired.
+- **Stout Halfling** — Clean. Grants Poison resistance (legacy 5.1). Properly wired.
+- **Standard Human** — Clean. Grants +1 to all six abilities via `ability_score_bonus` modifiers. Properly wired.
+- **Half-Orc** — Clean. Grants Intimidation proficiency (legacy 5.1). Properly wired.
+- **Abyssal Tiefling** — Clean. Grants Poison resistance, Poison Spray cantrip, Ray of Sickness (L3) / Hold Person (L5). Properly wired.
+- **Chthonic Tiefling** — Clean. Grants Necrotic resistance, Chill Touch cantrip, False Life (L3) / Ray of Enfeeblement (L5). Properly wired.
+- **Infernal Tiefling** — Clean. Grants Fire resistance, Fire Bolt cantrip, Hellish Rebuke (L3) / Darkness (L5). Properly wired.
+## Backgrounds & Mundane Equipment (backgrounds/weapons/armor/gear/tools/ammunition/packs — SRD 5.2.1)
+
+Note: Armor STR-requirement and Stealth-disadvantage are the only mechanics in this layer the resolver actually reads (`character_resolver.dart:1008-1024`); weapon mastery/properties, all `utilize_*` prose fields, tool `craftable_items`, and pack `content_refs`/quantities are authored but never consumed.
+
+### Backgrounds
+
+- **Acolyte** — Missing Mechanic. `ability_score_options`, `asi_distribution_options`, `granted_skill_refs` (Insight/Religion), and `granted_tool_refs` (Calligrapher's Supplies) are typed refs; `origin_feat_ref` (Magic Initiate) is a typed ref but not auto-granted/enforced. `equipment_choice_groups` are typed (eqItem refs + goldGp) and feed the wizard. Background ability-score choice and granted feat are surfaced but not mechanically applied/locked.
+- **Criminal** — Missing Mechanic. Typed skills (Sleight of Hand/Stealth), tool (Thieves' Tools), typed equipment option A (2 Daggers, Thieves' Tools, Crowbar, 2 Pouches, Traveler's Clothes, 16 GP). `origin_feat_ref` Alert typed but unenforced.
+- **Sage** — Missing Mechanic. Typed skills (Arcana/History), tool (Calligrapher's Supplies), typed equipment (Quarterstaff + supplies). `origin_feat_ref` Magic Initiate typed but unenforced.
+- **Soldier** — Missing Mechanic. Typed skills (Athletics/Intimidation). Tool is `granted_tool_variant_group: 'gaming_set'` (prose-keyed variant group, not a typed ref list — relies on wizard to resolve). `origin_feat_ref` Savage Attacker typed but unenforced. Equipment option A is typed but Gaming Set choice and the picked variant are not wired into a granted-tool ref.
+- **Artisan** — Missing Mechanic. Typed skills (Investigation/Persuasion), tool (Smith's Tools), typed equipment. `origin_feat_ref` Crafter typed but unenforced.
+- **Charlatan** — Missing Mechanic. Typed skills (Deception/Sleight of Hand), tool (Forgery Kit), typed equipment. `origin_feat_ref` Skilled typed but unenforced.
+- **Entertainer** — Missing Mechanic. Typed skills (Acrobatics/Performance), tool (Flute), typed equipment. `origin_feat_ref` Musician typed but unenforced.
+- **Farmer** — Missing Mechanic. Typed skills (Animal Handling/Nature), tool (Carpenter's Tools), typed equipment. `origin_feat_ref` Tough typed but unenforced.
+- **Guard** — Missing Mechanic. Typed skills (Athletics/Perception), tool (Gaming Set — generic, not a variant), typed equipment. `origin_feat_ref` Alert typed but unenforced.
+- **Guide** — Missing Mechanic. Typed skills (Stealth/Survival), tool (Cartographer's Tools), typed equipment. `origin_feat_ref` Magic Initiate typed but unenforced.
+- **Hermit** — Missing Mechanic. Typed skills (Medicine/Religion), tool (Herbalism Kit), typed equipment. `origin_feat_ref` Healer typed but unenforced.
+- **Merchant** — Missing Mechanic. Typed skills (Animal Handling/Persuasion), tool (Navigator's Tools), typed equipment. `origin_feat_ref` Lucky typed but unenforced.
+- **Noble** — Missing Mechanic. Typed skills (History/Persuasion), tool (Gaming Set), typed equipment. `origin_feat_ref` Skilled typed but unenforced.
+- **Sailor** — Missing Mechanic. Typed skills (Acrobatics/Perception), tool (Navigator's Tools), typed equipment. `origin_feat_ref` Tavern Brawler typed but unenforced.
+- **Scribe** — Missing Mechanic. Typed skills (Investigation/Perception), tool (Calligrapher's Supplies), typed equipment. `origin_feat_ref` Skilled typed but unenforced.
+- **Wayfarer** — Missing Mechanic. Typed skills (Insight/Stealth), tools (Thieves' Tools + Gaming Set), typed equipment. `origin_feat_ref` Lucky typed but unenforced.
+
+### Weapons
+
+All 38 weapons carry a typed `mastery_ref` and typed `property_refs`, but no weapon property has a mechanical consumer and `weapon_mastery_grant` is a reserved no-op in the resolver (`character_resolver.dart:44,602`). Mastery + all properties (Loading, Thrown, Versatile, Reach, Two-Handed, Finesse, Light, Heavy, Ammunition) are inert.
+
+- **Club** — Missing Mechanic. Mastery Slow + Light property inert.
+- **Dagger** — Missing Mechanic. Mastery Nick + Finesse/Light/Thrown (20/60) inert.
+- **Greatclub** — Missing Mechanic. Mastery Push + Two-Handed inert.
+- **Handaxe** — Missing Mechanic. Mastery Vex + Light/Thrown (20/60) inert.
+- **Javelin** — Missing Mechanic. Mastery Slow + Thrown (30/120) inert.
+- **Light Hammer** — Missing Mechanic. Mastery Nick + Light/Thrown (20/60) inert.
+- **Mace** — Missing Mechanic. Mastery Sap inert (no properties).
+- **Quarterstaff** — Missing Mechanic. Mastery Topple + Versatile (1d8) inert.
+- **Sickle** — Missing Mechanic. Mastery Nick + Light inert.
+- **Spear** — Missing Mechanic. Mastery Sap + Thrown/Versatile (20/60, 1d8) inert.
+- **Dart** — Missing Mechanic. Mastery Vex + Finesse/Thrown (20/60) inert.
+- **Light Crossbow** — Missing Mechanic. Mastery Slow + Ammunition/Loading/Two-Handed inert; ammo ref Bolts typed but unconsumed.
+- **Shortbow** — Missing Mechanic. Mastery Vex + Ammunition/Two-Handed inert; ammo ref Arrows typed but unconsumed.
+- **Sling** — Missing Mechanic. Mastery Slow + Ammunition inert; ammo ref Bullets, Sling typed but unconsumed.
+- **Battleaxe** — Missing Mechanic. Mastery Topple + Versatile (1d10) inert.
+- **Flail** — Missing Mechanic. Mastery Sap inert (no properties).
+- **Glaive** — Missing Mechanic. Mastery Graze + Heavy/Reach/Two-Handed inert.
+- **Greataxe** — Missing Mechanic. Mastery Cleave + Heavy/Two-Handed inert.
+- **Greatsword** — Missing Mechanic. Mastery Graze + Heavy/Two-Handed inert.
+- **Halberd** — Missing Mechanic. Mastery Cleave + Heavy/Reach/Two-Handed inert.
+- **Lance** — Missing Mechanic. Mastery Topple + Heavy/Reach/Two-Handed inert.
+- **Longsword** — Missing Mechanic. Mastery Sap + Versatile (1d10) inert.
+- **Maul** — Missing Mechanic. Mastery Topple + Heavy/Two-Handed inert.
+- **Morningstar** — Missing Mechanic. Mastery Sap inert (no properties).
+- **Pike** — Missing Mechanic. Mastery Push + Heavy/Reach/Two-Handed inert.
+- **Rapier** — Missing Mechanic. Mastery Vex + Finesse inert.
+- **Scimitar** — Missing Mechanic. Mastery Nick + Finesse/Light inert.
+- **Shortsword** — Missing Mechanic. Mastery Vex + Finesse/Light inert.
+- **Trident** — Missing Mechanic. Mastery Topple + Thrown/Versatile (20/60, 1d10) inert.
+- **Warhammer** — Missing Mechanic. Mastery Push + Versatile (1d10) inert.
+- **War Pick** — Missing Mechanic. Mastery Sap + Versatile (1d10) inert.
+- **Whip** — Missing Mechanic. Mastery Slow + Finesse/Reach inert.
+- **Blowgun** — Missing Mechanic. Mastery Vex + Ammunition/Loading inert; ammo ref Needles typed but unconsumed.
+- **Hand Crossbow** — Missing Mechanic. Mastery Vex + Ammunition/Light/Loading inert; ammo ref Bolts typed but unconsumed.
+- **Heavy Crossbow** — Missing Mechanic. Mastery Push + Ammunition/Heavy/Loading/Two-Handed inert; ammo ref Bolts typed but unconsumed.
+- **Longbow** — Missing Mechanic. Mastery Slow + Ammunition/Heavy/Two-Handed inert; ammo ref Arrows typed but unconsumed.
+- **Musket** — Missing Mechanic. Mastery Slow + Ammunition/Loading/Two-Handed inert; ammo ref Bullets, Firearm typed but unconsumed.
+- **Pistol** — Missing Mechanic. Mastery Vex + Ammunition/Loading inert; ammo ref Bullets, Firearm typed but unconsumed.
+
+### Armor
+
+`strength_requirement` and `stealth_disadvantage` are typed AND applied by the resolver (`character_resolver.dart:1008-1024`: STR shortfall imposes -10 speed; stealth flag emits the Disadvantage note). Positive counter-example — all rows Clean.
+
+- **Padded Armor** — Clean. Light, AC 11 + Dex, stealth disadvantage applied.
+- **Leather Armor** — Clean. Light, AC 11 + Dex, no stealth disadvantage.
+- **Studded Leather Armor** — Clean. Light, AC 12 + Dex, no stealth disadvantage.
+- **Hide Armor** — Clean. Medium, AC 12 + Dex (cap 2).
+- **Chain Shirt** — Clean. Medium, AC 13 + Dex (cap 2).
+- **Scale Mail** — Clean. Medium, AC 14 + Dex (cap 2), stealth disadvantage applied.
+- **Breastplate** — Clean. Medium, AC 14 + Dex (cap 2), no stealth disadvantage.
+- **Half Plate Armor** — Clean. Medium, AC 15 + Dex (cap 2), stealth disadvantage applied.
+- **Ring Mail** — Clean. Heavy, AC 14, no Dex, stealth disadvantage applied.
+- **Chain Mail** — Clean. Heavy, AC 16, STR req 13 (enforced), stealth disadvantage applied.
+- **Splint Armor** — Clean. Heavy, AC 17, STR req 15 (enforced), stealth disadvantage applied.
+- **Plate Armor** — Clean. Heavy, AC 18, STR req 15 (enforced), stealth disadvantage applied.
+- **Shield** — Clean. +2 AC, no stealth disadvantage; 0-min don/doff as Utilize action.
+
+### Gear & Consumables
+
+Consumables encode thrown attacks, save DCs, damage, healing, and light radii in the prose `utilize_description`; the typed `utilize_check_dc`/`utilize_ability_ref` fields exist but are never read by the resolver → Missing Mechanic + Poor Data Structure. Plain containers/clothing/foci with no active mechanic = Clean.
+
+- **Acid** — Missing Mechanic + Poor Data Structure. Thrown attack DC 8+DEX+PB, 2d6 Acid, all in prose; no typed DC/ability.
+- **Alchemist's Fire** — Missing Mechanic + Poor Data Structure. Thrown attack, 1d4 Fire + burning, prose-only.
+- **Antitoxin** — Missing Mechanic + Poor Data Structure. Bonus-action advantage vs Poisoned, prose-only.
+- **Backpack** — Clean. Container; descriptive only.
+- **Ball Bearings** — Poor Data Structure. Typed DC 15 / Dexterity present but unread; Prone effect in prose, no mechanical consumer (Missing Mechanic).
+- **Barrel** — Clean. Container.
+- **Basket** — Clean. Container.
+- **Bedroll** — Clean. Descriptive (cold-save advantage prose, no active trigger wired).
+- **Bell** — Clean. Descriptive.
+- **Blanket** — Clean. Descriptive cold-save advantage, unwired.
+- **Block and Tackle** — Clean. Descriptive lifting aid.
+- **Book** — Clean. Descriptive +5 prose, unwired.
+- **Bottle, Glass** — Clean. Container.
+- **Bucket** — Clean. Container.
+- **Caltrops** — Missing Mechanic + Poor Data Structure. Typed DC 15/Dexterity unread; damage/Speed-0 effect in prose.
+- **Candle** — Missing Mechanic. Light radius (5 ft bright) in prose only; no typed light field.
+- **Case, Crossbow Bolt** — Clean. Container.
+- **Case, Map or Scroll** — Clean. Container.
+- **Chain** — Poor Data Structure. Typed DC 13/Strength present but unread; bind effect prose (Missing Mechanic).
+- **Chest** — Clean. Container.
+- **Climber's Kit** — Clean. Descriptive anchor rules, unwired.
+- **Clothes, Fine** — Clean. Descriptive.
+- **Clothes, Traveler's** — Clean. Descriptive.
+- **Component Pouch** — Clean. Spellcasting focus container; descriptive.
+- **Costume** — Clean. Descriptive advantage prose, unwired.
+- **Crowbar** — Clean. Descriptive advantage prose, unwired.
+- **Burglar's Pack** (gear duplicate of pack as buyable item) — Poor Data Structure. Pack listed as a flat gear item with cost/weight but no contents on this row.
+- **Diplomat's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Dungeoneer's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Entertainer's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Explorer's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Flask** — Clean. Container.
+- **Grappling Hook** — Poor Data Structure. Typed DC 13/Dexterity present but unread; catch effect prose (Missing Mechanic).
+- **Healer's Kit** — Missing Mechanic + Poor Data Structure. Ten-use stabilize-without-check encoded in prose `consumable: true`; no typed uses counter or mechanical hook.
+- **Holy Water** — Missing Mechanic + Poor Data Structure. Thrown attack 2d8 Radiant vs Fiend/Undead, prose-only.
+- **Hunting Trap** — Poor Data Structure. Typed DC 13/Dexterity present but unread; 1d4 + Speed-0 effect prose (Missing Mechanic).
+- **Ink** — Clean. Consumable supply; descriptive.
+- **Ink Pen** — Clean. Descriptive.
+- **Jug** — Clean. Container.
+- **Ladder** — Clean. Descriptive.
+- **Lamp** — Missing Mechanic. Light radius (15 ft bright) in prose only; no typed light field.
+- **Lantern, Bullseye** — Missing Mechanic. 60-ft cone light in prose only.
+- **Lantern, Hooded** — Missing Mechanic. 30-ft radius light in prose only.
+- **Lock** — Poor Data Structure. Typed DC 15/Dexterity present but unread; pick-with-Thieves'-Tools relationship is prose, not linked to Thieves' Tools entity (Missing Mechanic / Unimplemented Prerequisite).
+- **Magnifying Glass** — Clean. Descriptive advantage prose, unwired.
+- **Manacles** — Poor Data Structure. Typed DC 13/Dexterity present but unread; bind/escape effect prose (Missing Mechanic).
+- **Map** — Clean. Descriptive +5 prose, unwired.
+- **Mirror** — Clean. Descriptive.
+- **Net** — Missing Mechanic + Poor Data Structure. Thrown Restrain DC 8+DEX+PB / escape DC 10 STR in prose; `consumable: false`; no typed DC.
+- **Oil** — Missing Mechanic + Poor Data Structure. Thrown flask, +5 Fire on later fire damage, prose-only.
+- **Paper** — Clean. Descriptive.
+- **Parchment** — Clean. Descriptive.
+- **Perfume** — Missing Mechanic + Poor Data Structure. 1-hr Persuasion advantage in prose; consumable, no typed effect.
+- **Poison, Basic** — Missing Mechanic + Poor Data Structure. +1d4 Poison weapon coating in prose; consumable, no typed mechanic.
+- **Pole** — Clean. Descriptive reach tool.
+- **Pot, Iron** — Clean. Container.
+- **Potion of Healing** — Missing Mechanic + Poor Data Structure. Heals 2d4+2 encoded in prose; no typed healing field.
+- **Pouch** — Clean. Container.
+- **Priest's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Quiver** — Clean. Container.
+- **Ram, Portable** — Clean. Descriptive +4 prose, unwired.
+- **Rations** — Clean. Consumable food; descriptive.
+- **Robe** — Clean. Descriptive.
+- **Rope** — Poor Data Structure. Typed DC 10/Dexterity (+DC 20 STR burst) present but unread; knot/burst effect prose (Missing Mechanic).
+- **Sack** — Clean. Container.
+- **Scholar's Pack** (gear item) — Poor Data Structure. Flat gear stub, no contents.
+- **Shovel** — Clean. Descriptive.
+- **Signal Whistle** — Clean. Descriptive.
+- **Spell Scroll (Cantrip)** — Missing Mechanic + Poor Data Structure. Cast-and-disintegrate in prose; no typed spell ref/level.
+- **Spell Scroll (Level 1)** — Missing Mechanic + Poor Data Structure. Save DC 13/attack +5 in prose; no typed spell ref.
+- **Spikes, Iron** — Clean. Descriptive.
+- **Spyglass** — Clean. Descriptive.
+- **String** — Clean. Descriptive.
+- **Tent** — Clean. Descriptive.
+- **Tinderbox** — Clean. Descriptive (lights other items as Bonus Action), unwired.
+- **Torch** — Missing Mechanic. Light radius (20 ft) AND 1 Fire melee attack in prose only; no typed light/attack.
+- **Vial** — Clean. Container.
+- **Waterskin** — Clean. Container.
+- **Saddle, Exotic** — Clean. Descriptive tack.
+- **Saddle, Military** — Clean. Descriptive save-advantage prose, unwired.
+- **Saddle, Riding** — Clean. Descriptive tack.
+- **Feed** — Clean. Consumable; descriptive.
+- **Stabling** — Clean. Service; descriptive.
+- **Crystal** — Clean. Arcane focus, typed `focus_kind_ref`.
+- **Orb** — Clean. Arcane focus, typed `focus_kind_ref`.
+- **Rod** — Clean. Arcane focus, typed `focus_kind_ref`.
+- **Staff (Arcane Focus)** — Clean. Arcane focus, typed `focus_kind_ref`.
+- **Wand (Arcane Focus)** — Clean. Arcane focus, typed `focus_kind_ref`.
+- **Sprig of Mistletoe** — Clean. Druidic focus, typed `focus_kind_ref`.
+- **Wooden Staff (Druidic Focus)** — Clean. Druidic focus, typed `focus_kind_ref`.
+- **Yew Wand** — Clean. Druidic focus, typed `focus_kind_ref`.
+- **Amulet (Holy Symbol)** — Clean. Holy symbol, typed `focus_kind_ref`.
+- **Emblem (Holy Symbol)** — Clean. Holy symbol, typed `focus_kind_ref`.
+- **Reliquary** — Clean. Holy symbol, typed `focus_kind_ref`.
+- **Chalk** — Clean. Descriptive.
+- **Fishing Tackle** — Clean. Descriptive.
+- **Hammer** — Clean. Descriptive.
+- **Hourglass** — Clean. Descriptive.
+- **Mess Kit** — Clean. Descriptive.
+- **Pick, Miner's** — Clean. Descriptive.
+- **Piton** — Clean. Descriptive.
+- **Scale, Merchant's** — Clean. Descriptive.
+- **Sealing Wax** — Clean. Descriptive.
+- **Signet Ring** — Clean. Descriptive.
+- **Soap** — Clean. Descriptive.
+- **Spellbook** — Clean. Descriptive container for spells.
+- **Whetstone** — Clean. Descriptive.
+
+### Tools
+
+Tools with a described mechanical use carry typed `utilize_check_dc` + prose `utilize_description`, but the resolver never reads either; `craftable_items` refs likewise unconsumed and tool↔item links (e.g. Thieves' Tools → Lock) are prose only → Missing Mechanic for any tool with a described mechanical use; gaming/instrument variants with no active check = mostly Clean.
+
+- **Alchemist's Supplies** — Missing Mechanic. DC 15 identify/fire in prose; typed DC unread.
+- **Brewer's Supplies** — Missing Mechanic. DC 15/10 detect/identify, prose; typed DC unread.
+- **Calligrapher's Supplies** — Missing Mechanic. DC 15 anti-forgery, prose; typed DC unread.
+- **Carpenter's Tools** — Missing Mechanic. DC 20 seal/pry, prose; typed DC unread.
+- **Cartographer's Tools** — Missing Mechanic. DC 15 draft map, prose; typed DC unread.
+- **Cobbler's Tools** — Missing Mechanic. DC 10 advantage-granting modify, prose; typed DC unread.
+- **Cook's Utensils** — Missing Mechanic. DC 10/15 flavor/detect, prose; typed DC unread.
+- **Glassblower's Tools** — Missing Mechanic. DC 15 discern history, prose; typed DC unread.
+- **Jeweler's Tools** — Missing Mechanic. DC 15 appraise gem, prose; typed DC unread.
+- **Leatherworker's Tools** — Missing Mechanic. DC 10 design, prose; typed DC unread.
+- **Mason's Tools** — Missing Mechanic. DC 10 chisel, prose; typed DC unread.
+- **Painter's Supplies** — Missing Mechanic. DC 10 paint, prose; typed DC unread.
+- **Potter's Tools** — Missing Mechanic. DC 15 discern history, prose; typed DC unread.
+- **Smith's Tools** — Missing Mechanic. DC 20 pry, prose; typed DC unread.
+- **Tinker's Tools** — Missing Mechanic. DC 20 assemble, prose; typed DC unread.
+- **Weaver's Tools** — Missing Mechanic. DC 10 mend/sew, prose; typed DC unread.
+- **Woodcarver's Tools** — Missing Mechanic. DC 10 carve, prose; typed DC unread.
+- **Disguise Kit** — Missing Mechanic. DC 10 makeup, prose; typed DC unread.
+- **Forgery Kit** — Missing Mechanic. DC 15/20 mimic/duplicate, prose; typed DC unread.
+- **Herbalism Kit** — Missing Mechanic. DC 10 identify plant, prose; typed DC unread.
+- **Navigator's Tools** — Missing Mechanic. DC 10/15 plot/stargaze, prose; typed DC unread.
+- **Poisoner's Kit** — Missing Mechanic. DC 10 detect poison, prose; typed DC unread.
+- **Thieves' Tools** — Missing Mechanic + Unimplemented Prerequisite. DC 15 pick lock/disarm trap in prose; typed DC unread and not linked to the Lock gear entity (Lock's pick rule is also prose).
+- **Gaming Set** — Missing Mechanic. DC 10/20 cheat/win, prose; typed DC unread.
+- **Dice Set** — Clean. Variant of Gaming Set (`variant_of_ref` typed); no own active check.
+- **Dragonchess Set** — Clean. Variant; no own active check.
+- **Playing Card Set** — Clean. Variant; no own active check.
+- **Three-Dragon Ante Set** — Clean. Variant; no own active check.
+- **Bagpipes** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Drum** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Dulcimer** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Flute** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Horn** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Lute** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Lyre** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Pan Flute** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Shawm** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+- **Viol** — Missing Mechanic. DC 10/15 play/improvise, prose; typed DC unread.
+
+### Ammunition
+
+Ammunition rows carry typed storage/cost/weight/bundle_count and resolve by name from weapon `ammunition_type_ref`, but no ammo-tracking/expenditure mechanic exists — the link is structurally present yet inert. Rows are otherwise well-typed (no prose-encoded mechanics).
+
+- **Arrows** — Clean. Typed bundle (Quiver, 20). Referenced by Shortbow/Longbow; no consumption mechanic, but no prose-encoded data issue.
+- **Bolts** — Clean. Typed bundle (Case, 20). Referenced by crossbows.
+- **Bullets, Firearm** — Clean. Typed bundle (Pouch, 20). Referenced by Musket/Pistol.
+- **Bullets, Sling** — Clean. Typed bundle (Pouch, 20). Referenced by Sling.
+- **Needles** — Clean. Typed bundle (Pouch, 50). Referenced by Blowgun.
+
+### Equipment Packs
+
+Packs encode contents only as a narrative string plus `content_refs` (item id list); the `content_quantities` ref→qty plumbing is unbuilt (file comment admits quantities are a "parallel narrative until the resolver plumbing is extended"), so picking a pack grants no typed inventory with quantities → Poor Data Structure / Missing Mechanic across all rows.
+
+- **Burglar's Pack** — Poor Data Structure + Missing Mechanic. 11 items as `content_refs`, but quantities (10 Candles, 7 Oil, 5 Rations) live only in the `contents` narrative string; no typed qty grant.
+- **Diplomat's Pack** — Poor Data Structure + Missing Mechanic. Quantities (5 Ink Pens, 2 Cases, 4 Oil, 5 Paper, 5 Parchment) prose-only.
+- **Dungeoneer's Pack** — Poor Data Structure + Missing Mechanic. Quantities (2 Oil, 10 Rations, 10 Torches) prose-only.
+- **Entertainer's Pack** — Poor Data Structure + Missing Mechanic. Quantities (3 Costumes, 8 Oil, 9 Rations) prose-only.
+- **Explorer's Pack** — Poor Data Structure + Missing Mechanic. Quantities (2 Oil, 10 Rations, 10 Torches) prose-only.
+- **Priest's Pack** — Poor Data Structure + Missing Mechanic. Quantities (7 Rations) prose-only.
+- **Scholar's Pack** — Poor Data Structure + Missing Mechanic. Quantities (10 Oil, 10 Parchment) prose-only.
 
 ---
 
-## Feats — Player-Facing + Class/Subclass Feature Feats (feats.dart, feats_class.dart)
-
-Note on enforcement: ALL typed prereqs here are warning-only (non-blocking) per ground truth; `prereq_requires_spellcasting`, "X or Y" ability prereqs, tool/armor-proficiency prereqs, and species prereqs are NOT validated at all. The DSL kind `speed_bonus` used throughout feats_class.dart is NOT in the resolver-implemented kind list — every "Speed increases by N" feature that relies on it is effectively a Missing Mechanic (flagged below). Pure-prose features with no `effects` and an active mechanic = Missing Mechanic.
-
-### Entity Log — feats.dart
-
-- **Alert** — Missing mechanic: "Initiative Proficiency" (add PB to Initiative) and "Initiative Swap" are pure prose; no `initiative_bonus`/typed effect. No effects array at all.
-- **Magic Initiate** — Clean. choice_group DSL covers list/cantrips/level-1 pick; spell-change & once-free-cast are prose riders but the grant is typed.
-- **Savage Attacker** — Missing mechanic: "roll weapon damage dice twice, use either" is pure prose; `reroll_damage` kind exists but is unused here.
-- **Skilled** — Clean (skill_or_tool choice_group typed).
-- **Ability Score Improvement** — Unimplemented prereq: "Level 4+" typed (`prereq_min_character_level`) but warning-only. ASI typed via asi_* fields. Clean otherwise.
-- **Grappler** — Unimplemented prereq: "Strength OR Dexterity 13+" — `prereq_min_score:13` present but single `prereq_ability_ref` absent (the "or" can't be stored); warning-only. Missing mechanic: "Punch and Grab", "Attack Advantage vs grappled", "Fast Wrestler" all pure prose; only ASI typed.
-- **Archery** — Missing mechanic: "+2 to attack rolls with Ranged weapons" is prose; no `attack_bonus_typed` effect. Unimplemented prereq: "Fighting Style Feature" only in free-text `prerequisite`, not typed/enforced.
-- **Defense** — Clean. `ac_bonus` +1 with equipped_armor_kind predicate typed. (Prereq "Fighting Style Feature" free-text/unenforced, consistent with line.)
-- **Great Weapon Fighting** — Missing mechanic: "treat 1/2 on damage die as 3" is prose; `min_die_value` kind exists but unused. Prereq free-text only.
-- **Two-Weapon Fighting** — Missing mechanic: add ability mod to off-hand damage is prose; no typed effect. Prereq free-text only.
-- **Boon of Combat Prowess** — Unimplemented prereq: "Level 19+" typed but warning-only. Missing mechanic: "Peerless Aim" (turn miss into hit) pure prose; ASI typed.
-- **Boon of Dimensional Travel** — Missing mechanic: "Blink Steps" teleport 30ft pure prose; ASI typed; prereq warning-only.
-- **Boon of Fate** — Missing mechanic: "Improve Fate" 2d4 swing pure prose; ASI typed; prereq warning-only.
-- **Boon of Irresistible Offense** — Missing mechanic: "Overcome Defenses" (ignore Resistance) and "Overwhelming Strike" (crit bonus) pure prose; no `damage_type_override`/crit effect; ASI typed.
-- **Boon of Spell Recall** — Unimplemented prereq: "Spellcasting Feature" (`prereq_requires_spellcasting:true`) is NEVER validated. Missing mechanic: "Free Casting" 1d4 slot recovery pure prose; ASI typed.
-- **Boon of the Night Spirit** — Partial. "Shadowy Form" resistance typed via 11 damage_resistance rows w/ has_state predicate (good). Missing mechanic: "Merge with Shadows" (Bonus-Action Invisible in dim/dark) pure prose, no condition/state grant. ASI typed.
-- **Boon of Truesight** — Clean. `truesight_grant` typed; ASI typed; prereq warning-only.
-- **Crafter** — Partial. tool_category choice_group typed. Missing mechanic: "20% Discount" and "Faster Crafting" pure prose (no typed field — acceptable as non-combat, but unstructured).
-- **Healer** — Missing mechanic: "Battle Medic" (spend HD heal + PB) and "Healing Surge" (reroll 1 on HD) pure prose; no effects.
-- **Lucky** — Partial. `resource_pool_grant` for Luck Points typed (pool + pb formula). Missing mechanic: spending a point for Advantage / impose Disadvantage on attacker is pure prose (no advantage_on/disadvantage_on typed — acceptable as it's reactive/spend-driven, but unmodeled).
-- **Musician** — Partial. instrument tool_category choice_group typed. Missing mechanic: "Encouraging Song" (grant Heroic Inspiration to PB allies) pure prose.
-- **Tavern Brawler** — Poor data structure: `asi_ability_options` uses raw strings 'Strength'/'Constitution' instead of `lookup('ability',…)` like every other feat (ID-ref inconsistency); choice_group ability_options uses 'STR'/'CON'. Missing mechanic: "Enhanced Unarmed Strike" (1d4+STR), "Improvised Weapon prof", "Push" all pure prose; only ASI typed.
-- **Tough** — Clean. `hp_bonus_per_level` value 2 typed (prose "twice level at pick" is a slight simplification but mechanic present).
-- **Athlete** — Unimplemented prereq: "Level 4+" warning-only. Poor data structure: asi_ability_options raw strings. Missing mechanic: Climbing/Jumping/Standing-up movement riders pure prose (no speed/movement typed).
-- **Charger** — Missing mechanic: "Charge" (+2d8 + push on charge attack) entirely pure prose; no effects. Prereq warning-only.
-- **Crossbow Expert** — Unimplemented prereq: "Dexterity 13+" typed (ability_ref+min_score) but warning-only. Poor data structure: asi raw string 'Dexterity'. Missing mechanic: Ignore Loading / Firing in Melee / Bonus Crossbow Attack all pure prose.
-- **Defensive Duelist** — Unimplemented prereq: "Dexterity 13+" warning-only. Missing mechanic: "Parry" reaction (+PB to AC) pure prose; only ASI typed.
-- **Dual Wielder** — Missing mechanic: Bonus Attack, Drawing Weapons, and "Enhanced Defense" +1 AC all pure prose; the +1 AC should be an `ac_bonus` effect with a dual-wield predicate but isn't. Prereq warning-only.
-- **Durable** — Missing mechanic: "Defy Death" (Advantage on Death Saves) and "Speedy Recovery" pure prose; no advantage_on/typed effect. ASI raw string.
-- **Elemental Adept** — Unimplemented prereq: "Spellcasting Feature" never validated. Missing mechanic: ignore Resistance + treat 1 as 2 for chosen type pure prose; no damage_type/choice effect; repeatable but no choice_group to pick the type.
-- **Fey-Touched** — Partial. `spell_always_prepared` Misty Step typed. Missing mechanic: the "+1 level-1 Divination/Enchantment spell of choice" has no choice_group; once-per-rest free cast prose. ASI raw string. Prereq warning-only.
-- **Great Weapon Master** — Missing mechanic: "Cleaving Strike" (bonus attack on crit/kill) and "Heavy Hitter" (+1d12) pure prose; no extra_damage_on_attack. ASI raw string.
-- **Heavy Armor Master** — Unimplemented prereq: "proficiency with Heavy Armor" in free-text only, not typed/validated. Missing mechanic: "Damage Resistance" reduce B/P/S by PB while in heavy armor — `damage_reduction_flat` kind exists but is unused; pure prose.
-- **Inspiring Leader** — Unimplemented prereq: "Charisma 13+" warning-only. Partial: `temp_hp_grant` with formula+trigger typed (good). ASI raw string.
-- **Keen Mind** — Missing mechanic: "Perfect Recall" (add PB to memory INT checks) pure prose; no typed effect. ASI raw string.
-- **Lightly Armored** — Clean (mechanic-wise): `proficiency_grant` Light armor typed. ASI raw string (minor). Prereq warning-only.
-- **Mage Slayer** — Missing mechanic: "Concentration Breaker" (impose Disadv on concentration save) and "Guarded Mind" (reroll mental save) pure prose.
-- **Martial Adept** — Missing mechanic: learn 2 Maneuvers + 1 Superiority Die entirely pure prose; no resource_pool_grant or choice_group.
-- **Medium Armor Master** — Unimplemented prereq: "proficiency with Medium Armor" free-text only. Missing mechanic: stealth-no-disadvantage + +3 Dex-to-AC cap pure prose; no AC/armor effect.
-- **Mobile** — Missing mechanic: "Nimble" Speed +10 has no `speed_bonus` effect (and `speed_bonus` isn't a resolver kind anyway); Dash/OA riders pure prose.
-- **Moderately Armored** — Unimplemented prereq: "proficiency with Light Armor" free-text only. Clean mechanic: `proficiency_grant` Medium + Shield typed.
-- **Mounted Combatant** — Missing mechanic: Mounted Strike/Veer/Leap Aside all pure prose; only ASI typed.
-- **Observant** — Missing mechanic: "Quick Search", "Lipreading", and "+5 Passive Perception/Investigation" pure prose; `passive_score_bonus` kind exists but is unused.
-- **Polearm Master** — Missing mechanic: bonus 1d4 butt-end attack + reach OA on enter pure prose; no effects.
-- **Resilient** — Partial. `grants_save_prof_from_asi:true` flag typed (custom field) covers Save Proficiency; ASI raw strings. Repeatable handled. Acceptable.
-- **Ritual Caster** — Unimplemented prereq: "Intelligence OR Wisdom 13+" — neither prereq_ability_ref nor prereq_min_score set ("or" not storable); warning-only regardless. Missing mechanic: ritual book pure prose (acceptable, non-combat).
-- **Sentinel** — Missing mechanic: "Stop the Foe" (Speed→0 on OA hit) — `oa_stops_movement` kind exists but unused; "Bonus OA after Disengage" — `enemy_cant_disengage_oa` kind exists but unused; "Distract the Foe" reaction prose. All pure prose despite matching kinds existing.
-- **Shadow-Touched** — Partial. `spell_always_prepared` Invisibility typed. Missing mechanic: choice of +1 Illusion/Necromancy spell has no choice_group; ASI raw string.
-- **Sharpshooter** — Missing mechanic: Long Range (no disadv), Cover ignore, +1d10 Bullseye all pure prose; `ignore_long_range_disadvantage`, `ignore_cover`, `extra_damage_on_attack` kinds all exist but unused.
-- **Shield Master** — Unimplemented prereq: "proficiency with Shields" free-text only. Missing mechanic: Shield Bash + Interpose Shield reaction pure prose.
-- **Skill Expert** — Partial. `bonus_skill_pick_count:1` + `bonus_expertise_pick_count:1` typed custom fields (good). ASI raw strings. Repeatable handled.
-- **Spell Sniper** — Unimplemented prereq: "Spellcasting Feature" never validated. Missing mechanic: double spell-attack range, ignore cover, learn attack cantrip all pure prose; `ignore_cover`/`cantrip_grant` kinds exist but unused.
-- **Telekinetic** — Partial. `cantrip_grant` Mage Hand typed. Missing mechanic: "Telekinetic Shove" (Bonus Action shove, STR save) pure prose. ASI raw string.
-- **Telepathic** — Partial. `spell_always_prepared` Detect Thoughts typed. Missing mechanic: 60-ft telepathic speech pure prose. ASI raw string.
-- **War Caster** — Unimplemented prereq: "Spellcasting Feature" never validated. Missing mechanic: "Concentration" Advantage — `concentration_advantage` kind exists but unused; "Reactive Spell" prose. Pure prose.
-- **Weapon Master** — Missing mechanic: "gain proficiency with four weapons of choice" has no choice_group / proficiency_grant; pure prose.
-- **Blind Fighting** — Clean. `blindsight_grant` (range_ft 10) typed.
-- **Dueling** — Missing mechanic: "+2 damage with single one-handed melee weapon" pure prose; `damage_bonus_typed` kind exists but unused.
-- **Interception** — Missing mechanic: reaction damage reduction 1d10+PB — `reaction_damage_reduction` kind exists but unused; pure prose.
-- **Protection** — Missing mechanic: reaction impose Disadvantage on attack vs ally pure prose; no typed effect.
-- **Thrown Weapon Fighting** — Missing mechanic: draw-as-attack + "+2 thrown damage" pure prose; no damage_bonus_typed.
-- **Unarmed Fighting** — Missing mechanic: unarmed d6/d8 damage + grapple damage pure prose; no min_die_value/unarmed effect.
-
-### Entity Log — feats_class.dart (class features)
-
-- **Rage** — Partial. Resistances, STR adv (check+save), scaling rage damage (`extra_damage_on_attack` scalesByClass), and rage-uses pool all typed with has_state predicate — strong. Missing mechanic: "No Spells/Concentration while raging" and duration end-conditions are in `activation` block (read by combat tracker, not resolver-enforced); prose-only otherwise.
-- **Unarmored Defense (Barbarian)** — Clean. `unarmored_ac_formula` (DEX+CON, shield_allowed) with none-armor predicate.
-- **Weapon Mastery (Barbarian)** — Partial. `weapon_mastery_count_bonus:2` typed but no choice_group to pick the 2 masteries (vs `weapon_mastery_grant` kind); swap-on-rest prose.
-- **Danger Sense** — Clean. `advantage_on` DEX save w/ not_incapacitated predicate.
-- **Reckless Attack** — Partial. `advantage_on` STR attack via has_state typed; the "attacks against you also have Advantage" downside is NOT modeled (no typed effect) — Missing mechanic.
-- **Primal Knowledge** — Partial. `proficiency_grant` skill typed (no choice_group/target). Missing mechanic: substitute STR for skill ability while raging is pure prose.
-- **Extra Attack (Barbarian)** — Clean. `extra_attack_count:2`.
-- **Fast Movement** — Missing mechanic: `speed_bonus:10` used but `speed_bonus` is NOT a resolver-implemented kind; effect won't apply.
-- **Feral Instinct** — Poor data structure / Missing mechanic: models "Advantage on Initiative" as `advantage_on` DEX check (proxy) plus `initiative_bonus:0` (no-op value). Initiative Advantage not cleanly typed.
-- **Instinctive Pounce** — Missing mechanic: move half Speed on Rage entry — pure prose, no effects.
-- **Brutal Strike** — Partial. `extra_damage_on_attack` 1d10 w/ requires_forgo_advantage + has_state typed. The Forceful/Hamstring Blow rider effects are prose-only.
-- **Relentless Rage** — Missing mechanic: drop-to-1-HP CON save mechanic pure prose; no effects.
-- **Improved Brutal Strike** — Missing mechanic: adds Staggering/Sundering Blow options — pure prose, no effects.
-- **Persistent Rage** — Missing mechanic: rage auto-extends + regain uses on initiative — pure prose.
-- **Improved Brutal Strike (II)** — Partial. 2d10 extra_damage typed; "two effects per use" prose.
-- **Indomitable Might** — Missing mechanic: treat low STR check/save rolls as STR score — pure prose; no typed floor effect.
-- **Primal Champion** — Clean. two `ability_score_bonus` (STR/CON +4, max 25) typed inline.
-- **Bardic Inspiration** — Partial. `resource_pool_grant` (cha_mod formula) + activation typed. Die-size scaling (d6→d12) is split across separate prose-only features (see below); the actual inspiration die value isn't a typed scaling field.
-- **Bard Spellcasting** — Clean (reference/spellcasting identity feature; no active mechanic to type — spellcasting handled elsewhere).
-- **Expertise (Bard)** — Clean. `expertise_count:2`.
-- **Jack of All Trades** — Clean. `half_proficiency_to_unproficient_checks`.
-- **Font of Inspiration** — Missing mechanic: Bardic die → d8 AND short-rest recharge — both pure prose; no typed die/recharge update.
-- **Countercharm** — Missing mechanic: reaction reroll vs Charm/Fright — pure prose.
-- **Expertise (Bard II)** — Clean. `expertise_count:2`.
-- **Magical Secrets** — Missing mechanic: spell-swap from any list — pure prose (acceptable as spell-management, but unstructured).
-- **Bardic Inspiration (d10)** — Missing mechanic / Poor data structure: die-size upgrade is its own prose feat with no effect; should be a scaling field on Bardic Inspiration.
-- **Words of Creation** — Partial. Should grant always-prepared Power Word Heal/Kill but has NO `spell_always_prepared` effects — pure prose. Missing mechanic.
-- **Bardic Inspiration (d12)** — Missing mechanic / Poor data structure: same as d10 — prose-only die bump.
-- **Superior Bardic Inspiration** — Missing mechanic: regain 2 uses on initiative — pure prose.
-- **Cleric Spellcasting** — Clean (spellcasting identity feature).
-- **Divine Order: Protector** — Clean (mechanic). `proficiency_grant` Martial weapons + Heavy armor typed. Prereq free-text "Divine Order Feature" unenforced.
-- **Divine Order: Thaumaturge** — Partial. `cantrip_count_bonus:1` typed. Missing mechanic: "Cleric cantrip damage rider" (+Wis to cantrip damage) pure prose; no `spellcasting_ability_to_damage`/extra_damage effect.
-- **Channel Divinity** — Partial. `resource_pool_grant` scaling (2/3/4) + activation typed. The CD options (Divine Spark, Turn Undead) themselves are prose.
-- **Sear Undead** — Missing mechanic: Radiant damage = Cleric level on Turn Undead — pure prose.
-- **Blessed Strikes** — Clean. `extra_damage_on_attack` 1d8 Radiant first_hit_per_turn typed.
-- **Divine Intervention** — Partial. `resource_pool_grant` 1/long-rest typed; the "cast any Cleric spell ≤5 free" selection is prose.
-- **Improved Blessed Strikes** — Clean. `extra_damage_on_attack` 2d8 Radiant typed (scaling via replacement).
-- **Greater Divine Intervention** — Missing mechanic: upgrade to any-level spell — pure prose, no effects.
-- **Druid Spellcasting** — Clean (spellcasting identity feature).
-- **Primal Order: Warden** — Clean (mechanic). `proficiency_grant` Martial weapons + Medium armor typed. Prereq free-text unenforced.
-- **Primal Order: Magician** — Partial. `cantrip_count_bonus:1` typed. Missing mechanic: Wis-to-Arcana/Nature rider pure prose.
-- **Wild Shape** — Partial. `resource_pool_grant` (count 2) + activation typed. The form-assumption / CR / duration scaling are prose; uses don't scale in the typed pool (prose says "scaling with level").
-- **Wild Companion** — Missing mechanic: spend Wild Shape use to cast Find Familiar — pure prose.
-- **Wild Resurgence** — Missing mechanic: convert Wild Shape ↔ spell slot — pure prose.
-- **Improved Elemental Fury** — Missing mechanic: Elemental Fury scaling — pure prose, no effects.
-- **Beast Spells** — Missing mechanic: cast while Wild Shaped — pure prose.
-- **Archdruid** — Missing mechanic: unlimited Wild Shape + ignore components — pure prose; no pool override effect.
-- **Second Wind** — Partial. `resource_pool_grant` scaling (2/3/4) + activation typed. The 1d10+Fighter-level heal amount is prose (no typed heal formula).
-- **Weapon Mastery (Fighter)** — Partial. `weapon_mastery_count_bonus:3` typed; no choice_group to pick masteries.
-- **Action Surge** — Partial. `resource_pool_grant` scaling (1→2) + activation typed; the extra-action grant itself is prose (tracker-level).
-- **Tactical Mind** — Missing mechanic: spend Second Wind for +1d10 to failed check — pure prose.
-- **Extra Attack (Fighter)** — Clean. `extra_attack_count:2` (higher tiers handled by separate features below).
-- **Tactical Shift** — Missing mechanic: move half Speed on Second Wind — pure prose.
-- **Indomitable** — Partial. `resource_pool_grant` scaling (1/2/3) typed; the reroll-with-+level bonus is prose.
-- **Two Extra Attacks** — Clean. `extra_attack_count:3`.
-- **Studied Attacks** — Missing mechanic: Advantage after a miss — pure prose; no advantage_on/state effect.
-- **Three Extra Attacks** — Clean. `extra_attack_count:4`.
-- **Martial Arts** — Missing mechanic: DEX-for-attacks, Martial Arts die, bonus unarmed strike — entirely pure prose; no effects (no unarmored/min_die/extra-attack typing).
-- **Unarmored Defense (Monk)** — Clean. `unarmored_ac_formula` (DEX+WIS, no shield) w/ none-armor + no-shield predicates.
-- **Monk's Focus** — Clean. `resource_pool_grant` count_formula monk_level typed.
-- **Unarmored Movement** — Missing mechanic: `speed_bonus` scaling used but `speed_bonus` is not a resolver kind; won't apply (scaling table present but inert).
-- **Flurry of Blows** — Missing mechanic: spend Focus for 2 unarmed strikes — pure prose.
-- **Patient Defense** — Missing mechanic: Disengage/Dodge as Bonus Action — pure prose; no granted_bonus_action_grant.
-- **Step of the Wind** — Missing mechanic: Dash as Bonus Action — pure prose; no granted_bonus_action_grant.
-- **Deflect Attacks** — Missing mechanic: reaction damage reduction 1d10+DEX+level — pure prose; `reaction_damage_reduction` kind exists but unused.
-- **Slow Fall** — Missing mechanic: reduce falling damage by 5×level — pure prose.
-- **Stunning Strike** — Missing mechanic: spend Focus, CON save or Stunned — pure prose.
-- **Extra Attack (Monk)** — Clean. `extra_attack_count:2`.
-- **Empowered Strikes** — Clean. `magical_unarmed_strikes` typed.
-- **Evasion (Monk)** — Missing mechanic: Dex-save-for-half → none/half — pure prose (no typed evasion field; same gap as Rogue Evasion).
-- **Acrobatic Movement** — Clean. `walk_on_liquid` w/ none-armor + no-shield predicates.
-- **Deflect Energy** — Missing mechanic: extends Deflect Attacks to elemental damage — pure prose.
-- **Perfect Focus** — Missing mechanic: regain Focus to 4 on initiative — pure prose.
-- **Superior Defense** — Missing mechanic: spend 3 Focus, Resistance to all but Force — pure prose; no damage_resistance rows.
-- **Body and Mind** — Missing mechanic: DEX/WIS +4, max 25 — pure prose; NO `ability_score_bonus` effects (contrast Primal Champion which types this correctly). Poor data structure.
-- **Lay On Hands** — Partial. `resource_pool_grant` count_formula paladin_level_x5 typed; healing/disease-neutralize spend is prose.
-- **Paladin Spellcasting** — Clean (spellcasting identity feature).
-- **Weapon Mastery (Paladin)** — Partial. `weapon_mastery_count_bonus:2`; no mastery choice_group.
-- **Paladin's Smite** — Partial. `spell_always_prepared` Divine Smite typed; the slot-scaling damage is prose (acceptable, spell-side).
-- **Channel Divinity (Paladin)** — Partial. `resource_pool_grant` scaling (2/3) typed; oath options prose.
-- **Extra Attack (Paladin)** — Clean. `extra_attack_count:2`.
-- **Faithful Steed** — Clean. `spell_always_prepared` Find Steed.
-- **Aura of Protection** — Missing mechanic: +CHA-mod to saves for self+allies in 10ft — pure prose; no typed aura/saving_throw bonus effect (a significant Paladin feature unmodeled).
-- **Abjure Foes** — Partial. `resource_pool_grant` 1/long-rest typed; the Frighten effect is prose.
-- **Radiant Strikes** — Clean. `extra_damage_on_attack` 1d8 Radiant first_hit_per_turn.
-- **Restoring Touch** — Missing mechanic: spend Lay On Hands to cure conditions — pure prose.
-- **Aura Expansion** — Missing mechanic: aura → 30ft — pure prose (depends on unmodeled Aura of Protection).
-- **Favored Enemy** — Clean. `spell_always_prepared` Hunter's Mark + `resource_pool_grant` (wis_mod formula) typed.
-- **Ranger Spellcasting** — Clean (spellcasting identity feature).
-- **Weapon Mastery (Ranger)** — Partial. `weapon_mastery_count_bonus:2`; no choice_group.
-- **Deft Explorer** — Partial. `expertise_count:1` + `language_grant` typed; higher-level extras prose.
-- **Roving** — Missing mechanic: `speed_bonus:5` (inert — not a resolver kind), though `climb_speed_equals_speed`/`swim_speed_equals_speed` typed and valid.
-- **Extra Attack (Ranger)** — Clean. `extra_attack_count:2`.
-- **Expertise (Ranger II)** — Clean. `expertise_count:2`.
-- **Tireless** — Partial. `resource_pool_grant` + `temp_hp_grant` (formula+trigger) typed; the Short-Rest Exhaustion reduction is prose.
-- **Relentless Hunter** — Clean. `concentration_immune_to_damage_break` typed.
-- **Nature's Veil** — Missing mechanic: Bonus-Action Invisible via slot — pure prose.
-- **Feral Senses** — Missing mechanic: no-Disadvantage vs unseen — pure prose.
-- **Foe Slayer** — Missing mechanic: Hunter's Mark d10 + Wis extra damage — pure prose.
-- **Expertise (Rogue)** — Clean. `expertise_count:2`.
-- **Sneak Attack** — Clean. `extra_damage_on_attack` scalesByClass 1d6→10d6 with finesse_or_ranged + first_hit_per_turn typed (one of the best-modeled).
-- **Weapon Mastery (Rogue)** — Partial. `weapon_mastery_count_bonus:2`; no choice_group.
-- **Cunning Action** — Clean. `granted_bonus_action_grant` (creature-action ref) typed.
-- **Steady Aim** — Missing mechanic: Bonus-Action self-Advantage (Speed→0) — pure prose.
-- **Cunning Strike** — Missing mechanic: spend Sneak dice for effects — pure prose.
-- **Uncanny Dodge** — Missing mechanic: reaction halve damage — pure prose; `reaction_damage_reduction` kind exists but unused.
-- **Evasion (Rogue)** — Missing mechanic: Dex-save evasion — pure prose; no typed evasion field.
-- **Reliable Talent** — Missing mechanic: treat d20 ≤9 as 10 — `reliable_talent` kind EXISTS but is NOT used here; pure prose.
-- **Improved Cunning Strike** — Missing mechanic: two effects/hit — pure prose.
-- **Devious Strikes** — Missing mechanic: new Cunning Strike options — pure prose.
-- **Slippery Mind** — Clean. two `proficiency_grant` saving_throw (WIS, CHA) typed.
-- **Elusive** — Missing mechanic: no Advantage against you — pure prose; no typed effect.
-- **Stroke of Luck** — Partial. `resource_pool_grant` 1/rest typed; the turn-miss-into-hit is prose.
-- **Sorcerer Spellcasting** — Clean (spellcasting identity feature).
-- **Innate Sorcery** — Partial. `resource_pool_grant` (cha_mod) + activation typed. Missing mechanic: Advantage on Sorcerer spell attacks + +1 save DC are prose (no advantage_on/save-DC effect).
-- **Font of Magic** — Partial. `resource_pool_grant` (sorcerer_level) typed; SP↔slot conversion prose.
-- **Sorcerous Restoration** — Partial. `resource_pool_grant` 1/short-rest typed; "regain 4 SP" amount is prose (no typed recovery amount).
-- **Sorcery Incarnate** — Missing mechanic: Innate Sorcery for 2 SP when out of uses — pure prose.
-- **Arcane Apotheosis** — Missing mechanic: free Metamagic while Innate Sorcery active — pure prose.
-- **Pact Magic** — Partial. `resource_pool_grant` (pact_slots, short_rest) + `slot_recovery_short_rest` typed; slot scaling/level prose.
-- **Magical Cunning** — Partial. `resource_pool_grant` 1/long-rest typed; the half-slot recovery amount is prose.
-- **Mystic Arcanum (Level 6 Spell)** — Partial. `resource_pool_grant` 1/long-rest typed; the L6 spell pick + always-known is prose (no spell choice_group).
-- **Mystic Arcanum (Level 7 Spell)** — Partial. Same as L6 (pool typed, spell pick prose).
-- **Mystic Arcanum (Level 8 Spell)** — Partial. Same (pool typed, spell pick prose).
-- **Mystic Arcanum (Level 9 Spell)** — Partial. Same (pool typed, spell pick prose).
-- **Eldritch Master** — Partial. `resource_pool_grant` 1/long-rest typed; the full-slot recovery is prose.
-- **Eldritch Resilience** — Missing mechanic: bonus Magical Cunning uses — pure prose, no effects.
-- **Wizard Spellcasting** — Clean (spellcasting identity feature).
-- **Ritual Adept** — Missing mechanic: cast spellbook rituals free — pure prose.
-- **Arcane Recovery** — Partial. `resource_pool_grant` 1/day typed; the slot-recovery formula is prose.
-- **Memorize Spell** — Missing mechanic: swap prepared spell on Short Rest — pure prose (acceptable, spell-management).
-- **Spell Mastery** — Missing mechanic: cast chosen L1/L2 spells at will — pure prose; no spell_always_prepared/choice.
-- **Signature Spells** — Missing mechanic: two L3 always-prepared free-cast — pure prose; no spell_always_prepared effects.
-
-### Entity Log — feats_class.dart (subclass features)
-
-- **Frenzy** — Missing mechanic: bonus melee attack while raging + Exhaustion — pure prose.
-- **Mindless Rage** — Clean. two `condition_immunity_grant` (Charmed, Frightened) w/ has_state predicate typed.
-- **Retaliation** — Missing mechanic: reaction melee attack on taking damage — pure prose.
-- **Intimidating Presence** — Missing mechanic: Bonus-Action Frighten (Wis save) — pure prose.
-- **Bonus Proficiencies (Lore)** — Missing mechanic: 3 skill proficiencies — pure prose; no proficiency_grant/choice_group (contrast Skilled feat which types it).
-- **Cutting Words** — Missing mechanic: reaction expend Bardic die to subtract — pure prose.
-- **Magical Discoveries** — Missing mechanic: learn 2 spells from any class — pure prose.
-- **Peerless Skill** — Missing mechanic: expend Bardic die to add to ability check — pure prose.
-- **Disciple of Life** — Missing mechanic: bonus healing 2+spell level — pure prose.
-- **Channel Divinity: Preserve Life** — Missing mechanic: 5×level HP heal pool — pure prose; no effects (not even a resource pool).
-- **Blessed Healer** — Missing mechanic: self-heal on healing others — pure prose.
-- **Supreme Healing** — Missing mechanic: max healing dice — pure prose.
-- **Circle Spells** — Missing mechanic: land-based always-prepared spells — pure prose; no spell_always_prepared/choice_group.
-- **Land's Aid** — Missing mechanic: 2d6 heal/damage emanation, PB uses — pure prose; no resource_pool_grant.
-- **Natural Recovery** — Missing mechanic: slot recovery on Short Rest — pure prose.
-- **Nature's Ward** — Clean. two `condition_immunity_grant` (Frightened, Poisoned) + `damage_immunity` Poison typed. (Disease-immunity prose rider not typed — minor.)
-- **Nature's Sanctuary** — Missing mechanic: Beast/Plant must save to attack you — pure prose.
-- **Improved Critical** — Clean. `crit_range_extend` threshold 19.
-- **Remarkable Athlete** — Missing mechanic: half-PB to STR/DEX/CON checks — pure prose; `half_proficiency_to_unproficient_checks` exists but is for a different scope; not typed.
-- **Additional Fighting Style** — Missing mechanic: gain another Fighting Style — pure prose; no choice/feat grant.
-- **Superior Critical** — Clean. `crit_range_extend` threshold 18.
-- **Survivor** — Missing mechanic: start-of-turn regen 5+CON — pure prose.
-- **Open Hand Technique** — Missing mechanic: Flurry rider effects (Prone/Push/disable) — pure prose.
-- **Wholeness of Body** — Missing mechanic: Bonus-Action heal 3×level, 1/long-rest — pure prose; no resource_pool_grant.
-- **Fleet Step** — Missing mechanic: Step of the Wind + Flurry combo — pure prose.
-- **Quivering Palm** — Missing mechanic: spend 4 Focus, CON save or 0 HP — pure prose.
-- **Sacred Weapon** — Missing mechanic: spend CD to buff weapon — pure prose.
-- **Aura of Devotion** — Clean. `condition_immunity_grant` Charmed typed (aura range/allies not typed but immunity present).
-- **Smite of Protection** — Missing mechanic: Half Cover on smite — pure prose.
-- **Holy Nimbus** — Partial. `resource_pool_grant` 1/long-rest typed; the Radiant aura damage + save Advantage are prose.
-- **Hunter's Lore** — Missing mechanic: learn target's immunities on mark — pure prose.
-- **Hunter's Prey** — Missing mechanic: choose Colossus Slayer/Horde Breaker/Lore — pure prose; the picks exist as Feature-Option feats but this parent has no choice_group binding.
-- **Defensive Tactics** — Missing mechanic: choose option — pure prose; options exist separately, no binding choice_group.
-- **Superior Hunter's Defense** — Missing mechanic: choose option — pure prose; options exist separately.
-- **Multiattack** — Missing mechanic: choose Volley/Whirlwind — pure prose; options exist separately.
-- **Hunter's Strategy** — Missing mechanic: all options unlocked — pure prose.
-- **Colossus Slayer** (Feature Option) — Missing mechanic: +1d8 vs damaged target, but `effects: const []` — pure prose despite `extra_damage_on_attack` being available. Prereq free-text unenforced.
-- **Horde Breaker** (Feature Option) — Missing mechanic: extra attack vs nearby creature; `effects: []` empty. Prereq free-text.
-- **Hunter's Lore Option** (Feature Option) — Missing mechanic: knowledge rider, `effects: []` (acceptable info-only, but unstructured). Prereq free-text.
-- **Escape the Horde** (Feature Option) — Missing mechanic: OA against you at Disadvantage; `effects: []` empty; no disadvantage typed.
-- **Multiattack Defense** (Feature Option) — Missing mechanic: attacker Disadvantage after hit; `effects: []`.
-- **Steel Will** (Feature Option) — Missing mechanic: Advantage vs Frightened; `effects: []` despite `advantage_on` save being typeable.
-- **Volley** (Feature Option) — Missing mechanic: ranged AoE; `effects: []` (action, prose-acceptable).
-- **Whirlwind Attack** (Feature Option) — Missing mechanic: melee AoE; `effects: []`.
-- **Evasion** (Feature Option) — Missing mechanic: Dex-save evasion; `effects: []`; no typed evasion field.
-- **Stand Against the Tide** (Feature Option) — Missing mechanic: redirect missed melee; `effects: []`.
-- **Uncanny Dodge** (Feature Option) — Missing mechanic: halve damage reaction; `effects: []`; `reaction_damage_reduction` available but unused.
-- **Fast Hands** — Clean. `granted_bonus_action_grant` (Fast Hands creature-action) typed.
-- **Second-Story Work** — Partial. `climb_speed_equals_speed` typed; the jump-distance bonus is prose.
-- **Supreme Sneak** — Missing mechanic: Advantage on Stealth if moved ≤half Speed — pure prose.
-- **Use Magic Device** — Unimplemented prereq context / Missing mechanic: ignore item class/race/level reqs — pure prose (interacts with magic-item attunement_prereq which is itself never checked).
-- **Thief's Reflexes** — Missing mechanic: two turns round 1 — pure prose.
-- **Draconic Resilience** — Clean. `hp_max_bonus_total:3` + `hp_bonus_per_level:1` + `unarmored_ac_formula` (base 13, DEX) typed.
-- **Draconic Spells** — Missing mechanic: fixed prepared list by ancestry — pure prose; ancestry options exist separately, no choice_group binding here.
-- **Elemental Affinity** — Missing mechanic: +CHA to matching-type damage + Resistance — pure prose; no damage/resistance effect.
-- **Dragon Wings** — Partial. `fly_speed` + `resource_pool_grant` 1/long-rest typed (duration prose).
-- **Dragon Companion** — Partial. `spell_always_prepared` Summon Dragon + `resource_pool_grant` typed; free-cast/no-concentration riders prose.
-- **Draconic Presence** — Missing mechanic: 60-ft Charm/Frighten emanation — pure prose; no resource pool or effect.
-- **Dark One's Blessing** — Clean. `temp_hp_grant` with formula (CHA+warlock level) + trigger on_reduce_to_0 typed.
-- **Fiendish Vigor** (Fiend Patron L3) — Clean. `spell_always_prepared` False Life typed.
-- **Dark One's Own Luck** — Partial. `resource_pool_grant` 1/rest typed; the +1d10 to check/save is prose.
-- **Fiendish Resilience** (Fiend Patron L10 parent) — Missing mechanic: choose damage-type Resistance on rest — pure prose; the 13 typed options exist separately but parent has no binding choice_group.
-- **Hurl Through Hell** — Partial. `resource_pool_grant` 1/long-rest typed; the 8d10 Psychic banish is prose.
-- **Evocation Savant** — Missing mechanic: half copy cost + extra cantrip — pure prose; no cantrip_count_bonus.
-- **Potent Cantrip** — Missing mechanic: half damage on cantrip save — pure prose.
-- **Sculpt Spells** — Missing mechanic: allies auto-succeed/no-damage — pure prose.
-- **Empowered Evocation** — Missing mechanic: +INT to one evocation damage roll — pure prose.
-- **Overchannel** — Missing mechanic: max damage + recoil — pure prose.
-- **Careful Spell** (Metamagic option) — Missing mechanic: SP for allies auto-succeed; pure prose, no effects. Prereq "Sorcerer — Metamagic" free-text unenforced.
-- **Distant Spell** (Metamagic) — Missing mechanic: double range; prose. Prereq free-text.
-- **Empowered Spell** (Metamagic) — Missing mechanic: reroll damage dice; `reroll_damage` exists but unused; prose.
-- **Extended Spell** (Metamagic) — Missing mechanic: double duration; prose.
-- **Heightened Spell** (Metamagic) — Missing mechanic: target save Disadvantage; prose.
-- **Quickened Spell** (Metamagic) — Missing mechanic: action→bonus action; prose.
-- **Seeking Spell** (Metamagic) — Missing mechanic: reroll missed spell attack; prose.
-- **Subtle Spell** (Metamagic) — Missing mechanic: no V/S components; prose.
-- **Transmuted Spell** (Metamagic) — Missing mechanic: swap damage type; `damage_type_override` exists but unused; prose.
-- **Twinned Spell** (Metamagic) — Missing mechanic: second target; prose.
-- **Agonizing Blast** (Invocation) — Unimplemented prereq: "Eldritch Blast cantrip" free-text only, unenforced. Missing mechanic: +CHA to EB damage — pure prose; no spellcasting_ability_to_damage.
-- **Armor of Shadows** (Invocation) — Missing mechanic: at-will Mage Armor — pure prose; no spell grant.
-- **Devil's Sight** (Invocation) — Missing mechanic: see in magical darkness 120ft — pure prose; `sense_grant`/blindsight unused.
-- **Eldritch Mind** (Invocation) — Missing mechanic: Advantage on Concentration saves — `concentration_advantage` exists but unused; prose.
-- **Eldritch Sight** (Invocation) — Missing mechanic: at-will Detect Magic — pure prose.
-- **Eldritch Spear** (Invocation) — Unimplemented prereq: "Eldritch Blast cantrip" free-text. Missing mechanic: EB range 300ft — pure prose.
-- **Fiendish Vigor** (Invocation — duplicate name) — Missing mechanic: at-will False Life — pure prose; no spell grant. (Name collides with Fiend Patron Fiendish Vigor — potential ID-resolution hazard.)
-- **Gaze of Two Minds** (Invocation) — Missing mechanic: perceive through touched creature — pure prose.
-- **Mask of Many Faces** (Invocation) — Missing mechanic: at-will Disguise Self — pure prose.
-- **Misty Visions** (Invocation) — Missing mechanic: at-will Silent Image — pure prose.
-- **One with Shadows** (Invocation) — Unimplemented prereq: "Warlock 5" free-text only. Missing mechanic: Invisible in dim/dark — pure prose.
-- **Repelling Blast** (Invocation) — Unimplemented prereq: "Eldritch Blast cantrip" free-text. Missing mechanic: push on EB hit — pure prose.
-- **Pact of the Blade** (Pact Boon) — Unimplemented prereq: "Warlock 3" free-text. Missing mechanic: conjure pact weapon, CHA attack/damage — pure prose.
-- **Pact of the Chain** (Pact Boon) — Unimplemented prereq: "Warlock 3" free-text. Missing mechanic: Find Familiar grant — pure prose.
-- **Pact of the Tome** (Pact Boon) — Unimplemented prereq: "Warlock 3" free-text. Missing mechanic: 3 cantrips from any list — pure prose; no cantrip_grant/choice.
-- **Draconic Ancestor — Acid/Cold/Fire/Lightning/Poison** (5 Draconic Spells options) — Missing mechanic: each lists bonus prepared spells in prose only; no `spell_always_prepared` effects; `effects` defaulted empty. Prereq "Draconic Sorcery 3" free-text unenforced. (5 cards, identical finding.)
-- **Fiendish Resilience — Acid/Bludgeoning/Cold/Fire/Force[absent]/Lightning/Necrotic/Piercing/Poison/Psychic/Radiant/Slashing/Thunder** (12 options) — Clean. Each has a typed `damage_resistance` row for its type; prereq "Fiend Warlock 10" free-text/unenforced (consistent). (12 cards, identical: Clean mechanic.)
-
-### Systemic Gaps (for roadmap)
-
-- Massive "typed kind exists but unused" gap: many resolver kinds are implemented but the content never wires them up — `attack_bonus_typed` (Archery), `damage_bonus_typed` (Dueling/Thrown), `min_die_value` (GWF/Unarmed Fighting), `damage_reduction_flat` (Heavy Armor Master), `reaction_damage_reduction` (Uncanny Dodge/Interception/Deflect Attacks), `passive_score_bonus` (Observant), `ignore_cover`/`ignore_long_range_disadvantage`/`extra_damage_on_attack` (Sharpshooter), `oa_stops_movement`/`enemy_cant_disengage_oa` (Sentinel), `reliable_talent` (Reliable Talent), `concentration_advantage` (War Caster/Eldritch Mind), `reroll_damage`/`damage_type_override` (Empowered/Transmuted Spell). The DSL is far ahead of the authored data.
-- No `speed_bonus` resolver kind despite being used by Fast Movement, Mobile, Unarmored Movement, Roving — every flat walking-speed bump is silently inert. Needs either a kind added or the data corrected.
-- "Choose N of a list" features are systematically unmodeled: Hunter's Prey/Defensive Tactics/Multiattack, Fiendish Resilience, Draconic Spells/Ancestry, Divine Order, Primal Order, and Additional Fighting Style all have separate option-feats but the PARENT feature carries no `choice_group` binding (and option feats often have empty `effects`), so picks aren't enforced or applied.
-- Spell-grant features with a player choice ("+1 spell of school X", Magical Secrets, Circle Spells, Mystic Arcanum, Signature/Spell Mastery, Pact of the Tome) lack any `spell_from_list` choice_group; only fixed always-prepared spells (Misty Step, etc.) are typed. The known-good pattern from Magic Initiate isn't reused.
-- Reactive/triggered combat features (smites, reactions, on-hit riders, save-or-X, auras like Aura of Protection) are almost entirely prose with no DSL coverage — and Auras specifically (a core Paladin pillar) have no granted-aura/conditional-save-bonus mechanic at all. Also: feat-prereq enforcement is universally warning-only and several prereq forms (spellcasting, "X or Y" ability, armor/weapon/tool proficiency, cantrip prereqs on Invocations) are stored only as free text and never checked; the `Fiendish Vigor` name appears twice (Fiend-Patron feat vs Invocation option), a likely ID-collision hazard.
-
----
-
-## Classes, Subclasses, Species & Subspecies (srd_core/classes.dart, subclasses.dart, species.dart, subspecies.dart)
-
-Scope note: per task, trait/action mechanics carried by `trait_refs` / `granted_*_refs` are audited separately. Below, a feature is only flagged "Missing mechanic" when its OWN card prose describes a rule with NO typed field AND no grant-ref carrying it. Cross-cutting facts verified in source: `primary_ability_ref` IS populated for every class (the schema field is `*_ref`, not a known-empty `primary_ability`); `multiclass_prereq_ability_refs`+`multiclass_prereq_min_score` are typed but warning-only (SRD §1.10 banner, never blocks); the class `rule_effects` typed featEffectList is EMPTY on all 12 classes; all L2+ class/subclass features are authored as prose `description` with no typed effect row (mechanics, when present, ride `granted_*_refs`). For subspecies, `granted_modifiers` (kind `speed_bonus`/`hp_bonus_*`/`ability_score_bonus`/`sense_grant`) and `granted_spells_at_level` ARE resolver-handled.
-
-### Entity Log — Classes (12)
-- **Barbarian** — Multiclass prereq (STR 13) typed but warning-only (non-blocking). L1 Rage/Unarmored Defense/Weapon Mastery/L2 Danger Sense/Reckless Attack carry trait/action refs. L3+ (Primal Knowledge, Brutal Strike, Relentless Rage, Persistent Rage, Indomitable Might, Primal Champion +4 STR/CON) are prose-only — no typed effect, no ref; `rule_effects` empty. Primal Champion's +4 ability score has no `ability_score_bonus`/`granted_modifiers` entry (missing mechanic).
-- **Bard** — Multiclass prereq (CHA 13) typed/warning-only. L1–2 (Bardic Inspiration, Spellcasting, Expertise, Jack of All Trades) carry refs. L5+ (Font of Inspiration, Magical Secrets, Words of Creation always-prepared spells, Superior Bardic Inspiration) prose-only, no typed mechanic. Jack of All Trades benefit relies on the `Jack of All Trades` trait ref (half-PB-to-checks = resolver `half_proficiency_to_unproficient_checks`, in trait).
-- **Cleric** — Multiclass prereq (WIS 13) typed/warning-only. `l1_order_feat_category: 'Divine Order'` is a typed choice hook. Divine Order text ("Protector: Martial weapons + Heavy armor" vs "Thaumaturge: extra cantrip + Wis to cantrip damage") is a branching grant described in prose and deferred to the `Divine Order` trait — verify trait actually grants both branches. L5+ (Sear Undead, Blessed Strikes +1d8 radiant, Divine Intervention) prose-only, no typed mechanic.
-- **Druid** — Multiclass prereq (WIS 13) typed/warning-only. `granted_languages: [Druidic]` + `granted_tool_refs: [Herbalism Kit]` typed. Primal Order choice (Magician vs Warden: extra cantrip / Arcana+Nature prof vs Martial weapon + Medium armor) is prose-only with NO trait ref and NO typed grant (missing mechanic — the L1 order choice grants nothing mechanically). L5+ (Wild Resurgence, Elemental Fury, Archdruid) prose-only.
-- **Fighter** — Multi-ability multiclass prereq lists STR+DEX with single `multiclass_prereq_min_score: 13`; schema semantics = "every listed ability ≥ score" (AND), but SRD multiclass needs only ONE — over-restrictive mis-warn (and warning-only anyway). Fighting Style at L1 is described as "gain a Fighting Style feat" but has no `granted_feat_refs` (deferred to player pick; no typed hook). L5/L9/L13+ (Extra Attack tiers, Studied Attacks) prose-only; Extra Attack not a typed `extra_attack_count`.
-- **Monk** — Multi-ability prereq DEX+WIS, same AND-vs-OR over-restriction. L1–6 features carry trait refs (Martial Arts, Unarmored Defense, Stunning Strike, etc.). `Unarmored Movement` (+10 speed, L2) is prose-only with NO trait ref and NO `speed_bonus` modifier (missing mechanic). L13+ (Deflect Energy, Superior Defense, Body and Mind +4 DEX/WIS) prose-only; Body and Mind ability boost untyped.
-- **Paladin** — Multi-ability prereq STR+CHA, AND-vs-OR over-restriction. L1–11 mostly carry refs (Lay on Hands, Aura of Protection, Aura of Courage, Radiant Strikes). Fighting Style (L2) "gain a Fighting Style feat" no `granted_feat_refs`. Aura of Protection ("+CHA to saves in 10 ft") relies on its trait ref — no aura/emanation typing exists. L14+ (Restoring Touch, Aura Expansion to 30 ft) prose-only.
-- **Ranger** — Multi-ability prereq DEX+WIS, AND-vs-OR over-restriction. L1–10 carry refs (Favored Enemy/Hunter's Mark, Roving climb+swim, Expertise, Tireless). Fighting Style (L2) no `granted_feat_refs`. L13+ (Relentless Hunter, Nature's Veil, Feral Senses, Foe Slayer) prose-only.
-- **Rogue** — Multiclass prereq (DEX 13) typed/warning-only. `granted_languages: [Thieves' Cant]` + `granted_tool_refs: [Thieves' Tools]` typed. L1–7 carry refs (Expertise, Sneak Attack, Cunning Action, Cunning Strike, Uncanny Dodge, Evasion, Reliable Talent). Thieves' Cant feature row (L1) is prose-only but duplicative of the typed granted_language. L11+ (Improved/Devious Cunning Strike, Elusive, Stroke of Luck) prose-only.
-- **Sorcerer** — Multiclass prereq (CHA 13) typed/warning-only. L1–2 carry refs (Innate Sorcery, Font of Magic). Metamagic (L2) prose-only — no typed Metamagic selection/grant. L5 Sorcerous Restoration mis-tagged with `Spellcasting Focus` trait ref (copy/paste — unrelated to SP recovery). L7+ (Sorcery Incarnate, extra Metamagic, Arcane Apotheosis) prose-only.
-- **Warlock** — Multiclass prereq (CHA 13) typed/warning-only; `caster_kind: 'Pact'`. L1–3 carry refs (Eldritch Invocations, Pact Magic, Magical Cunning, Pact Boon). Eldritch Invocations / Pact Boon are branching choices deferred to traits; no typed option-set. L5–11 Mystic Arcanum rows have EMPTY descriptions (level-6..9 spell grants undocumented and untyped). L13+ (Eldritch Master, Eldritch Resilience) prose-only.
-- **Wizard** — Multiclass prereq (INT 13) typed/warning-only. L1–2 carry refs (Spellcasting, Ritual Adept, Arcane Recovery, Scholar). L5/18/20 (Memorize Spell, Spell Mastery, Signature Spells) prose-only — no typed free-cast mechanic. Several spellcasting features lean on `Spellcasting Focus` trait for the focus grant only.
-
-### Entity Log — Subclasses (12)
-- **Path of the Berserker** — L3 granted; Frenzy/Mindless Rage/Retaliation/Intimidating Presence carry refs. Mindless Rage redundantly lists both a `trait` and a `feat` ref. Clean structurally; no prereqs.
-- **College of Lore** — `bonus_skill_pick_count: 3` typed (surfaces as pending skill choice). Bonus Proficiencies feature row is prose duplicate of that typed count. Magical Discoveries / Peerless Skill prose-only.
-- **Life Domain** — Disciple of Life / Preserve Life / Blessed Healer carry refs. Domain Spells (always-prepared bonus list) is prose-only — no `granted_spells_at_level` / always-prepared typing (missing mechanic). Supreme Healing prose-only.
-- **Circle of the Land** — Land's Aid / Land's Stride / Nature's Ward carry refs. Circle Forms (Wild Shape CR ½) and Nature's Sanctuary partly prose; Nature's Ward "resistance to a damage type associated with your land choice" is an unresolved CHOICE with no typed damage-resistance grant (missing mechanic — choice deferred nowhere).
-- **Champion** — Improved Critical / Remarkable Athlete / Heroic Warrior carry refs (crit-range relies on `crit_range_extend` in trait). Additional Fighting Style "second Fighting Style feat" no `granted_feat_refs`. Superior Critical (18–20) / Survivor prose-only — Superior Critical's wider crit range untyped (only the L3 trait exists).
-- **Warrior of the Open Hand** — Open Hand Technique / Wholeness of Body carry refs. Fleet Step / Quivering Palm (10d12 force) prose-only.
-- **Oath of Devotion** — Sacred Weapon carries action ref. Domain Spells prose-only (no always-prepared typing). Aura of Devotion / Smite of Protection / Holy Nimbus prose-only — auras have no typed emanation mechanic.
-- **Hunter** — Hunter's Prey / Defensive Tactics carry trait refs but are unresolved sub-choices (Colossus Slayer vs Horde Breaker vs Giant Killer) with no typed option enumeration. Hunter's Lore / Multiattack / Superior Hunter's Defense prose-only.
-- **Thief** — Fast Hands carries ref. Second-Story Work (climb speed = speed) prose-only — no `climb_speed_equals_speed` effect (missing mechanic). Use Magic Device "ignore class/race/level requirements" is an Unimplemented-prereq-bypass with no typed counterpart. Supreme Sneak / Thief's Reflexes prose-only.
-- **Draconic Sorcery** — Draconic Resilience / Elemental Affinity / Dragon Wings / Dragon Companion carry refs. Draconic Resilience's "+3 HP then +1/level" and "AC 13+DEX" ride the trait (verify `hp_bonus_per_level` + `unarmored_ac_formula` present in trait). Draconic Spells: damage-type CHOICE + bonus spells prose-only, untyped.
-- **Fiend Patron** — Dark One's Blessing/Own Luck, Fiendish Resilience carry refs. Fiendish Resilience "choose a damage type, gain resistance" is an unresolved choice with no typed resistance grant. Fiend Spells (bonus prepared) prose-only. Hurl Through Hell (8d10 psychic) prose-only.
-- **Evoker** — Sculpt Spells carries ref. Evocation Savant / Potent Cantrip / Empowered Evocation / Overchannel prose-only — all spell-shaping mechanics, none typeable under current DSL (no spell-effect DSL).
-
-### Entity Log — Species (9)
-- **Dragonborn** — Darkvision sense + Draconic Ancestry/Damage Resistance traits + Breath Weapon action + Draconic Flight bonus-action all typed/ref'd. Card text "damage resistance keyed to a chosen ancestry" — the actual color choice lives in subspecies (Black/Blue/... Dragonborn); species-level resistance is deferred. Clean (mechanics in refs/subspecies).
-- **Dwarf** — Darkvision + Poison resistance typed; Dwarven Resilience/Toughness/Stonecunning/Forge Wise traits. "tremorsense on stone" mentioned in description but represented as Stonecunning trait (verify trait grants tremorsense) — not a typed `sense_grant` at species level. Otherwise Clean.
-- **Elf** — Darkvision + Fey Ancestry/Trance/Keen Senses/Elven Lineage traits. Lineage (Drow/High/Wood) deferred to subspecies. Clean.
-- **Gnome** — Darkvision + Gnomish Cunning trait. Description promises "mental save advantage" (Gnomish Cunning trait) and "Forest/Rock lineage of innate magic" (subspecies). Clean (deferred).
-- **Goliath** — Powerful Build / Large Form / Giant Ancestry traits; giant-ancestry boon deferred to subspecies. Description "optional Large Form starting at level 5" — level gating lives in the Large Form trait, no typed level predicate at species level. Speed 35 typed. Clean (deferred).
-- **Halfling** — Halfling Lucky/Naturally Stealthy/Brave/Halfling Nimbleness traits; "reroll natural 1s" = Lucky trait. No Darkvision (correct). Clean (deferred to traits).
-- **Human** — Resourceful/Skilled/Versatile traits. Card text "bonus Heroic Inspiration on Long Rests, a free skill, and an Origin feat" — the Origin-feat grant (Versatile) has no `granted_feat_refs` at species level and no typed feat hook; relies entirely on the Versatile trait carrying it (flag: described feat-grant not represented by any species-level typed field).
-- **Orc** — Darkvision + Powerful Build trait + Adrenaline Rush bonus action + Relentless Endurance reaction, all ref'd. Description "temporary HP" delivered via Adrenaline Rush action. Clean.
-- **Tiefling** — Darkvision + Otherworldly Presence/Fiendish Legacy traits; legacy resistance + innate spells deferred to subspecies. Clean (deferred).
-
-### Entity Log — Subspecies (~22)
-- **Black/Copper Dragonborn** (Acid), **Blue/Bronze** (Lightning), **Brass/Gold/Red** (Fire), **Green** (Poison), **Silver/White** (Cold) — each grants typed `granted_damage_resistances`. BUT card text says "<type> breath weapon AND <type> resistance"; only resistance is typed — the breath-weapon damage-TYPE keying is NOT represented (species' Breath Weapon action is generic; no typed per-color damage override). Missing mechanic across all 10 color rows.
-- **Hill Dwarf** — typed `hp_bonus_per_level:1` modifier + Insight skill prof. Clean.
-- **Mountain Dwarf** — typed `hp_bonus_flat:2` modifier. Card omits SRD armor/weapon proficiencies (intentional legacy trim); Clean for what it claims.
-- **Drow** — typed superior-Darkvision `sense_grant` (120 ft) + Dancing Lights cantrip + `granted_spells_at_level` (Faerie Fire L3, Darkness L5). Clean (all typed).
-- **High Elf** — `granted_spells_at_level` (Detect Magic, Misty Step). Card text "a Wizard cantrip (L1)" is an unresolved free CHOICE with no typed cantrip grant (missing mechanic).
-- **Wood Elf** — typed `speed_bonus:5` (resolver-handled) + Druidcraft cantrip + Longstrider/Pass without Trace at-level spells. Clean.
-- **Forest Gnome** — Minor Illusion cantrip typed. "Speak with Small Beasts (telepathic)" prose-only — no typed action/trait ref (missing mechanic).
-- **Rock Gnome** — Mending + Prestidigitation cantrips typed. "Artificer's Lore (double prof on magic-item History)" and the Tinker clockwork-device feature are prose-only — no `expertise_grant`/action ref (missing mechanic).
-- **Cloud Giant** — Cloud's Jaunt bonus-action ref. Clean (mechanic in action).
-- **Fire Giant** — Fire's Burn action ref (1d10 fire on hit). Note: ride-along extra damage lives in the action card, not typed here. Clean (deferred).
-- **Frost Giant** — Frost's Chill action ref (1d6 cold + speed reduction). Clean (deferred).
-- **Hill Giant** — Hill's Tumble; described as a melee on-hit prone but wired as a `granted_reaction_refs` (likely mis-categorized: SRD Hill's Tumble triggers on your own hit, not a reaction). Flag: action-economy mismatch.
-- **Stone Giant** — Stone's Endurance reaction ref. Clean (deferred).
-- **Storm Giant** — Storm's Thunder reaction ref. Clean (deferred).
-- **Lightfoot Halfling** — Stealth skill prof typed. Clean.
-- **Stout Halfling** — Poison resistance typed. Clean.
-- **Standard Human** — typed `ability_score_bonus` +1 to all six abilities via `granted_modifiers`. Clean.
-- **Half-Orc** — Intimidation skill prof typed. Clean (legacy trim of SRD Half-Orc Relentless/Savage Attacks acknowledged).
-- **Abyssal Tiefling** — Poison resistance + Poison Spray cantrip + at-level spells. Clean.
-- **Chthonic Tiefling** — Necrotic resistance + Chill Touch + at-level spells. Clean.
-- **Infernal Tiefling** — Fire resistance + Fire Bolt + at-level spells. Clean.
-
-### Systemic Gaps (for roadmap)
-- **Leveled class/subclass features are prose-only.** Both `features` rows and the `rule_effects` typed featEffectList are empty of mechanics for all 12 classes and 12 subclasses past L1–L3; every L4+ benefit (Extra Attack tiers, flat ability boosts like Primal Champion/Body and Mind, Blessed Strikes, always-prepared domain spells, Studied Attacks) is unresolvable. The resolver only sees what L1–3 `granted_*_refs` carry.
-- **Multi-ability multiclass prereqs use AND not OR.** Fighter/Monk/Paladin/Ranger list two `multiclass_prereq_ability_refs` against one `multiclass_prereq_min_score`; schema semantics require BOTH, but SRD multiclass needs only one — over-restrictive. Moot in practice since the whole prereq check is warning-only/non-blocking, but the warning itself is wrong.
-- **Unresolved in-feature CHOICES have no typed representation.** Divine Order, Primal Order, Pact Boon, Eldritch Invocations, Metamagic, Hunter's Prey/Defensive Tactics, Nature's Ward / Fiendish Resilience resistance-type, High-Elf wizard cantrip, Draconic damage type — all branch points described in prose with no enumerated option set or typed grant, so the chosen branch grants nothing mechanically.
-- **"Gain a Fighting Style feat" / "Origin feat" never use `granted_feat_refs`.** Fighter L1, Paladin/Ranger L2, Champion L7, and Human (Versatile) describe feat grants in prose with no typed feat hook on the class/species card — deferred entirely to a player pick or to a trait.
-- **Dragonborn breath-weapon damage type is not keyed per color.** Subspecies type only `granted_damage_resistances`; the breath weapon's damage type (the defining color mechanic) has no typed override — the species' generic Breath Weapon action can't know the chosen element. Also several lineage flavor mechanics (Forest Gnome telepathy, Rock Gnome Artificer's Lore/Tinker) are prose-only with no ref/effect, and Hill Giant's Hill's Tumble is wired as a reaction despite being an on-your-hit rider (action-economy mismatch).
-
----
-
-## Traits & Backgrounds (srd_core/traits.dart, srd_core/backgrounds.dart)
-
-### Structural finding (applies to ALL 239 trait cards)
-
-The `_t()` builder (traits.dart L7–23) emits ONLY three attributes per row:
-`source`, `trait_kind`, `description`. It NEVER calls `effect()` and NEVER
-populates a typed `effects` DSL array, even though the full DSL + `effect()`
-helper exist (`_helpers.dart` L52). Therefore **every one of the 239 traits
-is a Missing Mechanic + Poor Data Structure card**: the entire functional rule
-lives in the `description` prose string, and the resolver cannot apply any of
-it. `trait_kind` is a free-text bucket label, not a mechanic. For monster
-traits this is partly by-design (monster actions are prose elsewhere too), but
-for the ~21 PC species traits and ~70 PC class traits the mechanics ARE
-resolver-expressible (advantage_on, damage_resistance, fly_speed,
-spell_always_prepared, hp_bonus_per_level, unarmored_ac_formula, etc.) and are
-simply not encoded here. Some species-level grants are typed on `species.dart`
-fields (e.g. Dwarf `granted_damage_resistances: [Poison]`, `granted_senses`),
-but the trait rows are referenced only by name via `trait_refs` and carry no
-effects; several sub-mechanics are typed NOWHERE (see Systemic Gaps).
-
-### Entity Log — Traits
-
-Verdict shorthand: **MM** = Missing Mechanic (rule is prose-only, no typed
-`effects`); **PDS** = Poor Data Structure (rule dumped in `description`). All
-trait rows below are MM+PDS unless noted. Names grouped by the resolver-DSL
-kind that SHOULD carry them; every name enumerated.
-
-Monster/creature traits whose mechanic is plausibly prose-only by system design
-but still has NO typed field (MM+PDS, monster-scope):
-- **Amphibious** — MM+PDS (breathe air/water; no movement/sense field).
-- **Legendary Resistance (3/Day)** — MM+PDS (auto-succeed save; no resource_pool_grant + saving-throw override).
-- **Magic Resistance** — MM+PDS (adv. on saves vs magic → `advantage_on`/`saving_throw`).
-- **Pack Tactics** — MM+PDS (adv. on attack → `advantage_on` w/ predicate).
-- **Keen Smell**, **Keen Sight**, **Keen Hearing**, **Keen Sight and Smell** — MM+PDS (adv. on Perception → `advantage_on`).
-- **Sunlight Sensitivity** — MM+PDS (disadv. → `disadvantage_on`).
-- **Spider Climb**, **Spider Climb (Roper)**, **Spider Climb (Vampire)** — MM+PDS (climb → `climb_speed_equals_speed`).
-- **Web Sense**, **Web Walker** — MM+PDS.
-- **Aggressive** — MM+PDS (bonus-action move → `granted_bonus_action_grant`).
-- **Brute** — MM+PDS (extra die → `extra_damage_on_attack`).
-- **Reckless**, **Reckless Attacker** — MM+PDS (adv./adv.-against → `advantage_on`+`disadvantage_on`).
-- **Flyby**, **Flyby (Bat)** — MM+PDS (no OA on fly-out → `opportunity_attack_immunity*`).
-- **Standing Leap**, **Running Leap**, **Running Leap (re: animals)** — MM+PDS (jump distances; no field).
-- **Undead Fortitude** — MM+PDS (CON-save-to-1HP; no typed mechanic).
-- **Aboleth Telepathy**, **Probing Telepathy**, **Limited Telepathy** — MM+PDS (no telepathy field).
-- **Eldritch Restoration**, **Rejuvenation**, **Demonic Restoration**, **Misty Escape**, **Nine Lives Stealer**, **Whelm**, **Blessed by Tyche** — MM+PDS (revival/death-deny; no typed mechanic).
-- **Mucous Cloud**, **Stench**, **Heated Body**, **Fire Aura**, **Paralyzing Aura**, **Fear Aura**, **Aura of the Dead**, **Frightful Presence** — MM+PDS (aura/save effects; no typed aura DSL).
-- **Legendary Resistance (3/Day, or 4/Day in Lair)** — MM+PDS.
-- **Spellcasting (Lich)**, **Spellcasting (Mage)**, **Spellcasting (Priest)**, **Spellcasting (Cult Fanatic)**, **Spell Storing (Lich)**, **Sphinx Spellcasting**, **Innate Spellcasting (Drow)**, **Innate Spellcasting (Druid)**, **Innate Spellcasting (Demon)**, **Innate Spellcasting (Sphinx)**, **Innate Spellcasting (Hag)**, **Innate Spellcasting (Lamia)**, **Innate Spellcasting (Rakshasa)**, **Innate Spellcasting (Pixie)** — MM+PDS (spell lists/DCs in prose; no `spell_always_prepared`/`spell_cast_from_item` rows, consistent w/ no-typed-spell-DSL note but spells themselves not even referenced).
-- **Turn Resistance**, **Magic Resistance (MF)**, **Magic Resistance (Strong)**, **Spell Resistance**, **Limited Magic Immunity**, **Brave** (monster), **Two Heads**, **Multiple Heads**, **Multi-Headed (Hydra)**, **Two-Headed (Death Dog)**, **Sure-Footed**, **Gnomish Cunning (monster dup?)** — MM+PDS (adv. on saves / condition advantage → `advantage_on`).
-- **Antimagic Cone** — MM+PDS.
-- **Creature Sense**, **Web Sense**, **Sense Magic**, **Treasure Sense**, **Iron Scent**, **Echolocation**, **Devil's Sight**, **Divine Awareness** — MM+PDS (senses → `sense_grant`/`blindsight_grant`/`truesight_grant`).
-- **Martial Advantage**, **Sneak Attack**, **Sneak Attack (Rogue)**, **Magic Weapons**, **Charge**, **Charge (Animal)**, **Trampling Charge**, **Hooves (Trampling)**, **Pounce**, **Blood Frenzy** — MM+PDS (extra damage / conditional adv. → `extra_damage_on_attack`/`advantage_on`).
-- **Hold Breath**, **Hold Breath (Crocodile)**, **Hold Breath (Octopus)**, **Water Breathing**, **Water Breathing (Animal)** — MM+PDS.
-- **Snow Camouflage**, **Stone Camouflage**, **Stone Camouflage (Xorn)**, **Plant Camouflage**, **Camouflage (Octopus)**, **Underwater Camouflage**, **Stealth Master** — MM+PDS (adv. on Stealth → `advantage_on`).
-- **Fey Ancestry** — MM+PDS (adv. vs Charm + no-sleep → `advantage_on`+`condition_immunity_grant`).
-- **Shapechanger (Werewolf)**, **Shapechanger (Werecreature)**, **Shapechanger (Vampire)** — MM+PDS.
-- **Regeneration**, **Acid Absorption**, **Lightning Absorption**, **Fire Absorption**, **Cold Absorption** — MM+PDS (heal/absorb → `damage_immunity_grant`+heal; no typed mechanic).
-- **Death Burst**, **Death Burst (Fire Beetle)** — MM+PDS.
-- **False Appearance**, **False Appearance (Gargoyle)** — MM+PDS.
-- **Siege Monster** — MM+PDS (double dmg to objects).
-- **Damage Transfer**, **Reflective Carapace**, **Reactive**, **Reactive Heads**, **Avoidance**, **Evasion** (monster) — MM+PDS.
-- **Wakeful** — MM+PDS.
-- **Earth Glide**, **Earth Glide (Xorn)**, **Earth Walk**, **Ice Walk**, **Air Form**, **Incorporeal Movement**, **Tunneler**, **Tree Stride**, **Climb (Animal)**, **Burrow (Giant Badger)**, **Beast of Burden** — MM+PDS (movement → `climb_speed_equals_speed`/`fly_speed`/`walk_on_liquid`/speed fields).
-- **Sunlight Hypersensitivity**, **Sunlight Sensitivity (Acute)**, **Aversion to Light** — MM+PDS (disadv. in sunlight).
-- **Cunning Action**, **Cunning Action (Rogue)**, **Nimble Escape** — MM+PDS (bonus-action Dash/Disengage/Hide → `granted_bonus_action_grant`).
-- **Tentacles**, **Tentacles (Chuul)**, **Ooze Cube**, **Swarm**, **Steal Memories**, **Construct Nature**, **Immutable Form**, **Shielded Mind**, **Inscrutable**, **Vampire Weaknesses**, **Mimicry**, **Light (Fire Beetle)**, **Ink Cloud** — MM+PDS.
-- **Speak with Beasts and Plants**, **Speak with Plants**, **Beast Whisperer** — MM+PDS (language-ish; no `language_grant`).
-
-PC species traits (mechanics ARE resolver-expressible; MM+PDS, and several sub-rules typed NOWHERE):
-- **Dwarven Resilience** — MM+PDS. Damage resistance typed on species (`granted_damage_resistances: Poison`) ✓; but "Advantage on saves vs Poisoned condition" has NO typed field (no save/condition-advantage on species → `advantage_on`).
-- **Dwarven Toughness** — MM+PDS (+1 HP/level → `hp_bonus_per_level`, not encoded).
-- **Stonecunning** — MM+PDS (tremorsense 60 ft as bonus action, PB/LR → `sense_grant`+`activation`; typed nowhere).
-- **Forge Wise** — MM+PDS (choose 2 artisan tools → `tool`/`choice_group`).
-- **Trance** — MM+PDS (no-sleep immunity → `condition_immunity_grant`; tool/weapon prof choice).
-- **Keen Senses (Elf)** — MM+PDS (skill choice → `skill`/`proficiency_grant`/`choice_group`).
-- **Elven Lineage**, **Fiendish Legacy**, **Draconic Ancestry**, **Giant Ancestry** — MM+PDS (lineage choice gating resistances + innate spells; no `choice_group`/`spell_always_prepared`).
-- **Halfling Lucky** — MM+PDS (reroll nat-1; no typed mechanic).
-- **Naturally Stealthy** — MM+PDS.
-- **Brave** (species, dup name w/ monster Brave) — MM+PDS (adv. vs Frightened → `advantage_on`). Note duplicate `name` collides with monster row.
-- **Halfling Nimbleness** — MM+PDS.
-- **Resourceful** — MM+PDS (Heroic Inspiration on LR).
-- **Skilled (Human)** — MM+PDS (3 skill choices → `skill`+`choice_group`).
-- **Versatile (Human)** — MM+PDS (origin feat choice → `feat`/`choice_group`; cf. backgrounds' `origin_feat_ref`).
-- **Gnomish Cunning** — MM+PDS (adv. INT/WIS/CHA saves → three `advantage_on`/`saving_throw`; typed nowhere on species).
-- **Powerful Build** — MM+PDS (carry capacity + adv. to end Grappled).
-- **Large Form** — MM+PDS (L5 size change, speed +10, adv. STR; → `species`/`activation`).
-- **Otherworldly Presence** — MM+PDS (Thaumaturgy cantrip → `cantrip_grant`).
-- **Damage Resistance (Dragonborn)** — MM+PDS (resistance keyed to ancestry → `damage_resistance_grant`; ancestry choice not typed).
-
-PC class traits (mechanics ARE resolver-expressible; all MM+PDS):
-- **Unarmored Defense (Barbarian)**, **Unarmored Defense (Monk)** — MM+PDS (→ `unarmored_ac_formula`).
-- **Reckless Attack** — MM+PDS (→ `advantage_on`+`disadvantage_on`).
-- **Danger Sense** — MM+PDS (adv. Dex saves → `advantage_on`/`saving_throw`).
-- **Weapon Mastery** — MM+PDS (→ `weapon_mastery_count_bonus`/`weapon_mastery_grant`).
-- **Jack of All Trades** — MM+PDS (→ `half_proficiency_to_unproficient_checks`).
-- **Expertise**, **Scholar (Wizard)** — MM+PDS (→ `expertise_count`/`expertise_grant`).
-- **Sneak Attack (Rogue)**, **Cunning Strike** — MM+PDS (→ `extra_damage_on_attack` w/ `scales_with`).
-- **Cunning Action (Rogue)** — MM+PDS (→ `granted_bonus_action_grant`).
-- **Martial Arts**, **Empowered Strikes**, **Stunning Strike**, **Heightened Focus**, **Open Hand Technique** — MM+PDS (→ `magical_unarmed_strikes`/`min_die_value`/`granted_*`).
-- **Arcane Recovery**, **Magical Cunning** — MM+PDS (→ `slot_recovery_short_rest`).
-- **Spellcasting Focus** — MM+PDS.
-- **Divine Order** — MM+PDS (sub-choice → armor/weapon `proficiency_grant`/`cantrip_grant`).
-- **Druidic** — MM+PDS (→ `language_grant`).
-- **Pact Magic**, **Pact Boon**, **Magical Cunning**, **Ritual Adept** — MM+PDS.
-- **Eldritch Invocations** — MM+PDS.
-- **Favored Enemy**, **Faithful Steed**, **Paladin's Smite**, **Dragon Companion** — MM+PDS (always-prepared spell → `spell_always_prepared`).
-- **Lay on Hands (Pool)** — MM+PDS (→ `resource_pool_grant`).
-- **Innate Sorcery** — MM+PDS (→ `resource_pool_grant`).
-- **Dwarven Toughness** (class-dup) / **Draconic Resilience** — MM+PDS (→ `hp_bonus_per_level`+`unarmored_ac_formula`).
-- **Fast Movement**, **Roving**, **Tactical Shift**, **Acrobatic Movement**, **Land's Stride** — MM+PDS (speed → speed fields/`walk_on_liquid`).
-- **Feral Instinct**, **Remarkable Athlete**, **Heroic Warrior** — MM+PDS (→ `initiative_bonus`/`advantage_on`).
-- **Frenzy**, **Radiant Strikes** — MM+PDS (→ `extra_damage_on_attack`).
-- **Mindless Rage**, **Aura of Courage** — MM+PDS (→ `condition_immunity_grant`).
-- **Aura of Protection** — MM+PDS (→ `saving_throw` bonus w/ predicate).
-- **Tactical Mind** — MM+PDS.
-- **Indomitable** — MM+PDS (reroll save → `saving_throw`/`scales_with`).
-- **Improved Critical** — MM+PDS (→ `crit_range_extend`).
-- **Deft Explorer** — MM+PDS (→ `expertise_grant`+`language_grant`).
-- **Hunter's Prey**, **Defensive Tactics** — MM+PDS (sub-choice; → `choice_group`).
-- **Tireless** — MM+PDS (→ `temp_hp_grant`+`recovery_grant`).
-- **Reliable Talent** — MM+PDS (→ `reliable_talent`, a dedicated DSL kind exists and is unused here).
-- **Slippery Mind** — MM+PDS (→ `saving_throw` proficiency / `proficiency_grant`).
-- **Disciple of Life**, **Blessed Healer** — MM+PDS.
-- **Elemental Affinity**, **Fiendish Resilience**, **Nature's Ward** — MM+PDS (→ `damage_resistance_grant`+`condition_immunity_grant`).
-- **Dark One's Blessing** — MM+PDS (→ `temp_hp_grant`).
-- **Dark One's Own Luck** — MM+PDS.
-- **Sculpt Spells** — MM+PDS.
-- **Uncanny Metabolism**, **Perfect Focus** — MM+PDS (→ `recovery_grant`/`resource_pool_grant`).
-- **Evasion** (class, dup name) — MM+PDS. Duplicate `name` collides with monster Evasion.
-
-(Note: several `name` collisions across scopes — **Brave**, **Evasion**,
-**Cunning Action**, **Sneak Attack**, **Charge**, **Flyby**, **Spider Climb**,
-**Stone Camouflage**, **Death Burst**, **Hold Breath**, **Sunlight
-Sensitivity** — because `trait_refs` resolve by name, these are ambiguous
-reference targets.)
-
-### Entity Log — Backgrounds (all 16)
-
-Backgrounds are the well-structured counter-example: ability options, ASI
-distribution, origin feat, skills, tool, gold, and equipment kit are ALL in
-dedicated typed fields. **Clean** unless noted:
-- **Acolyte** — Clean.
-- **Criminal** — Clean.
-- **Sage** — Clean.
-- **Soldier** — Clean. (Tool is a variant picker via `granted_tool_variant_group: 'gaming_set'` instead of `granted_tool_refs` — intentional, surfaced by wizard.)
-- **Artisan** — Clean.
-- **Charlatan** — Clean.
-- **Entertainer** — Clean.
-- **Farmer** — Clean.
-- **Guard** — Clean.
-- **Guide** — Clean.
-- **Hermit** — Clean.
-- **Merchant** — Clean.
-- **Noble** — Clean.
-- **Sailor** — Clean.
-- **Scribe** — Clean.
-- **Wayfarer** — Clean.
-
-Minor cross-cutting note (not per-card blocking): backgrounds use
-`granted_skill_refs`/`granted_tool_refs`/`origin_feat_ref` so the resolver can
-auto-apply, but `ability_score_options` + `asi_distribution_options` describe a
-CHOICE the resolver/wizard must enforce (pick 2 of 3, +2/+1 or +1/+1/+1) — fine
-as typed options, just confirm the wizard actually applies the chosen ASI.
-
-### Systemic Gaps (for roadmap)
-
-- **Trait `effects` DSL is 100% unused.** All 239 trait cards store their
-  mechanic only in `description`; the `_t()` builder has no `effects` param and
-  never calls `effect()`. The resolver applies ZERO trait mechanics. The ~21 PC
-  species + ~70 PC class traits are fully DSL-expressible (advantage_on,
-  damage_resistance_grant, unarmored_ac_formula, hp_bonus_per_level,
-  spell_always_prepared, reliable_talent, crit_range_extend, expertise_count,
-  resource_pool_grant, etc.) and should be back-filled.
-- **Species typed fields cover damage-resistance/senses/speed but NOT save- or
-  condition-advantage.** Dwarven Resilience's "adv. vs Poisoned", Gnomish
-  Cunning's "adv. INT/WIS/CHA saves", Fey Ancestry's "adv. vs Charm", and
-  Brave's "adv. vs Frightened" are typed NOWHERE — neither on the trait row nor
-  on `species.dart`. Need a species-level `advantage_on`/`saving_throw` grant
-  channel (or move these to trait `effects`).
-- **No typed model for "innate/limited-use spellcasting" on traits.** All 14
-  Innate/Spellcasting trait rows list spells, DCs, and per-day uses purely in
-  prose; spells aren't even `ref`'d. Combined with the documented absence of a
-  typed spell-effect DSL, monster and PC innate casting is entirely unresolvable.
-- **Activation/resource economy (X/day, PB/LR, pools, auras) has no typed
-  home on traits.** Legendary Resistance, Lay on Hands, Stonecunning, Large
-  Form, Indomitable, auras, regeneration/absorption all encode uses + action
-  type + duration in prose; the `activation()`/`resource_pool_grant` machinery
-  exists but is never wired to trait rows.
-- **Duplicate trait `name`s break name-based `trait_refs` resolution.** Brave,
-  Evasion, Cunning Action, Sneak Attack, Charge, Flyby, Spider Climb, Stone
-  Camouflage, Death Burst, Hold Breath, Sunlight Sensitivity each appear 2+
-  times across monster/species/class scopes; since species/classes reference
-  traits by name, the target is ambiguous. Need scoped slugs or unique names.
-
----
-
-## Spells — SRD 5.2.1 Core (spells.dart)
-
-### Entity Log
-
-**Shared core finding — applies to ALL 341 spells:** Missing Mechanic — there is NO typed spell-effect DSL. Only *identity* fields are typed (level, school, casting-time, range, components, duration, classes, ritual, concentration, material/cost/consumed, save-ability, attack-type, damage-types, applied-conditions). Every *functional* rule — damage dice, cantrip & upcast scaling, save outcomes (negate / half-on-success), healing amounts, temp-HP, area shape/size, summon stat blocks, and the actual *application* of an applied condition — lives only in markdown `description`. The resolver cannot auto-roll or auto-apply any spell. Even where `damage_type_refs` / `save_ability_ref` / `applied_condition_refs` are set, they are pure classification tags: no dice, DC math, or on-fail/on-success branch is attached. Per-spell notes flag scaling, concentration, imposed conditions, healing, and any *typed-field* gap.
-
-
-#### Cantrips (L0) (27)
-
-- **Acid Splash** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Chill Touch** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓); prose-only rider: target can't regain HP.
-- **Dancing Lights** — no typed effect DSL; concentration.
-- **Fire Bolt** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Light** — no typed effect DSL.
-- **Mage Hand** — no typed effect DSL.
-- **Mending** — no typed effect DSL; ritual.
-- **Minor Illusion** — no typed effect DSL.
-- **Poison Spray** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Prestidigitation** — no typed effect DSL.
-- **Ray of Frost** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Sacred Flame** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Shocking Grasp** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Spare the Dying** — no typed effect DSL.
-- **Thaumaturgy** — no typed effect DSL.
-- **Druidcraft** — no typed effect DSL.
-- **Eldritch Blast** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Guidance** — no typed effect DSL; concentration.
-- **Message** — no typed effect DSL.
-- **Produce Flame** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Resistance** — no typed effect DSL; concentration.
-- **Shillelagh** — no typed effect DSL.
-- **True Strike** — no typed effect DSL; cantrip damage scaling in prose.
-- **Vicious Mockery** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Elementalism** — no typed effect DSL.
-- **Starry Wisp** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-- **Sorcerous Burst** — no typed effect DSL; cantrip damage scaling in prose; damage dice in prose (types typed ✓).
-
-#### Level 1 (57)
-
-- **Burning Hands** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Charm Person** — no typed effect DSL; upcast scaling in prose; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Cure Wounds** — no typed effect DSL; upcast scaling in prose; healing dice in prose.
-- **Detect Magic** — no typed effect DSL; concentration; ritual.
-- **Healing Word** — no typed effect DSL; upcast scaling in prose; healing dice in prose.
-- **Hellish Rebuke** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Mage Armor** — no typed effect DSL.
-- **Magic Missile** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Shield** — no typed effect DSL.
-- **Sleep** — no typed effect DSL; upcast scaling in prose; concentration; conditions imposed: Incapacitated (typed ✓; apply-on-fail not in any DSL).
-- **Thunderwave** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Bless** — no typed effect DSL; upcast scaling in prose; concentration.
-- **Bane** — no typed effect DSL; concentration.
-- **Command** — no typed effect DSL.
-- **Faerie Fire** — no typed effect DSL; concentration.
-- **Guiding Bolt** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Identify** — no typed effect DSL; ritual.
-- **Protection from Evil and Good** — no typed effect DSL; concentration.
-- **Sanctuary** — no typed effect DSL.
-- **Detect Evil and Good** — no typed effect DSL; concentration.
-- **Detect Poison and Disease** — no typed effect DSL; concentration; ritual.
-- **Disguise Self** — no typed effect DSL.
-- **Speak with Animals** — no typed effect DSL; ritual.
-- **Animal Friendship** — no typed effect DSL; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Color Spray** — no typed effect DSL; conditions imposed: Blinded (typed ✓; apply-on-fail not in any DSL); Blinded typed ✓ but HP-pool mechanic (6d10) fully in prose; no save (correct).
-- **Divine Favor** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Goodberry** — no typed effect DSL.
-- **Grease** — no typed effect DSL; conditions imposed: Prone (typed ✓; apply-on-fail not in any DSL).
-- **Hunter's Mark** — no typed effect DSL; concentration.
-- **Jump** — no typed effect DSL.
-- **Longstrider** — no typed effect DSL.
-- **Purify Food and Drink** — no typed effect DSL; ritual.
-- **Silent Image** — no typed effect DSL; concentration.
-- **Hideous Laughter** — no typed effect DSL; concentration; conditions imposed: Prone, Incapacitated (typed ✓; apply-on-fail not in any DSL).
-- **Find Familiar** — no typed effect DSL; ritual.
-- **Hex** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Alarm** — no typed effect DSL; ritual.
-- **Chromatic Orb** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Comprehend Languages** — no typed effect DSL; ritual.
-- **Create or Destroy Water** — no typed effect DSL.
-- **Ensnaring Strike** — no typed effect DSL; concentration; conditions imposed: Restrained (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Entangle** — no typed effect DSL; concentration; conditions imposed: Restrained (typed ✓; apply-on-fail not in any DSL).
-- **Expeditious Retreat** — no typed effect DSL; concentration.
-- **False Life** — no typed effect DSL.
-- **Feather Fall** — no typed effect DSL.
-- **Fog Cloud** — no typed effect DSL; concentration.
-- **Heroism** — no typed effect DSL; concentration.
-- **Ice Knife** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Illusory Script** — no typed effect DSL; ritual.
-- **Ray of Sickness** — no typed effect DSL; conditions imposed: Poisoned (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Shield of Faith** — no typed effect DSL; concentration.
-- **Unseen Servant** — no typed effect DSL; ritual.
-- **Divine Smite** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Searing Smite** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Floating Disk** — no typed effect DSL; ritual.
-- **Inflict Wounds** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Dissonant Whispers** — no typed effect DSL; damage dice in prose (types typed ✓).
-
-#### Level 2 (58)
-
-- **Aid** — no typed effect DSL; upcast scaling in prose.
-- **Hold Person** — no typed effect DSL; upcast scaling in prose; concentration; conditions imposed: Paralyzed (typed ✓; apply-on-fail not in any DSL).
-- **Misty Step** — no typed effect DSL.
-- **Scorching Ray** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Web** — no typed effect DSL; concentration; conditions imposed: Restrained (typed ✓; apply-on-fail not in any DSL).
-- **Spiritual Weapon** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Silence** — no typed effect DSL; concentration; ritual.
-- **Mirror Image** — no typed effect DSL.
-- **Invisibility** — no typed effect DSL; upcast scaling in prose; concentration.
-- **See Invisibility** — no typed effect DSL.
-- **Suggestion** — no typed effect DSL; concentration.
-- **Levitate** — no typed effect DSL; concentration.
-- **Spike Growth** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Pass Without Trace** — no typed effect DSL; concentration.
-- **Lesser Restoration** — no typed effect DSL.
-- **Moonbeam** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Acid Arrow** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Alter Self** — no typed effect DSL; concentration.
-- **Animal Messenger** — no typed effect DSL; ritual.
-- **Arcane Lock** — no typed effect DSL.
-- **Augury** — no typed effect DSL; ritual.
-- **Blindness/Deafness** — no typed effect DSL; upcast scaling in prose; conditions imposed: Blinded, Deafened (typed ✓; apply-on-fail not in any DSL).
-- **Calm Emotions** — no typed effect DSL; concentration.
-- **Continual Flame** — no typed effect DSL.
-- **Darkness** — no typed effect DSL; concentration.
-- **Detect Thoughts** — no typed effect DSL; concentration.
-- **Enhance Ability** — no typed effect DSL; concentration.
-- **Find Traps** — no typed effect DSL.
-- **Gust of Wind** — no typed effect DSL; concentration.
-- **Knock** — no typed effect DSL.
-- **Locate Object** — no typed effect DSL; concentration.
-- **Magic Weapon** — no typed effect DSL; upcast scaling in prose.
-- **Protection from Poison** — no typed effect DSL.
-- **Ray of Enfeeblement** — no typed effect DSL; concentration.
-- **Rope Trick** — no typed effect DSL.
-- **Shatter** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Find Steed** — no typed effect DSL.
-- **Flaming Sphere** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Heat Metal** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Magic Mouth** — no typed effect DSL; ritual.
-- **Mind Spike** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Pass without Trace** — no typed effect DSL; concentration.
-- **Prayer of Healing** — no typed effect DSL; healing dice in prose.
-- **Zone of Truth** — no typed effect DSL.
-- **Barkskin** — no typed effect DSL; concentration.
-- **Blur** — no typed effect DSL; concentration.
-- **Darkvision** — no typed effect DSL.
-- **Enlarge/Reduce** — no typed effect DSL; concentration.
-- **Enthrall** — no typed effect DSL.
-- **Flame Blade** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Gentle Repose** — no typed effect DSL; ritual.
-- **Locate Animals or Plants** — no typed effect DSL; ritual.
-- **Spider Climb** — no typed effect DSL; concentration.
-- **Warding Bond** — no typed effect DSL.
-- **Shining Smite** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Arcanist's Magic Aura** — no typed effect DSL.
-- **Dragon's Breath** — no typed effect DSL; upcast scaling in prose; concentration; grants a Dex-save 3d6 breath of chosen type — empty damageTypes (variable).
-- **Phantasmal Force** — no typed effect DSL; concentration; Int save typed; deals 1d6 psychic in prose — empty damageTypes.
-
-#### Level 3 (42)
-
-- **Counterspell** — no typed effect DSL; GAP missing typed damageTypes:[Force] and saveAbility:Constitution (deals 3d8 Force on a Con save).
-- **Dispel Magic** — no typed effect DSL; upcast scaling in prose.
-- **Fireball** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Fly** — no typed effect DSL; upcast scaling in prose; concentration.
-- **Lightning Bolt** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Revivify** — no typed effect DSL.
-- **Hypnotic Pattern** — no typed effect DSL; concentration; conditions imposed: Charmed, Incapacitated (typed ✓; apply-on-fail not in any DSL).
-- **Slow** — no typed effect DSL; concentration.
-- **Haste** — no typed effect DSL; concentration.
-- **Animate Dead** — no typed effect DSL; upcast scaling in prose.
-- **Daylight** — no typed effect DSL.
-- **Major Image** — no typed effect DSL; concentration.
-- **Sleet Storm** — no typed effect DSL; concentration.
-- **Bestow Curse** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Clairvoyance** — no typed effect DSL; concentration.
-- **Create Food and Water** — no typed effect DSL.
-- **Fear** — no typed effect DSL; concentration; conditions imposed: Frightened (typed ✓; apply-on-fail not in any DSL).
-- **Gaseous Form** — no typed effect DSL; concentration.
-- **Glyph of Warding** — no typed effect DSL; variable damage type/save chosen at cast — empty damageTypes/saveAbility (hard to type; effect fully in prose).
-- **Magic Circle** — no typed effect DSL; upcast scaling in prose.
-- **Mass Healing Word** — no typed effect DSL; upcast scaling in prose; healing dice in prose.
-- **Phantom Steed** — no typed effect DSL; ritual.
-- **Plant Growth** — no typed effect DSL.
-- **Protection from Energy** — no typed effect DSL; concentration.
-- **Remove Curse** — no typed effect DSL.
-- **Sending** — no typed effect DSL.
-- **Speak with Dead** — no typed effect DSL.
-- **Stinking Cloud** — no typed effect DSL; concentration.
-- **Tongues** — no typed effect DSL.
-- **Water Breathing** — no typed effect DSL; ritual.
-- **Wind Wall** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Conjure Animals** — no typed effect DSL; concentration.
-- **Spirit Guardians** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Water Walk** — no typed effect DSL; ritual.
-- **Beacon of Hope** — no typed effect DSL; concentration; healing dice in prose.
-- **Blink** — no typed effect DSL.
-- **Meld into Stone** — no typed effect DSL; ritual.
-- **Nondetection** — no typed effect DSL.
-- **Speak with Plants** — no typed effect DSL.
-- **Tiny Hut** — no typed effect DSL; ritual.
-- **Call Lightning** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Vampiric Touch** — no typed effect DSL; upcast scaling in prose; concentration; healing dice in prose.
-
-#### Level 4 (34)
-
-- **Greater Invisibility** — no typed effect DSL; concentration; conditions imposed: Invisible (typed ✓; apply-on-fail not in any DSL).
-- **Polymorph** — no typed effect DSL; concentration.
-- **Banishment** — no typed effect DSL; upcast scaling in prose; concentration.
-- **Wall of Fire** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Confusion** — no typed effect DSL; upcast scaling in prose; concentration; Wis save typed but imposes random behavior — no condition typed.
-- **Stoneskin** — no typed effect DSL; concentration.
-- **Arcane Eye** — no typed effect DSL; concentration.
-- **Black Tentacles** — no typed effect DSL; concentration; conditions imposed: Restrained (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Death Ward** — no typed effect DSL.
-- **Dimension Door** — no typed effect DSL.
-- **Divination** — no typed effect DSL; ritual.
-- **Faithful Hound** — no typed effect DSL; summons attacker (4d8 piercing, DC save) fully in prose.
-- **Fire Shield** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Freedom of Movement** — no typed effect DSL.
-- **Guardian of Faith** — no typed effect DSL.
-- **Ice Storm** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Locate Creature** — no typed effect DSL; concentration.
-- **Phantasmal Killer** — no typed effect DSL; concentration; conditions imposed: Frightened (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Resilient Sphere** — no typed effect DSL; concentration.
-- **Conjure Minor Elementals** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Conjure Woodland Beings** — no typed effect DSL; concentration.
-- **Dominate Beast** — no typed effect DSL; concentration; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Blight** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Charm Monster** — no typed effect DSL; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Compulsion** — no typed effect DSL; concentration; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Control Water** — no typed effect DSL; concentration.
-- **Fabricate** — no typed effect DSL.
-- **Giant Insect** — no typed effect DSL; concentration.
-- **Hallucinatory Terrain** — no typed effect DSL.
-- **Private Sanctum** — no typed effect DSL.
-- **Secret Chest** — no typed effect DSL.
-- **Stone Shape** — no typed effect DSL.
-- **Vitriolic Sphere** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Aura of Life** — no typed effect DSL; concentration; healing dice in prose.
-
-#### Level 5 (38)
-
-- **Cone of Cold** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Hold Monster** — no typed effect DSL; upcast scaling in prose; concentration; conditions imposed: Paralyzed (typed ✓; apply-on-fail not in any DSL).
-- **Raise Dead** — no typed effect DSL.
-- **Wall of Force** — no typed effect DSL; concentration.
-- **Greater Restoration** — no typed effect DSL.
-- **Mass Cure Wounds** — no typed effect DSL; upcast scaling in prose; healing dice in prose.
-- **Scrying** — no typed effect DSL; concentration.
-- **Telekinesis** — no typed effect DSL; concentration.
-- **Cloudkill** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Animate Objects** — no typed effect DSL; concentration; creates attacking constructs w/ stat blocks fully in prose — no typed actor mechanics.
-- **Commune** — no typed effect DSL; ritual.
-- **Conjure Elemental** — no typed effect DSL; concentration.
-- **Contact Other Plane** — no typed effect DSL; ritual; Int save typed but inflicts madness/short-term-insanity — not a typed condition.
-- **Dispel Evil and Good** — no typed effect DSL; concentration.
-- **Flame Strike** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Geas** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Insect Plague** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Legend Lore** — no typed effect DSL.
-- **Modify Memory** — no typed effect DSL; concentration.
-- **Passwall** — no typed effect DSL.
-- **Planar Binding** — no typed effect DSL.
-- **Seeming** — no typed effect DSL.
-- **Tree Stride** — no typed effect DSL; concentration.
-- **Wall of Stone** — no typed effect DSL; concentration.
-- **Antilife Shell** — no typed effect DSL; concentration.
-- **Dominate Person** — no typed effect DSL; concentration; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Hallow** — no typed effect DSL.
-- **Reincarnate** — no typed effect DSL.
-- **Commune with Nature** — no typed effect DSL; ritual.
-- **Contagion** — no typed effect DSL; conditions imposed: Poisoned (typed ✓; apply-on-fail not in any DSL).
-- **Creation** — no typed effect DSL.
-- **Dream** — no typed effect DSL.
-- **Mislead** — no typed effect DSL; concentration; conditions imposed: Invisible (typed ✓; apply-on-fail not in any DSL).
-- **Telepathic Bond** — no typed effect DSL; ritual.
-- **Teleportation Circle** — no typed effect DSL.
-- **Arcane Hand** — no typed effect DSL; concentration; force-construct combat stats & damage fully in prose.
-- **Awaken** — no typed effect DSL.
-- **Blade Barrier** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-
-#### Level 6 (30)
-
-- **Disintegrate** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Heal** — no typed effect DSL; upcast scaling in prose; healing dice in prose.
-- **Chain Lightning** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Circle of Death** — no typed effect DSL; upcast scaling in prose; damage dice in prose (types typed ✓).
-- **Eyebite** — no typed effect DSL; concentration; conditions imposed: Frightened, Unconscious (typed ✓; apply-on-fail not in any DSL).
-- **Globe of Invulnerability** — no typed effect DSL; upcast scaling in prose; concentration.
-- **Harm** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Heroes' Feast** — no typed effect DSL.
-- **Magic Jar** — no typed effect DSL.
-- **Mass Suggestion** — no typed effect DSL.
-- **Move Earth** — no typed effect DSL; concentration.
-- **Sunbeam** — no typed effect DSL; concentration; conditions imposed: Blinded (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **True Seeing** — no typed effect DSL.
-- **Wall of Ice** — no typed effect DSL; upcast scaling in prose; concentration; damage dice in prose (types typed ✓).
-- **Find the Path** — no typed effect DSL; concentration.
-- **Conjure Fey** — no typed effect DSL; concentration.
-- **Flesh to Stone** — no typed effect DSL; concentration; conditions imposed: Restrained, Petrified (typed ✓; apply-on-fail not in any DSL).
-- **Forbiddance** — no typed effect DSL; ritual; damage dice in prose (types typed ✓).
-- **Guards and Wards** — no typed effect DSL.
-- **Planar Ally** — no typed effect DSL.
-- **Programmed Illusion** — no typed effect DSL.
-- **Wall of Thorns** — no typed effect DSL; concentration.
-- **Word of Recall** — no typed effect DSL.
-- **Freezing Sphere** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Create Undead** — no typed effect DSL; upcast scaling in prose.
-- **Irresistible Dance** — no typed effect DSL; concentration; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Wind Walk** — no typed effect DSL.
-- **Contingency** — no typed effect DSL.
-- **Instant Summons** — no typed effect DSL; ritual.
-- **Transport via Plants** — no typed effect DSL.
-
-#### Level 7 (20)
-
-- **Finger of Death** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Teleport** — no typed effect DSL.
-- **Conjure Celestial** — no typed effect DSL; upcast scaling in prose; concentration.
-- **Delayed Blast Fireball** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Etherealness** — no typed effect DSL.
-- **Forcecage** — no typed effect DSL.
-- **Plane Shift** — no typed effect DSL.
-- **Prismatic Spray** — no typed effect DSL; multi-type damage + multiple conditions (Restrained/Petrified/etc.) only Dex save typed; damageTypes & conditions empty.
-- **Regenerate** — no typed effect DSL; healing dice in prose.
-- **Resurrection** — no typed effect DSL.
-- **Reverse Gravity** — no typed effect DSL; concentration.
-- **Symbol** — no typed effect DSL; variable effect (Death/Discord/Fear/etc.) — empty damageTypes/saveAbility, condition only in prose.
-- **Divine Word** — no typed effect DSL; conditions imposed: Deafened, Blinded, Stunned (typed ✓; apply-on-fail not in any DSL).
-- **Fire Storm** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Arcane Sword** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Project Image** — no typed effect DSL; concentration.
-- **Mirage Arcane** — no typed effect DSL.
-- **Simulacrum** — no typed effect DSL.
-- **Magnificent Mansion** — no typed effect DSL.
-- **Sequester** — no typed effect DSL.
-
-#### Level 8 (18)
-
-- **Power Word Stun** — no typed effect DSL; conditions imposed: Stunned (typed ✓; apply-on-fail not in any DSL).
-- **Sunburst** — no typed effect DSL; conditions imposed: Blinded (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Antimagic Field** — no typed effect DSL; concentration.
-- **Animal Shapes** — no typed effect DSL.
-- **Control Weather** — no typed effect DSL; concentration.
-- **Demiplane** — no typed effect DSL.
-- **Dominate Monster** — no typed effect DSL; concentration; conditions imposed: Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Earthquake** — no typed effect DSL; concentration; conditions imposed: Prone (typed ✓; apply-on-fail not in any DSL).
-- **Holy Aura** — no typed effect DSL; concentration; conditions imposed: Blinded (typed ✓; apply-on-fail not in any DSL).
-- **Incendiary Cloud** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **Maze** — no typed effect DSL; concentration.
-- **Mind Blank** — no typed effect DSL.
-- **Telepathy** — no typed effect DSL.
-- **Antipathy/Sympathy** — no typed effect DSL; conditions imposed: Frightened, Charmed (typed ✓; apply-on-fail not in any DSL).
-- **Befuddlement** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Clone** — no typed effect DSL.
-- **Glibness** — no typed effect DSL.
-- **Tsunami** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-
-#### Level 9 (17)
-
-- **Meteor Swarm** — no typed effect DSL; damage dice in prose (types typed ✓).
-- **Power Word Kill** — no typed effect DSL.
-- **Time Stop** — no typed effect DSL.
-- **Wish** — no typed effect DSL.
-- **Astral Projection** — no typed effect DSL.
-- **Foresight** — no typed effect DSL.
-- **Gate** — no typed effect DSL; concentration.
-- **Imprisonment** — no typed effect DSL.
-- **Mass Heal** — no typed effect DSL; healing dice in prose.
-- **Prismatic Wall** — no typed effect DSL.
-- **Shapechange** — no typed effect DSL; concentration.
-- **Storm of Vengeance** — no typed effect DSL; concentration; damage dice in prose (types typed ✓).
-- **True Polymorph** — no typed effect DSL; concentration.
-- **True Resurrection** — no typed effect DSL.
-- **Weird** — no typed effect DSL; concentration; conditions imposed: Frightened (typed ✓; apply-on-fail not in any DSL); damage dice in prose (types typed ✓).
-- **Power Word Heal** — no typed effect DSL; healing dice in prose.
-- **Summon Dragon** — no typed effect DSL; concentration.
-
-### Systemic Gaps (for roadmap)
-
-- **No spell-effect DSL at all.** All 341 spells carry damage/heal/save-outcome/scaling/condition-application only as prose `description`. Damage-type, save-ability, attack-type and applied-condition fields exist but are inert classification tags — no dice expression, DC formula, or fail/success branch is attached, so the engine can never auto-resolve a spell.
-- **No scaling model.** 13 cantrips encode level-5/11/17 damage steps and ~50 leveled spells encode "Using a Higher-Level Spell Slot" upcasting purely in text; there is no typed `scaling`/`per_slot_level` field, so upcast and cantrip progression cannot be computed.
-- **No healing typing.** ~13 healing spells (Cure Wounds, Healing Word, Mass Cure Wounds, Heal, Prayer of Healing, Regenerate, etc.) bury XdY+mod healing in prose; there is no typed heal-amount field, only the (damage-oriented) `damage_type_refs`, which they correctly leave empty.
-- **Condition application is half-typed.** 36 spells set `applied_condition_refs` (e.g. Hold Person→Paralyzed, Web→Restrained) but the typed list only labels the condition — the trigger (save type/DC, on-fail vs ongoing, repeat-save) stays in prose and is never enforced.
-- **Variable/choice spells defeat the typed fields entirely.** Glyph of Warding, Symbol, Prismatic Spray, Dragon's Breath, Chromatic/Elemental-choice spells pick damage type/condition at cast time, so their `damageTypes`/`saveAbility` are empty or partial; and Counterspell is a concrete bug — 3d8 Force on a Con save with empty `damageTypes` and null `saveAbility`.
-
----
-
-## Magic Items (srd_core/magic_items.dart)
-
-**Builder note (`_mi`):** Every item's mechanics live in a single markdown `effects` STRING, copied verbatim into `description`. There is NO typed magic-item effect DSL — so *every* numeric bonus (AC, attack/damage, saves, ability-score set, resistance, advantage/disadvantage), spell-grant, charge cost, condition, and curse is prose-only and is NOT applied by the resolver. Only `magic_category_ref`, `rarity_ref`, `requires_attunement`, `is_cursed`, `activation`, `charges_max`, `charge_regain`, `is_sentient`, `base_item_ref`, `cost_gp`, `weight_lb`, and free-text `attunement_prereq` are typed. `charges_max`/`charge_regain` are typed *capacity/regen* only — actual charge **consumption** per use is never a typed mechanic. `attunement_prereq` is free text, never enforced (warning-only system doesn't even check it). `is_cursed` is a typed bool, but the curse's *effect* is always prose-only. Consequently NO item in this file is mechanically "Clean"; the distinctions below are about which gap categories each item triggers.
-
-### Entity Log
-
-#### Flat-bonus items — effects-as-prose numeric bonus the engine can't apply (Missing Mechanic + Poor Data Structure)
-- **Cloak of Protection** — +1 AC & saving throws, prose-only.
-- **Ring of Protection** — +1 AC & saving throws, prose-only.
-- **Bracers of Defense** — +2 AC (no armor/shield) prose-only.
-- **Stone of Good Luck (Luckstone)** — +1 ability checks & saves, prose-only.
-- **Robe of Stars** — +1 saves; Magic Missile L5 cast — prose-only.
-- **Weapon, +1 / Weapon, +2 / Weapon, +3** — +N attack/damage, prose-only.
-- **Armor, +1 / Armor, +2 / Armor, +3** — +N AC, prose-only.
-- **Shield, +1 / Shield, +2 / Shield, +3** — +N AC, prose-only.
-- **Ammunition, +1 / Ammunition, +2 / Ammunition, +3** — +N attack/damage, prose-only.
-- **Glamoured Studded Leather** — +1 AC, prose-only; disguise property prose-only.
-- **Elven Chain** — +1 AC + armor-proficiency grant, both prose-only (no proficiency_grant).
-- **Quarterstaff of the Acrobat** — +1 weapon & +1 AC, prose-only.
-- **Shield of the Cavalier** — +1 AC + reaction deflect, prose-only.
-- **Sentinel Shield** — Advantage on Initiative & Perception, prose-only.
-- **Mantle of the Champion** — Advantage on STR saves & Performance, prose-only.
-- **Gloves of Thievery** — +5 Sleight of Hand / lockpick, prose-only.
-- **Bracers of Archery** — Longbow/Shortbow proficiency + ranged damage +2, prose-only.
-- **Robe of the Archmagi** — unarmored AC 15+Dex, Advantage vs spells, +2 spell DC/attack; alignment attune-lock prose-only (also see attunement_prereq below).
-- **Robe of the Magi** — Advantage vs spells, +2 AC & saves, +2 spell DC/attack; prose-only.
-- **Talisman of Pure Good / Talisman of Ultimate Evil** — +2 all saves + reaction save-reroll (charges) + alignment touch damage, prose-only.
-- **Spellguard Shield** — Advantage vs spells + spell-attacks disadvantage, prose-only.
-- **Mantle of Spell Resistance** — Advantage vs spells, prose-only.
-- **Scarab of Protection** — Advantage vs spells + reaction necromancy reroll, prose-only.
-- **Ring of Spell Turning** — Advantage vs spells + reflect, prose-only.
-- **Defender** — +3 weapon, transferable to AC, prose-only.
-- **Luck Blade** — +2 weapon, +1 saves, reroll, Wish — prose-only.
-- **Rod of Lordly Might** — +3 mace +2d6 Force + transforms, prose-only.
-- **Staff of Power** — +2 AC/attack/saves + spell list, prose-only.
-- **Staff of Striking** — +3 attack/damage + charge force damage, prose-only.
-- **Quarterstaff of the Acrobat** (listed above).
-
-#### Ability-score-set / stat items — sets/raises an ability, prose-only (Missing Mechanic, no ability/ability_score_bonus DSL)
-- **Gauntlets of Ogre Power** — STR 19.
-- **Headband of Intellect** — INT 19.
-- **Amulet of Health** — CON 19.
-- **Belt of Giant Strength (Hill)** — STR 21.
-- **Belt of Giant Strength (Stone)** — STR 23.
-- **Belt of Giant Strength (Frost/Fire)** — STR 25.
-- **Belt of Giant Strength (Cloud)** — STR 27.
-- **Belt of Giant Strength (Storm)** — STR 29.
-- **Belt of Dwarvenkind** — CON +2 (+ Darkvision, language, Persuasion), prose-only.
-- **Tome of Clear Thought** — INT +2 & max +2, prose-only.
-- **Tome of Leadership and Influence** — CHA +2 & max +2, prose-only.
-- **Tome of Understanding** — WIS +2 & max +2, prose-only.
-- **Manual of Bodily Health** — CON +2 & max +2, prose-only.
-- **Manual of Gainful Exercise** — STR +2 & max +2, prose-only.
-- **Manual of Quickness of Action** — DEX +2 & max +2, prose-only.
-- **Ioun Stone** — multiple +2 ability / +1 AC / +1 PB variants, all prose-only.
-- **Hammer of Thunderbolts** — STR +4 (max 30), prose-only (also attunement_prereq below).
-
-#### Resistance / immunity items — damage resistance/immunity prose-only (Missing Mechanic; damage_resistance/immunity DSL exists for feats/species but `effects` is a string here so unreachable)
-- **Cloak of Resistance** — Resistance to a chosen type, prose-only.
-- **Ring of Resistance** — Resistance by gem, prose-only.
-- **Armor of Resistance** — Resistance by type, prose-only.
-- **Ring of Warmth** — Cold resistance, prose-only.
-- **Brooch of Shielding** — Force resistance + Magic Missile immunity, prose-only.
-- **Periapt of Proof against Poison** / **Periapt of Proof Against Poison** (duplicate entry, two casings) — Poison immunity + Poisoned-condition immunity, prose-only.
-- **Periapt of Health** — Disease immunity, prose-only.
-- **Necklace of Adaptation** — breathe anywhere + Advantage vs gas, prose-only.
-- **Cloak of Arachnida** — Poison resistance + climb + web, prose-only.
-- **Boots of the Winterlands** — Cold resistance + terrain, prose-only.
-- **Armor of Invulnerability** — Resistance/Immunity to nonmagical damage, prose-only.
-- **Dwarven Plate** — +2 AC + reaction negate forced move, prose-only.
-- **Adamantine Armor** — crit-to-normal-hit, prose-only.
-- **Dragon Scale Mail** — +1 AC + resistance + advantage, prose-only.
-
-#### Speed / movement-grant items — fly/swim/climb speed prose-only (Missing Mechanic; fly_speed/swim_speed/climb DSL exists but `effects` is a string)
-- **Boots of Elvenkind** — silent + stealth advantage.
-- **Boots of Speed** — speed doubled + OA disadvantage.
-- **Winged Boots** — fly speed = walk.
-- **Wings of Flying** — Fly 60.
-- **Boots of Levitation** — Levitate at will.
-- **Boots of Striding and Springing** — speed 30 + jump.
-- **Slippers of Spider Climbing** — climb speed = walk.
-- **Gloves of Swimming and Climbing** — climb/swim advantage.
-- **Ring of Swimming** — Swim 40.
-- **Ring of Water Walking** — walk on liquid (walk_on_liquid DSL exists, unreachable).
-- **Cloak of the Manta Ray** — breathe water + Swim 60.
-- **Mariner's Armor** — Swim = speed.
-- **Horseshoes of Speed** — +30 speed.
-- **Horseshoes of a Zephyr** — float/levitate.
-- **Carpet of Flying** — fly by size.
-- **Broom of Flying** — Fly 50.
-- **Ring of Jumping** — Jump.
-- **Ring of Free Action** — terrain/speed immunity.
-
-#### Sense / vision-grant items — darkvision/truesight/blindsight prose-only (Missing Mechanic; sense_grant/truesight_grant DSL exists, unreachable)
-- **Goggles of Night** — Darkvision 60.
-- **Eyes of the Eagle** — Perception advantage (sight).
-- **Eyes of Minute Seeing** — Investigation advantage (close).
-- **Robe of Eyes** — all-around sight + Darkvision 120 + see invisible.
-- **Gem of Seeing** — Truesight 120 (charged).
-- **Lantern of Revealing** — reveals invisible.
-- **Wand of Enemy Detection** — sense hostiles (charged).
-- **Eye of Vecna** — Truesight 30 + spells (cursed/sentient — see below).
-
-#### Spell-cast / charged-spell items — `charges_max`/`charge_regain` typed but per-use charge consumption + the cast spell are prose-only (Missing Mechanic: charge consumption not a typed mechanic + spell_cast_from_item unreachable for string effects)
-- **Wand of Magic Missiles** — 7 charges; Magic Missile.
-- **Staff of Healing** — 10 charges; Cure Wounds etc. (attunement_prereq).
-- **Eyes of Charming** — 3 charges; Charm Person.
-- **Gem of Brightness** — 50 charges; light/blind.
-- **Wand of Fireballs** — 7 charges; Fireball (attunement_prereq).
-- **Wand of Lightning Bolts** — 7 charges (attunement_prereq).
-- **Wand of Web** — 7 charges (attunement_prereq).
-- **Staff of Fire** — 10 charges + Fire resistance (attunement_prereq).
-- **Staff of Frost** — 10 charges + Cold resistance (attunement_prereq).
-- **Staff of the Magi** — 50 charges + spell absorb (attunement_prereq).
-- **Ring of Three Wishes** — 3 charges; Wish.
-- **Cube of Force** — 36 charges.
-- **Cube of Force** / **Cubic Gate** — 3 charges; Plane Shift/Gate.
-- **Helm of Teleportation** — 3 charges; Teleport.
-- **Robe of Scintillating Colors** — 3 charges; stun.
-- **Dragon Orb** — 7 charges.
-- **Chime of Opening** — 10 charges.
-- **Cloak of Invisibility** — 2 charges (timed invisibility).
-- **Gem of Seeing** — 3 charges (listed above).
-- **Medallion of Thoughts** — 3 charges; Detect Thoughts.
-- **Pipes of Haunting** — 3 charges; fear.
-- **Mace of Terror** — 3 charges; fear (charged weapon).
-- **Ring of Animal Influence** — 3 charges.
-- **Ring of Elemental Command** — 5 charges (attunement-affinity prose).
-- **Ring of Evasion** — 3 charges; reaction succeed DEX save.
-- **Ring of Shooting Stars** — 6 charges (attunement_prereq "worn outdoors at night").
-- **Ring of the Ram** — 3 charges; force attack.
-- **Rod of Resurrection** — 5 charges (attunement_prereq).
-- **Scarab of Protection** — 12 charges (listed above).
-- **Trident of Fish Command** — 3 charges.
-- **Wand of Binding** — 7 charges (attunement_prereq).
-- **Wand of Fear** — 7 charges.
-- **Wand of Magic Detection** — 3 charges.
-- **Wand of Paralysis** — 7 charges (attunement_prereq).
-- **Wand of Polymorph** — 7 charges (attunement_prereq).
-- **Wand of Wonder** — 7 charges (attunement_prereq).
-- **Wand of Secrets** — 3 charges.
-- **Staff of Charming** — 10 charges (attunement_prereq).
-- **Staff of Power** — 20 charges (attunement_prereq; listed above).
-- **Staff of Striking** — 10 charges (listed above).
-- **Staff of Swarming Insects** — 10 charges (attunement_prereq).
-- **Staff of the Woodlands** — 10 charges + spell-attack bonus (attunement_prereq).
-- **Staff of Withering** — 3 charges (attunement_prereq).
-- **Gem of Brightness** (listed above).
-- **Luck Blade** — 1d4-1 charges (Wish) (listed above).
-- **Nine Lives Stealer** — 1d8+1 charges (charge consumption prose-only).
-- **Necklace of Fireballs** — bead "charges" prose-only (no typed charges field used).
-- **Bag of Tricks (Gray)** — 3 charges (in-prose; not typed).
-
-#### Attunement-prereq items — `attunement_prereq` free text, never enforced (Unimplemented Prerequisite) [all also have prose-only mechanics]
-- **Staff of Healing** — "Bard, Cleric, or Druid".
-- **Pearl of Power** — "A spellcaster" (+ regain spell slot, prose-only).
-- **Robe of the Archmagi** — "Sorcerer, Warlock, or Wizard".
-- **Wand of Fireballs / Wand of Lightning Bolts / Wand of Web** — "A spellcaster".
-- **Wand of the War Mage, +1 / +2 / +3** — "A spellcaster" / "Spellcaster".
-- **Staff of Fire / Staff of Frost** — "Druid, Sorcerer, Warlock, or Wizard".
-- **Staff of the Magi** — "Sorcerer, Warlock, or Wizard".
-- **Holy Avenger** — "Paladin".
-- **Talisman of Pure Good** — "a creature of good alignment".
-- **Talisman of Ultimate Evil** — "a creature of evil alignment".
-- **Robe of the Magi** — "Bard, Cleric, Druid, Sorcerer, Warlock, or Wizard".
-- **Necklace of Prayer Beads** — "Cleric, Druid, or Paladin".
-- **Dwarven Thrower** — "Dwarf or has the Dwarven Toughness feature" (species/feature prereq, never validated).
-- **Hammer of Thunderbolts** — "must wear Belt of Giant Strength and Gauntlets of Ogre Power" (item-dependency prereq, never validated).
-- **Hat of Many Spells** — "Spellcaster".
-- **Rod of Resurrection** — "Cleric, Druid, or Paladin".
-- **Ring of Shooting Stars** — "must be worn outdoors at night" (situational prereq misfiled as attunement text).
-- **Staff of Charming / Staff of Swarming Insects / Staff of Withering** — class lists.
-- **Staff of the Woodlands** — "Druid".
-- **Staff of the Python** — "Cleric, Druid, or Warlock".
-- **Wand of Binding / Wand of Paralysis / Wand of Polymorph / Wand of Wonder** — "Spellcaster".
-
-#### Cursed items — `is_cursed` typed bool, but curse mechanic is prose-only (Missing Mechanic: no typed curse/penalty effect, no Remove-Curse enforcement)
-- **Potion of Poison** — illusion-masked poison; 3d6 + Poisoned, prose-only.
-- **Eye of Vecna** — sentient corrupting eye; curse + spells prose-only (is_sentient NOT set though item describes sentience — data gap).
-- **Hand of Vecna** — cursed +4 STR/spells; curse prose-only (is_sentient not set).
-- **Demon Armor** — +1 AC + Abyssal + curse, prose-only.
-- **Armor of Vulnerability** — Vulnerability curse + Remove Curse req, prose-only.
-- **Bag of Devouring** — devouring-bag curse, prose-only.
-- **Dust of Sneezing and Choking** — incapacitate curse, prose-only.
-- **Shield of Missile Attraction** — disadvantage/redirect curse, prose-only.
-- **Berserker Axe** — +1 weapon + HP max buff + berserk curse, prose-only.
-
-#### HP / temp-HP / healing items — prose-only (Missing Mechanic; hp_bonus/temp_hp_grant DSL exists, unreachable)
-- **Potion of Healing** — 2d4+2 HP.
-- **Potion of Greater Healing** — 4d4+4 HP.
-- **Potion of Superior Healing** — 8d4+8 HP.
-- **Potion of Supreme Healing** — 10d4+20 HP.
-- **Potion of Heroism** — 10 temp HP + Bless.
-- **Periapt of Wound Closure** — stabilize + double Hit Die heal.
-- **Ring of Regeneration** — 1d6 HP/10 min + regrow limbs.
-- **Restorative Ointment** — heal + cure conditions.
-- **Amulet of Health** (ability-set; listed above).
-- **Sword of Life Stealing** — crit necrotic + self-heal.
-
-#### Items whose mechanics are inherently DM-narrative / no typed analog (still Missing Mechanic but lower-impact; nothing in `effects` is resolver-applicable)
-- **Bag of Holding** — extradimensional storage (no mechanic to apply).
-- **Ring of Spell Storing** — store/cast spells.
-- **Sword of Sharpness** — maximize vs objects + crit sever + light.
-- **Plate Armor of Etherealness** — Etherealness on command.
-- **Vorpal Sword** — +3 weapon + ignore resistance + decapitate.
-- **Cloak of Elvenkind** — perception disadvantage + stealth advantage.
-- **Cloak of the Bat** — stealth + fly + polymorph.
-- **Cloak of Displacement** — attacks disadvantage.
-- **Hat of Disguise** — Disguise Self.
-- **Helm of Telepathy** — Detect Thoughts + telepathy.
-- **Bag of Beans** — random effects.
-- **Bag of Tricks (Gray) / (Rust) / (Tan)** — summon creatures.
-- **Decanter of Endless Water** — water.
-- **Driftglobe** — Daylight + float.
-- **Figurine of Wondrous Power (Bronze Griffon)** — summon.
-- **Horn of Blasting** — Thunder cone.
-- **Immovable Rod** — fixed in place.
-- **Necklace of Fireballs** — Fireball beads (listed above).
-- **Quiver of Ehlonna** — storage.
-- **Robe of Useful Items** — patches.
-- **Wand of the War Mage, +1** (listed above).
-- **Potion of Climbing / Fire Breath / Animal Friendship / Diminution / Flying / Gaseous Form / Giant Strength (Hill) / Invisibility / Mind Reading / Speed / Water Breathing** — spell/effect emulation prose-only.
-- **Oil of Slipperiness / Oil of Sharpness / Oil of Etherealness** — applied effects prose-only.
-- **Spell Scroll** — cast-from-scroll prose-only.
-- **Dragon Slayer / Flame Tongue / Frost Brand / Giant Slayer / Mace of Disruption / Mace of Smiting / Sun Blade / Sword of Wounding / Dagger of Venom / Javelin of Lightning / Thunderous Greatclub / Vicious Weapon / Scimitar of Speed / Dancing Sword / Oathbow / Nine Lives Stealer / Weapon of Warning** — +N bonuses and/or extra damage dice & riders, all prose-only.
-- **Mithral Armor** — removes stealth disadvantage/STR req, prose-only.
-- **Animated Shield** — animate.
-- **Arrow-Catching Shield** — +2 AC vs ranged + redirect, prose-only.
-- **Sphere of Annihilation / Talisman of the Sphere** — narrative.
-- **Apparatus of the Crab / Crystal Ball (+ Mind Reading / Telepathy variants) / Deck of Many Things / Deck of Illusions / Mirror of Life Trapping / Mirror of Mental Prowess / Iron Bands of Bilarro / Iron Flask / Instant Fortress / Cubic Gate / Well of Many Worlds / Amulet of the Planes / Amulet of Proof against Detection and Location** — narrative/utility.
-- **Helm of Brilliance / Helm of Comprehending Languages** — spell utility prose-only.
-- **Cape of the Mountebank / Folding Boat / Dimensional Shackles / Rope of Climbing / Rope of Entanglement / Portable Hole / Handy Haversack / Efficient Quiver / Sending Stones / Sovereign Glue / Universal Solvent / Marvelous Pigments / Manual of Golems / Feather Token / Bead of Force / Bead of Nourishment / Dust of Disappearance / Dust of Dryness / Eversmoking Bottle / Wind Fan / Folding Boat** — utility, no resolver mechanic.
-- **Bowl of Commanding Water Elementals / Censer of Controlling Air Elementals / Brazier of Commanding Fire Elementals / Stone of Controlling Earth Elementals / Elemental Gem / Efreeti Bottle / Ring of Djinni Summoning / Horn of Valhalla** — summons prose-only.
-- **Circlet of Blasting / Wand of Magic Detection / Gloves of Missile Snaring / Necklace of Prayer Beads / Periapt of Wound Closure** — effects prose-only.
-- **Rod of Absorption / Rod of Alertness / Rod of Rulership / Rod of Security** — rod utilities prose-only.
-- **Ring of Invisibility / Ring of Mind Shielding / Ring of Telekinesis / Ring of X-ray Vision / Ring of Feather Falling / Ring of Spell Turning / Ring of Djinni Summoning / Ring of Elemental Command** — ring utilities prose-only.
-- **Crystal Ball of Mind Reading / Crystal Ball of Telepathy** — variants, narrative.
-- **Staff of Thunder and Lightning / Staff of the Python** — weapon-staff utilities prose-only.
-- **Philter of Love / Potion of Clairvoyance / Potion of Growth / Potion of Longevity / Potion of Resistance / Potion of Vitality / Elixir of Health** — potion effects prose-only.
-- **Pipes of the Sewers** — summon rats prose-only.
-
-> NOTE: Every entity in this file is non-Clean by the rubric, because the `_mi` builder forces all mechanics into a prose string with no typed effect DSL. The headings above categorize each item by the *dominant* gap; many items hit several categories simultaneously (e.g. a charged spellcasting staff with an attunement_prereq and a resistance grant).
-
-### Systemic Gaps (for roadmap)
-- **No typed magic-item effect DSL.** `_mi.effects` is a single markdown string copied into `description`; the resolver applies ZERO item mechanics. Every flat bonus (AC/attack/damage/saves, +1/+2/+3 gear), ability-score set/raise, resistance/immunity, speed/sense grant, temp-HP/HP, and advantage/disadvantage across all ~286 items is inert. A magic-item effect-DSL (reusing the existing feat/species kinds: ac_bonus, attack_bonus_typed, ability/ability_score_bonus, damage_resistance, fly_speed, sense_grant, temp_hp_grant, etc.) is the single highest-leverage fix.
-- **`attunement_prereq` is free text and never enforced** (33+ items). Class lists, species ("Dwarf"), item-dependencies ("must wear Belt of Giant Strength…"), alignment ("creature of good alignment"), and even situational conditions ("worn outdoors at night") are dumped here with no typed structure and no validation hook — strictly worse than the warning-only feat prereqs.
-- **`is_cursed` is a bool with no teeth.** Nine cursed items carry only the flag; the curse penalty, the attunement-trap, and the Remove-Curse removal condition are all prose. There is no typed curse-penalty effect or "cannot un-attune without Remove Curse" mechanic.
-- **Charges are half-modeled.** `charges_max` + `charge_regain` capture capacity and dawn/dusk regen, but per-activation charge **consumption** and the spell/effect each charge buys are prose-only — so a charged item can't actually deplete or fire anything in the engine. A typed activation→cost→effect table is missing.
-- **Data-integrity nits surfaced:** duplicate item ("Periapt of Proof against Poison" appears twice with differing casing/flavor), and sentient artifacts (Eye/Hand of Vecna) describe sentience in prose but leave `is_sentient` at its `false` default — the one typed field meant to capture it is unused.
-
----
-
-## Mundane Equipment (weapons.dart, armor.dart, gear.dart, tools.dart, ammunition.dart, packs.dart, mounts.dart, vehicles.dart)
-
-Audit basis: all entities are authored as typed packEntity attribute maps. Verified
-against character_resolver.dart which fields actually drive mechanics:
-- Armor `strength_requirement` (speed −10 penalty) and `stealth_disadvantage`
-  (Stealth-disadvantage note) ARE typed AND applied by the resolver (§8b,
-  lines 1008–1025). So armor STR-req is NOT an unimplemented prereq.
-- Weapon `mastery_ref` is typed, but `weapon_mastery_grant` is a reserved
-  no-op (resolver line 602–609: "silently accept… reserved for later passes"),
-  and the weapon row's mastery is never linked to a `weapon_mastery_grant`
-  effect. Mastery is inert display data on every weapon.
-- Weapon `property_refs` are typed refs but no property (Loading, Thrown,
-  Two-Handed, Reach, Ammunition, Versatile, Finesse, Light, Heavy) has any
-  resolver/attack-pipeline consumer — inert on every weapon.
-- Gear `utilize_description` is free prose; no typed effect DSL. All active
-  item mechanics (thrown-vial attacks, save DCs, light radii, healing dice)
-  live only in that string. `utilize_check_dc`/`utilize_ability_ref` are typed
-  but never consumed.
-- Tool `utilize_description` (proficiency benefits) is prose; `craftable_items`
-  refs never consumed.
-- Pack `content_refs`/`contents` narrative: quantities are prose-only; the
-  header comment concedes `content_quantities` plumbing is unbuilt.
-
-### Entity Log
-
-#### Weapons (39) — all share the same two findings
-Inert weapon `mastery_ref` (typed but `weapon_mastery_grant` is a resolver
-no-op; mastery never linked/applied) + inert `property_refs` (no property has a
-mechanical consumer). Damage/range/cost/weight/category all typed correctly.
-- **Club**, **Dagger**, **Greatclub**, **Handaxe**, **Javelin**, **Light Hammer**,
-  **Mace**, **Quarterstaff**, **Sickle**, **Spear** (Simple Melee) — Missing mechanic: weapon mastery + properties typed but unimplemented (inert data).
-- **Dart**, **Light Crossbow**, **Shortbow**, **Sling** (Simple Ranged) — Missing mechanic: mastery + properties (incl. Ammunition/Loading) typed but unimplemented.
-- **Battleaxe**, **Flail**, **Glaive**, **Greataxe**, **Greatsword**, **Halberd**,
-  **Lance**, **Longsword**, **Maul**, **Morningstar**, **Pike**, **Rapier**,
-  **Scimitar**, **Shortsword**, **Trident**, **Warhammer**, **War Pick**, **Whip**
-  (Martial Melee) — Missing mechanic: mastery + properties typed but unimplemented.
-- **Blowgun**, **Hand Crossbow**, **Heavy Crossbow**, **Longbow**, **Musket**,
-  **Pistol** (Martial Ranged) — Missing mechanic: mastery + properties typed but unimplemented.
-
-#### Armor (14)
-STR-requirement and Stealth-disadvantage are typed AND resolver-enforced
-(non-blocking speed/skill notes), so those are NOT gaps. AC/dex_cap/don-doff/
-cost/weight all typed. All Clean.
-- **Padded Armor**, **Leather Armor**, **Studded Leather Armor** (Light) — Clean.
-- **Hide Armor**, **Chain Shirt**, **Scale Mail**, **Breastplate**, **Half Plate Armor** (Medium) — Clean.
-- **Ring Mail** — Clean.
-- **Chain Mail** (strReq 13), **Splint Armor** (strReq 15), **Plate Armor** (strReq 15) (Heavy) — Clean (STR req typed + applied).
-- **Shield** — Clean.
-
-#### Adventuring Gear (108)
-All cost/weight/consumable/focus fields typed. Items with active mechanics put
-the entire rule in prose `utilize_description` with no typed effect DSL (the
-schema offers none for gear). `utilize_check_dc`/`utilize_ability_ref` typed on
-some but never consumed by the resolver.
-
-Active-mechanic items — Missing mechanic: combat/utility effect lives only in
-prose `utilize_description`, not a typed/applied effect:
-- **Acid**, **Alchemist's Fire**, **Antitoxin**, **Holy Water**, **Oil**, **Net**,
-  **Poison, Basic**, **Caltrops**, **Ball Bearings**, **Hunting Trap**, **Torch**
-  (thrown-attack / save-DC / damage effects in prose only).
-- **Healer's Kit**, **Potion of Healing** (healing/stabilize effect in prose only).
-- **Spell Scroll (Cantrip)**, **Spell Scroll (Level 1)** (spell-from-item, no typed effect; also a magic-item gap).
-- **Book**, **Map**, **Magnifying Glass**, **Costume**, **Crowbar**, **Ram, Portable**,
-  **Perfume**, **Saddle, Military**, **Bedroll**, **Blanket**, **Climber's Kit**,
-  **Block and Tackle**, **Chain**, **Grappling Hook**, **Lock**, **Manacles**, **Rope**
-  (skill-check bonus / advantage / utility effect in prose only).
-- **Candle**, **Lamp**, **Lantern, Bullseye**, **Lantern, Hooded**, **Tinderbox**
-  (light-radius / action effect in prose only).
-- **Component Pouch** (spell-component substitution rule in prose only).
-
-Passive containers/trade-goods/mundane items with no active mechanic and full
-typed fields — Clean:
-- **Backpack**, **Barrel**, **Basket**, **Bell**, **Bottle, Glass**, **Bucket**,
-  **Case, Crossbow Bolt**, **Case, Map or Scroll**, **Chest**, **Clothes, Fine**,
-  **Clothes, Traveler's**, **Flask**, **Jug**, **Ladder**, **Mirror**, **Paper**,
-  **Parchment**, **Pole**, **Pot, Iron**, **Pouch**, **Quiver**, **Rations**,
-  **Robe**, **Sack**, **Shovel**, **Signal Whistle**, **Spikes, Iron**, **Spyglass**,
-  **String**, **Tent**, **Vial**, **Waterskin**, **Ink**, **Ink Pen**,
-  **Burglar's Pack**, **Diplomat's Pack**, **Dungeoneer's Pack**,
-  **Entertainer's Pack**, **Explorer's Pack**, **Priest's Pack**, **Scholar's Pack**
-  (pack rows duplicated here as gear), **Saddle, Exotic**, **Saddle, Riding**,
-  **Feed**, **Stabling**, **Chalk**, **Fishing Tackle**, **Hammer**, **Hourglass**,
-  **Mess Kit**, **Pick, Miner's**, **Piton**, **Scale, Merchant's**, **Sealing Wax**,
-  **Signet Ring**, **Soap**, **Spellbook**, **Whetstone** — Clean.
-- Foci — **Crystal**, **Orb**, **Rod**, **Staff (Arcane Focus)**, **Wand (Arcane Focus)**,
-  **Sprig of Mistletoe**, **Wooden Staff (Druidic Focus)**, **Yew Wand**,
-  **Amulet (Holy Symbol)**, **Emblem (Holy Symbol)**, **Reliquary** — Clean
-  (`is_focus`/`focus_kind_ref` typed).
-
-#### Tools (39)
-All cost/weight/ability_ref/category typed. The defining proficiency *benefit*
-(what a proficient user can do) lives entirely in prose `utilize_description`;
-`craftable_items` refs are inert (never consumed). Proficiency itself is granted
-elsewhere via `tool`/`proficiency_grant` effects, so the tool card's own use is
-not a typed mechanic.
-- Artisan's Tools (17): **Alchemist's Supplies**, **Brewer's Supplies**,
-  **Calligrapher's Supplies**, **Carpenter's Tools**, **Cartographer's Tools**,
-  **Cobbler's Tools**, **Cook's Utensils**, **Glassblower's Tools**, **Jeweler's Tools**,
-  **Leatherworker's Tools**, **Mason's Tools**, **Painter's Supplies**, **Potter's Tools**,
-  **Smith's Tools**, **Tinker's Tools**, **Weaver's Tools**, **Woodcarver's Tools**
-  — Missing mechanic: tool-use benefit (and Cobbler's "Advantage on next Acrobatics") in prose only; `utilize_check_dc` typed but unenforced.
-- Other Tools (6): **Disguise Kit**, **Forgery Kit**, **Herbalism Kit**,
-  **Navigator's Tools**, **Poisoner's Kit**, **Thieves' Tools** — Missing mechanic:
-  use-benefit in prose only (Thieves' Tools lock/trap DCs not wired to the Lock gear item).
-- Gaming Set (5): **Gaming Set**, **Dice Set**, **Dragonchess Set**,
-  **Playing Card Set**, **Three-Dragon Ante Set** — Missing mechanic: prose-only;
-  otherwise Clean (variant_of_ref typed correctly).
-- Musical Instruments (10): **Bagpipes**, **Drum**, **Dulcimer**, **Flute**,
-  **Horn**, **Lute**, **Lyre**, **Pan Flute**, **Shawm**, **Viol** — Clean in
-  substance (identical play-tune prose, no real per-item mechanic to type).
-
-#### Ammunition (5)
-storage/cost/weight/bundle_count all typed; no active mechanic. NOTE: builder
-declares ~6 but file authors 5 rows; weapons reference a `Bolts` ammo name that
-is present. All Clean.
-- **Arrows**, **Bolts**, **Bullets, Firearm**, **Bullets, Sling**, **Needles** — Clean.
-
-#### Equipment Packs (7)
-cost/content_refs/contents typed, but per-item **quantities are prose-only**
-(`contents` narrative string); header concedes `content_quantities` plumbing is
-unbuilt, so the resolver cannot expand a pack into N typed items.
-- **Burglar's Pack**, **Diplomat's Pack**, **Dungeoneer's Pack**, **Entertainer's Pack**,
-  **Explorer's Pack**, **Priest's Pack**, **Scholar's Pack** — Poor data structure:
-  contents quantities dumped in a narrative string instead of a typed
-  ref→quantity map. (NOTE: builder header says ~8; 7 rows authored.)
-
-#### Mounts (8)
-carrying_capacity/speed/cost/is_trained all typed; no active mechanic.
-(NOTE: task expected ~9; 8 rows authored — no "Warhorse" duplicate / no Riding
-Dog beyond Mastiff.)
-- **Camel**, **Elephant**, **Draft Horse**, **Riding Horse**, **Mastiff**, **Mule**,
-  **Pony**, **Warhorse** — Clean.
-
-#### Vehicles (13)
-vehicle_kind/speed/crew/passengers/cargo/ac/hp/damage_threshold/cost all typed.
-Land vehicles intentionally omit speed (defers to mount). No active mechanic.
-- **Carriage**, **Cart**, **Chariot**, **Sled**, **Wagon** (Land) — Clean.
-- **Galley**, **Keelboat**, **Longship**, **Rowboat**, **Sailing Ship**, **Warship** (Waterborne) — Clean.
-- **Airship** (Airborne) — Clean.
-
-### Systemic Gaps (for roadmap)
-- No attack/combat pipeline consumes weapon `property_refs` or `mastery_ref`:
-  all 39 weapons carry fully typed properties and a mastery, but the resolver
-  treats `weapon_mastery_grant` as a reserved no-op and no property (Loading,
-  Thrown, Versatile, Reach, Two-Handed, Ammunition, Finesse, Light, Heavy) has
-  any mechanical effect. Mastery/properties are inert display data game-wide.
-- No typed effect DSL for adventuring gear / consumables: thrown-vial attacks,
-  save DCs, damage dice, healing, and light radii all live in prose
-  `utilize_description`. Typed `utilize_check_dc`/`utilize_ability_ref` exist but
-  are never read by the resolver.
-- Equipment packs cannot be auto-expanded: per-item quantities live only in a
-  narrative string; the `content_quantities` ref→qty plumbing is unimplemented
-  (acknowledged in the source header), so picking a pack grants no typed items.
-- Tool proficiency *benefits* (and `craftable_items`) are entirely prose and
-  unwired; e.g. Thieves' Tools lock/trap DCs aren't linked to the Lock/Hunting
-  Trap gear items, and Cobbler's Advantage-grant isn't a typed effect.
-- Counts drift from the task's expected totals: gear ~108 ✓, weapons 39 ✓,
-  armor 14 ✓, tools 38 (not 39), ammunition 5 (not 6), packs 7 (not 8),
-  mounts 8 (not 9) — worth reconciling against the SRD tables.
-
-NOTE (positive): armor STR-requirement and Stealth-disadvantage are genuine
-counter-examples to the usual "prose prereq" pattern — both are typed AND
-resolver-applied (non-blocking), so armor is Clean across the board.
-
----
-
-## Monsters, Animals & Creature Actions (monsters.dart, animals.dart, creature_actions.dart)
-
-Scope: 248 monsters + 97 animals + 529 creature-action cards = 874 entities.
-Prereq criterion is N/A to creatures (no selection gating). Findings focus on
-**Missing Mechanic** (special ability / legendary action / spellcasting in prose
-with no typed effect) and **Poor Data Structure** (attack rider DC / secondary
-damage / save outcome dumped in the `description` string instead of the typed
-`save_dc` / `save_ability_ref` / `damage_dice` / `applied_condition_refs`
-fields the `_a()` builder provides).
-
-System note (applies to all 3 files): the monster/animal stat-block shape is
-**well typed** — `ac`, `hp_average`/`hp_dice`, all `speed_*_ft`, `stat_block`,
-`cr`, `xp`, `proficiency_bonus`, `passive_perception`, `senses[]`,
-`size_ref`/`creature_type_ref`/`alignment_ref`, `language_refs`,
-`damage_immunity_refs`/`resistance_refs`/`vulnerability_refs`,
-`condition_immunity_refs`, `telepathy_ft`, `legendary_action_uses`, and
-ref-lists (`trait_refs`, `action_refs`, `bonus_action_refs`, `reaction_refs`,
-`legendary_action_refs`) are dedicated fields. The gaps are all in (a) the
-referenced **trait cards** (traits.dart — pure prose, `trait_kind` enum +
-`description` only, NO effects DSL; so every monster's special abilities are
-unenforced prose), (b) **spell lists** (no typed spell DSL — DC/at-will/per-day
-lists dumped in a Spellcasting card's prose), and (c) **attack riders** in
-creature_actions where prose carries a save/secondary-damage the typed fields
-don't.
-
-### Entity Log — MONSTERS (monsters.dart, 248)
-
-- **Lich**, **Mummy Lord** — Missing mechanic (x2): `legendary_action_uses: 3`
-  declared but NO `legendary_action_refs` (legendary actions entirely absent);
-  spellcasting referenced as prose card (`Spellcasting (Lich)` / `Spellcasting
-  (Mummy Lord)`) — full DC + at-will/per-day spell list lives in `description`,
-  no typed spell refs or per-day uses. Also Legendary Resistance / Rejuvenation /
-  Turn Resistance are prose-only trait cards.
-- **Vampire**, **Adult Brass/Bronze/Copper/Gold/Silver Dragon**, **Ancient
-  Black/Blue/Brass/Bronze/Copper/Gold/Green/Red/Silver/White Dragon** (16) —
-  Missing mechanic: `legendary_action_uses` set but `legendary_action_refs`
-  omitted; the creature's legendary actions are not present at all (only the
-  five multiline Adult dragons + Aboleth/Beholder actually wire legendary refs).
-- **Drow**, **Sphinx**, **Mage**, **Priest**, **Cult Fanatic**, **Cultist
-  Fanatic**, **Archmage**, **Druid**, **Lamia**, **Rakshasa**, **Sphinx of
-  Lore**, **Pixie** (12) — Missing mechanic: spellcaster whose entire spell
-  list (save DC, spell-attack bonus, at-will / N-per-day tiers) is prose inside
-  a `Spellcasting`/`Innate Spellcasting` trait or action card; no typed
-  spell refs, no per-tier use tracking.
-- **Tarrasque** (CR 30), **Kraken** (CR 23) — Structure clean for typed stat
-  block, but no legendary/lair actions declared at all and signature mechanics
-  (Reflective Carapace, Legendary Resistance, Swallow recharge) ride on prose
-  trait/action cards; resolver/tracker cannot apply them.
-- All remaining 218 monsters — **Clean** (typed stat block fully populated;
-  traits/actions referenced). Caveat shared by ALL: their special **traits**
-  (Pack Tactics, Magic Resistance, Undead Fortitude, Regeneration, Sunlight
-  Sensitivity, Legendary Resistance, etc.) are prose-only trait cards with no
-  effects DSL, so advantage/immunity/regeneration riders are never mechanically
-  applied — a systemic trait-layer gap, not a per-monster authoring defect:
-  Aboleth, Goblin Warrior, Skeleton, Zombie, Adult Red Dragon, Beholder, Mind
-  Flayer, Ogre, Owlbear, Hobgoblin Warrior, Bandit, Giant Spider, Kobold
-  Warrior, Orc, Gnoll, Bugbear Warrior, Werewolf, Troll, Hydra, Balor, Pit
-  Fiend, Air/Earth/Fire/Water Elemental, Ghoul, Wight, Specter, Animated Armor,
-  Stone Giant, Hill Giant, Manticore, Minotaur, Basilisk, Cockatrice, Ettin,
-  Harpy, Will-o'-Wisp, Mummy, Treant, Adult Black/Blue/Green/White Dragon,
-  Chuul, Otyugh, Roper, Nothic, Dryad, Gargoyle, Couatl, Death Dog, Knight,
-  Veteran, Gladiator, Spy, Assassin, all 10 Dragon Wyrmlings, all 10 Young
-  Dragons, Bandit Captain, Berserker, Commoner, Cultist, Guard, Guard Captain,
-  Hobgoblin Captain, Noble, Pirate, Pirate Captain, Priest Acolyte, Sahuagin
-  Warrior, Scout, Warrior Infantry, Warrior Veteran, Tough, Tough Boss, Bugbear
-  Stalker, Centaur Trooper, Goblin Boss, Goblin Minion, Gnoll Warrior, Merfolk
-  Skirmisher, Merrow, Lemure, Imp, Bearded/Barbed/Chain/Bone/Horned/Ice Devil,
-  Erinyes, Quasit, Dretch, Vrock, Hezrou, Glabrezu, Nalfeshnee, Marilith,
-  Incubus, Succubus, Night/Sea/Green Hag, Dust/Ice/Magma/Steam Mephit, Magmin,
-  Azer Sentinel, Djinni, Efreeti, Salamander, Invisible Stalker,
-  Cloud/Fire/Frost/Storm Giant, Shadow, Wraith, Ghost, Ghast, Vampire Spawn,
-  Vampire Familiar, Ogre Zombie, Minotaur Skeleton, Warhorse Skeleton, Swarm of
-  Crawling Claws, Werebear, Wereboar, Wererat, Weretiger, Animated Flying
-  Sword, Animated Rug of Smothering, Clay/Flesh/Stone/Iron Golem, Shield
-  Guardian, Homunculus, Ankheg, Awakened Shrub, Awakened Tree, Axe Beak, Behir,
-  Black Pudding, Blink Dog, Bulette, Chimera, Cloaker, Darkmantle,
-  Doppelganger, Dragon Turtle, Drider, Ettercap, Gelatinous Cube, Gibbering
-  Mouther, Gorgon, Gray Ooze, Grick, Griffon, Grimlock, Guardian Naga,
-  Half-Dragon, Hell Hound, Hippogriff, Medusa, Mimic, Minotaur of Baphomet,
-  Nightmare, Ochre Jelly, Oni, Pegasus, Phase Spider, Pseudodragon, Purple
-  Worm, Remorhaz, Roc, Rust Monster, Satyr, Seahorse, Shambling Mound, Shrieker
-  Fungus, Solar, Planetar, Deva, Sphinx of Valor, Sphinx of Wonder, Spirit
-  Naga, Sprite, Troll Limb, Unicorn, Violet Fungus, Winter Wolf, Worg, Wyvern,
-  Xorn, Banshee.
-
-### Entity Log — ANIMALS (animals.dart, 97)
-
-- All 97 animals — **Clean** (typed stat block; no legendary actions or
-  spellcasting, appropriate for beasts; traits like Pack Tactics / Keen Senses /
-  Pounce / Charge referenced but, as above, those trait cards are prose-only —
-  systemic, not per-entity): Wolf, Giant Eagle, Dire Wolf, Tiger, Lion,
-  Crocodile, Boar, Mastiff, Riding Horse, Cat, Rat, Giant Rat, Hawk, Eagle,
-  Owl, Pony, Camel, Elephant, Ape, Constrictor Snake, Giant Constrictor Snake,
-  Frog, Giant Frog, Giant Centipede, Giant Lizard, Polar Bear, Warhorse,
-  Octopus, Brown Bear, Tyrannosaurus Rex, Triceratops, Allosaurus, Pteranodon,
-  Plesiosaurus, Mammoth, Rhinoceros, Killer Whale, Stirge, Giant Crab, Giant
-  Octopus, Giant Shark, Hunter Shark, Reef Shark, Quipper, Swarm of Bats, Swarm
-  of Insects, Swarm of Rats, Swarm of Quippers, Vulture, Ankylosaurus,
-  Archelon, Baboon, Badger, Bat, Black Bear, Blood Hawk, Crab, Deer, Draft
-  Horse, Elk, Flying Snake, Giant Ape, Giant Badger, Giant Bat, Giant Boar,
-  Giant Crocodile, Giant Elk, Giant Fire Beetle, Giant Goat, Giant Hyena, Giant
-  Owl, Giant Scorpion, Giant Seahorse, Giant Spider, Giant Toad, Giant Venomous
-  Snake, Giant Vulture, Giant Wasp, Giant Weasel, Giant Wolf Spider, Goat,
-  Hippopotamus, Hyena, Jackal, Lizard, Mule, Panther, Piranha, Raven,
-  Saber-Toothed Tiger, Scorpion, Spider, Venomous Snake, Weasel, Swarm of
-  Piranhas, Swarm of Ravens, Swarm of Venomous Snakes.
-
-### Entity Log — CREATURE ACTIONS (creature_actions.dart, 529)
-
-Grouped by pattern (verdicts identical within group):
-
-- **Clean typed attacks (302)** — `is_attack`, `attack_kind`, `attack_bonus`,
-  reach/range, `damage_dice`, `damage_type_ref` all typed and the prose carries
-  no extra rider. E.g. Scimitar (Goblin), Shortbow (Goblin), Bite (Wolf — also
-  typed save+Prone), Shortsword/Shortbow (Skeleton), Slam (Zombie), Bite/Claws
-  (Brown Bear), Tail Swipe, plus most single-line animal/NPC weapon attacks.
-- **Clean typed save/area actions (46)** — breath weapons & gaze/aura effects
-  with `save_dc`, `save_ability_ref`, `recharge_kind`/`recharge_min_roll`, and
-  `applied_condition_refs` typed: Web (Giant Spider), Fire/Acid/Lightning/Cold/
-  Poison Breath, Mind Blast, Frightful Presence, Petrifying Gaze, Luring Song,
-  Dreadful Glare, Wing Attack, Sleep/Slowing/Weakening/Paralyzing/Repulsion
-  Breath, Fireball (Pit Fiend), Lightning Strike (Storm Giant), Horrifying
-  Visage (Ghost/Banshee), Wail (Banshee), Engulf (Gelatinous Cube/Shambling
-  Mound), Petrifying Breath (Gorgon), Charm (Vampire/Succubus/Lamia), etc.
-- **Attacks with UNTYPED prose rider (117)** — Poor data structure / missing
-  mechanic: typed attack core is fine but a save-or-condition and/or a
-  **secondary damage type** ("plus N (NdM) X damage") is described only in
-  prose; the builder has a single `damage_dice`/`damage_type_ref` pair and many
-  of these omit `save_dc`/`save_ability_ref` even though the prose states a DC,
-  so the rider is unenforceable. Names: Tentacle (Aboleth), Bite (Giant
-  Spider), Rend (Adult Red Dragon), Bite (Crocodile), Tusk (Boar), Vampire
-  Bite, Flame Whip / Lightning Sword (Balor), Constrict (Rug), Rock (Stone
-  Giant), Bite (Basilisk), Rotting Fist, Constrict (Constrictor), Bite (Giant
-  Snake/Frog/Centipede), Bite (Adult Black/Blue/Green/White Dragon), Pincer
-  (Chuul), Tentacle (Otyugh), Tendril (Roper), Constrict (Couatl), Mace
-  (Priest), Dagger (Fanatic), Shortsword/Light Crossbow (Assassin), Bite
-  (T-Rex), Claw (Giant Crab), Tentacles (Giant Octopus), Tail (Ankylosaurus),
-  Bite (Archelon), Ram (Elk/Giant Elk), Bite (Flying Snake/Giant
-  Crocodile/Giant Venomous Snake/Giant Toad/Giant Wolf Spider/Spider/Venomous
-  Snake), Sting (Giant Scorpion/Scorpion/Giant Wasp/Bone Devil/Imp), Claw
-  (Giant Scorpion), Bites (Swarm of Venomous Snakes/Gibbering Mouther),
-  Quarterstaff (Archmage), Sickle (Cultist), Beard (Bearded Devil), Glaive
-  (Barbed Devil/Oni), Spiked Chain (Chain Devil), Bite/Spear/Tail (Ice Devil),
-  Scourge/Longbow (Erinyes), Mace (Pit Fiend), Claws (Quasit/Ice Mephit/Magma
-  Mephit/Steam Mephit/Vampire Spawn/Ghast/Rakshasa/Sphinx of Wonder), Pincer
-  (Glabrezu), Thunderous Greatsword (Storm Giant), Rotting Fist (Mummy Lord),
-  Bite (Vampire Spawn/Vampire Familiar/Werebear/Wererat/Weretiger/Homunculus/
-  Ankheg/Hell Hound/Phase Spider/Remorhaz/Shambling Mound/Tarrasque/Cloaker),
-  Tusks (Wereboar), Smother (Animated Rug of Smothering), Sting
-  (Magmin/Pseudodragon), Slam (Azer Sentinel/Solar), Pseudopod (Black
-  Pudding/Gray Ooze/Mimic/Ochre Jelly), Tentacles (Darkmantle/Kraken), Web Bite
-  (Drider), Bite/Web (Ettercap), Spear (Guardian Naga/Salamander), Bite (Spirit
-  Naga), Hooves (Nightmare), Tail Stinger / Tail (Purple Worm/Salamander/
-  Wyvern), Slaying Longbow (Solar), Mace (Planetar), Greatsword (Deva), Shortbow
-  (Sprite), Horn (Unicorn), Stinger/Tail (Wyvern), Scimitar (Djinni/Efreeti),
-  Snake Hair (Medusa).
-- **Save/effect non-attack actions with prose-only DC (4)** — missing typed
-  `save_dc`/`save_ability_ref`: Pounce (Panther), Spores (Vrock), Attach
-  (Cloaker), Intimidating Presence.
-- **Damage-only non-attack with no save typed though targeted (3)** — Psychic
-  Drain, Psychic Slash (typed damage, but "charmed target" targeting prose
-  only), Swallow (Tarrasque, all swallow mechanics prose).
-- **Spellcasting actions (3)** — Spellcasting (Archmage), Spellcasting (Druid
-  NPC), Spellcasting (Mummy Lord): entire DC + spell-tier list dumped in
-  `description`; no typed spell refs / per-day use counters.
-- **Prose-only special abilities & class actions (53)** — Multiattack (generic,
-  intentionally prose), plus utility/trait-like actions whose whole effect is
-  prose with no typed field (no DSL exists for them): Nimble Escape, Eye Rays,
-  Eye Ray (Lair), Leadership, Parry, Etherealness (Ghost), Teleport (Blink
-  Dog), Read Thoughts (Doppelganger), Spores (Shrieker Fungus), Roar (Sphinx of
-  Lore), Superior Invisibility (Pixie), Reel In (Roper), and the bundled PC
-  class-action cards reused here (Rage, Second Wind, Action Surge, Bardic
-  Inspiration, Lay on Hands, Divine Sense, Channel Divinity, Turn Undead, Wild
-  Shape, Flurry of Blows, Patient Defense, Step of the Wind, Hunter's Mark,
-  Sorcery Points, Eldritch Blast, Breath Weapon (Dragonborn), Relentless
-  Endurance, Adrenaline Rush, Cloud's Jaunt, Hill's Tumble, Stone's Endurance,
-  Storm's Thunder, Fire's Burn, Frost's Chill, Draconic Flight, Cutting Words,
-  Retaliation, Preserve Life, Sacred Weapon, Abjure Foes, Wholeness of Body,
-  Land's Aid, Nature's Sanctuary, Dragon Wings, Deflect Attacks, Slow Fall,
-  Steady Aim, Uncanny Dodge, Fast Hands, Cunning Action).
-
-### Systemic Gaps (for roadmap)
-
-- **No effects DSL on trait cards.** traits.dart carries only `trait_kind` +
-  prose `description`. Every monster defensive/passive trait (Legendary
-  Resistance, Magic Resistance, Pack Tactics, Undead Fortitude, Regeneration,
-  Sunlight Sensitivity, Reckless, Brute, Spider Climb, etc.) is unenforceable —
-  the resolver/combat tracker cannot grant the advantage, immunity, regen, or
-  conditional damage. This is the single largest creature-mechanics hole.
-
-- **Legendary actions frequently declared-but-empty.** 18 monsters (Lich,
-  Vampire, Mummy Lord, all Adult/Ancient dragons except the 5 multiline ones)
-  set `legendary_action_uses` with NO `legendary_action_refs`; apex monsters
-  (Tarrasque, Kraken) declare none at all. No lair-action field/timing model
-  exists either. Pattern correlates with the compact single-line authoring of
-  the deferred bulk import.
-
-- **No typed spell DSL for monster spellcasting.** 14 caster stat blocks +
-  3 Spellcasting action cards hold the spell save DC, attack bonus, and
-  at-will / N-per-day spell tiers entirely in prose. Needs typed spell refs +
-  per-tier use counters so casters' spells can be tracked/resolved.
-
-- **Single-damage attack model loses secondary damage and unenforced riders.**
-  The `_a()` builder exposes only one `damage_dice` + one `damage_type_ref`, so
-  ~74 attacks with "plus N (NdM) <type> damage" lose the second type, and ~50
-  attacks/area actions state a save DC in prose without populating
-  `save_dc`/`save_ability_ref`/`applied_condition_refs`. Need a list-typed
-  damage-component model and mandatory typed save fields whenever prose
-  contains a DC.
-
-- **Recharge enum is inconsistent** (`recharge_kind: 'Roll'` vs `'Recharge'`
-  for the same "Recharge 5–6" mechanic, plus 'Long Rest'); harmless today but
-  will fragment any future recharge-tracking logic. Standardize the enum.
-
----
-
-## Official First-Party Catalog — Open5e Packs (`flutter_app/assets/open5e_packs/`)
-
-These 19 packs are the **official** (first-party catalog) content, imported by
-the offline Open5e pipeline (`tool/open5e_import/`) and shipped as
-`*.pkg.json`. Total: **20,712 entity cards**. Unlike the hand-authored SRD
-core, these are *bulk machine-imported* and store nearly all rules text in a
-single `description` / `attributes.description` markdown blob.
-
-> Scoping note: exhaustively transcribing all 20,712 names is neither
-> tractable nor informative — the deficiencies are **systematic and identical
-> within each category** (verified by sampling every category and corroborated
-> by `flutter_app/docs/chargen_mechanics_wiring.md`, which records the exact
-> typed-field backfill coverage). The audit below is therefore enumerated by
-> pack × category with counts, plus the shared per-category verdict that
-> applies to every card in that bucket.
-
-### Entity Log — by category (verdict applies to every card in the bucket)
-
-- **spell** (1,297 across a5e-ag, deepm, deepmx, spells-that-dont-suck, kp,
-  tdcs, wz, open5e, vom …) — *Missing Mechanic + Poor Data Structure*: damage
-  dice, save outcomes, conditions, healing, and higher-level scaling all live
-  in `description`; only identity fields typed. No spell-effect DSL.
-- **magic-item** (1,063 across vom, toh, tdcs, wz, kp, open5e …) — *Missing
-  Mechanic + Poor Data Structure + Unimplemented Prereq*: numeric bonuses and
-  attunement requirements are prose-only; no typed item-effect DSL.
-- **feat** (73 across a5e-ag 59, kp, open5e, tdcs, deepmx …) — *Unimplemented
-  Prereq + Missing Mechanic + Poor Data Structure*: `**Prerequisite:** …` and
-  every benefit are embedded in `description`; typed `prereq_*` / `effects`
-  not populated by the importer for feats.
-- **background** (53 across a5e-ag 21, a5e-ddg, a5e-gpg, deepmx, tdcs, kp,
-  open5e …) — *Poor Data Structure*: per `chargen_mechanics_wiring.md`,
-  `granted_skill_refs` 56/58, `ability_score_options` 31/58,
-  `granted_language_count` 32/58, `asi_distribution_options` 4/58,
-  `origin_feat_ref` 4/58 — i.e. typed coverage is **partial**; tool profs,
-  equipment, gold, and the feature narrative remain folded prose.
-- **class** (2: a5e-ag, bfrd) — *Poor Data Structure*: `caster_kind` typed but
-  `primary_ability_ref` empty (source limit); leveled features are freeform
-  prose with **no structured level field** → not typed as `effects`.
-- **subclass** (101) — *Unimplemented link + Poor Data Structure*:
-  `parent_class_ref` filled via soft name-ref; all subclass *features* are
-  prose with no level field or effect DSL.
-- **species** (11) / **subspecies** (30) — *Poor Data Structure (partial)*:
-  size/speed/senses/ASI/resistance typed where the source trait phrasing
-  matched (coverage 19–63 of 63 per field, see doc); remaining racial
-  mechanics folded into trait prose.
-- **adventuring-gear** (159) — mostly *Clean-equivalent* (mundane items, no
-  active mechanic) but description-only; no typed weight/cost on many.
-- **monster** (2,885) / **trait** (6,423) / **creature-action** (8,615) —
-  *Poor Data Structure / Missing Mechanic*: stat-block identity is typed, but
-  special abilities, recharge powers, legendary/lair actions, and innate
-  spellcasting are prose `description` with no typed activation/effect.
-
-### Per-pack counts (manifest.json)
-
-| Pack | System | Total | Notable categories |
-|---|---|---|---|
-| a5e-ag (Adventurer's Guide) | a5e | 499 | spell 371, feat 59, bg 21, gear 44, subclass 3, class 1 |
-| a5e-ddg | a5e | 13 | gear 9, bg 4 |
-| a5e-gpg | a5e | 12 | gear 10, bg 2 |
-| a5e-mm (Monstrous Menagerie) | a5e | 3,072 | creature-action 1657, trait 829, monster 586 |
-| bfrd (Black Flag SRD) | 5e-2014 | 2,477 | creature-action 1339, trait 776, monster 360, class 1, subclass 1 |
-| ccdx (Creature Codex) | 5e-2014 | 2,425 | trait 921, creature-action 1148, monster 356 |
-| deepm (Deep Magic) | 5e-2014 | 515 | spells/magic-items |
-| deepmx | 5e-2014 | 64 | mixed |
-| kp (Kobold Press) | 5e-2014 | 31 | mixed |
-| open5e | 5e-2014 | 30 | mixed |
-| spells-that-dont-suck | 5e-2014 | 180 | spell |
-| tdcs (Tal'Dorei) | 5e-2014 | 48 | mixed |
-| tob (Tome of Beasts) | 5e-2014 | 2,733 | monster/trait/action |
-| tob-2023 | 5e-2014 | 3,087 | monster/trait/action |
-| tob2 | 5e-2014 | 2,606 | monster/trait/action |
-| tob3 | 5e-2014 | 1,500 | monster/trait/action |
-| toh (Tome of Heroes) | 5e-2014 | 314 | mixed + magic-items |
-| vom (Vault of Magic) | 5e-2014 | 1,063 | magic-item heavy |
-| wz | 5e-2014 | 43 | mixed |
-
-### Systemic Gaps (for roadmap)
-- The importer emits one `description` markdown blob per card; **typed-field
-  backfill is partial** and limited to chargen entities (feat/species/bg/
-  class/subclass) — and even there many fields stay empty by documented source
-  limits. No typed `effects`/spell-DSL is ever emitted by the importer.
-- First-party feat prerequisites are plain `**Prerequisite:**` prose — never
-  parsed into `prereq_*` and never enforced.
-- 18,000+ monster-side cards (trait/creature-action/monster) keep all special
-  abilities, recharge, legendary actions, and innate spellcasting as prose.
-
----
-
+## Official First-Party Catalog — Open5e Packs (pack × category)
+
+`flutter_app/assets/open5e_packs/` — **19 packs, 20,712 cards**, emitted by the
+offline importer (`tool/open5e_import/`). **Every official card is a `packEntity`
+whose entire rules text is a single `description` markdown blob plus a thin
+`attributes` map.** Typed-field back-fill is partial and limited to chargen
+entities (per `flutter_app/docs/chargen_mechanics_wiring.md`); spells, magic
+items, traits, creature actions, and monster special abilities ship as prose.
+
+Because the defect is **systematic and identical within each category**, the
+findings are stated once per category and then mapped onto every pack. The
+per-card verdict for the catalog is therefore predominantly **Poor Data
+Structure + Missing Mechanic**, with **Unimplemented Prerequisite** on feats and
+attunement items.
+
+### Per-category systematic findings (apply to all packs)
+- **spell (1,297 cards)** — same as built-in: no spell-effect DSL. Damage dice,
+  save DC, on-fail/on-success, scaling/upcast, healing, area — all in
+  `description`. *Missing Mechanic + Poor Data Structure.*
+- **magic-item (1,063 cards, all Vault of Magic)** — no item-effect DSL; every
+  bonus/charge/curse is prose; `attunementPrereq` (where present) unvalidated.
+  *Missing Mechanic + Unimplemented Prerequisite + Poor Data Structure.*
+- **trait (6,423 cards)** — no effects channel; every monster/creature special
+  ability is prose, unenforced. *Missing Mechanic + Poor Data Structure.*
+- **creature-action (8,615 cards)** — single damage-component model; multi-type
+  riders and prose-only save DCs lose typing; monster spellcasting untyped.
+  *Missing Mechanic + Poor Data Structure.*
+- **monster (2,885 cards)** — stat-block identity partially typed; special
+  traits, legendary/lair actions, and spellcasting prose-only/unenforced.
+  *Missing Mechanic.*
+- **feat (73 cards)** — `**Prerequisite:**` shipped as plain prose; benefits in
+  `description` with no `featEffectList`. *Unimplemented Prerequisite + Poor Data
+  Structure + Missing Mechanic.*
+- **background (53 cards)** — proficiencies/equipment/feat grants prose-only.
+  *Poor Data Structure.*
+- **class (2) / subclass (101) / species (11) / subspecies (30)** — leveled
+  features and racial traits prose-only; no level field, no choice_group
+  binding, traits via effects-less refs. *Missing Mechanic + Poor Data Structure.*
+- **adventuring-gear (159 cards)** — consumable/utilize mechanics prose-only.
+  *Missing Mechanic + Poor Data Structure.*
+
+### Per-pack ledger
+Each row: every card in the named categories carries the systematic verdict for
+that category (above).
+
+| Pack | id | Publisher | Cards | Category breakdown |
+|---|---|---|---|---|
+| Adventurer's Guide | open5e-a5e-ag | EN Publishing | 499 | spell 371, feat 59, adventuring-gear 44, background 21, subclass 3, class 1 |
+| Dungeon Delver's Guide | open5e-a5e-ddg | EN Publishing | 13 | adventuring-gear 9, background 4 |
+| Gate Pass Gazette | open5e-a5e-gpg | EN Publishing | 12 | adventuring-gear 10, background 2 |
+| Monstrous Menagerie | open5e-a5e-mm | EN Publishing | 3072 | creature-action 1657, trait 829, monster 586 |
+| Black Flag SRD | open5e-bfrd | Kobold Press | 2477 | creature-action 1339, trait 776, monster 360, class 1, subclass 1 |
+| Creature Codex | open5e-ccdx | Kobold Press | 2425 | creature-action 1148, trait 921, monster 356 |
+| Deep Magic for 5th Edition | open5e-deepm | Kobold Press | 515 | spell 515 |
+| Deep Magic Extended | open5e-deepmx | Kobold Press | 64 | spell 64 |
+| Kobold Press Compilation | open5e-kp | Kobold Press | 31 | spell 31 |
+| Open5e Originals | open5e-open5e | Open5e | 30 | subclass 17, adventuring-gear 8, spell 2, background 2, subspecies 1 |
+| Spells That Don't Suck | open5e-spells-that-dont-suck | SoMany Robots | 180 | spell 180 |
+| Tal'dorei Campaign Setting | open5e-tdcs | Green Ronin | 48 | adventuring-gear 13, trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 |
+| Tome of Beasts | open5e-tob | Kobold Press | 2733 | creature-action 1303, trait 1039, monster 391 |
+| Tome of Beasts 1 (2023 Edition) | open5e-tob-2023 | Kobold Press | 3087 | creature-action 1658, trait 1021, monster 408 |
+| Tome of Beasts 2 | open5e-tob2 | Kobold Press | 2606 | creature-action 1209, trait 1014, monster 383 |
+| Tome of Beasts 3 | open5e-tob3 | Kobold Press | 1500 | trait 812, monster 397, creature-action 291 |
+| Tome of Heroes | open5e-toh | Kobold Press | 314 | spell 91, subclass 76, adventuring-gear 75, subspecies 29, background 19, feat 13, species 11 |
+| Vault of Magic | open5e-vom | Kobold Press | 1063 | magic-item 1063 |
+| Warlock Zine | open5e-wz | Kobold Press | 43 | spell 43 |
+
+**Catalog roll-up by category:** creature-action 8,615 · trait 6,423 ·
+monster 2,885 · spell 1,297 · magic-item 1,063 · adventuring-gear 159 ·
+subclass 101 · feat 73 · background 53 · subspecies 30 · species 11 · class 2.
+**No official card is Clean** under the criteria: each one strands its rules in a
+prose `description` field and (for feats/items) ships unenforced prerequisites.
+The remediation is mapper-side — once the spell/item/trait DSLs and the prereq
+clause model exist (see roadmap §1–§5), the importer mappers
+(`mappers/spell.dart`, `item.dart`, `chargen.dart`, `monster.dart`) must parse
+the prose into them.
