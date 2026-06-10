@@ -376,14 +376,10 @@ class FieldWidgetFactory {
         ref: ref,
         entityFields: entityFields,
       ),
-      FieldType.spellEffectList => SpellEffectListFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
+      // Rule-authoring field types are no longer rendered on entity cards
+      // (Phase 1.1 — rules moved into the template). Data still parses and
+      // resolves; only the authoring UI is gone.
+      FieldType.spellEffectList => const SizedBox.shrink(),
       FieldType.rangedSenseList => RangedSenseListFieldWidget(
         schema: schema,
         value: value,
@@ -392,14 +388,7 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
-      FieldType.grantedModifiers => GrantedModifiersFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
+      FieldType.grantedModifiers => const SizedBox.shrink(),
       FieldType.equipmentChoiceGroups => EquipmentChoiceGroupsFieldWidget(
         schema: schema,
         value: value,
@@ -423,31 +412,9 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entityFields: entityFields,
       ),
-      FieldType.featEffectList => FeatEffectListFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-        entityFields: entityFields,
-      ),
-      FieldType.autoGrantSources => AutoGrantSourcesFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
-      FieldType.prereqClauses => PrereqClausesFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
+      FieldType.featEffectList => const SizedBox.shrink(),
+      FieldType.autoGrantSources => const SizedBox.shrink(),
+      FieldType.prereqClauses => const SizedBox.shrink(),
       _ => _TextFieldWidget(
         schema: schema,
         value: value,

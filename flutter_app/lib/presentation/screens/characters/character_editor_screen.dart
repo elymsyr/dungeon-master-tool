@@ -60,7 +60,6 @@ import '../../widgets/app_icon_image.dart';
 import '../../widgets/asset_ref_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/expandable_section.dart';
-import '../../widgets/prereq_warnings_banner.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/pending_choices_badge.dart';
@@ -646,10 +645,8 @@ class _CharacterEditorScreenState
                 children: [
                   _entityHeader(palette, character, template, effectiveAc),
                   const SizedBox(height: 12),
-                  PrereqWarningsBanner(
-                    unmetPrerequisites: resolved.unmetPrerequisites,
-                    debugWarnings: resolved.warnings,
-                  ),
+                  // Prerequisite-warnings banner removed in Phase 1.1; the new
+                  // template runtime will re-surface check_clauses warnings.
                   _renderRestActions(palette, character),
                   const SizedBox(height: 16),
                   ..._renderResolvedGrants(palette, character),
