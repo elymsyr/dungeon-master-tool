@@ -9,525 +9,384 @@
 
 Two sources of official / built-in content were inspected:
 
-1. **Official first-party catalog — Open5e packs** (machine-imported JSON
-   assets): `flutter_app/assets/open5e_packs/*.pkg.json`, declared in
-   `manifest.json` and `flutter_app/assets/first_party/manifest.json`.
-   **19 packs · 20,712 entity cards.** Every card was parsed from JSON and its
-   `attributes` map compared field-by-field against the typed schema
+1. **Official first-party catalog — Open5e packs** (machine-imported JSON):
+   `flutter_app/assets/open5e_packs/*.pkg.json`, declared in `manifest.json`.
+   **19 packs · 20,712 entity cards.** Every card's `attributes` map was parsed
+   from JSON and compared field-by-field against the typed schema
    (`flutter_app/lib/domain/entities/schema/builtin/content.dart`) and the
    mechanics the runtime actually consumes
-   (`flutter_app/lib/domain/services/character_resolver.dart`,
-   `flutter_app/lib/presentation/screens/characters/pending_choice_resolver_dialog.dart`).
+   (`character_resolver.dart`, `pending_choice_resolver_dialog.dart`).
 2. **Built-in pack — SRD 5.2.1 core** (hand-authored Dart):
-   `flutter_app/lib/domain/entities/schema/builtin/srd_core/`. **~2,260 cards**
-   emitted by typed Dart builders. Audited at the per-builder / per-category
-   level because deficiencies are uniform within a builder.
+   `flutter_app/lib/domain/entities/schema/builtin/srd_core/`. Audited at the
+   per-builder level (deficiencies are uniform within a builder) and used as the
+   **structural reference** — it populates the typed fields the official packs
+   leave empty.
 
-Chargen entities (feats / backgrounds / classes / subclasses / species /
-subspecies — 270 official cards) are **enumerated individually** below, because
-the three inspection criteria vary card-to-card there. Bulk content (spells,
-magic items, gear, traits, creature-actions, monsters — 20,442 official cards)
-is **machine-uniform within each pack×category**, so it is audited at that
-granularity with exact counts and representative named rows.
+**Card inventory (official packs)**
 
-### Verdict legend
-- **Clean** — every described prerequisite sits in a typed, enforced field;
-  every described mechanic has a matching typed `effects`/attribute the runtime
-  reads; nothing material is stranded in a generic text field.
-- **Unimplemented Prerequisite** — the card states a requirement that no
-  typed/enforced field carries, OR the field exists but is never validated at
-  apply-time (so the gate never fires).
-- **Missing Mechanic** — a functional rule in the card's text has no
-  corresponding typed mechanic the runtime applies.
-- **Poor Data Structure** — content is dumped into a single generic text field
-  instead of being split into dedicated typed fields.
+| Category | Cards | Audit granularity |
+|---|---:|---|
+| feat | 73 | per-entity |
+| background | 53 | per-entity |
+| class | 2 | per-entity |
+| subclass | 101 | per-entity |
+| species | 11 | per-entity |
+| subspecies | 30 | per-entity |
+| spell | 1,297 | per pack×category (machine-uniform) |
+| magic-item | 1,063 | per pack×category |
+| adventuring-gear | 159 | per pack×category |
+| trait | 6,423 | per pack×category |
+| creature-action | 8,615 | per pack×category |
+| monster | 2,885 | per pack×category |
+| **Total** | **20,712** | |
 
-### Headline tallies (official packs)
-- **Feats (73):** 9 fully structured (prereq + `effects`); **64 carry their
-  benefits as `description` text only** (Missing Mechanic); **5 have a
-  prerequisite in free-text only** with no structured field; the remaining
-  structured-prereq feats are **filtered in the UI picker but never validated at
-  apply-time** (Unimplemented Prerequisite).
-- **Backgrounds (53):** **24 set `granted_language_count` that the resolver
-  never consumes** (Missing Mechanic); no card has a structured "background
-  feature" field — feature text lives in `description`.
-- **Subclasses (101):** **101/101 dump every feature into a single
-  `description` field** (Poor Data Structure + Missing Mechanic) — none use the
-  schema's structured `features` / `rule_effects` / grant rows.
-- **Classes (2):** proficiencies/hit-die/caster typed; **no structured per-level
-  feature list** — class features in `description`.
-- **Species (11) / Subspecies (30):** mostly Clean — grants are typed and the
-  resolver applies them; 5 cards leave traits in `description`.
-- **Spells (1,297):** casting metadata typed; **spell `effects` empty for all
-  1,297** — damage/scaling/riders are descriptive text the runtime never
-  resolves (Missing Mechanic, system-wide).
-- **Magic items (1,063), gear (159), creature-actions (8,615), monsters
-  (2,885):** structurally Clean. **Traits (6,423)** are descriptive-by-design.
+Chargen entities (270) are **enumerated individually** because the three
+inspection criteria vary card-to-card. Bulk content (20,442 cards) is
+machine-uniform within each category, so it is audited at category granularity.
+
+**Finding codes**
+
+- **E** — benefits/mechanics live entirely in `description`; no typed
+  `effects`/`granted_modifiers` (Missing Mechanics — roadmap 2.1).
+- **P** — prerequisite stated in text but **not enforced at apply-time**; no
+  structured prereq field either (Unimplemented Prerequisite — roadmap 1.1).
+- **Pc** — structured prereq present (`prereq_clauses`/flat) but (a) unenforced
+  by the resolver and (b) `prereq_clauses` is undeclared in the schema (roadmap
+  1.1 + 1.2).
+- **D** — `description` duplicated verbatim into `attributes.description` (Poor
+  Data Structure — roadmap 3.1). **Applies to every feat/background/subclass/
+  species card; noted once here, not repeated per row.**
+- **✓m** — partially mechanized: a typed `effects` block is present.
+
+Sources abbreviated: **AG** Adventurer's Guide · **ToH** Tome of Heroes ·
+**TDCS** Tal'dorei Campaign Setting · **DDG** Dungeon Delver's Guide ·
+**GPG** Gate Pass Gazette · **O5e** Open5e Originals · **BFRD** Black Flag SRD.
 
 ---
 
-# Part A — Official first-party catalog (Open5e packs)
+## 1. Feats — 73 cards (per-entity)
 
-## A.1 Feats (73 cards)
-#### Adventurer's Guide (`open5e-a5e-ag`) — 59 feats
-- **Ace Driver**: prerequisite “Proficiency with a type of vehicle” in free-text only (no structured prereq_* field; not enforced); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Athletic**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Attentive**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Battle Caster**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Brutal Attack**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Bull Rush**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Combat Thievery**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Covert Training**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Crafting Expert**: Clean (structured prereq + effects)
-- **Crossbow Expertise**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Deadeye**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Deflector**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Destiny’s Call**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Dual-Wielding Expert**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Dungeoneer**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Empathic**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Fear Breaker**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Fortunate**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Guarded Warrior**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Hardy Adventurer**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Heavily Outfitted**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only)
-- **Heavy Armor Expertise**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Heraldic Training**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Idealistic Leader**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Intuitive**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Keen Intellect**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Lightly Outfitted**: Clean (structured prereq + effects)
-- **Linguistics Expert**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Martial Scholar**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Medium Armor Expert**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Moderately Outfitted**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only)
-- **Monster Hunter**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Mounted Warrior**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Mystical Talent**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Natural Warrior**: Clean (structured prereq + effects)
-- **Physician**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Polearm Savant**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Power Caster**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Powerful Attacker**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Primordial Caster**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Rallying Speaker**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Resonant Bond**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Rite Master**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Shield Focus**: Clean (structured prereq + effects)
-- **Skillful**: Clean (structured prereq + effects)
-- **Skirmisher**: Clean (structured prereq + effects)
-- **Spellbreaker**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Stalwart**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Stealth Expert**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Street Fighter**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Surgical Combatant**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Survivor**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Swift Combatant**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only)
-- **Tactical Support**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Tenacious**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Thespian**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Weapons Specialist**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Well-Heeled**: prerequisite “Prestige rating of 2 or higher” in free-text only (no structured prereq_* field; not enforced); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Woodcraft Training**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
+All 73 carry **D** (description mirrored into `attributes.description`).
+**64/73 carry E** (no typed effects). **27/73 declare a prerequisite**, none
+enforced at apply-time. The 9 partially mechanized feats are marked ✓m.
 
-#### Tal'dorei Campaign Setting (`open5e-tdcs`) — 1 feats
-- **Rapid Drinker**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
+| # | Feat | Source | Findings |
+|---:|---|---|---|
+| 1 | Ace Driver | AG | E · P (prereq text, no structured field) |
+| 2 | Athletic | AG | E |
+| 3 | Attentive | AG | E |
+| 4 | Battle Caster | AG | E · Pc |
+| 5 | Boundless Reserves | ToH | E · Pc |
+| 6 | Brutal Attack | AG | E |
+| 7 | Bull Rush | AG | E |
+| 8 | Combat Thievery | AG | E |
+| 9 | Covert Training | AG | E |
+| 10 | Crafting Expert | AG | ✓m |
+| 11 | Crossbow Expertise | AG | E |
+| 12 | Deadeye | AG | E · Pc |
+| 13 | Deflector | AG | E · Pc |
+| 14 | Destiny's Call | AG | E |
+| 15 | Diehard | ToH | E · Pc |
+| 16 | Dual-Wielding Expert | AG | E |
+| 17 | Dungeoneer | AG | E |
+| 18 | Empathic | AG | E |
+| 19 | Fear Breaker | AG | E |
+| 20 | Floriographer | ToH | E · Pc |
+| 21 | Forest Denizen | ToH | E |
+| 22 | Fortunate | AG | E |
+| 23 | Friend of the Forest | ToH | E |
+| 24 | Giant Foe | ToH | E · P (prereq text, no structured field) |
+| 25 | Guarded Warrior | AG | E |
+| 26 | Hardy Adventurer | AG | E |
+| 27 | Harrier | ToH | E · P (prereq text, no structured field) |
+| 28 | Heavily Outfitted | AG | ✓m · Pc |
+| 29 | Heavy Armor Expertise | AG | E · Pc |
+| 30 | Heraldic Training | AG | E |
+| 31 | Idealistic Leader | AG | E |
+| 32 | Inner Resilience | ToH | E · Pc |
+| 33 | Intuitive | AG | E |
+| 34 | Keen Intellect | AG | E |
+| 35 | Lightly Outfitted | AG | ✓m |
+| 36 | Linguistics Expert | AG | E |
+| 37 | Martial Scholar | AG | E · Pc |
+| 38 | Medium Armor Expert | AG | E · Pc |
+| 39 | Moderately Outfitted | AG | ✓m · Pc |
+| 40 | Monster Hunter | AG | E · Pc |
+| 41 | Mounted Warrior | AG | E |
+| 42 | Mystical Talent | AG | E |
+| 43 | Natural Warrior | AG | ✓m |
+| 44 | Part of the Pack | ToH | E · Pc |
+| 45 | Physician | AG | E |
+| 46 | Polearm Savant | AG | E |
+| 47 | Power Caster | AG | E · Pc |
+| 48 | Powerful Attacker | AG | E |
+| 49 | Primordial Caster | AG | E · Pc |
+| 50 | Rallying Speaker | AG | E · Pc |
+| 51 | Rapid Drinker | TDCS | E |
+| 52 | Resonant Bond | AG | E |
+| 53 | Rimecaster | ToH | E · Pc |
+| 54 | Rite Master | AG | E · Pc |
+| 55 | Shield Focus | AG | ✓m |
+| 56 | Skillful | AG | ✓m |
+| 57 | Skirmisher | AG | ✓m |
+| 58 | Sorcerous Vigor | ToH | E · Pc |
+| 59 | Spellbreaker | AG | E |
+| 60 | Stalker | ToH | E |
+| 61 | Stalwart | AG | E |
+| 62 | Stealth Expert | AG | E · Pc |
+| 63 | Street Fighter | AG | E |
+| 64 | Stunning Sniper | ToH | E · P (prereq text, no structured field) |
+| 65 | Surgical Combatant | AG | E |
+| 66 | Survivor | AG | E |
+| 67 | Swift Combatant | AG | ✓m · Pc |
+| 68 | Tactical Support | AG | E |
+| 69 | Tenacious | AG | E |
+| 70 | Thespian | AG | E |
+| 71 | Weapons Specialist | AG | E |
+| 72 | Well-Heeled | AG | E · P (prereq text, no structured field) |
+| 73 | Woodcraft Training | AG | E |
 
-#### Tome of Heroes (`open5e-toh`) — 13 feats
-- **Boundless Reserves**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Diehard**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Floriographer**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Forest Denizen**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Friend of the Forest**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Giant Foe**: prerequisite “*A Small or smaller race*” in free-text only (no structured prereq_* field; not enforced); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Harrier**: prerequisite “*The Shadow Traveler shadow fey trait or the ability to cast the* misty step *spell*” in free-text only (no structured prereq_* field; not enforced); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Inner Resilience**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Part of the Pack**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Rimecaster**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Sorcerous Vigor**: prereq stored in structured field but **not enforced at apply-time** (UI-picker filter only); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Stalker**: benefits described in `description` text only — no `effects` rows (mechanics not applied)
-- **Stunning Sniper**: prerequisite “*Proficiency with a ranged weapon*” in free-text only (no structured prereq_* field; not enforced); benefits described in `description` text only — no `effects` rows (mechanics not applied)
-
-## A.2 Backgrounds · Subclasses · Classes · Species · Subspecies (197 cards)
-### Backgrounds
-
-#### Adventurer's Guide (`open5e-a5e-ag`) — 21 background
-- **Acolyte**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Artisan**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Charlatan**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Criminal**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Cultist**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Entertainer**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Exile**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Farmer**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Folk Hero**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Gambler**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Guard**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Guildmember**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Hermit**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Marauder**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Noble**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Outlander**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Sage**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Sailor**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Soldier**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Trader**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Urchin**: background feature text (if any) lives in `description`; no structured `feature` field
-
-#### Dungeon Delver’s Guide (`open5e-a5e-ddg`) — 4 background
-- **Deep Hunter**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Dungeon Robber**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Escapee from Below**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Imposter**: background feature text (if any) lives in `description`; no structured `feature` field
-
-#### Gate Pass Gazette (`open5e-a5e-gpg`) — 2 background
-- **Cursed**: `granted_language_count=2` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Haunted**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-
-#### Open5e Originals (`open5e-open5e`) — 2 background
-- **Con Artist**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Scoundrel**: background feature text (if any) lives in `description`; no structured `feature` field
-
-#### Tal'dorei Campaign Setting (`open5e-tdcs`) — 5 background
-- **Crime Syndicate Member**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Elemental Warden**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Fate-Touched**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Lyceum Student**: `granted_language_count=2` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Recovered Cultist**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-
-#### Tome of Heroes (`open5e-toh`) — 19 background
-- **Court Servant**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Desert Runner**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Destined**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Diplomat**: `granted_language_count=2` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Forest Dweller**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Former Adventurer**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Freebooter**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Gamekeeper**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Innkeeper**: `granted_language_count=2` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Mercenary Company Scion**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Mercenary Recruit**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Monstrous Adoptee**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Mysterious Origins**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Northern Minstrel**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Occultist**: `granted_language_count=2` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Parfumier**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Scoundrel**: background feature text (if any) lives in `description`; no structured `feature` field
-- **Sentry**: `granted_language_count=1` authored but **never consumed by resolver** (no language slots granted); background feature text (if any) lives in `description`; no structured `feature` field
-- **Trophy Hunter**: background feature text (if any) lives in `description`; no structured `feature` field
-
-### Subclasses
-
-#### Adventurer's Guide (`open5e-a5e-ag`) — 3 subclass
-- **Gambling General**: ALL subclass mechanics dumped in one `description` field (3165 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Swift Strategist**: ALL subclass mechanics dumped in one `description` field (2745 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Talented Tactician**: ALL subclass mechanics dumped in one `description` field (3549 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-
-#### Black Flag SRD (`open5e-bfrd`) — 1 subclass
-- **Metallurgist**: ALL subclass mechanics dumped in one `description` field (4589 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-
-#### Open5e Originals (`open5e-open5e`) — 17 subclass
-- **Abjurationist**: ALL subclass mechanics dumped in one `description` field (3482 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Arcane Warrior**: ALL subclass mechanics dumped in one `description` field (7206 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of the Many**: ALL subclass mechanics dumped in one `description` field (2993 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Skalds**: ALL subclass mechanics dumped in one `description` field (1812 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Demise Domain**: ALL subclass mechanics dumped in one `description` field (3200 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Eldritch Trickster**: ALL subclass mechanics dumped in one `description` field (7856 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Mischief Domain**: ALL subclass mechanics dumped in one `description` field (3869 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oathless Betrayer**: ALL subclass mechanics dumped in one `description` field (4272 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **School of Abjuring and Warding**: ALL subclass mechanics dumped in one `description` field (2731 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **School of Divining and Soothsaying**: ALL subclass mechanics dumped in one `description` field (3069 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **School of Illusions and Phantasms**: ALL subclass mechanics dumped in one `description` field (2729 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **School of Necrotic Arts**: ALL subclass mechanics dumped in one `description` field (3078 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Storm Domain**: ALL subclass mechanics dumped in one `description` field (3011 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **The Ancient Fey Court**: ALL subclass mechanics dumped in one `description` field (3449 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **The Great Elder Thing**: ALL subclass mechanics dumped in one `description` field (3041 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of Shadowdancing**: ALL subclass mechanics dumped in one `description` field (1946 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Wyrd Magic**: ALL subclass mechanics dumped in one `description` field (9322 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-
-#### Tal'dorei Campaign Setting (`open5e-tdcs`) — 4 subclass
-- **Blood Domain**: ALL subclass mechanics dumped in one `description` field (5313 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of the Juggernaut**: ALL subclass mechanics dumped in one `description` field (2203 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Runechild**: ALL subclass mechanics dumped in one `description` field (4886 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Cerulean Spirit**: ALL subclass mechanics dumped in one `description` field (4391 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-
-#### Tome of Heroes (`open5e-toh`) — 76 subclass
-- **Ancient Dragons**: ALL subclass mechanics dumped in one `description` field (7120 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Animal Lords**: ALL subclass mechanics dumped in one `description` field (7512 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Beast Trainer**: ALL subclass mechanics dumped in one `description` field (3478 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Cantrip Adept**: ALL subclass mechanics dumped in one `description` field (1903 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Cat Burglar**: ALL subclass mechanics dumped in one `description` field (4303 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Chaplain**: ALL subclass mechanics dumped in one `description` field (3414 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of Ash**: ALL subclass mechanics dumped in one `description` field (5695 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of Bees**: ALL subclass mechanics dumped in one `description` field (5043 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of Crystals**: ALL subclass mechanics dumped in one `description` field (4503 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of Sand**: ALL subclass mechanics dumped in one `description` field (5974 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of Wind**: ALL subclass mechanics dumped in one `description` field (3038 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of the Green**: ALL subclass mechanics dumped in one `description` field (5588 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Circle of the Shapeless**: ALL subclass mechanics dumped in one `description` field (4924 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Cold-Blooded**: ALL subclass mechanics dumped in one `description` field (3713 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Echoes**: ALL subclass mechanics dumped in one `description` field (4292 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Investigation**: ALL subclass mechanics dumped in one `description` field (3020 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Shadows**: ALL subclass mechanics dumped in one `description` field (3478 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Sincerity**: ALL subclass mechanics dumped in one `description` field (3798 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of Tactics**: ALL subclass mechanics dumped in one `description` field (3631 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **College of the Cat**: ALL subclass mechanics dumped in one `description` field (2023 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Courser Mage**: ALL subclass mechanics dumped in one `description` field (1812 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Dawn Blade**: ALL subclass mechanics dumped in one `description` field (2600 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Familiar Master**: ALL subclass mechanics dumped in one `description` field (4726 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Gravebinding**: ALL subclass mechanics dumped in one `description` field (3866 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Grove Warden**: ALL subclass mechanics dumped in one `description` field (3498 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Haunted Warden**: ALL subclass mechanics dumped in one `description` field (4924 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Hungering**: ALL subclass mechanics dumped in one `description` field (1639 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Hunt Domain**: ALL subclass mechanics dumped in one `description` field (3033 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Hunter in Darkness**: ALL subclass mechanics dumped in one `description` field (3903 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Legionary**: ALL subclass mechanics dumped in one `description` field (2623 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Mercy Domain**: ALL subclass mechanics dumped in one `description` field (3503 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of Justice**: ALL subclass mechanics dumped in one `description` field (4903 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of Safeguarding**: ALL subclass mechanics dumped in one `description` field (6492 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of the Elements**: ALL subclass mechanics dumped in one `description` field (6286 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of the Guardian**: ALL subclass mechanics dumped in one `description` field (4224 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of the Hearth**: ALL subclass mechanics dumped in one `description` field (6066 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Oath of the Plaguetouched**: ALL subclass mechanics dumped in one `description` field (4861 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Old Wood**: ALL subclass mechanics dumped in one `description` field (5310 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of Booming Magnificence**: ALL subclass mechanics dumped in one `description` field (2966 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of Hellfire**: ALL subclass mechanics dumped in one `description` field (548 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of Mistwood**: ALL subclass mechanics dumped in one `description` field (2219 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of Thorns**: ALL subclass mechanics dumped in one `description` field (3519 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of the Dragon**: ALL subclass mechanics dumped in one `description` field (3466 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of the Herald**: ALL subclass mechanics dumped in one `description` field (2475 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Path of the Inner Eye**: ALL subclass mechanics dumped in one `description` field (2011 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Portal Domain**: ALL subclass mechanics dumped in one `description` field (5206 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Primordial**: ALL subclass mechanics dumped in one `description` field (4650 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Pugilist**: ALL subclass mechanics dumped in one `description` field (3505 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Radiant Pikeman**: ALL subclass mechanics dumped in one `description` field (1960 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Resonant Body**: ALL subclass mechanics dumped in one `description` field (4696 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Rifthopper**: ALL subclass mechanics dumped in one `description` field (4844 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Sapper**: ALL subclass mechanics dumped in one `description` field (5137 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **School of Liminality**: ALL subclass mechanics dumped in one `description` field (4758 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Serpent Domain**: ALL subclass mechanics dumped in one `description` field (2904 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Shadow Domain**: ALL subclass mechanics dumped in one `description` field (2722 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Smuggler**: ALL subclass mechanics dumped in one `description` field (4613 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Snake Speaker**: ALL subclass mechanics dumped in one `description` field (4618 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Soulspy**: ALL subclass mechanics dumped in one `description` field (7244 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Spear of the Weald**: ALL subclass mechanics dumped in one `description` field (3585 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Spellsmith**: ALL subclass mechanics dumped in one `description` field (4675 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Spore Sorcery**: ALL subclass mechanics dumped in one `description` field (4517 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Timeblade**: ALL subclass mechanics dumped in one `description` field (3245 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Tunnel Watcher**: ALL subclass mechanics dumped in one `description` field (3392 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Underfoot**: ALL subclass mechanics dumped in one `description` field (5398 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Vermin Domain**: ALL subclass mechanics dumped in one `description` field (2846 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Wasteland Strider**: ALL subclass mechanics dumped in one `description` field (3574 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Wastelander**: ALL subclass mechanics dumped in one `description` field (5209 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of Concordant Motion**: ALL subclass mechanics dumped in one `description` field (3098 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Dragon**: ALL subclass mechanics dumped in one `description` field (2789 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Humble Elephant**: ALL subclass mechanics dumped in one `description` field (2099 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Still Waters**: ALL subclass mechanics dumped in one `description` field (2409 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Tipsy Monkey**: ALL subclass mechanics dumped in one `description` field (2814 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Unerring Arrow**: ALL subclass mechanics dumped in one `description` field (3664 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Way of the Wildcat**: ALL subclass mechanics dumped in one `description` field (3052 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Wind Domain**: ALL subclass mechanics dumped in one `description` field (2969 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-- **Wyrdweaver**: ALL subclass mechanics dumped in one `description` field (4304 chars); no structured `features`/`rule_effects`/grants → no per-level features applied
-
-### Classes
-
-#### Adventurer's Guide (`open5e-a5e-ag`) — 1 class
-- **Marshal**: proficiencies/hit-die/caster structured; NO structured per-level `features` list — class features in `description` only
-
-#### Black Flag SRD (`open5e-bfrd`) — 1 class
-- **Mechanist**: proficiencies/hit-die/caster structured; NO structured per-level `features` list — class features in `description` only
-
-### Species
-
-#### Tome of Heroes (`open5e-toh`) — 11 species
-- **Alseid**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Catfolk**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Darakhul**: structured grants applied (granted_modifiers, granted_senses, granted_languages, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Derro**: structured grants applied (granted_modifiers, speed_ft, granted_languages); residual lore in `description` — Clean (mechanics typed)
-- **Drow**: structured grants applied (granted_modifiers, speed_ft, granted_languages); residual lore in `description` — Clean (mechanics typed)
-- **Erina**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Gearforged**: structured grants applied (granted_languages, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Minotaur**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages); residual lore in `description` — Clean (mechanics typed)
-- **Mushroomfolk**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages, granted_skill_proficiencies, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Satarre**: structured grants applied (granted_modifiers, granted_senses, speed_ft, granted_languages, granted_skill_proficiencies, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Shade**: only `description` + `creature_type_ref` — traits not structured
-
-### Subspecies
-
-#### Open5e Originals (`open5e-open5e`) — 1 subspecies
-- **Stoor Halfling**: structured grants applied (granted_modifiers, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-
-#### Tome of Heroes (`open5e-toh`) — 29 subspecies
-- **Acid Cap**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Bhain Kwai**: structured grants applied (granted_modifiers, speed_ft); residual lore in `description` — Clean (mechanics typed)
-- **Boghaid**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Delver**: structured grants applied (granted_modifiers, speed_ft); residual lore in `description` — Clean (mechanics typed)
-- **Derro Heritage**: structured grants applied (granted_modifiers, granted_cantrip_refs); residual lore in `description` — Clean (mechanics typed)
-- **Dragonborn Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Drow Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Dwarf Chassis**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Dwarf Heritage**: only `description` + `creature_type_ref, parent_species_ref` — traits not structured
-- **Elf/Shadow Fey Heritage**: structured grants applied (granted_modifiers, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Far-Touched**: structured grants applied (granted_modifiers, speed_ft, granted_spell_refs, granted_cantrip_refs); residual lore in `description` — Clean (mechanics typed)
-- **Favored**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies, granted_spell_refs, granted_cantrip_refs); residual lore in `description` — Clean (mechanics typed)
-- **Fever-Bit**: structured grants applied (granted_modifiers, speed_ft, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-- **Gnome Chassis**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Gnome Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Halfling Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Human Chassis**: only `description` + `creature_type_ref, parent_species_ref` — traits not structured
-- **Human/Half-Elf Heritage**: only `description` + `creature_type_ref, parent_species_ref` — traits not structured
-- **Kobold Chassis**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Kobold Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Malkin**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Morel**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Mutated**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies); residual lore in `description` — Clean (mechanics typed)
-- **Pantheran**: structured grants applied (granted_modifiers, speed_ft); residual lore in `description` — Clean (mechanics typed)
-- **Purified**: structured grants applied (granted_modifiers, speed_ft, granted_spell_refs, granted_cantrip_refs); residual lore in `description` — Clean (mechanics typed)
-- **Ravenfolk**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Tiefling Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Trollkin Heritage**: structured grants applied (granted_modifiers); residual lore in `description` — Clean (mechanics typed)
-- **Uncorrupted**: structured grants applied (granted_modifiers, speed_ft, granted_skill_proficiencies, granted_damage_resistances); residual lore in `description` — Clean (mechanics typed)
-
-## A.6 Bulk content (audited per pack × category — 20,442 cards)
-
-Within each category every card shares the same typed shape, so the verdict is
-uniform; exact per-pack counts and representative cards are listed.
-### spell entities
-
-*Verdict (uniform within category): all casting metadata typed (level/school/range/components/save/concentration); **spell `effects` field empty for 0/1297 → damage, scaling & rider effects live in `description` only; resolver never applies spell mechanics** (Missing Mechanic, system-wide)*
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Adventurer's Guide | 371 | Accelerando, Acid Arrow, Acid Splash, Aid |
-| Deep Magic for 5th Edition | 515 | Abhorrent Apparition, Accelerate, Acid Gate, Acid Rain |
-| Deep Magic Extended | 64 | Absolute Command, Amplify Ley Field, Animate Construct, Anomalous Object |
-| Kobold Press Compilation | 31 | Ambush, Blood Strike, Conjure Manabane Swarm, Curse of Formlessness |
-| Open5e Originals | 2 | Eye bite, Ray of Sickness |
-| Spells That Don't Suck | 180 | Adaptation, Alter Weather, Animal Ally, Animal Transformation |
-| Tome of Heroes | 91 | Ambush Chute, Armored Formation, Babble, Battle Mind |
-| Warlock Zine | 43 | Abrupt Hug, Avert Evil Eye, Bardo, Battle Chant |
-| **Total** | **1297** | |
-
-### magic-item entities
-
-*Verdict (uniform within category): fully typed — `rarity_ref`, `requires_attunement`, `is_cursed`, `is_sentient`, `activation`, structured `effects` populated for 1063/1063. Attunement *prerequisites* (e.g. “requires attunement by a wizard”) are not modelled as an enforced gate. **Clean (structured), minor: attunement-prereq not enforced***
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Vault of Magic | 1063 | Aberrant Agreement, Accursed Idol, Adamantine Spearbiter, Agile Breastplate |
-| **Total** | **1063** | |
-
-### adventuring-gear entities
-
-*Verdict (uniform within category): typed `cost_cp`/`weight_lb`/`consumable`/`is_focus`. **Clean***
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Adventurer's Guide | 44 | Holy Symbol, Common Clothes, Robe, Prayer Book |
-| Dungeon Delver’s Guide | 9 | Chalk, Traveler's Clothes, Hunting Traps, Cartographers' Tools |
-| Gate Pass Gazette | 10 | Days Of Rations, Person Tent, Traveler's Clothes, Days Worth Of Rations |
-| Open5e Originals | 8 | Fine Clothes, Disguise Kit, Tools For Your Typical Con, Pouch Containing |
-| Tal'dorei Campaign Setting | 13 | Dark Common Clothes Including A Hood, Tools To Match Your Choice Of Tool Proficiency, Belt Pouch Containing 10g, Staff |
-| Tome of Heroes | 75 | Artisan's Tools, Unique Piece Of Jewelry, Fine Clothes, Handcrafted Pipe |
-| **Total** | **159** | |
-
-### trait entities
-
-*Verdict (uniform within category): `trait_kind` + `description` only; no `effects` rows — monster/creature trait mechanics are descriptive text (acceptable for stat-block display, no character-side hook). **Descriptive-by-design***
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Monstrous Menagerie | 829 | Amphibious, Innate Spellcasting, Sea Changed, Camouflage |
-| Black Flag SRD | 776 | Aberrant Resilience, Amphibious, Legendary Resistance (3/Day), Probing Telepathy |
-| Creature Codex | 921 | Charge, Know Thoughts, Magic Resistance, Shapechanger |
-| Tal'dorei Campaign Setting | 11 | Flameform, Spellcasting, Evasion, Flyby |
-| Tome of Beasts | 1039 | Dual State, Infecting Telepathy, Nihileth's Lair, Regional Effects |
-| Tome of Beasts 1 (2023 Edition) | 1021 | Burning Touch, Cursed Existence, Sand Shroud, Undead Nature |
-| Tome of Beasts 2 | 1014 | Fear of Fire, Hold Breath, Icy Slime, Amphibious |
-| Tome of Beasts 3 | 812 | Armored Berserker, Dual Shields, Poor Depth Perception, Construct Nature |
-| **Total** | **6423** | |
-
-### creature-action entities
-
-*Verdict (uniform within category): typed attack math (`attack_bonus`/`attack_kind`/`damage_dice`/`reach_ft`/`range_*`/`recharge_*`/`uses_per_day`); rider effects within text. **Clean (combat fields typed)***
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Monstrous Menagerie | 1657 | Baleful Charm, Move, Multiattack, Slimy Cloud |
-| Black Flag SRD | 1339 | Detect, Multiattack, Psychic Bolt, Psychic Torrent |
-| Creature Codex | 1148 | Bulwark, Detect, Gore, Gore (Aatxe) |
-| Tal'dorei Campaign Setting | 10 | Flamecharm, Scimitar, Multiattack, Skysail Staff |
-| Tome of Beasts | 1303 | Detect, Enslave, Form Swap, Multiattack |
-| Tome of Beasts 1 (2023 Edition) | 1658 | Blinding Gaze, Deafening Voice, Multiattack, Slam |
-| Tome of Beasts 2 | 1209 | Bite, Grasping Claw, Multiattack, Strangle |
-| Tome of Beasts 3 | 291 | Iron Axe, Multiattack, Cast a Spell, Discern |
-| **Total** | **8615** | |
-
-### monster entities
-
-*Verdict (uniform within category): fully typed stat block (`ac`/`hp_*`/`speed_*`/`cr`/`xp`/`proficiency_bonus`/`stat_block`). **Clean***
-
-| Pack | Count | Representative cards |
-|---|---:|---|
-| Monstrous Menagerie | 586 | Aboleth, Aboleth Thrall, Abominable Snowman, Accursed Guardian Naga |
-| Black Flag SRD | 360 | Aboleth, Acolyte, Adult Black Dragon, Adult Blue Dragon |
-| Creature Codex | 356 | Aatxe, Acid Ant, Adult Light Dragon, Adult Wasteland Dragon |
-| Tal'dorei Campaign Setting | 4 | Firetamer, Skydancer, Stoneguard, Waverider |
-| Tome of Beasts | 391 | Aboleth, Nihilith, Abominable Beauty, Accursed Defiler, Adult Cave Dragon |
-| Tome of Beasts 1 (2023 Edition) | 408 | Abominable Beauty, Accursed Defiler, Adult Cave Dragon, Adult Flame Dragon |
-| Tome of Beasts 2 | 383 | A-mi-kuk, Aalpamac, Abbanith Giant, Adult Boreal Dragon |
-| Tome of Beasts 3 | 397 | Abaasy, Ahu-Nixta Mechanon, Akanka, Akkorokamui |
-| **Total** | **2885** | |
+**Note on ✓m feats.** Even the 9 mechanized feats carry their prerequisite (when
+present) as data that the resolver does not validate at apply-time, and their
+`prereq_clauses` key is undeclared in the schema. None is fully "Clean."
 
 ---
 
-# Part B — Built-in SRD 5.2.1 core (~2,260 hand-authored cards)
+## 2. Backgrounds — 53 cards (per-entity)
 
-Emitted by typed Dart builders in
-`flutter_app/lib/domain/entities/schema/builtin/srd_core/`. Unlike the imported
-Open5e packs, these builders **do** use the structured grant DSL, so the SRD
-core is the reference for what the schema supports.
+**Universal finding (all 53):** missing schema-`required` `origin_feat_ref`
+(0/53) and `asi_distribution_options` (0/53); no `starting_gold_gp`,
+`default_inventory_refs`, or `rule_effects`; **D** (description mirrored). Skills
+(51/53) and equipment choice groups (52/53) are otherwise well-populated. Extra
+per-entity gaps below: **A** = no `ability_score_options`; **S** = no
+`granted_skill_refs`; **Q** = no `equipment_choice_groups`.
 
-| Builder | Cards (approx.) | Verdict |
-|---|---:|---|
-| `subclasses.dart` | 12 | **Clean** — uses structured `features` rows with `granted_action_refs` / `granted_trait_refs` / `granted_feat_refs` / `granted_reaction_refs`, plus `granted_at_level` and `bonus_skill_pick_count`. Per-level features are auto-granted by the resolver (the model the 101 imported subclasses fail to use). |
-| `classes.dart` | 12 | **Clean** — hit-die, saves, proficiencies, caster progression and structured `features` rows present. |
-| `feats.dart` (62) · `feats_class.dart` (auto-grant traits) | ~80 | Mostly **Clean** — feats built with `effect()`/`predicate()` DSL (9+ `rule_effects` builders) and typed `prereq_*` fields. Prereqs still **UI-filtered, not apply-time validated** (same system gap as official feats). |
-| `backgrounds.dart` | 16 | **Clean** — `granted_skill_refs`, `granted_tool_refs`, `ability_score_options`, `origin_feat_ref`, `equipment_choice_groups` typed. Note the same `granted_language_count` consumption gap applies system-wide. |
-| `species.dart` (9) · `subspecies.dart` | ~10 | **Clean** — structured grants (`granted_modifiers`, senses, speeds, spell refs) applied by resolver Pass 5. |
-| `spells.dart` | ~342 | **Missing Mechanic (system-wide)** — casting metadata typed, but no structured spell-effect resolution exists; damage/scaling in `description`. |
-| `magic_items.dart` | ~287 | **Clean** — typed rarity/attunement/activation/effects. |
-| `traits.dart` (~239) · `creature_actions.dart` (~529) | ~768 | Combat/stat-block fields typed; trait riders descriptive-by-design. |
-| `monsters.dart` (248) · `animals.dart` (97) · `mounts`/`vehicles` | ~390 | **Clean** — full typed stat blocks. |
-| `gear`/`weapons`/`armor`/`tools`/`ammunition`/`packs` | ~80 | **Clean** — typed cost/weight/properties. |
-
-**Net:** the SRD core demonstrates the schema already supports structured
-subclass features, typed feat effects, and species grants. The deficiencies in
-Part A are therefore *content-pipeline / importer* gaps (the Open5e mapper does
-not populate these structured fields) layered on top of three genuine
-*system-level* gaps: feat-prerequisite apply-time validation, background
-language-slot consumption, and spell-effect resolution.
+| Background | Source | Extra gaps |
+|---|---|---|
+| Acolyte | AG | — |
+| Artisan | AG | — |
+| Charlatan | AG | — |
+| Con Artist | O5e | A |
+| Court Servant | ToH | A |
+| Crime Syndicate Member | TDCS | A |
+| Criminal | AG | — |
+| Cultist | AG | — |
+| Cursed | GPG | — |
+| Deep Hunter | DDG | — |
+| Desert Runner | ToH | A |
+| Destined | ToH | A |
+| Diplomat | ToH | A |
+| Dungeon Robber | DDG | — |
+| Elemental Warden | TDCS | A |
+| Entertainer | AG | — |
+| Escapee from Below | DDG | — |
+| Exile | AG | — |
+| Farmer | AG | — |
+| Fate-Touched | TDCS | A · S · Q (skeleton card — all grants empty) |
+| Folk Hero | AG | — |
+| Forest Dweller | ToH | A |
+| Former Adventurer | ToH | A |
+| Freebooter | ToH | A |
+| Gambler | AG | — |
+| Gamekeeper | ToH | A |
+| Guard | AG | — |
+| Guildmember | AG | S |
+| Haunted | GPG | — |
+| Hermit | AG | — |
+| Imposter | DDG | — |
+| Innkeeper | ToH | A |
+| Lyceum Student | TDCS | A |
+| Marauder | AG | — |
+| Mercenary Company Scion | ToH | A |
+| Mercenary Recruit | ToH | A |
+| Monstrous Adoptee | ToH | A |
+| Mysterious Origins | ToH | A |
+| Noble | AG | — |
+| Northern Minstrel | ToH | A |
+| Occultist | ToH | A |
+| Outlander | AG | — |
+| Parfumier | ToH | A |
+| Recovered Cultist | TDCS | A |
+| Sage | AG | — |
+| Sailor | AG | — |
+| Scoundrel | O5e | A |
+| Scoundrel | ToH | A |
+| Sentry | ToH | A |
+| Soldier | AG | — |
+| Trader | AG | — |
+| Trophy Hunter | ToH | A |
+| Urchin | AG | — |
 
 ---
 
-## Closing tally
+## 3. Classes — 2 cards (per-entity)
 
-| Source | Cards | Clean | With ≥1 finding |
-|---|---:|---:|---:|
-| Official feats | 73 | 9 | 64 |
-| Official backgrounds | 53 | 0 | 53 |
-| Official subclasses | 101 | 0 | 101 |
-| Official classes | 2 | 0 | 2 |
-| Official species | 11 | 10 | 1 |
-| Official subspecies | 30 | 27 | 3 |
-| Official spells | 1,297 | 0 | 1,297 |
-| Official magic items | 1,063 | 1,063 | 0 (minor: attunement-prereq) |
-| Official gear | 159 | 159 | 0 |
-| Official traits | 6,423 | n/a (descriptive) | — |
-| Official creature-actions | 8,615 | 8,615 | 0 |
-| Official monsters | 2,885 | 2,885 | 0 |
-| **Official total** | **20,712** | — | — |
-| SRD 5.2.1 core | ~2,260 | (per-builder, see Part B) | spells only |
+| Class | Source | Findings |
+|---|---|---|
+| Marshal | AG | Identity fields good (`hit_die`, `caster_kind`, `saving_throw_refs`, weapon/armor proficiencies, skill choice). **No `features` map** — every leveled class feature is prose only (Missing Mechanics, roadmap 1.3/2.2). **D**. |
+| Mechanist | BFRD | Same as Marshal: proficiency/identity fields populated; **no leveled `features`**; **D**. |
 
-See [`system_mechanics_roadmap.md`](system_mechanics_roadmap.md) for the
-prioritized engineering work these findings imply.
+---
+
+## 4. Subclasses — 101 cards (per-entity, uniform finding)
+
+**Every one of the 101 official subclasses carries only `description` +
+`parent_class_ref`.** None has `granted_at_level` (schema-`required`), `features`,
+or `rule_effects`. Result: taking any official subclass grants **zero**
+mechanical effect — all features are inert prose (Missing Mechanics 1.3/2.2;
+Poor Data Structure 3.1; missing required field). Listed for completeness,
+grouped by source. *(The four AG/BFRD entries link `parent_class_ref` to the
+same-pack first-party base class via a soft UUID ref rather than a name.)*
+
+**Adventurer's Guide (3):** Gambling General, Swift Strategist, Talented
+Tactician.
+
+**Black Flag SRD (1):** Metallurgist.
+
+**Open5e Originals (17):** Abjurationist, Arcane Warrior, Circle of the Many,
+College of Skalds, Demise Domain, Eldritch Trickster, Mischief Domain, Oathless
+Betrayer, School of Abjuring and Warding, School of Divining and Soothsaying,
+School of Illusions and Phantasms, School of Necrotic Arts, Storm Domain, The
+Ancient Fey Court, The Great Elder Thing, Way of Shadowdancing, Wyrd Magic.
+
+**Tal'dorei Campaign Setting (4):** Blood Domain, Path of the Juggernaut,
+Runechild, Way of the Cerulean Spirit.
+
+**Tome of Heroes (76):** Ancient Dragons, Animal Lords, Beast Trainer, Cantrip
+Adept, Cat Burglar, Chaplain, Circle of Ash, Circle of Bees, Circle of Crystals,
+Circle of Sand, Circle of Wind, Circle of the Green, Circle of the Shapeless,
+Cold-Blooded, College of Echoes, College of Investigation, College of Shadows,
+College of Sincerity, College of Tactics, College of the Cat, Courser Mage, Dawn
+Blade, Familiar Master, Gravebinding, Grove Warden, Haunted Warden, Hungering,
+Hunt Domain, Hunter in Darkness, Legionary, Mercy Domain, Oath of Justice, Oath
+of Safeguarding, Oath of the Elements, Oath of the Guardian, Oath of the Hearth,
+Oath of the Plaguetouched, Old Wood, Path of Booming Magnificence, Path of
+Hellfire, Path of Mistwood, Path of Thorns, Path of the Dragon, Path of the
+Herald, Path of the Inner Eye, Portal Domain, Primordial, Pugilist, Radiant
+Pikeman, Resonant Body, Rifthopper, Sapper, School of Liminality, Serpent
+Domain, Shadow Domain, Smuggler, Snake Speaker, Soulspy, Spear of the Weald,
+Spellsmith, Spore Sorcery, Timeblade, Tunnel Watcher, Underfoot, Vermin Domain,
+Wasteland Strider, Wastelander, Way of Concordant Motion, Way of the Dragon, Way
+of the Humble Elephant, Way of the Still Waters, Way of the Tipsy Monkey, Way of
+the Unerring Arrow, Way of the Wildcat, Wind Domain, Wyrdweaver.
+
+---
+
+## 5. Species — 11 cards (per-entity)
+
+All carry `creature_type_ref` and `description` (**D**). Granted traits are in
+text; structured grants are partial. **Sz** = missing `size_ref`; **Sp** =
+missing `speed_ft`; **M** = no `granted_modifiers`.
+
+| Species | Source | Findings |
+|---|---|---|
+| Alseid | ToH | size, speed, modifiers present; trait text un-mechanized |
+| Catfolk | ToH | size, speed, modifiers present; trait text un-mechanized |
+| Darakhul | ToH | **Sz · Sp** — no size/speed; traits text-only |
+| Derro | ToH | populated; trait text un-mechanized |
+| Drow | ToH | populated; trait text un-mechanized |
+| Erina | ToH | populated; trait text un-mechanized |
+| Gearforged | ToH | **Sz · Sp · M** — minimal structured data; all in text |
+| Minotaur | ToH | populated; trait text un-mechanized |
+| Mushroomfolk | ToH | **Sz** — no size; speed/mods present |
+| Satarre | ToH | populated; trait text un-mechanized |
+| Shade | ToH | **Sz · Sp · M** — minimal structured data; all in text |
+
+---
+
+## 6. Subspecies — 30 cards (per-entity, near-uniform finding)
+
+All 30 carry `parent_species_ref`, `creature_type_ref`, `description` (**D**),
+and most carry `granted_modifiers` (27/30). Grants are otherwise partial —
+`granted_cantrip_refs` 4/30, `granted_spell_refs` 3/30, `granted_skill_proficiencies`
+8/30, `size_ref` 10/30, `speed_ft` 13/30 — with the remainder of each
+subspecies' benefits folded into `description`. Cards (O5e + ToH):
+
+Acid Cap · Bhain Kwai · Boghaid · Delver · Derro Heritage · Dragonborn Heritage ·
+Drow Heritage · Dwarf Chassis · Dwarf Heritage · Elf/Shadow Fey Heritage ·
+Far-Touched · Favored · Fever-Bit · Gnome Chassis · Gnome Heritage · Halfling
+Heritage · Human Chassis · Human/Half-Elf Heritage · Kobold Chassis · Kobold
+Heritage · Malkin · Morel · Mutated · Pantheran · Purified · Ravenfolk · Stoor
+Halfling · Tiefling Heritage · Trollkin Heritage · Uncorrupted.
+
+---
+
+## 7. Bulk content (per pack×category — machine-uniform)
+
+### 7.1 Spells — 1,297 cards — **mostly Clean**
+Metadata is thoroughly typed on all 1,297: `level`, `school_ref`,
+`casting_time_amount`/`_unit_ref`, `components`, `duration_*`, `range_type`,
+`is_ritual`, `requires_concentration`. Conditional fields populate where
+applicable (`range_ft` 719, `save_ability_ref` 567, `damage_type_refs` 294,
+`attack_type` 89, `material_*` 369). **Residual finding:** the spell *effect*
+(including at-higher-levels scaling) remains in `description` with no typed
+"upcast/scaling" field — acceptable for narrative spell text, but automation
+cannot compute higher-level damage. **D** applies (description mirrored).
+
+### 7.2 Magic items — 1,063 cards (all in Vault of Magic) — **Clean structure**
+All 1,063 carry typed `rarity_ref`, `magic_category_ref`, `requires_attunement`,
+`is_cursed`, `is_sentient`, `activation`, and a typed `effects` block; no
+mirrored `description`. **Residual finding:** restricted-attunement clauses
+("by a spellcaster / by a creature of evil alignment" — 35 items) live only in
+prose; `requires_attunement` is a bare boolean with no typed *who-may-attune*
+field, so the restriction is unenforced (roadmap 1.1).
+
+### 7.3 Adventuring gear — 159 cards — **Clean**
+Uniformly typed `cost_cp`, `weight_lb`, `consumable`, `is_focus`; no mirrored
+description. No deficiency for mundane gear.
+
+### 7.4 Creature-actions — 8,615 cards — **Clean structure**
+Well typed: `action_type`, `is_attack`, `attack_bonus`/`attack_kind`/`damage_dice`
+(3,471–3,549 where attacks), `reach_ft`/`range_*`, `recharge_kind`/`recharge_min_roll`,
+`uses_per_day`. The free-form rider text (riders/conditions on a hit) remains in
+`description` — acceptable. **D** applies.
+
+### 7.5 Monsters — 2,885 cards — **Clean structure, one hygiene flag**
+Extensively typed: `ac`, `hp_average`/`hp_dice`, `cr`, `xp`, all speeds, saves,
+skills, senses, resistances/immunities/vulnerabilities, languages, action/
+bonus/reaction/legendary refs, `proficiency_bonus`, `initiative_*`. **Residual
+finding (3.2):** every card also carries a `stat_block` field duplicating the
+typed data as rendered text — redundant and a drift risk.
+
+### 7.6 Monster traits — 6,423 cards — **Missing Mechanics (uniform)**
+Every trait carries only `description` + `source` + `trait_kind`. Mechanically
+load-bearing traits (damage resistances, regeneration, *Magic Resistance*, *Pack
+Tactics*, *Sunlight Sensitivity*, etc.) are indistinguishable from flavor and
+carry no typed effect (roadmap 2.4). **D** applies.
+
+---
+
+## 8. Built-in SRD 5.2.1 core — reference pack (hand-authored)
+
+Audited per-builder under `flutter_app/lib/domain/entities/schema/builtin/srd_core/`.
+Unlike the imported packs, the SRD core **populates the typed fields**: the
+subclass builder emits `granted_at_level` + level-keyed `features`; the feat
+builders emit typed `effects`, flat `prereq_min_score`/`prereq_ability_ref`, and
+`granted_modifiers`; classes carry `features`; species/subspecies carry typed
+grants. It is therefore logged as the **structural gold standard** and is
+**Clean** on the Poor-Data-Structure and Missing-Mechanics criteria.
+
+**One system-wide caveat that still applies to the SRD core:** feat/magic-item
+prerequisites it declares are validated **only** by the picker dialog, never by
+the resolver at apply-time (roadmap 1.1). So even hand-authored content inherits
+the unenforced-prerequisite gap — it is a runtime deficiency, not a data one.
+
+---
+
+## Summary tally
+
+| Criterion | Official cards affected |
+|---|---:|
+| Unimplemented prerequisites (feats) | 27 declared, **0 enforced** at apply-time |
+| Unimplemented prerequisites (magic-item attunement restrictions) | 35+ (text-only) |
+| `prereq_clauses` undeclared in schema | 22 feats |
+| Missing mechanics — feat benefits text-only | 64 / 73 feats |
+| Missing mechanics — subclass features text-only | **101 / 101 subclasses** |
+| Missing mechanics — class leveled features text-only | 2 / 2 classes |
+| Missing mechanics — monster traits text-only | 6,423 / 6,423 traits |
+| Missing required field — background `origin_feat_ref` | 53 / 53 |
+| Missing required field — background `asi_distribution_options` | 53 / 53 |
+| Missing required field — subclass `granted_at_level` | 101 / 101 |
+| Poor data structure — `description` mirrored into attributes | feats, backgrounds, subclasses, species, spells, traits, creature-actions |
+| Poor data structure — monster `stat_block` duplication | 2,885 monsters |
+| **Clean (structure + mechanics)** | spells (metadata), magic items, adventuring gear, creature-actions, monsters (typed fields), and the entire SRD 5.2.1 core |
