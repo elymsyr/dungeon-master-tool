@@ -1,114 +1,180 @@
-# System Mechanics Roadmap — Official & Built-in Package Support
+# System Mechanics Roadmap
 
-> Automated System Architecture Inspector · audit date **2026-06-10** · branch `list`
+> Automated System-Architecture Inspection — official + built-in package audit.
+> Audit date **2026-06-10** · branch `list` · read-only (no source files modified).
 > Companion ledger: [`entity_audit_log.md`](entity_audit_log.md)
 
-## Audit basis
+This document summarizes the **global, system-wide deficiencies** surfaced by auditing
+every official and built-in content package against three criteria: *unimplemented
+prerequisites*, *missing mechanics*, and *poor data structure*. Per-entity findings live
+in [`entity_audit_log.md`](entity_audit_log.md).
 
-| Source | Location | Scale |
-|---|---|---|
-| Hand-authored SRD 5.2.1 Core pack (in-code, reference quality) | `flutter_app/lib/domain/entities/schema/builtin/srd_core/` | ~488 `packEntity` rows + spell/item tables |
-| Official Open5e packages (also in first-party catalog) | `flutter_app/assets/open5e_packs/*.pkg.json` · `assets/first_party/manifest.json` | **19 packs · 20,712 entity cards** |
+## Scope audited
 
-Engine reference points used to decide "implemented":
-- `CharacterResolver` (`lib/domain/services/character_resolver.dart`) — **68 Effect-DSL kinds** (`ac_bonus`, `attack_bonus_typed`, `proficiency_grant`, `resource_pool_grant`, `choice_group`, …).
-- Prerequisite evaluator in `pending_choice_resolver_dialog.dart` — clause atoms: `character_level`, `ability_min`, `spellcasting`, `armor_proficiency`, `weapon_proficiency` (simple/martial/any), `skill_proficiency`, `other`.
-- `multiclass_helper.dart` — multiclass ability prereq.
-- Content schema in `lib/domain/entities/schema/builtin/content.dart`.
+| Source | Where | Entities | Notes |
+|---|---|---|---|
+| **Built-in SRD 5.2.1 Core pack** | `flutter_app/lib/domain/entities/schema/builtin/srd_core/*.dart` (`buildSrdCorePack`, `srdCorePackVersion 1.0.3`) | ~1,900 | Hand-authored; the most mechanically-typed content. |
+| **Official first-party packs** | `flutter_app/assets/open5e_packs/*.pkg.json` (19 packs) + `assets/first_party/manifest.json` (catalog `2026-06-01`) | ~20,700 | Open5e / A5E / Kobold Press imports; typed-field coverage partial by the original descriptive policy. |
 
-**Headline finding.** The gap is **overwhelmingly content/import-pipeline, not engine**. The schema already defines the fields needed (`prereq_*`, `attunement_*`, `granted_at_level`, `features[]`, `effects[]`, `asi_distribution_options`, `origin_feat_ref`) and the resolver already consumes most of them — but the Open5e corpus was imported under a **descriptive-only policy** and leaves those fields empty, so almost nothing reaches `EffectiveCharacter`. A **smaller, genuine engine gap** remains in three places: **runtime attunement enforcement**, **formalizing/​widening the prerequisite clause model**, and **spell numeric-effect automation**. The bestiary (monsters + attack actions) is already well structured and needs no work.
-
-Quantified deficiency surface (Open5e corpus):
-
-| Area | Cards | Structured? | Gap |
-|---|--:|---|---|
-| Feats — effects | 73 | 9 have `effects[]` | **64** numeric/active benefits never applied |
-| Feats — prerequisites | 73 | 22 clauses + flat fields | **5** prose-only prereqs unenforceable; atom model too narrow |
-| Backgrounds | 53 | skills/equipment yes | `asi_distribution_options` 0/53, `origin_feat_ref` 0/53 |
-| Subclasses | 101 | **0** | no `granted_at_level`/`features[]`/`rule_effects` — features never granted |
-| Classes | 2 | proficiencies yes | `primary_ability_ref` 0/2, `features[]` 0/2 |
-| Species / subspecies | 41 | modifiers/speed yes | `trait_refs` empty on all → named traits unlinked |
-| Magic items | 1,063 | bools only | `effects` is a single string; `attunement_prereq` 0/1,063; `rule_effects` 0/1,063 |
-| Spells | 1,297 | metadata yes | `effects[]` 0/1,297 → all numeric resolution is prose |
+Effect application is performed by the pure resolver `character_resolver.dart`, which already
+supports ~110 typed effect kinds. The audit measures how much of each entity's *described*
+behaviour is actually expressed in resolver-readable typed fields versus dumped into prose.
 
 ---
 
-## 1. Prerequisite validation — engine present, content-starved, atom model too narrow
+## 1. Missing system-wide mechanics & rules
 
-**Observed.** The engine *does* enforce prerequisites (feat-selection dialog + multiclass helper). Of 73 Open5e feats, **22 carry `prereq_clauses`** and the flat `prereq_*` fields cover the rest — only **5** feats keep a prerequisite as free text with no structured field: *Ace Driver* ("Proficiency with a type of vehicle"), *Stunning Sniper* ("Proficiency with a ranged weapon"), *Giant Foe* ("A Small or smaller race"), *Harrier* ("the Shadow Traveler trait **or** the ability to cast *misty step*"), *Well-Heeled* ("Prestige rating of 2+"). These expose **missing atom types**: specific-proficiency, creature size, *known-trait*, *known-spell*, and "X **or** Y". Separately, both base classes have **empty `primary_ability_ref`**, so the multiclass-entry ability gate can never fire.
+### 1.1 Prerequisite validation is incomplete and partly incorrect
 
-**Architecture work needed.**
-- **Formalize `prereq_clauses` in the schema.** The UI evaluator already reads it, but the field is not declared in `content.dart` — make it the canonical, schema-validated representation and treat the legacy single-value `prereq_ability_ref`/`prereq_min_score` pair as a compatibility shim.
-- **Widen the atom set** beyond the current 7: add `specific_proficiency` (named weapon/tool/vehicle), `creature_size`, `known_trait`, `known_spell`, and explicit **AND/OR grouping** so "X or Y 13+" and "trait or spell" are expressible.
-- **Extend the import parser** to emit clauses for the prose phrasings it currently drops ("Proficiency with …", "A Small or smaller race", "the ability to cast …").
-- **Populate class `primary_ability_ref`** (curated — empty in Open5e source) so multiclass entry prereqs enforce.
-- **Re-validate at resolve time, not only at selection.** Prereqs are checked in the selection dialog only; a character whose stats later drop below a feat's prereq is never re-flagged.
-- Add prerequisite enforcement to **magic-item attunement** (§4) and **background/species** gates where source defines them.
+The system can gate feats on a **single ability score** + **character level** only, plus an
+optional typed `prereq_clauses` list. Everything else described as a "requirement" is
+cosmetic text the system does not enforce.
 
-## 2. Feat / class / subclass benefits — descriptive-only, not folded into the sheet
+- **`prereq_requires_spellcasting` is never consumed.** The field exists and is authored
+  (Elemental Adept, Spell Sniper, War Caster, Boon of Spell Recall…) but no code path reads
+  it. Spellcasting prerequisites are unenforced everywhere.
+- **No armor/weapon-proficiency prerequisite mechanic.** "Proficiency with Heavy Armor /
+  Medium Armor / Shields" (Heavy/Medium Armor Master, Shield Master, Moderately Armored)
+  exists only inside the narrative `prerequisite` string — no typed field, no enforcement.
+- **No OR-of-ability prerequisite on built-in feats.** The flat `prereq_ability_ref` holds a
+  single ability, so "Strength *or* Dexterity 13+" (Grappler) cannot be expressed; Grappler
+  even ships `prereq_min_score: 13` with **no** `prereq_ability_ref`, so its ability gate is
+  silently dropped. The richer `prereq_clauses` form *can* model OR, but **no built-in SRD
+  feat carries `prereq_clauses`** — only some imported packs do, and those drop non-ability
+  clauses.
+- **Non-ability prerequisites are entirely unrepresentable.** Official packs contain race/size
+  ("A Small or smaller race" — Giant Foe), class-feature ("Ki/Sorcery Points feature"),
+  trait/spell ("Shadow Traveler trait or *misty step*" — Harrier), vehicle-proficiency
+  (Ace Driver), weapon-proficiency (Stunning Sniper), and "prestige"-style prerequisites
+  (Well-Heeled). None has any typed representation.
+- **Multiclass prerequisite uses the wrong default and a missing schema field.**
+  `multiclass_helper.dart` treats a multi-ability list as **AND** unless the class declares
+  `multiclass_prereq_any_of: true`. That flag is **not defined in the schema**
+  (`content.dart`) and **not set by any class**. Result: **Fighter** (SRD: "Strength 13 *or*
+  Dexterity 13") is enforced as STR 13 **AND** DEX 13 — a correctness bug, not just a gap.
+  (Paladin STR+CHA, Ranger DEX+WIS, Monk DEX+WIS are correctly AND.)
+- **Magic-item attunement restriction is unenforceable.** The `requires_attunement` boolean is
+  typed, but the *restriction* ("by a spellcaster", "by a Paladin", "by a creature of good
+  alignment") is free text on only ~32/286 built-in items and **0/1063** in the Vault of Magic
+  pack (the clause is dropped from the imported text entirely). It is also inconsistent
+  ("A spellcaster" vs "Spellcaster"). No reliable gate is possible.
 
-**Observed.** The resolver supports 68 effect kinds, yet **64/73 Open5e feats have no `effects[]`** — only proficiency/spell *choice* effects (`choice_group`) were ever emitted. Numeric/active benefits (expertise dice, AC bonuses, advantage, extra reactions) stay in `description` prose and never reach `EffectiveCharacter`. The hand-authored SRD pack is far better but still leaves a few numeric benefits in `benefits` markdown (e.g. *Alert*'s Initiative Proficiency has no `proficiency_grant`/`initiative_bonus` effect).
+### 1.2 Class / subclass / species feature mechanics are not resolved
 
-**Architecture work needed.**
-- Build an **effect-extraction pass** (import-time pattern matching, or a curated overlay keyed by slug) converting recurring benefit phrasings into Effect-DSL entries — start with the highest-frequency patterns: flat `ac_bonus`, `attack_bonus_typed`/`damage_bonus_typed`, `reroll_damage`, `advantage_on`, `speed_bonus`, `proficiency_grant`, `resource_pool_grant`.
-- Add the **expertise-die / superiority-die** mechanics the A5e packs lean on heavily (not in the current 68 kinds).
-- Add a **coverage report to the importer** (per-type "% of cards with ≥1 effect") so descriptive-only content is visible rather than silently inert.
+The typed `effects` system is wired **only to `feat` entities** (`character_resolver.dart`
+reads `feat.fields['effects']`). As a consequence:
 
-## 3. Leveled features — schema supports it, content does not populate it
+- **All 12 classes and all 12 subclasses (built-in) carry zero typed mechanics.** Signature
+  features — Rage, Sneak Attack, Channel Divinity, **Aura of Protection** (+CHA to saves),
+  Sorcery Points, Pact slots, crit-range expansion (Champion 19–20 → 18–20), Martial Arts die —
+  live entirely in prose `description` or in a name-referenced `trait`/`creature-action` whose
+  body is also prose. None is machine-resolved.
+- **Species passive traits are prose-only.** Species carry a typed physical chassis
+  (`size_ref`, `speed_ft`, `creature_type_ref`, `granted_senses`, resistances) and action-economy
+  traits via action refs, but passive mechanics referenced through `trait_refs` (Dwarven
+  Resilience, Gnomish Cunning, Brave, Halfling Lucky, Powerful Build, Human Skilled/Versatile,
+  Otherworldly Presence…) resolve to nothing — the underlying `trait` rows hold only a
+  `description`, no typed effects, despite the resolver already supporting `advantage_on`,
+  `damage_resistance`, `resource_pool_grant`, `spell_grant`, `proficiency_grant`,
+  `ability_score_bonus`, etc.
+- **Class/subclass *option* feats (`feats_class.dart`, 155 entities) routinely ship empty
+  `effects`.** Many have obvious resolver candidates left unimplemented: Colossus Slayer
+  (`extra_damage_on_attack`), Steel Will / Eldritch Mind (`advantage_on`), Pact of the Tome /
+  Evocation Savant (`cantrip_count_bonus`), Draconic Ancestor spells (`spell_always_prepared`),
+  Elemental Affinity / Fiendish Resilience gateway (`damage_resistance`), Body and Mind
+  (`ability_score_bonus`).
 
-**Observed.** The schema and resolver **do** support leveled features: subclasses have a required `granted_at_level` and a `features[]` table (`{level, description, effects}`), and the resolver filters rows by character level (`character_resolver.dart`, `if (lvl > level) continue;`). But **all 101 Open5e subclasses are `description` + `parent_class_ref` only** — `granted_at_level`, `features[]`, and `rule_effects` are empty, so the resolver has nothing to grant. Both Open5e classes likewise keep their entire progression (and spell tables) in prose.
+### 1.3 Spell damage & scaling are not machine-readable
 
-**Architecture work needed.** This is **content-authoring + import**, not new engine capability:
-- Author a **curated progression table** per subclass/class (Open5e source has no per-level field) to populate `features[]` with `granted_at_level` and an `effects` array per row.
-- Populate class **spell tables** (`spell_slots_by_level`, `cantrips_known_by_level`, `prepared_spells_by_level`) — currently prose.
-- Wire `level_up_planner.dart` to surface these at level-up (resolver already applies them once populated).
+Spells are otherwise well-typed (school, range, components, duration, concentration,
+`class_refs`, `save_ability_ref`, `damage_type_refs`, `applied_condition_refs`), but:
 
-## 4. Magic items — single-field rules dump + unenforced attunement
+- **No typed damage-dice field and no higher-level / cantrip scaling table.** "8d6",
+  "+1d6 per slot above 3rd", and cantrip upgrade tables (Fire Bolt 1d10 → 4d10) live only in
+  prose. The system knows a spell's *save* and damage *type* but not its *magnitude* — it
+  cannot compute or scale spell damage. True for built-in spells (341) and ~1,100 spells across
+  the official packs (where `damage` / `effects` / `higher_level` = 0).
 
-**Observed.** All **1,063 Vault-of-Magic items** dump their ruleset into one free-text `effects` **string**. The schema defines structured attunement (`attunement_class_refs`, `attunement_spellcaster_only`, `attunement_min_ability_*`, `attunement_prereq`) and `rule_effects`/`granted_modifiers`/`charges_max` — **all empty (0/1,063)**. The conditional attunement clause ("by a spellcaster / by a creature of good alignment") is stripped before it reaches the pack. The engine, in turn, **does not enforce attunement at all**: no `attuned` flag on inventory rows, no 3-slot cap, `attunement_prereq` is never read.
+### 1.4 Magic-item effects have no typed representation
 
-**Architecture work needed.**
-- **Runtime attunement (engine).** Add an `attuned` flag to inventory rows, a **3-slot attunement cap** on the character, and validation of `attunement_prereq` / structured attunement refs at attune time.
-- **Item effect DSL (content + import).** Populate `rule_effects`/`granted_modifiers` for passive bonuses and `charges_max`/`charge_regain` for activated abilities, mirroring the feat/species path.
-- **Capture conditional attunement at the source** (it is dropped pre-pack) or backfill from a curated table into `attunement_prereq` + the structured attunement refs.
+- **Magic-item `effects` is a single prose string — literally equal to the description.** Zero
+  resolver-applicable effect rows exist across 286 built-in items and 1,063 Vault-of-Magic
+  items (`description == attributes.effects` for all 1,063). Flat-bonus items (Cloak/Ring of
+  Protection +1 AC & saves, Bracers of Defense +2 AC, +N weapons/armor, ability-score setters
+  like Gauntlets of Ogre Power / Headband of Intellect, Cloak of Resistance, Goggles of Night)
+  contribute nothing to a character's computed stats.
+- **Charges are partly typed** (`charges_max`, `charge_regain`) but *which spell each charge
+  casts* and per-charge cost remain prose.
 
-## 5. Spells — metadata typed, effect resolution is prose
+### 1.5 Creature stat-block schema gaps
 
-**Observed.** Spell metadata is well-typed (level, school, casting time, range, components, `save_ability_ref`, `damage_type_refs`, `attack_type`). But `effects[]` (the `spellEffectList` DSL) is **empty for all 1,297** spells and `at_higher_levels_text` is unused, so dice, healing, conditions, and upcast scaling exist only in `description`. Damage **type** is tagged (294 spells) with no structured **dice** to attach it to.
+- **No `saving_throws` field and no `skills` field for monsters/animals.** Proficient saves and
+  skills (e.g. Aboleth, Lich) are simply unrepresentable — a schema omission, not a text dump.
+- **Monster spellcasting is an opaque `trait_ref`** with no typed spell list, slots, or DC.
 
-**Architecture work needed.**
-- Define and populate a **structured spell-effect block** (damage dice + type, healing, save-for-half, applied condition, area) plus a **per-slot scaling table**, and have the resolver/combat layer apply it.
-- Add a **damage-dice field** so the existing `damage_type_refs`/`save_ability_ref` tags become actionable in the VTT.
+### 1.6 Choice / selection scaffolding is untyped for many features
 
-## 6. Background structure — partial fields, missing ASI rule and feat link
-
-**Observed.** Backgrounds populate skills/equipment well, but `asi_distribution_options` (the +2/+1 vs +1/+1/+1 choice) is **0/53** and `origin_feat_ref` is **0/53**; the background feature and advancement tables are dumped in `description`.
-
-**Architecture work needed.** Populate `asi_distribution_options` and `origin_feat_ref` at import (curated mapping), and extract the background **feature** into a dedicated structured field/effect rather than free text.
-
-## 7. Bestiary — already structured (no engine work)
-
-Monsters (2,885) carry full structured stat blocks; attack creature-actions (3,549) carry structured `attack_bonus`/`attack_kind`/`damage_dice`/`reach_ft`. The only residual is **[M]**: save-based *rider* effects within attacks and passive trait numbers (resistances, Pack Tactics, regeneration) remain prose. Optional future work: a lightweight monster-trait/save-rider effect schema for full VTT automation — low priority relative to §§1–6.
-
-## 8. Content pipeline — catalog gaps
-
-`flutter_app/assets/open5e_packs/unmapped_report.json` shows source lookups that never resolved to a Tier-0/Tier-1 catalog entry (sizes like `titanic`; languages like `void-speech`, `thieves-cant`). Extend the catalogs (or add alias mappings) so these non-SRD values map cleanly instead of being dropped.
+Branching picks are rendered as prose ("Choose A, B, or C") with no typed sub-choice field:
+Cleric Divine Order, Druid Primal Order, Warlock Pact Boon / Eldritch Invocations, Sorcerer
+Metamagic, Hunter's four pick-one tiers, Draconic damage-type choice. Several feature rows are
+**empty placeholders** carrying only a label (Bard L6/L13/L17, Warlock's four Mystic Arcanum
+rows, Paladin L20, Sorcerer "Metamagic (extra II)").
 
 ---
 
-## Priority summary
+## 2. Dedicated data fields the content needs (poor-structure remediation)
 
-| # | Work item | Layer | Effort | Impact |
-|---|---|---|---|---|
-| 1 | Formalize `prereq_clauses` in schema + widen atom set (proficiency/size/trait/spell, AND-OR) + resolve-time re-validation | Engine + import | M | High |
-| 2 | Runtime attunement (attuned flag, 3-slot cap, prereq enforcement) | Engine | M | High |
-| 3 | Structured spell-effect block + per-slot scaling + damage-dice field | Engine + content | L | High |
-| 4 | Effect-extraction pass for feat/species benefits (+ expertise/superiority-die kinds) | Import + engine | L | High |
-| 5 | Curated subclass/class `features[]` + `granted_at_level` + class spell tables | Content + import | L | High |
-| 6 | Magic-item `rule_effects`/`granted_modifiers`/`charges` + structured attunement refs | Content + import | M | Medium |
-| 7 | Background `asi_distribution_options` + `origin_feat_ref` + extracted feature field | Import | S | Medium |
-| 8 | Populate class `primary_ability_ref`; species `trait_refs` | Content | S | Medium |
-| 9 | Importer coverage report (% cards with effects) | Tooling | S | Medium |
-| 10 | Catalog aliases for unmapped sizes/languages | Pipeline | S | Low |
+The "everything in one text field" anti-pattern concentrates in a few categories. Required
+new/typed fields:
 
-**Bottom line:** ~4 of these are genuine engine extensions (clause model, attunement runtime, spell-effect application, a few new effect kinds); the rest are import-pipeline + curated-content work to populate fields the schema already exposes.
+- **Magic items:** replace the prose `effects` string with a typed effect-row list (reuse the
+  feat `effect()` DSL); add a typed `attunement_restriction` (class / alignment / feature enum),
+  typed `charges.spells`, and `is_cursed`.
+- **Spells:** add typed `damage_dice`, `damage_at_slot_level` / `cantrip_scaling` tables.
+- **Classes/subclasses:** add a typed leveled-features table whose rows carry `effects`; add
+  typed selection fields (`metamagic_pick`, `invocation_pick`, `pact_boon_pick`,
+  `subclass_choice_group`) instead of prose "choose" text; remove empty placeholder rows.
+- **Species/traits:** move PC trait mechanics out of the prose `trait` rows into typed
+  `granted_modifiers` / `effects` on the species (or onto typed trait rows the resolver reads).
+- **Feats:** universally adopt `prereq_clauses` (ability-OR, level, spellcasting, armor/weapon
+  proficiency, class-feature, race/size); deprecate the single-valued `prereq_ability_ref` path
+  for authoring.
+- **Monsters:** add `saving_throws` and `skills` fields and a typed spellcasting block.
+
+---
+
+## 3. Architecture changes required
+
+1. **Resolver fold sources.** Extend `character_resolver.dart` to read `effects` from `class`,
+   `subclass`, and `trait` entities (and from class/subclass leveled-feature rows), not just
+   `feat`. This is the single highest-leverage change — it unlocks the already-supported ~110
+   effect kinds for the majority of described mechanics.
+2. **Prerequisite engine.** Make `prereq_clauses` the canonical prerequisite representation and
+   have the eligibility path (`pending_choice_resolver_dialog._computeEligibleFeats`) and the
+   rule validator evaluate the full clause set (ability-OR, level, spellcasting, armor/weapon
+   proficiency, class-feature, race/size). Consume `prereq_requires_spellcasting`, or fold it
+   into a clause.
+3. **Multiclass fix.** Add `multiclass_prereq_any_of` to the schema (`content.dart`) and set it
+   on Fighter (and any future OR-class); or change the helper default. Keep Paladin/Ranger/Monk
+   as AND.
+4. **Attunement gating.** Add a typed `attunement_restriction` and enforce it where items are
+   equipped/attuned; normalize the legacy free-text values during import.
+5. **Spell damage model.** Add typed damage + scaling fields and a small evaluator so the
+   combat/VTT layer can roll/scale spell damage.
+6. **Magic-item effect rows.** Type item bonuses as `effects` so equipped items feed
+   `EffectiveCharacter` (AC, saves, ability scores, resistances, senses).
+7. **Creature schema.** Add `saving_throws`, `skills`, and a spellcasting block to the
+   monster/animal category schema; surface them in the stat-block renderer.
+8. **Importer/mapper coverage.** Extend `tool/open5e_import/mappers/chargen.dart` (and the
+   magic-item/spell mappers) to populate the new typed fields so the 19 official packs reach
+   parity with the hand-authored pack, continuing the effort tracked in
+   `flutter_app/docs/chargen_mechanics_wiring.md`.
+9. **Choice scaffolding.** Introduce typed selection fields for metamagic/invocations/pact
+   boon/subclass-internal picks, plus a validator to flag empty placeholder feature rows.
+
+### Suggested sequencing
+
+1. Resolver fold-source extension (1) + multiclass fix (3) — small, high-impact, correctness.
+2. Prerequisite engine (2) + attunement gating (4) — closes the enforcement gaps.
+3. Magic-item effect rows (6) + spell damage model (5) — biggest content-typing payload.
+4. Creature schema (7) + importer coverage (8) + choice scaffolding (9) — breadth & parity.
