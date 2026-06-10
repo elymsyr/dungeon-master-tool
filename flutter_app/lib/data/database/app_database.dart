@@ -14,6 +14,7 @@ import 'daos/map_pins_dao.dart';
 import 'daos/packages_dao.dart';
 import 'daos/personal_packages_dao.dart';
 import 'daos/sync_outbox_dao.dart';
+import 'daos/templates_dao.dart';
 import 'daos/timeline_pins_dao.dart';
 import 'daos/trash_dao.dart';
 import 'daos/world_characters_dao.dart';
@@ -38,6 +39,7 @@ import 'tables/package_schemas_table.dart';
 import 'tables/packages_table.dart';
 import 'tables/personal_packages_table.dart';
 import 'tables/sync_outbox_table.dart';
+import 'tables/templates_table.dart';
 import 'tables/timeline_pins_table.dart';
 import 'tables/trash_items_table.dart';
 import 'tables/world_characters_table.dart';
@@ -89,6 +91,7 @@ part 'app_database.g.dart';
     CombatConditions,
     MapPins,
     TimelinePins,
+    Templates,
   ],
   daos: [
     WorldsDao,
@@ -111,6 +114,7 @@ part 'app_database.g.dart';
     CombatDao,
     MapPinsDao,
     TimelinePinsDao,
+    TemplatesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -123,7 +127,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -134,14 +138,20 @@ class AppDatabase extends _$AppDatabase {
           for (final stmt in _v12Indexes) {
             await customStatement(stmt);
           }
+          // v13 (PR-1.4) Template library index.
+          await customStatement(_templatesIndex);
         },
         onUpgrade: (m, from, to) async {
-          // v12 is a fresh cut. Anything older was handled by the legacy
-          // rename in _openConnectionForUser; this branch should not run.
-          // Defensive: if it does, treat as fresh create.
-          await m.createAll();
-          for (final stmt in _v12Indexes) {
-            await customStatement(stmt);
+          // v12 was the fresh-cut baseline (anything older is handled by the
+          // legacy rename in _openConnectionForUser, which then routes through
+          // onCreate). Real upgrade steps start at v12 → v13.
+          //
+          // v13 (PR-1.4): Template library table. Additive — only the new
+          // `templates` table is created; every other table already exists on a
+          // v12 DB, so a blind createAll() would throw "table already exists".
+          if (from < 13) {
+            await m.createTable(templates);
+            await customStatement(_templatesIndex);
           }
         },
         beforeOpen: (details) async {
@@ -292,6 +302,13 @@ const List<String> _v12Indexes = <String>[
   'CREATE INDEX IF NOT EXISTS idx_trash_kind_deleted '
       'ON trash_items (kind, deleted_at)',
 ];
+
+/// v13 (PR-1.4) Template library index — the list query orders by
+/// `updated_at DESC`. Kept separate from [_v12Indexes] so each schema
+/// version's index block sits next to the migration step that adds it.
+const String _templatesIndex =
+    'CREATE INDEX IF NOT EXISTS idx_templates_updated '
+    'ON templates (updated_at DESC)';
 
 /// F2+ side-tables. Drift codegen kaçınmak için raw SQL ile yönetilir.
 /// `beforeOpen` her açılışta idempotent çalıştırır.
