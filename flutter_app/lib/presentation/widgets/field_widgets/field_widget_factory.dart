@@ -463,6 +463,29 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entityFields: entityFields,
       ),
+      // intPouch (PR-2.3 slice 2): new current/max resource pouch ("23/40")
+      // for rage, ki, charges, granted pouches. The `maxSource:manual` default
+      // lets the DM type the max on the card; +/- adjust current. The
+      // fixed/levelTable/formula maxSource kinds are resolved by the Phase-3
+      // rule runtime — until then the stored max is authoritative and (for
+      // manual) editable, so the field is fully usable rule-free today.
+      FieldType.intPouch => _IntPouchFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      // recordList (PR-2.3 slice 2): generic typed table. A `typeConfig.preset`
+      // routes to the bespoke v2 renderer (byte-identical parity); no preset →
+      // the generic typed-column table. See [_buildRecordListField].
+      FieldType.recordList => _buildRecordListField(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       _ => _TextFieldWidget(
         schema: schema,
         value: value,
@@ -3086,6 +3109,646 @@ class _SlotPip extends StatelessWidget {
           borderRadius: borderRadius,
           border: Border.all(color: color, width: 1.5),
         ),
+      ),
+    );
+  }
+}
+
+// ─── intPouch — current/max resource pouch ("23 / 40") ──────────────────────
+/// Template-v3 `intPouch` renderer. Value wire: `{"current": 23, "max": 40}`
+/// (the-template-system §2.3). Used for rage, ki, sorcery points, charges and
+/// data-driven granted pouches. The `+`/`−` buttons spend/recover the current
+/// value (clamped to `[0, max]`); a refill button snaps current to max and an
+/// empty button zeroes it.
+///
+/// `typeConfig.maxSource.kind` controls where the max comes from:
+///   - `manual` (default) — the DM types the max inline; editable here.
+///   - `fixed` / `levelTable` / `formula` — derived by the Phase-3 rule
+///     runtime. Until that lands the stored max is shown read-only (the field
+///     still works; only the auto-derivation is deferred), so no card breaks.
+class _IntPouchFieldWidget extends StatefulWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _IntPouchFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  State<_IntPouchFieldWidget> createState() => _IntPouchFieldWidgetState();
+}
+
+class _IntPouchFieldWidgetState extends State<_IntPouchFieldWidget> {
+  late TextEditingController _maxController;
+
+  /// True when the DM types the max on the card (the default). The other
+  /// kinds are derived by the rule runtime and shown read-only for now.
+  bool get _maxManual {
+    final ms = widget.schema.typeConfig?['maxSource'];
+    if (ms is Map) return (ms['kind'] ?? 'manual').toString() == 'manual';
+    return true;
+  }
+
+  ({int current, int? max}) get _parsed {
+    if (widget.value is Map) {
+      final m = widget.value as Map;
+      final cur = (m['current'] as num?)?.toInt() ?? 0;
+      final mx = (m['max'] as num?)?.toInt();
+      return (current: cur < 0 ? 0 : cur, max: mx);
+    }
+    return (current: 0, max: null);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _maxController =
+        TextEditingController(text: _parsed.max?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _IntPouchFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      final newText = _parsed.max?.toString() ?? '';
+      if (_maxController.text != newText) _maxController.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _maxController.dispose();
+    super.dispose();
+  }
+
+  void _write({required int current, int? max}) {
+    final clampedMax = (max != null && max < 0) ? 0 : max;
+    final ceiling = clampedMax ?? 99999;
+    final clampedCurrent = current.clamp(0, ceiling);
+    widget.onChanged({'current': clampedCurrent, 'max': clampedMax});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final state = _parsed;
+    final current = state.current;
+    final max = state.max;
+    final ceiling = max ?? 99999;
+    final atMin = current <= 0;
+    final atMax = max != null && current >= max;
+
+    final maxDisplay = (!widget.readOnly && _maxManual)
+        ? SizedBox(
+            width: 52,
+            child: TextFormField(
+              controller: _maxController,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: _fieldValueStyle(context),
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText: 'max',
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              ),
+              onChanged: (v) {
+                final parsed = int.tryParse(v.trim());
+                _write(current: current, max: parsed);
+              },
+            ),
+          )
+        : Text(
+            max?.toString() ?? '—',
+            style: _fieldValueStyle(context).copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.schema.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '$current',
+                style: _fieldValueStyle(context).copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: palette.featureCardAccent,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('/', style: TextStyle(fontSize: 13)),
+              ),
+              maxDisplay,
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                tooltip: 'Spend one',
+                icon: const Icon(Icons.remove_circle_outline, size: 18),
+                onPressed: (widget.readOnly || atMin)
+                    ? null
+                    : () => _write(current: current - 1, max: max),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+              IconButton(
+                tooltip: 'Recover one',
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                onPressed: (widget.readOnly || atMax)
+                    ? null
+                    : () => _write(
+                          current: (current + 1).clamp(0, ceiling),
+                          max: max,
+                        ),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+              IconButton(
+                tooltip: 'Refill to max',
+                icon: const Icon(Icons.refresh, size: 18),
+                onPressed: (widget.readOnly || max == null || current >= max)
+                    ? null
+                    : () => _write(current: max, max: max),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+              IconButton(
+                tooltip: 'Empty',
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: (widget.readOnly || atMin)
+                    ? null
+                    : () => _write(current: 0, max: max),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── recordList — preset routing + generic typed table ──────────────────────
+/// Routes a `recordList` field to its bespoke preset renderer (verbatim v2
+/// parity) or, when no preset is declared, the generic [_RecordListFieldWidget].
+///
+/// Presets map 1:1 to the v2 FieldType they replaced (the-template-system §3):
+///   `ranged-senses`      → [RangedSenseListFieldWidget]
+///   `equipment-choices`  → [EquipmentChoiceGroupsFieldWidget]
+///   `subspecies-options` → [SubspeciesOptionsFieldWidget]
+///   `spell-effects`      → hidden (combat semantics dropped — Phase 1.1)
+///   `prereq-clauses`     → hidden (rule-authoring UI removed — Phase 1.1)
+Widget _buildRecordListField({
+  required FieldSchema schema,
+  required dynamic value,
+  required bool readOnly,
+  required ValueChanged<dynamic> onChanged,
+  Map<String, Entity>? entities,
+  WidgetRef? ref,
+}) {
+  final preset = (schema.typeConfig?['preset'] ?? '').toString();
+  switch (preset) {
+    case 'ranged-senses':
+      return RangedSenseListFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      );
+    case 'equipment-choices':
+      return EquipmentChoiceGroupsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      );
+    case 'subspecies-options':
+      return SubspeciesOptionsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      );
+    // These presets carried rule-authoring / combat semantics that were
+    // retired in Phase 1.1; the cards keep the data but render nothing here,
+    // exactly as their v2 FieldTypes (spellEffectList / prereqClauses) do.
+    case 'spell-effects':
+    case 'prereq-clauses':
+      return const SizedBox.shrink();
+    default:
+      return _RecordListFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+      );
+  }
+}
+
+/// One generic-table column resolved from `typeConfig.columns`.
+class _RecordColumn {
+  final String key;
+  final String label;
+  final String kind; // text | int | float | dice | bool | enum | ref
+  final List<String> options; // enum
+  const _RecordColumn({
+    required this.key,
+    required this.label,
+    required this.kind,
+    this.options = const [],
+  });
+}
+
+List<_RecordColumn> _resolveRecordColumns(FieldSchema schema) {
+  final cols = schema.typeConfig?['columns'];
+  if (cols is! List) return const [];
+  final out = <_RecordColumn>[];
+  for (final c in cols) {
+    if (c is! Map) continue;
+    final key = (c['key'] ?? '').toString().trim();
+    if (key.isEmpty) continue;
+    final label = (c['label'] ?? key).toString();
+    final kind = (c['kind'] ?? 'text').toString();
+    final rawOpts = c['options'];
+    final options = rawOpts is List
+        ? [for (final o in rawOpts) o.toString()]
+        : const <String>[];
+    out.add(_RecordColumn(
+      key: key,
+      label: label,
+      kind: kind,
+      options: options,
+    ));
+  }
+  return out;
+}
+
+/// Generic typed-row table for a preset-less `recordList`. Renders one card
+/// per row with a per-column editor keyed off the column `kind`
+/// (text/int/float/dice/bool/enum/ref), plus add/delete-row controls. Rows are
+/// stored as `List<Map<String,dynamic>>` keyed on the column `key`.
+///
+/// `ref` columns are stored as a soft ref `{"name": ..., "slug": ...}` and, in
+/// read mode, resolve a hard `{"ref": uuid}` / `{"lookup": slug}` against the
+/// loaded entity map for display. A full entity-picker for ref columns is
+/// deferred to the JIT wave that first ships a ref-bearing generic recordList
+/// (no built-in card uses one yet — the parity presets cover today's content).
+class _RecordListFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+
+  const _RecordListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+  });
+
+  List<Map<String, dynamic>> _coerceRows(dynamic raw) {
+    if (raw is! List) return [];
+    return [
+      for (final r in raw)
+        if (r is Map) Map<String, dynamic>.from(r),
+    ];
+  }
+
+  void _writeRows(List<Map<String, dynamic>> rows) => onChanged(rows);
+
+  String _refDisplay(dynamic cell) {
+    if (cell is Map) {
+      if (cell['name'] != null && cell['name'].toString().isNotEmpty) {
+        return cell['name'].toString();
+      }
+      final id = cell['ref'] ?? cell['lookup'] ?? cell['slug'];
+      if (id != null) {
+        final e = entities?[id.toString()];
+        if (e != null) return e.name;
+        return id.toString();
+      }
+    }
+    return cell?.toString() ?? '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final columns = _resolveRecordColumns(schema);
+    final rows = _coerceRows(value);
+
+    if (columns.isEmpty) {
+      // Misconfigured field (no columns) — degrade gracefully rather than
+      // throwing; the editor's typeConfig validation blocks saving this state.
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          '${schema.label}: no columns configured',
+          style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+        ),
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (!readOnly)
+                  TextButton.icon(
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text(
+                      'Add row',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    onPressed: () =>
+                        _writeRows([...rows, <String, dynamic>{}]),
+                  ),
+              ],
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  readOnly ? '—' : 'No rows — tap + Add row.',
+                  style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                ),
+              ),
+            for (var ri = 0; ri < rows.length; ri++) ...[
+              if (ri > 0) const Divider(height: 14),
+              _buildRow(context, palette, columns, rows, ri),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(
+    BuildContext context,
+    DmToolColors palette,
+    List<_RecordColumn> columns,
+    List<Map<String, dynamic>> rows,
+    int ri,
+  ) {
+    final row = rows[ri];
+
+    void writeCell(String key, dynamic cellValue) {
+      final next = [...rows];
+      next[ri] = {...row, key: cellValue};
+      _writeRows(next);
+    }
+
+    void removeRow() {
+      final next = [...rows]..removeAt(ri);
+      _writeRows(next);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.featureCardBorder, width: 0.5),
+        borderRadius: palette.br,
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (final col in columns)
+                  _buildCell(context, col, row[col.key], (v) {
+                    writeCell(col.key, v);
+                  }),
+              ],
+            ),
+          ),
+          if (!readOnly)
+            IconButton(
+              tooltip: 'Remove row',
+              icon: const Icon(Icons.delete_outline, size: 18),
+              onPressed: removeRow,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 28, minHeight: 28),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCell(
+    BuildContext context,
+    _RecordColumn col,
+    dynamic cell,
+    ValueChanged<dynamic> onCell,
+  ) {
+    switch (col.kind) {
+      case 'bool':
+        final v = cell == true;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(col.label, style: const TextStyle(fontSize: 11)),
+            const SizedBox(width: 4),
+            Switch(
+              value: v,
+              onChanged: readOnly ? null : (b) => onCell(b),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ],
+        );
+      case 'enum':
+        final current = cell?.toString();
+        final safe = col.options.contains(current) ? current : null;
+        return SizedBox(
+          width: 160,
+          child: DropdownButtonFormField<String>(
+            initialValue: safe,
+            isDense: true,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: col.label,
+              isDense: true,
+              labelStyle: const TextStyle(fontSize: 11),
+            ),
+            items: [
+              for (final o in col.options)
+                DropdownMenuItem(value: o, child: Text(o)),
+            ],
+            onChanged: readOnly ? null : (v) => onCell(v),
+          ),
+        );
+      case 'ref':
+        if (readOnly) {
+          return _RecordCellLabel(label: col.label, value: _refDisplay(cell));
+        }
+        // Soft-ref editor: stores {name, slug} so free-text refs round-trip;
+        // hard refs resolved on display. Full entity picker deferred (see
+        // class doc).
+        final initial = cell is Map
+            ? (cell['name'] ?? _refDisplay(cell)).toString()
+            : (cell?.toString() ?? '');
+        return SizedBox(
+          width: 180,
+          child: TextFormField(
+            key: ValueKey('${schema.fieldKey}_${col.key}_ref'),
+            initialValue: initial,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: col.label,
+              isDense: true,
+              labelStyle: const TextStyle(fontSize: 11),
+            ),
+            onChanged: (s) {
+              final t = s.trim();
+              if (t.isEmpty) {
+                onCell(null);
+              } else {
+                onCell({'name': t, 'slug': _recordSlugify(t)});
+              }
+            },
+          ),
+        );
+      case 'int':
+      case 'float':
+        final isFloat = col.kind == 'float';
+        return SizedBox(
+          width: 90,
+          child: TextFormField(
+            key: ValueKey('${schema.fieldKey}_${col.key}_num'),
+            initialValue: cell?.toString() ?? '',
+            readOnly: readOnly,
+            keyboardType: TextInputType.numberWithOptions(decimal: isFloat),
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: col.label,
+              isDense: true,
+              labelStyle: const TextStyle(fontSize: 11),
+            ),
+            onChanged: (s) {
+              final t = s.trim();
+              if (t.isEmpty) {
+                onCell(null);
+              } else if (isFloat) {
+                onCell(double.tryParse(t));
+              } else {
+                onCell(int.tryParse(t));
+              }
+            },
+          ),
+        );
+      case 'text':
+      case 'dice':
+      default:
+        return SizedBox(
+          width: 160,
+          child: TextFormField(
+            key: ValueKey('${schema.fieldKey}_${col.key}_text'),
+            initialValue: cell?.toString() ?? '',
+            readOnly: readOnly,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: col.label,
+              isDense: true,
+              labelStyle: const TextStyle(fontSize: 11),
+            ),
+            onChanged: (s) {
+              final t = s.trim();
+              onCell(t.isEmpty ? null : s);
+            },
+          ),
+        );
+    }
+  }
+}
+
+/// Lowercase, hyphenated slug for a soft-ref name (mirrors the category/slug
+/// grammar used elsewhere in the editor).
+String _recordSlugify(String input) => input
+    .trim()
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+    .replaceAll(RegExp(r'^-+|-+$'), '');
+
+/// Read-only "Label: value" cell for the generic recordList table.
+class _RecordCellLabel extends StatelessWidget {
+  final String label;
+  final String value;
+  const _RecordCellLabel({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 12),
+        children: [
+          TextSpan(
+            text: '$label: ',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextSpan(text: value.isEmpty ? '—' : value),
+        ],
       ),
     );
   }
