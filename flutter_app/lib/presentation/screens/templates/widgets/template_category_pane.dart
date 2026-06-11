@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../application/providers/template_editor_provider.dart';
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import 'category_edit_sheet.dart';
 
 /// Left-hand category list of the Template Editor (roadmap §1.5).
 ///
-/// PR-1.5 is read-only: it lists the template's categories and drives selection
-/// into [templateEditorProvider]. Reorder handles and the "+ Add category" row
-/// land in Phase 2.1; until then they are hidden (built-in) or shown disabled
-/// (editable copy) so the layout contract is stable.
+/// Read-only on the built-in template (selection + drill only). On an editable
+/// copy (PR-2.1) it becomes a full CRUD surface: drag-to-reorder, a per-tile
+/// Edit/Archive menu, and a working "+ Add category" row — all wired into
+/// [TemplateEditorNotifier]'s category mutators.
 class TemplateCategoryPane extends ConsumerWidget {
   /// When set, tapping a category also runs this (used by the tablet master
   /// pane to drill into the in-place field list, and by the phone page to push
@@ -25,6 +26,7 @@ class TemplateCategoryPane extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final state = ref.watch(templateEditorProvider);
     final categories = state.categories;
+    final canEdit = state.canEdit;
 
     return Container(
       color: palette.sidebarFilterBg,
@@ -40,43 +42,126 @@ class TemplateCategoryPane extends ConsumerWidget {
           Expanded(
             child: categories.isEmpty
                 ? _EmptyHint(
-                    text: 'This template has no categories.',
+                    text: canEdit
+                        ? 'No categories yet — add one below.'
+                        : 'This template has no categories.',
                     palette: palette,
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    itemCount: categories.length,
-                    itemBuilder: (ctx, i) {
-                      final cat = categories[i];
-                      final isSelected =
-                          cat.categoryId == state.selectedCategoryId;
-                      return _CategoryTile(
-                        category: cat,
-                        isSelected: isSelected,
-                        palette: palette,
-                        showChevron: onCategoryTap != null,
-                        onTap: () {
-                          ref
-                              .read(templateEditorProvider.notifier)
-                              .selectCategory(cat.categoryId);
-                          onCategoryTap?.call(cat);
-                        },
-                      );
-                    },
-                  ),
+                : _buildList(context, ref, categories, state, palette, canEdit),
           ),
-          if (state.canEdit) ...[
+          if (canEdit) ...[
             Divider(height: 1, color: palette.sidebarDivider),
             _AddRow(
               label: 'Add category',
               palette: palette,
-              // Wired in Phase 2.1 (category CRUD). Disabled in PR-1.5.
-              onTap: null,
+              onTap: () => _handleAdd(context, ref),
             ),
           ],
         ],
       ),
     );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    List<EntityCategorySchema> categories,
+    TemplateEditorState state,
+    DmToolColors palette,
+    bool canEdit,
+  ) {
+    if (!canEdit) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemCount: categories.length,
+        itemBuilder: (ctx, i) => _tile(context, ref, categories[i], state,
+            palette, canEdit, reorderIndex: null),
+      );
+    }
+    // Editable copy: drag-to-reorder with explicit handles so taps still select.
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      buildDefaultDragHandles: false,
+      itemCount: categories.length,
+      onReorder: (oldIndex, newIndex) => ref
+          .read(templateEditorProvider.notifier)
+          .reorderCategories(oldIndex, newIndex),
+      itemBuilder: (ctx, i) => _tile(context, ref, categories[i], state,
+          palette, canEdit,
+          reorderIndex: i),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context,
+    WidgetRef ref,
+    EntityCategorySchema cat,
+    TemplateEditorState state,
+    DmToolColors palette,
+    bool canEdit, {
+    required int? reorderIndex,
+  }) {
+    return _CategoryTile(
+      // Stable key required by ReorderableListView; harmless for ListView.
+      key: ValueKey(cat.categoryId),
+      category: cat,
+      isSelected: cat.categoryId == state.selectedCategoryId,
+      palette: palette,
+      showChevron: onCategoryTap != null,
+      canEdit: canEdit,
+      reorderIndex: reorderIndex,
+      onTap: () {
+        ref
+            .read(templateEditorProvider.notifier)
+            .selectCategory(cat.categoryId);
+        onCategoryTap?.call(cat);
+      },
+      onEdit: canEdit ? () => _handleEdit(context, ref, cat) : null,
+      onToggleArchive: canEdit
+          ? () => ref
+              .read(templateEditorProvider.notifier)
+              .toggleCategoryArchived(cat.categoryId)
+          : null,
+    );
+  }
+
+  Future<void> _handleAdd(BuildContext context, WidgetRef ref) async {
+    final state = ref.read(templateEditorProvider);
+    final result = await showCategoryEditSheet(
+      context,
+      siblingSlugs: [for (final c in state.categories) c.slug],
+    );
+    if (result == null) return;
+    ref.read(templateEditorProvider.notifier).addCategory(
+          name: result.name,
+          slug: result.slug,
+          icon: result.icon,
+          color: result.color,
+        );
+  }
+
+  Future<void> _handleEdit(
+    BuildContext context,
+    WidgetRef ref,
+    EntityCategorySchema cat,
+  ) async {
+    final state = ref.read(templateEditorProvider);
+    final result = await showCategoryEditSheet(
+      context,
+      existing: cat,
+      siblingSlugs: [
+        for (final c in state.categories)
+          if (c.categoryId != cat.categoryId) c.slug,
+      ],
+    );
+    if (result == null) return;
+    ref.read(templateEditorProvider.notifier).updateCategoryMeta(
+          cat.categoryId,
+          name: result.name,
+          slug: result.slug,
+          icon: result.icon,
+          color: result.color,
+        );
   }
 }
 
@@ -85,14 +170,23 @@ class _CategoryTile extends StatelessWidget {
   final bool isSelected;
   final DmToolColors palette;
   final bool showChevron;
+  final bool canEdit;
+  final int? reorderIndex;
   final VoidCallback onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onToggleArchive;
 
   const _CategoryTile({
+    super.key,
     required this.category,
     required this.isSelected,
     required this.palette,
     required this.showChevron,
+    required this.canEdit,
+    required this.reorderIndex,
     required this.onTap,
+    this.onEdit,
+    this.onToggleArchive,
   });
 
   @override
@@ -108,13 +202,14 @@ class _CategoryTile extends StatelessWidget {
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
       title: Text(
-        category.name,
+        category.name.isEmpty ? '(unnamed)' : category.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
           color: palette.tabActiveText,
+          fontStyle: category.isArchived ? FontStyle.italic : FontStyle.normal,
         ),
       ),
       subtitle: Text(
@@ -122,14 +217,73 @@ class _CategoryTile extends StatelessWidget {
         '${category.isArchived ? ' · archived' : ''}',
         style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
       ),
-      trailing: showChevron
-          ? Icon(Icons.chevron_right,
-              size: 18, color: palette.sidebarLabelSecondary)
-          : null,
+      trailing: _buildTrailing(context),
       onTap: onTap,
     );
   }
+
+  Widget? _buildTrailing(BuildContext context) {
+    if (!canEdit) {
+      return showChevron
+          ? Icon(Icons.chevron_right,
+              size: 18, color: palette.sidebarLabelSecondary)
+          : null;
+    }
+    // Editable: an actions menu plus a reorder drag handle.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PopupMenuButton<_CategoryAction>(
+          tooltip: 'Category actions',
+          icon: Icon(Icons.more_vert,
+              size: 18, color: palette.sidebarLabelSecondary),
+          onSelected: (action) {
+            switch (action) {
+              case _CategoryAction.edit:
+                onEdit?.call();
+              case _CategoryAction.toggleArchive:
+                onToggleArchive?.call();
+            }
+          },
+          itemBuilder: (ctx) => [
+            const PopupMenuItem(
+              value: _CategoryAction.edit,
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.edit, size: 18),
+                title: Text('Edit'),
+              ),
+            ),
+            PopupMenuItem(
+              value: _CategoryAction.toggleArchive,
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  category.isArchived ? Icons.unarchive : Icons.archive,
+                  size: 18,
+                ),
+                title: Text(category.isArchived ? 'Unarchive' : 'Archive'),
+              ),
+            ),
+          ],
+        ),
+        if (reorderIndex != null)
+          ReorderableDragStartListener(
+            index: reorderIndex!,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 2, right: 4),
+              child: Icon(Icons.drag_handle,
+                  size: 18, color: palette.sidebarLabelSecondary),
+            ),
+          ),
+      ],
+    );
+  }
 }
+
+enum _CategoryAction { edit, toggleArchive }
 
 class _PaneHeader extends StatelessWidget {
   final String label;

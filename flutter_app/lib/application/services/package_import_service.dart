@@ -29,14 +29,25 @@ class PackageImportService {
   }) {
     if (packageEntities.isEmpty) return 0;
 
-    // Kategori eşleme: paket kategori adı → dünya slug
+    // Kategori eşleme — SLUG ÖNCELİKLİ (PR-2.1 hardening).
+    //
+    // `slug` is the stable import-matching key: when a user renames a category
+    // in the Template Editor its `name` changes but its `slug` does not, so
+    // matching by slug keeps pack rows landing in the right category. `name` is
+    // kept only as a fallback for older packs whose slug drifted from the
+    // world's slug while the names still agree.
+    final worldCatBySlug = {
+      for (final c in worldSchema.categories) c.slug: c,
+    };
     final worldCatByName = {
       for (final c in worldSchema.categories) c.name: c,
     };
-    final pkgCatByName = {
-      for (final c in packageSchema.categories) c.name: c,
+    // Package category schemas indexed by slug (an entity's `type` == its
+    // package category slug).
+    final pkgCatBySlug = {
+      for (final c in packageSchema.categories) c.slug: c,
     };
-    // Paket slug → paket kategori adı
+    // Paket slug → paket kategori adı (dünya isim-fallback'i için).
     final pkgSlugToName = {
       for (final c in packageSchema.categories) c.slug: c.name,
     };
@@ -60,17 +71,18 @@ class PackageImportService {
       final newId = idMapping[oldId]!;
       final entityMap = Map<String, dynamic>.from(entry.value as Map);
 
-      // Kategori eşleme
+      // Kategori eşleme — slug öncelikli, isim fallback.
       final pkgSlug = ((entityMap['type'] as String?) ?? 'npc')
           .toLowerCase()
           .replaceAll(' ', '-');
-      final catName = pkgSlugToName[pkgSlug];
-      if (catName == null) continue; // Bilinmeyen kategori — atla
+      var worldCat = worldCatBySlug[pkgSlug];
+      if (worldCat == null) {
+        final catName = pkgSlugToName[pkgSlug];
+        if (catName != null) worldCat = worldCatByName[catName];
+      }
+      if (worldCat == null) continue; // Dünyada eşleşen kategori yok — atla
 
-      final worldCat = worldCatByName[catName];
-      if (worldCat == null) continue; // Dünyada bu kategori yok — atla
-
-      final pkgCat = pkgCatByName[catName];
+      final pkgCat = pkgCatBySlug[pkgSlug];
 
       // Field eşleme
       final pkgAttrs =
