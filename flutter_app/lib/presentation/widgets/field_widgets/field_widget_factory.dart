@@ -415,6 +415,54 @@ class FieldWidgetFactory {
       FieldType.featEffectList => const SizedBox.shrink(),
       FieldType.autoGrantSources => const SizedBox.shrink(),
       FieldType.prereqClauses => const SizedBox.shrink(),
+
+      // ── Template v3 parity field types (PR-2.3) ──────────────────────────
+      // Each reuses its v2 ancestor's renderer verbatim — the value wire-shapes
+      // are byte-identical (the-template-system.md §1.4), so unconverted cards
+      // render unchanged. `abilityScoreTable` additionally reads `typeConfig`
+      // (columns/base/step) inside _StatBlockFieldWidget; the others are pure
+      // aliases pending their parametric forms wired in the editor (PR-2.2b).
+      FieldType.abilityScoreTable => _StatBlockFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.combatStatsTable => _CombatStatsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        levelOverride: combatStatsLevel,
+        acOverride: combatStatsAc,
+        armorNotes: combatStatsArmorNotes,
+      ),
+      FieldType.checkboxPouch => _SlotFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
+      FieldType.pouchMatrix => _SpellSlotGridFieldWidget(
+        schema: schema,
+        value: value,
+        onChanged: onChanged,
+      ),
+      FieldType.skillTree => _ProficiencyTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
+      FieldType.levelMatrix => _SpellSlotProgressionFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
       _ => _TextFieldWidget(
         schema: schema,
         value: value,
@@ -1422,7 +1470,64 @@ class _RelationFieldWidget extends StatelessWidget {
   }
 }
 
-// --- STAT BLOCK (STR/DEX/CON/INT/WIS/CHA) ---
+// --- ABILITY SCORE TABLE (parameterized statBlock: STR/DEX/CON/INT/WIS/CHA) ---
+
+/// One ability-score column resolved from an `abilityScoreTable` field's
+/// `typeConfig.columns`. Value map keys on [key]; the grid header shows [label].
+class _AbilityColumn {
+  final String key;
+  final String label;
+  const _AbilityColumn(this.key, this.label);
+}
+
+/// The six SRD ability scores, base 10 / step 2 — the fallback for a legacy
+/// `statBlock` field or an `abilityScoreTable` copy that carries no
+/// `typeConfig` yet. Keys are uppercase to match the existing stored value
+/// wire-shape (`{"STR": 10, ...}`) verbatim, so no card-value migration runs.
+const List<_AbilityColumn> _defaultAbilityColumns = [
+  _AbilityColumn('STR', 'STR'),
+  _AbilityColumn('DEX', 'DEX'),
+  _AbilityColumn('CON', 'CON'),
+  _AbilityColumn('INT', 'INT'),
+  _AbilityColumn('WIS', 'WIS'),
+  _AbilityColumn('CHA', 'CHA'),
+];
+
+/// Reads `typeConfig.columns` ([{key,label}]) into [_AbilityColumn]s, falling
+/// back to the six SRD scores when absent/empty/malformed.
+List<_AbilityColumn> _resolveAbilityColumns(FieldSchema schema) {
+  final cols = schema.typeConfig?['columns'];
+  if (cols is List) {
+    final out = <_AbilityColumn>[];
+    for (final c in cols) {
+      if (c is Map) {
+        final key = (c['key'] ?? '').toString().trim();
+        if (key.isEmpty) continue;
+        final label = (c['label'] ?? key).toString();
+        out.add(_AbilityColumn(key, label));
+      }
+    }
+    if (out.isNotEmpty) return out;
+  }
+  return _defaultAbilityColumns;
+}
+
+/// `modifierBase` from `typeConfig` (default 10 — today's hardcoded value).
+int _abilityModifierBase(FieldSchema schema) {
+  final v = schema.typeConfig?['modifierBase'];
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return 10;
+}
+
+/// `modifierStep` from `typeConfig` (default 2; a 0 step is treated as 2 to
+/// avoid a divide-by-zero in the modifier formula).
+int _abilityModifierStep(FieldSchema schema) {
+  final v = schema.typeConfig?['modifierStep'];
+  final n = v is int ? v : (v is num ? v.toInt() : 2);
+  return n == 0 ? 2 : n;
+}
+
 class _StatBlockFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
@@ -1441,7 +1546,7 @@ class _StatBlockFieldWidget extends StatefulWidget {
 }
 
 class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
-  static const _keys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+  late List<_AbilityColumn> _columns;
   final Map<String, TextEditingController> _controllers = {};
 
   Map<String, dynamic> get _stats => (widget.value is Map)
@@ -1451,10 +1556,11 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
   @override
   void initState() {
     super.initState();
+    _columns = _resolveAbilityColumns(widget.schema);
     final stats = _stats;
-    for (final key in _keys) {
-      _controllers[key] = TextEditingController(
-        text: (stats[key] ?? 10).toString(),
+    for (final col in _columns) {
+      _controllers[col.key] = TextEditingController(
+        text: (stats[col.key] ?? 10).toString(),
       );
     }
   }
@@ -1462,12 +1568,27 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
   @override
   void didUpdateWidget(covariant _StatBlockFieldWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
+    // Live editor typeConfig edits can add/remove/rename columns — reconcile
+    // the controller map so the grid follows the template without a remount.
+    final cfgChanged =
+        oldWidget.schema.typeConfig != widget.schema.typeConfig;
+    if (cfgChanged) {
+      _columns = _resolveAbilityColumns(widget.schema);
+      final liveKeys = _columns.map((c) => c.key).toSet();
+      for (final k in _controllers.keys.toList()) {
+        if (!liveKeys.contains(k)) {
+          _controllers.remove(k)?.dispose();
+        }
+      }
+    }
+    if (cfgChanged || oldWidget.value != widget.value) {
       final stats = _stats;
-      for (final key in _keys) {
-        final newText = (stats[key] ?? 10).toString();
-        final ctrl = _controllers[key]!;
-        if (ctrl.text != newText) {
+      for (final col in _columns) {
+        final newText = (stats[col.key] ?? 10).toString();
+        final ctrl = _controllers[col.key];
+        if (ctrl == null) {
+          _controllers[col.key] = TextEditingController(text: newText);
+        } else if (ctrl.text != newText) {
           ctrl.text = newText;
         }
       }
@@ -1485,6 +1606,8 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
   @override
   Widget build(BuildContext context) {
     final stats = _stats;
+    final base = _abilityModifierBase(widget.schema);
+    final step = _abilityModifierStep(widget.schema);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1499,16 +1622,21 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
             ),
             const SizedBox(height: 8),
             Row(
-              children: _keys.map((key) {
-                final val = stats[key] ?? 10;
-                final mod = ((val is int ? val : 10) - 10) ~/ 2;
+              children: _columns.map((col) {
+                final raw = stats[col.key] ?? 10;
+                final score = raw is int
+                    ? raw
+                    : (raw is num ? raw.toInt() : (int.tryParse('$raw') ?? 10));
+                // Truncating integer division reproduces today's hardcoded
+                // `(score-10)/2` exactly for the SRD grid (pixel parity).
+                final mod = (score - base) ~/ step;
                 final modStr = mod >= 0 ? '+$mod' : '$mod';
 
                 return Expanded(
                   child: Column(
                     children: [
                       Text(
-                        key,
+                        col.label,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -1518,8 +1646,8 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                       SizedBox(
                         width: 44,
                         child: TextFormField(
-                          key: ValueKey('sb_$key'),
-                          controller: _controllers[key],
+                          key: ValueKey('sb_${col.key}'),
+                          controller: _controllers[col.key],
                           readOnly: widget.readOnly,
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
@@ -1533,7 +1661,7 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                           ),
                           onChanged: (v) {
                             final updated = Map<String, dynamic>.from(stats);
-                            updated[key] = int.tryParse(v) ?? 10;
+                            updated[col.key] = int.tryParse(v) ?? 10;
                             widget.onChanged(updated);
                           },
                         ),
