@@ -8,6 +8,7 @@ import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/field_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import 'field_type_meta.dart';
+import 'type_config_forms/type_config_form.dart';
 
 /// Right-hand inspector of the Template Editor (roadmap §1.5).
 ///
@@ -339,22 +340,22 @@ class _FieldEditFormState extends ConsumerState<_FieldEditForm> {
                 _notifier.updateFieldMeta(_categoryId, _fieldId, helpText: v),
           ),
 
-          if (field.typeConfig != null && field.typeConfig!.isNotEmpty) ...[
+          if (TypeConfigForm.hasFormFor(field.fieldType)) ...[
+            const SizedBox(height: 18),
+            _FieldLabel(text: 'Type configuration', palette: palette),
+            const SizedBox(height: 8),
+            TypeConfigForm(
+              key: ValueKey('tc-${field.fieldId}'),
+              field: field,
+              palette: palette,
+            ),
+          ] else if (field.typeConfig != null &&
+              field.typeConfig!.isNotEmpty) ...[
             const SizedBox(height: 18),
             _JsonSection(
               title: 'Type configuration',
               data: field.typeConfig!,
               palette: palette,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Per-type configuration forms arrive in the next editor update; '
-              'until then the raw config is shown above.',
-              style: TextStyle(
-                fontSize: 11,
-                color: palette.sidebarLabelSecondary,
-                height: 1.4,
-              ),
             ),
           ],
           const SizedBox(height: 18),

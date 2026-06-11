@@ -58,6 +58,117 @@ String fieldKeyNormalize(String input) {
   return s;
 }
 
+// --- typeConfig vocabularies (the-template-system §2.3) ----------------------
+//
+// Exported so the per-type `typeConfig` sub-forms (PR-2.2b) and the validator
+// below share one source of truth for the closed value sets.
+
+/// Canonical `combatStatsTable` keys. The structure is **not** creator-editable
+/// (fixed widget semantics); only which keys are *visible* is configurable.
+const List<String> combatStatsCanonicalKeys = [
+  'hp',
+  'max_hp',
+  'ac',
+  'speed',
+  'level',
+  'initiative',
+  'xp',
+];
+
+/// Valid `maxSource`/`countSource` kinds shared by every pouch type (intPouch,
+/// checkboxPouch, pouchMatrix).
+const List<String> pouchSourceKinds = ['manual', 'fixed', 'levelTable', 'formula'];
+
+/// Valid `recordList` column kinds.
+const List<String> recordListColumnKinds = [
+  'text',
+  'int',
+  'float',
+  'dice',
+  'bool',
+  'enum',
+  'ref',
+];
+
+/// Valid `actionButton` actions (the button label is creator-editable; the
+/// process each one runs is fixed).
+const List<String> actionButtonActions = ['level_up', 'short_rest', 'long_rest'];
+
+/// Valid `levelUpTable` gates.
+const List<String> levelUpTableGates = ['class', 'character'];
+
+/// Valid `skillTree` proficiency tiers.
+const List<String> skillTreeTiers = ['proficient', 'expertise'];
+
+/// Seeds a valid default `typeConfig` for a parametric [type] so a freshly
+/// added field is immediately save-valid (never flashes a completeness error)
+/// and its sub-form opens on sensible values. Returns `null` for types that
+/// carry no parametric payload (scalars, media, relation, levelMatrix, …).
+///
+/// The defaults mirror the built-in D&D template's shapes (the-template-system
+/// §2.3) — the creator edits them in the inspector's type-config form.
+Map<String, dynamic>? defaultTypeConfig(FieldType type) {
+  switch (type) {
+    case FieldType.abilityScoreTable:
+    case FieldType.statBlock:
+      return {
+        'columns': [
+          {'key': 'str', 'label': 'STR'},
+          {'key': 'dex', 'label': 'DEX'},
+          {'key': 'con', 'label': 'CON'},
+          {'key': 'int', 'label': 'INT'},
+          {'key': 'wis', 'label': 'WIS'},
+          {'key': 'cha', 'label': 'CHA'},
+        ],
+        'modifierBase': 10,
+        'modifierStep': 2,
+        'publishAspects': true,
+      };
+    case FieldType.combatStatsTable:
+    case FieldType.combatStats:
+      return {
+        'visibleKeys': ['hp', 'max_hp', 'ac', 'initiative', 'level'],
+      };
+    case FieldType.intPouch:
+      return {
+        'maxSource': {'kind': 'manual'},
+      };
+    case FieldType.checkboxPouch:
+    case FieldType.slot:
+      return {
+        'countSource': {'kind': 'fixed', 'value': 3},
+        'style': 'pips',
+      };
+    case FieldType.pouchMatrix:
+    case FieldType.spellSlotGrid:
+      return {
+        'rowKeys': ['1', '2', '3'],
+        'rowLabelPrefix': 'Level ',
+        'maxSource': {'kind': 'manual'},
+      };
+    case FieldType.skillTree:
+    case FieldType.proficiencyTable:
+      return {
+        'abilityFieldKey': 'stat_block',
+        'proficiencyBonusAspect': 'prof_bonus',
+        'rowSeed': 'skill',
+        'tiers': ['proficient', 'expertise'],
+      };
+    case FieldType.recordList:
+      return {
+        'columns': [
+          {'key': 'name', 'label': 'Name', 'kind': 'text'},
+        ],
+      };
+    case FieldType.levelUpTable:
+      return {'gate': 'class'};
+    case FieldType.actionButton:
+      return {'action': 'level_up', 'placement': 'header'};
+    default:
+      return null;
+  }
+}
+
 /// Immutable draft state for the responsive Template Editor (roadmap §1.5).
 ///
 /// PR-1.5 lands the editor **read-only**: this state already carries the draft
@@ -393,6 +504,9 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
       fieldType: type,
       orderIndex: maxOrder + 1,
       isBuiltin: false,
+      // Parametric types open on a valid default config so the field is
+      // immediately save-valid and its sub-form has something to edit.
+      typeConfig: defaultTypeConfig(type),
       createdAt: now,
       updatedAt: now,
     );
@@ -448,6 +562,40 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
         gridColumnSpan: gridColumnSpan ?? f.gridColumnSpan,
         placeholder: placeholder ?? f.placeholder,
         helpText: helpText ?? f.helpText,
+        updatedAt: now,
+      ));
+    }
+    if (!changed) return;
+    _commitFields(catIndex, nextFields);
+  }
+
+  /// Replaces a field's per-type `typeConfig` payload wholesale (PR-2.2b). The
+  /// per-type sub-forms build the full config map and write it through here on
+  /// every change; the combined validator (`_validateTypeConfig`) then flags any
+  /// incompleteness. An empty map clears the config back to `null`.
+  void updateFieldTypeConfig(
+    String categoryId,
+    String fieldId,
+    Map<String, dynamic> typeConfig,
+  ) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final now = _now();
+    var changed = false;
+    final nextFields = <FieldSchema>[];
+    for (final f in category.fields) {
+      if (f.fieldId != fieldId) {
+        nextFields.add(f);
+        continue;
+      }
+      changed = true;
+      nextFields.add(f.copyWith(
+        typeConfig:
+            typeConfig.isEmpty ? null : Map<String, dynamic>.from(typeConfig),
         updatedAt: now,
       ));
     }
@@ -529,11 +677,172 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
     );
   }
 
-  /// Combined draft validation = category errors ⊕ field errors. Both commit
-  /// paths route through here so the single `errors` list (and the Save error
-  /// summary) reflects every blocking problem regardless of what was edited.
-  static List<String> _validateAll(List<EntityCategorySchema> categories) =>
-      [..._validateCategories(categories), ..._validateFields(categories)];
+  /// Combined draft validation = category errors ⊕ field errors ⊕ typeConfig
+  /// errors. Both commit paths route through here so the single `errors` list
+  /// (and the Save error summary) reflects every blocking problem regardless of
+  /// what was edited.
+  static List<String> _validateAll(List<EntityCategorySchema> categories) => [
+        ..._validateCategories(categories),
+        ..._validateFields(categories),
+        ..._validateTypeConfig(categories),
+      ];
+
+  /// Blocking `typeConfig` completeness validation per parametric field type
+  /// (the-template-system §2.3). Non-parametric types contribute nothing.
+  static List<String> _validateTypeConfig(
+      List<EntityCategorySchema> categories) {
+    final errors = <String>[];
+    for (final c in categories) {
+      final catLabel = c.name.trim().isEmpty ? '(unnamed)' : c.name.trim();
+      for (final f in c.fields) {
+        final fieldLabel = f.label.trim().isEmpty ? f.fieldKey : f.label.trim();
+        final where = '"$fieldLabel" in "$catLabel"';
+        final cfg = f.typeConfig;
+        // Absent config means a legacy-typed field carried over from a copied
+        // built-in (no typeConfig until the PR-2.3 renderer swap) or a
+        // non-parametric field — neither is editor-managed, so don't block on
+        // it. Every v3 field the editor mints seeds a non-null default config.
+        if (cfg == null) continue;
+        switch (f.fieldType) {
+          case FieldType.abilityScoreTable:
+          case FieldType.statBlock:
+            _validateConfigColumns(cfg, where, errors, requireKind: false);
+            final step = cfg['modifierStep'];
+            if (step is num && step == 0) {
+              errors.add('Ability scores $where: modifier step cannot be zero.');
+            }
+            break;
+          case FieldType.combatStatsTable:
+          case FieldType.combatStats:
+            final keys = cfg['visibleKeys'];
+            if (keys is! List || keys.isEmpty) {
+              errors.add('Combat stats $where needs at least one visible stat.');
+            } else {
+              for (final k in keys) {
+                if (!combatStatsCanonicalKeys.contains(k)) {
+                  errors.add('Combat stats $where has an unknown stat key "$k".');
+                }
+              }
+            }
+            break;
+          case FieldType.intPouch:
+            _validatePouchSource(cfg['maxSource'], where, 'max', errors);
+            break;
+          case FieldType.checkboxPouch:
+          case FieldType.slot:
+            _validatePouchSource(cfg['countSource'], where, 'count', errors);
+            break;
+          case FieldType.pouchMatrix:
+          case FieldType.spellSlotGrid:
+            final rows = cfg['rowKeys'];
+            if (rows is! List || rows.isEmpty) {
+              errors.add('Pouch matrix $where needs at least one row.');
+            }
+            _validatePouchSource(cfg['maxSource'], where, 'max', errors);
+            break;
+          case FieldType.skillTree:
+          case FieldType.proficiencyTable:
+            final tiers = cfg['tiers'];
+            if (tiers is! List || tiers.isEmpty) {
+              errors.add('Skill tree $where needs at least one tier.');
+            }
+            break;
+          case FieldType.recordList:
+            _validateConfigColumns(cfg, where, errors, requireKind: true);
+            break;
+          case FieldType.levelUpTable:
+            final gate = cfg['gate'];
+            if (gate is! String || !levelUpTableGates.contains(gate)) {
+              errors.add('Level-up table $where needs a gate (class or character).');
+            }
+            break;
+          case FieldType.actionButton:
+            final action = cfg['action'];
+            if (action is! String || !actionButtonActions.contains(action)) {
+              errors.add(
+                  'Action button $where needs an action (level-up / short rest / long rest).');
+            }
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    return errors;
+  }
+
+  /// Shared column-list validation for `abilityScoreTable` and `recordList`:
+  /// at least one column, non-empty keys, unique keys, and (records only) a
+  /// valid column kind.
+  static void _validateConfigColumns(
+    Map<String, dynamic>? cfg,
+    String where,
+    List<String> errors, {
+    required bool requireKind,
+  }) {
+    final cols = cfg?['columns'];
+    if (cols is! List || cols.isEmpty) {
+      errors.add('$where needs at least one column.');
+      return;
+    }
+    final seen = <String>{};
+    for (final col in cols) {
+      if (col is! Map) continue;
+      final colKey = (col['key'] ?? '').toString().trim();
+      if (colKey.isEmpty) {
+        errors.add('$where has a column with an empty key.');
+      } else if (!seen.add(colKey)) {
+        errors.add('$where has a duplicate column key "$colKey".');
+      }
+      if (requireKind) {
+        final kind = (col['kind'] ?? '').toString();
+        if (!recordListColumnKinds.contains(kind)) {
+          errors.add(
+              '$where column "${colKey.isEmpty ? '(unnamed)' : colKey}" has an invalid kind.');
+        }
+      }
+    }
+  }
+
+  /// Shared pouch `maxSource`/`countSource` validation across all pouch types.
+  static void _validatePouchSource(
+    Object? source,
+    String where,
+    String which,
+    List<String> errors,
+  ) {
+    if (source is! Map) {
+      errors.add('$where is missing its $which source.');
+      return;
+    }
+    final kind = (source['kind'] ?? '').toString();
+    if (!pouchSourceKinds.contains(kind)) {
+      errors.add('$where $which source has an invalid kind "$kind".');
+      return;
+    }
+    switch (kind) {
+      case 'fixed':
+        if (source['value'] is! num) {
+          errors.add('$where $which source (fixed) needs a number.');
+        }
+        break;
+      case 'formula':
+        final expr = (source['expr'] ?? '').toString().trim();
+        if (expr.isEmpty) {
+          errors.add('$where $which source (formula) needs an expression.');
+        }
+        break;
+      case 'levelTable':
+        final table = source['table'];
+        if (table is! Map || table.isEmpty) {
+          errors.add(
+              '$where $which source (level table) needs at least one entry.');
+        }
+        break;
+      case 'manual':
+        break;
+    }
+  }
 
   /// Blocking field validation, scoped per category: empty labels, and
   /// empty/malformed/reserved/duplicate field keys (the per-card value key must
