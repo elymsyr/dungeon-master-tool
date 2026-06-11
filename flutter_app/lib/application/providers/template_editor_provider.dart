@@ -9,6 +9,10 @@ import 'template_provider.dart';
 
 const _uuid = Uuid();
 
+/// Sentinel distinguishing "argument omitted" from an explicit `null` in the
+/// field mutators (so a nullable attribute like `groupId` can be *cleared*).
+const Object _unset = Object();
+
 /// Lowercase slug grammar shared by category and (later) field-key validation:
 /// a–z, 0–9 and single hyphens, never leading/trailing a hyphen.
 final RegExp templateSlugPattern = RegExp(r'^[a-z0-9]+(?:-[a-z0-9]+)*$');
@@ -26,6 +30,32 @@ String categorySlugify(String input) {
   final hyphenated =
       lowered.replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'-+'), '-');
   return hyphenated.replaceAll(RegExp(r'^-+|-+$'), '');
+}
+
+/// Lowercase `snake_case` grammar for field keys: starts with a letter, then
+/// letters/digits/single underscores (the wire keys cards store values under —
+/// e.g. `rage_uses`, `asi_options`, `spell_slots`). Distinct from the category
+/// slug grammar (hyphens) because card attribute maps are conventionally
+/// snake_case in this codebase.
+final RegExp templateFieldKeyPattern = RegExp(r'^[a-z][a-z0-9_]*$');
+
+/// Field keys the editor refuses to mint/rename onto. These collide with the
+/// entity envelope's own identity/format keys (`{id, slug, name, format}` ride
+/// beside `attributes`), so a field key must never shadow them.
+const Set<String> reservedFieldKeys = {'id', 'slug', 'name', 'format'};
+
+/// Normalizes free text into a [templateFieldKeyPattern]-valid key. Non-alnum
+/// runs collapse to single underscores; a leading digit is prefixed with `f_`
+/// so the result still starts with a letter. Empty when the input has no
+/// key-able characters (the validator then flags it).
+String fieldKeyNormalize(String input) {
+  final lowered = input.trim().toLowerCase();
+  var s = lowered
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  if (s.isNotEmpty && RegExp(r'^[0-9]').hasMatch(s)) s = 'f_$s';
+  return s;
 }
 
 /// Immutable draft state for the responsive Template Editor (roadmap §1.5).
@@ -322,10 +352,253 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
     state = state.copyWith(
       schema: updated,
       isDirty: true,
-      errors: _validateCategories(categories),
+      errors: _validateAll(categories),
       selectedCategoryId: selectedCategoryId ?? state.selectedCategoryId,
       selectedFieldId: clearFieldSelection ? null : state.selectedFieldId,
     );
+  }
+
+  // --- Field CRUD (PR-2.2) ----------------------------------------------------
+  //
+  // Mirrors the category mutators: each rebuilds the selected category's field
+  // list, rebuilds the draft `WorldSchema`, marks dirty, and recomputes the
+  // combined category+field validation surfaced in [TemplateEditorState.errors]
+  // (field-key uniqueness within the category, reserved keys, empty labels).
+
+  /// Appends a new field of [type] to [categoryId] and selects it. The label and
+  /// key are seeded to sensible, in-category-unique defaults the user edits in
+  /// the inspector. `orderIndex` is placed after the current last field.
+  void addField(String categoryId, FieldType type) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final now = _now();
+    final base = _humanizeType(type);
+    final key = _uniqueFieldKey(
+      fieldKeyNormalize(base),
+      {for (final f in category.fields) f.fieldKey},
+    );
+    final maxOrder = category.fields.fold<int>(
+      -1,
+      (m, f) => f.orderIndex > m ? f.orderIndex : m,
+    );
+    final field = FieldSchema(
+      fieldId: 'fld-${_uuid.v4()}',
+      categoryId: categoryId,
+      fieldKey: key,
+      label: base,
+      fieldType: type,
+      orderIndex: maxOrder + 1,
+      isBuiltin: false,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final nextFields = [...category.fields, field];
+    _commitFields(
+      catIndex,
+      nextFields,
+      selectField: field.fieldId,
+    );
+  }
+
+  /// Edits a field's core attributes (any subset). Untouched arguments are left
+  /// as-is. The key is re-normalized when provided; pass `groupId: null` (via
+  /// the sentinel default being overridden with an explicit `null`) to clear the
+  /// group assignment.
+  void updateFieldMeta(
+    String categoryId,
+    String fieldId, {
+    String? label,
+    String? fieldKey,
+    bool? isRequired,
+    bool? isList,
+    bool? hasEquip,
+    FieldVisibility? visibility,
+    Object? groupId = _unset,
+    int? gridColumnSpan,
+    String? placeholder,
+    String? helpText,
+  }) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final now = _now();
+    var changed = false;
+    final nextFields = <FieldSchema>[];
+    for (final f in category.fields) {
+      if (f.fieldId != fieldId) {
+        nextFields.add(f);
+        continue;
+      }
+      changed = true;
+      nextFields.add(f.copyWith(
+        label: label ?? f.label,
+        fieldKey: fieldKey == null ? f.fieldKey : fieldKeyNormalize(fieldKey),
+        isRequired: isRequired ?? f.isRequired,
+        isList: isList ?? f.isList,
+        hasEquip: hasEquip ?? f.hasEquip,
+        visibility: visibility ?? f.visibility,
+        groupId: groupId == _unset ? f.groupId : groupId as String?,
+        gridColumnSpan: gridColumnSpan ?? f.gridColumnSpan,
+        placeholder: placeholder ?? f.placeholder,
+        helpText: helpText ?? f.helpText,
+        updatedAt: now,
+      ));
+    }
+    if (!changed) return;
+    _commitFields(catIndex, nextFields);
+  }
+
+  /// Removes a field from [categoryId] (hard delete — fields have no archive
+  /// flag). Clears the field selection if the removed field was selected.
+  void removeField(String categoryId, String fieldId) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final nextFields = [
+      for (final f in category.fields)
+        if (f.fieldId != fieldId) f,
+    ];
+    if (nextFields.length == category.fields.length) return;
+    _commitFields(
+      catIndex,
+      nextFields,
+      clearSelectionIf: fieldId,
+    );
+  }
+
+  /// Reorders fields within [categoryId]. Indices follow Flutter's
+  /// `ReorderableListView` convention against the **orderIndex-sorted** list
+  /// (which is what the field list pane renders); `orderIndex` is renumbered.
+  void reorderFields(String categoryId, int oldIndex, int newIndex) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final sorted = [...category.fields]
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    if (oldIndex < 0 || oldIndex >= sorted.length) return;
+    var insertAt = newIndex;
+    if (insertAt > oldIndex) insertAt -= 1;
+    if (insertAt < 0) insertAt = 0;
+    if (insertAt >= sorted.length) insertAt = sorted.length - 1;
+    if (insertAt == oldIndex) return;
+    final moved = sorted.removeAt(oldIndex);
+    sorted.insert(insertAt, moved);
+    final now = _now();
+    final renumbered = [
+      for (var i = 0; i < sorted.length; i++)
+        sorted[i].orderIndex == i
+            ? sorted[i]
+            : sorted[i].copyWith(orderIndex: i, updatedAt: now),
+    ];
+    _commitFields(catIndex, renumbered);
+  }
+
+  /// Replaces [catIndex]'s field list, marks dirty, recomputes validation, and
+  /// optionally updates the field selection.
+  void _commitFields(
+    int catIndex,
+    List<FieldSchema> fields, {
+    String? selectField,
+    String? clearSelectionIf,
+  }) {
+    final schema = state.schema;
+    if (schema == null) return;
+    final categories = [...schema.categories];
+    categories[catIndex] = categories[catIndex].copyWith(fields: fields);
+    final updated = schema.copyWith(categories: categories);
+    final clearSel =
+        clearSelectionIf != null && state.selectedFieldId == clearSelectionIf;
+    state = state.copyWith(
+      schema: updated,
+      isDirty: true,
+      errors: _validateAll(categories),
+      selectedFieldId: selectField ?? (clearSel ? null : state.selectedFieldId),
+    );
+  }
+
+  /// Combined draft validation = category errors ⊕ field errors. Both commit
+  /// paths route through here so the single `errors` list (and the Save error
+  /// summary) reflects every blocking problem regardless of what was edited.
+  static List<String> _validateAll(List<EntityCategorySchema> categories) =>
+      [..._validateCategories(categories), ..._validateFields(categories)];
+
+  /// Blocking field validation, scoped per category: empty labels, and
+  /// empty/malformed/reserved/duplicate field keys (the per-card value key must
+  /// be unique within its category).
+  static List<String> _validateFields(List<EntityCategorySchema> categories) {
+    final errors = <String>[];
+    for (final c in categories) {
+      final catLabel = c.name.trim().isEmpty ? '(unnamed)' : c.name.trim();
+      final keyCounts = <String, int>{};
+      for (final f in c.fields) {
+        final fieldLabel =
+            f.label.trim().isEmpty ? f.fieldKey : f.label.trim();
+        if (f.label.trim().isEmpty) {
+          errors.add('Field "${f.fieldKey}" in "$catLabel" has an empty label.');
+        }
+        final key = f.fieldKey.trim();
+        if (key.isEmpty) {
+          errors.add('Field "$fieldLabel" in "$catLabel" has an empty key.');
+        } else if (!templateFieldKeyPattern.hasMatch(key)) {
+          errors.add(
+            'Field key "$key" in "$catLabel" must be lowercase snake_case '
+            '(letter first, then letters, numbers and single underscores).',
+          );
+        } else if (reservedFieldKeys.contains(key)) {
+          errors.add('Field key "$key" in "$catLabel" is reserved.');
+        }
+        if (key.isNotEmpty) keyCounts[key] = (keyCounts[key] ?? 0) + 1;
+      }
+      for (final entry in keyCounts.entries) {
+        if (entry.value > 1) {
+          errors.add(
+            'Duplicate field key "${entry.key}" in "$catLabel" '
+            '(used ${entry.value}×).',
+          );
+        }
+      }
+    }
+    return errors;
+  }
+
+  /// Seeds a human-readable default label from a [FieldType] (`intPouch` →
+  /// "Int Pouch"). The user renames it immediately; this just avoids an empty
+  /// label flashing as a validation error on add.
+  static String _humanizeType(FieldType type) {
+    final name = type.name.replaceAll('_', '');
+    final buf = StringBuffer();
+    for (var i = 0; i < name.length; i++) {
+      final ch = name[i];
+      if (i > 0 && ch.toUpperCase() == ch && ch.toLowerCase() != ch) {
+        buf.write(' ');
+      }
+      buf.write(i == 0 ? ch.toUpperCase() : ch);
+    }
+    return buf.toString();
+  }
+
+  /// Returns [base] if free within [existing], else suffixes `_2`, `_3`, … .
+  static String _uniqueFieldKey(String base, Set<String> existing) {
+    final seed = base.isEmpty ? 'field' : base;
+    if (!existing.contains(seed)) return seed;
+    var n = 2;
+    while (existing.contains('${seed}_$n')) {
+      n++;
+    }
+    return '${seed}_$n';
   }
 
   /// Blocking category validation: empty names, empty/malformed/reserved slugs,

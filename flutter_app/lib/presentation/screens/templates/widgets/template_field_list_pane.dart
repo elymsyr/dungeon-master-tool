@@ -5,17 +5,24 @@ import '../../../../application/providers/template_editor_provider.dart';
 import '../../../../domain/entities/schema/field_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import 'field_type_meta.dart';
+import 'field_type_picker.dart';
 
 /// Middle pane: the field list for the currently-selected category
-/// (roadmap §1.5). Read-only in PR-1.5 — taps select a field for the inspector;
-/// reorder handles and "+ Add field" land in Phase 2.2 (shown disabled here so
-/// the layout contract is fixed).
+/// (roadmap §1.5).
+///
+/// Read-only on the built-in template (taps select a field for the inspector).
+/// On an editable copy (PR-2.2) it becomes a full CRUD surface: drag-to-reorder,
+/// a per-tile Delete menu, and a working "+ Add field" row that opens the
+/// responsive field-type picker — all wired into [TemplateEditorNotifier]'s
+/// field mutators.
 class TemplateFieldListPane extends ConsumerWidget {
   /// Optional back affordance shown as a leading header chevron (tablet master
   /// pane drilling back to the category list). Null on desktop/phone.
   final VoidCallback? onBack;
 
-  /// Run after a field is selected (phone pushes the field edit page).
+  /// Run after a field is selected (phone pushes the field edit page). Also
+  /// fired after a new field is added on touch surfaces so the phone flow drills
+  /// straight into the new field's edit page.
   final ValueChanged<FieldSchema>? onFieldTap;
 
   /// Phone pages own the title via their AppBar, so they hide the in-pane
@@ -34,6 +41,7 @@ class TemplateFieldListPane extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final state = ref.watch(templateEditorProvider);
     final category = state.selectedCategory;
+    final canEdit = state.canEdit;
 
     if (category == null) {
       return Container(
@@ -45,7 +53,8 @@ class TemplateFieldListPane extends ConsumerWidget {
       );
     }
 
-    // Sort by orderIndex (stable) to mirror the on-sheet field order.
+    // Sort by orderIndex (stable) to mirror the on-sheet field order. This is
+    // the order the reorder mutator's indices are taken against.
     final fields = [...category.fields]
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
@@ -67,50 +76,137 @@ class TemplateFieldListPane extends ConsumerWidget {
           Expanded(
             child: fields.isEmpty
                 ? _Empty(
-                    text: 'This category has no fields.',
+                    text: canEdit
+                        ? 'No fields yet — add one below.'
+                        : 'This category has no fields.',
                     palette: palette,
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    itemCount: fields.length,
-                    itemBuilder: (ctx, i) {
-                      final field = fields[i];
-                      return _FieldTile(
-                        field: field,
-                        isSelected: field.fieldId == state.selectedFieldId,
-                        palette: palette,
-                        onTap: () {
-                          ref
-                              .read(templateEditorProvider.notifier)
-                              .selectField(field.fieldId);
-                          onFieldTap?.call(field);
-                        },
-                      );
-                    },
-                  ),
+                : _buildList(context, ref, fields, state, palette, canEdit),
           ),
-          if (state.canEdit) ...[
+          if (canEdit) ...[
             Divider(height: 1, color: palette.sidebarDivider),
-            ListTile(
-              dense: true,
-              enabled: false,
-              leading: Icon(Icons.add,
-                  size: 18,
-                  color: palette.sidebarLabelSecondary.withValues(alpha: 0.5)),
-              title: Text(
-                'Add field',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: palette.sidebarLabelSecondary.withValues(alpha: 0.5),
-                ),
-              ),
-              // Wired in Phase 2.2 (field CRUD + type picker).
-              onTap: null,
+            _AddRow(
+              palette: palette,
+              onTap: () => _handleAdd(context, ref, category.categoryId),
             ),
           ],
         ],
       ),
     );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    List<FieldSchema> fields,
+    TemplateEditorState state,
+    DmToolColors palette,
+    bool canEdit,
+  ) {
+    if (!canEdit) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemCount: fields.length,
+        itemBuilder: (ctx, i) =>
+            _tile(context, ref, fields[i], state, palette, canEdit,
+                reorderIndex: null),
+      );
+    }
+    // Editable copy: drag-to-reorder with explicit handles so taps still select.
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      buildDefaultDragHandles: false,
+      itemCount: fields.length,
+      onReorder: (oldIndex, newIndex) => ref
+          .read(templateEditorProvider.notifier)
+          .reorderFields(state.selectedCategoryId!, oldIndex, newIndex),
+      itemBuilder: (ctx, i) => _tile(
+        context,
+        ref,
+        fields[i],
+        state,
+        palette,
+        canEdit,
+        reorderIndex: i,
+      ),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context,
+    WidgetRef ref,
+    FieldSchema field,
+    TemplateEditorState state,
+    DmToolColors palette,
+    bool canEdit, {
+    required int? reorderIndex,
+  }) {
+    return _FieldTile(
+      // Stable key required by ReorderableListView; harmless for ListView.
+      key: ValueKey(field.fieldId),
+      field: field,
+      isSelected: field.fieldId == state.selectedFieldId,
+      palette: palette,
+      canEdit: canEdit,
+      reorderIndex: reorderIndex,
+      onTap: () {
+        ref.read(templateEditorProvider.notifier).selectField(field.fieldId);
+        onFieldTap?.call(field);
+      },
+      onDelete: canEdit
+          ? () => _handleDelete(context, ref, state.selectedCategoryId!, field)
+          : null,
+    );
+  }
+
+  Future<void> _handleAdd(
+    BuildContext context,
+    WidgetRef ref,
+    String categoryId,
+  ) async {
+    final type = await showFieldTypePicker(context);
+    if (type == null) return;
+    final notifier = ref.read(templateEditorProvider.notifier);
+    notifier.addField(categoryId, type);
+    // addField selects the new field; drill into it on the phone flow.
+    final added = ref.read(templateEditorProvider).selectedField;
+    if (added != null) onFieldTap?.call(added);
+  }
+
+  Future<void> _handleDelete(
+    BuildContext context,
+    WidgetRef ref,
+    String categoryId,
+    FieldSchema field,
+  ) async {
+    final label = field.label.isEmpty ? field.fieldKey : field.label;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete field?'),
+        content: Text(
+          'Remove "$label" from this category? Cards already created keep any '
+          'value stored under "${field.fieldKey}" until they are next saved, '
+          'but the field stops rendering.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  Theme.of(ctx).extension<DmToolColors>()!.dangerBtnBg,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    ref.read(templateEditorProvider.notifier).removeField(categoryId, field.fieldId);
   }
 }
 
@@ -118,13 +214,20 @@ class _FieldTile extends StatelessWidget {
   final FieldSchema field;
   final bool isSelected;
   final DmToolColors palette;
+  final bool canEdit;
+  final int? reorderIndex;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const _FieldTile({
+    super.key,
     required this.field,
     required this.isSelected,
     required this.palette,
+    required this.canEdit,
+    required this.reorderIndex,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -166,13 +269,57 @@ class _FieldTile extends StatelessWidget {
           color: palette.sidebarLabelSecondary,
         ),
       ),
-      trailing: ruleCount > 0
-          ? _RuleBadge(count: ruleCount, palette: palette)
-          : null,
+      trailing: _buildTrailing(),
       onTap: onTap,
     );
   }
+
+  Widget? _buildTrailing() {
+    final ruleCount = field.rules?.length ?? 0;
+    if (!canEdit) {
+      return ruleCount > 0 ? _RuleBadge(count: ruleCount, palette: palette) : null;
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (ruleCount > 0) _RuleBadge(count: ruleCount, palette: palette),
+        PopupMenuButton<_FieldAction>(
+          tooltip: 'Field actions',
+          icon: Icon(Icons.more_vert,
+              size: 18, color: palette.sidebarLabelSecondary),
+          onSelected: (action) {
+            switch (action) {
+              case _FieldAction.delete:
+                onDelete?.call();
+            }
+          },
+          itemBuilder: (ctx) => const [
+            PopupMenuItem(
+              value: _FieldAction.delete,
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.delete_outline, size: 18),
+                title: Text('Delete'),
+              ),
+            ),
+          ],
+        ),
+        if (reorderIndex != null)
+          ReorderableDragStartListener(
+            index: reorderIndex!,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 2, right: 4),
+              child: Icon(Icons.drag_handle,
+                  size: 18, color: palette.sidebarLabelSecondary),
+            ),
+          ),
+      ],
+    );
+  }
 }
+
+enum _FieldAction { delete }
 
 class _RuleBadge extends StatelessWidget {
   final int count;
@@ -196,6 +343,26 @@ class _RuleBadge extends StatelessWidget {
           color: palette.featureCardAccent,
         ),
       ),
+    );
+  }
+}
+
+class _AddRow extends StatelessWidget {
+  final DmToolColors palette;
+  final VoidCallback onTap;
+
+  const _AddRow({required this.palette, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      leading: Icon(Icons.add, size: 18, color: palette.featureCardAccent),
+      title: Text(
+        'Add field',
+        style: TextStyle(fontSize: 13, color: palette.featureCardAccent),
+      ),
+      onTap: onTap,
     );
   }
 }

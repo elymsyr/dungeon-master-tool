@@ -11,10 +11,13 @@ import 'field_type_meta.dart';
 
 /// Right-hand inspector of the Template Editor (roadmap §1.5).
 ///
-/// Read-only in PR-1.5: shows the selected field's full definition, or — when
-/// no field is selected — the active category's metadata. Phase 2.1/2.2 swap
-/// the read-only rows for the label/key/type/typeConfig editing forms; this is
-/// the mount point.
+/// On the built-in (read-only) template it shows the selected field's full
+/// definition, or — when no field is selected — the active category's metadata.
+/// On an editable copy (PR-2.2) the field view becomes a live core-attributes
+/// form (label / key / required / list / visibility / group / column span /
+/// guidance) that writes straight through to [TemplateEditorNotifier]. The
+/// per-type `typeConfig` sub-forms mount here in PR-2.2b; until then `typeConfig`
+/// and `rules` are shown read-only beneath the form.
 class TemplateFieldInspector extends ConsumerWidget {
   /// When true (phone edit page), only the field detail is shown — no category
   /// fallback (the phone has a dedicated category surface upstream).
@@ -30,7 +33,16 @@ class TemplateFieldInspector extends ConsumerWidget {
     final category = state.selectedCategory;
 
     Widget body;
-    if (field != null) {
+    if (field != null && state.canEdit && category != null) {
+      // Keyed by fieldId so the form's controllers reset cleanly whenever the
+      // selection moves to a different field.
+      body = _FieldEditForm(
+        key: ValueKey(field.fieldId),
+        field: field,
+        category: category,
+        palette: palette,
+      );
+    } else if (field != null) {
       body = _FieldDetail(field: field, palette: palette);
     } else if (!fieldOnly && category != null) {
       body = _CategoryDetail(category: category, palette: palette);
@@ -46,6 +58,407 @@ class TemplateFieldInspector extends ConsumerWidget {
     return Container(
       color: palette.featureCardBg,
       child: body,
+    );
+  }
+}
+
+/// Live editor for a field's core (non-`typeConfig`) attributes. Every change
+/// writes through to the notifier immediately (the editor has explicit Save, so
+/// the draft just needs to stay current and dirty). Controllers are the source
+/// of truth while editing; the widget is keyed by `fieldId` so a selection
+/// change rebuilds it fresh.
+class _FieldEditForm extends ConsumerStatefulWidget {
+  final FieldSchema field;
+  final EntityCategorySchema category;
+  final DmToolColors palette;
+
+  const _FieldEditForm({
+    super.key,
+    required this.field,
+    required this.category,
+    required this.palette,
+  });
+
+  @override
+  ConsumerState<_FieldEditForm> createState() => _FieldEditFormState();
+}
+
+class _FieldEditFormState extends ConsumerState<_FieldEditForm> {
+  late final TextEditingController _labelCtrl;
+  late final TextEditingController _keyCtrl;
+  late final TextEditingController _placeholderCtrl;
+  late final TextEditingController _helpCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final f = widget.field;
+    _labelCtrl = TextEditingController(text: f.label);
+    _keyCtrl = TextEditingController(text: f.fieldKey);
+    _placeholderCtrl = TextEditingController(text: f.placeholder);
+    _helpCtrl = TextEditingController(text: f.helpText);
+  }
+
+  @override
+  void dispose() {
+    _labelCtrl.dispose();
+    _keyCtrl.dispose();
+    _placeholderCtrl.dispose();
+    _helpCtrl.dispose();
+    super.dispose();
+  }
+
+  TemplateEditorNotifier get _notifier =>
+      ref.read(templateEditorProvider.notifier);
+
+  String get _categoryId => widget.field.categoryId;
+  String get _fieldId => widget.field.fieldId;
+
+  /// Field keys used by the *other* fields in this category — for live
+  /// duplicate feedback (the notifier re-validates on commit).
+  Set<String> get _siblingKeys => {
+        for (final f in widget.category.fields)
+          if (f.fieldId != _fieldId) f.fieldKey,
+      };
+
+  String? get _keyError {
+    final key = _keyCtrl.text.trim();
+    if (key.isEmpty) return 'Key is required.';
+    if (!templateFieldKeyPattern.hasMatch(key)) {
+      return 'Lowercase snake_case (letter first) only.';
+    }
+    if (reservedFieldKeys.contains(key)) return 'This key is reserved.';
+    if (_siblingKeys.contains(key)) {
+      return 'Another field in this category uses this key.';
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final field = widget.field;
+    final meta = FieldTypeMeta.of(field.fieldType);
+    final rules = field.rules ?? const [];
+
+    // Group dropdown choices: the category's groups plus an "ungrouped" entry.
+    final groups = [...widget.category.fieldGroups]
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: type icon + summary (type itself is fixed after creation).
+          Row(
+            children: [
+              Icon(meta.icon, size: 22, color: palette.featureCardAccent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      meta.label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                    Text(
+                      meta.summary,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (meta.ruleCapable)
+                Tooltip(
+                  message: 'Rule-capable — rules attach in Phase 3',
+                  child: Icon(Icons.bolt,
+                      size: 18, color: palette.featureCardAccent),
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          _FieldLabel(text: 'Label', palette: palette),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _labelCtrl,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              hintText: 'Player-facing name',
+            ),
+            onChanged: (v) =>
+                _notifier.updateFieldMeta(_categoryId, _fieldId, label: v),
+          ),
+          const SizedBox(height: 14),
+
+          _FieldLabel(text: 'Key', palette: palette),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _keyCtrl,
+            decoration: InputDecoration(
+              isDense: true,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.tag, size: 18),
+              helperText: 'Stable per-card value key — snake_case.',
+              errorText: _keyCtrl.text.isEmpty ? null : _keyError,
+            ),
+            onChanged: (v) {
+              final normalized = fieldKeyNormalize(v);
+              if (normalized != v) {
+                _keyCtrl.value = TextEditingValue(
+                  text: normalized,
+                  selection:
+                      TextSelection.collapsed(offset: normalized.length),
+                );
+              }
+              _notifier.updateFieldMeta(_categoryId, _fieldId,
+                  fieldKey: normalized);
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: 18),
+
+          _SwitchRow(
+            label: 'Required',
+            value: field.isRequired,
+            palette: palette,
+            onChanged: (v) => _notifier.updateFieldMeta(_categoryId, _fieldId,
+                isRequired: v),
+          ),
+          _SwitchRow(
+            label: 'List (multiple values)',
+            value: field.isList,
+            palette: palette,
+            onChanged: (v) =>
+                _notifier.updateFieldMeta(_categoryId, _fieldId, isList: v),
+          ),
+          if (field.fieldType == FieldType.relation)
+            _SwitchRow(
+              label: 'Equippable',
+              value: field.hasEquip,
+              palette: palette,
+              onChanged: (v) => _notifier.updateFieldMeta(_categoryId, _fieldId,
+                  hasEquip: v),
+            ),
+          const SizedBox(height: 12),
+
+          _FieldLabel(text: 'Visibility', palette: palette),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<FieldVisibility>(
+            initialValue: field.visibility,
+            isDense: true,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              for (final v in FieldVisibility.values)
+                DropdownMenuItem(value: v, child: Text(_visibilityLabel(v))),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              _notifier.updateFieldMeta(_categoryId, _fieldId, visibility: v);
+            },
+          ),
+          const SizedBox(height: 14),
+
+          if (groups.isNotEmpty) ...[
+            _FieldLabel(text: 'Group', palette: palette),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String?>(
+              initialValue: groups.any((g) => g.groupId == field.groupId)
+                  ? field.groupId
+                  : null,
+              isDense: true,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Ungrouped'),
+                ),
+                for (final g in groups)
+                  DropdownMenuItem<String?>(
+                    value: g.groupId,
+                    child: Text(g.name.isEmpty ? g.groupId : g.name),
+                  ),
+              ],
+              onChanged: (v) => _notifier.updateFieldMeta(_categoryId, _fieldId,
+                  groupId: v),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          _FieldLabel(text: 'Column span', palette: palette),
+          const SizedBox(height: 6),
+          _ColumnSpanStepper(
+            value: field.gridColumnSpan,
+            palette: palette,
+            onChanged: (v) => _notifier.updateFieldMeta(_categoryId, _fieldId,
+                gridColumnSpan: v),
+          ),
+          const SizedBox(height: 18),
+
+          _FieldLabel(text: 'Placeholder', palette: palette),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _placeholderCtrl,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              hintText: 'Optional input hint',
+            ),
+            onChanged: (v) => _notifier.updateFieldMeta(_categoryId, _fieldId,
+                placeholder: v),
+          ),
+          const SizedBox(height: 14),
+
+          _FieldLabel(text: 'Help text', palette: palette),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _helpCtrl,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              hintText: 'Optional guidance shown under the field',
+            ),
+            onChanged: (v) =>
+                _notifier.updateFieldMeta(_categoryId, _fieldId, helpText: v),
+          ),
+
+          if (field.typeConfig != null && field.typeConfig!.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            _JsonSection(
+              title: 'Type configuration',
+              data: field.typeConfig!,
+              palette: palette,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Per-type configuration forms arrive in the next editor update; '
+              'until then the raw config is shown above.',
+              style: TextStyle(
+                fontSize: 11,
+                color: palette.sidebarLabelSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          _RulesSection(rules: rules, palette: palette),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  final DmToolColors palette;
+
+  const _FieldLabel({required this.text, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.6,
+        color: palette.sidebarLabelSecondary,
+      ),
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final DmToolColors palette;
+  final ValueChanged<bool> onChanged;
+
+  const _SwitchRow({
+    required this.label,
+    required this.value,
+    required this.palette,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        label,
+        style: TextStyle(fontSize: 13, color: palette.tabActiveText),
+      ),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _ColumnSpanStepper extends StatelessWidget {
+  final int value;
+  final DmToolColors palette;
+  final ValueChanged<int> onChanged;
+
+  const _ColumnSpanStepper({
+    required this.value,
+    required this.palette,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = value.clamp(1, 4);
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          iconSize: 22,
+          color: palette.sidebarLabelSecondary,
+          onPressed: clamped > 1 ? () => onChanged(clamped - 1) : null,
+        ),
+        SizedBox(
+          width: 36,
+          child: Text(
+            '$clamped',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: palette.tabActiveText,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          iconSize: 22,
+          color: palette.sidebarLabelSecondary,
+          onPressed: clamped < 4 ? () => onChanged(clamped + 1) : null,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'of 4 grid columns',
+          style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+        ),
+      ],
     );
   }
 }
