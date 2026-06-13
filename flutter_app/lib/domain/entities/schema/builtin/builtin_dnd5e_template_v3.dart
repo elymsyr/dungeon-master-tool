@@ -1,3 +1,4 @@
+import '../field_schema.dart';
 import '../world_schema.dart';
 import 'builtin_dnd5e_v2_schema.dart';
 
@@ -52,15 +53,28 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 ///     hash-excluded structural markers). "Zero rule-assigned fields" is the
 ///     binding contract; the empty/absent distinction is cosmetic.
 ///
-/// Old [FieldType] values are KEPT in place — the type swap
-/// (statBlock→abilityScoreTable, slot→checkboxPouch, …) is PR-2.3, not here.
+/// **PR-2.3 PC-category parity type swap (this slice):** the Player Character
+/// category's v2 field types are migrated to their v3 equivalents IN THE v3
+/// GENERATOR ONLY — the v2 schema ([generateBuiltinDnd5eV2Schema], the shared
+/// `dm.dart` `_playerCharacterCategory`) stays frozen so existing v2 worlds
+/// keep resolving on the old engine (dual-stack invariant, roadmap §1.4). Only
+/// the **wire-identical** renames land here (content-convert §1 — value-
+/// preserving no-ops needing no card migration): `statBlock` →
+/// `abilityScoreTable`, `combatStats` → `combatStatsTable`, `proficiencyTable`
+/// → `skillTree`, `spellSlotGrid` → `pouchMatrix`. Each gains the `typeConfig`
+/// the v3 renderers + editor forms read ([pcFieldTypeSwaps]). The genuinely-NEW
+/// conversions that need a value migration — death-save/heroic-inspiration
+/// integers → `checkboxPouch` (int `n` → `{count, states}`) and the
+/// `actionButton` rest/level-up fields that retire the hardcoded
+/// `_renderRestActions` row — are the NEXT slice (they ship with the world-open
+/// value-migration shim so neither side is half-built).
 ///
 /// This is the SINGLE SOURCE OF TRUTH consumed by both the exporter and the
 /// loader's hash-equality assert, so the on-disk asset and the in-code
 /// generator can never silently diverge.
 WorldSchema generateBuiltinDnd5eTemplateV3() {
   final build = generateBuiltinDnd5eV2Schema();
-  return build.schema.copyWith(
+  final base = build.schema.copyWith(
     schemaId: builtinDnd5eV3SchemaId,
     formatVersion: 3,
     name: 'D&D 5e (Default)',
@@ -70,6 +84,122 @@ WorldSchema generateBuiltinDnd5eTemplateV3() {
     createdAt: builtinDnd5eTemplateTimestamp,
     updatedAt: builtinDnd5eTemplateTimestamp,
   );
+  return swapPlayerCharacterFieldTypes(base);
+}
+
+/// Slug of the built-in Player Character category (set in `dm.dart`
+/// `_playerCharacterCategory`). The parity type swap is keyed off this so the
+/// transform finds the right category regardless of its generated `categoryId`.
+const builtinPlayerCharacterSlug = 'player-character';
+
+/// The PC-category parity type swaps: `fieldKey` → (v3 [FieldType], `typeConfig`).
+///
+/// **RULE-FREE:** these carry `typeConfig` only — never `rules` (roadmap §1.1
+/// rule reset; the first rule-assigned field lands in a Phase 3 JIT wave). The
+/// `typeConfig` shapes mirror `defaultTypeConfig` in `template_editor_provider`
+/// (the-template-system §2.3) and satisfy the editor's completeness validator,
+/// so a copy of the built-in opens immediately editable.
+///
+/// The value wire is **byte-identical** before/after each rename, so no card
+/// migration runs:
+///   * `abilityScoreTable` columns use **UPPERCASE** keys (`STR`…`CHA`) to match
+///     the stored `{"STR":10,…}` stat-block value verbatim.
+///   * `combatStatsTable.visibleKeys` lists only canonical PC stats (the
+///     monster-only `cr` sub-field is dropped from the visible set — the stored
+///     value map is untouched).
+///   * `skillTree` reuses the proficiency-table `{name,ability,proficient,
+///     expertise,misc}` rows unchanged.
+///   * `pouchMatrix` reuses the `{max{},remaining{}}` spell-slot wire; the
+///     renderer derives its rows from `max.keys`, so `rowKeys` is advisory.
+const Map<String, ({FieldType type, Map<String, dynamic> typeConfig})>
+    pcFieldTypeSwaps = {
+  'stat_block': (
+    type: FieldType.abilityScoreTable,
+    typeConfig: {
+      'columns': [
+        {'key': 'STR', 'label': 'STR'},
+        {'key': 'DEX', 'label': 'DEX'},
+        {'key': 'CON', 'label': 'CON'},
+        {'key': 'INT', 'label': 'INT'},
+        {'key': 'WIS', 'label': 'WIS'},
+        {'key': 'CHA', 'label': 'CHA'},
+      ],
+      'modifierBase': 10,
+      'modifierStep': 2,
+      'publishAspects': true,
+    },
+  ),
+  'combat_stats': (
+    type: FieldType.combatStatsTable,
+    typeConfig: {
+      'visibleKeys': ['hp', 'max_hp', 'ac', 'speed', 'level', 'initiative', 'xp'],
+    },
+  ),
+  'saving_throws': (
+    type: FieldType.skillTree,
+    typeConfig: {
+      'abilityFieldKey': 'stat_block',
+      'proficiencyBonusAspect': 'prof_bonus',
+      'rowSeed': 'ability',
+      // Saving throws are proficient-only — no expertise tier in 5e.
+      'tiers': ['proficient'],
+    },
+  ),
+  'skills': (
+    type: FieldType.skillTree,
+    typeConfig: {
+      'abilityFieldKey': 'stat_block',
+      'proficiencyBonusAspect': 'prof_bonus',
+      'rowSeed': 'skill',
+      'tiers': ['proficient', 'expertise'],
+    },
+  ),
+  'class_resources': (
+    type: FieldType.skillTree,
+    typeConfig: {
+      'abilityFieldKey': 'stat_block',
+      'proficiencyBonusAspect': 'prof_bonus',
+      'rowSeed': 'skill',
+      'tiers': ['proficient', 'expertise'],
+    },
+  ),
+  'spell_slots': (
+    type: FieldType.pouchMatrix,
+    typeConfig: {
+      'rowKeys': ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+      'rowLabelPrefix': 'Level ',
+      'maxSource': {'kind': 'manual'},
+    },
+  ),
+};
+
+/// Rewrites the Player Character category's wire-identical v2 field types to
+/// their v3 equivalents ([pcFieldTypeSwaps]), attaching each type's
+/// `typeConfig`. Every other category (and every other field) is returned
+/// untouched — the swap is deliberately scoped to the PC sheet (roadmap PR-T6,
+/// the Phase-2 screenshot gate). Idempotent and value-preserving: a field
+/// already carrying the v3 type is left as-is, and no `defaultValue`/`subFields`
+/// (the stored value wire) is altered.
+WorldSchema swapPlayerCharacterFieldTypes(WorldSchema schema) {
+  final categories = [
+    for (final category in schema.categories)
+      if (category.slug == builtinPlayerCharacterSlug)
+        category.copyWith(
+          fields: [
+            for (final field in category.fields)
+              if (pcFieldTypeSwaps.containsKey(field.fieldKey))
+                field.copyWith(
+                  fieldType: pcFieldTypeSwaps[field.fieldKey]!.type,
+                  typeConfig: pcFieldTypeSwaps[field.fieldKey]!.typeConfig,
+                )
+              else
+                field,
+          ],
+        )
+      else
+        category,
+  ];
+  return schema.copyWith(categories: categories);
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel
