@@ -2208,6 +2208,10 @@ class _CharacterEditorScreenState
       combatStatsLevel: combatStatsLevel,
       combatStatsAc: combatStatsAc,
       combatStatsArmorNotes: combatStatsArmorNotes,
+      // actionButton fields invoke the same player flows as the hardcoded
+      // rest-actions row (one path) — the widget supplies its fixed
+      // `typeConfig.action`, we dispatch to the matching handler.
+      onAction: (action) => _runCardAction(action, character),
     );
 
     // Inline `!` badges for any pending level-up decisions that map to
@@ -2630,6 +2634,24 @@ class _CharacterEditorScreenState
         ),
       ],
     );
+  }
+
+  /// Dispatch a template `actionButton` press to the matching player flow.
+  /// Single seam shared with the hardcoded [_renderRestActions] row so both
+  /// the legacy buttons and the new `actionButton` field type drive the same
+  /// `_levelUp`/`_shortRest`/`_longRest` handlers. Unknown actions no-op
+  /// (a malformed `typeConfig.action` can't crash the sheet).
+  Future<void> _runCardAction(String action, Character character) {
+    switch (action) {
+      case 'level_up':
+        return _levelUp(character);
+      case 'short_rest':
+        return _shortRest(character);
+      case 'long_rest':
+        return _longRest(character);
+      default:
+        return Future<void>.value();
+    }
   }
 
   int _asInt(Object? raw, [int fallback = 0]) {

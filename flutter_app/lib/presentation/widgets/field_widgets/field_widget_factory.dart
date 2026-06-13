@@ -152,6 +152,15 @@ class FieldWidgetFactory {
     /// `extra_hp` adjusts its own value AND combat_stats.{hp,max_hp}
     /// atomically). Editor merges the patch into the entity fields.
     void Function(Map<String, dynamic> patch)? onPatchFields,
+
+    /// Player-action callback for `actionButton` fields. The host (the
+    /// character editor) maps the action string (`level_up`/`short_rest`/
+    /// `long_rest`) onto its existing `_levelUp`/`_shortRest`/`_longRest`
+    /// flows, so the field button and the legacy rest-actions row drive the
+    /// SAME code path (the-template-system §"actionButton"). Null in
+    /// non-character contexts (the database card view has no live character);
+    /// the button then renders disabled rather than half-working.
+    Future<void> Function(String action)? onAction,
   }) {
     // Special-case top-level extra_hp field (signed delta input that also
     // mutates combat_stats.hp/max_hp). Must precede the type switch since
@@ -501,6 +510,16 @@ class FieldWidgetFactory {
         readOnly: readOnly,
         onChanged: onChanged,
         entities: entities,
+      ),
+      // actionButton (PR-2.3 slice 3b): the player verbs — Level Up / Short
+      // Rest / Long Rest — as a button. The label is the creator-editable
+      // FieldSchema.label; the process is fixed per `typeConfig.action` and
+      // runs through [onAction], which the host wires to its existing
+      // level-up/rest flows (so the field button and the legacy rest-actions
+      // row share one path). No card value — it stores nothing.
+      FieldType.actionButton => _ActionButtonFieldWidget(
+        schema: schema,
+        onAction: onAction,
       ),
       _ => _TextFieldWidget(
         schema: schema,
@@ -3142,6 +3161,72 @@ class _SlotPip extends StatelessWidget {
 ///   - `fixed` / `levelTable` / `formula` — derived by the Phase-3 rule
 ///     runtime. Until that lands the stored max is shown read-only (the field
 ///     still works; only the auto-derivation is deferred), so no card breaks.
+/// `actionButton` (PR-2.3 slice 3b) — renders the player verbs (Level Up /
+/// Short Rest / Long Rest) as a button on the PC sheet. The button **label**
+/// is the creator-editable [FieldSchema.label]; the **process is fixed** per
+/// `typeConfig.action` and runs through the host's [onAction] callback, which
+/// the character editor maps onto its existing `_levelUp`/`_shortRest`/
+/// `_longRest` flows — so the field button and the legacy rest-actions row
+/// share one code path (the-template-system §"actionButton"). When no host
+/// supplies [onAction] (e.g. the database card view, which has no live
+/// character) the button renders **disabled** rather than half-working. What a
+/// press *does to a pouch* is declared on the target pouch field's rules
+/// (`refill_pouch`/`empty_pouch`), resolved by the Phase-3 runtime — not here.
+///
+/// `typeConfig.placement` (`header`/`inline`) is a layout hint for the host:
+/// inline rendering (this widget in its field-list slot) is always correct;
+/// header hoisting pairs with the built-in PC-category type swap that retires
+/// the hardcoded `_renderRestActions` row, so it lands with that change.
+class _ActionButtonFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final Future<void> Function(String action)? onAction;
+
+  const _ActionButtonFieldWidget({
+    required this.schema,
+    this.onAction,
+  });
+
+  /// `level_up | short_rest | long_rest`, defaulting to `level_up` for a
+  /// missing/unknown value so a malformed config still renders a usable verb.
+  String get _action {
+    const valid = {'level_up', 'short_rest', 'long_rest'};
+    final s = (schema.typeConfig?['action'] ?? 'level_up').toString();
+    return valid.contains(s) ? s : 'level_up';
+  }
+
+  IconData get _icon => switch (_action) {
+        'short_rest' => Icons.bedtime_outlined,
+        'long_rest' => Icons.nightlight_round,
+        _ => Icons.arrow_upward,
+      };
+
+  /// Fallback verb when the creator left the label blank — mirrors the
+  /// hardcoded `_renderRestActions` button text so the swap is seamless.
+  String get _defaultLabel => switch (_action) {
+        'short_rest' => 'Short Rest',
+        'long_rest' => 'Long Rest',
+        _ => 'Level Up',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final label = schema.label.trim().isEmpty ? _defaultLabel : schema.label;
+    final action = _action;
+    final enabled = onAction != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: enabled ? () => onAction!(action) : null,
+          icon: Icon(_icon, size: 16),
+          label: Text(label),
+        ),
+      ),
+    );
+  }
+}
+
 class _IntPouchFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
