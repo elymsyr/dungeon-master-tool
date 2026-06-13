@@ -73,8 +73,15 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 /// the shared, idempotent shim ([migratePipIntToCheckboxPouch],
 /// content-convert §2), and the SAME shim migrates existing card values at
 /// world-open — so neither the template nor stored content is ever half-built.
-/// The genuinely-NEW `actionButton` rest/level-up fields that retire the
-/// hardcoded `_renderRestActions` row are the next slice.
+///
+/// **PR-2.3 slice B part 2 (this slice) — the `actionButton` header fields.**
+/// The three genuinely-NEW `actionButton` fields ([pcActionButtonFields] —
+/// level-up / short-rest / long-rest, `placement: header`) are appended to the
+/// Player Character category. They RETIRE the hardcoded `_renderRestActions`
+/// row in `character_editor_screen.dart`: the sheet now hoists every header-
+/// placed `actionButton` field into its action row (the slice-3b `onAction` ->
+/// `_runCardAction` seam), falling back to the legacy hardcoded row only for a
+/// v2 schema that carries no such field (dual-stack, roadmap §1.4).
 ///
 /// This is the SINGLE SOURCE OF TRUTH consumed by both the exporter and the
 /// loader's hash-equality assert, so the on-disk asset and the in-code
@@ -210,24 +217,80 @@ const pcPipTypeConfig = <String, dynamic>{
   'style': 'pips',
 };
 
+/// The PC-category `actionButton` header fields (the-template-system §2.3),
+/// appended to the Player Character category by [swapPlayerCharacterFieldTypes].
+/// Each entry is `(fieldKey, label, action)`; `action` is the closed verb set
+/// (`level_up | short_rest | long_rest`) and the editable `label` matches the
+/// legacy `_renderRestActions` button text exactly (pixel parity — the Phase-2
+/// screenshot gate).
+///
+/// **RULE-FREE (roadmap §1.1):** they carry `typeConfig` only —
+/// `{action, placement:'header'}`. What a button *does to a pouch* is declared
+/// on the target pouch field via an `on_button` rule (the-template-system §2.3
+/// `actionButton`), a Phase-3 JIT wave — never on the button itself. The
+/// `placement:'header'` hint tells the PC sheet to hoist them into the header
+/// action row (retiring the hardcoded `_renderRestActions`), and tells the
+/// sheet's `_renderSchemaFields` to skip them inline so they never double-render.
+const pcActionButtonFields = <({String key, String label, String action})>[
+  (key: 'level_up', label: 'Level Up', action: 'level_up'),
+  (key: 'short_rest', label: 'Short Rest', action: 'short_rest'),
+  (key: 'long_rest', label: 'Long Rest', action: 'long_rest'),
+];
+
 /// Rewrites the Player Character category's wire-identical v2 field types to
 /// their v3 equivalents ([pcFieldTypeSwaps]), attaching each type's
-/// `typeConfig`. Every other category (and every other field) is returned
-/// untouched — the swap is deliberately scoped to the PC sheet (roadmap PR-T6,
-/// the Phase-2 screenshot gate). Idempotent and value-preserving: a field
-/// already carrying the v3 type is left as-is, and no `defaultValue`/`subFields`
-/// (the stored value wire) is altered.
+/// `typeConfig`, and appends the three [pcActionButtonFields] header buttons.
+/// Every other category (and every other field) is returned untouched — the
+/// swap is deliberately scoped to the PC sheet (roadmap PR-T6, the Phase-2
+/// screenshot gate). Idempotent and value-preserving: a field already carrying
+/// the v3 type is left as-is, no `defaultValue`/`subFields` (the stored value
+/// wire) is altered, and an already-appended action button (matched by
+/// `fieldKey`) is not duplicated.
 WorldSchema swapPlayerCharacterFieldTypes(WorldSchema schema) {
   final categories = [
     for (final category in schema.categories)
       if (category.slug == builtinPlayerCharacterSlug)
         category.copyWith(
-          fields: [for (final field in category.fields) _swapPcField(field)],
+          fields: _swapAndAppendPcFields(category.categoryId, category.fields),
         )
       else
         category,
   ];
   return schema.copyWith(categories: categories);
+}
+
+/// Swaps each PC field type ([_swapPcField]) and appends the
+/// [pcActionButtonFields] header buttons after the last existing field.
+/// Idempotent: a button whose `fieldKey` is already present (re-run) is
+/// skipped, so re-evolving an already-v3 category is a byte-identical no-op.
+List<FieldSchema> _swapAndAppendPcFields(
+  String categoryId,
+  List<FieldSchema> fields,
+) {
+  final swapped = [for (final field in fields) _swapPcField(field)];
+  final existingKeys = {for (final f in swapped) f.fieldKey};
+  var nextOrder = swapped.fold<int>(
+        0,
+        (max, f) => f.orderIndex > max ? f.orderIndex : max,
+      ) +
+      1;
+  final actions = <FieldSchema>[];
+  for (final spec in pcActionButtonFields) {
+    if (existingKeys.contains(spec.key)) continue;
+    actions.add(FieldSchema(
+      fieldId: 'fld-pc-${spec.key}',
+      categoryId: categoryId,
+      fieldKey: spec.key,
+      label: spec.label,
+      fieldType: FieldType.actionButton,
+      typeConfig: {'action': spec.action, 'placement': 'header'},
+      isBuiltin: true,
+      orderIndex: nextOrder++,
+      createdAt: builtinDnd5eTemplateTimestamp,
+      updatedAt: builtinDnd5eTemplateTimestamp,
+    ));
+  }
+  return [...swapped, ...actions];
 }
 
 /// Applies the PC-category type swap to a single field. Wire-identical parity

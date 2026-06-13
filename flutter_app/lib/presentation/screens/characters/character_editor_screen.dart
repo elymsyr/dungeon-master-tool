@@ -647,7 +647,7 @@ class _CharacterEditorScreenState
                   const SizedBox(height: 12),
                   // Prerequisite-warnings banner removed in Phase 1.1; the new
                   // template runtime will re-surface check_clauses warnings.
-                  _renderRestActions(palette, character),
+                  _renderHeaderActions(palette, playerCat, character),
                   const SizedBox(height: 16),
                   ..._renderResolvedGrants(palette, character),
                   ..._renderSchemaFields(
@@ -1000,6 +1000,13 @@ class _CharacterEditorScreenState
     final fieldsByGroup = <String?, List<FieldSchema>>{};
     for (final f in cat.fields) {
       if (_hiddenCharacterFieldKeys.contains(f.fieldKey)) continue;
+      // actionButton fields placed in the header (placement: header) are
+      // hoisted into the action row by _renderHeaderActions — skip them here
+      // so they never double-render inline.
+      if (f.fieldType == FieldType.actionButton &&
+          f.typeConfig?['placement'] == 'header') {
+        continue;
+      }
       fieldsByGroup.putIfAbsent(f.groupId, () => []).add(f);
     }
     for (final list in fieldsByGroup.values) {
@@ -2593,9 +2600,82 @@ class _CharacterEditorScreenState
     ));
   }
 
+  /// Header action row — the schema-driven replacement for the legacy
+  /// hardcoded [_renderRestActions]. Hoists every PC-category `actionButton`
+  /// field whose `typeConfig.placement == 'header'` (the built-in level-up /
+  /// short-rest / long-rest verbs, the-template-system §2.3) into a single
+  /// Row of equal-width buttons, driven through the same [_runCardAction] seam
+  /// as the inline `_ActionButtonFieldWidget` (slice 3b).
+  ///
+  /// Dual-stack (roadmap §1.4): a v2 schema carries no `actionButton` field,
+  /// so this falls back to the legacy hardcoded row — no world loses its rest
+  /// buttons mid-migration, and the v3 row reproduces the v2 layout/icons
+  /// exactly (the Phase-2 pixel-parity gate).
+  Widget _renderHeaderActions(
+      DmToolColors palette, EntityCategorySchema playerCat, Character character) {
+    final headerActions = [
+      for (final f in playerCat.fields)
+        if (f.fieldType == FieldType.actionButton &&
+            f.typeConfig?['placement'] == 'header')
+          f,
+    ]..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    if (headerActions.isEmpty) {
+      return _renderRestActions(palette, character);
+    }
+    final children = <Widget>[];
+    for (final f in headerActions) {
+      if (children.isNotEmpty) children.add(const SizedBox(width: 8));
+      final action = (f.typeConfig?['action'] as String?) ?? 'level_up';
+      children.add(Expanded(
+        child: OutlinedButton.icon(
+          onPressed: () => _runCardAction(action, character),
+          icon: Icon(_headerActionIcon(action), size: 16),
+          label:
+              Text(f.label.isNotEmpty ? f.label : _headerActionLabel(action)),
+        ),
+      ));
+    }
+    return Row(children: children);
+  }
+
+  /// Per-action icon for the header action buttons — identical to both the
+  /// legacy [_renderRestActions] row and the inline `_ActionButtonFieldWidget`,
+  /// so the verb keeps its glyph whichever surface renders it.
+  IconData _headerActionIcon(String action) {
+    switch (action) {
+      case 'short_rest':
+        return Icons.bedtime_outlined;
+      case 'long_rest':
+        return Icons.nightlight_round;
+      case 'level_up':
+      default:
+        return Icons.arrow_upward;
+    }
+  }
+
+  /// Fallback label for a header action button whose `FieldSchema.label` is
+  /// blank — mirrors the legacy [_renderRestActions] button text.
+  String _headerActionLabel(String action) {
+    switch (action) {
+      case 'short_rest':
+        return 'Short Rest';
+      case 'long_rest':
+        return 'Long Rest';
+      case 'level_up':
+      default:
+        return 'Level Up';
+    }
+  }
+
   /// Action bar shown above the schema fields. Three quick verbs — Level
   /// Up, Short Rest, Long Rest — that wrap the longer-form dialogs so the
   /// player doesn't need to find the level field and bump it by hand.
+  ///
+  /// **Legacy / v2-fallback only.** The v3 PC template ships three
+  /// `actionButton` header fields; [_renderHeaderActions] renders those
+  /// schema-driven and falls back here only for a v2 schema (which has no such
+  /// field). Kept until the per-world authority flip (Phase 3.11) retires the
+  /// v2 stack entirely.
   Widget _renderRestActions(DmToolColors palette, Character character) {
     // Player verbs — bypass edit-mode gate so mid-session level-up / rest
     // doesn't require flipping to edit. Pending upgrades surface in their
