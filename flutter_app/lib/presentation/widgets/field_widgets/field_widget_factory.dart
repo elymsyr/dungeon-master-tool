@@ -486,6 +486,22 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
+      // levelUpTable (PR-2.3 slice 3a): the level-up progression table declared
+      // on class/species. Rows `{level, description, grants[], choices[]}`
+      // (the-template-system §2.3) — a display + per-row editor. The rows GATE
+      // level-up grants/choices, but actually *firing* those grants is the
+      // Phase-3 rule runtime's job (and `planLevelUp`'s rewrite). This widget
+      // is pure data authoring/display — no runtime change. Entity refs in
+      // grants/choices resolve to names via the entity map for display; the
+      // full entity picker is deferred to the JIT class wave (Wave 6), so refs
+      // are authored as plain id/name strings here (the documented wire shape).
+      FieldType.levelUpTable => _LevelUpTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+      ),
       _ => _TextFieldWidget(
         schema: schema,
         value: value,
@@ -3748,6 +3764,633 @@ class _RecordCellLabel extends StatelessWidget {
             ),
           ),
           TextSpan(text: value.isEmpty ? '—' : value),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── levelUpTable — level → {description, grants, choices} progression ──────
+/// Resolve a level-up grant/choice ref (a plain id/name string per the
+/// documented wire) to a human label via the loaded entity map. Falls back to
+/// the raw string when nothing resolves (free-text authoring, picker deferred).
+String _levelUpRefName(dynamic raw, Map<String, Entity>? entities) {
+  final s = raw?.toString().trim() ?? '';
+  if (s.isEmpty) return '';
+  final byId = entities?[s];
+  if (byId != null) return byId.name;
+  return s;
+}
+
+/// Editor + read view for a `levelUpTable` field. Rows are stored as
+/// `List<Map<String,dynamic>>`, each `{level:int, description:String,
+/// grants:[{ref, target}], choices:[{choiceId, prompt, pick, optionRefs[],
+/// target}]}` (the-template-system §2.3). `typeConfig.gate` (`class`/`character`)
+/// is surfaced as a caption — it only affects the Phase-3 resolver, not this UI.
+///
+/// Edit mode preserves insertion order (so live level edits don't reorder a row
+/// out from under the cursor); read mode sorts ascending by level. Entity refs
+/// in grants/choices resolve to names via [entities] for display; authoring is
+/// free-text (id or name) — the full entity picker lands with the JIT class
+/// wave that first ships a populated levelUpTable.
+class _LevelUpTableFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+
+  const _LevelUpTableFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+  });
+
+  String get _gate {
+    final g = schema.typeConfig?['gate'];
+    final s = (g ?? 'class').toString();
+    return s == 'character' ? 'character' : 'class';
+  }
+
+  List<Map<String, dynamic>> _coerceRows(dynamic raw) {
+    if (raw is! List) return [];
+    return [
+      for (final r in raw)
+        if (r is Map) Map<String, dynamic>.from(r),
+    ];
+  }
+
+  List<Map<String, dynamic>> _coerceList(dynamic raw) {
+    if (raw is! List) return [];
+    return [
+      for (final r in raw)
+        if (r is Map) Map<String, dynamic>.from(r),
+    ];
+  }
+
+  int _rowLevel(Map<String, dynamic> row) {
+    final v = row['level'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse('${v ?? ''}') ?? 0;
+  }
+
+  void _writeRows(List<Map<String, dynamic>> rows) => onChanged(rows);
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final rows = _coerceRows(value);
+
+    if (readOnly) {
+      final sorted = [...rows]
+        ..sort((a, b) => _rowLevel(a).compareTo(_rowLevel(b)));
+      if (sorted.isEmpty) return const SizedBox.shrink();
+      return Card(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                schema.label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (var ri = 0; ri < sorted.length; ri++) ...[
+                if (ri > 0) const Divider(height: 14),
+                _buildReadRow(context, palette, sorted[ri]),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        schema.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Gates on $_gate level',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.srdSubtitle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add level', style: TextStyle(fontSize: 11)),
+                  onPressed: () {
+                    final nextLevel = rows.isEmpty
+                        ? 1
+                        : (rows.map(_rowLevel).reduce((a, b) => a > b ? a : b) +
+                            1);
+                    _writeRows([
+                      ...rows,
+                      <String, dynamic>{
+                        'level': nextLevel,
+                        'description': '',
+                        'grants': <Map<String, dynamic>>[],
+                        'choices': <Map<String, dynamic>>[],
+                      },
+                    ]);
+                  },
+                ),
+              ],
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  'No levels — tap + Add level.',
+                  style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                ),
+              ),
+            for (var ri = 0; ri < rows.length; ri++) ...[
+              if (ri > 0) const Divider(height: 16),
+              _buildEditRow(context, palette, rows, ri),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── read mode ──────────────────────────────────────────────────────────
+  Widget _buildReadRow(
+    BuildContext context,
+    DmToolColors palette,
+    Map<String, dynamic> row,
+  ) {
+    final level = _rowLevel(row);
+    final desc = (row['description'] ?? '').toString();
+    final grants = _coerceList(row['grants']);
+    final choices = _coerceList(row['choices']);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 1, right: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: palette.featureCardAccent,
+            borderRadius: palette.br,
+          ),
+          child: Text(
+            'L$level',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (desc.isNotEmpty)
+                Text(desc, style: _fieldValueStyle(context)),
+              for (final g in grants)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    '• Grants ${_levelUpRefName(g['ref'], entities)}'
+                    '${(g['target'] ?? '').toString().isEmpty ? '' : ' → ${g['target']}'}',
+                    style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                  ),
+                ),
+              for (final c in choices)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    '◆ ${(c['prompt'] ?? 'Choice').toString()} '
+                    '(pick ${_asPick(c['pick'])} of '
+                    '${(c['optionRefs'] is List ? (c['optionRefs'] as List).length : 0)})',
+                    style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _asPick(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse('${v ?? ''}') ?? 1;
+  }
+
+  // ── edit mode ──────────────────────────────────────────────────────────
+  Widget _buildEditRow(
+    BuildContext context,
+    DmToolColors palette,
+    List<Map<String, dynamic>> rows,
+    int ri,
+  ) {
+    final row = rows[ri];
+    final keyBase = '${schema.fieldKey}_lut_$ri';
+
+    void writeRow(Map<String, dynamic> next) {
+      final all = [...rows];
+      all[ri] = next;
+      _writeRows(all);
+    }
+
+    void removeRow() {
+      final all = [...rows]..removeAt(ri);
+      _writeRows(all);
+    }
+
+    final grants = _coerceList(row['grants']);
+    final choices = _coerceList(row['choices']);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.featureCardBorder, width: 0.5),
+        borderRadius: palette.br,
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 64,
+                child: TextFormField(
+                  key: ValueKey('${keyBase}_level'),
+                  initialValue: _rowLevel(row).toString(),
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'Level',
+                    isDense: true,
+                    labelStyle: TextStyle(fontSize: 11),
+                  ),
+                  onChanged: (s) =>
+                      writeRow({...row, 'level': int.tryParse(s.trim()) ?? 0}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('${keyBase}_desc'),
+                  initialValue: (row['description'] ?? '').toString(),
+                  style: const TextStyle(fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'Feature / description',
+                    isDense: true,
+                    labelStyle: TextStyle(fontSize: 11),
+                  ),
+                  onChanged: (s) => writeRow({...row, 'description': s}),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove level',
+                icon: const Icon(Icons.delete_outline, size: 18),
+                onPressed: removeRow,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+              ),
+            ],
+          ),
+          // grants ------------------------------------------------------------
+          _SubListHeader(
+            label: 'Grants',
+            palette: palette,
+            onAdd: () => writeRow({
+              ...row,
+              'grants': [
+                ...grants,
+                <String, dynamic>{'ref': '', 'target': ''},
+              ],
+            }),
+          ),
+          for (var gi = 0; gi < grants.length; gi++)
+            _buildGrantRow(palette, row, grants, gi, '${keyBase}_g$gi', writeRow),
+          // choices -----------------------------------------------------------
+          _SubListHeader(
+            label: 'Choices',
+            palette: palette,
+            onAdd: () => writeRow({
+              ...row,
+              'choices': [
+                ...choices,
+                <String, dynamic>{
+                  'choiceId':
+                      'choice-${DateTime.now().microsecondsSinceEpoch}',
+                  'prompt': '',
+                  'pick': 1,
+                  'optionRefs': <String>[],
+                  'target': '',
+                },
+              ],
+            }),
+          ),
+          for (var ci = 0; ci < choices.length; ci++)
+            _buildChoiceRow(
+                palette, row, choices, ci, '${keyBase}_c$ci', writeRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrantRow(
+    DmToolColors palette,
+    Map<String, dynamic> row,
+    List<Map<String, dynamic>> grants,
+    int gi,
+    String keyBase,
+    void Function(Map<String, dynamic>) writeRow,
+  ) {
+    final grant = grants[gi];
+
+    void writeGrant(Map<String, dynamic> next) {
+      final all = [...grants];
+      all[gi] = next;
+      writeRow({...row, 'grants': all});
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              key: ValueKey('${keyBase}_ref'),
+              initialValue: (grant['ref'] ?? '').toString(),
+              style: const TextStyle(fontSize: 12),
+              decoration: const InputDecoration(
+                labelText: 'Grant (entity id or name)',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 11),
+              ),
+              onChanged: (s) => writeGrant({...grant, 'ref': s.trim()}),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 130,
+            child: TextFormField(
+              key: ValueKey('${keyBase}_target'),
+              initialValue: (grant['target'] ?? '').toString(),
+              style: const TextStyle(fontSize: 12),
+              decoration: const InputDecoration(
+                labelText: 'Target field',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 11),
+              ),
+              onChanged: (s) => writeGrant({...grant, 'target': s.trim()}),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove grant',
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () {
+              final all = [...grants]..removeAt(gi);
+              writeRow({...row, 'grants': all});
+            },
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChoiceRow(
+    DmToolColors palette,
+    Map<String, dynamic> row,
+    List<Map<String, dynamic>> choices,
+    int ci,
+    String keyBase,
+    void Function(Map<String, dynamic>) writeRow,
+  ) {
+    final choice = choices[ci];
+    final optionRefs = <String>[
+      if (choice['optionRefs'] is List)
+        for (final o in (choice['optionRefs'] as List)) o.toString(),
+    ];
+
+    void writeChoice(Map<String, dynamic> next) {
+      final all = [...choices];
+      all[ci] = next;
+      writeRow({...row, 'choices': all});
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8, top: 4),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.br,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('${keyBase}_prompt'),
+                  initialValue: (choice['prompt'] ?? '').toString(),
+                  style: const TextStyle(fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'Prompt',
+                    isDense: true,
+                    labelStyle: TextStyle(fontSize: 11),
+                  ),
+                  onChanged: (s) => writeChoice({...choice, 'prompt': s}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 56,
+                child: TextFormField(
+                  key: ValueKey('${keyBase}_pick'),
+                  initialValue: _asPick(choice['pick']).toString(),
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: const InputDecoration(
+                    labelText: 'Pick',
+                    isDense: true,
+                    labelStyle: TextStyle(fontSize: 11),
+                  ),
+                  onChanged: (s) =>
+                      writeChoice({...choice, 'pick': int.tryParse(s.trim()) ?? 1}),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove choice',
+                icon: const Icon(Icons.close, size: 16),
+                onPressed: () {
+                  final all = [...choices]..removeAt(ci);
+                  writeRow({...row, 'choices': all});
+                },
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 160,
+            child: TextFormField(
+              key: ValueKey('${keyBase}_target'),
+              initialValue: (choice['target'] ?? '').toString(),
+              style: const TextStyle(fontSize: 12),
+              decoration: const InputDecoration(
+                labelText: 'Target field',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 11),
+              ),
+              onChanged: (s) => writeChoice({...choice, 'target': s.trim()}),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                'Options',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: palette.srdSubtitle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 13),
+                label: const Text('Add option', style: TextStyle(fontSize: 10)),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => writeChoice({
+                  ...choice,
+                  'optionRefs': [...optionRefs, ''],
+                }),
+              ),
+            ],
+          ),
+          for (var oi = 0; oi < optionRefs.length; oi++)
+            Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      key: ValueKey('${keyBase}_o$oi'),
+                      initialValue: optionRefs[oi],
+                      style: const TextStyle(fontSize: 12),
+                      decoration: const InputDecoration(
+                        labelText: 'Option (entity id or name)',
+                        isDense: true,
+                        labelStyle: TextStyle(fontSize: 11),
+                      ),
+                      onChanged: (s) {
+                        final all = [...optionRefs];
+                        all[oi] = s.trim();
+                        writeChoice({...choice, 'optionRefs': all});
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Remove option',
+                    icon: const Icon(Icons.close, size: 14),
+                    onPressed: () {
+                      final all = [...optionRefs]..removeAt(oi);
+                      writeChoice({...choice, 'optionRefs': all});
+                    },
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 22, minHeight: 22),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small section header ("Grants" / "Choices") with an inline add button,
+/// used by [_LevelUpTableFieldWidget]'s per-row sub-lists.
+class _SubListHeader extends StatelessWidget {
+  final String label;
+  final DmToolColors palette;
+  final VoidCallback onAdd;
+
+  const _SubListHeader({
+    required this.label,
+    required this.palette,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: palette.srdSubtitle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          TextButton.icon(
+            icon: const Icon(Icons.add, size: 13),
+            label: Text('Add ${label.toLowerCase().substring(0, label.length - 1)}',
+                style: const TextStyle(fontSize: 10)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              minimumSize: const Size(0, 28),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: onAdd,
+          ),
         ],
       ),
     );
