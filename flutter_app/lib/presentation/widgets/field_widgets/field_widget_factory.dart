@@ -2875,8 +2875,53 @@ class _SlotFieldWidget extends StatelessWidget {
     onChanged({'count': count, 'states': states});
   }
 
+  /// When the creator configures this pouch as `style:'pips'` with a fixed
+  /// `countSource` (`{kind:'fixed', value:N}` — the v3 death-saves /
+  /// heroic-inspiration shape), the field renders as a fixed row of cumulative
+  /// tap-to-fill pips instead of the editable +/-/refill slot strip. Returns
+  /// the fixed pip count, or `null` when the field should use the default
+  /// slot renderer (no `style:'pips'`, or a non-fixed/invalid count source).
+  int? get _fixedPipCount {
+    final cfg = schema.typeConfig;
+    if (cfg['style'] != 'pips') return null;
+    final src = cfg['countSource'];
+    if (src is! Map || src['kind'] != 'fixed') return null;
+    final v = (src['value'] as num?)?.toInt();
+    if (v == null || v <= 0) return null;
+    return v.clamp(1, 99);
+  }
+
+  /// Fixed-count, cumulative tap-to-fill pip row (the `style:'pips'` config).
+  /// Reuses the legacy [_PipCounter] verbatim so the v3 PC sheet's death-saves
+  /// and heroic-inspiration are pixel-identical to the v2 integer pips. No
+  /// add/remove/refill chrome — the count is template-fixed — and the pips stay
+  /// tappable regardless of [readOnly], since these update mid-session.
+  Widget _buildFixedPips(int count) {
+    final filled = _parsed.states.where((s) => s).length.clamp(0, count);
+    return _LabeledFieldRow(
+      label: schema.label,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: _PipCounter(
+          count: filled,
+          max: count,
+          onChanged: (n) {
+            final next = n.clamp(0, count);
+            _write(
+              count: count,
+              states: List.generate(count, (i) => i < next),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pipCount = _fixedPipCount;
+    if (pipCount != null) return _buildFixedPips(pipCount);
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final state = _parsed;
     final count = state.count;
