@@ -1,3 +1,4 @@
+import '../../../services/template_migration/legacy_content_converter.dart';
 import '../field_schema.dart';
 import '../world_schema.dart';
 import 'builtin_dnd5e_v2_schema.dart';
@@ -62,12 +63,18 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 /// preserving no-ops needing no card migration): `statBlock` →
 /// `abilityScoreTable`, `combatStats` → `combatStatsTable`, `proficiencyTable`
 /// → `skillTree`, `spellSlotGrid` → `pouchMatrix`. Each gains the `typeConfig`
-/// the v3 renderers + editor forms read ([pcFieldTypeSwaps]). The genuinely-NEW
-/// conversions that need a value migration — death-save/heroic-inspiration
-/// integers → `checkboxPouch` (int `n` → `{count, states}`) and the
-/// `actionButton` rest/level-up fields that retire the hardcoded
-/// `_renderRestActions` row — are the NEXT slice (they ship with the world-open
-/// value-migration shim so neither side is half-built).
+/// the v3 renderers + editor forms read ([pcFieldTypeSwaps]).
+///
+/// **PR-2.3 slice B (this slice) — value-migrating pip swap.** The three death-
+/// save / heroic-inspiration `integer` fields are converted to `checkboxPouch`
+/// ([pcPipFieldSwaps]). Unlike the parity renames above this is NOT wire-
+/// identical: the v2 value is a clamped `0..3` integer, the v3 value is the
+/// `{count, states}` pouch wire. The field's `defaultValue` is migrated here via
+/// the shared, idempotent shim ([migratePipIntToCheckboxPouch],
+/// content-convert §2), and the SAME shim migrates existing card values at
+/// world-open — so neither the template nor stored content is ever half-built.
+/// The genuinely-NEW `actionButton` rest/level-up fields that retire the
+/// hardcoded `_renderRestActions` row are the next slice.
 ///
 /// This is the SINGLE SOURCE OF TRUTH consumed by both the exporter and the
 /// loader's hash-equality assert, so the on-disk asset and the in-code
@@ -173,6 +180,36 @@ const Map<String, ({FieldType type, Map<String, dynamic> typeConfig})>
   ),
 };
 
+/// The PC-category **pip** fields converted from v2 `integer` to v3
+/// `checkboxPouch` (content-convert §2 — a VALUE-MIGRATING swap, distinct from
+/// the wire-identical [pcFieldTypeSwaps]). Death-save successes/failures and
+/// heroic inspiration were stored as a clamped `0..3` integer and rendered as a
+/// 3-checkbox widget; the v3 sheet renders them as `checkboxPouch` pips
+/// (`{count, states}`). [swapPlayerCharacterFieldTypes] rewrites the field type,
+/// attaches [pcPipTypeConfig], migrates the `defaultValue` through the shared
+/// idempotent shim ([migratePipIntToCheckboxPouch]), and clears the now-
+/// meaningless integer `minValue`/`maxValue` validation (field-cleanup policy).
+const pcPipFieldKeys = <String>{
+  'death_saves_successes',
+  'death_saves_failures',
+  'heroic_inspiration',
+};
+
+/// The fixed pip count for every built-in PC pip field — three death-save
+/// successes / failures (5e: three of either ends the save) and three heroic-
+/// inspiration charges (the v2 `max: 3` bound).
+const pcPipCount = 3;
+
+/// `checkboxPouch` `typeConfig` for the built-in pip fields: a fixed three-pip
+/// count (so a copied template can't shrink the death-save track) rendered in
+/// the `pips` style. Mirrors `defaultTypeConfig(FieldType.checkboxPouch)` in
+/// `template_editor_provider` and satisfies its completeness validator, so a
+/// copy of the built-in opens immediately editable.
+const pcPipTypeConfig = <String, dynamic>{
+  'countSource': {'kind': 'fixed', 'value': pcPipCount},
+  'style': 'pips',
+};
+
 /// Rewrites the Player Character category's wire-identical v2 field types to
 /// their v3 equivalents ([pcFieldTypeSwaps]), attaching each type's
 /// `typeConfig`. Every other category (and every other field) is returned
@@ -185,21 +222,40 @@ WorldSchema swapPlayerCharacterFieldTypes(WorldSchema schema) {
     for (final category in schema.categories)
       if (category.slug == builtinPlayerCharacterSlug)
         category.copyWith(
-          fields: [
-            for (final field in category.fields)
-              if (pcFieldTypeSwaps.containsKey(field.fieldKey))
-                field.copyWith(
-                  fieldType: pcFieldTypeSwaps[field.fieldKey]!.type,
-                  typeConfig: pcFieldTypeSwaps[field.fieldKey]!.typeConfig,
-                )
-              else
-                field,
-          ],
+          fields: [for (final field in category.fields) _swapPcField(field)],
         )
       else
         category,
   ];
   return schema.copyWith(categories: categories);
+}
+
+/// Applies the PC-category type swap to a single field. Wire-identical parity
+/// renames ([pcFieldTypeSwaps]) only rewrite the type + `typeConfig`; the value-
+/// migrating pip fields ([pcPipFieldKeys]) additionally migrate `defaultValue`
+/// through the shared shim and drop the integer-only `minValue`/`maxValue`
+/// validation. Every other field is returned untouched. Idempotent: a field
+/// already carrying the v3 pouch wire re-migrates to the byte-identical value.
+FieldSchema _swapPcField(FieldSchema field) {
+  final key = field.fieldKey;
+  if (pcFieldTypeSwaps.containsKey(key)) {
+    return field.copyWith(
+      fieldType: pcFieldTypeSwaps[key]!.type,
+      typeConfig: pcFieldTypeSwaps[key]!.typeConfig,
+    );
+  }
+  if (pcPipFieldKeys.contains(key)) {
+    return field.copyWith(
+      fieldType: FieldType.checkboxPouch,
+      typeConfig: pcPipTypeConfig,
+      defaultValue:
+          migratePipIntToCheckboxPouch(field.defaultValue, count: pcPipCount),
+      // The v2 `integer` field carried minValue:0 / maxValue:3 — meaningless on
+      // a `{count, states}` map value, so reset to the empty validation.
+      validation: const FieldValidation(),
+    );
+  }
+  return field;
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel
