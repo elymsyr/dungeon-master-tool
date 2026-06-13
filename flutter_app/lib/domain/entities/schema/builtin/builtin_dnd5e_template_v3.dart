@@ -98,7 +98,18 @@ WorldSchema generateBuiltinDnd5eTemplateV3() {
     createdAt: builtinDnd5eTemplateTimestamp,
     updatedAt: builtinDnd5eTemplateTimestamp,
   );
-  return swapPlayerCharacterFieldTypes(base);
+  final v3 = swapPlayerCharacterFieldTypes(base);
+  // STATIC-FIELD PRESERVATION CHECKPOINT (roadmap PR-2.3; prompt §4 retention
+  // policy). Enforce — not just claim — that the v2->v3 transform never drops,
+  // retypes, or value-mutates a player-facing narrative/static-text field.
+  // Runs under `assert` so it gates debug/test builds (the same discipline as
+  // the editor's validator) at zero release cost. Computed over the live schema
+  // so the audit can never silently drift from the source.
+  assert(() {
+    auditStaticFieldPreservation(build.schema, v3);
+    return true;
+  }());
+  return v3;
 }
 
 /// Slug of the built-in Player Character category (set in `dm.dart`
@@ -334,4 +345,94 @@ Map<String, dynamic> liftSeedRows(
     for (final entry in seedRows.entries)
       if (entry.value.isNotEmpty) entry.key: entry.value,
   };
+}
+
+/// The [FieldType]s that carry player-facing narrative / static prose — the
+/// retention-policy-protected fields (description, notes, biography, backstory,
+/// benefits, appearance, ideals/bonds/flaws, GM notes, flavor, glossary
+/// summary/effects, …). Roadmap §1.4 declares these "sacred": the rule
+/// migration must NEVER delete, retype, or value-mutate one. The set is a
+/// deliberate **superset** — every text/textarea/markdown field is protected,
+/// not just an allow-list of names, so a future category's prose field is
+/// covered automatically.
+const staticNarrativeFieldTypes = <FieldType>{
+  FieldType.text,
+  FieldType.textarea,
+  FieldType.markdown,
+};
+
+/// **STATIC-FIELD PRESERVATION AUDIT** (roadmap PR-2.3 checklist; prompt §4
+/// retention policy). Asserts that every narrative/static-text field present in
+/// the v2 source schema ([v2]) survives the v2→v3 transform ([v3]) with an
+/// IDENTICAL `fieldType` and `defaultValue`, in the same category (matched on
+/// the stable `slug` + `fieldKey`). No prose field is ever dropped, retyped, or
+/// value-mutated by the rule migration.
+///
+/// This is the binding source of truth for the preservation checklist
+/// ([docs/new_system/static-field-preservation-checklist.md]) — it is computed
+/// over the live schema, so the audit can never silently drift from a
+/// hand-maintained list. Returns every preserved `"<slug> / <fieldKey>"`
+/// identifier on success (the explicit audit list); throws [StateError] naming
+/// the first offending field on any violation. Wired into
+/// [generateBuiltinDnd5eTemplateV3] under an `assert`.
+List<String> auditStaticFieldPreservation(WorldSchema v2, WorldSchema v3) {
+  final v3Fields = <String, FieldSchema>{};
+  for (final category in v3.categories) {
+    for (final field in category.fields) {
+      v3Fields['${category.slug} ${field.fieldKey}'] = field;
+    }
+  }
+
+  final preserved = <String>[];
+  for (final category in v2.categories) {
+    for (final field in category.fields) {
+      if (!staticNarrativeFieldTypes.contains(field.fieldType)) continue;
+      final id = '${category.slug} / ${field.fieldKey}';
+      final v3Field = v3Fields['${category.slug} ${field.fieldKey}'];
+      if (v3Field == null) {
+        throw StateError(
+          'Static-field preservation VIOLATION: narrative field "$id" '
+          '(${field.fieldType.name}) was DROPPED from the v3 template.',
+        );
+      }
+      if (v3Field.fieldType != field.fieldType) {
+        throw StateError(
+          'Static-field preservation VIOLATION: narrative field "$id" was '
+          'RETYPED ${field.fieldType.name} -> ${v3Field.fieldType.name} in the '
+          'v3 template.',
+        );
+      }
+      if (!_deepValueEquals(v3Field.defaultValue, field.defaultValue)) {
+        throw StateError(
+          'Static-field preservation VIOLATION: narrative field "$id" had its '
+          'stored defaultValue mutated in the v3 template.',
+        );
+      }
+      preserved.add(id);
+    }
+  }
+  return preserved;
+}
+
+/// Structural deep-equality for a field `defaultValue` (the JSON-shaped value
+/// seed: `Map` / `List` / scalar / `null`). Used by
+/// [auditStaticFieldPreservation] so the preservation check compares stored
+/// prose content by value, not by reference.
+bool _deepValueEquals(dynamic a, dynamic b) {
+  if (identical(a, b)) return true;
+  if (a is Map && b is Map) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || !_deepValueEquals(a[key], b[key])) return false;
+    }
+    return true;
+  }
+  if (a is List && b is List) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!_deepValueEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  return a == b;
 }
