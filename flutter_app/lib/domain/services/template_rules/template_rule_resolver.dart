@@ -13,17 +13,20 @@
 /// panel that compares old/new outputs on demand. Keeping it inert means a
 /// half-built kind never affects a real character sheet.
 ///
-/// **This slice implements ONE rule kind:** `modify_stat` with a *constant*
-/// (`fixed`) value source — the simplest derivation, needing no aspect context
-/// or formula evaluator. Every other kind (`grant_refs`, `grant_proficiency`,
-/// `choose`, `set_pouch_max`, `refill_pouch`/`empty_pouch`, `grant_pouch`,
-/// `check_clauses`, `note`) and every other value source (`field`, `formula`)
-/// is recorded in [TemplateResolution.deferred] rather than silently dropped,
-/// so the harness shows exactly what remains for later slices.
+/// **Implemented so far:** the `modify_stat` rule kind with two value sources —
+/// a constant (`fixed`, slice 1) and a stored field read (`field`, slice 2,
+/// reading `attachment.values[...]`). The [AspectContext] is now built from the
+/// PC card and threaded through [TemplateRuleResolver.resolve] ready for the
+/// `formula` source + evaluator (slice 3). Every other kind (`grant_refs`,
+/// `grant_proficiency`, `choose`, `set_pouch_max`, `refill_pouch`/`empty_pouch`,
+/// `grant_pouch`, `check_clauses`, `note`) and the `formula` value source are
+/// recorded in [TemplateResolution.deferred] rather than silently dropped, so
+/// the harness shows exactly what remains for later slices.
 library;
 
 import '../../entities/schema/field_schema.dart';
 import '../../entities/schema/entity_category_schema.dart';
+import 'aspect_context.dart';
 
 /// The closed set of 6 rule triggers (the-template-system.md §4.1).
 ///
@@ -160,10 +163,14 @@ class TemplateRuleResolver {
   ///
   /// [gateLevel] is the character level used to gate `level_up` rules
   /// (`row.level <= gateLevel`); defaults to a high value so an ungated harness
-  /// run applies every level rule. Pure — returns a fresh [TemplateResolution].
+  /// run applies every level rule. [aspects] is the PC card's aspect map
+  /// (§4.3) — read by the `formula` value source (slice 3); the already-built
+  /// `fixed`/`field` sources don't need it, but it is threaded now so the fold
+  /// signature is stable. Pure — returns a fresh [TemplateResolution].
   TemplateResolution resolve(
     List<ResolverAttachment> attachments, {
     int gateLevel = 1 << 20,
+    AspectContext aspects = AspectContext.empty,
   }) {
     final statDeltas = <String, num>{};
     final notes = <String>[];
@@ -183,6 +190,7 @@ class TemplateRuleResolver {
             rule: rules[i],
             ruleIndex: i,
             gateLevel: gateLevel,
+            aspects: aspects,
             statDeltas: statDeltas,
             deferred: deferred,
           );
@@ -204,6 +212,7 @@ class TemplateRuleResolver {
     required Map<String, dynamic> rule,
     required int ruleIndex,
     required int gateLevel,
+    required AspectContext aspects,
     required Map<String, num> statDeltas,
     required List<ResolverSkip> deferred,
   }) {
@@ -243,14 +252,13 @@ class TemplateRuleResolver {
       return;
     }
 
-    final value = _resolveValueSource(rule['value']);
-    if (value == null) {
-      deferred.add(skip(
-          'value source not a constant (only `fixed` supported this slice)'));
+    final resolved = _resolveValueSource(rule['value'], attachment, field, aspects);
+    if (resolved.value == null) {
+      deferred.add(skip(resolved.reason ?? 'value source could not be resolved'));
       return;
     }
 
-    statDeltas[target] = (statDeltas[target] ?? 0) + value;
+    statDeltas[target] = (statDeltas[target] ?? 0) + resolved.value!;
   }
 
   /// True for the three triggers that fold a stat, with their gating applied.
@@ -288,23 +296,63 @@ class TemplateRuleResolver {
     return 1;
   }
 
-  /// Resolve a value source to a constant number, or null when it is not a
-  /// constant this slice can evaluate.
+  /// Resolve a value source (the-template-system.md §4.2) to a number, or a
+  /// `(value: null, reason: …)` so the caller can record precisely why it was
+  /// deferred.
   ///
-  /// Accepted constant forms:
+  /// Implemented sources:
   ///   * a bare number (`"value": 2`) — shorthand for `fixed`;
-  ///   * `{"kind": "fixed", "value": N}`.
-  /// `field` / `formula` sources return null (deferred to a later slice — they
-  /// need the aspect context / formula evaluator that arrive next).
-  num? _resolveValueSource(dynamic source) {
-    if (source is num) return source;
-    if (source is Map) {
-      final kind = (source['kind'] as String?)?.trim();
-      if (kind == null || kind == 'fixed') {
-        final v = source['value'];
-        if (v is num) return v;
-      }
+  ///   * `{"kind": "fixed", "value": N}` — a constant (slice 1);
+  ///   * `{"kind": "field", "field": "<key>"}` — the stored value of one of the
+  ///     attachment's fields, coerced to a number (slice 2). An absent/blank
+  ///     `field` defaults to the rule's **own** field key, so a rule on an
+  ///     ability-score-improvement field can add that field's own value.
+  /// Not yet implemented:
+  ///   * `{"kind": "formula", "expr": "..."}` — deferred to slice 3 (needs
+  ///     `formula_evaluator.dart` over [aspects]).
+  ({num? value, String? reason}) _resolveValueSource(
+    dynamic source,
+    ResolverAttachment attachment,
+    FieldSchema field,
+    AspectContext aspects,
+  ) {
+    if (source is num) return (value: source, reason: null);
+    if (source is! Map) {
+      return (value: null, reason: 'value source is not a number or object');
     }
+
+    final kind = (source['kind'] as String?)?.trim();
+
+    if (kind == null || kind == 'fixed') {
+      final v = source['value'];
+      if (v is num) return (value: v, reason: null);
+      return (value: null, reason: 'fixed value source missing numeric "value"');
+    }
+
+    if (kind == 'field') {
+      final raw = (source['field'] as String?)?.trim();
+      final lookupKey = (raw != null && raw.isNotEmpty) ? raw : field.fieldKey;
+      final stored = attachment.values[lookupKey];
+      final n = _coerceNum(stored);
+      if (n != null) return (value: n, reason: null);
+      return (
+        value: null,
+        reason: 'field value source "$lookupKey" is not numeric '
+            '(${stored == null ? 'absent' : stored.runtimeType})',
+      );
+    }
+
+    if (kind == 'formula') {
+      // Slice 3: evaluate `expr` over [aspects] via formula_evaluator.dart.
+      return (value: null, reason: 'formula value source deferred to slice 3');
+    }
+
+    return (value: null, reason: 'unknown value source kind "$kind"');
+  }
+
+  static num? _coerceNum(dynamic v) {
+    if (v is num) return v;
+    if (v is String) return num.tryParse(v.trim());
     return null;
   }
 }

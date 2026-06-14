@@ -15,6 +15,7 @@
 
 import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
+import 'package:dungeon_master_tool/domain/services/template_rules/aspect_context.dart';
 import 'package:dungeon_master_tool/domain/services/template_rules/template_rule_resolver.dart';
 
 const _ts = '2026-01-01T00:00:00.000Z';
@@ -23,6 +24,8 @@ FieldSchema _field(
   String categoryId,
   String key, {
   required int order,
+  FieldType type = FieldType.integer,
+  Map<String, dynamic>? typeConfig,
   List<Map<String, dynamic>>? rules,
 }) =>
     FieldSchema(
@@ -30,8 +33,9 @@ FieldSchema _field(
       categoryId: categoryId,
       fieldKey: key,
       label: key,
-      fieldType: FieldType.integer,
+      fieldType: type,
       orderIndex: order,
+      typeConfig: typeConfig,
       rules: rules,
       createdAt: _ts,
       updatedAt: _ts,
@@ -125,6 +129,44 @@ void main() {
     ]),
   );
 
+  // A "Belt of Giant Strength": +N to STR where N is the belt's OWN stored
+  // field value (the `field` value source, slice 2). `value: {kind: field}`
+  // with no explicit "field" defaults to the rule's own field key (`str_bonus`),
+  // whose stored value is 4 → +4 str.
+  final belt = ResolverAttachment(
+    entityId: 'item-belt',
+    isEquipped: true,
+    values: const {'str_bonus': 4},
+    category: _category('item', [
+      _field('item', 'str_bonus', order: 0, rules: [
+        {
+          'kind': 'modify_stat',
+          'trigger': 'when_equipped',
+          'target': 'str',
+          'value': {'kind': 'field'},
+        },
+      ]),
+    ]),
+  );
+
+  // A "Cloak of Protection": +ac equal to a DIFFERENT stored field (explicit
+  // "field" key → reads `attachment.values['protection']` = 1).
+  final cloak = ResolverAttachment(
+    entityId: 'item-cloak',
+    isEquipped: true,
+    values: const {'protection': 1},
+    category: _category('item', [
+      _field('item', 'cloak_ac', order: 0, rules: [
+        {
+          'kind': 'modify_stat',
+          'trigger': 'when_equipped',
+          'target': 'ac',
+          'value': {'kind': 'field', 'field': 'protection'},
+        },
+      ]),
+    ]),
+  );
+
   // A feat carrying a not-yet-built kind + a formula value source — both must
   // land in `deferred`, never silently change a stat.
   final feat = ResolverAttachment(
@@ -148,14 +190,66 @@ void main() {
     ]),
   );
 
+  // ── Aspect context (slice 2): built from a synthetic PC card. ────────────
+  final pcCategory = _category('player-character', [
+    _field('player-character', 'abilities',
+        order: 0,
+        type: FieldType.abilityScoreTable,
+        typeConfig: {
+          'publishAspects': true,
+          'modifierBase': 10,
+          'modifierStep': 2,
+          'columns': [
+            {'key': 'str', 'label': 'STR'},
+            {'key': 'dex', 'label': 'DEX'},
+            {'key': 'con', 'label': 'CON'},
+          ],
+        }),
+    _field('player-character', 'combat',
+        order: 1, type: FieldType.combatStatsTable),
+    _field('player-character', 'prof_bonus',
+        order: 2,
+        type: FieldType.integer,
+        typeConfig: {'publishAspect': 'prof_bonus'}),
+  ]);
+  final aspects = AspectContext.fromPcCard(
+    pcCategory: pcCategory,
+    values: const {
+      'abilities': {'str': 16, 'dex': 14, 'con': 9},
+      'combat': {'level': 5, 'ac': 17, 'max_hp': 42, 'hp': 30},
+      'prof_bonus': 3,
+    },
+    classLevelsBySlug: const {'barbarian': 5},
+  );
+
+  print('=== AspectContext (slice 2) ===');
+  final aspectKeys = aspects.aspects.keys.toList()..sort();
+  for (final k in aspectKeys) {
+    print('  $k = ${aspects.value(k)}');
+  }
+  // con 9 exercises the floor() rule: floor((9-10)/2) = -1 (NOT 0 from `~/`).
+  final aspectsOk = aspects.value('str') == 16 &&
+      aspects.value('str_mod') == 3 &&
+      aspects.value('dex_mod') == 2 &&
+      aspects.value('con_mod') == -1 &&
+      aspects.value('level') == 5 &&
+      aspects.value('ac') == 17 &&
+      aspects.value('max_hp') == 42 &&
+      aspects.value('prof_bonus') == 3 &&
+      aspects.value('class_level(barbarian)') == 5 &&
+      !aspects.has('hp'); // combatStatsTable publishes only level/ac/max_hp
+  print('Aspect self-check: ${aspectsOk ? 'PASS' : 'FAIL'}\n');
+
+  // ── Stat fold ────────────────────────────────────────────────────────────
   const resolver = TemplateRuleResolver();
   final result = resolver.resolve(
-    [species, shield, plate, barbarian, feat],
+    [species, shield, plate, barbarian, belt, cloak, feat],
     gateLevel: 5,
+    aspects: aspects,
   );
 
   print('=== TemplateRuleResolver shadow harness (gateLevel: 5) ===\n');
-  print('Stat overlay (expected: ac +3, speed +10):');
+  print('Stat overlay (expected: ac +4, speed +10, str +4):');
   if (result.statDeltas.isEmpty) {
     print('  (none)');
   } else {
@@ -166,7 +260,7 @@ void main() {
     }
   }
 
-  print('\nDeferred (not implemented this slice) — expected 2 '
+  print('\nDeferred (not implemented yet) — expected 2 '
       '(formula value source, grant_refs kind):');
   if (result.deferred.isEmpty) {
     print('  (none)');
@@ -177,10 +271,14 @@ void main() {
   }
 
   // Self-checks so the harness fails loudly if a future edit breaks the slice.
-  final ac = result.delta('ac');
-  final speed = result.delta('speed');
-  final ok = ac == 3 && speed == 10 && result.deferred.length == 2;
-  print('\nResult: ${ok ? 'PASS' : 'FAIL'} '
-      '(ac=$ac expected 3, speed=$speed expected 10, '
+  final ac = result.delta('ac'); // species 1 + shield 2 + cloak(field) 1 = 4
+  final speed = result.delta('speed'); // barbarian L5 fast movement = 10
+  final str = result.delta('str'); // belt own-field value = 4
+  final foldOk =
+      ac == 4 && speed == 10 && str == 4 && result.deferred.length == 2;
+  print('\nFold self-check: ${foldOk ? 'PASS' : 'FAIL'} '
+      '(ac=$ac expected 4, speed=$speed expected 10, str=$str expected 4, '
       'deferred=${result.deferred.length} expected 2)');
+
+  print('\nOverall: ${aspectsOk && foldOk ? 'PASS' : 'FAIL'}');
 }
