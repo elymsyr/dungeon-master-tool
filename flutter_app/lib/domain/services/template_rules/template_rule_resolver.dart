@@ -26,11 +26,16 @@
 ///     comparison clauses (inline, or read from the field's stored rows) against
 ///     the [AspectContext]; an unmet prerequisite pushes a policy-tagged string
 ///     into [TemplateResolution.warnings] (the §4.4-step-5 prereq-banner content).
+///   * `grant_refs` (slice 5) — collects entity-id refs (traits, languages,
+///     resistances, spells, actions) into a PC list-field named by `target`,
+///     de-duplicated, in [TemplateResolution.grants].
+///   * `grant_proficiency` (slice 5) — sets a proficiency `tier`
+///     (`proficient`/`expertise`) on a skillTree field's rows, in
+///     [TemplateResolution.proficiencyGrants].
 ///
-/// Every other kind (`grant_refs`, `grant_proficiency`, `choose`,
-/// `set_pouch_max`, `refill_pouch`/`empty_pouch`, `grant_pouch`) is recorded in
-/// [TemplateResolution.deferred] rather than silently dropped, so the harness
-/// shows exactly what remains for later slices.
+/// Every other kind (`choose`, `set_pouch_max`, `refill_pouch`/`empty_pouch`,
+/// `grant_pouch`) is recorded in [TemplateResolution.deferred] rather than
+/// silently dropped, so the harness shows exactly what remains for later slices.
 library;
 
 import '../../entities/schema/field_schema.dart';
@@ -67,8 +72,9 @@ abstract final class RuleTriggers {
 }
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
-/// (the-template-system.md §4.2). [modifyStat], [note] and [checkClauses] are
-/// interpreted; the rest are still recorded as deferred.
+/// (the-template-system.md §4.2). [modifyStat], [note], [checkClauses],
+/// [grantRefs] and [grantProficiency] are interpreted; the rest are still
+/// recorded as deferred.
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -145,6 +151,18 @@ class TemplateResolution {
   /// — the policy-tagged content of the §4.4-step-5 prereq banner.
   final List<String> warnings;
 
+  /// Entity-id refs granted into a PC list-field by `grant_refs` (§4.2:
+  /// traits/languages/resistances/spells/actions), keyed by the target list-field
+  /// key and de-duplicated in fold order (e.g.
+  /// `{'resistances': ['fire', 'cold']}`).
+  final Map<String, List<String>> grants;
+
+  /// Proficiency tiers set on a skillTree field's rows by `grant_proficiency`
+  /// (§4.2), keyed by the target skillTree fieldKey then row name → tier
+  /// (`proficient`/`expertise`); e.g. `{'skills': {'Stealth': 'expertise'}}`.
+  /// `expertise` outranks `proficient` when a row is granted twice.
+  final Map<String, Map<String, String>> proficiencyGrants;
+
   /// Rules not interpreted by this slice (kind or value-source not yet built).
   final List<ResolverSkip> deferred;
 
@@ -152,14 +170,28 @@ class TemplateResolution {
     required this.statDeltas,
     required this.notes,
     required this.warnings,
+    required this.grants,
+    required this.proficiencyGrants,
     required this.deferred,
   });
 
   /// The net delta accumulated for [aspect] (0 when untouched).
   num delta(String aspect) => statDeltas[aspect] ?? 0;
 
+  /// The de-duplicated refs granted into [fieldKey] (empty when none).
+  List<String> grantsFor(String fieldKey) => grants[fieldKey] ?? const [];
+
+  /// The tier (`proficient`/`expertise`) granted to [rowName] in skillTree
+  /// [fieldKey], or `null` when that row got no grant.
+  String? proficiencyFor(String fieldKey, String rowName) =>
+      proficiencyGrants[fieldKey]?[rowName];
+
   bool get isEmpty =>
-      statDeltas.isEmpty && notes.isEmpty && warnings.isEmpty;
+      statDeltas.isEmpty &&
+      notes.isEmpty &&
+      warnings.isEmpty &&
+      grants.isEmpty &&
+      proficiencyGrants.isEmpty;
 }
 
 /// Stateless fold over a v3 template's rule attachments.
@@ -187,6 +219,8 @@ class TemplateRuleResolver {
     final statDeltas = <String, num>{};
     final notes = <String>[];
     final warnings = <String>[];
+    final grants = <String, List<String>>{};
+    final proficiencyGrants = <String, Map<String, String>>{};
     final deferred = <ResolverSkip>[];
 
     for (final attachment in attachments) {
@@ -206,6 +240,8 @@ class TemplateRuleResolver {
             statDeltas: statDeltas,
             notes: notes,
             warnings: warnings,
+            grants: grants,
+            proficiencyGrants: proficiencyGrants,
             deferred: deferred,
           );
         }
@@ -216,6 +252,8 @@ class TemplateRuleResolver {
       statDeltas: statDeltas,
       notes: notes,
       warnings: warnings,
+      grants: grants,
+      proficiencyGrants: proficiencyGrants,
       deferred: deferred,
     );
   }
@@ -230,6 +268,8 @@ class TemplateRuleResolver {
     required Map<String, num> statDeltas,
     required List<String> notes,
     required List<String> warnings,
+    required Map<String, List<String>> grants,
+    required Map<String, Map<String, String>> proficiencyGrants,
     required List<ResolverSkip> deferred,
   }) {
     final kind = (rule['kind'] as String?)?.trim() ?? '';
@@ -278,6 +318,30 @@ class TemplateRuleResolver {
           trigger: trigger,
           aspects: aspects,
           warnings: warnings,
+        );
+      case RuleKinds.grantRefs:
+        _foldGrantRefs(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          grants: grants,
+          deferred: deferred,
+        );
+      case RuleKinds.grantProficiency:
+        _foldGrantProficiency(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          proficiencyGrants: proficiencyGrants,
+          deferred: deferred,
         );
       default:
         deferred.add(
@@ -406,6 +470,177 @@ class TemplateRuleResolver {
       }
     }
   }
+
+  /// `grant_refs` (§4.2): collect entity-id refs into a PC list-field named by
+  /// `target`, de-duplicated in fold order. Refs come from inline `rule['refs']`
+  /// (or `params.refs`), else the rule's **own** stored field value
+  /// (`attachment.values[field.fieldKey]`). Gated by the folding triggers — a
+  /// `level_up` grant only lands once the gate level is reached; an unequipped
+  /// item's `when_equipped` grant contributes nothing (not a skip). A grant
+  /// authored under a non-folding trigger, a missing `target`, or no resolvable
+  /// refs is surfaced as deferred, never silently dropped.
+  void _foldGrantRefs({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required Map<String, List<String>> grants,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
+      if (!_isFoldingTrigger(trigger)) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a grant trigger'));
+      }
+      return;
+    }
+
+    final target = (rule['target'] as String?)?.trim() ?? '';
+    if (target.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'grant_refs missing "target" list-field key'));
+      return;
+    }
+
+    final refs = _gatherStrings(
+      rule,
+      attachment,
+      field,
+      inlineKey: 'refs',
+      mapKeys: const ['id', 'ref', 'entity_id', 'slug'],
+    );
+    if (refs.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'grant_refs found no refs (inline "refs" or stored field '
+          '"${field.fieldKey}")'));
+      return;
+    }
+
+    final bucket = grants.putIfAbsent(target, () => <String>[]);
+    for (final ref in refs) {
+      if (!bucket.contains(ref)) bucket.add(ref);
+    }
+  }
+
+  /// `grant_proficiency` (§4.2): set a proficiency tier on a skillTree field's
+  /// rows. `target` is the skillTree fieldKey; `tier` ∈ `proficient`/`expertise`
+  /// (default `proficient`); the affected rows come from inline `rule['rows']`
+  /// (or `params.rows`), else the rule's own stored field value. Recorded into
+  /// [proficiencyGrants] as `{target: {rowName: tier}}`; `expertise` outranks
+  /// `proficient` when a row is granted twice. Same trigger gating as
+  /// `grant_refs`; a non-folding trigger / missing target / no rows defers.
+  void _foldGrantProficiency({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required Map<String, Map<String, String>> proficiencyGrants,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
+      if (!_isFoldingTrigger(trigger)) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a grant trigger'));
+      }
+      return;
+    }
+
+    final target = (rule['target'] as String?)?.trim() ?? '';
+    if (target.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'grant_proficiency missing "target" skillTree field key'));
+      return;
+    }
+
+    final rows = _gatherStrings(
+      rule,
+      attachment,
+      field,
+      inlineKey: 'rows',
+      mapKeys: const ['name', 'row', 'skill', 'ability'],
+    );
+    if (rows.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'grant_proficiency found no rows (inline "rows" or stored field '
+          '"${field.fieldKey}")'));
+      return;
+    }
+
+    final tier = _proficiencyTier(rule);
+    final bucket =
+        proficiencyGrants.putIfAbsent(target, () => <String, String>{});
+    for (final row in rows) {
+      bucket[row] = _higherTier(bucket[row], tier);
+    }
+  }
+
+  /// Collect a list of strings for a collection rule (`grant_refs` /
+  /// `grant_proficiency`): inline `rule[inlineKey]` (or `rule['params']
+  /// [inlineKey]`), else the rule's own stored field value
+  /// (`attachment.values[field.fieldKey]`). A bare scalar source is tolerated as
+  /// a single-element list. Each entry is a bare string or a map carrying the id
+  /// under one of [mapKeys]; blank/empty entries are skipped.
+  List<String> _gatherStrings(
+    Map<String, dynamic> rule,
+    ResolverAttachment attachment,
+    FieldSchema field, {
+    required String inlineKey,
+    required List<String> mapKeys,
+  }) {
+    dynamic source = rule[inlineKey];
+    if (source is! List) {
+      final params = rule['params'];
+      if (params is Map && params[inlineKey] is List) {
+        source = params[inlineKey];
+      }
+    }
+    source ??= attachment.values[field.fieldKey];
+    final list =
+        source is List ? source : (source == null ? const [] : [source]);
+
+    final out = <String>[];
+    for (final entry in list) {
+      final value = _stringFrom(entry, mapKeys);
+      if (value != null && value.isNotEmpty) out.add(value);
+    }
+    return out;
+  }
+
+  static String? _stringFrom(dynamic entry, List<String> mapKeys) {
+    if (entry is String) return entry.trim();
+    if (entry is num) return entry.toString();
+    if (entry is Map) {
+      for (final k in mapKeys) {
+        final v = entry[k];
+        if (v is String && v.trim().isNotEmpty) return v.trim();
+        if (v is num) return v.toString();
+      }
+    }
+    return null;
+  }
+
+  /// `grant_proficiency` tier: `expertise` or `proficient` (default), read from
+  /// `rule['tier']` (or under `params`).
+  String _proficiencyTier(Map<String, dynamic> rule) {
+    String? raw = (rule['tier'] as String?)?.trim();
+    if (raw == null || raw.isEmpty) {
+      final params = rule['params'];
+      if (params is Map) raw = (params['tier'] as String?)?.trim();
+    }
+    return raw?.toLowerCase() == 'expertise' ? 'expertise' : 'proficient';
+  }
+
+  /// Combine two proficiency tiers — `expertise` always wins over `proficient`.
+  String _higherTier(String? existing, String incoming) =>
+      (existing == 'expertise' || incoming == 'expertise')
+          ? 'expertise'
+          : 'proficient';
 
   /// True for the three triggers that fold a stat, with their gating applied.
   bool _triggerActive(

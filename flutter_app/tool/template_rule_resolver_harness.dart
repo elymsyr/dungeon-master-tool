@@ -168,10 +168,15 @@ void main() {
   );
 
   // A "Tough"-style feat: a `formula` value source (`2 * level`, slice 3) that
-  // now resolves against the aspect context (level 5 → +10 max_hp), plus a
-  // not-yet-built `grant_refs` kind that must still land in `deferred`.
+  // resolves against the aspect context (level 5 → +10 max_hp), plus a
+  // `grant_refs` kind (slice 5) that now RESOLVES — it reads the refs from its
+  // own stored field (`grant_resistance` = ['fire', 'cold']) into the PC
+  // `resistances` list-field (so `deferred` drops from 1 to 0).
   final feat = ResolverAttachment(
     entityId: 'feat-tough',
+    values: const {
+      'grant_resistance': ['fire', 'cold'],
+    },
     category: _category('feat', [
       _field('feat', 'hp_per_level', order: 0, rules: [
         {
@@ -186,6 +191,69 @@ void main() {
           'kind': 'grant_refs',
           'trigger': 'when_granted',
           'target': 'resistances',
+        },
+      ]),
+    ]),
+  );
+
+  // A "Half-Elf"-style species exercising `grant_refs` (slice 5) with INLINE
+  // refs (not a stored field) and DE-DUPLICATION: it grants `fire` again (already
+  // granted by the feat) plus `poison`, so `resistances` ends as the deduped
+  // ['fire', 'cold', 'poison'] (fold order: feat fire/cold, then species poison;
+  // the duplicate fire is dropped). Refs are given as maps carrying `id`, to
+  // exercise the map-ref form.
+  final halfElf = ResolverAttachment(
+    entityId: 'species-half-elf',
+    category: _category('species', [
+      _field('species', 'fey_resistance', order: 0, rules: [
+        {
+          'kind': 'grant_refs',
+          'trigger': 'when_granted',
+          'target': 'resistances',
+          'refs': [
+            {'id': 'fire'},
+            {'id': 'poison'},
+          ],
+        },
+      ]),
+    ]),
+  );
+
+  // A "Rogue" exercising `grant_proficiency` (slice 5). Two fields:
+  //   * `expert_skills` (order 0) grants `expertise` on rows read from its own
+  //     stored recordList (Stealth, Sleight of Hand) — the field-rows path.
+  //   * `base_skills` (order 1) grants `proficient` on INLINE rows (Stealth,
+  //     Perception) — exercising inline rows AND the tier-precedence rule:
+  //     Stealth was already expertise, so the later proficient grant must NOT
+  //     downgrade it. Final `skills`: Stealth=expertise, Sleight of
+  //     Hand=expertise, Perception=proficient.
+  final rogue = ResolverAttachment(
+    entityId: 'class-rogue',
+    values: const {
+      'expert_skills': [
+        {'name': 'Stealth'},
+        {'name': 'Sleight of Hand'},
+      ],
+    },
+    category: _category('rogue', [
+      _field('rogue', 'expert_skills',
+          order: 0,
+          type: FieldType.recordList,
+          rules: [
+            {
+              'kind': 'grant_proficiency',
+              'trigger': 'when_granted',
+              'target': 'skills',
+              'tier': 'expertise',
+            },
+          ]),
+      _field('rogue', 'base_skills', order: 1, rules: [
+        {
+          'kind': 'grant_proficiency',
+          'trigger': 'when_granted',
+          'target': 'skills',
+          'tier': 'proficient',
+          'rows': ['Stealth', 'Perception'],
         },
       ]),
     ]),
@@ -327,6 +395,8 @@ void main() {
       belt,
       cloak,
       feat,
+      halfElf,
+      rogue,
       monk,
       flametongue,
       grappler,
@@ -368,8 +438,31 @@ void main() {
     }
   }
 
-  print('\nDeferred (not implemented yet) — expected 1 '
-      '(grant_refs kind; the formula value source now resolves):');
+  print('\nGrants (grant_refs, slice 5) — expected '
+      'resistances=[fire, cold, poison]:');
+  if (result.grants.isEmpty) {
+    print('  (none)');
+  } else {
+    final keys = result.grants.keys.toList()..sort();
+    for (final k in keys) {
+      print('  $k: ${result.grants[k]}');
+    }
+  }
+
+  print('\nProficiency grants (grant_proficiency, slice 5) — expected '
+      'skills={Stealth: expertise, Sleight of Hand: expertise, '
+      'Perception: proficient}:');
+  if (result.proficiencyGrants.isEmpty) {
+    print('  (none)');
+  } else {
+    final keys = result.proficiencyGrants.keys.toList()..sort();
+    for (final k in keys) {
+      print('  $k: ${result.proficiencyGrants[k]}');
+    }
+  }
+
+  print('\nDeferred (not implemented yet) — expected 0 '
+      '(grant_refs + grant_proficiency now resolve):');
   if (result.deferred.isEmpty) {
     print('  (none)');
   } else {
@@ -393,11 +486,11 @@ void main() {
       maxHp == 10 &&
       unarmoredAc == 11 &&
       profCheck == 3 &&
-      result.deferred.length == 1;
+      result.deferred.isEmpty;
   print('\nFold self-check: ${foldOk ? 'PASS' : 'FAIL'} '
       '(ac=$ac/4, speed=$speed/10, str=$str/4, max_hp=$maxHp/10, '
       'unarmored_ac=$unarmoredAc/11, prof_check=$profCheck/3, '
-      'deferred=${result.deferred.length}/1)');
+      'deferred=${result.deferred.length}/0)');
 
   // `note`/`check_clauses` self-checks (slice 4).
   final noteOk = result.notes.length == 1 &&
@@ -413,6 +506,24 @@ void main() {
   print('Warning self-check: ${warnOk ? 'PASS' : 'FAIL'} '
       '(warnings=${result.warnings.length}/1)');
 
+  // `grant_refs`/`grant_proficiency` self-checks (slice 5).
+  final resistances = result.grantsFor('resistances');
+  final grantsOk = resistances.length == 3 &&
+      resistances[0] == 'fire' && // feat, first
+      resistances[1] == 'cold' && // feat, second
+      resistances[2] == 'poison' && // half-elf (the duplicate fire was deduped)
+      result.grants.length == 1; // only `resistances` was granted into
+  final profOk = result.proficiencyGrants.length == 1 &&
+      result.proficiencyFor('skills', 'Stealth') == 'expertise' &&
+      result.proficiencyFor('skills', 'Sleight of Hand') == 'expertise' &&
+      // proficient grant must NOT downgrade the prior expertise on Stealth.
+      result.proficiencyFor('skills', 'Perception') == 'proficient' &&
+      result.proficiencyGrants['skills']!.length == 3;
+  print('Grants self-check: ${grantsOk ? 'PASS' : 'FAIL'} '
+      '(resistances=$resistances)');
+  print('Proficiency self-check: ${profOk ? 'PASS' : 'FAIL'} '
+      '(skills=${result.proficiencyGrants['skills']})');
+
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk ? 'PASS' : 'FAIL'}');
 }
