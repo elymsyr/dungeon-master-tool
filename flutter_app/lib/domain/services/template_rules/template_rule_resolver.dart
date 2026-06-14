@@ -38,10 +38,19 @@
 ///     [TemplateResolution.pendingChoices] (§4.4 step 4). The picker UI/choice
 ///     persistence and the re-fold of `perPick` effects from a stored selection
 ///     are a later slice; this slice only surfaces the unanswered choice.
+///   * `set_pouch_max` (slice 7) — the first of the pouch kinds. Sets the
+///     *maximum* of an `intPouch` (scalar) or `pouchMatrix` (per-row) target
+///     field from a source: a level-keyed field read (a `levelTable`
+///     `{level: max}` or `levelMatrix` `{level: {row: max}}`, selected at the
+///     gate level like the §4.3 `table(...)` function) or a `formula` over the
+///     [AspectContext]. Maxima **aggregate across multiclass** — multiple class
+///     attachments targeting the same pouch sum their contributions (per-row for
+///     a matrix). Emitted into [TemplateResolution.pouchMax], gated by the
+///     folding triggers.
 ///
-/// Every other kind (`set_pouch_max`, `refill_pouch`/`empty_pouch`,
-/// `grant_pouch`) is recorded in [TemplateResolution.deferred] rather than
-/// silently dropped, so the harness shows exactly what remains for later slices.
+/// Every other kind (`refill_pouch`/`empty_pouch`, `grant_pouch`) is recorded in
+/// [TemplateResolution.deferred] rather than silently dropped, so the harness
+/// shows exactly what remains for later slices.
 library;
 
 import '../../entities/schema/field_schema.dart';
@@ -79,8 +88,9 @@ abstract final class RuleTriggers {
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
 /// (the-template-system.md §4.2). [modifyStat], [note], [checkClauses],
-/// [grantRefs], [grantProficiency] and [choose] are interpreted; the rest are
-/// still recorded as deferred.
+/// [grantRefs], [grantProficiency], [choose] and [setPouchMax] are interpreted;
+/// the rest ([refillPouch]/[emptyPouch], [grantPouch]) are still recorded as
+/// deferred.
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -227,6 +237,14 @@ class TemplateResolution {
   /// still owes. Each carries its options/prompt/pick for the picker UI.
   final List<PendingChoice> pendingChoices;
 
+  /// Pouch *maxima* set by `set_pouch_max` (§4.2), keyed by the target pouch
+  /// field key. The value is either a `num` (an `intPouch` scalar max) or a
+  /// `Map<String, num>` (a `pouchMatrix` per-row max, keyed by row key). Maxima
+  /// are summed across attachments (per-row for a matrix), so multiclass
+  /// spell-slot / resource progressions aggregate, e.g.
+  /// `{'spell_slots': {'1': 5, '2': 4}, 'ki_points': 5}`.
+  final Map<String, dynamic> pouchMax;
+
   /// Rules not interpreted by this slice (kind or value-source not yet built).
   final List<ResolverSkip> deferred;
 
@@ -237,6 +255,7 @@ class TemplateResolution {
     required this.grants,
     required this.proficiencyGrants,
     required this.pendingChoices,
+    required this.pouchMax,
     required this.deferred,
   });
 
@@ -262,13 +281,30 @@ class TemplateResolution {
     return null;
   }
 
+  /// The aggregated maximum set on pouch [fieldKey] — a `num` (intPouch) or a
+  /// `Map<String, num>` (pouchMatrix), or `null` when no `set_pouch_max` rule
+  /// targeted it (e.g. its progression has no row at or below the gate level).
+  dynamic pouchMaxFor(String fieldKey) => pouchMax[fieldKey];
+
+  /// The per-row maximum for row [rowKey] of pouchMatrix [fieldKey], or `null`
+  /// when that field/row got no max (or [fieldKey] is a scalar intPouch).
+  num? pouchRowMax(String fieldKey, String rowKey) {
+    final max = pouchMax[fieldKey];
+    if (max is Map) {
+      final v = max[rowKey];
+      return v is num ? v : null;
+    }
+    return null;
+  }
+
   bool get isEmpty =>
       statDeltas.isEmpty &&
       notes.isEmpty &&
       warnings.isEmpty &&
       grants.isEmpty &&
       proficiencyGrants.isEmpty &&
-      pendingChoices.isEmpty;
+      pendingChoices.isEmpty &&
+      pouchMax.isEmpty;
 }
 
 /// Stateless fold over a v3 template's rule attachments.
@@ -299,6 +335,7 @@ class TemplateRuleResolver {
     final grants = <String, List<String>>{};
     final proficiencyGrants = <String, Map<String, String>>{};
     final pendingChoices = <PendingChoice>[];
+    final pouchMax = <String, dynamic>{};
     final deferred = <ResolverSkip>[];
 
     for (final attachment in attachments) {
@@ -321,6 +358,7 @@ class TemplateRuleResolver {
             grants: grants,
             proficiencyGrants: proficiencyGrants,
             pendingChoices: pendingChoices,
+            pouchMax: pouchMax,
             deferred: deferred,
           );
         }
@@ -334,6 +372,7 @@ class TemplateRuleResolver {
       grants: grants,
       proficiencyGrants: proficiencyGrants,
       pendingChoices: pendingChoices,
+      pouchMax: pouchMax,
       deferred: deferred,
     );
   }
@@ -351,6 +390,7 @@ class TemplateRuleResolver {
     required Map<String, List<String>> grants,
     required Map<String, Map<String, String>> proficiencyGrants,
     required List<PendingChoice> pendingChoices,
+    required Map<String, dynamic> pouchMax,
     required List<ResolverSkip> deferred,
   }) {
     final kind = (rule['kind'] as String?)?.trim() ?? '';
@@ -434,6 +474,19 @@ class TemplateRuleResolver {
           trigger: trigger,
           gateLevel: gateLevel,
           pendingChoices: pendingChoices,
+          deferred: deferred,
+        );
+      case RuleKinds.setPouchMax:
+        _foldSetPouchMax(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          aspects: aspects,
+          pouchMax: pouchMax,
           deferred: deferred,
         );
       default:
@@ -744,6 +797,209 @@ class TemplateRuleResolver {
       pick: pick,
       target: target,
     ));
+  }
+
+  /// `set_pouch_max` (§4.2): set the *maximum* of a pouch target field from a
+  /// level-keyed progression or a formula, aggregating across attachments.
+  ///
+  /// `target` names the PC pouch field (an `intPouch` or `pouchMatrix`). The
+  /// source is read via [_resolvePouchSource]:
+  ///   * a level-keyed field — a `levelTable` (`{level: max}`) or `levelMatrix`
+  ///     (`{level: {row: max}}`) — selected at [gateLevel] like the §4.3
+  ///     `table(...)` step function (the highest level row ≤ gate). A matrix row
+  ///     yields a per-row `Map<String, num>`; a table yields a scalar `num`.
+  ///   * a `formula` over the [AspectContext] (a scalar `num`).
+  ///
+  /// Contributions accumulate into [pouchMax] *by sum* — multiple class cards
+  /// targeting the same pouch combine (per-row for a matrix), so a multiclass
+  /// caster's slots aggregate. Gated by the folding triggers (`set_pouch_max`
+  /// lives on a `when_granted` class field in the built-in; the gate level —
+  /// not the trigger — selects the progression row). A progression with no row
+  /// at or below the gate contributes nothing (not a skip — the class simply has
+  /// no slots yet). A non-folding trigger, a missing `target`, an unresolvable
+  /// source, or a shape clash (scalar vs matrix on the same target) is surfaced
+  /// as deferred, never silently dropped.
+  void _foldSetPouchMax({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required AspectContext aspects,
+    required Map<String, dynamic> pouchMax,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
+      if (!_isFoldingTrigger(trigger)) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a set_pouch_max trigger'));
+      }
+      return;
+    }
+
+    final target = (rule['target'] as String?)?.trim() ?? '';
+    if (target.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'set_pouch_max missing "target" pouch field key'));
+      return;
+    }
+
+    final resolved =
+        _resolvePouchSource(rule, attachment, field, gateLevel, aspects);
+    if (resolved.reason != null) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind, resolved.reason!));
+      return;
+    }
+    // A legitimately empty contribution (progression below the gate level): the
+    // class has no slots yet — nothing to add, and not an error.
+    if (resolved.value == null) return;
+
+    final clash =
+        _accumulatePouchMax(pouchMax, target, resolved.value as Object);
+    if (clash != null) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind, clash));
+    }
+  }
+
+  /// Resolve a `set_pouch_max` source to either a scalar `num` (intPouch max) or
+  /// a `Map<String, num>` (pouchMatrix per-row max). The source is, in order:
+  ///   * `rule['source']` / `rule['params']['source']` — `{kind: 'formula',
+  ///     expr}` (a scalar over [aspects]) or `{kind: 'field', field}` (a stored
+  ///     level-keyed map), else
+  ///   * the rule's own stored field value (`attachment.values[field.fieldKey]`
+  ///     — the slot-progression `levelMatrix`/`levelTable` data).
+  ///
+  /// A returned `(value: null, reason: null)` means a valid-but-empty
+  /// contribution (no progression row ≤ [gateLevel]); a non-null `reason` is a
+  /// hard deferral.
+  ({Object? value, String? reason}) _resolvePouchSource(
+    Map<String, dynamic> rule,
+    ResolverAttachment attachment,
+    FieldSchema field,
+    int gateLevel,
+    AspectContext aspects,
+  ) {
+    dynamic source = rule['source'];
+    if (source is! Map) {
+      final params = rule['params'];
+      if (params is Map && params['source'] is Map) source = params['source'];
+    }
+
+    // Explicit formula source → a scalar max.
+    if (source is Map && (source['kind'] as String?)?.trim() == 'formula') {
+      final expr = (source['expr'] as String?)?.trim();
+      if (expr == null || expr.isEmpty) {
+        return (value: null, reason: 'set_pouch_max formula source missing "expr"');
+      }
+      try {
+        return (value: const FormulaEvaluator().evaluate(expr, aspects),
+            reason: null);
+      } on FormulaException catch (e) {
+        return (value: null, reason: 'formula "$expr" failed: ${e.message}');
+      }
+    }
+
+    // Field source (explicit key) or the rule's own field — a level-keyed map.
+    dynamic raw;
+    if (source is Map && (source['kind'] as String?)?.trim() == 'field') {
+      final key = (source['field'] as String?)?.trim();
+      raw = attachment.values[(key != null && key.isNotEmpty)
+          ? key
+          : field.fieldKey];
+    } else {
+      raw = attachment.values[field.fieldKey];
+    }
+
+    if (raw is num) return (value: raw, reason: null);
+    if (raw is! Map) {
+      return (
+        value: null,
+        reason: 'set_pouch_max source for "${field.fieldKey}" is not a '
+            'level-keyed map, number, or formula '
+            '(${raw == null ? 'absent' : raw.runtimeType})',
+      );
+    }
+
+    return _selectAtLevel(raw, gateLevel);
+  }
+
+  /// Select the value of a level-keyed map at [gateLevel] — the entry whose
+  /// integer key is the highest value ≤ [gateLevel] (the §4.3 `table(...)` step
+  /// semantics; D&D slot tables are cumulative, so the single matching row is
+  /// the full count, not a sum across levels).
+  ///
+  /// A `levelMatrix` (values are maps) yields a `Map<String, num>` row; a
+  /// `levelTable` (values are numbers) yields a scalar `num`. No key ≤ gate ⇒
+  /// `(value: null, reason: null)` (empty, not an error).
+  ({Object? value, String? reason}) _selectAtLevel(
+    Map<dynamic, dynamic> data,
+    int gateLevel,
+  ) {
+    int? bestLevel;
+    dynamic bestValue;
+    for (final entry in data.entries) {
+      final lvl = _coerceNum(entry.key)?.toInt();
+      if (lvl == null || lvl > gateLevel) continue;
+      if (bestLevel == null || lvl > bestLevel) {
+        bestLevel = lvl;
+        bestValue = entry.value;
+      }
+    }
+    if (bestLevel == null) return (value: null, reason: null);
+
+    if (bestValue is Map) {
+      final row = <String, num>{};
+      bestValue.forEach((k, v) {
+        final n = _coerceNum(v);
+        if (n != null) row['$k'] = n;
+      });
+      if (row.isEmpty) return (value: null, reason: null);
+      return (value: row, reason: null);
+    }
+
+    final n = _coerceNum(bestValue);
+    if (n != null) return (value: n, reason: null);
+    return (
+      value: null,
+      reason: 'set_pouch_max level $bestLevel value is not numeric '
+          '(${bestValue.runtimeType})',
+    );
+  }
+
+  /// Add [contribution] (a `num` scalar or a `Map<String, num>` row) into
+  /// [pouchMax] under [target], summing with any existing contribution
+  /// (per-row for a matrix). Returns `null` on success, or a deferral reason
+  /// when the shapes clash (a scalar contribution onto a matrix target, or vice
+  /// versa).
+  String? _accumulatePouchMax(
+    Map<String, dynamic> pouchMax,
+    String target,
+    Object contribution,
+  ) {
+    final existing = pouchMax[target];
+    if (existing == null) {
+      pouchMax[target] = contribution is Map
+          ? Map<String, num>.from(contribution)
+          : contribution;
+      return null;
+    }
+    if (existing is num && contribution is num) {
+      pouchMax[target] = existing + contribution;
+      return null;
+    }
+    if (existing is Map && contribution is Map) {
+      final merged = Map<String, num>.from(existing);
+      contribution.forEach((k, v) {
+        if (v is num) merged['$k'] = (merged['$k'] ?? 0) + v;
+      });
+      pouchMax[target] = merged;
+      return null;
+    }
+    return 'set_pouch_max shape clash on target "$target" '
+        '(${existing is Map ? 'matrix' : 'scalar'} already set, '
+        'got ${contribution is Map ? 'matrix' : 'scalar'})';
   }
 
   /// A `choose` rule's `pick` count (top-level or under `params`), clamped to ≥ 1

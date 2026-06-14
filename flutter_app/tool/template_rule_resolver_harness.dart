@@ -405,6 +405,130 @@ void main() {
     ]),
   );
 
+  // A "Wizard" exercising `set_pouch_max` (slice 7) with a `levelMatrix` source:
+  // its slot-progression field holds `{level: {tier: max}}` and the rule has NO
+  // explicit `source`, so it reads its OWN stored field. At gateLevel 5 the
+  // level-5 row `{1:4, 2:3, 3:2}` is selected (the §4.3 `table(...)` step: the
+  // highest defined level ≤ gate) and set as the per-row max on the PC
+  // `spell_slots` pouchMatrix target.
+  final wizard = ResolverAttachment(
+    entityId: 'class-wizard',
+    values: const {
+      'spell_slots': {
+        '1': {'1': 2},
+        '2': {'1': 3},
+        '3': {'1': 4, '2': 2},
+        '4': {'1': 4, '2': 3},
+        '5': {'1': 4, '2': 3, '3': 2},
+      },
+    },
+    category: _category('wizard', [
+      _field('wizard', 'spell_slots',
+          order: 0,
+          type: FieldType.levelMatrix,
+          rules: [
+            {
+              'kind': 'set_pouch_max',
+              'trigger': 'when_granted',
+              'target': 'spell_slots',
+            },
+          ]),
+    ]),
+  );
+
+  // A multiclass "Cleric" targeting the SAME `spell_slots` pouchMatrix — its
+  // per-row maxima AGGREGATE (sum) with the wizard's. At gateLevel 5 its row is
+  // `{1:1, 2:1}`, so the combined `spell_slots` max is `{1:5, 2:4, 3:2}` (tier 3
+  // from the wizard alone). Uses an explicit `field` source pointing at its own
+  // progression field, exercising that source path.
+  final cleric = ResolverAttachment(
+    entityId: 'class-cleric',
+    values: const {
+      'divine_slots': {
+        '1': {'1': 1},
+        '5': {'1': 1, '2': 1},
+      },
+    },
+    category: _category('cleric', [
+      _field('cleric', 'divine_slots',
+          order: 0,
+          type: FieldType.levelMatrix,
+          rules: [
+            {
+              'kind': 'set_pouch_max',
+              'trigger': 'when_granted',
+              'target': 'spell_slots',
+              'source': {'kind': 'field', 'field': 'divine_slots'},
+            },
+          ]),
+    ]),
+  );
+
+  // A "Ki Monk" exercising `set_pouch_max` with a `levelTable` (scalar) source →
+  // an `intPouch` target. `{1:0, 2:2, …, 5:5}` selected at gate 5 → 5 ki points
+  // (a plain number, not a per-row map).
+  final kiMonk = ResolverAttachment(
+    entityId: 'class-ki-monk',
+    values: const {
+      'ki': {'1': 0, '2': 2, '3': 3, '4': 4, '5': 5},
+    },
+    category: _category('ki-monk', [
+      _field('ki-monk', 'ki',
+          order: 0,
+          type: FieldType.levelTable,
+          rules: [
+            {
+              'kind': 'set_pouch_max',
+              'trigger': 'when_granted',
+              'target': 'ki_points',
+            },
+          ]),
+    ]),
+  );
+
+  // A "Sorcerer" exercising the `formula` source of `set_pouch_max`: sorcery
+  // points = `level` evaluated over the aspect context → 5 at level 5 (a scalar
+  // intPouch max on a distinct target).
+  final sorcerer = ResolverAttachment(
+    entityId: 'class-sorcerer',
+    category: _category('sorcerer', [
+      _field('sorcerer', 'sorcery', order: 0, rules: [
+        {
+          'kind': 'set_pouch_max',
+          'trigger': 'when_granted',
+          'target': 'sorcery_points',
+          'source': {'kind': 'formula', 'expr': 'level'},
+        },
+      ]),
+    ]),
+  );
+
+  // A "Paladin" whose slot progression only begins at level 7 — at gateLevel 5
+  // NO row is ≤ the gate, so it contributes NOTHING (and is NOT a deferred
+  // skip: the class simply has no slots yet). `pouchMaxFor('paladin_slots')`
+  // must stay null.
+  final paladin = ResolverAttachment(
+    entityId: 'class-paladin',
+    values: const {
+      'paladin_slots': {
+        '7': {'1': 1},
+        '9': {'1': 2},
+      },
+    },
+    category: _category('paladin', [
+      _field('paladin', 'paladin_slots',
+          order: 0,
+          type: FieldType.levelMatrix,
+          rules: [
+            {
+              'kind': 'set_pouch_max',
+              'trigger': 'when_granted',
+              'target': 'paladin_slots',
+            },
+          ]),
+    ]),
+  );
+
   // ── Aspect context (slice 2): built from a synthetic PC card. ────────────
   final pcCategory = _category('player-character', [
     _field('player-character', 'abilities',
@@ -473,6 +597,11 @@ void main() {
       grappler,
       athlete,
       fighter,
+      wizard,
+      cleric,
+      kiMonk,
+      sorcerer,
+      paladin,
     ],
     gateLevel: 5,
     aspects: aspects,
@@ -545,8 +674,20 @@ void main() {
     }
   }
 
+  print('\nPouch maxima (set_pouch_max, slice 7) — expected '
+      'spell_slots={1:5, 2:4, 3:2} (wizard+cleric), ki_points=5, '
+      'sorcery_points=5 (paladin slots gated out at L5):');
+  if (result.pouchMax.isEmpty) {
+    print('  (none)');
+  } else {
+    final keys = result.pouchMax.keys.toList()..sort();
+    for (final k in keys) {
+      print('  $k: ${result.pouchMax[k]}');
+    }
+  }
+
   print('\nDeferred (not implemented yet) — expected 0 '
-      '(grant_refs + grant_proficiency + choose now resolve):');
+      '(grant_refs + grant_proficiency + choose + set_pouch_max now resolve):');
   if (result.deferred.isEmpty) {
     print('  (none)');
   } else {
@@ -632,6 +773,23 @@ void main() {
   print('Choose self-check: ${chooseOk ? 'PASS' : 'FAIL'} '
       '(choices=${result.pendingChoices.length}/2)');
 
+  // `set_pouch_max` self-check (slice 7). pouchMatrix maxima aggregate per-row
+  // across the wizard + cleric; the levelTable/formula sources set scalar
+  // intPouch maxima; the paladin's level-7 progression is gated out at L5.
+  final slots = result.pouchMaxFor('spell_slots');
+  final pouchOk = result.pouchMax.length == 3 &&
+      slots is Map &&
+      slots.length == 3 &&
+      result.pouchRowMax('spell_slots', '1') == 5 && // wizard 4 + cleric 1
+      result.pouchRowMax('spell_slots', '2') == 4 && // wizard 3 + cleric 1
+      result.pouchRowMax('spell_slots', '3') == 2 && // wizard only
+      result.pouchMaxFor('ki_points') == 5 && // levelTable scalar at L5
+      result.pouchMaxFor('sorcery_points') == 5 && // formula `level`
+      result.pouchMaxFor('paladin_slots') == null; // gated out (begins L7)
+  print('Pouch self-check: ${pouchOk ? 'PASS' : 'FAIL'} '
+      '(spell_slots=$slots, ki_points=${result.pouchMaxFor('ki_points')}, '
+      'sorcery_points=${result.pouchMaxFor('sorcery_points')})');
+
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk ? 'PASS' : 'FAIL'}');
 }
