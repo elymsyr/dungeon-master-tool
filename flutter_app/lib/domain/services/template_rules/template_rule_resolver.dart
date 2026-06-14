@@ -47,8 +47,19 @@
 ///     attachments targeting the same pouch sum their contributions (per-row for
 ///     a matrix). Emitted into [TemplateResolution.pouchMax], gated by the
 ///     folding triggers.
+///   * `refill_pouch` / `empty_pouch` (slice 8) — the imperative `on_button`
+///     pair (§4.2). Unlike every kind above these do **not** fold a derived
+///     overlay; they mutate stored pouch *current* values in response to a
+///     rest / level-up button press. They are therefore interpreted by a
+///     separate entry point, [TemplateRuleResolver.applyButton], rather than by
+///     `resolve(...)` — a button press walks the attachments' pouch fields,
+///     fires the rules whose `params.button` matches, and computes each pouch's
+///     new current from its max (refill: `all` → full, `half_max_round_up` →
+///     `ceil(max/2)`, or a formula amount; empty: `all` → 0, or a formula
+///     amount), per-row for a `pouchMatrix`. During a `resolve(...)` fold these
+///     `on_button` rules are correctly inert (a fold is not the button runtime).
 ///
-/// Every other kind (`refill_pouch`/`empty_pouch`, `grant_pouch`) is recorded in
+/// The last kind (`grant_pouch`) is still recorded in
 /// [TemplateResolution.deferred] rather than silently dropped, so the harness
 /// shows exactly what remains for later slices.
 library;
@@ -88,9 +99,11 @@ abstract final class RuleTriggers {
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
 /// (the-template-system.md §4.2). [modifyStat], [note], [checkClauses],
-/// [grantRefs], [grantProficiency], [choose] and [setPouchMax] are interpreted;
-/// the rest ([refillPouch]/[emptyPouch], [grantPouch]) are still recorded as
-/// deferred.
+/// [grantRefs], [grantProficiency], [choose] and [setPouchMax] are interpreted
+/// by the `resolve(...)` fold; the imperative [refillPouch]/[emptyPouch] pair is
+/// interpreted by [TemplateRuleResolver.applyButton] (they mutate stored pouch
+/// state on a button press rather than fold an overlay). Only [grantPouch]
+/// remains recorded as deferred.
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -377,6 +390,205 @@ class TemplateRuleResolver {
     );
   }
 
+  /// Apply a `button` press (the-template-system.md §4.2 / §6 item 6) — one of
+  /// `long_rest` / `short_rest` / `level_up` — to the pouch fields across
+  /// [attachments], firing the `refill_pouch` / `empty_pouch` rules that name
+  /// that button and returning each touched pouch's **new current** value.
+  ///
+  /// These are the imperative `on_button` kinds: unlike the fold in
+  /// [resolve], they mutate stored pouch state rather than derive an overlay,
+  /// so they live behind this separate entry point. The fold and the button
+  /// runtime never overlap — `resolve(...)` leaves these rules inert.
+  ///
+  /// A rule fires when it is a `refill_pouch`/`empty_pouch` kind, its trigger is
+  /// `on_button` (the §4.1 imperative trigger), and its `params.button` (or
+  /// top-level `button`) equals [button]. The pouch it acts on is its
+  /// `params.target` (or top-level `target`), defaulting to the **field's own
+  /// key** — refill/empty rules are declared *on the target pouch field*
+  /// (§2.3), so the common case needs no `target`.
+  ///
+  /// The new current is computed from the pouch's max and prior current:
+  ///   * **refill** — `amount: all` (or absent) restores to full (`current =
+  ///     max`); `half_max_round_up` adds `ceil(max/2)` (capped at max); a
+  ///     formula/number adds that many (capped at max). `current = min(prior +
+  ///     amount, max)`.
+  ///   * **empty** — `amount: all` (or absent) drains to 0; a formula/number
+  ///     spends that many. `current = max(prior - amount, 0)`.
+  ///
+  /// A `pouchMatrix` (a per-row `Map<String, num>` max/current) is processed
+  /// **per row**; an `intPouch` (a scalar) as a single value. Maxima come from
+  /// [pouchMax] (the [resolve] overlay — typically the same run's output);
+  /// prior currents from [currentValues], keyed by pouch field key (a scalar
+  /// `num`, or a per-row `Map<String, num>` — the caller normalizes the stored
+  /// `intPouch` `current` / `pouchMatrix` `remaining` into this shape). Multiple
+  /// rules touching the same pouch chain in fold order (each sees the prior
+  /// result). [aspects] feeds formula amounts.
+  ///
+  /// Returns only the pouches a fired rule touched → their new current (a `num`
+  /// or `Map<String, num>`). Pure — mutates no input.
+  Map<String, dynamic> applyButton(
+    List<ResolverAttachment> attachments, {
+    required String button,
+    Map<String, dynamic> pouchMax = const {},
+    Map<String, dynamic> currentValues = const {},
+    AspectContext aspects = AspectContext.empty,
+  }) {
+    final updated = <String, dynamic>{};
+
+    for (final attachment in attachments) {
+      final fields = [...attachment.category.fields]
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+      for (final field in fields) {
+        final rules = field.rules ?? const <Map<String, dynamic>>[];
+        for (final rule in rules) {
+          final kind = (rule['kind'] as String?)?.trim() ?? '';
+          if (kind != RuleKinds.refillPouch && kind != RuleKinds.emptyPouch) {
+            continue;
+          }
+          final trigger = (rule['trigger'] as String?)?.trim() ?? '';
+          // Refill/empty are inherently imperative; only an on_button rule fires
+          // on a button press (a misauthored trigger simply does nothing here).
+          if (trigger != RuleTriggers.onButton) continue;
+          final ruleButton = _ruleParamString(rule, 'button');
+          if (ruleButton != button) continue;
+
+          final target =
+              _ruleParamString(rule, 'target') ?? field.fieldKey;
+          // Prior current: the running result first (so chained rules on the
+          // same pouch see each other), else the caller-supplied current.
+          final prior = updated.containsKey(target)
+              ? updated[target]
+              : currentValues[target];
+          final next = _applyPouchButton(
+            isRefill: kind == RuleKinds.refillPouch,
+            rule: rule,
+            prior: prior,
+            max: pouchMax[target],
+            aspects: aspects,
+          );
+          if (next != null) updated[target] = next;
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  /// Compute one pouch's new current for a refill/empty button rule. Dispatches
+  /// to a per-row computation for a `pouchMatrix` (when [max] or [prior] is a
+  /// `Map`) or a scalar computation for an `intPouch`. Returns `null` only when
+  /// nothing could be computed (an unresolvable amount and no max/prior to act
+  /// on) — the caller then leaves the pouch untouched rather than corrupt it.
+  dynamic _applyPouchButton({
+    required bool isRefill,
+    required Map<String, dynamic> rule,
+    required dynamic prior,
+    required dynamic max,
+    required AspectContext aspects,
+  }) {
+    if (max is Map || prior is Map) {
+      final rowKeys = <String>{
+        if (max is Map) ...max.keys.map((k) => '$k'),
+        if (prior is Map) ...prior.keys.map((k) => '$k'),
+      };
+      final out = <String, num>{};
+      for (final key in rowKeys) {
+        final rowMax = max is Map ? _coerceNum(max[key]) : null;
+        final rowPrior = prior is Map ? (_coerceNum(prior[key]) ?? 0) : 0;
+        final v = _computePouchCurrent(
+          isRefill: isRefill,
+          rule: rule,
+          prior: rowPrior,
+          max: rowMax,
+          aspects: aspects,
+        );
+        if (v != null) out[key] = v;
+      }
+      return out.isEmpty ? null : out;
+    }
+
+    return _computePouchCurrent(
+      isRefill: isRefill,
+      rule: rule,
+      prior: _coerceNum(prior) ?? 0,
+      max: _coerceNum(max),
+      aspects: aspects,
+    );
+  }
+
+  /// The scalar refill/empty computation. [prior] is the current value, [max]
+  /// the pouch maximum (possibly `null` when no `set_pouch_max` fed it).
+  ///
+  /// Refill: `amount: all`/absent → full (`max`, or `prior` when no max known);
+  /// `half_max_round_up` → `min(prior + ceil(max/2), max)`; a formula/number →
+  /// `min(prior + amount, max)`. Empty: `all`/absent → `0`; a formula/number →
+  /// `max(prior - amount, 0)`. Returns `null` when an amount can't be resolved
+  /// (e.g. a `half_max_round_up`/formula with no max) so the pouch is left as-is.
+  num? _computePouchCurrent({
+    required bool isRefill,
+    required Map<String, dynamic> rule,
+    required num prior,
+    required num? max,
+    required AspectContext aspects,
+  }) {
+    final raw = _pouchAmountRaw(rule);
+    final spec = raw is String ? raw.trim().toLowerCase() : null;
+    final isAll = raw == null || spec == 'all';
+
+    if (isRefill) {
+      if (isAll) return max ?? prior;
+      final amount = _pouchAmountValue(raw, spec, max, aspects);
+      if (amount == null) return null;
+      final next = prior + amount;
+      if (max == null) return next < 0 ? 0 : next;
+      return next > max ? max : (next < 0 ? 0 : next);
+    } else {
+      if (isAll) return 0;
+      final amount = _pouchAmountValue(raw, spec, max, aspects);
+      if (amount == null) return null;
+      final next = prior - amount;
+      return next < 0 ? 0 : next;
+    }
+  }
+
+  /// Raw `amount` of a refill/empty rule (top-level, else under `params`).
+  dynamic _pouchAmountRaw(Map<String, dynamic> rule) {
+    final top = rule['amount'];
+    if (top != null) return top;
+    final params = rule['params'];
+    if (params is Map) return params['amount'];
+    return null;
+  }
+
+  /// Resolve a non-`all` refill/empty amount to a number:
+  ///   * `half_max_round_up` → `ceil(max/2)` (needs a max; `null` without one);
+  ///   * a number → itself;
+  ///   * a string → a §4.3 formula over [aspects] (a bare numeric string parses
+  ///     too); a malformed/erroring formula → `null` (the pouch is left as-is).
+  num? _pouchAmountValue(
+    dynamic raw,
+    String? spec,
+    num? max,
+    AspectContext aspects,
+  ) {
+    if (spec == 'half_max_round_up') {
+      if (max == null) return null;
+      return (max / 2).ceil();
+    }
+    if (raw is num) return raw;
+    if (raw is String) {
+      final expr = raw.trim();
+      if (expr.isEmpty) return null;
+      try {
+        return const FormulaEvaluator().evaluate(expr, aspects);
+      } on FormulaException {
+        return null;
+      }
+    }
+    return null;
+  }
+
   void _foldRule({
     required ResolverAttachment attachment,
     required FieldSchema field,
@@ -489,6 +701,13 @@ class TemplateRuleResolver {
           pouchMax: pouchMax,
           deferred: deferred,
         );
+      case RuleKinds.refillPouch:
+      case RuleKinds.emptyPouch:
+        // Imperative on_button kinds — they mutate stored pouch *current* values
+        // on a rest / level-up button press, NOT a derived overlay. They are
+        // applied by [applyButton], so during a fold they are correctly inert
+        // (this is not a silent drop: the fold simply isn't their runtime).
+        break;
       default:
         deferred.add(
           _skip(attachment, field, ruleIndex, kind, 'kind not implemented in this slice'),

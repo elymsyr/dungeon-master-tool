@@ -529,6 +529,66 @@ void main() {
     ]),
   );
 
+  // A PC sheet exercising the imperative `refill_pouch`/`empty_pouch` kinds
+  // (slice 8). These are `on_button` rules declared ON the target pouch field;
+  // a rest/level-up button press fires the ones whose `button` matches and
+  // recomputes each pouch's current from its max. The maxima come from the same
+  // run's slice-7 `set_pouch_max` overlay (spell_slots / ki_points /
+  // sorcery_points), exercising the four amount paths:
+  //   * spell_slots (pouchMatrix) — refill on long_rest, amount `all` → per-row
+  //     current restored to max `{1:5, 2:4, 3:2}`.
+  //   * ki_points (intPouch) — refill on SHORT rest, amount `half_max_round_up`
+  //     → ceil(5/2) = 3 (prior 0).
+  //   * sorcery_points (intPouch) — refill on long_rest, amount formula `level`
+  //     → min(0 + 5, 5) = 5 (exercises a formula amount AND the max cap).
+  //   * rage (intPouch) — empty on long_rest, amount `all` → 0 (prior 2; no max
+  //     needed to empty).
+  final pcSheet = ResolverAttachment(
+    entityId: 'pc-sheet',
+    category: _category('player-character', [
+      _field('player-character', 'spell_slots',
+          order: 0,
+          type: FieldType.pouchMatrix,
+          rules: [
+            {
+              'kind': 'refill_pouch',
+              'trigger': 'on_button',
+              'params': {'button': 'long_rest', 'amount': 'all'},
+            },
+          ]),
+      _field('player-character', 'ki_points',
+          order: 1,
+          type: FieldType.intPouch,
+          rules: [
+            {
+              'kind': 'refill_pouch',
+              'trigger': 'on_button',
+              'params': {'button': 'short_rest', 'amount': 'half_max_round_up'},
+            },
+          ]),
+      _field('player-character', 'sorcery_points',
+          order: 2,
+          type: FieldType.intPouch,
+          rules: [
+            {
+              'kind': 'refill_pouch',
+              'trigger': 'on_button',
+              'params': {'button': 'long_rest', 'amount': 'level'},
+            },
+          ]),
+      _field('player-character', 'rage',
+          order: 3,
+          type: FieldType.intPouch,
+          rules: [
+            {
+              'kind': 'empty_pouch',
+              'trigger': 'on_button',
+              'params': {'button': 'long_rest', 'amount': 'all'},
+            },
+          ]),
+    ]),
+  );
+
   // ── Aspect context (slice 2): built from a synthetic PC card. ────────────
   final pcCategory = _category('player-character', [
     _field('player-character', 'abilities',
@@ -790,6 +850,51 @@ void main() {
       '(spell_slots=$slots, ki_points=${result.pouchMaxFor('ki_points')}, '
       'sorcery_points=${result.pouchMaxFor('sorcery_points')})');
 
+  // ── Button runtime (slice 8): refill_pouch / empty_pouch via applyButton. ──
+  // Prior currents (some expended): the long rest refills/empties, the short
+  // rest only refills ki. Maxima are reused from the slice-7 fold output.
+  const pouchCurrents = <String, dynamic>{
+    'spell_slots': {'1': 0, '2': 1, '3': 0},
+    'ki_points': 0,
+    'sorcery_points': 0,
+    'rage': 2,
+  };
+  final longRest = resolver.applyButton(
+    [pcSheet],
+    button: 'long_rest',
+    pouchMax: result.pouchMax,
+    currentValues: pouchCurrents,
+    aspects: aspects,
+  );
+  final shortRest = resolver.applyButton(
+    [pcSheet],
+    button: 'short_rest',
+    pouchMax: result.pouchMax,
+    currentValues: pouchCurrents,
+    aspects: aspects,
+  );
+
+  print('\nButton runtime (refill_pouch/empty_pouch, slice 8) — long_rest '
+      'expected spell_slots={1:5, 2:4, 3:2}, sorcery_points=5, rage=0; '
+      'short_rest expected ki_points=3:');
+  print('  long_rest  → $longRest');
+  print('  short_rest → $shortRest');
+
+  final longSlots = longRest['spell_slots'];
+  final buttonOk = longRest.length == 3 &&
+      longSlots is Map &&
+      longSlots['1'] == 5 && // refill all → per-row max (wizard+cleric)
+      longSlots['2'] == 4 &&
+      longSlots['3'] == 2 &&
+      longRest['sorcery_points'] == 5 && // formula `level` (5), capped at max 5
+      longRest['rage'] == 0 && // empty all → 0
+      !longRest.containsKey('ki_points') && // ki refills on SHORT rest only
+      shortRest.length == 1 &&
+      shortRest['ki_points'] == 3 && // half_max_round_up → ceil(5/2)
+      !shortRest.containsKey('spell_slots');
+  print('Button self-check: ${buttonOk ? 'PASS' : 'FAIL'} '
+      '(long=${longRest.length}/3, short=${shortRest.length}/1)');
+
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk && buttonOk ? 'PASS' : 'FAIL'}');
 }
