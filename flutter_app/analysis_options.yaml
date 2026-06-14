@@ -19,6 +19,10 @@ analyzer:
     use_build_context_synchronously: warning
     cancel_subscriptions: warning
     close_sinks: warning
+    # freezed forwards `@JsonKey(...)` from the factory constructor to the
+    # generated field; the analyzer can't see that target and false-positives.
+    # Standard freezed + json_serializable recommendation.
+    invalid_annotation_target: ignore
 
 linter:
   rules:

@@ -233,7 +233,6 @@ class _FieldTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = FieldTypeMeta.of(field.fieldType);
-    final ruleCount = field.rules?.length ?? 0;
     return ListTile(
       dense: true,
       selected: isSelected,

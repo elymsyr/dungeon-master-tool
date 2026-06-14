@@ -2883,7 +2883,7 @@ class _SlotFieldWidget extends StatelessWidget {
   /// slot renderer (no `style:'pips'`, or a non-fixed/invalid count source).
   int? get _fixedPipCount {
     final cfg = schema.typeConfig;
-    if (cfg['style'] != 'pips') return null;
+    if (cfg == null || cfg['style'] != 'pips') return null;
     final src = cfg['countSource'];
     if (src is! Map || src['kind'] != 'fixed') return null;
     final v = (src['value'] as num?)?.toInt();

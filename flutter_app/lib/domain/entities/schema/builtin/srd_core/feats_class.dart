@@ -80,11 +80,8 @@ Map<String, dynamic> _sf({
 /// damage effects.
 Map<String, String> _dt(String name) => lookup('damage-type', name);
 Map<String, String> _ability(String name) => lookup('ability', name);
-Map<String, String> _skill(String name) => lookup('skill', name);
-Map<String, String> _state(String name) => lookup('character-state', name);
 Map<String, String> _pool(String name) => lookup('resource-pool', name);
 Map<String, String> _cond(String name) => lookup('condition', name);
-Map<String, String> _sense(String name) => lookup('sense', name);
 
 /// Compact builder for feature-option feats. Each option is a non-chooseable
 /// feat under category `Feature Option: <featureName>`. The

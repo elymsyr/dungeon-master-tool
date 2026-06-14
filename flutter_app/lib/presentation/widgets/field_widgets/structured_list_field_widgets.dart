@@ -31,7 +31,6 @@ class _StructuredListShell extends StatelessWidget {
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
   final Map<String, dynamic> Function() makeEmptyRow;
   final Widget Function(int index, Map<String, dynamic> row, ValueChanged<Map<String, dynamic>> onRowChanged) buildRow;
-  final List<Widget>? headerActions;
 
   const _StructuredListShell({
     required this.schema,
@@ -40,7 +39,6 @@ class _StructuredListShell extends StatelessWidget {
     required this.onChanged,
     required this.makeEmptyRow,
     required this.buildRow,
-    this.headerActions,
   });
 
   void _addRow() {
@@ -88,7 +86,6 @@ class _StructuredListShell extends StatelessWidget {
                   schema.fieldType.name,
                   style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
                 ),
-                if (!readOnly && headerActions != null) ...headerActions!,
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
