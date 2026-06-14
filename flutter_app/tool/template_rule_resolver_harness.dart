@@ -529,6 +529,51 @@ void main() {
     ]),
   );
 
+  // A "Barbarian" exercising `grant_pouch` (slice 9 — §2.4 worked example): a
+  // data-driven class-resource pouch declared on a `recordList` field. The
+  // stored rows each carry a name, a "level:max,…" progression string, and a
+  // refill button. At gateLevel 5:
+  //   * Rage `"1:2,3:3,6:4,12:5,17:6"` → max 3 (the highest threshold ≤ 5 is the
+  //     L3 step; a L5 barbarian has 3 rages), refilling on long_rest → a
+  //     GrantedPouch keyed `class-barbarian:Rage`.
+  //   * Brutal Strike `"9:1,13:2"` begins at L9 → NOT granted yet at L5 (its
+  //     progression has no row ≤ the gate — not a deferral, just locked).
+  // Reuses the default column names (name / max_by_level / refill_on).
+  final barbarianResources = ResolverAttachment(
+    entityId: 'class-barbarian',
+    values: const {
+      'resources': [
+        {
+          'name': 'Rage',
+          'max_by_level': '1:2,3:3,6:4,12:5,17:6',
+          'refill_on': 'long_rest',
+        },
+        {
+          'name': 'Brutal Strike',
+          'max_by_level': '9:1,13:2',
+          'refill_on': 'short_rest',
+        },
+      ],
+    },
+    category: _category('barbarian-resources', [
+      _field('barbarian-resources', 'resources',
+          order: 0,
+          type: FieldType.recordList,
+          rules: [
+            {
+              'kind': 'grant_pouch',
+              'trigger': 'when_granted',
+              'params': {
+                'nameCol': 'name',
+                'maxTableCol': 'max_by_level',
+                'refillCol': 'refill_on',
+                'gate': 'class',
+              },
+            },
+          ]),
+    ]),
+  );
+
   // A PC sheet exercising the imperative `refill_pouch`/`empty_pouch` kinds
   // (slice 8). These are `on_button` rules declared ON the target pouch field;
   // a rest/level-up button press fires the ones whose `button` matches and
@@ -662,6 +707,7 @@ void main() {
       kiMonk,
       sorcerer,
       paladin,
+      barbarianResources,
     ],
     gateLevel: 5,
     aspects: aspects,
@@ -746,8 +792,20 @@ void main() {
     }
   }
 
+  print('\nGranted pouches (grant_pouch, slice 9) — expected '
+      'class-barbarian:Rage max 3 refills long_rest (Brutal Strike gated '
+      'out at L5):');
+  if (result.grantedPouches.isEmpty) {
+    print('  (none)');
+  } else {
+    final keys = result.grantedPouches.keys.toList()..sort();
+    for (final k in keys) {
+      print('  $k: ${result.grantedPouches[k]}');
+    }
+  }
+
   print('\nDeferred (not implemented yet) — expected 0 '
-      '(grant_refs + grant_proficiency + choose + set_pouch_max now resolve):');
+      '(ALL rule kinds now resolve):');
   if (result.deferred.isEmpty) {
     print('  (none)');
   } else {
@@ -850,6 +908,21 @@ void main() {
       '(spell_slots=$slots, ki_points=${result.pouchMaxFor('ki_points')}, '
       'sorcery_points=${result.pouchMaxFor('sorcery_points')})');
 
+  // `grant_pouch` self-check (slice 9). The Rage row materialises as a pouch
+  // (max 3 at L5 — the L3 step of "1:2,3:3,…"; refills on long_rest); the Brutal
+  // Strike row (begins L9) is NOT granted at gateLevel 5.
+  final rage = result.grantedPouchFor('class-barbarian', 'Rage');
+  final grantPouchOk = result.grantedPouches.length == 1 &&
+      rage != null &&
+      rage.name == 'Rage' &&
+      rage.max == 3 && // table "1:2,3:3,6:4,…" at L5 → 3 (highest step ≤ 5)
+      rage.refillOn == 'long_rest' &&
+      rage.pouchKey == 'class-barbarian:Rage' &&
+      // the L9 Brutal Strike resource has not unlocked at L5.
+      result.grantedPouchFor('class-barbarian', 'Brutal Strike') == null;
+  print('Grant-pouch self-check: ${grantPouchOk ? 'PASS' : 'FAIL'} '
+      '(granted=${result.grantedPouches.length}/1, rage=$rage)');
+
   // ── Button runtime (slice 8): refill_pouch / empty_pouch via applyButton. ──
   // Prior currents (some expended): the long rest refills/empties, the short
   // rest only refills ki. Maxima are reused from the slice-7 fold output.
@@ -896,5 +969,5 @@ void main() {
       '(long=${longRest.length}/3, short=${shortRest.length}/1)');
 
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk && buttonOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk && grantPouchOk && buttonOk ? 'PASS' : 'FAIL'}');
 }

@@ -58,10 +58,20 @@
 ///     `ceil(max/2)`, or a formula amount; empty: `all` → 0, or a formula
 ///     amount), per-row for a `pouchMatrix`. During a `resolve(...)` fold these
 ///     `on_button` rules are correctly inert (a fold is not the button runtime).
+///   * `grant_pouch` (slice 9) — the final kind: data-driven class-resource
+///     pouches (Rage, Ki, Channel Divinity — §2.4 worked example). A
+///     `when_granted` rule on a `recordList` field whose rows each declare a
+///     resource pouch (`nameCol`/`maxTableCol`/`refillCol`); the rule reads the
+///     stored rows, selects each resource's max from its level→max table at the
+///     gate level (reusing [_selectAtLevel]), and emits a [GrantedPouch]
+///     descriptor into [TemplateResolution.grantedPouches] so the PC sheet can
+///     render a "Rage 2/2" intPouch and persist its current under
+///     `granted_pouches`.
 ///
-/// The last kind (`grant_pouch`) is still recorded in
-/// [TemplateResolution.deferred] rather than silently dropped, so the harness
-/// shows exactly what remains for later slices.
+/// **All rule kinds are now implemented.** Any rule whose kind is unrecognised
+/// (or that is missing a required param) is still recorded in
+/// [TemplateResolution.deferred] rather than silently dropped, so the
+/// harness/debug panel shows exactly what could not be folded.
 library;
 
 import '../../entities/schema/field_schema.dart';
@@ -98,12 +108,12 @@ abstract final class RuleTriggers {
 }
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
-/// (the-template-system.md §4.2). [modifyStat], [note], [checkClauses],
-/// [grantRefs], [grantProficiency], [choose] and [setPouchMax] are interpreted
-/// by the `resolve(...)` fold; the imperative [refillPouch]/[emptyPouch] pair is
-/// interpreted by [TemplateRuleResolver.applyButton] (they mutate stored pouch
-/// state on a button press rather than fold an overlay). Only [grantPouch]
-/// remains recorded as deferred.
+/// (the-template-system.md §4.2) — **all implemented**. [modifyStat], [note],
+/// [checkClauses], [grantRefs], [grantProficiency], [choose], [setPouchMax] and
+/// [grantPouch] are interpreted by the `resolve(...)` fold; the imperative
+/// [refillPouch]/[emptyPouch] pair is interpreted by
+/// [TemplateRuleResolver.applyButton] (they mutate stored pouch state on a
+/// button press rather than fold an overlay).
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -220,6 +230,47 @@ class PendingChoice {
       '${target == null ? '' : ' → $target'})';
 }
 
+/// A resource pouch granted by a `grant_pouch` rule (the-template-system.md
+/// §2.4 — Rage / Ki / Channel Divinity). The PC sheet renders this as an
+/// `intPouch` (e.g. "Rage 2/2") in the owning entity's resource group and
+/// persists its *current* on the PC card under
+/// `granted_pouches[<pouchKey>] = {"current": N}`.
+///
+/// The descriptor carries only the *derived* shape (name + max + refill button);
+/// the stored current lives on the PC card, mutated by the rest/level-up buttons
+/// via the [TemplateRuleResolver.applyButton] runtime — a `grant_pouch` pouch
+/// refills exactly like a declared one once it has been materialised.
+class GrantedPouch {
+  /// The contributing entity that granted the pouch (the class card, usually).
+  final String entityId;
+
+  /// The resource's display name (e.g. "Rage") — the `nameCol` cell value.
+  final String name;
+
+  /// The pouch maximum at the gate level, selected from the `maxTableCol`
+  /// level→max progression (e.g. `1:2,3:3,6:4` → `2` at level 5).
+  final num max;
+
+  /// Which button refills the pouch — `short_rest` / `long_rest` / `level_up`
+  /// (the `refillCol` cell), or `null` when the row declared none.
+  final String? refillOn;
+
+  const GrantedPouch({
+    required this.entityId,
+    required this.name,
+    required this.max,
+    this.refillOn,
+  });
+
+  /// Persistence key under the PC card's `granted_pouches` map (§2.4):
+  /// `<entityId>:<name>`.
+  String get pouchKey => '$entityId:$name';
+
+  @override
+  String toString() =>
+      '$pouchKey — max $max${refillOn == null ? '' : ' (refills on $refillOn)'}';
+}
+
 /// The resolver's output overlay — an `EffectiveCharacter`-equivalent in the
 /// making (the-template-system.md §4.4 step 5). [statDeltas] comes from
 /// `modify_stat`; [notes] from `note` rules; [warnings] from `check_clauses`.
@@ -258,6 +309,12 @@ class TemplateResolution {
   /// `{'spell_slots': {'1': 5, '2': 4}, 'ki_points': 5}`.
   final Map<String, dynamic> pouchMax;
 
+  /// Resource pouches materialised by `grant_pouch` (§2.4), keyed by
+  /// [GrantedPouch.pouchKey] (`<entityId>:<name>`). Each carries the derived
+  /// name/max/refill button so the PC sheet can render and refill it; e.g.
+  /// `{'class-barbarian:Rage': GrantedPouch(max: 2, refillOn: 'long_rest')}`.
+  final Map<String, GrantedPouch> grantedPouches;
+
   /// Rules not interpreted by this slice (kind or value-source not yet built).
   final List<ResolverSkip> deferred;
 
@@ -269,6 +326,7 @@ class TemplateResolution {
     required this.proficiencyGrants,
     required this.pendingChoices,
     required this.pouchMax,
+    required this.grantedPouches,
     required this.deferred,
   });
 
@@ -310,6 +368,12 @@ class TemplateResolution {
     return null;
   }
 
+  /// The resource pouch granted to [entityId] under resource [name], or `null`
+  /// when no `grant_pouch` rule materialised it (e.g. its progression has no
+  /// row at or below the gate level yet).
+  GrantedPouch? grantedPouchFor(String entityId, String name) =>
+      grantedPouches['$entityId:$name'];
+
   bool get isEmpty =>
       statDeltas.isEmpty &&
       notes.isEmpty &&
@@ -317,7 +381,8 @@ class TemplateResolution {
       grants.isEmpty &&
       proficiencyGrants.isEmpty &&
       pendingChoices.isEmpty &&
-      pouchMax.isEmpty;
+      pouchMax.isEmpty &&
+      grantedPouches.isEmpty;
 }
 
 /// Stateless fold over a v3 template's rule attachments.
@@ -349,6 +414,7 @@ class TemplateRuleResolver {
     final proficiencyGrants = <String, Map<String, String>>{};
     final pendingChoices = <PendingChoice>[];
     final pouchMax = <String, dynamic>{};
+    final grantedPouches = <String, GrantedPouch>{};
     final deferred = <ResolverSkip>[];
 
     for (final attachment in attachments) {
@@ -372,6 +438,7 @@ class TemplateRuleResolver {
             proficiencyGrants: proficiencyGrants,
             pendingChoices: pendingChoices,
             pouchMax: pouchMax,
+            grantedPouches: grantedPouches,
             deferred: deferred,
           );
         }
@@ -386,6 +453,7 @@ class TemplateRuleResolver {
       proficiencyGrants: proficiencyGrants,
       pendingChoices: pendingChoices,
       pouchMax: pouchMax,
+      grantedPouches: grantedPouches,
       deferred: deferred,
     );
   }
@@ -603,6 +671,7 @@ class TemplateRuleResolver {
     required Map<String, Map<String, String>> proficiencyGrants,
     required List<PendingChoice> pendingChoices,
     required Map<String, dynamic> pouchMax,
+    required Map<String, GrantedPouch> grantedPouches,
     required List<ResolverSkip> deferred,
   }) {
     final kind = (rule['kind'] as String?)?.trim() ?? '';
@@ -699,6 +768,18 @@ class TemplateRuleResolver {
           gateLevel: gateLevel,
           aspects: aspects,
           pouchMax: pouchMax,
+          deferred: deferred,
+        );
+      case RuleKinds.grantPouch:
+        _foldGrantPouch(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          grantedPouches: grantedPouches,
           deferred: deferred,
         );
       case RuleKinds.refillPouch:
@@ -1080,6 +1161,150 @@ class TemplateRuleResolver {
     if (clash != null) {
       deferred.add(_skip(attachment, field, ruleIndex, kind, clash));
     }
+  }
+
+  /// `grant_pouch` (§2.4 worked example — data-driven class resources like Rage,
+  /// Ki, Channel Divinity). The rule lives on a `recordList` field whose stored
+  /// rows each declare one resource pouch; per row it emits a [GrantedPouch]
+  /// descriptor (name + level-selected max + refill button) into
+  /// [grantedPouches], keyed by `<entityId>:<name>`.
+  ///
+  /// Column names come from the rule params (with the §2.4 defaults):
+  ///   * `nameCol` (default `name`) — the resource's display name (its key half);
+  ///   * `maxTableCol` (default `max_by_level`) — a `"1:2,3:3,6:4,…"` level→max
+  ///     progression string (a bare number or a `{level: max}` map are also
+  ///     accepted), read at the gate level via [_selectAtLevel];
+  ///   * `refillCol` (default `refill_on`) — which button refills the pouch
+  ///     (`short_rest`/`long_rest`/`level_up`), recorded for the button runtime.
+  ///
+  /// Gated by the folding triggers (`grant_pouch` rides a `when_granted` class
+  /// field in the built-in; the `gate` param — `class`/`character` — is the level
+  /// the caller fed as [gateLevel], matching `set_pouch_max`'s discipline). A row
+  /// whose progression has no entry at or below the gate is **not granted yet**
+  /// (the resource hasn't unlocked — not a skip). A non-folding trigger, no
+  /// stored rows, or a structurally invalid max table is surfaced as deferred,
+  /// never silently dropped.
+  void _foldGrantPouch({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required Map<String, GrantedPouch> grantedPouches,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
+      if (!_isFoldingTrigger(trigger)) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a grant_pouch trigger'));
+      }
+      return;
+    }
+
+    final nameCol = _ruleParamString(rule, 'nameCol') ?? 'name';
+    final maxCol = _ruleParamString(rule, 'maxTableCol') ?? 'max_by_level';
+    final refillCol = _ruleParamString(rule, 'refillCol') ?? 'refill_on';
+
+    final raw = attachment.values[field.fieldKey];
+    final rows = raw is List ? raw.whereType<Map>().toList() : const <Map>[];
+    if (rows.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'grant_pouch found no resource rows in stored field '
+          '"${field.fieldKey}"'));
+      return;
+    }
+
+    for (final row in rows) {
+      final name = _stringFrom(row[nameCol], const ['name', 'value', 'id']);
+      // An unnamed resource row can't key a pouch — skip it (a blank trailing
+      // row in an editor table is common and harmless).
+      if (name == null || name.isEmpty) continue;
+
+      final resolved = _resolveGrantedMax(row[maxCol], gateLevel);
+      if (resolved.reason != null) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind, resolved.reason!));
+        continue;
+      }
+      // No progression row ≤ the gate ⇒ the resource hasn't unlocked yet
+      // (e.g. a Channel Divinity that begins at L3 for a L1 character).
+      if (resolved.max == null) continue;
+
+      final refillOn =
+          _stringFrom(row[refillCol], const ['value', 'name', 'id']);
+      final pouch = GrantedPouch(
+        entityId: attachment.entityId,
+        name: name,
+        max: resolved.max!,
+        refillOn: refillOn,
+      );
+      grantedPouches[pouch.pouchKey] = pouch;
+    }
+  }
+
+  /// Resolve a `grant_pouch` row's max table to a scalar `num` at [gateLevel].
+  /// The table is one of:
+  ///   * a `"1:2,3:3,6:4"` level→max **string** (the §2.4 / §4.3 `table(...)`
+  ///     comma/colon form), parsed by [_parseLevelTableString];
+  ///   * a `{level: max}` **map** (already structured);
+  ///   * a bare **number** (a level-independent fixed max).
+  ///
+  /// A `(max: null, reason: null)` means a valid-but-not-yet-unlocked resource
+  /// (no progression entry ≤ the gate); a non-null `reason` is a hard deferral
+  /// (a missing/garbled table, or a row-valued — non-scalar — selection, which a
+  /// resource pouch never is).
+  ({num? max, String? reason}) _resolveGrantedMax(dynamic raw, int gateLevel) {
+    if (raw is num) return (max: raw, reason: null);
+
+    Map<dynamic, dynamic> table;
+    if (raw is String) {
+      final parsed = _parseLevelTableString(raw);
+      if (parsed == null) {
+        return (
+          max: null,
+          reason: 'grant_pouch max table "$raw" is not a valid '
+              '"level:max,…" progression',
+        );
+      }
+      table = parsed;
+    } else if (raw is Map) {
+      table = raw;
+    } else {
+      return (
+        max: null,
+        reason: 'grant_pouch max table is missing or invalid '
+            '(${raw == null ? 'absent' : raw.runtimeType})',
+      );
+    }
+
+    final selected = _selectAtLevel(table, gateLevel);
+    if (selected.reason != null) return (max: null, reason: selected.reason);
+    final value = selected.value;
+    if (value == null) return (max: null, reason: null); // below gate
+    if (value is num) return (max: value, reason: null);
+    return (
+      max: null,
+      reason: 'grant_pouch max table resolved to a non-scalar '
+          '(${value.runtimeType}) — a resource pouch max must be a number',
+    );
+  }
+
+  /// Parse a `"1:2,3:3,6:4,12:5,17:6"` level→max progression string into a
+  /// `{level: max}` map (the §2.4 max-table / §4.3 `table(...)` data form).
+  /// Whitespace-tolerant; malformed pairs are skipped. Returns `null` when no
+  /// valid `level:max` pair is found.
+  Map<int, num>? _parseLevelTableString(String raw) {
+    final out = <int, num>{};
+    for (final part in raw.split(',')) {
+      final pair = part.split(':');
+      if (pair.length != 2) continue;
+      final lvl = int.tryParse(pair[0].trim());
+      final max = num.tryParse(pair[1].trim());
+      if (lvl == null || max == null) continue;
+      out[lvl] = max;
+    }
+    return out.isEmpty ? null : out;
   }
 
   /// Resolve a `set_pouch_max` source to either a scalar `num` (intPouch max) or
