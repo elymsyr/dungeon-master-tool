@@ -22,12 +22,14 @@
 //      per-pack `conversion_report.json` (the `unmapped_report.json` pattern),
 //   5. stamps `"format": 3` on the entity and the pack metadata.
 //
-// SCOPE (PR-3.0 slice 3): the per-kind `effects` → v3 **data-field** mapping is
-// a later slice — here every parametric row is counted as `mapped` (its §6
-// disposition) and ALSO surfaced in the description; the field write lands next.
-// This slice is the file/report scaffold + the description & value passes, so it
-// defaults to **--dry-run** (it does not rewrite the committed pack assets; the
-// mass conversion runs in the Phase-3 waves once the field mapping is in).
+// SCOPE (PR-3.0 slice 4): the per-kind `effects` → v3 **data-field** mapping is
+// now wired (`effect_field_mapper.dart`) — each parametric row is counted as
+// `mapped`, its mechanics written into the canonical v3 data field, AND it is
+// still surfaced in the description (master-roadmap §3 "keep the row ALSO
+// described"). The mapper names the fields the JIT waves add to the template; it
+// authors no template rule itself (RULE RESET intact). The mass conversion still
+// runs in the Phase-3 waves, so the CLI defaults to **--dry-run** (it does not
+// rewrite the committed pack assets unless `--write` is passed).
 //
 // Run from the Flutter project root (`flutter_app/`):
 //
@@ -45,6 +47,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dungeon_master_tool/domain/services/template_migration/description_generator.dart';
+import 'package:dungeon_master_tool/domain/services/template_migration/effect_field_mapper.dart';
 import 'package:dungeon_master_tool/domain/services/template_migration/legacy_content_converter.dart';
 
 /// Default location of the bundled packs (relative to the Flutter project root).
@@ -81,8 +84,17 @@ class ConversionReport {
   /// Prerequisite clauses rendered into the `### Prerequisites` bullet list.
   int prereqs = 0;
 
+  /// Total v3 data-field writes produced by mapped rows (slice 4). A row may
+  /// produce more than one write, so this can exceed [mapped].
+  int fieldWrites = 0;
+
+  /// Mapped rows that wrote to more than one distinct field (observability for
+  /// a future multi-field kind — content-convert §6).
+  int multiFieldRows = 0;
+
   final Map<String, int> mappedKinds = <String, int>{};
   final Map<String, int> notedKinds = <String, int>{};
+  final Map<String, int> fieldWriteKeys = <String, int>{};
   final List<String> notedSamples = <String>[];
 
   void _bump(Map<String, int> bucket, String kind) {
@@ -93,6 +105,19 @@ class ConversionReport {
   void recordMapped(String kind) {
     mapped++;
     _bump(mappedKinds, kind);
+  }
+
+  /// Records the v3 data-field writes a mapped row produced (slice 4), tallying
+  /// the per-field counts and flagging a row that fed more than one field.
+  void recordFieldWrites(List<EffectFieldWrite> writes) {
+    if (writes.isEmpty) return;
+    final keys = <String>{};
+    for (final w in writes) {
+      fieldWrites++;
+      _bump(fieldWriteKeys, w.fieldKey);
+      keys.add(w.fieldKey);
+    }
+    if (keys.length > 1) multiFieldRows++;
   }
 
   void recordNoted(String kind, String entityName) {
@@ -112,8 +137,12 @@ class ConversionReport {
     noted += other.noted;
     dropped += other.dropped;
     prereqs += other.prereqs;
+    fieldWrites += other.fieldWrites;
+    multiFieldRows += other.multiFieldRows;
     other.mappedKinds.forEach((k, v) => mappedKinds[k] = (mappedKinds[k] ?? 0) + v);
     other.notedKinds.forEach((k, v) => notedKinds[k] = (notedKinds[k] ?? 0) + v);
+    other.fieldWriteKeys
+        .forEach((k, v) => fieldWriteKeys[k] = (fieldWriteKeys[k] ?? 0) + v);
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -127,6 +156,11 @@ class ConversionReport {
           'dropped': dropped,
         },
         'prerequisite_clauses': prereqs,
+        'field_writes': <String, dynamic>{
+          'total': fieldWrites,
+          'multi_field_rows': multiFieldRows,
+          'by_field': _sortedByCountDesc(fieldWriteKeys),
+        },
         'mapped_kinds': _sortedByCountDesc(mappedKinds),
         'noted_kinds': _sortedByCountDesc(notedKinds),
         'noted_samples': notedSamples,
@@ -135,7 +169,7 @@ class ConversionReport {
   String get summaryLine =>
       '$packName: converted $converted, skipped $skipped | '
       'effects mapped $mapped / noted $noted / dropped $dropped | '
-      'prereqs $prereqs';
+      'fields $fieldWrites | prereqs $prereqs';
 }
 
 /// A map sorted by descending count then key, for stable, readable report JSON.
@@ -232,12 +266,17 @@ bool convertEntity(Map<String, dynamic> entity, ConversionReport report) {
       .map(normalizePrereqClause)
       .toList(growable: false);
 
-  // (c) tally row dispositions (§6 / §8).
+  // (c) tally row dispositions (§6 / §8) and, for mapped rows, write the v3
+  // data field the standing template rules read (slice 4). The row stays
+  // described regardless (renderEffectsBody below renders every row).
   for (final row in effectRows) {
     final kind = _str(row['kind']);
     switch (classifyEffectRow(row)) {
       case EffectDisposition.mapped:
         report.recordMapped(kind);
+        final writes = mapEffectToFields(row);
+        applyEffectWrites(attributes, writes);
+        report.recordFieldWrites(writes);
       case EffectDisposition.noted:
         report.recordNoted(kind, _str(entity['name']));
       case EffectDisposition.dropped:

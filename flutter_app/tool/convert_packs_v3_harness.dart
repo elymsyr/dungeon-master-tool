@@ -85,6 +85,13 @@ void _feat() {
   expect('noted == 1 (reroll)', report.noted == 1);
   expect('dropped == 0', report.dropped == 0);
   expect('prereqs == 1', report.prereqs == 1);
+  // slice 4: mapped rows also write their v3 data fields.
+  final attrs = entity['attributes'] as Map;
+  expect('field writes == 2 (asi + speed)', report.fieldWrites == 2);
+  expect('ability_bonuses row written',
+      attrs['ability_bonuses'] is List && (attrs['ability_bonuses'] as List).length == 1);
+  expect('speed_bonus scalar written', attrs['speed_bonus'] == 5);
+  expect('reroll wrote no data field', attrs.containsKey('extra_attacks') == false);
   expect('intro kept at top',
       desc.startsWith('You have undergone extensive physical training.'));
   expect('has ### Prerequisites', desc.contains('### Prerequisites'));
