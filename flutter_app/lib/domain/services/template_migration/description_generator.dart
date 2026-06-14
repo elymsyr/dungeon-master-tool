@@ -299,6 +299,84 @@ String renderEffect(Map<String, dynamic>? effect) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Effect-row disposition classifier (content-convert §6 / §8 report counts)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// The ~25 **parametric** effect/modifier kinds (content-convert §6) — the
+/// closed set that [renderEffect] gives a bespoke bold-led template AND that the
+/// wave converter maps into a v3 **data field** (the standing template field
+/// rules read them). Kept in lock-step with the bespoke `case` labels in
+/// [renderEffect]; it is the single source of truth the offline CLI
+/// (`convert_packs_v3.dart`) uses to tally the `mapped` count, and the per-kind
+/// field mapping (a later slice) will dispatch over the same set.
+const Set<String> parametricEffectKinds = {
+  'ability_score_bonus',
+  'ac_bonus',
+  'speed_bonus',
+  'hp_bonus_flat',
+  'hp_max_bonus_total',
+  'hp_bonus_per_level',
+  'initiative_bonus',
+  'temp_hp_grant',
+  'proficiency_grant',
+  'proficiency_grant_raw',
+  'expertise_grant',
+  'language_grant',
+  'spell_grant',
+  'spell_always_prepared',
+  'cantrip_grant',
+  'damage_resistance',
+  'damage_resistance_grant',
+  'damage_immunity',
+  'damage_immunity_grant',
+  'damage_vulnerability',
+  'damage_vulnerability_grant',
+  'condition_immunity_grant',
+  'sense_grant',
+  'truesight_grant',
+  'blindsight_grant',
+  'unarmored_ac_formula',
+  'resource_pool_grant',
+  'recovery_grant',
+  'slot_recovery_short_rest',
+  'granted_action_grant',
+  'granted_bonus_action_grant',
+  'granted_reaction_grant',
+  'extra_attack_count',
+  'extra_attack_bump',
+  'class_level_grant',
+  'choice_group',
+};
+
+/// The §6 disposition of a single legacy effect/modifier row, used for the
+/// per-pack `conversion_report.json` counts (content-convert §8):
+///
+///   * [mapped] — a parametric kind ([parametricEffectKinds]); its mechanics are
+///     written into a v3 data field by the wave converter (and it is also
+///     described in the card text).
+///   * [noted] — an out-of-mechanical-scope combat/VTT kind, or any other
+///     recognised/unknown kind that renders to text only: it is preserved as
+///     player-facing rules text in the `description` (content-convert §6
+///     "nothing is deleted silently"; §Verification "every noted row must be
+///     visible as rules text").
+///   * [dropped] — a null/empty row that renders to nothing. This should be 0
+///     for real content; a non-zero count flags malformed source data.
+enum EffectDisposition { mapped, noted, dropped }
+
+/// Classifies one legacy effect/modifier [row] by its §6 disposition (see
+/// [EffectDisposition]). A row whose [renderEffect] is empty is [dropped];
+/// a row whose `kind` is in [parametricEffectKinds] is [mapped]; everything
+/// else that renders is [noted]. Deterministic and side-effect-free.
+EffectDisposition classifyEffectRow(Map<String, dynamic>? row) {
+  if (row == null || row.isEmpty) return EffectDisposition.dropped;
+  if (renderEffect(row).isEmpty) return EffectDisposition.dropped;
+  if (parametricEffectKinds.contains(_str(row['kind']))) {
+    return EffectDisposition.mapped;
+  }
+  return EffectDisposition.noted;
+}
+
 /// Renders one legacy prerequisite clause (`{kind, value, ability, args, …}`) to
 /// a single player-facing line for the `### Prerequisites` bullet list. An
 /// authored `text` / `name` wins; otherwise the closed clause vocabulary
