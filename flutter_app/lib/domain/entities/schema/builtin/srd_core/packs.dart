@@ -26,8 +26,38 @@ Map<String, dynamic> _p({
     'contents': narrative,
   };
   if (weightLb != null) attrs['weight_lb'] = weightLb;
-  return packEntity(slug: _slug, name: name, attributes: attrs);
+  return packEntity(
+      slug: _slug,
+      name: name,
+      description: _describe(name, contents, narrative, costGp, weightLb),
+      attributes: attrs);
 }
+
+/// Player-facing Markdown for an equipment pack: what it is, an itemised
+/// "What's inside" list (built from the same `contents` map the refs use, so
+/// the prose can never drift from the bundle), and the cost/weight footer.
+String _describe(String name, Map<String, int> contents, String narrative,
+    int costGp, double? weightLb) {
+  final items = contents.entries
+      .map((e) => e.value > 1 ? '- ${e.key} ×${e.value}' : '- ${e.key}')
+      .join('\n');
+  final footer = weightLb != null
+      ? '**Cost:** $costGp gp  ·  **Weight:** ${_lb(weightLb)} lb'
+      : '**Cost:** $costGp gp';
+  return '''
+**$name.**
+
+A ready-made bundle of adventuring gear, sold together so you can equip a character in a single purchase instead of buying each item one at a time. When you buy the pack, you gain everything listed below.
+
+**What's inside:**
+$items
+
+$footer
+''';
+}
+
+/// Trim a trailing `.0` so whole pounds read "42" not "42.0".
+String _lb(double w) => w == w.roundToDouble() ? '${w.round()}' : '$w';
 
 /// Most pack contents are gear; a handful (Arrows, Bolts) are ammunition.
 /// Resolver looks up the row by exact name in the destination slug.

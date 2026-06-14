@@ -33,8 +33,72 @@ Map<String, dynamic> _t({
         craftableGear.map((g) => ref('adventuring-gear', g)).toList();
   }
   if (variantOf != null) attrs['variant_of_ref'] = ref('tool', variantOf);
-  return packEntity(slug: _slug, name: name, attributes: attrs);
+  return packEntity(
+      slug: _slug,
+      name: name,
+      description: _describe(
+          name: name,
+          category: category,
+          ability: ability,
+          costGp: costGp,
+          weightLb: weightLb,
+          utilizeDescription: utilizeDescription,
+          variantOf: variantOf),
+      attributes: attrs);
 }
+
+/// Player-facing Markdown for a tool: its category, the proficiency rule
+/// (add your proficiency bonus when you're proficient), the ability its
+/// checks use, the concrete things you can do with it, and the cost/weight
+/// footer. Gaming-set/instrument variants point back at their base tool.
+String _describe({
+  required String name,
+  required String category,
+  required String ability,
+  required double costGp,
+  required double weightLb,
+  String? utilizeDescription,
+  String? variantOf,
+}) {
+  final intro = switch (category) {
+    "Artisan's Tools" =>
+      "*Artisan's Tools.* A set of specialized implements used to craft and repair goods in a single trade.",
+    'Gaming Set' =>
+      '*Gaming Set.* The pieces and props for a game of chance or skill, used for play and for reading your opponents.',
+    'Musical Instrument' =>
+      '*Musical Instrument.* An instrument you play to perform, entertain, and set a mood.',
+    _ =>
+      '*$category.* A specialized kit for a particular task.',
+  };
+  final prof =
+      'When you are **proficient** with this tool, add your **proficiency bonus** to any ability check you make using it. Those checks use your **$ability**.';
+  final blocks = <String>['**$name.**', intro, prof];
+  if (variantOf != null && variantOf != name) {
+    blocks.add(
+        'This is a specific kind of **$variantOf**; proficiency with the $variantOf covers it.');
+  }
+  if (utilizeDescription != null) {
+    blocks.add('**What you can do with it:**\n- $utilizeDescription.');
+  }
+  final footer = weightLb > 0
+      ? '**Cost:** ${_gp(costGp)}  ·  **Weight:** ${_lb(weightLb)} lb'
+      : '**Cost:** ${_gp(costGp)}';
+  blocks.add(footer);
+  return '\n${blocks.join('\n\n')}\n';
+}
+
+/// Format a gp price, dropping to silver/copper for sub-gold costs so prices
+/// read naturally (0.1 → "1 sp", 0.04 → "4 cp", 0 → "no cost").
+String _gp(double gp) {
+  final cp = (gp * 100).round();
+  if (cp == 0) return 'no cost (improvised)';
+  if (cp % 100 == 0) return '${cp ~/ 100} gp';
+  if (cp % 10 == 0) return '${cp ~/ 10} sp';
+  return '$cp cp';
+}
+
+/// Trim a trailing `.0` so whole pounds read "8" not "8.0".
+String _lb(double w) => w == w.roundToDouble() ? '${w.round()}' : '$w';
 
 /// SRD 5.2.1 tools — Artisan's Tools (15), Other Tools (5), Gaming Set
 /// variants (3), Musical Instruments (9).
