@@ -891,6 +891,46 @@ void main() {
   print('Choose self-check: ${chooseOk ? 'PASS' : 'FAIL'} '
       '(choices=${result.pendingChoices.length}/2)');
 
+  // `choose` RESOLUTION self-check (slice PR-2.5). The SAME athlete feat, now
+  // given a recorded selection `['str']` via `ruleChoices` keyed by the choice
+  // key, no longer surfaces a pending choice — instead its `perPick` effect is
+  // folded once for the picked row: `modify_stat target:'ability:{row.ability}'
+  // value:'{row.amount}'` interpolates against the chosen row {ability:'str',
+  // amount:1} → a real `ability:str +1` stat delta. Run in isolation (just the
+  // athlete) so the +1 is attributable and the main run above stays unchanged
+  // (it surfaces the choice as pending, since no selection was passed to it).
+  final athleteAnswered = resolver.resolve(
+    [athlete],
+    gateLevel: 5,
+    aspects: aspects,
+    ruleChoices: const {
+      'feat-athlete:asi_options:rule#0': ['str'],
+    },
+  );
+  final answeredStr = athleteAnswered.delta('ability:str');
+  print('\nChoose resolution (slice PR-2.5) — athlete given ["str"] expected '
+      'ability:str +1 and NO pending choice:');
+  print('  statDeltas=${athleteAnswered.statDeltas}, '
+      'pendingChoices=${athleteAnswered.pendingChoices.length}, '
+      'deferred=${athleteAnswered.deferred.length}');
+  final chooseResolveOk = answeredStr == 1 &&
+      athleteAnswered.statDeltas.length == 1 &&
+      athleteAnswered.pendingChoices.isEmpty &&
+      athleteAnswered.deferred.isEmpty &&
+      // a stale selection that matches no option must defer, not silently drop.
+      resolver.resolve(
+        [athlete],
+        gateLevel: 5,
+        aspects: aspects,
+        ruleChoices: const {
+          'feat-athlete:asi_options:rule#0': ['con'],
+        },
+      ).deferred.length ==
+          1;
+  print('Choose resolution self-check: ${chooseResolveOk ? 'PASS' : 'FAIL'} '
+      '(ability:str=$answeredStr/1, '
+      'pending=${athleteAnswered.pendingChoices.length}/0)');
+
   // `set_pouch_max` self-check (slice 7). pouchMatrix maxima aggregate per-row
   // across the wizard + cleric; the levelTable/formula sources set scalar
   // intPouch maxima; the paladin's level-7 progression is gated out at L5.
@@ -969,5 +1009,5 @@ void main() {
       '(long=${longRest.length}/3, short=${shortRest.length}/1)');
 
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && pouchOk && grantPouchOk && buttonOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk && chooseResolveOk && pouchOk && grantPouchOk && buttonOk ? 'PASS' : 'FAIL'}');
 }

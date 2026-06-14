@@ -32,12 +32,18 @@
 ///   * `grant_proficiency` (slice 5) — sets a proficiency `tier`
 ///     (`proficient`/`expertise`) on a skillTree field's rows, in
 ///     [TemplateResolution.proficiencyGrants].
-///   * `choose` (slice 6) — emits a *pending choice* rather than folding a final
-///     value: an `optionsFrom` (rows/refs) or inline option list, a `pick`
-///     count, a `prompt` and optional `target`, surfaced in
-///     [TemplateResolution.pendingChoices] (§4.4 step 4). The picker UI/choice
-///     persistence and the re-fold of `perPick` effects from a stored selection
-///     are a later slice; this slice only surfaces the unanswered choice.
+///   * `choose` (slice 6 / slice PR-2.5) — a rule whose handling depends on
+///     whether the PC has answered it. With **no** recorded selection it emits a
+///     *pending choice* (an `optionsFrom` (rows/refs) or inline option list, a
+///     `pick` count, a `prompt` and optional `target`) into
+///     [TemplateResolution.pendingChoices] (§4.4 step 4). With a recorded
+///     selection (passed as `ruleChoices[<choiceKey>]`) it surfaces **no**
+///     pending choice and instead folds the rule's `perPick` nested effects once
+///     per picked option — each picked id is matched back to its source row and
+///     the effects are `{row.<col>}`/`{pick}` interpolated against it, then
+///     re-folded through the same dispatch (so an ASI pick's
+///     `modify_stat ability:{row.ability} +{row.amount}` lands as a real stat
+///     delta — slice PR-2.5).
 ///   * `set_pouch_max` (slice 7) — the first of the pouch kinds. Sets the
 ///     *maximum* of an `intPouch` (scalar) or `pouchMatrix` (per-row) target
 ///     field from a source: a level-keyed field read (a `levelTable`
@@ -181,9 +187,11 @@ class ResolverSkip {
 /// equivalent of "the PC owes a decision".
 ///
 /// A made selection persists on the PC card as data under
-/// `rule_choices[<choiceKey>] = [<picked>, …]` (§4.4 step 4). Re-folding the
-/// rule's `perPick` effects from a stored selection is a later slice; this
-/// record only carries what the picker needs to render the prompt.
+/// `rule_choices[<choiceKey>] = [<picked>, …]` (§4.4 step 4) and is fed back to
+/// [TemplateRuleResolver.resolve] as its `ruleChoices` argument; an answered
+/// choice surfaces no [PendingChoice] and instead folds the rule's `perPick`
+/// effects (slice PR-2.5). This record only carries what the picker needs to
+/// render the still-unanswered prompt.
 class PendingChoice {
   /// The contributing entity that owns the `choose` rule (class/feat/species…).
   final String entityId;
@@ -401,11 +409,21 @@ class TemplateRuleResolver {
   /// run applies every level rule. [aspects] is the PC card's aspect map
   /// (§4.3) — read by the `formula` value source (slice 3); the already-built
   /// `fixed`/`field` sources don't need it, but it is threaded now so the fold
-  /// signature is stable. Pure — returns a fresh [TemplateResolution].
+  /// signature is stable.
+  ///
+  /// [ruleChoices] is the PC card's recorded `choose` selections (§4.4 step 4),
+  /// keyed by [PendingChoice.choiceKey] (`<entityId>:<fieldKey>:<ruleId>`) →
+  /// the picked option ids. A `choose` rule **with** a recorded (non-empty)
+  /// selection no longer surfaces a [PendingChoice]; instead its `perPick`
+  /// nested effects are folded once per pick — `{row.*}`/`{pick}` interpolated
+  /// against the chosen option's source row — through this same fold (slice
+  /// PR-2.5). A choice with no recorded selection still surfaces as pending.
+  /// Pure — returns a fresh [TemplateResolution].
   TemplateResolution resolve(
     List<ResolverAttachment> attachments, {
     int gateLevel = 1 << 20,
     AspectContext aspects = AspectContext.empty,
+    Map<String, List<String>> ruleChoices = const {},
   }) {
     final statDeltas = <String, num>{};
     final notes = <String>[];
@@ -431,6 +449,7 @@ class TemplateRuleResolver {
             ruleIndex: i,
             gateLevel: gateLevel,
             aspects: aspects,
+            ruleChoices: ruleChoices,
             statDeltas: statDeltas,
             notes: notes,
             warnings: warnings,
@@ -664,6 +683,7 @@ class TemplateRuleResolver {
     required int ruleIndex,
     required int gateLevel,
     required AspectContext aspects,
+    required Map<String, List<String>> ruleChoices,
     required Map<String, num> statDeltas,
     required List<String> notes,
     required List<String> warnings,
@@ -754,7 +774,16 @@ class TemplateRuleResolver {
           kind: kind,
           trigger: trigger,
           gateLevel: gateLevel,
+          aspects: aspects,
+          ruleChoices: ruleChoices,
+          statDeltas: statDeltas,
+          notes: notes,
+          warnings: warnings,
+          grants: grants,
+          proficiencyGrants: proficiencyGrants,
           pendingChoices: pendingChoices,
+          pouchMax: pouchMax,
+          grantedPouches: grantedPouches,
           deferred: deferred,
         );
       case RuleKinds.setPouchMax:
@@ -1037,8 +1066,18 @@ class TemplateRuleResolver {
   /// choice authored under a non-folding trigger, or one with no resolvable
   /// options, is surfaced as deferred, never silently dropped.
   ///
-  /// This slice only *emits* the pending choice; recording a selection and
-  /// re-folding the rule's `perPick` effects from it is a later slice.
+  /// **Resolution (slice PR-2.5).** When the PC card has a recorded selection
+  /// for this rule's [PendingChoice.choiceKey] in [ruleChoices], the choice is
+  /// *answered*: it surfaces no pending choice and instead folds its `perPick`
+  /// nested effects once per picked option. Each picked id is matched back to
+  /// its source row (the recordList row / inline option it came from); the
+  /// `perPick` effect rules are then `{row.<col>}`/`{pick}` interpolated against
+  /// that row and re-folded through [_foldRule] (so an ASI pick's
+  /// `modify_stat target:'ability:{row.ability}' value:'{row.amount}'` lands as
+  /// a real stat delta). A picked id matching no option is surfaced as deferred
+  /// (a stale/garbled selection), never silently dropped; a choice whose
+  /// `perPick` is empty (a pure `target` write, e.g. `subclass_refs`) folds
+  /// nothing here (the data write is a call-site concern).
   void _foldChoose({
     required ResolverAttachment attachment,
     required FieldSchema field,
@@ -1047,7 +1086,16 @@ class TemplateRuleResolver {
     required String kind,
     required String trigger,
     required int gateLevel,
+    required AspectContext aspects,
+    required Map<String, List<String>> ruleChoices,
+    required Map<String, num> statDeltas,
+    required List<String> notes,
+    required List<String> warnings,
+    required Map<String, List<String>> grants,
+    required Map<String, Map<String, String>> proficiencyGrants,
     required List<PendingChoice> pendingChoices,
+    required Map<String, dynamic> pouchMax,
+    required Map<String, GrantedPouch> grantedPouches,
     required List<ResolverSkip> deferred,
   }) {
     if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
@@ -1058,7 +1106,7 @@ class TemplateRuleResolver {
       return;
     }
 
-    final options = _gatherStrings(
+    final entries = _gatherOptionEntries(
       rule,
       attachment,
       field,
@@ -1075,19 +1123,49 @@ class TemplateRuleResolver {
         'choiceId',
       ],
     );
-    if (options.isEmpty) {
+    if (entries.isEmpty) {
       deferred.add(_skip(attachment, field, ruleIndex, kind,
           'choose found no options (inline "options", "optionsFrom", or stored '
           'field "${field.fieldKey}")'));
       return;
     }
 
+    final options = [for (final e in entries) e.value];
     final pick = _choosePick(rule);
     final prompt = _ruleParamString(rule, 'prompt') ??
         (pick > 1 ? 'Choose $pick options' : 'Choose an option');
     final target = _ruleParamString(rule, 'target');
     final ruleId = _ruleParamString(rule, 'ruleId') ?? 'rule#$ruleIndex';
+    final choiceKey = '${attachment.entityId}:${field.fieldKey}:$ruleId';
 
+    final selection = ruleChoices[choiceKey];
+    if (selection != null && selection.isNotEmpty) {
+      // Answered: apply the recorded picks' perPick effects, surface no pending.
+      _applyChoiceSelection(
+        attachment: attachment,
+        field: field,
+        rule: rule,
+        ruleIndex: ruleIndex,
+        kind: kind,
+        selection: selection,
+        entries: entries,
+        gateLevel: gateLevel,
+        aspects: aspects,
+        ruleChoices: ruleChoices,
+        statDeltas: statDeltas,
+        notes: notes,
+        warnings: warnings,
+        grants: grants,
+        proficiencyGrants: proficiencyGrants,
+        pendingChoices: pendingChoices,
+        pouchMax: pouchMax,
+        grantedPouches: grantedPouches,
+        deferred: deferred,
+      );
+      return;
+    }
+
+    // Unanswered: surface the pending choice for the picker UI.
     pendingChoices.add(PendingChoice(
       entityId: attachment.entityId,
       fieldKey: field.fieldKey,
@@ -1097,6 +1175,82 @@ class TemplateRuleResolver {
       pick: pick,
       target: target,
     ));
+  }
+
+  /// Fold the `perPick` nested effects of an *answered* `choose` rule (§4.4 step
+  /// 4). For each picked id in [selection], match it back to its source option
+  /// [entries] (so `{row.<col>}` placeholders resolve against the chosen row),
+  /// interpolate every `perPick` effect rule, and re-fold it through
+  /// [_foldRule] (reusing the full dispatch so a `perPick` may itself be any
+  /// rule kind). A picked id matching no option is deferred (a stale/garbled
+  /// selection).
+  void _applyChoiceSelection({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required List<String> selection,
+    required List<({String value, dynamic source})> entries,
+    required int gateLevel,
+    required AspectContext aspects,
+    required Map<String, List<String>> ruleChoices,
+    required Map<String, num> statDeltas,
+    required List<String> notes,
+    required List<String> warnings,
+    required Map<String, List<String>> grants,
+    required Map<String, Map<String, String>> proficiencyGrants,
+    required List<PendingChoice> pendingChoices,
+    required Map<String, dynamic> pouchMax,
+    required Map<String, GrantedPouch> grantedPouches,
+    required List<ResolverSkip> deferred,
+  }) {
+    final perPick = _gatherPerPick(rule);
+    // A choose with no perPick is a pure data write into `target` (e.g. a
+    // subclass ref) — nothing to fold here (the write is a call-site concern).
+    if (perPick.isEmpty) return;
+
+    for (final picked in selection) {
+      final match = _matchOption(entries, picked);
+      if (match == null) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'choose selection "$picked" matches no current option '
+            '(stale or garbled rule_choices entry)'));
+        continue;
+      }
+      for (final raw in perPick) {
+        if (raw is! Map) {
+          deferred.add(_skip(attachment, field, ruleIndex, kind,
+              'choose perPick effect is not an object (${raw.runtimeType})'));
+          continue;
+        }
+        final effect = _interpolateValue(
+          Map<String, dynamic>.from(raw),
+          match.source,
+          picked,
+        ) as Map<String, dynamic>;
+        // Re-fold the interpolated effect through the full dispatcher: a
+        // perPick may be any rule kind (commonly modify_stat / grant_refs).
+        _foldRule(
+          attachment: attachment,
+          field: field,
+          rule: effect,
+          ruleIndex: ruleIndex,
+          gateLevel: gateLevel,
+          aspects: aspects,
+          ruleChoices: ruleChoices,
+          statDeltas: statDeltas,
+          notes: notes,
+          warnings: warnings,
+          grants: grants,
+          proficiencyGrants: proficiencyGrants,
+          pendingChoices: pendingChoices,
+          pouchMax: pouchMax,
+          grantedPouches: grantedPouches,
+          deferred: deferred,
+        );
+      }
+    }
   }
 
   /// `set_pouch_max` (§4.2): set the *maximum* of a pouch target field from a
@@ -1512,6 +1666,113 @@ class TemplateRuleResolver {
         if (v is String && v.trim().isNotEmpty) return v.trim();
         if (v is num) return v.toString();
       }
+    }
+    return null;
+  }
+
+  /// Like [_gatherStrings], but keeps each option's **source** entry alongside
+  /// its derived id (`choose` slice PR-2.5 — the resolution re-fold needs the
+  /// source row so `{row.<col>}` placeholders in `perPick` effects resolve). The
+  /// source is the raw list element (a recordList row `Map`, or an inline
+  /// string/number); the value is its id via [_stringFrom].
+  List<({String value, dynamic source})> _gatherOptionEntries(
+    Map<String, dynamic> rule,
+    ResolverAttachment attachment,
+    FieldSchema field, {
+    required String inlineKey,
+    required List<String> mapKeys,
+  }) {
+    dynamic source = rule[inlineKey];
+    if (source is! List) {
+      final params = rule['params'];
+      if (params is Map && params[inlineKey] is List) {
+        source = params[inlineKey];
+      }
+    }
+    source ??= attachment.values[field.fieldKey];
+    final list =
+        source is List ? source : (source == null ? const [] : [source]);
+
+    final out = <({String value, dynamic source})>[];
+    for (final entry in list) {
+      final value = _stringFrom(entry, mapKeys);
+      if (value != null && value.isNotEmpty) {
+        out.add((value: value, source: entry));
+      }
+    }
+    return out;
+  }
+
+  /// The first option entry whose id equals [picked], or `null` when a recorded
+  /// selection no longer matches any current option (a stale `rule_choices`).
+  ({String value, dynamic source})? _matchOption(
+    List<({String value, dynamic source})> entries,
+    String picked,
+  ) {
+    for (final e in entries) {
+      if (e.value == picked) return e;
+    }
+    return null;
+  }
+
+  /// The `perPick` nested effects of a `choose` rule (top-level `perPick`, else
+  /// under `params`); the empty list when absent.
+  List<dynamic> _gatherPerPick(Map<String, dynamic> rule) {
+    dynamic p = rule['perPick'];
+    if (p is! List) {
+      final params = rule['params'];
+      if (params is Map && params['perPick'] is List) p = params['perPick'];
+    }
+    return p is List ? p : const [];
+  }
+
+  /// `{row.<col>}` / `{pick}` placeholders for a `choose` `perPick` effect.
+  static final RegExp _choiceToken = RegExp(r'\{(row\.[A-Za-z0-9_]+|pick)\}');
+
+  /// Deep-interpolate a `perPick` effect node against the chosen option's [row]
+  /// (its source recordList row, when any) and the [picked] id:
+  ///   * a `Map` / `List` is rebuilt with each member interpolated;
+  ///   * a `String` that is **exactly** one placeholder yields the raw typed
+  ///     value (so `value: "{row.amount}"` becomes the `int` `1`, not `"1"` —
+  ///     keeping `modify_stat`'s numeric value source happy);
+  ///   * a `String` with embedded placeholders is string-substituted;
+  ///   * any other scalar passes through unchanged.
+  /// An unresolvable token is left verbatim (so a data bug surfaces downstream
+  /// — e.g. an unresolved `ability:{row.ability}` target — rather than silently
+  /// resolving to nothing).
+  dynamic _interpolateValue(dynamic node, dynamic row, String picked) {
+    if (node is Map) {
+      final out = <String, dynamic>{};
+      node.forEach((k, v) => out['$k'] = _interpolateValue(v, row, picked));
+      return out;
+    }
+    if (node is List) {
+      return [for (final e in node) _interpolateValue(e, row, picked)];
+    }
+    if (node is String) return _interpolateChoiceString(node, row, picked);
+    return node;
+  }
+
+  dynamic _interpolateChoiceString(String text, dynamic row, String picked) {
+    final whole = _choiceToken.firstMatch(text);
+    if (whole != null && whole.start == 0 && whole.end == text.length) {
+      final resolved = _resolveChoiceToken(whole.group(1)!, row, picked);
+      return resolved ?? text; // unknown token ⇒ leave verbatim
+    }
+    return text.replaceAllMapped(_choiceToken, (m) {
+      final resolved = _resolveChoiceToken(m.group(1)!, row, picked);
+      return resolved == null ? m.group(0)! : '$resolved';
+    });
+  }
+
+  /// Resolve a single `choose` placeholder token: `pick` → the picked id;
+  /// `row.<col>` → that column of the chosen [row] (when it is a `Map`).
+  /// Returns `null` for an unresolvable token (left verbatim by the caller).
+  dynamic _resolveChoiceToken(String token, dynamic row, String picked) {
+    if (token == 'pick') return picked;
+    if (token.startsWith('row.')) {
+      if (row is Map) return row[token.substring(4)];
+      return null;
     }
     return null;
   }
