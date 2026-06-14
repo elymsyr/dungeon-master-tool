@@ -32,8 +32,14 @@
 ///   * `grant_proficiency` (slice 5) — sets a proficiency `tier`
 ///     (`proficient`/`expertise`) on a skillTree field's rows, in
 ///     [TemplateResolution.proficiencyGrants].
+///   * `choose` (slice 6) — emits a *pending choice* rather than folding a final
+///     value: an `optionsFrom` (rows/refs) or inline option list, a `pick`
+///     count, a `prompt` and optional `target`, surfaced in
+///     [TemplateResolution.pendingChoices] (§4.4 step 4). The picker UI/choice
+///     persistence and the re-fold of `perPick` effects from a stored selection
+///     are a later slice; this slice only surfaces the unanswered choice.
 ///
-/// Every other kind (`choose`, `set_pouch_max`, `refill_pouch`/`empty_pouch`,
+/// Every other kind (`set_pouch_max`, `refill_pouch`/`empty_pouch`,
 /// `grant_pouch`) is recorded in [TemplateResolution.deferred] rather than
 /// silently dropped, so the harness shows exactly what remains for later slices.
 library;
@@ -73,8 +79,8 @@ abstract final class RuleTriggers {
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
 /// (the-template-system.md §4.2). [modifyStat], [note], [checkClauses],
-/// [grantRefs] and [grantProficiency] are interpreted; the rest are still
-/// recorded as deferred.
+/// [grantRefs], [grantProficiency] and [choose] are interpreted; the rest are
+/// still recorded as deferred.
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -137,6 +143,60 @@ class ResolverSkip {
       '$entityId/$fieldKey#$ruleIndex ($kind): $reason';
 }
 
+/// A `choose` rule that has surfaced an unanswered pick (the-template-system.md
+/// §4.4 step 4). The picker UI consumes this — [pendingChoices] is the resolver
+/// equivalent of "the PC owes a decision".
+///
+/// A made selection persists on the PC card as data under
+/// `rule_choices[<choiceKey>] = [<picked>, …]` (§4.4 step 4). Re-folding the
+/// rule's `perPick` effects from a stored selection is a later slice; this
+/// record only carries what the picker needs to render the prompt.
+class PendingChoice {
+  /// The contributing entity that owns the `choose` rule (class/feat/species…).
+  final String entityId;
+
+  /// The field whose rule emitted this choice.
+  final String fieldKey;
+
+  /// The rule's stable id (`rule['ruleId']`), or `rule#<index>` when absent —
+  /// the third segment of [choiceKey].
+  final String ruleId;
+
+  /// Player-facing prompt shown by the picker.
+  final String prompt;
+
+  /// The selectable option ids/labels (entity refs, ability keys, or inline
+  /// strings), in declaration order.
+  final List<String> options;
+
+  /// How many of [options] the player must pick (≥ 1).
+  final int pick;
+
+  /// Optional PC list-field the made selection is written into (e.g.
+  /// `subclass_refs`); informational for this slice (the write happens when the
+  /// choice is resolved, a later slice).
+  final String? target;
+
+  const PendingChoice({
+    required this.entityId,
+    required this.fieldKey,
+    required this.ruleId,
+    required this.prompt,
+    required this.options,
+    required this.pick,
+    this.target,
+  });
+
+  /// Persistence key under the PC card's `rule_choices` map (§4.4 step 4):
+  /// `<entityId>:<fieldKey>:<ruleId>`.
+  String get choiceKey => '$entityId:$fieldKey:$ruleId';
+
+  @override
+  String toString() =>
+      '$choiceKey — "$prompt" (pick $pick of ${options.length}'
+      '${target == null ? '' : ' → $target'})';
+}
+
 /// The resolver's output overlay — an `EffectiveCharacter`-equivalent in the
 /// making (the-template-system.md §4.4 step 5). [statDeltas] comes from
 /// `modify_stat`; [notes] from `note` rules; [warnings] from `check_clauses`.
@@ -163,6 +223,10 @@ class TemplateResolution {
   /// `expertise` outranks `proficient` when a row is granted twice.
   final Map<String, Map<String, String>> proficiencyGrants;
 
+  /// Unanswered `choose` rules (§4.4 step 4), in fold order — the picks the PC
+  /// still owes. Each carries its options/prompt/pick for the picker UI.
+  final List<PendingChoice> pendingChoices;
+
   /// Rules not interpreted by this slice (kind or value-source not yet built).
   final List<ResolverSkip> deferred;
 
@@ -172,6 +236,7 @@ class TemplateResolution {
     required this.warnings,
     required this.grants,
     required this.proficiencyGrants,
+    required this.pendingChoices,
     required this.deferred,
   });
 
@@ -186,12 +251,24 @@ class TemplateResolution {
   String? proficiencyFor(String fieldKey, String rowName) =>
       proficiencyGrants[fieldKey]?[rowName];
 
+  /// The unanswered `choose` emitted by [entityId]'s [fieldKey] rule, or `null`
+  /// when that field surfaced no pending choice.
+  PendingChoice? choiceFor(String entityId, String fieldKey) {
+    for (final choice in pendingChoices) {
+      if (choice.entityId == entityId && choice.fieldKey == fieldKey) {
+        return choice;
+      }
+    }
+    return null;
+  }
+
   bool get isEmpty =>
       statDeltas.isEmpty &&
       notes.isEmpty &&
       warnings.isEmpty &&
       grants.isEmpty &&
-      proficiencyGrants.isEmpty;
+      proficiencyGrants.isEmpty &&
+      pendingChoices.isEmpty;
 }
 
 /// Stateless fold over a v3 template's rule attachments.
@@ -221,6 +298,7 @@ class TemplateRuleResolver {
     final warnings = <String>[];
     final grants = <String, List<String>>{};
     final proficiencyGrants = <String, Map<String, String>>{};
+    final pendingChoices = <PendingChoice>[];
     final deferred = <ResolverSkip>[];
 
     for (final attachment in attachments) {
@@ -242,6 +320,7 @@ class TemplateRuleResolver {
             warnings: warnings,
             grants: grants,
             proficiencyGrants: proficiencyGrants,
+            pendingChoices: pendingChoices,
             deferred: deferred,
           );
         }
@@ -254,6 +333,7 @@ class TemplateRuleResolver {
       warnings: warnings,
       grants: grants,
       proficiencyGrants: proficiencyGrants,
+      pendingChoices: pendingChoices,
       deferred: deferred,
     );
   }
@@ -270,6 +350,7 @@ class TemplateRuleResolver {
     required List<String> warnings,
     required Map<String, List<String>> grants,
     required Map<String, Map<String, String>> proficiencyGrants,
+    required List<PendingChoice> pendingChoices,
     required List<ResolverSkip> deferred,
   }) {
     final kind = (rule['kind'] as String?)?.trim() ?? '';
@@ -341,6 +422,18 @@ class TemplateRuleResolver {
           trigger: trigger,
           gateLevel: gateLevel,
           proficiencyGrants: proficiencyGrants,
+          deferred: deferred,
+        );
+      case RuleKinds.choose:
+        _foldChoose(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          pendingChoices: pendingChoices,
           deferred: deferred,
         );
       default:
@@ -578,6 +671,104 @@ class TemplateRuleResolver {
     for (final row in rows) {
       bucket[row] = _higherTier(bucket[row], tier);
     }
+  }
+
+  /// `choose` (§4.2 / §4.4 step 4): surface an unanswered pick rather than fold a
+  /// final value. Options come from inline `params['options']` (or top-level
+  /// `options`), else — per `optionsFrom` (`rows`/`refs`) — the rule's own stored
+  /// field value (`attachment.values[field.fieldKey]`: a recordList's rows or a
+  /// ref list). `pick` (default 1), `prompt` and an optional `target` PC
+  /// list-field round out the [PendingChoice]. Gated by the folding triggers — a
+  /// `level_up` choice only surfaces once its gate level is reached; an
+  /// unequipped item's `when_equipped` choice surfaces nothing (not a skip). A
+  /// choice authored under a non-folding trigger, or one with no resolvable
+  /// options, is surfaced as deferred, never silently dropped.
+  ///
+  /// This slice only *emits* the pending choice; recording a selection and
+  /// re-folding the rule's `perPick` effects from it is a later slice.
+  void _foldChoose({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required List<PendingChoice> pendingChoices,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
+      if (!_isFoldingTrigger(trigger)) {
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a choose trigger'));
+      }
+      return;
+    }
+
+    final options = _gatherStrings(
+      rule,
+      attachment,
+      field,
+      inlineKey: 'options',
+      mapKeys: const [
+        'id',
+        'ref',
+        'value',
+        'ability',
+        'name',
+        'option',
+        'entity_id',
+        'slug',
+        'choiceId',
+      ],
+    );
+    if (options.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'choose found no options (inline "options", "optionsFrom", or stored '
+          'field "${field.fieldKey}")'));
+      return;
+    }
+
+    final pick = _choosePick(rule);
+    final prompt = _ruleParamString(rule, 'prompt') ??
+        (pick > 1 ? 'Choose $pick options' : 'Choose an option');
+    final target = _ruleParamString(rule, 'target');
+    final ruleId = _ruleParamString(rule, 'ruleId') ?? 'rule#$ruleIndex';
+
+    pendingChoices.add(PendingChoice(
+      entityId: attachment.entityId,
+      fieldKey: field.fieldKey,
+      ruleId: ruleId,
+      prompt: prompt,
+      options: options,
+      pick: pick,
+      target: target,
+    ));
+  }
+
+  /// A `choose` rule's `pick` count (top-level or under `params`), clamped to ≥ 1
+  /// (default 1).
+  int _choosePick(Map<String, dynamic> rule) {
+    dynamic raw = rule['pick'];
+    if (raw is! num) {
+      final params = rule['params'];
+      if (params is Map) raw = params['pick'];
+    }
+    final n = raw is num ? raw.toInt() : 1;
+    return n < 1 ? 1 : n;
+  }
+
+  /// Read a string param from a rule, top-level first then under `params`;
+  /// returns `null` when absent/blank in both.
+  String? _ruleParamString(Map<String, dynamic> rule, String key) {
+    final top = (rule[key] as String?)?.trim();
+    if (top != null && top.isNotEmpty) return top;
+    final params = rule['params'];
+    if (params is Map) {
+      final p = (params[key] as String?)?.trim();
+      if (p != null && p.isNotEmpty) return p;
+    }
+    return null;
   }
 
   /// Collect a list of strings for a collection rule (`grant_refs` /

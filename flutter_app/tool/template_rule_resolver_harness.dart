@@ -334,6 +334,77 @@ void main() {
     ]),
   );
 
+  // An "Athlete"-style feat exercising the `choose` kind (slice 6) with
+  // `optionsFrom: rows`: the options come from the feat's OWN stored recordList
+  // (`asi_options` rows carrying an `ability` each → ['str', 'dex']). The choice
+  // is unanswered, so it surfaces as a PendingChoice (pick 1) rather than
+  // folding a stat. The `perPick` effect is carried in the rule but NOT applied
+  // this slice (re-folding a made selection is a later slice).
+  final athlete = ResolverAttachment(
+    entityId: 'feat-athlete',
+    values: const {
+      'asi_options': [
+        {'ability': 'str', 'amount': 1},
+        {'ability': 'dex', 'amount': 1},
+      ],
+    },
+    category: _category('feat', [
+      _field('feat', 'asi_options',
+          order: 0,
+          type: FieldType.recordList,
+          rules: [
+            {
+              'kind': 'choose',
+              'trigger': 'when_granted',
+              'params': {
+                'optionsFrom': 'rows',
+                'pick': 1,
+                'prompt': 'Choose an ability to increase',
+                'target': 'ability_increases',
+                'perPick': [
+                  {
+                    'kind': 'modify_stat',
+                    'target': 'ability:{row.ability}',
+                    'value': '{row.amount}',
+                  },
+                ],
+              },
+            },
+          ]),
+    ]),
+  );
+
+  // A "Fighter" exercising `choose` (slice 6) with INLINE options and the
+  // `level_up` gate. The fighting-style choice (gated at level 1) surfaces at
+  // gateLevel 5; the second style (gated at level 11) must NOT surface. All
+  // params are top-level here (prompt/options/pick/target), exercising the
+  // top-level path vs the athlete's `params`-nested path.
+  final fighter = ResolverAttachment(
+    entityId: 'class-fighter',
+    category: _category('fighter', [
+      _field('fighter', 'fighting_style', order: 0, rules: [
+        {
+          'kind': 'choose',
+          'trigger': 'level_up',
+          'trigger_args': {'at_level': 1},
+          'prompt': 'Choose a Fighting Style',
+          'target': 'fighting_styles',
+          'pick': 1,
+          'options': ['Archery', 'Defense', 'Dueling', 'Great Weapon Fighting'],
+        },
+      ]),
+      _field('fighter', 'second_style', order: 1, rules: [
+        {
+          'kind': 'choose',
+          'trigger': 'level_up',
+          'trigger_args': {'at_level': 11},
+          'prompt': 'Choose a second Fighting Style',
+          'options': ['Protection', 'Two-Weapon Fighting'],
+        },
+      ]),
+    ]),
+  );
+
   // ── Aspect context (slice 2): built from a synthetic PC card. ────────────
   final pcCategory = _category('player-character', [
     _field('player-character', 'abilities',
@@ -400,6 +471,8 @@ void main() {
       monk,
       flametongue,
       grappler,
+      athlete,
+      fighter,
     ],
     gateLevel: 5,
     aspects: aspects,
@@ -461,8 +534,19 @@ void main() {
     }
   }
 
+  print('\nPending choices (choose kind, slice 6) — expected 2 '
+      '(athlete ASI from rows, fighter style inline; the L11 second style '
+      'does NOT surface at gateLevel 5):');
+  if (result.pendingChoices.isEmpty) {
+    print('  (none)');
+  } else {
+    for (final choice in result.pendingChoices) {
+      print('  - $choice  options=${choice.options}');
+    }
+  }
+
   print('\nDeferred (not implemented yet) — expected 0 '
-      '(grant_refs + grant_proficiency now resolve):');
+      '(grant_refs + grant_proficiency + choose now resolve):');
   if (result.deferred.isEmpty) {
     print('  (none)');
   } else {
@@ -524,6 +608,30 @@ void main() {
   print('Proficiency self-check: ${profOk ? 'PASS' : 'FAIL'} '
       '(skills=${result.proficiencyGrants['skills']})');
 
+  // `choose` self-check (slice 6). Two choices surface; the L11 second style
+  // does NOT (it is gated out at gateLevel 5).
+  final asi = result.choiceFor('feat-athlete', 'asi_options');
+  final style = result.choiceFor('class-fighter', 'fighting_style');
+  final chooseOk = result.pendingChoices.length == 2 &&
+      asi != null &&
+      asi.options.length == 2 &&
+      asi.options[0] == 'str' && // rows path: ability col → option id
+      asi.options[1] == 'dex' &&
+      asi.pick == 1 &&
+      asi.prompt == 'Choose an ability to increase' &&
+      asi.target == 'ability_increases' &&
+      asi.choiceKey == 'feat-athlete:asi_options:rule#0' &&
+      style != null &&
+      style.options.length == 4 && // inline options path
+      style.options.first == 'Archery' &&
+      style.pick == 1 &&
+      style.prompt == 'Choose a Fighting Style' &&
+      style.target == 'fighting_styles' &&
+      // the L11 second style must NOT have surfaced.
+      result.choiceFor('class-fighter', 'second_style') == null;
+  print('Choose self-check: ${chooseOk ? 'PASS' : 'FAIL'} '
+      '(choices=${result.pendingChoices.length}/2)');
+
   print('\nOverall: '
-      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk ? 'PASS' : 'FAIL'}');
+      '${aspectsOk && foldOk && noteOk && warnOk && grantsOk && profOk && chooseOk ? 'PASS' : 'FAIL'}');
 }
