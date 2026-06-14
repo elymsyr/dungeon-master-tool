@@ -8,6 +8,7 @@ import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/field_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import 'field_type_meta.dart';
+import 'rule_attachment_editor.dart';
 import 'type_config_forms/type_config_form.dart';
 
 /// Right-hand inspector of the Template Editor (roadmap §1.5).
@@ -180,7 +181,7 @@ class _FieldEditFormState extends ConsumerState<_FieldEditForm> {
               ),
               if (meta.ruleCapable)
                 Tooltip(
-                  message: 'Rule-capable — rules attach in Phase 3',
+                  message: 'Rule-capable — attach rules below',
                   child: Icon(Icons.bolt,
                       size: 18, color: palette.featureCardAccent),
                 ),
@@ -359,7 +360,15 @@ class _FieldEditFormState extends ConsumerState<_FieldEditForm> {
             ),
           ],
           const SizedBox(height: 18),
-          _RulesSection(rules: rules, palette: palette),
+          if (meta.ruleCapable)
+            RuleAttachmentEditor(
+              key: ValueKey('rules-${field.fieldId}'),
+              field: field,
+              category: widget.category,
+              palette: palette,
+            )
+          else
+            _RulesSection(rules: rules, palette: palette),
         ],
       ),
     );

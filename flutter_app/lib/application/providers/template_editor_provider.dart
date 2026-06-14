@@ -5,6 +5,8 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/services/template_rules/template_rule_resolver.dart'
+    show RuleKinds, RuleTriggers;
 import 'template_provider.dart';
 
 const _uuid = Uuid();
@@ -99,6 +101,35 @@ const List<String> levelUpTableGates = ['class', 'character'];
 
 /// Valid `skillTree` proficiency tiers.
 const List<String> skillTreeTiers = ['proficient', 'expertise'];
+
+/// Field types that may carry rule attachments (master-roadmap §2.1 "Rule
+/// capability"). Mirrors the `ruleCapable` flags in `field_type_meta.dart`
+/// (the presentation-layer source the badge/picker read) — kept here so the
+/// application-layer rule validator and the rule-attachment editor share one
+/// closed set without the provider importing presentation. Scalars/media are
+/// aspect sources only and are never rule-capable.
+const Set<FieldType> ruleCapableTypes = {
+  FieldType.relation,
+  FieldType.recordList,
+  FieldType.intPouch,
+  FieldType.checkboxPouch,
+  FieldType.pouchMatrix,
+  FieldType.abilityScoreTable,
+  FieldType.combatStatsTable,
+  FieldType.skillTree,
+  FieldType.levelMatrix,
+  FieldType.levelTable,
+  FieldType.levelTextTable,
+  FieldType.levelUpTable,
+  FieldType.actionButton,
+  // Legacy v2 aliases (PR-2.3 swaps their renderers) stay rule-capable so a
+  // copied built-in carrying the old type keeps its rules valid.
+  FieldType.statBlock,
+  FieldType.combatStats,
+  FieldType.slot,
+  FieldType.proficiencyTable,
+  FieldType.spellSlotGrid,
+};
 
 /// Seeds a valid default `typeConfig` for a parametric [type] so a freshly
 /// added field is immediately save-valid (never flashes a completeness error)
@@ -603,6 +634,42 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
     _commitFields(catIndex, nextFields);
   }
 
+  /// Replaces a field's `rules` attachment list wholesale (PR-3.5a). The
+  /// rule-attachment editor builds the full list (add/edit/delete/reorder) and
+  /// writes it through here on every change; [_validateRules] then flags any
+  /// rule with an unknown kind/trigger or attached to a non-rule-capable field.
+  /// An empty list clears `rules` back to `null` (the "no rules" wire shape).
+  void updateFieldRules(
+    String categoryId,
+    String fieldId,
+    List<Map<String, dynamic>> rules,
+  ) {
+    final schema = state.schema;
+    if (schema == null || !state.canEdit) return;
+    final catIndex =
+        schema.categories.indexWhere((c) => c.categoryId == categoryId);
+    if (catIndex < 0) return;
+    final category = schema.categories[catIndex];
+    final now = _now();
+    var changed = false;
+    final nextFields = <FieldSchema>[];
+    for (final f in category.fields) {
+      if (f.fieldId != fieldId) {
+        nextFields.add(f);
+        continue;
+      }
+      changed = true;
+      nextFields.add(f.copyWith(
+        rules: rules.isEmpty
+            ? null
+            : [for (final r in rules) Map<String, dynamic>.from(r)],
+        updatedAt: now,
+      ));
+    }
+    if (!changed) return;
+    _commitFields(catIndex, nextFields);
+  }
+
   /// Removes a field from [categoryId] (hard delete — fields have no archive
   /// flag). Clears the field selection if the removed field was selected.
   void removeField(String categoryId, String fieldId) {
@@ -685,7 +752,48 @@ class TemplateEditorNotifier extends StateNotifier<TemplateEditorState> {
         ..._validateCategories(categories),
         ..._validateFields(categories),
         ..._validateTypeConfig(categories),
+        ..._validateRules(categories),
       ];
+
+  /// Blocking rule-attachment validation (PR-3.5a). Each rule must declare a
+  /// kind from the closed [RuleKinds] set; an explicit `trigger` (when present)
+  /// must be from the closed [RuleTriggers] set; and rules may only be attached
+  /// to rule-capable field types (master-roadmap §2.1). The editor only ever
+  /// writes valid shapes, but a copied/imported template can carry drift — this
+  /// surfaces it in the Save error summary rather than letting the shadow
+  /// resolver silently defer it.
+  static List<String> _validateRules(List<EntityCategorySchema> categories) {
+    final errors = <String>[];
+    for (final c in categories) {
+      final catLabel = c.name.trim().isEmpty ? '(unnamed)' : c.name.trim();
+      for (final f in c.fields) {
+        final rules = f.rules;
+        if (rules == null || rules.isEmpty) continue;
+        final fieldLabel = f.label.trim().isEmpty ? f.fieldKey : f.label.trim();
+        final where = '"$fieldLabel" in "$catLabel"';
+        if (!ruleCapableTypes.contains(f.fieldType)) {
+          errors.add(
+              'Field $where is not rule-capable but has ${rules.length} rule(s).');
+        }
+        for (var i = 0; i < rules.length; i++) {
+          final rule = rules[i];
+          final kind = (rule['kind'] ?? '').toString();
+          if (kind.isEmpty) {
+            errors.add('Rule ${i + 1} on $where is missing its kind.');
+          } else if (!RuleKinds.all.contains(kind)) {
+            errors.add('Rule ${i + 1} on $where has an unknown kind "$kind".');
+          }
+          final trigger = rule['trigger'];
+          if (trigger != null &&
+              !RuleTriggers.all.contains(trigger.toString())) {
+            errors.add(
+                'Rule ${i + 1} on $where has an unknown trigger "$trigger".');
+          }
+        }
+      }
+    }
+    return errors;
+  }
 
   /// Blocking `typeConfig` completeness validation per parametric field type
   /// (the-template-system §2.3). Non-parametric types contribute nothing.

@@ -131,6 +131,23 @@ abstract final class RuleKinds {
   static const grantPouch = 'grant_pouch';
   static const checkClauses = 'check_clauses';
   static const note = 'note';
+
+  /// The closed kind vocabulary, in a stable authoring order (the order the
+  /// rule-attachment editor lists them). The leading [modifyStat]/[grantRefs]/
+  /// [grantProficiency]/[choose] are the common card-authoring kinds; the pouch
+  /// family and the [checkClauses]/[note] escape hatch follow.
+  static const all = <String>[
+    modifyStat,
+    grantRefs,
+    grantProficiency,
+    choose,
+    setPouchMax,
+    grantPouch,
+    refillPouch,
+    emptyPouch,
+    checkClauses,
+    note,
+  ];
 }
 
 /// One rule-bearing entity contributing to a character — a class, subclass,
