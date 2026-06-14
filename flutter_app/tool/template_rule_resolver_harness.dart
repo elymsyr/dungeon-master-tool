@@ -167,8 +167,9 @@ void main() {
     ]),
   );
 
-  // A feat carrying a not-yet-built kind + a formula value source — both must
-  // land in `deferred`, never silently change a stat.
+  // A "Tough"-style feat: a `formula` value source (`2 * level`, slice 3) that
+  // now resolves against the aspect context (level 5 → +10 max_hp), plus a
+  // not-yet-built `grant_refs` kind that must still land in `deferred`.
   final feat = ResolverAttachment(
     entityId: 'feat-tough',
     category: _category('feat', [
@@ -185,6 +186,35 @@ void main() {
           'kind': 'grant_refs',
           'trigger': 'when_granted',
           'target': 'resistances',
+        },
+      ]),
+    ]),
+  );
+
+  // A "Monk" exercising the richer §4.3 formula grammar (slice 3):
+  //   * Unarmored Defense — `10 + dex_mod + con_mod` = 10 + 2 + (-1) = 11.
+  //   * Proficiency bonus — `table(level, "1:2,5:3,9:4,13:5,17:6")` at level 5
+  //     → 3 (the highest threshold <= 5), exercising the step-table function.
+  final monk = ResolverAttachment(
+    entityId: 'class-monk',
+    category: _category('monk', [
+      _field('monk', 'unarmored_defense', order: 0, rules: [
+        {
+          'kind': 'modify_stat',
+          'trigger': 'when_granted',
+          'target': 'unarmored_ac',
+          'value': {'kind': 'formula', 'expr': '10 + dex_mod + con_mod'},
+        },
+      ]),
+      _field('monk', 'prof', order: 1, rules: [
+        {
+          'kind': 'modify_stat',
+          'trigger': 'when_granted',
+          'target': 'prof_check',
+          'value': {
+            'kind': 'formula',
+            'expr': 'table(level, "1:2,5:3,9:4,13:5,17:6")',
+          },
         },
       ]),
     ]),
@@ -243,13 +273,14 @@ void main() {
   // ── Stat fold ────────────────────────────────────────────────────────────
   const resolver = TemplateRuleResolver();
   final result = resolver.resolve(
-    [species, shield, plate, barbarian, belt, cloak, feat],
+    [species, shield, plate, barbarian, belt, cloak, feat, monk],
     gateLevel: 5,
     aspects: aspects,
   );
 
   print('=== TemplateRuleResolver shadow harness (gateLevel: 5) ===\n');
-  print('Stat overlay (expected: ac +4, speed +10, str +4):');
+  print('Stat overlay (expected: ac +4, speed +10, str +4, max_hp +10, '
+      'unarmored_ac +11, prof_check +3):');
   if (result.statDeltas.isEmpty) {
     print('  (none)');
   } else {
@@ -260,8 +291,8 @@ void main() {
     }
   }
 
-  print('\nDeferred (not implemented yet) — expected 2 '
-      '(formula value source, grant_refs kind):');
+  print('\nDeferred (not implemented yet) — expected 1 '
+      '(grant_refs kind; the formula value source now resolves):');
   if (result.deferred.isEmpty) {
     print('  (none)');
   } else {
@@ -274,11 +305,22 @@ void main() {
   final ac = result.delta('ac'); // species 1 + shield 2 + cloak(field) 1 = 4
   final speed = result.delta('speed'); // barbarian L5 fast movement = 10
   final str = result.delta('str'); // belt own-field value = 4
-  final foldOk =
-      ac == 4 && speed == 10 && str == 4 && result.deferred.length == 2;
+  final maxHp = result.delta('max_hp'); // feat formula 2 * level(5) = 10
+  final unarmoredAc =
+      result.delta('unarmored_ac'); // monk 10 + dex_mod(2) + con_mod(-1) = 11
+  final profCheck =
+      result.delta('prof_check'); // monk table(level=5,…) = 3
+  final foldOk = ac == 4 &&
+      speed == 10 &&
+      str == 4 &&
+      maxHp == 10 &&
+      unarmoredAc == 11 &&
+      profCheck == 3 &&
+      result.deferred.length == 1;
   print('\nFold self-check: ${foldOk ? 'PASS' : 'FAIL'} '
-      '(ac=$ac expected 4, speed=$speed expected 10, str=$str expected 4, '
-      'deferred=${result.deferred.length} expected 2)');
+      '(ac=$ac/4, speed=$speed/10, str=$str/4, max_hp=$maxHp/10, '
+      'unarmored_ac=$unarmoredAc/11, prof_check=$profCheck/3, '
+      'deferred=${result.deferred.length}/1)');
 
   print('\nOverall: ${aspectsOk && foldOk ? 'PASS' : 'FAIL'}');
 }

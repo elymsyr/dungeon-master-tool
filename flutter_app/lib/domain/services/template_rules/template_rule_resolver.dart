@@ -13,20 +13,22 @@
 /// panel that compares old/new outputs on demand. Keeping it inert means a
 /// half-built kind never affects a real character sheet.
 ///
-/// **Implemented so far:** the `modify_stat` rule kind with two value sources —
-/// a constant (`fixed`, slice 1) and a stored field read (`field`, slice 2,
-/// reading `attachment.values[...]`). The [AspectContext] is now built from the
-/// PC card and threaded through [TemplateRuleResolver.resolve] ready for the
-/// `formula` source + evaluator (slice 3). Every other kind (`grant_refs`,
-/// `grant_proficiency`, `choose`, `set_pouch_max`, `refill_pouch`/`empty_pouch`,
-/// `grant_pouch`, `check_clauses`, `note`) and the `formula` value source are
-/// recorded in [TemplateResolution.deferred] rather than silently dropped, so
-/// the harness shows exactly what remains for later slices.
+/// **Implemented so far:** the `modify_stat` rule kind with all three value
+/// sources — a constant (`fixed`, slice 1), a stored field read (`field`, slice
+/// 2, reading `attachment.values[...]`), and a `formula` (slice 3) evaluated
+/// over the PC card's [AspectContext] via `formula_evaluator.dart` (§4.3
+/// grammar: aspect identifiers, arithmetic, `floor/ceil/min/max`, `table(...)`).
+/// Every other kind (`grant_refs`, `grant_proficiency`, `choose`,
+/// `set_pouch_max`, `refill_pouch`/`empty_pouch`, `grant_pouch`,
+/// `check_clauses`, `note`) is recorded in [TemplateResolution.deferred] rather
+/// than silently dropped, so the harness shows exactly what remains for later
+/// slices.
 library;
 
 import '../../entities/schema/field_schema.dart';
 import '../../entities/schema/entity_category_schema.dart';
 import 'aspect_context.dart';
+import 'formula_evaluator.dart';
 
 /// The closed set of 6 rule triggers (the-template-system.md §4.1).
 ///
@@ -307,9 +309,10 @@ class TemplateRuleResolver {
   ///     attachment's fields, coerced to a number (slice 2). An absent/blank
   ///     `field` defaults to the rule's **own** field key, so a rule on an
   ///     ability-score-improvement field can add that field's own value.
-  /// Not yet implemented:
-  ///   * `{"kind": "formula", "expr": "..."}` — deferred to slice 3 (needs
-  ///     `formula_evaluator.dart` over [aspects]).
+  ///   * `{"kind": "formula", "expr": "..."}` — the §4.3 expression evaluated
+  ///     over [aspects] via `formula_evaluator.dart` (slice 3). A blank `expr`
+  ///     or a malformed formula returns a precise deferral reason, never a
+  ///     silent stat change.
   ({num? value, String? reason}) _resolveValueSource(
     dynamic source,
     ResolverAttachment attachment,
@@ -343,8 +346,16 @@ class TemplateRuleResolver {
     }
 
     if (kind == 'formula') {
-      // Slice 3: evaluate `expr` over [aspects] via formula_evaluator.dart.
-      return (value: null, reason: 'formula value source deferred to slice 3');
+      final expr = (source['expr'] as String?)?.trim();
+      if (expr == null || expr.isEmpty) {
+        return (value: null, reason: 'formula value source missing "expr"');
+      }
+      try {
+        final v = const FormulaEvaluator().evaluate(expr, aspects);
+        return (value: v, reason: null);
+      } on FormulaException catch (e) {
+        return (value: null, reason: 'formula "$expr" failed: ${e.message}');
+      }
     }
 
     return (value: null, reason: 'unknown value source kind "$kind"');
