@@ -13,16 +13,24 @@
 /// panel that compares old/new outputs on demand. Keeping it inert means a
 /// half-built kind never affects a real character sheet.
 ///
-/// **Implemented so far:** the `modify_stat` rule kind with all three value
-/// sources — a constant (`fixed`, slice 1), a stored field read (`field`, slice
-/// 2, reading `attachment.values[...]`), and a `formula` (slice 3) evaluated
-/// over the PC card's [AspectContext] via `formula_evaluator.dart` (§4.3
-/// grammar: aspect identifiers, arithmetic, `floor/ceil/min/max`, `table(...)`).
+/// **Implemented so far:**
+///   * `modify_stat` with all three value sources — a constant (`fixed`, slice
+///     1), a stored field read (`field`, slice 2, reading
+///     `attachment.values[...]`), and a `formula` (slice 3) evaluated over the
+///     PC card's [AspectContext] via `formula_evaluator.dart` (§4.3 grammar:
+///     aspect identifiers, arithmetic, `floor/ceil/min/max`, `table(...)`).
+///   * `note` (slice 4) — the §4.2 escape hatch: emits `rule['text']` (with
+///     `{field_key}` interpolation from the attachment's stored values) into
+///     [TemplateResolution.notes] when its trigger is active.
+///   * `check_clauses` (slice 4) — evaluates a list of `{aspect, op, value}`
+///     comparison clauses (inline, or read from the field's stored rows) against
+///     the [AspectContext]; an unmet prerequisite pushes a policy-tagged string
+///     into [TemplateResolution.warnings] (the §4.4-step-5 prereq-banner content).
+///
 /// Every other kind (`grant_refs`, `grant_proficiency`, `choose`,
-/// `set_pouch_max`, `refill_pouch`/`empty_pouch`, `grant_pouch`,
-/// `check_clauses`, `note`) is recorded in [TemplateResolution.deferred] rather
-/// than silently dropped, so the harness shows exactly what remains for later
-/// slices.
+/// `set_pouch_max`, `refill_pouch`/`empty_pouch`, `grant_pouch`) is recorded in
+/// [TemplateResolution.deferred] rather than silently dropped, so the harness
+/// shows exactly what remains for later slices.
 library;
 
 import '../../entities/schema/field_schema.dart';
@@ -59,7 +67,8 @@ abstract final class RuleTriggers {
 }
 
 /// The closed set of 8 rule kinds + the `note` escape hatch
-/// (the-template-system.md §4.2). Only [modifyStat] is interpreted this slice.
+/// (the-template-system.md §4.2). [modifyStat], [note] and [checkClauses] are
+/// interpreted; the rest are still recorded as deferred.
 abstract final class RuleKinds {
   static const modifyStat = 'modify_stat';
   static const grantRefs = 'grant_refs';
@@ -123,16 +132,17 @@ class ResolverSkip {
 }
 
 /// The resolver's output overlay — an `EffectiveCharacter`-equivalent in the
-/// making (the-template-system.md §4.4 step 5). This slice fills [statDeltas];
-/// [notes]/[warnings] are populated by later kinds (`note`, `check_clauses`).
+/// making (the-template-system.md §4.4 step 5). [statDeltas] comes from
+/// `modify_stat`; [notes] from `note` rules; [warnings] from `check_clauses`.
 class TemplateResolution {
   /// Summed additive deltas per aspect path (e.g. `{'ac': 2, 'speed': 10}`).
   final Map<String, num> statDeltas;
 
-  /// Player-facing rule text from `note` rules (later slice).
+  /// Player-facing rule text emitted by `note` rules, in fold order.
   final List<String> notes;
 
-  /// Prerequisite/validation warnings from `check_clauses` (later slice).
+  /// Prerequisite/validation warnings emitted by `check_clauses`, in fold order
+  /// — the policy-tagged content of the §4.4-step-5 prereq banner.
   final List<String> warnings;
 
   /// Rules not interpreted by this slice (kind or value-source not yet built).
@@ -194,6 +204,8 @@ class TemplateRuleResolver {
             gateLevel: gateLevel,
             aspects: aspects,
             statDeltas: statDeltas,
+            notes: notes,
+            warnings: warnings,
             deferred: deferred,
           );
         }
@@ -216,6 +228,8 @@ class TemplateRuleResolver {
     required int gateLevel,
     required AspectContext aspects,
     required Map<String, num> statDeltas,
+    required List<String> notes,
+    required List<String> warnings,
     required List<ResolverSkip> deferred,
   }) {
     final kind = (rule['kind'] as String?)?.trim() ?? '';
@@ -223,44 +237,174 @@ class TemplateRuleResolver {
         ? (rule['trigger'] as String).trim()
         : RuleTriggers.fallback;
 
-    ResolverSkip skip(String reason) => ResolverSkip(
-          entityId: attachment.entityId,
-          fieldKey: field.fieldKey,
-          ruleIndex: ruleIndex,
-          kind: kind.isEmpty ? '(missing)' : kind,
-          reason: reason,
-        );
-
-    // Only `modify_stat` is interpreted this slice; everything else is owed.
-    if (kind != RuleKinds.modifyStat) {
-      deferred.add(skip('kind not implemented in this slice'));
+    if (kind.isEmpty) {
+      deferred.add(_skip(attachment, field, ruleIndex, kind, 'rule missing "kind"'));
       return;
     }
 
+    // Dispatch on rule kind. Interpreted kinds handle their own trigger gate;
+    // any other kind is owed (recorded in `deferred`, never silently dropped).
+    switch (kind) {
+      case RuleKinds.modifyStat:
+        _foldModifyStat(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          aspects: aspects,
+          statDeltas: statDeltas,
+          deferred: deferred,
+        );
+      case RuleKinds.note:
+        _foldNote(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          ruleIndex: ruleIndex,
+          kind: kind,
+          trigger: trigger,
+          gateLevel: gateLevel,
+          notes: notes,
+          deferred: deferred,
+        );
+      case RuleKinds.checkClauses:
+        _foldCheckClauses(
+          attachment: attachment,
+          field: field,
+          rule: rule,
+          trigger: trigger,
+          aspects: aspects,
+          warnings: warnings,
+        );
+      default:
+        deferred.add(
+          _skip(attachment, field, ruleIndex, kind, 'kind not implemented in this slice'),
+        );
+    }
+  }
+
+  /// `modify_stat` (§4.2): sum a value source into [statDeltas] under a target
+  /// aspect path, gated by a folding trigger.
+  void _foldModifyStat({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required AspectContext aspects,
+    required Map<String, num> statDeltas,
+    required List<ResolverSkip> deferred,
+  }) {
     // Trigger gate: only the folding triggers contribute a stat delta.
     if (!_triggerActive(trigger, attachment, rule, gateLevel)) {
       // Inactive folding trigger ⇒ correctly contributes nothing (not a skip).
       // Non-folding triggers (prereq_*, on_button) are recorded as deferred so
       // a modify_stat authored under them is visibly unhandled here.
       if (!_isFoldingTrigger(trigger)) {
-        deferred.add(skip('trigger "$trigger" is not a stat-fold trigger'));
+        deferred.add(_skip(attachment, field, ruleIndex, kind,
+            'trigger "$trigger" is not a stat-fold trigger'));
       }
       return;
     }
 
     final target = (rule['target'] as String?)?.trim() ?? '';
     if (target.isEmpty) {
-      deferred.add(skip('modify_stat missing "target" aspect path'));
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          'modify_stat missing "target" aspect path'));
       return;
     }
 
-    final resolved = _resolveValueSource(rule['value'], attachment, field, aspects);
+    final resolved =
+        _resolveValueSource(rule['value'], attachment, field, aspects);
     if (resolved.value == null) {
-      deferred.add(skip(resolved.reason ?? 'value source could not be resolved'));
+      deferred.add(_skip(attachment, field, ruleIndex, kind,
+          resolved.reason ?? 'value source could not be resolved'));
       return;
     }
 
     statDeltas[target] = (statDeltas[target] ?? 0) + resolved.value!;
+  }
+
+  /// `note` (§4.2): the escape hatch. Emit the rule's text — with `{field_key}`
+  /// placeholders interpolated from the attachment's stored values — into
+  /// [notes] when the note is active. A note is always surfaced (it is just
+  /// informational text), except `when_equipped` (only when equipped) and
+  /// `level_up` (only once the gate level is reached).
+  void _foldNote({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required int ruleIndex,
+    required String kind,
+    required String trigger,
+    required int gateLevel,
+    required List<String> notes,
+    required List<ResolverSkip> deferred,
+  }) {
+    if (!_noteActive(trigger, attachment, rule, gateLevel)) return;
+
+    final raw = (rule['text'] as String?) ?? (rule['note'] as String?);
+    final text = raw?.trim();
+    if (text == null || text.isEmpty) {
+      deferred.add(
+        _skip(attachment, field, ruleIndex, kind, 'note rule missing "text"'),
+      );
+      return;
+    }
+
+    notes.add(_interpolate(text, attachment));
+  }
+
+  /// `check_clauses` (§4.2 / §4.4 step 5): evaluate a list of comparison clauses
+  /// against the aspect context; an unmet clause pushes a policy-tagged warning.
+  ///
+  /// Clauses are read inline from `rule['clauses']` (or `rule['params']
+  /// ['clauses']`), falling back to the field's own stored rows
+  /// (`attachment.values[field.fieldKey]`, the `prereq-clauses` recordList).
+  /// Each clause is `{aspect|field, op, value}`. `policy` ∈ `warn` (default) /
+  /// `block` — both surface here; the block/warn split governs how a *picker*
+  /// vs the *sheet* reacts, a later call-site concern.
+  void _foldCheckClauses({
+    required ResolverAttachment attachment,
+    required FieldSchema field,
+    required Map<String, dynamic> rule,
+    required String trigger,
+    required AspectContext aspects,
+    required List<String> warnings,
+  }) {
+    if (!_checkActive(trigger, attachment)) return;
+
+    final clauses = _gatherClauses(rule, attachment, field);
+    // No clauses ⇒ no prerequisites ⇒ trivially satisfied (not a skip).
+    if (clauses.isEmpty) return;
+
+    final policy = _clausePolicy(rule);
+
+    for (final clause in clauses) {
+      final result = _evalClause(clause, aspects);
+      if (result.reason != null) {
+        // A malformed clause is a template-authoring error — surface it loudly
+        // so it is never silently treated as "passing".
+        warnings.add('${attachment.entityId} [clause error]: ${result.reason}');
+        continue;
+      }
+      if (result.passed == false) {
+        final aspectName =
+            (clause['aspect'] ?? clause['field']).toString().trim();
+        final op = (clause['op'] as String?)?.trim().isNotEmpty == true
+            ? (clause['op'] as String).trim()
+            : '>=';
+        final need = clause['value'];
+        final have = aspects.value(aspectName);
+        warnings.add('${attachment.entityId} [$policy]: requires '
+            '$aspectName $op $need (have $have)');
+      }
+    }
   }
 
   /// True for the three triggers that fold a stat, with their gating applied.
@@ -279,6 +423,38 @@ class TemplateRuleResolver {
         return gateLevel >= _ruleAtLevel(rule);
       default:
         return false;
+    }
+  }
+
+  /// A note surfaces unless gated by equip state (`when_equipped`) or level
+  /// (`level_up`); all other triggers (incl. the `prereq_*`/`on_button`
+  /// imperatives) still show their text, since a note is purely informational.
+  bool _noteActive(
+    String trigger,
+    ResolverAttachment attachment,
+    Map<String, dynamic> rule,
+    int gateLevel,
+  ) {
+    switch (trigger) {
+      case RuleTriggers.whenEquipped:
+        return attachment.isEquipped;
+      case RuleTriggers.levelUp:
+        return gateLevel >= _ruleAtLevel(rule);
+      default:
+        return true;
+    }
+  }
+
+  /// Prereq clauses are checked whenever the entity is present, except the
+  /// equip-scoped triggers (`when_equipped`/`prereq_to_equip`), which only
+  /// matter once the item is actually equipped.
+  bool _checkActive(String trigger, ResolverAttachment attachment) {
+    switch (trigger) {
+      case RuleTriggers.whenEquipped:
+      case RuleTriggers.prereqToEquip:
+        return attachment.isEquipped;
+      default:
+        return true;
     }
   }
 
@@ -365,5 +541,106 @@ class TemplateRuleResolver {
     if (v is num) return v;
     if (v is String) return num.tryParse(v.trim());
     return null;
+  }
+
+  /// Build a [ResolverSkip] for a rule this slice could not (fully) interpret.
+  ResolverSkip _skip(
+    ResolverAttachment attachment,
+    FieldSchema field,
+    int ruleIndex,
+    String kind,
+    String reason,
+  ) =>
+      ResolverSkip(
+        entityId: attachment.entityId,
+        fieldKey: field.fieldKey,
+        ruleIndex: ruleIndex,
+        kind: kind.isEmpty ? '(missing)' : kind,
+        reason: reason,
+      );
+
+  /// Replace `{field_key}` placeholders in a `note` template with the
+  /// attachment's stored value for that key; an unknown key is left verbatim.
+  static final RegExp _placeholder = RegExp(r'\{([A-Za-z0-9_]+)\}');
+
+  String _interpolate(String text, ResolverAttachment attachment) {
+    return text.replaceAllMapped(_placeholder, (m) {
+      final key = m.group(1)!;
+      final value = attachment.values[key];
+      return value == null ? m.group(0)! : '$value';
+    });
+  }
+
+  /// `check_clauses` policy: `block` or `warn` (default), read from the rule
+  /// (`policy` at the top level or under `params`).
+  String _clausePolicy(Map<String, dynamic> rule) {
+    String? raw = (rule['policy'] as String?)?.trim();
+    if (raw == null || raw.isEmpty) {
+      final params = rule['params'];
+      if (params is Map) raw = (params['policy'] as String?)?.trim();
+    }
+    return raw?.toLowerCase() == 'block' ? 'block' : 'warn';
+  }
+
+  /// Collect comparison clauses for a `check_clauses` rule: inline
+  /// `rule['clauses']`, else `rule['params']['clauses']`, else the field's own
+  /// stored rows (`attachment.values[field.fieldKey]` — the `prereq-clauses`
+  /// recordList data). Returns only the map-shaped entries.
+  List<Map<dynamic, dynamic>> _gatherClauses(
+    Map<String, dynamic> rule,
+    ResolverAttachment attachment,
+    FieldSchema field,
+  ) {
+    dynamic source = rule['clauses'];
+    if (source is! List) {
+      final params = rule['params'];
+      if (params is Map && params['clauses'] is List) {
+        source = params['clauses'];
+      }
+    }
+    source ??= attachment.values[field.fieldKey];
+    if (source is! List) return const [];
+    return source.whereType<Map>().toList();
+  }
+
+  /// Evaluate one `{aspect|field, op, value}` clause against [aspects].
+  /// Returns `(passed: bool)` for a well-formed clause, or `(reason: …)` when
+  /// the clause is malformed (missing aspect/value, or an unknown operator).
+  ({bool? passed, String? reason}) _evalClause(
+    Map<dynamic, dynamic> clause,
+    AspectContext aspects,
+  ) {
+    final aspectName =
+        (clause['aspect'] ?? clause['field'])?.toString().trim();
+    if (aspectName == null || aspectName.isEmpty) {
+      return (passed: null, reason: 'clause missing "aspect"');
+    }
+
+    final rhs = _coerceNum(clause['value']);
+    if (rhs == null) {
+      return (
+        passed: null,
+        reason: 'clause "$aspectName" missing numeric "value"',
+      );
+    }
+
+    final op = (clause['op'] as String?)?.trim().isNotEmpty == true
+        ? (clause['op'] as String).trim()
+        : '>=';
+    final lhs = aspects.value(aspectName);
+
+    final bool? passed = switch (op) {
+      '>=' => lhs >= rhs,
+      '<=' => lhs <= rhs,
+      '>' => lhs > rhs,
+      '<' => lhs < rhs,
+      '==' || '=' => lhs == rhs,
+      '!=' => lhs != rhs,
+      _ => null,
+    };
+    if (passed == null) {
+      return (passed: null, reason: 'clause "$aspectName" has unknown op "$op"');
+    }
+    return (passed: passed, reason: null);
   }
 }

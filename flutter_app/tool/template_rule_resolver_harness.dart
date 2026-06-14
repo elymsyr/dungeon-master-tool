@@ -220,6 +220,52 @@ void main() {
     ]),
   );
 
+  // A "Flame Tongue" sword exercising the `note` kind (slice 4): an escape-hatch
+  // rule whose text surfaces on the card with a `{field_key}` placeholder
+  // interpolated from the item's own stored value (`fire_bonus` = 2). Gated to
+  // `when_equipped`, so it only shows while the sword is equipped (it is).
+  final flametongue = ResolverAttachment(
+    entityId: 'item-flametongue',
+    isEquipped: true,
+    values: const {'fire_bonus': 2},
+    category: _category('item', [
+      _field('item', 'flame_note', order: 0, rules: [
+        {
+          'kind': 'note',
+          'trigger': 'when_equipped',
+          'text': 'While ablaze, deals an extra {fire_bonus} fire damage '
+              'on a hit.',
+        },
+      ]),
+    ]),
+  );
+
+  // A "Grappler"-style feat exercising the `check_clauses` kind (slice 4). Its
+  // prereq clauses are stored as the field's recordList rows (the production
+  // `prereq-clauses` shape), NOT inline — exercising the field-rows fallback.
+  // str 16 >= 13 passes (no warning); con 9 >= 13 FAILS → one `[block]` warning.
+  final grappler = ResolverAttachment(
+    entityId: 'feat-grappler',
+    values: const {
+      'prereqs': [
+        {'aspect': 'str', 'op': '>=', 'value': 13}, // pass
+        {'aspect': 'con', 'op': '>=', 'value': 13}, // fail (con score = 9)
+      ],
+    },
+    category: _category('feat', [
+      _field('feat', 'prereqs',
+          order: 0,
+          type: FieldType.recordList,
+          rules: [
+            {
+              'kind': 'check_clauses',
+              'trigger': 'prereq_to_grant',
+              'policy': 'block',
+            },
+          ]),
+    ]),
+  );
+
   // ── Aspect context (slice 2): built from a synthetic PC card. ────────────
   final pcCategory = _category('player-character', [
     _field('player-character', 'abilities',
@@ -273,7 +319,18 @@ void main() {
   // ── Stat fold ────────────────────────────────────────────────────────────
   const resolver = TemplateRuleResolver();
   final result = resolver.resolve(
-    [species, shield, plate, barbarian, belt, cloak, feat, monk],
+    [
+      species,
+      shield,
+      plate,
+      barbarian,
+      belt,
+      cloak,
+      feat,
+      monk,
+      flametongue,
+      grappler,
+    ],
     gateLevel: 5,
     aspects: aspects,
   );
@@ -288,6 +345,26 @@ void main() {
     for (final k in keys) {
       final v = result.statDeltas[k]!;
       print('  $k: ${v >= 0 ? '+' : ''}$v');
+    }
+  }
+
+  print('\nNotes (note kind, slice 4) — expected 1 '
+      '("…extra 2 fire damage…"):');
+  if (result.notes.isEmpty) {
+    print('  (none)');
+  } else {
+    for (final note in result.notes) {
+      print('  - $note');
+    }
+  }
+
+  print('\nWarnings (check_clauses, slice 4) — expected 1 '
+      '(grappler con prereq, [block]):');
+  if (result.warnings.isEmpty) {
+    print('  (none)');
+  } else {
+    for (final warning in result.warnings) {
+      print('  - $warning');
     }
   }
 
@@ -322,5 +399,20 @@ void main() {
       'unarmored_ac=$unarmoredAc/11, prof_check=$profCheck/3, '
       'deferred=${result.deferred.length}/1)');
 
-  print('\nOverall: ${aspectsOk && foldOk ? 'PASS' : 'FAIL'}');
+  // `note`/`check_clauses` self-checks (slice 4).
+  final noteOk = result.notes.length == 1 &&
+      result.notes.single ==
+          'While ablaze, deals an extra 2 fire damage on a hit.';
+  final warnOk = result.warnings.length == 1 &&
+      result.warnings.single.contains('feat-grappler') &&
+      result.warnings.single.contains('[block]') &&
+      result.warnings.single.contains('con') &&
+      result.warnings.single.contains('(have 9)');
+  print('Note self-check: ${noteOk ? 'PASS' : 'FAIL'} '
+      '(notes=${result.notes.length}/1)');
+  print('Warning self-check: ${warnOk ? 'PASS' : 'FAIL'} '
+      '(warnings=${result.warnings.length}/1)');
+
+  print('\nOverall: '
+      '${aspectsOk && foldOk && noteOk && warnOk ? 'PASS' : 'FAIL'}');
 }
