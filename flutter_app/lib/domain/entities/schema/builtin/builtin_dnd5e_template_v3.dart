@@ -689,53 +689,78 @@ FieldSchema _attachLineageGrantRule(
 }
 
 // --- Lineage scalar-modifier `modify_stat` wave (roadmap Phase 3, §4.2) ------
-// Wave 5: the Subspecies scalar stat bonuses (speed / flat HP). The legacy
-// `granted_modifiers` typed DSL is display-only and non-rule-capable; the v3
-// mechanics live on the canonical scalar data fields the converter emits
-// (`effect_field_mapper`: `speed_bonus`→`speed_bonus`, `hp_bonus_flat`→`hp_bonus`)
-// so the built-in lineage cards and a converted pack's cards drive the SAME rule.
+// Waves 5-6: the Subspecies stat bonuses — flat (speed / HP) AND level-scaled
+// (HP per level). The legacy `granted_modifiers` typed DSL is display-only and
+// non-rule-capable; the v3 mechanics live on the canonical scalar data fields the
+// converter emits (`effect_field_mapper`: `speed_bonus`→`speed_bonus`,
+// `hp_bonus_flat`→`hp_bonus`, `hp_bonus_per_level`→`hp_bonus_per_level`) so the
+// built-in lineage cards and a converted pack's cards drive the SAME rule. Flat
+// bonuses fold via a `field` value source; the per-level bonus folds via a §4.3
+// `formula` value source (`hp_bonus_per_level * level`).
 
 /// Slug of the built-in Subspecies (lineage) category (set in `content.dart`
 /// `_subspeciesCategory`). The lineage modifier wave is scoped to this — the only
-/// built-in lineage category whose cards carry flat speed / HP grants (Wood Elf
-/// +5 ft Speed, Mountain Dwarf +2 HP) — so every appended rule-bearing field is
-/// used by ≥1 card (master-roadmap §3 shift 2).
+/// built-in lineage category whose cards carry stat grants (Wood Elf +5 ft Speed,
+/// Mountain Dwarf +2 HP, Hill Dwarf +1 HP per level) — so every appended
+/// rule-bearing field is used by ≥1 card (master-roadmap §3 shift 2).
 const builtinSubspeciesSlug = 'subspecies';
 
 /// The rule-capable Subspecies field that anchors the modifier `modify_stat`
 /// rules. `parent_species_ref` (the required lineage relation) is always present
 /// and rule-capable; the scalar bonus fields the rules *read* (`speed_bonus`,
-/// `hp_bonus`) are `integer` aspect/value sources only and are never themselves
-/// rule-capable (`template_validator.ruleCapableTypes`) — the same anchor
-/// discipline as the Armor AC rule on `category_ref`.
+/// `hp_bonus`, `hp_bonus_per_level`) are `integer` aspect/value sources only and
+/// are never themselves rule-capable (`template_validator.ruleCapableTypes`) —
+/// the same anchor discipline as the Armor AC rule on `category_ref`.
 const lineageModifierRuleAnchorFieldKey = 'parent_species_ref';
 
 /// The canonical v3 scalar stat-bonus fields APPENDED to the Subspecies category,
-/// each `(fieldKey, label, group, target)`. `fieldKey` is the converter's
-/// canonical vocabulary ([effectTargetFields]); `target` is the PC aspect the
-/// `modify_stat` rule folds into (`speed`, `max_hp` — the `aspect_context`
-/// canonical names). `integer` is NOT rule-capable, so these fields only hold the
-/// per-card value while the rule lives on the [lineageModifierRuleAnchorFieldKey]
-/// anchor and reads them via a `field` value source.
-const lineageModifierFields =
-    <({String fieldKey, String label, String group, String target})>[
-  (fieldKey: 'speed_bonus', label: 'Speed Bonus (ft)', group: grpCombat, target: 'speed'),
-  (fieldKey: 'hp_bonus', label: 'HP Bonus', group: grpTraitsActions, target: 'max_hp'),
+/// each `(fieldKey, label, group, target, formula)`. `fieldKey` is the
+/// converter's canonical vocabulary ([effectTargetFields]); `target` is the PC
+/// aspect the `modify_stat` rule folds into (`speed`, `max_hp` — the
+/// `aspect_context` canonical names). `integer` is NOT rule-capable, so these
+/// fields only hold the per-card value while the rule lives on the
+/// [lineageModifierRuleAnchorFieldKey] anchor and reads them.
+///
+/// A `null` [formula] is a **flat** bonus read straight off the field via a
+/// `field` value source (`speed_bonus`, `hp_bonus`). A non-null [formula] is a
+/// **level-scaled** bonus evaluated by the §4.3 formula evaluator over the PC
+/// aspect context augmented with the card's own numeric fields — so e.g.
+/// `hp_bonus_per_level` multiplies the per-card amount by the character's
+/// `level`, the data-driven way to scale a grant by level.
+const lineageModifierFields = <({
+  String fieldKey,
+  String label,
+  String group,
+  String target,
+  String? formula,
+})>[
+  (fieldKey: 'speed_bonus', label: 'Speed Bonus (ft)', group: grpCombat, target: 'speed', formula: null),
+  (fieldKey: 'hp_bonus', label: 'HP Bonus', group: grpTraitsActions, target: 'max_hp', formula: null),
+  (fieldKey: 'hp_bonus_per_level', label: 'HP Bonus / Level', group: grpTraitsActions, target: 'max_hp', formula: 'hp_bonus_per_level * level'),
 ];
 
 /// Builds the `when_granted modify_stat` rule for a [lineageModifierFields] entry.
-/// The value is read from the card's own scalar bonus field via a `field` value
-/// source carrying `default: 0` — so the many lineage cards that grant no such
-/// bonus fold to a +0 no-op (skipped by `_foldModifyStat`) instead of an
-/// unresolved skip. `kind`/`trigger` are the canonical wire strings
-/// (`RuleKinds.modifyStat` / `RuleTriggers.whenGranted`); `ruleId` is namespaced
-/// by field key so the two rules stay distinct on the shared anchor.
-Map<String, dynamic> _lineageModifierRule(String fieldKey, String target) => {
+/// A flat bonus ([formula] null) reads the card's own scalar bonus field via a
+/// `field` value source carrying `default: 0` — so the many lineage cards that
+/// grant no such bonus fold to a +0 no-op (skipped by `_foldModifyStat`) instead
+/// of an unresolved skip. A level-scaled bonus ([formula] non-null) uses a
+/// `formula` value source: the §4.3 expression reads the card's per-card amount
+/// (e.g. `hp_bonus_per_level`, 0 when the field is absent) times the PC `level`,
+/// so an absent field also folds to +0. `kind`/`trigger` are the canonical wire
+/// strings (`RuleKinds.modifyStat` / `RuleTriggers.whenGranted`); `ruleId` is
+/// namespaced by field key so the rules stay distinct on the shared anchor.
+Map<String, dynamic> _lineageModifierRule(
+  String fieldKey,
+  String target,
+  String? formula,
+) => {
       'ruleId': 'subspecies-$fieldKey',
       'trigger': 'when_granted',
       'kind': 'modify_stat',
       'target': target,
-      'value': {'kind': 'field', 'field': fieldKey, 'default': 0},
+      'value': formula == null
+          ? {'kind': 'field', 'field': fieldKey, 'default': 0}
+          : {'kind': 'formula', 'expr': formula},
     };
 
 /// Attaches the lineage scalar-modifier wave to the [builtinSubspeciesSlug]
@@ -804,7 +829,7 @@ List<Map<String, dynamic>> _lineageAnchorRules(
   final haveIds = {for (final r in rules) r['ruleId']};
   for (final spec in lineageModifierFields) {
     if (haveIds.contains('subspecies-${spec.fieldKey}')) continue;
-    rules.add(_lineageModifierRule(spec.fieldKey, spec.target));
+    rules.add(_lineageModifierRule(spec.fieldKey, spec.target, spec.formula));
   }
   return rules;
 }

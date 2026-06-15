@@ -1895,9 +1895,12 @@ class TemplateRuleResolver {
   ///     `field` defaults to the rule's **own** field key, so a rule on an
   ///     ability-score-improvement field can add that field's own value.
   ///   * `{"kind": "formula", "expr": "..."}` — the §4.3 expression evaluated
-  ///     over [aspects] via `formula_evaluator.dart` (slice 3). A blank `expr`
-  ///     or a malformed formula returns a precise deferral reason, never a
-  ///     silent stat change.
+  ///     over [aspects] via `formula_evaluator.dart` (slice 3), augmented with
+  ///     the granting attachment's own numeric field values (see
+  ///     [_formulaAspects]) so a level-scaled grant can read a per-card amount
+  ///     (e.g. a lineage's `hp_bonus_per_level`) alongside the PC's `level`. A
+  ///     blank `expr` or a malformed formula returns a precise deferral reason,
+  ///     never a silent stat change.
   ({num? value, String? reason}) _resolveValueSource(
     dynamic source,
     ResolverAttachment attachment,
@@ -1942,7 +1945,8 @@ class TemplateRuleResolver {
         return (value: null, reason: 'formula value source missing "expr"');
       }
       try {
-        final v = const FormulaEvaluator().evaluate(expr, aspects);
+        final v = const FormulaEvaluator()
+            .evaluate(expr, _formulaAspects(attachment, aspects));
         return (value: v, reason: null);
       } on FormulaException catch (e) {
         return (value: null, reason: 'formula "$expr" failed: ${e.message}');
@@ -1950,6 +1954,30 @@ class TemplateRuleResolver {
     }
 
     return (value: null, reason: 'unknown value source kind "$kind"');
+  }
+
+  /// Build the aspect map a `formula` value source evaluates against: the PC's
+  /// published aspects (the character) overlaid on the granting [attachment]'s
+  /// own numeric field values (the card). This lets a level-scaled grant read a
+  /// per-card amount (e.g. a lineage's `hp_bonus_per_level`) **and** the PC's
+  /// `level` in one expression — keeping the per-card value in data instead of
+  /// baked into the formula string. PC aspects win on a name collision, so
+  /// `level`, `ac`, the ability scores, etc. always mean the character and are
+  /// never shadowed by a stray card field of the same name. When the attachment
+  /// carries no numeric fields the original [aspects] context is returned
+  /// unchanged (no allocation).
+  AspectContext _formulaAspects(
+    ResolverAttachment attachment,
+    AspectContext aspects,
+  ) {
+    final merged = <String, num>{};
+    attachment.values.forEach((key, raw) {
+      final n = _coerceNum(raw);
+      if (n != null) merged[key] = n;
+    });
+    if (merged.isEmpty) return aspects;
+    merged.addAll(aspects.aspects); // PC aspects override card fields
+    return AspectContext(merged);
   }
 
   static num? _coerceNum(dynamic v) {

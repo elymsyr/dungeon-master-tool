@@ -17,12 +17,14 @@
 // understand a lineage from the card text alone (master-roadmap §4
 // description-first).
 //
-// Wave 5 (lineage `modify_stat` rules) ADDITIVELY adds the canonical v3 scalar
-// stat-bonus fields (`speed_bonus` on Wood Elf, `hp_bonus` on Mountain Dwarf —
-// the `effect_field_mapper` vocabulary) alongside the retained legacy
-// `granted_modifiers` rows (which stay for display only). The Subspecies
-// category's `modify_stat` rules ([attachLineageModifierRules]) fold these into
-// the PC `speed` / `max_hp` aspects. Every other attribute
+// Waves 5-6 (lineage `modify_stat` rules) ADDITIVELY add the canonical v3 scalar
+// stat-bonus fields (`speed_bonus` on Wood Elf, `hp_bonus` on Mountain Dwarf,
+// `hp_bonus_per_level` on Hill Dwarf — the `effect_field_mapper` vocabulary)
+// alongside the retained legacy `granted_modifiers` rows (which stay for display
+// only). The Subspecies category's `modify_stat` rules
+// ([attachLineageModifierRules]) fold the flat fields into the PC `speed` /
+// `max_hp` aspects and the per-level field into `max_hp` scaled by character
+// `level` (a §4.3 `formula` value source). Every other attribute
 // (`parent_species_ref`, `legacy_subspecies_key`, `granted_modifiers`,
 // `granted_damage_resistances`, `granted_skill_proficiencies`,
 // `granted_cantrip_refs`, `granted_spells_at_level`, `granted_action_refs`,
@@ -105,6 +107,10 @@ Part of the **Dwarf** species. Hill Dwarves carry the keen Insight of highland f
           'granted_modifiers': [
             {'kind': 'hp_bonus_per_level', 'value': 1},
           ],
+          // Canonical v3 scalar the level-scaled `modify_stat` rule reads: it
+          // folds `hp_bonus_per_level * level` into max HP (the legacy
+          // `granted_modifiers` row above stays for display only).
+          'hp_bonus_per_level': 1,
           'granted_skill_proficiencies': [lookup('skill', 'Insight')],
         },
       ),
