@@ -45,14 +45,15 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 ///     non-empty catalogs are embedded (Tier-1 content shapes and Tier-2 DM
 ///     categories ship shape only). `computeWorldSchemaContentHash` folds the
 ///     embedded `seedRows` into the content hash.
-///   * **RULE RESET (roadmap §1.1 shift 1):** every field's `rules` stays
-///     absent (`null` → omitted via `includeIfNull:false`). The template is
-///     fully rule-free; the first rule-assigned field lands just-in-time in a
-///     Phase 3 conversion wave. Emitting `null` rather than a literal `[]` is
-///     deliberate — it keeps each field's JSON byte-identical to its v2 form,
-///     so the only hash delta from v2→v3 is the embedded `seedRows` (and the
-///     hash-excluded structural markers). "Zero rule-assigned fields" is the
-///     binding contract; the empty/absent distinction is cosmetic.
+///   * **RULE RESET → FIRST JIT RULE (roadmap §1.1 shift 1 / Phase 3 wave):**
+///     the v2→v3 transform starts every field `rules`-free (`null` → omitted via
+///     `includeIfNull:false`) so the only structural delta from v2 is the
+///     embedded `seedRows`. The **first** rule-assigned field now lands here as
+///     the Phase-3 Armor JIT wave ([attachArmorRules]) — a single
+///     `when_equipped modify_stat` AC rule on the Armor category. Every OTHER
+///     field stays byte-identical to its v2 form; subsequent waves (the armor
+///     Strength-requirement `check_clauses`, weapon prereqs, the species/
+///     subspecies `grant_refs`/`choose` rules) append the same way.
 ///
 /// **PR-2.3 PC-category parity type swap (this slice):** the Player Character
 /// category's v2 field types are migrated to their v3 equivalents IN THE v3
@@ -98,7 +99,11 @@ WorldSchema generateBuiltinDnd5eTemplateV3() {
     createdAt: builtinDnd5eTemplateTimestamp,
     updatedAt: builtinDnd5eTemplateTimestamp,
   );
-  final v3 = swapPlayerCharacterFieldTypes(base);
+  final swapped = swapPlayerCharacterFieldTypes(base);
+  // FIRST JIT RULE WAVE (roadmap Phase 3): attach the Armor equip-time rule(s)
+  // to the v3 template. Runs after the PC type swap and before the preservation
+  // audit so the audit sees the final shipped template.
+  final v3 = attachArmorRules(swapped);
   // STATIC-FIELD PRESERVATION CHECKPOINT (roadmap PR-2.3; prompt §4 retention
   // policy). Enforce — not just claim — that the v2->v3 transform never drops,
   // retypes, or value-mutates a player-facing narrative/static-text field.
@@ -330,6 +335,80 @@ FieldSchema _swapPcField(FieldSchema field) {
     );
   }
   return field;
+}
+
+// --- Armor JIT rule wave (roadmap Phase 3, the-template-system §4.2) ---------
+
+/// Slug of the built-in Armor category (set in `content.dart` `_armorCategory`).
+/// The armor rule wave is keyed off this so the transform finds the category
+/// regardless of its generated `categoryId`.
+const builtinArmorSlug = 'armor';
+
+/// The rule-capable Armor field that carries the equip-time rules. `category_ref`
+/// (the armor's defining `relation`) is the stable, always-present rule-capable
+/// anchor — the scalar fields the rules *read* (`base_ac`, later
+/// `strength_requirement`) are integer aspect/value sources only and are never
+/// themselves rule-capable (`template_validator.ruleCapableTypes`). Folding
+/// reads card data via the rule's value/clause sources, not via the anchor
+/// field's own value, so the anchor choice is purely structural.
+const armorRuleAnchorFieldKey = 'category_ref';
+
+/// The **FIRST built-in template rule** (roadmap Phase 3 JIT wave). When a PC
+/// equips a piece of armor, the worn armor's `base_ac` is folded into the
+/// character's `ac` aspect — `modify_stat` "adds to … ac" (the-template-system
+/// §4.2) under the `when_equipped` trigger, read from the card via the `field`
+/// value source (`TemplateRuleResolver._resolveValueSource`). The `kind`/
+/// `trigger` strings are the canonical wire values from `RuleKinds.modifyStat`/
+/// `RuleTriggers.whenEquipped` (kept as literals so this entity-layer generator
+/// does not import the services-layer resolver; the closed sets are enforced by
+/// `validateTemplateCategories`, which `tool/validate_template.dart` runs).
+///
+/// **Scope of this wave (deliberately one rule):** the Dex contribution
+/// (`adds_dex`/`dex_cap`) is reconciled by the `combatStatsTable` widget
+/// (the-template-system §2.3 — AC overrides live in the widget); the per-card
+/// Strength-requirement `check_clauses` rule is the *next* slice (it needs a
+/// `prereq-clauses` recordList field + per-card clause data, since a clause's
+/// `value` is a fixed literal — `TemplateRuleResolver._evalClause` — and cannot
+/// read the scalar `strength_requirement` inline).
+///
+/// Authored as raw maps — the `rules` wire is validated lazily by
+/// `validateTemplateCategories` (PR-T2 decision: raw maps avoid a freezed
+/// explosion on the open-ended rule grammar).
+const armorRules = <Map<String, dynamic>>[
+  {
+    'ruleId': 'armor-ac-when-equipped',
+    'trigger': 'when_equipped',
+    'kind': 'modify_stat',
+    'target': 'ac',
+    'value': {'kind': 'field', 'field': 'base_ac'},
+  },
+];
+
+/// Attaches [armorRules] to the Armor category's [armorRuleAnchorFieldKey] field
+/// ([builtinArmorSlug]). Every other category and field is returned untouched —
+/// the wave is scoped to the single field that gains the first rule. Idempotent
+/// and additive: a field that already carries rules (a re-run, or a copied
+/// built-in) is left as-is, and no other field property is changed (so the
+/// static-field preservation audit and the v2-parity of every untouched field
+/// both hold).
+WorldSchema attachArmorRules(WorldSchema schema) {
+  final categories = [
+    for (final category in schema.categories)
+      if (category.slug == builtinArmorSlug)
+        category.copyWith(
+          fields: [
+            for (final field in category.fields)
+              if (field.fieldKey == armorRuleAnchorFieldKey &&
+                  (field.rules == null || field.rules!.isEmpty))
+                field.copyWith(rules: armorRules)
+              else
+                field,
+          ],
+        )
+      else
+        category,
+  ];
+  return schema.copyWith(categories: categories);
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel
