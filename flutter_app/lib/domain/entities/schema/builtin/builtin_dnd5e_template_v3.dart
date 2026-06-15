@@ -54,9 +54,14 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 ///     Phase-3 Armor JIT wave ([attachArmorRules]): a `when_equipped modify_stat`
 ///     AC rule on the existing `category_ref` anchor PLUS a NEW `prereq_clauses`
 ///     recordList field carrying a `prereq_to_equip check_clauses` Strength-
-///     requirement rule. Every OTHER field stays byte-identical to its v2 form;
-///     subsequent waves (weapon prereqs, the species/subspecies `grant_refs`/
-///     `choose` rules) append the same way.
+///     requirement rule. The Phase-3 **species/subspecies grant wave**
+///     ([attachSpeciesGrantRules]) then attaches a `when_granted grant_refs` rule
+///     to each existing trait/sense/language/resistance/immunity/action/spell
+///     relation list field on the Species and Subspecies categories (each rule
+///     reads its field's own stored refs into a named PC grant bucket). Every
+///     OTHER field stays byte-identical to its v2 form; subsequent waves (species
+///     skill `grant_proficiency`, the lineage `subspecies_options` `choose`
+///     preset, granted-modifier `modify_stat`) append the same way.
 ///
 /// **PR-2.3 PC-category parity type swap (this slice):** the Player Character
 /// category's v2 field types are migrated to their v3 equivalents IN THE v3
@@ -103,10 +108,15 @@ WorldSchema generateBuiltinDnd5eTemplateV3() {
     updatedAt: builtinDnd5eTemplateTimestamp,
   );
   final swapped = swapPlayerCharacterFieldTypes(base);
-  // FIRST JIT RULE WAVE (roadmap Phase 3): attach the Armor equip-time rule(s)
-  // to the v3 template. Runs after the PC type swap and before the preservation
-  // audit so the audit sees the final shipped template.
-  final v3 = attachArmorRules(swapped);
+  // FIRST/SECOND JIT RULE WAVE (roadmap Phase 3): attach the Armor equip-time
+  // rule(s) to the v3 template. Runs after the PC type swap and before the
+  // preservation audit so the audit sees the final shipped template.
+  final withArmor = attachArmorRules(swapped);
+  // THIRD JIT RULE WAVE (roadmap Phase 3, the-template-system §4.2 `grant_refs`):
+  // attach the species/subspecies trait/sense/language/resistance/action/spell
+  // grant rules. Additive — each rule lands on an existing relation list field
+  // and reads that field's own stored refs; no card migration is needed.
+  final v3 = attachSpeciesGrantRules(withArmor);
   // STATIC-FIELD PRESERVATION CHECKPOINT (roadmap PR-2.3; prompt §4 retention
   // policy). Enforce — not just claim — that the v2->v3 transform never drops,
   // retypes, or value-mutates a player-facing narrative/static-text field.
@@ -500,6 +510,104 @@ EntityCategorySchema _attachArmorCategoryRules(EntityCategorySchema category) {
       updatedAt: builtinDnd5eTemplateTimestamp,
     ));
   }
+  return category.copyWith(fields: fields);
+}
+
+// --- Species/Subspecies grant_refs rule wave (roadmap Phase 3, §4.2) ---------
+
+/// Slugs of the built-in lineage categories that carry the shared grant-shape
+/// relation fields (set in `content.dart` `_speciesCategory`/`_subspeciesCategory`).
+/// The grant wave walks BOTH because the Subspecies category mirrors the Species
+/// grant fields verbatim ("the same grant shape as Species, so CharacterResolver
+/// folds them identically") — so one rule table drives both.
+const builtinSpeciesGrantSlugs = <String>['species', 'subspecies'];
+
+/// The Species/Subspecies relation list fields that carry a `grant_refs` rule,
+/// mapped `fieldKey → target` — the named PC grant bucket the refs collect into
+/// (the-template-system §4.2: "target PC list-field key; refs from field value").
+///
+/// Each is a `relation` (`isList: true`) field that already exists in v2 and is
+/// rule-capable (`template_validator.ruleCapableTypes`), so the wave only
+/// ATTACHES a rule — it appends no field and migrates no card data (the refs are
+/// read from the card's own stored field value, which the built-in lineage cards
+/// already populate, so `TemplateRuleResolver._foldGrantRefs` resolves them via
+/// the stored-field fallback — no inline `refs`).
+///
+/// **Deliberately `grant_refs`-only.** The skill-proficiency grant
+/// (`granted_skill_proficiencies`) is a different kind (`grant_proficiency`), the
+/// typed `granted_modifiers` DSL folds via `modify_stat`, and the lineage
+/// `subspecies_options` is a `choose` preset — each is its own later wave. This
+/// table is exactly the pure entity-ref grants (traits, senses, languages, the
+/// damage/condition resistance-immunity-vulnerability grid, the three action
+/// kinds, innate spells + cantrips).
+const speciesGrantRefFields = <({String fieldKey, String target})>[
+  (fieldKey: 'trait_refs', target: 'traits'),
+  (fieldKey: 'granted_senses', target: 'senses'),
+  (fieldKey: 'granted_languages', target: 'languages'),
+  (fieldKey: 'granted_damage_resistances', target: 'damage_resistances'),
+  (fieldKey: 'granted_damage_immunities', target: 'damage_immunities'),
+  (fieldKey: 'granted_damage_vulnerabilities', target: 'damage_vulnerabilities'),
+  (fieldKey: 'granted_condition_immunities', target: 'condition_immunities'),
+  (fieldKey: 'granted_action_refs', target: 'actions'),
+  (fieldKey: 'granted_bonus_action_refs', target: 'bonus_actions'),
+  (fieldKey: 'granted_reaction_refs', target: 'reactions'),
+  (fieldKey: 'granted_spell_refs', target: 'spells'),
+  (fieldKey: 'granted_cantrip_refs', target: 'cantrips'),
+];
+
+/// Builds the single `grant_refs` rule for a [speciesGrantRefFields] entry on the
+/// given category [slug]. The rule carries NO inline `refs` — at fold time
+/// `TemplateRuleResolver._foldGrantRefs` reads them from the field's own stored
+/// value (`attachment.values[fieldKey]`), i.e. each lineage card's populated
+/// relation list. `trigger: when_granted` ≡ always-on once the species/subspecies
+/// is attached to the PC (§4.1); `kind: grant_refs` (`RuleKinds.grantRefs`) and
+/// the trigger are the canonical wire strings (kept as literals so this
+/// entity-layer generator does not import the services-layer resolver; the closed
+/// sets are enforced by `validateTemplateCategories`). `ruleId` is namespaced by
+/// slug + target so the species and subspecies copies stay distinct and stable.
+Map<String, dynamic> _speciesGrantRule(String slug, String target) => {
+      'ruleId': '$slug-grant-$target',
+      'trigger': 'when_granted',
+      'kind': 'grant_refs',
+      'target': target,
+    };
+
+/// Attaches the [speciesGrantRefFields] `grant_refs` rules to every category in
+/// [builtinSpeciesGrantSlugs]. Every other category and field is returned
+/// untouched — the wave is scoped to the lineage categories. Idempotent and
+/// additive: a field is only given a rule if it carries none (a re-run / copied
+/// built-in is left as-is), a grant field absent from a category is silently
+/// skipped, and no other field property is changed (so the static-field
+/// preservation audit and the v2-parity of every untouched field both hold).
+WorldSchema attachSpeciesGrantRules(WorldSchema schema) {
+  final categories = [
+    for (final category in schema.categories)
+      if (builtinSpeciesGrantSlugs.contains(category.slug))
+        _attachSpeciesGrantRules(category)
+      else
+        category,
+  ];
+  return schema.copyWith(categories: categories);
+}
+
+/// Applies the grant_refs wave to one lineage [category] (see
+/// [attachSpeciesGrantRules]). Each [speciesGrantRefFields] target is matched to
+/// the category's field by `fieldKey`; a rule-free match gains its single
+/// `grant_refs` rule, everything else is left byte-identical.
+EntityCategorySchema _attachSpeciesGrantRules(EntityCategorySchema category) {
+  final targetByKey = {
+    for (final spec in speciesGrantRefFields) spec.fieldKey: spec.target,
+  };
+  final fields = <FieldSchema>[
+    for (final field in category.fields)
+      if (targetByKey.containsKey(field.fieldKey) &&
+          (field.rules == null || field.rules!.isEmpty))
+        field.copyWith(
+          rules: [_speciesGrantRule(category.slug, targetByKey[field.fieldKey]!)],
+        )
+      else
+        field,
+  ];
   return category.copyWith(fields: fields);
 }
 
