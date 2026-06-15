@@ -1,7 +1,9 @@
 import '../../../services/template_migration/legacy_content_converter.dart';
+import '../entity_category_schema.dart';
 import '../field_schema.dart';
 import '../world_schema.dart';
 import 'builtin_dnd5e_v2_schema.dart';
+import 'groups.dart';
 
 /// Schema id for the v3 dynamic Template (Template & Package architecture,
 /// roadmap §1.2). Distinct lineage from the v2 embedded schema
@@ -48,12 +50,13 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 ///   * **RULE RESET → FIRST JIT RULE (roadmap §1.1 shift 1 / Phase 3 wave):**
 ///     the v2→v3 transform starts every field `rules`-free (`null` → omitted via
 ///     `includeIfNull:false`) so the only structural delta from v2 is the
-///     embedded `seedRows`. The **first** rule-assigned field now lands here as
-///     the Phase-3 Armor JIT wave ([attachArmorRules]) — a single
-///     `when_equipped modify_stat` AC rule on the Armor category. Every OTHER
-///     field stays byte-identical to its v2 form; subsequent waves (the armor
-///     Strength-requirement `check_clauses`, weapon prereqs, the species/
-///     subspecies `grant_refs`/`choose` rules) append the same way.
+///     embedded `seedRows`. The rule-assigned fields now land here as the
+///     Phase-3 Armor JIT wave ([attachArmorRules]): a `when_equipped modify_stat`
+///     AC rule on the existing `category_ref` anchor PLUS a NEW `prereq_clauses`
+///     recordList field carrying a `prereq_to_equip check_clauses` Strength-
+///     requirement rule. Every OTHER field stays byte-identical to its v2 form;
+///     subsequent waves (weapon prereqs, the species/subspecies `grant_refs`/
+///     `choose` rules) append the same way.
 ///
 /// **PR-2.3 PC-category parity type swap (this slice):** the Player Character
 /// category's v2 field types are migrated to their v3 equivalents IN THE v3
@@ -363,13 +366,14 @@ const armorRuleAnchorFieldKey = 'category_ref';
 /// does not import the services-layer resolver; the closed sets are enforced by
 /// `validateTemplateCategories`, which `tool/validate_template.dart` runs).
 ///
-/// **Scope of this wave (deliberately one rule):** the Dex contribution
+/// **Scope of this rule (deliberately one rule):** the Dex contribution
 /// (`adds_dex`/`dex_cap`) is reconciled by the `combatStatsTable` widget
-/// (the-template-system §2.3 — AC overrides live in the widget); the per-card
-/// Strength-requirement `check_clauses` rule is the *next* slice (it needs a
-/// `prereq-clauses` recordList field + per-card clause data, since a clause's
-/// `value` is a fixed literal — `TemplateRuleResolver._evalClause` — and cannot
-/// read the scalar `strength_requirement` inline).
+/// (the-template-system §2.3 — AC overrides live in the widget). The per-card
+/// Strength-requirement `check_clauses` rule is the SECOND armor wave and lands
+/// alongside this one ([armorPrereqClausesRules]) on a NEW `prereq-clauses`
+/// recordList field, since a clause's `value` is a fixed literal
+/// (`TemplateRuleResolver._evalClause`) and cannot read the scalar
+/// `strength_requirement` inline.
 ///
 /// Authored as raw maps — the `rules` wire is validated lazily by
 /// `validateTemplateCategories` (PR-T2 decision: raw maps avoid a freezed
@@ -384,31 +388,119 @@ const armorRules = <Map<String, dynamic>>[
   },
 ];
 
-/// Attaches [armorRules] to the Armor category's [armorRuleAnchorFieldKey] field
-/// ([builtinArmorSlug]). Every other category and field is returned untouched —
-/// the wave is scoped to the single field that gains the first rule. Idempotent
-/// and additive: a field that already carries rules (a re-run, or a copied
-/// built-in) is left as-is, and no other field property is changed (so the
-/// static-field preservation audit and the v2-parity of every untouched field
-/// both hold).
+/// The Armor `prereq_clauses` field key — the recordList that holds each piece's
+/// equip prerequisites as `{aspect, op, value}` clause rows (the-template-system
+/// §2.3 recordList preset `prereq-clauses`, §4.2 `check_clauses`). This is a
+/// genuinely-NEW field (it did not exist in the v2 schema), so it is APPENDED to
+/// the Armor category here rather than evolved from an existing field — additive,
+/// so it never collides with the static-field preservation audit (which only
+/// guards v2 narrative fields).
+const armorPrereqClausesFieldKey = 'prereq_clauses';
+
+/// `typeConfig` for the armor `prereq_clauses` recordList. The `preset:
+/// 'prereq-clauses'` keeps the bespoke clause renderer (the-template-system §2.3,
+/// the listed preset set) while the data model is the generic three-column
+/// `{aspect, op, value}` shape the resolver's `check_clauses` reads
+/// (`TemplateRuleResolver._evalClause`). Column `kind`s are drawn from the
+/// validator's closed [recordListColumnKinds] set so the field passes
+/// `_validateTypeConfig`'s recordList branch.
+const armorPrereqClausesTypeConfig = <String, dynamic>{
+  'columns': [
+    {'key': 'aspect', 'label': 'Aspect', 'kind': 'text'},
+    {'key': 'op', 'label': 'Operator', 'kind': 'text'},
+    {'key': 'value', 'label': 'Value', 'kind': 'int'},
+  ],
+  'preset': 'prereq-clauses',
+};
+
+/// The **SECOND built-in template rule** (roadmap Phase 3 JIT wave). When a PC
+/// attempts to equip armor whose Strength prerequisite they do not meet, the
+/// `check_clauses` rule evaluates the worn piece's stored `prereq_clauses` rows
+/// against the character's published ability-score aspects and pushes a
+/// policy-tagged warning into the resolution (`warn` — the sheet warn-keeps:
+/// the AC still applies, but a banner flags the unmet Str req; a `block` policy
+/// would instead gate a picker — the-template-system §4.2 `check_clauses`, the
+/// same warn/block split as the legacy `prereq_clauses` engine).
+///
+/// The rule carries NO inline `clauses` — they are read from the field's own
+/// stored rows (`TemplateRuleResolver._gatherClauses` falls back to
+/// `attachment.values[field.fieldKey]`), i.e. each armor card's migrated
+/// `prereq_clauses` value (`srd_core/armor.dart`). The clause `aspect` is the
+/// **uppercase** ability key `STR` to match the v3 PC `abilityScoreTable`, which
+/// publishes aspects under its verbatim column keys (`STR`…`CHA`,
+/// [pcFieldTypeSwaps]) — `AspectContext._publishAbilityScores`. Trigger
+/// `prereq_to_equip` only fires while the piece is equipped
+/// (`_checkActive`); `kind`/`trigger`/`policy` are the canonical wire strings
+/// (`RuleKinds.checkClauses` / `RuleTriggers.prereqToEquip` / `warn`).
+const armorPrereqClausesRules = <Map<String, dynamic>>[
+  {
+    'ruleId': 'armor-strength-requirement',
+    'trigger': 'prereq_to_equip',
+    'kind': 'check_clauses',
+    'policy': 'warn',
+  },
+];
+
+/// Attaches the armor JIT rule waves to the [builtinArmorSlug] category:
+///   1. [armorRules] — the first rule — folds onto the [armorRuleAnchorFieldKey]
+///      anchor field (AC `modify_stat` when equipped); and
+///   2. a NEW `prereq_clauses` recordList field ([armorPrereqClausesFieldKey]) is
+///      APPENDED carrying [armorPrereqClausesRules] (the Strength-requirement
+///      `check_clauses`), since a clause's `value` is a fixed literal and must
+///      live in per-card field rows, not inline on a scalar.
+///
+/// Every other category and field is returned untouched — the wave is scoped to
+/// the Armor category. Idempotent and additive: the anchor field is only given
+/// rules if it carries none (a re-run / copied built-in is left as-is), the
+/// `prereq_clauses` field is appended only if absent, and no other field property
+/// is changed (so the static-field preservation audit and the v2-parity of every
+/// untouched field both hold).
 WorldSchema attachArmorRules(WorldSchema schema) {
   final categories = [
     for (final category in schema.categories)
       if (category.slug == builtinArmorSlug)
-        category.copyWith(
-          fields: [
-            for (final field in category.fields)
-              if (field.fieldKey == armorRuleAnchorFieldKey &&
-                  (field.rules == null || field.rules!.isEmpty))
-                field.copyWith(rules: armorRules)
-              else
-                field,
-          ],
-        )
+        _attachArmorCategoryRules(category)
       else
         category,
   ];
   return schema.copyWith(categories: categories);
+}
+
+/// Applies both armor rule waves to the Armor [category] (see [attachArmorRules]).
+EntityCategorySchema _attachArmorCategoryRules(EntityCategorySchema category) {
+  // Wave 1: attach the AC rule to the always-present `category_ref` anchor.
+  final fields = <FieldSchema>[
+    for (final field in category.fields)
+      if (field.fieldKey == armorRuleAnchorFieldKey &&
+          (field.rules == null || field.rules!.isEmpty))
+        field.copyWith(rules: armorRules)
+      else
+        field,
+  ];
+  // Wave 2: append the `prereq_clauses` recordList field (idempotent — skip if a
+  // re-run / copied built-in already carries it).
+  if (!fields.any((f) => f.fieldKey == armorPrereqClausesFieldKey)) {
+    final nextOrder = fields.fold<int>(
+          0,
+          (max, f) => f.orderIndex > max ? f.orderIndex : max,
+        ) +
+        1;
+    fields.add(FieldSchema(
+      fieldId: 'fld-armor-$armorPrereqClausesFieldKey',
+      categoryId: category.categoryId,
+      fieldKey: armorPrereqClausesFieldKey,
+      label: 'Equip Prerequisites',
+      fieldType: FieldType.recordList,
+      typeConfig: armorPrereqClausesTypeConfig,
+      rules: armorPrereqClausesRules,
+      isBuiltin: true,
+      groupId: grpIdentity,
+      orderIndex: nextOrder,
+      createdAt: builtinDnd5eTemplateTimestamp,
+      updatedAt: builtinDnd5eTemplateTimestamp,
+    ));
+  }
+  return category.copyWith(fields: fields);
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel

@@ -9,6 +9,13 @@
 // field is touched. The AC formula, Strength requirement, Stealth
 // disadvantage and don/doff times are restated in plain language so a player
 // can equip any piece correctly from the card text alone.
+//
+// The three Strength-gated heavy pieces (Chain Mail 13, Splint/Plate 15) also
+// publish their equip prerequisite as a `prereq_clauses` recordList row
+// (`{aspect:'STR', op:'>=', value:N}`) — the data the v3 template's
+// `prereq_to_equip check_clauses` rule reads (builtin_dnd5e_template_v3.dart
+// `armorPrereqClausesRules`). This is ADDITIVE: the scalar `strength_requirement`
+// is retained for display/back-compat; only the Str-gated rows gain the clause.
 
 import '_helpers.dart';
 
@@ -39,7 +46,19 @@ Map<String, dynamic> _a({
     'weight_lb': weightLb,
   };
   if (dexCap != null) attrs['dex_cap'] = dexCap;
-  if (strReq != null) attrs['strength_requirement'] = strReq;
+  if (strReq != null) {
+    // ADDITIVE migration (master-roadmap §3 `prereqClauses` row): keep the scalar
+    // `strength_requirement` for display/back-compat AND publish the equip
+    // prerequisite as a `prereq-clauses` recordList row the template's
+    // `check_clauses` rule reads (`armorPrereqClausesRules`). The aspect is the
+    // UPPERCASE `STR` key the v3 PC `abilityScoreTable` publishes
+    // (`AspectContext._publishAbilityScores`); a wearer below it warn-keeps a
+    // banner ("requires STR >= N") while the armor's AC still applies.
+    attrs['strength_requirement'] = strReq;
+    attrs['prereq_clauses'] = [
+      {'aspect': 'STR', 'op': '>=', 'value': strReq},
+    ];
+  }
   return packEntity(
       slug: _slug, name: name, description: description, attributes: attrs);
 }
