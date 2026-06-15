@@ -58,10 +58,13 @@ const builtinDnd5eTemplateTimestamp = '2026-06-10T00:00:00.000Z';
 ///     ([attachSpeciesGrantRules]) then attaches a `when_granted grant_refs` rule
 ///     to each existing trait/sense/language/resistance/immunity/action/spell
 ///     relation list field on the Species and Subspecies categories (each rule
-///     reads its field's own stored refs into a named PC grant bucket). Every
-///     OTHER field stays byte-identical to its v2 form; subsequent waves (species
-///     skill `grant_proficiency`, the lineage `subspecies_options` `choose`
-///     preset, granted-modifier `modify_stat`) append the same way.
+///     reads its field's own stored refs into a named PC grant bucket), and the
+///     **species/subspecies skill wave** ([_speciesGrantProficiencyRule]) attaches
+///     a `when_granted grant_proficiency` rule to `granted_skill_proficiencies`
+///     (each lineage's granted skills become proficient on the PC `skills`
+///     skillTree). Every OTHER field stays byte-identical to its v2 form;
+///     subsequent waves (the lineage `subspecies_options` `choose` preset,
+///     granted-modifier `modify_stat`) append the same way.
 ///
 /// **PR-2.3 PC-category parity type swap (this slice):** the Player Character
 /// category's v2 field types are migrated to their v3 equivalents IN THE v3
@@ -513,7 +516,9 @@ EntityCategorySchema _attachArmorCategoryRules(EntityCategorySchema category) {
   return category.copyWith(fields: fields);
 }
 
-// --- Species/Subspecies grant_refs rule wave (roadmap Phase 3, §4.2) ---------
+// --- Species/Subspecies grant rule waves (roadmap Phase 3, §4.2) -------------
+// Wave 3: `grant_refs` over the entity-ref relation fields ([speciesGrantRefFields]).
+// Wave 4: `grant_proficiency` over `granted_skill_proficiencies`.
 
 /// Slugs of the built-in lineage categories that carry the shared grant-shape
 /// relation fields (set in `content.dart` `_speciesCategory`/`_subspeciesCategory`).
@@ -534,10 +539,11 @@ const builtinSpeciesGrantSlugs = <String>['species', 'subspecies'];
 /// the stored-field fallback — no inline `refs`).
 ///
 /// **Deliberately `grant_refs`-only.** The skill-proficiency grant
-/// (`granted_skill_proficiencies`) is a different kind (`grant_proficiency`), the
-/// typed `granted_modifiers` DSL folds via `modify_stat`, and the lineage
-/// `subspecies_options` is a `choose` preset — each is its own later wave. This
-/// table is exactly the pure entity-ref grants (traits, senses, languages, the
+/// (`granted_skill_proficiencies`) is a different kind (`grant_proficiency`,
+/// attached by its own wave — [_speciesGrantProficiencyRule]), the typed
+/// `granted_modifiers` DSL folds via `modify_stat`, and the lineage
+/// `subspecies_options` is a `choose` preset — each is its own wave. This table
+/// is exactly the pure entity-ref grants (traits, senses, languages, the
 /// damage/condition resistance-immunity-vulnerability grid, the three action
 /// kinds, innate spells + cantrips).
 const speciesGrantRefFields = <({String fieldKey, String target})>[
@@ -572,6 +578,52 @@ Map<String, dynamic> _speciesGrantRule(String slug, String target) => {
       'target': target,
     };
 
+/// The Species/Subspecies **skill-proficiency** grant field — the FOURTH lineage
+/// rule slice (roadmap §3 wave row 3, the-template-system §4.2 `grant_proficiency`).
+///
+/// It is a separate wave from [speciesGrantRefFields] because a granted skill does
+/// not append to a list bucket (as a `grant_refs` ref does) — it sets a
+/// proficiency **tier** on a row of the PC `skills` skillTree. The relation field
+/// already exists in v2 (`content.dart` `_speciesCategory`/`_subspeciesCategory`,
+/// `relation isList:true` over the `skill` catalog) and is rule-capable
+/// (`template_validator.ruleCapableTypes`), so the wave only ATTACHES a rule — it
+/// appends no field and migrates no card data. The rule carries NO inline `rows`
+/// — `TemplateRuleResolver._foldGrantProficiency` reads the affected skill refs
+/// from the field's own stored value (`attachment.values[fieldKey]`), i.e. each
+/// lineage card's already-populated skill list (e.g. High Elf → Insight, Wood Elf
+/// → Stealth, Orc → Intimidation).
+const speciesGrantProficiencyFieldKey = 'granted_skill_proficiencies';
+
+/// The PC skillTree field the lineage skill grant writes into: `skills`, the v3
+/// rename of the v2 proficiency table ([pcFieldTypeSwaps] — `skills` →
+/// [FieldType.skillTree]). `_foldGrantProficiency` records `{skills: {row:
+/// tier}}` so the granted skill rows surface as proficient on the character sheet.
+const speciesGrantProficiencyTarget = 'skills';
+
+/// The proficiency tier every lineage skill grant confers. All built-in
+/// species/subspecies skill grants are base **proficiency** — `expertise` is a
+/// class/feat-tier grant, never a lineage one — so the rule fixes the lower tier
+/// (`_proficiencyTier` defaults to `proficient`, but it is set explicitly so the
+/// exported asset is self-documenting).
+const speciesGrantProficiencyTier = 'proficient';
+
+/// Builds the single `grant_proficiency` rule for the lineage
+/// [speciesGrantProficiencyFieldKey] on the given category [slug]. The rule
+/// carries NO inline `rows` — at fold time `_foldGrantProficiency` reads them from
+/// the field's own stored skill refs. `kind`/`trigger`/`tier` are the canonical
+/// wire strings (`RuleKinds.grantProficiency` / `RuleTriggers.whenGranted` /
+/// `skillTreeTiers`); kept as literals so this entity-layer generator does not
+/// import the services-layer resolver (the closed sets are enforced by
+/// `validateTemplateCategories`). `ruleId` is slug-namespaced so the species and
+/// subspecies copies stay distinct and stable.
+Map<String, dynamic> _speciesGrantProficiencyRule(String slug) => {
+      'ruleId': '$slug-grant-skill-proficiencies',
+      'trigger': 'when_granted',
+      'kind': 'grant_proficiency',
+      'target': speciesGrantProficiencyTarget,
+      'tier': speciesGrantProficiencyTier,
+    };
+
 /// Attaches the [speciesGrantRefFields] `grant_refs` rules to every category in
 /// [builtinSpeciesGrantSlugs]. Every other category and field is returned
 /// untouched — the wave is scoped to the lineage categories. Idempotent and
@@ -590,25 +642,43 @@ WorldSchema attachSpeciesGrantRules(WorldSchema schema) {
   return schema.copyWith(categories: categories);
 }
 
-/// Applies the grant_refs wave to one lineage [category] (see
-/// [attachSpeciesGrantRules]). Each [speciesGrantRefFields] target is matched to
-/// the category's field by `fieldKey`; a rule-free match gains its single
-/// `grant_refs` rule, everything else is left byte-identical.
+/// Applies the lineage grant waves to one [category] (see
+/// [attachSpeciesGrantRules]): each [speciesGrantRefFields] target gains its
+/// single `grant_refs` rule, and the [speciesGrantProficiencyFieldKey] field
+/// gains its `grant_proficiency` rule. Only rule-free fields are touched (a
+/// re-run / copied built-in is left as-is); everything else is byte-identical.
 EntityCategorySchema _attachSpeciesGrantRules(EntityCategorySchema category) {
   final targetByKey = {
     for (final spec in speciesGrantRefFields) spec.fieldKey: spec.target,
   };
   final fields = <FieldSchema>[
     for (final field in category.fields)
-      if (targetByKey.containsKey(field.fieldKey) &&
-          (field.rules == null || field.rules!.isEmpty))
-        field.copyWith(
-          rules: [_speciesGrantRule(category.slug, targetByKey[field.fieldKey]!)],
-        )
+      if (field.rules == null || field.rules!.isEmpty)
+        _attachLineageGrantRule(category.slug, field, targetByKey)
       else
         field,
   ];
   return category.copyWith(fields: fields);
+}
+
+/// Returns [field] with its lineage grant rule attached, or the field unchanged
+/// if it is not a grant field. A [speciesGrantRefFields] field (matched via
+/// [targetByKey]) gets a `grant_refs` rule; the [speciesGrantProficiencyFieldKey]
+/// field gets a `grant_proficiency` rule. Only ever called on a rule-free field
+/// (the caller guards), so this never overwrites an existing rule.
+FieldSchema _attachLineageGrantRule(
+  String slug,
+  FieldSchema field,
+  Map<String, String> targetByKey,
+) {
+  final refTarget = targetByKey[field.fieldKey];
+  if (refTarget != null) {
+    return field.copyWith(rules: [_speciesGrantRule(slug, refTarget)]);
+  }
+  if (field.fieldKey == speciesGrantProficiencyFieldKey) {
+    return field.copyWith(rules: [_speciesGrantProficiencyRule(slug)]);
+  }
+  return field;
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel
