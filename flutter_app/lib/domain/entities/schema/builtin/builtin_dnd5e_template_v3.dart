@@ -119,7 +119,14 @@ WorldSchema generateBuiltinDnd5eTemplateV3() {
   // attach the species/subspecies trait/sense/language/resistance/action/spell
   // grant rules. Additive — each rule lands on an existing relation list field
   // and reads that field's own stored refs; no card migration is needed.
-  final v3 = attachSpeciesGrantRules(withArmor);
+  final withGrants = attachSpeciesGrantRules(withArmor);
+  // FIFTH JIT RULE WAVE (roadmap Phase 3, the-template-system §4.2 `modify_stat`):
+  // the lineage scalar stat-bonus rules. Appends the canonical `speed_bonus` /
+  // `hp_bonus` data fields (the `effect_field_mapper` vocabulary) to the
+  // Subspecies category and folds them into the PC `speed` / `max_hp` aspects via
+  // anchored `when_granted modify_stat` rules. Additive — no card migration to
+  // existing fields, the bonus value is read from each card's own new field.
+  final v3 = attachLineageModifierRules(withGrants);
   // STATIC-FIELD PRESERVATION CHECKPOINT (roadmap PR-2.3; prompt §4 retention
   // policy). Enforce — not just claim — that the v2->v3 transform never drops,
   // retypes, or value-mutates a player-facing narrative/static-text field.
@@ -679,6 +686,127 @@ FieldSchema _attachLineageGrantRule(
     return field.copyWith(rules: [_speciesGrantProficiencyRule(slug)]);
   }
   return field;
+}
+
+// --- Lineage scalar-modifier `modify_stat` wave (roadmap Phase 3, §4.2) ------
+// Wave 5: the Subspecies scalar stat bonuses (speed / flat HP). The legacy
+// `granted_modifiers` typed DSL is display-only and non-rule-capable; the v3
+// mechanics live on the canonical scalar data fields the converter emits
+// (`effect_field_mapper`: `speed_bonus`→`speed_bonus`, `hp_bonus_flat`→`hp_bonus`)
+// so the built-in lineage cards and a converted pack's cards drive the SAME rule.
+
+/// Slug of the built-in Subspecies (lineage) category (set in `content.dart`
+/// `_subspeciesCategory`). The lineage modifier wave is scoped to this — the only
+/// built-in lineage category whose cards carry flat speed / HP grants (Wood Elf
+/// +5 ft Speed, Mountain Dwarf +2 HP) — so every appended rule-bearing field is
+/// used by ≥1 card (master-roadmap §3 shift 2).
+const builtinSubspeciesSlug = 'subspecies';
+
+/// The rule-capable Subspecies field that anchors the modifier `modify_stat`
+/// rules. `parent_species_ref` (the required lineage relation) is always present
+/// and rule-capable; the scalar bonus fields the rules *read* (`speed_bonus`,
+/// `hp_bonus`) are `integer` aspect/value sources only and are never themselves
+/// rule-capable (`template_validator.ruleCapableTypes`) — the same anchor
+/// discipline as the Armor AC rule on `category_ref`.
+const lineageModifierRuleAnchorFieldKey = 'parent_species_ref';
+
+/// The canonical v3 scalar stat-bonus fields APPENDED to the Subspecies category,
+/// each `(fieldKey, label, group, target)`. `fieldKey` is the converter's
+/// canonical vocabulary ([effectTargetFields]); `target` is the PC aspect the
+/// `modify_stat` rule folds into (`speed`, `max_hp` — the `aspect_context`
+/// canonical names). `integer` is NOT rule-capable, so these fields only hold the
+/// per-card value while the rule lives on the [lineageModifierRuleAnchorFieldKey]
+/// anchor and reads them via a `field` value source.
+const lineageModifierFields =
+    <({String fieldKey, String label, String group, String target})>[
+  (fieldKey: 'speed_bonus', label: 'Speed Bonus (ft)', group: grpCombat, target: 'speed'),
+  (fieldKey: 'hp_bonus', label: 'HP Bonus', group: grpTraitsActions, target: 'max_hp'),
+];
+
+/// Builds the `when_granted modify_stat` rule for a [lineageModifierFields] entry.
+/// The value is read from the card's own scalar bonus field via a `field` value
+/// source carrying `default: 0` — so the many lineage cards that grant no such
+/// bonus fold to a +0 no-op (skipped by `_foldModifyStat`) instead of an
+/// unresolved skip. `kind`/`trigger` are the canonical wire strings
+/// (`RuleKinds.modifyStat` / `RuleTriggers.whenGranted`); `ruleId` is namespaced
+/// by field key so the two rules stay distinct on the shared anchor.
+Map<String, dynamic> _lineageModifierRule(String fieldKey, String target) => {
+      'ruleId': 'subspecies-$fieldKey',
+      'trigger': 'when_granted',
+      'kind': 'modify_stat',
+      'target': target,
+      'value': {'kind': 'field', 'field': fieldKey, 'default': 0},
+    };
+
+/// Attaches the lineage scalar-modifier wave to the [builtinSubspeciesSlug]
+/// category: it attaches each [lineageModifierFields] `modify_stat` rule to the
+/// [lineageModifierRuleAnchorFieldKey] anchor and APPENDS each canonical scalar
+/// bonus `integer` field (so the rule has a per-card value to read). Every other
+/// category and field is returned untouched. Idempotent and additive: a bonus
+/// field is appended only if absent, the anchor only gains a rule it does not
+/// already carry (matched by `ruleId`), and no other field property is changed —
+/// so the static-field preservation audit and v2-parity both hold.
+WorldSchema attachLineageModifierRules(WorldSchema schema) {
+  final categories = [
+    for (final category in schema.categories)
+      if (category.slug == builtinSubspeciesSlug)
+        _attachLineageModifierRules(category)
+      else
+        category,
+  ];
+  return schema.copyWith(categories: categories);
+}
+
+/// Applies the lineage scalar-modifier wave to one [category] (see
+/// [attachLineageModifierRules]).
+EntityCategorySchema _attachLineageModifierRules(EntityCategorySchema category) {
+  // Attach the modifier rules to the anchor, appending to any it already carries
+  // (idempotent — a rule whose `ruleId` is already present is not duplicated).
+  final fields = <FieldSchema>[
+    for (final field in category.fields)
+      if (field.fieldKey == lineageModifierRuleAnchorFieldKey)
+        field.copyWith(rules: _lineageAnchorRules(field.rules))
+      else
+        field,
+  ];
+  // Append each canonical scalar bonus field that is not already present.
+  final present = {for (final f in fields) f.fieldKey};
+  var nextOrder = fields.fold<int>(
+        0,
+        (max, f) => f.orderIndex > max ? f.orderIndex : max,
+      ) +
+      1;
+  for (final spec in lineageModifierFields) {
+    if (present.contains(spec.fieldKey)) continue;
+    fields.add(FieldSchema(
+      fieldId: 'fld-subspecies-${spec.fieldKey}',
+      categoryId: category.categoryId,
+      fieldKey: spec.fieldKey,
+      label: spec.label,
+      fieldType: FieldType.integer,
+      isBuiltin: true,
+      groupId: spec.group,
+      orderIndex: nextOrder++,
+      createdAt: builtinDnd5eTemplateTimestamp,
+      updatedAt: builtinDnd5eTemplateTimestamp,
+    ));
+  }
+  return category.copyWith(fields: fields);
+}
+
+/// Merges the [lineageModifierFields] `modify_stat` rules into the anchor field's
+/// [existing] rule list without duplicating (matched by `ruleId`), preserving any
+/// rule already attached. Returns a fresh list.
+List<Map<String, dynamic>> _lineageAnchorRules(
+  List<Map<String, dynamic>>? existing,
+) {
+  final rules = <Map<String, dynamic>>[...?existing];
+  final haveIds = {for (final r in rules) r['ruleId']};
+  for (final spec in lineageModifierFields) {
+    if (haveIds.contains('subspecies-${spec.fieldKey}')) continue;
+    rules.add(_lineageModifierRule(spec.fieldKey, spec.target));
+  }
+  return rules;
 }
 
 /// Converts the generator's strongly-typed seed-row side-channel

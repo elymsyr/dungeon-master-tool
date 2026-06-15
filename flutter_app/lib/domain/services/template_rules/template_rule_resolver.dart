@@ -883,6 +883,11 @@ class TemplateRuleResolver {
       return;
     }
 
+    // A +0 modification is a no-op: skip it so an optional bonus field left
+    // unset on a card (resolved via its value source `default`) contributes no
+    // spurious `statDeltas` entry (which would flip `RuleResolution.isEmpty`).
+    if (resolved.value == 0) return;
+
     statDeltas[target] = (statDeltas[target] ?? 0) + resolved.value!;
   }
 
@@ -1918,6 +1923,12 @@ class TemplateRuleResolver {
       final stored = attachment.values[lookupKey];
       final n = _coerceNum(stored);
       if (n != null) return (value: n, reason: null);
+      // Optional bonus fields (e.g. a lineage `speed_bonus` that most cards
+      // leave unset) may declare a `default` the source falls back to when the
+      // card carries no numeric value — so an absent optional bonus folds to the
+      // default (typically 0) rather than surfacing as an unresolved skip.
+      final fallback = _coerceNum(source['default']);
+      if (fallback != null) return (value: fallback, reason: null);
       return (
         value: null,
         reason: 'field value source "$lookupKey" is not numeric '

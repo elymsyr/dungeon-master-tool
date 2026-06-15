@@ -15,14 +15,19 @@
 // `granted_*_action_refs` point at (the Goliath giant ancestries) plus the
 // spell/sense/resistance grants the row already carries, so a player can
 // understand a lineage from the card text alone (master-roadmap §4
-// description-first). The enrichment is provably ADDITIVE: only each
-// `description` value changed — every attribute (`parent_species_ref`,
-// `legacy_subspecies_key`, `granted_modifiers`, `granted_damage_resistances`,
-// `granted_skill_proficiencies`, `granted_cantrip_refs`,
-// `granted_spells_at_level`, `granted_action_refs`, `granted_bonus_action_refs`,
-// `granted_reaction_refs`) is byte-identical to the pre-enrichment row, so no
-// mechanical field is touched and no template rule is authored (RULE RESET
-// intact; Wave 3 description slice).
+// description-first).
+//
+// Wave 5 (lineage `modify_stat` rules) ADDITIVELY adds the canonical v3 scalar
+// stat-bonus fields (`speed_bonus` on Wood Elf, `hp_bonus` on Mountain Dwarf —
+// the `effect_field_mapper` vocabulary) alongside the retained legacy
+// `granted_modifiers` rows (which stay for display only). The Subspecies
+// category's `modify_stat` rules ([attachLineageModifierRules]) fold these into
+// the PC `speed` / `max_hp` aspects. Every other attribute
+// (`parent_species_ref`, `legacy_subspecies_key`, `granted_modifiers`,
+// `granted_damage_resistances`, `granted_skill_proficiencies`,
+// `granted_cantrip_refs`, `granted_spells_at_level`, `granted_action_refs`,
+// `granted_bonus_action_refs`, `granted_reaction_refs`) is byte-identical to the
+// pre-enrichment row.
 
 import '_helpers.dart';
 
@@ -119,6 +124,9 @@ Part of the **Dwarf** species. Mountain Dwarves are raised among harsh peaks, an
           'granted_modifiers': [
             {'kind': 'hp_bonus_flat', 'value': 2},
           ],
+          // Canonical v3 scalar bonus the `modify_stat` rule folds into max HP
+          // (the legacy `granted_modifiers` row above stays for display only).
+          'hp_bonus': 2,
         },
       ),
 
@@ -189,6 +197,9 @@ Part of the **Elf** species. Wood Elves are swift, wary folk of the deep forest,
           'granted_modifiers': [
             {'kind': 'speed_bonus', 'value': 5},
           ],
+          // Canonical v3 scalar bonus the `modify_stat` rule folds into Speed
+          // (the legacy `granted_modifiers` row above stays for display only).
+          'speed_bonus': 5,
           'granted_cantrip_refs': [ref('spell', 'Druidcraft')],
           'granted_spells_at_level': [
             {'spell_ref': ref('spell', 'Longstrider'), 'at_level': 3, 'uses_per_long_rest': 1},
