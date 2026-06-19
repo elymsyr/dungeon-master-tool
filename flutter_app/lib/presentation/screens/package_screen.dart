@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
@@ -664,6 +665,16 @@ class _PackageOnlineButtonState
   }
 
   Future<void> _toggle(bool currentlyOnline) async {
+    if (!currentlyOnline && !ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Online sync is beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final notifier = ref.read(activePackageProvider.notifier);

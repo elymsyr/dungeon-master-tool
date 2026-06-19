@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
+import '../../application/providers/beta_provider.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
@@ -37,6 +38,16 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
       (itemType: widget.itemType, localId: widget.localId);
 
   Future<void> _publishSnapshot() async {
+    if (!ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Marketplace publishing is beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
     final listing = await showPublishSnapshotDialog(
       context: context,
       itemType: widget.itemType,
