@@ -1,5 +1,48 @@
 # Release Notes
 
+## Dungeon Master Tool v12.0.1 — Beta Gating, SRD Reference Overlay, Equipment Pick Fix (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v12.0.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release. Three bug fixes and two internal improvements. "Make Online" and "Share to Marketplace" now correctly require beta membership (previously the client let any signed-in user trigger these actions and the request failed server-side with an opaque error). The package editor now overlays the full built-in SRD entity catalog as read-only reference rows, so conditions, damage types, spell lists, and other Tier-0 lookups render even when the package being edited carries none of that content. A scoped-key fix in the character resolver prevents class and background equipment picks from overwriting each other when both use the same group ID.
+
+### Highlights
+
+#### Beta gate on cloud actions
+
+- **Make Online (packages)** and **Share to Marketplace** now show a clear snackbar directing non-beta users to Settings → Subscriptions instead of silently failing when the request reaches the server. World "Make Online" already had this gate; the two missing surfaces are now consistent with it.
+
+#### SRD reference overlay in the package editor (`srdReferenceEntitiesProvider`)
+
+- Every package's category lists (conditions, damage types, spells, monsters, …) now render the **built-in SRD entities as read-only reference rows** alongside the package's own content. The overlay is injected into `EntityNotifier` via a new `overlaySrdReference` flag; overlaid rows are tracked in `_referenceEntityIds` and are never written back to the package on save.
+- Packages always load with the **live built-in D&D 5e v2 schema** instead of the stored `package_schemas` row, which could become stale or missing and surface a "No template found" error.
+
+#### Bundled pack auto-installer (debug mode)
+
+- A new `BundledPacksBootstrap` service mirrors the SRD bootstrap pattern for the bundled Open5e packs in `assets/open5e_packs/`. In debug builds it re-installs any pack whose on-disk SHA-1 hash differs from the stored `bundled_content_hash`, so freshly regenerated pack content (e.g. background equipment from the importer fix in v12.0.0) is visible immediately without flipping the admin toggle. **No-op in release** — the R2 catalog is the delivery channel there (BB-1: packs are excluded from release bundles). The admin "Install asset packs" toggle now correctly gates the installer; turning it OFF removes the packs and they stay gone.
+
+#### Character resolver — scoped equipment choice key
+
+- Equipment choices are now keyed as `$sourceId:$groupId` instead of `$groupId` alone. Class and background starting-equipment pick groups can share identical group IDs; the old flat key caused one source's selection to silently overwrite the other's, resulting in missing starting gear on new characters.
+
+### Bug Fixes
+
+- **Beta gate missing on package Make Online** — non-beta users saw no error and the server rejected the request silently.
+- **Beta gate missing on Share to Marketplace** — same as above; client-side gate now shows a human-readable message.
+- **Package editor empty category lists** — Tier-0 lookups (conditions, damage types, etc.) showed empty when a custom package carried none of its own; fixed by the SRD reference overlay.
+- **"No template found" on package open** — packages with a missing or stale `package_schemas` row errored on load; now always resolved to the live built-in schema.
+- **Equipment picks collision** — class and background starting-equipment picks with the same `group_id` overwrote each other in the character resolver.
+
+### Internal / Developer
+
+- `BundledPacksBootstrap` service + `bundledPacksBootstrapProvider` — content-hash gated debug installer for the Open5e asset packs; warm-start cost is ~22 cheap DB reads.
+- `srdReferenceEntitiesProvider` — cached Riverpod provider that parses the installed SRD pack into typed `Entity` objects (all categories, marked `linked: true`).
+- `EntityNotifier` gains `overlaySrdReference` constructor flag and `_applyReferenceOverlay()` — overlay ids tracked in `_referenceEntityIds` to prevent accidental persistence.
+- `packageEntitiesProvider` calls `bundledPacksBootstrapProvider` before reading so the wizard/editor always sees current bundled pack content.
+
+---
+
 ## Dungeon Master Tool v12.0.0 — SRD Content Consolidation, Unified Banner Art, Open5e Import Quality, Final Anon Lockdown (Beta)
 
 **Release date:** June 2026
