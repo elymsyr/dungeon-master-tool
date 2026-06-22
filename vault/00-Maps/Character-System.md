@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: chargen
-updated: 2026-06-09
+updated: 2026-06-22
 tags: [moc]
 ---
 
@@ -31,4 +31,5 @@ Wizard draft ([[character_draft_notifier]]) → [[level_up_planner]] emits delta
 - [[World-and-Content]] (entity store) · [[Content-Pipeline]] (where effects originate) · [[Combat-and-VTT]] (consumes effective stats).
 
 ## Source Docs
-- `flutter_app/docs/chargen_mechanics_wiring.md`, `character_creation_level_audit.md`, `missing_mechanical_effects_audit.md`.
+- Chargen mechanics wiring completed (C1-C7 mapper fields + D1-D9 species/feat/bg typed grants; 2026-06-01 to Jun 9) — doc removed after completion.
+- `flutter_app/docs/` audit docs: `character_creation_level_audit.md`, `missing_mechanical_effects_audit.md`.

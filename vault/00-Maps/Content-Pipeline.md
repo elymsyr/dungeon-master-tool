@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-06-09
+updated: 2026-06-22
 tags: [moc]
 ---
 
@@ -33,4 +33,5 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
 - [[World-and-Content]] (installs packages) · [[Character-System]] (consumes effects) · [[Data-Layer]] (entity shape) · [[Backend-Infra]] (R2 catalog).
 
 ## Source Docs
-- `flutter_app/docs/open5e_import_roadmap.md`, `chargen_mechanics_wiring.md`; `open5e_import_initiative`, `open5e_pack_consolidation_jun2026` memories.
+- `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
+- Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

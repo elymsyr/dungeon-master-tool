@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: combat-vtt
-updated: 2026-06-09
+updated: 2026-06-22
 tags: [moc]
 ---
 
@@ -26,5 +26,8 @@ DM edits initiative/HP → [[combat_provider]] → [[combat_dao]] (Drift) → [[
 ## Related Domains
 - [[Character-System]] (effective stats) · [[Projection-Second-Screen]] (output) · [[Data-Layer]] (encounter tables) · [[Sync-and-Realtime]].
 
+## VTT Upgrade — Phase 1 (shipped 2026-06-02)
+Token HUD (DM + player views), `hidden` flag end-to-end (DM sets → fog-filtered before projection), damage/heal/hide context menu on token long-press. Token context menu drives [[combat_provider]] state. See [[Fog-of-War-and-Visibility]] for hidden-flag filtering.
+
 ## Source Docs
-- `flutter_app/docs/` VTT-upgrade + battlemap notes; `vtt_upgrade_initiative` memory.
+- `vtt_upgrade_initiative` memory; design docs removed after Phase 1 shipped.

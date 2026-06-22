@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-06-09
+updated: 2026-06-22
 tags: [moc, architecture]
 ---
 
@@ -61,4 +61,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 - [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).
 
 ## Source docs (design history)
-`flutter_app/docs/`: `open5e_import_roadmap.md`, `chargen_mechanics_wiring.md`, `online_second_screen_architecture_may21.md`, `security_media_supabase_r2_audit_may21.md`, plus the dated sync/perf redesign docs.
+- `flutter_app/docs/`: `open5e_import_roadmap.md`, `security_media_supabase_r2_audit_may21.md`, `email_confirmation_setup.md`.
+- `docs/content-audit/`: `entity_audit_log.md` + `system_mechanics_roadmap.md` — Jun 2026 full-pack audit (19 packs, 20 712 cards).
+- `docs/new_system/`: `master-roadmap.md`, `the-template-system.md`, `content-convert.md` — [[Template-System]] initiative (approved 2026-06-10).
+- `docs/TEMPLATE_RELEASE_NOTE.md` — release note style guide.

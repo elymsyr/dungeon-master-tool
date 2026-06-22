@@ -26,4 +26,4 @@ tags: [system]
 
 ## Related
 - MoCs: [[Content-Pipeline]], [[Character-System]], [[World-and-Content]]
-- Source Docs: `flutter_app/docs/chargen_mechanics_wiring.md`
+- Source Docs: chargen wiring doc removed after all phases shipped (2026-06-09). Coverage: subclass parent 125/125, caster_kind 26/26, softRef cross-pack fully wired.
