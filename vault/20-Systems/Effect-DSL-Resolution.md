@@ -29,4 +29,4 @@ tags: [system]
 
 ## Related
 - MoCs: [[Character-System]], [[Content-Pipeline]]
-- Source Docs: `flutter_app/docs/chargen_mechanics_wiring.md`, `missing_mechanical_effects_audit.md`
+- Source Docs: `flutter_app/docs/missing_mechanical_effects_audit.md`; chargen wiring doc removed after all phases shipped (2026-06-09).

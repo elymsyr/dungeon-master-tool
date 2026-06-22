@@ -29,4 +29,4 @@ tags: [system]
 
 ## Related
 - MoCs: [[Projection-Second-Screen]], [[Combat-and-VTT]]
-- Source Docs: `flutter_app/docs/second_screen_dm_player_view_spec_may21.md`
+- Source Docs: design spec removed after online second-screen shipped (2026-05-22/23).

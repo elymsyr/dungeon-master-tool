@@ -38,4 +38,4 @@ tags: [file]
 - `_addUnique` disambiguates same-slug name collisions (3rd-party docs reuse generic subclass/feat names) by suffixing the parent tag or a counter.
 
 ## Notes
-- "Honest source limits" left empty (not faked): leveled class features, subclass `granted_at_level` (no level field in ClassFeature), feat effect/ASI DSL beyond the conservative parses, and any "of your choice" grant — all stay folded in the description. See `flutter_app/docs/chargen_mechanics_wiring.md` and the BG-equipment / official-pkg-chargen-rules memory entries.
+- "Honest source limits" left empty (not faked): leveled class features, subclass `granted_at_level` (no level field in ClassFeature), feat effect/ASI DSL beyond the conservative parses, and any "of your choice" grant — all stay folded in the description. Wiring doc removed after all phases (C1-C7, D1-D9) shipped 2026-06-09; see BG-equipment + official-pkg-chargen-rules memory entries for final state.

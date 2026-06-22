@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: projection
-updated: 2026-06-09
+updated: 2026-06-22
 tags: [moc]
 ---
 
@@ -28,5 +28,5 @@ tags: [moc]
 ## Related Domains
 - [[Combat-and-VTT]] · [[Media-and-Assets]] (images) · [[Multiplayer-and-Online]] (online output) · [[Platform-Targets]].
 
-## Source Docs
-- `flutter_app/docs/online_second_screen_architecture_may21.md`, `second_screen_dm_player_view_spec_may21.md`.
+## Status Note
+Online second-screen ([[projection_output_online]]) fully shipped (Faz A-F + bug sprints B1-B9, C1-C5; 2026-05-22/23). Token HUD (DM+player), hidden flag end-to-end, tiered BM debounce (120/500 ms), optimistic ghost, projection CDC 50 ms debounce, player gridSnap all live. Design docs removed after completion.
