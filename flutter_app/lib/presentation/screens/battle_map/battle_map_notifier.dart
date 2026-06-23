@@ -8,15 +8,19 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/services/asset_ref_resolver.dart';
 import '../../../application/services/map_image_upload.dart';
 import '../../../application/services/pending_write_buffer.dart';
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/creature_size.dart';
 import '../../../domain/value_objects/grid_distance.dart';
 import '../../../domain/value_objects/map_shape.dart';
 import '../../../domain/value_objects/media_kind.dart';
@@ -596,13 +600,43 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       shapeSnaps.add(_toShapeSnapshot(s));
     }
 
+    // Compute full token-size multipliers (auto creature-size + manual
+    // overrides), mirroring BattleMapSnapshotBuilder.build() exactly.
+    // state.tokenSizeMultipliers only holds manual resizes; without this
+    // recomputation, all tokens appear the same size on the player view
+    // after the DM reopens the battle map screen.
+    final encounter = _ref
+        .read(combatProvider)
+        .encounters
+        .where((e) => e.id == encounterId)
+        .firstOrNull;
+    final entityMap = _ref.read(entityProvider);
+    final charEntityMap = <String, Entity>{
+      for (final ch in _ref.read(combatCharactersProvider))
+        ch.entity.id: ch.entity,
+    };
+    final fullMultipliers = <String, double>{};
+    if (encounter != null) {
+      for (final c in encounter.combatants) {
+        final manualMult = encounter.tokenSizeMultipliers[c.id];
+        final entity = c.entityId != null
+            ? (entityMap[c.entityId!] ?? charEntityMap[c.entityId!])
+            : null;
+        final cells = tokenCellSpan(entity, entityMap);
+        fullMultipliers[c.id] = manualMult ??
+            (state.tokenSize > 0
+                ? cells * state.gridSize / state.tokenSize
+                : cells);
+      }
+    }
+
     _ref.read(projectionControllerProvider.notifier).updateBattleMapDrawings(
           itemId: proj.id,
           strokes: strokeSnaps,
           measurements: measurementSnaps,
           shapes: shapeSnaps,
           tokenSize: state.tokenSize,
-          tokenSizeMultipliers: state.tokenSizeMultipliers,
+          tokenSizeMultipliers: fullMultipliers,
           gridVisible: state.gridVisible,
           gridSize: state.gridSize,
           feetPerCell: state.feetPerCell,

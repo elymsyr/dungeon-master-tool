@@ -1,5 +1,16 @@
 # Release Notes
 
+## Dungeon Master Tool v12.1.0
+
+**Release date:** June 2026
+
+### Bug Fixes
+
+- **Battlemap: HP bars now visible in player view** — Fixed an issue where HP bars were not displayed for players even when the DM had "Show HP" enabled. The `showAllHp` flag is now correctly propagated through all broadcast paths (`updateBattleMapSnapshot` and the online patch pipeline).
+- **Battlemap: Token sizes now correct in player view** — Fixed an issue where all tokens appeared the same size in the player view regardless of creature size (Large, Huge, Gargantuan, etc.). Full creature-size multipliers are now computed from each combatant's entity and broadcast to players, instead of only sending manual resize overrides.
+
+---
+
 ## Dungeon Master Tool v12.0.2 — Package Online Sync, Beta Backstop, Dark-Theme Readability (Beta)
 
 **Release date:** June 2026
