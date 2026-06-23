@@ -322,14 +322,18 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
   // --------------- markdown style ---------------
 
   MarkdownStyleSheet _defaultStyleSheet(DmToolColors? palette) {
+    // When a caller supplies textStyle (e.g. entity cards use srdInk), derive
+    // heading/bullet colors from it so markdown subsections match the card
+    // palette instead of falling back to the global html* colors.
+    final baseColor = widget.textStyle?.color;
     return MarkdownStyleSheet(
       p: widget.textStyle ?? TextStyle(fontSize: 13, color: palette?.htmlText),
-      h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-      h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-      h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+      h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: baseColor ?? palette?.htmlHeader),
+      h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: baseColor ?? palette?.htmlHeader),
+      h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: baseColor ?? palette?.htmlHeader),
       code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
       a: TextStyle(color: palette?.htmlLink),
-      listBullet: TextStyle(fontSize: 13, color: palette?.htmlText),
+      listBullet: TextStyle(fontSize: 13, color: baseColor ?? palette?.htmlText),
     );
   }
 

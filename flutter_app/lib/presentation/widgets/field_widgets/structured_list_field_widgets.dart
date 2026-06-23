@@ -234,11 +234,16 @@ Widget _miniEnum({
 }) {
   return SizedBox(
     width: width,
-    child: DropdownButtonFormField<String>(
+    // Builder so the selected-value text inherits the theme's on-surface ink
+    // instead of a hardcoded black that's unreadable on dark palettes.
+    child: Builder(builder: (context) {
+    return DropdownButtonFormField<String>(
       initialValue: (value != null && options.contains(value)) ? value : null,
       isDense: true,
       isExpanded: true,
-      style: const TextStyle(fontSize: 12, color: Colors.black87),
+      style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
         isDense: true,
@@ -254,7 +259,8 @@ Widget _miniEnum({
               ))
           .toList(),
       onChanged: readOnly ? null : onChanged,
-    ),
+    );
+    }),
   );
 }
 
