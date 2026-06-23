@@ -1,5 +1,31 @@
 # Release Notes
 
+## Dungeon Master Tool v12.0.2 — Package Online Sync, Beta Backstop, Dark-Theme Readability (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v12.0.2) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release. One feature, one gating hardening, two readability fixes. Packages get their own **Online** section in the settings dialog — personal device-to-device cloud sync, the package-tab counterpart to the existing world "Make Online" flow. The beta gate on cloud actions is now also enforced at the provider level so UI paths that skip the pre-check (e.g. the phone overflow toggle) fail with a clear message instead of an opaque server error. Two dark-palette fixes restore unreadable text in structured editors and entity-card markdown.
+
+### Highlights
+
+#### Online sync for packages (`_PackageOnlineSection`)
+
+- The package settings dialog now has an **Online** section mirroring `OnlineWorldSection`. Owners can **Make Online** to push the package to the cloud so it syncs across their own devices, or **Make Offline** to remove the cloud copy. Personal sync only — no invites or sharing.
+- Pushes by name with the already-loaded package data, so it works even when the package isn't the active/open one.
+
+#### Beta gate backstop on cloud sync
+
+- `ActivePackageNotifier.makeOnline()` now throws a clear beta-only `StateError` at the provider level, covering UI paths that don't pre-check (the phone overflow toggle). Desktop buttons still pre-check for a nicer message.
+- World **Publish** and package **Make Online** both surface the same "join the free beta" snackbar pointing to Settings → Subscriptions.
+
+#### Dark-theme readability
+
+- Mini dropdown fields in structured list editors now inherit the theme's `onSurface` color instead of a hardcoded black that was unreadable on dark palettes.
+- Markdown headings and bullets in entity cards now derive their color from the caller's `textStyle` (e.g. `srdInk`) so subsections match the card palette instead of the global `html*` fallback.
+
+---
+
 ## Dungeon Master Tool v12.0.1 — Beta Gating, SRD Reference Overlay, Equipment Pick Fix (Beta)
 
 **Release date:** June 2026
