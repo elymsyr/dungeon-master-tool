@@ -372,6 +372,8 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     final cur = current.snapshot;
 
     // Merge: combat data from `snapshot`, drawing/fog/etc. from `cur`.
+    // showAllHp, hideTokenHud, tokenSizeMultipliers come from the
+    // encounter-derived snapshot so they stay in sync with DM settings.
     final merged = cur.copyWith(
       tokens: snapshot.tokens,
       turnIndex: snapshot.turnIndex,
@@ -381,6 +383,9 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       // Carry the vector scene blob from the encounter so it survives this
       // tokens-only merge (Phase 0 transport — nothing renders it yet).
       sceneVectorJson: snapshot.sceneVectorJson,
+      showAllHp: snapshot.showAllHp,
+      hideTokenHud: snapshot.hideTokenHud,
+      tokenSizeMultipliers: snapshot.tokenSizeMultipliers,
     );
 
     // Local state update — no full push.
@@ -391,13 +396,16 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     ];
     state = state.copyWith(items: newItems);
 
-    // Tokens-only patch to the output — small payload regardless
-    // of how big the fog bitmap is.
+    // Patch to the output — includes HP/HUD flags and size multipliers so
+    // players see correct token sizes and HP bars without a full fog re-upload.
     _pushBattleMapPatch(itemId, {
       'tokens': snapshot.tokens.map((t) => t.toJson()).toList(),
       'turnIndex': snapshot.turnIndex,
       if (snapshot.sceneVectorJson.isNotEmpty)
         'sceneVectorJson': snapshot.sceneVectorJson,
+      'showAllHp': snapshot.showAllHp,
+      'hideTokenHud': snapshot.hideTokenHud,
+      'tokenSizeMultipliers': snapshot.tokenSizeMultipliers,
     });
   }
 
