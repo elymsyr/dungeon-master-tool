@@ -8,6 +8,11 @@ import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../application/providers/personal_online_provider.dart';
+import '../../../application/providers/world_mirror_provider.dart';
+import '../../../application/providers/beta_provider.dart';
+import '../../../application/providers/auth_provider.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
@@ -675,6 +680,10 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 localId: packageName,
                 title: packageName,
               ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
+              const SizedBox(height: 12),
+              _PackageOnlineSection(packageName: packageName, data: data),
             ],
           ),
           ),
@@ -733,6 +742,160 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     if (success) {
       ref.invalidate(packageListProvider);
       if (mounted) context.go('/package');
+    }
+  }
+}
+
+/// "Make Online" section for the package settings dialog — the package-tab
+/// counterpart to [OnlineWorldSection]. Personal sync only (no invites): the
+/// owner pushes/pulls the cloud copy that mirrors across their own devices.
+/// Pushes by name with the already-loaded [data] so it works even when the
+/// package isn't the active/open one.
+class _PackageOnlineSection extends ConsumerStatefulWidget {
+  final String packageName;
+  final Map<String, dynamic> data;
+
+  const _PackageOnlineSection({required this.packageName, required this.data});
+
+  @override
+  ConsumerState<_PackageOnlineSection> createState() =>
+      _PackageOnlineSectionState();
+}
+
+class _PackageOnlineSectionState extends ConsumerState<_PackageOnlineSection> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final offline =
+        !SupabaseConfig.isConfigured || ref.watch(authProvider) == null;
+    final isOnline = ref
+        .watch(personalOnlinePackageNamesProvider)
+        .contains(widget.packageName);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.cloud_outlined, size: 16, color: palette.tabActiveText),
+            const SizedBox(width: 6),
+            Text('Online',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                )),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (offline)
+          Text(
+            'Sign in and configure Supabase to enable online sync.',
+            style:
+                TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: palette.featureCardBg,
+              borderRadius: palette.br,
+              border: Border.all(color: palette.featureCardBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isOnline
+                      ? 'This package is online.'
+                      : 'This package is local-only.',
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isOnline
+                      ? 'It syncs across your devices. Making it offline removes the cloud copy.'
+                      : 'Making it online syncs it across your other devices. No invites or sharing.',
+                  style: TextStyle(
+                      fontSize: 12, color: palette.sidebarLabelSecondary),
+                ),
+                const SizedBox(height: 10),
+                isOnline
+                    ? TextButton.icon(
+                        onPressed: _busy ? null : _toggle,
+                        icon: _busy
+                            ? _spinner()
+                            : const Icon(Icons.cloud_off, size: 16),
+                        label: const Text('Make Offline'),
+                      )
+                    : FilledButton.icon(
+                        onPressed: _busy ? null : _toggle,
+                        icon: _busy
+                            ? _spinner()
+                            : const Icon(Icons.cloud_upload, size: 16),
+                        label: const Text('Make Online'),
+                      ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _spinner() => const SizedBox(
+      width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2));
+
+  Future<void> _toggle() async {
+    final isOnline = ref
+        .read(personalOnlinePackageNamesProvider)
+        .contains(widget.packageName);
+    if (!isOnline && !ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Online sync is beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
+    final mirror = ref.read(worldMirrorServiceProvider);
+    if (mirror == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Sign in and configure Supabase to enable sync.')),
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      if (isOnline) {
+        await mirror.unpublishPersonalPackage(widget.packageName);
+        ref
+            .read(personalOnlinePackageNamesProvider.notifier)
+            .remove(widget.packageName);
+      } else {
+        await mirror.pushPersonalPackage(
+            packageName: widget.packageName, state: widget.data);
+        ref
+            .read(personalOnlinePackageNamesProvider.notifier)
+            .add(widget.packageName);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                isOnline ? 'Package is now offline' : 'Package is now online')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 }

@@ -313,6 +313,13 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   /// "Make Online" — aktif paketi `personal_packages`'a publish eder ve
   /// online listesine ekler. Bundan sonra her `save()` otomatik sync olur.
   Future<void> makeOnline() async {
+    // Beta-only backstop — covers UI paths that don't pre-check (e.g. phone
+    // overflow toggle). Desktop button still pre-checks for a nicer message.
+    if (!_ref.read(isBetaActiveProvider)) {
+      throw StateError(
+        'Online sync is beta-only. Open Settings → Subscriptions to join the free beta.',
+      );
+    }
     final name = state;
     final data = _data;
     if (name == null || data == null) {
