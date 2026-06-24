@@ -11,6 +11,7 @@ import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/soundpad_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
@@ -138,6 +139,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     );
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
+    ref.read(soundpadStateProvider.notifier).stopAll();
     if (mounted) context.go('/hub');
   }
 

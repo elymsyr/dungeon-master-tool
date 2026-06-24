@@ -1,5 +1,38 @@
 # Release Notes
 
+## Dungeon Master Tool v12.1.1 — Soundmap Music Stops on Hub Exit (Beta)
+
+**Release date:** June 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v12.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release. Fixes a single bug: music and ambience playing through the Soundmap kept running after the DM or player returned to the Hub screen. No new features, no migrations.
+
+---
+
+### Bug fixes
+
+- **Soundmap: music and ambience no longer continue after "Back to Hub"** — Selecting "Back to Hub" from inside a world now fully stops all Soundmap playback (music, ambience) before navigating to the Hub. Previously the audio engine kept running in the background, with no way to stop it from the Hub screen.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `12.1.0` → `12.1.1`.
+- **Local DB:** unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v12.1.0: feat effect parsing stays conservative; subspecies reclassification on legacy packs is heuristic; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; feat-ASI honoring applies only to newly-recorded picks; Tier-4 combat-tracker-dependent effects pending; D7 Drift v12 round-trip test harness pending.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v12.1.0
 
 **Release date:** June 2026
