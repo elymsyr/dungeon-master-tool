@@ -221,6 +221,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
+    ref.read(soundpadStateProvider.notifier).stopAll();
     if (mounted) context.go('/hub');
   }
 
