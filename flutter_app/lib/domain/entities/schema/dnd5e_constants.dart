@@ -7,11 +7,6 @@ import 'rules/rule_config.dart';
 /// D&D 5e ability kısaltmaları (ProficiencyTable row.ability için).
 const kDnd5eAbilities = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
-/// Proficiency bonus by character level (1–20). Delegates to the single
-/// [RuleConfig] source so the sheet, wizard and planner never diverge.
-int proficiencyBonusForLevel(int level) =>
-    RuleConfig.dnd5eDefaults.proficiencyBonusFor(level < 1 ? 1 : level);
-
 /// `ability_mod = floor((score - 10) / 2)`. Delegates to [RuleConfig].
 int abilityModifier(int score) =>
     RuleConfig.dnd5eDefaults.abilityModifier(score);

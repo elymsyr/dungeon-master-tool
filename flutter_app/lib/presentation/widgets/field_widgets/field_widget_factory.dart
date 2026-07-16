@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
+import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../core/utils/screen_type.dart';
@@ -4118,7 +4119,7 @@ class _DateFieldWidget extends StatelessWidget {
 /// Toplam bonus `entityFields` varsa runtime'da hesaplanır:
 ///   `ability_mod + PB * (proficient ? 1 : 0) + PB * (expertise ? 1 : 0) + misc`
 /// `stat_block` ve `proficiency_bonus` diğer field'lardan okunur.
-class _ProficiencyTableFieldWidget extends StatelessWidget {
+class _ProficiencyTableFieldWidget extends ConsumerWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -4165,20 +4166,22 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
     return int.tryParse(v?.toString() ?? '');
   }
 
-  int _proficiencyBonus() {
+  int _proficiencyBonus(WidgetRef ref) {
     final pb = entityFields?['proficiency_bonus'];
     if (pb is int) return pb;
     if (pb is num) return pb.toInt();
     final parsed = int.tryParse(pb?.toString() ?? '');
     if (parsed != null) return parsed;
-    // Fallback: level'dan türet.
+    // Fallback: level'dan türet — kampanyanın RuleConfig kırılımlarıyla.
     final cs = entityFields?['combat_stats'];
     int level = 1;
     if (cs is Map) {
       final lv = cs['level'];
       level = (lv is int) ? lv : int.tryParse(lv?.toString() ?? '') ?? 1;
     }
-    return proficiencyBonusForLevel(level);
+    return ref
+        .watch(ruleConfigProvider)
+        .proficiencyBonusFor(level < 1 ? 1 : level);
   }
 
   void _updateRow(int index, Map<String, dynamic> patch) {
@@ -4188,9 +4191,9 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final rows = _rows;
-    final pb = _proficiencyBonus();
+    final pb = _proficiencyBonus(ref);
     final outline = Theme.of(context).colorScheme.outline;
 
     return Card(

@@ -13,10 +13,13 @@ import 'count_formula.dart';
 /// Stateless. Safe to call on every read. Not memoized at this layer; wrap
 /// with a Riverpod `Provider.family` for caching.
 class CharacterResolver {
-  /// Effect `kind`s with a real `applyEffect` case below. Hand-mirrored from
-  /// the switch — the Rule Catalog must declare a superset of this set, which
-  /// a debug assert in `ruleCatalogProvider` enforces so the declared
-  /// (editor/validation) surface never drops a kind the resolver applies.
+  /// Effect `kind`s the `applyEffect` switch RECOGNIZES — either applied to
+  /// the sheet or silently accepted for play-time systems (combat tracker,
+  /// chargen pickers). Hand-mirrored from the switch; kept in exact sync with
+  /// the Rule Catalog keys (drift test + debug assert in
+  /// `ruleCatalogProvider`), so no catalog-offered kind ever hits the
+  /// "not applied" warning path. Which subset actually changes the sheet is
+  /// declared per-rule via `RuleDefinition.resolverStatus`.
   static const Set<String> knownEffectKinds = {
     'class_level_grant', 'ability_score_bonus', 'ac_bonus', 'speed_bonus',
     'hp_bonus_per_level', 'hp_bonus_flat', 'hp_max_bonus_total',
@@ -43,6 +46,27 @@ class CharacterResolver {
     'spellcasting_ability_to_damage', 'cantrip_count_bonus',
     'spell_cast_from_item', 'weapon_mastery_grant',
     'weapon_mastery_count_bonus', 'expertise_count', 'choice_group',
+    'attack_bonus', 'condition_advantage_on_save_grant',
+  };
+
+  /// Subset of [knownEffectKinds] with a real `applyEffect` body — the kinds
+  /// that actually change the resolved sheet. Everything else in
+  /// [knownEffectKinds] is recognized-but-silently-accepted for play-time
+  /// systems (combat tracker, chargen pickers). Must stay in exact sync with
+  /// the catalog kinds whose `resolverStatus` is `applied` — a drift test
+  /// enforces it, so the editor can never claim a rule works when this
+  /// resolver would ignore it.
+  static const Set<String> sheetAppliedEffectKinds = {
+    'class_level_grant', 'ability_score_bonus', 'ac_bonus', 'speed_bonus',
+    'hp_bonus_per_level', 'hp_bonus_flat', 'hp_max_bonus_total',
+    'initiative_bonus', 'proficiency_grant', 'language_grant', 'spell_grant',
+    'cantrip_grant', 'spell_always_prepared', 'damage_resistance',
+    'damage_immunity', 'damage_vulnerability', 'condition_immunity_grant',
+    'sense_grant', 'truesight_grant', 'blindsight_grant', 'expertise_grant',
+    'temp_hp_grant', 'granted_action_grant', 'granted_bonus_action_grant',
+    'granted_reaction_grant', 'unarmored_ac_formula', 'extra_attack_count',
+    'extra_attack_bump', 'crit_range_extend', 'resource_pool_grant',
+    'swim_speed_equals_speed', 'climb_speed_equals_speed', 'fly_speed',
   };
 
   /// Resolve [pc] against the campaign-wide entity map [entitiesById].
@@ -87,10 +111,15 @@ class CharacterResolver {
       for (final eff in effects) {
         if (eff['kind'] != 'class_level_grant') continue;
         final targetRef = eff['target_ref'];
-        if (targetRef is! Map) continue;
-        final tname = targetRef['name'];
-        if (tname is! String) continue;
-        final classId = _findEntityIdByName(entitiesById, 'class', tname);
+        // All three ref envelopes (String id, {_ref,name}, {slug,name}) via
+        // the shared resolver — the editor stores a plain String id, which
+        // the old Map-only parse silently dropped. Legacy {name}-only maps
+        // keep working through the class-name fallback.
+        var classId = _resolveRef(targetRef, entitiesById);
+        if (classId == null && targetRef is Map && targetRef['name'] is String) {
+          classId = _findEntityIdByName(
+              entitiesById, 'class', targetRef['name'] as String);
+        }
         if (classId == null) continue;
         final addAmount = (eff['value'] is int) ? eff['value'] as int : 1;
         classLevels = {
@@ -385,11 +414,21 @@ class CharacterResolver {
           break; // already applied in pass 1
         case 'ability_score_bonus':
           // Species/subspecies/feat ASI grant. `ability` accepts full names
-          // ("Constitution") or abbreviations ("CON"). `max` caps the post-
-          // grant score; defaults to 20.
+          // ("Constitution") or abbreviations ("CON"). The legacy modifier
+          // editor instead stores a `target_ref` to the ability entity (its
+          // Target picker is the only input it offers), so when the direct
+          // string doesn't parse, dereference the ref and use the entity
+          // name — otherwise editor-authored rows (and the shipped
+          // "Resilient: CON" preset) silently do nothing. `max` caps the
+          // post-grant score; defaults to 20.
           final raw = (eff['ability'] ?? eff['target_kind'] ?? '').toString();
-          final abbrev = _abilityAbbrev(raw) ?? raw.toUpperCase();
+          var abbrev = _abilityAbbrev(raw) ?? raw.toUpperCase();
           const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+          if (!valid.contains(abbrev)) {
+            final refId = _refIdFor(eff, entitiesById);
+            final refName = refId != null ? entitiesById[refId]?.name : null;
+            abbrev = (refName != null ? _abilityAbbrev(refName) : null) ?? '';
+          }
           if (!valid.contains(abbrev)) break;
           final amt = _intOf(eff['value']);
           if (amt == 0) break;
@@ -474,7 +513,21 @@ class CharacterResolver {
         case 'sense_grant':
         case 'truesight_grant':
         case 'blindsight_grant':
-          final id = _refIdFor(eff, entitiesById);
+          var id = _refIdFor(eff, entitiesById);
+          // truesight/blindsight name their sense in the kind itself; the
+          // catalog editor may author them without a target_ref, so fall
+          // back to the sense entity of the matching name.
+          if (id == null && eff['kind'] != 'sense_grant') {
+            final wanted =
+                eff['kind'] == 'truesight_grant' ? 'truesight' : 'blindsight';
+            for (final e in entitiesById.values) {
+              if (e.categorySlug == 'sense' &&
+                  e.name.toLowerCase() == wanted) {
+                id = e.id;
+                break;
+              }
+            }
+          }
           if (id != null) {
             if (!senses.contains(id)) senses.add(id);
             noteSource(id, source);
@@ -529,12 +582,23 @@ class CharacterResolver {
           unarmoredFormulas.add(Map<String, dynamic>.from(eff));
         case 'extra_attack_count':
         case 'extra_attack_bump':
-          final v = _intOf(eff['value']);
+          // Optional scales_with class-level table (Fighter 5→2, 11→3, 20→4)
+          // wins over the flat value — same precedence as resource pools.
+          final scaled = evalScalesWith(eff['scales_with']);
+          final v = scaled != null ? _intOf(scaled) : _intOf(eff['value']);
           if (v > extraAttackCount) extraAttackCount = v;
         case 'crit_range_extend':
+          // `threshold` is the d20 face crits start at (Champion: 19, then
+          // 18). Floor at 2 — a threshold of 0/1 is always authoring error
+          // (it would crit on every roll) and is warned, not applied.
           final payload = eff['payload'];
           final t = (payload is Map) ? _intOf(payload['threshold']) : _intOf(eff['value']);
-          if (t > 0 && t < critRangeMin) critRangeMin = t;
+          if (t >= 2 && t < critRangeMin) {
+            critRangeMin = t;
+          } else if (t > 0 && t < 2) {
+            warnings.add(
+                'crit_range_extend threshold $t ignored (from $source)');
+          }
         case 'resource_pool_grant':
           // Compute pool max from count_formula + scales_with; runtime tracks current.
           final payload = (eff['payload'] is Map)
@@ -553,6 +617,21 @@ class CharacterResolver {
             'recharge': payload['recharge'] ?? eff['recharge'],
           };
           resourcePools.add(entry);
+        case 'swim_speed_equals_speed':
+          // Marker — resolved post-pass to walking speed.
+          extraSpeeds['swim'] = -1;
+        case 'climb_speed_equals_speed':
+          extraSpeeds['climb'] = -1;
+        case 'fly_speed':
+          // payload: {value_ft: int} for explicit speeds, otherwise equals walk.
+          final payload = eff['payload'];
+          final v = (payload is Map) ? _intOf(payload['value_ft']) : _intOf(eff['value']);
+          if (v > 0) {
+            final cur = extraSpeeds['fly'] ?? 0;
+            if (v > cur) extraSpeeds['fly'] = v;
+          } else {
+            extraSpeeds['fly'] = -1;
+          }
         case 'state_grant':
         case 'recovery_grant':
         case 'slot_recovery_short_rest':
@@ -578,21 +657,8 @@ class CharacterResolver {
         case 'passive_score_bonus':
         case 'reliable_talent':
         case 'min_die_value':
-        case 'swim_speed_equals_speed':
-          // Marker — resolved post-pass to walking speed.
-          extraSpeeds['swim'] = -1;
-        case 'climb_speed_equals_speed':
-          extraSpeeds['climb'] = -1;
-        case 'fly_speed':
-          // payload: {value_ft: int} for explicit speeds, otherwise equals walk.
-          final payload = eff['payload'];
-          final v = (payload is Map) ? _intOf(payload['value_ft']) : _intOf(eff['value']);
-          if (v > 0) {
-            final cur = extraSpeeds['fly'] ?? 0;
-            if (v > cur) extraSpeeds['fly'] = v;
-          } else {
-            extraSpeeds['fly'] = -1;
-          }
+        case 'attack_bonus':
+        case 'condition_advantage_on_save_grant':
         case 'walk_on_liquid':
         case 'magical_unarmed_strikes':
         case 'damage_type_override':
@@ -608,7 +674,8 @@ class CharacterResolver {
           // so authoring data with these kinds doesn't spam warnings.
           break;
         default:
-          warnings.add('Unhandled effect kind "${eff['kind']}" from $source');
+          warnings.add(
+              'Effect kind "${eff['kind']}" is not applied to the sheet (from $source)');
       }
     }
 
@@ -727,7 +794,8 @@ class CharacterResolver {
       // Legacy granted_modifiers DSL — apply if present.
       final modifiers = _readMapList(feat.fields['granted_modifiers']);
       for (final m in modifiers) {
-        applyEffect(_modifierAsEffect(m), 'feat:${feat.name}');
+        final eff = _modifierAsEffect(m);
+        if (eff != null) applyEffect(eff, 'feat:${feat.name}');
       }
     }
 
@@ -761,7 +829,8 @@ class CharacterResolver {
             }
           });
           for (final m in _readMapList(f['granted_modifiers'])) {
-            applyEffect(_modifierAsEffect(m), src);
+            final eff = _modifierAsEffect(m);
+            if (eff != null) applyEffect(eff, src);
           }
           for (final s in _readRefList(f['granted_senses'], entitiesById)) {
             if (!senses.contains(s)) senses.add(s);
@@ -1314,33 +1383,52 @@ class CharacterResolver {
     return _resolveRef(eff['target_ref'], all);
   }
 
-  static Map<String, dynamic> _modifierAsEffect(Map<String, dynamic> m) {
-    // Re-shape grantedModifiers row into effect kinds the resolver knows.
+  /// Legacy `granted_modifiers` kind names → the resolver kind that applies
+  /// them. Aliased at read time (not migrated) so read-only built-in SRD and
+  /// imported Open5e packs keep working and template content-hashes stay
+  /// untouched. Public so the legacy modifier editor knows these rows DO
+  /// apply and must not flag them as inert.
+  static const Map<String, String> legacyModifierKindAliases = {
+    'resistance_grant': 'damage_resistance',
+    'damage_resistance_grant': 'damage_resistance',
+    'immunity_grant': 'damage_immunity',
+    'damage_immunity_grant': 'damage_immunity',
+    'vulnerability_grant': 'damage_vulnerability',
+    'damage_vulnerability_grant': 'damage_vulnerability',
+    'spell_known_grant': 'spell_grant',
+  };
+
+  /// Re-shape a legacy `granted_modifiers` row into an effect the resolver
+  /// applies. Returns null for narrative-only rows (`feature_text`) that have
+  /// no sheet effect and must not warn. Kinds with no resolver implementation
+  /// (`save_bonus`, `skill_bonus`, ...) pass through unchanged and surface via
+  /// the `applyEffect` default-case warning.
+  static Map<String, dynamic>? _modifierAsEffect(Map<String, dynamic> m) {
     final kind = (m['kind'] ?? '').toString();
+    if (kind == 'feature_text') return null;
     final mapped = <String, dynamic>{...m};
-    switch (kind) {
-      case 'ac_bonus':
-      case 'speed_bonus':
-      case 'hp_bonus_flat':
-      case 'hp_bonus_per_level':
-      case 'initiative_bonus':
-      case 'proficiency_grant':
-      case 'language_grant':
-      case 'spell_grant':
-      case 'cantrip_grant':
-      case 'ability_score_bonus':
-      case 'sense_grant':
-      case 'truesight_grant':
-      case 'blindsight_grant':
-      case 'condition_immunity_grant':
-      case 'damage_resistance_grant':
-      case 'damage_immunity_grant':
-      case 'damage_vulnerability_grant':
-        // already same kind name
-        break;
-      default:
-        // Unknown legacy kinds get a synthetic "unhandled" tag; resolver warns.
-        mapped['kind'] = kind;
+    final alias = legacyModifierKindAliases[kind];
+    if (alias != null) mapped['kind'] = alias;
+    // Legacy rows and the editor's target-kind list write `save`; the
+    // proficiency_grant switch speaks `saving_throw`.
+    if (mapped['target_kind'] == 'save') {
+      mapped['target_kind'] = 'saving_throw';
+    }
+    // The legacy editor's Condition picker means "only while under this
+    // condition". Translate it to the has_condition predicate the effect
+    // pipeline already understands: gated defense kinds surface as
+    // conditional-grant chips, everything else correctly stays off the
+    // sheet instead of applying unconditionally.
+    final conditionRef = m['condition_ref'];
+    if (conditionRef is String && conditionRef.isNotEmpty) {
+      final preds = mapped['predicates'] is List
+          ? List<dynamic>.from(mapped['predicates'] as List)
+          : <dynamic>[];
+      preds.add({
+        'kind': 'has_condition',
+        'args': {'condition_ref': conditionRef},
+      });
+      mapped['predicates'] = preds;
     }
     return mapped;
   }

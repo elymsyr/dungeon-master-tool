@@ -673,6 +673,46 @@ class ResolvedGrantsCard extends StatelessWidget {
     );
   }
 
+  /// Resolver warnings (unapplied effect kinds, dropped rows). Rendered so
+  /// "I authored an effect and nothing happened" is visible instead of silent.
+  Widget _warningsBlock(List<String> warnings) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Rule Warnings',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          for (final w in warnings)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 14, color: Colors.amber),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      w,
+                      style: TextStyle(fontSize: 12, color: palette.srdInk),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final senses = effective.senseEntityIds;
@@ -699,7 +739,9 @@ class ResolvedGrantsCard extends StatelessWidget {
         : const <String>[];
     final armorProf = effective.proficiencies.armorCategoryIds;
     final weaponProf = effective.proficiencies.weaponCategoryIds;
+    final warnings = effective.warnings;
     if (senses.isEmpty &&
+        warnings.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
         vuln.isEmpty &&
@@ -778,6 +820,7 @@ class ResolvedGrantsCard extends StatelessWidget {
               const SizedBox(height: 4),
               for (final p in pools) _poolCounterRow(p),
             ],
+            if (warnings.isNotEmpty) _warningsBlock(warnings),
           ],
         ),
       ),

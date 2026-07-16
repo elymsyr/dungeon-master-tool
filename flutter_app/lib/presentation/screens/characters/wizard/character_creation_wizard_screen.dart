@@ -684,8 +684,8 @@ Map<String, dynamic> buildSeedFields({
 
   final hitDie = _parseHitDie(characterClass?.fields['hit_die']);
   final maxHp = hitDie + conMod +
-      (draft.level - 1) * ((hitDie ~/ 2) + 1 + conMod);
-  final profBonus = 2 + ((draft.level - 1) ~/ 4);
+      (draft.level - 1) * (_hpPerLevel(config, hitDie) + conMod);
+  final profBonus = config.proficiencyBonusFor(draft.level < 1 ? 1 : draft.level);
 
   final fieldsByKey = {for (final f in playerCat.fields) f.fieldKey: f};
 
@@ -1606,6 +1606,14 @@ int _classBonusLanguageCap(Entity classEntity) {
 int _parseHitDie(dynamic raw) {
   final n = hitDieFaces(raw);
   return n == 0 ? 8 : n;
+}
+
+/// Fixed HP gained per level above 1st for a die with [faces] sides, from
+/// the campaign's [RuleConfig] table; dice absent from the table (exotic
+/// homebrew sizes) fall back to the 5e average formula.
+int _hpPerLevel(RuleConfig config, int faces) {
+  final fixed = config.hpPerLevelFor('d$faces');
+  return fixed > 0 ? fixed : (faces ~/ 2) + 1;
 }
 
 // ── Step widgets ──────────────────────────────────────────────────────────
@@ -2620,11 +2628,15 @@ class _ReviewStep extends ConsumerWidget {
     final classEntity =
         draft.classId == null ? null : entities[draft.classId];
     final race = draft.raceId == null ? null : entities[draft.raceId];
+    // Same formulas as [buildSeedFields] — the review must predict exactly
+    // what Create will write, including campaign RuleConfig overrides.
+    final config = ref.watch(ruleConfigProvider);
     final hitDie = _parseHitDie(classEntity?.fields['hit_die']);
     final maxHp = hitDie +
         conMod +
-        (draft.level - 1) * ((hitDie ~/ 2) + 1 + conMod);
-    final profBonus = 2 + ((draft.level - 1) ~/ 4);
+        (draft.level - 1) * (_hpPerLevel(config, hitDie) + conMod);
+    final profBonus =
+        config.proficiencyBonusFor(draft.level < 1 ? 1 : draft.level);
     final speedFt = race?.fields['speed_ft'] is int
         ? race!.fields['speed_ft'] as int
         : 30;
