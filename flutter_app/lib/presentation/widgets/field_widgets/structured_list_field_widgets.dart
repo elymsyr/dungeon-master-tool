@@ -6,6 +6,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/rules/rule_definition.dart';
 import '../../../domain/entities/schema/rules/rule_validator.dart';
+import '../../../domain/services/character_resolver.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 
 /// Typed structured-list editors for the 4 list FieldTypes:
@@ -845,35 +846,6 @@ class SpellEffectListFieldWidget extends StatelessWidget {
 // 4. grantedModifiers — {kind, target_kind, target_ref, value, scaling, condition_ref, notes}
 // ─────────────────────────────────────────────────────────────────────────
 
-const _modifierKinds = [
-  'ability_score_bonus',
-  'ability_score_max_increase',
-  'ac_bonus',
-  'save_bonus',
-  'skill_bonus',
-  'attack_bonus',
-  'damage_bonus',
-  'speed_bonus',
-  'hp_bonus_flat',
-  'hp_bonus_per_level',
-  'initiative_bonus',
-  'passive_score_bonus',
-  'resistance_grant',
-  'immunity_grant',
-  'vulnerability_grant',
-  'condition_save_advantage',
-  'condition_save_immunity',
-  'attack_advantage_vs',
-  'proficiency_grant',
-  'expertise_grant',
-  'language_grant',
-  'sense_grant',
-  'spell_known_grant',
-  'spell_at_will_grant',
-  'feat_grant',
-  'feature_text',
-];
-
 /// Curated kind set for the legacy `granted_modifiers` editor — only the
 /// simple value/target grant kinds whose catalog entry is `resolverStatus:
 /// applied` (i.e. the resolver actually applies them). Authoring a kind the
@@ -888,7 +860,6 @@ const _modifierCatalogKinds = [
   'hp_bonus_flat',
   'hp_bonus_per_level',
   'initiative_bonus',
-  'passive_score_bonus',
   'proficiency_grant',
   'expertise_grant',
   'language_grant',
@@ -1092,13 +1063,25 @@ List<String> _allowedTypesForTargetKind(String? targetKind) {
     case 'class':
       return const ['class'];
     case 'spell':
+    case 'cantrip':
       return const ['spell'];
     case 'feat':
       return const ['feat'];
     case 'tool':
       return const ['tool'];
+    case 'weapon':
+      return const ['weapon'];
     case 'save':
+    case 'saving_throw':
       return const ['ability']; // saves resolve via ability lookup
+    case 'armor_category':
+      return const ['armor-category'];
+    case 'weapon_category':
+      return const ['weapon-category'];
+    case 'creature-action':
+      return const ['creature-action'];
+    case 'damage_type': // legacy underscore variant of damage-type
+      return const ['damage-type'];
     default:
       return const <String>[];
   }
@@ -1163,8 +1146,11 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
         final kind = row['kind'] as String?;
         // Offer only curated kinds the catalog actually knows; union the row's
         // stored kind so a legacy/dropped value is never silently hidden.
+        // Without a ref (read-only projection views) the curated list is used
+        // as-is — the retired full legacy list offered kinds the resolver
+        // never applied.
         final baseKinds = catalog == null
-            ? _modifierKinds
+            ? _modifierCatalogKinds
             : _modifierCatalogKinds.where(catalog.contains).toList();
         final kindOptions =
             (kind != null && kind.isNotEmpty && !baseKinds.contains(kind))
@@ -1183,6 +1169,23 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            // Stored kind the catalog doesn't declare AND the resolver
+            // doesn't alias ⇒ it will not apply (it only surfaces as a sheet
+            // warning). Flag it here so legacy/imported rows aren't silently
+            // inert. `feature_text` is narrative-only by design — no warning.
+            if (catalog != null &&
+                kind != null &&
+                kind.isNotEmpty &&
+                kind != 'feature_text' &&
+                !catalog.contains(kind) &&
+                !CharacterResolver.legacyModifierKindAliases
+                    .containsKey(kind))
+              const Tooltip(
+                message:
+                    'This modifier kind is not applied to the character sheet.',
+                child: Icon(Icons.warning_amber_rounded,
+                    size: 18, color: Colors.orange),
+              ),
             _miniEnum(
               label: 'Kind',
               value: kind,
@@ -1831,6 +1834,13 @@ class _FeatEffectRow extends StatelessWidget {
               width: 240,
               display: (k) => catalog?.labelFor(k) ?? k,
             ),
+            if (rule?.resolverStatus == RuleResolverStatus.deferred)
+              Tooltip(
+                message: 'Stored on the character for play-time systems '
+                    '(combat tracker, pickers) — it does not change the '
+                    'resolved character sheet.',
+                child: _badge('play-time', Colors.blueGrey),
+              ),
             if (showTargetKind)
               _miniEnum(
                 label: 'Target Kind',

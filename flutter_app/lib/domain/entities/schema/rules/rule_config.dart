@@ -21,8 +21,11 @@ library;
 String? canonicalHitDie(Object? raw) {
   if (raw is int) return 'd$raw';
   if (raw is String) {
-    final m = RegExp(r'd?(\d+)', caseSensitive: false).firstMatch(raw.trim());
-    if (m != null) return 'd${m.group(1)}';
+    final s = raw.trim();
+    // Prefer the faces after a literal 'd' so "1d10" yields d10, not d1.
+    final die = RegExp(r'd\s*(\d+)', caseSensitive: false).firstMatch(s);
+    if (die != null) return 'd${die.group(1)}';
+    if (RegExp(r'^\d+$').hasMatch(s)) return 'd$s';
   }
   return null;
 }

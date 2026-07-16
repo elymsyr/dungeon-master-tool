@@ -32,6 +32,7 @@ import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
+import '../dialogs/rule_config_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
@@ -409,6 +410,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
     Icons.people,           // Characters (mobile/tablet only)
   ];
 
+  /// Template-level numeric rules (ASI levels, HP table, AC constants).
+  /// Saving goes through applyTemplateUpdate, which persists the schema and
+  /// bumps the campaign revision so sheets/planner recompute immediately.
+  void _openRuleSettings() {
+    RuleConfigDialog.show(
+      context,
+      schema: ref.read(worldSchemaProvider),
+      onSave: (updated) => ref
+          .read(activeCampaignProvider.notifier)
+          .applyTemplateUpdate(updated),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Cross-device hydrate gate: completeLoad awaits cloud applyInitialState
@@ -674,6 +688,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 switch (action) {
                   case 'import':
                     ImportPackageDialog.show(context);
+                  case 'rules':
+                    _openRuleSettings();
                   case 'bug':
                     BugReportDialog.show(context);
                   default:
@@ -717,6 +733,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       ]),
                     ),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
+                if (editMode)
+                  const PopupMenuItem(value: 'rules', child: Row(children: [Icon(Icons.tune, size: 18), SizedBox(width: 8), Text('Rule Settings')])),
                 const PopupMenuDivider(),
                 ...themeNames.map((name) => PopupMenuItem(
                   value: 'theme:$name',
@@ -744,6 +762,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
               tooltip: l10n.importPackage,
               onPressed: () => ImportPackageDialog.show(context),
             ),
+            // Rule Settings (template-level numeric rules) — edit mode only.
+            if (editMode)
+              IconButton(
+                icon: const Icon(Icons.tune, size: 20),
+                tooltip: 'Rule Settings',
+                onPressed: _openRuleSettings,
+              ),
             // Tema
             PopupMenuButton<String>(
               icon: const Icon(Icons.palette, size: 20),

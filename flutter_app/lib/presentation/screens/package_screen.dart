@@ -23,6 +23,7 @@ import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
+import '../dialogs/rule_config_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
@@ -41,6 +42,11 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
   @override
   Widget build(BuildContext context) {
     final packageName = ref.watch(activePackageProvider) ?? '';
+    // Rebuild when the package data is replaced in place (e.g. Rule Settings
+    // saving through applyTemplateUpdate), so the worldSchemaProvider
+    // override below is re-parsed from the freshly persisted world_schema
+    // instead of staying stale until the screen remounts.
+    ref.watch(campaignRevisionProvider);
     final packageNotifier = ref.read(activePackageProvider.notifier);
     final data = packageNotifier.data;
 
@@ -447,6 +453,20 @@ class _PackageScreenContentState
           if (SupabaseConfig.isConfigured &&
               widget.packageName != srdCorePackageName)
             _ShareToWorldButton(packageName: widget.packageName),
+          // Rule Settings — template-level numeric rules. Edit mode only;
+          // built-in packages are read-only so they never see the button.
+          if (_editMode && widget.packageName != srdCorePackageName)
+            IconButton(
+              icon: const Icon(Icons.tune, size: 20),
+              tooltip: 'Rule Settings',
+              onPressed: () => RuleConfigDialog.show(
+                context,
+                schema: widget.schema,
+                onSave: (updated) => ref
+                    .read(activePackageProvider.notifier)
+                    .applyTemplateUpdate(updated),
+              ),
+            ),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
             final isBuiltin = widget.packageName == srdCorePackageName;

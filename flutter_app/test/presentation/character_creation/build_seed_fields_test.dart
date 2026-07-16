@@ -5,6 +5,7 @@ import 'package:dungeon_master_tool/application/providers/character_provider.dar
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/rules/rule_config.dart';
 import 'package:dungeon_master_tool/presentation/screens/characters/wizard/character_creation_wizard_screen.dart';
 
 EntityCategorySchema _loadPlayerCat() {
@@ -258,6 +259,66 @@ void main() {
       expect(out['language_refs'] ?? out['languages'],
           contains('lang-druidic'));
       expect(out['resistance_refs'], contains('dmg-lightning'));
+    });
+  });
+
+  group('buildSeedFields — RuleConfig-driven derived stats', () {
+    final klass = _mkEntity(
+      id: 'class-fighter',
+      slug: 'class',
+      name: 'Fighter',
+      fields: const {'hit_die': 'd10'},
+    );
+    // CON 10 → mod 0, so HP isolates the die contribution.
+    const draft = CharacterDraft(level: 5, classId: 'class-fighter');
+
+    Map<String, dynamic> seed(RuleConfig config) => buildSeedFields(
+          config: config,
+          draft: draft,
+          playerCat: playerCat,
+          race: null,
+          characterClass: klass,
+          background: null,
+          entities: {klass.id: klass},
+        );
+
+    test('defaults reproduce the 5e average formula and PB table', () {
+      final out = seed(RuleConfig.dnd5eDefaults);
+      final cs = out['combat_stats'] as Map;
+      // d10: 10 at L1 + 4 × 6 = 34; PB at L5 = 3.
+      expect(cs['max_hp'], 34);
+      expect(out['proficiency_bonus'], 3);
+    });
+
+    test('custom HP table and PB breakpoints flow into the seed', () {
+      const custom = RuleConfig(
+        asiLevels: [4, 8, 12, 16, 19],
+        hitDieToHp: {'d6': 4, 'd8': 5, 'd10': 8, 'd12': 7},
+        acUnarmoredBase: 10,
+        acShieldBonus: 2,
+        proficiencyBonusBreakpoints: [3, 5, 7, 9],
+      );
+      final out = seed(custom);
+      final cs = out['combat_stats'] as Map;
+      // d10 now grants 8/level: 10 + 4 × 8 = 42.
+      expect(cs['max_hp'], 42);
+      // Breakpoints at 3 and 5 both passed by L5 → 2 + 2 = 4.
+      expect(out['proficiency_bonus'], 4);
+    });
+
+    test('hit die missing from the table falls back to the average formula',
+        () {
+      const noD10 = RuleConfig(
+        asiLevels: [4, 8, 12, 16, 19],
+        hitDieToHp: {'d6': 4, 'd8': 5, 'd12': 7},
+        acUnarmoredBase: 10,
+        acShieldBonus: 2,
+        proficiencyBonusBreakpoints: [5, 9, 13, 17],
+      );
+      final out = seed(noD10);
+      final cs = out['combat_stats'] as Map;
+      // Average fallback for d10 is 6 → same as defaults.
+      expect(cs['max_hp'], 34);
     });
   });
 }
