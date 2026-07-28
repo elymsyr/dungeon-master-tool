@@ -5,6 +5,24 @@
 > [`system_mechanics_roadmap.md`](system_mechanics_roadmap.md). Branch: `list`.
 > Generated 2026-06-10.
 
+> [!IMPORTANT] Terminology update — 2026-07-28 rule-system removal
+> The `rule_effects`, `effects` (feat) and `granted_modifiers` fields this
+> ledger measures **no longer exist**. Card mechanics are now plainly named
+> fields (`granted_skill_proficiencies`, `ability_bonuses`, `ac_bonus`,
+> `resource_pool_grants`, `mechanical_notes`, …) — the closed list is
+> `CharacterResolver.grantFieldKeys`; see
+> `vault/20-Systems/Grant-Resolution.md`.
+>
+> Every count below is still accurate as a measure of *how much mechanical
+> content the official packs leave in prose* — that gap is unchanged. Read
+> "no typed `effects`/`granted_modifiers`" as "no typed grants". Two notes:
+> - Cards that *did* carry old-format rows (e.g. the 27/30 subspecies with
+>   `granted_modifiers`) were converted in place by `migrateRuleEffects`, so
+>   they are no worse off; packs re-emitted from the Open5e importer will
+>   carry the named fields directly.
+> - Finding code **E** is unaffected in substance — only the field names in
+>   its definition changed.
+
 ## Scope & method
 
 Two sources of official / built-in content were inspected:
@@ -46,8 +64,8 @@ machine-uniform within each category, so it is audited at category granularity.
 
 **Finding codes**
 
-- **E** — benefits/mechanics live entirely in `description`; no typed
-  `effects`/`granted_modifiers` (Missing Mechanics — roadmap 2.1).
+- **E** — benefits/mechanics live entirely in `description`; no typed grants
+  (Missing Mechanics — roadmap 2.1).
 - **P** — prerequisite stated in text but **not enforced at apply-time**; no
   structured prereq field either (Unimplemented Prerequisite — roadmap 1.1).
 - **Pc** — structured prereq present (`prereq_clauses`/flat) but (a) unenforced
@@ -156,7 +174,7 @@ present) as data that the resolver does not validate at apply-time, and their
 
 **Universal finding (all 53):** missing schema-`required` `origin_feat_ref`
 (0/53) and `asi_distribution_options` (0/53); no `starting_gold_gp`,
-`default_inventory_refs`, or `rule_effects`; **D** (description mirrored). Skills
+`default_inventory_refs`, or typed grants; **D** (description mirrored). Skills
 (51/53) and equipment choice groups (52/53) are otherwise well-populated. Extra
 per-entity gaps below: **A** = no `ability_score_options`; **S** = no
 `granted_skill_refs`; **Q** = no `equipment_choice_groups`.
@@ -232,7 +250,7 @@ per-entity gaps below: **A** = no `ability_score_options`; **S** = no
 
 **Every one of the 101 official subclasses carries only `description` +
 `parent_class_ref`.** None has `granted_at_level` (schema-`required`), `features`,
-or `rule_effects`. Result: taking any official subclass grants **zero**
+or typed grants. Result: taking any official subclass grants **zero**
 mechanical effect — all features are inert prose (Missing Mechanics 1.3/2.2;
 Poor Data Structure 3.1; missing required field). Listed for completeness,
 grouped by source. *(The four AG/BFRD entries link `parent_class_ref` to the
@@ -276,7 +294,8 @@ the Unerring Arrow, Way of the Wildcat, Wind Domain, Wyrdweaver.
 
 All carry `creature_type_ref` and `description` (**D**). Granted traits are in
 text; structured grants are partial. **Sz** = missing `size_ref`; **Sp** =
-missing `speed_ft`; **M** = no `granted_modifiers`.
+missing `speed_ft`; **M** = no ability-score grants (measured as
+`granted_modifiers`; now `ability_bonuses`).
 
 | Species | Source | Findings |
 |---|---|---|
@@ -297,7 +316,8 @@ missing `speed_ft`; **M** = no `granted_modifiers`.
 ## 6. Subspecies — 30 cards (per-entity, near-uniform finding)
 
 All 30 carry `parent_species_ref`, `creature_type_ref`, `description` (**D**),
-and most carry `granted_modifiers` (27/30). Grants are otherwise partial —
+and most carry ability-score grants (27/30, measured as `granted_modifiers`;
+now `ability_bonuses`). Grants are otherwise partial —
 `granted_cantrip_refs` 4/30, `granted_spell_refs` 3/30, `granted_skill_proficiencies`
 8/30, `size_ref` 10/30, `speed_ft` 13/30 — with the remainder of each
 subspecies' benefits folded into `description`. Cards (O5e + ToH):
@@ -361,8 +381,8 @@ carry no typed effect (roadmap 2.4). **D** applies.
 Audited per-builder under `flutter_app/lib/domain/entities/schema/builtin/srd_core/`.
 Unlike the imported packs, the SRD core **populates the typed fields**: the
 subclass builder emits `granted_at_level` + level-keyed `features`; the feat
-builders emit typed `effects`, flat `prereq_min_score`/`prereq_ability_ref`, and
-`granted_modifiers`; classes carry `features`; species/subspecies carry typed
+builders emit typed grants and flat `prereq_min_score`/`prereq_ability_ref`;
+classes carry `features`; species/subspecies carry typed
 grants. It is therefore logged as the **structural gold standard** and is
 **Clean** on the Poor-Data-Structure and Missing-Mechanics criteria.
 

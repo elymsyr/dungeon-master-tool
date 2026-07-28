@@ -1791,9 +1791,10 @@ class AutoGrantSourcesFieldWidget extends StatelessWidget {
 //   granted_bonus_action_refs, granted_reaction_refs, granted_trait_refs}>
 //
 // CharacterResolver matches rows by `name` (string) and folds the listed
-// grants. `granted_modifiers` (typed DSL) is supported by the resolver but
-// stays out of this MVP editor — authors needing the full DSL can drop to
-// JSON view; the modifier editor at the species level already covers it.
+// grants through the same `applyGrantsFrom` reader every other card uses.
+// Keys beyond the ones listed above (numeric bonuses, resource pools,
+// mechanical notes) belong on a first-class `subspecies` entity rather than
+// a nested option row; authors needing them should promote the row.
 // ─────────────────────────────────────────────────────────────────────────
 
 const _kSubspeciesGrantKeys = <(

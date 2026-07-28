@@ -1,7 +1,7 @@
 ---
 type: system
 domain: world-content
-updated: 2026-06-22
+updated: 2026-07-28
 tags: [system]
 ---
 
@@ -10,9 +10,12 @@ tags: [system]
 > [!summary] What this is
 > The approved migration (2026-06-10) from hardcoded schema + per-card DSL rules to a user-editable JSON Template that owns both field definitions and rule semantics. An entity card becomes pure data; rules fire from field semantics declared once in the template. Owned by [[World-and-Content]] / [[Character-System]].
 
+> [!warning] Status as of 2026-07-28
+> This note describes a migration **approved 2026-06-10 but not implemented** — all four phases are still `Planned`, and the source docs it cites (`docs/new_system/…`) are no longer in the repo. Meanwhile pain point #2 was solved independently and differently: the per-card rule DSL was deleted outright on 2026-07-28 in favour of named grant fields (see [[Grant-Resolution]]), without moving rule semantics into the template. Treat the phase plan below as historical intent, not a current roadmap.
+
 ## Why it exists — Current pain points
 1. **Schema is code.** 74 categories in `builtin_dnd5e_v2_schema.dart`; changing a field requires an app build.
-2. **Rules live on cards.** Every card is a tiny program (effects DSL, `rule_effects`, `granted_modifiers`…); creators must understand DSL to author content.
+2. ~~**Rules live on cards.** Every card is a tiny program (effects DSL, `rule_effects`, `granted_modifiers`…); creators must understand DSL to author content.~~ — **Resolved 2026-07-28 outside this initiative.** The DSLs were removed; a card now declares mechanics in plainly named fields (`granted_skill_proficiencies`, `ac_bonus`, `resource_pool_grants`, `mechanical_notes`, …) with no kind registry, no predicates and no scaling language. See [[Grant-Resolution]].
 3. **Template editor is read-only.** Users cannot create, copy, or edit templates.
 
 ## Target architecture
@@ -26,8 +29,8 @@ tags: [system]
 2. **Just-In-Time template evolution.** A rule-bearing field is added to the template **only at the moment a card needs it**. End-state: zero dead fields (enforced by automated usage audit).
 3. **Description-first cards.** Every card's `description` is completed into standalone standard-format Markdown; the rule fields keep the sheet in sync with the text.
 
-## Phase plan (4 phases, approved 2026-06-10)
-See `docs/new_system/master-roadmap.md` for the authoritative detail. High-level:
+## Phase plan (4 phases, approved 2026-06-10 — none started)
+The cited authoritative doc `docs/new_system/master-roadmap.md` has since been deleted from the repo; recover it from git history if this initiative is revived. High-level:
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -55,10 +58,11 @@ Follows existing `ScreenType` breakpoints + `ResizableSplit` pattern (as in `dat
 ## Participants (once implemented)
 - [[builtin_schema]] — will emit JSON template on build instead of Dart code.
 - [[world_schema]] / [[entity_category_schema]] / [[field_schema]] — extended with template fields + rule semantics.
-- [[srd_helpers]] — rule DSL authoring moves to template field config.
-- [[character_resolver]] — reads rules from template field semantics instead of per-card effect rows.
+- [[srd_helpers]] — rule DSL authoring moves to template field config. *(Moot: there is no rule DSL to move.)*
+- [[character_resolver]] — reads rules from template field semantics instead of per-card effect rows. *(Partly overtaken: it already reads named fields rather than effect rows; what remains is sourcing those field definitions from a template rather than Dart.)*
 
 ## Related
 - MoCs: [[World-and-Content]], [[Character-System]], [[Content-Pipeline]]
 - Supersedes: Rules Engine initiative (frozen after R6; R7 cancelled); see `rules_engine_initiative_jun10` memory.
-- Source Docs: `docs/new_system/master-roadmap.md` (authoritative), `docs/new_system/the-template-system.md` (format spec), `docs/new_system/content-convert.md` (converter pipeline), `docs/new_system/static-field-preservation-checklist.md`.
+- Overtaken in part by: [[Grant-Resolution]] (2026-07-28 rule-system removal).
+- Source Docs *(all deleted from the repo — recover from git history)*: `docs/new_system/master-roadmap.md` (authoritative), `docs/new_system/the-template-system.md` (format spec), `docs/new_system/content-convert.md` (converter pipeline), `docs/new_system/static-field-preservation-checklist.md`.

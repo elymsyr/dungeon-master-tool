@@ -10,10 +10,11 @@
 /// human-readable `mechanical_notes` line so **nothing an author wrote is
 /// silently dropped**.
 ///
-/// Applied at the two ingestion seams:
+/// Applied at the three ingestion seams:
 ///   * `WorldRepositoryImpl._loadFromDb` — every world entity on load, so
 ///     existing local worlds convert transparently the first time they open
 ///     (and persist converted on the next save);
+///   * `builtin_synth.dart` — the built-in schema synth path;
 ///   * `PackagePayloadImporter.install` — every pack entity on install, so
 ///     old-format bundled/R2 payloads land already converted.
 ///

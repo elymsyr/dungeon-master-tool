@@ -429,27 +429,23 @@ void _checkChargen(List<SourceDoc> docs) {
     return l.containsAll({'Common', 'Dwarvish'});
   }());
 
-  // C4: fixed ASI parsed into granted_modifiers.
+  // C4: fixed ASI parsed into the `ability_bonuses` statBlock map
+  // ({'CON': 2}). Replaced the retired `granted_modifiers` rows.
   check('Dwarf ASI = CON +2', () {
-    final m = (dwarf['granted_modifiers'] as List?) ?? const [];
-    return m.length == 1 &&
-        (m.first as Map)['ability'] == 'CON' &&
-        (m.first as Map)['value'] == 2 &&
-        (m.first as Map)['kind'] == 'ability_score_bonus';
+    final m = (dwarf['ability_bonuses'] as Map?) ?? const {};
+    return m.length == 1 && m['CON'] == 2;
   }());
   check('Half-Orc ASI = STR+2, CON+1', () {
     final ho = _ofType(pack, 'species')
         .firstWhere((s) => s['name'] == 'Half-Orc')['attributes'] as Map;
-    final m = ((ho['granted_modifiers'] as List?) ?? const [])
-        .map((e) => '${(e as Map)['ability']}+${e['value']}')
-        .toSet();
-    return m.containsAll({'STR+2', 'CON+1'});
+    final m = (ho['ability_bonuses'] as Map?) ?? const {};
+    return m['STR'] == 2 && m['CON'] == 1;
   }());
   check('Human ASI = all six +1', () {
     final hu = _ofType(pack, 'species')
         .firstWhere((s) => s['name'] == 'Human')['attributes'] as Map;
-    final m = (hu['granted_modifiers'] as List?) ?? const [];
-    return m.length == 6 && m.every((e) => (e as Map)['value'] == 1);
+    final m = (hu['ability_bonuses'] as Map?) ?? const {};
+    return m.length == 6 && m.values.every((v) => v == 1);
   }());
 
   // C5: background skill grants + language count parsed from benefit rows.

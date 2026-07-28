@@ -30,7 +30,7 @@ tags: [home, moc]
 | [[Deployment-and-Ops]] | CI, build, wrangler, dart-define, Docker |
 
 ## System deep-dives
-- [[CDC-Sync-Flow]] · [[Effect-DSL-Resolution]] · [[Ref-Resolution-Hard-vs-Soft]]
+- [[CDC-Sync-Flow]] · [[Grant-Resolution]] · [[Ref-Resolution-Hard-vs-Soft]]
 - [[Media-Storage-Tiers]] · [[Fog-of-War-and-Visibility]] · [[Pack-Build-Two-Pass-Refgraph]]
 
 ## Platform integration

@@ -27,7 +27,7 @@ tags: [file]
 - Depends on: `entity.dart`, [[caster_progression]] (`CasterKind`, `defaultSpellSlotsByLevel`).
 - Used by: the character editor's multiclass add-class flow (confirmation banner) + spell-slot display.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]] §1.10
 
 ## Key Logic / Variables

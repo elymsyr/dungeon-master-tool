@@ -28,7 +28,7 @@ tags: [file]
 - Depends on: [[character_draft]] (state type), [[ability_score_method]] (`AbilityScoreMethod`, `kAbilityKeys`), `flutter_riverpod`, `dart:math`.
 - Used by: every character-creation wizard step widget.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables

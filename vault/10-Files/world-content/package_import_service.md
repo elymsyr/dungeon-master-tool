@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/package_import_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -34,7 +34,7 @@ tags: [file]
 - **ID remap**: builds `idMapping[oldId] = uuid.v4()` for every package entity FIRST, so intra-batch relation refs resolve in one pass.
 - **Category match by name**: pkg slug -> pkg category name -> world category by name. Unknown pkg category or missing world category => entity SKIPPED.
 - **Field mapping** (`_mapFields`) per world field, in priority order: (1) same `fieldKey` present in pkg attrs; (2) label-based match (`pkgLabelToKey[worldField.label]`); (3) `_defaultValue`. Relation-type fields run `_remapRelation` (rewrites string + list refs through `idMapping`; leaves external refs untouched).
-- **`_defaultValue`** returns per-`FieldType` zero values; notable typed defaults — `statBlock` => all-10 ability map, `combatStats` => empty hp/max_hp/ac/speed/cr/xp/initiative, `proficiencyTable` => `{'rows': []}`, and empty lists for `classFeatures`/`spellEffectList`/`rangedSenseList`/`grantedModifiers`/`equipmentChoiceGroups`/`featEffectList`. `defaultValue`/`isList` on the schema win first.
+- **`_defaultValue`** returns per-`FieldType` zero values; notable typed defaults — `statBlock` => all-10 ability map, `combatStats` => empty hp/max_hp/ac/speed/cr/xp/initiative, `proficiencyTable` => `{'rows': []}`, and empty lists for `classFeatures`/`spellEffectList`/`rangedSenseList`/`equipmentChoiceGroups`/`resourcePoolGrants`/`playerChoices`. `defaultValue`/`isList` on the schema win first.
 - **`resolveLookupPlaceholder`** (Tier-0 lookup resolution): a `{_lookup, name}` map resolves to `tier0NameToId[slug][name]` (or `''` if absent). Recurses into nested maps/lists, coercing keys to `String` so downstream `jsonEncode` never sees `_Map<dynamic,dynamic>`.
 
 ## Notes

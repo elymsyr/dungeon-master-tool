@@ -52,12 +52,12 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 ```
 
 - **Sync-and-Realtime** is the spine: it drains the [[sync_outbox_dao|outbox]] in [[Data-Layer]] and mirrors to [[Backend-Infra]] (Supabase CDC), feeding [[Multiplayer-and-Online]].
-- **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Effect-DSL-Resolution]].
+- **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]].
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
 
 ## Key cross-cutting flows
 - [[CDC-Sync-Flow]] — 12-step local-edit → Postgres → peer apply.
-- [[Effect-DSL-Resolution]] — descriptive content → typed EffectiveCharacter.
+- [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).
 
 ## Source docs (design history)

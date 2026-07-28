@@ -154,7 +154,7 @@ class CharacterResolver {
     // grant lands on senses/damageRes/damageImmunities/damageVulnerabilities/
     // conditionImmunities so the sheet can render "<Grant> — <Source>".
     final grantSources = <String, List<String>>{};
-    // Strip the `kind:` prefix that `applyEffect`-style call sites use
+    // Strip the `kind:` prefix that `applyGrantsFrom` call sites pass
     // (`species:Dwarf`, `feat:Magic Initiate`, `subspecies:Dwarf/Hill`) so
     // the chip subtitle stays clean. Subspecies tags become "Hill Dwarf".
     String cleanSource(String s) {
@@ -549,7 +549,7 @@ class CharacterResolver {
       }
     }
 
-    // ── 5. Pass 3: feat effects (excluding level grants) ───────────────
+    // ── 5. Pass 3: feat ASI + grant block ──────────────────────────────
     final allFeatIds = [...featIds, ...autoGrantedFeatIds];
     for (final fid in allFeatIds) {
       final feat = entitiesById[fid];

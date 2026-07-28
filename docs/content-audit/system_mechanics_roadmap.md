@@ -6,6 +6,28 @@
 > Per-entity evidence: [`entity_audit_log.md`](entity_audit_log.md).
 > Branch: `list`. Generated 2026-06-10.
 
+> [!IMPORTANT] Terminology update — 2026-07-28 rule-system removal
+> This audit was measured against the old rule DSL. The `rule_effects`,
+> `effects` (feat) and `granted_modifiers` fields **no longer exist**: card
+> mechanics are now plainly named fields (`granted_skill_proficiencies`,
+> `ac_bonus`, `extra_attack_count_by_level`, `resource_pool_grants`,
+> `mechanical_notes`, …), read by `CharacterResolver.applyGrantsFrom`. The
+> closed list is `CharacterResolver.grantFieldKeys`; see
+> `vault/20-Systems/Grant-Resolution.md`.
+>
+> **The findings still stand** — every "N/M cards leave this in prose" count is
+> unchanged, because what was missing is still missing; only the name of the
+> field it should land in has changed. Two consequences for the plan below:
+> - Anywhere this doc says "typed `effects` / `granted_modifiers`", read
+>   "the named grant-block fields".
+> - Item **1.3**'s proposed `features[].rule_effects` level scheduler is
+>   **obsolete as designed**. Level-gated mechanics now hang off the granted
+>   feat/trait entity via `auto_granted_by` + `at_level`, with numeric scaling
+>   expressed as `{lvl: value}` tables — the resolver already does this, so 1.3
+>   is now purely the content-pipeline gap described in 2.2.
+> - The 37 previously no-op effect kinds are no longer silently dropped; they
+>   render on the sheet as `mechanical_notes` prose.
+
 ## How to read this
 
 Each item below is a **global deficiency** — a missing system-wide mechanic,
@@ -21,7 +43,7 @@ from being fully supported. Two kinds of gap are distinguished:
 The distinction matters: the SRD core is the structural gold standard. It was
 verified during this audit that the SRD subclass builder emits
 `granted_at_level` + typed `features`, and the SRD feat builders emit typed
-`effects`/`prereq_min_score`/`granted_modifiers`. The schema can hold all of it.
+grants + `prereq_min_score`. The schema can hold all of it.
 The official Open5e packs simply do not fill those fields.
 
 **Anchor files**
@@ -78,18 +100,22 @@ it. Then have the resolver (not just the dialog) evaluate it as part of 1.1.
 (level-keyed typed feature lists) plus `subclass.granted_at_level`, and the SRD
 core populates them. The official packs do not: **all 101 official subclasses
 carry only `description` + `parent_class_ref`** (0 features, 0
-`granted_at_level`, 0 `rule_effects`), and **both official base classes**
+`granted_at_level`, no grants), and **both official base classes**
 (*Marshal*, *Mechanist*) carry no `features` map. So a character taking any
 official subclass receives **zero** mechanical grants — every feature is inert
-prose. The resolver's subclass pass (`character_resolver.dart` ~L981–990) reads
-`saving_throw_refs`/`weapon_proficiency_categories`/`armor_training_refs`/
-`rule_effects` from the subclass — none of which official subclasses populate.
+prose. The resolver's subclass pass reads
+`saving_throw_refs`/`weapon_proficiency_categories`/`armor_training_refs`
+from the subclass — none of which official subclasses populate.
 
-**Architecture change (system side).** Primarily a pipeline gap (2.2), but the
-runtime also needs: a level-feature scheduler in the resolver that applies
-`features[].rule_effects` at the correct character level, and a "feature not yet
+**Architecture change (system side).** ~~The runtime needs a level-feature
+scheduler that applies `features[].rule_effects` at the correct character
+level.~~ **Obsolete since 2026-07-28** — level-gated mechanics hang off the
+granted feat/trait entity (`auto_granted_by` + `at_level`), with numeric
+scaling as `{lvl: value}` tables, and the resolver's auto-grant walker already
+implements it. What remains on the runtime side is a "feature not yet
 mechanized" placeholder state so the sheet can render the prose feature while
-flagging it unenforced. `subclass.granted_at_level` is schema-`required` yet
+flagging it unenforced; the rest is the pipeline gap in 2.2.
+`subclass.granted_at_level` is schema-`required` yet
 absent on all 101 cards — the resolver currently tolerates the null; it should
 record it as a data-integrity warning rather than silently defaulting.
 
@@ -119,12 +145,12 @@ L19–22) is candid about this: *"Honest source limits (left empty, not faked):
 leveled class `features`/subclass `granted_at_level` …, feat effect/ASI DSL, and
 any 'of your choice' grant — all stay folded in the description."*
 
-### 2.1 Feat benefits left in prose (no typed `effects`)
+### 2.1 Feat benefits left in prose (no typed grants)
 **64 of 73 official feats** have their entire mechanical benefit in
-`description`, with no typed `effects` and no `granted_modifiers`. Only 9 feats
+`description`, with no typed grants. Only 9 feats
 (Crafting Expert, Lightly/Moderately/Heavily Outfitted, Natural Warrior, Shield
 Focus, Skillful, Skirmisher, Swift Combatant) are mechanized. The resolver's
-feat pass reads `effects`/`granted_modifiers`/`asi_*`; for the other 64 it
+feat pass reads the grant-block fields + `asi_*`; for the other 64 it
 applies nothing.
 
 ### 2.2 Subclass & class features left in prose
@@ -134,7 +160,7 @@ is the single largest chargen content-pipeline deficit by card count.
 ### 2.3 Backgrounds missing typed grants
 Across 53 official backgrounds: `origin_feat_ref` **0/53** (schema-`required`),
 `asi_distribution_options` **0/53** (schema-`required`), `starting_gold_gp`
-**0/53**, `default_inventory_refs` **0/53**, `rule_effects` **0/53**. Two
+**0/53**, `default_inventory_refs` **0/53**, no grants **0/53**. Two
 backgrounds (*Fate-Touched*, *Guildmember*) additionally lack
 `granted_skill_refs`; 26/53 lack `ability_score_options`. Equipment choice
 groups (52/53) and granted skills (51/53) are otherwise well-populated.
@@ -148,7 +174,7 @@ effect, so a VTT/automation layer cannot act on them.
 
 ### 2.5 Species / subspecies partially mechanized
 Of 11 official species, 4 lack `size_ref` and 3 lack `speed_ft` (*Darakhul*,
-*Gearforged*, *Shade*); 2 carry no `granted_modifiers`. Of 30 subspecies the
+*Gearforged*, *Shade*); 2 carry no ability-score grants. Of 30 subspecies the
 grants are partial (e.g. `granted_cantrip_refs` on only 4/30). These should be
 completable from source.
 
