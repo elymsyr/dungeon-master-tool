@@ -1131,9 +1131,9 @@ Map<String, dynamic> _defaultFieldsFor(EntityCategorySchema cat) {
       FieldType.classFeatures => const <Map<String, dynamic>>[],
       FieldType.spellEffectList => const <Map<String, dynamic>>[],
       FieldType.rangedSenseList => const <Map<String, dynamic>>[],
-      FieldType.grantedModifiers => const <Map<String, dynamic>>[],
       FieldType.equipmentChoiceGroups => const <Map<String, dynamic>>[],
-      FieldType.featEffectList => const <Map<String, dynamic>>[],
+      FieldType.resourcePoolGrants => const <Map<String, dynamic>>[],
+      FieldType.playerChoices => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

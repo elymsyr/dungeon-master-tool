@@ -262,58 +262,32 @@ class ResolvedGrantsCard extends StatelessWidget {
     return ['$sign$total max HP'];
   }
 
-  /// Render temp-HP grant sources as text rows — `source — formula (trigger)`.
-  /// No counter buttons since these are runtime triggers, not stored pools;
-  /// the actual write to PC `temp_hp` happens through the combat tracker or
-  /// a dedicated trigger UI (future work).
-  Widget _tempHpGrantsBlock(List<Map<String, dynamic>> grants) {
-    if (grants.isEmpty) return const SizedBox.shrink();
+  /// "Other Effects" — the `mechanicalNotes` lines collected from every
+  /// granted card. These are the rules the engine does not compute
+  /// (advantage riders, rerolls, reaction abilities, …) surfaced verbatim so
+  /// the player still sees them on the sheet.
+  Widget _mechanicalNotesBlock(List<String> notes) {
+    if (notes.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 130,
-            child: Text(
-              'Temp HP Grants',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: palette.sidebarLabelSecondary,
-              ),
+          Text(
+            'Other Effects',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: palette.sidebarLabelSecondary,
             ),
           ),
-          for (final g in grants)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.pink.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Colors.pink.withValues(alpha: 0.4),
-                  width: 0.5,
-                ),
-              ),
+          const SizedBox(height: 4),
+          for (final note in notes)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 2),
               child: Text(
-                () {
-                  final src = g['source']?.toString() ?? '';
-                  final formula = g['formula']?.toString();
-                  final trigger = g['trigger']?.toString();
-                  final parts = <String>[
-                    if (src.isNotEmpty) src,
-                    if (formula != null && formula.isNotEmpty) formula,
-                    if (trigger != null && trigger.isNotEmpty) '($trigger)',
-                  ];
-                  return parts.join(' · ');
-                }(),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: palette.srdInk,
-                ),
+                '• $note',
+                style: TextStyle(fontSize: 12, color: palette.srdInk),
               ),
             ),
         ],
@@ -727,7 +701,7 @@ class ResolvedGrantsCard extends StatelessWidget {
     final pools = _grantedPoolEntries();
     final extraSpeeds = effective.extraSpeeds;
     final conditional = effective.conditionalGrants;
-    final tempHpGrants = effective.tempHpGrants;
+    final mechanicalNotes = effective.mechanicalNotes;
     final unarmoredFormulas = effective.unarmoredFormulas;
     final freeCast = effective.freeCastSpellIds;
     final ritualBook = effective.ritualBookSpellIds;
@@ -753,7 +727,7 @@ class ResolvedGrantsCard extends StatelessWidget {
         pools.isEmpty &&
         extraSpeeds.isEmpty &&
         conditional.isEmpty &&
-        tempHpGrants.isEmpty &&
+        mechanicalNotes.isEmpty &&
         unarmoredFormulas.isEmpty &&
         freeCast.isEmpty &&
         ritualBook.isEmpty &&
@@ -802,7 +776,7 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Actions', actions, Colors.red),
             _chipRow('Bonus Actions', bonusActions, Colors.amber),
             _chipRow('Reactions', reactions, Colors.cyan),
-            _tempHpGrantsBlock(tempHpGrants),
+            _mechanicalNotesBlock(mechanicalNotes),
             _unarmoredFormulasBlock(unarmoredFormulas),
             _chipRow('Free Casts', freeCast, Colors.deepPurple),
             _chipRow('Ritual Book', ritualBook, Colors.brown),

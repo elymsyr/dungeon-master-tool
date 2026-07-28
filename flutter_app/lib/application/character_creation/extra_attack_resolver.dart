@@ -1,11 +1,12 @@
 import '../../domain/entities/entity.dart';
 
-/// Pure resolver for the `extra_attack_count` effect granted by auto-granted
-/// class/subclass feats. Mirrors [resolveResourcePoolsAt] but for the flat
-/// `value` shape used by Extra Attack: each feat declares a single integer
-/// (2 at L5, 3 at L11 Fighter, 4 at L20 Fighter) and the runtime takes the
-/// **maximum** across all matching grants — matching the precedence rule
-/// already implemented by `CharacterResolver`.
+/// Pure resolver for the `extra_attack_count` /
+/// `extra_attack_count_by_level` grant fields on auto-granted class/subclass
+/// feats. Each feat declares the *total* attacks per Attack action (2 at L5,
+/// 3 at L11 Fighter, 4 at L20 Fighter) either as a flat int or as a
+/// `{lvl: count}` table; the runtime takes the **maximum** across all
+/// matching grants — matching the precedence rule already implemented by
+/// `CharacterResolver`.
 ///
 /// Returns 0 when no class is supplied, [level] is below 1, or no matching
 /// feat is found at or below [level].
@@ -27,16 +28,28 @@ int resolveExtraAttackCountAt({
     if (e.categorySlug != 'feat') continue;
     if (!_isAutoGranted(e, classNames, level, entities)) continue;
 
-    final effects = e.fields['effects'];
-    if (effects is! List) continue;
-    for (final eff in effects) {
-      if (eff is! Map) continue;
-      final kind = eff['kind'];
-      if (kind != 'extra_attack_count' && kind != 'extra_attack_bump') continue;
-      final raw = eff['value'];
-      final v = raw is int ? raw : int.tryParse('$raw');
-      if (v == null) continue;
-      if (v > best) best = v;
+    final table = e.fields['extra_attack_count_by_level'];
+    final scaled = _valueForLevel(table, level);
+    final raw = e.fields['extra_attack_count'];
+    final v = scaled ?? (raw is int ? raw : int.tryParse('$raw'));
+    if (v == null) continue;
+    if (v > best) best = v;
+  }
+  return best;
+}
+
+/// `{lvl: count}` table lookup — the value of the highest level ≤ [level].
+int? _valueForLevel(Object? table, int level) {
+  if (table is! Map) return null;
+  int? best;
+  var bestLvl = -1;
+  for (final e in table.entries) {
+    final lvl = e.key is int ? e.key as int : int.tryParse('${e.key}');
+    final v = e.value is int ? e.value as int : int.tryParse('${e.value}');
+    if (lvl == null || v == null) continue;
+    if (lvl <= level && lvl > bestLvl) {
+      bestLvl = lvl;
+      best = v;
     }
   }
   return best;

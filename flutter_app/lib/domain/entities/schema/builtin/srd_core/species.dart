@@ -16,7 +16,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'trait_refs': [
             ref('trait', 'Draconic Ancestry'),
             ref('trait', 'Damage Resistance (Dragonborn)'),
@@ -38,7 +40,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'granted_damage_resistances': [lookup('damage-type', 'Poison')],
           'trait_refs': [
             ref('trait', 'Dwarven Resilience'),
@@ -57,7 +61,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'trait_refs': [
             ref('trait', 'Fey Ancestry'),
             ref('trait', 'Trance'),
@@ -75,7 +81,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Small'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'trait_refs': [
             ref('trait', 'Gnomish Cunning'),
           ],
@@ -139,7 +147,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'trait_refs': [
             ref('trait', 'Powerful Build'),
           ],
@@ -160,7 +170,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
-          'granted_senses': [lookup('sense', 'Darkvision')],
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 60},
+          ],
           'trait_refs': [
             ref('trait', 'Otherworldly Presence'),
             ref('trait', 'Fiendish Legacy'),

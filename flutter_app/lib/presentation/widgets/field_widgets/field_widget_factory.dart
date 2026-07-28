@@ -393,14 +393,6 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
-      FieldType.grantedModifiers => GrantedModifiersFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
       FieldType.equipmentChoiceGroups => EquipmentChoiceGroupsFieldWidget(
         schema: schema,
         value: value,
@@ -424,7 +416,15 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entityFields: entityFields,
       ),
-      FieldType.featEffectList => FeatEffectListFieldWidget(
+      FieldType.resourcePoolGrants => ResourcePoolGrantsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.playerChoices => PlayerChoicesFieldWidget(
         schema: schema,
         value: value,
         readOnly: readOnly,

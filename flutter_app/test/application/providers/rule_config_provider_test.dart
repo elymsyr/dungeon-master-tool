@@ -1,7 +1,6 @@
 import 'package:dungeon_master_tool/application/providers/entity_provider.dart';
-import 'package:dungeon_master_tool/application/providers/rule_catalog_provider.dart';
 import 'package:dungeon_master_tool/application/providers/rule_config_provider.dart';
-import 'package:dungeon_master_tool/domain/entities/schema/rules/rule_config.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/rule_config.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,18 +57,6 @@ void main() {
       );
       expect(parent.read(ruleConfigProvider).acUnarmoredBase, 11);
       expect(child.read(ruleConfigProvider).acUnarmoredBase, 13);
-    });
-  });
-
-  group('ruleCatalogProvider', () {
-    test('resolves through a nested scope without touching the root', () {
-      // Locks in the 2cd862b fix: the catalog provider declares
-      // `dependencies` so it is instantiated inside the scoped container.
-      final parent = _container(_schema());
-      final child = _container(_schema(), parent: parent);
-      final catalog = child.read(ruleCatalogProvider);
-      expect(catalog.rules, isNotEmpty);
-      expect(catalog.contains('ability_score_bonus'), isTrue);
     });
   });
 }

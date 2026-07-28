@@ -208,23 +208,24 @@ void main() {
   });
 
   // ────────────────────────────────────────────────────────────
-  // grantedModifiers
+  // resourcePoolGrants + playerChoices
   // ────────────────────────────────────────────────────────────
-  group('FieldType.grantedModifiers editor', () {
+  group('FieldType.resourcePoolGrants editor', () {
     testWidgets('renders empty state', (tester) async {
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
-        schema: _schema(FieldType.grantedModifiers, label: 'Modifiers'),
+        schema: _schema(FieldType.resourcePoolGrants, label: 'Resource Pools'),
         value: const [],
         readOnly: false,
         onChanged: (_) {},
       )));
-      expect(find.textContaining('Modifiers (0)'), findsOneWidget);
+      expect(find.textContaining('Resource Pools (0)'), findsOneWidget);
     });
 
-    testWidgets('add appends row with full modifier shape', (tester) async {
+    testWidgets('add appends a pool row defaulting to long rest',
+        (tester) async {
       dynamic captured;
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
-        schema: _schema(FieldType.grantedModifiers, label: 'Modifiers'),
+        schema: _schema(FieldType.resourcePoolGrants, label: 'Resource Pools'),
         value: const [],
         readOnly: false,
         onChanged: (v) => captured = v,
@@ -232,43 +233,73 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
       final row = (captured as List).first as Map;
-      expect(row.keys, containsAll(<String>[
-        'kind', 'target_kind', 'target_ref', 'value',
-        'scaling', 'condition_ref', 'notes',
-      ]));
+      expect(row['recharge'], 'long_rest');
     });
 
-    testWidgets('renders kind/target_kind dropdowns', (tester) async {
+    testWidgets('renders count-by-level chips', (tester) async {
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
-        schema: _schema(FieldType.grantedModifiers, label: 'Modifiers'),
+        schema: _schema(FieldType.resourcePoolGrants, label: 'Resource Pools'),
         value: const [
           {
-            'kind': 'ac_bonus',
-            'target_kind': null,
-            'target_ref': null,
-            'value': 1,
-            'scaling': 'flat',
-            'condition_ref': null,
-            'notes': '',
+            'pool_ref': {'slug': 'resource-pool', 'name': 'pool:rage_uses'},
+            'recharge': 'long_rest',
+            'count_by_level': {'1': 2, '3': 3},
           },
         ],
         readOnly: false,
         onChanged: (_) {},
       )));
-      expect(find.text('Modifiers (1)'), findsOneWidget);
-      expect(find.text('Kind'), findsOneWidget);
-      expect(find.text('Target Kind'), findsOneWidget);
+      expect(find.text('Resource Pools (1)'), findsOneWidget);
+      expect(find.text('L1 → 2'), findsOneWidget);
+      expect(find.text('L3 → 3'), findsOneWidget);
+    });
+  });
+
+  group('FieldType.playerChoices editor', () {
+    testWidgets('add appends an enum row with one pick', (tester) async {
+      dynamic captured;
+      await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
+        schema: _schema(FieldType.playerChoices, label: 'Player Choices'),
+        value: const [],
+        readOnly: false,
+        onChanged: (v) => captured = v,
+      )));
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pump();
+      final row = (captured as List).first as Map;
+      expect(row['pick_kind'], 'enum');
+      expect(row['pick'], 1);
+    });
+
+    testWidgets('renders option chips for enum rows', (tester) async {
+      await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
+        schema: _schema(FieldType.playerChoices, label: 'Player Choices'),
+        value: const [
+          {
+            'group_id': 'list',
+            'label': 'Spell List',
+            'pick_kind': 'enum',
+            'pick': 1,
+            'options': [
+              {'id': 'Cleric', 'label': 'Cleric'},
+              {'id': 'Druid', 'label': 'Druid'},
+            ],
+          },
+        ],
+        readOnly: false,
+        onChanged: (_) {},
+      )));
+      expect(find.text('Player Choices (1)'), findsOneWidget);
+      expect(find.text('Cleric'), findsOneWidget);
+      expect(find.text('Druid'), findsOneWidget);
     });
 
     testWidgets('removes row on close button tap', (tester) async {
       dynamic captured;
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
-        schema: _schema(FieldType.grantedModifiers, label: 'Modifiers'),
+        schema: _schema(FieldType.playerChoices, label: 'Player Choices'),
         value: const [
-          {
-            'kind': 'ac_bonus', 'target_kind': null, 'target_ref': null,
-            'value': 1, 'scaling': '', 'condition_ref': null, 'notes': '',
-          },
+          {'group_id': 'g', 'label': 'G', 'pick_kind': 'enum', 'pick': 1},
         ],
         readOnly: false,
         onChanged: (v) => captured = v,

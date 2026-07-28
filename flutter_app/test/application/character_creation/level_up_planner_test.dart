@@ -556,87 +556,10 @@ void main() {
     });
   });
 
-  group('planLevelUp save-proficiency grants (SRD §1.4)', () {
-    test('feature with proficiency_grant surfaces ability name on LevelGain',
-        () {
-      final cls = _makeClass(
-        name: 'Sorcerer',
-        hitDie: 'd6',
-        features: [
-          {
-            'level': 1,
-            'name': 'Soul Save',
-            'description': 'You gain Charisma save proficiency.',
-            'effects': [
-              {
-                'kind': 'proficiency_grant',
-                'target_kind': 'saving_throw',
-                'target_ref': {'slug': 'ability', 'name': 'Charisma'},
-              },
-            ],
-          },
-        ],
-      );
-      final p = planLevelUp(
-        fromLevel: 0,
-        toLevel: 1,
-        classEntity: cls,
-        subclassEntity: null,
-      );
-      expect(p.newFeatures, hasLength(1));
-      expect(p.newFeatures.single.grantedSaveProficiencyNames, ['Charisma']);
-    });
+  // The save-proficiency notice moved with the DSL removal: class features
+  // grant saves via the feat card's `granted_save_proficiencies` list, which
+  // the resolver applies directly — the planner no longer parses feature rows.
 
-    test('subclass feature save grant surfaces too', () {
-      final sub = _makeSubclass(
-        name: 'Eldritch Knight',
-        features: [
-          {
-            'level': 7,
-            'name': 'War Magic',
-            'description': 'You gain Wisdom save proficiency.',
-            'effects': [
-              {
-                'kind': 'proficiency_grant',
-                'target_kind': 'ability',
-                'target_ref': {'slug': 'ability', 'name': 'Wisdom'},
-              },
-            ],
-          },
-        ],
-      );
-      final p = planLevelUp(
-        fromLevel: 6,
-        toLevel: 7,
-        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
-        subclassEntity: sub,
-      );
-      final eldritch =
-          p.newFeatures.firstWhere((f) => f.source == 'Eldritch Knight');
-      expect(eldritch.grantedSaveProficiencyNames, ['Wisdom']);
-    });
-
-    test('features without proficiency_grant leave list empty', () {
-      final cls = _makeClass(
-        name: 'Rogue',
-        hitDie: 'd8',
-        features: [
-          {
-            'level': 1,
-            'name': 'Sneak Attack',
-            'description': 'You deal extra damage.',
-          },
-        ],
-      );
-      final p = planLevelUp(
-        fromLevel: 0,
-        toLevel: 1,
-        classEntity: cls,
-        subclassEntity: null,
-      );
-      expect(p.newFeatures.single.grantedSaveProficiencyNames, isEmpty);
-    });
-  });
 
   group('planLevelUp extra-attack fields (SRD §1.5)', () {
     Entity featExtra({
@@ -657,9 +580,7 @@ void main() {
                 'at_level': atLevel,
               },
             ],
-            'effects': [
-              {'kind': 'extra_attack_count', 'value': value},
-            ],
+            'extra_attack_count': value,
           },
         );
 

@@ -26,7 +26,7 @@ import '../../../../domain/services/entity_ref.dart';
 import '../../../../domain/entities/schema/dnd5e_constants.dart'
     show kDnd5eSkills, kDnd5eSavingThrows;
 import '../../../../domain/entities/schema/entity_category_schema.dart';
-import '../../../../domain/entities/schema/rules/rule_config.dart';
+import '../../../../domain/entities/schema/rule_config.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../widgets/expandable_markdown.dart';
@@ -640,6 +640,26 @@ class _CharacterCreationWizardScreenState
   }
 }
 
+/// Flatten a grant list to plain entity ids.
+///
+/// Most grant fields are relation lists of resolved id strings, but
+/// `granted_senses` rows are `{sense_ref, range_ft}` maps so a card can state
+/// "Darkvision 60 ft". The PC's own `senses` field is a plain relation list, so
+/// the range is dropped here and the resolved sheet carries it instead
+/// (`EffectiveCharacter.senseRanges`).
+List<String> _grantIds(List<dynamic> raw) {
+  final out = <String>[];
+  for (final row in raw) {
+    if (row is String) {
+      if (row.isNotEmpty) out.add(row);
+    } else if (row is Map) {
+      final ref = row['sense_ref'] ?? row['ref'];
+      if (ref is String && ref.isNotEmpty) out.add(ref);
+    }
+  }
+  return out;
+}
+
 /// Builds the entity.fields map seed: ability scores, level, alignment,
 /// race/class/background relations, derived combat stats. Pure; no UI.
 ///
@@ -956,13 +976,13 @@ Map<String, dynamic> buildSeedFields({
         v is List ? v.whereType<String>().toList() : const <String>[];
     final weaponCats = ProficienciesStep.mergeProficiencyRefs(
       base: stringList(characterClass.fields['weapon_proficiency_categories']),
-      featEffects: orderFeatEntity?.fields['effects'],
-      targetKind: 'weapon_category',
+      featFields: orderFeatEntity?.fields,
+      grantKey: 'granted_weapon_proficiencies',
     );
     final armorCats = ProficienciesStep.mergeProficiencyRefs(
       base: stringList(characterClass.fields['armor_training_refs']),
-      featEffects: orderFeatEntity?.fields['effects'],
-      targetKind: 'armor_category',
+      featFields: orderFeatEntity?.fields,
+      grantKey: 'granted_armor_proficiencies',
     );
     if (weaponCats.isNotEmpty) {
       appendIds(const ['weapon_proficiency_categories'], weaponCats);
@@ -1134,7 +1154,7 @@ Map<String, dynamic> buildSeedFields({
   ) {
     final raw = src.fields[fromKey];
     if (raw is! List) return;
-    final ids = raw.whereType<String>().toList();
+    final ids = _grantIds(raw);
     if (ids.isEmpty) return;
     for (final to in toKeys) {
       if (!fieldsByKey.containsKey(to)) continue;
@@ -1243,7 +1263,7 @@ Map<String, dynamic> buildSeedFields({
       void copyRow(String fromKey, List<String> toKeys) {
         final raw = row[fromKey];
         if (raw is! List) return;
-        final ids = raw.whereType<String>().toList();
+        final ids = _grantIds(raw);
         if (ids.isEmpty) return;
         for (final to in toKeys) {
           if (!fieldsByKey.containsKey(to)) continue;

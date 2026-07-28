@@ -63,9 +63,7 @@ List<Map<String, dynamic>> srdSubspecies() => [
         description:
             'Hill Dwarf — keen Insight from highland wisdom plus Dwarven Toughness (+1 HP per level). (SRD 5.1 legacy ancestry)',
         grants: {
-          'granted_modifiers': [
-            {'kind': 'hp_bonus_per_level', 'value': 1},
-          ],
+          'hp_bonus_per_level': 1,
           'granted_skill_proficiencies': [lookup('skill', 'Insight')],
         },
       ),
@@ -75,9 +73,7 @@ List<Map<String, dynamic>> srdSubspecies() => [
         description:
             'Mountain Dwarf — extra hardiness from harsh peaks. (SRD 5.1 legacy ancestry: +2 max HP)',
         grants: {
-          'granted_modifiers': [
-            {'kind': 'hp_bonus_flat', 'value': 2},
-          ],
+          'hp_bonus_flat': 2,
         },
       ),
 
@@ -88,13 +84,8 @@ List<Map<String, dynamic>> srdSubspecies() => [
         description:
             'Superior Darkvision (120 ft. — replaces base Darkvision). Innate spells: Dancing Lights (L1), Faerie Fire (L3, 1/day), Darkness (L5, 1/day).',
         grants: {
-          'granted_modifiers': [
-            {
-              'kind': 'sense_grant',
-              'target_kind': 'sense',
-              'target_ref': lookup('sense', 'Darkvision'),
-              'payload': {'range_ft': 120},
-            },
+          'granted_senses': [
+            {'sense_ref': lookup('sense', 'Darkvision'), 'range_ft': 120},
           ],
           'granted_cantrip_refs': [ref('spell', 'Dancing Lights')],
           'granted_spells_at_level': [
@@ -121,9 +112,7 @@ List<Map<String, dynamic>> srdSubspecies() => [
         description:
             'Speed 35 ft (+5 ft from base). Innate spells: Druidcraft (L1), Longstrider (L3, 1/day), Pass without Trace (L5, 1/day).',
         grants: {
-          'granted_modifiers': [
-            {'kind': 'speed_bonus', 'value': 5},
-          ],
+          'speed_bonus_ft': 5,
           'granted_cantrip_refs': [ref('spell', 'Druidcraft')],
           'granted_spells_at_level': [
             {'spell_ref': ref('spell', 'Longstrider'), 'at_level': 3, 'uses_per_long_rest': 1},
@@ -238,14 +227,9 @@ List<Map<String, dynamic>> srdSubspecies() => [
         description:
             'Standard Human — +1 to every ability score. (SRD 5.1 legacy ancestry; replaces the Versatile / Skilled package thematically.)',
         grants: {
-          'granted_modifiers': [
-            {'kind': 'ability_score_bonus', 'ability': 'STR', 'value': 1},
-            {'kind': 'ability_score_bonus', 'ability': 'DEX', 'value': 1},
-            {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 1},
-            {'kind': 'ability_score_bonus', 'ability': 'INT', 'value': 1},
-            {'kind': 'ability_score_bonus', 'ability': 'WIS', 'value': 1},
-            {'kind': 'ability_score_bonus', 'ability': 'CHA', 'value': 1},
-          ],
+          'ability_bonuses': {
+            'STR': 1, 'DEX': 1, 'CON': 1, 'INT': 1, 'WIS': 1, 'CHA': 1, //
+          },
         },
       ),
 

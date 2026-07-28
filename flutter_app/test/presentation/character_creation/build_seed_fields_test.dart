@@ -5,7 +5,7 @@ import 'package:dungeon_master_tool/application/providers/character_provider.dar
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
-import 'package:dungeon_master_tool/domain/entities/schema/rules/rule_config.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/rule_config.dart';
 import 'package:dungeon_master_tool/presentation/screens/characters/wizard/character_creation_wizard_screen.dart';
 
 EntityCategorySchema _loadPlayerCat() {

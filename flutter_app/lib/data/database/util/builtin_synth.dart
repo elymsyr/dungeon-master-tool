@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/package_import_service.dart';
+import '../../schema/rule_effects_migration.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart'
     show srdCorePackageName;
 import '../app_database.dart';
@@ -104,8 +105,11 @@ Future<BuiltinSynthResult> synthesizeWorldBuiltins(
       'dm_notes': r.dmNotes,
       'pdfs': _decodeList(r.pdfsJson),
       'location_id': r.locationId,
+      // Synthesised built-in rows go through the same legacy-DSL conversion
+      // as world rows — an old bundled pack (installed before the rule-system
+      // removal) reads as named grant fields either way.
       'attributes': remapped is Map<String, dynamic>
-          ? remapped
+          ? migrateRuleEffects(remapped)
           : <String, dynamic>{},
       'package_id': builtinPkgId,
       'package_entity_id': r.id,

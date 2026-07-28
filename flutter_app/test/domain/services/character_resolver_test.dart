@@ -1,6 +1,6 @@
 import 'package:dungeon_master_tool/domain/entities/character.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
-import 'package:dungeon_master_tool/domain/entities/schema/rules/rule_config.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/rule_config.dart';
 import 'package:dungeon_master_tool/domain/services/character_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -57,56 +57,12 @@ void main() {
       expect(descs, isNot(contains('Improved Critical')));
     });
 
-    test('feat with class_level_grant bumps effective class level', () {
-      final wizard = _e(
-        id: 'cls_wiz',
-        slug: 'class',
-        name: 'Wizard',
-        fields: {
-          'features': [
-            {'level': 1, 'description': 'Wizard Spellcasting'},
-          ],
-        },
-      );
-      final feat = _e(
-        id: 'feat_levelgrant',
-        slug: 'feat',
-        name: 'Squire of the Tower',
-        fields: {
-          'effects': [
-            {
-              'kind': 'class_level_grant',
-              'target_ref': {'_ref': 'class', 'name': 'Wizard'},
-              'value': 1,
-            },
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {
-        'class_levels': const <String, int>{},
-        'feat_ids': ['feat_levelgrant'],
-      });
-      final eff = CharacterResolver.resolve(pc, {
-        wizard.id: wizard,
-        feat.id: feat,
-      });
-      expect(eff.classLevels['cls_wiz'], 1);
-      expect(
-        eff.activeFeatures.any((r) => r.description == 'Wizard Spellcasting'),
-        true,
-      );
-    });
-
-    test('Tough-style hp_bonus_per_level effect aggregates', () {
+    test('Tough-style hp_bonus_per_level aggregates', () {
       final feat = _e(
         id: 'feat_tough',
         slug: 'feat',
         name: 'Tough',
-        fields: {
-          'effects': [
-            {'kind': 'hp_bonus_per_level', 'value': 2},
-          ],
-        },
+        fields: {'hp_bonus_per_level': 2},
       );
       final pc = _pc(id: 'pc1', fields: {
         'feat_ids': ['feat_tough'],
@@ -142,11 +98,7 @@ void main() {
         id: 'feat_alert',
         slug: 'feat',
         name: 'Alert',
-        fields: {
-          'effects': [
-            {'kind': 'initiative_bonus', 'value': 5},
-          ],
-        },
+        fields: {'initiative_bonus': 5},
       );
       final pc = _pc(id: 'pc1', fields: {
         'feat_ids': ['feat_alert'],
@@ -478,7 +430,7 @@ void main() {
       expect(eff.damageResistanceIds, contains('dmg_fire'));
     });
 
-    test('subspecies row speed_bonus modifier stacks with base speed', () {
+    test('subspecies row speed_bonus_ft stacks with base speed', () {
       final elf = _e(
         id: 'species_elf',
         slug: 'species',
@@ -487,9 +439,7 @@ void main() {
           'subspecies_options': [
             {
               'name': 'Wood Elf',
-              'granted_modifiers': [
-                {'kind': 'speed_bonus', 'value': 5},
-              ],
+              'speed_bonus_ft': 5,
             },
           ],
         },
@@ -502,15 +452,13 @@ void main() {
       expect(eff.speedBonus, 5);
     });
 
-    test('species ability_score_bonus modifier raises target ability', () {
+    test('species ability_bonuses raises the target ability', () {
       final dwarf = _e(
         id: 'species_dwarf',
         slug: 'species',
         name: 'Dwarf',
         fields: {
-          'granted_modifiers': [
-            {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 2},
-          ],
+          'ability_bonuses': {'CON': 2},
         },
       );
       final pc = _pc(id: 'pc1', fields: {
@@ -524,15 +472,14 @@ void main() {
       expect(eff.effectiveAbilities['CON'], 16);
     });
 
-    test('ability_score_bonus accepts full ability name + clamps at max 20', () {
+    test('ability_bonuses accepts a full ability name + clamps at 20', () {
       final boon = _e(
         id: 'species_boon',
         slug: 'species',
         name: 'Boon',
         fields: {
-          'granted_modifiers': [
-            {'kind': 'ability_score_bonus', 'ability': 'Strength', 'value': 5},
-          ],
+          // Full ability names are accepted alongside the STR/DEX/... form.
+          'ability_bonuses': {'Strength': 5},
         },
       );
       final pc = _pc(id: 'pc1', fields: {
@@ -546,21 +493,17 @@ void main() {
       expect(eff.effectiveAbilities['STR'], 20);
     });
 
-    test('subspecies ability_score_bonus stacks with species bonus', () {
+    test('subspecies ability_bonuses stack with the species bonus', () {
       final dwarf = _e(
         id: 'species_dwarf',
         slug: 'species',
         name: 'Dwarf',
         fields: {
-          'granted_modifiers': [
-            {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 2},
-          ],
+          'ability_bonuses': {'CON': 2},
           'subspecies_options': [
             {
               'name': 'Hill',
-              'granted_modifiers': [
-                {'kind': 'ability_score_bonus', 'ability': 'WIS', 'value': 1},
-              ],
+              'ability_bonuses': {'WIS': 1},
             },
           ],
         },
@@ -927,17 +870,14 @@ void main() {
         slug: 'species',
         name: 'Elf',
         fields: {
-          'granted_senses': ['sense_darkvision'],
+          'granted_senses': [
+            {'sense_ref': 'sense_darkvision', 'range_ft': 60},
+          ],
           'subspecies_options': [
             {
               'name': 'Drow',
-              'granted_modifiers': [
-                {
-                  'kind': 'sense_grant',
-                  'target_kind': 'sense',
-                  'target_ref': 'sense_darkvision',
-                  'payload': {'range_ft': 120},
-                },
+              'granted_senses': [
+                {'sense_ref': 'sense_darkvision', 'range_ft': 120},
               ],
             },
           ],
@@ -964,9 +904,7 @@ void main() {
           'subspecies_options': [
             {
               'name': 'Wood Elf',
-              'granted_modifiers': [
-                {'kind': 'speed_bonus', 'value': 5},
-              ],
+              'speed_bonus_ft': 5,
             },
           ],
         },
@@ -1016,9 +954,7 @@ void main() {
           'subspecies_options': [
             {
               'name': 'Mountain Dwarf',
-              'granted_modifiers': [
-                {'kind': 'hp_bonus_flat', 'value': 2},
-              ],
+              'hp_bonus_flat': 2,
             },
           ],
         },
@@ -1098,14 +1034,10 @@ void main() {
           'subspecies_options': [
             {
               'name': 'Standard Human',
-              'granted_modifiers': [
-                {'kind': 'ability_score_bonus', 'ability': 'STR', 'value': 1},
-                {'kind': 'ability_score_bonus', 'ability': 'DEX', 'value': 1},
-                {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 1},
-                {'kind': 'ability_score_bonus', 'ability': 'INT', 'value': 1},
-                {'kind': 'ability_score_bonus', 'ability': 'WIS', 'value': 1},
-                {'kind': 'ability_score_bonus', 'ability': 'CHA', 'value': 1},
-              ],
+              'ability_bonuses': {
+                'STR': 1, 'DEX': 1, 'CON': 1,
+                'INT': 1, 'WIS': 1, 'CHA': 1,
+              },
             },
           ],
         },
@@ -1156,7 +1088,7 @@ void main() {
       expect(eff.proficiencies.skillIds, contains('sk_intimidation'));
     });
 
-    test('subclass feature with proficiency_grant (saving_throw) folds in', () {
+    test('subclass class-feature feat folds in its save proficiency', () {
       final chaAbility = _e(
         id: 'ab_cha',
         slug: 'ability',
@@ -1174,18 +1106,23 @@ void main() {
         fields: {
           'granted_at_level': 1,
           'features': [
+            {'level': 1, 'name': 'Soul Save', 'description': 'CHA save prof.'},
+          ],
+        },
+      );
+      final featureFeat = _e(
+        id: 'feat_soul_save',
+        slug: 'feat',
+        name: 'Soul Save',
+        fields: {
+          'auto_granted_by': [
             {
-              'level': 1,
-              'name': 'Soul Save',
-              'effects': [
-                {
-                  'kind': 'proficiency_grant',
-                  'target_kind': 'saving_throw',
-                  'target_ref': {'slug': 'ability', 'name': 'Charisma'},
-                },
-              ],
+              'source': 'subclass',
+              'source_ref': {'slug': 'subclass', 'name': 'Soul of Sorcery'},
+              'at_level': 1,
             },
           ],
+          'granted_save_proficiencies': ['ab_cha'],
         },
       );
       final pc = _pc(id: 'pc1', fields: {
@@ -1196,54 +1133,9 @@ void main() {
         cls.id: cls,
         sub.id: sub,
         chaAbility.id: chaAbility,
+        featureFeat.id: featureFeat,
       });
       expect(eff.proficiencies.savingThrowAbilityIds, contains('ab_cha'));
-    });
-
-    test('feat level_grant fixed-point terminates with mutual cycle', () {
-      final wizard = _e(id: 'cls_wiz', slug: 'class', name: 'Wizard');
-      final fighter = _e(id: 'cls_ftr', slug: 'class', name: 'Fighter');
-      final featA = _e(
-        id: 'feat_a',
-        slug: 'feat',
-        name: 'A',
-        fields: {
-          'effects': [
-            {
-              'kind': 'class_level_grant',
-              'target_ref': {'_ref': 'class', 'name': 'Wizard'},
-              'value': 1,
-            },
-          ],
-        },
-      );
-      final featB = _e(
-        id: 'feat_b',
-        slug: 'feat',
-        name: 'B',
-        fields: {
-          'effects': [
-            {
-              'kind': 'class_level_grant',
-              'target_ref': {'_ref': 'class', 'name': 'Fighter'},
-              'value': 1,
-            },
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {
-        'feat_ids': ['feat_a', 'feat_b'],
-      });
-      // Should not infinite-loop. Each feat applies value=1 PER iteration —
-      // resolver caps at 3 fixed-point iterations, so both classes hit 3.
-      final eff = CharacterResolver.resolve(pc, {
-        wizard.id: wizard,
-        fighter.id: fighter,
-        featA.id: featA,
-        featB.id: featB,
-      });
-      expect(eff.classLevels['cls_wiz'], greaterThanOrEqualTo(1));
-      expect(eff.classLevels['cls_ftr'], greaterThanOrEqualTo(1));
     });
 
     test('auto_granted_by walker applies feat when class level matches', () {
@@ -1264,28 +1156,27 @@ void main() {
               'at_level': 1,
             },
           ],
-          'effects': [
-            {
-              'kind': 'unarmored_ac_formula',
-              'payload': {
-                'base': 10,
-                'ability_mods': ['DEX', 'CON'],
-                'shield_allowed': true,
-              },
-              'predicates': [
-                {'kind': 'equipped_armor_kind', 'args': {'value': 'none'}},
-              ],
-            },
-          ],
+          // "While not wearing armor" is carried by the field names, so no
+          // predicate is needed — _computeArmorClass only consults these when
+          // no armor is equipped.
+          'unarmored_ac_base': 10,
+          'unarmored_ac_abilities': ['ab_dex', 'ab_con'],
+          'unarmored_ac_shield_allowed': true,
         },
       );
+      final dex = _e(id: 'ab_dex', slug: 'ability', name: 'Dexterity');
+      final con = _e(id: 'ab_con', slug: 'ability', name: 'Constitution');
       final pc = _pc(id: 'pc_barb', fields: {
         'class_levels': {'cls_barb': 1},
       });
-      final eff = CharacterResolver.resolve(pc, {cls.id: cls, feat.id: feat});
+      final eff = CharacterResolver.resolve(
+          pc, {cls.id: cls, feat.id: feat, dex.id: dex, con.id: con});
       expect(eff.autoGrantedFeatIds, contains('feat_unarmored_barb'));
       expect(eff.unarmoredFormulas, isNotEmpty);
-      expect(eff.unarmoredFormulas.first['kind'], 'unarmored_ac_formula');
+      expect(
+        (eff.unarmoredFormulas.first['payload'] as Map)['ability_mods'],
+        ['DEX', 'CON'],
+      );
     });
 
     test('auto_granted_by below required level does not apply', () {
@@ -1302,9 +1193,7 @@ void main() {
           'auto_granted_by': [
             {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 9},
           ],
-          'effects': [
-            {'kind': 'damage_resistance', 'target_ref': 'd_b'},
-          ],
+          'granted_damage_resistances': ['d_b'],
         },
       );
       final pc = _pc(id: 'pc1', fields: {
@@ -1314,7 +1203,7 @@ void main() {
       expect(eff.autoGrantedFeatIds, isNot(contains('feat_brutal_strike')));
     });
 
-    test('damage_resistance + damage_immunity + condition_immunity flow', () {
+    test('resistance / immunity / condition-immunity grants flow', () {
       final dmgB = _e(id: 'd_b', slug: 'damage-type', name: 'Bludgeoning');
       final dmgF = _e(id: 'd_f', slug: 'damage-type', name: 'Fire');
       final condC = _e(id: 'c_charm', slug: 'condition', name: 'Charmed');
@@ -1323,11 +1212,9 @@ void main() {
         slug: 'feat',
         name: 'Hardiness',
         fields: {
-          'effects': [
-            {'kind': 'damage_resistance', 'target_ref': 'd_b'},
-            {'kind': 'damage_immunity', 'target_ref': 'd_f'},
-            {'kind': 'condition_immunity_grant', 'target_ref': 'c_charm'},
-          ],
+          'granted_damage_resistances': ['d_b'],
+          'granted_damage_immunities': ['d_f'],
+          'granted_condition_immunities': ['c_charm'],
         },
       );
       final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_x']});
@@ -1342,18 +1229,18 @@ void main() {
     test('extra_attack_count multiclass takes max not sum', () {
       final featA = _e(
         id: 'fa', slug: 'feat', name: 'A',
-        fields: {'effects': [{'kind': 'extra_attack_count', 'value': 2}]},
+        fields: {'extra_attack_count': 2},
       );
       final featB = _e(
         id: 'fb', slug: 'feat', name: 'B',
-        fields: {'effects': [{'kind': 'extra_attack_count', 'value': 3}]},
+        fields: {'extra_attack_count': 3},
       );
       final pc = _pc(id: 'pc1', fields: {'feat_ids': ['fa', 'fb']});
       final eff = CharacterResolver.resolve(pc, {featA.id: featA, featB.id: featB});
       expect(eff.extraAttackCount, 3);
     });
 
-    test('class_level_at_least predicate gates effect', () {
+    test('auto_granted_by.at_level is the level gate for a grant', () {
       final cls = _e(id: 'cls_barb', slug: 'class', name: 'Barbarian');
       final dmgB = _e(id: 'd_b', slug: 'damage-type', name: 'Bludgeoning');
       final feat = _e(
@@ -1362,34 +1249,24 @@ void main() {
         name: 'Late',
         fields: {
           'auto_granted_by': [
-            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 1},
+            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 9},
           ],
-          'effects': [
-            {
-              'kind': 'damage_resistance',
-              'target_ref': 'd_b',
-              'predicates': [
-                {
-                  'kind': 'class_level_at_least',
-                  'args': {'class_ref': 'cls_barb', 'level': 9},
-                },
-              ],
-            },
-          ],
+          'granted_damage_resistances': ['d_b'],
         },
       );
-      // L5: feat is auto-granted but the per-effect predicate fails.
+      // L5: below the gate — the card is not granted at all.
       final pc5 = _pc(id: 'pc5', fields: {'class_levels': {'cls_barb': 5}});
       final eff5 = CharacterResolver.resolve(pc5, {
         cls.id: cls, dmgB.id: dmgB, feat.id: feat,
       });
-      expect(eff5.autoGrantedFeatIds, contains('feat_late'));
+      expect(eff5.autoGrantedFeatIds, isNot(contains('feat_late')));
       expect(eff5.damageResistanceIds, isNot(contains('d_b')));
-      // L9: predicate passes; resistance applies.
+      // L9: gate passes; the resistance applies.
       final pc9 = _pc(id: 'pc9', fields: {'class_levels': {'cls_barb': 9}});
       final eff9 = CharacterResolver.resolve(pc9, {
         cls.id: cls, dmgB.id: dmgB, feat.id: feat,
       });
+      expect(eff9.autoGrantedFeatIds, contains('feat_late'));
       expect(eff9.damageResistanceIds, contains('d_b'));
     });
 
@@ -1452,42 +1329,13 @@ void main() {
     });
   });
 
-  group('CharacterResolver rule-system regressions', () {
-    test('deferred effect kinds do not leak a phantom swim speed', () {
-      // Regression: the empty case labels for deferred kinds used to group
-      // into the swim_speed_equals_speed body, granting swim = walk.
-      final feat = _e(
-        id: 'feat_def',
-        slug: 'feat',
-        name: 'Deferred Bundle',
-        fields: {
-          'effects': [
-            {'kind': 'advantage_on'},
-            {'kind': 'state_grant'},
-            {'kind': 'reliable_talent'},
-            {'kind': 'min_die_value'},
-            {'kind': 'passive_score_bonus', 'value': 5},
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_def']});
-      final eff = CharacterResolver.resolve(pc, {feat.id: feat});
-      expect(eff.extraSpeeds, isEmpty);
-      expect(eff.warnings, isEmpty,
-          reason: 'deferred kinds are recognized, not warned about');
-    });
-
-    test('swim/climb_speed_equals_speed still resolve to walking speed', () {
+  group('CharacterResolver grant-block behaviour', () {
+    test('-1 on an alternate speed means "equal to walking speed"', () {
       final feat = _e(
         id: 'feat_swim',
         slug: 'feat',
         name: 'Amphibious',
-        fields: {
-          'effects': [
-            {'kind': 'swim_speed_equals_speed'},
-            {'kind': 'climb_speed_equals_speed'},
-          ],
-        },
+        fields: {'speed_swim_ft': -1, 'speed_climb_ft': -1},
       );
       final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_swim']});
       final eff = CharacterResolver.resolve(pc, {feat.id: feat});
@@ -1495,245 +1343,69 @@ void main() {
       expect(eff.extraSpeeds['climb'], 30);
     });
 
-    test('legacy resistance/immunity/vulnerability modifier kinds alias', () {
-      final fire = _e(id: 'd_fire', slug: 'damage-type', name: 'Fire');
-      final poison = _e(id: 'd_poison', slug: 'damage-type', name: 'Poison');
-      final cold = _e(id: 'd_cold', slug: 'damage-type', name: 'Cold');
-      final feat = _e(
-        id: 'feat_legacy',
-        slug: 'feat',
-        name: 'Legacy Hardiness',
-        fields: {
-          'granted_modifiers': [
-            {'kind': 'resistance_grant', 'target_ref': 'd_fire'},
-            {'kind': 'damage_immunity_grant', 'target_ref': 'd_poison'},
-            {'kind': 'vulnerability_grant', 'target_ref': 'd_cold'},
-          ],
-        },
+    test('an explicit fly speed beats a "= walking speed" grant', () {
+      final wings = _e(
+        id: 'feat_wings', slug: 'feat', name: 'Wings',
+        fields: {'speed_fly_ft': 60},
       );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_legacy']});
-      final eff = CharacterResolver.resolve(pc, {
-        fire.id: fire, poison.id: poison, cold.id: cold, feat.id: feat,
-      });
-      expect(eff.damageResistanceIds, contains('d_fire'));
-      expect(eff.damageImmunityIds, contains('d_poison'));
-      expect(eff.damageVulnerabilityIds, contains('d_cold'));
-      expect(eff.warnings, isEmpty);
-    });
-
-    test('species-path legacy damage_resistance_grant aliases too', () {
-      final acid = _e(id: 'd_acid', slug: 'damage-type', name: 'Acid');
-      final sp = _e(
-        id: 'species_x',
-        slug: 'species',
-        name: 'X',
-        fields: {
-          'granted_modifiers': [
-            {'kind': 'damage_resistance_grant', 'target_ref': 'd_acid'},
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {'race_id': 'species_x'});
-      final eff = CharacterResolver.resolve(pc, {sp.id: sp, acid.id: acid});
-      expect(eff.damageResistanceIds, contains('d_acid'));
-    });
-
-    test('legacy spell_known_grant aliases to spell_grant', () {
-      final spell = _e(id: 'sp_misty', slug: 'spell', name: 'Misty Step');
-      final feat = _e(
-        id: 'feat_fey',
-        slug: 'feat',
-        name: 'Fey Touched',
-        fields: {
-          'granted_modifiers': [
-            {'kind': 'spell_known_grant', 'target_ref': 'sp_misty'},
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_fey']});
-      final eff = CharacterResolver.resolve(pc, {spell.id: spell, feat.id: feat});
-      expect(eff.grantedSpellIds, contains('sp_misty'));
-    });
-
-    test("proficiency_grant with legacy target_kind 'save' grants the save", () {
-      // Regression for the shipped "Resilient" preset, which writes 'save'.
-      final con = _e(id: 'ab_con', slug: 'ability', name: 'Constitution');
-      final feat = _e(
-        id: 'feat_resilient',
-        slug: 'feat',
-        name: 'Resilient',
-        fields: {
-          'granted_modifiers': [
-            {
-              'kind': 'proficiency_grant',
-              'target_kind': 'save',
-              'target_ref': 'ab_con',
-            },
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_resilient']});
-      final eff = CharacterResolver.resolve(pc, {con.id: con, feat.id: feat});
-      expect(eff.proficiencies.savingThrowAbilityIds, contains('ab_con'));
-    });
-
-    test('unimplemented legacy kind warns; feature_text stays silent', () {
-      final feat = _e(
-        id: 'feat_mixed',
-        slug: 'feat',
-        name: 'Mixed Legacy',
-        fields: {
-          'granted_modifiers': [
-            {'kind': 'save_bonus', 'value': 1},
-            {'kind': 'feature_text', 'notes': 'Narrative only.'},
-          ],
-        },
-      );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_mixed']});
-      final eff = CharacterResolver.resolve(pc, {feat.id: feat});
-      expect(
-        eff.warnings,
-        anyElement(allOf(contains('save_bonus'), contains('not applied'))),
-      );
-      expect(eff.warnings.where((w) => w.contains('feature_text')), isEmpty);
-    });
-
-    test('ability_score_bonus dereferences target_ref (Resilient preset)', () {
-      // The legacy modifier editor stores the ability as a target_ref entity
-      // (it has no free-text ability field), exactly like the shipped
-      // "Resilient: CON" preset. The resolver must dereference it.
-      final con = _e(id: 'ability-con', slug: 'ability', name: 'Constitution');
-      final feat = _e(
-        id: 'feat_resilient2',
-        slug: 'feat',
-        name: 'Resilient',
-        fields: {
-          'granted_modifiers': [
-            {
-              'kind': 'ability_score_bonus',
-              'target_kind': 'ability',
-              'target_ref': 'ability-con',
-              'value': 1,
-            },
-          ],
-        },
+      final glide = _e(
+        id: 'feat_glide', slug: 'feat', name: 'Glide',
+        fields: {'speed_fly_ft': -1},
       );
       final pc = _pc(id: 'pc1', fields: {
-        'feat_ids': ['feat_resilient2'],
-        'base_abilities': {
-          'STR': 10, 'DEX': 10, 'CON': 13,
-          'INT': 10, 'WIS': 10, 'CHA': 10,
-        },
+        'feat_ids': ['feat_glide', 'feat_wings'],
       });
-      final eff = CharacterResolver.resolve(pc, {con.id: con, feat.id: feat});
-      expect(eff.effectiveAbilities['CON'], 14);
+      final eff = CharacterResolver.resolve(
+          pc, {wings.id: wings, glide.id: glide});
+      expect(eff.extraSpeeds['fly'], 60);
     });
 
-    test('legacy condition_ref gates the modifier instead of always applying',
-        () {
-      final fire = _e(id: 'd_fire', slug: 'damage-type', name: 'Fire');
-      final rage = _e(id: 'c_rage', slug: 'condition', name: 'Raging');
-      final feat = _e(
-        id: 'feat_rage_res',
-        slug: 'feat',
-        name: 'Rage Resistance',
+    test('granted_senses keeps the largest range per sense', () {
+      final dark = _e(id: 'sense_dark', slug: 'sense', name: 'Darkvision');
+      final a = _e(
+        id: 'feat_a', slug: 'feat', name: 'A',
         fields: {
-          'granted_modifiers': [
-            {
-              'kind': 'resistance_grant',
-              'target_ref': 'd_fire',
-              'condition_ref': 'c_rage',
-            },
-            {
-              'kind': 'speed_bonus',
-              'value': 10,
-              'condition_ref': 'c_rage',
-            },
+          'granted_senses': [
+            {'sense_ref': 'sense_dark', 'range_ft': 60},
           ],
         },
       );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_rage_res']});
-      final eff = CharacterResolver.resolve(pc, {
-        fire.id: fire, rage.id: rage, feat.id: feat,
-      });
-      // Defense kinds surface as conditional-grant chips, not flat grants.
-      expect(eff.damageResistanceIds, isNot(contains('d_fire')));
-      expect(
-        eff.conditionalGrants.any((g) =>
-            g['state'] == 'c_rage' &&
-            g['kind'] == 'damage_resistance' &&
-            (g['ids'] as List).contains('d_fire')),
-        isTrue,
-      );
-      // Non-defense kinds correctly stay off the sheet while un-triggered.
-      expect(eff.speedBonus, 0);
-    });
-
-    test('truesight/blindsight grants resolve the sense by name without a ref',
-        () {
-      final truesight = _e(id: 'sense_true', slug: 'sense', name: 'Truesight');
-      final feat = _e(
-        id: 'feat_truesight',
-        slug: 'feat',
-        name: 'Truesight Feat',
+      final b = _e(
+        id: 'feat_b', slug: 'feat', name: 'B',
         fields: {
-          'effects': [
-            {
-              'kind': 'truesight_grant',
-              'payload': {'range_ft': 60},
-            },
+          'granted_senses': [
+            {'sense_ref': 'sense_dark', 'range_ft': 120},
           ],
         },
       );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_truesight']});
-      final eff = CharacterResolver.resolve(pc, {
-        truesight.id: truesight, feat.id: feat,
-      });
-      expect(eff.senseEntityIds, contains('sense_true'));
-      expect(eff.senseRanges['sense_true'], 60);
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_a', 'feat_b']});
+      final eff =
+          CharacterResolver.resolve(pc, {dark.id: dark, a.id: a, b.id: b});
+      expect(eff.senseEntityIds, contains('sense_dark'));
+      expect(eff.senseRanges['sense_dark'], 120);
     });
 
-    test('attack_bonus and condition_advantage_on_save_grant are recognized',
-        () {
+    test('a bare ref in granted_senses is a sense with no stated range', () {
+      final dark = _e(id: 'sense_dark', slug: 'sense', name: 'Darkvision');
       final feat = _e(
-        id: 'feat_def2',
-        slug: 'feat',
-        name: 'Deferred Extras',
-        fields: {
-          'effects': [
-            {'kind': 'attack_bonus', 'value': 1},
-            {'kind': 'condition_advantage_on_save_grant', 'target_ref': 'c_x'},
-          ],
-        },
+        id: 'feat_a', slug: 'feat', name: 'A',
+        fields: {'granted_senses': ['sense_dark']},
       );
-      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_def2']});
-      final eff = CharacterResolver.resolve(pc, {feat.id: feat});
-      expect(eff.warnings, isEmpty,
-          reason: 'catalog-offered deferred kinds must not warn');
-      expect(eff.extraSpeeds, isEmpty);
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_a']});
+      final eff = CharacterResolver.resolve(pc, {dark.id: dark, feat.id: feat});
+      expect(eff.senseEntityIds, contains('sense_dark'));
+      expect(eff.senseRanges['sense_dark'], isNull);
     });
 
-    test('crit_range_extend honors payload threshold, rejects absurd values',
+    test('crit_threshold applies; an absurd value is refused with a warning',
         () {
       final champ = _e(
-        id: 'feat_champ',
-        slug: 'feat',
-        name: 'Improved Critical',
-        fields: {
-          'effects': [
-            {'kind': 'crit_range_extend', 'payload': {'threshold': 19}},
-          ],
-        },
+        id: 'feat_champ', slug: 'feat', name: 'Improved Critical',
+        fields: {'crit_threshold': 19},
       );
       final broken = _e(
-        id: 'feat_broken',
-        slug: 'feat',
-        name: 'Broken Crit',
-        fields: {
-          'effects': [
-            {'kind': 'crit_range_extend', 'value': 1},
-          ],
-        },
+        id: 'feat_broken', slug: 'feat', name: 'Broken Crit',
+        fields: {'crit_threshold': 1},
       );
       final ok = CharacterResolver.resolve(
           _pc(id: 'pc1', fields: {'feat_ids': ['feat_champ']}),
@@ -1743,7 +1415,80 @@ void main() {
           _pc(id: 'pc2', fields: {'feat_ids': ['feat_broken']}),
           {broken.id: broken});
       expect(bad.critRangeMin, 20, reason: 'threshold 1 must be ignored');
-      expect(bad.warnings, anyElement(contains('crit_range_extend')));
+      expect(bad.warnings, anyElement(contains('crit_threshold')));
+    });
+
+    test('active_while_state_ref routes defenses to conditionalGrants', () {
+      final fire = _e(id: 'd_fire', slug: 'damage-type', name: 'Fire');
+      final raging =
+          _e(id: 'state_raging', slug: 'character-state', name: 'state:raging');
+      final feat = _e(
+        id: 'feat_rage_res',
+        slug: 'feat',
+        name: 'Rage Resistance',
+        fields: {
+          'active_while_state_ref': 'state_raging',
+          'granted_damage_resistances': ['d_fire'],
+          // A numeric bonus on a gated card must NOT reach the resting sheet.
+          'speed_bonus_ft': 10,
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_rage_res']});
+      final eff = CharacterResolver.resolve(pc, {
+        fire.id: fire, raging.id: raging, feat.id: feat,
+      });
+      expect(eff.damageResistanceIds, isNot(contains('d_fire')));
+      expect(
+        eff.conditionalGrants.any((g) =>
+            g['state'] == 'state:raging' &&
+            g['kind'] == 'damage_resistance' &&
+            (g['ids'] as List).contains('d_fire')),
+        isTrue,
+      );
+      expect(eff.speedBonus, 0);
+    });
+
+    test('a gated card still contributes its mechanical notes, state-labelled',
+        () {
+      final raging =
+          _e(id: 'state_raging', slug: 'character-state', name: 'state:raging');
+      final feat = _e(
+        id: 'feat_rage', slug: 'feat', name: 'Rage',
+        fields: {
+          'active_while_state_ref': 'state_raging',
+          'mechanical_notes': 'Advantage on Strength checks and saves',
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_rage']});
+      final eff =
+          CharacterResolver.resolve(pc, {raging.id: raging, feat.id: feat});
+      expect(
+        eff.mechanicalNotes,
+        contains('while raging: Advantage on Strength checks and saves'),
+      );
+    });
+
+    test('mechanical_notes split on newlines and de-duplicate', () {
+      final a = _e(
+        id: 'feat_a', slug: 'feat', name: 'A',
+        fields: {'mechanical_notes': 'Line one\n\nLine two\n'},
+      );
+      final b = _e(
+        id: 'feat_b', slug: 'feat', name: 'B',
+        fields: {'mechanical_notes': 'Line one'},
+      );
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_a', 'feat_b']});
+      final eff = CharacterResolver.resolve(pc, {a.id: a, b.id: b});
+      expect(eff.mechanicalNotes, ['Line one', 'Line two']);
+    });
+
+    test('no card grants anything → no warnings and empty totals', () {
+      final feat = _e(id: 'feat_x', slug: 'feat', name: 'Plain');
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_x']});
+      final eff = CharacterResolver.resolve(pc, {feat.id: feat});
+      expect(eff.warnings, isEmpty);
+      expect(eff.extraSpeeds, isEmpty);
+      expect(eff.mechanicalNotes, isEmpty);
     });
 
     test('RuleConfig acUnarmoredBase override feeds unarmored AC', () {

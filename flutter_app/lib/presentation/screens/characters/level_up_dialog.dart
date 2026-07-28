@@ -226,16 +226,6 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                             f.description,
                             style: TextStyle(fontSize: 11, color: hint),
                           ),
-                        if (f.grantedSaveProficiencyNames.isNotEmpty)
-                          Text(
-                            'You gain proficiency in '
-                            '${f.grantedSaveProficiencyNames.join(", ")} '
-                            'saving throws.',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
                       ],
                     ),
                   ),

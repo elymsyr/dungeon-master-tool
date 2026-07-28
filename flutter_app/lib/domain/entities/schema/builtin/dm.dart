@@ -183,8 +183,6 @@ class _FB {
         gridSpan: 2,
         defaultValue: const {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
       );
-  void grantedModifiers(String k, String l, {String g = grpRules}) =>
-      _base(key: k, label: l, type: FieldType.grantedModifiers, groupId: g, isList: true, gridSpan: 2);
   void image(String k, String l,
           {bool isList = false,
           String g = grpIdentity,
@@ -703,8 +701,10 @@ EntityCategorySchema _curseCategory(String schemaId, String now, int orderIndex)
       const ['condition'], isList: true, g: grpRules);
   fb.relation('removed_by_spell_refs', 'Removed By Spells',
       const ['spell'], isList: true, g: grpRules);
-  // Ongoing typed modifiers (e.g. -2 to all attack rolls while cursed).
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  // Ongoing mechanics as plain lines ("-2 to all attack rolls while cursed").
+  // Deliberately text, not typed grant fields: nothing applies a curse to a
+  // resolved character sheet, so typed fields here would silently do nothing.
+  fb.textarea('mechanical_notes', 'Mechanical Notes', g: grpRules);
   fb.markdown('effect', 'Effect (narrative)', g: grpRules);
   fb.markdown('removed_by', 'Removed By (narrative)', g: grpRules);
 
@@ -732,8 +732,9 @@ EntityCategorySchema _environmentalEffectCategory(String schemaId, String now, i
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type'], g: grpRules);
   fb.relation('applied_condition_refs', 'Applied Conditions',
       const ['condition'], isList: true, g: grpRules);
-  // Ongoing typed modifiers (e.g. difficult terrain → speed_bonus -10).
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  // Ongoing mechanics as plain lines ("difficult terrain: speed halved").
+  // Text for the same reason as Curse — no resolver path applies these.
+  fb.textarea('mechanical_notes', 'Mechanical Notes', g: grpRules);
   fb.markdown('effect', 'Effect (narrative)', g: grpRules);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);

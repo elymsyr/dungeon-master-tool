@@ -167,7 +167,7 @@ PendingChoice newPendingChoice({
       featureName: featureName,
     );
 
-/// Scan [feats]' `choice_group` effects and emit one [PendingChoice]
+/// Scan [feats]' `player_choices` rows and emit one [PendingChoice]
 /// (kind `featChoice`) per under-filled group, so the player is prompted to
 /// resolve each pick (Skilled's 3 skills/tools, Magic Initiate's cantrips +
 /// spell, …).
@@ -188,25 +188,22 @@ List<PendingChoice> seedFeatChoicePendings({
 }) {
   final out = <PendingChoice>[];
   for (final feat in feats) {
-    final effects = feat.fields['effects'];
-    if (effects is! List) continue;
-    for (final row in effects) {
+    final rows = feat.fields['player_choices'];
+    if (rows is! List) continue;
+    for (final row in rows) {
       if (row is! Map) continue;
-      if (row['kind'] != 'choice_group') continue;
-      final payload = row['payload'];
-      if (payload is! Map) continue;
-      final groupId = payload['group_id']?.toString() ?? '';
+      final groupId = row['group_id']?.toString() ?? '';
       if (groupId.isEmpty) continue;
-      final pickKind = payload['pick_kind']?.toString() ?? 'enum';
+      final pickKind = row['pick_kind']?.toString() ?? 'enum';
       if (pickKind == 'ability') continue;
-      final pick = payload['pick'] is int ? payload['pick'] as int : 1;
+      final pick = row['pick'] is int ? row['pick'] as int : 1;
       final storageKey = '${feat.id}:$groupId';
       final raw = existingFeatChoices[storageKey] ?? '';
       final pickedCount =
           raw.isEmpty ? 0 : raw.split(',').where((s) => s.isNotEmpty).length;
       final remaining = (pick - pickedCount).clamp(0, pick);
       if (remaining <= 0) continue;
-      final label = payload['label']?.toString() ?? groupId;
+      final label = row['label']?.toString() ?? groupId;
       out.add(newPendingChoice(
         kind: PendingChoiceKind.featChoice,
         level: level,

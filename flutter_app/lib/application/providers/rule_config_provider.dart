@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/schema/rules/rule_config.dart';
+import '../../domain/entities/schema/rule_config.dart';
 import 'entity_provider.dart';
 
 /// The active template's [RuleConfig].

@@ -15,9 +15,9 @@ import 'skill_mod_helper.dart';
 /// Wizard step that surfaces per-feat sub-choices.
 ///
 /// Reads the background's `origin_feat_ref` and any feats already in
-/// `draft.featIds`. For each feat, walks `effects` filtering
-/// `kind == 'choice_group'` and renders a picker per payload — enum, skill+
-/// tool combo, tool-category, ability, or spell-from-list.
+/// `draft.featIds`. For each feat, walks its `player_choices` rows and
+/// renders a picker per row — enum, skill+tool combo, tool-category,
+/// ability, or spell-from-list.
 ///
 /// Picks are stored in `draft.originFeatChoices` keyed `<feat_id>:<group_id>`.
 /// Single-pick values are plain option ids; multi-pick values are stored as a
@@ -132,16 +132,12 @@ class FeatsStep extends ConsumerWidget {
   }
 
   static List<Map<String, dynamic>> _readChoiceGroups(Entity feat) {
-    final effects = feat.fields['effects'];
-    if (effects is! List) return const [];
-    final out = <Map<String, dynamic>>[];
-    for (final row in effects) {
-      if (row is! Map) continue;
-      if (row['kind'] != 'choice_group') continue;
-      final payload = row['payload'];
-      if (payload is Map) out.add(Map<String, dynamic>.from(payload));
-    }
-    return out;
+    final rows = feat.fields['player_choices'];
+    if (rows is! List) return const [];
+    return [
+      for (final row in rows)
+        if (row is Map) Map<String, dynamic>.from(row),
+    ];
   }
 }
 
@@ -1066,7 +1062,7 @@ class FeatChoiceContributions {
       preparedSpellIds.isEmpty;
 }
 
-/// Walk each active feat's `choice_group` effects and bucket the picks by
+/// Walk each active feat's `player_choices` rows and bucket the picks by
 /// type so the wizard can apply them to the seed map at commit. Skill/tool
 /// folding uses entity category to route a `skill_or_tool` pick to the
 /// right bucket.
