@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/pending_choices.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -27,16 +27,17 @@ tags: [file]
 - Depends on: [[level_up_planner]] (`LevelUpPlan`), `entity.dart`, `dart:math`.
 - Used by: the creation wizard commit (seeds initial `pending_choices`), the editor level-up flow + `PendingChoicesPanel` (renders badges + resolver dialogs).
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
 - `PendingChoiceKind` wire values (stored discriminator): asiOrFeat, fightingStyle, cantrips, spells, subclass, weaponMastery, skillProficiency, toolProficiency, languages, expertise, featAsi, divineOrder, featureOption, featChoice. `fromWire` reverses; malformed entries are dropped silently on decode (lose one badge, not the editor).
 - `PendingChoice` carries `id`, `kind`, `level`, optional `classId`/`classLabel`, `count` (spells/cantrips/skills remaining), `maxSpellLevel`, `sourceEntityId` (e.g. the feat for `featAsi`/`featChoice`), `featureName`, `dismissed` (soft-dismiss; still surfaced in the Upgrades panel). IDs minted by `_newId` (`pc_<microsTime36>_<rand36>`).
 - `pendingChoicesFromPlan`: maps `LevelUpPlan` flags → choices — subclass (only when `!hasSubclass`), asiOrFeat, fightingStyle, divineOrder, one `featureOption` per `featureOptionPicks` name, cantrips (`cantripsKnownDelta`), spells (`preparedSpellsDelta` + `maxSpellLevelAtNewLevel`), weaponMastery (`weaponMasteryCountDelta`).
-- `seedFeatChoicePendings`: scans each feat's `choice_group` effects, emits one `featChoice` per under-filled group (remaining = `pick - alreadyPicked` from comma-joined `existingFeatChoices[<featId>:<groupId>]`); `pick_kind == 'ability'` skipped (handled by featAsi).
-- `seedFeatFollowOns`: for one feat emits skillProficiency (`bonus_skill_pick_count`), expertise (`bonus_expertise_pick_count`), featAsi (`asi_amount > 0`, sourced to the feat), plus the feat's `choice_group` pendings. Shared by editor level-up + manual feat-edit paths so they never drift.
+- `seedFeatChoicePendings`: scans each feat's **`player_choices`** rows (`{group_id, label, prompt, pick_kind, pick, options?, list_group_id?, spell_level?}` — `FieldType.playerChoices`), emits one `featChoice` per under-filled group (remaining = `pick - alreadyPicked` from comma-joined `existingFeatChoices[<featId>:<groupId>]`); `pick_kind == 'ability'` skipped (handled by featAsi, and the resolver dialog has no ability picker).
+- `seedFeatFollowOns`: for one feat emits skillProficiency (`bonus_skill_pick_count`), expertise (`bonus_expertise_pick_count`), featAsi (`asi_amount > 0`, sourced to the feat), plus the feat's `player_choices` pendings. Shared by editor level-up + manual feat-edit paths so they never drift.
 - `pendingChoiceLabel`: human label per kind (`"$classLabel L$level · ..."`). `pendingChoiceFieldHints`: which schema field tiles light the `!` badge per kind (e.g. asiOrFeat → `{stat_block, feats}`, spells/cantrips → `{spells_known}`, subclass → `{subclass_refs}`, weaponMastery → `{weapon_masteries}`).
 
 ## Notes
 - The wizard maps results to `.toMap()` into seeded `pending_choices`; the editor merges `PendingChoice`s as follow-ons.
+- `player_choices` replaced the old `choice_group` effect rows in the 2026-07-28 rule-system removal (see [[Grant-Resolution]]); the wire shape of a group is otherwise unchanged, so stored `existingFeatChoices` keys still resolve.

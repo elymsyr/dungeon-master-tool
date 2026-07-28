@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/field_schema.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -23,14 +23,16 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `freezed_annotation`
-- Used by: [[entity_category_schema]], [[package_import_service]] (`_defaultValue` switch on `fieldType`), entity editors, [[character_resolver]] / [[effective_character]] (consume the DSL field shapes)
+- Used by: [[entity_category_schema]], [[package_import_service]] (`_defaultValue` switch on `fieldType`), entity editors, [[character_resolver]] / [[effective_character]] (consume the grant-block field shapes)
 - Domain map: [[World-and-Content]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- **`FieldType`** (closed enum, JSON-renamed where noted): scalars `text/textarea/markdown/integer/float_(@'float')/boolean_(@'boolean')/enum_(@'enum')/date/dice`; media `image/imagePerEra/file/pdf`; refs `relation` (allowedTypes targets categories), `tagList`; structured D&D types — `statBlock`, `combatStats`, `conditionStats`, `slot`, `proficiencyTable`, `levelTable`, `levelTextTable`, `classFeatures`, `spellEffectList`, `rangedSenseList`, `grantedModifiers` (LEGACY typed-bonus DSL), `equipmentChoiceGroups`, `featEffectList` (the richer effect DSL behind `rule_effects`), `autoGrantSources`, `spellSlotGrid`, `spellSlotProgression`, `subspeciesOptions`, `crCalculator`.
-- **Canonical effect-kind registry** lives in `rules/dnd5e_rule_catalog.dart` (NOT here) — debug-cross-checked against `CharacterResolver.knownEffectKinds`. `featEffectList` rows carry `predicates` (AND-combined closed enum), `scales_with`, `activation`. The inline doc comments are the authoritative shape spec for each structured type.
+- **`FieldType`** (closed enum, JSON-renamed where noted): scalars `text/textarea/markdown/integer/float_(@'float')/boolean_(@'boolean')/enum_(@'enum')/date/dice`; media `image/imagePerEra/file/pdf`; refs `relation` (allowedTypes targets categories), `tagList`; structured D&D types — `statBlock`, `combatStats`, `conditionStats`, `slot`, `proficiencyTable`, `levelTable`, `levelTextTable`, `classFeatures`, `spellEffectList`, `rangedSenseList`, `equipmentChoiceGroups`, `resourcePoolGrants`, `playerChoices`, `autoGrantSources`, `spellSlotGrid`, `spellSlotProgression`, `subspeciesOptions`, `crCalculator`.
+- **No effect-kind registry.** `featEffectList` and `grantedModifiers` — the two competing effect DSLs — were deleted in the 2026-07-28 rule-system removal along with `rules/dnd5e_rule_catalog.dart`. Card mechanics are now plainly named fields built on the ordinary types above (`relation` lists, `integer`, `statBlock`, `levelTable`, `textarea`); the closed contract is `CharacterResolver.grantFieldKeys`, emitted onto categories by `_FB.grantBlock` in `builtin/content.dart`. See [[Grant-Resolution]].
+- The two structured types added in their place: **`resourcePoolGrants`** (`{pool_ref, recharge, count?, count_formula?, count_by_level?, class_ref?}` — per-rest pools like Rage/Ki/Bardic Inspiration) and **`playerChoices`** (`{group_id, label, prompt, pick_kind, pick, options?, list_group_id?, spell_level?}` — deferred "pick N of these" decisions read by [[pending_choices]]). Net zero: two types out, two in.
+- The inline doc comments on each enum value are the authoritative shape spec for that structured type.
 - **`FieldSchema`** key fields: `fieldId`/`categoryId`/`fieldKey`/`label`/`fieldType` (required), `isRequired`, `defaultValue` (dynamic), `placeholder`, `helpText`, `validation`, `visibility` (default `shared`), `orderIndex`, `isBuiltin`, `isList`, `hasEquip`, `showSourceFilter` (relation-list "show all sources"), `allowedInSections`, `subFields` (combatStats sub-columns feeding the encounter table), `groupId`, `gridColumnSpan`, `mediaKindWire` (per-field upload-kind override stored as string to keep `MediaKind` out of the schema layer).
 - **`FieldVisibility`**: `shared`, `dmOnly`, `private_(@'private')` — online-mode field visibility gating.
 

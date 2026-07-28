@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/level_up_planner.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -27,13 +27,13 @@ tags: [file]
 - Depends on: [[caster_progression]] (`parseCasterKind`, `levelTableValue`, `defaultCantripsKnown`, `defaultPreparedSpells`, `maxPreparableSpellLevel`, `spellSlotsForClass`, `CasterKind`), [[extra_attack_resolver]] (`resolveExtraAttackCountAt`), [[weapon_mastery_resolver]] (`resolveWeaponMasteryCountAt`), [[resource_pool_resolver]] (`resolveResourcePoolsAt`), `rule_config.dart`, `entity.dart`.
 - Used by: [[pending_choices]] (`pendingChoicesFromPlan` consumes the flags), the editor level-up dialog UI.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
 - Clamps `from`/`to` to [0,20]. `hitDie` normalized via `canonicalHitDie` (imported packs store `8`, SRD stores `"d8"`) — never throws an `as String?` cast.
 - HP: `levelsGained * config.hpPerLevelFor(hitDie)` (fixed d6→4/d8→5/d10→6/d12→7). `effectiveHpDelta` adds `levelsGained * conModifier` (CON read post-ASI by the dialog so the screen matches what's applied); honors a manual `rolledTotal` over the average.
-- Features: `_featuresInRange` reads `entity.fields['features']`, keeps rows with `afterLevel < level <= throughLevel`, sorts by (level, source). `_saveGrantsFromEffects` extracts save-proficiency names from `proficiency_grant` effects with `target_kind` saving_throw/ability.
+- Features: `_featuresInRange` reads `entity.fields['features']`, keeps rows with `afterLevel < level <= throughLevel`, sorts by (level, source). Save proficiencies are no longer surfaced here — the old `_saveGrantsFromEffects` / `grantedSaveProficiencyNames` pair scanned `proficiency_grant` effect rows and went with the rule system (2026-07-28); the class's top-level `saving_throw_refs` is the single source and [[character_resolver]] applies it.
 - Flags detected over the (from,to] window: `isAsiOrFeatLevel` (`config.isAsiLevel`); `isExtraAttackLevel` (resolver-driven via `resolveExtraAttackCountAt`, with a fallback `_extraAttackFallbackLevels = {5}` only when no entity map); `isSubclassLevel` (feature-name contains "subclass"); `isDivineOrderLevel` (feature name == "Divine Order"); `isFightingStyleLevel` (feature name contains "fighting style" OR class `grants_fighting_style_at_levels` table).
 - `featureOptionPicks`: 1-of-N subclass-feature picks from a hardcoded `featureOptionTriggers` set (Hunter's Prey, Defensive Tactics, Multiattack, Superior Hunter's Defense, Pact Boon, Draconic Spells, Fiendish Resilience) PLUS cumulative per-level pickers in `_cumulativePickProgression` (Sorcerer Metamagic 2/1/1 at L2/10/17; Warlock Eldritch Invocations 2/1/1/1/1/1/1 at L1/5/7/9/12/15/18). Option feats must be authored under category `Feature Option: <name>` in `feats_class.dart`.
 - Caster fields populated only when `casterKind != none && toLevel > 0`: cantrip/prepared caps prefer authored `cantrips_known_by_level`/`prepared_spells_by_level` tables, fall back to the `caster_progression` defaults; slot maps via `_slotsAt`→`spellSlotsForClass` (authored `spell_slots_by_level` override beats SRD preset).

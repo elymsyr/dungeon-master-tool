@@ -25,7 +25,7 @@ tags: [file]
 - Depends on: [[ability_score_method]] (`AbilityScoreMethod`), `freezed_annotation`.
 - Used by: [[character_draft_notifier]] (state type), the wizard steps, and the commit path that builds the persisted `Character`.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables

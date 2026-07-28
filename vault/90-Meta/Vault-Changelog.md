@@ -1,7 +1,7 @@
 ---
 type: meta
 domain: meta
-updated: 2026-06-22
+updated: 2026-07-28
 tags: [meta, changelog]
 ---
 
@@ -9,6 +9,7 @@ tags: [meta, changelog]
 
 > [!note] Append-only log of vault structural changes. Newest first.
 
+- **2026-07-28** — Rule-system removal documented. **Renamed** `20-Systems/Effect-DSL-Resolution.md` → [[Grant-Resolution]] and rewrote it: the `kind`/`predicates`/`scales_with`/`activation` DSL and the parallel `granted_modifiers` DSL are gone, replaced by the 40 named grant-block fields in `CharacterResolver.grantFieldKeys`; note carries the full before/after mapping. All 23 `Effect-DSL-Resolution` backlinks rewritten. **New file-note** [[rule_effects_migration]] (`10-Files/world-content/`) for the one-shot converter. **Rewrote** [[character_resolver]] (pass list, `applyGrantsFrom` as single reader, state gating, level tables). **Updated** [[effective_character]] (`mechanicalNotes`), [[extra_attack_resolver]], [[weapon_mastery_resolver]], [[resource_pool_resolver]] (+ its name-keyed `pool_ref` limitation), [[level_up_planner]] (`grantedSaveProficiencyNames` removed), [[pending_choices]] (`choice_group` → `player_choices`), [[field_schema]] (2 FieldTypes out, 2 in), [[package_import_service]], [[srd_helpers]] (effect builders deleted), [[mapper_chargen]], [[srd-pack-content]]. **Maps/refs**: [[Character-System]], [[Content-Pipeline]], [[Glossary]] (new "Grant block" term; "Effect DSL" marked retired), [[SRD-5.2.1]]. **[[Template-System]]** flagged not-implemented, its pain point #2 marked resolved elsewhere, dead `docs/new_system/` citations called out. **docs/content-audit/**: status banners on both audits — counts still valid, field names changed; roadmap item 1.3's `features[].rule_effects` scheduler marked obsolete by design.
 - **2026-06-22** — Docs reorganization + vault gap fill. **flutter_app/docs/**: deleted 4 completed docs (`chargen_mechanics_wiring.md`, `online_second_screen_architecture_may21.md`, `second_screen_dm_player_view_spec_may21.md`, `media_redesign_test_plan_may21.md`). **docs/**: created `content-audit/` subfolder, moved `entity_audit_log.md` + `system_mechanics_roadmap.md` into it. **Vault**: stripped 8 stale source-doc references across `_Architecture-Overview`, `Projection-Second-Screen`, `Character-System`, `Content-Pipeline`, `Combat-and-VTT`, `Fog-of-War-and-Visibility`, `Effect-DSL-Resolution`, `Ref-Resolution-Hard-vs-Soft`, `mapper_chargen`. Added `[[Combat-and-VTT]]` VTT Phase 1 shipped note (token HUD, hidden flag, context menu). New `[[Template-System]]` deep-dive in `20-Systems/`.
 - **2026-06-10** — Template System initiative approved (`docs/new_system/master-roadmap.md`). Rules Engine frozen (R7 cancelled). No vault note existed until 2026-06-22.
 - **2026-06-02** — VTT upgrade Phase 1 shipped: token HUD (DM+player), hidden flag end-to-end, damage/heal/hide context menu. [[Combat-and-VTT]] + [[Fog-of-War-and-Visibility]] affected; no vault structural change at time.

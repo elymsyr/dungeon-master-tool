@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/{classes,subclasse
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -42,16 +42,17 @@ tags: [file]
 - `creature_actions.dart` → `srdCreatureActions()` — **137** creature-action rows referenced by monsters.
 
 ## Dependencies & Links
-- Depends on: [[srd_helpers]] (`packEntity`, `lookup`, `ref`, `effect`, `autoGrantBy`, `eqGroup`), `dnd5e_constants`.
+- Depends on: [[srd_helpers]] (`packEntity`, `lookup`, `ref`, `autoGrantBy`, `eqGroup`), `dnd5e_constants`.
 - Used by: [[srd_core_pack]] (`_rawRowsBySlug`).
 - Domain map: [[Content-Pipeline]]
-- System flow: [[Pack-Build-Two-Pass-Refgraph]], [[Effect-DSL-Resolution]]
+- System flow: [[Pack-Build-Two-Pass-Refgraph]], [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]], [[Content-Licenses]], [[builtin_schema]] (the Tier-1 shapes these rows fill)
 
 ## Key Logic / Variables
 - Each file defines a private compact builder (`_w`, `_a`, `_g`, `_t`, `_spell`, `_mi`, `_cf`, `_sf`, `_sub`, …) that sets every fieldKey from the matching Tier-1 schema in `content.dart` (see [[builtin_schema]]) and wraps the result in `packEntity`.
 - **Monster ↔ child wiring**: `monsters.dart`/`animals.dart` reference `trait` and `creature-action` rows by name via `ref(...)`, so `traits.dart` + `creature_actions.dart` must build BEFORE monsters in `_rawRowsBySlug`. Open5e mappers replicate this exact pattern.
 - **Feat folding**: class/subclass auto-grant feats + per-feature option feats (Metamagic, Eldritch Invocations, Pact Boon, Hunter picks, …) live in `feats_class.dart` and are concatenated into the single `feat` slug so the resolver's auto-grant and feature-option dialogs find them.
+- **Card mechanics are named fields.** `feats_class.dart`, `feats.dart` and `subspecies.dart` were converted off the `effect()` / `granted_modifiers` DSL on 2026-07-28; a card now sets grant-block keys directly (`granted_damage_resistances`, `extra_attack_count_by_level`, `resource_pool_grants`, `active_while_state_ref`, `mechanical_notes`, …). `_helpers.dart` no longer exports effect builders. See [[Grant-Resolution]].
 - Counts are author-progress proxies (`spells.dart` notes the full SRD has ~350; this covers the canonical, most-played slice). Bump `srdCorePackVersion` on any row change.
 
 ## Notes

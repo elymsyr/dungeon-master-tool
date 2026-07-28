@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/character/effective_character.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-28
 tags: [file]
 ---
 
@@ -25,14 +25,15 @@ tags: [file]
 - Depends on: `freezed_annotation` only.
 - Used by: [[character_resolver]] (constructs it), the character sheet / editor UI (reads it).
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
 - `ResolvedInventoryItem`: `entityId`, `quantity`, free-form `source` tag (`class:Fighter:option:A`, `background:Soldier`, `feat:Magic Initiate`).
-- `ResolvedFeatureRow`: `{level, description, sourceEntityId}` — narrative only (mechanics flow through auto-grant on the feat/trait entity, not the row).
+- `ResolvedFeatureRow`: `{level, description, sourceEntityId}` — narrative only (mechanics flow through auto-grant on the feat/trait entity's grant block, not the row).
 - `ResolvedProficiencies`: skillIds, toolIds, savingThrowAbilityIds, languageIds, weaponCategoryIds, armorCategoryIds.
-- `EffectiveCharacter` notable fields: `classLevels`, `subclassId`, `featIds`, `effectiveAbilities` (post-grant, default all 10), `proficiencies`, `acBonus` + computed `armorClass` (sheet prefers this over manual `combat_stats.ac`) + `armorNotes` (SRD 5.2.1 worn-armor penalties), `speedBonus` + `extraSpeeds` (fly/swim/climb/burrow, larger-wins), `hpBonusFlat`/`hpBonusPerLevel`, `initiativeBonus`, granted spell/cantrip ids, `activeFeatures`, `inventory`, `senseEntityIds` + `senseRanges` (per-sense ft overrides, e.g. Drow 120ft, larger-wins), damage res/imm/vuln ids, condition immunity ids, `conditionalGrants` (state-gated `{state, kind, ids, source}`), `tempHpGrants`, `expertiseSkillIds`, `alwaysPreparedSpellIds`, `autoGrantedFeatIds` / `autoGrantedTraitIds` (rendered as "Class Features" vs chosen), granted action/bonus-action/reaction ids, `unarmoredFormulas` (raw effect rows for AC composition), `extraAttackCount` (multiclass takes max not sum), `critRangeMin` (default 20), `resourcePools` (`{pool_ref, max, recharge}`), `grantSources` (id → ordered source names for chip subtitles), `freeCastSpellIds`, `ritualBookSpellIds`, `activeConditionIds`, `warnings`.
+- `EffectiveCharacter` notable fields: `classLevels`, `subclassId`, `featIds`, `effectiveAbilities` (post-grant, default all 10), `proficiencies`, `acBonus` + computed `armorClass` (sheet prefers this over manual `combat_stats.ac`) + `armorNotes` (SRD 5.2.1 worn-armor penalties), `speedBonus` + `extraSpeeds` (fly/swim/climb/burrow, larger-wins; `-1` = equal to walking), `hpBonusFlat`/`hpBonusPerLevel`, `initiativeBonus`, granted spell/cantrip ids, `activeFeatures`, `inventory`, `senseEntityIds` + `senseRanges` (per-sense ft overrides, e.g. Drow 120ft, larger-wins), damage res/imm/vuln ids, condition immunity ids, `conditionalGrants` (state-gated `{state, kind, ids, source}`), `tempHpGrants`, `expertiseSkillIds`, `alwaysPreparedSpellIds`, `autoGrantedFeatIds` / `autoGrantedTraitIds` (rendered as "Class Features" vs chosen), granted action/bonus-action/reaction ids, `unarmoredFormulas` (`{base, ability_mods, shield_allowed}` rows composed from the card's `unarmored_ac_*` fields), `extraAttackCount` (multiclass takes max not sum), `weaponMasteryCount`, `critRangeMin` (default 20), `resourcePools` (`{pool_ref, max, recharge}`), `mechanicalNotes`, `grantSources` (id → ordered source names for chip subtitles), `freeCastSpellIds`, `ritualBookSpellIds`, `activeConditionIds`, `warnings`.
+- **`mechanicalNotes`** (added 2026-07-28 with the rule-system removal): deduped, human-readable rule lines a card declares in `mechanical_notes` that the sheet cannot pre-compute — advantage/disadvantage riders, reroll rules, roll-time damage, action-economy timing. Lines from a state-gated card are prefixed with the state ("while raging: …"). `ResolvedGrantsCard` renders them under "Other Effects". Before the removal these were no-op effect kinds that vanished silently.
 
 ## Notes
 - Generated parts `effective_character.freezed.dart` + `.g.dart` (not authored). Field doc-comments in the source carry the precise "larger wins" / "runtime writes happen elsewhere" invariants reflected above.

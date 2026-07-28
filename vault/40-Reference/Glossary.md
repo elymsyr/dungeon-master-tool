@@ -18,7 +18,8 @@ tags: [reference, glossary]
 - **SyncTier** — fast (realtime) vs slow (10 s batched) routing of writes. See [[sync_tier]].
 - **Tier-0 / Tier-1** — Tier-0 = enum lookups (size, alignment, damage-type…); Tier-1 = content categories (monster, spell, class…). 73-category schema.
 - **EffectiveCharacter** — computed character view after [[character_resolver]] folds all effects. See [[effective_character]].
-- **Effect DSL** — declarative effect entries on content (`effect/predicate/scalesWith/activation`). See [[Effect-DSL-Resolution]].
+- **Grant block** — the shared set of plainly named fields a card uses to declare what it grants (`granted_skill_proficiencies`, `ac_bonus`, `resource_pool_grants`, `mechanical_notes`, …). Emitted by `_FB.grantBlock`, read by `CharacterResolver.applyGrantsFrom`. See [[Grant-Resolution]].
+- **Effect DSL** *(retired 2026-07-28)* — the former `effect/predicate/scalesWith/activation` row language on content, plus the parallel `granted_modifiers` DSL. Replaced by the grant block; existing data is converted by [[rule_effects_migration]].
 - **Hard ref / Soft ref** — uuid `_ref` (intra-pack, build-resolved) vs slug+name (cross-pack, runtime). See [[Ref-Resolution-Hard-vs-Soft]].
 - **Drift** — the local SQLite ORM (schema v12). See [[Data-Layer]].
 - **Free / Counted / Transient** — the three media tiers. See [[Media-Storage-Tiers]].

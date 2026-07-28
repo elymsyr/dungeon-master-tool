@@ -27,7 +27,7 @@ tags: [file]
 - Depends on: [[ability_score_method]] (`kAbilityKeys`, `kStandardArray`, `kPointBuyCosts`, `kPointBuyBudget`), `rule_config.dart` (`RuleConfig.dnd5eDefaults.abilityModifier`).
 - Used by: the wizard Abilities step; [[character_draft_notifier]] / commit path validation.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]] §1
 
 ## Key Logic / Variables

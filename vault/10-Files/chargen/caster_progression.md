@@ -27,7 +27,7 @@ tags: [file]
 - Depends on: `entity.dart` only.
 - Used by: [[level_up_planner]], [[multiclass_helper]] (`combinedCasterLevel` calls `defaultSpellSlotsByLevel(CasterKind.full,...)`), the wizard Spells step.
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]] §1.5
 
 ## Key Logic / Variables

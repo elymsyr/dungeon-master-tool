@@ -25,7 +25,7 @@ tags: [file]
 - Depends on: nothing.
 - Used by: [[ability_score_validator]], [[character_draft]], [[character_draft_notifier]] (initial-score layouts + `kAbilityKeys`).
 - Domain map: [[Character-System]]
-- System flow: [[Effect-DSL-Resolution]]
+- System flow: [[Grant-Resolution]]
 - Spec / reference: [[SRD-5.2.1]] §1
 
 ## Key Logic / Variables

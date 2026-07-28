@@ -21,7 +21,7 @@ tags: [moc]
 
 ## Key Files — SRD core + catalog
 - [[srd_core_pack]] — hand-authored SRD 5.2.1 package builder (two-pass).
-- [[srd_helpers]] — effect-DSL builders (`effect`/`predicate`/`scalesWith`/`activation`/`autoGrantBy`). See [[Effect-DSL-Resolution]].
+- [[srd_helpers]] — wire-format + placeholder builders (`packEntity`/`lookup`/`ref`/`autoGrantBy`/`eqGroup`). Card mechanics are plain named fields, not builders. See [[Grant-Resolution]].
 - [[srd-pack-content]] — grouped: classes/subclasses/species/spells/monsters/feats/items.
 - [[builtin_schema]] — `builtin_dnd5e_v2_schema.dart` + `lookups.dart` (73 categories, Tier-0 seeds).
 - [[build_catalog]] · [[publish_catalog]] — first-party catalog build + R2 publish CLI.

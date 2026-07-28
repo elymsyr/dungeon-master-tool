@@ -11,7 +11,7 @@ tags: [moc]
 > D&D 5e character creation + level-up + read-time stat resolution. Wizard state machine, multiclass, caster progression, ASI/feat picks, and the pure-function resolver that folds descriptive content entities into a typed `EffectiveCharacter`. Content itself comes from [[Content-Pipeline]] / [[World-and-Content]].
 
 ## Key Files
-- [[character_resolver]] — pure read-time resolver; applies 50+ effect kinds → [[effective_character]]. Core of [[Effect-DSL-Resolution]].
+- [[character_resolver]] — pure read-time resolver; folds the 40 named grant-block fields a card can declare → [[effective_character]]. Core of [[Grant-Resolution]].
 - [[entity_ref]] — hard (uuid) vs soft (slug+name) ref resolution. See [[Ref-Resolution-Hard-vs-Soft]].
 - [[level_up_planner]] — `planLevelUp` delta: HP, prof bonus, features, ASI/feat flags, slots, pools.
 - [[caster_progression]] — Full/Half/Pact spell tables (cantrips/known/prepared/slots).
