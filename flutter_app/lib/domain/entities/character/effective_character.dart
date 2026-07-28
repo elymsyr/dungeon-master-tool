@@ -102,20 +102,14 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     @Default([]) List<String> damageVulnerabilityIds,
     @Default([]) List<String> conditionImmunityIds,
     /// Grants that only apply while the character is in a runtime state
-    /// (Raging, Wild Shape, Aura active, etc.). Resolver routes effect rows
-    /// here when the `has_state` predicate is the only failing predicate.
+    /// (Raging, Wild Shape, Aura active, etc.). Resolver routes a card's
+    /// defense grants here when the card sets `active_while_state_ref`.
     /// Each entry: `{state: String, kind: String, ids: [String], source:
-    /// String}` — `kind` matches the original effect kind (`damage_resistance`,
-    /// `condition_immunity_grant`, ...). Sheet renders these as gated chips
-    /// alongside the always-on lists; combat tracker flips them on/off when
-    /// the state engages.
+    /// String}` — `kind` is one of `damage_resistance`, `damage_immunity`,
+    /// `damage_vulnerability`, `condition_immunity_grant`. Sheet renders
+    /// these as gated chips alongside the always-on lists; combat tracker
+    /// flips them on/off when the state engages.
     @Default([]) List<Map<String, dynamic>> conditionalGrants,
-    /// Sources that grant temp HP via a trigger (rest, attack hit, kill,
-    /// etc.). Resolver collects every `temp_hp_grant` effect row that passes
-    /// non-state predicates and stores the source + raw effect map for the
-    /// sheet to render as text. The actual write to `temp_hp` happens
-    /// runtime — combat tracker / button press — not here.
-    @Default([]) List<Map<String, dynamic>> tempHpGrants,
     @Default([]) List<String> expertiseSkillIds,
     @Default([]) List<String> alwaysPreparedSpellIds,
     /// Feat IDs auto-granted by class level / species / background that the
@@ -124,9 +118,9 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// Features" rather than "Chosen Feats".
     @Default([]) List<String> autoGrantedFeatIds,
     /// Trait IDs auto-granted by class level / species / background via
-    /// `auto_granted_by`. Traits carry no mechanical effects; this list
-    /// drives display of narrative class/species/background features (e.g.
-    /// Druidic, Thieves' Cant, Fey Ancestry) on the character sheet.
+    /// `auto_granted_by` or species `trait_refs`. A trait's grant block is
+    /// applied like a feat's; the list also drives display of class/species
+    /// features (e.g. Druidic, Fey Ancestry) on the character sheet.
     @Default([]) List<String> autoGrantedTraitIds,
     /// Creature-action IDs auto-granted by species / subspecies via
     /// `granted_action_refs`. Surfaced to the sheet under the Actions
@@ -141,17 +135,27 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// Endurance, Goliath Stone's Endurance). Sourced from
     /// `granted_reaction_refs` on species + subspecies rows.
     @Default([]) List<String> grantedReactionIds,
-    /// Unarmored AC formulas registered by feats with `unarmored_ac_formula`
-    /// effects whose predicates are satisfied. Each entry is the raw effect
-    /// row preserved as-is so downstream UI can read `payload.base`,
-    /// `payload.ability_mods`, `payload.shield_allowed`. Final AC composition
-    /// (max of armored AC vs each formula) is the consumer's job.
+    /// Unarmored AC formulas collected from cards that set
+    /// `unarmored_ac_base` (+ `unarmored_ac_abilities` /
+    /// `unarmored_ac_shield_allowed`). Each entry keeps the
+    /// `{payload: {base, ability_mods, shield_allowed}}` shape so downstream
+    /// UI reads it unchanged. Final AC composition (max of armored AC vs
+    /// each formula) is the consumer's job.
     @Default([]) List<Map<String, dynamic>> unarmoredFormulas,
     /// Max extra-attack count (e.g. 2 / 3 / 4). Multiclass takes the max,
     /// not the sum (Fighter L11 + Barbarian L5 = 3 attacks, not 5).
     @Default(0) int extraAttackCount,
     /// Crit threshold floor. Default 20; Champion-style features lower this.
     @Default(20) int critRangeMin,
+    /// Total weapon-mastery slots granted by `weapon_mastery_count` fields
+    /// (class-feature feats, Weapon Master feat). 0 = no mastery system.
+    @Default(0) int weaponMasteryCount,
+    /// Plain-text rules the engine does not compute, collected verbatim from
+    /// every granted card's `mechanical_notes` field ("Advantage on saves
+    /// against being frightened", "while raging: +2 melee damage"). Rendered
+    /// on the sheet under "Other Effects" so nothing an author wrote is
+    /// silently dropped.
+    @Default([]) List<String> mechanicalNotes,
     /// Resource pools whose max was computed at resolve time. Runtime tracks
     /// `current` separately on the character. Each entry: `{pool_ref, max,
     /// recharge}`.

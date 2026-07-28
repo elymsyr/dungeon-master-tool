@@ -1,4 +1,4 @@
-import '../../domain/entities/schema/rules/rule_config.dart';
+import '../../domain/entities/schema/rule_config.dart';
 import 'ability_score_method.dart';
 
 /// Pure validator for ability score assignments. No I/O, no UI, no Riverpod —

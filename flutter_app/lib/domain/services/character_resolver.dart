@@ -2,7 +2,7 @@ import '../entities/character.dart';
 import '../entities/character/effective_character.dart';
 import '../entities/entity.dart';
 import 'entity_ref.dart';
-import '../entities/schema/rules/rule_config.dart';
+import '../entities/schema/rule_config.dart';
 import 'count_formula.dart';
 
 /// Pure-function read-time resolver. Walks a [Character]'s raw choices
@@ -13,60 +13,50 @@ import 'count_formula.dart';
 /// Stateless. Safe to call on every read. Not memoized at this layer; wrap
 /// with a Riverpod `Provider.family` for caching.
 class CharacterResolver {
-  /// Effect `kind`s the `applyEffect` switch RECOGNIZES — either applied to
-  /// the sheet or silently accepted for play-time systems (combat tracker,
-  /// chargen pickers). Hand-mirrored from the switch; kept in exact sync with
-  /// the Rule Catalog keys (drift test + debug assert in
-  /// `ruleCatalogProvider`), so no catalog-offered kind ever hits the
-  /// "not applied" warning path. Which subset actually changes the sheet is
-  /// declared per-rule via `RuleDefinition.resolverStatus`.
-  static const Set<String> knownEffectKinds = {
-    'class_level_grant', 'ability_score_bonus', 'ac_bonus', 'speed_bonus',
-    'hp_bonus_per_level', 'hp_bonus_flat', 'hp_max_bonus_total',
-    'initiative_bonus', 'proficiency_grant', 'language_grant', 'spell_grant',
-    'cantrip_grant', 'spell_always_prepared', 'damage_resistance',
-    'damage_immunity', 'damage_vulnerability', 'condition_immunity_grant',
-    'sense_grant', 'truesight_grant', 'blindsight_grant', 'expertise_grant',
-    'temp_hp_grant', 'granted_action_grant', 'granted_bonus_action_grant',
-    'granted_reaction_grant', 'unarmored_ac_formula', 'extra_attack_count',
-    'extra_attack_bump', 'crit_range_extend', 'resource_pool_grant',
-    'state_grant', 'recovery_grant', 'slot_recovery_short_rest',
-    'concentration_advantage', 'concentration_immune_to_damage_break',
-    'reaction_attack_grant', 'reaction_damage_reduction',
-    'reaction_negate_via_save',
-    'opportunity_attack_immunity_when_disengage_redundant',
-    'enemy_cant_disengage_oa', 'oa_stops_movement', 'damage_reduction_flat',
-    'ignore_cover', 'ignore_long_range_disadvantage', 'advantage_on',
-    'disadvantage_on', 'extra_damage_on_attack', 'reroll_damage', 'reroll_d20',
-    'attack_bonus_typed', 'damage_bonus_typed',
-    'half_proficiency_to_unproficient_checks', 'passive_score_bonus',
-    'reliable_talent', 'min_die_value', 'swim_speed_equals_speed',
-    'climb_speed_equals_speed', 'fly_speed', 'walk_on_liquid',
-    'magical_unarmed_strikes', 'damage_type_override',
-    'spellcasting_ability_to_damage', 'cantrip_count_bonus',
-    'spell_cast_from_item', 'weapon_mastery_grant',
-    'weapon_mastery_count_bonus', 'expertise_count', 'choice_group',
-    'attack_bonus', 'condition_advantage_on_save_grant',
+  /// Every field key of the shared grant block (`_FB.grantBlock` in
+  /// `builtin/content.dart`). This is the *complete* contract between an
+  /// authored card and the resolved sheet — there is no effect DSL, no kind
+  /// registry and no predicate language behind it. [applyGrantsFrom] is the
+  /// single reader, so adding a mechanic means adding a key here and a line
+  /// there.
+  ///
+  /// The one-shot data migration (`data/schema/rule_effects_migration.dart`)
+  /// targets these keys when it converts pre-existing `rule_effects` /
+  /// `granted_modifiers` rows, so keep the two in sync.
+  static const Set<String> grantFieldKeys = {
+    'active_while_state_ref',
+    'granted_skill_proficiencies', 'granted_tool_proficiencies',
+    'granted_save_proficiencies', 'granted_weapon_proficiencies',
+    'granted_armor_proficiencies', 'granted_expertise_skills',
+    'granted_languages',
+    'granted_spell_refs', 'granted_cantrip_refs', 'always_prepared_spell_refs',
+    'ability_bonuses', 'ability_bonus_cap', 'ac_bonus', 'speed_bonus_ft',
+    'initiative_bonus',
+    'hp_bonus_flat', 'hp_bonus_per_level',
+    'extra_attack_count', 'extra_attack_count_by_level', 'crit_threshold',
+    'weapon_mastery_count',
+    'unarmored_ac_base', 'unarmored_ac_abilities',
+    'unarmored_ac_shield_allowed',
+    'granted_damage_resistances', 'granted_damage_immunities',
+    'granted_damage_vulnerabilities', 'granted_condition_immunities',
+    'granted_senses',
+    'speed_fly_ft', 'speed_swim_ft', 'speed_climb_ft', 'speed_burrow_ft',
+    'granted_action_refs', 'granted_bonus_action_refs', 'granted_reaction_refs',
+    'trait_refs',
+    'resource_pool_grants', 'player_choices',
+    'mechanical_notes',
   };
 
-  /// Subset of [knownEffectKinds] with a real `applyEffect` body — the kinds
-  /// that actually change the resolved sheet. Everything else in
-  /// [knownEffectKinds] is recognized-but-silently-accepted for play-time
-  /// systems (combat tracker, chargen pickers). Must stay in exact sync with
-  /// the catalog kinds whose `resolverStatus` is `applied` — a drift test
-  /// enforces it, so the editor can never claim a rule works when this
-  /// resolver would ignore it.
-  static const Set<String> sheetAppliedEffectKinds = {
-    'class_level_grant', 'ability_score_bonus', 'ac_bonus', 'speed_bonus',
-    'hp_bonus_per_level', 'hp_bonus_flat', 'hp_max_bonus_total',
-    'initiative_bonus', 'proficiency_grant', 'language_grant', 'spell_grant',
-    'cantrip_grant', 'spell_always_prepared', 'damage_resistance',
-    'damage_immunity', 'damage_vulnerability', 'condition_immunity_grant',
-    'sense_grant', 'truesight_grant', 'blindsight_grant', 'expertise_grant',
-    'temp_hp_grant', 'granted_action_grant', 'granted_bonus_action_grant',
-    'granted_reaction_grant', 'unarmored_ac_formula', 'extra_attack_count',
-    'extra_attack_bump', 'crit_range_extend', 'resource_pool_grant',
-    'swim_speed_equals_speed', 'climb_speed_equals_speed', 'fly_speed',
+  /// Grant keys that can meaningfully surface as a *conditional* grant when the
+  /// card sets `active_while_state_ref` (e.g. Rage's resistances). Everything
+  /// else on a state-gated card is roll-time behaviour the sheet cannot
+  /// pre-compute, so it stays out of the unconditional totals and is surfaced
+  /// through `mechanical_notes` instead.
+  static const Map<String, String> _conditionalGrantKinds = {
+    'granted_damage_resistances': 'damage_resistance',
+    'granted_damage_immunities': 'damage_immunity',
+    'granted_damage_vulnerabilities': 'damage_vulnerability',
+    'granted_condition_immunities': 'condition_immunity_grant',
   };
 
   /// Resolve [pc] against the campaign-wide entity map [entitiesById].
@@ -85,7 +75,7 @@ class CharacterResolver {
     final featIds = _readStringList(fields['feat_ids']);
     final equipmentChoices = _readStringMap(fields['equipment_choices']);
     final subclassId = _readNullableString(fields['subclass_id']);
-    var classLevels = _readIntMap(fields['class_levels']);
+    final classLevels = _readIntMap(fields['class_levels']);
     final raceId = _readNullableString(fields['race_id']);
     final subspeciesId = _readNullableString(fields['subspecies_id']);
     final backgroundId = _readNullableString(fields['background_id']);
@@ -96,45 +86,10 @@ class CharacterResolver {
     // heuristic. Absent → heuristic fallback (legacy / not-yet-resolved).
     final featAsiChoices = fields['feat_asi_choices'];
 
-    // ── 2. Pass 1: feat class_level_grant (one pass per feat occurrence).
-    // Each feat in `feat_ids` is applied exactly once. Repeatable feats
-    // surface multiple ids in the list, so duplicates apply additively.
-    final appliedLevelGrants = <String>{};
-    for (final fid in featIds) {
-      if (!appliedLevelGrants.add(fid)) {
-        // duplicate id — still apply for repeatable feats; remove this guard
-        // if we ever decide to dedupe by entity id.
-      }
-      final feat = entitiesById[fid];
-      if (feat == null) continue;
-      final effects = _readMapList(feat.fields['effects']);
-      for (final eff in effects) {
-        if (eff['kind'] != 'class_level_grant') continue;
-        final targetRef = eff['target_ref'];
-        // All three ref envelopes (String id, {_ref,name}, {slug,name}) via
-        // the shared resolver — the editor stores a plain String id, which
-        // the old Map-only parse silently dropped. Legacy {name}-only maps
-        // keep working through the class-name fallback.
-        var classId = _resolveRef(targetRef, entitiesById);
-        if (classId == null && targetRef is Map && targetRef['name'] is String) {
-          classId = _findEntityIdByName(
-              entitiesById, 'class', targetRef['name'] as String);
-        }
-        if (classId == null) continue;
-        final addAmount = (eff['value'] is int) ? eff['value'] as int : 1;
-        classLevels = {
-          ...classLevels,
-          classId: (classLevels[classId] ?? 0) + addAmount,
-        };
-      }
-    }
-
-    // ── 3. Pass 2: class + subclass features by level ──────────────────
+    // ── 2. Pass 1: class + subclass features by level ──────────────────
+    // Narrative rows only — mechanics live on the auto-granted Feat/Trait
+    // cards (Pass 4b), never inline on the class's features table.
     final activeFeatures = <ResolvedFeatureRow>[];
-    // Per row: the effect map plus a display source like
-    // `class:Barbarian` or `subclass:Berserker`. Pass 4 applies these via
-    // applyEffect so source-tagging flows through `noteSource`.
-    final pendingFeatureEffects = <({Map<String, dynamic> eff, String source})>[];
 
     for (final entry in classLevels.entries) {
       final classEntity = entitiesById[entry.key];
@@ -142,12 +97,7 @@ class CharacterResolver {
         warnings.add('Missing class entity ${entry.key}');
         continue;
       }
-      _collectFeaturesByLevel(
-        classEntity,
-        entry.value,
-        activeFeatures,
-        pendingFeatureEffects,
-      );
+      _collectFeaturesByLevel(classEntity, entry.value, activeFeatures);
     }
     if (subclassId != null) {
       final sub = entitiesById[subclassId];
@@ -168,12 +118,7 @@ class CharacterResolver {
             ? sub.fields['granted_at_level'] as int
             : 1;
         if (gateLevel >= grantedAt) {
-          _collectFeaturesByLevel(
-            sub,
-            gateLevel,
-            activeFeatures,
-            pendingFeatureEffects,
-          );
+          _collectFeaturesByLevel(sub, gateLevel, activeFeatures);
         }
       }
     }
@@ -195,7 +140,6 @@ class CharacterResolver {
     final senses = <String>[];
     final senseRanges = <String, int>{};
     final conditionalGrants = <Map<String, dynamic>>[];
-    final tempHpGrants = <Map<String, dynamic>>[];
     final damageRes = <String>[];
     final damageImmunities = <String>[];
     final damageVulnerabilities = <String>[];
@@ -242,450 +186,314 @@ class CharacterResolver {
     final weaponCats = <String>[];
     final armorCats = <String>[];
 
-    // Predicate evaluator. Closed-enum predicate kinds are AND-combined per
-    // effect row. Unknown kinds return false (conservative — better to skip
-    // than mis-apply). State predicates always return false at resolve time
-    // (states are runtime); the resolver re-runs when state flips.
-    bool evalPredicate(Map<String, dynamic> p) {
-      final kind = p['kind'];
-      final args = p['args'];
-      final argMap = (args is Map) ? Map<String, dynamic>.from(args) : const <String, dynamic>{};
-      switch (kind) {
-        case 'class_level_at_least':
-          // args: {class_ref: {_ref: 'class', name: 'Barbarian'}, level: int}
-          // OR args: {class_ref: '<class id>', level: int}
-          final ref = argMap['class_ref'];
-          final needLvl = _intOf(argMap['level']);
-          final classId = (ref is String) ? ref : _resolveRef(ref, entitiesById);
-          if (classId == null) return false;
-          return (classLevels[classId] ?? 0) >= needLvl;
-        case 'equipped_armor_kind':
-          // args: {value: 'none'|'light'|'medium'|'heavy'|'not_heavy'|'not_none'}
-          // Walk the PC's inventory for an equipped armor entity (non-shield).
-          // 'none' is true iff no armor is equipped; 'not_heavy' is true
-          // unless the equipped armor resolves to heavy. 'not_none' is true
-          // iff any armor is equipped. Light/medium/heavy each require an
-          // equipped armor of the matching category.
-          final want = argMap['value']?.toString() ?? '';
-          final armor = _equippedArmor(fields, entitiesById);
-          if (armor == null) return want == 'none' || want == 'not_heavy';
-          final catRef = armor.fields['category_ref'];
-          final catId = _resolveRef(catRef, entitiesById);
-          final cat = (catId != null) ? entitiesById[catId]?.name.toLowerCase() ?? '' : '';
-          if (want == 'none') return false;
-          if (want == 'not_none') return true;
-          if (want == 'not_heavy') return !cat.contains('heavy');
-          return cat.contains(want);
-        case 'equipped_shield':
-          final want = argMap['value']?.toString() ?? 'any';
-          final has = _hasEquippedShield(fields, entitiesById);
-          if (want == 'any') return true;
-          if (want == 'true') return has;
-          if (want == 'false') return !has;
-          return false;
-        case 'has_state':
-        case 'has_condition':
-        case 'target_has_condition':
-          // Runtime state — at resolve time we don't gate on these. The
-          // resolver attaches the predicate to the resulting accumulator
-          // entry (e.g. conditionalResistances) so the runtime can apply at
-          // combat time. For now, return false to avoid premature application.
-          return false;
-        case 'not_incapacitated':
-          return true;
-        default:
-          return false;
+    final mechanicalNotes = <String>[];
+    var weaponMasteryCount = 0;
+    // Feats / traits pulled in by the auto-grant walker (Pass 3). Declared here
+    // because `applyGrantsFrom` writes `trait_refs` into the trait list.
+    final autoGrantedFeatIds = <String>[];
+    final autoGrantedTraitIds = <String>[];
+
+    /// Read an ability relation-list field down to `STR`/`DEX`/… abbreviations.
+    List<String> abilityAbbrevs(Object? raw) {
+      final out = <String>[];
+      for (final id in _readRefList(raw, entitiesById)) {
+        final abbrev = _abilityAbbrev(entitiesById[id]?.name ?? '');
+        if (abbrev != null && !out.contains(abbrev)) out.add(abbrev);
       }
+      return out;
     }
 
-    bool predicatesPass(Object? rawPredicates) {
-      if (rawPredicates is! List) return true;
-      for (final p in rawPredicates) {
-        if (p is Map) {
-          if (!evalPredicate(Map<String, dynamic>.from(p))) return false;
-        }
+    /// Fold one `granted_senses` row. Accepts the current
+    /// `{sense_ref, range_ft}` shape and a bare ref (a sense with no stated
+    /// range), so hand-authored and migrated data both read cleanly. The
+    /// largest range per sense wins — Drow's Superior Darkvision 120 beats the
+    /// base 60.
+    void addSense(Object? row, String src) {
+      Object? refRaw = row;
+      int range = 0;
+      if (row is Map) {
+        refRaw = row['sense_ref'] ?? row['ref'];
+        range = _intOf(row['range_ft']);
       }
-      return true;
+      final id = _resolveRef(refRaw, entitiesById);
+      if (id == null) return;
+      if (!senses.contains(id)) senses.add(id);
+      noteSource(id, src);
+      if (range > 0 && range > (senseRanges[id] ?? 0)) senseRanges[id] = range;
     }
 
-    /// Split a predicate list into state-gated refs vs non-state predicates.
-    /// Returns null when no state predicate is present, otherwise the unique
-    /// state refs and the residual non-state predicate list. State predicates
-    /// always fail at resolve time but the resolver can still surface the
-    /// effect as a conditional grant when the non-state predicates pass.
-    ({List<String> stateRefs, List<Map<String, dynamic>> rest})? splitStatePredicates(
-        Object? rawPredicates) {
-      if (rawPredicates is! List) return null;
-      final states = <String>[];
-      final rest = <Map<String, dynamic>>[];
-      for (final p in rawPredicates) {
-        if (p is! Map) continue;
-        final map = Map<String, dynamic>.from(p);
-        final kind = map['kind'];
-        if (kind == 'has_state' ||
-            kind == 'has_condition' ||
-            kind == 'target_has_condition') {
-          final args = map['args'];
-          final ref = (args is Map)
-              ? (args['ref'] ?? args['state_ref'] ?? args['condition_ref'])
-              : null;
-          final tag = ref?.toString();
-          if (tag != null && tag.isNotEmpty && !states.contains(tag)) {
-            states.add(tag);
-          }
-        } else {
-          rest.add(map);
-        }
+    /// Resolve a `{lvl: value}` level table down to the value for the highest
+    /// level not above the character's. [classRef] scopes the lookup to that
+    /// class's level; absent, total character level is used. This is what
+    /// makes Fighter's Extra Attack (5→2, 11→3, 20→4) and Barbarian's Rage
+    /// uses (1→2, 3→3, 6→4, …) work without a scaling DSL.
+    int? valueForLevel(Object? table, {Object? classRef}) {
+      if (table is! Map) return null;
+      var lookupLvl = classLevels.values.fold<int>(0, (a, b) => a + b);
+      if (classRef != null) {
+        final classId = _resolveRef(classRef, entitiesById);
+        if (classId == null) return null;
+        lookupLvl = classLevels[classId] ?? 0;
       }
-      if (states.isEmpty) return null;
-      return (stateRefs: states, rest: rest);
-    }
-
-    /// Resolve a `scales_with` table down to a single value for the current
-    /// character context. Returns null if the table doesn't apply.
-    Object? evalScalesWith(Object? rawScales) {
-      if (rawScales is! Map) return null;
-      final s = Map<String, dynamic>.from(rawScales);
-      final kind = s['kind']?.toString();
-      final tableRaw = s['table'];
-      if (tableRaw is! List) return null;
-      int lookupLvl = 0;
-      if (kind == 'class_level' || kind == 'class_level_table') {
-        final ref = s['class_ref'];
-        final classId = (ref is String) ? ref : _resolveRef(ref, entitiesById);
-        if (classId != null) lookupLvl = classLevels[classId] ?? 0;
-      } else if (kind == 'character_level') {
-        lookupLvl = classLevels.values.fold<int>(0, (a, b) => a + b);
-      }
-      Object? best;
+      int? best;
       var bestLvl = -1;
-      for (final row in tableRaw) {
-        if (row is! Map) continue;
-        final lvl = _intOf(row['lvl']);
+      for (final e in table.entries) {
+        final lvl = _intOf(e.key is int ? e.key : int.tryParse(e.key.toString()));
         if (lvl <= lookupLvl && lvl > bestLvl) {
           bestLvl = lvl;
-          best = row['v'];
+          best = _intOf(e.value);
         }
       }
       return best;
     }
 
-    /// Subset of effect kinds that can meaningfully surface as a conditional
-    /// grant when state-gated. Roll-time kinds (advantage_on, extra damage)
-    /// are excluded — they live in the combat tracker layer.
-    const conditionalKinds = <String>{
-      'damage_resistance',
-      'damage_immunity',
-      'damage_vulnerability',
-      'condition_immunity_grant',
-    };
+    /// Fold a card's `resource_pool_grants` rows into [resourcePools].
+    /// Max = level table, else `count_formula` (cha_mod_min_1 and friends),
+    /// else the flat `count`. Runtime tracks the remaining value.
+    void applyResourcePools(Map<String, dynamic> f) {
+      for (final row in _readMapList(f['resource_pool_grants'])) {
+        final scaled =
+            valueForLevel(row['count_by_level'], classRef: row['class_ref']);
+        final formula = evalCountFormula(
+          row['count_formula']?.toString(),
+          abilities: abilities,
+          classLevels: classLevels,
+          entitiesById: entitiesById,
+        );
+        resourcePools.add(<String, dynamic>{
+          'pool_ref': row['pool_ref'],
+          'max': scaled ?? formula ?? row['count'],
+          'recharge': row['recharge'],
+        });
+      }
+    }
 
-    void applyEffect(Map<String, dynamic> eff, String source) {
-      // Split state predicates out before the main predicate gate. If a
-      // `has_state` predicate is present and the non-state predicates all
-      // pass, route eligible effect kinds to `conditionalGrants` so the
-      // sheet can render them as gated chips. Otherwise the regular
-      // predicate gate runs (state predicates always fail at resolve time,
-      // so the effect drops if any remain in that path).
-      final split = splitStatePredicates(eff['predicates']);
-      if (split != null) {
-        final kind = eff['kind']?.toString() ?? '';
-        if (conditionalKinds.contains(kind)) {
-          // All non-state predicates must pass for the gated grant to apply.
-          for (final p in split.rest) {
-            if (!evalPredicate(p)) return;
-          }
-          final id = _refIdFor(eff, entitiesById);
-          if (id == null) return;
-          conditionalGrants.add(<String, dynamic>{
-            'state': split.stateRefs.first,
-            'kind': kind,
-            'ids': <String>[id],
-            'source': source,
-          });
-          return;
+    /// Apply everything a card grants to the working accumulators.
+    ///
+    /// [f] is a card's raw `fields` map. Feat, Trait, Magic Item, Species,
+    /// Subspecies and the nested `subspecies_options` rows all speak the same
+    /// grant-block keys ([grantFieldKeys]), so this one reader covers every
+    /// source — there is no per-source effect interpreter behind it.
+    ///
+    /// When the card sets `active_while_state_ref` its grants are *conditional*:
+    /// the four defense keys land in [conditionalGrants] so the sheet can draw
+    /// them as "while raging" chips, and the rest are skipped — a state-gated
+    /// numeric bonus must not be folded into a resting sheet total. Runtime
+    /// flips the state and the sheet re-resolves.
+    void applyGrantsFrom(Map<String, dynamic> f, String src) {
+      // The gating tag is the state entity's *name* (`state:raging`) — that is
+      // what runtime `active_states[]` stores and what the sheet's
+      // "(while raging)" chips display. Fall back to the raw ref for
+      // unresolvable/legacy values so the gate never silently opens.
+      final stateRef = f['active_while_state_ref'];
+      String? stateId;
+      if (stateRef != null) {
+        final resolved = _resolveRef(stateRef, entitiesById);
+        if (resolved != null) {
+          stateId = entitiesById[resolved]?.name ?? resolved;
+        } else if (stateRef is Map) {
+          stateId = (stateRef['name'] ?? stateRef['_lookup'])?.toString();
+        } else if (stateRef is String) {
+          stateId = stateRef;
         }
-        // Fall through to default gate — non-conditional kinds drop.
       }
-      // Row-level predicate gate.
-      if (!predicatesPass(eff['predicates'])) return;
-      switch (eff['kind']) {
-        case 'class_level_grant':
-          break; // already applied in pass 1
-        case 'ability_score_bonus':
-          // Species/subspecies/feat ASI grant. `ability` accepts full names
-          // ("Constitution") or abbreviations ("CON"). The legacy modifier
-          // editor instead stores a `target_ref` to the ability entity (its
-          // Target picker is the only input it offers), so when the direct
-          // string doesn't parse, dereference the ref and use the entity
-          // name — otherwise editor-authored rows (and the shipped
-          // "Resilient: CON" preset) silently do nothing. `max` caps the
-          // post-grant score; defaults to 20.
-          final raw = (eff['ability'] ?? eff['target_kind'] ?? '').toString();
-          var abbrev = _abilityAbbrev(raw) ?? raw.toUpperCase();
-          const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
-          if (!valid.contains(abbrev)) {
-            final refId = _refIdFor(eff, entitiesById);
-            final refName = refId != null ? entitiesById[refId]?.name : null;
-            abbrev = (refName != null ? _abilityAbbrev(refName) : null) ?? '';
-          }
-          if (!valid.contains(abbrev)) break;
-          final amt = _intOf(eff['value']);
-          if (amt == 0) break;
-          final cap = (eff['max'] is int) ? eff['max'] as int : 20;
-          final cur = abilities[abbrev] ?? 10;
-          final next = cur + amt;
-          abilities[abbrev] = next > cap ? cap : next;
-        case 'ac_bonus':
-          acBonus += _intOf(eff['value']);
-        case 'speed_bonus':
-          speedBonus += _intOf(eff['value']);
-        case 'hp_bonus_per_level':
-          hpBonusPerLevel += _intOf(eff['value']);
-        case 'hp_bonus_flat':
-        case 'hp_max_bonus_total':
-          hpBonusFlat += _intOf(eff['value']);
-        case 'initiative_bonus':
-          initiativeBonus += _intOf(eff['value']);
-        case 'proficiency_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id == null) break;
-          final tk = eff['target_kind'];
-          switch (tk) {
-            case 'skill':
-              if (!skills.contains(id)) skills.add(id);
-            case 'tool':
-              if (!tools.contains(id)) tools.add(id);
-            case 'saving_throw':
-            case 'ability':
-              if (!saves.contains(id)) saves.add(id);
-            case 'armor_category':
-              if (!armorCats.contains(id)) armorCats.add(id);
-            case 'weapon_category':
-              if (!weaponCats.contains(id)) weaponCats.add(id);
-          }
-        case 'language_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !languages.contains(id)) languages.add(id);
-        case 'spell_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !grantedSpellIds.contains(id)) {
-            grantedSpellIds.add(id);
-          }
-        case 'cantrip_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !grantedCantripIds.contains(id)) {
-            grantedCantripIds.add(id);
-          }
-        case 'spell_always_prepared':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !alwaysPreparedSpells.contains(id)) {
-            alwaysPreparedSpells.add(id);
-          }
-        case 'damage_resistance':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null) {
-            if (!damageRes.contains(id)) damageRes.add(id);
-            noteSource(id, source);
-          }
-        case 'damage_immunity':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null) {
-            if (!damageImmunities.contains(id)) damageImmunities.add(id);
-            noteSource(id, source);
-          }
-        case 'damage_vulnerability':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null) {
-            if (!damageVulnerabilities.contains(id)) {
-              damageVulnerabilities.add(id);
-            }
-            noteSource(id, source);
-          }
-        case 'condition_immunity_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null) {
-            if (!conditionImmunities.contains(id)) {
-              conditionImmunities.add(id);
-            }
-            noteSource(id, source);
-          }
-        case 'sense_grant':
-        case 'truesight_grant':
-        case 'blindsight_grant':
-          var id = _refIdFor(eff, entitiesById);
-          // truesight/blindsight name their sense in the kind itself; the
-          // catalog editor may author them without a target_ref, so fall
-          // back to the sense entity of the matching name.
-          if (id == null && eff['kind'] != 'sense_grant') {
-            final wanted =
-                eff['kind'] == 'truesight_grant' ? 'truesight' : 'blindsight';
-            for (final e in entitiesById.values) {
-              if (e.categorySlug == 'sense' &&
-                  e.name.toLowerCase() == wanted) {
-                id = e.id;
-                break;
-              }
-            }
-          }
-          if (id != null) {
-            if (!senses.contains(id)) senses.add(id);
-            noteSource(id, source);
-            // Optional range_ft payload — when present, keep the max range per
-            // sense id. Drow Superior Darkvision = 120 overrides base 60.
-            final payload = eff['payload'];
-            int? range;
-            if (payload is Map && payload['range_ft'] is int) {
-              range = payload['range_ft'] as int;
-            } else if (eff['range_ft'] is int) {
-              range = eff['range_ft'] as int;
-            }
-            if (range != null && range > 0) {
-              final prior = senseRanges[id] ?? 0;
-              if (range > prior) senseRanges[id] = range;
-            }
-          }
-        case 'expertise_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !expertiseSkills.contains(id)) {
-            expertiseSkills.add(id);
-          }
-        case 'temp_hp_grant':
-          // Surface the grant for the sheet to render — actual write to PC
-          // `temp_hp` is a runtime trigger (rest, kill, attack hit), not a
-          // resolve-time decision.
-          tempHpGrants.add(<String, dynamic>{
-            'source': source,
-            'formula': eff['payload'] is Map ? (eff['payload'] as Map)['formula'] : eff['formula'],
-            'trigger': eff['payload'] is Map ? (eff['payload'] as Map)['trigger'] : eff['trigger'],
-            'activation': eff['activation'],
+      final gated = stateId != null && stateId.isNotEmpty;
+
+      // Notes first: they are the one thing that must survive on a gated card,
+      // since that is where its roll-time behaviour is written down.
+      for (final line in _readLines(f['mechanical_notes'])) {
+        final label = gated ? '${_stateLabel(stateId)}: $line' : line;
+        if (!mechanicalNotes.contains(label)) mechanicalNotes.add(label);
+      }
+
+      if (gated) {
+        // Defense grants surface as "(while raging)" chips…
+        for (final entry in _conditionalGrantKinds.entries) {
+          final ids = _readRefList(f[entry.key], entitiesById);
+          if (ids.isEmpty) continue;
+          conditionalGrants.add(<String, dynamic>{
+            'state': stateId,
+            'kind': entry.value,
+            'ids': ids,
+            'source': src,
           });
-        case 'granted_action_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !grantedActionIds.contains(id)) {
-            grantedActionIds.add(id);
-            noteSource(id, source);
-          }
-        case 'granted_bonus_action_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !grantedBonusActionIds.contains(id)) {
-            grantedBonusActionIds.add(id);
-            noteSource(id, source);
-          }
-        case 'granted_reaction_grant':
-          final id = _refIdFor(eff, entitiesById);
-          if (id != null && !grantedReactionIds.contains(id)) {
-            grantedReactionIds.add(id);
-            noteSource(id, source);
-          }
-        case 'unarmored_ac_formula':
-          unarmoredFormulas.add(Map<String, dynamic>.from(eff));
-        case 'extra_attack_count':
-        case 'extra_attack_bump':
-          // Optional scales_with class-level table (Fighter 5→2, 11→3, 20→4)
-          // wins over the flat value — same precedence as resource pools.
-          final scaled = evalScalesWith(eff['scales_with']);
-          final v = scaled != null ? _intOf(scaled) : _intOf(eff['value']);
-          if (v > extraAttackCount) extraAttackCount = v;
-        case 'crit_range_extend':
-          // `threshold` is the d20 face crits start at (Champion: 19, then
-          // 18). Floor at 2 — a threshold of 0/1 is always authoring error
-          // (it would crit on every roll) and is warned, not applied.
-          final payload = eff['payload'];
-          final t = (payload is Map) ? _intOf(payload['threshold']) : _intOf(eff['value']);
-          if (t >= 2 && t < critRangeMin) {
-            critRangeMin = t;
-          } else if (t > 0 && t < 2) {
-            warnings.add(
-                'crit_range_extend threshold $t ignored (from $source)');
-          }
-        case 'resource_pool_grant':
-          // Compute pool max from count_formula + scales_with; runtime tracks current.
-          final payload = (eff['payload'] is Map)
-              ? Map<String, dynamic>.from(eff['payload'] as Map)
-              : <String, dynamic>{};
-          final scaledMax = evalScalesWith(eff['scales_with']);
-          final formulaMax = evalCountFormula(
-            payload['count_formula']?.toString(),
-            abilities: abilities,
-            classLevels: classLevels,
-            entitiesById: entitiesById,
-          );
-          final entry = <String, dynamic>{
-            'pool_ref': payload['pool_ref'] ?? eff['target_ref'],
-            'max': scaledMax ?? formulaMax ?? payload['count'] ?? eff['value'],
-            'recharge': payload['recharge'] ?? eff['recharge'],
-          };
-          resourcePools.add(entry);
-        case 'swim_speed_equals_speed':
-          // Marker — resolved post-pass to walking speed.
-          extraSpeeds['swim'] = -1;
-        case 'climb_speed_equals_speed':
-          extraSpeeds['climb'] = -1;
-        case 'fly_speed':
-          // payload: {value_ft: int} for explicit speeds, otherwise equals walk.
-          final payload = eff['payload'];
-          final v = (payload is Map) ? _intOf(payload['value_ft']) : _intOf(eff['value']);
-          if (v > 0) {
-            final cur = extraSpeeds['fly'] ?? 0;
-            if (v > cur) extraSpeeds['fly'] = v;
-          } else {
-            extraSpeeds['fly'] = -1;
-          }
-        case 'state_grant':
-        case 'recovery_grant':
-        case 'slot_recovery_short_rest':
-        case 'concentration_advantage':
-        case 'concentration_immune_to_damage_break':
-        case 'reaction_attack_grant':
-        case 'reaction_damage_reduction':
-        case 'reaction_negate_via_save':
-        case 'opportunity_attack_immunity_when_disengage_redundant':
-        case 'enemy_cant_disengage_oa':
-        case 'oa_stops_movement':
-        case 'damage_reduction_flat':
-        case 'ignore_cover':
-        case 'ignore_long_range_disadvantage':
-        case 'advantage_on':
-        case 'disadvantage_on':
-        case 'extra_damage_on_attack':
-        case 'reroll_damage':
-        case 'reroll_d20':
-        case 'attack_bonus_typed':
-        case 'damage_bonus_typed':
-        case 'half_proficiency_to_unproficient_checks':
-        case 'passive_score_bonus':
-        case 'reliable_talent':
-        case 'min_die_value':
-        case 'attack_bonus':
-        case 'condition_advantage_on_save_grant':
-        case 'walk_on_liquid':
-        case 'magical_unarmed_strikes':
-        case 'damage_type_override':
-        case 'spellcasting_ability_to_damage':
-        case 'cantrip_count_bonus':
-        case 'spell_cast_from_item':
-        case 'weapon_mastery_grant':
-        case 'weapon_mastery_count_bonus':
-        case 'expertise_count':
-        case 'choice_group':
-          // Recognized kinds reserved for later passes (combat tracker, choice
-          // resolution, weapon-specific attack pipeline). Silently accept here
-          // so authoring data with these kinds doesn't spam warnings.
-          break;
-        default:
-          warnings.add(
-              'Effect kind "${eff['kind']}" is not applied to the sheet (from $source)');
+        }
+        // …but the card's resource pools always apply: the pool is the
+        // counter of how often the state can be *entered* (Rage uses), not
+        // something that exists only while raging. Everything else on a
+        // gated card is roll-time behaviour and belongs in its
+        // `mechanical_notes` (already collected above).
+        applyResourcePools(f);
+        return;
       }
+
+      // ── Proficiencies ───────────────────────────────────────────────────
+      void addAll(List<String> ids, List<String> into) {
+        for (final id in ids) {
+          if (!into.contains(id)) into.add(id);
+        }
+      }
+      addAll(_readRefList(f['granted_skill_proficiencies'], entitiesById), skills);
+      addAll(_readRefList(f['granted_tool_proficiencies'], entitiesById), tools);
+      addAll(_readRefList(f['granted_save_proficiencies'], entitiesById), saves);
+      addAll(_readRefList(f['granted_weapon_proficiencies'], entitiesById), weaponCats);
+      addAll(_readRefList(f['granted_armor_proficiencies'], entitiesById), armorCats);
+      addAll(_readRefList(f['granted_expertise_skills'], entitiesById), expertiseSkills);
+      addAll(_readRefList(f['granted_languages'], entitiesById), languages);
+
+      // ── Spells ──────────────────────────────────────────────────────────
+      for (final id in _readRefList(f['granted_spell_refs'], entitiesById)) {
+        if (!grantedSpellIds.contains(id)) grantedSpellIds.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_cantrip_refs'], entitiesById)) {
+        if (!grantedCantripIds.contains(id)) grantedCantripIds.add(id);
+        noteSource(id, src);
+      }
+      addAll(_readRefList(f['always_prepared_spell_refs'], entitiesById),
+          alwaysPreparedSpells);
+      _applyLevelGatedSpells(
+        rows: _readMapList(f['granted_spells_at_level']),
+        totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
+        entitiesById: entitiesById,
+        grantedSpellIds: grantedSpellIds,
+        grantedCantripIds: grantedCantripIds,
+        resourcePools: resourcePools,
+        noteSource: (id) => noteSource(id, src),
+      );
+
+      // ── Numeric bonuses ─────────────────────────────────────────────────
+      final abilityBonuses = f['ability_bonuses'];
+      if (abilityBonuses is Map) {
+        // Default cap 20; Primal Champion-style cards raise it via
+        // `ability_bonus_cap`.
+        final capRaw = _intOf(f['ability_bonus_cap']);
+        final cap = capRaw >= 20 ? capRaw : 20;
+        for (final e in abilityBonuses.entries) {
+          final abbrev = _abilityAbbrev(e.key.toString()) ?? e.key.toString().toUpperCase();
+          if (!_abilityAbbrevs.contains(abbrev)) continue;
+          final amt = _intOf(e.value);
+          if (amt == 0) continue;
+          final next = (abilities[abbrev] ?? 10) + amt;
+          abilities[abbrev] = next > cap ? cap : next;
+        }
+      }
+      acBonus += _intOf(f['ac_bonus']);
+      speedBonus += _intOf(f['speed_bonus_ft']);
+      initiativeBonus += _intOf(f['initiative_bonus']);
+      hpBonusFlat += _intOf(f['hp_bonus_flat']);
+      hpBonusPerLevel += _intOf(f['hp_bonus_per_level']);
+      weaponMasteryCount += _intOf(f['weapon_mastery_count']);
+
+      // Multiclass takes the max attack count, never the sum. The level table
+      // wins over the flat value when it has a row for the current level.
+      final attacksScaled = valueForLevel(f['extra_attack_count_by_level']);
+      final attacks = attacksScaled ?? _intOf(f['extra_attack_count']);
+      if (attacks > extraAttackCount) extraAttackCount = attacks;
+
+      // A threshold of 0/1 would crit on every roll — always an authoring
+      // slip, so warn instead of applying it.
+      final crit = _intOf(f['crit_threshold']);
+      if (crit >= 2 && crit < critRangeMin) {
+        critRangeMin = crit;
+      } else if (crit > 0 && crit < 2) {
+        warnings.add('crit_threshold $crit ignored (from $src)');
+      }
+
+      // Unarmored AC replacement (Barbarian / Monk / Draconic Sorcerer). The
+      // field name carries the "while not wearing armor" condition, so no
+      // predicate is needed; `_computeArmorClass` only consults these when no
+      // armor is equipped.
+      final unarmoredBase = f['unarmored_ac_base'];
+      if (unarmoredBase is int) {
+        unarmoredFormulas.add(<String, dynamic>{
+          'payload': <String, dynamic>{
+            'base': unarmoredBase,
+            'ability_mods': abilityAbbrevs(f['unarmored_ac_abilities']),
+            'shield_allowed': f['unarmored_ac_shield_allowed'] == true,
+          },
+        });
+      }
+
+      // ── Defense ─────────────────────────────────────────────────────────
+      for (final id in _readRefList(f['granted_damage_resistances'], entitiesById)) {
+        if (!damageRes.contains(id)) damageRes.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_damage_immunities'], entitiesById)) {
+        if (!damageImmunities.contains(id)) damageImmunities.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_damage_vulnerabilities'], entitiesById)) {
+        if (!damageVulnerabilities.contains(id)) damageVulnerabilities.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_condition_immunities'], entitiesById)) {
+        if (!conditionImmunities.contains(id)) conditionImmunities.add(id);
+        noteSource(id, src);
+      }
+
+      // ── Senses ──────────────────────────────────────────────────────────
+      final rawSenses = f['granted_senses'];
+      if (rawSenses is List) {
+        for (final row in rawSenses) {
+          addSense(row, src);
+        }
+      }
+
+      // ── Movement ────────────────────────────────────────────────────────
+      // `-1` means "equal to walking speed" — the sentinel the sheet already
+      // understands for Spider Climb / Second-Story Work style grants.
+      const speedModeByField = {
+        'speed_fly_ft': 'fly',
+        'speed_swim_ft': 'swim',
+        'speed_climb_ft': 'climb',
+        'speed_burrow_ft': 'burrow',
+      };
+      // An explicit distance is more specific than "= walking speed", so it
+      // wins over the sentinel regardless of order; between two explicit
+      // distances the larger wins.
+      speedModeByField.forEach((field, mode) {
+        final v = f[field];
+        if (v is! int || v == 0) return;
+        final cur = extraSpeeds[mode];
+        if (v == -1) {
+          if (cur == null) extraSpeeds[mode] = -1;
+        } else if (cur == null || cur == -1 || v > cur) {
+          extraSpeeds[mode] = v;
+        }
+      });
+
+      // ── Granted actions + traits ────────────────────────────────────────
+      for (final id in _readRefList(f['granted_action_refs'], entitiesById)) {
+        if (!grantedActionIds.contains(id)) grantedActionIds.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_bonus_action_refs'], entitiesById)) {
+        if (!grantedBonusActionIds.contains(id)) grantedBonusActionIds.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['granted_reaction_refs'], entitiesById)) {
+        if (!grantedReactionIds.contains(id)) grantedReactionIds.add(id);
+        noteSource(id, src);
+      }
+      for (final id in _readRefList(f['trait_refs'], entitiesById)) {
+        if (!autoGrantedTraitIds.contains(id)) autoGrantedTraitIds.add(id);
+        noteSource(id, src);
+      }
+
+      // ── Resource pools ──────────────────────────────────────────────────
+      applyResourcePools(f);
+
+      // `player_choices` rows are deliberately not read here — pending-choice
+      // queueing is a chargen/level-up concern (`pending_choices.dart` reads
+      // the card fields directly), not a resolved-sheet stat.
     }
 
     // ── 4b. Auto-grant walker. Scan every feat AND trait in the entity map;
     // if its `auto_granted_by` list matches the character's current
     // class+level / subclass / species / background, add it to the working
-    // set. Feats also have their `effects` applied below; traits are
-    // narrative-only and only surface on the sheet for display.
-    final autoGrantedFeatIds = <String>[];
-    final autoGrantedTraitIds = <String>[];
+    // set. Both then have their grant block applied below.
     bool matchesAutoGrant(List<Map<String, dynamic>> autoSources) {
       for (final src in autoSources) {
         final source = src['source']?.toString();
@@ -787,113 +595,17 @@ class CharacterResolver {
           }
         }
       }
-      final effects = _readMapList(feat.fields['effects']);
-      for (final eff in effects) {
-        applyEffect(eff, 'feat:${feat.name}');
-      }
-      // Legacy granted_modifiers DSL — apply if present.
-      final modifiers = _readMapList(feat.fields['granted_modifiers']);
-      for (final m in modifiers) {
-        final eff = _modifierAsEffect(m);
-        if (eff != null) applyEffect(eff, 'feat:${feat.name}');
-      }
-    }
-
-    // ── 6. Pass 4: feature-row effects (from class/subclass walk) ──────
-    for (final row in pendingFeatureEffects) {
-      applyEffect(row.eff, row.source);
+      applyGrantsFrom(feat.fields, 'feat:${feat.name}');
     }
 
     // ── 7. Pass 5: species + background grants ─────────────────────────
     if (raceId != null) {
       final sp = entitiesById[raceId];
       if (sp != null) {
-        final speciesSource = 'species:${sp.name}';
-        // Apply every grant carried by a species-shaped fields map — the
-        // species entity itself, a chosen subspecies entity, or (legacy) a
-        // nested subspecies_options row. All three share the same field set,
-        // so the application is factored once.
-        void applyGrantsFrom(Map<String, dynamic> f, String src) {
-          // Innate alternate movement speeds carried as absolute feet; keep the
-          // larger value per mode (effects also feed `extraSpeeds`).
-          const speedModeByField = {
-            'speed_fly_ft': 'fly',
-            'speed_swim_ft': 'swim',
-            'speed_climb_ft': 'climb',
-            'speed_burrow_ft': 'burrow',
-          };
-          speedModeByField.forEach((field, mode) {
-            final v = f[field];
-            if (v is int && v > 0 && v > (extraSpeeds[mode] ?? 0)) {
-              extraSpeeds[mode] = v;
-            }
-          });
-          for (final m in _readMapList(f['granted_modifiers'])) {
-            final eff = _modifierAsEffect(m);
-            if (eff != null) applyEffect(eff, src);
-          }
-          for (final s in _readRefList(f['granted_senses'], entitiesById)) {
-            if (!senses.contains(s)) senses.add(s);
-            noteSource(s, src);
-          }
-          for (final r in _readRefList(f['granted_damage_resistances'], entitiesById)) {
-            if (!damageRes.contains(r)) damageRes.add(r);
-            noteSource(r, src);
-          }
-          for (final r in _readRefList(f['granted_damage_immunities'], entitiesById)) {
-            if (!damageImmunities.contains(r)) damageImmunities.add(r);
-            noteSource(r, src);
-          }
-          for (final r in _readRefList(f['granted_damage_vulnerabilities'], entitiesById)) {
-            if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
-            noteSource(r, src);
-          }
-          for (final r in _readRefList(f['granted_condition_immunities'], entitiesById)) {
-            if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
-            noteSource(r, src);
-          }
-          for (final l in _readRefList(f['granted_languages'], entitiesById)) {
-            if (!languages.contains(l)) languages.add(l);
-          }
-          for (final sk in _readRefList(f['granted_skill_proficiencies'], entitiesById)) {
-            if (!skills.contains(sk)) skills.add(sk);
-          }
-          for (final t in _readRefList(f['trait_refs'], entitiesById)) {
-            if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
-            noteSource(t, src);
-          }
-          for (final a in _readRefList(f['granted_action_refs'], entitiesById)) {
-            if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
-            noteSource(a, src);
-          }
-          for (final a in _readRefList(f['granted_bonus_action_refs'], entitiesById)) {
-            if (!grantedBonusActionIds.contains(a)) grantedBonusActionIds.add(a);
-            noteSource(a, src);
-          }
-          for (final a in _readRefList(f['granted_reaction_refs'], entitiesById)) {
-            if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
-            noteSource(a, src);
-          }
-          for (final sp_ in _readRefList(f['granted_spell_refs'], entitiesById)) {
-            if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
-            noteSource(sp_, src);
-          }
-          for (final sp_ in _readRefList(f['granted_cantrip_refs'], entitiesById)) {
-            if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
-            noteSource(sp_, src);
-          }
-          _applyLevelGatedSpells(
-            rows: _readMapList(f['granted_spells_at_level']),
-            totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
-            entitiesById: entitiesById,
-            grantedSpellIds: grantedSpellIds,
-            grantedCantripIds: grantedCantripIds,
-            resourcePools: resourcePools,
-            noteSource: (id) => noteSource(id, src),
-          );
-        }
-
-        applyGrantsFrom(sp.fields, speciesSource);
+        // The species entity itself, a chosen subspecies entity and (legacy) a
+        // nested subspecies_options row all speak the grant-block keys, so the
+        // shared reader covers all three.
+        applyGrantsFrom(sp.fields, 'species:${sp.name}');
 
         // Subspecies — a first-class `subspecies` entity (preferred) or, for
         // legacy data, a nested `subspecies_options` row. `subspeciesId` may be
@@ -973,48 +685,22 @@ class CharacterResolver {
       }
     }
 
-    // ── 8b. Pass 5b: entity-level `rule_effects` ──────────────────────────
-    // The uniform `rule_effects` (featEffectList) field now lives on every
-    // rule-bearing category (class, subclass, species, background, trait,
-    // magic-item, weapon, armor) alongside feat's own `effects`. A distinct
-    // key avoids colliding with magic-item/spell's existing narrative
-    // `effects`. The field is new, so it is empty on all existing SRD content
-    // — applying it here is purely additive and changes nothing until a user
-    // authors a rule. Class/subclass flat effects apply while the class is
-    // held; granted-trait effects apply when the trait is granted; item
-    // effects apply while equipped.
-    void applyEntityEffects(Entity? e, String source) {
-      if (e == null) return;
-      for (final eff in _readMapList(e.fields['rule_effects'])) {
-        applyEffect(eff, source);
-      }
-    }
-
-    for (final cid in classLevels.keys) {
-      final ce = entitiesById[cid];
-      applyEntityEffects(ce, 'class:${ce?.name ?? cid}');
-    }
-    if (subclassId != null) {
-      final sub = entitiesById[subclassId];
-      applyEntityEffects(sub, 'subclass:${sub?.name ?? subclassId}');
-    }
-    if (raceId != null) {
-      final sp = entitiesById[raceId];
-      applyEntityEffects(sp, 'species:${sp?.name ?? raceId}');
-    }
-    if (backgroundId != null) {
-      final bg = entitiesById[backgroundId];
-      applyEntityEffects(bg, 'background:${bg?.name ?? backgroundId}');
-    }
-    for (final tid in autoGrantedTraitIds) {
+    // ── 8b. Pass 5b: granted traits + equipped items ───────────────────
+    // Traits carry the same grant block as feats — applied once granted
+    // (species trait_refs, auto-grant walker). A trait's own `trait_refs` is
+    // deliberately not declared in the schema, so this cannot recurse.
+    // Magic items apply their block while equipped.
+    for (final tid in List<String>.from(autoGrantedTraitIds)) {
       final tr = entitiesById[tid];
-      applyEntityEffects(tr, 'trait:${tr?.name ?? tid}');
+      if (tr == null) continue;
+      applyGrantsFrom(tr.fields, 'trait:${tr.name}');
     }
     for (final row in _iterEquippedInventory(fields)) {
       final id = _resolveRef(row, entitiesById);
       if (id == null) continue;
       final item = entitiesById[id];
-      applyEntityEffects(item, 'item:${item?.name ?? id}');
+      if (item == null) continue;
+      applyGrantsFrom(item.fields, 'item:${item.name}');
     }
 
     // ── 8. Class proficiency grants (saves + weapon/armor categories) ──
@@ -1190,7 +876,6 @@ class CharacterResolver {
       senseEntityIds: senses,
       senseRanges: senseRanges,
       conditionalGrants: conditionalGrants,
-      tempHpGrants: tempHpGrants,
       damageResistanceIds: damageRes,
       damageImmunityIds: damageImmunities,
       damageVulnerabilityIds: damageVulnerabilities,
@@ -1205,6 +890,8 @@ class CharacterResolver {
       unarmoredFormulas: unarmoredFormulas,
       extraAttackCount: extraAttackCount,
       critRangeMin: critRangeMin,
+      weaponMasteryCount: weaponMasteryCount,
+      mechanicalNotes: mechanicalNotes,
       resourcePools: resourcePools,
       grantSources: grantSources,
       freeCastSpellIds: _readStringList(fields['free_cast_spell_ids']),
@@ -1220,12 +907,7 @@ class CharacterResolver {
     Entity src,
     int level,
     List<ResolvedFeatureRow> out,
-    List<({Map<String, dynamic> eff, String source})> pendingEffects,
   ) {
-    // `kind` mirrors the tags `applyEffect` callers already use elsewhere
-    // (`class:`, `subclass:`) so `cleanSource` strips them uniformly.
-    final kind = src.categorySlug == 'subclass' ? 'subclass' : 'class';
-    final source = '$kind:${src.name}';
     final rows = _readMapList(src.fields['features']);
     for (final r in rows) {
       final lvl = (r['level'] is int) ? r['level'] as int : 1;
@@ -1235,26 +917,12 @@ class CharacterResolver {
         description: (r['description'] ?? '').toString(),
         sourceEntityId: src.id,
       ));
-      // Legacy inline effects on the row still applied for backwards compat
-      // during migration; new content delegates to `auto_granted_by` on the
-      // ref'd feat/trait entity, picked up in Pass 4b.
-      final effs = _readMapList(r['effects']);
-      for (final e in effs) {
-        pendingEffects.add((eff: e, source: source));
-      }
     }
   }
 
-  static String? _findEntityIdByName(
-    Map<String, Entity> all,
-    String slug,
-    String name,
-  ) =>
-      findEntityIdByName(all, slug, name);
-
   /// Compute the PC's armor class from equipped armor + Dex (capped by
-  /// armor row), shield bonus, generic `ac_bonus` effects, and any
-  /// `unarmored_ac_formula` effects whose predicates already resolved.
+  /// armor row), shield bonus, generic `ac_bonus` grants, and any
+  /// unarmored-AC formulas collected from `unarmored_ac_base` fields.
   /// Mirrors SRD §1 Armor Class rules. Surfaced on EffectiveCharacter so
   /// the sheet's AC chip refreshes whenever inventory equip flags change
   /// without forcing the player to retype the value into combat_stats.
@@ -1379,58 +1047,35 @@ class CharacterResolver {
   static String? _resolveRef(Object? raw, Map<String, Entity> all) =>
       resolveEntityRef(raw, all);
 
-  static String? _refIdFor(Map<String, dynamic> eff, Map<String, Entity> all) {
-    return _resolveRef(eff['target_ref'], all);
-  }
-
-  /// Legacy `granted_modifiers` kind names → the resolver kind that applies
-  /// them. Aliased at read time (not migrated) so read-only built-in SRD and
-  /// imported Open5e packs keep working and template content-hashes stay
-  /// untouched. Public so the legacy modifier editor knows these rows DO
-  /// apply and must not flag them as inert.
-  static const Map<String, String> legacyModifierKindAliases = {
-    'resistance_grant': 'damage_resistance',
-    'damage_resistance_grant': 'damage_resistance',
-    'immunity_grant': 'damage_immunity',
-    'damage_immunity_grant': 'damage_immunity',
-    'vulnerability_grant': 'damage_vulnerability',
-    'damage_vulnerability_grant': 'damage_vulnerability',
-    'spell_known_grant': 'spell_grant',
+  static const Set<String> _abilityAbbrevs = {
+    'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', //
   };
 
-  /// Re-shape a legacy `granted_modifiers` row into an effect the resolver
-  /// applies. Returns null for narrative-only rows (`feature_text`) that have
-  /// no sheet effect and must not warn. Kinds with no resolver implementation
-  /// (`save_bonus`, `skill_bonus`, ...) pass through unchanged and surface via
-  /// the `applyEffect` default-case warning.
-  static Map<String, dynamic>? _modifierAsEffect(Map<String, dynamic> m) {
-    final kind = (m['kind'] ?? '').toString();
-    if (kind == 'feature_text') return null;
-    final mapped = <String, dynamic>{...m};
-    final alias = legacyModifierKindAliases[kind];
-    if (alias != null) mapped['kind'] = alias;
-    // Legacy rows and the editor's target-kind list write `save`; the
-    // proficiency_grant switch speaks `saving_throw`.
-    if (mapped['target_kind'] == 'save') {
-      mapped['target_kind'] = 'saving_throw';
+  /// Split a `mechanical_notes` value into displayable lines. The field is a
+  /// textarea (one note per line), but a migrated list of strings reads the
+  /// same way.
+  static List<String> _readLines(Object? raw) {
+    if (raw is List) {
+      return [
+        for (final v in raw)
+          if (v is String && v.trim().isNotEmpty) v.trim(),
+      ];
     }
-    // The legacy editor's Condition picker means "only while under this
-    // condition". Translate it to the has_condition predicate the effect
-    // pipeline already understands: gated defense kinds surface as
-    // conditional-grant chips, everything else correctly stays off the
-    // sheet instead of applying unconditionally.
-    final conditionRef = m['condition_ref'];
-    if (conditionRef is String && conditionRef.isNotEmpty) {
-      final preds = mapped['predicates'] is List
-          ? List<dynamic>.from(mapped['predicates'] as List)
-          : <dynamic>[];
-      preds.add({
-        'kind': 'has_condition',
-        'args': {'condition_ref': conditionRef},
-      });
-      mapped['predicates'] = preds;
+    if (raw is String) {
+      return [
+        for (final line in raw.split('\n'))
+          if (line.trim().isNotEmpty) line.trim(),
+      ];
     }
-    return mapped;
+    return const [];
+  }
+
+  /// Human label for a state id/tag: `state:raging` → `while raging`.
+  static String _stateLabel(String stateId) {
+    final name = stateId.startsWith('state:')
+        ? stateId.substring('state:'.length)
+        : stateId;
+    return 'while ${name.replaceAll('_', ' ')}';
   }
 
   static List<String> _readStringList(Object? raw) {

@@ -1,6 +1,6 @@
 import '../../domain/entities/entity.dart';
 
-/// Resolver for the `weapon_mastery_count_bonus` effect on auto-granted
+/// Resolver for the `weapon_mastery_count` grant field on auto-granted
 /// class feats. Mirrors `resolveExtraAttackCountAt`: each feat declares an
 /// integer cap and the runtime takes the **maximum** across grants at or
 /// below [level]. SRD §1.7 spec varies by class (Fighter 3 at L1, others 2)
@@ -23,16 +23,10 @@ int resolveWeaponMasteryCountAt({
     if (e.categorySlug != 'feat') continue;
     if (!_isAutoGranted(e, classNames, level, entities)) continue;
 
-    final effects = e.fields['effects'];
-    if (effects is! List) continue;
-    for (final eff in effects) {
-      if (eff is! Map) continue;
-      if (eff['kind'] != 'weapon_mastery_count_bonus') continue;
-      final raw = eff['value'];
-      final v = raw is int ? raw : int.tryParse('$raw');
-      if (v == null) continue;
-      if (v > best) best = v;
-    }
+    final raw = e.fields['weapon_mastery_count'];
+    final v = raw is int ? raw : int.tryParse('$raw');
+    if (v == null) continue;
+    if (v > best) best = v;
   }
   return best;
 }

@@ -1,3 +1,4 @@
+import '../../data/schema/rule_effects_migration.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/repositories/package_repository.dart';
 
@@ -24,8 +25,17 @@ class PackagePayloadImporter {
     required String installedFrom,
     Map<String, dynamic>? extraMetadata,
   }) async {
-    final entities = (payload['entities'] as Map?)?.cast<String, dynamic>() ??
-        const <String, dynamic>{};
+    final rawEntities =
+        (payload['entities'] as Map?)?.cast<String, dynamic>() ??
+            const <String, dynamic>{};
+    // Old-format payloads (bundled packs / R2 catalog builds that predate the
+    // rule-system removal) carry `rule_effects` / `granted_modifiers` rows —
+    // convert them to named grant fields at install time so the stored pack
+    // is already in the current shape. No-op on current-format payloads.
+    final entities = <String, dynamic>{
+      for (final e in rawEntities.entries)
+        e.key: _migrateEntity(e.value),
+    };
     final metadata = <String, dynamic>{
       ...?(payload['metadata'] as Map?)?.cast<String, dynamic>(),
       ...?extraMetadata,
@@ -49,5 +59,17 @@ class PackagePayloadImporter {
       'metadata': metadata,
     });
     return packageName;
+  }
+
+  /// Convert one payload entity's `attributes` through [migrateRuleEffects],
+  /// leaving every other key untouched.
+  static Object? _migrateEntity(Object? entity) {
+    if (entity is! Map) return entity;
+    final attrs = entity['attributes'];
+    if (attrs is! Map) return entity;
+    final migrated =
+        migrateRuleEffects(Map<String, dynamic>.from(attrs));
+    if (identical(migrated, attrs)) return entity;
+    return {...entity, 'attributes': migrated};
   }
 }

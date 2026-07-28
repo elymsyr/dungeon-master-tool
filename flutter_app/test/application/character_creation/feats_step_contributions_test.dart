@@ -7,7 +7,7 @@ import 'package:dungeon_master_tool/presentation/screens/characters/wizard/steps
 Entity _feat({
   required String id,
   required String name,
-  required List<Map<String, dynamic>> effects,
+  required List<Map<String, dynamic>> choices,
 }) =>
     Entity(
       id: id,
@@ -21,7 +21,7 @@ Entity _feat({
       dmNotes: '',
       pdfs: const [],
       locationId: null,
-      fields: {'effects': effects},
+      fields: {'player_choices': choices},
     );
 
 Entity _bg({required String id, required String originFeatId}) => Entity(
@@ -61,16 +61,13 @@ void main() {
       final feat = _feat(
         id: 'feat-tb',
         name: 'Tavern Brawler',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'asi',
               'pick_kind': 'ability',
               'pick': 1,
               'ability_options': ['STR', 'CON'],
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
@@ -90,15 +87,12 @@ void main() {
       final feat = _feat(
         id: 'feat-skl',
         name: 'Skilled',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'picks',
               'pick_kind': 'skill_or_tool',
               'pick': 3,
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-skl');
@@ -123,10 +117,8 @@ void main() {
       final feat = _feat(
         id: 'feat-mi',
         name: 'Magic Initiate',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'list',
               'pick_kind': 'enum',
               'pick': 1,
@@ -134,27 +126,20 @@ void main() {
                 {'id': 'Cleric', 'label': 'Cleric'},
               ],
             },
-          },
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'cantrips',
               'pick_kind': 'spell_from_list',
               'pick': 2,
               'list_group_id': 'list',
               'spell_level': 0,
             },
-          },
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'level1',
               'pick_kind': 'spell_from_list',
               'pick': 1,
               'list_group_id': 'list',
               'spell_level': 1,
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-mi');
@@ -183,16 +168,13 @@ void main() {
       final feat = _feat(
         id: 'feat-tb',
         name: 'Tavern Brawler',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'asi',
               'pick_kind': 'ability',
               'pick': 1,
               'ability_options': ['STR', 'CON'],
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
@@ -213,17 +195,14 @@ void main() {
       final feat = _feat(
         id: 'feat-tb',
         name: 'Tavern Brawler',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'asi',
               'label': 'ASI',
               'pick_kind': 'ability',
               'pick': 1,
               'ability_options': ['STR', 'CON'],
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
@@ -238,17 +217,14 @@ void main() {
       final feat = _feat(
         id: 'feat-tb',
         name: 'Tavern Brawler',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'asi',
               'label': 'ASI',
               'pick_kind': 'ability',
               'pick': 1,
               'ability_options': ['STR', 'CON'],
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
@@ -266,17 +242,14 @@ void main() {
       final feat = _feat(
         id: 'feat-tb',
         name: 'Tavern Brawler',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'asi',
               'label': 'ASI',
               'pick_kind': 'ability',
               'pick': 1,
               'ability_options': ['STR', 'CON'],
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
@@ -292,10 +265,8 @@ void main() {
       final feat = _feat(
         id: 'feat-mi',
         name: 'Magic Initiate',
-        effects: [
+        choices: [
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'list',
               'label': 'List',
               'pick_kind': 'enum',
@@ -304,10 +275,7 @@ void main() {
                 {'id': 'Cleric', 'label': 'Cleric'},
               ],
             },
-          },
           {
-            'kind': 'choice_group',
-            'payload': {
               'group_id': 'cantrips',
               'label': 'Cantrips',
               'pick_kind': 'spell_from_list',
@@ -315,7 +283,6 @@ void main() {
               'list_group_id': 'list',
               'spell_level': 0,
             },
-          },
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-mi');

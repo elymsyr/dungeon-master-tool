@@ -248,16 +248,6 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
-  void grantedModifiers(String k, String l, {String g = grpRules}) =>
-      _base(
-        key: k,
-        label: l,
-        type: FieldType.grantedModifiers,
-        groupId: g,
-        gridSpan: 2,
-        defaultValue: const <Map<String, dynamic>>[],
-      );
-
   void equipmentChoiceGroups(String k, String l, {String g = grpProgression}) =>
       _base(
         key: k,
@@ -268,15 +258,210 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
-  void featEffectList(String k, String l, {String g = grpRules}) =>
+  void resourcePoolGrants(String k, String l, {String g = grpGrantsResources}) =>
       _base(
         key: k,
         label: l,
-        type: FieldType.featEffectList,
+        type: FieldType.resourcePoolGrants,
         groupId: g,
         gridSpan: 2,
         defaultValue: const <Map<String, dynamic>>[],
       );
+
+  void playerChoices(String k, String l, {String g = grpGrantsResources}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.playerChoices,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
+  /// The shared "what does this card grant?" block.
+  ///
+  /// Every part is a plainly-named field a DM can read without knowing any
+  /// DSL — `hp_bonus_per_level: 2` instead of
+  /// `{kind: hp_bonus_per_level, value: 2}`. [CharacterResolver.applyGrantsFrom]
+  /// is the single reader for all of them.
+  ///
+  /// The flags exist so a category only gains the parts it does not already
+  /// express in its own typed fields: a Class already has
+  /// `saving_throw_refs` / `armor_training_refs` / `caster_kind`, so handing it
+  /// a second way to grant proficiencies would recreate exactly the ambiguity
+  /// this block removes. Class features live on class-feature Feat cards
+  /// (`auto_granted_by`), which is where the block does belong.
+  void grantBlock({
+    bool proficiencies = true,
+    bool spells = true,
+    bool languages = true,
+    bool defense = true,
+    bool senses = true,
+    bool speeds = true,
+    bool actions = true,
+    bool traits = true,
+    bool numeric = true,
+    bool unarmoredAc = true,
+    bool resources = true,
+    bool state = true,
+    bool notes = true,
+  }) {
+    // ── Condition gate ─────────────────────────────────────────────────────
+    // When set, every grant on this card is conditional: the resolver routes
+    // them to `EffectiveCharacter.conditionalGrants` (rendered as "while
+    // raging" chips) instead of the unconditional totals.
+    if (state) {
+      relation('active_while_state_ref', 'Only While State Active',
+          const ['character-state'],
+          g: grpGrantsProficiency);
+    }
+
+    // ── Proficiencies, languages, spells ───────────────────────────────────
+    if (proficiencies) {
+      relation('granted_skill_proficiencies', 'Skill Proficiencies',
+          const ['skill'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_tool_proficiencies', 'Tool Proficiencies',
+          const ['tool'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_save_proficiencies', 'Saving Throw Proficiencies',
+          const ['ability'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_weapon_proficiencies', 'Weapon Proficiencies',
+          const ['weapon-category', 'weapon'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_armor_proficiencies', 'Armor Proficiencies',
+          const ['armor-category'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_expertise_skills', 'Expertise Skills', const ['skill'],
+          isList: true, g: grpGrantsProficiency);
+    }
+    if (languages) {
+      relation('granted_languages', 'Languages', const ['language'],
+          isList: true, g: grpGrantsProficiency);
+    }
+    if (spells) {
+      relation('granted_spell_refs', 'Spells', const ['spell'],
+          isList: true, g: grpGrantsProficiency);
+      relation('granted_cantrip_refs', 'Cantrips', const ['spell'],
+          isList: true, g: grpGrantsProficiency);
+      relation('always_prepared_spell_refs', 'Always-Prepared Spells',
+          const ['spell'],
+          isList: true, g: grpGrantsProficiency);
+    }
+
+    // ── Numeric bonuses ────────────────────────────────────────────────────
+    if (numeric) {
+      statBlock('ability_bonuses', 'Ability Score Bonuses',
+          g: grpGrantsNumeric,
+          defaultValue: const {
+            'STR': 0, 'DEX': 0, 'CON': 0, 'INT': 0, 'WIS': 0, 'CHA': 0, //
+          });
+      integer('ability_bonus_cap', 'Ability Score Cap',
+          min: 20, max: 30, g: grpGrantsNumeric,
+          help: 'Cap for the bonuses above. Leave empty for the default 20 '
+              '(Primal Champion raises it to 25).');
+      integer('ac_bonus', 'AC Bonus', min: -10, max: 10, g: grpGrantsNumeric);
+      integer('speed_bonus_ft', 'Walking Speed Bonus (ft)',
+          min: -60, max: 60, g: grpGrantsNumeric);
+      integer('initiative_bonus', 'Initiative Bonus',
+          min: -10, max: 20, g: grpGrantsNumeric);
+      integer('hp_bonus_flat', 'Max HP Bonus (flat)',
+          min: -50, max: 100, g: grpGrantsNumeric);
+      integer('hp_bonus_per_level', 'Max HP Bonus per Level',
+          min: -5, max: 10, g: grpGrantsNumeric);
+      integer('extra_attack_count', 'Attacks per Attack Action',
+          min: 1, max: 8, g: grpGrantsNumeric,
+          help: 'Total attacks, not extra ones. Leave empty for the default 1.');
+      levelTable('extra_attack_count_by_level', 'Attacks by Level',
+          g: grpGrantsNumeric);
+      integer('crit_threshold', 'Critical Hit Threshold',
+          min: 2, max: 20, g: grpGrantsNumeric,
+          help: '19 = crits on 19-20. Leave empty for the default 20.');
+      integer('weapon_mastery_count', 'Weapon Mastery Slots',
+          min: 0, max: 8, g: grpGrantsNumeric);
+    }
+    if (unarmoredAc) {
+      integer('unarmored_ac_base', 'Unarmored AC Base',
+          min: 0, max: 20, g: grpGrantsNumeric,
+          help: 'Replaces AC while no armor is worn: base + the ability '
+              'modifiers below.');
+      relation('unarmored_ac_abilities', 'Unarmored AC Abilities',
+          const ['ability'],
+          isList: true, g: grpGrantsNumeric);
+      boolean('unarmored_ac_shield_allowed', 'Shield Allowed with Unarmored AC',
+          g: grpGrantsNumeric);
+    }
+
+    // ── Defense, senses, movement, granted actions ─────────────────────────
+    if (defense) {
+      relation('granted_damage_resistances', 'Damage Resistances',
+          const ['damage-type'],
+          isList: true, g: grpGrantsDefense);
+      relation('granted_damage_immunities', 'Damage Immunities',
+          const ['damage-type'],
+          isList: true, g: grpGrantsDefense);
+      relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities',
+          const ['damage-type'],
+          isList: true, g: grpGrantsDefense);
+      relation('granted_condition_immunities', 'Condition Immunities',
+          const ['condition'],
+          isList: true, g: grpGrantsDefense);
+    }
+    if (senses) {
+      rangedSenseList('granted_senses', 'Senses', g: grpGrantsDefense);
+    }
+    if (speeds) {
+      integer('speed_fly_ft', 'Fly Speed (ft)',
+          min: -1, max: 120, g: grpGrantsDefense,
+          help: '-1 = equal to walking speed.');
+      integer('speed_swim_ft', 'Swim Speed (ft)',
+          min: -1, max: 120, g: grpGrantsDefense,
+          help: '-1 = equal to walking speed.');
+      integer('speed_climb_ft', 'Climb Speed (ft)',
+          min: -1, max: 120, g: grpGrantsDefense,
+          help: '-1 = equal to walking speed.');
+      integer('speed_burrow_ft', 'Burrow Speed (ft)',
+          min: -1, max: 120, g: grpGrantsDefense,
+          help: '-1 = equal to walking speed.');
+    }
+    if (actions) {
+      relation('granted_action_refs', 'Granted Actions',
+          const ['creature-action'],
+          isList: true, g: grpGrantsDefense);
+      relation('granted_bonus_action_refs', 'Granted Bonus Actions',
+          const ['creature-action'],
+          isList: true, g: grpGrantsDefense);
+      relation('granted_reaction_refs', 'Granted Reactions',
+          const ['creature-action'],
+          isList: true, g: grpGrantsDefense);
+    }
+    if (traits) {
+      relation('trait_refs', 'Traits', const ['trait'],
+          isList: true, g: grpGrantsDefense);
+    }
+
+    // ── Resource pools + deferred player choices ────────────────────────────
+    if (resources) {
+      resourcePoolGrants('resource_pool_grants', 'Resource Pools');
+      playerChoices('player_choices', 'Player Choices');
+    }
+
+    // ── Anything the engine does not model ─────────────────────────────────
+    // One note per line. Shown verbatim on the character sheet under "Other
+    // Effects" so a rule the resolver cannot compute is still in front of the
+    // player instead of silently dropped.
+    if (notes) {
+      _base(
+        key: 'mechanical_notes',
+        label: 'Mechanical Notes',
+        type: FieldType.textarea,
+        groupId: grpGrantsNotes,
+        gridSpan: 2,
+        helpText: 'One rule per line. Shown on the character sheet as-is.',
+      );
+    }
+  }
 
   void autoGrantSources(String k, String l, {String g = grpRules}) =>
       _base(
@@ -288,14 +473,15 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
-  void statBlock(String k, String l, {String g = grpAbilityScores}) =>
+  void statBlock(String k, String l, {String g = grpAbilityScores, dynamic defaultValue}) =>
       _base(
         key: k,
         label: l,
         type: FieldType.statBlock,
         groupId: g,
         gridSpan: 2,
-        defaultValue: const {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
+        defaultValue: defaultValue ??
+            const {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
       );
 
   void proficiencyTable(String k, String l, {String g = grpCombat, dynamic defaultValue}) =>
@@ -387,9 +573,10 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   // subset is granted (e.g. Barbarian multiclass = shields + martial weapons,
   // not full Barbarian proficiencies).
   fb.markdown('multiclass_granted_proficiencies', 'Multiclass Granted Proficiencies', g: grpProgression);
-  // Typed rule effects applied while the class is held (always-on; gate by
-  // level with a `class_level_at_least` predicate). Empty by default.
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpFeatures);
+  // No grant block here: every mechanical grant a class makes already has a
+  // typed home above (`saving_throw_refs`, `armor_training_refs`,
+  // `caster_kind`, the level tables) and per-level features live on
+  // class-feature Feat cards wired up through `auto_granted_by`.
 
   return _mk(
     schemaId: schemaId,
@@ -419,7 +606,8 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   fb.integer('bonus_skill_pick_count', 'Bonus Skill Picks at Grant', min: 0, max: 6);
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpFeatures);
+  // No grant block — same rationale as Class: subclass mechanics ship as
+  // class-feature Feat cards keyed to the subclass via `auto_granted_by`.
 
   return _mk(
     schemaId: schemaId,
@@ -451,28 +639,10 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120, g: grpCombat);
-  // Senses & Languages.
-  fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true, g: grpSensesLanguages);
-  fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true, g: grpSensesLanguages);
-  // Damage / condition resistance & immunity grid.
-  fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
-  // Traits + actions + skill proficiency grants + the modifier DSL.
-  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true, g: grpTraitsActions);
-  // Innate spells / cantrips (Drow Dancing Lights, Tiefling Hellish Rebuke,
-  // High Elf Wizard cantrip etc.). Resolver folds into grantedSpellIds /
-  // grantedCantripIds on the EffectiveCharacter and tags with the species
-  // source for display.
-  fb.relation('granted_spell_refs', 'Innate Spells', const ['spell'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_cantrip_refs', 'Innate Cantrips', const ['spell'], isList: true, g: grpTraitsActions);
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpTraitsActions);
+  // Everything a species grants — the shared block. `speeds: false` because the
+  // four specialised speeds above are the species' own innate movement and live
+  // in the Movement group; the resolver reads the same keys either way.
+  fb.grantBlock(speeds: false);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields
   // available at the species level — folded by CharacterResolver when the
@@ -487,13 +657,11 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
     color: '#00897b',
     icon: 'diversity_3',
     fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
-      FieldGroup(groupId: grpSensesLanguages, name: 'Senses & Languages', gridColumns: 2, orderIndex: 2),
-      FieldGroup(groupId: grpResistances, name: 'Resistances & Immunities', gridColumns: 2, orderIndex: 3),
-      FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 4),
-      FieldGroup(groupId: grpRules, name: 'Lineage Options', gridColumns: 1, orderIndex: 5),
+    groups: [
+      const FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      const FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
+      ...grantGroups(2),
+      const FieldGroup(groupId: grpRules, name: 'Lineage Options', gridColumns: 1, orderIndex: 7),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -514,25 +682,8 @@ EntityCategorySchema _subspeciesCategory(String schemaId, String now, int orderI
   fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120, g: grpCombat);
-  // Senses & Languages.
-  fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true, g: grpSensesLanguages);
-  fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true, g: grpSensesLanguages);
-  // Damage / condition resistance & immunity grid.
-  fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
-  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
-  // Traits + actions + skill proficiency grants + the modifier DSL — the same
-  // grant shape as Species, so CharacterResolver folds them identically.
-  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_spell_refs', 'Innate Spells', const ['spell'], isList: true, g: grpTraitsActions);
-  fb.relation('granted_cantrip_refs', 'Innate Cantrips', const ['spell'], isList: true, g: grpTraitsActions);
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpTraitsActions);
+  // Same grant block as Species, so CharacterResolver folds them identically.
+  fb.grantBlock(speeds: false);
 
   return _mk(
     schemaId: schemaId,
@@ -542,12 +693,10 @@ EntityCategorySchema _subspeciesCategory(String schemaId, String now, int orderI
     color: '#26a69a',
     icon: 'diversity_2',
     fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
-      FieldGroup(groupId: grpSensesLanguages, name: 'Senses & Languages', gridColumns: 2, orderIndex: 2),
-      FieldGroup(groupId: grpResistances, name: 'Resistances & Immunities', gridColumns: 2, orderIndex: 3),
-      FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 4),
+    groups: [
+      const FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      const FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
+      ...grantGroups(2),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -577,7 +726,9 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   fb.integer('starting_gold_gp', 'Starting Gold (gp)', min: 0);
   fb.integer('gold_alternative_gp', 'Gold Alternative (gp)', min: 0,
       help: 'Choose this gp instead of default_inventory_refs');
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpIdentity);
+  // No grant block: a background's whole mechanical footprint is the four typed
+  // fields above (skills, tools, language slots, ASI) plus its Origin Feat,
+  // which is where any further mechanic belongs.
 
   return _mk(
     schemaId: schemaId,
@@ -635,19 +786,10 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   // the chosen ability. Editor's `featAsi` pending resolution reads this and
   // flips `saving_throws.rows[i].proficient` for the bumped ability.
   fb.boolean('grants_save_prof_from_asi', 'Grants Save Prof from ASI Ability', g: grpRules);
-  // Typed effect DSL — applied by CharacterResolver. Covers level grants,
-  // proficiency / language / spell / cantrip grants, AC / speed / HP / initiative
-  // / attack bonuses, extra-attack bumps, and choice-group sub-pickers.
-  fb.featEffectList('effects', 'Effects (typed)', g: grpRules);
-  // Legacy typed bonus DSL — narrower than `effects` but still rendered.
-  // Resolver consumes both; new content should prefer `effects`.
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  // Typed activation block — feats that grant a usable ability (Rage,
-  // Action Surge, Channel Divinity) carry `{actionType, duration, uses,
-  // triggersStateRef, endConditions}`. Resolver reads the map directly;
-  // schema declares the key so attribute-key integrity passes.
-  fb.markdown('activation', 'Activation (typed)', g: grpRules);
   fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
+  // Feats — including the class/subclass-feature feats that carry every
+  // per-level class mechanic — are the block's main home.
+  fb.grantBlock();
 
   return _mk(
     schemaId: schemaId,
@@ -657,9 +799,10 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
     color: '#ff7043',
     icon: 'stars',
     fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpRules, name: 'Rules Text', gridColumns: 1, orderIndex: 1),
+    groups: [
+      const FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      const FieldGroup(groupId: grpRules, name: 'Rules Text', gridColumns: 1, orderIndex: 1),
+      ...grantGroups(2),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -729,7 +872,8 @@ EntityCategorySchema _weaponCategory(String schemaId, String now, int orderIndex
   fb.relation('ammunition_type_ref', 'Ammunition Type', const ['ammunition'], g: grpProperties);
   fb.floatF('cost_gp', 'Cost (gp)', required_: true, min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', required_: true, min: 0, g: grpCostWeight);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpProperties);
+  // No grant block: a mundane weapon's mechanics are the typed fields above.
+  // A weapon that grants something is a Magic Item card with `base_item_ref`.
 
   return _mk(
     schemaId: schemaId,
@@ -765,7 +909,7 @@ EntityCategorySchema _armorCategory(String schemaId, String now, int orderIndex)
   fb.integer('doff_time_minutes', 'Doff (min)', required_: true, min: 0);
   fb.floatF('cost_gp', 'Cost (gp)', required_: true, min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', required_: true, min: 0, g: grpCostWeight);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpIdentity);
+  // No grant block — same rationale as Weapon: magic armor is a Magic Item.
 
   return _mk(
     schemaId: schemaId,
@@ -1011,9 +1155,11 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
     required_: true,
   );
   fb.text('command_word', 'Command Word');
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpRules);
   fb.markdown('effects', 'Effects (narrative)', required_: true, g: grpRules);
+  // What the item grants while equipped / attuned. `resources: false` because
+  // an item's uses are `charges_max` + `charge_regain` above; `traits` and
+  // `unarmoredAc` are species/class shapes that no item uses.
+  fb.grantBlock(resources: false, traits: false, unarmoredAc: false);
   fb.integer('cost_gp', 'Cost (gp)', min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', min: 0, g: grpCostWeight);
   fb.boolean('is_sentient', 'Sentient', required_: true);
@@ -1033,11 +1179,12 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
     color: '#8e24aa',
     icon: 'auto_fix_high',
     fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpProperties, name: 'Properties', gridColumns: 2, orderIndex: 1),
-      FieldGroup(groupId: grpRules, name: 'Effects', gridColumns: 1, orderIndex: 2),
-      FieldGroup(groupId: grpCostWeight, name: 'Cost & Weight', gridColumns: 2, orderIndex: 3),
+    groups: [
+      const FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      const FieldGroup(groupId: grpProperties, name: 'Properties', gridColumns: 2, orderIndex: 1),
+      const FieldGroup(groupId: grpRules, name: 'Effects', gridColumns: 1, orderIndex: 2),
+      ...grantGroups(3),
+      const FieldGroup(groupId: grpCostWeight, name: 'Cost & Weight', gridColumns: 2, orderIndex: 8),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -1139,8 +1286,6 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
     'Spellcasting',
     'Other',
   ]);
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  fb.featEffectList('rule_effects', 'Rule Effects (typed)', g: grpRules);
   fb.markdown('description', 'Description (narrative)', g: grpRules);
   fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
   // Player-facing? Narrative class/species traits are auto-granted and should
@@ -1150,9 +1295,11 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
       defaultValue: false, g: grpIdentity);
   // Inverse edge of class.granted_trait_refs / species.granted_trait_refs /
   // background.granted_trait_refs. The auto-grant walker adds the trait to the
-  // character's Features list; the resolver also applies the trait's typed
-  // `rule_effects` (legacy `granted_modifiers` stays display-only).
+  // character's Features list and applies its grant block.
   fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
+  // A trait is the species/monster analogue of a feat, so it carries the same
+  // block. `traits: false` — a trait granting other traits invites cycles.
+  fb.grantBlock(traits: false);
 
   return _mk(
     schemaId: schemaId,
@@ -1162,9 +1309,10 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
     color: '#7e57c2',
     icon: 'auto_awesome',
     fields: fb.out,
-    groups: const [
-      FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpRules, name: 'Rules', gridColumns: 1, orderIndex: 1),
+    groups: [
+      const FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
+      const FieldGroup(groupId: grpRules, name: 'Rules', gridColumns: 1, orderIndex: 1),
+      ...grantGroups(2),
     ],
     orderIndex: orderIndex,
     now: now,

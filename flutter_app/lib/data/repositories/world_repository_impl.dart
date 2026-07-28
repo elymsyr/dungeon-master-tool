@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../application/services/srd_core_bootstrap.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../database/util/builtin_synth.dart';
+import '../schema/rule_effects_migration.dart';
 import '../../core/utils/deep_copy.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
@@ -407,7 +408,11 @@ class WorldRepositoryImpl implements CampaignRepository {
         'dm_notes': e.dmNotes,
         'pdfs': jsonDecode(e.pdfsJson),
         'location_id': e.locationId,
-        'attributes': jsonDecode(e.fieldsJson),
+        // Read-time conversion of retired `rule_effects` / `granted_modifiers`
+        // rows into named grant fields. No-op (identical map) on converted
+        // data; converted shape persists on the next save.
+        'attributes': migrateRuleEffects(
+            Map<String, dynamic>.from(jsonDecode(e.fieldsJson) as Map)),
         if (e.packageId != null) 'package_id': e.packageId,
         if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
         if (e.linked) 'linked': true,

@@ -319,18 +319,15 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (featId == null) return;
     final feat = widget.entities[featId];
     if (feat == null) return;
-    final effects = feat.fields['effects'];
-    if (effects is! List) return;
+    final rows = feat.fields['player_choices'];
+    if (rows is! List) return;
     final targetLabel = widget.choice.featureName;
-    for (final row in effects) {
+    for (final row in rows) {
       if (row is! Map) continue;
-      if (row['kind'] != 'choice_group') continue;
-      final payload = row['payload'];
-      if (payload is! Map) continue;
-      final label = payload['label']?.toString() ?? '';
-      final groupId = payload['group_id']?.toString() ?? '';
+      final label = row['label']?.toString() ?? '';
+      final groupId = row['group_id']?.toString() ?? '';
       if (label != targetLabel) continue;
-      _featChoiceGroup = Map<String, dynamic>.from(payload);
+      _featChoiceGroup = Map<String, dynamic>.from(row);
       _featChoiceStorageKey = '$featId:$groupId';
       // Pre-populate from any partial picks already in feat_choices so the
       // user only needs to add the remaining ones.

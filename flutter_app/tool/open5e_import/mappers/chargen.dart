@@ -256,7 +256,7 @@ void mapSpecies({
     // ref when the spell ships here, else a runtime-resolving softRef.
     final senses = <Map<String, String>>[];
     final langs = <Map<String, String>>[];
-    final modifiers = <Map<String, dynamic>>[];
+    final abilityBonuses = <String, int>{};
     final dmgRes = <Map<String, String>>[];
     final dmgImm = <Map<String, String>>[];
     final dmgVuln = <Map<String, String>>[];
@@ -273,7 +273,11 @@ void mapSpecies({
         if (s != null) senses.add(s);
       }
       if (tn == 'languages') langs.addAll(_refListFromText(norm, 'language', d));
-      if (tn == 'ability score increase') modifiers.addAll(_parseAsi(d));
+      if (tn == 'ability score increase') {
+        _parseAsi(d).forEach((code, v) {
+          abilityBonuses[code] = (abilityBonuses[code] ?? 0) + v;
+        });
+      }
       // D1 — damage resistance / immunity / vulnerability (lowercase prose; the
       // "X damage" anchor avoids matching damage dealt by an action).
       for (final m in RegExp(r'resistan\w*\s+to\s+([^.;]*?)\s+damage',
@@ -316,9 +320,15 @@ void mapSpecies({
       final dd = _dedupeByName(v);
       if (dd.isNotEmpty) attrs[key] = dd;
     }
-    put('granted_senses', senses);
+    // `granted_senses` rows use the {sense_ref, range_ft} shape; prose gives
+    // no reliable range, so rows carry only the ref.
+    if (senses.isNotEmpty) {
+      attrs['granted_senses'] = [
+        for (final ref in _dedupeByName(senses)) {'sense_ref': ref},
+      ];
+    }
     put('granted_languages', langs);
-    if (modifiers.isNotEmpty) attrs['granted_modifiers'] = modifiers;
+    if (abilityBonuses.isNotEmpty) attrs['ability_bonuses'] = abilityBonuses;
     put('granted_damage_resistances', dmgRes);
     put('granted_damage_immunities', dmgImm);
     put('granted_damage_vulnerabilities', dmgVuln);
@@ -610,44 +620,42 @@ bool _isJunkPrereq(String s) {
   return null;
 }
 
-/// Feat benefit grants → `effects` entries matching the resolver's known kinds
-/// (see `CharacterResolver.knownEffectKinds`). Conservative: only emits the
+/// Feat benefit grants → grant-block fields written straight into [attrs]
+/// (see `CharacterResolver.grantFieldKeys`). Conservative: only emits the
 /// high-confidence, unconditional grants — armor proficiency, flat speed bonus,
 /// and Tough-style per-level HP. Conditional / PB-scaling / "of your choice"
 /// benefits stay in the folded narrative (honest source limits).
-List<Map<String, dynamic>> _parseFeatEffects(String desc) {
-  final out = <Map<String, dynamic>>[];
+void _parseFeatGrants(String desc, Map<String, dynamic> attrs) {
+  final armorProfs = <Map<String, String>>[];
   for (final m in RegExp(
           r'(?:training with|proficiency with|gain)\s+(Light|Medium|Heavy)\s+armor',
           caseSensitive: false)
       .allMatches(desc)) {
-    out.add(effect('proficiency_grant',
-        targetKind: 'armor_category',
-        targetRef: lookup('armor-category', titleCase(m.group(1)!))));
+    armorProfs.add(lookup('armor-category', titleCase(m.group(1)!)));
   }
   if (RegExp(r'(?:training with|proficiency with|gain)\b[^.]{0,24}\bshields?\b',
           caseSensitive: false)
       .hasMatch(desc)) {
-    out.add(effect('proficiency_grant',
-        targetKind: 'armor_category',
-        targetRef: lookup('armor-category', 'Shield')));
+    armorProfs.add(lookup('armor-category', 'Shield'));
+  }
+  if (armorProfs.isNotEmpty) {
+    attrs['granted_armor_proficiencies'] = _dedupeByName(armorProfs);
   }
   final sp = RegExp(r'\bspeed increases by\s+(\d+)\s*(?:feet|ft)\b',
           caseSensitive: false)
       .firstMatch(desc);
   if (sp != null) {
-    out.add(effect('speed_bonus', value: int.parse(sp.group(1)!)));
+    attrs['speed_bonus_ft'] = int.parse(sp.group(1)!);
   }
   if (RegExp(r'hit point maximum increases by[^.]*twice your[^.]*level',
           caseSensitive: false)
       .hasMatch(desc)) {
-    out.add(effect('hp_bonus_per_level', value: 2));
+    attrs['hp_bonus_per_level'] = 2;
   }
-  return out;
 }
 
-/// Feat benefit "choose N skills/tools of your choice" → a `choice_group`
-/// effect the resolver dialog renders as a skill/tool picker (matches the
+/// Feat benefit "choose N skills/tools of your choice" → a `player_choices`
+/// row the resolver dialog renders as a skill/tool picker (matches the
 /// built-in Skilled feat). Fires only on an explicit build grant — a number
 /// word directly before `skills`/`tools`. Per-use "choose" (a die / a target /
 /// to do X) never matches (no number+noun), and weapon/language picks have no
@@ -666,14 +674,11 @@ List<Map<String, dynamic>> _parseFeatChoiceGroups(String desc) {
   if (pick == null || pick < 1) return const [];
   return [
     {
-      'kind': 'choice_group',
-      'payload': {
-        'group_id': 'skills',
-        'label': 'Skills & Tools',
-        'prompt': 'Choose proficiencies',
-        'pick_kind': 'skill_or_tool',
-        'pick': pick,
-      },
+      'group_id': 'skills',
+      'label': 'Skills & Tools',
+      'prompt': 'Choose proficiencies',
+      'pick_kind': 'skill_or_tool',
+      'pick': pick,
     },
   ];
 }
@@ -971,7 +976,8 @@ const _abilityCode = {
 /// species). The "+N to ability scores each" wording grants all six; explicit
 /// "X score increases by N" phrases grant that one. "of your choice" wording is
 /// intentionally left to the folded narrative (no fixed typing possible).
-List<Map<String, dynamic>> _parseAsi(String desc) {
+/// Fixed ASI prose → `ability_bonuses` map entries ({'STR': 2, ...}).
+Map<String, int> _parseAsi(String desc) {
   if (RegExp(r'ability scores?\s+each\s+increase\s+by\s+(\d+)',
               caseSensitive: false)
           .hasMatch(desc) ||
@@ -979,21 +985,16 @@ List<Map<String, dynamic>> _parseAsi(String desc) {
               caseSensitive: false)
           .hasMatch(desc)) {
     final v = int.parse(RegExp(r'by\s+(\d+)').firstMatch(desc)!.group(1)!);
-    return [
-      for (final code in _abilityCode.values)
-        {'kind': 'ability_score_bonus', 'ability': code, 'value': v},
-    ];
+    return {for (final code in _abilityCode.values) code: v};
   }
-  final out = <Map<String, dynamic>>[];
+  final out = <String, int>{};
   final re = RegExp(
       r'(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+score\s+increases?\s+by\s+(\d+)',
       caseSensitive: false);
   for (final m in re.allMatches(desc)) {
-    out.add({
-      'kind': 'ability_score_bonus',
-      'ability': _abilityCode[m.group(1)!.toLowerCase()],
-      'value': int.parse(m.group(2)!),
-    });
+    final code = _abilityCode[m.group(1)!.toLowerCase()];
+    if (code == null) continue;
+    out[code] = (out[code] ?? 0) + int.parse(m.group(2)!);
   }
   return out;
 }
@@ -1137,11 +1138,9 @@ void mapFeats({
       attrs['asi_max_score'] = asi.maxScore;
       attrs['asi_ability_options'] = asi.options;
     }
-    final effects = [
-      ..._parseFeatEffects(benefitText),
-      ..._parseFeatChoiceGroups(benefitText),
-    ];
-    if (effects.isNotEmpty) attrs['effects'] = effects;
+    _parseFeatGrants(benefitText, attrs);
+    final choices = _parseFeatChoiceGroups(benefitText);
+    if (choices.isNotEmpty) attrs['player_choices'] = choices;
     _addUnique(pack, slug: 'feat', name: name, source: source,
         description: desc, tags: const [], attributes: attrs);
   }

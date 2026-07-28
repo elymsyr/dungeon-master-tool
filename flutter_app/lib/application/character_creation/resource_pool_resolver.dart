@@ -4,15 +4,15 @@ import '../../domain/services/count_formula.dart';
 /// Pure resolver for class resource pools (Rage uses, Bardic Inspiration,
 /// Channel Divinity, Ki / Focus Points, Wild Shape, Lay on Hands, etc.).
 /// Walks every feat in [entities] whose `auto_granted_by` points at the
-/// active class or subclass, picks each `resource_pool_grant` effect,
+/// active class or subclass, picks each `resource_pool_grants` row,
 /// and resolves a max value at [level] from either:
 ///
-///   1. `scales_with.table` — uses the entry with the highest `lvl ≤ level`
-///   2. `payload.count_formula` — evaluated via [evalCountFormula] when
+///   1. `count_by_level` — uses the entry with the highest `lvl ≤ level`
+///   2. `count_formula` — evaluated via [evalCountFormula] when
 ///      `abilities` / `classLevels` are supplied (e.g. `paladin_level_x5`,
 ///      `monk_level`, `cha_mod_min_1`). Skipped when context is empty so
 ///      planner-only callers fall through to the literal `count`.
-///   3. `payload.count` literal — final fallback.
+///   3. `count` literal — final fallback.
 ///
 /// Returns a map of `pool_ref.name` → max count. Empty when no class is
 /// supplied or no feats apply at this level.
@@ -36,28 +36,24 @@ Map<String, int> resolveResourcePoolsAt({
     if (e.categorySlug != 'feat') continue;
     if (!_isAutoGranted(e, classNames, level, entities)) continue;
 
-    final effects = e.fields['effects'];
-    if (effects is! List) continue;
-    for (final eff in effects) {
-      if (eff is! Map) continue;
-      if (eff['kind'] != 'resource_pool_grant') continue;
-      final payload = eff['payload'];
-      if (payload is! Map) continue;
-      final poolRef = payload['pool_ref'];
+    final rows = e.fields['resource_pool_grants'];
+    if (rows is! List) continue;
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final poolRef = row['pool_ref'];
       if (poolRef is! Map) continue;
       final poolName = poolRef['name']?.toString();
       if (poolName == null || poolName.isEmpty) continue;
 
       final value = _resolveValue(
-        eff,
-        payload,
+        row,
         level,
         abilities: abilities,
         classLevels: classLevels,
         entities: entities,
       );
       if (value == null) continue;
-      // If multiple effects grant the same pool (e.g. base + subclass
+      // If multiple rows grant the same pool (e.g. base + subclass
       // upgrade), keep the larger value so the player isn't downgraded.
       final cur = out[poolName] ?? 0;
       if (value > cur) out[poolName] = value;
@@ -90,45 +86,38 @@ bool _isAutoGranted(Entity feat, Set<String> sources, int level,
 }
 
 int? _resolveValue(
-  Map eff,
-  Map payload,
+  Map row,
   int level, {
   required Map<String, int> abilities,
   required Map<String, int> classLevels,
   required Map<String, Entity> entities,
 }) {
-  final scales = eff['scales_with'];
-  if (scales is Map) {
-    final table = scales['table'];
-    if (table is List) {
-      int? best;
-      int? bestLvl;
-      for (final row in table) {
-        if (row is! Map) continue;
-        final lvlRaw = row['lvl'];
-        final vRaw = row['v'];
-        final lvl = lvlRaw is int ? lvlRaw : int.tryParse('$lvlRaw');
-        final v = vRaw is int ? vRaw : int.tryParse('$vRaw');
-        if (lvl == null || v == null) continue;
-        if (lvl > level) continue;
-        if (bestLvl == null || lvl > bestLvl) {
-          bestLvl = lvl;
-          best = v;
-        }
+  final table = row['count_by_level'];
+  if (table is Map) {
+    int? best;
+    int? bestLvl;
+    for (final e in table.entries) {
+      final lvl = e.key is int ? e.key as int : int.tryParse('${e.key}');
+      final v = e.value is int ? e.value as int : int.tryParse('${e.value}');
+      if (lvl == null || v == null) continue;
+      if (lvl > level) continue;
+      if (bestLvl == null || lvl > bestLvl) {
+        bestLvl = lvl;
+        best = v;
       }
-      if (best != null) return best;
     }
+    if (best != null) return best;
   }
   if (abilities.isNotEmpty || classLevels.isNotEmpty) {
     final formulaMax = evalCountFormula(
-      payload['count_formula']?.toString(),
+      row['count_formula']?.toString(),
       abilities: abilities,
       classLevels: classLevels,
       entitiesById: entities,
     );
     if (formulaMax != null) return formulaMax;
   }
-  final countRaw = payload['count'];
+  final countRaw = row['count'];
   if (countRaw is int) return countRaw;
   if (countRaw is String) {
     final parsed = int.tryParse(countRaw);

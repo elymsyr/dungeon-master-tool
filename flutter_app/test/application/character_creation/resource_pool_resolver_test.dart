@@ -13,7 +13,7 @@ Entity _feat({
   required String id,
   required String name,
   required List<Map<String, dynamic>> autoGrantedBy,
-  required List<Map<String, dynamic>> effects,
+  required List<Map<String, dynamic>> pools,
 }) =>
     Entity(
       id: id,
@@ -21,7 +21,7 @@ Entity _feat({
       categorySlug: 'feat',
       fields: {
         'auto_granted_by': autoGrantedBy,
-        'effects': effects,
+        'resource_pool_grants': pools,
       },
     );
 
@@ -39,19 +39,14 @@ Map<String, dynamic> _poolGrant({
   String? sourceClass,
 }) =>
     {
-      'kind': 'resource_pool_grant',
-      'payload': {
-        'pool_ref': {'slug': 'resource-pool', 'name': pool},
-        'recharge': recharge,
-        'count': ?count,
-      },
+      'pool_ref': {'slug': 'resource-pool', 'name': pool},
+      'recharge': recharge,
+      'count': ?count,
       if (scalesTable != null)
-        'scales_with': {
-          'kind': 'class_level',
-          'class_ref': {'slug': 'class', 'name': sourceClass ?? 'Class'},
-          'table': [
-            for (final row in scalesTable) {'lvl': row[0], 'v': row[1]},
-          ],
+        'class_ref': {'slug': 'class', 'name': sourceClass ?? 'Class'},
+      if (scalesTable != null)
+        'count_by_level': {
+          for (final row in scalesTable) '${row[0]}': row[1],
         },
     };
 
@@ -74,7 +69,7 @@ void main() {
         id: 'feat-rage',
         name: 'Rage',
         autoGrantedBy: [_grantBy('Barbarian', 1)],
-        effects: [
+        pools: [
           _poolGrant(
             pool: 'pool:rage_uses',
             scalesTable: [
@@ -101,7 +96,7 @@ void main() {
         id: 'feat-rage',
         name: 'Rage',
         autoGrantedBy: [_grantBy('Barbarian', 1)],
-        effects: [
+        pools: [
           _poolGrant(
             pool: 'pool:rage_uses',
             scalesTable: [
@@ -144,7 +139,7 @@ void main() {
         id: 'feat-flat',
         name: 'Flat Pool',
         autoGrantedBy: [_grantBy('Bard', 1)],
-        effects: [_poolGrant(pool: 'pool:flat_thing', count: 7)],
+        pools: [_poolGrant(pool: 'pool:flat_thing', count: 7)],
       );
       expect(
         resolveResourcePoolsAt(
@@ -162,7 +157,7 @@ void main() {
         id: 'feat-l3',
         name: 'Late Grant',
         autoGrantedBy: [_grantBy('Cleric', 3)],
-        effects: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
+        pools: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
       );
       expect(
         resolveResourcePoolsAt(
@@ -180,7 +175,7 @@ void main() {
         id: 'feat-sub',
         name: 'Subclass Pool',
         autoGrantedBy: [_grantBy('LifeDomain', 2)],
-        effects: [_poolGrant(pool: 'pool:divine_strike', count: 1)],
+        pools: [_poolGrant(pool: 'pool:divine_strike', count: 1)],
       );
       expect(
         resolveResourcePoolsAt(
@@ -200,17 +195,11 @@ void main() {
         id: 'feat-formula',
         name: 'Lay on Hands',
         autoGrantedBy: [_grantBy('Paladin', 1)],
-        effects: const [
+        pools: const [
           {
-            'kind': 'resource_pool_grant',
-            'payload': {
-              'pool_ref': {
-                'slug': 'resource-pool',
-                'name': 'pool:lay_on_hands_hp',
-              },
-              'recharge': 'long_rest',
-              'count_formula': 'paladin_level_x5',
-            },
+            'pool_ref': {'slug': 'resource-pool', 'name': 'pool:lay_on_hands_hp'},
+            'recharge': 'long_rest',
+            'count_formula': 'paladin_level_x5',
           },
         ],
       );
@@ -231,17 +220,11 @@ void main() {
         id: 'feat-loh',
         name: 'Lay on Hands',
         autoGrantedBy: [_grantBy('Paladin', 1)],
-        effects: const [
+        pools: const [
           {
-            'kind': 'resource_pool_grant',
-            'payload': {
-              'pool_ref': {
-                'slug': 'resource-pool',
-                'name': 'pool:lay_on_hands_hp',
-              },
-              'recharge': 'long_rest',
-              'count_formula': 'paladin_level_x5',
-            },
+            'pool_ref': {'slug': 'resource-pool', 'name': 'pool:lay_on_hands_hp'},
+            'recharge': 'long_rest',
+            'count_formula': 'paladin_level_x5',
           },
         ],
       );
@@ -263,17 +246,11 @@ void main() {
         id: 'feat-ki',
         name: 'Focus Points',
         autoGrantedBy: [_grantBy('Monk', 2)],
-        effects: const [
+        pools: const [
           {
-            'kind': 'resource_pool_grant',
-            'payload': {
-              'pool_ref': {
-                'slug': 'resource-pool',
-                'name': 'pool:focus_points',
-              },
-              'recharge': 'short_rest',
-              'count_formula': 'monk_level',
-            },
+            'pool_ref': {'slug': 'resource-pool', 'name': 'pool:focus_points'},
+            'recharge': 'short_rest',
+            'count_formula': 'monk_level',
           },
         ],
       );
@@ -295,17 +272,11 @@ void main() {
         id: 'feat-cd',
         name: 'Channel Divinity',
         autoGrantedBy: [_grantBy('Cleric', 1)],
-        effects: const [
+        pools: const [
           {
-            'kind': 'resource_pool_grant',
-            'payload': {
-              'pool_ref': {
-                'slug': 'resource-pool',
-                'name': 'pool:channel_divinity',
-              },
-              'recharge': 'short_rest',
-              'count_formula': 'cha_mod_min_1',
-            },
+            'pool_ref': {'slug': 'resource-pool', 'name': 'pool:channel_divinity'},
+            'recharge': 'short_rest',
+            'count_formula': 'cha_mod_min_1',
           },
         ],
       );
@@ -341,13 +312,13 @@ void main() {
         id: 'feat-base',
         name: 'Channel Divinity Base',
         autoGrantedBy: [_grantBy('Cleric', 2)],
-        effects: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
+        pools: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
       );
       final sub = _feat(
         id: 'feat-upgrade',
         name: 'Channel Divinity Upgrade',
         autoGrantedBy: [_grantBy('Cleric', 6)],
-        effects: [_poolGrant(pool: 'pool:channel_divinity', count: 2)],
+        pools: [_poolGrant(pool: 'pool:channel_divinity', count: 2)],
       );
       expect(
         resolveResourcePoolsAt(

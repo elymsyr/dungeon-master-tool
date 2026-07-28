@@ -40,7 +40,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/services/perf_probe.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character/effective_character.dart';
-import '../../../domain/entities/schema/rules/rule_config.dart';
+import '../../../domain/entities/schema/rule_config.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';

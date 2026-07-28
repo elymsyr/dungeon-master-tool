@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/schema/rules/rule_config.dart';
+import '../../domain/entities/schema/rule_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 
 /// Minimal editor for the template's tunable [RuleConfig] values

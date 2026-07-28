@@ -1,5 +1,5 @@
 import '../../domain/entities/entity.dart';
-import '../../domain/entities/schema/rules/rule_config.dart';
+import '../../domain/entities/schema/rule_config.dart';
 import 'caster_progression.dart';
 import 'extra_attack_resolver.dart';
 import 'resource_pool_resolver.dart';
@@ -12,19 +12,11 @@ class LevelGain {
   final String name;
   final String description;
 
-  /// Ability names (e.g. `Wisdom`, `Charisma`) for which this feature
-  /// grants a saving-throw proficiency. Sourced from the feature row's
-  /// `effects` entries with `kind: proficiency_grant` and
-  /// `target_kind: saving_throw` (or `ability`). Empty when the feature
-  /// has no save grant — dialog uses this to render a dedicated notice.
-  final List<String> grantedSaveProficiencyNames;
-
   const LevelGain({
     required this.level,
     required this.source,
     required this.name,
     required this.description,
-    this.grantedSaveProficiencyNames = const [],
   });
 }
 
@@ -271,23 +263,6 @@ Map<int, int>? _slotsAt(Entity? classEntity, int level) {
   return spellSlotsForClass(classEntity, level);
 }
 
-List<String> _saveGrantsFromEffects(Object? effects) {
-  if (effects is! List) return const [];
-  final out = <String>[];
-  for (final eff in effects) {
-    if (eff is! Map) continue;
-    if (eff['kind'] != 'proficiency_grant') continue;
-    final tk = eff['target_kind'];
-    if (tk != 'saving_throw' && tk != 'ability') continue;
-    final ref = eff['target_ref'];
-    if (ref is! Map) continue;
-    final name = ref['name']?.toString();
-    if (name == null || name.isEmpty) continue;
-    if (!out.contains(name)) out.add(name);
-  }
-  return out;
-}
-
 List<LevelGain> _featuresInRange({
   required Entity? entity,
   required String source,
@@ -308,7 +283,6 @@ List<LevelGain> _featuresInRange({
       source: source,
       name: (row['name'] ?? '').toString(),
       description: (row['description'] ?? '').toString(),
-      grantedSaveProficiencyNames: _saveGrantsFromEffects(row['effects']),
     ));
   }
   out.sort((a, b) {

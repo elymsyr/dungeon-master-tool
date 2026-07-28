@@ -2,7 +2,7 @@
 /// Skills/saving throws presetleri, proficiency bonus tablosu, ability listesi.
 library;
 
-import 'rules/rule_config.dart';
+import 'rule_config.dart';
 
 /// D&D 5e ability kısaltmaları (ProficiencyTable row.ability için).
 const kDnd5eAbilities = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];

@@ -97,13 +97,13 @@ class ProficienciesStep extends ConsumerWidget {
         : entities[draft.l1OrderChoiceId];
     final weaponCategoryIds = mergeProficiencyRefs(
       base: _stringList(classEntity?.fields['weapon_proficiency_categories']),
-      featEffects: orderFeatEntity?.fields['effects'],
-      targetKind: 'weapon_category',
+      featFields: orderFeatEntity?.fields,
+      grantKey: 'granted_weapon_proficiencies',
     );
     final armorCategoryIds = mergeProficiencyRefs(
       base: _stringList(classEntity?.fields['armor_training_refs']),
-      featEffects: orderFeatEntity?.fields['effects'],
-      targetKind: 'armor_category',
+      featFields: orderFeatEntity?.fields,
+      grantKey: 'granted_armor_proficiencies',
     );
 
     // Weapon Mastery picker — count derived from class feats with
@@ -311,23 +311,19 @@ class ProficienciesStep extends ConsumerWidget {
     return v.whereType<String>().toList();
   }
 
-  /// Merge base proficiency refs (from the class entity) with any
-  /// `proficiency_grant` effects on the picked L1 Order feat. The feat
-  /// effect schema is `{kind: 'proficiency_grant', target_kind: '...',
-  /// target_ref: {id: 'category-id'}}` — pull `target_ref.id` when
-  /// `target_kind` matches the requested category type.
+  /// Merge base proficiency refs (from the class entity) with the picked L1
+  /// Order feat's grant-block ref list ([grantKey] is
+  /// `granted_weapon_proficiencies` or `granted_armor_proficiencies`). Rows
+  /// are either bare id strings or `{id}` / `{_ref}` / `{slug}` envelopes.
   static List<String> mergeProficiencyRefs({
     required List<String> base,
-    required Object? featEffects,
-    required String targetKind,
+    required Object? featFields,
+    required String grantKey,
   }) {
     final out = <String>[...base];
-    if (featEffects is List) {
-      for (final eff in featEffects) {
-        if (eff is! Map) continue;
-        if (eff['kind'] != 'proficiency_grant') continue;
-        if (eff['target_kind'] != targetKind) continue;
-        final ref = eff['target_ref'];
+    final rows = featFields is Map ? featFields[grantKey] : null;
+    if (rows is List) {
+      for (final ref in rows) {
         final id = ref is Map ? ref['id']?.toString() : ref?.toString();
         if (id == null || id.isEmpty) continue;
         if (!out.contains(id)) out.add(id);

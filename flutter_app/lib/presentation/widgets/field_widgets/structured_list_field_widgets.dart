@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/rule_catalog_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
-import '../../../domain/entities/schema/rules/rule_definition.dart';
-import '../../../domain/entities/schema/rules/rule_validator.dart';
-import '../../../domain/services/character_resolver.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 
-/// Typed structured-list editors for the 4 list FieldTypes:
+/// Typed structured-list editors for the structured list FieldTypes:
 ///   - classFeatures
 ///   - spellEffectList
 ///   - rangedSenseList
-///   - grantedModifiers
+///   - equipmentChoiceGroups
+///   - resourcePoolGrants
+///   - playerChoices
+///   - autoGrantSources
+///   - subspeciesOptions
 ///
 /// All editors share the [_StructuredListShell] (Card + add button + per-row
 /// removal) and operate on `List<Map<String, dynamic>>`. Each row is rendered
@@ -30,7 +30,6 @@ class _StructuredListShell extends StatelessWidget {
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
   final Map<String, dynamic> Function() makeEmptyRow;
   final Widget Function(int index, Map<String, dynamic> row, ValueChanged<Map<String, dynamic>> onRowChanged) buildRow;
-  final List<Widget>? headerActions;
 
   const _StructuredListShell({
     required this.schema,
@@ -39,7 +38,6 @@ class _StructuredListShell extends StatelessWidget {
     required this.onChanged,
     required this.makeEmptyRow,
     required this.buildRow,
-    this.headerActions,
   });
 
   void _addRow() {
@@ -87,7 +85,6 @@ class _StructuredListShell extends StatelessWidget {
                   schema.fieldType.name,
                   style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
                 ),
-                if (!readOnly && headerActions != null) ...headerActions!,
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
@@ -265,31 +262,17 @@ Widget _miniEnum({
   );
 }
 
-Widget _miniBool({
-  required String label,
-  required bool value,
-  required bool readOnly,
-  required ValueChanged<bool> onChanged,
-}) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 4),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: Checkbox(
-            value: value,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onChanged: readOnly ? null : (b) => onChanged(b ?? false),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11)),
-      ],
+/// Small tinted pill used to surface non-editable row facts (an unresolved
+/// pack ref's name, a `choice_required` flag).
+Widget _badge(String text, Color color) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: color.withValues(alpha: 0.4), width: 0.5),
     ),
+    child: Text(text, style: TextStyle(fontSize: 10, color: color)),
   );
 }
 
@@ -843,418 +826,6 @@ class SpellEffectListFieldWidget extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 4. grantedModifiers — {kind, target_kind, target_ref, value, scaling, condition_ref, notes}
-// ─────────────────────────────────────────────────────────────────────────
-
-/// Curated kind set for the legacy `granted_modifiers` editor — only the
-/// simple value/target grant kinds whose catalog entry is `resolverStatus:
-/// applied` (i.e. the resolver actually applies them). Authoring a kind the
-/// resolver ignores would silently do nothing, which is the bug this list
-/// closes. Richer kinds (predicates/payload/scaling) live on the catalog-driven
-/// `rule_effects` editor instead. Each entry is cross-checked against the live
-/// catalog at build time (`catalog.contains`) before it is offered.
-const _modifierCatalogKinds = [
-  'ability_score_bonus',
-  'ac_bonus',
-  'speed_bonus',
-  'hp_bonus_flat',
-  'hp_bonus_per_level',
-  'initiative_bonus',
-  'proficiency_grant',
-  'expertise_grant',
-  'language_grant',
-  'sense_grant',
-  'spell_grant',
-  'cantrip_grant',
-  'damage_resistance',
-  'damage_immunity',
-  'damage_vulnerability',
-  'condition_immunity_grant',
-];
-
-const _modifierTargetKinds = [
-  '',
-  'ability',
-  'skill',
-  'damage-type',
-  'condition',
-  'sense',
-  'class',
-  'spell',
-  'feat',
-  'tool',
-  'language',
-  'save',
-];
-
-const _modifierScalings = [
-  '',
-  'flat',
-  'per-level',
-  'per-proficiency-bonus',
-];
-
-/// SRD common modifier presets. Each preset has a label and a list of one or
-/// more pre-filled rows. Inserted at the end of the existing rows list.
-const _modifierPresets = <String, List<Map<String, dynamic>>>{
-  'Tough (feat)': [
-    {
-      'kind': 'hp_bonus_per_level',
-      'target_kind': null,
-      'target_ref': null,
-      'value': 2,
-      'scaling': 'per-level',
-      'condition_ref': null,
-      'notes': 'Tough: +2 HP per character level',
-    },
-  ],
-  'Resilient: CON': [
-    {
-      'kind': 'proficiency_grant',
-      'target_kind': 'save',
-      'target_ref': 'ability-con',
-      'value': null,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Resilient (CON) saving throw proficiency',
-    },
-    {
-      'kind': 'ability_score_bonus',
-      'target_kind': 'ability',
-      'target_ref': 'ability-con',
-      'value': 1,
-      'scaling': 'flat',
-      'condition_ref': null,
-      'notes': 'Resilient: +1 CON',
-    },
-  ],
-  'Alert (feat)': [
-    {
-      'kind': 'initiative_bonus',
-      'target_kind': null,
-      'target_ref': null,
-      'value': 5,
-      'scaling': 'flat',
-      'condition_ref': null,
-      'notes': 'Alert: +5 initiative (2024 rules: PB, swap if needed)',
-    },
-  ],
-  'Lucky (feat)': [
-    {
-      // Narrative only — luck points have no resolver-applied kind.
-      'kind': null,
-      'target_kind': null,
-      'target_ref': null,
-      'value': 3,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Lucky: 3 luck points / long rest, reroll 1 d20 (track manually)',
-    },
-  ],
-  'Magic Initiate: cantrip + 1st': [
-    {
-      'kind': 'cantrip_grant',
-      'target_kind': 'spell',
-      'target_ref': null,
-      'value': null,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Cantrip from chosen list',
-    },
-    {
-      'kind': 'spell_grant',
-      'target_kind': 'spell',
-      'target_ref': null,
-      'value': null,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': '1st-level spell from chosen list',
-    },
-    {
-      'kind': 'spell_grant',
-      'target_kind': 'spell',
-      'target_ref': null,
-      'value': 1,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': '1×/long rest cast of 1st-level without slot (track manually)',
-    },
-  ],
-  'Darkvision 60 ft': [
-    {
-      'kind': 'sense_grant',
-      'target_kind': 'sense',
-      'target_ref': 'sense-darkvision',
-      'value': 60,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Darkvision 60 ft',
-    },
-  ],
-  'Fire resistance': [
-    {
-      'kind': 'damage_resistance',
-      'target_kind': 'damage-type',
-      'target_ref': 'damage-type-fire',
-      'value': null,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Resistance to fire damage',
-    },
-  ],
-  'Poison immunity + advantage': [
-    {
-      'kind': 'damage_immunity',
-      'target_kind': 'damage-type',
-      'target_ref': 'damage-type-poison',
-      'value': null,
-      'scaling': '',
-      'condition_ref': null,
-      'notes': 'Immunity to poison damage',
-    },
-    {
-      // No resolver-applied kind for save-advantage-vs-condition yet — keep
-      // as a narrative note (kind null = no mechanical effect; track manually).
-      'kind': null,
-      'target_kind': 'condition',
-      'target_ref': 'condition-poisoned',
-      'value': null,
-      'scaling': '',
-      'condition_ref': 'condition-poisoned',
-      'notes': 'Advantage on saves vs being poisoned (track manually)',
-    },
-  ],
-  'Heavy Armor Master': [
-    {
-      'kind': 'ability_score_bonus',
-      'target_kind': 'ability',
-      'target_ref': 'ability-str',
-      'value': 1,
-      'scaling': 'flat',
-      'condition_ref': null,
-      'notes': 'HAM: +1 STR',
-    },
-    {
-      // No resolver-applied flat-damage-reduction kind yet — narrative note.
-      'kind': null,
-      'target_kind': 'damage-type',
-      'target_ref': null,
-      'value': -3,
-      'scaling': 'flat',
-      'condition_ref': null,
-      'notes': 'While wearing heavy armor: reduce bludg/pierc/slash by 3 (track manually)',
-    },
-  ],
-};
-
-/// Maps a `target_kind` string to the entity slug(s) accepted by
-/// [showEntitySelectorDialog]. Lookup categories share their slug with the
-/// target_kind value (e.g. 'ability' → 'ability'), but a few aliases exist
-/// for content categories.
-List<String> _allowedTypesForTargetKind(String? targetKind) {
-  switch (targetKind) {
-    case 'ability':
-    case 'skill':
-    case 'damage-type':
-    case 'condition':
-    case 'sense':
-    case 'language':
-      return [targetKind!];
-    case 'class':
-      return const ['class'];
-    case 'spell':
-    case 'cantrip':
-      return const ['spell'];
-    case 'feat':
-      return const ['feat'];
-    case 'tool':
-      return const ['tool'];
-    case 'weapon':
-      return const ['weapon'];
-    case 'save':
-    case 'saving_throw':
-      return const ['ability']; // saves resolve via ability lookup
-    case 'armor_category':
-      return const ['armor-category'];
-    case 'weapon_category':
-      return const ['weapon-category'];
-    case 'creature-action':
-      return const ['creature-action'];
-    case 'damage_type': // legacy underscore variant of damage-type
-      return const ['damage-type'];
-    default:
-      return const <String>[];
-  }
-}
-
-class GrantedModifiersFieldWidget extends StatelessWidget {
-  final FieldSchema schema;
-  final dynamic value;
-  final bool readOnly;
-  final ValueChanged<dynamic> onChanged;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
-
-  const GrantedModifiersFieldWidget({
-    super.key,
-    required this.schema,
-    required this.value,
-    required this.readOnly,
-    required this.onChanged,
-    this.entities,
-    this.ref,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = _coerceRows(value);
-    return _StructuredListShell(
-      schema: schema,
-      rows: rows,
-      readOnly: readOnly,
-      onChanged: onChanged,
-      headerActions: [
-        PopupMenuButton<String>(
-          tooltip: 'Add preset',
-          icon: const Icon(Icons.bolt, size: 18),
-          itemBuilder: (ctx) => _modifierPresets.keys
-              .map((label) => PopupMenuItem<String>(value: label, child: Text(label, style: const TextStyle(fontSize: 13))))
-              .toList(),
-          onSelected: (label) {
-            final preset = _modifierPresets[label];
-            if (preset == null) return;
-            onChanged([...rows, ...preset.map((r) => Map<String, dynamic>.from(r))]);
-          },
-        ),
-      ],
-      makeEmptyRow: () => {
-        'kind': null,
-        'target_kind': null,
-        'target_ref': null,
-        'value': null,
-        'scaling': '',
-        'condition_ref': null,
-        'notes': '',
-      },
-      buildRow: (i, row, onRowChanged) {
-        final targetKind = row['target_kind'] as String?;
-        final allowed = _allowedTypesForTargetKind(targetKind);
-        // Catalog is the single registry. Read (not watch): static for the
-        // card's lifetime; falls back to the legacy const lists when no ref
-        // (read-only projection views).
-        final catalog = ref?.read(ruleCatalogProvider);
-        final kind = row['kind'] as String?;
-        // Offer only curated kinds the catalog actually knows; union the row's
-        // stored kind so a legacy/dropped value is never silently hidden.
-        // Without a ref (read-only projection views) the curated list is used
-        // as-is — the retired full legacy list offered kinds the resolver
-        // never applied.
-        final baseKinds = catalog == null
-            ? _modifierCatalogKinds
-            : _modifierCatalogKinds.where(catalog.contains).toList();
-        final kindOptions =
-            (kind != null && kind.isNotEmpty && !baseKinds.contains(kind))
-                ? [...baseKinds, kind]
-                : baseKinds;
-        // Target-kind options from the selected rule's declared targets when
-        // it names any, else the legacy union list (kinds that take no target
-        // keep the historical picker for back-compat).
-        final declaredTargets =
-            (catalog != null && kind != null) ? (catalog[kind]?.allowedTargetKinds ?? const <String>[]) : const <String>[];
-        final targetKindOptions = declaredTargets.isNotEmpty
-            ? <String>{'', ...declaredTargets}.toList()
-            : _modifierTargetKinds;
-        return Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // Stored kind the catalog doesn't declare AND the resolver
-            // doesn't alias ⇒ it will not apply (it only surfaces as a sheet
-            // warning). Flag it here so legacy/imported rows aren't silently
-            // inert. `feature_text` is narrative-only by design — no warning.
-            if (catalog != null &&
-                kind != null &&
-                kind.isNotEmpty &&
-                kind != 'feature_text' &&
-                !catalog.contains(kind) &&
-                !CharacterResolver.legacyModifierKindAliases
-                    .containsKey(kind))
-              const Tooltip(
-                message:
-                    'This modifier kind is not applied to the character sheet.',
-                child: Icon(Icons.warning_amber_rounded,
-                    size: 18, color: Colors.orange),
-              ),
-            _miniEnum(
-              label: 'Kind',
-              value: kind,
-              options: kindOptions,
-              readOnly: readOnly,
-              display: (k) => catalog?.labelFor(k) ?? k,
-              onChanged: (v) => onRowChanged({...row, 'kind': v}),
-              width: 220,
-            ),
-            _miniEnum(
-              label: 'Target Kind',
-              value: targetKind,
-              options: targetKindOptions,
-              readOnly: readOnly,
-              onChanged: (v) {
-                // Reset target_ref when target_kind changes since allowed types differ.
-                onRowChanged({...row, 'target_kind': v == '' ? null : v, 'target_ref': null});
-              },
-              width: 160,
-            ),
-            if (allowed.isNotEmpty)
-              _MiniRelationField(
-                label: 'Target',
-                value: row['target_ref'] as String?,
-                allowedTypes: allowed,
-                entities: entities,
-                ref: ref,
-                readOnly: readOnly,
-                onChanged: (v) => onRowChanged({...row, 'target_ref': v}),
-              ),
-            _miniInt(
-              label: 'Value',
-              value: row['value'] is int ? row['value'] as int : null,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'value': v}),
-              width: 70,
-            ),
-            _miniEnum(
-              label: 'Scaling',
-              value: row['scaling'] as String?,
-              options: _modifierScalings,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'scaling': v ?? ''}),
-              width: 150,
-            ),
-            _MiniRelationField(
-              label: 'Condition',
-              value: row['condition_ref'] as String?,
-              allowedTypes: const ['condition'],
-              entities: entities,
-              ref: ref,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'condition_ref': v}),
-            ),
-            _miniText(
-              label: 'Notes',
-              value: (row['notes'] ?? '').toString(),
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'notes': v}),
-              width: 240,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
 // 5. equipmentChoiceGroups — editable structured display.
 // Shape: List<{group_id, label, prompt, options:[{option_id, label,
 //   items:[{ref, quantity}], gold_gp?}]}>
@@ -1632,50 +1203,17 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// featEffectList — {kind, target_kind?, target_ref?, value?, payload?, predicates?, scales_with?, activation?}
+// resourcePoolGrants — {pool_ref, recharge, count?, count_formula?,
+//   count_by_level?: {lvl: count}, class_ref?}
 //
-// MVP editor: kind dropdown + value int + target relation. Predicates,
-// scales_with, activation render as read-only badges (count). Authoring those
-// nested structures from the UI is a follow-up; for now SRD content authors
-// edit the data file directly when complex shapes are needed.
+// One row per per-rest resource pool the card grants (Rage uses, Ki,
+// Bardic Inspiration). Max precedence: count_by_level > count_formula >
+// count — mirrors CharacterResolver / resolveResourcePoolsAt.
 // ─────────────────────────────────────────────────────────────────────────
 
-const _featEffectKinds = [
-  // Existing
-  'class_level_grant', 'proficiency_grant', 'language_grant', 'spell_grant',
-  'cantrip_grant', 'ac_bonus', 'speed_bonus', 'hp_bonus_per_level',
-  'hp_bonus_flat', 'initiative_bonus', 'attack_bonus', 'extra_attack_bump',
-  'choice_group',
-  // New (PR-7c+)
-  'unarmored_ac_formula', 'damage_resistance', 'damage_immunity',
-  'damage_vulnerability', 'condition_immunity_grant',
-  'condition_advantage_on_save_grant', 'crit_range_extend',
-  'extra_damage_on_attack', 'reroll_damage', 'reroll_d20',
-  'attack_bonus_typed', 'damage_bonus_typed', 'ignore_cover',
-  'ignore_long_range_disadvantage', 'damage_reduction_flat',
-  'swim_speed_equals_speed', 'climb_speed_equals_speed', 'fly_speed',
-  'sense_grant', 'truesight_grant', 'blindsight_grant', 'walk_on_liquid',
-  'advantage_on', 'disadvantage_on', 'expertise_grant',
-  'half_proficiency_to_unproficient_checks', 'passive_score_bonus',
-  'reliable_talent', 'min_die_value', 'state_grant', 'resource_pool_grant',
-  'recovery_grant', 'slot_recovery_short_rest', 'spell_always_prepared',
-  'spell_cast_from_item', 'spellcasting_ability_to_damage',
-  'cantrip_count_bonus', 'magical_unarmed_strikes', 'damage_type_override',
-  'concentration_advantage', 'concentration_immune_to_damage_break',
-  'reaction_attack_grant', 'reaction_damage_reduction',
-  'reaction_negate_via_save',
-  'opportunity_attack_immunity_when_disengage_redundant',
-  'enemy_cant_disengage_oa', 'oa_stops_movement', 'weapon_mastery_grant',
-  'weapon_mastery_count_bonus', 'expertise_count', 'extra_attack_count',
-  'hp_max_bonus_total', 'temp_hp_grant',
-];
+const _poolRecharges = ['', 'short_rest', 'long_rest'];
 
-const _featEffectTargetKinds = [
-  '', 'ac', 'save', 'skill', 'speed', 'hp', 'sense', 'damage_type', 'condition',
-  'class', 'spell', 'cantrip', 'language', 'feat', 'tool', 'weapon', 'ability',
-];
-
-class FeatEffectListFieldWidget extends StatelessWidget {
+class ResourcePoolGrantsFieldWidget extends StatelessWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -1683,7 +1221,7 @@ class FeatEffectListFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
 
-  const FeatEffectListFieldWidget({
+  const ResourcePoolGrantsFieldWidget({
     super.key,
     required this.schema,
     required this.value,
@@ -1696,798 +1234,459 @@ class FeatEffectListFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = _coerceRows(value);
-    // Catalog is the single source of truth for the kind / target-kind options.
-    // Read (not watch): `ref` here is the host card's WidgetRef and the catalog
-    // is static for the card's lifetime. Falls back to the historical const
-    // lists when no ref is available (e.g. read-only projection views).
-    final catalog = ref?.read(ruleCatalogProvider);
+    return _StructuredListShell(
+      schema: schema,
+      rows: rows,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      makeEmptyRow: () => {'pool_ref': null, 'recharge': 'long_rest'},
+      buildRow: (i, row, onRowChanged) {
+        final table = row['count_by_level'] is Map
+            ? Map<String, dynamic>.from(row['count_by_level'] as Map)
+            : null;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _MiniRelationField(
+                  label: 'Pool',
+                  value: row['pool_ref'] is String
+                      ? row['pool_ref'] as String
+                      : null,
+                  allowedTypes: const ['resource-pool'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'pool_ref': v}),
+                ),
+                if (row['pool_ref'] is Map)
+                  _badge(
+                    (row['pool_ref'] as Map)['name']?.toString() ?? 'pool',
+                    Colors.teal,
+                  ),
+                _miniEnum(
+                  label: 'Recharge',
+                  value: row['recharge']?.toString(),
+                  options: _poolRecharges,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged(
+                      {...row, 'recharge': (v == null || v.isEmpty) ? null : v}),
+                  width: 120,
+                ),
+                _miniInt(
+                  label: 'Uses',
+                  value: row['count'] is int ? row['count'] as int : null,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'count': v}),
+                  width: 70,
+                ),
+                _miniText(
+                  label: 'Formula (e.g. cha_mod_min_1)',
+                  value: row['count_formula']?.toString() ?? '',
+                  readOnly: readOnly,
+                  width: 190,
+                  onChanged: (s) => onRowChanged(
+                      {...row, 'count_formula': s.isEmpty ? null : s}),
+                ),
+              ],
+            ),
+            _LevelValueTableEditor(
+              title: 'Uses by level',
+              table: table,
+              classRefName: row['class_ref'] is Map
+                  ? (row['class_ref'] as Map)['name']?.toString()
+                  : null,
+              readOnly: readOnly,
+              onChanged: (m) {
+                final next = {...row};
+                if (m == null || m.isEmpty) {
+                  next.remove('count_by_level');
+                } else {
+                  next['count_by_level'] = m;
+                }
+                onRowChanged(next);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Compact `{level: value}` table editor shared by the resource-pool rows.
+/// Renders nothing in read-only mode when the table is empty.
+class _LevelValueTableEditor extends StatelessWidget {
+  final String title;
+  final Map<String, dynamic>? table;
+  final String? classRefName;
+  final bool readOnly;
+  final ValueChanged<Map<String, dynamic>?> onChanged;
+
+  const _LevelValueTableEditor({
+    required this.title,
+    required this.table,
+    required this.classRefName,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = table;
+    if ((t == null || t.isEmpty) && readOnly) return const SizedBox.shrink();
+    final entries = (t ?? const <String, dynamic>{}).entries.toList()
+      ..sort((a, b) =>
+          (int.tryParse(a.key) ?? 0).compareTo(int.tryParse(b.key) ?? 0));
+    final suffix = classRefName == null ? '' : ' ($classRefName level)';
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('$title$suffix:',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.outline)),
+          for (final e in entries)
+            InputChip(
+              label: Text('L${e.key} → ${e.value}',
+                  style: const TextStyle(fontSize: 11)),
+              onDeleted: readOnly
+                  ? null
+                  : () {
+                      final next = {...?t}..remove(e.key);
+                      onChanged(next);
+                    },
+              visualDensity: VisualDensity.compact,
+            ),
+          if (!readOnly)
+            _AddLevelValueButton(
+              onAdd: (lvl, v) => onChanged({...?t, '$lvl': v}),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddLevelValueButton extends StatefulWidget {
+  final void Function(int level, int value) onAdd;
+  const _AddLevelValueButton({required this.onAdd});
+
+  @override
+  State<_AddLevelValueButton> createState() => _AddLevelValueButtonState();
+}
+
+class _AddLevelValueButtonState extends State<_AddLevelValueButton> {
+  final _lvl = TextEditingController();
+  final _val = TextEditingController();
+
+  @override
+  void dispose() {
+    _lvl.dispose();
+    _val.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 44,
+          child: TextField(
+            controller: _lvl,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(fontSize: 11),
+            decoration: const InputDecoration(
+                labelText: 'Lvl',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 10)),
+          ),
+        ),
+        const SizedBox(width: 4),
+        SizedBox(
+          width: 44,
+          child: TextField(
+            controller: _val,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(fontSize: 11),
+            decoration: const InputDecoration(
+                labelText: 'Val',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 10)),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add, size: 16),
+          visualDensity: VisualDensity.compact,
+          onPressed: () {
+            final lvl = int.tryParse(_lvl.text.trim());
+            final v = int.tryParse(_val.text.trim());
+            if (lvl == null || v == null) return;
+            widget.onAdd(lvl, v);
+            _lvl.clear();
+            _val.clear();
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// playerChoices — {group_id, label, prompt, pick_kind, pick, options?,
+//   list_group_id?, spell_level?}
+//
+// One row per deferred "pick N of these" decision a card queues when taken
+// (Magic Initiate's spell list + cantrips + level-1 spell, Skilled's three
+// skills). `pending_choices.dart` reads these rows to queue prompts; the
+// resolver dialog / wizard render the actual pickers.
+// ─────────────────────────────────────────────────────────────────────────
+
+const _playerChoicePickKinds = [
+  'enum',
+  'skill',
+  'skill_or_tool',
+  'tool_category',
+  'spell_from_list',
+];
+
+class PlayerChoicesFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const PlayerChoicesFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _coerceRows(value);
     return _StructuredListShell(
       schema: schema,
       rows: rows,
       readOnly: readOnly,
       onChanged: onChanged,
       makeEmptyRow: () => {
-        'kind': null,
-        'target_kind': null,
-        'target_ref': null,
-        'value': null,
+        'group_id': '',
+        'label': '',
+        'pick_kind': 'enum',
+        'pick': 1,
       },
-      buildRow: (i, row, onRowChanged) => _FeatEffectRow(
-        catalog: catalog,
-        row: row,
-        entities: entities,
-        ref: ref,
-        readOnly: readOnly,
-        onChanged: onRowChanged,
-      ),
-    );
-  }
-}
-
-/// One authorable feat-effect row: kind + target + per-rule params, plus the
-/// full predicate / scales-with / activation sub-editors driven by the rule's
-/// declared capability flags. Replaces the old MVP read-only badges.
-class _FeatEffectRow extends StatelessWidget {
-  final RuleCatalog? catalog;
-  final Map<String, dynamic> row;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
-  final bool readOnly;
-  final ValueChanged<Map<String, dynamic>> onChanged;
-
-  const _FeatEffectRow({
-    required this.catalog,
-    required this.row,
-    required this.entities,
-    required this.ref,
-    required this.readOnly,
-    required this.onChanged,
-  });
-
-  Map<String, dynamic> _without(String key) {
-    final m = {...row}..remove(key);
-    return m;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final kind = row['kind'] as String?;
-    final rule = (catalog != null && kind != null) ? catalog![kind] : null;
-    final targetKind = row['target_kind'] as String?;
-    final allowed =
-        _allowedTypesForTargetKind(targetKind == '' ? null : targetKind);
-
-    // Kind options ← catalog, unioning any current value so a legacy /
-    // not-yet-declared kind is never silently dropped from the row.
-    final baseKinds = catalog?.kinds.toList() ?? _featEffectKinds;
-    final kindOptions =
-        (kind != null && kind.isNotEmpty && !baseKinds.contains(kind))
-            ? [...baseKinds, kind]
-            : baseKinds;
-
-    // Target-kind dropdown is hidden for rules that take no target (e.g.
-    // ac_bonus), unless the row already carries one (never hide data).
-    final ruleTargets = rule?.allowedTargetKinds ?? const <String>[];
-    final showTargetKind = catalog == null ||
-        rule == null ||
-        ruleTargets.isNotEmpty ||
-        (targetKind != null && targetKind.isNotEmpty);
-    final baseTargets = catalog?.targetKindsFor(kind) ?? _featEffectTargetKinds;
-    final targetOptions = <String>{
-      '',
-      ...baseTargets,
-      if (targetKind != null && targetKind.isNotEmpty) targetKind,
-    }.toList();
-
-    // Nested-shape gating: show a sub-editor when the rule supports it (edit
-    // mode) or when the row already carries that data (any mode).
-    final preds = _coerceRows(row['predicates']);
-    final showPreds =
-        (!readOnly && (rule?.supportsPredicates ?? false)) || preds.isNotEmpty;
-    final scales =
-        row['scales_with'] is Map ? Map<String, dynamic>.from(row['scales_with']) : null;
-    final showScales =
-        (!readOnly && (rule?.supportsScaling ?? false)) || scales != null;
-    final activation =
-        row['activation'] is Map ? Map<String, dynamic>.from(row['activation']) : null;
-    final showActivation =
-        (!readOnly && (rule?.supportsActivation ?? false)) || activation != null;
-
-    // Undeclared payload keys (data we can't author yet) — surface as a badge
-    // so the author knows the row carries extra structure that is preserved.
-    final payload =
-        row['payload'] is Map ? Map<String, dynamic>.from(row['payload']) : const {};
-    final declaredPayloadKeys = <String>{
-      for (final p in rule?.params ?? const <RuleParamSpec>[])
-        if (p.location == RuleParamLocation.payload) p.key,
-    };
-    final extraPayloadKeys =
-        payload.keys.where((k) => !declaredPayloadKeys.contains(k)).toList();
-
-    // Non-blocking authoring warnings (bad target kind, unknown predicate,
-    // missing required param). Only when a real kind is set, to avoid nagging
-    // on a freshly-added empty row.
-    final issues = (catalog != null && kind != null && kind.isNotEmpty)
-        ? validateEffectRow(row, catalog!)
-        : const <RuleIssue>[];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
+      buildRow: (i, row, onRowChanged) {
+        final options = row['options'] is List
+            ? List<Map<String, dynamic>>.from(
+                (row['options'] as List).whereType<Map>().map(
+                    (m) => Map<String, dynamic>.from(m)))
+            : const <Map<String, dynamic>>[];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (issues.isNotEmpty)
-              Tooltip(
-                message: issues.map((e) => '• ${e.message}').join('\n'),
-                child: const Icon(Icons.warning_amber_rounded,
-                    size: 18, color: Colors.orange),
-              ),
-            _miniEnum(
-              label: 'Kind',
-              value: kind,
-              options: kindOptions,
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _miniText(
+                  label: 'Id',
+                  value: row['group_id']?.toString() ?? '',
+                  readOnly: readOnly,
+                  width: 90,
+                  onChanged: (s) => onRowChanged({...row, 'group_id': s}),
+                ),
+                _miniText(
+                  label: 'Label',
+                  value: row['label']?.toString() ?? '',
+                  readOnly: readOnly,
+                  width: 140,
+                  onChanged: (s) => onRowChanged({...row, 'label': s}),
+                ),
+                _miniEnum(
+                  label: 'Pick from',
+                  value: row['pick_kind']?.toString(),
+                  options: _playerChoicePickKinds,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'pick_kind': v}),
+                  width: 140,
+                ),
+                _miniInt(
+                  label: 'Picks',
+                  value: row['pick'] is int ? row['pick'] as int : null,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'pick': v ?? 1}),
+                  width: 60,
+                ),
+                if (row['pick_kind'] == 'spell_from_list') ...[
+                  _miniInt(
+                    label: 'Spell level',
+                    value: row['spell_level'] is int
+                        ? row['spell_level'] as int
+                        : null,
+                    readOnly: readOnly,
+                    onChanged: (v) =>
+                        onRowChanged({...row, 'spell_level': v}),
+                    width: 90,
+                  ),
+                  _miniText(
+                    label: 'List group id',
+                    value: row['list_group_id']?.toString() ?? '',
+                    readOnly: readOnly,
+                    width: 110,
+                    onChanged: (s) => onRowChanged(
+                        {...row, 'list_group_id': s.isEmpty ? null : s}),
+                  ),
+                ],
+              ],
+            ),
+            _miniText(
+              label: 'Prompt shown to the player',
+              value: row['prompt']?.toString() ?? '',
               readOnly: readOnly,
-              onChanged: (v) => onChanged({...row, 'kind': v}),
-              width: 240,
-              display: (k) => catalog?.labelFor(k) ?? k,
+              width: 420,
+              onChanged: (s) =>
+                  onRowChanged({...row, 'prompt': s.isEmpty ? null : s}),
             ),
-            if (rule?.resolverStatus == RuleResolverStatus.deferred)
-              Tooltip(
-                message: 'Stored on the character for play-time systems '
-                    '(combat tracker, pickers) — it does not change the '
-                    'resolved character sheet.',
-                child: _badge('play-time', Colors.blueGrey),
-              ),
-            if (showTargetKind)
-              _miniEnum(
-                label: 'Target Kind',
-                value: targetKind,
-                options: targetOptions,
+            if (row['pick_kind'] == 'enum')
+              _ChoiceOptionsEditor(
+                options: options,
                 readOnly: readOnly,
-                onChanged: (v) => onChanged({
-                  ...row,
-                  'target_kind': v == '' ? null : v,
-                  'target_ref': null,
-                }),
-                width: 140,
+                onChanged: (list) => onRowChanged(
+                    list.isEmpty
+                        ? ({...row}..remove('options'))
+                        : {...row, 'options': list}),
               ),
-            if (allowed.isNotEmpty)
-              _MiniRelationField(
-                label: 'Target',
-                value: row['target_ref'] is String
-                    ? row['target_ref'] as String
-                    : null,
-                allowedTypes: allowed,
-                entities: entities,
-                ref: ref,
-                readOnly: readOnly,
-                onChanged: (v) => onChanged({...row, 'target_ref': v}),
-              ),
-            ..._paramInputs(rule),
-            if (extraPayloadKeys.isNotEmpty)
-              _badge('payload: ${extraPayloadKeys.join(", ")}', Colors.brown),
           ],
-        ),
-        if (rule?.description.isNotEmpty == true && !readOnly)
-          Padding(
-            padding: const EdgeInsets.only(top: 2, left: 2),
-            child: Text(
-              rule!.description,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.outline,
-                  fontStyle: FontStyle.italic),
-            ),
-          ),
-        if (showPreds)
-          _PredicateEditor(
-            predicateKinds: catalog?.predicateKinds ?? const [],
-            preds: preds,
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (list) => onChanged(
-                list.isEmpty ? _without('predicates') : {...row, 'predicates': list}),
-          ),
-        if (showScales)
-          _ScalesWithEditor(
-            scales: scales,
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (m) =>
-                onChanged(m == null ? _without('scales_with') : {...row, 'scales_with': m}),
-          ),
-        if (showActivation)
-          _ActivationEditor(
-            activation: activation,
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (m) =>
-                onChanged(m == null ? _without('activation') : {...row, 'activation': m}),
-          ),
-      ],
+        );
+      },
     );
   }
-
-  /// Inline param inputs for the selected rule (top-level `value` + payload
-  /// params). Legacy/unknown kinds keep the bare Value field; undeclared
-  /// payload keys are preserved by always spreading the existing payload.
-  List<Widget> _paramInputs(RuleDefinition? rule) {
-    final out = <Widget>[];
-    final payload =
-        row['payload'] is Map ? Map<String, dynamic>.from(row['payload']) : <String, dynamic>{};
-
-    void writePayload(String key, Object? v) {
-      final p = {...payload};
-      if (v == null || (v is String && v.isEmpty) || (v is List && v.isEmpty)) {
-        p.remove(key);
-      } else {
-        p[key] = v;
-      }
-      onChanged(p.isEmpty ? _without('payload') : {...row, 'payload': p});
-    }
-
-    RuleParamSpec? valueParam;
-    for (final p in rule?.params ?? const <RuleParamSpec>[]) {
-      if (p.location == RuleParamLocation.topLevel && p.key == 'value') {
-        valueParam = p;
-      }
-    }
-
-    if (valueParam != null) {
-      out.add(_paramWidget(
-          valueParam, row['value'], (v) => onChanged({...row, 'value': v})));
-    } else if (rule == null || row['value'] != null) {
-      // Preserve / allow editing of a bare value on legacy or unknown rows.
-      out.add(_miniInt(
-        label: 'Value',
-        value: row['value'] is int ? row['value'] as int : null,
-        readOnly: readOnly,
-        onChanged: (v) => onChanged({...row, 'value': v}),
-        width: 70,
-      ));
-    }
-
-    for (final p in rule?.params ?? const <RuleParamSpec>[]) {
-      if (p.location == RuleParamLocation.payload) {
-        out.add(_paramWidget(p, payload[p.key], (v) => writePayload(p.key, v)));
-      } else if (p.location == RuleParamLocation.topLevel && p.key != 'value') {
-        out.add(_paramWidget(p, row[p.key], (v) {
-          onChanged(v == null ? _without(p.key) : {...row, p.key: v});
-        }));
-      }
-    }
-    return out;
-  }
-
-  Widget _paramWidget(
-      RuleParamSpec spec, Object? value, ValueChanged<Object?> write) {
-    return switch (spec.type) {
-      RuleParamType.int_ => _miniInt(
-          label: spec.label,
-          value: value is int ? value : null,
-          readOnly: readOnly,
-          onChanged: write,
-          width: 80,
-        ),
-      RuleParamType.bool_ => _miniBool(
-          label: spec.label,
-          value: value == true,
-          readOnly: readOnly,
-          onChanged: write,
-        ),
-      RuleParamType.enumChoice => _miniEnum(
-          label: spec.label,
-          value: value?.toString(),
-          options: ['', ...spec.enumOptions],
-          readOnly: readOnly,
-          onChanged: (v) => write(v == null || v.isEmpty ? null : v),
-          width: 140,
-        ),
-      RuleParamType.relation => _MiniRelationField(
-          label: spec.label,
-          value: value is String ? value : null,
-          allowedTypes: spec.relationAllowedTypes,
-          entities: entities,
-          ref: ref,
-          readOnly: readOnly,
-          onChanged: write,
-        ),
-      RuleParamType.abilityList => _miniText(
-          label: spec.label,
-          value: value is List ? value.join(',') : '',
-          readOnly: readOnly,
-          width: 150,
-          onChanged: (s) {
-            final list = s
-                .split(',')
-                .map((e) => e.trim())
-                .where((e) => e.isNotEmpty)
-                .toList();
-            write(list.isEmpty ? null : list);
-          },
-        ),
-      RuleParamType.string_ || RuleParamType.dice => _miniText(
-          label: spec.label,
-          value: value?.toString() ?? '',
-          readOnly: readOnly,
-          width: 150,
-          onChanged: (s) => write(s.isEmpty ? null : s),
-        ),
-    };
-  }
 }
 
-/// Compact bordered section used by the nested feat-effect sub-editors.
-Widget _nestedBox({
-  required BuildContext context,
-  required String title,
-  required bool readOnly,
-  VoidCallback? onAdd,
-  VoidCallback? onClear,
-  required List<Widget> children,
-}) {
-  final outline = Theme.of(context).colorScheme.outline;
-  return Container(
-    margin: const EdgeInsets.only(top: 6),
-    padding: const EdgeInsets.fromLTRB(8, 2, 4, 6),
-    decoration: BoxDecoration(
-      border: Border.all(color: outline.withValues(alpha: 0.4)),
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(title,
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: outline)),
-            const Spacer(),
-            if (!readOnly && onClear != null)
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 16),
-                tooltip: 'Clear',
-                visualDensity: VisualDensity.compact,
-                onPressed: onClear,
-              ),
-            if (!readOnly && onAdd != null)
-              IconButton(
-                icon: const Icon(Icons.add, size: 16),
-                tooltip: 'Add',
-                visualDensity: VisualDensity.compact,
-                onPressed: onAdd,
-              ),
-          ],
-        ),
-        ...children,
-      ],
-    ),
-  );
-}
-
-/// Editor for an effect row's `predicates: [{kind, args}]` (AND-combined).
-class _PredicateEditor extends StatelessWidget {
-  final List<String> predicateKinds;
-  final List<Map<String, dynamic>> preds;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
+/// Editor for an enum choice row's `options: [{id, label}]`.
+class _ChoiceOptionsEditor extends StatelessWidget {
+  final List<Map<String, dynamic>> options;
   final bool readOnly;
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
 
-  const _PredicateEditor({
-    required this.predicateKinds,
-    required this.preds,
-    required this.entities,
-    required this.ref,
+  const _ChoiceOptionsEditor({
+    required this.options,
     required this.readOnly,
     required this.onChanged,
   });
 
-  static const _fallbackKinds = [
-    'class_level_at_least', 'equipped_armor_kind', 'equipped_shield',
-    'has_proficiency', 'has_state', 'has_condition', 'target_has_condition',
-    'not_incapacitated',
-  ];
-
-  void _write(int i, Map<String, dynamic> next) {
-    final l = [...preds];
-    l[i] = next;
-    onChanged(l);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final kinds = predicateKinds.isEmpty ? _fallbackKinds : predicateKinds;
-    return _nestedBox(
-      context: context,
-      title: 'Predicates — all must pass',
-      readOnly: readOnly,
-      onAdd: () =>
-          onChanged([...preds, {'kind': null, 'args': <String, dynamic>{}}]),
-      children: [
-        if (preds.isEmpty)
-          Text('No predicates',
-              style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.outline)),
-        for (var i = 0; i < preds.length; i++) _row(context, kinds, i),
-      ],
-    );
-  }
-
-  Widget _row(BuildContext context, List<String> kinds, int i) {
-    final p = preds[i];
-    final kind = p['kind'] as String?;
-    final args = p['args'] is Map
-        ? Map<String, dynamic>.from(p['args'])
-        : <String, dynamic>{};
-    final kindOptions =
-        (kind != null && kind.isNotEmpty && !kinds.contains(kind))
-            ? [...kinds, kind]
-            : kinds;
-    void writeArgs(Map<String, dynamic> a) => _write(i, {...p, 'args': a});
+    if (options.isEmpty && readOnly) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Wrap(
-        spacing: 6,
+        spacing: 8,
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _miniEnum(
-            label: 'Predicate',
-            value: kind,
-            options: kindOptions,
-            readOnly: readOnly,
-            onChanged: (v) =>
-                _write(i, {...p, 'kind': v, 'args': <String, dynamic>{}}),
-            width: 210,
-          ),
-          ..._argInputs(kind, args, writeArgs),
-          if (!readOnly)
-            IconButton(
-              icon: const Icon(Icons.close, size: 14),
-              tooltip: 'Remove',
+          Text('Options:',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.outline)),
+          for (var i = 0; i < options.length; i++)
+            InputChip(
+              label: Text(
+                options[i]['label']?.toString() ??
+                    options[i]['id']?.toString() ??
+                    '',
+                style: const TextStyle(fontSize: 11),
+              ),
+              onDeleted: readOnly
+                  ? null
+                  : () {
+                      final next = [...options]..removeAt(i);
+                      onChanged(next);
+                    },
               visualDensity: VisualDensity.compact,
-              onPressed: () => onChanged([...preds]..removeAt(i)),
+            ),
+          if (!readOnly)
+            _AddChoiceOptionButton(
+              onAdd: (id) => onChanged(
+                  [...options, {'id': id, 'label': id}]),
             ),
         ],
       ),
     );
   }
-
-  List<Widget> _argInputs(
-      String? kind, Map<String, dynamic> args, ValueChanged<Map<String, dynamic>> writeArgs) {
-    String? refArg() {
-      final v = args['ref'] ?? args['state_ref'] ?? args['condition_ref'];
-      return v is String ? v : null;
-    }
-
-    switch (kind) {
-      case 'class_level_at_least':
-        return [
-          _MiniRelationField(
-            label: 'Class',
-            value: args['class_ref'] is String ? args['class_ref'] as String : null,
-            allowedTypes: const ['class'],
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs({...args, 'class_ref': v}),
-          ),
-          _miniInt(
-            label: 'Level',
-            value: args['level'] is int ? args['level'] as int : null,
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs({...args, 'level': v}),
-            width: 70,
-          ),
-        ];
-      case 'equipped_armor_kind':
-        return [
-          _miniEnum(
-            label: 'Value',
-            value: args['value']?.toString(),
-            options: const ['none', 'light', 'medium', 'heavy', 'not_heavy', 'not_none'],
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs({...args, 'value': v}),
-            width: 130,
-          ),
-        ];
-      case 'equipped_shield':
-        return [
-          _miniEnum(
-            label: 'Value',
-            value: args['value']?.toString(),
-            options: const ['any', 'true', 'false'],
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs({...args, 'value': v}),
-            width: 100,
-          ),
-        ];
-      case 'has_state':
-        return [
-          _MiniRelationField(
-            label: 'State',
-            value: refArg(),
-            allowedTypes: const ['character-state'],
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs(v == null ? <String, dynamic>{} : {'ref': v}),
-          ),
-        ];
-      case 'has_condition':
-      case 'target_has_condition':
-        return [
-          _MiniRelationField(
-            label: 'Condition',
-            value: refArg(),
-            allowedTypes: const ['condition'],
-            entities: entities,
-            ref: ref,
-            readOnly: readOnly,
-            onChanged: (v) => writeArgs(v == null ? <String, dynamic>{} : {'ref': v}),
-          ),
-        ];
-      case 'not_incapacitated':
-      case null:
-        return const [];
-      default:
-        return [
-          _miniText(
-            label: 'Value',
-            value: args['value']?.toString() ?? '',
-            readOnly: readOnly,
-            width: 130,
-            onChanged: (s) =>
-                writeArgs(s.isEmpty ? <String, dynamic>{} : {...args, 'value': s}),
-          ),
-        ];
-    }
-  }
 }
 
-/// Editor for an effect row's `scales_with: {kind, class_ref?, table:[{lvl,v}]}`.
-class _ScalesWithEditor extends StatelessWidget {
-  final Map<String, dynamic>? scales;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
-  final bool readOnly;
-  final ValueChanged<Map<String, dynamic>?> onChanged;
+class _AddChoiceOptionButton extends StatefulWidget {
+  final ValueChanged<String> onAdd;
+  const _AddChoiceOptionButton({required this.onAdd});
 
-  const _ScalesWithEditor({
-    required this.scales,
-    required this.entities,
-    required this.ref,
-    required this.readOnly,
-    required this.onChanged,
-  });
+  @override
+  State<_AddChoiceOptionButton> createState() =>
+      _AddChoiceOptionButtonState();
+}
+
+class _AddChoiceOptionButtonState extends State<_AddChoiceOptionButton> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final base = scales ?? const {'kind': 'class_level'};
-    final kind = base['kind']?.toString() ?? 'class_level';
-    final table = _coerceRows(base['table']);
-    void write(Map<String, dynamic> next) => onChanged(next);
-    return _nestedBox(
-      context: context,
-      title: 'Scales with level (largest row ≤ level wins)',
-      readOnly: readOnly,
-      onClear: scales == null ? null : () => onChanged(null),
-      onAdd: () => write({
-        ...base,
-        'kind': kind,
-        'table': [...table, {'lvl': 1, 'v': 1}],
-      }),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _miniEnum(
-              label: 'By',
-              value: kind,
-              options: const ['class_level', 'character_level'],
-              readOnly: readOnly,
-              onChanged: (v) => write({...base, 'kind': v ?? 'class_level'}),
-              width: 160,
-            ),
-            if (kind == 'class_level' || kind == 'class_level_table')
-              _MiniRelationField(
-                label: 'Class',
-                value: base['class_ref'] is String ? base['class_ref'] as String : null,
-                allowedTypes: const ['class'],
-                entities: entities,
-                ref: ref,
-                readOnly: readOnly,
-                onChanged: (v) => write({...base, 'class_ref': v}),
-              ),
-          ],
+        SizedBox(
+          width: 110,
+          child: TextField(
+            controller: _ctrl,
+            style: const TextStyle(fontSize: 11),
+            decoration: const InputDecoration(
+                labelText: 'New option',
+                isDense: true,
+                labelStyle: TextStyle(fontSize: 10)),
+            onSubmitted: (s) {
+              if (s.trim().isEmpty) return;
+              widget.onAdd(s.trim());
+              _ctrl.clear();
+            },
+          ),
         ),
-        if (table.isEmpty)
-          Text('No table rows',
-              style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.outline)),
-        for (var i = 0; i < table.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Wrap(
-              spacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _miniInt(
-                  label: 'Lvl',
-                  value: table[i]['lvl'] is int ? table[i]['lvl'] as int : null,
-                  readOnly: readOnly,
-                  onChanged: (v) {
-                    final t = [...table];
-                    t[i] = {...t[i], 'lvl': v};
-                    write({...base, 'table': t});
-                  },
-                  width: 70,
-                ),
-                _miniInt(
-                  label: 'Value',
-                  value: table[i]['v'] is int ? table[i]['v'] as int : null,
-                  readOnly: readOnly,
-                  onChanged: (v) {
-                    final t = [...table];
-                    t[i] = {...t[i], 'v': v};
-                    write({...base, 'table': t});
-                  },
-                  width: 80,
-                ),
-                if (!readOnly)
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 14),
-                    tooltip: 'Remove',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      final t = [...table]..removeAt(i);
-                      write({...base, 'table': t});
-                    },
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Editor for an effect row's `activation: {action_type, uses{count,per},
-/// triggers_state_ref}`. Combat-tracker metadata — no resolve-time effect.
-/// Unknown keys (duration, end_conditions) are preserved by spreading.
-class _ActivationEditor extends StatelessWidget {
-  final Map<String, dynamic>? activation;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
-  final bool readOnly;
-  final ValueChanged<Map<String, dynamic>?> onChanged;
-
-  const _ActivationEditor({
-    required this.activation,
-    required this.entities,
-    required this.ref,
-    required this.readOnly,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final base = activation ?? <String, dynamic>{};
-    final uses = base['uses'] is Map
-        ? Map<String, dynamic>.from(base['uses'])
-        : <String, dynamic>{};
-    void write(Map<String, dynamic> next) => onChanged(next);
-    void writeUses(Map<String, dynamic> u) {
-      final next = {...base};
-      if (u.isEmpty) {
-        next.remove('uses');
-      } else {
-        next['uses'] = u;
-      }
-      write(next);
-    }
-
-    return _nestedBox(
-      context: context,
-      title: 'Activation (action economy)',
-      readOnly: readOnly,
-      onClear: activation == null ? null : () => onChanged(null),
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _miniEnum(
-              label: 'Action',
-              value: base['action_type']?.toString(),
-              options: const [
-                'action', 'bonus_action', 'reaction', 'free', 'no_action', 'passive'
-              ],
-              readOnly: readOnly,
-              onChanged: (v) => write({...base, 'action_type': v}),
-              width: 150,
-            ),
-            _miniInt(
-              label: 'Uses',
-              value: uses['count'] is int ? uses['count'] as int : null,
-              readOnly: readOnly,
-              onChanged: (v) {
-                final u = {...uses};
-                if (v == null) {
-                  u.remove('count');
-                } else {
-                  u['count'] = v;
-                }
-                writeUses(u);
-              },
-              width: 70,
-            ),
-            _miniEnum(
-              label: 'Per',
-              value: uses['per']?.toString(),
-              options: const ['', 'short_rest', 'long_rest'],
-              readOnly: readOnly,
-              onChanged: (v) {
-                final u = {...uses};
-                if (v == null || v.isEmpty) {
-                  u.remove('per');
-                } else {
-                  u['per'] = v;
-                }
-                writeUses(u);
-              },
-              width: 130,
-            ),
-            _MiniRelationField(
-              label: 'Triggers State',
-              value: base['triggers_state_ref'] is String
-                  ? base['triggers_state_ref'] as String
-                  : null,
-              allowedTypes: const ['character-state'],
-              entities: entities,
-              ref: ref,
-              readOnly: readOnly,
-              onChanged: (v) {
-                final next = {...base};
-                if (v == null) {
-                  next.remove('triggers_state_ref');
-                } else {
-                  next['triggers_state_ref'] = v;
-                }
-                write(next);
-              },
-            ),
-          ],
+        IconButton(
+          icon: const Icon(Icons.add, size: 16),
+          visualDensity: VisualDensity.compact,
+          onPressed: () {
+            final s = _ctrl.text.trim();
+            if (s.isEmpty) return;
+            widget.onAdd(s);
+            _ctrl.clear();
+          },
         ),
       ],
     );
   }
 }
-
-Widget _badge(String label, Color color) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(label,
-          style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
-    );
 
 // ─────────────────────────────────────────────────────────────────────────
 // autoGrantSources — {source: 'class'|'subclass'|'species'|'subspecies'|

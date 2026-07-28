@@ -1,4 +1,4 @@
-import 'package:dungeon_master_tool/domain/entities/schema/rules/rule_config.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/rule_config.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/world_schema.dart';
 import 'package:dungeon_master_tool/presentation/dialogs/rule_config_dialog.dart';
 import 'package:flutter/material.dart';

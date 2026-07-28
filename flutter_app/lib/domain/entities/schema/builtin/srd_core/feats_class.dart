@@ -3,29 +3,34 @@
 // Each entry is a feat with:
 //   • prose `description` / `benefits` — preserved verbatim from SRD class
 //     prose for read-mode preview;
-//   • structured `effects` consumed by CharacterResolver;
+//   • plainly-named grant fields (`granted_damage_resistances`,
+//     `resource_pool_grants`, `extra_attack_count`, …) consumed by
+//     `CharacterResolver.applyGrantsFrom` — see `_FB.grantBlock`;
+//   • `mechanical_notes` for roll-time rules the engine does not compute
+//     (advantage riders, reroll abilities, reaction effects) — shown
+//     verbatim on the character sheet under "Other Effects";
 //   • `auto_granted_by` listing the class + level that grants it;
 //   • `chooseable: false` so the feat is hidden from the player feat-picker.
 //
 // Resolver auto-grant walker (CharacterResolver Pass 4b) picks up every feat
 // whose `auto_granted_by` matches the character's class levels / species /
-// background and applies its effects exactly like a player-chosen feat.
+// background and applies its grants exactly like a player-chosen feat.
 //
 // Narrative-only class features (Druidic, Thieves' Cant) live in
-// `traits.dart` as Traits with `auto_granted_by` populated; the resolver
-// skips them and the UI only shows the prose.
+// `traits.dart` as Traits with `auto_granted_by` populated.
 
 import '_helpers.dart';
 
 /// Class-feature feat builder. Wraps `packEntity` with sensible defaults.
+/// [grants] keys must be grant-block field keys
+/// (`CharacterResolver.grantFieldKeys`).
 Map<String, dynamic> _cf({
   required String name,
   required String className,
   required int atLevel,
   required String description,
   String? benefits,
-  List<Map<String, dynamic>> effects = const [],
-  Map<String, dynamic>? activation,
+  Map<String, dynamic> grants = const {},
   bool repeatable = false,
 }) =>
     packEntity(
@@ -39,8 +44,7 @@ Map<String, dynamic> _cf({
           autoGrantBy(source: 'class', sourceName: className, atLevel: atLevel),
         ],
         'repeatable': repeatable,
-        'effects': effects,
-        'activation': ?activation,
+        ...grants,
         'benefits': benefits ?? description,
       },
     );
@@ -52,8 +56,7 @@ Map<String, dynamic> _sf({
   required int atLevel,
   required String description,
   String? benefits,
-  List<Map<String, dynamic>> effects = const [],
-  Map<String, dynamic>? activation,
+  Map<String, dynamic> grants = const {},
 }) =>
     packEntity(
       slug: 'feat',
@@ -70,8 +73,7 @@ Map<String, dynamic> _sf({
           ),
         ],
         'repeatable': false,
-        'effects': effects,
-        'activation': ?activation,
+        ...grants,
         'benefits': benefits ?? description,
       },
     );
@@ -80,11 +82,9 @@ Map<String, dynamic> _sf({
 /// damage effects.
 Map<String, String> _dt(String name) => lookup('damage-type', name);
 Map<String, String> _ability(String name) => lookup('ability', name);
-Map<String, String> _skill(String name) => lookup('skill', name);
 Map<String, String> _state(String name) => lookup('character-state', name);
 Map<String, String> _pool(String name) => lookup('resource-pool', name);
 Map<String, String> _cond(String name) => lookup('condition', name);
-Map<String, String> _sense(String name) => lookup('sense', name);
 
 /// Compact builder for feature-option feats. Each option is a non-chooseable
 /// feat under category `Feature Option: <featureName>`. The
@@ -96,7 +96,7 @@ Map<String, dynamic> _opt({
   required String description,
   String? benefits,
   String? prerequisite,
-  List<Map<String, dynamic>> effects = const [],
+  Map<String, dynamic> grants = const {},
 }) =>
     packEntity(
       slug: 'feat',
@@ -107,7 +107,7 @@ Map<String, dynamic> _opt({
         'prerequisite': ?prerequisite,
         'chooseable': false,
         'repeatable': false,
-        'effects': effects,
+        ...grants,
         'benefits': benefits ?? description,
       },
     );
@@ -128,55 +128,24 @@ List<Map<String, dynamic>> srdClassFeats() => [
             '**No Spells.** While raging you can\'t cast spells or maintain Concentration.\n\n'
             '**Duration.** Lasts up to 10 minutes; ends if you don\'t attack or take damage on your turn, you fall Unconscious, or you don Heavy armor.\n\n'
             '**Uses.** Per Long Rest: 2 (L1), 3 (L3), 4 (L6), 5 (L12), 6 (L17), unlimited (L20).',
-        activation: activation(
-          actionType: 'bonus_action',
-          duration: {'kind': 'minutes', 'value': 10},
-          uses: {
-            'pool_ref': _pool('pool:rage_uses'),
-            'recharge': 'long_rest',
-          },
-          triggersStateRef: 'state:raging',
-          endConditions: const [
-            'no_attack_or_damage_taken_last_turn',
-            'incapacitated',
-            'heavy_armor_donned',
-            'manual',
+        grants: {
+          'active_while_state_ref': _state('state:raging'),
+          'granted_damage_resistances': [
+            _dt('Bludgeoning'), _dt('Piercing'), _dt('Slashing'), //
           ],
-        ),
-        effects: [
-          effect('damage_resistance',
-              targetRef: _dt('Bludgeoning'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('damage_resistance',
-              targetRef: _dt('Piercing'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('damage_resistance',
-              targetRef: _dt('Slashing'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('advantage_on',
-              targetKind: 'check',
-              targetRef: _ability('Strength'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('advantage_on',
-              targetKind: 'save',
-              targetRef: _ability('Strength'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('extra_damage_on_attack',
-              payload: {
-                'flat': 2,
-                'when': 'str_melee',
-                'type_ref': _dt('Bludgeoning'),
-              },
-              scalesWith: scalesByClass('Barbarian', [
-                [1, 2], [9, 3], [16, 4],
-              ]),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('resource_pool_grant',
-              payload: {'pool_ref': _pool('pool:rage_uses'), 'recharge': 'long_rest'},
-              scalesWith: scalesByClass('Barbarian', [
-                [1, 2], [3, 3], [6, 4], [12, 5], [17, 6], [20, 99],
-              ])),
-        ],
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:rage_uses'),
+              'recharge': 'long_rest',
+              'class_ref': ref('class', 'Barbarian'),
+              'count_by_level': {1: 2, 3: 3, 6: 4, 12: 5, 17: 6, 20: 99},
+            },
+          ],
+          'mechanical_notes':
+              'Advantage on Strength checks and Strength saving throws\n'
+              'Strength-based melee attacks deal +2 damage (+3 at L9, +4 at L16)\n'
+              "Can't cast spells or maintain Concentration",
+        },
       ),
       _cf(
         name: 'Unarmored Defense (Barbarian)',
@@ -184,15 +153,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'While not wearing armor, your AC equals 10 + Dex mod + Con mod. Shield allowed.',
-        effects: [
-          effect('unarmored_ac_formula',
-              payload: {
-                'base': 10,
-                'ability_mods': ['DEX', 'CON'],
-                'shield_allowed': true,
-              },
-              predicates: [predicate('equipped_armor_kind', {'value': 'none'})]),
-        ],
+        grants: {
+          'unarmored_ac_base': 10,
+          'unarmored_ac_abilities': [_ability('Dexterity'), _ability('Constitution')],
+          'unarmored_ac_shield_allowed': true,
+        },
       ),
       _cf(
         name: 'Weapon Mastery (Barbarian)',
@@ -200,9 +165,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You can use the mastery property of two kinds of Simple or Martial Melee weapons; swap one on each Long Rest.',
-        effects: [
-          effect('weapon_mastery_count_bonus', value: 2),
-        ],
+        grants: {'weapon_mastery_count': 2},
       ),
       _cf(
         name: 'Danger Sense',
@@ -210,12 +173,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You have Advantage on Dexterity saving throws unless you have the Incapacitated condition.',
-        effects: [
-          effect('advantage_on',
-              targetKind: 'save',
-              targetRef: _ability('Dexterity'),
-              predicates: [predicate('not_incapacitated')]),
-        ],
+        grants: {
+          'mechanical_notes':
+              'Advantage on Dexterity saving throws unless Incapacitated',
+        },
       ),
       _cf(
         name: 'Reckless Attack',
@@ -223,17 +184,12 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'On your turn you can attack recklessly: gain Advantage on Strength-based melee attack rolls until your next turn, but attack rolls against you also have Advantage.',
-        activation: activation(
-          actionType: 'no_action',
-          duration: {'kind': 'until_end_of_next_turn'},
-          triggersStateRef: 'state:reckless_attacking',
-        ),
-        effects: [
-          effect('advantage_on',
-              targetKind: 'attack',
-              targetRef: _ability('Strength'),
-              predicates: [predicate('has_state', {'ref': 'state:reckless_attacking'})]),
-        ],
+        grants: {
+          'mechanical_notes':
+              'While attacking recklessly: Advantage on Strength-based melee '
+              'attack rolls, and attack rolls against you have Advantage until '
+              'your next turn',
+        },
       ),
       _cf(
         name: 'Primal Knowledge',
@@ -241,16 +197,18 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 3,
         description:
             'You gain proficiency in another skill of your choice from the Barbarian list. While raging you can substitute Strength for the ability score normally used to make checks with that skill.',
-        effects: [
-          effect('proficiency_grant', targetKind: 'skill'),
-        ],
+        grants: {
+          'bonus_skill_pick_count': 1,
+          'mechanical_notes':
+              'While raging, you can make checks with that skill using Strength',
+        },
       ),
       _cf(
         name: 'Extra Attack (Barbarian)',
         className: 'Barbarian',
         atLevel: 5,
         description: 'You can attack twice when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 2)],
+        grants: {'extra_attack_count': 2},
       ),
       _cf(
         name: 'Fast Movement',
@@ -258,21 +216,19 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 5,
         description:
             'Your Speed increases by 10 feet while you aren\'t wearing Heavy armor.',
-        effects: [
-          effect('speed_bonus',
-              value: 10,
-              predicates: [predicate('equipped_armor_kind', {'value': 'not_heavy'})]),
-        ],
+        grants: {
+          'speed_bonus_ft': 10,
+          'mechanical_notes': 'Only while not wearing Heavy armor',
+        },
       ),
       _cf(
         name: 'Feral Instinct',
         className: 'Barbarian',
         atLevel: 7,
         description: 'You have Advantage on Initiative rolls.',
-        effects: [
-          effect('advantage_on', targetKind: 'check', targetRef: _ability('Dexterity')),
-          effect('initiative_bonus', value: 0),
-        ],
+        grants: {
+          'mechanical_notes': 'Advantage on Initiative rolls',
+        },
       ),
       _cf(
         name: 'Instinctive Pounce',
@@ -287,15 +243,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'When you Reckless Attack, you can forgo Advantage to deal +1d10 damage and apply one Brutal Strike effect (Forceful Blow / Hamstring Blow).',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'dice': '1d10',
-                'when': 'str_melee',
-                'requires_forgo_advantage': true,
-              },
-              predicates: [predicate('has_state', {'ref': 'state:reckless_attacking'})]),
-        ],
+        grants: {
+          'mechanical_notes':
+              'When you Reckless Attack, you can forgo Advantage to deal '
+              '+1d10 damage and apply one Brutal Strike effect',
+        },
       ),
       _cf(
         name: 'Relentless Rage',
@@ -324,15 +276,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 17,
         description:
             'Brutal Strike\'s damage die increases to 2d10, and you can apply two Brutal Strike effects per use.',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'dice': '2d10',
-                'when': 'str_melee',
-                'requires_forgo_advantage': true,
-              },
-              predicates: [predicate('has_state', {'ref': 'state:reckless_attacking'})]),
-        ],
+        grants: {
+          'mechanical_notes':
+              "Brutal Strike's damage die increases to 2d10; apply two Brutal "
+              'Strike effects per use',
+        },
       ),
       _cf(
         name: 'Indomitable Might',
@@ -347,20 +295,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 20,
         description:
             'Your Strength and Constitution increase by 4. Your maximum for those scores becomes 25.',
-        effects: [
-          {
-            'kind': 'ability_score_bonus',
-            'ability': 'STR',
-            'value': 4,
-            'max': 25,
-          },
-          {
-            'kind': 'ability_score_bonus',
-            'ability': 'CON',
-            'value': 4,
-            'max': 25,
-          },
-        ],
+        grants: {
+          'ability_bonuses': {'STR': 4, 'CON': 4},
+          'ability_bonus_cap': 25,
+        },
       ),
 
       // ─── BARD ────────────────────────────────────────────────────────────
@@ -370,22 +308,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'As a Bonus Action, you can grant a creature within 60 feet (other than yourself) a Bardic Inspiration die — initially d6, increasing with level. Within 10 minutes the recipient adds it to one ability check, attack roll, or saving throw.',
-        activation: activation(
-          actionType: 'bonus_action',
-          duration: {'kind': 'minutes', 'value': 10},
-          uses: {
-            'pool_ref': _pool('pool:bardic_inspiration'),
-            'recharge': 'long_rest',
-          },
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:bardic_inspiration'),
-                'recharge': 'long_rest',
-                'count_formula': 'cha_mod_min_1',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:bardic_inspiration'),
+              'recharge': 'long_rest',
+              'count_formula': 'cha_mod_min_1',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Bard Spellcasting',
@@ -400,9 +331,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'Choose two skills with which you have Proficiency. Your Proficiency Bonus is doubled for any check you make with those skills.',
-        effects: [
-          effect('expertise_count', value: 2),
-        ],
+        grants: {'bonus_expertise_pick_count': 2},
       ),
       _cf(
         name: 'Jack of All Trades',
@@ -410,7 +339,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You can add half your Proficiency Bonus (rounded down) to any ability check you make that uses a skill in which you lack Proficiency.',
-        effects: [effect('half_proficiency_to_unproficient_checks')],
+        grants: {
+          'mechanical_notes':
+              'Add half your Proficiency Bonus (round down) to ability checks '
+              'using skills you lack proficiency in',
+        },
       ),
       _cf(
         name: 'Font of Inspiration',
@@ -431,7 +364,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         className: 'Bard',
         atLevel: 9,
         description: 'Two more proficient skills gain Expertise.',
-        effects: [effect('expertise_count', value: 2)],
+        grants: {'bonus_expertise_pick_count': 2},
       ),
       _cf(
         name: 'Magical Secrets',
@@ -488,14 +421,8 @@ List<Map<String, dynamic>> srdClassFeats() => [
           'prerequisite': 'Cleric — Divine Order Feature',
           'chooseable': false,
           'repeatable': false,
-          'effects': [
-            effect('proficiency_grant',
-                targetKind: 'weapon_category',
-                targetRef: lookup('weapon-category', 'Martial')),
-            effect('proficiency_grant',
-                targetKind: 'armor_category',
-                targetRef: lookup('armor-category', 'Heavy')),
-          ],
+          'granted_weapon_proficiencies': [lookup('weapon-category', 'Martial')],
+          'granted_armor_proficiencies': [lookup('armor-category', 'Heavy')],
           'benefits':
               '**Martial Weapons.** Gain proficiency with Martial weapons.\n\n'
               '**Heavy Armor Training.** Gain Heavy Armor training.',
@@ -511,11 +438,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
           'prerequisite': 'Cleric — Divine Order Feature',
           'chooseable': false,
           'repeatable': false,
-          'effects': [
-            // +1 cantrip slot from the Wizard list. The actual cantrip pick
-            // is left to the existing cantrips pending flow.
-            effect('cantrip_count_bonus', value: 1),
-          ],
+          'mechanical_notes': 'Learn one extra Wizard cantrip',
           'benefits':
               '**Wizard Cantrip.** You learn one Wizard cantrip of your choice (pick from the cantrip picker).\n\n'
               '**Cleric Cantrip Damage Rider.** Once on each of your turns, when you cast a Cleric cantrip that deals damage, add your Wisdom modifier to the damage roll on one hit.',
@@ -527,25 +450,16 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You gain Divine Spark and Turn Undead as Channel Divinity options. Uses scale: 2 at L2, 3 at L6, 4 at L18; regained on Short or Long Rest.',
-        activation: activation(
-          actionType: 'action',
-          uses: {
-            'pool_ref': _pool('pool:channel_divinity'),
-            'recharge': 'short_rest',
-          },
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:channel_divinity'),
-                'recharge': 'short_rest',
-              },
-              scalesWith: scalesByClass('Cleric', const [
-                [2, 2],
-                [6, 3],
-                [18, 4],
-              ])),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:channel_divinity'),
+              'recharge': 'short_rest',
+              'class_ref': ref('class', 'Cleric'),
+              'count_by_level': {2: 2, 6: 3, 18: 4},
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Sear Undead',
@@ -560,14 +474,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 7,
         description:
             'Once on each of your turns, when you hit with a weapon attack or a cantrip you can deal an extra 1d8 Radiant damage to the target.',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'dice': '1d8',
-                'when': 'first_hit_per_turn',
-                'type_ref': _dt('Radiant'),
-              }),
-        ],
+        grants: {
+          'mechanical_notes':
+              'Once per turn, deal +1d8 Radiant damage on a hit',
+        },
       ),
       _cf(
         name: 'Divine Intervention',
@@ -575,28 +485,25 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 10,
         description:
             'As a Magic action, choose any Cleric spell of level 5 or lower; you cast it without expending a spell slot. 1/Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:divine_intervention'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:divine_intervention'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Improved Blessed Strikes',
         className: 'Cleric',
         atLevel: 14,
         description: 'The Blessed Strikes damage increases to 2d8.',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'dice': '2d8',
-                'when': 'first_hit_per_turn',
-                'type_ref': _dt('Radiant'),
-              }),
-        ],
+        grants: {
+          'mechanical_notes':
+              'Once per turn, deal +2d8 Radiant damage on a hit',
+        },
       ),
       _cf(
         name: 'Greater Divine Intervention',
@@ -629,14 +536,8 @@ List<Map<String, dynamic>> srdClassFeats() => [
           'prerequisite': 'Druid — Primal Order Feature',
           'chooseable': false,
           'repeatable': false,
-          'effects': [
-            effect('proficiency_grant',
-                targetKind: 'weapon_category',
-                targetRef: lookup('weapon-category', 'Martial')),
-            effect('proficiency_grant',
-                targetKind: 'armor_category',
-                targetRef: lookup('armor-category', 'Medium')),
-          ],
+          'granted_weapon_proficiencies': [lookup('weapon-category', 'Martial')],
+          'granted_armor_proficiencies': [lookup('armor-category', 'Medium')],
           'benefits':
               '**Martial Weapons.** Gain proficiency with Martial weapons.\n\n'
               '**Medium Armor Training.** Gain Medium Armor training.',
@@ -652,9 +553,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
           'prerequisite': 'Druid — Primal Order Feature',
           'chooseable': false,
           'repeatable': false,
-          'effects': [
-            effect('cantrip_count_bonus', value: 1),
-          ],
+          'mechanical_notes': 'Learn one extra Druid cantrip',
           'benefits':
               '**Extra Cantrip.** You learn one extra Druid cantrip (pick from the cantrip picker).\n\n'
               '**Knowledge Lore.** When you make an Arcana or Nature check, add your Wisdom modifier; usable once per Short Rest.',
@@ -666,23 +565,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'As a Bonus Action you assume the form of a Beast you have seen (CR ≤ 1/4, no flying speed). Lasts a number of hours equal to half your Druid level. 2 uses per Short or Long Rest, scaling with level.',
-        activation: activation(
-          actionType: 'bonus_action',
-          duration: {'kind': 'hours'},
-          uses: {
-            'pool_ref': _pool('pool:wild_shape'),
-            'recharge': 'short_rest',
-          },
-          triggersStateRef: 'state:wild_shape_active',
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:wild_shape'),
-                'recharge': 'short_rest',
-                'count': 2,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:wild_shape'),
+              'recharge': 'short_rest',
+              'count': 2,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Wild Companion',
@@ -726,23 +617,16 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'On your turn, as a Bonus Action, you regain HP equal to 1d10 + your Fighter level. Uses scale: 2 (L1), 3 (L4), 4 (L10). Recharges on Short or Long Rest.',
-        activation: activation(
-          actionType: 'bonus_action',
-          uses: {
-            'pool_ref': _pool('pool:second_wind'),
-            'recharge': 'short_rest',
-          },
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:second_wind'),
-                'recharge': 'short_rest',
-              },
-              scalesWith: scalesByClass('Fighter', [
-                [1, 2], [4, 3], [10, 4],
-              ])),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:second_wind'),
+              'recharge': 'short_rest',
+              'class_ref': ref('class', 'Fighter'),
+              'count_by_level': {1: 2, 4: 3, 10: 4},
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Weapon Mastery (Fighter)',
@@ -750,7 +634,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You can use the mastery property of three kinds of weapons. You can swap one on each Long Rest. Additional masteries unlock at higher levels.',
-        effects: [effect('weapon_mastery_count_bonus', value: 3)],
+        grants: {'weapon_mastery_count': 3},
       ),
       _cf(
         name: 'Action Surge',
@@ -758,24 +642,16 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'On your turn (no action) you can take one additional Attack action or Magic action. 1/Short Rest, 2/Short Rest at level 17.',
-        activation: activation(
-          actionType: 'free',
-          uses: {
-            'pool_ref': _pool('pool:action_surge'),
-            'recharge': 'short_rest',
-          },
-          triggersStateRef: 'state:action_surge_used',
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:action_surge'),
-                'recharge': 'short_rest',
-              },
-              scalesWith: scalesByClass('Fighter', [
-                [1, 1], [17, 2],
-              ])),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:action_surge'),
+              'recharge': 'short_rest',
+              'class_ref': ref('class', 'Fighter'),
+              'count_by_level': {1: 1, 17: 2},
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Tactical Mind',
@@ -790,7 +666,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 5,
         description:
             'You can attack twice when you take the Attack action. Three times at L11; four times at L20.',
-        effects: [effect('extra_attack_count', value: 2)],
+        grants: {'extra_attack_count': 2},
       ),
       _cf(
         name: 'Tactical Shift',
@@ -805,25 +681,23 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'If you fail a saving throw, you can reroll it with a bonus equal to your Fighter level. Once per Long Rest at L9; two uses at L13; three at L17.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:indomitable_uses'),
-                'recharge': 'long_rest',
-              },
-              scalesWith: scalesByClass('Fighter', const [
-                [9, 1],
-                [13, 2],
-                [17, 3],
-              ])),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:indomitable_uses'),
+              'recharge': 'long_rest',
+              'class_ref': ref('class', 'Fighter'),
+              'count_by_level': {9: 1, 13: 2, 17: 3},
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Two Extra Attacks',
         className: 'Fighter',
         atLevel: 11,
         description: 'You can attack three times when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 3)],
+        grants: {'extra_attack_count': 3},
       ),
       _cf(
         name: 'Studied Attacks',
@@ -837,7 +711,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         className: 'Fighter',
         atLevel: 20,
         description: 'You can attack four times when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 4)],
+        grants: {'extra_attack_count': 4},
       ),
 
       // ─── MONK ────────────────────────────────────────────────────────────
@@ -854,18 +728,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'While not wearing armor and not wielding a Shield, your AC equals 10 + Dex mod + Wis mod.',
-        effects: [
-          effect('unarmored_ac_formula',
-              payload: {
-                'base': 10,
-                'ability_mods': ['DEX', 'WIS'],
-                'shield_allowed': false,
-              },
-              predicates: [
-                predicate('equipped_armor_kind', {'value': 'none'}),
-                predicate('equipped_shield', {'value': 'false'}),
-              ]),
-        ],
+        grants: {
+          'unarmored_ac_base': 10,
+          'unarmored_ac_abilities': [_ability('Dexterity'), _ability('Wisdom')],
+          'unarmored_ac_shield_allowed': false,
+        },
       ),
       _cf(
         name: "Monk's Focus",
@@ -873,14 +740,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You gain Focus Points equal to your Monk level. You can spend them on Flurry of Blows, Patient Defense, or Step of the Wind. Regained on a Short or Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:focus_points'),
-                'recharge': 'short_rest',
-                'count_formula': 'monk_level',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:focus_points'),
+              'recharge': 'short_rest',
+              'count_formula': 'monk_level',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Unarmored Movement',
@@ -888,17 +756,12 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'Your Speed increases by 10 feet while you aren\'t wearing armor or wielding a Shield. Increases at higher levels.',
-        effects: [
-          effect('speed_bonus',
-              value: 10,
-              predicates: [
-                predicate('equipped_armor_kind', {'value': 'none'}),
-                predicate('equipped_shield', {'value': 'false'}),
-              ],
-              scalesWith: scalesByClass('Monk', [
-                [2, 10], [6, 15], [10, 20], [14, 25], [18, 30],
-              ])),
-        ],
+        grants: {
+          'speed_bonus_ft': 10,
+          'mechanical_notes':
+              'Only while unarmored and shieldless; increases to +15 (L6), '
+              '+20 (L10), +25 (L14), +30 (L18)',
+        },
       ),
       _cf(
         name: 'Flurry of Blows',
@@ -947,7 +810,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         className: 'Monk',
         atLevel: 5,
         description: 'You can attack twice when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 2)],
+        grants: {'extra_attack_count': 2},
       ),
       _cf(
         name: 'Empowered Strikes',
@@ -955,7 +818,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 6,
         description:
             'Your Unarmed Strikes count as magical for the purpose of overcoming resistance and immunity. You can change the damage type to Force.',
-        effects: [effect('magical_unarmed_strikes')],
+        grants: {
+          'mechanical_notes':
+              'Unarmed Strikes count as magical; damage type can be Force',
+        },
       ),
       _cf(
         name: 'Evasion (Monk)',
@@ -970,13 +836,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'While you aren\'t wearing armor or wielding a Shield, you can move along vertical surfaces and across liquids on your turn without falling, provided you move 10+ feet.',
-        effects: [
-          effect('walk_on_liquid',
-              predicates: [
-                predicate('equipped_armor_kind', {'value': 'none'}),
-                predicate('equipped_shield', {'value': 'false'}),
-              ]),
-        ],
+        grants: {
+          'mechanical_notes':
+              'While unarmored and shieldless, move along vertical surfaces '
+              'and across liquids without falling (move 10+ ft)',
+        },
       ),
       _cf(
         name: 'Deflect Energy',
@@ -1014,21 +878,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You have a pool of healing power equal to your Paladin level × 5. As a Bonus Action you can touch a creature and restore HP from the pool, or spend 5 points to neutralize one disease or poison. The pool refreshes on a Long Rest.',
-        activation: activation(
-          actionType: 'bonus_action',
-          uses: {
-            'pool_ref': _pool('pool:lay_on_hands_hp'),
-            'recharge': 'long_rest',
-          },
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:lay_on_hands_hp'),
-                'recharge': 'long_rest',
-                'count_formula': 'paladin_level_x5',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:lay_on_hands_hp'),
+              'recharge': 'long_rest',
+              'count_formula': 'paladin_level_x5',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Paladin Spellcasting',
@@ -1043,7 +901,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
-        effects: [effect('weapon_mastery_count_bonus', value: 2)],
+        grants: {'weapon_mastery_count': 2},
       ),
       _cf(
         name: "Paladin's Smite",
@@ -1051,9 +909,9 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You always have Divine Smite prepared. When you hit with a melee weapon or Unarmed Strike, you can expend a spell slot to deal an extra 2d8 Radiant damage to the target, plus 1d8 per slot level above 1 (max 5d8).',
-        effects: [
-          effect('spell_always_prepared', targetRef: ref('spell', 'Divine Smite')),
-        ],
+        grants: {
+          'always_prepared_spell_refs': [ref('spell', 'Divine Smite')],
+        },
       ),
       _cf(
         name: 'Channel Divinity (Paladin)',
@@ -1061,33 +919,32 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 3,
         description:
             'You gain Channel Divinity options from your Oath. Uses scale: 2 at L3, 3 at L11. Regained on Short or Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:paladin_channel_divinity'),
-                'recharge': 'short_rest',
-              },
-              scalesWith: scalesByClass('Paladin', const [
-                [3, 2],
-                [11, 3],
-              ])),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:paladin_channel_divinity'),
+              'recharge': 'short_rest',
+              'class_ref': ref('class', 'Paladin'),
+              'count_by_level': {3: 2, 11: 3},
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Extra Attack (Paladin)',
         className: 'Paladin',
         atLevel: 5,
         description: 'You can attack twice when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 2)],
+        grants: {'extra_attack_count': 2},
       ),
       _cf(
         name: 'Faithful Steed',
         className: 'Paladin',
         atLevel: 5,
         description: 'You always have Find Steed prepared.',
-        effects: [
-          effect('spell_always_prepared', targetRef: ref('spell', 'Find Steed')),
-        ],
+        grants: {
+          'always_prepared_spell_refs': [ref('spell', 'Find Steed')],
+        },
       ),
       _cf(
         name: 'Aura of Protection',
@@ -1102,14 +959,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'As a Magic action, force creatures of your choice within 60 feet to make a Wisdom save or be Frightened of you until the end of your next turn (1/Long Rest).',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:abjure_foes'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:abjure_foes'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Radiant Strikes',
@@ -1117,14 +975,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 11,
         description:
             'Once on each of your turns, when you hit a creature with a weapon attack you deal an extra 1d8 Radiant damage.',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'dice': '1d8',
-                'when': 'first_hit_per_turn',
-                'type_ref': _dt('Radiant'),
-              }),
-        ],
+        grants: {
+          'mechanical_notes':
+              'Once per turn, deal +1d8 Radiant damage on a hit',
+        },
       ),
       _cf(
         name: 'Restoring Touch',
@@ -1147,16 +1001,16 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You always have Hunter\'s Mark prepared. You can cast it without a spell slot a number of times equal to your Wisdom modifier (min 1) per Long Rest.',
-        effects: [
-          effect('spell_always_prepared',
-              targetRef: ref('spell', "Hunter's Mark")),
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:hunters_mark_no_slot_uses'),
-                'recharge': 'long_rest',
-                'count_formula': 'wis_mod_min_1',
-              }),
-        ],
+        grants: {
+          'always_prepared_spell_refs': [ref('spell', "Hunter's Mark")],
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:hunters_mark_no_slot_uses'),
+              'recharge': 'long_rest',
+              'count_formula': 'wis_mod_min_1',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Ranger Spellcasting',
@@ -1171,7 +1025,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
-        effects: [effect('weapon_mastery_count_bonus', value: 2)],
+        grants: {'weapon_mastery_count': 2},
       ),
       _cf(
         name: 'Deft Explorer',
@@ -1179,10 +1033,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You gain Expertise in one proficient skill of your choice and learn one extra language. More benefits unlock at higher Ranger levels.',
-        effects: [
-          effect('expertise_count', value: 1),
-          effect('language_grant'),
-        ],
+        grants: {
+          'bonus_expertise_pick_count': 1,
+          'mechanical_notes': 'Learn one extra language of your choice',
+        },
       ),
       _cf(
         name: 'Roving',
@@ -1190,25 +1044,25 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 3,
         description:
             'Your Speed increases by 5 feet, and you gain Climb and Swim Speeds equal to your Speed.',
-        effects: [
-          effect('speed_bonus', value: 5),
-          effect('climb_speed_equals_speed'),
-          effect('swim_speed_equals_speed'),
-        ],
+        grants: {
+          'speed_bonus_ft': 5,
+          'speed_climb_ft': -1,
+          'speed_swim_ft': -1,
+        },
       ),
       _cf(
         name: 'Extra Attack (Ranger)',
         className: 'Ranger',
         atLevel: 5,
         description: 'You can attack twice when you take the Attack action.',
-        effects: [effect('extra_attack_count', value: 2)],
+        grants: {'extra_attack_count': 2},
       ),
       _cf(
         name: 'Expertise (Ranger II)',
         className: 'Ranger',
         atLevel: 9,
         description: 'Two more proficient skills gain Expertise.',
-        effects: [effect('expertise_count', value: 2)],
+        grants: {'bonus_expertise_pick_count': 2},
       ),
       _cf(
         name: 'Tireless',
@@ -1216,20 +1070,18 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 10,
         description:
             'As a Magic action you grant yourself Temporary HP equal to 1d8 + your Wisdom modifier. Uses equal to your Wisdom modifier per Long Rest. Whenever you finish a Short Rest your Exhaustion level decreases by 1.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:tireless_temp_hp_uses'),
-                'recharge': 'long_rest',
-                'count_formula': 'wis_mod_min_1',
-              }),
-          effect('temp_hp_grant',
-              payload: {
-                'formula': '1d8 + WIS_mod',
-                'trigger': 'magic_action_self',
-                'pool_ref_text': 'pool:tireless_temp_hp_uses',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:tireless_temp_hp_uses'),
+              'recharge': 'long_rest',
+              'count_formula': 'wis_mod_min_1',
+            },
+          ],
+          'mechanical_notes':
+              'Magic action: gain 1d8 + WIS modifier Temporary HP\n'
+              'Short Rest reduces your Exhaustion level by 1',
+        },
       ),
       _cf(
         name: 'Relentless Hunter',
@@ -1237,7 +1089,10 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 13,
         description:
             'Damage you take doesn\'t break your Concentration on Hunter\'s Mark.',
-        effects: [effect('concentration_immune_to_damage_break')],
+        grants: {
+          'mechanical_notes':
+              "Damage doesn't break your Concentration on Hunter's Mark",
+        },
       ),
       _cf(
         name: "Nature's Veil",
@@ -1268,7 +1123,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'Choose two proficient skills. Your Proficiency Bonus is doubled for any check you make with those skills.',
-        effects: [effect('expertise_count', value: 2)],
+        grants: {'bonus_expertise_pick_count': 2},
       ),
       _cf(
         name: 'Sneak Attack',
@@ -1276,17 +1131,13 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'Once per turn, you can deal extra damage to a target you hit with a Finesse or Ranged weapon attack if you have Advantage on the attack, or if another enemy of the target is within 5 feet of it (and that enemy isn\'t Incapacitated and you don\'t have Disadvantage on the attack). Damage scales by Rogue level (1d6 → 10d6).',
-        effects: [
-          effect('extra_damage_on_attack',
-              payload: {
-                'when': 'first_hit_per_turn',
-                'requires': 'finesse_or_ranged',
-              },
-              scalesWith: scalesByClass('Rogue', [
-                [1, '1d6'], [3, '2d6'], [5, '3d6'], [7, '4d6'], [9, '5d6'],
-                [11, '6d6'], [13, '7d6'], [15, '8d6'], [17, '9d6'], [19, '10d6'],
-              ])),
-        ],
+        grants: {
+          'mechanical_notes':
+              'Sneak Attack: once per turn, extra damage on a Finesse/ranged '
+              'hit with Advantage or an adjacent enemy — 1d6 (L1), 2d6 (L3), '
+              '3d6 (L5), 4d6 (L7), 5d6 (L9), 6d6 (L11), 7d6 (L13), 8d6 (L15), '
+              '9d6 (L17), 10d6 (L19)',
+        },
       ),
       _cf(
         name: 'Weapon Mastery (Rogue)',
@@ -1294,7 +1145,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
-        effects: [effect('weapon_mastery_count_bonus', value: 2)],
+        grants: {'weapon_mastery_count': 2},
       ),
       _cf(
         name: 'Cunning Action',
@@ -1302,11 +1153,9 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You can take the Dash, Disengage, or Hide action as a Bonus Action.',
-        effects: [
-          effect('granted_bonus_action_grant',
-              targetKind: 'creature-action',
-              targetRef: ref('creature-action', 'Cunning Action')),
-        ],
+        grants: {
+          'granted_bonus_action_refs': [ref('creature-action', 'Cunning Action')],
+        },
       ),
       _cf(
         name: 'Steady Aim',
@@ -1363,14 +1212,9 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 15,
         description:
             'You gain proficiency in Wisdom and Charisma saving throws.',
-        effects: [
-          effect('proficiency_grant',
-              targetKind: 'saving_throw',
-              targetRef: _ability('Wisdom')),
-          effect('proficiency_grant',
-              targetKind: 'saving_throw',
-              targetRef: _ability('Charisma')),
-        ],
+        grants: {
+          'granted_save_proficiencies': [_ability('Wisdom'), _ability('Charisma')],
+        },
       ),
       _cf(
         name: 'Elusive',
@@ -1385,14 +1229,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 20,
         description:
             'When you miss an attack roll or fail an ability check you can turn it into a hit or treat the d20 as a 20. 1/Short or Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:stroke_of_luck'),
-                'recharge': 'short_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:stroke_of_luck'),
+              'recharge': 'short_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
 
       // ─── SORCERER ────────────────────────────────────────────────────────
@@ -1409,20 +1254,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'As a Bonus Action you trigger Innate Sorcery for 1 minute: Advantage on Sorcerer spell attack rolls and +1 to your spell save DC. Uses equal to your Charisma modifier (min 1) per Long Rest.',
-        activation: activation(
-          actionType: 'bonus_action',
-          duration: {'kind': 'minutes', 'value': 1},
-          uses: {'recharge': 'long_rest', 'count_formula': 'cha_mod_min_1'},
-          triggersStateRef: 'state:innate_sorcery_active',
-        ),
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:innate_sorcery_uses'),
-                'recharge': 'long_rest',
-                'count_formula': 'cha_mod_min_1',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:innate_sorcery_uses'),
+              'recharge': 'long_rest',
+              'count_formula': 'cha_mod_min_1',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Font of Magic',
@@ -1430,14 +1270,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You gain Sorcery Points equal to your Sorcerer level. You can convert Sorcery Points ↔ spell slots at progressive costs.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:sorcery_points'),
-                'recharge': 'long_rest',
-                'count_formula': 'sorcerer_level',
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:sorcery_points'),
+              'recharge': 'long_rest',
+              'count_formula': 'sorcerer_level',
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Sorcerous Restoration',
@@ -1445,14 +1286,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 5,
         description:
             'When you finish a Short Rest, you regain 4 expended Sorcery Points. 1/Short Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:sorcerous_restoration_per_short_rest'),
-                'recharge': 'short_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:sorcerous_restoration_per_short_rest'),
+              'recharge': 'short_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Sorcery Incarnate',
@@ -1476,14 +1318,16 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'Your spell slots regain on a Short or Long Rest. Charisma is your spellcasting ability.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:pact_slots'),
-                'recharge': 'short_rest',
-              }),
-          effect('slot_recovery_short_rest'),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:pact_slots'),
+              'recharge': 'short_rest',
+            },
+          ],
+          'mechanical_notes':
+              'Pact Magic spell slots recharge on a Short or Long Rest',
+        },
       ),
       _cf(
         name: 'Magical Cunning',
@@ -1491,14 +1335,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'When you finish a Short Rest you can regain expended Pact Magic spell slots equal to half your maximum (rounded up). 1/Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:magical_cunning_per_day'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:magical_cunning_per_day'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Mystic Arcanum (Level 6 Spell)',
@@ -1506,14 +1351,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 11,
         description:
             'You learn one level 6 Warlock spell as a Mystic Arcanum. You can cast it once without a slot per Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:mystic_arcanum_6'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:mystic_arcanum_6'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Mystic Arcanum (Level 7 Spell)',
@@ -1521,14 +1367,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 13,
         description:
             'You learn one level 7 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:mystic_arcanum_7'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:mystic_arcanum_7'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Mystic Arcanum (Level 8 Spell)',
@@ -1536,14 +1383,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 15,
         description:
             'You learn one level 8 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:mystic_arcanum_8'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:mystic_arcanum_8'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Mystic Arcanum (Level 9 Spell)',
@@ -1551,14 +1399,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 17,
         description:
             'You learn one level 9 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:mystic_arcanum_9'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:mystic_arcanum_9'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Eldritch Master',
@@ -1566,14 +1415,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 13,
         description:
             'You can take 1 minute to plead with your patron and regain all expended Pact Magic spell slots. 1/Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:eldritch_master'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:eldritch_master'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Eldritch Resilience',
@@ -1604,14 +1454,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 1,
         description:
             'Once per day after a Short Rest, you regain expended spell slots whose combined level ≤ half your Wizard level (rounded up); none can be 6th level or higher.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:arcane_recovery_per_day'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:arcane_recovery_per_day'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _cf(
         name: 'Memorize Spell',
@@ -1652,16 +1503,10 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 6,
         description:
             'You can\'t be Charmed or Frightened while raging. If you are Charmed or Frightened when you enter your Rage, that condition ends.',
-        effects: [
-          effect('condition_immunity_grant',
-              targetKind: 'condition',
-              targetRef: _cond('Charmed'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-          effect('condition_immunity_grant',
-              targetKind: 'condition',
-              targetRef: _cond('Frightened'),
-              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
-        ],
+        grants: {
+          'active_while_state_ref': _state('state:raging'),
+          'granted_condition_immunities': [_cond('Charmed'), _cond('Frightened')],
+        },
       ),
       _sf(
         name: 'Retaliation',
@@ -1765,11 +1610,10 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 10,
         description:
             'You are immune to the Frightened and Poisoned conditions. You\'re also immune to Poison damage and to disease.',
-        effects: [
-          effect('condition_immunity_grant', targetRef: _cond('Frightened')),
-          effect('condition_immunity_grant', targetRef: _cond('Poisoned')),
-          effect('damage_immunity', targetRef: _dt('Poison')),
-        ],
+        grants: {
+          'granted_condition_immunities': [_cond('Frightened'), _cond('Poisoned')],
+          'granted_damage_immunities': [_dt('Poison')],
+        },
       ),
       _sf(
         name: 'Nature\'s Sanctuary',
@@ -1785,9 +1629,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         subclassName: 'Champion',
         atLevel: 3,
         description: 'Your weapon attacks score a Critical Hit on a roll of 19 or 20.',
-        effects: [
-          effect('crit_range_extend', payload: {'threshold': 19}),
-        ],
+        grants: {'crit_threshold': 19},
       ),
       _sf(
         name: 'Remarkable Athlete',
@@ -1808,9 +1650,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 15,
         description:
             'Your weapon attacks score a Critical Hit on a roll of 18, 19, or 20.',
-        effects: [
-          effect('crit_range_extend', payload: {'threshold': 18}),
-        ],
+        grants: {'crit_threshold': 18},
       ),
       _sf(
         name: 'Survivor',
@@ -1864,9 +1704,9 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 7,
         description:
             'You and friendly creatures within 10 feet of you can\'t be Charmed.',
-        effects: [
-          effect('condition_immunity_grant', targetRef: _cond('Charmed')),
-        ],
+        grants: {
+          'granted_condition_immunities': [_cond('Charmed')],
+        },
       ),
       _sf(
         name: 'Smite of Protection',
@@ -1881,14 +1721,15 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 20,
         description:
             'As a Bonus Action you emanate divine light for 10 minutes. Hostile creatures that start their turn in your Aura of Protection take 10 Radiant damage; you have Advantage on saving throws against spells cast by Fiends or Undead. 1/Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:holy_nimbus'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:holy_nimbus'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
 
       // ─── Hunter (Ranger) ─────────────────────────────────────────────────
@@ -1949,7 +1790,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               "Once per turn, when you hit a damaged creature with a weapon attack, add 1d8 damage of the weapon's type.",
         },
@@ -1964,7 +1804,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Once per turn, after attacking with a weapon, make a second attack with the same weapon vs. a different creature within 5 ft. of the first target.',
         },
@@ -1979,7 +1818,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Pick a creature on Short/Long Rest; learn its damage immunities, resistances, vulnerabilities.',
         },
@@ -1995,7 +1833,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Defensive Tactics',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Opportunity Attacks against you are made with Disadvantage.',
         },
@@ -2011,7 +1848,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Defensive Tactics',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'After being hit, the attacker has Disadvantage on the rest of its attacks against you that turn.',
         },
@@ -2027,7 +1863,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Defensive Tactics',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits': 'Advantage on saves vs. Frightened.',
         },
       ),
@@ -2042,7 +1877,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Multiattack',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Ranged AoE — attack each creature in a 10-ft. radius within ranged-weapon range.',
         },
@@ -2058,7 +1892,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': 'Hunter Ranger — Multiattack',
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Melee AoE — attack any number of creatures within 5 ft.',
         },
@@ -2074,7 +1907,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Dex saves vs. half-damage effects: no damage on success, half on fail.',
         },
@@ -2090,7 +1922,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               "Reaction: redirect an enemy's missed melee attack to another creature.",
         },
@@ -2106,7 +1937,6 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
           'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
           'chooseable': false,
           'repeatable': false,
-          'effects': const [],
           'benefits':
               'Reaction: halve the damage of an attack that hits you.',
         },
@@ -2119,11 +1949,9 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'You can use the Bonus Action granted by Cunning Action to make a Sleight of Hand check, use Thieves\' Tools, or take the Use an Object action.',
-        effects: [
-          effect('granted_bonus_action_grant',
-              targetKind: 'creature-action',
-              targetRef: ref('creature-action', 'Fast Hands')),
-        ],
+        grants: {
+          'granted_bonus_action_refs': [ref('creature-action', 'Fast Hands')],
+        },
       ),
       _sf(
         name: 'Second-Story Work',
@@ -2131,7 +1959,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'You gain a Climb Speed equal to your walking Speed, and your jump distance increases by your Dex modifier × 1 ft.',
-        effects: [effect('climb_speed_equals_speed')],
+        grants: {'speed_climb_ft': -1},
       ),
       _sf(
         name: 'Supreme Sneak',
@@ -2162,17 +1990,13 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'Your HP maximum increases by 3, and increases by 1 each time you gain a Sorcerer level. While not wearing armor, your AC = 13 + your Dexterity modifier.',
-        effects: [
-          effect('hp_max_bonus_total', value: 3),
-          effect('hp_bonus_per_level', value: 1),
-          effect('unarmored_ac_formula',
-              payload: {
-                'base': 13,
-                'ability_mods': ['DEX'],
-                'shield_allowed': true,
-              },
-              predicates: [predicate('equipped_armor_kind', {'value': 'none'})]),
-        ],
+        grants: {
+          'hp_bonus_flat': 3,
+          'hp_bonus_per_level': 1,
+          'unarmored_ac_base': 13,
+          'unarmored_ac_abilities': [_ability('Dexterity')],
+          'unarmored_ac_shield_allowed': true,
+        },
       ),
       _sf(
         name: 'Draconic Spells',
@@ -2194,15 +2018,18 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 14,
         description:
             'As a Bonus Action you sprout dragon wings, gaining a Fly Speed equal to your Speed for 1 hour. 1/Long Rest.',
-        effects: [
-          effect('fly_speed'),
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:dragon_wings'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'speed_fly_ft': -1,
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:dragon_wings'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+          'mechanical_notes':
+              'Bonus Action to sprout wings; Fly Speed lasts 1 hour (1/Long Rest)',
+        },
       ),
       _sf(
         name: 'Dragon Companion',
@@ -2210,17 +2037,16 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 18,
         description:
             'You always have Summon Dragon prepared. You can also cast it once without expending a spell slot; the cast doesn\'t require Concentration if you spend 3 Sorcery Points on it. 1/Long Rest.',
-        effects: [
-          effect('spell_always_prepared',
-              targetKind: 'spell',
-              targetRef: ref('spell', 'Summon Dragon')),
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:dragon_companion'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'always_prepared_spell_refs': [ref('spell', 'Summon Dragon')],
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:dragon_companion'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _sf(
         name: 'Draconic Presence',
@@ -2237,22 +2063,20 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'When you reduce a creature to 0 HP, you gain Temporary HP equal to your Charisma modifier + your Warlock level (min 1).',
-        effects: [
-          effect('temp_hp_grant',
-              payload: {
-                'formula': 'CHA_mod + warlock_level (min 1)',
-                'trigger': 'on_reduce_creature_to_0_hp',
-              }),
-        ],
+        grants: {
+          'mechanical_notes':
+              'When you reduce a creature to 0 HP, gain Temporary HP equal to '
+              'CHA modifier + Warlock level (min 1)',
+        },
       ),
       _sf(
         name: 'Fiendish Vigor',
         subclassName: 'Fiend Patron',
         atLevel: 3,
         description: 'You always have False Life prepared.',
-        effects: [
-          effect('spell_always_prepared', targetRef: ref('spell', 'False Life')),
-        ],
+        grants: {
+          'always_prepared_spell_refs': [ref('spell', 'False Life')],
+        },
       ),
       _sf(
         name: 'Dark One\'s Own Luck',
@@ -2260,14 +2084,15 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 6,
         description:
             'When you make an ability check or saving throw, you can roll 1d10 and add it to the result. 1/Short or Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:dark_ones_own_luck'),
-                'recharge': 'short_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:dark_ones_own_luck'),
+              'recharge': 'short_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
       _sf(
         name: 'Fiendish Resilience',
@@ -2282,14 +2107,15 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 14,
         description:
             'When you hit a creature with an attack, you can banish it through the lower planes. The creature disappears and re-appears at the start of its next turn, taking 8d10 Psychic damage. 1/Long Rest.',
-        effects: [
-          effect('resource_pool_grant',
-              payload: {
-                'pool_ref': _pool('pool:hurl_through_hell'),
-                'recharge': 'long_rest',
-                'count': 1,
-              }),
-        ],
+        grants: {
+          'resource_pool_grants': [
+            {
+              'pool_ref': _pool('pool:hurl_through_hell'),
+              'recharge': 'long_rest',
+              'count': 1,
+            },
+          ],
+        },
       ),
 
       // ─── Evoker (Wizard) ─────────────────────────────────────────────────
@@ -2549,107 +2375,107 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Acid damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Acid')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Acid')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Bludgeoning',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Bludgeoning damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Bludgeoning')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Bludgeoning')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Cold',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Cold damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Cold')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Cold')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Fire',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Fire damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Fire')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Fire')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Lightning',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Lightning damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Lightning')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Lightning')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Necrotic',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Necrotic damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Necrotic')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Necrotic')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Piercing',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Piercing damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Piercing')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Piercing')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Poison',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Poison damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Poison')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Poison')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Psychic',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Psychic damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Psychic')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Psychic')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Radiant',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Radiant damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Radiant')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Radiant')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Slashing',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Slashing damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Slashing')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Slashing')],
+        },
       ),
       _opt(
         name: 'Fiendish Resilience — Thunder',
         featureName: 'Fiendish Resilience',
         prerequisite: 'Fiend Warlock 10',
         description: 'Resistance to Thunder damage.',
-        effects: [
-          {'kind': 'damage_resistance', 'target_ref': _dt('Thunder')},
-        ],
+        grants: {
+          'granted_damage_resistances': [_dt('Thunder')],
+        },
       ),
     ];
