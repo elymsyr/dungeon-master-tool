@@ -424,6 +424,14 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
+      FieldType.spellsAtLevel => SpellsAtLevelFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.playerChoices => PlayerChoicesFieldWidget(
         schema: schema,
         value: value,

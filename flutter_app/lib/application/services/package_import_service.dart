@@ -215,6 +215,7 @@ class PackageImportService {
       FieldType.equipmentChoiceGroups => const <Map<String, dynamic>>[],
       FieldType.resourcePoolGrants => const <Map<String, dynamic>>[],
       FieldType.playerChoices => const <Map<String, dynamic>>[],
+      FieldType.spellsAtLevel => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

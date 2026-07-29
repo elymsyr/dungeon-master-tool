@@ -278,6 +278,16 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
+  void spellsAtLevel(String k, String l, {String g = grpGrantsProficiency}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.spellsAtLevel,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
   /// The shared "what does this card grant?" block.
   ///
   /// Every part is a plainly-named field a DM can read without knowing any
@@ -348,6 +358,11 @@ class _FB {
       relation('always_prepared_spell_refs', 'Always-Prepared Spells',
           const ['spell'],
           isList: true, g: grpGrantsProficiency);
+      // The level-gated sibling of `granted_spell_refs`: one row per spell
+      // that unlocks at a character level (Drow's Faerie Fire at 3). Kept a
+      // separate field rather than an option on the flat list so the flat
+      // list stays a plain "you know these" picker.
+      spellsAtLevel('granted_spells_at_level', 'Spells by Level');
     }
 
     // ── Numeric bonuses ────────────────────────────────────────────────────
@@ -547,6 +562,19 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.relation('tool_proficiency_options', 'Tool Options', const ['tool'], isList: true, g: grpProgression);
   fb.relation('armor_training_refs', 'Armor Training', const ['armor-category'],
       isList: true, g: grpProgression);
+  // Unconditional grants a class makes on top of the choice-driven fields
+  // above: Rogue's Thieves' Tools, Druid's Herbalism Kit + Druidic. Same field
+  // keys the grant block uses elsewhere, so one mechanic still has one name;
+  // the class just does not get the rest of the block (see the note below).
+  fb.relation('granted_tool_refs', 'Granted Tools', const ['tool'],
+      isList: true, g: grpProgression);
+  fb.relation('granted_languages', 'Granted Languages', const ['language'],
+      isList: true, g: grpProgression);
+  // Chargen picker filters, not grants: which feat category the L1 "order"
+  // choice draws from (Cleric's Divine Order) and which weapons the Weapon
+  // Mastery picker offers.
+  fb.text('l1_order_feat_category', 'L1 Order Feat Category', g: grpProgression);
+  fb.text('weapon_mastery_filter', 'Weapon Mastery Filter', g: grpProgression);
   // Typed starting inventory (auto-import to PC.inventory) — granted unconditionally.
   // Use equipment_choice_groups for "Choose A or B" structured picks; resolver merges both.
   fb.relation('default_inventory_refs', 'Default Inventory',
@@ -604,6 +632,15 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   fb.relation('parent_class_ref', 'Parent Class', const ['class'], required_: true);
   fb.integer('granted_at_level', 'Granted at Level', required_: true, min: 1, max: 20);
   fb.integer('bonus_skill_pick_count', 'Bonus Skill Picks at Grant', min: 0, max: 6);
+  // Proficiency extensions beyond the parent class, read by the resolver's
+  // subclass pass. Same three keys the Class category uses — the mechanic
+  // keeps one name whichever card grants it.
+  fb.relation('saving_throw_refs', 'Extra Saving Throw Proficiencies',
+      const ['ability'], isList: true, g: grpProgression);
+  fb.relation('weapon_proficiency_categories', 'Extra Weapon Category Proficiencies',
+      const ['weapon-category'], isList: true, g: grpProgression);
+  fb.relation('armor_training_refs', 'Extra Armor Training',
+      const ['armor-category'], isList: true, g: grpProgression);
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
   // No grant block — same rationale as Class: subclass mechanics ship as
@@ -619,7 +656,8 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
     fields: fb.out,
     groups: const [
       FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpFeatures, name: 'Features', gridColumns: 1, orderIndex: 1),
+      FieldGroup(groupId: grpProgression, name: 'Progression', gridColumns: 2, orderIndex: 1),
+      FieldGroup(groupId: grpFeatures, name: 'Features', gridColumns: 1, orderIndex: 2),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -682,6 +720,11 @@ EntityCategorySchema _subspeciesCategory(String schemaId, String now, int orderI
   fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120, g: grpCombat);
   fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120, g: grpCombat);
+  // Migration key: the `subspecies_options` row name this entity was split out
+  // of, so characters saved before the field→entity move still match. Never
+  // authored by hand.
+  fb.text('legacy_subspecies_key', 'Legacy Subspecies Key',
+      help: 'Migration only — matches saves that stored the old option name.');
   // Same grant block as Species, so CharacterResolver folds them identically.
   fb.grantBlock(speeds: false);
 
@@ -708,6 +751,11 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   final fb = _FB(catId, now);
   fb.relation('granted_skill_refs', 'Granted Skills', const ['skill'], isList: true, required_: true);
   fb.relation('granted_tool_refs', 'Granted Tools', const ['tool'], isList: true);
+  // Soldier-style "pick one of this tool family" grant: the value names a tool
+  // subcategory and the wizard offers its members (`gaming_set` → every
+  // Gaming Set tool). Distinct from `granted_tool_refs`, which grants outright.
+  fb.text('granted_tool_variant_group', 'Granted Tool Variant Group',
+      help: "Tool subcategory to pick one from, e.g. 'gaming_set'.");
   fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 5);
   fb.relation('ability_score_options', 'Ability Score Options', const ['ability'], isList: true, required_: true);
   // SRD 2024 p.83: each background allows either +2/+1 to two abilities
