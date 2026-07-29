@@ -256,6 +256,7 @@ Map<String, Entity> readCharacterEntities(WidgetRef ref, Character character) {
   // species/class/subclass refs resolve in the header chips (issue: blank
   // chips for worldless chars built from official content).
   return layerCharacterPackages(
+    ref.watch,
     base,
     sourcePackagesOf(character),
     (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,

@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-06-22
+updated: 2026-07-29
 tags: [moc, architecture]
 ---
 
@@ -52,13 +52,14 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 ```
 
 - **Sync-and-Realtime** is the spine: it drains the [[sync_outbox_dao|outbox]] in [[Data-Layer]] and mirrors to [[Backend-Infra]] (Supabase CDC), feeding [[Multiplayer-and-Online]].
-- **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]].
+- **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]]. Packages may [[Package-Links|link]] each other instead of duplicating content.
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
 
 ## Key cross-cutting flows
 - [[CDC-Sync-Flow]] — 12-step local-edit → Postgres → peer apply.
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).
+- [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.
 
 ## Source docs (design history)
 - `flutter_app/docs/`: `open5e_import_roadmap.md`, `security_media_supabase_r2_audit_may21.md`, `email_confirmation_setup.md`.

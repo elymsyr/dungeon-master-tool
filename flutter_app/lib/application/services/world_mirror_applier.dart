@@ -16,6 +16,7 @@ import '../providers/campaign_provider.dart';
 import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
 import '../providers/world_characters_provider.dart';
+import '../providers/package_link_provider.dart';
 import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
@@ -23,10 +24,7 @@ import '../../data/database/app_database.dart' hide WorldCharacterRow;
 import 'eviction_sweeper.dart';
 import 'fetch_queue.dart';
 import 'reference_indexer.dart';
-import '../../data/database/util/builtin_synth.dart';
-import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'beta_loss_gate.dart';
-import 'package_import_service.dart';
 import 'package_sync_service.dart';
 import 'pending_write_buffer.dart';
 import 'world_mirror_service.dart';
@@ -1218,24 +1216,12 @@ class WorldMirrorApplier {
       await repo.save(packageName, decoded);
       final pkg = await db.packagesDao.getByName(packageName);
       if (pkg == null) return;
-      await db.installedPackagesDao.upsert(
-        InstalledPackagesCompanion.insert(
-          worldId: worldId,
-          packageId: pkg.id,
-          packageName: Value(pkg.name),
-        ),
-      );
-      final build = generateBuiltinDnd5eV2Schema();
-      final tier0Slugs = build.seedRows.keys.toSet();
-      final tier0Index =
-          await buildTier0LookupIndex(db, worldId, tier0Slugs: tier0Slugs);
-      await PackageSyncService(db).sync(
-        worldId: worldId,
-        packageId: pkg.id,
-        resolveAttrs: (attrs) =>
-            PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
-                as Map<String, dynamic>,
-      );
+      // Installs the shared package plus everything it links. A link whose
+      // target the player doesn't have is dangling and simply skipped — the
+      // DM shares each package separately.
+      await ref
+          .read(worldPackageInstallerProvider)
+          .installIntoWorld(worldId: worldId, packageId: pkg.id);
       ref.invalidate(packageListProvider);
       _bumpRevision();
     }

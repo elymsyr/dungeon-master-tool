@@ -7,6 +7,7 @@ import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
+import '../../../application/providers/package_link_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/personal_online_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
@@ -538,18 +539,31 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           .getOwnedListingIds('package', name);
       hasListings = ids.isNotEmpty;
     } catch (_) {/* ignore */}
+
+    // Deleting a linked-to package is allowed — the links just stop resolving
+    // (soft-ref semantics), so warn rather than block.
+    var linkWarning = '';
+    try {
+      final linkers =
+          await ref.read(packageLinkServiceProvider).reverseLinks(name);
+      if (linkers.isNotEmpty) {
+        linkWarning = l10n.packageDeleteLinkedWarning(
+          linkers.length,
+          linkers.map((p) => p.name).join(', '),
+        );
+      }
+    } catch (_) {/* ignore */}
     if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.packageDelete),
-        content: Text(
-          hasListings
-              ? '${l10n.packageDeleteConfirm(name)}\n\n'
-                  '${l10n.packageDeleteMarketplaceWarning}'
-              : l10n.packageDeleteConfirm(name),
-        ),
+        content: Text([
+          l10n.packageDeleteConfirm(name),
+          if (hasListings) l10n.packageDeleteMarketplaceWarning,
+          if (linkWarning.isNotEmpty) linkWarning,
+        ].join('\n\n')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),

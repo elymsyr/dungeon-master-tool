@@ -2737,6 +2737,7 @@ class _CharacterEditorScreenState
     // the watch re-runs when each future settles. Shared with the resolver and
     // header chips so all card surfaces resolve identically.
     return layerCharacterPackages(
+      ref.watch,
       base,
       sourcePackagesOf(character),
       (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,

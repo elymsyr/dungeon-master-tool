@@ -2,6 +2,7 @@ import '../../data/schema/auto_grant_inversion.dart';
 import '../../data/schema/rule_effects_migration.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/repositories/package_repository.dart';
+import 'package_link_service.dart';
 
 /// Imports an Open5e-style content payload (`package_name` + `metadata` +
 /// `entities`) into the local package store, attaching the *live* built-in v2
@@ -55,6 +56,23 @@ class PackagePayloadImporter {
         ? title
         : payload['package_name'] as String;
 
+    // `save` REPLACES state_json, so a re-install would otherwise drop the
+    // package's declared links. Carry them across: from the payload when it
+    // declares any (`links` or `metadata.links` — how a built pack ships its
+    // dependencies), else from whatever the local row already holds.
+    var links = PackageLinkService.linksFromState({
+      ...payload,
+      'metadata': metadata,
+    });
+    if (links.isEmpty) {
+      try {
+        links = PackageLinkService.linksFromState(
+            await _repo.load(packageName));
+      } catch (_) {
+        // Package not installed yet — nothing to preserve.
+      }
+    }
+
     final schema = generateBuiltinDnd5eV2Schema().schema;
     await _repo.save(packageName, {
       'entities': entities,
@@ -62,6 +80,8 @@ class PackagePayloadImporter {
       'template_id': builtinDnd5eV2SchemaId,
       'template_original_hash': builtinDnd5eV2OriginalHash,
       'metadata': metadata,
+      if (links.isNotEmpty)
+        'links': [for (final l in links) l.toJson()],
     });
     return packageName;
   }

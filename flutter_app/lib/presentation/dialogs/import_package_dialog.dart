@@ -3,14 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/package_link_provider.dart';
 import '../../application/providers/package_provider.dart';
-import '../../application/services/package_import_service.dart';
-import '../../application/services/package_sync_service.dart';
 import '../../application/services/template_compatibility_service.dart';
 import '../../data/database/database_provider.dart';
-import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
-import 'package:drift/drift.dart' hide Column, Table;
-import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/template_compatibility.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -204,10 +200,11 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         }
         return;
       }
-      final result = await PackageSyncService(db).uninstall(
-        worldId: campaignId,
-        packageId: pkgRow.id,
-      );
+      // Only this package — packages it links stay installed (the user removes
+      // them explicitly). See [WorldPackageInstaller].
+      final result = await ref
+          .read(worldPackageInstallerProvider)
+          .uninstallFromWorld(worldId: campaignId, packageId: pkgRow.id);
       await activeNotifier.reload();
       await _loadInstalled();
       if (mounted) {
@@ -256,46 +253,26 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         return;
       }
 
-      // Live-link install: register the package, then sync. New pack rows
-      // come in as linked entities — pack updates propagate, user edits
-      // detach to homebrew.
-      await db.installedPackagesDao.upsert(InstalledPackagesCompanion.insert(
-        worldId: campaignId,
-        packageId: pkgRow.id,
-        packageName: Value(pkgRow.name),
-      ));
-
-      // Build Tier-0 (slug,name) → uuid index from this campaign's seeded
-      // entities so pack-side `_lookup` placeholders resolve.
-      final build = generateBuiltinDnd5eV2Schema();
-      final tier0Slugs = build.seedRows.keys.toSet();
-      final tier0Rows = await (db.select(db.worldEntities)
-            ..where((t) =>
-                t.worldId.equals(campaignId) &
-                t.categorySlug.isIn(tier0Slugs)))
-          .get();
-      final tier0Index = <String, Map<String, String>>{};
-      for (final r in tier0Rows) {
-        tier0Index
-            .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] =
-            r.id;
-      }
-
-      final result = await PackageSyncService(db).sync(
-        worldId: campaignId,
-        packageId: pkgRow.id,
-        resolveAttrs: (attrs) =>
-            PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
-                as Map<String, dynamic>,
-      );
+      // Live-link install: register the package (and everything it links),
+      // then sync each. New pack rows come in as linked entities — pack
+      // updates propagate, user edits detach to homebrew.
+      final result = await ref
+          .read(worldPackageInstallerProvider)
+          .installIntoWorld(worldId: campaignId, packageId: pkgRow.id);
       // Reload campaign so the entity provider picks up the new rows.
       await activeNotifier.reload();
 
       if (mounted) {
         Navigator.pop(context);
+        final l10n = L10n.of(context)!;
+        final deps = result.dependencyCount;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.of(context)!.importSuccess(result.added))),
+            content: Text(deps > 0
+                ? '${l10n.importSuccess(result.added)} '
+                    '${l10n.packageLinkedAlsoInstalled(deps)}'
+                : l10n.importSuccess(result.added)),
+          ),
         );
       }
     } catch (e) {
@@ -346,10 +323,28 @@ class _PackageImportCardState extends State<_PackageImportCard> {
   bool _expanded = false;
   bool _loading = true;
 
+  /// Packages this one links — they get installed alongside it, so the card
+  /// says so before the user commits.
+  int _linkedCount = 0;
+
   @override
   void initState() {
     super.initState();
     _checkCompatibility();
+    _countLinks();
+  }
+
+  Future<void> _countLinks() async {
+    try {
+      final container = ProviderScope.containerOf(context, listen: false);
+      final closure = await container
+          .read(packageLinkServiceProvider)
+          .closure(widget.info.name);
+      // Closure ends with the package itself.
+      if (mounted && closure.length > 1) {
+        setState(() => _linkedCount = closure.length - 1);
+      }
+    } catch (_) {/* links are advisory — never block the card */}
   }
 
   Future<void> _checkCompatibility() async {
@@ -456,6 +451,22 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                               fontSize: 11,
                               color: palette.sidebarLabelSecondary),
                         ),
+                        if (_linkedCount > 0)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.link,
+                                  size: 11,
+                                  color: palette.featureCardAccent),
+                              const SizedBox(width: 3),
+                              Text(
+                                l10n.packageLinkedAlsoInstalled(_linkedCount),
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: palette.featureCardAccent),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),

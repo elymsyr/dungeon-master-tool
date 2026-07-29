@@ -1085,6 +1085,7 @@ final effectiveCharacterProvider =
   // the wizard resolved them — otherwise worldless chars built from official
   // content render empty header chips and count-but-empty granted fields.
   final entities = layerCharacterPackages(
+    ref.watch,
     base,
     sourcePackagesOf(pc),
     (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,

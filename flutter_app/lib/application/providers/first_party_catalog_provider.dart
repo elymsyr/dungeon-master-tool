@@ -58,10 +58,46 @@ class FirstPartyInstallNotifier
   CatalogInstallStatus statusFor(String slug) =>
       state[slug] ?? const CatalogInstallStatus();
 
+  /// Installs [entry] together with everything it declares in
+  /// [CatalogEntry.requires], dependencies first. A required slug missing from
+  /// the manifest is skipped — the link simply dangles, matching the soft-ref
+  /// rule that a missing target is a warning, never a failure.
   Future<bool> install(CatalogEntry entry) async {
     if (statusFor(entry.slug).phase == CatalogInstallPhase.installing) {
       return false;
     }
+    if (entry.requires.isNotEmpty) {
+      final catalog =
+          await _ref.read(firstPartyCatalogProvider.future);
+      final bySlug = {for (final e in catalog) e.slug: e};
+      final order = <CatalogEntry>[];
+      final emitted = <String>{};
+      final visiting = <String>{};
+
+      // Post-order DFS, cycle-safe — mirrors PackageLinkService.closure.
+      void walk(CatalogEntry node) {
+        if (emitted.contains(node.slug)) return;
+        if (!visiting.add(node.slug)) return;
+        for (final slug in node.requires) {
+          final dep = bySlug[slug];
+          if (dep != null && dep.slug != node.slug) walk(dep);
+        }
+        visiting.remove(node.slug);
+        if (emitted.add(node.slug)) order.add(node);
+      }
+
+      walk(entry);
+      for (final dep in order) {
+        if (dep.slug == entry.slug) continue;
+        if (statusFor(dep.slug).phase == CatalogInstallPhase.done) continue;
+        final ok = await _installOne(dep);
+        if (!ok) return false; // a missing dependency fails the whole install
+      }
+    }
+    return _installOne(entry);
+  }
+
+  Future<bool> _installOne(CatalogEntry entry) async {
     _set(entry.slug,
         const CatalogInstallStatus(phase: CatalogInstallPhase.installing));
     try {

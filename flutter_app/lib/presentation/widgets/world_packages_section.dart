@@ -1,13 +1,10 @@
-import 'package:drift/drift.dart' hide Column, Table;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/campaign_provider.dart';
-import '../../application/services/package_import_service.dart';
-import '../../application/services/package_sync_service.dart';
+import '../../application/providers/package_link_provider.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
-import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Lists packages installed into a world, with re-sync + remove actions.
@@ -42,30 +39,13 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
   }
 
   Future<void> _resync(InstalledPackage row) async {
-    final db = ref.read(appDatabaseProvider);
-    // Build Tier-0 (slug,name) → uuid index from this campaign's seeded
-    // entities so pack-side `_lookup` placeholders resolve correctly.
-    final build = generateBuiltinDnd5eV2Schema();
-    final tier0Slugs = build.seedRows.keys.toSet();
-    final tier0Rows = await (db.select(db.worldEntities)
-          ..where((t) =>
-              t.worldId.equals(widget.campaignId) &
-              t.categorySlug.isIn(tier0Slugs)))
-        .get();
-    final tier0Index = <String, Map<String, String>>{};
-    for (final r in tier0Rows) {
-      tier0Index
-          .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] = r.id;
-    }
-    final result = await PackageSyncService(db).sync(
-      worldId: widget.campaignId,
-      packageId: row.packageId,
-      resolveAttrs: (attrs) =>
-          PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
-              as Map<String, dynamic>,
-    );
+    // Re-syncs the package and everything it links, dependencies first.
+    final result = await ref.read(worldPackageInstallerProvider).resync(
+          worldId: widget.campaignId,
+          packageId: row.packageId,
+        );
     // Reload campaign so the entity provider picks up the synced rows.
-    if (result.total > 0) {
+    if (result.added + result.updated + result.removed > 0) {
       await ref.read(activeCampaignProvider.notifier).reload();
     }
     if (!mounted) return;
@@ -101,11 +81,12 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
     );
     if (confirmed != true) return;
 
-    final db = ref.read(appDatabaseProvider);
-    final result = await PackageSyncService(db).uninstall(
-      worldId: widget.campaignId,
-      packageId: row.packageId,
-    );
+    // Only this package — packages it links stay installed.
+    final result =
+        await ref.read(worldPackageInstallerProvider).uninstallFromWorld(
+              worldId: widget.campaignId,
+              packageId: row.packageId,
+            );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(

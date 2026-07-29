@@ -23,7 +23,9 @@ import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
+import '../dialogs/link_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
@@ -129,10 +131,12 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
               () => ref.read(saveStateProvider.notifier).markDirty(),
               ref.read(eventBusProvider),
               ref.read(pendingWriteBufferProvider),
-              // Overlay the built-in SRD pack as read-only reference rows so
-              // empty category lists (conditions, damage types, ...) render in
-              // every package. The SRD package itself already owns them.
-              overlaySrdReference: packageName != srdCorePackageName,
+              // Overlay the built-in SRD pack plus every linked package as
+              // read-only reference rows, so empty category lists (conditions,
+              // damage types, ...) and linked content render in every package.
+              // The SRD package itself already owns the SRD rows.
+              referenceOverlayFor:
+                  packageName == srdCorePackageName ? null : packageName,
             );
           },
         ),
@@ -453,6 +457,16 @@ class _PackageScreenContentState
           if (SupabaseConfig.isConfigured &&
               widget.packageName != srdCorePackageName)
             _ShareToWorldButton(packageName: widget.packageName),
+          // Linked Packages — borrow another package's content instead of
+          // duplicating it. Edit mode only; the built-in pack is regenerated
+          // from code every boot so it can never hold links.
+          if (_editMode && widget.packageName != srdCorePackageName)
+            IconButton(
+              icon: const Icon(Icons.link, size: 20),
+              tooltip: L10n.of(context)!.packageLinksTooltip,
+              onPressed: () =>
+                  LinkPackageDialog.show(context, widget.packageName),
+            ),
           // Rule Settings — template-level numeric rules. Edit mode only;
           // built-in packages are read-only so they never see the button.
           if (_editMode && widget.packageName != srdCorePackageName)
