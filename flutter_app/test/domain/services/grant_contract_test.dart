@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -233,6 +234,56 @@ void main() {
         }
       }
       expect(offenders, isEmpty);
+    });
+
+    test('no bundled pack asset ships a retired DSL row', () {
+      // The built-in SRD pack is Dart source and moved with the removal; the
+      // Open5e packs are pre-generated JSON assets that did not, and sat on
+      // the old shape for months. `PackagePayloadImporter` converts them on
+      // install so they worked, which is exactly why nobody noticed.
+      // `tool/migrate_pack_assets.dart` brings them forward.
+      final dir = Directory('assets/open5e_packs');
+      expect(dir.existsSync(), isTrue,
+          reason: 'bundled packs missing — this test would pass vacuously');
+
+      final offenders = <String>[];
+      var scanned = 0;
+      for (final file in dir
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.pkg.json'))) {
+        final root = jsonDecode(file.readAsStringSync());
+        final entities = (root as Map)['entities'];
+        if (entities is! Map) continue;
+        for (final row in entities.values) {
+          if (row is! Map) continue;
+          final attrs = row['attributes'];
+          if (attrs is! Map) continue;
+          scanned++;
+          final slug = row['type']?.toString() ?? '';
+          for (final key in const ['rule_effects', 'granted_modifiers']) {
+            if (attrs.containsKey(key)) {
+              offenders.add('${file.uri.pathSegments.last}: '
+                  '$slug/${row['name']} → $key');
+            }
+          }
+          // `effects` is still live as a magic item's narrative blurb and as
+          // the spell / creature-action `spellEffectList`. Anywhere else, a
+          // list of `{kind: …}` rows is the retired feat DSL.
+          const liveEffects = {'magic-item', 'spell', 'creature-action'};
+          final effects = attrs['effects'];
+          if (!liveEffects.contains(slug) &&
+              effects is List &&
+              effects.any((r) => r is Map && r.containsKey('kind'))) {
+            offenders.add('${file.uri.pathSegments.last}: '
+                '$slug/${row['name']} → effects');
+          }
+        }
+      }
+      expect(offenders, isEmpty,
+          reason: 'run `dart run tool/migrate_pack_assets.dart`');
+      expect(scanned, greaterThan(1000),
+          reason: 'scanned too few rows to mean anything');
     });
 
     test('grant keys the SRD uses are a subset of the contract', () {

@@ -5,7 +5,7 @@ path: flutter_app/lib/data/schema/rule_effects_migration.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -46,4 +46,4 @@ Beyond the tables: `has_state` predicates become `active_while_state_ref`; `scal
 ## Notes
 - **Idempotent by construction** — the guard `_hasLegacyEffects` means a converted map short-circuits on one key lookup, so running this on every world load is cheap.
 - Covered by `test/data/schema/rule_effects_migration_test.dart` (17 tests), including a coverage assertion that no kind in the historical set falls through without either a field or a note.
-- This is a **compatibility shim, not the destination**. Content authored today writes the named fields directly, and packs rebuilt after 2026-07-28 need no conversion; the shim exists for already-installed packs and saved worlds. See [[mapper_chargen]] for the producer side — until the Open5e packs are re-emitted, every install pays this conversion and some mechanics arrive as prose notes rather than typed fields.
+- This is a **compatibility shim, not the destination**. Content authored today writes the named fields directly, and packs rebuilt after 2026-07-28 need no conversion; the shim exists for already-installed packs and saved worlds. The producer side ([[mapper_chargen]]) already emits the named fields, and the **bundled Open5e assets were rewritten in place on 2026-07-29** by [[migrate_pack_assets]] (45 rows across `a5e-ag`, `open5e` and `toh`), so a fresh install no longer pays this conversion at all.

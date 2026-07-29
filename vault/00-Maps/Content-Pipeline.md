@@ -17,6 +17,7 @@ tags: [moc]
 - [[normalize]] — enum string → canonical Tier-0 name; unmapped sink.
 - [[refgraph]] — PackBuilder: uuidv5 namespace + two-pass `_ref` resolution. See [[Pack-Build-Two-Pass-Refgraph]].
 - [[emit]] — assemble wire-format `.pkg.json` + manifest + unmapped report.
+- [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
 
 ## Key Files — SRD core + catalog
