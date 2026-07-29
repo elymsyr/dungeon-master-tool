@@ -267,5 +267,88 @@ void main() {
         reason: 'Rage advantage must be visible on the sheet as a note',
       );
     });
+
+    test('Druid knows Druidic and Rogue knows Thieves\' Cant', () {
+      // `class.granted_languages` was authored on both classes but nothing
+      // read it — the wizard showed the language and the resolved sheet did
+      // not. Same field key as the grant block uses elsewhere.
+      String? langOf(String className) {
+        final cls = find('class', className);
+        final eff = CharacterResolver.resolve(
+          pc({
+            'class_levels': {cls.id: 1},
+            'base_abilities': abilities,
+          }),
+          entities,
+        );
+        final ids = eff.proficiencies.languageIds;
+        return ids.isEmpty ? null : entities[ids.first]?.name;
+      }
+
+      expect(langOf('Druid'), 'Druidic');
+      expect(langOf('Rogue'), "Thieves' Cant");
+    });
+
+    test('Druid is proficient with the Herbalism Kit it grants', () {
+      final druid = find('class', 'Druid');
+      final eff = CharacterResolver.resolve(
+        pc({
+          'class_levels': {druid.id: 1},
+          'base_abilities': abilities,
+        }),
+        entities,
+      );
+      expect(
+        eff.proficiencies.toolIds.map((i) => entities[i]?.name),
+        contains('Herbalism Kit'),
+      );
+    });
+
+    test('High Elf innate spells unlock at their authored levels', () {
+      // `granted_spells_at_level` — a level-gated grant that the resolver has
+      // always read but that had no schema field until now, so nobody could
+      // author or even see it.
+      final elf = find('species', 'Elf');
+      final high = find('subspecies', 'High Elf');
+      final wiz = find('class', 'Wizard');
+
+      List<String?> spellsAt(int level) {
+        final eff = CharacterResolver.resolve(
+          pc({
+            'race_id': elf.id,
+            'subspecies_id': high.id,
+            'class_levels': {wiz.id: level},
+            'base_abilities': abilities,
+          }),
+          entities,
+        );
+        return eff.grantedSpellIds.map((i) => entities[i]?.name).toList();
+      }
+
+      expect(spellsAt(1), isEmpty);
+      expect(spellsAt(3), contains('Detect Magic'));
+      expect(spellsAt(3), isNot(contains('Misty Step')));
+      expect(spellsAt(5), containsAll(['Detect Magic', 'Misty Step']));
+    });
+
+    test('a 1/day innate spell brings its own daily counter', () {
+      final elf = find('species', 'Elf');
+      final high = find('subspecies', 'High Elf');
+      final wiz = find('class', 'Wizard');
+      final eff = CharacterResolver.resolve(
+        pc({
+          'race_id': elf.id,
+          'subspecies_id': high.id,
+          'class_levels': {wiz.id: 5},
+          'base_abilities': abilities,
+        }),
+        entities,
+      );
+      final detectMagic = find('spell', 'Detect Magic');
+      final pool = eff.resourcePools
+          .firstWhere((p) => p['pool_ref'] == detectMagic.id, orElse: () => {});
+      expect(pool['max'], 1);
+      expect(pool['recharge'], 'long_rest');
+    });
   });
 }

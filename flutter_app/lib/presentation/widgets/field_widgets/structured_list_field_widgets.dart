@@ -1443,6 +1443,105 @@ class _AddLevelValueButtonState extends State<_AddLevelValueButton> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// spellsAtLevel — {spell_ref, at_level, is_cantrip?, uses_per_long_rest?}
+//
+// The level-gated sibling of `granted_spell_refs`: one row per innate spell
+// that unlocks as the character levels (Drow's Faerie Fire at 3, Darkness at
+// 5). `CharacterResolver.applyGrantsFrom` skips rows above the character's
+// level and turns `uses_per_long_rest` into a daily counter pool.
+// ─────────────────────────────────────────────────────────────────────────
+
+class SpellsAtLevelFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const SpellsAtLevelFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _StructuredListShell(
+      schema: schema,
+      rows: _coerceRows(value),
+      readOnly: readOnly,
+      onChanged: onChanged,
+      makeEmptyRow: () => {'spell_ref': null, 'at_level': 1},
+      buildRow: (i, row, onRowChanged) => Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _MiniRelationField(
+            label: 'Spell',
+            value: row['spell_ref'] is String ? row['spell_ref'] as String : null,
+            allowedTypes: const ['spell'],
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (v) => onRowChanged({...row, 'spell_ref': v}),
+          ),
+          if (row['spell_ref'] is Map)
+            _badge(
+              (row['spell_ref'] as Map)['name']?.toString() ?? 'spell',
+              Colors.indigo,
+            ),
+          _miniInt(
+            label: 'At level',
+            value: row['at_level'] is int ? row['at_level'] as int : null,
+            readOnly: readOnly,
+            onChanged: (v) => onRowChanged({...row, 'at_level': v ?? 1}),
+            width: 90,
+          ),
+          _miniInt(
+            label: 'Uses / long rest',
+            value: row['uses_per_long_rest'] is int
+                ? row['uses_per_long_rest'] as int
+                : null,
+            readOnly: readOnly,
+            onChanged: (v) {
+              final next = {...row};
+              if (v == null || v <= 0) {
+                next.remove('uses_per_long_rest');
+              } else {
+                next['uses_per_long_rest'] = v;
+              }
+              onRowChanged(next);
+            },
+            width: 120,
+          ),
+          FilterChip(
+            label: const Text('Cantrip', style: TextStyle(fontSize: 11)),
+            selected: row['is_cantrip'] == true,
+            onSelected: readOnly
+                ? null
+                : (sel) {
+                    final next = {...row};
+                    if (sel) {
+                      next['is_cantrip'] = true;
+                    } else {
+                      next.remove('is_cantrip');
+                    }
+                    onRowChanged(next);
+                  },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // playerChoices — {group_id, label, prompt, pick_kind, pick, options?,
 //   list_group_id?, spell_level?}
 //

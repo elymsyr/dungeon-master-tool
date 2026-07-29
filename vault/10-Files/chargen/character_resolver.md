@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/character_resolver.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -23,7 +23,7 @@ tags: [file]
 - Triggers: none — invoked synchronously on read.
 
 **Outputs**
-- Public API: `static EffectiveCharacter resolve(...)`; `static const Set<String> grantFieldKeys` — the complete, closed contract of grant-block field keys (40) an authored card may set. There is no effect DSL, no kind registry and no predicate language behind it.
+- Public API: `static EffectiveCharacter resolve(...)`; `static const Set<String> grantFieldKeys` — the complete, closed contract of grant-block field keys (41) an authored card may set. There is no effect DSL, no kind registry and no predicate language behind it.
 - Writes: none — never persists; returns a value object.
 
 ## Dependencies & Links

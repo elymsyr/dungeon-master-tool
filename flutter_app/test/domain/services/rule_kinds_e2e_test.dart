@@ -108,6 +108,36 @@ final _cases = <_Case>[
     },
   ),
   _Case(
+    'spells gated by character level',
+    {'granted_spells_at_level'},
+    {
+      'granted_spells_at_level': [
+        {'spell_ref': 'sp_x', 'at_level': 3},
+        {'spell_ref': 'sp_c', 'at_level': 3, 'is_cantrip': true},
+        {'spell_ref': 'sp_p', 'at_level': 5, 'uses_per_long_rest': 1},
+        // The character is level 5; this row must stay locked.
+        {'spell_ref': 'sp_late', 'at_level': 9},
+      ],
+    },
+    [
+      _e('sp_x', 'spell', 'Faerie Fire'),
+      _e('sp_c', 'spell', 'Dancing Lights'),
+      _e('sp_p', 'spell', 'Darkness'),
+      _e('sp_late', 'spell', 'Wish'),
+    ],
+    (eff) {
+      expect(eff.grantedSpellIds, containsAll(['sp_x', 'sp_p']));
+      expect(eff.grantedSpellIds, isNot(contains('sp_late')));
+      expect(eff.grantedCantripIds, contains('sp_c'));
+      // `uses_per_long_rest` turns the grant into a daily counter keyed by
+      // the spell itself.
+      final pool = eff.resourcePools
+          .firstWhere((p) => p['pool_ref'] == 'sp_p', orElse: () => {});
+      expect(pool['max'], 1);
+      expect(pool['recharge'], 'long_rest');
+    },
+  ),
+  _Case(
     'ability bonuses respect the raised cap (Primal Champion pattern)',
     {'ability_bonuses', 'ability_bonus_cap'},
     {

@@ -30,6 +30,7 @@ class CharacterResolver {
     'granted_armor_proficiencies', 'granted_expertise_skills',
     'granted_languages',
     'granted_spell_refs', 'granted_cantrip_refs', 'always_prepared_spell_refs',
+    'granted_spells_at_level',
     'ability_bonuses', 'ability_bonus_cap', 'ac_bonus', 'speed_bonus_ft',
     'initiative_bonus',
     'hp_bonus_flat', 'hp_bonus_per_level',
@@ -712,6 +713,12 @@ class CharacterResolver {
       }
       for (final t in _readRefList(cls.fields['granted_tool_refs'], entitiesById)) {
         if (!tools.contains(t)) tools.add(t);
+      }
+      // Druid's Druidic, Rogue's Thieves' Cant. Same field key the grant block
+      // uses on feats/species — the class simply does not carry the rest of
+      // the block, so it is read here instead of through `applyGrantsFrom`.
+      for (final l in _readRefList(cls.fields['granted_languages'], entitiesById)) {
+        if (!languages.contains(l)) languages.add(l);
       }
       final wcats = cls.fields['weapon_proficiency_categories'];
       if (wcats is List) {

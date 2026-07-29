@@ -40,9 +40,11 @@ Map<String, int> resolveResourcePoolsAt({
     if (rows is! List) continue;
     for (final row in rows) {
       if (row is! Map) continue;
-      final poolRef = row['pool_ref'];
-      if (poolRef is! Map) continue;
-      final poolName = poolRef['name']?.toString();
+      // `pool_ref` arrives either as an unresolved `{slug, name}` placeholder
+      // (hand-authored / freshly imported content) or as the entity id the
+      // pack builder resolved it to. Both must key the same pool name, since
+      // that name is what `class_resource_pools` stores on the character.
+      final poolName = _poolName(row['pool_ref'], entities);
       if (poolName == null || poolName.isEmpty) continue;
 
       final value = _resolveValue(
@@ -60,6 +62,13 @@ Map<String, int> resolveResourcePoolsAt({
     }
   }
   return out;
+}
+
+/// Resolve a `pool_ref` cell down to the pool's name.
+String? _poolName(Object? poolRef, Map<String, Entity> entities) {
+  if (poolRef is Map) return poolRef['name']?.toString();
+  if (poolRef is String && poolRef.isNotEmpty) return entities[poolRef]?.name;
+  return null;
 }
 
 bool _isAutoGranted(Entity feat, Set<String> sources, int level,

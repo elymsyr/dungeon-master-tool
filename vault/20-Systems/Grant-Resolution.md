@@ -1,7 +1,7 @@
 ---
 type: system
 domain: chargen
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [system]
 ---
 
@@ -21,13 +21,13 @@ tags: [system]
 - `data/schema/rule_effects_migration.dart` — one-shot converter for pre-existing data still in the old row format.
 
 ## The contract
-`CharacterResolver.grantFieldKeys` is the complete, closed list of grant-block field keys (40). Adding a mechanic means adding a key there and a line in `applyGrantsFrom` — nothing else. Grouped by what a DM is looking for:
+`CharacterResolver.grantFieldKeys` is the complete, closed list of grant-block field keys (41). Adding a mechanic means adding a key there, a line in `applyGrantsFrom`, a field in `_FB.grantBlock` and an isolation case — the four guards in `grant_contract_test.dart` / `grant_field_isolation_test.dart` fail until all four exist. Grouped by what a DM is looking for:
 
 | Group | Keys |
 |---|---|
 | Condition | `active_while_state_ref` |
 | Proficiency | `granted_skill_proficiencies`, `granted_tool_proficiencies`, `granted_save_proficiencies`, `granted_weapon_proficiencies`, `granted_armor_proficiencies`, `granted_expertise_skills`, `granted_languages` |
-| Spells | `granted_spell_refs`, `granted_cantrip_refs`, `always_prepared_spell_refs` |
+| Spells | `granted_spell_refs`, `granted_cantrip_refs`, `always_prepared_spell_refs`, `granted_spells_at_level` |
 | Numeric | `ability_bonuses`, `ability_bonus_cap`, `ac_bonus`, `speed_bonus_ft`, `initiative_bonus`, `hp_bonus_flat`, `hp_bonus_per_level`, `extra_attack_count`, `extra_attack_count_by_level`, `crit_threshold`, `weapon_mastery_count` |
 | Unarmored AC | `unarmored_ac_base`, `unarmored_ac_abilities`, `unarmored_ac_shield_allowed` |
 | Defense | `granted_damage_resistances`, `granted_damage_immunities`, `granted_damage_vulnerabilities`, `granted_condition_immunities` |
@@ -36,7 +36,9 @@ tags: [system]
 | Structured | `resource_pool_grants`, `player_choices` |
 | Prose | `mechanical_notes` |
 
-Feat, Trait, Magic Item, Species, Subspecies and the nested `subspecies_options` rows all speak these same keys, so one reader covers every source.
+Feat, Trait, Magic Item, Species, Subspecies and the nested `subspecies_options` rows all speak these same keys, so one reader covers every source. Proven per-source by `test/domain/services/grant_source_matrix_test.dart`, which hangs one identical bundle off every card type and demands the same sheet.
+
+**Class, Subclass and Background do not carry the block.** Every grant they make already had a typed home — `saving_throw_refs`, `weapon_proficiency_categories`, `armor_training_refs`, `granted_skill_refs`, `granted_tool_refs`, `granted_languages` — read by the resolver's class/background passes rather than by `applyGrantsFrom`. Giving them the block too would put two fields for one mechanic on one card, which is exactly what the removal was for; `grant_contract_test.dart` asserts no category ever declares both names of a synonym pair. Note `granted_languages` deliberately keeps the *same* key on a class as on a feat: one mechanic, one name, wherever it is authored.
 
 ## Flow
 1. Character holds `class_levels`, `subclass_id`, `feat_ids`, `race_id`, `subspecies_id`, `background_id`, `equipment_choices`, `base_abilities`.

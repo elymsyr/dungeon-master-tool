@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/resource_pool_resolver.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -37,5 +37,6 @@ tags: [file]
 
 ## Notes
 - `count_formula` support in pools was a deliberate May-2026 fix (shared `evalCountFormula` helper threaded through `planLevelUp` via `_classLevelsForLevel`). The `count_by_level` table replaced the old `scales_with` DSL in the 2026-07-28 rule-system removal.
-- **Known limitation:** pools are keyed by *name*, and `pool_ref` is expected as an unresolved `{_lookup/slug, name}` placeholder. Given an entity map whose refs are already resolved to id strings (e.g. `buildBuiltinSrdEntities()`), this returns empty. Pre-dates the rule-system removal. [[character_resolver]] does not share the limitation — it resolves refs properly.
+- Pools are keyed by *name* (that name is what `class_resource_pools` stores on the PC). `pool_ref` is accepted in **both** shapes — an unresolved `{_lookup/slug, name}` placeholder *and* a resolved id string, looked up through the entity map by `_poolName`. An id that resolves to nothing is skipped rather than keyed by the raw uuid.
+- **Fixed 2026-07-29:** only the placeholder shape was accepted, so against a resolved entity map (`buildBuiltinSrdEntities()` — i.e. every shipped pack) this returned empty and the level-up dialog showed **no resource pools for any class**. [[character_resolver]] never had the bug, which is why the sheet was right and only the preview was wrong. Pinned by `test/domain/services/grant_reader_agreement_test.dart`, which walks all 12 SRD classes at 12 levels and demands the two readers agree.
 - `_isAutoGranted` is duplicated across this file, `extra_attack_resolver.dart`, and `weapon_mastery_resolver.dart`.
