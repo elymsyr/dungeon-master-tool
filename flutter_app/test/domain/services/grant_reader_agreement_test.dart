@@ -145,20 +145,27 @@ void main() {
           categorySlug: 'feat',
           name: 'Rage',
           fields: {
-            'auto_granted_by': [
-              {
-                'source': 'class',
-                'source_ref': {'slug': 'class', 'name': 'Barbarian'},
-                'at_level': 1,
-              },
-            ],
             'resource_pool_grants': [
               {'pool_ref': poolRef, 'recharge': 'long_rest', 'count': 2},
             ],
           },
         );
 
-    const cls = Entity(id: 'c', categorySlug: 'class', name: 'Barbarian');
+    // The Barbarian card is what says Rage arrives at L1.
+    const cls = Entity(
+      id: 'c',
+      categorySlug: 'class',
+      name: 'Barbarian',
+      fields: {
+        'features': [
+          {
+            'level': 1,
+            'name': 'Rage',
+            'granted_feat_refs': ['f1'],
+          },
+        ],
+      },
+    );
 
     test('a resolved entity id keys the pool by its name', () {
       final world = {

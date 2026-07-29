@@ -31,7 +31,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]] §1.7
 
 ## Key Logic / Variables
-- Identical structure to [[extra_attack_resolver]]: build class+subclass name set, scan `feat` entities, `_isAutoGranted` gates on `auto_granted_by` `source_ref` name + `at_level <= level`, then keep `best = max` of the matched feats' `weapon_mastery_count` values.
+- Identical structure to [[extra_attack_resolver]]: call the shared [[auto_granted_feats]] `autoGrantedFeatsAt(...)` for the class/subclass level table, then keep `best = max` of the returned feats' `weapon_mastery_count` values.
 
 ## Notes
 - Initial creation weapon-mastery picks (CharacterDraft `weaponMasteryChoiceIds`, cap Barb 2 / Fighter 3 / Paladin/Ranger/Rogue 2) are stored on the draft separately; this resolver computes the running cap for level-up deltas.

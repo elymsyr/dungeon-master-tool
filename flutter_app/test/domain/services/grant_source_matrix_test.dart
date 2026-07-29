@@ -48,6 +48,26 @@ final _refs = <String, Entity>{
   'cls_a': _e('cls_a', 'class', 'Rogue'),
 };
 
+/// The Rogue card with a level table that hands out [ids] at [level]. A class
+/// states its grants here and nowhere else, so every "auto-granted" case below
+/// builds its source card this way.
+Map<String, Entity> _classGranting(
+  int level,
+  Map<String, List<String>> refsByKey, {
+  String id = 'cls_a',
+  String slug = 'class',
+  String name = 'Rogue',
+  Map<String, dynamic> extra = const {},
+}) =>
+    {
+      id: _e(id, slug, name, {
+        ...extra,
+        'features': [
+          {'level': level, 'name': 'Feature', ...refsByKey},
+        ],
+      }),
+    };
+
 Character _pc(Map<String, dynamic> extra) => Character(
       id: 'pc1',
       templateId: 'tpl',
@@ -91,43 +111,44 @@ void main() {
     });
 
     test('a class-feature feat auto-granted at the current level', () {
-      final feat = _e('feat_x', 'feat', 'Cunning Action', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'class', 'source_ref': 'cls_a', 'at_level': 2},
-        ],
-      });
+      final feat = _e('feat_x', 'feat', 'Cunning Action', _bundle);
       _expectBundleApplied(
-        CharacterResolver.resolve(_pc(const {}), {..._refs, 'feat_x': feat}),
+        CharacterResolver.resolve(_pc(const {}), {
+          ..._refs,
+          ..._classGranting(2, const {'granted_feat_refs': ['feat_x']}),
+          'feat_x': feat,
+        }),
         from: 'auto-granted class feature',
       );
     });
 
     test('a subclass feature feat, gated on the parent class level', () {
-      final sub = _e('sub_a', 'subclass', 'Thief', {'parent_class_ref': 'cls_a'});
-      final feat = _e('feat_x', 'feat', 'Second-Story Work', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'subclass', 'source_ref': 'sub_a', 'at_level': 3},
-        ],
-      });
+      final feat = _e('feat_x', 'feat', 'Second-Story Work', _bundle);
       _expectBundleApplied(
         CharacterResolver.resolve(
           _pc({'subclass_id': 'sub_a'}),
-          {..._refs, 'sub_a': sub, 'feat_x': feat},
+          {
+            ..._refs,
+            ..._classGranting(
+              3,
+              const {'granted_feat_refs': ['feat_x']},
+              id: 'sub_a',
+              slug: 'subclass',
+              name: 'Thief',
+              extra: const {'parent_class_ref': 'cls_a'},
+            ),
+            'feat_x': feat,
+          },
         ),
         from: 'auto-granted subclass feature',
       );
     });
 
     test('a species feature feat', () {
-      final sp = _e('sp_x', 'species', 'Elf');
-      final feat = _e('feat_x', 'feat', 'Fey Ancestry', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'species', 'source_ref': 'sp_x'},
-        ],
+      final sp = _e('sp_x', 'species', 'Elf', {
+        'granted_feat_refs': ['feat_x'],
       });
+      final feat = _e('feat_x', 'feat', 'Fey Ancestry', _bundle);
       _expectBundleApplied(
         CharacterResolver.resolve(
           _pc({'race_id': 'sp_x'}),
@@ -137,20 +158,20 @@ void main() {
       );
     });
 
-    test('a background origin feat', () {
-      final bg = _e('bg_x', 'background', 'Criminal');
-      final feat = _e('feat_x', 'feat', 'Alert', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'background', 'source_ref': 'bg_x'},
-        ],
+    test('a background origin feat, once chargen has taken it', () {
+      // A Background names its feat on `origin_feat_ref`, but the resolver
+      // deliberately does not force-apply it: the wizard writes it into
+      // `feat_ids` so the player can swap it. This is that state.
+      final bg = _e('bg_x', 'background', 'Criminal', {
+        'origin_feat_ref': 'feat_x',
       });
+      final feat = _e('feat_x', 'feat', 'Alert', _bundle);
       _expectBundleApplied(
         CharacterResolver.resolve(
-          _pc({'background_id': 'bg_x'}),
+          _pc({'background_id': 'bg_x', 'feat_ids': ['feat_x']}),
           {..._refs, 'bg_x': bg, 'feat_x': feat},
         ),
-        from: 'auto-granted background feat',
+        from: 'background origin feat',
       );
     });
 
@@ -208,16 +229,15 @@ void main() {
       );
     });
 
-    test('a trait auto-granted by class level', () {
-      final trait = _e('trait_x', 'trait', 'Evasion', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'class', 'source_ref': 'cls_a', 'at_level': 5},
-        ],
-      });
+    test('a trait named by a class level row', () {
+      final trait = _e('trait_x', 'trait', 'Evasion', _bundle);
       _expectBundleApplied(
-        CharacterResolver.resolve(_pc(const {}), {..._refs, 'trait_x': trait}),
-        from: 'trait via auto_granted_by',
+        CharacterResolver.resolve(_pc(const {}), {
+          ..._refs,
+          ..._classGranting(5, const {'granted_trait_refs': ['trait_x']}),
+          'trait_x': trait,
+        }),
+        from: 'trait via a class features row',
       );
     });
 
@@ -238,15 +258,13 @@ void main() {
   });
 
   group('a grant that should not apply, does not', () {
-    test('an auto-grant below its at_level stays off the sheet', () {
-      final feat = _e('feat_x', 'feat', 'Extra Attack', {
-        ..._bundle,
-        'auto_granted_by': [
-          {'source': 'class', 'source_ref': 'cls_a', 'at_level': 11},
-        ],
+    test('a level row above the character level stays off the sheet', () {
+      final feat = _e('feat_x', 'feat', 'Extra Attack', _bundle);
+      final eff = CharacterResolver.resolve(_pc(const {}), {
+        ..._refs,
+        ..._classGranting(11, const {'granted_feat_refs': ['feat_x']}),
+        'feat_x': feat,
       });
-      final eff =
-          CharacterResolver.resolve(_pc(const {}), {..._refs, 'feat_x': feat});
       expect(eff.autoGrantedFeatIds, isEmpty);
       expect(eff.proficiencies.toolIds, isEmpty);
       expect(eff.acBonus, 0);

@@ -1106,7 +1106,12 @@ void main() {
         fields: {
           'granted_at_level': 1,
           'features': [
-            {'level': 1, 'name': 'Soul Save', 'description': 'CHA save prof.'},
+            {
+              'level': 1,
+              'name': 'Soul Save',
+              'description': 'CHA save prof.',
+              'granted_feat_refs': ['feat_soul_save'],
+            },
           ],
         },
       );
@@ -1114,16 +1119,7 @@ void main() {
         id: 'feat_soul_save',
         slug: 'feat',
         name: 'Soul Save',
-        fields: {
-          'auto_granted_by': [
-            {
-              'source': 'subclass',
-              'source_ref': {'slug': 'subclass', 'name': 'Soul of Sorcery'},
-              'at_level': 1,
-            },
-          ],
-          'granted_save_proficiencies': ['ab_cha'],
-        },
+        fields: {'granted_save_proficiencies': ['ab_cha']},
       );
       final pc = _pc(id: 'pc1', fields: {
         'class_levels': {'cls_sorcerer': 1},
@@ -1138,24 +1134,26 @@ void main() {
       expect(eff.proficiencies.savingThrowAbilityIds, contains('ab_cha'));
     });
 
-    test('auto_granted_by walker applies feat when class level matches', () {
+    test('the class level table applies a feat once its level is reached', () {
       final cls = _e(
         id: 'cls_barb',
         slug: 'class',
         name: 'Barbarian',
+        fields: {
+          'features': [
+            {
+              'level': 1,
+              'name': 'Unarmored Defense',
+              'granted_feat_refs': ['feat_unarmored_barb'],
+            },
+          ],
+        },
       );
       final feat = _e(
         id: 'feat_unarmored_barb',
         slug: 'feat',
         name: 'Unarmored Defense (Barbarian)',
         fields: {
-          'auto_granted_by': [
-            {
-              'source': 'class',
-              'source_ref': 'cls_barb',
-              'at_level': 1,
-            },
-          ],
           // "While not wearing armor" is carried by the field names, so no
           // predicate is needed — _computeArmorClass only consults these when
           // no armor is equipped.
@@ -1179,22 +1177,26 @@ void main() {
       );
     });
 
-    test('auto_granted_by below required level does not apply', () {
+    test('a level table row above the character level does not apply', () {
       final cls = _e(
         id: 'cls_barb',
         slug: 'class',
         name: 'Barbarian',
+        fields: {
+          'features': [
+            {
+              'level': 9,
+              'name': 'Brutal Strike',
+              'granted_feat_refs': ['feat_brutal_strike'],
+            },
+          ],
+        },
       );
       final feat = _e(
         id: 'feat_brutal_strike',
         slug: 'feat',
         name: 'Brutal Strike',
-        fields: {
-          'auto_granted_by': [
-            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 9},
-          ],
-          'granted_damage_resistances': ['d_b'],
-        },
+        fields: {'granted_damage_resistances': ['d_b']},
       );
       final pc = _pc(id: 'pc1', fields: {
         'class_levels': {'cls_barb': 5},
@@ -1240,19 +1242,27 @@ void main() {
       expect(eff.extraAttackCount, 3);
     });
 
-    test('auto_granted_by.at_level is the level gate for a grant', () {
-      final cls = _e(id: 'cls_barb', slug: 'class', name: 'Barbarian');
+    test('the features row level is the gate for a grant', () {
+      final cls = _e(
+        id: 'cls_barb',
+        slug: 'class',
+        name: 'Barbarian',
+        fields: {
+          'features': [
+            {
+              'level': 9,
+              'name': 'Late',
+              'granted_feat_refs': ['feat_late'],
+            },
+          ],
+        },
+      );
       final dmgB = _e(id: 'd_b', slug: 'damage-type', name: 'Bludgeoning');
       final feat = _e(
         id: 'feat_late',
         slug: 'feat',
         name: 'Late',
-        fields: {
-          'auto_granted_by': [
-            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 9},
-          ],
-          'granted_damage_resistances': ['d_b'],
-        },
+        fields: {'granted_damage_resistances': ['d_b']},
       );
       // L5: below the gate — the card is not granted at all.
       final pc5 = _pc(id: 'pc5', fields: {'class_levels': {'cls_barb': 5}});
@@ -1270,12 +1280,20 @@ void main() {
       expect(eff9.damageResistanceIds, contains('d_b'));
     });
 
-    test('trait auto_granted_by surfaces in autoGrantedTraitIds', () {
+    test('a class-granted trait surfaces in autoGrantedTraitIds', () {
       final cls = _e(
         id: 'cls_druid',
         slug: 'class',
         name: 'Druid',
-        fields: {'features': const <Map<String, dynamic>>[]},
+        fields: {
+          'features': [
+            {
+              'level': 1,
+              'name': 'Druidic',
+              'granted_trait_refs': ['trait_druidic'],
+            },
+          ],
+        },
       );
       final trait = _e(
         id: 'trait_druidic',
@@ -1283,13 +1301,6 @@ void main() {
         name: 'Druidic',
         fields: {
           'description': 'You know Druidic, the secret language of druids.',
-          'auto_granted_by': [
-            {
-              'source': 'class',
-              'source_ref': {'_ref': 'class', 'name': 'Druid'},
-              'at_level': 1,
-            }
-          ],
         },
       );
       final pc = _pc(id: 'pc1', fields: {

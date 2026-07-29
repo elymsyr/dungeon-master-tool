@@ -491,62 +491,71 @@ class CharacterResolver {
       // the card fields directly), not a resolved-sheet stat.
     }
 
-    // ── 4b. Auto-grant walker. Scan every feat AND trait in the entity map;
-    // if its `auto_granted_by` list matches the character's current
-    // class+level / subclass / species / background, add it to the working
-    // set. Both then have their grant block applied below.
-    bool matchesAutoGrant(List<Map<String, dynamic>> autoSources) {
-      for (final src in autoSources) {
-        final source = src['source']?.toString();
-        final ref = src['source_ref'];
-        final at = src['at_level'];
-        final atLevel = (at is int) ? at : _intOf(at);
-        switch (source) {
-          case 'class':
-            final classId = _resolveRef(ref, entitiesById);
-            final lvl = (classId != null) ? (classLevels[classId] ?? 0) : 0;
-            if (classId != null && lvl >= (atLevel == 0 ? 1 : atLevel)) {
-              return true;
-            }
-          case 'subclass':
-            final subId = _resolveRef(ref, entitiesById);
-            if (subId == null || subId != subclassId) break;
-            // Gate by the parent class's level so subclass L6/L10/L14
-            // features don't auto-grant the moment the L3 subclass is
-            // picked. Falls back to total character level when the
-            // subclass doesn't declare a parent_class_ref.
-            final minLevel = atLevel == 0 ? 1 : atLevel;
-            final subEntity = entitiesById[subId];
-            final parentClassId =
-                _resolveRef(subEntity?.fields['parent_class_ref'], entitiesById);
-            final levelHere = parentClassId != null
-                ? (classLevels[parentClassId] ?? 0)
-                : classLevels.values.fold<int>(0, (a, b) => a + b);
-            if (levelHere >= minLevel) return true;
-          case 'species':
-            final spId = _resolveRef(ref, entitiesById);
-            if (spId != null && spId == raceId) return true;
-          case 'background':
-            final bgId = _resolveRef(ref, entitiesById);
-            if (bgId != null && bgId == backgroundId) return true;
-        }
-      }
-      return false;
+    // ── 4b. Auto-grant walker. Each card states what it hands out: a Class /
+    // Subclass on the `features` row for the level, a Species / Subspecies on
+    // its flat `granted_feat_refs` + `trait_refs`, a Background on
+    // `origin_feat_ref`. Collect everything the character has already earned;
+    // the grant block of each is applied below, exactly like a chosen feat.
+    //
+    // This replaced an inverse `auto_granted_by` edge declared on the feat,
+    // which meant the level lived on the feat while the class card carried an
+    // unrelated narrative row for the same feature — two places to edit, and
+    // in practice they disagreed. It also had to scan every entity in the
+    // world; this walks only the four cards the character actually has.
+    void grantFeat(String id) {
+      if (featIds.contains(id) || autoGrantedFeatIds.contains(id)) return;
+      if (entitiesById[id]?.categorySlug != 'feat') return;
+      autoGrantedFeatIds.add(id);
     }
 
-    for (final e in entitiesById.values) {
-      final autoSources = _readMapList(e.fields['auto_granted_by']);
-      if (autoSources.isEmpty) continue;
-      if (!matchesAutoGrant(autoSources)) continue;
-      switch (e.categorySlug) {
-        case 'feat':
-          if (!featIds.contains(e.id) && !autoGrantedFeatIds.contains(e.id)) {
-            autoGrantedFeatIds.add(e.id);
-          }
-        case 'trait':
-          if (!autoGrantedTraitIds.contains(e.id)) {
-            autoGrantedTraitIds.add(e.id);
-          }
+    void grantTrait(String id) {
+      if (autoGrantedTraitIds.contains(id)) return;
+      if (entitiesById[id]?.categorySlug != 'trait') return;
+      autoGrantedTraitIds.add(id);
+    }
+
+    /// Walk [src]'s level table and take every row at or below [upTo].
+    void collectLevelGrants(Entity? src, int upTo) {
+      if (src == null) return;
+      for (final row in _readMapList(src.fields['features'])) {
+        final lvl = (row['level'] is int) ? row['level'] as int : 1;
+        if (lvl > upTo) continue;
+        for (final id in _readRefList(row['granted_feat_refs'], entitiesById)) {
+          grantFeat(id);
+        }
+        for (final id in _readRefList(row['granted_trait_refs'], entitiesById)) {
+          grantTrait(id);
+        }
+      }
+    }
+
+    for (final entry in classLevels.entries) {
+      collectLevelGrants(entitiesById[entry.key], entry.value);
+    }
+    if (subclassId != null) {
+      final sub = entitiesById[subclassId];
+      // Gate subclass rows by the parent class's level so an L6/L10/L14
+      // feature doesn't arrive the moment the L3 subclass is picked. Falls
+      // back to total character level when there's no `parent_class_ref`.
+      final parentClassId =
+          _resolveRef(sub?.fields['parent_class_ref'], entitiesById);
+      collectLevelGrants(
+        sub,
+        parentClassId != null
+            ? (classLevels[parentClassId] ?? 0)
+            : classLevels.values.fold<int>(0, (a, b) => a + b),
+      );
+    }
+    // Species / subspecies have no level table — everything they name arrives
+    // at character creation. (A Background's `origin_feat_ref` is deliberately
+    // NOT read here: the wizard writes it into `feat_ids` so the player can
+    // swap it afterwards, and force-applying it would put a removed feat back.)
+    for (final id in [raceId, subspeciesId]) {
+      final card = (id == null) ? null : entitiesById[id];
+      if (card == null) continue;
+      for (final fid
+          in _readRefList(card.fields['granted_feat_refs'], entitiesById)) {
+        grantFeat(fid);
       }
     }
 

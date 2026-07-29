@@ -12,7 +12,6 @@ import '../../dialogs/entity_selector_dialog.dart';
 ///   - equipmentChoiceGroups
 ///   - resourcePoolGrants
 ///   - playerChoices
-///   - autoGrantSources
 ///   - subspeciesOptions
 ///
 /// All editors share the [_StructuredListShell] (Card + add button + per-row
@@ -534,6 +533,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
       onChanged: onChanged,
       makeEmptyRow: () => {
         'level': null,
+        'name': '',
         'description': '',
         'granted_damage_resistances': <String>[],
         'granted_damage_immunities': <String>[],
@@ -566,12 +566,23 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                   onChanged: (v) => onRowChanged({...row, 'level': v}),
                   width: 60,
                 ),
+                // Every shipped row carries a `name`, but this editor never
+                // drew it — the class card showed a bare summary line with no
+                // feature title. It matters more now that the row is the
+                // single place a level-gated grant is declared.
+                _miniText(
+                  label: 'Feature',
+                  value: (row['name'] ?? '').toString(),
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'name': v}),
+                  width: 200,
+                ),
                 _miniText(
                   label: 'Summary',
                   value: (row['description'] ?? '').toString(),
                   readOnly: readOnly,
                   onChanged: (v) => onRowChanged({...row, 'description': v}),
-                  width: 480,
+                  width: 380,
                 ),
                 if (gateMiss)
                   Tooltip(
@@ -1783,100 +1794,6 @@ class _AddChoiceOptionButtonState extends State<_AddChoiceOptionButton> {
           },
         ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// autoGrantSources — {source: 'class'|'subclass'|'species'|'subspecies'|
-//                     'background', source_ref, at_level?, choice_required?}
-// ─────────────────────────────────────────────────────────────────────────
-
-const _autoGrantSources = [
-  'class',
-  'subclass',
-  'species',
-  'subspecies',
-  'background',
-];
-
-class AutoGrantSourcesFieldWidget extends StatelessWidget {
-  final FieldSchema schema;
-  final dynamic value;
-  final bool readOnly;
-  final ValueChanged<dynamic> onChanged;
-  final Map<String, Entity>? entities;
-  final WidgetRef? ref;
-
-  const AutoGrantSourcesFieldWidget({
-    super.key,
-    required this.schema,
-    required this.value,
-    required this.readOnly,
-    required this.onChanged,
-    this.entities,
-    this.ref,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = _coerceRows(value);
-    return _StructuredListShell(
-      schema: schema,
-      rows: rows,
-      readOnly: readOnly,
-      onChanged: onChanged,
-      makeEmptyRow: () => {
-        'source': null,
-        'source_ref': null,
-        'at_level': null,
-      },
-      buildRow: (i, row, onRowChanged) {
-        final source = row['source'] as String?;
-        final allowed = (source == null || source.isEmpty)
-            ? const <String>[]
-            : <String>[source];
-        return Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _miniEnum(
-              label: 'Source',
-              value: source,
-              options: _autoGrantSources,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({
-                ...row,
-                'source': v,
-                'source_ref': null,
-              }),
-              width: 130,
-            ),
-            if (allowed.isNotEmpty)
-              _MiniRelationField(
-                label: 'Source Ref',
-                value: row['source_ref'] is String
-                    ? row['source_ref'] as String
-                    : null,
-                allowedTypes: allowed,
-                entities: entities,
-                ref: ref,
-                readOnly: readOnly,
-                onChanged: (v) => onRowChanged({...row, 'source_ref': v}),
-              ),
-            _miniInt(
-              label: 'At Level',
-              value: row['at_level'] is int ? row['at_level'] as int : null,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'at_level': v}),
-              width: 80,
-            ),
-            if (row['choice_required'] == true)
-              _badge('choice_required', Colors.orange),
-          ],
-        );
-      },
     );
   }
 }

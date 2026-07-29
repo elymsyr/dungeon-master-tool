@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../application/services/srd_core_bootstrap.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../database/util/builtin_synth.dart';
+import '../schema/auto_grant_inversion.dart';
 import '../schema/rule_effects_migration.dart';
 import '../../core/utils/deep_copy.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -440,6 +441,12 @@ class WorldRepositoryImpl implements CampaignRepository {
     if (synth.entries.isNotEmpty) {
       entitiesMap.addAll(synth.entries);
     }
+
+    // Cross-entity read-time conversion: move any surviving `auto_granted_by`
+    // off the feat and onto the class/species card that grants it. Runs after
+    // the synth merge because the source card may be a built-in row that only
+    // exists in `entitiesMap` at this point. No-op on converted worlds.
+    invertAutoGrants(entitiesMap);
 
     // Reconstruct WorldSchema map. Legacy world_schemas table is gone —
     // schema content rides in world_settings.settings_json under

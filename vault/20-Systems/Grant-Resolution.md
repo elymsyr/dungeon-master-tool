@@ -42,7 +42,7 @@ Feat, Trait, Magic Item, Species, Subspecies and the nested `subspecies_options`
 
 ## Flow
 1. Character holds `class_levels`, `subclass_id`, `feat_ids`, `race_id`, `subspecies_id`, `background_id`, `equipment_choices`, `base_abilities`.
-2. Resolver gathers auto-granted feats/traits (`auto_granted_by` + `at_level` gates — see [[character_resolver]] Pass 3) and the explicitly chosen ones.
+2. Resolver gathers auto-granted feats/traits by walking the **granting card**: the Class / Subclass `features` rows at or below the character's level in that class, plus `species`/`subspecies` `granted_feat_refs` and `trait_refs` (see [[character_resolver]] Pass 4b). It then adds the explicitly chosen feats.
 3. For each source card, `applyGrantsFrom(card.fields, sourceLabel)` folds every populated grant key into the working accumulators.
 4. Missing refs are silently dropped → surfaced as warnings on [[effective_character]].
 

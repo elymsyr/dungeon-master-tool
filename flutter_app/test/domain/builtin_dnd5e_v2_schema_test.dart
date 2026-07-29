@@ -221,16 +221,17 @@ void main() {
       expect(keys, containsAll({'size_ref', 'speed_ft', 'creature_type_ref', 'trait_refs'}));
     });
 
-    test('trait has auto_granted_by, chooseable, benefits', () {
+    test('trait has chooseable, benefits, no auto_granted_by', () {
       final t = schema.categories.firstWhere((c) => c.slug == 'trait');
       final keys = t.fields.map((f) => f.fieldKey).toSet();
       expect(keys, containsAll({
-        'auto_granted_by',
         'chooseable',
         'benefits',
         'trait_kind',
         'description',
       }));
+      // Which card hands a trait out is stated by that card, never here.
+      expect(keys, isNot(contains('auto_granted_by')));
     });
 
     test('spell has level 0..9 and damage-type relation list', () {

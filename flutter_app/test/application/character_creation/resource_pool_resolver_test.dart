@@ -2,34 +2,40 @@ import 'package:dungeon_master_tool/application/character_creation/resource_pool
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Entity _class(String name) => Entity(
+/// A class / subclass card. Its `features` level table is the single place
+/// that says which feats arrive at which level — [grants] is `{level: featIds}`.
+Entity _class(
+  String name, {
+  String slug = 'class',
+  Map<int, List<String>> grants = const {},
+}) =>
+    Entity(
       id: 'class-${name.toLowerCase()}',
       name: name,
-      categorySlug: 'class',
-      fields: const {},
+      categorySlug: slug,
+      fields: {
+        'features': [
+          for (final e in grants.entries)
+            {
+              'level': e.key,
+              'name': '$name L${e.key}',
+              'granted_feat_refs': e.value,
+            },
+        ],
+      },
     );
 
 Entity _feat({
   required String id,
   required String name,
-  required List<Map<String, dynamic>> autoGrantedBy,
   required List<Map<String, dynamic>> pools,
 }) =>
     Entity(
       id: id,
       name: name,
       categorySlug: 'feat',
-      fields: {
-        'auto_granted_by': autoGrantedBy,
-        'resource_pool_grants': pools,
-      },
+      fields: {'resource_pool_grants': pools},
     );
-
-Map<String, dynamic> _grantBy(String sourceName, int atLevel) => {
-      'source': 'class',
-      'source_ref': {'slug': 'class', 'name': sourceName},
-      'at_level': atLevel,
-    };
 
 Map<String, dynamic> _poolGrant({
   required String pool,
@@ -68,7 +74,6 @@ void main() {
       final feat = _feat(
         id: 'feat-rage',
         name: 'Rage',
-        autoGrantedBy: [_grantBy('Barbarian', 1)],
         pools: [
           _poolGrant(
             pool: 'pool:rage_uses',
@@ -82,7 +87,9 @@ void main() {
       );
       expect(
         resolveResourcePoolsAt(
-          classEntity: _class('Barbarian'),
+          classEntity: _class('Barbarian', grants: const {
+            1: ['feat-rage'],
+          }),
           subclassEntity: null,
           level: 0,
           entities: {feat.id: feat},
@@ -95,7 +102,6 @@ void main() {
       final feat = _feat(
         id: 'feat-rage',
         name: 'Rage',
-        autoGrantedBy: [_grantBy('Barbarian', 1)],
         pools: [
           _poolGrant(
             pool: 'pool:rage_uses',
@@ -111,7 +117,9 @@ void main() {
         ],
       );
       final entities = {feat.id: feat};
-      final cls = _class('Barbarian');
+      final cls = _class('Barbarian', grants: const {
+        1: ['feat-rage'],
+      });
 
       expect(
         resolveResourcePoolsAt(
@@ -138,12 +146,13 @@ void main() {
       final feat = _feat(
         id: 'feat-flat',
         name: 'Flat Pool',
-        autoGrantedBy: [_grantBy('Bard', 1)],
         pools: [_poolGrant(pool: 'pool:flat_thing', count: 7)],
       );
       expect(
         resolveResourcePoolsAt(
-          classEntity: _class('Bard'),
+          classEntity: _class('Bard', grants: const {
+            1: ['feat-flat'],
+          }),
           subclassEntity: null,
           level: 3,
           entities: {feat.id: feat},
@@ -156,12 +165,13 @@ void main() {
       final feat = _feat(
         id: 'feat-l3',
         name: 'Late Grant',
-        autoGrantedBy: [_grantBy('Cleric', 3)],
         pools: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
       );
       expect(
         resolveResourcePoolsAt(
-          classEntity: _class('Cleric'),
+          classEntity: _class('Cleric', grants: const {
+            3: ['feat-l3'],
+          }),
           subclassEntity: null,
           level: 2,
           entities: {feat.id: feat},
@@ -174,13 +184,14 @@ void main() {
       final feat = _feat(
         id: 'feat-sub',
         name: 'Subclass Pool',
-        autoGrantedBy: [_grantBy('LifeDomain', 2)],
         pools: [_poolGrant(pool: 'pool:divine_strike', count: 1)],
       );
       expect(
         resolveResourcePoolsAt(
           classEntity: _class('Cleric'),
-          subclassEntity: _class('LifeDomain'),
+          subclassEntity: _class('LifeDomain', slug: 'subclass', grants: const {
+            2: ['feat-sub'],
+          }),
           level: 5,
           entities: {feat.id: feat},
         ),
@@ -194,7 +205,6 @@ void main() {
       final feat = _feat(
         id: 'feat-formula',
         name: 'Lay on Hands',
-        autoGrantedBy: [_grantBy('Paladin', 1)],
         pools: const [
           {
             'pool_ref': {'slug': 'resource-pool', 'name': 'pool:lay_on_hands_hp'},
@@ -205,7 +215,9 @@ void main() {
       );
       expect(
         resolveResourcePoolsAt(
-          classEntity: _class('Paladin'),
+          classEntity: _class('Paladin', grants: const {
+            1: ['feat-formula'],
+          }),
           subclassEntity: null,
           level: 5,
           entities: {feat.id: feat},
@@ -215,11 +227,12 @@ void main() {
     });
 
     test('evaluates paladin_level_x5 when classLevels provided', () {
-      final paladin = _class('Paladin');
+      final paladin = _class('Paladin', grants: const {
+        1: ['feat-loh'],
+      });
       final feat = _feat(
         id: 'feat-loh',
         name: 'Lay on Hands',
-        autoGrantedBy: [_grantBy('Paladin', 1)],
         pools: const [
           {
             'pool_ref': {'slug': 'resource-pool', 'name': 'pool:lay_on_hands_hp'},
@@ -241,11 +254,12 @@ void main() {
     });
 
     test('evaluates monk_level for Ki / Focus Points', () {
-      final monk = _class('Monk');
+      final monk = _class('Monk', grants: const {
+        2: ['feat-ki'],
+      });
       final feat = _feat(
         id: 'feat-ki',
         name: 'Focus Points',
-        autoGrantedBy: [_grantBy('Monk', 2)],
         pools: const [
           {
             'pool_ref': {'slug': 'resource-pool', 'name': 'pool:focus_points'},
@@ -267,11 +281,12 @@ void main() {
     });
 
     test('evaluates cha_mod_min_1 with ability score, clamps at 1', () {
-      final cleric = _class('Cleric');
+      final cleric = _class('Cleric', grants: const {
+        1: ['feat-cd'],
+      });
       final feat = _feat(
         id: 'feat-cd',
         name: 'Channel Divinity',
-        autoGrantedBy: [_grantBy('Cleric', 1)],
         pools: const [
           {
             'pool_ref': {'slug': 'resource-pool', 'name': 'pool:channel_divinity'},
@@ -311,18 +326,19 @@ void main() {
       final cls = _feat(
         id: 'feat-base',
         name: 'Channel Divinity Base',
-        autoGrantedBy: [_grantBy('Cleric', 2)],
         pools: [_poolGrant(pool: 'pool:channel_divinity', count: 1)],
       );
       final sub = _feat(
         id: 'feat-upgrade',
         name: 'Channel Divinity Upgrade',
-        autoGrantedBy: [_grantBy('Cleric', 6)],
         pools: [_poolGrant(pool: 'pool:channel_divinity', count: 2)],
       );
       expect(
         resolveResourcePoolsAt(
-          classEntity: _class('Cleric'),
+          classEntity: _class('Cleric', grants: const {
+            2: ['feat-base'],
+            6: ['feat-upgrade'],
+          }),
           subclassEntity: null,
           level: 6,
           entities: {cls.id: cls, sub.id: sub},

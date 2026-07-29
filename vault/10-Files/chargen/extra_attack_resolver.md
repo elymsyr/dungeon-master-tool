@@ -31,7 +31,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- Builds the set of class+subclass *names*, then scans all `feat` entities; `_isAutoGranted` keeps a feat if any `auto_granted_by` row's `source_ref` name is in that set with `at_level <= level`.
+- Delegates "which feats does this class have by now" to the shared [[auto_granted_feats]] `autoGrantedFeatsAt(...)`, which walks the Class / Subclass `features` rows at or below the level.
 - Among matched feats reads `extra_attack_count_by_level` first (highest `lvl ≤ level` wins), falling back to the flat `extra_attack_count`, and keeps `best = max(best, value)`.
 
 ## Notes

@@ -31,7 +31,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- Auto-grant match (`_isAutoGranted`, identical to the extra-attack / weapon-mastery resolvers): a feat is in scope if any `auto_granted_by` row's `source_ref` resolves to the class or subclass *name* and `at_level <= level`.
+- Auto-grant match comes from the shared [[auto_granted_feats]] `autoGrantedFeatsAt(...)`, the same reader the extra-attack and weapon-mastery resolvers use. Before the inversion each of the three carried its own byte-identical copy of an `auto_granted_by` scan.
 - Value resolution tries three sources in order: (1) `count_by_level` — a `{lvl: count}` table, picks the entry with the highest `lvl <= level`; (2) `count_formula` via `evalCountFormula` (e.g. `paladin_level_x5`, `monk_level`, `cha_mod_min_1`) — **skipped when both `abilities` and `classLevels` are empty** so planner-only callers fall through; (3) the flat `count` literal fallback (int or parseable string). Same precedence as `CharacterResolver.applyGrantsFrom`, so the planner preview and the resolved sheet agree.
 - When multiple rows grant the same pool name (base + subclass upgrade), keeps the **larger** value so the player isn't downgraded.
 
