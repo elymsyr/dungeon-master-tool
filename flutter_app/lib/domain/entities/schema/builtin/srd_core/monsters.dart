@@ -1915,7 +1915,7 @@ List<Map<String, dynamic>> srdMonsters() => [
           'cr': '3', 'xp': 700, 'proficiency_bonus': 2, 'passive_perception': 12,
           'language_refs': [lookup('language', 'Common')],
           'condition_immunity_refs': [lookup('condition', 'Frightened')],
-          'trait_refs': [ref('trait', 'Brave')],
+          'trait_refs': [ref('trait', 'Brave (Monster)')],
           'action_refs': [
             ref('creature-action', 'Multiattack'),
             ref('creature-action', 'Greatsword (Knight)'),
@@ -1962,7 +1962,7 @@ List<Map<String, dynamic>> srdMonsters() => [
           'stat_block': {'STR': 18, 'DEX': 15, 'CON': 16, 'INT': 10, 'WIS': 12, 'CHA': 15},
           'cr': '5', 'xp': 1800, 'proficiency_bonus': 3, 'passive_perception': 11,
           'language_refs': [lookup('language', 'Common')],
-          'trait_refs': [ref('trait', 'Brave')],
+          'trait_refs': [ref('trait', 'Brave (Monster)')],
           'action_refs': [
             ref('creature-action', 'Multiattack'),
             ref('creature-action', 'Spear (Gladiator)'),
@@ -2078,7 +2078,7 @@ List<Map<String, dynamic>> srdMonsters() => [
           'resistance_refs': [lookup('damage-type', 'Poison')],
           'trait_refs': [
             ref('trait', 'Cunning Action'),
-            ref('trait', 'Evasion'),
+            ref('trait', 'Evasion (Monster)'),
             ref('trait', 'Sneak Attack'),
           ],
           'action_refs': [

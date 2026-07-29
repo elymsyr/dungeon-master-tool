@@ -1,10 +1,11 @@
 import '../../domain/entities/entity.dart';
 import '../../domain/services/count_formula.dart';
+import 'auto_granted_feats.dart';
 
 /// Pure resolver for class resource pools (Rage uses, Bardic Inspiration,
 /// Channel Divinity, Ki / Focus Points, Wild Shape, Lay on Hands, etc.).
-/// Walks every feat in [entities] whose `auto_granted_by` points at the
-/// active class or subclass, picks each `resource_pool_grants` row,
+/// Walks every feat the active class or subclass grants at or below [level]
+/// (see [autoGrantedFeatsAt]), picks each `resource_pool_grants` row,
 /// and resolves a max value at [level] from either:
 ///
 ///   1. `count_by_level` — uses the entry with the highest `lvl ≤ level`
@@ -24,19 +25,14 @@ Map<String, int> resolveResourcePoolsAt({
   Map<String, int> abilities = const {},
   Map<String, int> classLevels = const {},
 }) {
-  if (level < 1) return const {};
-  final classNames = <String>{};
-  if (classEntity != null) classNames.add(classEntity.name);
-  if (subclassEntity != null) classNames.add(subclassEntity.name);
-  if (classNames.isEmpty) return const {};
-  if (entities.isEmpty) return const {};
-
   final out = <String, int>{};
-  for (final e in entities.values) {
-    if (e.categorySlug != 'feat') continue;
-    if (!_isAutoGranted(e, classNames, level, entities)) continue;
-
-    final rows = e.fields['resource_pool_grants'];
+  for (final feat in autoGrantedFeatsAt(
+    classEntity: classEntity,
+    subclassEntity: subclassEntity,
+    level: level,
+    entities: entities,
+  )) {
+    final rows = feat.fields['resource_pool_grants'];
     if (rows is! List) continue;
     for (final row in rows) {
       if (row is! Map) continue;
@@ -71,28 +67,6 @@ String? _poolName(Object? poolRef, Map<String, Entity> entities) {
   return null;
 }
 
-bool _isAutoGranted(Entity feat, Set<String> sources, int level,
-    Map<String, Entity> entities) {
-  final auto = feat.fields['auto_granted_by'];
-  if (auto is! List) return false;
-  for (final row in auto) {
-    if (row is! Map) continue;
-    final sourceRef = row['source_ref'];
-    String? srcName;
-    if (sourceRef is Map) {
-      srcName = sourceRef['name']?.toString();
-    } else if (sourceRef is String) {
-      srcName = entities[sourceRef]?.name;
-    }
-    final atLvlRaw = row['at_level'];
-    final atLvl = atLvlRaw is int ? atLvlRaw : int.tryParse('$atLvlRaw');
-    if (srcName == null || atLvl == null) continue;
-    if (!sources.contains(srcName)) continue;
-    if (atLvl > level) continue;
-    return true;
-  }
-  return false;
-}
 
 int? _resolveValue(
   Map row,

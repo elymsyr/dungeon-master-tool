@@ -491,9 +491,11 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     for (final e in widget.entities.values) {
       if (e.categorySlug != 'feat') continue;
       final fields = e.fields;
+      // `chooseable: false` is the whole test now. It used to be paired with
+      // an `auto_granted_by` check, but every card that carried one also set
+      // `chooseable: false`, and which class grants a feat is no longer
+      // recorded on the feat at all.
       if (fields['chooseable'] == false) continue;
-      final auto = fields['auto_granted_by'];
-      if (auto is List && auto.isNotEmpty) continue;
       if (_isFightingStyleFeat(e)) continue;
       // Prefer the typed `prereq_clauses` (B1) when present — they model
       // OR-of-abilities, spellcasting, and armor/weapon proficiency that the

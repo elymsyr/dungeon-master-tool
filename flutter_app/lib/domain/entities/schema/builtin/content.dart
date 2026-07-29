@@ -299,8 +299,9 @@ class _FB {
   /// express in its own typed fields: a Class already has
   /// `saving_throw_refs` / `armor_training_refs` / `caster_kind`, so handing it
   /// a second way to grant proficiencies would recreate exactly the ambiguity
-  /// this block removes. Class features live on class-feature Feat cards
-  /// (`auto_granted_by`), which is where the block does belong.
+  /// this block removes. Class features live on class-feature Feat cards,
+  /// which is where the block does belong — the Class card only names which
+  /// of them arrive at which level, on its `features` rows.
   void grantBlock({
     bool proficiencies = true,
     bool spells = true,
@@ -477,16 +478,6 @@ class _FB {
       );
     }
   }
-
-  void autoGrantSources(String k, String l, {String g = grpRules}) =>
-      _base(
-        key: k,
-        label: l,
-        type: FieldType.autoGrantSources,
-        groupId: g,
-        gridSpan: 2,
-        defaultValue: const <Map<String, dynamic>>[],
-      );
 
   void statBlock(String k, String l, {String g = grpAbilityScores, dynamic defaultValue}) =>
       _base(
@@ -681,6 +672,11 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   // four specialised speeds above are the species' own innate movement and live
   // in the Movement group; the resolver reads the same keys either way.
   fb.grantBlock(speeds: false);
+  // Feats every member of the species gets. The forward edge that replaced
+  // `feat.auto_granted_by` — a species has no level table, so unlike a class
+  // it names the feats flat.
+  fb.relation('granted_feat_refs', 'Granted Feats', const ['feat'],
+      isList: true, g: grpGrantsProficiency);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields
   // available at the species level — folded by CharacterResolver when the
@@ -727,6 +723,9 @@ EntityCategorySchema _subspeciesCategory(String schemaId, String now, int orderI
       help: 'Migration only — matches saves that stored the old option name.');
   // Same grant block as Species, so CharacterResolver folds them identically.
   fb.grantBlock(speeds: false);
+  // Same forward edge as Species — see the note there.
+  fb.relation('granted_feat_refs', 'Granted Feats', const ['feat'],
+      isList: true, g: grpGrantsProficiency);
 
   return _mk(
     schemaId: schemaId,
@@ -814,10 +813,10 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   // the character sheet via the auto-grant walker. Default true.
   fb.boolean('chooseable', 'Player-Chooseable',
       defaultValue: true, g: grpIdentity);
-  // Inverse edge of class.granted_feat_refs / species.granted_feat_refs /
-  // background.granted_feat_refs. Resolver walks these to auto-apply the feat
-  // when the character meets the source criteria (class level, species, background).
-  fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
+  // No "auto-granted by" field here. Which card hands out this feat, and at
+  // which level, is stated once — by that card: `class`/`subclass` name it on
+  // the `features` row for the level, `species`/`subspecies` on
+  // `granted_feat_refs`, `background` on `origin_feat_ref`.
   // Typed Ability Score Increase. ASI options + amount (often +1, sometimes +2).
   fb.relation('asi_ability_options', 'ASI Ability Options', const ['ability'], isList: true, g: grpRules);
   fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
@@ -1341,10 +1340,9 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
   // catalogue out of choice surfaces unless explicitly opted in.
   fb.boolean('chooseable', 'Player-Chooseable',
       defaultValue: false, g: grpIdentity);
-  // Inverse edge of class.granted_trait_refs / species.granted_trait_refs /
-  // background.granted_trait_refs. The auto-grant walker adds the trait to the
-  // character's Features list and applies its grant block.
-  fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
+  // No "auto-granted by" field — same rule as Feat. A trait is handed out by
+  // the `granted_trait_refs` on a class/subclass `features` row, or by
+  // `species.trait_refs` / `subspecies.trait_refs`.
   // A trait is the species/monster analogue of a feat, so it carries the same
   // block. `traits: false` — a trait granting other traits invites cycles.
   fb.grantBlock(traits: false);

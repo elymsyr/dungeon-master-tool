@@ -36,17 +36,18 @@ void main() {
     });
 
     test('auto-granted class-feature feat gates on class level', () {
-      final cls = _e('cls_x', 'class', 'Fighter');
-      final feat = _e('feat_x', 'feat', 'L5 Feature', {
-        ..._acGrant,
-        'auto_granted_by': [
+      // The Fighter card's level table is what gates the feature — the feat
+      // itself says nothing about who grants it or when.
+      final cls = _e('cls_x', 'class', 'Fighter', {
+        'features': [
           {
-            'source': 'class',
-            'source_ref': 'cls_x',
-            'at_level': 5,
+            'level': 5,
+            'name': 'L5 Feature',
+            'granted_feat_refs': ['feat_x'],
           },
         ],
       });
+      final feat = _e('feat_x', 'feat', 'L5 Feature', _acGrant);
       final at4 = CharacterResolver.resolve(
         _pc({'class_levels': {'cls_x': 4}}),
         {cls.id: cls, feat.id: feat},

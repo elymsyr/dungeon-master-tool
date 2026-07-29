@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import '_helpers.dart';
 import 'ammunition.dart';
 import 'animals.dart';
 import 'armor.dart';
@@ -38,7 +39,7 @@ const srdSourceTag = 'SRD 5.2.1';
 /// fix / new rows so existing installs re-seed (see [SrdCorePackageBootstrap]).
 /// Hoisted to a top-level const so the bootstrap can compare against the
 /// stored DB version WITHOUT building the full ~2000-entity pack first.
-const srdCorePackVersion = '1.0.3';
+const srdCorePackVersion = '1.0.4';
 
 /// Output of [buildSrdCorePack]. `entities` is keyed by the freshly minted
 /// UUID, value is the wire-format package entity (see `_helpers.packEntity`).
@@ -69,7 +70,12 @@ String srdStableEntityId(String slug, String name) =>
 
 /// Returns the per-slug raw row lists the pack ships, in stable order.
 /// Order matters for deterministic UUID assignment when needed.
-Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
+///
+/// Public so content tests can inspect what the authoring functions produce
+/// *before* [buildSrdCorePack] mints ids and resolves refs — in particular to
+/// pin the output of [wireFeatureGrants]. Each call returns fresh maps, so
+/// callers may mutate freely.
+Map<String, List<Map<String, dynamic>>> srdRawRowsBySlug() => {
       // Tier-1 slugs that don't depend on other Tier-1 rows.
       'weapon': srdWeapons(),
       'armor': srdArmor(),
@@ -83,9 +89,9 @@ Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
       // Identity-content groups. Class/subclass auto-grant feats + per-
       // feature option feats (Metamagic, Eldritch Invocations, Pact Boon,
       // Draconic Spells, Fiendish Resilience, Hunter Ranger picks) are
-      // authored in feats_class.dart and folded into the same 'feat' slug
-      // so resolver Pass 4b sees the auto_granted_by entries and the
-      // PendingChoiceKind.featureOption dialog filter finds the options.
+      // authored in feats_class.dart and folded into the same 'feat' slug so
+      // `wireFeatureGrants` can hang each one off its Class/Subclass level row
+      // and the PendingChoiceKind.featureOption dialog filter finds the options.
       // srdSubclassFeats() also holds every Feature-Option feat at the
       // tail of its list — without it the option dialog renders empty.
       'feat': [
@@ -119,7 +125,12 @@ Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
 /// bootstrap service resolves them at import time once it knows the
 /// campaign's Tier-0 row UUIDs.
 SrdCorePack buildSrdCorePack() {
-  final raw = _rawRowsBySlug();
+  final raw = srdRawRowsBySlug();
+
+  // Pass 0: move every class/subclass-feature feat's placement onto the
+  // source card, so "Paladin gains this at level 9" is stored once — on the
+  // Paladin card's `features` row — instead of on the feat.
+  wireFeatureGrants(raw);
 
   // Pass 1: mint deterministic UUIDv5s keyed on "slug:name". Stable across
   // sessions so installed-campaign foreign keys (package_entity_id) keep
@@ -137,6 +148,14 @@ SrdCorePack buildSrdCorePack() {
       // in the same slug don't collide.
       final key = name ?? 'row-${slugIndex.length}';
       final id = srdStableEntityId(slug, key);
+      // Ids are `slug:name` derived, so two rows sharing a name silently
+      // overwrite each other — the later one wins and the earlier feature
+      // vanishes from the pack with no error anywhere. This shipped twice
+      // ("Uncanny Dodge", "Fiendish Vigor") before anyone noticed.
+      if (entities.containsKey(id)) {
+        throw StateError('duplicate SRD entity "$slug:$key" — pack ids are '
+            'derived from the name, so one row would overwrite the other');
+      }
       entities[id] = row;
       if (name != null) slugIndex[name] = id;
     }
@@ -161,6 +180,83 @@ SrdCorePack buildSrdCorePack() {
   };
 
   return SrdCorePack(entities: entities, metadata: metadata);
+}
+
+/// Rewrite each class/subclass-feature feat's build-time
+/// [srdFeatureGrantKey] marker into a `granted_feat_refs` entry on the
+/// matching `features` row of its Class / Subclass card, then strip the
+/// marker. After this runs no feat carries any notion of who grants it —
+/// the class card owns the level, which is the single place a DM edits it.
+///
+/// Throws when the marker names a Class / Subclass card that does not exist.
+///
+/// Two kinds of pre-existing disagreement between the class tables and the
+/// feature feats surface here, and both are resolved in favour of the **feat's**
+/// level, because that is the level the resolver applied before this inversion
+/// — so resolved sheets come out byte-identical and only the displayed table
+/// changes:
+///
+///  * row exists under that name at a different level → the row moves;
+///  * no row at all → one is synthesized from the feat.
+///
+/// Returns a `"Class L9 Feature"` descriptor for each row it had to move or
+/// synthesize. `srd_core_content_validation_test` pins that list, so a new
+/// mismatch (or a typo in `featureName:`) fails loudly instead of quietly
+/// growing the class table.
+List<String> wireFeatureGrants(Map<String, List<Map<String, dynamic>>> raw) {
+  final drifted = <String>[];
+  final cards = <String, Map<String, Map<String, dynamic>>>{
+    for (final slug in const ['class', 'subclass'])
+      slug: {
+        for (final row in raw[slug] ?? const <Map<String, dynamic>>[])
+          row['name'] as String: row,
+      },
+  };
+
+  for (final feat in raw['feat'] ?? const <Map<String, dynamic>>[]) {
+    final marker = feat.remove(srdFeatureGrantKey);
+    if (marker is! Map) continue;
+    final source = marker['source'] as String;
+    final sourceName = marker['source_name'] as String;
+    final featureName = marker['feature_name'] as String;
+    final atLevel = marker['at_level'] as int;
+
+    final card = cards[source]?[sourceName];
+    if (card == null) {
+      throw StateError('feat "${feat['name']}" names a missing '
+          '$source "$sourceName"');
+    }
+    final attrs = card['attributes'] as Map<String, dynamic>;
+    final features = (attrs['features'] as List?)?.cast<Map<String, dynamic>>();
+    if (features == null) {
+      throw StateError('$source "$sourceName" has no `features` table, so '
+          'feat "${feat['name']}" has nowhere to hang');
+    }
+
+    var row = features
+        .cast<Map<String, dynamic>?>()
+        .firstWhere((r) => r!['name'] == featureName, orElse: () => null);
+    if (row == null) {
+      row = <String, dynamic>{
+        'level': atLevel,
+        'name': featureName,
+        'description': feat['description'] ?? '',
+      };
+      features.add(row);
+      drifted.add('$sourceName L$atLevel "$featureName" (satır yoktu, eklendi)');
+    } else if (row['level'] != atLevel) {
+      drifted.add('$sourceName "$featureName" '
+          'L${row['level']} → L$atLevel (feat seviyesine hizalandı)');
+      row['level'] = atLevel;
+    }
+    final refs =
+        (row['granted_feat_refs'] ??= <Map<String, dynamic>>[]) as List;
+    final edge = ref('feat', feat['name'] as String);
+    if (!refs.any((r) => r is Map && r['name'] == edge['name'])) {
+      refs.add(edge);
+    }
+  }
+  return drifted;
 }
 
 /// Walk a value and rewrite every `{'_ref': slug, 'name': X}` placeholder

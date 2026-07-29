@@ -562,55 +562,49 @@ void main() {
 
 
   group('planLevelUp extra-attack fields (SRD §1.5)', () {
-    Entity featExtra({
-      required String id,
-      required String className,
-      required int atLevel,
-      required int value,
-    }) =>
-        Entity(
+    Entity featExtra({required String id, required int value}) => Entity(
           id: id,
           name: 'Extra Attack $id',
           categorySlug: 'feat',
-          fields: {
-            'auto_granted_by': [
-              {
-                'source': 'class',
-                'source_ref': {'slug': 'class', 'name': className},
-                'at_level': atLevel,
-              },
-            ],
-            'extra_attack_count': value,
-          },
+          fields: {'extra_attack_count': value},
         );
 
     Map<String, Entity> fighterFeats() {
-      final l5 = featExtra(
-        id: 'fighter-extra-5',
-        className: 'Fighter',
-        atLevel: 5,
-        value: 2,
-      );
-      final l11 = featExtra(
-        id: 'fighter-extra-11',
-        className: 'Fighter',
-        atLevel: 11,
-        value: 3,
-      );
-      final l20 = featExtra(
-        id: 'fighter-extra-20',
-        className: 'Fighter',
-        atLevel: 20,
-        value: 4,
-      );
+      final l5 = featExtra(id: 'fighter-extra-5', value: 2);
+      final l11 = featExtra(id: 'fighter-extra-11', value: 3);
+      final l20 = featExtra(id: 'fighter-extra-20', value: 4);
       return {l5.id: l5, l11.id: l11, l20.id: l20};
     }
+
+    /// The Fighter card, whose `features` table is the only statement of when
+    /// each Extra Attack bump arrives.
+    Entity fighter() => _makeClass(
+          name: 'Fighter',
+          hitDie: 'd10',
+          features: const [
+            {
+              'level': 5,
+              'name': 'Extra Attack',
+              'granted_feat_refs': ['fighter-extra-5'],
+            },
+            {
+              'level': 11,
+              'name': 'Two Extra Attacks',
+              'granted_feat_refs': ['fighter-extra-11'],
+            },
+            {
+              'level': 20,
+              'name': 'Three Extra Attacks',
+              'granted_feat_refs': ['fighter-extra-20'],
+            },
+          ],
+        );
 
     test('Fighter 4→5 flags Extra Attack with count 0→2', () {
       final p = planLevelUp(
         fromLevel: 4,
         toLevel: 5,
-        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        classEntity: fighter(),
         subclassEntity: null,
         entities: fighterFeats(),
       );
@@ -624,7 +618,7 @@ void main() {
       final p = planLevelUp(
         fromLevel: 10,
         toLevel: 11,
-        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        classEntity: fighter(),
         subclassEntity: null,
         entities: fighterFeats(),
       );
@@ -638,7 +632,7 @@ void main() {
       final p = planLevelUp(
         fromLevel: 19,
         toLevel: 20,
-        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        classEntity: fighter(),
         subclassEntity: null,
         entities: fighterFeats(),
       );
@@ -664,7 +658,7 @@ void main() {
       final p = planLevelUp(
         fromLevel: 11,
         toLevel: 12,
-        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        classEntity: fighter(),
         subclassEntity: null,
         entities: fighterFeats(),
       );

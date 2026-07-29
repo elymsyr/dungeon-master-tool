@@ -44,22 +44,31 @@ Map<String, dynamic> eqGroup({
   'options': options,
 };
 
-/// `auto_granted_by` entry — declares the feat is auto-applied when the
-/// character has the matching class+level / species / background.
-Map<String, dynamic> autoGrantBy({
-  required String source,
+/// Row-level key carrying a class-feature feat's placement on its source
+/// card. **Build-time only** — `buildSrdCorePack` consumes and strips it, so
+/// it never reaches the entity's `attributes` and is not a schema field. The
+/// leading underscore keeps it out of the wire format by convention.
+const srdFeatureGrantKey = '_feature_grant';
+
+/// Tag [row] with the Class / Subclass `features` row that grants it. The
+/// pack builder reads this and writes `granted_feat_refs` onto that row, so
+/// the level a feature arrives at is stored **once**, on the class card.
+Map<String, dynamic> withFeatureGrant(
+  Map<String, dynamic> row, {
+  required String source, // 'class' | 'subclass'
   required String sourceName,
-  int? atLevel,
-  bool? choiceRequired,
-}) {
-  final slug = source; // 'class' | 'subclass' | 'species' | 'background'
-  return {
-    'source': source,
-    'source_ref': ref(slug, sourceName),
-    'at_level': ?atLevel,
-    'choice_required': ?choiceRequired,
-  };
-}
+  required int atLevel,
+  required String featureName,
+}) =>
+    {
+      ...row,
+      srdFeatureGrantKey: <String, dynamic>{
+        'source': source,
+        'source_name': sourceName,
+        'at_level': atLevel,
+        'feature_name': featureName,
+      },
+    };
 
 /// One package entity in the wire format `PackageImportService` consumes.
 /// `attributes` keys must match the target category's `FieldSchema.fieldKey`.

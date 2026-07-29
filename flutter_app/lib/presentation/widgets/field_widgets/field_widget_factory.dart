@@ -440,14 +440,6 @@ class FieldWidgetFactory {
         entities: entities,
         ref: ref,
       ),
-      FieldType.autoGrantSources => AutoGrantSourcesFieldWidget(
-        schema: schema,
-        value: value,
-        readOnly: readOnly,
-        onChanged: onChanged,
-        entities: entities,
-        ref: ref,
-      ),
       _ => _TextFieldWidget(
         schema: schema,
         value: value,

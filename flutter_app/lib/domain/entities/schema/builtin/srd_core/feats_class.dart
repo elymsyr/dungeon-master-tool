@@ -9,73 +9,87 @@
 //   • `mechanical_notes` for roll-time rules the engine does not compute
 //     (advantage riders, reroll abilities, reaction effects) — shown
 //     verbatim on the character sheet under "Other Effects";
-//   • `auto_granted_by` listing the class + level that grants it;
 //   • `chooseable: false` so the feat is hidden from the player feat-picker.
 //
-// Resolver auto-grant walker (CharacterResolver Pass 4b) picks up every feat
-// whose `auto_granted_by` matches the character's class levels / species /
-// background and applies its grants exactly like a player-chosen feat.
+// **Where the level lives.** A feat card does not say which class grants it —
+// the class says what it grants, on the `features` row for that level (see
+// `_FeatureGrant` below and `wireFeatureGrants` in `srd_core_pack.dart`).
+// `CharacterResolver` Pass 4b walks those rows for the character's class and
+// subclass and applies each referenced feat exactly like a player-chosen one.
 //
 // Narrative-only class features (Druidic, Thieves' Cant) live in
-// `traits.dart` as Traits with `auto_granted_by` populated.
+// `traits.dart` and are referenced the same way, via the row's
+// `granted_trait_refs`.
 
 import '_helpers.dart';
 
 /// Class-feature feat builder. Wraps `packEntity` with sensible defaults.
 /// [grants] keys must be grant-block field keys
 /// (`CharacterResolver.grantFieldKeys`).
+///
+/// [atLevel] and [className] do not become fields on the feat. They name the
+/// `features` row on the Class card that this feat hangs off, and
+/// `wireFeatureGrants` writes the edge there at pack-build time. [featureName]
+/// overrides the row lookup for the feats whose name carries a
+/// disambiguating suffix the SRD table does not use — feat names are globally
+/// unique ("Extra Attack (Paladin)"), class feature rows are not ("Extra
+/// Attack").
 Map<String, dynamic> _cf({
   required String name,
   required String className,
   required int atLevel,
   required String description,
+  String? featureName,
   String? benefits,
   Map<String, dynamic> grants = const {},
   bool repeatable = false,
 }) =>
-    packEntity(
-      slug: 'feat',
-      name: name,
-      description: description,
-      attributes: {
-        'category_ref': lookup('feat-category', 'Class Feature'),
-        'chooseable': false,
-        'auto_granted_by': [
-          autoGrantBy(source: 'class', sourceName: className, atLevel: atLevel),
-        ],
-        'repeatable': repeatable,
-        ...grants,
-        'benefits': benefits ?? description,
-      },
+    withFeatureGrant(
+      packEntity(
+        slug: 'feat',
+        name: name,
+        description: description,
+        attributes: {
+          'category_ref': lookup('feat-category', 'Class Feature'),
+          'chooseable': false,
+          'repeatable': repeatable,
+          ...grants,
+          'benefits': benefits ?? description,
+        },
+      ),
+      source: 'class',
+      sourceName: className,
+      atLevel: atLevel,
+      featureName: featureName ?? name,
     );
 
-/// Subclass-feature feat builder.
+/// Subclass-feature feat builder. See [_cf] for how [atLevel] is wired.
 Map<String, dynamic> _sf({
   required String name,
   required String subclassName,
   required int atLevel,
   required String description,
+  String? featureName,
   String? benefits,
   Map<String, dynamic> grants = const {},
 }) =>
-    packEntity(
-      slug: 'feat',
-      name: name,
-      description: description,
-      attributes: {
-        'category_ref': lookup('feat-category', 'Subclass Feature'),
-        'chooseable': false,
-        'auto_granted_by': [
-          autoGrantBy(
-            source: 'subclass',
-            sourceName: subclassName,
-            atLevel: atLevel,
-          ),
-        ],
-        'repeatable': false,
-        ...grants,
-        'benefits': benefits ?? description,
-      },
+    withFeatureGrant(
+      packEntity(
+        slug: 'feat',
+        name: name,
+        description: description,
+        attributes: {
+          'category_ref': lookup('feat-category', 'Subclass Feature'),
+          'chooseable': false,
+          'repeatable': false,
+          ...grants,
+          'benefits': benefits ?? description,
+        },
+      ),
+      source: 'subclass',
+      sourceName: subclassName,
+      atLevel: atLevel,
+      featureName: featureName ?? name,
     );
 
 /// Common shared damage type lookups — used as `target_ref` in resistance/
@@ -151,6 +165,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Unarmored Defense (Barbarian)',
         className: 'Barbarian',
         atLevel: 1,
+        featureName: 'Unarmored Defense',
         description:
             'While not wearing armor, your AC equals 10 + Dex mod + Con mod. Shield allowed.',
         grants: {
@@ -163,6 +178,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Weapon Mastery (Barbarian)',
         className: 'Barbarian',
         atLevel: 1,
+        featureName: 'Weapon Mastery',
         description:
             'You can use the mastery property of two kinds of Simple or Martial Melee weapons; swap one on each Long Rest.',
         grants: {'weapon_mastery_count': 2},
@@ -207,6 +223,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Extra Attack (Barbarian)',
         className: 'Barbarian',
         atLevel: 5,
+        featureName: 'Extra Attack',
         description: 'You can attack twice when you take the Attack action.',
         grants: {'extra_attack_count': 2},
       ),
@@ -322,6 +339,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Bard Spellcasting',
         className: 'Bard',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'You know cantrips and spells from the Bard spell list. Charisma is your spellcasting ability. You can use a Musical Instrument or Bard Spellcasting Focus.',
       ),
@@ -329,6 +347,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Expertise (Bard)',
         className: 'Bard',
         atLevel: 2,
+        featureName: 'Expertise',
         description:
             'Choose two skills with which you have Proficiency. Your Proficiency Bonus is doubled for any check you make with those skills.',
         grants: {'bonus_expertise_pick_count': 2},
@@ -363,6 +382,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Expertise (Bard II)',
         className: 'Bard',
         atLevel: 9,
+        featureName: 'Expertise (II)',
         description: 'Two more proficient skills gain Expertise.',
         grants: {'bonus_expertise_pick_count': 2},
       ),
@@ -405,6 +425,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Cleric Spellcasting',
         className: 'Cleric',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'You know cantrips and prepare spells from the Cleric spell list. Wisdom is your spellcasting ability; you can use a Holy Symbol as a spellcasting focus.',
       ),
@@ -518,6 +539,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Druid Spellcasting',
         className: 'Druid',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'You know cantrips and prepare spells from the Druid spell list. Wisdom is your spellcasting ability; you can use a Druidic Focus.',
       ),
@@ -632,6 +654,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Weapon Mastery (Fighter)',
         className: 'Fighter',
         atLevel: 1,
+        featureName: 'Weapon Mastery',
         description:
             'You can use the mastery property of three kinds of weapons. You can swap one on each Long Rest. Additional masteries unlock at higher levels.',
         grants: {'weapon_mastery_count': 3},
@@ -664,6 +687,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Extra Attack (Fighter)',
         className: 'Fighter',
         atLevel: 5,
+        featureName: 'Extra Attack',
         description:
             'You can attack twice when you take the Attack action. Three times at L11; four times at L20.',
         grants: {'extra_attack_count': 2},
@@ -726,6 +750,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Unarmored Defense (Monk)',
         className: 'Monk',
         atLevel: 1,
+        featureName: 'Unarmored Defense',
         description:
             'While not wearing armor and not wielding a Shield, your AC equals 10 + Dex mod + Wis mod.',
         grants: {
@@ -767,6 +792,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Flurry of Blows',
         className: 'Monk',
         atLevel: 2,
+        featureName: 'Monk\'s Focus',
         description:
             'Spend 1 Focus Point to make two Unarmed Strikes as a Bonus Action.',
       ),
@@ -774,6 +800,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Patient Defense',
         className: 'Monk',
         atLevel: 2,
+        featureName: 'Monk\'s Focus',
         description:
             'You can take the Disengage action as a Bonus Action. You can spend 1 Focus Point to also take the Dodge action as a Bonus Action.',
       ),
@@ -781,6 +808,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Step of the Wind',
         className: 'Monk',
         atLevel: 2,
+        featureName: 'Monk\'s Focus',
         description:
             'You can take the Dash action as a Bonus Action. You can spend 1 Focus Point to also jump twice as far on that turn and not provoke Opportunity Attacks.',
       ),
@@ -809,6 +837,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Extra Attack (Monk)',
         className: 'Monk',
         atLevel: 5,
+        featureName: 'Extra Attack',
         description: 'You can attack twice when you take the Attack action.',
         grants: {'extra_attack_count': 2},
       ),
@@ -827,6 +856,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Evasion (Monk)',
         className: 'Monk',
         atLevel: 7,
+        featureName: 'Evasion',
         description:
             'When subjected to an effect that allows a Dexterity save for half damage, you instead take no damage on a success and half damage on a failure.',
       ),
@@ -892,6 +922,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Paladin Spellcasting',
         className: 'Paladin',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'Half-caster on the Paladin spell list. Charisma is your spellcasting ability; a Holy Symbol is your spellcasting focus.',
       ),
@@ -899,6 +930,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Weapon Mastery (Paladin)',
         className: 'Paladin',
         atLevel: 1,
+        featureName: 'Weapon Mastery',
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
         grants: {'weapon_mastery_count': 2},
@@ -917,6 +949,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Channel Divinity (Paladin)',
         className: 'Paladin',
         atLevel: 3,
+        featureName: 'Channel Divinity',
         description:
             'You gain Channel Divinity options from your Oath. Uses scale: 2 at L3, 3 at L11. Regained on Short or Long Rest.',
         grants: {
@@ -934,6 +967,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Extra Attack (Paladin)',
         className: 'Paladin',
         atLevel: 5,
+        featureName: 'Extra Attack',
         description: 'You can attack twice when you take the Attack action.',
         grants: {'extra_attack_count': 2},
       ),
@@ -1016,6 +1050,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Ranger Spellcasting',
         className: 'Ranger',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'Half-caster on the Ranger spell list. Wisdom is your spellcasting ability; a Druidic Focus is a valid focus.',
       ),
@@ -1023,6 +1058,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Weapon Mastery (Ranger)',
         className: 'Ranger',
         atLevel: 1,
+        featureName: 'Weapon Mastery',
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
         grants: {'weapon_mastery_count': 2},
@@ -1054,6 +1090,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Extra Attack (Ranger)',
         className: 'Ranger',
         atLevel: 5,
+        featureName: 'Extra Attack',
         description: 'You can attack twice when you take the Attack action.',
         grants: {'extra_attack_count': 2},
       ),
@@ -1061,6 +1098,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Expertise (Ranger II)',
         className: 'Ranger',
         atLevel: 9,
+        featureName: 'Expertise',
         description: 'Two more proficient skills gain Expertise.',
         grants: {'bonus_expertise_pick_count': 2},
       ),
@@ -1121,6 +1159,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Expertise (Rogue)',
         className: 'Rogue',
         atLevel: 1,
+        featureName: 'Expertise',
         description:
             'Choose two proficient skills. Your Proficiency Bonus is doubled for any check you make with those skills.',
         grants: {'bonus_expertise_pick_count': 2},
@@ -1143,6 +1182,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Weapon Mastery (Rogue)',
         className: 'Rogue',
         atLevel: 1,
+        featureName: 'Weapon Mastery',
         description:
             'You can use the mastery property of two kinds of weapons; swap one on each Long Rest.',
         grants: {'weapon_mastery_count': 2},
@@ -1171,10 +1211,15 @@ List<Map<String, dynamic>> srdClassFeats() => [
         description:
             'When you hit with Sneak Attack you can spend Sneak Attack dice to apply effects (Poison, Trip, Withdraw, etc.).',
       ),
+      // Suffixed because "Uncanny Dodge" is also a Hunter Ranger
+      // Superior-Hunter's-Defense option feat, and pack entity ids are
+      // derived from `slug:name` — an unsuffixed duplicate silently
+      // overwrites one of the two.
       _cf(
-        name: 'Uncanny Dodge',
+        name: 'Uncanny Dodge (Rogue)',
         className: 'Rogue',
         atLevel: 5,
+        featureName: 'Uncanny Dodge',
         description:
             'When an attacker that you can see hits you with an attack roll, you can use your Reaction to halve the damage.',
       ),
@@ -1182,6 +1227,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Evasion (Rogue)',
         className: 'Rogue',
         atLevel: 7,
+        featureName: 'Evasion',
         description:
             'When subjected to an effect that allows a Dexterity save for half damage, you instead take no damage on a success and half damage on a failure.',
       ),
@@ -1245,6 +1291,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Sorcerer Spellcasting',
         className: 'Sorcerer',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'You know cantrips and spells from the Sorcerer spell list. Charisma is your spellcasting ability.',
       ),
@@ -1438,6 +1485,7 @@ List<Map<String, dynamic>> srdClassFeats() => [
         name: 'Wizard Spellcasting',
         className: 'Wizard',
         atLevel: 1,
+        featureName: 'Spellcasting',
         description:
             'You know cantrips and prepare wizard spells from your spellbook. Intelligence is your spellcasting ability.',
       ),
@@ -1528,6 +1576,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         name: 'Bonus Proficiencies (Lore)',
         subclassName: 'College of Lore',
         atLevel: 3,
+        featureName: 'Bonus Proficiencies',
         description: 'You gain proficiency with three skills of your choice.',
       ),
       _sf(
@@ -1564,6 +1613,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         name: 'Channel Divinity: Preserve Life',
         subclassName: 'Life Domain',
         atLevel: 3,
+        featureName: 'Preserve Life',
         description:
             'As a Magic action you spend a Channel Divinity to restore 5 × your Cleric level HP across creatures within 30 feet you can see (none above half max HP).',
       ),
@@ -2069,10 +2119,13 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
               'CHA modifier + Warlock level (min 1)',
         },
       ),
+      // Suffixed for the same reason as `Uncanny Dodge (Rogue)` — the
+      // Warlock Eldritch Invocation of this name is a separate option feat.
       _sf(
-        name: 'Fiendish Vigor',
+        name: 'Fiendish Vigor (Fiend Patron)',
         subclassName: 'Fiend Patron',
         atLevel: 3,
+        featureName: 'Fiendish Vigor',
         description: 'You always have False Life prepared.',
         grants: {
           'always_prepared_spell_refs': [ref('spell', 'False Life')],

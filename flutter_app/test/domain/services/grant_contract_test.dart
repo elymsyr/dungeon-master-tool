@@ -88,6 +88,11 @@ void main() {
             'granted_languages',
             'granted_language_count',
             'granted_tool_variant_group',
+            // Species / subspecies name the feats they hand out. Read by the
+            // resolver's Pass 4b auto-grant walker (which pulls the feat in so
+            // its whole grant block applies), not by `applyGrantsFrom` — so it
+            // is deliberately outside the block's own key set.
+            'granted_feat_refs',
             // Not grants at all — `granted_` here reads as "included in".
             'granted_at_level',
             'granted_magic_items',

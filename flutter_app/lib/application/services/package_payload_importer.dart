@@ -1,3 +1,4 @@
+import '../../data/schema/auto_grant_inversion.dart';
 import '../../data/schema/rule_effects_migration.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/repositories/package_repository.dart';
@@ -36,6 +37,10 @@ class PackagePayloadImporter {
       for (final e in rawEntities.entries)
         e.key: _migrateEntity(e.value),
     };
+    // Same vintage, but cross-entity: a feat that still declares which class
+    // grants it has that edge moved onto the class card. Runs over the whole
+    // payload because it writes to a different entity than it reads.
+    invertAutoGrants(entities);
     final metadata = <String, dynamic>{
       ...?(payload['metadata'] as Map?)?.cast<String, dynamic>(),
       ...?extraMetadata,

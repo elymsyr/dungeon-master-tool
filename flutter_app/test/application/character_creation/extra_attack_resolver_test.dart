@@ -2,58 +2,50 @@ import 'package:dungeon_master_tool/application/character_creation/extra_attack_
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Entity _class(String name) => Entity(
+/// A class card whose `features` level table hands out [byLevel]'s feat ids.
+/// That table is the only declaration of when a feature arrives.
+Entity _class(String name, {Map<int, List<String>> byLevel = const {}}) =>
+    Entity(
       id: 'class-${name.toLowerCase()}',
       name: name,
       categorySlug: 'class',
-      fields: const {},
+      fields: {
+        'features': [
+          for (final e in byLevel.entries)
+            {
+              'level': e.key,
+              'name': '$name L${e.key}',
+              'granted_feat_refs': e.value,
+            },
+        ],
+      },
     );
 
 Entity _feat({
   required String id,
   required String name,
-  required List<Map<String, dynamic>> autoGrantedBy,
   required Map<String, dynamic> grants,
 }) =>
-    Entity(
-      id: id,
-      name: name,
-      categorySlug: 'feat',
-      fields: {
-        'auto_granted_by': autoGrantedBy,
-        ...grants,
-      },
-    );
-
-Map<String, dynamic> _grantBy(String sourceName, int atLevel) => {
-      'source': 'class',
-      'source_ref': {'slug': 'class', 'name': sourceName},
-      'at_level': atLevel,
-    };
+    Entity(id: id, name: name, categorySlug: 'feat', fields: grants);
 
 Map<String, dynamic> _extra(int value) => {'extra_attack_count': value};
 
 Map<String, Entity> _fighterFeats() {
   final l5 = _feat(
-    id: 'feat-extra-5',
-    name: 'Extra Attack (Fighter)',
-    autoGrantedBy: [_grantBy('Fighter', 5)],
-    grants: _extra(2),
-  );
-  final l11 = _feat(
-    id: 'feat-extra-11',
-    name: 'Two Extra Attacks',
-    autoGrantedBy: [_grantBy('Fighter', 11)],
-    grants: _extra(3),
-  );
+      id: 'feat-extra-5', name: 'Extra Attack (Fighter)', grants: _extra(2));
+  final l11 =
+      _feat(id: 'feat-extra-11', name: 'Two Extra Attacks', grants: _extra(3));
   final l20 = _feat(
-    id: 'feat-extra-20',
-    name: 'Three Extra Attacks',
-    autoGrantedBy: [_grantBy('Fighter', 20)],
-    grants: _extra(4),
-  );
+      id: 'feat-extra-20', name: 'Three Extra Attacks', grants: _extra(4));
   return {l5.id: l5, l11.id: l11, l20.id: l20};
 }
+
+/// The Fighter card that grants them: L5 / L11 / L20.
+Entity _fighter() => _class('Fighter', byLevel: const {
+      5: ['feat-extra-5'],
+      11: ['feat-extra-11'],
+      20: ['feat-extra-20'],
+    });
 
 void main() {
   group('resolveExtraAttackCountAt', () {
@@ -72,7 +64,7 @@ void main() {
     test('returns 0 when level < 1', () {
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 0,
           entities: _fighterFeats(),
@@ -84,7 +76,7 @@ void main() {
     test('returns 0 for Fighter L4 (below threshold)', () {
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 4,
           entities: _fighterFeats(),
@@ -96,7 +88,7 @@ void main() {
     test('returns 2 for Fighter L5', () {
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 5,
           entities: _fighterFeats(),
@@ -108,7 +100,7 @@ void main() {
     test('returns 3 for Fighter L11', () {
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 11,
           entities: _fighterFeats(),
@@ -120,7 +112,7 @@ void main() {
     test('returns 4 for Fighter L20', () {
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 20,
           entities: _fighterFeats(),
@@ -133,7 +125,7 @@ void main() {
       final feats = _fighterFeats();
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: _fighter(),
           subclassEntity: null,
           level: 15,
           entities: feats,
@@ -148,16 +140,18 @@ void main() {
       final feat = _feat(
         id: 'feat-table',
         name: 'Extra Attack (table)',
-        autoGrantedBy: [_grantBy('Fighter', 5)],
         grants: const {
           'extra_attack_count': 2,
           'extra_attack_count_by_level': {'5': 2, '11': 3, '20': 4},
         },
       );
       final entities = {feat.id: feat};
+      final fighter = _class('Fighter', byLevel: const {
+        5: ['feat-table'],
+      });
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: fighter,
           subclassEntity: null,
           level: 11,
           entities: entities,
@@ -166,7 +160,7 @@ void main() {
       );
       expect(
         resolveExtraAttackCountAt(
-          classEntity: _class('Fighter'),
+          classEntity: fighter,
           subclassEntity: null,
           level: 20,
           entities: entities,
@@ -175,7 +169,7 @@ void main() {
       );
     });
 
-    test('ignores feats not auto-granted by the active class', () {
+    test('a class whose table names none of them gets nothing', () {
       final feats = _fighterFeats();
       expect(
         resolveExtraAttackCountAt(

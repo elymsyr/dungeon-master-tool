@@ -46,8 +46,9 @@ List<Map<String, dynamic>> srdSubclasses() => [
                 traits: [ref('trait', 'Frenzy')]),
             _fg(6, 'Mindless Rage',
                 'Immune to Charmed and Frightened conditions while Raging. If Charmed/Frightened when entering Rage, the condition ends.',
-                traits: [ref('trait', 'Mindless Rage')],
-                feats: [ref('feat', 'Mindless Rage')]),
+                // No `feats:` here — the Mindless Rage feature feat wires
+                // itself onto this row via `_sf(subclassName:, atLevel:)`.
+                traits: [ref('trait', 'Mindless Rage')]),
             _fg(10, 'Retaliation',
                 'When you take damage from a creature within 5 feet, take a Reaction to make one melee attack against it.',
                 reactions: [ref('creature-action', 'Retaliation')]),
