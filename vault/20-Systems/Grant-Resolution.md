@@ -13,7 +13,7 @@ tags: [system]
 > **Supersedes the Effect DSL (removed 2026-07-28).** There is no longer a `kind`/`target_kind`/`value`/`predicates`/`scales_with`/`activation` row language, no effect-kind catalog and no predicate evaluator. See [[#What replaced the Effect DSL]].
 
 ## Participants
-- [[srd_helpers]] — authoring side: `packEntity`, `lookup`/`ref` placeholders, `autoGrantBy`, `eqGroup`/`eqOption`/`eqItem`. (The `effect`/`predicate`/`scalesByClass`/`activation` builders are gone.)
+- [[srd_helpers]] — authoring side: `packEntity`, `lookup`/`ref` placeholders, `withFeatureGrant`, `eqGroup`/`eqOption`/`eqItem`. (The `effect`/`predicate`/`scalesByClass`/`activation` builders are gone, and so is `autoGrantBy` — see [[#The auto-grant edge was inverted]].)
 - `builtin/content.dart` — `_FB.grantBlock(...)` emits the shared grant-block fields onto a category.
 - [[character_resolver]] — application side: `applyGrantsFrom` is the **single reader** of those fields.
 - [[effective_character]] — output view (carries `warnings` for dropped refs and `mechanicalNotes` for prose rules).
@@ -72,6 +72,15 @@ Removed 2026-07-28. Measured before the change: of 70 catalogued effect kinds, 2
 | `rules/dnd5e_rule_catalog.dart`, `rule_definition.dart`, `rule_validator.dart`, `rule_catalog_provider.dart` | deleted; `rule_config.dart` (ASI levels, PB breakpoints, hit-die→HP, AC constants) survives at `schema/rule_config.dart` |
 
 Existing data is converted by `migrateRuleEffects` ([[rule_effects_migration]]), wired into world load, built-in synth and package import, so no card loses a mechanic. Unconvertible rows become prose notes rather than disappearing.
+
+## The auto-grant edge was inverted
+Removed 2026-07-29, same principle one level up. A Feat used to name the card that hands it out (`feat.auto_granted_by: [{source, source_ref, at_level}]`), so "Paladin gains this at level 9" was stated on the *feat*, invisible on the Paladin card, and the resolver had to scan every feat in the world to answer "what does this class grant?".
+
+Now the **granting card states it, once**: `class`/`subclass` on the `features` row for that level (`granted_feat_refs` / `granted_trait_refs`), `species`/`subspecies` on flat `granted_feat_refs` (no level table), `background` on `origin_feat_ref`. `feat.auto_granted_by` and `FieldType.autoGrantSources` are deleted; [[character_resolver]] Pass 4b now walks the chosen cards instead of the world.
+
+Authoring keeps the old ergonomics without the old data shape: `withFeatureGrant` stamps a build-time-only `_feature_grant` marker that `buildSrdCorePack` Pass 0 (`wireFeatureGrants`) moves onto the source card and strips, so it never reaches `attributes`. Pre-existing world/package data is converted by `invertAutoGrants` (`data/schema/auto_grant_inversion.dart`), a cross-entity migration hooked into world load and package import; a missing source card becomes a `mechanical_notes` line rather than a dropped grant. Guarded by `test/domain/services/feature_grant_edge_test.dart` (15 tests).
+
+> **Consequence for imported content.** A class or subclass with no `features` rows grants nothing, whatever its description says. Every bundled Open5e subclass is currently in that state — see `flutter_app/docs/open5e_content_audit.md`.
 
 ## Related
 - MoCs: [[Character-System]], [[Content-Pipeline]]

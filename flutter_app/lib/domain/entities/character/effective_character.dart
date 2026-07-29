@@ -117,8 +117,9 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// surfaces them separately so the UI can render them under "Class
     /// Features" rather than "Chosen Feats".
     @Default([]) List<String> autoGrantedFeatIds,
-    /// Trait IDs auto-granted by class level / species / background via
-    /// `auto_granted_by` or species `trait_refs`. A trait's grant block is
+    /// Trait IDs auto-granted by class level / species / background — named by
+    /// the granting card, on a class/subclass `features` row for the level or
+    /// on the species' `trait_refs`. A trait's grant block is
     /// applied like a feat's; the list also drives display of class/species
     /// features (e.g. Druidic, Fey Ancestry) on the character sheet.
     @Default([]) List<String> autoGrantedTraitIds,

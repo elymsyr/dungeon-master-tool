@@ -16,10 +16,22 @@
 // leaves intact and `CharacterResolver._resolveRef` name-resolves at runtime
 // against installed content (a clean no-op if the target pack isn't installed).
 //
-// Honest source limits (left empty, not faked): leveled class `features`/subclass
-// `granted_at_level` (Open5e `ClassFeature` rows have no level field), class
-// `primary_ability` (empty in source), feat effect/ASI DSL, and any "of your
-// choice" grant — all stay folded in the description.
+// Known gaps, tracked in `docs/open5e_content_audit.md`:
+//
+//   * Leveled class `features` and `subclass.granted_at_level` are empty. This
+//     is NOT a source limit — `ClassFeature` itself has no level, but its child
+//     `ClassFeatureItem` does (`level` 0-20, plus `column_value` for the class
+//     table), and every Open5e document that ships classes ships
+//     `ClassFeatureItem.json`. `build_packs.dart` simply never loads that file.
+//     See audit §A1 / §4.1-4.2.
+//   * Species/background grants are matched by trait *name* here, while Open5e
+//     tags every trait and benefit row with a `type` (`MODIFICATION_TYPES`).
+//     That is why `size_ref` lands on 63% of species and `granted_tool_refs` on
+//     no background at all. See audit §4.3-4.4.
+//
+// Genuine source limits (left empty, not faked): class `primary_ability` (empty
+// in the shipped documents), feat effect DSL, and any "of your choice" grant —
+// all stay folded in the description.
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/_helpers.dart';
 
 import '../loaders.dart';

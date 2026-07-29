@@ -1,11 +1,21 @@
 # Open5e → Content Packages — Roadmap & Reference
 
-**Status:** P0–P5 shipped — all v2 content built (22 packages: ~3,540 monsters,
-~1,955 spells, ~2,319 magic items, 26 classes + 125 subclasses, 63 species, 58
-backgrounds, 91 feats). Only P2 (marketplace publish) remains; user reviews the
-content before any publish.
+**Status:** P0–P5 shipped. **19 packages bundled** in `assets/open5e_packs/`:
+2,885 monsters, 8,615 creature-actions, 6,423 traits, 1,297 spells, 1,063 magic
+items, 2 classes + 101 subclasses, 11 species + 30 subspecies, 53 backgrounds,
+73 feats, 159 synthesised gear rows. P2 (marketplace publish) remains.
+
+> The counts below the header describe *entities*, not field coverage. The
+> bundled chargen content is substantially under-filled — 1 of 8 declared
+> `subclass` fields is ever written, and `ClassFeatureItem.json` (which carries
+> the level a class feature is gained at) is never loaded. The per-field state,
+> its causes, and the remediation roadmap live in
+> **[`open5e_content_audit.md`](open5e_content_audit.md)**; regenerate its
+> numbers with `dart run tool/open5e_import/bin/audit_packs.dart`.
+
 **Author tooling:** `flutter_app/tool/open5e_import/`
-**Source data:** `open5e-api-staging/data/` (58 MB, read-only)
+**Source data:** `open5e-api-staging/data/` (58 MB, read-only, **gitignored** —
+not present in a fresh clone; restore it before rebuilding packs)
 
 ---
 
@@ -100,12 +110,19 @@ Each monster pack also carries its creature-action + trait child entities (e.g.
 `open5e-tob` = 391 monsters + 1303 actions + 1039 traits). **0 unresolved refs**
 across all packs. Total bundled asset weight ≈ **32 MB** (see R6).
 
-**P5 char-build content** (descriptive) folds into the same per-document packages
-and adds three more documents (`a5e-ddg`, `a5e-gpg`, `open5e-2024` — backgrounds/
-subclasses only), for **22 packages** total: 26 base classes + 125 subclasses
-(largest: `toh` 76 subclasses), 63 species (`toh` 40, `srd-2014` 13), 58
-backgrounds (`a5e-ag` 21), 91 feats (`a5e-ag` 59). Child feature/trait/benefit
-rows are folded into each entity's `description` markdown (see §6).
+**P5 char-build content** folds into the same per-document packages and adds
+`a5e-ddg` + `a5e-gpg` (backgrounds only).
+
+> **Corrections (2026-07-29).** The counts above are *source* counts, taken before
+> the SRD-overlap skip was applied. What actually ships in `assets/open5e_packs/`
+> is **19 packages**, not 22: the two `srd-*` rows in the table are built-time
+> skips (`build_packs.dart` `doc.isSrdOverlap`), and `open5e-2024` produces no
+> pack at all — worth confirming, see audit §A2. That removes the SRD half of the
+> chargen content, so the bundled totals are **2 base classes + 101 subclasses,
+> 11 species + 30 subspecies, 53 backgrounds, 73 feats** (`toh` is the largest at
+> 76 subclasses). No entity is lost — the SRD chargen rows ship in the built-in
+> pack instead. Field coverage is a separate matter:
+> [`open5e_content_audit.md`](open5e_content_audit.md).
 
 ---
 
@@ -223,21 +240,30 @@ weapon/armor entities to point at).
 Magic weapons/armor/shields (e.g. from Vault of Magic) ARE captured via the
 magic-item mapper.
 
-### Class / subclass / species / background / feat — `mappers/chargen.dart`, DONE
+### Class / subclass / species / background / feat — `mappers/chargen.dart`
 
-Descriptive only (locked policy). For every type, the parent `desc` plus its
-child rows (joined by `parent` slug) are folded into one `description` markdown
-(`### <child name>` blocks). **No grant/effect DSL and no inter-entity `_ref`**
-is emitted, so these render as reference cards but never dangle and don't
-auto-wire into level-up.
+> **Superseded in part.** The "descriptive only" policy below was the P5 shipping
+> decision; the mapper has since grown real field mapping (species grants, feat
+> prereq clauses + ASI, background equipment groups, subclass `parent_class_ref`).
+> For what is actually filled today, and what is still missing and why, read
+> **[`open5e_content_audit.md`](open5e_content_audit.md)** — it supersedes this
+> subsection and §6.
+
+For every type, the parent `desc` plus its child rows (joined by `parent` slug)
+are folded into one `description` markdown (`### <child name>` blocks). On top of
+that fold, each type fills the typed fields it can derive:
 
 | Type | Source rows | app slug | typed fields filled | folded child |
 |---|---|---|---|---|
-| Class (base, `subclass_of==null`) | `CharacterClass` | `class` | `hit_die` (`D12`→12), `saving_throw_refs` (abbrev→ability), `primary_ability_ref` (when present), `caster_kind` (FULL/HALF/PACT/NONE→Full/Half/Pact/None) | `ClassFeature` |
-| Class (`subclass_of` set) | `CharacterClass` | `subclass` | — (parent class name → tag + `*Subclass of …*` header) | `ClassFeature` |
-| Species (+ subspecies) | `Species` | `species` | — (subspecies → parent tag) | `SpeciesTrait` |
-| Background | `Background` | `background` | — | `BackgroundBenefit` |
-| Feat | `Feat` | `feat` | `repeatable=false`; `prerequisite` → `**Prerequisite:**` header | `FeatBenefit` |
+| Class (base, `subclass_of==null`) | `CharacterClass` | `class` | `hit_die`, `saving_throw_refs`, `caster_kind` (source or inferred), armor/weapon/skill proficiencies parsed from the Proficiencies feature | `ClassFeature` |
+| Class (`subclass_of` set) | `CharacterClass` | `subclass` | `parent_class_ref` (in-pack `ref`, else runtime `softRef`) | `ClassFeature` |
+| Species (+ subspecies) | `Species` | `species` / `subspecies` | `size_ref`, `speed_ft`, `creature_type_ref`, `parent_species_ref`, plus grant-block keys parsed from trait prose | `SpeciesTrait` |
+| Background | `Background` | `background` | `granted_skill_refs`, `granted_language_count`, `ability_score_options`, `equipment_choice_groups`, `origin_feat_ref` | `BackgroundBenefit` |
+| Feat | `Feat` | `feat` | `category_ref`, `prerequisite` + `prereq_clauses`, `asi_*`, a conservative grant subset | `FeatBenefit` |
+
+Three ref flavours: `ref()` for in-pack targets (build fails if unresolved),
+`lookup()` for Tier-0 values (resolved at import), and `softRef()` for cross-pack
+targets that `CharacterResolver._resolveRef` name-resolves at runtime.
 
 Name collisions (3rd-party docs reuse generic subclass/feat names) are
 disambiguated with a ` (Parent)` / ` (n)` suffix so `pack.add` never silently
@@ -298,10 +324,12 @@ an install dialog listing all 19 packs with their per-type counts.
 ## 6. Depth policy & known limitations
 
 - Monsters/spells/items: **fully usable** (render from stat fields + text).
-- Classes/species/feats/backgrounds: **descriptive only**. They appear as cards
-  with their text but do **not** auto-grant features on level-up. This is an
-  accepted trade-off (no effect/grant DSL parsing). Surface a "reference content"
-  label in the UI for these categories (P5).
+- Classes/species/feats/backgrounds: **partially wired**. Species and feats do
+  auto-grant what the mapper could parse; classes and subclasses still grant
+  nothing on level-up, because `ClassFeatureItem.json` — the fixture carrying the
+  level a feature is gained at — is never loaded. The original P5 note claimed
+  this was a source limit; it is not. Per-field state and the fix roadmap:
+  [`open5e_content_audit.md`](open5e_content_audit.md).
 - Per-monster: `legendary_action_uses` defaults to 3 (Open5e omits the count);
   secondary/extra attack damage stays in the action description.
 
@@ -370,14 +398,21 @@ are excluded from publish by default to avoid duplicate listings.
   schools/casting-units/durations/components/categories/rarities resolved to
   canonical Tier-0 names — **zero** spell/item lookup misses. Goldens locked.
   Mundane SRD weapons/armor/gear deliberately not imported (built-in duplicates).
-- **P5 — Classes / species / feats / backgrounds (descriptive) (DONE).**
-  `mappers/chargen.dart`: 26 base classes + 125 subclasses, 63 species, 58
-  backgrounds, 91 feats across 11 source docs. Child feature/trait/benefit rows
-  folded into `description` markdown; only safe class scalars (hit die, saves,
-  primary ability, caster kind) typed. No grant DSL, no dangling refs. Golden:
-  Barbarian (hit_die 12 / Con+Str saves / folded features), Grappler (prereq).
+- **P5 — Classes / species / feats / backgrounds (DONE, under-filled).**
+  `mappers/chargen.dart`, shipping 2 base classes + 101 subclasses, 11 species +
+  30 subspecies, 53 backgrounds, 73 feats (the SRD-document chargen rows ship via
+  the built-in pack instead). Child feature/trait/benefit rows folded into
+  `description` markdown, plus typed fields where derivable. No dangling refs.
+  Golden: Barbarian (hit_die 12 / Con+Str saves / folded features), Grappler
+  (prereq). **Field coverage is incomplete** — 1 of 8 `subclass` fields is ever
+  written and no class ships a level table. See P7.
 - **P6 — Media (optional, deferred).** Per-entity art via the existing R2 pipeline
   under media limits, only if revisited.
+- **P7 — Content audit & backfill (OPEN).** Per-field state, root causes and the
+  phased remediation plan live in
+  [`open5e_content_audit.md`](open5e_content_audit.md); numbers regenerate via
+  `dart run tool/open5e_import/bin/audit_packs.dart`. Blocked on restoring the
+  gitignored `open5e-api-staging/` snapshot.
 
 ---
 
