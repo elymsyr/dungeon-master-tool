@@ -70,6 +70,31 @@ void main(List<String> args) {
   print('  $credited with banner credit');
 }
 
+/// Catalog slugs a pack depends on, read from its `metadata.links` — the same
+/// `[{package_id, name}]` shape the app persists in `packages.state_json`.
+/// A link may name the target by catalog slug or by `package_id`; both are
+/// emitted verbatim and resolved against the manifest at install time, where an
+/// unknown slug is skipped rather than failing.
+///
+/// Empty for every pack today: the importer does not yet declare links (the
+/// official packs still carry their own copies of SRD content — see
+/// `docs/open5e_content_audit.md`). This is the wiring so that stops being a
+/// code change when they do.
+List<String> _requiredSlugs(Map<String, dynamic> meta) {
+  final raw = meta['links'];
+  if (raw is! List) return const [];
+  final out = <String>[];
+  for (final item in raw) {
+    if (item is! Map) continue;
+    final slug = (item['slug'] ?? item['package_id'] ?? item['name'] ?? '')
+        .toString()
+        .trim();
+    if (slug.isEmpty || out.contains(slug)) continue;
+    out.add(slug);
+  }
+  return out;
+}
+
 /// Parse `banner-credits.yaml` into `slug -> {creator, link}`. Returns empty
 /// when the file is missing so the catalog still builds without it.
 Map<String, Map<String, String>> _bannerCredits(String root) {
@@ -119,6 +144,9 @@ List<Map<String, dynamic>> _packageEntries(String root, File manifest) {
       'attribution': (meta['attribution'] as String?) ?? '',
       'game_system': (meta['game_system'] as String?) ?? p['game_system'] ?? '',
       'is_srd_overlap': (meta['is_srd_overlap'] as bool?) ?? false,
+      // Package→package links declared by the pack, surfaced as catalog
+      // dependencies: installing this entry installs these slugs first.
+      'requires': _requiredSlugs(meta),
       'counts': (p['counts'] as Map?)?.cast<String, dynamic>() ?? const {},
       'bundled_asset': '$_open5eDir/$asset',
       'r2_path': 'package/$slug@$version.json.gz',
@@ -158,6 +186,7 @@ List<Map<String, dynamic>> _handAuthoredEntries(String root) {
         'attribution': (meta['attribution'] as String?) ?? '',
         'game_system': (meta['game_system'] as String?) ?? '',
         'is_srd_overlap': false,
+        'requires': _requiredSlugs(meta),
         'counts': (meta['counts'] as Map?)?.cast<String, dynamic>() ?? const {},
         'bundled_asset': '$_firstPartyDir/$type/$name',
         'r2_path': '$type/$slug@$version.json.gz',

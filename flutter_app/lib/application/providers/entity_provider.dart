@@ -22,11 +22,11 @@ import '../services/reference_indexer.dart';
 import '../services/event_bus.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/undo_redo_mixin.dart';
-import 'builtin_package_provider.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
 import 'online_worlds_provider.dart';
+import 'package_link_provider.dart' show packageReferenceOverlayProvider;
 import 'role_provider.dart';
 import 'auth_provider.dart';
 import 'save_state_provider.dart';
@@ -267,19 +267,20 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// tekrar açarsa yeni bir kopya forklayabilir.
   final Map<String, String> _recentForks = {};
 
-  /// When true (package-screen scope only), the built-in SRD pack's entities
-  /// are overlaid into [state] as read-only reference rows. See
+  /// Package name whose reference overlay to apply (package-screen scope
+  /// only), or null for no overlay. The overlay is the built-in SRD pack PLUS
+  /// every package this one links, injected as read-only reference rows. See
   /// [_applyReferenceOverlay].
-  final bool _overlaySrdReference;
+  final String? _referenceOverlayFor;
 
-  /// Ids of the SRD reference-overlay entities currently injected into
-  /// [state]. These never persist — every write path skips them.
+  /// Ids of the reference-overlay entities currently injected into [state].
+  /// These never persist — every write path skips them.
   final Set<String> _referenceEntityIds = {};
 
   EntityNotifier(
       this._campaign, this._ref, this._onDirty, this._eventBus, this._buffer,
-      {bool overlaySrdReference = false})
-      : _overlaySrdReference = overlaySrdReference,
+      {String? referenceOverlayFor})
+      : _referenceOverlayFor = referenceOverlayFor,
         super({}) {
     _loadFromCampaign();
     // Reload when the active campaign's data is mutated in-place
@@ -310,25 +311,29 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       if (changed) state = patched;
     });
     // Package-screen reference overlay: inject the read-only built-in SRD
-    // entities so every package's category lists (conditions, damage types,
-    // spells, ...) render even when the package itself carries none. Loaded
-    // async from the installed SRD package; the listen re-applies once the
+    // entities plus every linked package's entities, so the package's category
+    // lists (conditions, damage types, spells, ...) render even when the
+    // package itself carries none. Loaded async; the listen re-applies once the
     // future resolves. `_loadFromCampaign` above already applied a first pass
     // (a no-op until the provider resolves), and re-applies on every reload.
-    if (_overlaySrdReference) {
-      _ref.listen(srdReferenceEntitiesProvider, (_, next) {
+    final overlayFor = _referenceOverlayFor;
+    if (overlayFor != null) {
+      _ref.listen(packageReferenceOverlayProvider(overlayFor), (_, next) {
         if (next.hasValue) _applyReferenceOverlay();
       });
     }
   }
 
-  /// Merges the read-only built-in SRD reference entities on top of the
-  /// package-own [state]. Package-own rows win on id collision (overlay is
-  /// skipped for ids already present). Records injected ids in
+  /// Merges the read-only reference entities (built-in SRD + linked packages)
+  /// on top of the package-own [state]. Package-own rows win on id collision
+  /// (overlay is skipped for ids already present). Records injected ids in
   /// [_referenceEntityIds] so persistence paths never write them back into the
-  /// package. No-op until [srdReferenceEntitiesProvider] resolves.
+  /// package. No-op until [packageReferenceOverlayProvider] resolves.
   void _applyReferenceOverlay() {
-    final overlay = _ref.read(srdReferenceEntitiesProvider).valueOrNull;
+    final overlayFor = _referenceOverlayFor;
+    if (overlayFor == null) return;
+    final overlay =
+        _ref.read(packageReferenceOverlayProvider(overlayFor)).valueOrNull;
     if (overlay == null || overlay.isEmpty) return;
     final next = Map<String, Entity>.from(state);
     _referenceEntityIds.clear();
@@ -391,10 +396,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
     state = entities;
 
-    // `_loadFromCampaign` replaces `state` wholesale, so the read-only SRD
+    // `_loadFromCampaign` replaces `state` wholesale, so the read-only
     // reference overlay must be re-applied after every reload (initial mount,
     // cloud restore, template update).
-    if (_overlaySrdReference) _applyReferenceOverlay();
+    if (_referenceOverlayFor != null) _applyReferenceOverlay();
   }
 
   void undo() {

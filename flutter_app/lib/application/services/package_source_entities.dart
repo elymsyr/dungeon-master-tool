@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/database_provider.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
+import '../providers/package_link_provider.dart';
 import '../providers/package_provider.dart';
 import 'builtin_srd_entities.dart';
 import 'package_import_service.dart';
@@ -88,6 +89,25 @@ List<String> sourcePackagesOf(Character character) {
   return const [];
 }
 
+/// Transitive link closure of [packageNames] as names, or the input unchanged
+/// while the closure is still loading. A package the user picked pulls in the
+/// packages it links, so a class/species borrowed from a linked pack
+/// dereferences the same way it does inside the package editor.
+/// `Ref.watch` / `WidgetRef.watch` share this shape, so the helpers below work
+/// from providers and widgets alike (same trick as `world_packages_provider`).
+typedef PackageWatch = T Function<T>(ProviderListenable<T> p);
+
+List<String> expandedPackageNames(
+    PackageWatch watch, List<String> packageNames) {
+  if (packageNames.isEmpty) return packageNames;
+  final closure =
+      watch(packageLinkClosureOfAllProvider(packageSetKey(packageNames)))
+          .valueOrNull;
+  // Empty means nothing resolved locally — keep the caller's list rather than
+  // silently dropping every source.
+  return (closure == null || closure.isEmpty) ? packageNames : closure;
+}
+
 /// Layers a character's installed [packageNames] on top of [base] (packages
 /// win id collisions). [readPackage] returns the loaded entity map for a
 /// package name, or null while its future is still in flight — callers must
@@ -95,14 +115,18 @@ List<String> sourcePackagesOf(Character character) {
 /// (resolver, stat chips, editor) so official-package refs dereference
 /// everywhere the wizard already resolved them. Returns [base] unchanged when
 /// the character has no source packages or none have loaded yet.
+///
+/// [watch] is the caller's `ref.watch`, used to expand [packageNames] over
+/// their link closure before layering.
 Map<String, Entity> layerCharacterPackages(
+  PackageWatch watch,
   Map<String, Entity> base,
   List<String> packageNames,
   Map<String, Entity>? Function(String name) readPackage,
 ) {
   if (packageNames.isEmpty) return base;
   final maps = <Map<String, Entity>>[];
-  for (final name in packageNames) {
+  for (final name in expandedPackageNames(watch, packageNames)) {
     final m = readPackage(name);
     if (m != null && m.isNotEmpty) maps.add(m);
   }
@@ -112,10 +136,11 @@ Map<String, Entity> layerCharacterPackages(
   );
 }
 
-/// Merges the built-in SRD map with every package in [packageNames], packages
-/// layering on top (later names win id collisions). Package maps still
-/// loading contribute nothing yet — the caller re-runs when their futures
-/// settle (both call sites watch [packageEntitiesProvider] reactively).
+/// Merges the built-in SRD map with every package in [packageNames] *and the
+/// packages those link*, packages layering on top (later names win id
+/// collisions). Package maps still loading contribute nothing yet — the caller
+/// re-runs when their futures settle (both call sites watch
+/// [packageEntitiesProvider] reactively).
 Map<String, Entity> mergeBuiltinWithPackages(
   Ref ref,
   Map<String, Entity> builtin,
@@ -123,7 +148,9 @@ Map<String, Entity> mergeBuiltinWithPackages(
 ) {
   if (packageNames.isEmpty) return builtin;
   final merged = <String, Entity>{...builtin};
-  for (final name in packageNames) {
+  // Closure is dependency-ordered (links first), so a picked package still
+  // wins an id collision against the packages it borrows from.
+  for (final name in expandedPackageNames(ref.watch, packageNames)) {
     final map = ref.watch(packageEntitiesProvider(name)).valueOrNull;
     if (map == null) continue;
     merged.addAll(map);

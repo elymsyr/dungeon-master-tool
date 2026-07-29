@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: world-content
-updated: 2026-06-09
+updated: 2026-07-29
 tags: [moc]
 ---
 
@@ -16,6 +16,8 @@ tags: [moc]
 - [[entity]] — generic schema-driven `@freezed` entity (fields map keyed by FieldSchema).
 - [[world_entities_dao]] — entity queries by world/category.
 - [[package_import_service]] · [[package_sync_service]] · [[package_payload_importer]] — ingest/sync/parse packages.
+- [[world_package_installer]] — the one way to install a package (+ its link closure) into a world.
+- [[package_link_service]] — package→package link graph (closure, cycles, dangling). See [[Package-Links]].
 - [[packages_dao]] · [[personal_packages_dao]] — package storage.
 - [[world_schema]] · [[entity_category_schema]] · [[field_schema]] — schema model (73 categories, Tier-0/Tier-1).
 - [[first_party_catalog_service]] — official catalog fetch (R2 → cache → bundled).
@@ -24,6 +26,9 @@ tags: [moc]
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.
+
+## Systems
+- [[Package-Links]] — a package borrows another's content instead of duplicating it; links follow it into worlds and downloads.
 
 ## Related Domains
 - [[Content-Pipeline]] (source of packages) · [[Character-System]] (consumes entities) · [[Data-Layer]] · [[Backend-Infra]] (marketplace, catalog).

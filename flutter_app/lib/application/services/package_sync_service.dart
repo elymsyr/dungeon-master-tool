@@ -41,10 +41,20 @@ class PackageSyncService {
   /// state. Resolver translates Tier-0 lookup placeholders embedded in the
   /// package entity attributes — pass null when the package's pack rows
   /// already store resolved IDs.
+  ///
+  /// [foreignRefs] maps pack-entity ids owned by *other* packages to the ids
+  /// they already carry in this world (real `world_entities` ids, or the
+  /// deterministic synth ids of the built-in pack). Without it a card that
+  /// references a linked package's entity — which is exactly what the package
+  /// editor's reference overlay lets you author — would keep the foreign
+  /// pack-side id and dangle in the world. Build it with
+  /// `WorldPackageInstaller.buildForeignRefIndex`. This package's own rows
+  /// always win a key collision.
   Future<PackageSyncResult> sync({
     required String worldId,
     required String packageId,
     Map<String, dynamic> Function(Map<String, dynamic> attrs)? resolveAttrs,
+    Map<String, String>? foreignRefs,
   }) async {
     return _db.transaction(() async {
       // Load current pack entities.
@@ -64,8 +74,10 @@ class PackageSyncService {
 
       // Build pack_id → world_id map. Existing rows reuse their UUIDs;
       // new pack rows get fresh UUIDs minted now so cross-references in
-      // the same batch resolve in one pass.
+      // the same batch resolve in one pass. Foreign (linked-package) ids seed
+      // the map first so this package's own rows overwrite them on collision.
       final packToWorld = <String, String>{};
+      if (foreignRefs != null) packToWorld.addAll(foreignRefs);
       for (final pack in packRows) {
         final existing = byPackEntId[pack.id];
         packToWorld[pack.id] = existing?.id ?? _uuid.v4();

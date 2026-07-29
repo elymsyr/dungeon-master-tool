@@ -21,10 +21,11 @@ final builtinPackageIdProvider = FutureProvider<String?>((ref) async {
 
 /// Read-only snapshot of the built-in SRD pack's entities, parsed into typed
 /// [Entity] objects (every category — Tier-0 lookups like conditions/damage
-/// types plus Tier-1 content like spells/monsters). Consumed by the
-/// package-screen reference overlay ([EntityNotifier] with
-/// `overlaySrdReference: true`) so every package's category lists render the
-/// SRD content without persisting any of it into that package.
+/// types plus Tier-1 content like spells/monsters). Feeds
+/// `packageReferenceOverlayProvider`, which unions it with the entities of
+/// every package the viewed package links; that union is what
+/// `EntityNotifier(referenceOverlayFor: …)` injects, so a package's category
+/// lists render SRD + linked content without persisting any of it.
 ///
 /// Source of truth is the installed SRD package row, so the overlay always
 /// matches what the SRD package itself shows. Marked `linked: true` so the UI

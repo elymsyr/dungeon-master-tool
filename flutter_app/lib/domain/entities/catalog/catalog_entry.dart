@@ -30,6 +30,13 @@ class CatalogEntry {
   final String? bannerCreditCreator;
   final String? bannerCreditLink;
 
+  /// Slugs of other catalog entries this package links, emitted by
+  /// `build_catalog.dart` from the pack's `metadata.links`. Installing this
+  /// entry installs its requirements first (transitively) so a package that
+  /// borrows another's content never lands half-resolved. Empty for every
+  /// self-contained pack.
+  final List<String> requires;
+
   const CatalogEntry({
     required this.itemType,
     required this.slug,
@@ -45,6 +52,7 @@ class CatalogEntry {
     required this.sizeBytes,
     this.bannerCreditCreator,
     this.bannerCreditLink,
+    this.requires = const [],
   });
 
   int get totalEntities => counts.values.fold(0, (a, b) => a + b);
@@ -66,5 +74,9 @@ class CatalogEntry {
         bannerCreditCreator:
             (j['banner_credit'] as Map?)?['creator'] as String?,
         bannerCreditLink: (j['banner_credit'] as Map?)?['link'] as String?,
+        requires: ((j['requires'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList(growable: false),
       );
 }

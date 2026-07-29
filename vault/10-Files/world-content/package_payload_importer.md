@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/package_payload_importer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -24,7 +24,7 @@ tags: [file]
 - Writes via `_repo.save(packageName, {...})` — `entities`, `world_schema` (live built-in v2 JSON), `template_id` = `builtinDnd5eV2SchemaId`, `template_original_hash` = `builtinDnd5eV2OriginalHash`, `metadata`.
 
 ## Dependencies & Links
-- Depends on: [[srd_core_pack]] (built-in v2 schema generator), `PackageRepository` (`package_repository`), [[packages_dao]] (via repo)
+- Depends on: [[srd_core_pack]] (built-in v2 schema generator), `PackageRepository` (`package_repository`), [[packages_dao]] (via repo), [[package_link_service]]
 - Used by: [[bundled_packs_bootstrap]], [[first_party_catalog_service]] (official-catalog installer)
 - Domain map: [[World-and-Content]]
 - System flow: [[Content-Pipeline]]
@@ -32,6 +32,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - **Name resolution**: prefers human title `metadata.title` (e.g. "Adventurer's Guide") over the machine slug `package_name` (e.g. `open5e-a5e-ag`); falls back to slug when no title.
+- **Link preservation (2026-07-29)**: `save` REPLACES `state_json`, so a re-install would drop the package's declared links. `install` reads them from the payload (`links` or `metadata.links` — how a built pack ships its dependencies) and falls back to whatever the local row already holds. See [[Package-Links]].
 - **Metadata merge order**: payload `metadata` <- `extraMetadata` <- forced `installed_from`. `installed_from` ('assets' bundled / 'official' R2 catalog) is read back by `packageMetadataProvider` to tag the source in the package list and is what the admin uninstall path keys on.
 - Always attaches `generateBuiltinDnd5eV2Schema().schema.toJson()` as the pack's `world_schema` — content is schema-versionless and follows the app's current built-in schema.
 

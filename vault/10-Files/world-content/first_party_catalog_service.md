@@ -5,7 +5,7 @@ path: flutter_app/lib/data/services/first_party_catalog_service.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -39,4 +39,5 @@ tags: [file]
 - HTTP helper `_get` maps `SocketException`/`HandshakeException`/`TimeoutException` -> `OfflineException` internally, non-200 -> `HttpException`; the public methods catch-and-fallback, so the OfflineException never escapes.
 
 ## Notes
+- **Dependencies (2026-07-29)**: manifest entries carry `requires` (catalog slugs), parsed onto `CatalogEntry.requires` and resolved transitively by `FirstPartyInstallNotifier.install` before the requested entry — a package installs with the packages it links. Emitted by [[build_catalog]] from the pack's `metadata.links`; empty for every pack today. See [[Package-Links]].
 - Worker not deployed at time of writing (P7 deferred per first-party catalog initiative). Banner upload via `cloudflare/upload_banners.sh`.

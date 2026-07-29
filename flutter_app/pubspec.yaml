@@ -74,6 +74,10 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   mocktail: ^1.0.0
+  # test/support/test_database.dart registers a sqlite3 library resolver so
+  # Drift-backed tests run on hosts that ship only libsqlite3.so.0 (no -dev
+  # package). Transitive via drift, declared here for the analyzer.
+  sqlite3: ^2.4.0
 
   # Code Generation
   build_runner: ^2.4.15
