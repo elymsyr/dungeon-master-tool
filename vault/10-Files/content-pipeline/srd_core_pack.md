@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/srd_core_pack.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-29
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 **Outputs**
 - `SrdCorePack buildSrdCorePack()` — `{entities: <uuid → wire-format entity>, metadata}`.
 - `srdStableEntityId(slug, name)` — `uuid.v5(_srdNamespaceUuid, 'slug:name')`, shared with `SrdCorePackageBootstrap`.
-- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.0.3'`.
+- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.0.5'`.
 
 ## Dependencies & Links
 - Depends on: [[srd-pack-content]] (all 20+ content files), [[srd_helpers]] (`packEntity`, `lookup`, `ref`), `package:uuid`.
@@ -40,4 +40,5 @@ tags: [file]
 - `trinket` slug intentionally unpopulated (SRD 5.2.1 omits the d100 trinket table).
 
 ## Notes
+- Every value authored into a row must be **JSON-encodable with String keys** — `jsonEncode` rejects a Map with int keys, and [[srd_core_package_bootstrap]] encodes each row's `attributes` verbatim. Level tables (`count_by_level`, `extra_attack_count_by_level`) therefore use `{'1': 2}`, not `{1: 2}`; `test/domain/srd_core_json_encodable_test.dart` guards this.
 - v1.0.3 added 14 magic-items + 7 spells ported from the dropped Open5e SRD packs (see Open5e Pack Consolidation memory). Subspecies became a first-class category in Jun 2026 (pack v1.0.2).
