@@ -971,9 +971,9 @@ const _abilityCode = {
   'charisma': 'CHA',
 };
 
-/// Typed fixed ability-score bonuses from an "Ability Score Increase" trait —
-/// `{kind: ability_score_bonus, ability: STR, value: N}` (matches built-in
-/// species). The "+N to ability scores each" wording grants all six; explicit
+/// Typed fixed ability-score bonuses from an "Ability Score Increase" trait,
+/// emitted into the `ability_bonuses` stat map that the built-in species use.
+/// The "+N to ability scores each" wording grants all six; explicit
 /// "X score increases by N" phrases grant that one. "of your choice" wording is
 /// intentionally left to the folded narrative (no fixed typing possible).
 /// Fixed ASI prose → `ability_bonuses` map entries ({'STR': 2, ...}).

@@ -308,17 +308,32 @@ void _checkChargenGrants(List<SourceDoc> docs) {
     return ids.containsAll({'A', 'B'}) && b['gold_gp'] == 50;
   }());
 
-  // B2: A5e armor-training benefit emitted as a proficiency_grant effect.
+  // B2: A5e armor-training benefit lands in the named grant field. Replaced
+  // the retired `effects: [{kind: proficiency_grant, target_kind:
+  // armor_category}]` row, which the resolver stopped reading in 2026-07.
   final a5e = buildChargen(docs.firstWhere((d) => d.slug == 'a5e-ag'));
   check('a5e-ag: no unresolved refs (${a5e.resolveRefs().length})',
       a5e.resolveRefs().isEmpty);
-  check('an a5e feat emits an armor proficiency_grant effect', () {
+  check('an a5e feat grants armor proficiency by name', () {
     return _ofType(a5e, 'feat').any((f) {
-      final effects = ((f['attributes'] as Map)['effects'] as List?) ?? const [];
-      return effects.cast<Map>().any((e) =>
-          e['kind'] == 'proficiency_grant' &&
-          e['target_kind'] == 'armor_category');
+      final refs = (f['attributes'] as Map)['granted_armor_proficiencies'];
+      return refs is List && refs.isNotEmpty;
     });
+  }());
+  // No mapper may reintroduce a per-card rule language.
+  check('no chargen card carries a retired DSL row', () {
+    for (final slug in const ['feat', 'background', 'class', 'subclass',
+        'species', 'subspecies']) {
+      for (final e in _ofType(a5e, slug)) {
+        final attrs = e['attributes'] as Map;
+        if (attrs.containsKey('rule_effects') ||
+            attrs.containsKey('granted_modifiers') ||
+            attrs.containsKey('effects')) {
+          return false;
+        }
+      }
+    }
+    return true;
   }());
 }
 
