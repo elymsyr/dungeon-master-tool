@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/{classes,subclasse
 layer: domain
 language: dart
 status: stable
-updated: 2026-07-28
+updated: 2026-07-29
 tags: [file]
 ---
 
