@@ -42,7 +42,7 @@ tags: [file]
 - `creature_actions.dart` → `srdCreatureActions()` — **137** creature-action rows referenced by monsters.
 
 ## Dependencies & Links
-- Depends on: [[srd_helpers]] (`packEntity`, `lookup`, `ref`, `autoGrantBy`, `eqGroup`), `dnd5e_constants`.
+- Depends on: [[srd_helpers]] (`packEntity`, `lookup`, `ref`, `withFeatureGrant`, `eqGroup`), `dnd5e_constants`.
 - Used by: [[srd_core_pack]] (`_rawRowsBySlug`).
 - Domain map: [[Content-Pipeline]]
 - System flow: [[Pack-Build-Two-Pass-Refgraph]], [[Grant-Resolution]]

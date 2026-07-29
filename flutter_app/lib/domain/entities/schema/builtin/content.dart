@@ -595,7 +595,7 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   // No grant block here: every mechanical grant a class makes already has a
   // typed home above (`saving_throw_refs`, `armor_training_refs`,
   // `caster_kind`, the level tables) and per-level features live on
-  // class-feature Feat cards wired up through `auto_granted_by`.
+  // class-feature Feat cards, named by the `features` row for their level.
 
   return _mk(
     schemaId: schemaId,
@@ -635,7 +635,8 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
   // No grant block — same rationale as Class: subclass mechanics ship as
-  // class-feature Feat cards keyed to the subclass via `auto_granted_by`.
+  // class-feature Feat cards, named by this card's `features` row for their
+  // level — the subclass states the edge, not the feat.
 
   return _mk(
     schemaId: schemaId,
