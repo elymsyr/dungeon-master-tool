@@ -126,6 +126,30 @@ Deleting a linked-to package from the hub is likewise **allowed**: the Packages
 tab warns which packages link it (`PackageLinkService.reverseLinks`) and the
 links go dangling.
 
+> The official-catalog install path ([[first_party_catalog_provider]]) resolves
+> `requires` on the way *in* but has no equivalent on the way *out* — that warning
+> is not wired there. It becomes load-bearing the moment the official packs stop
+> duplicating content and start linking one owner (audit phase L2/D2).
+
+## What links do **not** solve — content ownership
+
+The mechanism is finished; deciding *which* pack owns a shared name is content
+work, and the 2026-07-30 audit pass found the obvious heuristic wrong. A
+`(slug, name)` collision is a collision the resolver faces, **not** evidence the
+two cards say the same thing:
+
+- 90.3% of cross-pack shared `creature-action` / `trait` names carry different
+  text ("Multiattack" = 8 copies, 8 texts; "Amphibious" = 7 copies, 5 texts).
+- Those rows are **owned children**: a monster hard-`_ref`s them via
+  `action_refs` / `trait_refs`. There is nothing to link — collapsing them by name
+  moves another creature's text onto this creature.
+- Publishers restat deliberately (Level Up A5E vs SRD; Tome of Beasts 2016 vs the
+  2023 edition), so "same name" across documents is often "different game".
+
+Rule of thumb: link **library** content a pack genuinely re-ships (gear, spells,
+backgrounds, feats); never link, and never dedup, content a statblock owns. See
+`flutter_app/docs/open5e_content_audit.md` §2.5 and [[dupe_census]].
+
 ## Key Constants / Invariants
 
 - Closure order = dependency order = install order = collision precedence.

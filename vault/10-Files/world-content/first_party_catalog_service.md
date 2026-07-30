@@ -28,7 +28,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `CatalogEntry` (`catalog_entry`), `OfflineException` (`error_format`)
-- Used by: Marketplace official-content UI, official-catalog installer (-> [[package_payload_importer]])
+- Used by: Marketplace official-content UI, official-catalog installer [[first_party_catalog_provider]] (-> [[package_payload_importer]])
 - Domain map: [[World-and-Content]]
 - System flow: [[Content-Pipeline]]
 - Spec / reference: [[catalog-publish-ops]]

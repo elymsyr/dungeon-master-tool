@@ -40,3 +40,4 @@ tags: [file]
 
 ## Notes
 - Worker not yet deployed per the First-Party Catalog memory; legal/R2 publish approval is the remaining gate for the Open5e packs (P2). Run [[build_catalog]] first or it errors.
+- ⚠️ **Immutability + a constant `pack_version` means a content rebuild publishes nothing.** [[emit]] hardcodes `pack_version: '1.0.0'`, so every Open5e pack's `r2_path` is `package/<slug>@1.0.0.json.gz` and `_exists()` skips it. Republishing regenerated packs therefore reports *"19 skipped"* and no client sees the change; `--force` would overwrite a path the contract calls immutable and still gives clients no upgrade signal ([[first_party_catalog_provider]] never re-checks `catalog_version`). The fix is a real version bump upstream, not a flag here — audit doc phase **D1**.
