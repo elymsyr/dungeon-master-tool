@@ -19,6 +19,7 @@ tags: [moc]
 - [[emit]] — assemble wire-format `.pkg.json` + manifest + unmapped report.
 - [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
+- [[audit_packs]] · [[dupe_census]] — offline censuses over the shipped assets: *are the fields filled?* and *should this entity exist at all?*. Both back `flutter_app/docs/open5e_content_audit.md`.
 
 ## Key Files — SRD core + catalog
 - [[srd_core_pack]] — hand-authored SRD 5.2.1 package builder (two-pass).
@@ -34,5 +35,6 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
 - [[World-and-Content]] (installs packages) · [[Character-System]] (consumes effects) · [[Data-Layer]] (entity shape) · [[Backend-Infra]] (R2 catalog).
 
 ## Source Docs
+- `flutter_app/docs/open5e_content_audit.md` — **the active work item.** Single entry point for fixing official-pack content: empty fields, 20.9% duplicated entities, and refs written as prose. Its §2 ("never create what you can link") outranks every fill target in it.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

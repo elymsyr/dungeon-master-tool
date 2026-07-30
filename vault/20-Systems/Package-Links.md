@@ -1,7 +1,7 @@
 ---
 type: system
 domain: world-content
-updated: 2026-07-29
+updated: 2026-07-30
 tags: [system]
 ---
 
@@ -24,8 +24,20 @@ overlaid the built-in SRD pack into every *other* package's editing view, and
 could not be pointed at anything but SRD. Package links generalise it.
 
 Note this is the **mechanism** only. The official Open5e packs still carry their
-own copies of SRD-overlapping content — see `flutter_app/docs/open5e_content_audit.md`.
-Deduplicating them is separate work that this unblocks.
+own copies of SRD-overlapping content — measured 2026-07-30 by [[dupe_census]] at
+**4,331 of 20,712 bundled entities (20.9%)**, and every pack still emits
+`requires: []`. Deduplicating them is separate work that this unblocks; the plan
+is `flutter_app/docs/open5e_content_audit.md` §2 + Stage L.
+
+**Declaring a link in a built pack takes both keys.** A `metadata.links` entry is
+read by two different consumers that look at different fields:
+`build_catalog._requiredSlugs` reads `slug ?? package_id ?? name` and needs the
+**catalog slug** (`open5e-toh`), while `PackageLink.fromJson` ignores `slug`
+entirely and needs the **installed local name** — which is the target's
+`metadata.title` (`Tome of Heroes`), because [[package_payload_importer]] names
+the row after the title. Emit `{"slug": …, "name": …}`; either key alone fails
+silently on one side. No link to the built-in pack is needed or wanted: it is in
+scope everywhere already (below), and the catalog has no entry for it.
 
 ## Participants
 
