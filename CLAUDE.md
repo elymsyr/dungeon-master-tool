@@ -2,13 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Read the vault first
+## Always CodeGraph First
+
+In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+
+- **MCP tools** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them. `codegraph_node` returns one symbol's source + callers, or reads a whole file with line numbers. If the tools are listed but deferred, load them by name via tool search.
+- **Shell** (always works): `codegraph explore "<symbol names or question>"` and `codegraph node <symbol-or-file>` print the same output.
+
+If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+
+## Read the vault only needed
 
 `vault/` is a curated Obsidian knowledge base covering this codebase — **consult it before reading raw source.** It is maintained as a trustworthy substitute for source-diving, and keeping it current is part of the work.
 
 Its rules (mirrored from [vault/90-Meta/SOP.md](vault/90-Meta/SOP.md)):
 
-1. **Consult first** — before modifying logic or writing new code in an area, read the matching `vault/10-Files/<domain>/<basename>.md` (note name = source basename, e.g. `sync_engine.dart` → `vault/10-Files/sync/sync_engine.md`) or the domain Map-of-Content in `vault/00-Maps/`. Treat the note's Inputs/Outputs + Key Logic as the contract; open raw source only when the note is missing, stale, or insufficient.
+1. **Consult first if needed more detailed information** — before modifying logic or writing new code in an area, read the matching `vault/10-Files/<domain>/<basename>.md` (note name = source basename, e.g. `sync_engine.dart` → `vault/10-Files/sync/sync_engine.md`) or the domain Map-of-Content in `vault/00-Maps/`. Treat the note's Inputs/Outputs + Key Logic as the contract; open raw source only when the note is missing, stale, or insufficient.
 2. **Auto-update** — creating a new architecturally significant source file means creating its tracking note from `vault/90-Meta/Templates/File-Tracking-Note`, filing it in the right `10-Files/<domain>/`, and wiring links up to the domain MoC and laterally to deps/callers (bidirectional). Modifying a file enough to change behavior means updating its note's Key Logic + `updated:` date.
 3. **Maintain context** — new Supabase migration, new worker route, schema/version bump, or new domain → update the affected MoC and `vault/00-Maps/_Architecture-Overview.md`, and always append a line to `vault/90-Meta/Vault-Changelog.md`.
 
@@ -131,12 +140,3 @@ The DM can project to a pop-out desktop window (`desktop_multi_window`, driven b
 - Comments and prose in this repo are a mix of Turkish and English — match the surrounding file.
 - Admin identity is never in source: it lives in the `app_admins` table and the client only learns a bool via the `is_admin()` RPC.
 - Branch from `main` (`feature/…`, `fix/…`), run `flutter analyze && flutter test` before pushing, address review with new commits rather than force-pushes.
-
-## CodeGraph
-
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
-
-- **MCP tools** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them. `codegraph_node` returns one symbol's source + callers, or reads a whole file with line numbers. If the tools are listed but deferred, load them by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` and `codegraph node <symbol-or-file>` print the same output.
-
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
