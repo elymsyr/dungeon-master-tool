@@ -36,3 +36,6 @@ tags: [file]
 
 ## Notes
 - Filled ≠ *read*. A field can be 100% and still reach no sheet if [[character_resolver]] has no pass for it — the audit doc pairs every fill target with `bundled_pack_resolve_test`.
+- Filled ≠ *read by the wizard* either. The chargen steps have their own readers and several match ids by raw `String` equality, so a correctly-written `{slug, name}` softRef is invisible there even when the sheet resolves it. See [[entity_ref]] and audit doc §2.3.1.
+- Filled ≠ *correct*. The tool never compares a value to its fixture, and `⚠ const` only fires when a value is identical across an **entire category** — a mapper default that varies by document slips through. The audit's phase **T1** (`verify_packs.dart`, source ↔ asset differ) is what turns this into a correctness gate.
+- **Scope hole: the built-in pack is not measured.** `--packs` defaults to `assets/open5e_packs` and nothing points it at `generateBuiltinDnd5eV2Schema().seedRows` + `buildSrdCorePack()`, even though [[srd_core_pack]] is the target of every softRef the packs emit. Audit phase **T2** adds a `--builtin` mode. Current corpus figure for the bundled side: **407 declared (category, field) slots, 125 filled**.
