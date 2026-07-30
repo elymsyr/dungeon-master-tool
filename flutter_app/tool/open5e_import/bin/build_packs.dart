@@ -22,6 +22,7 @@ import '../mappers/spell.dart';
 import '../normalize.dart';
 import '../refgraph.dart';
 import '../sources.dart';
+import '../vocab.dart';
 
 void main(List<String> args) {
   final opts = _parseArgs(args);
@@ -36,6 +37,10 @@ void main(List<String> args) {
   }
 
   final norm = Normalizer();
+  // Upstream Tier-0 vocabulary (audit B9). Read across every document, not per
+  // pack: a Tome of Beasts 2 monster speaks `void-speech`, whose fixture lives
+  // in `kobold-press/tob/`. Only consulted when the built-in canon misses.
+  norm.vocab = Vocabulary.load(dataRoot);
   final docs = sourceDocs(dataRoot);
   final results = <PackResult>[];
   var hadError = false;
@@ -60,6 +65,11 @@ void main(List<String> args) {
       continue;
     }
     final pack = PackBuilder(doc.packageName);
+    // Third-party vocabulary is seeded into the pack that needs it, never into
+    // the built-in schema (audit §2). Rebound per pack so the `{_ref}` the
+    // normalizer hands back always points inside the pack being built.
+    norm.tier0Seeder = (slug, name) => seedTier0Row(pack, norm.vocab,
+        slug: slug, name: name, source: doc.title);
 
     if (doc.hasCreatures) {
       mapCreatures(
@@ -103,6 +113,8 @@ void main(List<String> args) {
         source: doc.title,
         classes: loadFixtures(doc.v2File('CharacterClass.json')),
         features: loadFixtures(doc.v2File('ClassFeature.json')),
+        // The level a feature arrives at lives only here (audit B1).
+        featureItems: loadFixtures(doc.v2File('ClassFeatureItem.json')),
       );
     }
     if (doc.hasSpecies) {

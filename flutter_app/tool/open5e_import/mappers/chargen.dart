@@ -18,12 +18,11 @@
 //
 // Known gaps, tracked in `docs/open5e_content_audit.md`:
 //
-//   * Leveled class `features` and `subclass.granted_at_level` are empty. This
-//     is NOT a source limit — `ClassFeature` itself has no level, but its child
-//     `ClassFeatureItem` does (`level` 0-20, plus `column_value` for the class
-//     table), and every Open5e document that ships classes ships
-//     `ClassFeatureItem.json`. `build_packs.dart` simply never loads that file.
-//     See audit §A1 / §4.1-4.2.
+//   * ~~Leveled class `features` and `subclass.granted_at_level` are empty.~~
+//     **Fixed 2026-07-30 (audit B1)** — `ClassFeatureItem.json` is now loaded and
+//     `_levelFeatures` turns it into the `classFeatures` level table plus
+//     `granted_at_level`. Its `column_value` rows (the class table proper —
+//     spell slots, proficiency bonus) are still unread: that is B2.
 //   * Species/background grants are matched by trait *name* here, while Open5e
 //     tags every trait and benefit row with a `type` (`MODIFICATION_TYPES`).
 //     That is why `size_ref` lands on 63% of species and `granted_tool_refs` on
@@ -73,8 +72,10 @@ void mapClasses({
   required String source,
   required List<Fixture> classes,
   required List<Fixture> features,
+  List<Fixture> featureItems = const [],
 }) {
   final featuresByParent = groupBy(features, 'parent');
+  final itemsByFeature = groupBy(featureItems, 'parent');
   // Base-class pk → display name, so a subclass can link `parent_class_ref` to
   // its parent *when that parent ships in the same pack* (SRD docs carry both).
   // Subclasses whose base class lives in the built-in pack (toh/a5e/…) get no
@@ -109,6 +110,15 @@ void mapClasses({
         'parent_class_ref':
             parentName != null ? ref('class', parentName) : softRef('class', parent),
       };
+      // B1: the level table. `granted_at_level` is the lowest level any of the
+      // subclass's own features arrives at — that *is* the level the subclass is
+      // taken at, and the schema requires it. Left absent when the document
+      // ships no levelled feature for it: inventing 3 would be a guess.
+      final rows = _levelFeatures(kids, itemsByFeature);
+      if (rows.isNotEmpty) {
+        attrs['features'] = rows;
+        attrs['granted_at_level'] = rows.first['level'];
+      }
       _addUnique(pack, slug: 'subclass', name: name, source: source,
           description: desc, tags: [parent], attributes: attrs);
       continue;
@@ -181,6 +191,8 @@ void mapClasses({
 
     final desc = _fold((c['desc'] as String?)?.trim() ?? '', kids);
     attrs['description'] = desc;
+    final rows = _levelFeatures(kids, itemsByFeature);
+    if (rows.isNotEmpty) attrs['features'] = rows;
     pack.add(packEntity(
       slug: 'class', name: name, source: source,
       description: desc, attributes: attrs));
@@ -1199,6 +1211,64 @@ String _fold(String parentDesc, List<Fixture> children) {
     buf.write(d);
   }
   return buf.toString().trim();
+}
+
+/// The `classFeatures` level table for one class/subclass (audit phase **B1**).
+///
+/// `ClassFeature` has no level; its child `ClassFeatureItem` does, keyed by
+/// `parent` → the feature's pk. Two shapes share that file and only one is a
+/// granted feature:
+///
+///   * **granted feature** — one item per level the feature arrives or improves
+///     at, `column_value == null`. Becomes a row here.
+///   * **class-table column** — 20 items, one per level, each carrying a
+///     `column_value` (`Proficiency Bonus`, `Augment Effects Known`, spell
+///     slots). Belongs to B2's typed `*_by_level` fields, not to a feature list,
+///     so it is skipped. No shipped document *mixes* the two within one feature,
+///     which is what makes "every item has a `column_value`" a safe test.
+///
+/// A feature that improves gets one row per distinct level; `detail` (`'2 dice'`,
+/// `'two attacks'`) is the only thing distinguishing those rows upstream, so it
+/// carries the follow-up rows' description while the first keeps the prose.
+/// No grant refs are emitted — the prose names no entity we could resolve.
+List<Map<String, dynamic>> _levelFeatures(
+  List<Fixture> features,
+  Map<String, List<Fixture>> itemsByFeature,
+) {
+  final rows = <Map<String, dynamic>>[];
+  for (final f in features) {
+    final name = (f['name'] as String?)?.trim() ?? '';
+    if (name.isEmpty) continue;
+    final items = itemsByFeature[f['_pk'].toString()] ?? const <Fixture>[];
+    if (items.isEmpty) continue;
+    // Level → the item's `detail`, first non-empty wins.
+    final byLevel = <int, String?>{};
+    for (final i in items) {
+      if (i['column_value'] != null) continue;
+      final lvl = i['level'];
+      if (lvl is! int || lvl < 1 || lvl > 20) continue;
+      final detail = (i['detail'] as String?)?.trim();
+      byLevel.putIfAbsent(lvl, () => (detail?.isEmpty ?? true) ? null : detail);
+    }
+    if (byLevel.isEmpty) continue;
+    final desc = (f['desc'] as String?)?.trim() ?? '';
+    final levels = byLevel.keys.toList()..sort();
+    for (var n = 0; n < levels.length; n++) {
+      final detail = byLevel[levels[n]];
+      final body = n == 0
+          ? [desc, if (detail != null) '**At this level:** $detail']
+              .where((s) => s.isNotEmpty)
+              .join('\n\n')
+          : (detail != null ? '**At this level:** $detail' : desc);
+      rows.add(<String, dynamic>{
+        'level': levels[n],
+        'name': name,
+        if (body.isNotEmpty) 'description': body,
+      });
+    }
+  }
+  rows.sort((a, b) => (a['level'] as int).compareTo(b['level'] as int));
+  return rows;
 }
 
 /// `'D12'` / `'d8'` → `12` / `8`.
