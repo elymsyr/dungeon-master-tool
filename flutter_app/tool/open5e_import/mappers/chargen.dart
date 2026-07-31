@@ -23,15 +23,21 @@
 //     `_levelFeatures` turns it into the `classFeatures` level table plus
 //     `granted_at_level`. Its `column_value` rows (the class table proper —
 //     spell slots, proficiency bonus) are still unread: that is B2.
-//   * Species/background grants are matched by trait *name* here, while Open5e
-//     tags every trait and benefit row with a `type` (`MODIFICATION_TYPES`).
-//     That is why `size_ref` lands on 63% of species and `granted_tool_refs` on
-//     no background at all. See audit §4.3-4.4.
+//   * ~~Species/background grants are matched by trait *name* here, while Open5e
+//     tags every trait and benefit row with a `type` (`MODIFICATION_TYPES`).~~
+//     **Reversed 2026-07-31 (audit B3).** `BackgroundBenefit.type` was already
+//     the key `mapBackgrounds` matches on, and `SpeciesTrait.type` is **null on
+//     100% of the rows we ship** — it is populated only in `srd-2024` (18 rows),
+//     a document the publisher-wide SRD skip never builds. Name matching is not
+//     a shortcut here, it is the only key the data has. What was really missing
+//     was `granted_tool_refs`, now emitted; and `size_ref`'s 63% is an upstream
+//     hole, not a matching failure. See audit §4.3-4.4.
 //
 // Genuine source limits (left empty, not faked): class `primary_ability` (empty
 // in the shipped documents), feat effect DSL, and any "of your choice" grant —
 // all stay folded in the description.
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/_helpers.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/tools.dart';
 
 import '../loaders.dart';
 import '../normalize.dart';
@@ -62,6 +68,133 @@ const _casterKind = {
 /// species→spell, background→origin feat.
 Map<String, String> softRef(String slug, String name) =>
     {'slug': slug, 'name': name};
+
+// ── Background tool proficiencies (audit B3) ───────────────────────────────
+//
+// `BackgroundBenefit` rows of type `tool_proficiency` are one short prose line
+// ("Disguise kit, forgery kit.", "One type of gaming set, thieves' tools").
+// The 40 of them across the shipped documents are what `granted_tool_refs` sat
+// at 0% for — not a missing `type` column, which these rows have always had.
+//
+// The canon is `srdTools()` itself rather than a hand-copied list, so a tool
+// renamed in the built-in pack can never silently stop matching here.
+
+/// Punctuation-insensitive match key: upstream writes `Cartographers’ tools`,
+/// `Thieves’ tools` and `Navigator's tools` for three cards whose canonical
+/// names put the apostrophe elsewhere or use the straight quote.
+String _toolKey(String s) => s
+    .toLowerCase()
+    .replaceAll(RegExp(r"['’`]"), '')
+    .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+    .trim();
+
+/// The three tool families the wizard can offer a pick from
+/// (`proficiencies_step._toolCategoryNameForGroup`). `Other Tools` is absent on
+/// purpose: it is a catch-all bucket, not a "choose one of these" family.
+const _toolGroupForCategory = {
+  'Gaming Set': 'gaming_set',
+  'Musical Instrument': 'musical_instrument',
+  "Artisan's Tools": 'artisans_tools',
+};
+
+/// Phrase upstream uses for each family → the group token.
+const _toolGroupPhrases = {
+  'gaming set': 'gaming_set',
+  'musical instrument': 'musical_instrument',
+  'artisans tools': 'artisans_tools',
+  'artisans supplies': 'artisans_tools',
+};
+
+/// Plain misspelling of an SRD card (`Herbalist kit` → `Herbalism Kit`, one row
+/// in `tdcs`). Kept as an explicit, auditable list — never fuzzy matching.
+const _toolAliases = {'herbalist kit': 'Herbalism Kit'};
+
+/// `_toolKey(canonical name)` → `(canonical name, group token or null)`, built
+/// once from the built-in SRD tool cards.
+final Map<String, ({String name, String? group})> _toolIndex = () {
+  final out = <String, ({String name, String? group})>{};
+  for (final t in srdTools()) {
+    final name = t['name'] as String;
+    final cat = (t['attributes'] as Map)['category_ref'];
+    final catName = cat is Map ? cat['name'] as String? : null;
+    out[_toolKey(name)] = (name: name, group: _toolGroupForCategory[catName]);
+  }
+  for (final e in _toolAliases.entries) {
+    final canon = out[_toolKey(e.value)];
+    if (canon != null) out[e.key] = canon;
+  }
+  return out;
+}();
+
+/// Parse a `tool_proficiency` benefit line into the two typed fields the
+/// background schema offers: outright grants (`granted_tool_refs`) and a single
+/// "pick one of this family" slot (`granted_tool_variant_group`).
+///
+/// The rules are deliberately conservative, because both ways of being wrong
+/// are silent: emitting an alternative as a grant hands the player a
+/// proficiency they never chose, and emitting one family out of two quietly
+/// deletes the other choice.
+///
+///   * **`or` makes every named tool an alternative, not a grant.** "Your
+///     choice of one from Thieves' Tools, Forgery Kit, or Disguise Kit" names
+///     three real cards and grants none of them. With an `or` present, only a
+///     family survives — and only when the line names exactly one family and
+///     every tool it names belongs to it ("one type of artisan's tools or
+///     smith's tools" → `artisans_tools`, which already offers Smith's Tools).
+///   * **Two families is not representable.** `granted_tool_variant_group` is a
+///     single text field, so "one type of gaming set, one musical instrument"
+///     (one row, `toh`) emits neither and stays in the folded prose. That is a
+///     schema limit, recorded rather than papered over by picking the first.
+///   * **A family absorbs its own members.** "Gaming set, thieves' tools" emits
+///     the `gaming_set` group plus a ref to Thieves' Tools — not a ref to the
+///     umbrella `Gaming Set` card, which would grant the family outright.
+///   * Vehicles (`land vehicles`, `vehicles (water)`, `one vehicle`) match no
+///     card and no family: the SRD ships no vehicle tools, so they are dropped
+///     to prose rather than synthesised.
+({List<Map<String, String>> refs, String? group}) parseToolProficiencies(
+    String desc) {
+  final key = _toolKey(desc);
+  if (key.isEmpty) return (refs: const <Map<String, String>>[], group: null);
+
+  final families = <String>{};
+  for (final p in _toolGroupPhrases.entries) {
+    if (RegExp('\\b${p.key}\\b').hasMatch(key)) families.add(p.value);
+  }
+  final hits = <String, ({String name, String? group})>{}; // match key -> card
+  for (final e in _toolIndex.entries) {
+    if (RegExp('\\b${RegExp.escape(e.key)}\\b').hasMatch(key)) {
+      hits[e.key] = e.value;
+    }
+  }
+  // Longest match wins: `Pan Flute` must not also register a bare `Flute`.
+  final named = <String, String?>{}; // canonical name -> its group
+  for (final e in hits.entries) {
+    final shadowed = hits.keys.any((k) =>
+        k != e.key && RegExp('\\b${RegExp.escape(e.key)}\\b').hasMatch(k));
+    if (!shadowed) named[e.value.name] = e.value.group;
+  }
+
+  final hasOr = RegExp(r'\bor\b').hasMatch(key);
+  if (families.length > 1) {
+    return (refs: const <Map<String, String>>[], group: null);
+  }
+  final group = families.isEmpty ? null : families.first;
+
+  if (hasOr) {
+    // Only an unambiguous single-family choice survives an `or`.
+    final ok = group != null && named.values.every((g) => g == group);
+    return (
+      refs: const <Map<String, String>>[],
+      group: ok ? group : null,
+    );
+  }
+  final refs = [
+    for (final e in named.entries)
+      if (group == null || e.value != group) softRef('tool', e.key),
+  ];
+  refs.sort((a, b) => a['name']!.compareTo(b['name']!));
+  return (refs: refs, group: group);
+}
 
 /// Map classes + subclasses. Base classes (`subclass_of == null`) become
 /// `class` entities; the rest become `subclass` entities (descriptive — no
@@ -199,6 +332,12 @@ void mapClasses({
   }
 }
 
+/// v1 statblock fallback for species traits (audit **B3**): lowercased species
+/// name → the `{name, desc}` rows reconstructed from v1 `Race.json`'s prose
+/// columns. Built by `build_packs`; consulted only for a species v2 shipped
+/// with zero `SpeciesTrait` rows.
+typedef V1SpeciesIndex = Map<String, List<Map<String, String>>>;
+
 /// Map species + subspecies. Descriptive (traits folded into description) plus
 /// the typed stat fields the schema requires — `size_ref`, `speed_ft`,
 /// `creature_type_ref` — parsed from the canonical `Size` / `Speed` trait rows.
@@ -210,8 +349,30 @@ void mapSpecies({
   required String source,
   required List<Fixture> species,
   required List<Fixture> traits,
+  V1SpeciesIndex v1Traits = const {},
 }) {
   final traitsByParent = groupBy(traits, 'parent');
+
+  // B3 — a species upstream's v2 conversion left with **no** trait rows at all
+  // gets them from v1 (`toh`'s Shade: 0 rows in v2, a full statblock in v1).
+  // Same rule and same reason as B8's action backfill: only an entirely empty
+  // set is filled, so a species v2 converted can never be overridden. The
+  // recovered rows are `{name, desc}` shaped exactly like the v2 fixtures, so
+  // every parser below — size, speed, ASI, languages, senses, D1–D9 — applies
+  // to them unchanged.
+  if (v1Traits.isNotEmpty) {
+    for (final s in species) {
+      final pk = s['_pk'].toString();
+      if ((traitsByParent[pk] ?? const <Fixture>[]).isNotEmpty) continue;
+      final name = (s['name'] as String?)?.trim().toLowerCase();
+      final rows = name == null ? null : v1Traits[name];
+      if (rows == null || rows.isEmpty) continue;
+      traitsByParent[pk] = [
+        for (final r in rows)
+          <String, dynamic>{'parent': pk, 'name': r['name'], 'desc': r['desc']},
+      ];
+    }
+  }
 
   // Pass 1 — parse each species' own size/speed from its trait rows.
   final stats = <String, ({String? size, int? speed})>{};
@@ -303,24 +464,27 @@ void mapSpecies({
         });
       }
       // D1 — damage resistance / immunity / vulnerability (lowercase prose; the
-      // "X damage" anchor avoids matching damage dealt by an action).
+      // "X damage" anchor avoids matching damage dealt by an action). Scanned
+      // over [dPerm], not [d]: a resistance that only holds for the minute an
+      // activated trait lasts is not a species grant (audit B3).
+      final dPerm = _permanentClauses(d);
       for (final m in RegExp(r'resistan\w*\s+to\s+([^.;]*?)\s+damage',
-          caseSensitive: false).allMatches(d)) {
+          caseSensitive: false).allMatches(dPerm)) {
         dmgRes.addAll(_refListFromText(norm, 'damage-type', m.group(1)!, ci: true));
       }
       for (final m in RegExp(r'immun\w*\s+to\s+([^.;]*?)\s+damage',
-          caseSensitive: false).allMatches(d)) {
+          caseSensitive: false).allMatches(dPerm)) {
         dmgImm.addAll(_refListFromText(norm, 'damage-type', m.group(1)!, ci: true));
       }
       for (final m in RegExp(r'vulnerab\w*\s+to\s+([^.;]*?)\s+damage',
-          caseSensitive: false).allMatches(d)) {
+          caseSensitive: false).allMatches(dPerm)) {
         dmgVuln.addAll(_refListFromText(norm, 'damage-type', m.group(1)!, ci: true));
       }
       // D2 — condition immunity (explicit immunity phrasing only; "advantage on
       // saves against X" is intentionally NOT a grant).
       for (final m in RegExp(
           r"(?:immun\w*\s+to|can'?t be|cannot be)\s+(?:the\s+|being\s+)?([a-z][a-z ]{0,24})",
-          caseSensitive: false).allMatches(d)) {
+          caseSensitive: false).allMatches(dPerm)) {
         condImm.addAll(_refListFromText(norm, 'condition', m.group(1)!, ci: true));
       }
       // D3 — fixed skill proficiency ("gain/have proficiency in the X skill";
@@ -365,6 +529,30 @@ void mapSpecies({
     _addUnique(pack, slug: subOf != null ? 'subspecies' : 'species', name: name,
         source: source, description: desc, tags: tags, attributes: attrs);
   }
+}
+
+/// Sentences that scope a benefit to the duration of an activated trait, so a
+/// resistance or immunity inside them is not something the species *has*.
+///
+/// Found by B3: `toh`'s Shade has "***Ghostly Flesh.*** … your transformation
+/// lasts for 1 minute … **During it**, … you have resistance to bludgeoning,
+/// piercing, and slashing damage …" — three permanent resistances at level 1
+/// for a 1/long-rest, 3rd-level trait. Its unconditional necrotic resistance
+/// (Spectral Resilience) is in a different sentence and still lands, which is
+/// why the filter is per sentence rather than per trait.
+final _temporaryClause = RegExp(
+    r'\bduring (?:it|this|that|the transformation)\b'
+    r'|\bwhile (?:it lasts|transformed)\b'
+    r'|\bfor the duration\b',
+    caseSensitive: false);
+
+/// [desc] with every [_temporaryClause] sentence removed.
+String _permanentClauses(String desc) {
+  if (!_temporaryClause.hasMatch(desc)) return desc;
+  return [
+    for (final s in desc.split(RegExp(r'(?<=[.;])\s+')))
+      if (!_temporaryClause.hasMatch(s)) s,
+  ].join(' ');
 }
 
 const _sizeWords = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
@@ -1027,10 +1215,10 @@ Map<String, int> _parseAsi(String desc) {
 /// typed grants Open5e carries as benefit rows keyed by `type`: skill
 /// proficiencies (`skill_proficiency`) → `granted_skill_refs`, SRD-2024 ability
 /// options (`ability_score`) → `ability_score_options` (+ `asi_distribution_options`
-/// when three abilities are offered), and language slots (`language`) →
-/// `granted_language_count`. Tool proficiencies and the origin feat are *not*
-/// emitted — both are content-entity refs that would dangle outside the pack
-/// (the SRD feat lives in the built-in pack), so they stay in the folded text.
+/// when three abilities are offered), language slots (`language`) →
+/// `granted_language_count`, and — audit **B3** — tool proficiencies
+/// (`tool_proficiency`) → `granted_tool_refs` / `granted_tool_variant_group`
+/// via [parseToolProficiencies].
 void mapBackgrounds({
   required PackBuilder pack,
   required Normalizer norm,
@@ -1083,6 +1271,15 @@ void mapBackgrounds({
           attrs['asi_distribution_options'] = ['+2/+1', '+1/+1/+1'];
         }
       }
+    }
+    // B3 — tool proficiencies. Tools are content cards in the built-in pack, so
+    // (like `origin_feat_ref`) they travel as softRefs: a hard `_ref` would fail
+    // the build, and the resolver drops a softRef whose target isn't installed.
+    final toolText = descOfType('tool_proficiency');
+    if (toolText != null) {
+      final t = parseToolProficiencies(toolText);
+      if (t.refs.isNotEmpty) attrs['granted_tool_refs'] = t.refs;
+      if (t.group != null) attrs['granted_tool_variant_group'] = t.group;
     }
     final langText = descOfType('language');
     if (langText != null) {

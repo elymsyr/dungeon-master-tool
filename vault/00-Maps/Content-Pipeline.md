@@ -65,8 +65,17 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   three buckets match `v1/tob3/Monster.json` row for row, so [[build_packs]] now
   indexes v1's statblock columns and [[mapper_monster]] backfills **only** buckets
   v2 left empty. `monster.action_refs` 86% → 99.8%; corpus actionless 400 → 5, all
-  genuinely actionless. All three rebuilds stay scratch-only, so the shipped assets
-  carry none of these fixes yet (promotion is Stage D). Next: **B3** — species,
-  subspecies and backgrounds, matched by `type` instead of by name.
+  genuinely actionless. **B3 done 2026-07-31**: filed as "match `SpeciesTrait.type`
+  and `BackgroundBenefit.type` instead of names", and three of its five clauses
+  did not survive the snapshot — `BackgroundBenefit.type` was already the key, and
+  `SpeciesTrait.type` is **null on 100% of the rows we ship** (only `srd-2024`
+  fills it, and the SRD skip never builds it). What was real: `tool_proficiency`
+  → `granted_tool_refs` **0% → 35%** + `granted_tool_variant_group` 0% → 22%, plus
+  a third v2 conversion gap — `toh`'s **Shade** ships zero trait rows and is
+  recovered from `v1/toh/Race.json`. `size_ref` at 100% is unreachable: four
+  species say the subrace decides and the subraces never say, and v1's
+  `size_raw`/`speed_json` are default-filled traps. All four rebuilds stay
+  scratch-only, so the shipped assets carry none of these fixes yet (promotion is
+  Stage D). Next: **B2** — the `column_value` class tables B1 deliberately left.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

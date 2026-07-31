@@ -54,6 +54,10 @@ void main(List<String> args) {
   // bucket the v2 fixtures leave empty; see `mapCreatures`.
   final v1Actions = _v1ActionIndex(dataRoot);
 
+  // v1 `Race.json` species index (audit B3) — same gap, same rule: consulted
+  // only for a species the v2 fixtures gave zero trait rows.
+  final v1Species = _v1SpeciesIndex(dataRoot);
+
   final v1ByDoc = _v1ClassIndex(dataRoot);
   final v1Global = <String, String>{};
   for (final pref in _v1GlobalPref) {
@@ -126,12 +130,16 @@ void main(List<String> args) {
       );
     }
     if (doc.hasSpecies) {
+      final v1SpeciesDoc = _v1DocForSpecies[doc.slug];
       mapSpecies(
         pack: pack,
         norm: norm,
         source: doc.title,
         species: loadFixtures(doc.v2File('Species.json')),
         traits: loadFixtures(doc.v2File('SpeciesTrait.json')),
+        // Audit B3 — for a species v2 converted with zero trait rows.
+        v1Traits: (v1SpeciesDoc == null ? null : v1Species[v1SpeciesDoc]) ??
+            const {},
       );
     }
     if (doc.hasBackgrounds) {
@@ -240,6 +248,90 @@ const _v1DocForCreatures = {
   'tob-2023': 'tob-2023',
   'tob3': 'tob3',
 };
+
+/// v2 document slug → the v1 document holding the same species, for the B3
+/// trait recovery. Only the two documents that ship a `Species.json` outside
+/// the SRD skip are listed, and both are name-parity on the pinned snapshot
+/// (toh 11/11 races, o5e 1/1). Exactly one species needs it — `toh`'s Shade,
+/// which v2 converted with zero `SpeciesTrait` rows.
+const _v1DocForSpecies = {
+  'toh': 'toh',
+  'open5e': 'o5e',
+};
+
+/// v1 `Race.json` prose column → the v2 trait name it stands in for. `traits`
+/// is absent here because it is a multi-trait blob, split on its own headers.
+const _v1RaceColumns = {
+  'size': 'Size',
+  'speed_desc': 'Speed',
+  'asi_desc': 'Ability Score Increase',
+  'languages': 'Languages',
+  'age': 'Age',
+  'alignment': 'Alignment',
+};
+
+/// Build `v1doc → V1SpeciesIndex` from every `v1/<doc>/Race.json` under
+/// [dataRoot]. v1 keeps a race's traits as markdown prose with `***Name.***`
+/// headers rather than as rows, so the headers are what turn it back into the
+/// `{name, desc}` shape `mapSpecies` already knows how to read.
+///
+/// The structured columns v1 *does* carry — `size_raw` and `speed_json` — are
+/// deliberately **not** read. They are default-filled, not sourced: `size_raw`
+/// is `Medium` for all 11 toh races including Derro and Erina, whose own prose
+/// says Small, and `speed_json` says 25 for Drow against its own `speed_desc`'s
+/// 30. Trusting them would have quietly overwritten seven correct sizes to buy
+/// four wrong ones.
+Map<String, V1SpeciesIndex> _v1SpeciesIndex(String dataRoot) {
+  final out = <String, V1SpeciesIndex>{};
+  final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
+  if (!v1.existsSync()) return out;
+  for (final ent in v1.listSync().whereType<Directory>()) {
+    final slug = ent.path.split(Platform.pathSeparator).last;
+    final races = loadFixtures('${ent.path}${Platform.pathSeparator}Race.json');
+    if (races.isEmpty) continue;
+    final byName = <String, List<Map<String, String>>>{};
+    for (final r in races) {
+      final name = (r['name'] as String?)?.trim();
+      if (name == null || name.isEmpty) continue;
+      final rows = <Map<String, String>>[];
+      for (final col in _v1RaceColumns.entries) {
+        rows.addAll(_v1TraitRows(r[col.key], fallbackName: col.value));
+      }
+      // `vision` is one headed trait (Darkvision / Superior Darkvision) and
+      // `traits` is every remaining one; both name themselves in the markdown.
+      rows.addAll(_v1TraitRows(r['vision'], fallbackName: 'Vision'));
+      rows.addAll(_v1TraitRows(r['traits'], fallbackName: 'Trait'));
+      if (rows.isNotEmpty) byName[name.toLowerCase()] = rows;
+    }
+    if (byName.isNotEmpty) out[slug] = byName;
+  }
+  return out;
+}
+
+/// Split a v1 markdown prose column into `{name, desc}` trait rows on its
+/// `***Name.***` headers. Text with no header becomes a single row named
+/// [fallbackName]; empty or non-string input yields nothing.
+List<Map<String, String>> _v1TraitRows(dynamic raw,
+    {required String fallbackName}) {
+  if (raw is! String) return const [];
+  final text = raw.trim();
+  if (text.isEmpty) return const [];
+  final header = RegExp(r'\*\*\*\s*(.+?)\.?\s*\*\*\*');
+  final matches = header.allMatches(text).toList();
+  if (matches.isEmpty) {
+    return [{'name': fallbackName, 'desc': text}];
+  }
+  final out = <Map<String, String>>[];
+  for (var i = 0; i < matches.length; i++) {
+    final m = matches[i];
+    final end = i + 1 < matches.length ? matches[i + 1].start : text.length;
+    final name = m.group(1)!.trim();
+    final desc = text.substring(m.end, end).trim();
+    if (name.isEmpty || desc.isEmpty) continue;
+    out.add({'name': name, 'desc': desc});
+  }
+  return out;
+}
 
 /// v1 `Monster.*_json` column → the `CreatureAction.action_type` bucket it
 /// stands in for.

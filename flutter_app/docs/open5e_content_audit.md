@@ -54,14 +54,19 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **B3 — species, subspecies and backgrounds** (§6). With
-B8 done, no *shipped defect* is left on the board — what remains is empty fields,
-and B3 is the largest block of them that needs no policy decision: the 41 species
-/ subspecies and 53 backgrounds in the rebuild carry their traits and benefits as
-prose while `size_ref`, `speed_ft` and `granted_skill_refs` sit empty, because the
-mapper matches those child rows by **name** instead of by their `type` column —
-the same mistake B1 and B9 turned out to be. Like B1/B8/B9 it is measurable on the
-rebuild alone.
+**Next action right now:** **B2 — the class tables B1 deliberately left** (§6).
+It is the last narrow, decision-free mapper phase: `ClassFeatureItem` rows
+carrying a `column_value` are a class table column, not a granted feature, and
+B1 proved no document mixes the two inside one feature. A1 already sized it —
+**171 rows in exactly two documents** (`a5e-ag` 113, `bfrd` 58) — so it is a
+day's work, not "all class tables". Everything after it (B5, B6, B10, L1) needs
+a target-shape decision first.
+
+> **Three phases running have now reversed their own premise** (B9's unmapped
+> report, B8's action buckets, B3's `type` column). The pattern is that a defect
+> filed from the *shipped assets* names a plausible cause the source data then
+> contradicts. Re-measure the premise against the snapshot before writing code —
+> B3's filed exit criterion was itself unreachable.
 
 Stage A is done (snapshot pinned at `d4276c58`, every fixture file decided — §4 A0,
 §4 A1), L0 is done (the census now measures what the phases are graded on — §3.2),
@@ -70,7 +75,11 @@ subclasses now carry a level table and `granted_at_level` — **B9 is done** (th
 unmapped report is down to the one bucket no fixture can fix, 144 → 70), and
 **B8 is done**: ToB3's missing Actions block turned out to be an upstream
 conversion gap, not a bucketing bug, and is recovered from `data/v1`
-(`monster.action_refs` 86% → 99.8% on the rebuild).
+(`monster.action_refs` 86% → 99.8% on the rebuild). **B3 is done** — three of its
+five filed clauses were wrong (`SpeciesTrait.type` is null on every row we ship,
+and `size_ref` at 100% is unreachable), but the one that was right delivered
+`granted_tool_refs` 0% → 35%, and a third v2 conversion gap surfaced with it:
+`toh`'s Shade shipped with no traits at all and is recovered from `data/v1`.
 
 Also unblocked and independent: **B2** (the class tables B1 deliberately left —
 its `column_value` rows), **B10** (the 70 free-text alignments B9 left, which needs
@@ -838,6 +847,21 @@ ls open5e-api-staging/data/v1            # ← NOT optional, see below
 > 396 statblocks ship with an empty Actions block — which is precisely how the
 > defect went unnoticed in the first place. This one *is* visible to
 > `audit_packs` (`monster.action_refs`), and **T3** will make it a gate.
+>
+> **B3 (2026-07-31) added a third, and the reason to stop calling `data/v1` a
+> fallback.** `_v1SpeciesIndex` / `_v1DocForSpecies` rebuild `toh`'s **Shade**,
+> which v2 converted with zero `SpeciesTrait` rows, out of v1 `Race.json`'s
+> `***Name.***` markdown. Three independent v2 conversion gaps — spell classes,
+> ToB3's actions, Shade's traits — now depend on a directory that is
+> `.gitignore`d, absent by default, and silently skipped when missing.
+>
+> **But B3 also found the limit.** v1 carries structured `size_raw` and
+> `speed_json` columns that look like exactly the kind of data B8 recovered, and
+> they are **default-filled, not sourced**: `size_raw` is `Medium` for all 11
+> `toh` races including the two the prose calls Small. Reading them would have
+> overwritten 7 correct sizes to buy 4 wrong ones. The same v1 file is
+> authoritative for one column and junk for the next, so "recover it from v1" is
+> a per-column decision every phase has to re-earn — never a policy.
 
 **The snapshot is pinned here.** The default `--rev staging-2026-05-31` is a
 label, not a commit, and upstream `staging` moves — always pass the SHA below so
@@ -1148,10 +1172,53 @@ unchanged by decision (A0), so only the second number describes the importer.
 ### 5.3 `species` (11) / `subspecies` (30)
 
 `mapSpecies` matches trait rows by **name** (`'size'`, `'speed'`, `'darkvision'`,
-`'languages'`, `'ability score increase'`). Open5e ships a `type` field on every trait
-(`MODIFICATION_TYPES`: `ability_score`, `skill_proficiency`, `tool_proficiency`,
-`language`, `equipment`, `feature`, `feat`, …). Switching to `type` is the single fix
-behind most of these rows.
+`'languages'`, `'ability score increase'`).
+
+> **~~Switching to `type` is the single fix behind most of these rows.~~
+> Reversed by B3, 2026-07-31.** Open5e declares a `type` on `SpeciesTrait`
+> (`MODIFICATION_TYPES`), and this file assumed it was populated. On the pinned
+> snapshot it is **null on 100% of the rows we ship**: `toh` 0/184, `open5e`
+> 0/2, `srd-2014` 0/93. The only document that fills it is `srd-2024` (18 of 51
+> rows, `SIZE` + `SPEED`) — and the publisher-wide SRD skip never builds it.
+> Name matching here is not a shortcut taken over a better key; it is the only
+> key the data has. The measured causes of the gaps are below, and none of them
+> is the matching.
+
+**Where `size_ref` 63% and `speed_ft` 72% actually come from** (all 11 species,
+counted against the snapshot):
+
+| Species | `Size` trait says | `Speed` trait says |
+|---|---|---|
+| Alseid, Catfolk, Derro, Drow, Erina, Minotaur, Satarre (7) | a size — parses | a distance — parses |
+| Mushroomfolk | "determined by its subrace" | 30 feet — parses |
+| Gearforged | "determined by your Race Chassis" | "determined by your Race Chassis" |
+| Darakhul | "determined by your Heritage Subrace" | "determined by your Heritage Subrace" |
+| Shade | *no trait rows at all in v2* | *ditto* — **recovered by B3** |
+
+The four misses are upstream saying *the subrace decides* — and **the subraces
+never say**. All 29 `toh` subspecies carry ASI + flavour traits and not one
+carries a Size or Speed row, which is also exactly why subspecies sit at 33% /
+43%: they inherit, and 19 of them descend from the three parents that defer.
+So `size_ref` at 100% is not reachable from this source, and the exit criterion
+this phase was filed with was wrong.
+
+> **`data/v1` has structured `size_raw` and `speed_json` columns. They are
+> default-filled, not sourced, and reading them would have made the data
+> worse.** `size_raw` is `Medium` for all 11 `toh` races — including Derro and
+> Erina, whose own prose says **Small**. `speed_json` says 25 for Drow against
+> its own `speed_desc`'s 30. Taking them would have overwritten 7 correct sizes
+> to buy 4 wrong ones. This is the opposite of B8, where v1 held real data v2
+> had dropped: the same file is authoritative for one column and junk for
+> another, so "recover it from v1" has to be decided per column, per phase.
+
+**Shade — a third v2 conversion gap** (B8's shape again). `toh`'s Shade ships
+**zero** `SpeciesTrait` rows in v2 while v1's `Race.json` holds its whole
+statblock. `build_packs._v1SpeciesIndex` rebuilds `{name, desc}` rows from v1's
+`***Name.***` markdown headers, and `mapSpecies` uses them only for a species v2
+left completely empty — so nothing v2 converted can ever be overridden. Shade
+gained `ability_bonuses`, `granted_languages`, `granted_senses`,
+`granted_damage_resistances` and a real description; its size and speed stay
+empty because v1 says "determined by your Living Origin" too.
 
 | | Field | Group | Req | species | subspecies | Cause | Source |
 |:--:|---|---|:--:|--:|--:|:--:|---|
@@ -1160,12 +1227,12 @@ behind most of these rows.
 | 🔴 | `age` | Identity | | 0% | 0% | `M` | "Age" trait row |
 | 🟡 | `speed_ft` | Movement | **yes** (species) | 72% | 43% | `M` | "Speed" trait — name match |
 | 🟡 | `speed_burrow/climb/fly/swim_ft` | Movement | | ≤9% | ≤3% | `M` | `_parseAltSpeeds` skips anything conditional |
-| 🟡 | `granted_languages` | Grants | | 90% | 0% | `M` | trait `type == 'language'` |
-| 🟡 | `ability_bonuses` | Grants | | 81% | 90% | `M` | trait `type == 'ability_score'`; "of your choice" unmodelled |
-| 🟡 | `granted_senses` | Grants | | 63% | 0% | `M` | Darkvision only, **with no range**. Every shipped payload is a bare ref rather than a `{sense_ref, range_ft}` row — a shape the resolver explicitly accepts ("a sense with no stated range"), so it lands, at range 0. The fix is parsing the range out of the trait, not the shape. |
-| 🟡 | `granted_skill_proficiencies` | Grants | | 45% | 26% | `M` | trait `type == 'skill_proficiency'` |
-| 🟡 | `granted_damage_resistances` | Grants | | 36% | 13% | `M` | regex over prose |
-| 🔴 | `granted_tool_proficiencies` | Grants | | 0% | 0% | `M`🔗 | trait `type == 'tool_proficiency'` never read |
+| ✅ | `granted_languages` | Grants | | ~~90%~~ **100%** | 0% | `M` | "Languages" trait prose. **B3**: the last miss was Shade's dropped rows |
+| 🟡 | `ability_bonuses` | Grants | | ~~81%~~ **90%** | 90% | `M` | "Ability Score Increase" prose; "of your choice" unmodelled. **B3**: +Shade |
+| 🟡 | `granted_senses` | Grants | | ~~63%~~ **72%** | 0% | `M` | Darkvision only, **with no range**. Every shipped payload is a bare ref rather than a `{sense_ref, range_ft}` row — a shape the resolver explicitly accepts ("a sense with no stated range"), so it lands, at range 0. The fix is parsing the range out of the trait, not the shape. **B3**: +Shade |
+| 🟡 | `granted_skill_proficiencies` | Grants | | 45% | 26% | `M` | "proficiency in the X skill" prose |
+| 🟡 | `granted_damage_resistances` | Grants | | ~~36%~~ **45%** | 13% | `M` | regex over prose. **B3** added a per-sentence duration filter: Shade's Ghostly Flesh grants B/P/S resistance only for the 1 minute a 3rd-level, 1/long-rest transformation lasts, and shipped it as three permanent level-1 grants until the fix. Its unconditional necrotic resistance is a different sentence and still lands |
+| 🔴 | `granted_tool_proficiencies` | Grants | | 0% | 0% | `S`🔗 | ~~trait `type == 'tool_proficiency'` never read~~ — **B3**: the column is null on every row we ship (above). `toh` species do grant tools, in prose ("proficient in one skill and one tool of your choice"), and every one is a *choice*, so there is nothing unconditional to emit |
 | 🔴 | **`granted_feat_refs`** | Grants | | 0% | 0% | `M`🔗 | trait `type == 'feat'` never read — softRef the built-in feat, never mint one |
 | 🟡 | `granted_spell_refs` / `granted_cantrip_refs` | Grants | | 0% | 13%/10% | `M`🔗 | needs the "cast the X spell" phrasing; targets are built-in spells |
 | 🔴 | rest of the grant block (30 keys) | Grants | | 0% | 0% | `M`/⚪ | see §5.7 |
@@ -1178,9 +1245,9 @@ name — an A5E `D` decision under §2.5.
 
 | | Field | Group | Req | Fill | Cause | Source |
 |:--:|---|---|:--:|--:|:--:|---|
-| 🟡 | `granted_skill_refs` | Grants | **yes** | 96% | `M` | benefit `type == 'skill_proficiency'` |
-| 🔴 | **`granted_tool_refs`** | Grants | | 0% | `M`🔗 | benefit `type == 'tool_proficiency'` — exists in `MODIFICATION_TYPES`, `descOfType` never asks for it; the targets are built-in tools |
-| 🔴 | `granted_tool_variant_group` | Grants | | 0% | ⚪ | app-only |
+| ✅ | `granted_skill_refs` | Grants | **yes** | 96% | `S` | benefit `type == 'skill_proficiency'`. **B3 measured the 2 misses and 96% is the ceiling:** `tdcs`/Fate-Touched has no `skill_proficiency` row at all, and `a5e-ag`/Guildmember's says "Two of your choice" — a pick with no field to hold it (there is no `granted_skill_count`). Neither is a mapper gap |
+| 🟡 | **`granted_tool_refs`** | Grants | | ~~0%~~ **35%** (19/53) | `M`🔗 | benefit `type == 'tool_proficiency'` — **B3**: `descOfType` now asks for it; 23 softRefs, all resolving to built-in tool cards |
+| 🟡 | `granted_tool_variant_group` | Grants | | ~~0%~~ **22%** (12/53) | `M` | **B3**: "one type of gaming set" → `gaming_set`. The wizard knows three families (`gaming_set`, `musical_instrument`, `artisans_tools`) |
 | 🟡 | `granted_language_count` | Grants | | 58% | `M` | benefit `type == 'language'` |
 | 🟡 | `ability_score_options` | Grants | **yes** | 50% | `S`/`M` | benefit `type == 'ability_score'`; pre-2024 docs have none |
 | 🔴 | `asi_distribution_options` | Grants | **yes** | 0% | `S` | SRD-2024 concept; only emitted when 3 abilities are offered |
@@ -1191,6 +1258,27 @@ name — an A5E `D` decision under §2.5.
 
 > Three **required** fields sit at 0–50%. Decide whether the requirement is wrong for
 > third-party content or whether the SRD-overlap skip (§4 A2) needs revisiting.
+> B3 narrows this: `asi_distribution_options` and `origin_feat_ref` are **only**
+> reachable from `srd-2024` benefit rows, so their 0% is entirely the skip, not
+> the mapper — `mapBackgrounds` has had working code for both since before B3.
+
+**What B3 refused to emit, and why** (`parseToolProficiencies`, 40 rows). Both
+ways of being wrong here are silent, so the parser is conservative in two
+specific directions:
+
+| Upstream line | Emitted | Why |
+|---|---|---|
+| `Gaming set, thieves' tools.` | `gaming_set` + ref *Thieves' Tools* | a family absorbs its own members — the umbrella `Gaming Set` card would grant the whole family instead of offering a pick |
+| `One type of artisan's tools or smith's tools.` | `artisans_tools` | one family, and every tool named belongs to it |
+| `Your choice of one from Thieves' Tools, Forgery Kit, or Disguise Kit.` | **nothing** | three real cards, none granted. An `or` makes a named tool an alternative, not a grant |
+| `One type of gaming set, one musical instrument` | **nothing** | `granted_tool_variant_group` is a *single* text field. Picking the first would delete the second choice. **This is a schema limit, not a parser one** — 1 row |
+| `Land vehicles.`, `vehicles (water)` | **nothing** | the SRD ships no vehicle tool cards; synthesising one would invent content |
+| `No additional tool proficiencies`, `Two of your choice` | **nothing** | correctly empty |
+
+The canon is `srdTools()` itself rather than a copied name list, so a tool
+renamed in the built-in pack cannot silently stop matching. One alias is
+hard-coded and auditable: `Herbalist kit` → `Herbalism Kit`, a plain misspelling
+in one `toh` row.
 
 ### 5.5 `feat` — 73 entities
 
@@ -1504,10 +1592,37 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       filled on **171 rows in exactly two documents** (a5e-ag 113, bfrd 58) and is
       empty in toh / open5e / tdcs / open5e-2024. This is a narrow phase — do not
       size it as "all class tables".*
-- [ ] **B3 — Type-driven species/background mapping.** Match `SpeciesTrait.type` and
-      `BackgroundBenefit.type` instead of names; add `tool_proficiency` and `feat`
-      (both resolve to built-in cards — §2.3).
-      *Exit: `size_ref`, `speed_ft`, `granted_skill_refs` at 100%.*
+- [x] **B3 — ~~Type-driven species/background mapping~~. The `type` column was
+      already the key, or was never there. Done 2026-07-31.**
+      *Filed as: match `SpeciesTrait.type` and `BackgroundBenefit.type` instead of
+      names; add `tool_proficiency` and `feat`. Exit: `size_ref`, `speed_ft`,
+      `granted_skill_refs` at 100%.* Three of those five clauses did not survive
+      the snapshot (§5.3, §5.4):
+      - `BackgroundBenefit.type` **is** what `mapBackgrounds` matches on and always
+        was; `feat` has had a working `origin_feat_ref` path since before B3. Its
+        0% is the SRD skip, not the mapper.
+      - `SpeciesTrait.type` is **null on 100% of the rows we ship** — populated only
+        in `srd-2024` (18/51), a document the skip never builds. There is no better
+        key to switch to.
+      - `size_ref` / `speed_ft` cannot reach 100%: four species say *the subrace
+        decides* and their 29 subraces never say. v1's structured `size_raw` /
+        `speed_json` are default-filled (`Medium` for Derro and Erina, which are
+        Small) and reading them would have cost 7 correct sizes to buy 4 wrong ones.
+      - `granted_skill_refs` 96% is already the ceiling: 1 background has no
+        skill row upstream, 1 says "Two of your choice" and no field holds a count.
+
+      **What was real and is now done:** `tool_proficiency` — 40 benefit rows,
+      `granted_tool_refs` **0% → 35%** (19/53, 23 softRefs, every one resolving to
+      a built-in tool card) and `granted_tool_variant_group` **0% → 22%** (12/53).
+      Plus a third v2 conversion gap in B8's shape: `toh`'s **Shade** ships zero
+      `SpeciesTrait` rows and its statblock is recovered from v1 `Race.json`
+      (`granted_languages` 90% → **100%**, `ability_bonuses` 81% → 90%,
+      `granted_senses` 63% → 72%). Recovering it exposed a **D1 over-grant** —
+      a resistance that lasts only for the minute an activated trait runs was
+      being emitted as permanent — now filtered per sentence.
+      *Diff: 28 backgrounds + 1 species changed, zero entities added or removed,
+      spell class-tag coverage byte-identical. `dupe_census` C: +23 softRefs, all
+      to the built-in pack, dangling count unchanged.*
 - [ ] **B4 — Spell gaps.** `shape_type`/`shape_size` → area fields;
       `reaction_condition` → `reaction_trigger`. ~~load `SpellCastingOption.json` →
       `at_higher_levels_text`~~ — **struck by A1:** the mapper already appends
@@ -1836,9 +1951,10 @@ dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
 
 # Importer-side unit tests (drive the mapper, not the shipped asset — the assets
-# predate B1/B8/B9, so only the mapper can be asserted until promotion).
+# predate B1/B3/B8/B9, so only the mapper can be asserted until promotion).
 flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B8 v1 action backfill (8)
+                                   # + B3 background tools / v1 species (12)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
