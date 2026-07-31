@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-07-30
+updated: 2026-07-31
 tags: [moc]
 ---
 
@@ -84,6 +84,14 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   outright while their empty heading / `[Column data]` placeholder shipped as
   prose. Now rendered as a `### Class Table` markdown table. **Neither census
   tool can see it** (`description` was already 100% "filled"), which is exactly
-  what **T1** exists to catch. Next: **B4** — two plain spell column reads.
+  what **T1** exists to catch. **B4 done 2026-07-31** — and the first phase
+  whose filed premise *survived* the snapshot, because it was measured first:
+  [[mapper_spell]] now reads `shape_type`/`shape_size` → `area_shape_ref` +
+  `area_size_ft` (**0% → 7%**, all five upstream shapes already built-in
+  `area-shape` rows, size unconditionally feet) and `reaction_condition` →
+  `reaction_trigger` (**0% → 3%**, with upstream's dangling "which you take …"
+  lead-in stripped since the app's field stands alone). Both are at their
+  ceiling — that is all the source has. Next: **T1** (`verify_packs`), which
+  everything left in Stage B now depends on for grading.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

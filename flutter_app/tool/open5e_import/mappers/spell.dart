@@ -96,6 +96,28 @@ void mapSpells({
       attrs['attack_type'] = (range.$2 ?? 0) > 5 ? 'Ranged' : 'Melee';
     }
 
+    // Area of effect (audit **B4**). `shape_type` is a clean 5-value enum
+    // upstream — cone/cube/cylinder/line/sphere — and every one of them is
+    // already a built-in `area-shape` Tier-0 row, so `lookupRef` resolves all
+    // of them and nothing reaches the unmapped sink. `shape_size_unit` is null
+    // on ~2/3 of the rows and `ft`/`feet` on the rest; **no other unit occurs
+    // anywhere in the snapshot**, including the two skipped WotC documents, so
+    // the size is unconditionally feet. No row carries a size without a shape.
+    final shapeRaw = (s['shape_type'] as String?)?.trim() ?? '';
+    if (shapeRaw.isNotEmpty) {
+      final shape = norm.lookupRef('area-shape', shapeRaw, context: name);
+      if (shape != null) attrs['area_shape_ref'] = shape;
+      final size = _numOf(s['shape_size']);
+      if (size != null && size > 0) attrs['area_size_ft'] = size.round();
+    }
+
+    // Reaction trigger (audit **B4**). Every non-empty `reaction_condition` in
+    // the snapshot sits on a `reaction` casting time (51/51 in the shipping
+    // documents), so this is not gated on `ct` — the source already agrees, and
+    // gating could only ever drop a row upstream chose to fill.
+    final trigger = _reactionTrigger((s['reaction_condition'] as String?) ?? '');
+    if (trigger != null) attrs['reaction_trigger'] = trigger;
+
     // Classes → tags (descriptive; not inter-entity refs). v2 carries the
     // linkage in `classes`; when empty (most 3rd-party docs) fall back to the
     // v1 `dnd_class` string indexed by spell name.
@@ -120,6 +142,21 @@ String _description(Fixture s) {
   final higher = (s['higher_level'] as String?)?.trim() ?? '';
   if (higher.isEmpty) return desc;
   return '$desc\n\n**At Higher Levels.** $higher';
+}
+
+/// Upstream writes `reaction_condition` as the tail of the casting-time line —
+/// "1 reaction, *which you take when you are hit by an attack*" — so 46 of the
+/// 51 shipping rows begin with a dangling relative clause. The app's field is a
+/// standalone `reaction_trigger`, so the lead-in is dropped and the remainder
+/// is made a sentence. The other 5 rows already read standalone and only gain
+/// the capital and the full stop.
+final _reactionLeadIn = RegExp(r'^(?:which|that)\s+you\s+take\s+');
+
+String? _reactionTrigger(String raw) {
+  var t = raw.trim().replaceFirst(_reactionLeadIn, '').trim();
+  if (t.isEmpty) return null;
+  t = t[0].toUpperCase() + t.substring(1);
+  return RegExp(r'[.!?]$').hasMatch(t) ? t : '$t.';
 }
 
 /// `'10minutes'` → `(10, 'Minute')`, `'bonus-action'` → `(1, 'Bonus Action')`.

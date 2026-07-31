@@ -54,18 +54,23 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **B4 — spell gaps** (§6), the last mapper phase that
-needs no target-shape decision: `shape_type`/`shape_size` → the area fields and
-`reaction_condition` → `reaction_trigger`, both plain column reads (A1 already
-struck B4's third clause). After it, everything left (B5, B6, B10, L1) needs a
-decision before code, and **T1** has earned priority — see the box below.
+**Next action right now:** **T1 — `verify_packs.dart`** (§6). B4 closed the last
+mapper phase that needed no target-shape decision; everything still open in
+Stage B (B5, B6, B10) plus L1 needs a decision before any code, and T1 has
+earned priority — see the box below.
 
-> **Four phases running have now reversed their own premise** (B9's unmapped
-> report, B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`).
-> The pattern is exact: a defect filed from the *shipped assets* names a
-> plausible cause, and the source data contradicts it. Measure the premise
-> against the snapshot before writing code — B3's and B2's filed exit criteria
-> were both unreachable.
+> **Four phases running reversed their own premise** (B9's unmapped report,
+> B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`). The
+> pattern was exact: a defect filed from the *shipped assets* names a plausible
+> cause, and the source data contradicts it. Measure the premise against the
+> snapshot before writing code — B3's and B2's filed exit criteria were both
+> unreachable.
+>
+> **B4 broke the streak**, and how it broke it is the point: its premise was
+> checked against the snapshot *first* (`shape_type` is a clean 5-value enum
+> already present in the built-in `area-shape` canon; `shape_size` is feet in
+> every row that has one; `reaction_condition` is non-empty on exactly the
+> reaction-cast rows), and only then was code written. Checking cost one query.
 >
 > **And B2 exposed the reason the pattern keeps recurring.** Its fix — 171
 > dropped class-table rows, plus `[Column data]` shipping as prose — is
@@ -90,8 +95,11 @@ and `size_ref` at 100% is unreachable), but the one that was right delivered
 documents, but the 171 rows it was meant to read were being dropped outright
 while their `[Column data]` placeholder shipped as prose; they are now a
 rendered class table.
+**B4 is done** — and is the first phase whose filed premise held: `area_shape_ref`
+and `area_size_ft` 0% → **7%** (103 spells), `reaction_trigger` 0% → **3%** (51),
+every value sourced, nothing inferred, nothing new in the unmapped sink.
 
-Also unblocked and independent: **B4** (two plain spell column reads), **B10** (the 70 free-text alignments B9 left, which needs
+Also unblocked and independent: **B10** (the 70 free-text alignments B9 left, which needs
 a target-shape decision first), **U1** (wizard readers), **T2**/**T3** (tooling),
 **M1**.
 **L1** now has a real target list rather than a headline: §3.2's per-category
@@ -1323,8 +1331,8 @@ with a built-in spell (313 of them A5E — see §2.5).
 | | Field | Fill | Cause | Source |
 |:--:|---|--:|:--:|---|
 | 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row: four chargen readers take raw ids only, and `tags` is what makes packaged spells visible today. Reader fix (U1) ships first; the `tags` route is retired last.** |
-| 🔴 | `area_shape_ref`, `area_size_ft` | 0% | `M` | `Spell.shape_type` / `shape_size` / `shape_size_unit` are in the fixtures |
-| 🔴 | `reaction_trigger` | 0% | `M` | `Spell.reaction_condition` |
+| 🟡 | `area_shape_ref`, `area_size_ft` | 0% → **7%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.shape_type` is a 5-value enum (cone/cube/cylinder/line/sphere), every value already a built-in `area-shape` Tier-0 row, so all 103 resolve and none reach the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit occurs anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 7% *is* the ceiling: only 103 of 1,297 spells have an area upstream. |
+| 🟡 | `reaction_trigger` | 0% → **3%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.reaction_condition` is non-empty on 51 rows, all 51 with `casting_time: reaction`. Upstream writes it as the tail of the casting-time line ("1 reaction, *which you take when…*"), so 46 of 51 open with a dangling relative clause; the lead-in is stripped and the remainder made a sentence, since the app's field stands alone. 3% is the ceiling. |
 | ⚪ | `at_higher_levels_text` | 0% | `P` | **Reclassified by A1 (2026-07-30): not a gap.** `Spell.higher_level` prose is already shipped, appended to `description` as *"At Higher Levels"*. `SpellCastingOption.json` adds **zero** spells on top of that in any document, so this field is a formatting preference (split the prose out of `description`), not missing content. Was `🔴 L`. |
 | 🔴 | `applied_condition_refs` | 0% | `M`🔗 | Tier-0 conditions via `lookup()` |
 | 🔴 | `effects` | 0% | ⚪ | `spellEffectList` — a live named field with a real editor (**not** a removed DSL), but nothing in `domain/` or `application/` reads it, and Open5e has no structured damage rows. Leave empty until a reader exists. |
@@ -1660,11 +1668,25 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       *Diff: 28 backgrounds + 1 species changed, zero entities added or removed,
       spell class-tag coverage byte-identical. `dupe_census` C: +23 softRefs, all
       to the built-in pack, dangling count unchanged.*
-- [ ] **B4 — Spell gaps.** `shape_type`/`shape_size` → area fields;
-      `reaction_condition` → `reaction_trigger`. ~~load `SpellCastingOption.json` →
-      `at_higher_levels_text`~~ — **struck by A1:** the mapper already appends
-      `Spell.higher_level` prose, and **zero** spells in any document have
-      casting-option payload without that prose. There is nothing to recover.
+- [x] **B4 — Spell gaps. Done 2026-07-31** — and the first phase whose filed
+      premise survived the snapshot. Both clauses were checked before any code
+      was written and both held: `shape_type` is a clean 5-value enum whose
+      every value is already a built-in `area-shape` Tier-0 row, `shape_size` is
+      feet in every row that has one (no other unit exists in the snapshot, and
+      no row has a size without a shape), and `reaction_condition` is non-empty
+      on exactly the 51 rows cast as a reaction. `area_shape_ref` /
+      `area_size_ft` **0% → 7%** (103 spells), `reaction_trigger` **0% → 3%**
+      (51). Both are at their **ceiling** — that is all the source has.
+      `reaction_condition` is stored upstream as the tail of the casting-time
+      line, so its dangling "which you take …" lead-in is stripped and the
+      remainder made a sentence.
+      *Diff: 153 spells changed, 257 values added, zero entities added or
+      removed, spell class-tag coverage byte-identical in all 8 spell packs,
+      `dupe_census` and `unmapped_report.json` byte-identical.*
+      ~~load `SpellCastingOption.json` → `at_higher_levels_text`~~ —
+      **struck by A1:** the mapper already appends `Spell.higher_level` prose,
+      and **zero** spells in any document have casting-option payload without
+      that prose. There is nothing to recover.
 - [ ] **B5 — Grant block (§5.7).** Start with `mechanical_notes`: route every rule
       the mapper currently abandons in prose into it, one per line, so it reaches
       the sheet. Then the sourced keys. Also confirm/fix the
@@ -1988,11 +2010,12 @@ dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
 
 # Importer-side unit tests (drive the mapper, not the shipped asset — the assets
-# predate B1/B2/B3/B8/B9, so only the mapper can be asserted until promotion).
+# predate B1/B2/B3/B4/B8/B9, so only the mapper can be asserted until promotion).
 flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B8 v1 action backfill (8)
                                    # + B3 background tools / v1 species (12)
                                    # + B2 class tables (9)
+                                   # + B4 spell area / reaction trigger (11)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart

@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/spell.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-31
 tags: [file]
 ---
 
@@ -36,7 +36,10 @@ tags: [file]
 - `_duration`: maps the long tail of free-text durations onto the 6 canonical units; instantaneous/dispelled/permanent special-cased; unparseable → `'Special'` (a canonical row, never logged unmapped).
 - Components: V/S/M booleans → Tier-0 `casting-component` rows; material spec adds `material_description` / `material_cost_gp` / `material_consumed`.
 - Spell attack: `attack_roll == true` → `attack_type` Ranged if range>5 ft else Melee.
+- **Area of effect** (audit **B4**, 2026-07-31): `shape_type` → `area_shape_ref` via the built-in `area-shape` Tier-0 canon, `shape_size` → `area_size_ft`. Upstream uses exactly five shapes (cone/cube/cylinder/line/sphere) and every one is already a built-in row, so nothing reaches the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit exists anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 103 of 1,297 shipping spells have an area at all, so 7% is the ceiling.
+- **Reaction trigger** (audit **B4**): `reaction_condition` → `reaction_trigger` via `_reactionTrigger`. Upstream stores it as the *tail of the casting-time line* ("1 reaction, which you take when…"), so 46 of the 51 rows open with a dangling relative clause; `_reactionLeadIn` strips `which|that you take` and the remainder is capitalised and given a full stop, because the app's field stands alone. Not gated on casting time — all 51 rows are already `reaction`, so a gate could only ever drop data.
 - **Class tags**: v2 `classes` (`['srd_wizard']`→`['Wizard']` via `_classTags`, taking the last `_`-segment + dedup) win; else `_classTagsFromV1` splits the v1 comma-string (`'Druid, Ranger, Sorceror'`→`['Druid','Ranger','Sorcerer']`, applying `_v1ClassFix = {'Sorceror':'Sorcerer'}`). Non-class tokens pass through harmlessly (match no class).
 
 ## Notes
+- **B4's premise held** — the first audit phase where it did, after B9/B8/B3/B2 each reversed theirs. Both columns were measured against the pinned snapshot (`d4276c58`) *before* code was written. See `flutter_app/docs/open5e_content_audit.md` §5.6 / §6 B4.
 - The class list lives as tags because the spell card's class linkage is matched at runtime by name against installed class entities, not by a hard `_ref`.
