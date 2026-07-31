@@ -76,6 +76,14 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   species say the subrace decides and the subraces never say, and v1's
   `size_raw`/`speed_json` are default-filled traps. All four rebuilds stay
   scratch-only, so the shipped assets carry none of these fixes yet (promotion is
-  Stage D). Next: **B2** — the `column_value` class tables B1 deliberately left.
+  Stage D). **B2 done 2026-07-31**: the four fields it was filed to fill
+  (`cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level`,
+  `extra_attack_count_by_level`) need `CORE_TRAITS_TABLE`/`SPELL_SLOTS`, which
+  exist **only in the two skipped WotC documents** — but the 171 `column_value`
+  rows B1 excluded from `features` had no other home and were being dropped
+  outright while their empty heading / `[Column data]` placeholder shipped as
+  prose. Now rendered as a `### Class Table` markdown table. **Neither census
+  tool can see it** (`description` was already 100% "filled"), which is exactly
+  what **T1** exists to catch. Next: **B4** — two plain spell column reads.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

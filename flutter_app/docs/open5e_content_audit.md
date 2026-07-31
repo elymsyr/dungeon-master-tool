@@ -54,19 +54,25 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **B2 — the class tables B1 deliberately left** (§6).
-It is the last narrow, decision-free mapper phase: `ClassFeatureItem` rows
-carrying a `column_value` are a class table column, not a granted feature, and
-B1 proved no document mixes the two inside one feature. A1 already sized it —
-**171 rows in exactly two documents** (`a5e-ag` 113, `bfrd` 58) — so it is a
-day's work, not "all class tables". Everything after it (B5, B6, B10, L1) needs
-a target-shape decision first.
+**Next action right now:** **B4 — spell gaps** (§6), the last mapper phase that
+needs no target-shape decision: `shape_type`/`shape_size` → the area fields and
+`reaction_condition` → `reaction_trigger`, both plain column reads (A1 already
+struck B4's third clause). After it, everything left (B5, B6, B10, L1) needs a
+decision before code, and **T1** has earned priority — see the box below.
 
-> **Three phases running have now reversed their own premise** (B9's unmapped
-> report, B8's action buckets, B3's `type` column). The pattern is that a defect
-> filed from the *shipped assets* names a plausible cause the source data then
-> contradicts. Re-measure the premise against the snapshot before writing code —
-> B3's filed exit criterion was itself unreachable.
+> **Four phases running have now reversed their own premise** (B9's unmapped
+> report, B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`).
+> The pattern is exact: a defect filed from the *shipped assets* names a
+> plausible cause, and the source data contradicts it. Measure the premise
+> against the snapshot before writing code — B3's and B2's filed exit criteria
+> were both unreachable.
+>
+> **And B2 exposed the reason the pattern keeps recurring.** Its fix — 171
+> dropped class-table rows, plus `[Column data]` shipping as prose — is
+> **invisible to both census tools**, because `description` counted as 100%
+> filled while holding empty headings and a placeholder. Presence is not
+> correctness; that is §3.4's claim, now demonstrated three times, and it is
+> what **T1** exists to fix.
 
 Stage A is done (snapshot pinned at `d4276c58`, every fixture file decided — §4 A0,
 §4 A1), L0 is done (the census now measures what the phases are graded on — §3.2),
@@ -80,9 +86,12 @@ five filed clauses were wrong (`SpeciesTrait.type` is null on every row we ship,
 and `size_ref` at 100% is unreachable), but the one that was right delivered
 `granted_tool_refs` 0% → 35%, and a third v2 conversion gap surfaced with it:
 `toh`'s Shade shipped with no traits at all and is recovered from `data/v1`.
+**B2 is done** — its four target fields have no source outside the skipped SRD
+documents, but the 171 rows it was meant to read were being dropped outright
+while their `[Column data]` placeholder shipped as prose; they are now a
+rendered class table.
 
-Also unblocked and independent: **B2** (the class tables B1 deliberately left —
-its `column_value` rows), **B10** (the 70 free-text alignments B9 left, which needs
+Also unblocked and independent: **B4** (two plain spell column reads), **B10** (the 70 free-text alignments B9 left, which needs
 a target-shape decision first), **U1** (wizard readers), **T2**/**T3** (tooling),
 **M1**.
 **L1** now has a real target list rather than a headline: §3.2's per-category
@@ -1116,8 +1125,9 @@ still subject to the re-verification pass (§6 V1).
 | 🔴 | `l1_order_feat_category`, `weapon_mastery_filter`, `complexity` | Progression | | 0% | ⚪ | app-only concepts |
 | 🔴 | `casting_ability_ref`, `spellcasting_focus_ref` | Spellcasting | | 0% | `M`🔗 | Spellcasting feature prose; the focus is a built-in item |
 | ✅ | `caster_kind` | Spellcasting | **yes** | 100% | | `caster_type`, else inferred from feature names |
-| 🔴 | `cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level` | Spellcasting | | 0% | **`L`** | `ClassFeature.feature_type == CORE_TRAITS_TABLE` + `ClassFeatureItem.column_value` |
+| 🔴 | `cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level` | Spellcasting | | 0% | ~~**`L`**~~ **`S`** | ~~`feature_type == CORE_TRAITS_TABLE` + `ClassFeatureItem.column_value`~~ — **B2 reclassified these.** `CORE_TRAITS_TABLE` exists in 1 document and `SPELL_SLOTS` in 2, **all of them the skipped WotC pair**; the `Cantrips Known` / `Prepared Spells` / `Spell Slots` columns exist nowhere else. There is no source, so this is a source limit, not a loader gap |
 | ✅ | **`features`** | Features | | 0% shipped → **100%** rebuilt | ~~`L`~~ **B1 done** | `ClassFeatureItem.level`; each row's `granted_feat_refs` is still empty — a 🔗 under §0 rule 3, left to B5 |
+| ✅ | `description` — the class table | Features | | 100%, but **2 of 2 table-bearing classes were shipping it broken** | **B2 done** | The 171 `column_value` rows B1 excluded from `features` had no other home, so every number was dropped while the column's *empty* heading (`a5e-ag`) or `[Column data]` placeholder (`bfrd`) was folded in. Now rendered as a `### Class Table` markdown table. **Neither census tool can see this** — `description` counted as filled either way (§3.4, → T1) |
 
 ### 5.2 `subclass` — 101 entities
 
@@ -1586,12 +1596,39 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       *Not done: `bundled_pack_resolve_test` still cannot show a bundled subclass
       feature — `assets/open5e_packs/` predates B1 and promoting the rebuild is
       Stage D's decision, not B1's. That assertion is a Stage D gate.*
-- [ ] **B2 — Class tables.** `feature_type == CORE_TRAITS_TABLE` + `column_value` →
-      `cantrips_known_by_level` / `prepared_spells_by_level` / `spell_slots_by_level`
-      / `extra_attack_count_by_level`. *Scope check from A1: `column_value` is
-      filled on **171 rows in exactly two documents** (a5e-ag 113, bfrd 58) and is
-      empty in toh / open5e / tdcs / open5e-2024. This is a narrow phase — do not
-      size it as "all class tables".*
+- [x] **B2 — ~~Class tables~~. The four target fields have no source; the 171 rows
+      were being dropped. Done 2026-07-31.**
+      *Filed as: `feature_type == CORE_TRAITS_TABLE` + `column_value` →
+      `cantrips_known_by_level` / `prepared_spells_by_level` /
+      `spell_slots_by_level` / `extra_attack_count_by_level`.* **Not one of those
+      five names is reachable.** Measured over the snapshot:
+      `CORE_TRAITS_TABLE` exists in **exactly one** document (`srd-2024`, 12 rows)
+      and `SPELL_SLOTS` in two (`srd-2014` 55, `srd-2024` 55) — all skipped by the
+      publisher-wide SRD rule. The `Cantrips Known` / `Prepared Spells` /
+      `Spell Slots` columns those fields need exist **only** in the two skipped
+      documents (`srd-2014` 1,293 `column_value` rows, `srd-2024` 1,534). This is
+      the fourth phase running whose premise the source contradicts.
+
+      **What the 171 rows actually are:** 2 `PROFICIENCY_BONUS` tables (Marshal,
+      Mechanist) that reproduce the standard 5e progression exactly, and 7
+      `CLASS_TABLE_DATA` columns with no schema field to hold them — Marshal's
+      *Commanding Presence*, *Followers*, *Maneuvers Known*, *Maneuver Degree*,
+      *Lessons Known*, and Mechanist's two *Augment Effects Known*.
+
+      **And they were not merely unread — they shipped as damage.** The owning
+      `ClassFeature` carries no prose (`''` in `a5e-ag`, the literal
+      `'[Column data]'` in `bfrd`), so `_fold` was writing empty
+      `### Maneuvers Known` headings into the Marshal and three `[Column data]`
+      paragraphs into the Mechanist, while every number vanished. B2 excludes
+      column features from the fold and renders them as one markdown
+      **`### Class Table`** in the description: no schema change, no invented
+      mechanic. The standard proficiency-bonus column is dropped (the app computes
+      it); a document that ever deviates is rendered. `bfrd`'s two identically
+      named columns are numbered rather than merged.
+      *Diff: 2 class descriptions, zero entity churn.* **Both census tools report
+      byte-identical output** — `description` was already 100% "filled", with
+      empty headings and a placeholder. That is §3.4 made concrete for the third
+      time and belongs to **T1**: presence is not correctness.
 - [x] **B3 — ~~Type-driven species/background mapping~~. The `type` column was
       already the key, or was never there. Done 2026-07-31.**
       *Filed as: match `SpeciesTrait.type` and `BackgroundBenefit.type` instead of
@@ -1951,10 +1988,11 @@ dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
 
 # Importer-side unit tests (drive the mapper, not the shipped asset — the assets
-# predate B1/B3/B8/B9, so only the mapper can be asserted until promotion).
+# predate B1/B2/B3/B8/B9, so only the mapper can be asserted until promotion).
 flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B8 v1 action backfill (8)
                                    # + B3 background tools / v1 species (12)
+                                   # + B2 class tables (9)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
