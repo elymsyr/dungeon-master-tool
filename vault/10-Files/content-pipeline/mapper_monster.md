@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/monster.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-07-31
 tags: [file]
 ---
 
@@ -16,8 +16,9 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- `mapCreatures(pack, norm, source, creatures, actions, attacks, traits)` — fixture lists from [[loaders]] (`groupBy(actions,'parent')`, etc.).
+- `mapCreatures(pack, norm, source, creatures, actions, attacks, traits, v1Actions)` — fixture lists from [[loaders]] (`groupBy(actions,'parent')`, etc.).
 - `Normalizer norm` for Tier-0 lookups ([[normalize]]).
+- `V1ActionIndex v1Actions` (audit **B8**) — `lowercased monster name → action_type bucket → [{name, desc}]`, built by [[build_packs]] from `data/v1/<doc>/Monster.json`. Defaults to `const {}`, which is the exact pre-B8 behaviour.
 
 **Outputs**
 - Adds `monster`, `creature-action`, `trait` entities to the `PackBuilder` ([[refgraph]]). Monster references children by name via `ref('creature-action', name)` / `ref('trait', name)`.
@@ -31,7 +32,12 @@ tags: [file]
 
 ## Key Logic / Variables
 - **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
-  - ⚠️ **The switch trusts the source, and `open5e-tob3` breaks on it**: that pack ships **2** `action_refs` against 136 bonus / 96 reaction / 75 legendary, so **396 of its 397 monsters render an empty Actions block** while every other pack sits at 1,200–1,900 `action_refs`. Nothing catches it — the refs all resolve, so the build gate passes, and the field census is per-field so `action_refs` still reads as "filled". Measured 2026-07-30; audit doc §3.5, phases **B8** (fix the mapping / reject an implausible per-document distribution) and **T3** (relational gate).
+  - ✅ **`open5e-tob3`'s empty Actions block was never this switch's fault** (audit **B8**, fixed 2026-07-31). The pack shipped **2** `action_refs` against 136 bonus / 96 reaction / 75 legendary, and the natural reading was a mis-set enum. The pinned snapshot says otherwise: `tob3/CreatureAction.json` genuinely holds 309 rows for 397 creatures with 2 `ACTION` among them, and the three non-`ACTION` buckets match `v1/tob3/Monster.json` **row for row** (136 / 96 / 75). Upstream's v2 conversion dropped one column; the mapper was faithful. Nothing caught it — the refs that existed all resolved, so the build gate passed, and the per-field census still read `action_refs` as "filled". **T3** is still the gate that would.
+- **v1 action backfill** (audit **B8**): after the v2 loop, any of the four buckets **left entirely empty for this creature** is filled from `v1Actions[rawName.toLowerCase()]` through the *same* `_cleanChildName` + `_ensureChild` path, so recovered rows inherit the sanitizer, the content dedup and the `Name (Creature)` disambiguation.
+  - **Empty-bucket-only is the safety argument, and it is measured.** The looser "add any v1 row whose name is absent" rule would add **~2,000 rows corpus-wide** — v1 and v2 disagree about action *names*, not about which actions exist, so it would ship duplicates dressed as recoveries. The conservative rule's whole cost is one monster (Abaasy, the single tob3 creature v2 partially converted, keeps 2 and forgoes 5).
+  - The join key is the **raw** upstream name, not `_cleanMonsterName`'s output — that is what reaches tob3's 15 `Npc: …` monsters.
+  - `_v1ActionRow` emits prose only: v1 has no `CreatureActionAttack` equivalent, so `attack_bonus`/`damage_dice`/`attack_kind` are absent rather than reverse-engineered out of the text. tob3 ships no attack fixture at all, so nothing is lost. The visible consequence is that `creature-action.attack_kind`/`damage_dice` *shares* fall (41%→35%, 40%→34%) while their absolute counts are unchanged.
+  - Result on the rebuild: `monster.action_refs` **86% → 99.8%** (2880/2885), tob3's actionless monsters **396 → 1**. Tests: `flutter_app/test/tool/creature_action_fallback_test.dart` (8 cases).
 - **Child dedup** (`_ensureChild`): content-hashed (`type|description|sorted-attrs`) so identical actions/traits across creatures are authored once; name collisions on different content are disambiguated with ` (CreatureName)` / ` (CreatureName N)`.
 - **Name sanitization** (Open5e scraper mis-segments stat blocks): `_cleanMonsterName` strips `Npc:` prefix + re-cases small-words. `_cleanChildName` drops trailing periods, lifts roll-table range rows (`1-4: Arm`→`Arm`), recovers a label from desc for purely-numeric names, strips leading list-counts and leaked attack clauses, reduces `Label: effect sentence`→`Label` (gated), and DROPS clearly-spurious full-sentence fragments (`_looksLikeSentenceFragment`: ≥4 lowercase-initial words, multiple sentences, or legendary-action preamble) — returning null skips the ref so no orphan ships.
 - **Stat derivation**: `_crString` maps decimals to fractions (0.125→`1/8`); `_profForCr` and `_xpByCr` (full CR→XP table 0..30) backfill proficiency bonus + XP when Open5e omits them. `_saveTable`/`_skillTable` reconstruct proficiency tables by back-solving `misc = bonus - abilityMod - PB`.

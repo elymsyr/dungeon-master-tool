@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/build_packs.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-07-30
+updated: 2026-07-31
 tags: [file]
 ---
 
@@ -19,6 +19,7 @@ tags: [file]
 - CLI args (`--data`, `--out`, `--rev`); defaults: data = `../open5e-api-staging/data`, out = `assets/open5e_packs`, rev = `staging-2026-05-31`.
 - Reads `data/v2/<publisher>/<doc>/*.json` Django fixtures via `loadFixtures` (Creature, Spell, MagicItem, CharacterClass, Species, Background, Feat + their child files), plus the Tier-0 vocabulary files across every document ([[vocab]]).
 - Reads `data/v1/<doc>/Spell.json` to build a `spellNameLower → dnd_class` fallback index (v2 leaves `Spell.classes` empty for most 3rd-party docs).
+- Reads `data/v1/<doc>/Monster.json` to build the B8 action index (`_v1ActionIndex`), recovering action buckets upstream's v2 conversion never wrote.
 - Document registry from `sourceDocs(dataRoot)` (see `sources`).
 
 **Outputs**
@@ -38,6 +39,8 @@ tags: [file]
 - Per document: build a fresh `PackBuilder`, call `mapCreatures` / `mapSpells` / `mapMagicItems` / `mapClasses` / `mapSpecies` / `mapBackgrounds` / `mapFeats` for each present content type, then `pack.resolveRefs()` (Pass 2). Non-empty unresolved list → log + `hadError = true` + skip writing that pack.
 - **SRD overlap skip**: documents whose publisher is `wizards-of-the-coast` (`doc.isSrdOverlap`) are discovered but never written — the app ships the hand-authored built-in SRD 5.2.1 pack instead (see [[srd_core_pack]]).
 - **v1 class recovery**: `_v1ClassIndex` reads every `v1/<doc>/Spell.json`; `_v1DocForV2` maps each v2 doc slug to the v1 doc holding its `dnd_class` linkage (e.g. `wz→warlock`, `a5e-ag→a5e`, `deepm→dmag`); `_v1GlobalPref` is the cross-doc canonical fallback order (`wotc-srd`, `o5e`, `a5e`, `dmag`, …). Doc-scoped overlay wins over the global fallback.
+- **v1 action recovery** (audit **B8**, 2026-07-31): `_v1ActionIndex` reads every `v1/<doc>/Monster.json` into `v1doc → lowercased monster name → action_type bucket → [{name, desc}]`, decoding the `actions_json` / `bonus_actions_json` / `reactions_json` / `legendary_actions_json` columns (each a JSON *string*). `_v1DocForCreatures` maps the 8 v2 document slugs verified on the snapshot by monster-count **and** name parity (`a5e-mm→menagerie`, `bfrd→blackflag`, `ccdx→cc`, `tdcs→taldorei`, `tob`, `tob2`, `tob-2023`, `tob3`); the SRD documents are deliberately absent (skipped before this point, and `wotc-srd` is not row-parity with `srd-2014`). [[mapper_monster]] consumes it and fills **only** a bucket v2 left entirely empty — see that note for why the looser rule was rejected.
+  - ⚠️ **This is the second undetectable `data/v1` dependency, and the bigger one.** Without `v1/tob3/Monster.json` the build is clean and green while 396 statblocks ship with an empty Actions block — exactly how the defect survived. Unlike the spell tags it *is* visible to [[audit_packs]] (`monster.action_refs` 86% vs 99.8%), so check that number after any rebuild.
   - ⚠️ **`data/v1` is a hard dependency of character creation.** [[mapper_spell]] writes the recovered class as a bare-name **`tags`** entry (`spell.class_refs` is 0%), and the chargen spell pickers match on exactly that tag — so a snapshot cloned without `v1`, or a new document missing from `_v1DocForV2`, produces spells with no class linkage and **no error**: refs still resolve, both audit tools stay green (`tags` is not a declared field), and the wizard silently offers an empty spell list. Check `data/v1` in the snapshot and diff spell-tag coverage after any rebuild.
 - **Discovery is silent about what it skips.** `sourceDocs` requires a `Document.json` plus at least one of the seven `_mappedFiles`; a document whose content lives only in unmapped files (`Item.json`, `Rule.json`, …) is dropped with no log line, and the SRD-overlap skip is **publisher-wide** (`publisher == 'wizards-of-the-coast'`), not just `srd-2014`/`srd-2024`.
 - **`--rev` is a label, not a pin.** Default `staging-2026-05-31` is a hardcoded string while upstream `staging` moves, so two runs months apart are not comparable unless the caller passes the actual clone SHA. **The pinned snapshot is `d4276c586d79f2a27bf2b814aed151cf57605283`** (upstream commit date 2026-06-13, cloned 2026-07-30) — pass that as `--rev`, and see the audit doc's §4 A0 table.

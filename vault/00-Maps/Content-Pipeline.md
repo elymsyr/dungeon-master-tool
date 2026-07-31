@@ -59,9 +59,14 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   seeded as pack-local Tier-0 rows (§2: never in the built-in schema).
   `unmapped_report.json` 144 → 70 (only free-text `alignment` left, = **B10**),
   `monster.size_ref` 100%; the cost is 6 packs each shipping a one-row
-  `Void Speech`, filed on **L2**. Both rebuilds stay scratch-only, so the shipped
-  assets do not carry either fix yet (promotion is Stage D). Next: **B8** — the
-  only shipped *defect* left, 396 of `open5e-tob3`'s 397 monsters with no
-  Actions block.
+  `Void Speech`, filed on **L2**. **B8 done 2026-07-31**: `open5e-tob3`'s 396
+  actionless monsters were not a bucketing bug — upstream's v2 conversion dropped
+  that document's whole `ACTION` column (2 rows for 397 creatures) while the other
+  three buckets match `v1/tob3/Monster.json` row for row, so [[build_packs]] now
+  indexes v1's statblock columns and [[mapper_monster]] backfills **only** buckets
+  v2 left empty. `monster.action_refs` 86% → 99.8%; corpus actionless 400 → 5, all
+  genuinely actionless. All three rebuilds stay scratch-only, so the shipped assets
+  carry none of these fixes yet (promotion is Stage D). Next: **B3** — species,
+  subspecies and backgrounds, matched by `type` instead of by name.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

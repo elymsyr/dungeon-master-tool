@@ -11,6 +11,7 @@
 // Fails (exit 1) on any unresolved `_ref` so a broken pack never ships.
 //
 // ignore_for_file: avoid_print
+import 'dart:convert';
 import 'dart:io';
 
 import '../emit.dart';
@@ -48,6 +49,11 @@ void main(List<String> args) {
   // v1 `Spell.dnd_class` index — the v2 fixtures leave `Spell.classes` empty for
   // most 3rd-party docs, so spells ship with no class link. v1 still carries the
   // comma-string class list per spell name; index it as a fallback for mapSpells.
+  // v1 `Monster.*_json` action index (audit B8) — upstream's v2 conversion
+  // dropped whole action buckets for some documents. Only consulted for a
+  // bucket the v2 fixtures leave empty; see `mapCreatures`.
+  final v1Actions = _v1ActionIndex(dataRoot);
+
   final v1ByDoc = _v1ClassIndex(dataRoot);
   final v1Global = <String, String>{};
   for (final pref in _v1GlobalPref) {
@@ -72,6 +78,7 @@ void main(List<String> args) {
         slug: slug, name: name, source: doc.title);
 
     if (doc.hasCreatures) {
+      final v1Doc = _v1DocForCreatures[doc.slug];
       mapCreatures(
         pack: pack,
         norm: norm,
@@ -80,6 +87,7 @@ void main(List<String> args) {
         actions: loadFixtures(doc.v2File('CreatureAction.json')),
         attacks: loadFixtures(doc.v2File('CreatureActionAttack.json')),
         traits: loadFixtures(doc.v2File('CreatureTrait.json')),
+        v1Actions: (v1Doc == null ? null : v1Actions[v1Doc]) ?? const {},
       );
     }
     if (doc.hasSpells) {
@@ -215,6 +223,85 @@ const _v1GlobalPref = [
   'kp',
   'warlock',
 ];
+
+/// v2 document slug → the v1 document slug holding the same monsters, for the
+/// B8 action backfill. Every pair below is verified on the pinned snapshot by
+/// monster-count *and* name parity (menagerie 586/586, blackflag 360/360,
+/// cc 356/356, tob 391/391, tob2 379/383, tob-2023 405/408, tob3 397/397,
+/// taldorei 4/4). The SRD documents are deliberately absent: they are skipped
+/// before this point, and `wotc-srd` is not row-parity with `srd-2014` anyway.
+const _v1DocForCreatures = {
+  'a5e-mm': 'menagerie',
+  'bfrd': 'blackflag',
+  'ccdx': 'cc',
+  'tdcs': 'taldorei',
+  'tob': 'tob',
+  'tob2': 'tob2',
+  'tob-2023': 'tob-2023',
+  'tob3': 'tob3',
+};
+
+/// v1 `Monster.*_json` column → the `CreatureAction.action_type` bucket it
+/// stands in for.
+const _v1ActionColumns = {
+  'actions_json': 'ACTION',
+  'bonus_actions_json': 'BONUS_ACTION',
+  'reactions_json': 'REACTION',
+  'legendary_actions_json': 'LEGENDARY_ACTION',
+};
+
+/// Build `v1doc → V1ActionIndex` from every `v1/<doc>/Monster.json` under
+/// [dataRoot]. The columns hold a JSON *string* of `[{name, desc}, …]`; a
+/// malformed or absent column is simply skipped, exactly like `_v1ClassIndex`.
+Map<String, V1ActionIndex> _v1ActionIndex(String dataRoot) {
+  final out = <String, V1ActionIndex>{};
+  final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
+  if (!v1.existsSync()) return out;
+  for (final ent in v1.listSync().whereType<Directory>()) {
+    final slug = ent.path.split(Platform.pathSeparator).last;
+    final monsters =
+        loadFixtures('${ent.path}${Platform.pathSeparator}Monster.json');
+    if (monsters.isEmpty) continue;
+    final byName = <String, Map<String, List<Map<String, String>>>>{};
+    for (final m in monsters) {
+      final name = (m['name'] as String?)?.trim();
+      if (name == null || name.isEmpty) continue;
+      final buckets = <String, List<Map<String, String>>>{};
+      for (final col in _v1ActionColumns.entries) {
+        final rows = _v1ActionRows(m[col.key]);
+        if (rows.isNotEmpty) buckets[col.value] = rows;
+      }
+      if (buckets.isNotEmpty) byName[name.toLowerCase()] = buckets;
+    }
+    if (byName.isNotEmpty) out[slug] = byName;
+  }
+  return out;
+}
+
+/// Decode one `*_json` column into `{name, desc}` rows. Accepts the JSON-string
+/// form the fixtures use and an already-decoded list, and drops anything that
+/// is not an object carrying a non-empty `desc`.
+List<Map<String, String>> _v1ActionRows(dynamic raw) {
+  dynamic decoded = raw;
+  if (raw is String) {
+    if (raw.trim().isEmpty) return const [];
+    try {
+      decoded = jsonDecode(raw);
+    } catch (_) {
+      return const [];
+    }
+  }
+  if (decoded is! List) return const [];
+  final out = <Map<String, String>>[];
+  for (final e in decoded) {
+    if (e is! Map) continue;
+    final name = (e['name'] as String?)?.trim() ?? '';
+    final desc = (e['desc'] as String?)?.trim() ?? '';
+    if (name.isEmpty || desc.isEmpty) continue;
+    out.add({'name': name, 'desc': desc});
+  }
+  return out;
+}
 
 /// Build `v1doc → { spellNameLower → dnd_class }` from every `v1/<doc>/Spell.json`
 /// under [dataRoot]. Used to recover class tags absent from the v2 fixtures.

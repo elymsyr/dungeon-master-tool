@@ -13,8 +13,16 @@ import '../loaders.dart';
 import '../normalize.dart';
 import '../refgraph.dart';
 
+/// v1 statblock fallback for creature actions (audit **B8**): lowercased
+/// monster name → `action_type` bucket → the raw `{name, desc}` rows upstream's
+/// v1 `Monster.*_json` columns carry. Built by `build_packs`.
+typedef V1ActionIndex = Map<String, Map<String, List<Map<String, String>>>>;
+
 /// Map all creatures in a document into [pack]. Child actions/traits are
 /// deduped within the package by content so shared rows are authored once.
+///
+/// [v1Actions] backfills a bucket the v2 fixtures leave **completely empty** for
+/// a creature; it can never override a bucket v2 populated. See B8 below.
 void mapCreatures({
   required PackBuilder pack,
   required Normalizer norm,
@@ -23,6 +31,7 @@ void mapCreatures({
   required List<Fixture> actions,
   required List<Fixture> attacks,
   required List<Fixture> traits,
+  V1ActionIndex v1Actions = const {},
 }) {
   final actionsByCreature = groupBy(actions, 'parent');
   final traitsByCreature = groupBy(traits, 'parent');
@@ -33,7 +42,8 @@ void mapCreatures({
 
   for (final c in creatures) {
     final pk = c['_pk'].toString();
-    final cname = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
+    final rawName = (c['name'] as String?)?.trim() ?? 'Unknown';
+    final cname = _cleanMonsterName(rawName);
 
     // ── Build child trait entities + collect refs ──
     final traitRefs = <Map<String, String>>[];
@@ -97,6 +107,45 @@ void mapCreatures({
           break;
         default:
           actionRefs.add(r);
+      }
+    }
+
+    // ── B8: backfill buckets upstream's v2 conversion dropped ──
+    // Tome of Beasts 3 ships 309 CreatureAction rows for 397 creatures and
+    // exactly 2 of them are ACTION, while v1's `actions_json` holds 1,373 —
+    // the non-ACTION buckets match v1 row for row (136/96/75), so this is a
+    // partial upstream conversion, not a mapping bug and not a mis-set enum.
+    // Only a bucket v2 left entirely empty for this creature is filled, so
+    // every other document is a no-op: their zero-BONUS_ACTION packs are zero
+    // in v1 too, and the handful of actionless creatures elsewhere (Frog,
+    // Seahorse, Shrieker) are actionless in both. v1 rows are prose only —
+    // there is no v1 equivalent of CreatureActionAttack — so a recovered
+    // action carries name + text and no structured attack, which is exactly
+    // what tob3 would have shipped anyway (it has no attack fixture at all).
+    final v1 = v1Actions[rawName.toLowerCase()];
+    if (v1 != null) {
+      final buckets = <String, List<Map<String, String>>>{
+        'ACTION': actionRefs,
+        'BONUS_ACTION': bonusRefs,
+        'REACTION': reactionRefs,
+        'LEGENDARY_ACTION': legendaryRefs,
+      };
+      for (final b in buckets.entries) {
+        if (b.value.isNotEmpty) continue;
+        for (final row in v1[b.key] ?? const <Map<String, String>>[]) {
+          final desc = row['desc']?.trim() ?? '';
+          final cleaned =
+              _cleanChildName(row['name']?.trim() ?? 'Action', desc, 'creature-action');
+          if (cleaned == null) continue;
+          final name = _ensureChild(
+            pack: pack,
+            childNameByHash: childNameByHash,
+            baseName: cleaned,
+            creatureName: cname,
+            row: _v1ActionRow(cleaned, desc, b.key, source),
+          );
+          b.value.add(ref('creature-action', name));
+        }
       }
     }
 
@@ -357,6 +406,26 @@ Map<String, dynamic> _actionRow(
     attributes: attrs,
   );
 }
+
+/// A `creature-action` recovered from a v1 `Monster.*_json` column (audit
+/// **B8**). v1 carries only a name and the statblock prose, so the structured
+/// attack attributes `_actionRow` derives from CreatureActionAttack are simply
+/// absent — the row is deliberately not reverse-engineered out of the text.
+Map<String, dynamic> _v1ActionRow(
+        String name, String desc, String bucket, String source) =>
+    packEntity(
+      slug: 'creature-action',
+      name: name,
+      description: desc,
+      source: source,
+      attributes: <String, dynamic>{
+        'source': source,
+        'action_type': _actionType(bucket),
+        'description': desc,
+        'is_attack': false,
+        'recharge_kind': 'None',
+      },
+    );
 
 /// Build "XdY+Z" from a CreatureActionAttack's primary damage fields.
 String? _attackDamageDice(Fixture attack) {

@@ -54,18 +54,23 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **B8 — ToB3's action buckets** (§6, §3.5). It is the
-only *shipped defect* left on the board rather than an empty field: **396 of
-`open5e-tob3`'s 397 monsters have no Actions block at all**, because their
-`CreatureAction.action_type` sends every row to bonus action / reaction /
-legendary. The restored snapshot is what makes it diagnosable, it needs no policy
-decision, and like B1/B9 it is measurable on the rebuild alone.
+**Next action right now:** **B3 — species, subspecies and backgrounds** (§6). With
+B8 done, no *shipped defect* is left on the board — what remains is empty fields,
+and B3 is the largest block of them that needs no policy decision: the 41 species
+/ subspecies and 53 backgrounds in the rebuild carry their traits and benefits as
+prose while `size_ref`, `speed_ft` and `granted_skill_refs` sit empty, because the
+mapper matches those child rows by **name** instead of by their `type` column —
+the same mistake B1 and B9 turned out to be. Like B1/B8/B9 it is measurable on the
+rebuild alone.
 
 Stage A is done (snapshot pinned at `d4276c58`, every fixture file decided — §4 A0,
 §4 A1), L0 is done (the census now measures what the phases are graded on — §3.2),
 **B1 is done** — §5.2's headline defect is fixed in the importer: 100 of 101
-subclasses now carry a level table and `granted_at_level` — and **B9 is done**: the
-unmapped report is down to the one bucket no fixture can fix (144 → 70).
+subclasses now carry a level table and `granted_at_level` — **B9 is done** (the
+unmapped report is down to the one bucket no fixture can fix, 144 → 70), and
+**B8 is done**: ToB3's missing Actions block turned out to be an upstream
+conversion gap, not a bucketing bug, and is recovered from `data/v1`
+(`monster.action_refs` 86% → 99.8% on the rebuild).
 
 Also unblocked and independent: **B2** (the class tables B1 deliberately left —
 its `column_value` rows), **B10** (the 70 free-text alignments B9 left, which needs
@@ -733,9 +738,9 @@ them are in one pack:
 | `open5e-tob2` | 383 | 1 |
 | every other pack | — | 0 |
 
-The rows are not missing — they are in the **wrong bucket**. `mapCreatures`
-switches on `CreatureAction.action_type` and defaults to `action_refs`; in
-`tob3` almost nothing hits the default:
+The hypothesis on this table was that the rows are not missing but in the **wrong
+bucket** — `mapCreatures` switches on `CreatureAction.action_type` and defaults to
+`action_refs`, and in `tob3` almost nothing hits the default:
 
 | Pack | `action_refs` | `bonus_action_refs` | `reaction_refs` | `legendary_action_refs` |
 |---|--:|--:|--:|--:|
@@ -745,13 +750,25 @@ switches on `CreatureAction.action_type` and defaults to `action_refs`; in
 | `open5e-a5e-mm` | 1,867 | 265 | 174 | 230 |
 | **`open5e-tob3`** | **2** | **136** | **96** | **75** |
 
-So *Tome of Beasts 3* ships 397 statblocks whose attacks render as bonus actions,
-reactions and legendary actions, with the Actions block empty. Cause is upstream
-`action_type` values the mapper takes at face value, or a mis-set enum in that
-document's fixtures — confirm against the restored snapshot (A0) and fix in **B8**.
-Nothing in the audit, the build gate (no ref dangles — they all resolve, just into
-the wrong list) or the tests would have caught it, which is why **T3** adds
-relational assertions.
+**The snapshot says that hypothesis was wrong, and B8 (2026-07-31) settled it.**
+The rows *are* missing. `tob3/CreatureAction.json` holds 309 rows for 397
+creatures and exactly 2 of them are `ACTION` — the mapper reproduces the fixture
+faithfully. Nothing is in the wrong bucket either: the non-`ACTION` rows are
+genuine bonus actions, reactions and legendary actions, and their counts match
+`v1/tob3/Monster.json`'s columns **row for row** (136 / 96 / 75). What differs is
+the fourth column: v1's `actions_json` carries **1,373 actions v2 never
+converted**. This is a partial upstream conversion of one document, not a mis-set
+enum and not a mapping bug — and `tob3` is the only document it happened to
+(every other document is ≤ 3 actionless creatures, all of them Frogs, Seahorses
+and Shriekers that are actionless in both v1 and v2).
+
+Fixed by backfilling from v1 — the same fallback shape the spell class tags
+already use, and the second undetectable hard dependency on `data/v1`. See §6 B8
+for the rule, its measured safety argument and its one-monster cost.
+
+Nothing in the audit, the build gate (no ref dangles — the rows that existed all
+resolved, they were simply few) or the tests would have caught this, which is why
+**T3** adds relational assertions.
 
 For contrast, the in-pack child model is otherwise sound: `_ensureChild` dedupes
 children **by content hash** and disambiguates a colliding name with the creature
@@ -812,6 +829,15 @@ ls open5e-api-staging/data/v1            # ← NOT optional, see below
 > with no class linkage at all — and neither audit tool reports it, because `tags`
 > is not a declared field. `diff_packs.dart` therefore carries a permanent spell
 > class-tag coverage column; check it after every rebuild.
+>
+> **B8 (2026-07-31) added a second, larger one.** `_v1ActionIndex` /
+> `_v1DocForCreatures` recover **Tome of Beasts 3's entire Actions block** from
+> `data/v1/tob3/Monster.json` — 1,368 refs across 395 monsters, 1,286 rows after
+> the content dedup — because upstream's v2 conversion never wrote that
+> document's `ACTION` rows (§3.5). Without `data/v1` the packs build cleanly and
+> 396 statblocks ship with an empty Actions block — which is precisely how the
+> defect went unnoticed in the first place. This one *is* visible to
+> `audit_packs` (`monster.action_refs`), and **T3** will make it a gate.
 
 **The snapshot is pinned here.** The default `--rev staging-2026-05-31` is a
 label, not a commit, and upstream `staging` moves — always pass the SHA below so
@@ -1228,14 +1254,17 @@ is hard-`_ref`ed from exactly one statblock.
 | — | *(whole category)* | | ~~`D`~~ | **Dedup withdrawn 2026-07-30.** 2,126 rows share a name, but "Multiattack" is 8 copies with 8 different texts and every row is owned by one monster's `action_refs`. Collapsing by name reassigns another creature's text. **L0 confirmed and closed this:** the census now reports 0 actionable redundancy for both `creature-action` and `trait` |
 
 **`monster` (2885)** — healthiest category *by field fill*, and the counter-example
-to trusting that: **400 of the 2,885 have no actions at all** (396 of them in
-`open5e-tob3`, whose attacks all landed in the bonus-action / reaction /
-legendary buckets — §3.5, phases **B8**/**T3**). 409 share a name with built-in,
+to trusting that: **400 of the 2,885 shipped have no actions at all** (396 of them
+in `open5e-tob3`, whose actions upstream's v2 conversion never wrote — §3.5).
+**B8 fixed this in the importer: 5 on the rebuild**, all genuinely actionless
+creatures; the shipped 400 stands until promotion, and **T3** is what will keep it
+from coming back. 409 share a name with built-in,
 588 across packs (`aboleth`, `acolyte`, `adult black dragon`, …) — mostly separate
 editions, per §2.5.
 
 | | Field | Fill | Cause | Notes |
 |:--:|---|--:|:--:|---|
+| ✅ | `action_refs` | 86% shipped → **99.8%** rebuilt | ~~`S`~~ **B8 done** | The category's headline defect, and it was never a mapping bug: upstream's v2 conversion dropped `tob3`'s whole `ACTION` column (2 rows for 397 creatures) while `v1/tob3/Monster.json` kept all 1,373. `mapCreatures` backfills from v1 into empty buckets only. 2880/2885 on the rebuild; the 5 left are Frogs, Seahorses, Shriekers and Berberoka — actionless in both sources. **Shipped stays 86% until promotion** (Stage D). |
 | ✅ | `size_ref` | 99.9% shipped → **100%** rebuilt | ~~`L`~~ **B9 done** | Was 2 titanic-size creatures logged in `unmapped_report.json`. **A1 was right that this was not a source limit** — `a5e-mm/Size.json` holds `titanic`; B9 loads it, seeds a `Titanic` size row in `open5e-a5e-mm` and hard-refs it. 2885/2885 on the rebuild; **shipped stays 99.9% until promotion** (Stage D). Was `S`. |
 | 🟡 | `alignment_ref` | 97% | `S` | 70 fuzzy 3rd-party alignments, logged. **A1: genuinely `S` — 29 distinct free-text expressions (`any evil alignment`, `chaotic neutral or chaotic evil`) with no fixture behind them, plus `'Titan)'`/`'Shapechanger)'` corrupt at the source → B10.** |
 | 🔴 | `tags_line` | 0% | `M` | the `type` subtype split never reaches the field |
@@ -1509,13 +1538,44 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       (`class.primary_ability_ref`, `background.origin_feat_ref`,
       `background.asi_distribution_options`, `spell.class_refs`): fill, or relax the
       requirement for third-party content.
-- [ ] **B8 — Fix ToB3's action buckets.** 396 of `open5e-tob3`'s 397 monsters ship
-      with an empty Actions block because their `CreatureAction.action_type` sends
-      every row to bonus action / reaction / legendary (§3.5). Confirm the upstream
-      values against the restored snapshot, then either correct the mapping or
-      treat an implausible per-document distribution as an import error.
-      *Exit: every pack's `action_refs` share is within range of the corpus, and
-      no pack has more than a handful of monsters with zero actions.*
+- [x] **B8 — ToB3's actions were never converted, not mis-bucketed. Done
+      2026-07-31.** The phase was filed as a bucketing bug; the pinned snapshot
+      says the opposite. `tob3/CreatureAction.json` has 309 rows for 397
+      creatures with **2** `ACTION` among them, and the three non-`ACTION`
+      buckets match `v1/tob3/Monster.json` **row for row** (136 / 96 / 75) — so
+      the mapper was faithful and upstream's v2 conversion simply dropped one
+      column. v1's `actions_json` holds the 1,373 missing actions.
+      `mapCreatures` now takes a `v1Actions` index (built by `build_packs` from
+      every `v1/<doc>/Monster.json`) and fills **only a bucket v2 left entirely
+      empty for that creature**.
+      **That rule is measured, not assumed.** The obvious looser rule — add any
+      v1 row whose *name* is absent from the bucket — would add **~2,000 rows
+      corpus-wide**, because v1 and v2 disagree about action *names*, not about
+      which actions exist; it would ship duplicates dressed as recoveries. The
+      conservative rule's entire cost is **one monster**: Abaasy, the only tob3
+      creature v2 partially converted, keeps its 2 v2 rows and forgoes v1's 5.
+      Recovered rows are prose only — v1 has no `CreatureActionAttack` — so they
+      carry name + text and no `attack_bonus`/`damage_dice`. tob3 ships no attack
+      fixture at all, so this loses nothing that document ever had.
+      Joined on the **raw** upstream name, which is what reaches the 15 `Npc: …`
+      monsters whose pack name is cleaned. `_v1DocForCreatures` maps only the 8
+      pairs verified on the snapshot by monster-count *and* name parity; the SRD
+      documents are deliberately absent.
+      **Measured on the rebuild:** `monster.action_refs` **86% → 99.8%**
+      (2485 → 2880 of 2885); tob3's actionless monsters **396 → 1** (Berberoka,
+      which has no actions in v1 either — a source hole, like B1's Path of
+      Hellfire); corpus actionless **400 → 5**, all of them genuinely actionless
+      creatures. `diff_packs` touches exactly one pack: +1,286 `creature-action`,
+      395 monsters gain `action_refs`, and 6 rows are name-slot reassignments
+      where a recovered action takes a plain name and the previous occupant moves
+      to "Name (Creature)" — verified lossless, every old row's content still
+      present. Section C of `dupe_census` stays at 1 (no new dangling softRef) and
+      actionable redundancy stays at **1,183**: every new row is a monster-owned
+      child. Honest cost: `creature-action.attack_kind`/`damage_dice` drop 41% →
+      35% / 40% → 34% as *shares* — the absolute counts are unchanged (3,549 /
+      3,464), the denominator grew by 1,286 prose-only rows. Guarded by
+      `test/tool/creature_action_fallback_test.dart` (8 cases). **Not promoted** —
+      scratch-only, per the Stage D decision.
 - [x] **B9 — Load the Tier-0 vocabulary fixtures. Done 2026-07-30.** *(new phase,
       filed by A1.)* New `tool/open5e_import/vocab.dart` reads every vocabulary file
       under every `data/v2/<publisher>/<doc>/` — the 11 `open5e/core` files plus the
@@ -1776,8 +1836,9 @@ dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
 
 # Importer-side unit tests (drive the mapper, not the shipped asset — the assets
-# predate B1/B9, so only the mapper can be asserted until promotion).
+# predate B1/B8/B9, so only the mapper can be asserted until promotion).
 flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
+                                   # + B8 v1 action backfill (8)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
