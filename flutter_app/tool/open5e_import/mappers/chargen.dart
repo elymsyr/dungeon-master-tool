@@ -230,9 +230,12 @@ void mapClasses({
       // Subclass — descriptive card (+ parent ref when parent is in-pack).
       final parentName = baseBySlug[subclassOf];
       final parent = parentName ?? titleCase(_lastSegment(subclassOf));
-      final desc = _fold(
-        '*Subclass of $parent.*\n\n${(c['desc'] as String?)?.trim() ?? ''}',
-        kids,
+      final desc = _appendTable(
+        _fold(
+          '*Subclass of $parent.*\n\n${(c['desc'] as String?)?.trim() ?? ''}',
+          [for (final k in kids) if (!_isTableFeature(k, itemsByFeature)) k],
+        ),
+        _classTable(kids, itemsByFeature),
       );
       // Parent link: a hard in-pack `ref` when the base class ships here (SRD
       // docs carry both); otherwise a runtime-resolving `softRef` by name so the
@@ -322,7 +325,14 @@ void mapClasses({
       }
     }
 
-    final desc = _fold((c['desc'] as String?)?.trim() ?? '', kids);
+    // B2: table columns carry no prose of their own — folding them yields empty
+    // `### Maneuvers Known` headings and `[Column data]` paragraphs — so they
+    // are excluded from the fold and rendered as one markdown table instead.
+    final desc = _appendTable(
+      _fold((c['desc'] as String?)?.trim() ?? '',
+          [for (final k in kids) if (!_isTableFeature(k, itemsByFeature)) k]),
+      _classTable(kids, itemsByFeature),
+    );
     attrs['description'] = desc;
     final rows = _levelFeatures(kids, itemsByFeature);
     if (rows.isNotEmpty) attrs['features'] = rows;
@@ -1428,6 +1438,105 @@ String _fold(String parentDesc, List<Fixture> children) {
 /// `'two attacks'`) is the only thing distinguishing those rows upstream, so it
 /// carries the follow-up rows' description while the first keeps the prose.
 /// No grant refs are emitted — the prose names no entity we could resolve.
+// ── Class tables (audit B2) ────────────────────────────────────────────────
+//
+// B1 correctly refused to emit a `ClassFeatureItem` column as 20 identical
+// "features" and left it to B2. Nothing then picked it up, so **171 rows of
+// genuine class-table content were dropped entirely** — and worse than
+// silently: the owning `ClassFeature` carries no prose (`''` in `a5e-ag`, the
+// literal placeholder `'[Column data]'` in `bfrd`), so `_fold` was shipping
+// empty `### Maneuvers Known` headings and three `[Column data]` paragraphs
+// into the Marshal's and Mechanist's descriptions.
+//
+// B2 was filed as `feature_type == CORE_TRAITS_TABLE` + `column_value` →
+// `cantrips_known_by_level` / `prepared_spells_by_level` / `spell_slots_by_level`
+// / `extra_attack_count_by_level`. **None of that is reachable.** Measured over
+// the pinned snapshot: `CORE_TRAITS_TABLE` exists in exactly one document
+// (`srd-2024`, 12 rows) and `SPELL_SLOTS` in two (`srd-2014` 55, `srd-2024` 55)
+// — all three are documents the publisher-wide SRD skip never builds. The
+// `Cantrips Known`, `Prepared Spells` and `Spell Slots` columns those fields
+// need do not exist in any shipped document.
+//
+// What *is* there is 7 bespoke columns across 2 classes with no schema field to
+// hold them: Marshal's Commanding Presence / Followers / Maneuvers Known /
+// Maneuver Degree / Lessons Known, and Mechanist's two Augment Effects Known.
+// So they are rendered back into the description as a markdown table: no
+// schema change, no invented mechanic, and the numbers stop vanishing.
+
+/// True when every `ClassFeatureItem` of this feature carries a `column_value`
+/// — B1's test for "this is a class-table column, not a granted feature". No
+/// shipped document mixes the two inside one feature, which is what makes it a
+/// test rather than a heuristic.
+bool _isTableFeature(Fixture f, Map<String, List<Fixture>> itemsByFeature) {
+  final items = itemsByFeature[f['_pk'].toString()] ?? const <Fixture>[];
+  if (items.isEmpty) return false;
+  return items.every((i) {
+    final v = i['column_value'];
+    return v is String && v.trim().isNotEmpty;
+  });
+}
+
+/// The standard 5e proficiency bonus by level. Both `PROFICIENCY_BONUS` columns
+/// on the snapshot reproduce it exactly, and the app computes it already
+/// (`proficiencyTableDefault`), so rendering it would duplicate a derived value
+/// as though it were content. A document that ever *deviates* is rendered.
+String _standardProfBonus(int level) => '+${((level - 1) ~/ 4) + 2}';
+
+/// Render a class's `column_value` features as one markdown table appended to
+/// its description. Returns an empty string when the class has no table, or
+/// when its only table is the standard proficiency bonus.
+String _classTable(
+  List<Fixture> features,
+  Map<String, List<Fixture>> itemsByFeature,
+) {
+  final columns = <({String name, Map<int, String> byLevel})>[];
+  for (final f in features) {
+    if (!_isTableFeature(f, itemsByFeature)) continue;
+    final name = (f['name'] as String?)?.trim() ?? '';
+    if (name.isEmpty) continue;
+    final byLevel = <int, String>{};
+    for (final i in itemsByFeature[f['_pk'].toString()]!) {
+      final lvl = i['level'];
+      if (lvl is! int || lvl < 1 || lvl > 20) continue;
+      byLevel[lvl] = (i['column_value'] as String).trim();
+    }
+    if (byLevel.isEmpty) continue;
+    // Drop a proficiency-bonus column that only restates the standard table.
+    if ((f['feature_type'] as String?) == 'PROFICIENCY_BONUS' &&
+        byLevel.entries.every((e) => e.value == _standardProfBonus(e.key))) {
+      continue;
+    }
+    // `bfrd` ships two distinct columns both named `Augment Effects Known`;
+    // numbering them keeps the header honest instead of silently merging.
+    var label = name;
+    final clash = columns.where((c) => c.name == name || c.name.startsWith('$name (')).length;
+    if (clash > 0) label = '$name (${clash + 1})';
+    columns.add((name: label, byLevel: byLevel));
+  }
+  if (columns.isEmpty) return '';
+
+  final levels = <int>{for (final c in columns) ...c.byLevel.keys}.toList()..sort();
+  final buf = StringBuffer('### Class Table\n\n| Level | ')
+    ..writeAll(columns.map((c) => c.name), ' | ')
+    ..write(' |\n|---:|')
+    ..writeAll(columns.map((_) => '---'), '|')
+    ..write('|\n');
+  for (final lvl in levels) {
+    buf.write('| $lvl | ');
+    buf.writeAll(columns.map((c) => c.byLevel[lvl] ?? '—'), ' | ');
+    buf.write(' |\n');
+  }
+  return buf.toString().trimRight();
+}
+
+/// Join a folded description and a rendered class table, either of which may be
+/// empty (most classes have no table at all).
+String _appendTable(String desc, String table) {
+  if (table.isEmpty) return desc;
+  if (desc.isEmpty) return table;
+  return '$desc\n\n$table';
+}
+
 List<Map<String, dynamic>> _levelFeatures(
   List<Fixture> features,
   Map<String, List<Fixture>> itemsByFeature,
