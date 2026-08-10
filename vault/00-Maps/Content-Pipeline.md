@@ -21,6 +21,7 @@ tags: [moc]
 - [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
 - [[audit_packs]] · [[dupe_census]] · [[diff_packs]] — offline censuses over the shipped assets: *are the fields filled?*, *should this entity exist at all?* and *what did my rebuild change?*. All three back `flutter_app/docs/open5e_content_audit.md`.
+- [[verify_packs]] — the correctness gate beside those three: *is the shipped value the one the fixture column holds?* Needs the pinned snapshot, exits non-zero on a disagreement, and is the only tool that can see a **fabricated** value (a mapper default with no source behind it).
 
 ## Key Files — SRD core + catalog
 - [[srd_core_pack]] — hand-authored SRD 5.2.1 package builder (two-pass).
