@@ -54,13 +54,13 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **B11 — stop fabricating `hp_dice`** (§6), the defect
-T1 found on its first run: 360 `open5e-bfrd` monsters ship a `1d4` hit-die pool
-because the mapper defaults it and that pack's source column is null throughout
-(§3.6). Decide the target shape first — omit vs. derive — per the box below.
-Everything else still open in Stage B (B5, B6, B10) plus L1 needs the same kind
-of decision; **T2** (audit the built-in pack) and **T3** (relational gate) need
-none and are the fallback if B11's decision stalls.
+**Next action right now:** **T2** (audit the built-in pack) or **T3** (the
+relational gate) — the two open phases that need no shape decision and no new
+source reading. Everything still open in Stage B (B5, B6, B10) plus L1 needs a
+target-shape call first, so they are the slower path, not the blocked one.
+**B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
+derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
+3,303 (§3.6).
 
 > **Four phases running reversed their own premise** (B9's unmapped report,
 > B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`). The
@@ -84,9 +84,10 @@ none and are the fallback if B11's decision stalls.
 > **T1 closed that gap and immediately paid for itself** (§3.6). It reports 0
 > disagreements corpus-wide — every value the importer copied, it copied right —
 > but **3,663 values with no source behind them at all**, a class neither census
-> can express. One of them is a live defect: 360 monsters shipping a `1d4` hit
-> die because their pack's `hit_dice` column is null and the mapper defaults it
-> (**B11**). It also demonstrated the checking-first rule from the other
+> can express. One of them was a live defect: 360 monsters shipping a `1d4` hit
+> die because their pack's `hit_dice` column is null and the mapper defaulted it
+> — **fixed by B11**, by omitting the field rather than deriving one. It also
+> demonstrated the checking-first rule from the other
 > direction: its first run produced 893 "defects" and **all 893 were bugs in the
 > verifier's own rule table**, so the tool was corrected against the snapshot
 > before a single mapper was blamed.
@@ -115,6 +116,13 @@ fixture column it came from: **0 disagreements** across 67,503 judgements, 371
 holes (301 of which the B4 rebuild already closes, which re-confirms B4 and B9
 from the source side), and 3,663 values with no source at all — itemised in
 §3.6, four of them confirmed as correct defaults and one filed as **B11**.
+**B11 is done** — that one fabrication is gone: `hp_dice` is now copied from
+`hit_dice` or **omitted**, never defaulted. The rebuild removes it from exactly
+the 360 `open5e-bfrd` monsters whose source column is null and touches no other
+pack; `monster.hp_dice` `unsourced` → **0**, corpus `unsourced` **3,663 →
+3,303**. Deriving it from `hp_average` + CON + size was rejected: that is
+inference, and it would have owed an `unverifiable` rule declaring the field
+unmeasurable rather than actually sourcing it.
 
 Also unblocked and independent: **B10** (the 70 free-text alignments B9 left, which needs
 a target-shape decision first), **U1** (wizard readers), **T2**/**T3** (tooling),
@@ -755,7 +763,7 @@ exist. Fixing the tools is cheaper than re-doing a phase that passed a bad gate.
 
 | Claim you might read into a green number | Why it does not follow | Owner |
 |---|---|---|
-| ~~"`audit_packs` says 100%, so the field is right"~~ | **Fixed by T1 2026-07-31, and it was hiding a real defect:** `verify_packs.dart` compares every value to its fixture column. 0 disagreements corpus-wide — but **3,663 `unsourced`** values the census read as coverage, including 360 `monster.hp_dice` that are a mapper fallback on a pack whose source column is null throughout (§3.6, filed as **B11**) | ~~T1~~ |
+| ~~"`audit_packs` says 100%, so the field is right"~~ | **Fixed by T1 2026-07-31, and it was hiding a real defect:** `verify_packs.dart` compares every value to its fixture column. 0 disagreements corpus-wide — but **3,663 `unsourced`** values the census read as coverage, including 360 `monster.hp_dice` that are a mapper fallback on a pack whose source column is null throughout (§3.6, filed as **B11** and fixed 2026-08-10 — that field is now omitted, not defaulted) | ~~T1~~ |
 | "The bundled packs are audited, so the content is audited" | `audit_packs` and `dupe_census` read `assets/open5e_packs` only. The built-in pack — the target of every softRef — is never measured | **T2** |
 | ~~"Section C says 0 dangling, so every ref lands"~~ | **Fixed by L0 2026-07-30, and it was a real defect:** section C now resolves the way `findEntityIdByName` does, and "nothing installed" is **1**, not 0 — `"Spare The Dying"` vs `"Spare the Dying"` (§3.2) | ~~L0~~ |
 | ~~"A `(slug, name)` collision means duplicated content"~~ | **Fixed by L0:** sections A and B split every collision into same-text / name-only / no-text-either-side. 7 of 1,660 section-A rows say the same thing; 1,749 of 2,540 section-B names only share a name (§3.2) | ~~L0~~ |
@@ -824,7 +832,7 @@ the shipped assets, 9 parent categories, 5,514 of 5,515 entities matched:
 | `ok` | 67,503 | the shipped value **is** the source's value |
 | `disagree` | **0** | no shipped value contradicts its source column |
 | `absent` | 371 | the source has a value the pack does not |
-| `unsourced` | **3,663** | the pack has a value the source does not |
+| `unsourced` | **3,663** → **3,303** on the rebuild (B11) | the pack has a value the source does not |
 | `unverifiable` | 13,397 | the mapper derives it from more than one column; a rule declares the reason |
 
 **The headline is the zero.** Every value the importer copied, it copied
@@ -838,7 +846,8 @@ which no column-level fix reaches. The 301 that close are `spell.area_shape_ref`
 `monster.size_ref` (2, B9's `titanic`). That is **B4 and B9 re-confirmed from the
 source side**, by a tool that shares no code with either.
 
-**`unsourced` — 3,663, and this is the class no other tool can see.** §5's ⚠
+**`unsourced` — 3,663 as measured, 3,303 on the rebuild (B11).** This is the
+class no other tool can see. §5's ⚠
 marker only fires when a value is identical on *every* row of a category
 corpus-wide; this counts, per field, the rows that carry a value with nothing
 behind it:
@@ -846,7 +855,7 @@ behind it:
 | Count | Field | Verdict on it |
 |--:|---|---|
 | 1,063 ×3 | `magic-item` `is_cursed` / `is_sentient` / `activation` | **Confirmed constants.** `MagicItem.json` has no such column and Open5e never will; `false`/`false`/`None` are the correct 5e defaults. V1 answered. |
-| 360 | `monster.hp_dice` | **A real defect → B11.** `open5e-bfrd` has `hit_dice: null` on all 360 creatures and ships the mapper's `'1d4'` fallback for every one — including a 165-HP Aboleth. `audit_packs` reads 100% filled. |
+| ~~360~~ **0** | `monster.hp_dice` | **A real defect, fixed by B11 2026-08-10.** `open5e-bfrd` has `hit_dice: null` on all 360 creatures and shipped the mapper's `'1d4'` fallback for every one — including a 165-HP Aboleth — while `audit_packs` read 100% filled. The mapper now omits the field when the column is null. |
 | 73 | `feat.repeatable` | **Confirmed constant** — no column, and `false` is the safe default. |
 | 41 | `species` / `subspecies` `creature_type_ref` | **Confirmed constant, and §5 already said so:** `Species.json` has no type column, and the mapper writes the literal `'Humanoid'`. Defensible; now measured rather than assumed. |
 
@@ -1901,8 +1910,8 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       null ref, not a coerced pick.
       *Exit: `unmapped_report.json`'s `alignment` list is empty or contains only the
       two source-corrupt values, with a written rule for each of the 29 inputs.*
-- [ ] **B11 — Stop fabricating `hp_dice`.** *(new phase, filed by T1 2026-07-31
-      — §3.6.)* `_monsterRow` writes `hp_dice: (c['hit_dice'] as String?) ?? '1d4'`,
+- [x] **B11 — Stop fabricating `hp_dice`.** *(filed by T1 2026-07-31, done
+      2026-08-10 — §3.6.)* `_monsterRow` wrote `hp_dice: (c['hit_dice'] as String?) ?? '1d4'`,
       and **`open5e-bfrd` has `hit_dice: null` on all 360 of its creatures**, so
       the whole pack ships `1d4` — including a 165-HP Aboleth, a 238-HP Adult
       Black Dragon and 358 others whose own `hp_average` contradicts the die pool
@@ -1917,9 +1926,18 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       reconstructible but is inference, not source — and would then owe an
       `unverifiable` rule in `verify.dart` saying so. Whichever is chosen, the
       other 18 packs must not move.
-      *Exit: `verify_packs` reports 0 `unsourced` for `monster.hp_dice`, the
-      `diff_packs` run shows the change confined to `open5e-bfrd`, and a test
-      pins the null-source behaviour.*
+      **Outcome: omit.** Deriving would have replaced a fabrication with an
+      inference and then declared the field unmeasurable — the `unsourced` count
+      would drop for the wrong reason. `_monsterRow` now writes `hp_dice` only
+      when `hit_dice` is a non-blank string; nothing else in the row changed.
+      A sheet showing no die pool beside a real `hp_average` is the honest
+      rendering, and the schema does not require the field.
+      *Exit met:* `verify_packs --packs /tmp/packs-rebuild` reports **0
+      `unsourced` for `monster.hp_dice`** (corpus 3,663 → 3,303, `disagree`
+      still 0); an id-level comparison of every shipped monster against the
+      rebuild shows **360 changes, all `open5e-bfrd`, all `1d4` → absent**, no
+      other pack touched; `test/tool/monster_hp_dice_test.dart` (4 cases) pins
+      null / missing key / blank / real value.
 
 ### Stage M — prove the mechanics land (outcome 2)
 
@@ -2153,6 +2171,8 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B3 background tools / v1 species (12)
                                    # + B2 class tables (9)
                                    # + B4 spell area / reaction trigger (11)
+                                   # + T1 verifier rule table (19)
+                                   # + B11 hp_dice null-source (4)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart

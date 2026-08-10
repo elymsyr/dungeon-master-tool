@@ -470,7 +470,6 @@ Map<String, dynamic> _monsterRow({
     'initiative_modifier': _int(c['initiative_bonus']) ?? dexMod,
     'initiative_score': 10 + (_int(c['initiative_bonus']) ?? dexMod),
     'hp_average': _int(c['hit_points']) ?? 1,
-    'hp_dice': (c['hit_dice'] as String?)?.trim() ?? '1d4',
     'speed_walk_ft': _int(c['walk']) ?? 30,
     'stat_block': stats,
     'cr': cr,
@@ -479,6 +478,11 @@ Map<String, dynamic> _monsterRow({
     'passive_perception': _int(c['passive_perception']) ?? (10 + abilityModifier(stats['WIS']!)),
     'action_refs': actionRefs,
   };
+
+  // B11: `hit_dice` is null on every row of some documents (all 360 of bfrd's).
+  // No die pool is truer than a fabricated one — omit rather than default.
+  final hitDice = (c['hit_dice'] as String?)?.trim();
+  if (hitDice != null && hitDice.isNotEmpty) attrs['hp_dice'] = hitDice;
 
   // Identity refs (skip silently-unknown → logged in sink).
   final size = norm.lookupRef('size', (c['size'] as String?) ?? '', context: name);
