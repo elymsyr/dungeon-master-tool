@@ -3,6 +3,14 @@
 //   dart run tool/open5e_import/bin/audit_packs.dart [--packs assets/open5e_packs]
 //                                                    [--only class,subclass,...]
 //                                                    [--markdown]
+//                                                    [--builtin]
+//
+// `--builtin` (audit phase T2) points the same census at the built-in pack
+// instead of the bundled assets: `generateBuiltinDnd5eV2Schema().seedRows`
+// (Tier-0 rows) + `buildSrdCorePack()` (Tier-1 content). It is the target of
+// every softRef this audit writes and nothing had ever measured it. Category
+// selection widens to whatever those two actually ship — the `_auditedSlugs`
+// allow-list below describes an *Open5e* pack, not the built-in one.
 //
 // Joins two things the rest of the toolchain never compares: the *declared*
 // shape of a category (`generateBuiltinDnd5eV2Schema()` — every field, its
@@ -30,6 +38,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/entity_category_schema.dart';
 
 /// Categories a pack can ship. Tier-0 lookups and Tier-2 DM categories never
@@ -53,10 +62,11 @@ void main(List<String> args) {
   final opts = _parseArgs(args);
   final packDir = opts['packs'] ?? 'assets/open5e_packs';
   final markdown = args.contains('--markdown');
+  final builtin = args.contains('--builtin');
   final only = (opts['only'] ?? '').split(',').where((s) => s.isNotEmpty).toSet();
 
   final dir = Directory(packDir);
-  if (!dir.existsSync()) {
+  if (!builtin && !dir.existsSync()) {
     stderr.writeln('ERROR: pack dir not found: $packDir');
     exit(2);
   }
@@ -66,8 +76,11 @@ void main(List<String> args) {
     for (final c in schema.categories) c.slug: c,
   };
 
-  final census = _readPacks(dir);
-  final slugs = _auditedSlugs.where((s) => only.isEmpty || only.contains(s));
+  final census = builtin ? _readBuiltin() : _readPacks(dir);
+  final auditable = builtin
+      ? schema.categories.map((c) => c.slug).where(census.containsKey)
+      : _auditedSlugs;
+  final slugs = auditable.where((s) => only.isEmpty || only.contains(s));
 
   for (final slug in slugs) {
     final cat = bySlug[slug];
@@ -152,21 +165,49 @@ Map<String, _CategoryCensus> _readPacks(Directory dir) {
       if (raw is! Map) continue;
       final slug = raw['type']?.toString();
       if (slug == null || !_auditedSlugs.contains(slug)) continue;
-      final stat = out.putIfAbsent(slug, _CategoryCensus.new);
-      stat.total++;
-      stat.packs.add(packName);
-      final attrs = raw['attributes'];
-      if (attrs is! Map) continue;
-      attrs.forEach((k, v) {
-        if (!_isFilled(v)) return;
-        final key = k.toString();
-        stat.filled[key] = (stat.filled[key] ?? 0) + 1;
-        final seen = stat.distinct.putIfAbsent(key, () => <String>{});
-        if (seen.length < 2) seen.add(jsonEncode(v));
-      });
+      _ingest(out, slug, packName, raw['attributes']);
     }
   }
   return out;
+}
+
+/// The same census over the built-in pack (audit **T2**) — Tier-0 seed rows
+/// carry their values under `fields`, Tier-1 SRD rows under `attributes`, but
+/// both are the flat map the schema's fieldKeys describe.
+Map<String, _CategoryCensus> _readBuiltin() {
+  final out = <String, _CategoryCensus>{};
+  generateBuiltinDnd5eV2Schema().seedRows.forEach((slug, rows) {
+    for (final row in rows) {
+      _ingest(out, slug, 'builtin_schema', row['fields']);
+    }
+  });
+  for (final raw in buildSrdCorePack().entities.values) {
+    if (raw is! Map) continue;
+    final slug = raw['type']?.toString();
+    if (slug == null) continue;
+    _ingest(out, slug, 'srd_core', raw['attributes']);
+  }
+  return out;
+}
+
+/// Count one entity of [slug] and every filled key in its value map.
+void _ingest(
+  Map<String, _CategoryCensus> out,
+  String slug,
+  String packName,
+  dynamic attrs,
+) {
+  final stat = out.putIfAbsent(slug, _CategoryCensus.new);
+  stat.total++;
+  stat.packs.add(packName);
+  if (attrs is! Map) return;
+  attrs.forEach((k, v) {
+    if (!_isFilled(v)) return;
+    final key = k.toString();
+    stat.filled[key] = (stat.filled[key] ?? 0) + 1;
+    final seen = stat.distinct.putIfAbsent(key, () => <String>{});
+    if (seen.length < 2) seen.add(jsonEncode(v));
+  });
 }
 
 /// Non-null and not an empty string/list/map. `0` and `false` count as filled.
