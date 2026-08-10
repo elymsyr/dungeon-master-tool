@@ -54,11 +54,14 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **T3** (the relational gate) — the last open phase
-that needs no shape decision and no new source reading, and the one §3.5's 396
-actionless statblocks were filed against. Everything still open in Stage B (B5,
-B6, B10) plus L1 needs a target-shape call first, so they are the slower path,
-not the blocked one.
+**Next action right now:** **the rebuild, then D1.** Stage T is finished and all
+three of its tools now say the same thing: the *importer* is fixed and the
+*shipped assets* are not. B1/B2/B3/B4/B8/B9/B11 live only in the mapper, and
+T3's gate is red on the assets for exactly that reason. Rebuilding and grading
+the output (`diff_packs` + `verify_packs --packs` + `gate_packs --packs`) needs no
+decision at all; D1's versioning rule is the one call that does. Everything still
+open in Stage B (B5, B6, B10) plus L1 needs a target-shape call first, so they
+are the slower path, not the blocked one.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -68,6 +71,12 @@ required and **0% filled** behind a `_ability_name_` placeholder nothing
 resolves, plus the fact that **no spell-slot table ships anywhere**, in the app
 or in the packs. Filed as **T2-1/2/3**; the built-in pack is measured here, never
 edited here.
+**T3 is done** (2026-08-10): `gate_packs.dart` gates the relations a field census
+cannot see, and `build_packs` runs it over its own output (§3.8). 198 violations,
+all already filed — 197 of them tob3's, waiting on the B8 rebuild, and 1 the
+`"Spare The Dying"` ref L3 owns. Nothing orphaned, nothing dangling, no
+equipment option without an item, and L0's qualifier-strip hazard is confirmed
+latent **and now asserted latent**. Stage T is closed.
 
 > **Four phases running reversed their own premise** (B9's unmapped report,
 > B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`). The
@@ -132,8 +141,8 @@ inference, and it would have owed an `unverifiable` rule declaring the field
 unmeasurable rather than actually sourcing it.
 
 Also unblocked and independent: **B10** (the 70 free-text alignments B9 left, which needs
-a target-shape decision first), **U1** (wizard readers), **T2**/**T3** (tooling),
-**M1**.
+a target-shape decision first), **U1** (wizard readers), **M1**. ~~T2/T3
+(tooling)~~ — both shipped 2026-08-10.
 **L1** now has a real target list rather than a headline: §3.2's per-category
 actionable split.
 
@@ -826,7 +835,11 @@ for the rule, its measured safety argument and its one-monster cost.
 
 Nothing in the audit, the build gate (no ref dangles — the rows that existed all
 resolved, they were simply few) or the tests would have caught this, which is why
-**T3** adds relational assertions.
+**T3** adds relational assertions. **T3 shipped 2026-08-10** (§3.8):
+`gate_packs.dart` states this defect as two rules — `monster-actionless` and
+`bucket-skew`, the latter simply "the base action bucket cannot be outnumbered by
+the situational ones" — and `build_packs` runs it over its own output, so the
+next partial upstream conversion fails the build instead of shipping.
 
 ### 3.6 Are the values *right*? (measured 2026-07-31 by T1)
 
@@ -971,6 +984,50 @@ resolution; resolution stays L3's and T3's question.
 pack is in scope to *measure* here and edits to it need an `srdCorePackVersion`
 bump plus its own tests. T2-1/2/3 carry them.
 
+### 3.8 Do the entities hang together? (T3, 2026-08-10)
+
+`gate_packs.dart` asks the one question none of the four censuses can: not "is
+this field filled" or "is this value the source's", but **"does this entity have
+the relations it must have?"**. Seven rules, run over all 19 packs, exit 1 on any
+violation — and `build_packs` runs the same gate over what it just wrote, so §3.5
+can never happen silently again.
+
+| Rule | Violations | Reading |
+|---|--:|---|
+| `monster-actionless` | **196** | all `open5e-tob3`; B8 fixes it in the importer |
+| `bucket-skew` | **1** | `open5e-tob3` — 2 `action_refs` against 307 bonus/reaction/legendary |
+| `dangling-soft-ref` | **1** | `open5e-toh` Favored → `spell/"Spare The Dying"` (L3) |
+| `orphan-child` | 0 | every `creature-action` / `trait` is reachable from a statblock |
+| `dangling-hard-ref` | 0 | as the build gate already promised |
+| `qualifier-strip` | 0 | the L0 hazard is latent, and now asserted latent |
+| `empty-equipment-option` | 0 | all 52 `equipment_choice_groups` options resolve ≥1 item |
+
+**Nothing new is broken — that is the finding.** Every violation is an
+already-filed defect, and all but one of them is one pack: the shipped assets
+predate B8, so tob3's statblocks stay actionless until the rebuild is promoted
+(Stage D). Run against a post-B8 rebuild the first two rules go to 0, which is
+the acceptance test D1 now has. The four zero rows are the new information —
+`orphan-child` and `empty-equipment-option` had never been checked at all, and
+the hypothesis behind §3.2's dedup proposals was that a name-based merge might
+already have stranded rows. It has not.
+
+**`dangling-soft-ref` found the L3 ref independently**, from the pack side rather
+than from `dupe_census`' section C. Two tools disagreeing about it would have
+meant one of them was wrong about how the runtime resolves; they agree, so the
+`"Spare The Dying"` / "Spare the Dying" case fold is a real miss.
+
+**The `qualifier-strip` rule is an alarm, not a report.** L0 measured 3,501
+bundled rows whose stripped name ("Legendary Resistance (3/Day)" →
+"Legendary Resistance") is a built-in card, and `findEntityIdByName` does that
+strip on a miss — but nothing *points* at those names, so no ref lands on the
+wrong card today. The rule fires the moment one does.
+
+**Two exceptions are recorded rather than tolerated.** `a5e-mm`'s Frog and
+Seahorse are actionless upstream — the pinned snapshot has no `CreatureAction`
+row parented to either and neither name exists in any v1 `Monster.json`, so B8's
+backfill has nothing to recover. They are allow-listed **by name** in
+`gate.dart`, so a pack that loses a *different* creature's actions still fails.
+
 ---
 
 ## 4. Stage A — source snapshot
@@ -1028,7 +1085,8 @@ ls open5e-api-staging/data/v1            # ← NOT optional, see below
 > document's `ACTION` rows (§3.5). Without `data/v1` the packs build cleanly and
 > 396 statblocks ship with an empty Actions block — which is precisely how the
 > defect went unnoticed in the first place. This one *is* visible to
-> `audit_packs` (`monster.action_refs`), and **T3** will make it a gate.
+> `audit_packs` (`monster.action_refs`), and **T3 made it a gate** (§3.8): a
+> build without `data/v1` now fails `monster-actionless` instead of shipping.
 >
 > **B3 (2026-07-31) added a third, and the reason to stop calling `data/v1` a
 > fallback.** `_v1SpeciesIndex` / `_v1DocForSpecies` rebuild `toh`'s **Shade**,
@@ -2118,24 +2176,27 @@ has a value" into "the value produced the right number on a sheet".
         and `pack.content_quantities` 0/7 while `content_refs` is 100%. *Exit:
         filled from SRD 5.2.1 text with a version bump, or each declared
         deliberately empty.*
-- [ ] **T3 — Relational sanity gate.** *(no snapshot needed.)* Per-entity
-      completeness checks the field census structurally cannot express, run over
-      the assets and failing the build: every `monster` has ≥1 action; no
-      `creature-action` / `trait` row is orphaned; every `subclass` resolves its
-      `parent_class_ref`; every `equipment_choice_groups` option resolves at least
-      one item; per-pack bucket distributions (`action_refs` vs bonus / reaction /
-      legendary) stay inside a corpus-wide band. §3.5 exists because none of these
-      were checked and `open5e-tob3` shipped 396 actionless statblocks.
-      - [ ] **Qualifier-strip mis-resolution** (filed by L0, §3.4). `_ensureChild`
-            disambiguates a colliding child name with the creature name, and
-            `findEntityIdByName` strips exactly that qualifier on a miss: **3,501**
-            bundled rows have a name whose stripped form is a built-in card
-            ("Legendary Resistance (3/Day)" → "Legendary Resistance"). Nothing
-            points at those names today, so it is latent, not a live bug — assert
-            it stays that way, because a future softRef naming a qualified child
-            would silently land on the generic built-in card.
-      *Exit: the checks run in CI over `assets/open5e_packs/` and are green, or
-      each exception is recorded with a reason.*
+- [x] **T3 — Relational sanity gate — done 2026-08-10.** *(no snapshot needed.)*
+      `tool/open5e_import/gate.dart` + `bin/gate_packs.dart`: seven per-entity
+      rules over all 19 packs, exit 1 on any violation, and `build_packs` runs
+      the same gate over what it just wrote — a pack that fails it cannot ship.
+      **198 violations, every one already filed**: 196 `monster-actionless` +
+      1 `bucket-skew` (both `open5e-tob3`, both fixed in the importer by B8 and
+      red only until the rebuild is promoted) and 1 `dangling-soft-ref`
+      (`"Spare The Dying"`, L3's, found independently of `dupe_census`). The four
+      rules that came back **0** are the new information: no orphaned
+      `creature-action`/`trait`, no dangling hard ref, no equipment option
+      without an item, and no ref that resolves only through the qualifier strip.
+      §3.8 has the table and the two recorded exceptions (`a5e-mm`'s Frog and
+      Seahorse are actionless upstream, allow-listed by name).
+      *Exit met:* the checks run over `assets/open5e_packs/` and every violation
+      is either a filed phase or a recorded exception. Tests:
+      `test/tool/gate_packs_test.dart` (9 — each rule provoked once, plus the
+      healthy shape and the sample floor).
+      - [x] **Qualifier-strip mis-resolution** — asserted. The rule fires when a
+            soft ref resolves *only* after the trailing-parenthetical retry;
+            corpus-wide it is 0, so L0's 3,501 stripped-name collisions stay
+            latent and the day one goes live the build says so.
 
 ### Stage V — verify what already ships
 
@@ -2270,6 +2331,15 @@ dart run tool/open5e_import/bin/verify_packs.dart --data ../open5e-api-staging/d
 # The rule table lives in tool/open5e_import/verify.dart, NOT in bin/ — adding a
 # field means adding a `_Rule` there and a case to the test below.
 
+# Do the entities HANG TOGETHER? (T3) Per-entity relational rules a field census
+# structurally cannot express. No snapshot needed; exits 1 on any violation, and
+# `build_packs` runs the same gate over what it just wrote.
+dart run tool/open5e_import/bin/gate_packs.dart                # §3.8
+dart run tool/open5e_import/bin/gate_packs.dart --packs /tmp/packs-rebuild \
+    --examples 20                          # gate a rebuild before promoting it
+# The rules live in tool/open5e_import/gate.dart, NOT in bin/ — adding one means
+# adding it there plus a provoking case and a healthy case in the test below.
+
 # Catalog side (§3.3, Stage D). Today this reports 19 skips, not 19 uploads:
 dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
@@ -2284,6 +2354,7 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + T1 verifier rule table (19)
                                    # + B11 hp_dice null-source (4)
                                    # + T2 built-in census row shapes (2)
+                                   # + T3 relational gate rules (9)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
@@ -2297,9 +2368,9 @@ flutter test test/application/character_creation/
 flutter analyze && flutter test
 ```
 
-**Planned tools**: none left in Stage T's tooling row — `verify_packs.dart` (T1)
-shipped 2026-07-31 and `audit_packs.dart --builtin` (T2) 2026-08-10; both are in
-the command list above. T3's relational gate is the one still unwritten. L0's
+**Planned tools**: none left, in Stage T or anywhere else. `verify_packs.dart`
+(T1) shipped 2026-07-31, `audit_packs.dart --builtin` (T2) and
+`gate_packs.dart` (T3) 2026-08-10; all three are in the command list above. L0's
 fidelity flags shipped 2026-07-30 and are in the census output above.
 
 **The §2.5 text-divergence measurement — superseded by L0.** Kept only as the

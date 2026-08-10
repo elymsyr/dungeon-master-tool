@@ -21,6 +21,7 @@ tags: [moc]
 - [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
 - [[audit_packs]] · [[dupe_census]] · [[diff_packs]] — offline censuses over the shipped assets: *are the fields filled?*, *should this entity exist at all?* and *what did my rebuild change?*. All three back `flutter_app/docs/open5e_content_audit.md`. `audit_packs --builtin` (T2) runs the same census over the built-in pack — the link target — instead of the assets.
+- [[gate_packs]] — the **relational** gate (T3): seven per-entity rules the field censuses structurally cannot express (actionless monster, orphaned child row, dangling ref, qualifier-strip mis-resolution, empty equipment option, skewed action buckets). No snapshot needed, exits non-zero on any violation, and [[build_packs]] runs it over what it just wrote.
 - [[verify_packs]] — the correctness gate beside those three: *is the shipped value the one the fixture column holds?* Needs the pinned snapshot, exits non-zero on a disagreement, and is the only tool that can see a **fabricated** value (a mapper default with no source behind it).
 
 ## Key Files — SRD core + catalog
@@ -103,6 +104,11 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   required and **0% filled** behind an `_ability_name_` placeholder nothing
   resolves — the wizard's skill ability-mod chip has never rendered — plus the
   fact that no spell-slot table ships anywhere. Filed T2-1/2/3; the built-in pack
-  is measured, never edited, by this audit. Next: **T3**, the relational gate.
+  is measured, never edited, by this audit. **T3 done 2026-08-10**: [[gate_packs]]
+  gates the relations a field census cannot express — 198 violations, all already
+  filed (197 tob3's, waiting on the B8 rebuild; 1 the `"Spare The Dying"` ref L3
+  owns), and nothing orphaned, dangling or unresolvable. [[build_packs]] runs it
+  over its own output, so §3.5 cannot repeat silently. **Stage T is closed**;
+  next is the rebuild and **D1**.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

@@ -25,7 +25,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[builtin_schema]] (the declared side), [[emit]] (the shape it reads).
-- Sibling of: [[dupe_census]] — that tool asks *"should this entity exist at all?"*, this one asks *"are its fields filled?"*.
+- Sibling of: [[dupe_census]] — that tool asks *"should this entity exist at all?"*, this one asks *"are its fields filled?"* — and [[gate_packs]], which asks the question a per-field census structurally cannot: *does this entity have the relations it must have?*
 - Consumers: `flutter_app/docs/open5e_content_audit.md`.
 - Domain map: [[Content-Pipeline]]
 

@@ -34,7 +34,7 @@ tags: [file]
 ## Dependencies & Links
 - Depends on: nothing in `lib/` — deliberately. Compare with [[dupe_census]], which imports [[builtin_schema]] + [[srd_core_pack]].
 - Reads the output of: [[build_packs]] / [[emit]].
-- Siblings: [[audit_packs]], [[dupe_census]], [[migrate_pack_assets]].
+- Siblings: [[audit_packs]], [[dupe_census]], [[verify_packs]], [[gate_packs]], [[migrate_pack_assets]].
 - Domain map: [[Content-Pipeline]]
 - Spec / reference: `flutter_app/docs/open5e_content_audit.md` §4 A0 (the phase that added it, and the classified diff it produced), §7 (commands).
 
