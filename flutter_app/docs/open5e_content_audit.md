@@ -54,10 +54,13 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **T1 — `verify_packs.dart`** (§6). B4 closed the last
-mapper phase that needed no target-shape decision; everything still open in
-Stage B (B5, B6, B10) plus L1 needs a decision before any code, and T1 has
-earned priority — see the box below.
+**Next action right now:** **B11 — stop fabricating `hp_dice`** (§6), the defect
+T1 found on its first run: 360 `open5e-bfrd` monsters ship a `1d4` hit-die pool
+because the mapper defaults it and that pack's source column is null throughout
+(§3.6). Decide the target shape first — omit vs. derive — per the box below.
+Everything else still open in Stage B (B5, B6, B10) plus L1 needs the same kind
+of decision; **T2** (audit the built-in pack) and **T3** (relational gate) need
+none and are the fallback if B11's decision stalls.
 
 > **Four phases running reversed their own premise** (B9's unmapped report,
 > B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`). The
@@ -76,8 +79,17 @@ earned priority — see the box below.
 > dropped class-table rows, plus `[Column data]` shipping as prose — is
 > **invisible to both census tools**, because `description` counted as 100%
 > filled while holding empty headings and a placeholder. Presence is not
-> correctness; that is §3.4's claim, now demonstrated three times, and it is
-> what **T1** exists to fix.
+> correctness; that is §3.4's claim, now demonstrated three times.
+>
+> **T1 closed that gap and immediately paid for itself** (§3.6). It reports 0
+> disagreements corpus-wide — every value the importer copied, it copied right —
+> but **3,663 values with no source behind them at all**, a class neither census
+> can express. One of them is a live defect: 360 monsters shipping a `1d4` hit
+> die because their pack's `hit_dice` column is null and the mapper defaults it
+> (**B11**). It also demonstrated the checking-first rule from the other
+> direction: its first run produced 893 "defects" and **all 893 were bugs in the
+> verifier's own rule table**, so the tool was corrected against the snapshot
+> before a single mapper was blamed.
 
 Stage A is done (snapshot pinned at `d4276c58`, every fixture file decided — §4 A0,
 §4 A1), L0 is done (the census now measures what the phases are graded on — §3.2),
@@ -98,6 +110,11 @@ rendered class table.
 **B4 is done** — and is the first phase whose filed premise held: `area_shape_ref`
 and `area_size_ft` 0% → **7%** (103 spells), `reaction_trigger` 0% → **3%** (51),
 every value sourced, nothing inferred, nothing new in the unmapped sink.
+**T1 is done** — `verify_packs.dart` now compares every shipped value to the
+fixture column it came from: **0 disagreements** across 67,503 judgements, 371
+holes (301 of which the B4 rebuild already closes, which re-confirms B4 and B9
+from the source side), and 3,663 values with no source at all — itemised in
+§3.6, four of them confirmed as correct defaults and one filed as **B11**.
 
 Also unblocked and independent: **B10** (the 70 free-text alignments B9 left, which needs
 a target-shape decision first), **U1** (wizard readers), **T2**/**T3** (tooling),
@@ -738,7 +755,7 @@ exist. Fixing the tools is cheaper than re-doing a phase that passed a bad gate.
 
 | Claim you might read into a green number | Why it does not follow | Owner |
 |---|---|---|
-| "`audit_packs` says 100%, so the field is right" | It counts *presence*. `0`/`false`/a constant all count; the ⚠ marker only catches a value identical on **every** row of a category | **T1** |
+| ~~"`audit_packs` says 100%, so the field is right"~~ | **Fixed by T1 2026-07-31, and it was hiding a real defect:** `verify_packs.dart` compares every value to its fixture column. 0 disagreements corpus-wide — but **3,663 `unsourced`** values the census read as coverage, including 360 `monster.hp_dice` that are a mapper fallback on a pack whose source column is null throughout (§3.6, filed as **B11**) | ~~T1~~ |
 | "The bundled packs are audited, so the content is audited" | `audit_packs` and `dupe_census` read `assets/open5e_packs` only. The built-in pack — the target of every softRef — is never measured | **T2** |
 | ~~"Section C says 0 dangling, so every ref lands"~~ | **Fixed by L0 2026-07-30, and it was a real defect:** section C now resolves the way `findEntityIdByName` does, and "nothing installed" is **1**, not 0 — `"Spare The Dying"` vs `"Spare the Dying"` (§3.2) | ~~L0~~ |
 | ~~"A `(slug, name)` collision means duplicated content"~~ | **Fixed by L0:** sections A and B split every collision into same-text / name-only / no-text-either-side. 7 of 1,660 section-A rows say the same thing; 1,749 of 2,540 section-B names only share a name (§3.2) | ~~L0~~ |
@@ -795,6 +812,68 @@ for the rule, its measured safety argument and its one-monster cost.
 Nothing in the audit, the build gate (no ref dangles — the rows that existed all
 resolved, they were simply few) or the tests would have caught this, which is why
 **T3** adds relational assertions.
+
+### 3.6 Are the values *right*? (measured 2026-07-31 by T1)
+
+`verify_packs.dart` re-reads every entity's fixture row and judges each mapped
+field against a hand-written restatement of the field ⟷ column contract. Over
+the shipped assets, 9 parent categories, 5,514 of 5,515 entities matched:
+
+| Verdict | Count | What it means |
+|---|--:|---|
+| `ok` | 67,503 | the shipped value **is** the source's value |
+| `disagree` | **0** | no shipped value contradicts its source column |
+| `absent` | 371 | the source has a value the pack does not |
+| `unsourced` | **3,663** | the pack has a value the source does not |
+| `unverifiable` | 13,397 | the mapper derives it from more than one column; a rule declares the reason |
+
+**The headline is the zero.** Every value the importer copied, it copied
+correctly — across 2,885 monsters, 1,297 spells, 1,063 magic items and the
+chargen categories. The other three columns are where the work is.
+
+**`absent` — 371, and 301 of them are already fixed.** The B4 rebuild leaves
+only 70: B10's free-text alignments (`any alignment`, `neutral good (50%)`),
+which no column-level fix reaches. The 301 that close are `spell.area_shape_ref`
++ `area_size_ft` (206, B4), `monster.language_refs` (93, B9's `void-speech`) and
+`monster.size_ref` (2, B9's `titanic`). That is **B4 and B9 re-confirmed from the
+source side**, by a tool that shares no code with either.
+
+**`unsourced` — 3,663, and this is the class no other tool can see.** §5's ⚠
+marker only fires when a value is identical on *every* row of a category
+corpus-wide; this counts, per field, the rows that carry a value with nothing
+behind it:
+
+| Count | Field | Verdict on it |
+|--:|---|---|
+| 1,063 ×3 | `magic-item` `is_cursed` / `is_sentient` / `activation` | **Confirmed constants.** `MagicItem.json` has no such column and Open5e never will; `false`/`false`/`None` are the correct 5e defaults. V1 answered. |
+| 360 | `monster.hp_dice` | **A real defect → B11.** `open5e-bfrd` has `hit_dice: null` on all 360 creatures and ships the mapper's `'1d4'` fallback for every one — including a 165-HP Aboleth. `audit_packs` reads 100% filled. |
+| 73 | `feat.repeatable` | **Confirmed constant** — no column, and `false` is the safe default. |
+| 41 | `species` / `subspecies` `creature_type_ref` | **Confirmed constant, and §5 already said so:** `Species.json` has no type column, and the mapper writes the literal `'Humanoid'`. Defensible; now measured rather than assumed. |
+
+The 890 `magic-item.magic_category_ref` and 93 `monster.language_refs` entries
+that looked like defects on the first run were **not**: see below.
+
+**`unverifiable` — 13,397, declared not discovered.** These are the fields where
+agreement-with-a-column is the wrong question, and each rule says why: `xp` /
+`proficiency_bonus` / `passive_perception` / `initiative_modifier` fall back to
+CR- and ability-derived tables (2,885 each), `spell.casting_time_amount`'s
+implied 1 (1,115), `spell.range_ft` parsed out of `range_text` (578),
+`legendary_action_uses`'s SRD default of 3, and B4's deliberately-reshaped
+`reaction_trigger` (51). Naming them is the point: an undeclared derivation is
+indistinguishable from a fabrication, and this is the list of things a future
+phase would have to prove another way.
+
+**Five bugs in the rule table came before any bug in a mapper.** The first run
+reported 893 disagreements; all 893 were the verifier being wrong about how a
+correct value is spelled — the app pluralises its magic-item categories
+(`scroll` → "Scrolls"), upstream writes class abilities as three-letter codes
+(`['wis','con']`), a5e calls transmutation "transformation", class hit dice are
+written `D10`, and **B9's pack-local Tier-0 rows are referenced by resolved uuid
+rather than by a `{_lookup, name}` placeholder**, so a name comparison has to
+follow the id. That last one is worth remembering: a seeded Tier-0 row looks
+nothing like a lookup placeholder in the wire format. All five are pinned by
+`test/tool/verify_packs_test.dart`, so the next rule added to the table inherits
+the lesson instead of re-learning it.
 
 For contrast, the in-pack child model is otherwise sound: `_ensureChild` dedupes
 children **by content hash** and disambiguates a colliding name with the creature
@@ -1822,6 +1901,25 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       null ref, not a coerced pick.
       *Exit: `unmapped_report.json`'s `alignment` list is empty or contains only the
       two source-corrupt values, with a written rule for each of the 29 inputs.*
+- [ ] **B11 — Stop fabricating `hp_dice`.** *(new phase, filed by T1 2026-07-31
+      — §3.6.)* `_monsterRow` writes `hp_dice: (c['hit_dice'] as String?) ?? '1d4'`,
+      and **`open5e-bfrd` has `hit_dice: null` on all 360 of its creatures**, so
+      the whole pack ships `1d4` — including a 165-HP Aboleth, a 238-HP Adult
+      Black Dragon and 358 others whose own `hp_average` contradicts the die pool
+      beside it. No census sees it: `hp_dice` is a filled string on every row of
+      every pack, so `audit_packs` reads 100% and the ⚠ marker cannot fire
+      (the other 18 packs carry real values, so the constant is not corpus-wide).
+      This is the defect class T1 was built to expose, and the first one it found.
+      Decide the target shape before coding, per the box in §0: the honest options
+      are **omit the field** when the source has none (the schema does not require
+      it; a sheet showing no die pool is truer than a wrong one) or **derive it**
+      from `hp_average` + the CON modifier and the size's hit die, which is
+      reconstructible but is inference, not source — and would then owe an
+      `unverifiable` rule in `verify.dart` saying so. Whichever is chosen, the
+      other 18 packs must not move.
+      *Exit: `verify_packs` reports 0 `unsourced` for `monster.hp_dice`, the
+      `diff_packs` run shows the change confined to `open5e-bfrd`, and a test
+      pins the null-source behaviour.*
 
 ### Stage M — prove the mechanics land (outcome 2)
 
@@ -1858,15 +1956,33 @@ has a value" into "the value produced the right number on a sheet".
 
 ### Stage T — prove the values are right (outcome 1)
 
-- [ ] **T1 — `verify_packs.dart`: source ↔ asset differ.** `audit_packs.dart`
-      counts values; nothing compares them to the fixtures. New tool: for each
-      document, sample N entities per category, re-read their fixture rows and
-      diff every mapped field, reporting *disagreements* (wrong value) separately
-      from *absences* (unmapped). Run it over the full corpus for cheap fields and
-      sampled for expensive ones.
-      *Exit: V1 stops being manual — a green `verify_packs` run replaces
-      "sampled against the fixtures", and every ⚠ constant is either confirmed
-      correct against the source or filed as an `M`.*
+- [x] **T1 — `verify_packs.dart`: source ↔ asset verifier.** *(done
+      2026-07-31.)* `audit_packs.dart` counts values; nothing compared them to
+      the fixtures. New tool + `tool/open5e_import/verify.dart` engine: for every
+      entity it re-reads the fixture row it was built from and judges each mapped
+      field on a **hand-written restatement** of the field ⟷ column contract —
+      read off the fixtures and the schema, importing no mapper, so it is not the
+      mapper checking itself. Four verdicts, not two: `disagree` (wrong value —
+      the only one that fails the run), `absent` (a hole), **`unsourced`** (the
+      pack has a value the source does not — the fabrication class §5's ⚠ marker
+      could only ever catch corpus-wide), and `unverifiable`, which a rule
+      declares with a reason when the mapper genuinely derives the value from
+      more than one column.
+      Result on the corpus (67,503 judgements over 9 parent categories, **5,514
+      of 5,515** entities matched to their fixture row — the one miss is
+      `open5e-open5e`'s "Abjurationist", which upstream has since renamed to
+      "School of Abjuring and Warding"):
+      **0 disagreements** — no shipped value contradicts its source column.
+      **70 `absent`**, all of them B10's free-text alignments; the B4 rebuild
+      closes the other 301 (`spell.area_*` 206, `monster.language_refs` 93,
+      `size_ref` 2), which independently re-confirms B4 and B9 *from the source
+      side*. **3,663 `unsourced`**, itemised in §3.6 — and one of them is a new
+      defect nothing else could see, filed as **B11**.
+      The tool found five bugs **in its own rule table** before it found anything
+      in a mapper (§3.6); `test/tool/verify_packs_test.dart` (19 cases) pins the
+      judgement matrix so that stays a one-time cost.
+      *Exit met: V1 is no longer manual — the ⚠ list is machine-produced and
+      every entry is either sourced-and-confirmed or filed.*
 - [ ] **T2 — Audit the built-in pack too.** *(no snapshot needed.)*
       `audit_packs.dart --builtin`: run the same declared-vs-filled census, the
       same ⚠-constant detection and the same undeclared-key footer over
@@ -1899,13 +2015,21 @@ has a value" into "the value produced the right number on a sheet".
 
 - [ ] **V1 — Re-verify every green row.** The from-scratch requirement in §0:
       each ✅ and ✅⚠ row in §5 is checked against the source once, not assumed.
-      Start with the known ⚠ constants (`creature_type_ref`, `repeatable`,
-      `is_cursed`, `is_sentient`, `activation`, `trait_kind`, gear `cost_cp` /
-      `weight_lb`) — each is a mapper default masquerading as coverage. **Driven by
-      T1**; hand-sampling 125 filled (category, field) slots across 20,712 entities
-      is not a repeatable gate.
+      **T1 did the parent categories** (2026-07-31): 67,503 judgements, **0
+      disagreements**, and every ⚠ constant it covers now has a recorded verdict
+      in §3.6 — `is_cursed` / `is_sentient` / `activation` / `repeatable` /
+      species `creature_type_ref` confirmed as columnless defaults, `hp_dice`
+      refuted and filed as **B11**. `feat.category_ref`'s "every one is General"
+      turns out to be **sourced**, not defaulted: it agrees with `Feat.type` on
+      all 73 rows, so the ⚠ is upstream's uniformity, not the mapper's.
+      What is left is what T1's rule table does not reach: `trait.trait_kind`
+      (hardcoded `Other` on all 6,423 — child rows have no by-name fixture match,
+      so this needs a per-parent check or T3's relational pass) and the gear stubs'
+      `cost_cp` / `weight_lb`, which have **no fixture at all** and are B6's, not
+      a verification question.
       *Exit: no ⚠ marker left without a recorded "this default is correct"
-      rationale, and `verify_packs` covers every ✅ row.*
+      rationale; `verify_packs` covers every ✅ row it structurally can, and the
+      rows it cannot are named with the phase that owns them.*
 
 ### Stage D — deliver it (nothing above reaches a user without this)
 
@@ -2004,6 +2128,19 @@ dart run tool/open5e_import/bin/diff_packs.dart --new /tmp/packs-rebuild
 dart run tool/open5e_import/bin/diff_packs.dart --new /tmp/packs-rebuild \
     --only creature-action --examples 10
 dart run tool/open5e_import/bin/diff_packs.dart --new /tmp/packs-rebuild --markdown
+
+# Is the value RIGHT? (T1) Re-reads each entity's fixture row and judges every
+# mapped field: disagree / absent / unsourced / unverifiable. Needs the snapshot.
+# Exits 1 on a disagreement (a mapping defect); holes and fabrications only report.
+dart run tool/open5e_import/bin/verify_packs.dart --data ../open5e-api-staging/data
+dart run tool/open5e_import/bin/verify_packs.dart --data ../open5e-api-staging/data \
+    --packs /tmp/packs-rebuild            # grade a rebuild instead of the assets
+dart run tool/open5e_import/bin/verify_packs.dart --data ../open5e-api-staging/data \
+    --only monster --doc bfrd --examples 10
+dart run tool/open5e_import/bin/verify_packs.dart --data ../open5e-api-staging/data \
+    --markdown --allow-disagreements
+# The rule table lives in tool/open5e_import/verify.dart, NOT in bin/ — adding a
+# field means adding a `_Rule` there and a case to the test below.
 
 # Catalog side (§3.3, Stage D). Today this reports 19 skips, not 19 uploads:
 dart run tool/catalog_publish/bin/build_catalog.dart
