@@ -25,7 +25,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[loaders]], [[sources]]. **Imports no mapper and calls no [[normalize]]** — see below.
-- Sibling of: [[audit_packs]] (presence), [[dupe_census]] (redundancy), [[diff_packs]] (rebuild delta).
+- Sibling of: [[audit_packs]] (presence), [[dupe_census]] (redundancy), [[diff_packs]] (rebuild delta), [[gate_packs]] (relations — T3, and the owner of the `creature-action`/`trait` rows this tool's scope excludes).
 - Consumers: `flutter_app/docs/open5e_content_audit.md` §3.6.
 - Domain map: [[Content-Pipeline]]
 

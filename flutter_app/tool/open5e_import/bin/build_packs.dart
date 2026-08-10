@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../emit.dart';
+import '../gate.dart';
 import '../loaders.dart';
 import '../mappers/chargen.dart';
 import '../mappers/item.dart';
@@ -192,6 +193,14 @@ void main(List<String> args) {
     print('Unmapped values logged → $outDir/unmapped_report.json '
         '(${report.length} slug bucket(s)).');
   }
+
+  // Relational gate (audit T3). The `_ref` check above only proves the refs a
+  // pack *has* resolve; this proves it has the ones it must — §3.5's 396
+  // actionless tob3 statblocks passed everything else. Runs on what was just
+  // written, so a pack that fails here never ships.
+  final gate = gatePackDir(outDir);
+  gate.printPlain();
+  if (gate.violations.isNotEmpty) hadError = true;
 
   if (hadError) exit(1);
 }

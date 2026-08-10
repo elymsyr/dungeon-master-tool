@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/build_packs.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-07-31
+updated: 2026-08-10
 tags: [file]
 ---
 
@@ -30,7 +30,7 @@ tags: [file]
 - Process exit code: 1 if any unresolved ref, 2 if data root missing.
 
 ## Dependencies & Links
-- Depends on: [[sources]], [[loaders]], [[normalize]], [[vocab]], [[refgraph]], [[emit]], [[mapper_monster]], [[mapper_spell]], [[mapper_item]], [[mapper_chargen]]
+- Depends on: [[sources]], [[loaders]], [[normalize]], [[vocab]], [[refgraph]], [[emit]], [[mapper_monster]], [[mapper_spell]], [[mapper_item]], [[mapper_chargen]], [[gate_packs]]
 - Used by: build pipeline (`dart run`); output consumed by [[package_payload_importer]] / [[package_import_service]] and [[build_catalog]].
 - Domain map: [[Content-Pipeline]]
 - System flow: [[Pack-Build-Two-Pass-Refgraph]]
@@ -38,6 +38,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - Per document: build a fresh `PackBuilder`, call `mapCreatures` / `mapSpells` / `mapMagicItems` / `mapClasses` / `mapSpecies` / `mapBackgrounds` / `mapFeats` for each present content type, then `pack.resolveRefs()` (Pass 2). Non-empty unresolved list → log + `hadError = true` + skip writing that pack.
+- **Relational gate after the write** (audit **T3**, 2026-08-10): once every pack is emitted, `gatePackDir(outDir)` ([[gate_packs]]) runs over the output and any violation sets `hadError`. `resolveRefs()` above only proves the refs a pack *has* resolve; this proves it has the ones it must — §3.5's 396 actionless statblocks passed the ref gate cleanly. A build without `data/v1` now fails `monster-actionless` instead of shipping.
 - **SRD overlap skip**: documents whose publisher is `wizards-of-the-coast` (`doc.isSrdOverlap`) are discovered but never written — the app ships the hand-authored built-in SRD 5.2.1 pack instead (see [[srd_core_pack]]).
 - **v1 class recovery**: `_v1ClassIndex` reads every `v1/<doc>/Spell.json`; `_v1DocForV2` maps each v2 doc slug to the v1 doc holding its `dnd_class` linkage (e.g. `wz→warlock`, `a5e-ag→a5e`, `deepm→dmag`); `_v1GlobalPref` is the cross-doc canonical fallback order (`wotc-srd`, `o5e`, `a5e`, `dmag`, …). Doc-scoped overlay wins over the global fallback.
 - **v1 action recovery** (audit **B8**, 2026-07-31): `_v1ActionIndex` reads every `v1/<doc>/Monster.json` into `v1doc → lowercased monster name → action_type bucket → [{name, desc}]`, decoding the `actions_json` / `bonus_actions_json` / `reactions_json` / `legendary_actions_json` columns (each a JSON *string*). `_v1DocForCreatures` maps the 8 v2 document slugs verified on the snapshot by monster-count **and** name parity (`a5e-mm→menagerie`, `bfrd→blackflag`, `ccdx→cc`, `tdcs→taldorei`, `tob`, `tob2`, `tob-2023`, `tob3`); the SRD documents are deliberately absent (skipped before this point, and `wotc-srd` is not row-parity with `srd-2014`). [[mapper_monster]] consumes it and fills **only** a bucket v2 left entirely empty — see that note for why the looser rule was rejected.
