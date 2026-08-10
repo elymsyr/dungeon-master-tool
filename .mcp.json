@@ -7,6 +7,12 @@
         "serve",
         "--mcp"
       ]
+    },
+    "codebase-memory": {
+      "type": "stdio",
+      "command": "codebase-memory-mcp",
+      "args": [],
+      "env": {}
     }
   }
 }
