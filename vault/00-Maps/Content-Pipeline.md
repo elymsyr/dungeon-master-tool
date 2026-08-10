@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-07-31
+updated: 2026-08-10
 tags: [moc]
 ---
 
@@ -20,7 +20,7 @@ tags: [moc]
 - [[emit]] — assemble wire-format `.pkg.json` + manifest + unmapped report.
 - [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
-- [[audit_packs]] · [[dupe_census]] · [[diff_packs]] — offline censuses over the shipped assets: *are the fields filled?*, *should this entity exist at all?* and *what did my rebuild change?*. All three back `flutter_app/docs/open5e_content_audit.md`.
+- [[audit_packs]] · [[dupe_census]] · [[diff_packs]] — offline censuses over the shipped assets: *are the fields filled?*, *should this entity exist at all?* and *what did my rebuild change?*. All three back `flutter_app/docs/open5e_content_audit.md`. `audit_packs --builtin` (T2) runs the same census over the built-in pack — the link target — instead of the assets.
 - [[verify_packs]] — the correctness gate beside those three: *is the shipped value the one the fixture column holds?* Needs the pinned snapshot, exits non-zero on a disagreement, and is the only tool that can see a **fabricated** value (a mapper default with no source behind it).
 
 ## Key Files — SRD core + catalog
@@ -92,7 +92,17 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   `area-shape` rows, size unconditionally feet) and `reaction_condition` →
   `reaction_trigger` (**0% → 3%**, with upstream's dangling "which you take …"
   lead-in stripped since the app's field stands alone). Both are at their
-  ceiling — that is all the source has. Next: **T1** (`verify_packs`), which
-  everything left in Stage B now depends on for grading.
+  ceiling — that is all the source has. **T1 done 2026-07-31**: [[verify_packs]]
+  grades every shipped value against its fixture column — 0 disagreements, but
+  **3,663 `unsourced`**, the fabrication class no census can express. **B11 done
+  2026-08-10**: the one live defect in that list — [[mapper_monster]] wrote
+  `hit_dice ?? '1d4'` and `open5e-bfrd` is null throughout — is fixed by
+  **omitting** the field, 360 removals confined to that pack. **T2 done
+  2026-08-10**: [[audit_packs]] `--builtin` measures the built-in pack for the
+  first time (2,719 entities, 59 categories) and finds `skill.ability_ref`
+  required and **0% filled** behind an `_ability_name_` placeholder nothing
+  resolves — the wizard's skill ability-mod chip has never rendered — plus the
+  fact that no spell-slot table ships anywhere. Filed T2-1/2/3; the built-in pack
+  is measured, never edited, by this audit. Next: **T3**, the relational gate.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

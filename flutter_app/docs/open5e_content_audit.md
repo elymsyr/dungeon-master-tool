@@ -54,13 +54,20 @@ actionable copies** of content the app already has in scope — inside a 20.9%
 collision surface whose remaining 3,153 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **T2** (audit the built-in pack) or **T3** (the
-relational gate) — the two open phases that need no shape decision and no new
-source reading. Everything still open in Stage B (B5, B6, B10) plus L1 needs a
-target-shape call first, so they are the slower path, not the blocked one.
+**Next action right now:** **T3** (the relational gate) — the last open phase
+that needs no shape decision and no new source reading, and the one §3.5's 396
+actionless statblocks were filed against. Everything still open in Stage B (B5,
+B6, B10) plus L1 needs a target-shape call first, so they are the slower path,
+not the blocked one.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
+**T2 is done** (2026-08-10): the built-in pack — the target of every softRef —
+is measured for the first time (§3.7, 2,719 entities). It found `skill.ability_ref`
+required and **0% filled** behind a `_ability_name_` placeholder nothing
+resolves, plus the fact that **no spell-slot table ships anywhere**, in the app
+or in the packs. Filed as **T2-1/2/3**; the built-in pack is measured here, never
+edited here.
 
 > **Four phases running reversed their own premise** (B9's unmapped report,
 > B8's action buckets, B3's `type` column, B2's `CORE_TRAITS_TABLE`). The
@@ -764,7 +771,7 @@ exist. Fixing the tools is cheaper than re-doing a phase that passed a bad gate.
 | Claim you might read into a green number | Why it does not follow | Owner |
 |---|---|---|
 | ~~"`audit_packs` says 100%, so the field is right"~~ | **Fixed by T1 2026-07-31, and it was hiding a real defect:** `verify_packs.dart` compares every value to its fixture column. 0 disagreements corpus-wide — but **3,663 `unsourced`** values the census read as coverage, including 360 `monster.hp_dice` that are a mapper fallback on a pack whose source column is null throughout (§3.6, filed as **B11** and fixed 2026-08-10 — that field is now omitted, not defaulted) | ~~T1~~ |
-| "The bundled packs are audited, so the content is audited" | `audit_packs` and `dupe_census` read `assets/open5e_packs` only. The built-in pack — the target of every softRef — is never measured | **T2** |
+| ~~"The bundled packs are audited, so the content is audited"~~ | **Fixed by T2 2026-08-10, and it was hiding a dead field:** `audit_packs --builtin` measures the link target too (§3.7). `skill.ability_ref` is required and **0% filled** — the seed rows write `_ability_name_` for a bootstrap step that does not exist, so the wizard's skill ability-mod chip has never rendered (filed **T2-1**) | ~~T2~~ |
 | ~~"Section C says 0 dangling, so every ref lands"~~ | **Fixed by L0 2026-07-30, and it was a real defect:** section C now resolves the way `findEntityIdByName` does, and "nothing installed" is **1**, not 0 — `"Spare The Dying"` vs `"Spare the Dying"` (§3.2) | ~~L0~~ |
 | ~~"A `(slug, name)` collision means duplicated content"~~ | **Fixed by L0:** sections A and B split every collision into same-text / name-only / no-text-either-side. 7 of 1,660 section-A rows say the same thing; 1,749 of 2,540 section-B names only share a name (§3.2) | ~~L0~~ |
 | "The census matches the runtime, so its collisions are the app's collisions" | **Only section C does, deliberately.** Identity and resolution are different questions: the resolver's trailing-parenthetical retry would call 3,501 qualified statblock rows ("Legendary Resistance (3/Day)") duplicates of built-in cards. A/B fold case and never strip; C mirrors the resolver exactly. The 3,501 are a *resolution* hazard — a softRef naming a qualified child lands on the generic built-in card | **T3** |
@@ -893,6 +900,76 @@ monsters *because the text is identical*, and no row is orphaned (0 unreferenced
 these categories out of it: the app resolves a softRef **by name**, so a
 deliberately qualified child name is exactly what qualifier-stripping
 mis-resolves (§2.3).
+
+### 3.7 The built-in pack, measured for the first time (T2, 2026-08-10)
+
+`audit_packs.dart --builtin` runs the §3.1 census over the link *target* instead
+of the bundled assets: `generateBuiltinDnd5eV2Schema().seedRows` (Tier-0) +
+`buildSrdCorePack()` (Tier-1). **2,719 entities across 59 categories.** Every
+softRef this audit writes lands here, and until now nothing had ever counted it.
+
+| Category | Entities | Declared | Filled |
+|---|--:|--:|--:|
+| `class` | 12 | 30 | 22 |
+| `subclass` | 12 | 8 | 5 |
+| `species` | 9 | 48 | 9 |
+| `subspecies` | 30 | 48 | 14 |
+| `background` | 16 | 11 | 9 |
+| `feat` | 305 | 60 | 44 |
+| `spell` | 341 | 25 | 20 |
+| `magic-item` | 286 | 64 | 13 |
+| `monster` | 248 | 40 | 33 |
+| `animal` | 97 | 40 | 25 |
+| `creature-action` | 528 | 19 | 17 |
+| `trait` | 238 | 46 | 3 |
+| `weapon` / `armor` / `tool` / `adventuring-gear` | 38 / 13 / 38 / 107 | 12 / 10 / 8 / 8 | 12 / 10 / 7 / 8 |
+| `ammunition` / `pack` / `mount` / `vehicle` | 5 / 7 / 8 / 12 | 4 / 5 / 4 / 9 | 4 / 4 / 4 / 9 |
+| 39 Tier-0 lookups | 369 | — | — |
+
+(2,350 Tier-1 rows + 369 Tier-0 seed rows.)
+
+**The headline is not a hole — it is a field nobody ever wrote.**
+
+- **`skill.ability_ref` is required and 0% filled (0/18)**, and the census's
+  undeclared-key footer says why: the seed rows write **`_ability_name_`**
+  instead, with the comment "bootstrap resolves to entityId". *No bootstrap
+  resolves it.* `srd_core_package_bootstrap` mirrors `row['fields']` into
+  `package_entities` verbatim, and a repo-wide search finds the key in exactly
+  two places — the seed row that writes it and a schema test that asserts it is
+  present. The live consequence is
+  [`skill_mod_helper.dart`](../lib/presentation/screens/characters/wizard/steps/skill_mod_helper.dart):
+  `skillAbilityModFor` bails on the first guard for every skill, so the wizard's
+  ability-mod chip beside an unpicked skill has never rendered. Filed **T2-1**.
+- **The four class spellcasting tables B2 could not fill are empty here too**
+  (`cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level`
+  0/12; `extra_attack_count_by_level` 0/305 on `feat`). B2 closed on "the source
+  only has them in the two skipped WotC documents" — §3.7 says the built-in pack
+  is not the fallback either, so **nothing in the app ships a slot table**. Filed
+  **T2-2**; it is a prerequisite for Stage M, not a Stage B item.
+- **B4's two spell fields are 0% on the built-in side**: `area_shape_ref` /
+  `area_size_ft` 0/341, `reaction_trigger` 0/341, `at_higher_levels_text` 0/341.
+  The Open5e packs now carry the first two at their source ceiling (7%), so the
+  hand-authored SRD spells are the ones lagging. Filed **T2-3**.
+- **`pack.content_quantities` 0/7** while `content_refs` is 100% — a Burglar's
+  Pack knows it contains ball bearings, not that it contains 1,000 of them.
+  Folded into **T2-3**.
+- **10 `⚠ const` columns, all confirmed deliberate**: `is_sentient` (no SRD
+  sentient item ships), `animal`/`species` `creature_type_ref` (Beast /
+  Humanoid), `subclass.granted_at_level` (SRD 5.2.1 gives every subclass at 3),
+  `multiclass_prereq_min_score` (13 throughout), `background.asi_distribution_options`
+  and `gold_alternative_gp`, `mount.is_trained`, and the two `source` columns.
+  None is a fabrication — unlike the Open5e side, these rows are authored by
+  hand and the constant *is* the rule.
+
+**No planned softRef dangles on a missing name.** Every category the audit links
+into ships rows — 38 tools, 107 gear, 341 spells, 305 feats, 2,717 `(slug, name)`
+pairs in scope — and the one dangling ref anyone has found is `dupe_census`
+section C's `"Spare The Dying"`, already filed on **L3**. T2 measures fill, not
+resolution; resolution stays L3's and T3's question.
+
+**Fixes are deliberately not part of T2** (its own exit says so): the built-in
+pack is in scope to *measure* here and edits to it need an `srdCorePackVersion`
+bump plus its own tests. T2-1/2/3 carry them.
 
 ---
 
@@ -2001,15 +2078,46 @@ has a value" into "the value produced the right number on a sheet".
       judgement matrix so that stays a one-time cost.
       *Exit met: V1 is no longer manual — the ⚠ list is machine-produced and
       every entry is either sourced-and-confirmed or filed.*
-- [ ] **T2 — Audit the built-in pack too.** *(no snapshot needed.)*
-      `audit_packs.dart --builtin`: run the same declared-vs-filled census, the
-      same ⚠-constant detection and the same undeclared-key footer over
-      `generateBuiltinDnd5eV2Schema().seedRows` + `buildSrdCorePack()`. It is the
-      target of every softRef this audit writes and it has never been measured.
-      *Exit: a built-in census section added to §3; any hole that would make a
-      planned softRef dangle (missing tool, gear, feat or spell name) is filed
-      before the phase that would point at it. Fixes to it are a separate change
-      with an `srdCorePackVersion` bump.*
+- [x] **T2 — Audit the built-in pack too.** *(done 2026-08-10, no snapshot
+      needed.)* `audit_packs.dart --builtin` points the same declared-vs-filled
+      census, ⚠-constant detection and undeclared-key footer at
+      `generateBuiltinDnd5eV2Schema().seedRows` + `buildSrdCorePack()` —
+      **2,719 entities, 59 categories**, measured in §3.7. Asset-mode output is
+      byte-identical to before the change; `test/tool/builtin_census_shape_test.dart`
+      pins the two row shapes the census depends on (Tier-0 under `fields`,
+      Tier-1 under `attributes`), because a drift there would read as a content
+      hole rather than a tool bug.
+      The census found one dead field, not a hole: **`skill.ability_ref` is
+      required and 0% filled** — the seed rows write `_ability_name_` "for the
+      bootstrap" and nothing anywhere resolves it, so the wizard's skill
+      ability-mod chip has never rendered. No planned softRef dangles on a
+      missing *name*; the only known dangling ref stays L3's.
+      *Exit met: §3.7 added; every hole either explained (10 ⚠ const columns are
+      authored rules) or filed as T2-1/2/3 below.*
+  - [ ] **T2-1 — `skill.ability_ref` is never resolved.** 18 Tier-0 skill rows
+        ship `_ability_name_: 'Dexterity'` and an empty required `ability_ref`;
+        `srd_core_package_bootstrap` writes `row['fields']` through verbatim, so
+        the placeholder reaches the DB unchanged and `skillAbilityModFor` bails
+        on its first guard for every skill. Ids are deterministic
+        (`srdStableEntityId('ability', name)`), so this is resolvable at build
+        time — but the world-side rows are synthesised by `builtin_synth`, so
+        check which id the wizard actually reads before picking a side.
+        *Exit: the chip renders in the wizard's skill step, the undeclared
+        `_ability_name_` key is gone from the census footer, and
+        `builtin_dnd5e_v2_schema_test`'s assertion is updated to the new shape.*
+  - [ ] **T2-2 — No spell-slot table ships anywhere.** `class.spell_slots_by_level`,
+        `cantrips_known_by_level`, `prepared_spells_by_level` are 0/12 on the
+        built-in pack and 0% on the Open5e side (B2: the source only has them in
+        the two skipped WotC documents). Blocks Stage M — a resolver cannot fold
+        what nobody authored. *Exit: the SRD 5.2.1 tables authored in
+        `srd_core/classes.dart` with an `srdCorePackVersion` bump, or a written
+        decision that the resolver computes them from `caster_kind`.*
+  - [ ] **T2-3 — Built-in spell/pack fields the Open5e side now beats.**
+        `spell.area_shape_ref` / `area_size_ft` / `reaction_trigger` /
+        `at_higher_levels_text` all 0/341 (B4 filled the first two in the packs),
+        and `pack.content_quantities` 0/7 while `content_refs` is 100%. *Exit:
+        filled from SRD 5.2.1 text with a version bump, or each declared
+        deliberately empty.*
 - [ ] **T3 — Relational sanity gate.** *(no snapshot needed.)* Per-entity
       completeness checks the field census structurally cannot express, run over
       the assets and failing the build: every `monster` has ≥1 action; no
@@ -2116,6 +2224,8 @@ cd flutter_app
 dart run tool/open5e_import/bin/audit_packs.dart
 dart run tool/open5e_import/bin/audit_packs.dart --markdown   # doc-shaped tables
 dart run tool/open5e_import/bin/audit_packs.dart --only class,subclass
+dart run tool/open5e_import/bin/audit_packs.dart --builtin     # §3.7 (T2) —
+# the built-in pack instead of the assets; widens to all 59 categories it ships.
 
 dart run tool/open5e_import/bin/dupe_census.dart              # §3.2
 dart run tool/open5e_import/bin/dupe_census.dart --markdown
@@ -2173,6 +2283,7 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B4 spell area / reaction trigger (11)
                                    # + T1 verifier rule table (19)
                                    # + B11 hp_dice null-source (4)
+                                   # + T2 built-in census row shapes (2)
 
 # Proves a mechanic reaches the sheet, not just the file.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
@@ -2186,9 +2297,10 @@ flutter test test/application/character_creation/
 flutter analyze && flutter test
 ```
 
-**Planned tools** (do not exist yet — the phase that adds them owns the command):
-`audit_packs.dart --builtin` (T2) and `verify_packs.dart` (T1). L0's fidelity
-flags shipped 2026-07-30 and are in the census output above.
+**Planned tools**: none left in Stage T's tooling row — `verify_packs.dart` (T1)
+shipped 2026-07-31 and `audit_packs.dart --builtin` (T2) 2026-08-10; both are in
+the command list above. T3's relational gate is the one still unwritten. L0's
+fidelity flags shipped 2026-07-30 and are in the census output above.
 
 **The §2.5 text-divergence measurement — superseded by L0.** Kept only as the
 independent check on the census's text column; the census's own figures are the
