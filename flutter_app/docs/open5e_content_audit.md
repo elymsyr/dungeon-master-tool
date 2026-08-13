@@ -91,16 +91,29 @@ still open.
 (the five in §2.3.1 plus the granted-skill set the table missed) matched
 `*_refs` entries by raw `String` equality or `whereType<String>()`, so a
 correctly written `{slug, name}` matched nothing; they now share one helper,
-`resolveEntityRefList`. The `tags` fallback stays until U2 proves the spell list
-is non-empty without it — U1 only *adds* visibility, so nothing that renders
-today can stop rendering. This was L3's stated blocker; L3's remaining gate is
-now U2.
+`resolveEntityRefList`. The `tags` fallback stays until the spell list is
+non-empty without it — U1 only *adds* visibility, so nothing that renders today
+can stop rendering. This was L3's stated blocker; L3's remaining gate was U2.
+*(U2 has since answered the open half: the list is **not** non-empty without
+`tags` — 1,212 of 1,297 packaged spells rest on it alone. See below.)*
+
+**U2 is done — 2026-08-13.** Outcome 4 now has a gate. 12 of the 19 bundled
+packs ship a chargen category; each of them gets a wizard-level test
+(`test/presentation/character_creation/wizard_pack_families_test.dart`, 39
+cases, data-driven so a new pack is covered without editing the test) that
+installs the pack over the built-in SRD, asserts the step readers list its
+rows, and commits a draft built from them. It also **measured the thing L3 has
+to preserve**: of 1,297 packaged spells, **1,212 are visible through `tags`
+alone and 0 through `class_refs`** — 85 are invisible today under any path. So
+`tags` is not a fallback, it is the only path, and L3 must fill `class_refs`
+*before* retiring it, not after. Verified by mutation: dropping the `tags` half
+of the predicate fails 11 of the 39 cases.
 
 **Next action right now:** **publish** (one command with the two secrets — the
 only thing between the promoted assets and users). After that Stage D is closed
-and the roadmap is back to content: **U2** is the natural next build (it gates
-the rest of L3 and is the only proof of outcome 4), while B5, B6, B10 and L1
-each need a target-shape call first.
+and the roadmap is back to content: **L3** is now unblocked (U2 is its gate and
+the 1,212 figure is its floor), while B5, B6, B10 and L1 each need a
+target-shape call first.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -1276,7 +1289,9 @@ answers the second "known reason" this section used to list.
    `deepm` 75/515 untagged, `kp` 7/31, `a5e-ag` 3/371. A further 8 spells carry
    tags that match no class name (`deepmx` 3, `kp` 3, `a5e-ag` 2 — v1's
    non-class tokens like "Ritual Caster"). This is the floor `spell.class_refs`
-   (**L3**) has to beat, and the number U2 should assert against.
+   (**L3**) has to beat. **U2 asserted it 2026-08-13** and independently
+   reproduced the same split from the shipped assets: 1,297 packaged spells,
+   1,212 visible via `tags`, 0 via `class_refs`, 85 invisible.
 3. **`open5e/core` and `open5e/elderberry-inn-icons` are the two silently-dropped
    documents** (§4 A2's last box). `core` holds only Tier-0 vocabulary
    (`Ability`, `Alignment`, `Condition`, `CreatureType`, `DamageType`,
@@ -1505,8 +1520,11 @@ describe the assets as well as the importer.
 > with no test today.
 >
 > **Status after B1:** the field is filled, and since the 2026-08-13 promotion it
-> ships — so the level-3 lock is now live for users, with the wizard assertion
-> still owed on **U2**. What B1 does assert is the resolver half, in
+> ships — so the level-3 lock is now live for users. **The wizard assertion
+> landed with U2 (2026-08-13)**: `wizard_pack_families_test` checks
+> `granted_at_level` is present and in range on every packaged subclass, and
+> that each one lists under its resolved parent class.
+> What B1 does assert is the resolver half, in
 > `test/tool/class_feature_levels_test.dart`: at Barbarian 2 the subclass grants
 > nothing, at 3 it grants its level-3 row, at 14 all three.
 
@@ -1653,7 +1671,7 @@ with a built-in spell (313 of them A5E — see §2.5).
 
 | | Field | Fill | Cause | Source |
 |:--:|---|--:|:--:|---|
-| 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row. The reader fix (U1) shipped 2026-08-13 — the four chargen readers now resolve softRefs — but `tags` is still what makes packaged spells visible today, so it is retired last, after U2.** |
+| 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row. The reader fix (U1) shipped 2026-08-13 — the four chargen readers now resolve softRefs — but `tags` is still what makes packaged spells visible today, so it is retired last. U2 (2026-08-13) measured exactly how much rests on it: 1,212 of 1,297 packaged spells, against 0 via `class_refs`.** |
 | 🟡 | `area_shape_ref`, `area_size_ft` | 0% → **7%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.shape_type` is a 5-value enum (cone/cube/cylinder/line/sphere), every value already a built-in `area-shape` Tier-0 row, so all 103 resolve and none reach the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit occurs anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 7% *is* the ceiling: only 103 of 1,297 spells have an area upstream. |
 | 🟡 | `reaction_trigger` | 0% → **3%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.reaction_condition` is non-empty on 51 rows, all 51 with `casting_time: reaction`. Upstream writes it as the tail of the casting-time line ("1 reaction, *which you take when…*"), so 46 of 51 open with a dangling relative clause; the lead-in is stripped and the remainder made a sentence, since the app's field stands alone. 3% is the ceiling. |
 | ⚪ | `at_higher_levels_text` | 0% | `P` | **Reclassified by A1 (2026-07-30): not a gap.** `Spell.higher_level` prose is already shipped, appended to `description` as *"At Higher Levels"*. `SpellCastingOption.json` adds **zero** spells on top of that in any document, so this field is a formatting preference (split the prose out of `description`), not missing content. Was `🔴 L`. |
@@ -1868,9 +1886,11 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       present, both resolve), `assets/first_party/manifest.json` shows non-empty
       `requires` on the packs that now link, and installing a linker from the
       catalog pulls its target (`FirstPartyInstallNotifier.install`).*
-- [ ] **L3 — Turn existing prose into refs.** *(U1 shipped 2026-08-13 — the
-      readers no longer block this; the remaining gate is U2, which has to prove
-      the spell list is non-empty before the `tags` route is retired.)* The 🔗 rows in §5
+- [ ] **L3 — Turn existing prose into refs.** *(Unblocked 2026-08-13: U1 fixed
+      the readers, U2 built the gate and pinned the floor — **1,212 of 1,297
+      packaged spells are visible through `tags` and 0 through `class_refs`**, so
+      fill `class_refs` and re-run `wizard_pack_families_test` **before**
+      retiring the `tags` route, never the other way round.)* The 🔗 rows in §5
       that already ship in some form: `subclass` parent tags, feat prerequisites,
       `spell.class_refs`, `magic-item.base_item_ref`.
       - [x] **Fix the one ref that already dangles. Done 2026-08-13.**
@@ -1914,15 +1934,38 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       the membership test the raw `.contains` failed; unresolvable/garbage
       entries drop instead of throwing. `flutter test test/presentation/character_creation/ test/domain/services/`
       → 225 passing, `flutter analyze lib test` → 16 issues, 0 errors (baseline).
-- [ ] **U2 — Wizard-level test per pack family.** One test per family
-      (`toh`, `a5e-*`, `tob*`, `open5e`, …) that picks the pack as a source
-      package and walks Identity → Class → Subclass → Proficiencies → Spells →
-      Equipment → Feats, asserting each step renders options and the draft
-      commits. This is the only gate that proves outcome 4; today
-      `test/presentation/character_creation/` never loads a pack at all.
-      *Exit: every bundled pack that ships a chargen category (class, subclass,
-      species, subspecies, background, feat, spell) has a passing wizard test,
-      and B1's `granted_at_level` change is asserted there (§5.2).*
+- [x] **U2 — Wizard-level test per pack family. Done 2026-08-13.**
+      `test/presentation/character_creation/wizard_pack_families_test.dart`
+      enumerates `assets/open5e_packs/`, keeps the **12 packs that ship a
+      chargen category** (the other 7 are monster-only and have no wizard
+      surface), installs each over the built-in SRD exactly the way
+      `bundled_pack_resolve_test` does, and asserts per pack: every packaged
+      subclass lists under its resolved parent class, `granted_at_level` is
+      present and in 1–20 (**B1's wizard-side assertion, §5.2** — tolerance of
+      one row for toh's `Path of Hellfire`, which has no upstream source), every
+      subspecies lists under its species, packaged spells reach at least one
+      class's spell list, every `origin_feat_ref` resolves, and a draft built
+      from the pack's own picks passes `buildSeedFields` → `CharacterResolver`.
+      39 cases, all green; the file is data-driven, so a nineteenth-plus pack is
+      covered without touching it.
+      **The measurement that matters for L3:** of 1,297 packaged spells,
+      **1,212 are visible through `tags` and 0 through `class_refs`** (85 carry
+      neither and are invisible today). `tags` is therefore not a fallback but
+      the *only* path — L3 has to fill `class_refs` first and hold ≥1,212, not
+      retire `tags` first.
+      *Prerequisite shipped with it:* the option-list predicates the steps used
+      to inline are now `lib/application/character_creation/wizard_options.dart`
+      (`spellMatchesClass`, `subclassesForClass`, `subclassGrantedAtLevel`,
+      `subspeciesForSpecies`). Testing the steps meant having something callable
+      without pumping a widget, and the copies had already drifted: the wizard's
+      own `_validateSpells` counted class spells by `class_refs` **only**, so on
+      any packaged spell list it counted 0 and silently suppressed its own
+      check. Five copies → one predicate; the subspecies filter was duplicated
+      four times.
+      *Check:* mutation — deleting the `tags` half of `spellMatchesClass` and
+      the softRef half of the subclass parent lookup fails 11 of the 39 cases.
+      `flutter test test/presentation/ test/application/character_creation/ test/domain/services/`
+      → 559 passing, `flutter analyze lib test` → 16 issues, 0 errors (baseline).
 
 ### Stage B — fill the fields
 
@@ -2409,8 +2452,9 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    not the 20.9% collision surface — section C's "nothing installed" is 0 under the
    resolver's own matching, and every linker ships both link keys plus a non-empty
    `requires`.
-4. **Character creation** — a wizard test per pack family passes (U2), and no
-   chargen filter reads a `*_ref` field as a raw id (U1 — done 2026-08-13).
+4. **Character creation** — a wizard test per pack family passes (U2 — done
+   2026-08-13, 12 chargen-bearing packs, 39 cases), and no chargen filter reads
+   a `*_ref` field as a raw id (U1 — done 2026-08-13). **Outcome 4 is met.**
 5. **Delivery** — a published catalog whose packs upload rather than skip (D1 —
    bumped and rebuilt, **upload still owed**), with an upgrade path for existing
    installs (D2 — done 2026-08-13).
@@ -2509,7 +2553,8 @@ flutter test test/domain/services/bundled_pack_resolve_test.dart
 # The link mechanism itself (not content):
 flutter test test/application/services/package_link_service_test.dart
 flutter test test/application/services/world_package_installer_test.dart
-# Chargen side — outcome 4. None of these load a pack yet (that is Stage U2).
+# Chargen side — outcome 4. `wizard_pack_families_test` (U2) installs each of
+# the 12 chargen-bearing packs and walks the steps; the rest are pack-free.
 flutter test test/presentation/character_creation/
 flutter test test/application/character_creation/
 # Repo gate before any push:

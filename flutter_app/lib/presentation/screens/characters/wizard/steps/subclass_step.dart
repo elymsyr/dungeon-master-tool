@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
+import '../../../../../application/character_creation/wizard_options.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
-import '../../../../../domain/services/entity_ref.dart';
 import '../../../../widgets/class_level_up_table.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/expandable_section.dart';
@@ -37,30 +37,19 @@ class SubclassStep extends ConsumerWidget {
     final entities = ref.watch(wizardEntitiesProvider);
     // W4: filter the cached subclass list down to entries for this class.
     final allSubclasses = ref.watch(entitiesByCategoryProvider('subclass'));
-    final subclasses = [
-      for (final e in allSubclasses)
-        if (_parentClassId(e, entities) == draft.classId) e,
-    ];
+    final subclasses = subclassesForClass(draft.classId, entities,
+        candidates: allSubclasses);
     if (subclasses.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text('No subclasses available for this class.'),
       );
     }
-    // Re-sort by granted_at_level, then name (name is already alphabetical
-    // from the family provider, so the stable sort preserves it).
-    subclasses.sort((a, b) {
-      final la = _grantedAtLevel(a);
-      final lb = _grantedAtLevel(b);
-      if (la != lb) return la.compareTo(lb);
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
-
     // Per SRD §1.5, a subclass cannot be picked before the class's
     // declared `granted_at_level`. If everything is gated, clear any
     // stale selection so the wizard's "complete" state matches.
     final minGranted = subclasses
-        .map(_grantedAtLevel)
+        .map(subclassGrantedAtLevel)
         .fold<int>(20, (acc, l) => l < acc ? l : acc);
     final allLocked = minGranted > draft.level;
     if (allLocked && draft.subclassId != null) {
@@ -87,7 +76,7 @@ class SubclassStep extends ConsumerWidget {
         for (final s in subclasses)
           _SubclassRow(
             entity: s,
-            grantedAtLevel: _grantedAtLevel(s),
+            grantedAtLevel: subclassGrantedAtLevel(s),
             draftLevel: draft.level,
             selected: draft.subclassId == s.id,
             onTap: () => notifier.setSubclass(s.id),
@@ -122,18 +111,6 @@ class SubclassStep extends ConsumerWidget {
     );
   }
 
-  // `parent_class_ref` is a plain id for in-pack/built-in parents but a softRef
-  // `{slug, name}` Map when the base class lives in another pack (toh/a5e
-  // subclasses). Resolve both so packaged subclasses list under their class.
-  static String? _parentClassId(Entity e, Map<String, Entity> entities) =>
-      resolveEntityRef(e.fields['parent_class_ref'], entities);
-
-  static int _grantedAtLevel(Entity e) {
-    final v = e.fields['granted_at_level'];
-    if (v is int) return v;
-    if (v is String) return int.tryParse(v) ?? 1;
-    return 1;
-  }
 }
 
 class _SubclassRow extends StatelessWidget {

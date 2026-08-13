@@ -21,6 +21,7 @@ tags: [moc]
 - [[ability_score_method]] · [[ability_score_validator]] — array/point-buy/roll + ASI validation.
 - [[multiclass_helper]] — multiclass progression + grants.
 - [[character_draft]] · [[character_draft_notifier]] — wizard Riverpod state.
+- [[wizard_options]] — sihirbaz adımlarının seçenek yüklemleri (büyü→sınıf, alt sınıf→sınıf, alt tür→tür); adımlar ve U2 paket testleri aynı fonksiyonları çağırır.
 - [[pending_choices]] — queued choice kinds (ASI, feat, subclass, spell, equipment…).
 - [[effective_character]] — computed view (AC, init, prof, immunities, warnings).
 
