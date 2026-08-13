@@ -13,9 +13,8 @@ resolved.
 **B1 done 2026-07-30** — `ClassFeatureItem.json` is loaded; the rebuild fills
 `class.features` 100% (2/2) and `subclass.features` / `granted_at_level` 99%
 (100/101), 572 level rows, and a resolver test proves they land on the sheet at the
-right level (§5.2). **The rebuild is still scratch-only**, so §5's shipped
-percentages stay 0% until promotion (Stage D) — the fix exists, the assets do not
-carry it yet.
+right level (§5.2). ~~The rebuild is still scratch-only~~ — **promoted
+2026-08-13**, so every "rebuilt" percentage in §5 is now the shipped one.
 **B9 done 2026-07-30** — Open5e's own Tier-0 vocabulary fixtures are now a second
 canon behind the built-in one (`tool/open5e_import/vocab.dart`). Content fixtures
 reference Tier-0 rows by **fixture pk**, so the vocabulary is what turns
@@ -46,22 +45,33 @@ see — **396 of `open5e-tob3`'s 397 monsters have no actions**.
 self-contained: everything needed to pick up the work is below, and the links out
 are optional depth, never prerequisites. Open a session with this file alone.
 
-**The problem in two lines.** The bundled Open5e packs ship the right entities
-with mostly empty fields — most sharply, 101 subclasses that attach to the correct
-parent class and grant nothing (**fixed in the importer by B1**; the shipped assets
-still show it until the rebuild is promoted). And **1,178 of their 20,712 entities (5.7%) are
-actionable copies** of content the app already has in scope — inside a 20.9%
-collision surface whose remaining 3,153 rows are one statblock's own children
+**The problem in two lines.** The bundled Open5e packs shipped the right entities
+with mostly empty fields — most sharply, 101 subclasses that attached to the correct
+parent class and granted nothing (**fixed by B1 and shipped 2026-08-13**: 100 of
+101 now carry a level table). And **1,183 of their 22,005 entities (5.4%) are
+actionable copies** of content the app already has in scope — inside a 20.3%
+collision surface whose remaining 3,279 rows are one statblock's own children
 (§3.2, measured by L0).
 
-**Next action right now:** **the rebuild, then D1.** Stage T is finished and all
-three of its tools now say the same thing: the *importer* is fixed and the
-*shipped assets* are not. B1/B2/B3/B4/B8/B9/B11 live only in the mapper, and
-T3's gate is red on the assets for exactly that reason. Rebuilding and grading
-the output (`diff_packs` + `verify_packs --packs` + `gate_packs --packs`) needs no
-decision at all; D1's versioning rule is the one call that does. Everything still
-open in Stage B (B5, B6, B10) plus L1 needs a target-shape call first, so they
-are the slower path, not the blocked one.
+**The rebuild is promoted — done 2026-08-13.** `assets/open5e_packs/` is now the
+output of the pinned snapshot with B1/B2/B3/B4/B8/B9/B11 in it, and the split this
+file spent three weeks describing — "the importer is fixed and the shipped assets
+are not" — is closed. Graded before promotion by all three tools and re-run after:
+`verify_packs` **0 disagreements**, `absent` **371 → 70**, `unsourced` **3,663 →
+3,303**; `gate_packs` **198 → 1** violation (only L3's `"Spare The Dying"`);
+`audit_packs` filled slots **125 → 133 of 407**; `diff_packs` 1,391 changed values
+in 30 classes, every one attributable to a filed phase. Entity total 20,712 →
+**22,005** (+1,286 recovered tob3 actions, +6 `language`, +1 `size`).
+**D1 is half done:** `emit.packVersion` is a hand-bumped constant at **1.1.0**,
+the catalog is rebuilt (19 entries at `1.1.0`, fresh `r2_path`s, `counts` /
+`size_bytes` drift cleared), so `publish_catalog` will upload rather than skip.
+The upload itself has **not** run — it needs `DMT_WORKER_URL` + `ADMIN_TOKEN`,
+which are CI secrets, not available locally.
+
+**Next action right now:** **publish** (one command with the two secrets), then
+**D2** (upgrade + uninstall paths — an installed `@1.0.0` still has no trigger to
+move to `1.1.0`). Everything still open in Stage B (B5, B6, B10) plus L1 needs a
+target-shape call first, so they are the slower path, not the blocked one.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -309,11 +319,14 @@ packaged spells are visible only through a `tags` fallback that the same fix wou
 retire. Filling a field is therefore not the last step; §2.3.1 and Stage U are. →
 outcome 4.
 
-**Gap 5 — nothing published.** `emit.dart` hardcodes `pack_version: '1.0.0'`,
+**Gap 5 — nothing published.** `emit.dart` hardcoded `pack_version: '1.0.0'`,
 `build_catalog` derives the immutable `r2_path` from that version, and
 `publish_catalog` **skips** an object that already exists unless `--force`. Every
-pack is `1.0.0` and already uploaded, so a perfect rebuild changes nothing for any
-user, and no installed pack has an upgrade trigger. → Stage D.
+pack was `1.0.0` and already uploaded, so a perfect rebuild changed nothing for any
+user. **Half closed by D1 (2026-08-13):** `emit.packVersion` is `1.1.0` and the
+catalog now points at unwritten `r2_path`s, so the upload is a real upload — but
+it has not been run (CI secrets), and no installed pack has an upgrade trigger
+yet. → Stage D.
 
 The wiring for what does exist is not the problem. All 97 `parent_class_ref`
 softRefs on the bundled subclasses resolve by name against the built-in SRD classes
@@ -611,18 +624,25 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
 
 | Category | Entities | Packs | Declared fields | Filled |
 |---|--:|--:|--:|--:|
-| `class` | 2 | 2 | 30 | 7 |
-| `subclass` | 101 | 5 | 8 | **1** |
+| `class` | 2 | 2 | 30 | 8 |
+| `subclass` | 101 | 5 | 8 | **3** |
 | `species` | 11 | 1 | 48 | 9 |
 | `subspecies` | 30 | 2 | 48 | 10 |
-| `background` | 53 | 6 | 11 | 4 |
+| `background` | 53 | 6 | 11 | 6 |
 | `feat` | 73 | 3 | 60 | 13 |
-| `spell` | 1297 | 8 | 25 | 18 |
+| `spell` | 1297 | 8 | 25 | 21 |
 | `magic-item` | 1063 | 1 | 64 | 8 |
 | `monster` | 2885 | 8 | 40 | 35 |
-| `creature-action` | 8615 | 8 | 19 | 13 |
+| `creature-action` | 9901 | 8 | 19 | 13 |
 | `trait` | 6423 | 8 | 46 | 3 |
 | `adventuring-gear` | 159 | 6 | 8 | 4 |
+
+**133 of 407 declared (category, field) slots are filled** (was 125 before the
+2026-08-13 promotion). The eight that moved are B1's `subclass.features` /
+`granted_at_level`, B2's `class.features`, B3's `background.granted_tool_refs` /
+`granted_tool_variant_group`, and B4's `spell.area_shape_ref` / `area_size_ft` /
+`reaction_trigger`. `creature-action` grew by 1,286 rows (B8's tob3 recovery), and
+six packs gained a one-row `language` seed plus `a5e-mm` a `size` seed (B9).
 
 Every chargen category also carries a `description` key in `attributes` that the
 schema does not declare (`feat` additionally carries `prereq_clauses`) — see the
@@ -635,12 +655,14 @@ are in the skipped SRD documents — **no entity is being lost**.
 
 ### 3.2 Duplication census — fidelity-fixed by L0 (2026-07-30)
 
-`dart run tool/open5e_import/bin/dupe_census.dart` — 19 packs, 20,712 entities,
-against 2,717 `(slug, name)` rows the built-in pack puts in scope.
+`dart run tool/open5e_import/bin/dupe_census.dart` — 19 packs, 22,005 entities,
+against 2,717 `(slug, name)` rows the built-in pack puts in scope. **Re-measured
+2026-08-13 against the promoted rebuild**; the pre-promotion figures were 20,712
+entities / 4,331 union / 1,178 actionable.
 
-**Union: 4,331 of 20,712 bundled entities (20.9%) share a `(slug, name)` key with
-content already in scope — of which 3,153 are rows owned by one statblock, so the
-actionable redundancy is 1,178 (5.7%).** A and B below overlap (a trait can be in
+**Union: 4,462 of 22,005 bundled entities (20.3%) share a `(slug, name)` key with
+content already in scope — of which 3,279 are rows owned by one statblock, so the
+actionable redundancy is 1,183 (5.4%).** A and B below overlap (a trait can be in
 the built-in pack *and* in six bundled packs), so do not add them.
 
 > **The census now prints that split itself**, and the actionable figure is what
@@ -654,10 +676,11 @@ the built-in pack *and* in six bundled packs), so do not add them.
 | `spell` | 318 | 313 are A5E restats → keep; ~5 genuine |
 | `adventuring-gear` | 43 | synthesised stubs, no text at all → drop (B6) |
 | `background` | 13 | 12 A5E + 1 cross-pack (`Scoundrel`) |
+| `language` | 5 | B9's recorded cost: 6 packs each seed their own one-row `Void Speech` |
 | `feat` | 1 | inspect |
 | `magic-item` | 1 | inspect |
 | `creature-action`, `trait` | **0** | every redundant copy is a statblock's own child (§2.5) |
-| **total** | **1,178** | |
+| **total** | **1,183** | |
 
 **A + B by category**, with the text split L0 added. `no text` is its own bucket
 because `monster` ships an empty top-level `description` in every pack and the gear
@@ -668,21 +691,22 @@ evidence of duplication:
 |---|--:|--:|--:|--:|--:|--:|
 | `adventuring-gear` | 23 | 0 | 0 | 23 | 24 | 0 |
 | `background` | 12 | 0 | 12 | 0 | 1 | 0 |
-| `creature-action` | 448 | 3 | 445 | 0 | 1678 | 8615 |
+| `creature-action` | 454 | 3 | 451 | 0 | 1804 | 9901 |
 | `feat` | 1 | 0 | 1 | 0 | 0 | 0 |
+| `language` | 0 | 0 | 0 | 0 | 5 | 0 |
 | `magic-item` | 1 | 0 | 1 | 0 | 0 | 0 |
 | `monster` | 409 | 0 | 409 | 0 | 588 | 0 |
 | `spell` | 314 | 0 | 314 | 0 | 4 | 0 |
 | `trait` | 452 | 4 | 448 | 0 | 1098 | 6423 |
-| **total** | **1660** | **7** | **1630** | **23** | **3393** | **15038** |
+| **total** | **1666** | **7** | **1636** | **23** | **3524** | **16324** |
 
-**7 of 1,660.** Seven bundled cards that collide with the built-in pack actually
+**7 of 1,666.** Seven bundled cards that collide with the built-in pack actually
 say the same thing. Section A is a shadowing surface, not a set of duplicates.
 
-**B, by text agreement** (2,540 shared names): 188 identical, **1,749 share only a
-name**, 603 have no prose on any copy (588 `monster` + 15 gear). §2.5's earlier
-"1,937 shared names" counted repeats *within* one pack as well; the census requires
-two distinct packs.
+**B, by text agreement** (2,576 shared names): 189 identical, **1,784 share only a
+name**, 603 have no prose on any copy (588 `monster` + gear + the 5 `language`
+seeds). §2.5's earlier "1,937 shared names" counted
+repeats *within* one pack as well; the census requires two distinct packs.
 
 **Matcher fidelity — the §3.4 rows, now measured.** A/B key on *identity*
 (`(slug, lowercased name)`, exact); C keys on the *resolver*
@@ -692,8 +716,8 @@ disagree, and the disagreement is the point:
 | | Count |
 |---|--:|
 | A: collision only a case-folded key sees (the app holds two distinct entities) | 3 |
-| A: **not** a collision, but the resolver's strip lands it on a built-in card | **3,501** |
-| B: shared names — identity key / resolver key | 2,540 / 2,512 |
+| A: **not** a collision, but the resolver's strip lands it on a built-in card | **3,791** |
+| B: shared names — identity key / resolver key | 2,576 / 2,548 |
 | C: refs the old census called resolved that the app **drops** | **1** |
 | C: refs the app resolves that the old census called dangling | 0 |
 
@@ -707,7 +731,7 @@ disagree, and the disagreement is the point:
 | `open5e-ccdx` | 87 | 70 `trait`, 17 `creature-action` |
 | `open5e-tob-2023` | 83 | 65 `trait`, 18 `creature-action` |
 | `open5e-tob2` | 77 | 64 `trait`, 13 `creature-action` |
-| `open5e-tob3` | 69 | 60 `trait`, 9 `creature-action` |
+| `open5e-tob3` | 75 | 60 `trait`, 15 `creature-action` |
 | `open5e-tob` | 68 | 51 `trait`, 17 `creature-action` |
 | `open5e-toh` | 9 | 9 `adventuring-gear` |
 | `open5e-tdcs` | 4 | 2 `trait`, 2 `creature-action` |
@@ -725,13 +749,14 @@ Bucketed the way the app resolves, not the way the old census matched:
 
 | softRef target | Count |
 |---|--:|
-| built-in pack | 105 |
+| built-in pack | 128 |
 | another bundled pack | 0 |
 | own pack | 29 |
 | **nothing installed** | **1** |
-| **total** | **135** |
+| **total** | **158** |
 
-135 refs across 20,712 entities is the measure of Gap 3, and the bad news is how
+158 refs across 22,005 entities is the measure of Gap 3 (135 before the 2026-08-13
+promotion — B3's `background.granted_tool_refs` is the growth), and the bad news is how
 little is expressed as a ref at all. The 29 self-targeting softRefs are candidates
 for hard `ref()` (build-gated instead of best-effort). **This table is the guard
 rail for every B phase: it must grow, and its "nothing installed" row must stay at
@@ -747,27 +772,36 @@ rail for every B phase: it must grow, and its "nothing installed" row must stay 
 
 ### 3.3 Catalog state
 
-`assets/first_party/manifest.json` carries 19 package entries, **all with
-`requires: []`** and **all at `version: 1.0.0`**. Its `counts` and `size_bytes`
-also carry pre-existing drift from a pack regeneration that never rebuilt the
-manifest — so the manifest is stale independently of anything here, and A0's
-rebuild diff must account for it.
+**Updated 2026-08-13 (D1).** `assets/first_party/manifest.json` carries 19 package
+entries, now **all at `version: 1.1.0`** with matching
+`r2_path = package/<slug>@1.1.0.json.gz`, and its `counts` / `size_bytes` are
+rebuilt from the promoted assets, so §3.3's pre-existing drift is cleared. Every
+entry still carries **`requires: []`** — that is L2's, not D1's.
 
 The version is not cosmetic. The delivery chain is:
 
-`emit.dart` `pack_version: '1.0.0'` (hardcoded) → `build_catalog` `version` →
+`emit.dart` `pack_version: packVersion` (a hand-bumped `const`, **1.1.0**) →
+`build_catalog` `version` →
 `r2_path = package/<slug>@<version>.json.gz` (documented as **immutable**) →
 `publish_catalog` `_exists()` → **skip unless `--force`** → client installs
 `entry.version` and stamps it as `metadata.catalog_version`.
 
+The rule chosen for `packVersion` is a hand-bumped semver constant, not a content
+hash: `r2_path` immutability only needs the *version* to change per release, and
+semver ordering is what makes D2's installed-vs-catalog check a plain comparison.
+Bumping it is a release step, documented on the constant itself.
+
 Consequences this audit has to plan for (§6 Stage D):
 
-- Re-running the whole roadmap and republishing uploads **nothing**: every object
-  already exists at `@1.0.0`.
+- ~~Re-running the whole roadmap and republishing uploads **nothing**~~ — fixed by
+  the bump: at `@1.1.0` no object exists, so all 19 upload without `--force`. **The
+  upload has not been run**: `publish_catalog` needs `DMT_WORKER_URL` and
+  `ADMIN_TOKEN`, which live as CI secrets.
 - `--force` overwriting a versioned path contradicts the immutability contract and
   leaves clients with no signal that anything changed.
-- There is no installed-pack upgrade path at all: `FirstPartyInstallNotifier`
-  installs, it never diffs a stored `catalog_version` against the manifest.
+- There is still no installed-pack upgrade path: `FirstPartyInstallNotifier`
+  installs, it never diffs a stored `catalog_version` against the manifest — so a
+  user on `@1.0.0` stays there. **D2**, and the bump is what makes it matter.
 - In debug, `BundledPacksBootstrap` sidesteps all of this with a content hash
   (`metadata.bundled_content_hash`) — which is exactly why the problem is easy to
   miss while developing. Release builds do not ship the assets at all.
@@ -795,8 +829,10 @@ exist. Fixing the tools is cheaper than re-doing a phase that passed a bad gate.
 answer *"does every monster have actions?"*, and the difference is a shipped
 defect that the ✅-heavy `monster` table hid.
 
-**400 of 2,885 bundled monsters (13.9%) have an empty `action_refs`** — and 396 of
-them are in one pack:
+**As measured 2026-07-30, 400 of 2,885 bundled monsters (13.9%) had an empty
+`action_refs`** — 396 of them in one pack. **Fixed in the shipped assets
+2026-08-13**: the promotion carried B8's backfill, and `gate_packs` now reports
+`monster-actionless` **0**. The table is the record of the defect, not of today:
 
 | Pack | Monsters | With no `action_refs` |
 |---|--:|--:|
@@ -849,24 +885,27 @@ the shipped assets, 9 parent categories, 5,514 of 5,515 entities matched:
 
 | Verdict | Count | What it means |
 |---|--:|---|
-| `ok` | 67,503 | the shipped value **is** the source's value |
-| `disagree` | **0** | no shipped value contradicts its source column |
-| `absent` | 371 | the source has a value the pack does not |
-| `unsourced` | **3,663** → **3,303** on the rebuild (B11) | the pack has a value the source does not |
-| `unverifiable` | 13,397 | the mapper derives it from more than one column; a rule declares the reason |
+| `ok` | 67,503 → **67,804** | the shipped value **is** the source's value |
+| `disagree` | **0** → **0** | no shipped value contradicts its source column |
+| `absent` | 371 → **70** | the source has a value the pack does not |
+| `unsourced` | 3,663 → **3,303** | the pack has a value the source does not |
+| `unverifiable` | 13,397 → **13,397** | the mapper derives it from more than one column; a rule declares the reason |
+
+(Right-hand column re-measured 2026-08-13 against the promoted assets; the arrows
+are the B4/B9/B11 predictions this section made, now shipped rather than pending.)
 
 **The headline is the zero.** Every value the importer copied, it copied
 correctly — across 2,885 monsters, 1,297 spells, 1,063 magic items and the
 chargen categories. The other three columns are where the work is.
 
-**`absent` — 371, and 301 of them are already fixed.** The B4 rebuild leaves
-only 70: B10's free-text alignments (`any alignment`, `neutral good (50%)`),
+**`absent` — was 371; 301 of them are now fixed in the assets.** Only 70 are
+left: B10's free-text alignments (`any alignment`, `neutral good (50%)`),
 which no column-level fix reaches. The 301 that close are `spell.area_shape_ref`
 + `area_size_ft` (206, B4), `monster.language_refs` (93, B9's `void-speech`) and
 `monster.size_ref` (2, B9's `titanic`). That is **B4 and B9 re-confirmed from the
 source side**, by a tool that shares no code with either.
 
-**`unsourced` — 3,663 as measured, 3,303 on the rebuild (B11).** This is the
+**`unsourced` — 3,663 as first measured, 3,303 in the assets since B11 shipped.** This is the
 class no other tool can see. §5's ⚠
 marker only fires when a value is identical on *every* row of a category
 corpus-wide; this counts, per field, the rows that carry a value with nothing
@@ -992,21 +1031,21 @@ the relations it must have?"**. Seven rules, run over all 19 packs, exit 1 on an
 violation — and `build_packs` runs the same gate over what it just wrote, so §3.5
 can never happen silently again.
 
-| Rule | Violations | Reading |
-|---|--:|---|
-| `monster-actionless` | **196** | all `open5e-tob3`; B8 fixes it in the importer |
-| `bucket-skew` | **1** | `open5e-tob3` — 2 `action_refs` against 307 bonus/reaction/legendary |
-| `dangling-soft-ref` | **1** | `open5e-toh` Favored → `spell/"Spare The Dying"` (L3) |
-| `orphan-child` | 0 | every `creature-action` / `trait` is reachable from a statblock |
-| `dangling-hard-ref` | 0 | as the build gate already promised |
-| `qualifier-strip` | 0 | the L0 hazard is latent, and now asserted latent |
-| `empty-equipment-option` | 0 | all 52 `equipment_choice_groups` options resolve ≥1 item |
+| Rule | Violations (2026-08-10 assets) | → after the 2026-08-13 promotion | Reading |
+|---|--:|--:|---|
+| `monster-actionless` | **196** | **0** | all `open5e-tob3`; B8's backfill shipped |
+| `bucket-skew` | **1** | **0** | `open5e-tob3` — was 2 `action_refs` against 307 situational |
+| `dangling-soft-ref` | **1** | **1** | `open5e-toh` Favored → `spell/"Spare The Dying"` (L3) |
+| `orphan-child` | 0 | 0 | every `creature-action` / `trait` is reachable from a statblock |
+| `dangling-hard-ref` | 0 | 0 | as the build gate already promised |
+| `qualifier-strip` | 0 | 0 | the L0 hazard is latent, and now asserted latent |
+| `empty-equipment-option` | 0 | 0 | all 52 `equipment_choice_groups` options resolve ≥1 item |
 
-**Nothing new is broken — that is the finding.** Every violation is an
-already-filed defect, and all but one of them is one pack: the shipped assets
-predate B8, so tob3's statblocks stay actionless until the rebuild is promoted
-(Stage D). Run against a post-B8 rebuild the first two rules go to 0, which is
-the acceptance test D1 now has. The four zero rows are the new information —
+**Nothing new is broken — that is the finding.** Every violation was an
+already-filed defect, and all but one was one pack: the assets predated B8, so
+tob3's statblocks stayed actionless until the rebuild was promoted. **That
+prediction held exactly** — the promoted assets gate at **1 violation**, the L3
+ref, which was T3's stated acceptance test for D1. The four zero rows are the new information —
 `orphan-child` and `empty-equipment-option` had never been checked at all, and
 the hypothesis behind §3.2's dedup proposals was that a name-based merge might
 already have stranded rows. It has not.
@@ -1044,9 +1083,10 @@ The mapper-vs-asset drift this section feared is one shape fix (7 species) plus
 9 corrupt dice strings the new snapshot cleans up.
 
 Blocking status is cleared: **Stage B, and any pack rebuild for a Stage L
-deletion, can now proceed.** The rebuild lives in a scratch directory —
+deletion, can now proceed.** The A0 rebuild lived in a scratch directory —
 `assets/open5e_packs/` was deliberately **not** overwritten, since promoting it is
-a delivery decision (Stage D), not an A0 one.
+a delivery decision (Stage D), not an A0 one. **That promotion happened
+2026-08-13** under D1, carrying B1–B11 with it.
 
 `open5e-api-staging/` is gitignored (`.gitignore:8`), so the clone is not
 committed. `build_packs.dart` defaults `--data` to `../open5e-api-staging/data`
@@ -1127,13 +1167,14 @@ two runs of this audit stay comparable:
 - [x] Spot-check spell `tags` coverage before/after the rebuild (guards the v1
       path) — **unchanged in all 8 spell-bearing packs**, now a permanent column
       of `diff_packs.dart` rather than a spot check.
-- [ ] Rebuild `assets/open5e_packs/manifest.json` and
+- [x] Rebuild `assets/open5e_packs/manifest.json` and
       `assets/first_party/manifest.json`, and treat the resulting `counts` /
       `size_bytes` churn as the pre-existing drift it is (§3.3), not as a new change
-      — **deliberately not done.** The rebuild stayed in a scratch dir; overwriting
-      the shipped assets and both manifests is the same act as shipping them, which
-      is **Stage D1**'s versioning decision. Nothing above depends on it: the
-      snapshot is what Stage B needs, and the assets are proven reproducible.
+      — **done 2026-08-13, as part of D1.** Deliberately deferred until then, because
+      overwriting the shipped assets is the same act as shipping them. The rebuild
+      was graded in a scratch dir first (`diff_packs` + `verify_packs --packs` +
+      `gate_packs --packs`, all three matching this file's predictions) and only
+      then written over `assets/open5e_packs/`.
 
 #### The diff, classified
 
@@ -1357,18 +1398,18 @@ still subject to the re-verification pass (§6 V1).
 | 🔴 | `casting_ability_ref`, `spellcasting_focus_ref` | Spellcasting | | 0% | `M`🔗 | Spellcasting feature prose; the focus is a built-in item |
 | ✅ | `caster_kind` | Spellcasting | **yes** | 100% | | `caster_type`, else inferred from feature names |
 | 🔴 | `cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level` | Spellcasting | | 0% | ~~**`L`**~~ **`S`** | ~~`feature_type == CORE_TRAITS_TABLE` + `ClassFeatureItem.column_value`~~ — **B2 reclassified these.** `CORE_TRAITS_TABLE` exists in 1 document and `SPELL_SLOTS` in 2, **all of them the skipped WotC pair**; the `Cantrips Known` / `Prepared Spells` / `Spell Slots` columns exist nowhere else. There is no source, so this is a source limit, not a loader gap |
-| ✅ | **`features`** | Features | | 0% shipped → **100%** rebuilt | ~~`L`~~ **B1 done** | `ClassFeatureItem.level`; each row's `granted_feat_refs` is still empty — a 🔗 under §0 rule 3, left to B5 |
+| ✅ | **`features`** | Features | | **100%** (0% before the 2026-08-13 promotion) | ~~`L`~~ **B1 done** | `ClassFeatureItem.level`; each row's `granted_feat_refs` is still empty — a 🔗 under §0 rule 3, left to B5 |
 | ✅ | `description` — the class table | Features | | 100%, but **2 of 2 table-bearing classes were shipping it broken** | **B2 done** | The 171 `column_value` rows B1 excluded from `features` had no other home, so every number was dropped while the column's *empty* heading (`a5e-ag`) or `[Column data]` placeholder (`bfrd`) was folded in. Now rendered as a `### Class Table` markdown table. **Neither census tool can see this** — `description` counted as filled either way (§3.4, → T1) |
 
 ### 5.2 `subclass` — 101 entities
 
 **Was** the worst row in the audit: 1 of 8 declared fields ever written. **B1 took it
-to 3 of 8** — `features` and `granted_at_level` are filled on 100 of 101 in the
-rebuild. Also the one category whose first filled field is the **model for §2.3** —
-copy its pattern.
+to 3 of 8** — `features` and `granted_at_level` are filled on 100 of 101, and since
+the 2026-08-13 promotion that is what ships. Also the one category whose first filled
+field is the **model for §2.3** — copy its pattern.
 
-The `Fill` column is *shipped → rebuilt* wherever B1 moved it; the shipped assets are
-unchanged by decision (A0), so only the second number describes the importer.
+The `Fill` column reads *before → after* wherever B1 moved it; both numbers now
+describe the assets as well as the importer.
 
 | | Field | Group | Req | Fill | Cause | Source |
 |:--:|---|---|:--:|--:|:--:|---|
@@ -1403,10 +1444,9 @@ unchanged by decision (A0), so only the second number describes the importer.
 > banner reports. That is the *correct* behaviour, but it is a user-visible change
 > with no test today.
 >
-> **Status after B1:** the field is filled *in the importer*, and because the rebuild
-> was not promoted **no user sees the change yet** — which is what keeps the wizard
-> assertion on **U2** rather than making it a B1 blocker. It must land before the
-> promotion in Stage D. What B1 does assert is the resolver half, in
+> **Status after B1:** the field is filled, and since the 2026-08-13 promotion it
+> ships — so the level-3 lock is now live for users, with the wizard assertion
+> still owed on **U2**. What B1 does assert is the resolver half, in
 > `test/tool/class_feature_levels_test.dart`: at Barbarian 2 the subclass grants
 > nothing, at 3 it grants its level-3 row, at 14 all three.
 
@@ -1585,16 +1625,15 @@ is hard-`_ref`ed from exactly one statblock.
 **`monster` (2885)** — healthiest category *by field fill*, and the counter-example
 to trusting that: **400 of the 2,885 shipped have no actions at all** (396 of them
 in `open5e-tob3`, whose actions upstream's v2 conversion never wrote — §3.5).
-**B8 fixed this in the importer: 5 on the rebuild**, all genuinely actionless
-creatures; the shipped 400 stands until promotion, and **T3** is what will keep it
-from coming back. 409 share a name with built-in,
+**B8 fixed this: 5 remain**, all genuinely actionless creatures, and since the
+2026-08-13 promotion that is what ships. **T3** is what keeps it from coming back. 409 share a name with built-in,
 588 across packs (`aboleth`, `acolyte`, `adult black dragon`, …) — mostly separate
 editions, per §2.5.
 
 | | Field | Fill | Cause | Notes |
 |:--:|---|--:|:--:|---|
-| ✅ | `action_refs` | 86% shipped → **99.8%** rebuilt | ~~`S`~~ **B8 done** | The category's headline defect, and it was never a mapping bug: upstream's v2 conversion dropped `tob3`'s whole `ACTION` column (2 rows for 397 creatures) while `v1/tob3/Monster.json` kept all 1,373. `mapCreatures` backfills from v1 into empty buckets only. 2880/2885 on the rebuild; the 5 left are Frogs, Seahorses, Shriekers and Berberoka — actionless in both sources. **Shipped stays 86% until promotion** (Stage D). |
-| ✅ | `size_ref` | 99.9% shipped → **100%** rebuilt | ~~`L`~~ **B9 done** | Was 2 titanic-size creatures logged in `unmapped_report.json`. **A1 was right that this was not a source limit** — `a5e-mm/Size.json` holds `titanic`; B9 loads it, seeds a `Titanic` size row in `open5e-a5e-mm` and hard-refs it. 2885/2885 on the rebuild; **shipped stays 99.9% until promotion** (Stage D). Was `S`. |
+| ✅ | `action_refs` | **99.8%** (was 86% before the 2026-08-13 promotion) | ~~`S`~~ **B8 done** | The category's headline defect, and it was never a mapping bug: upstream's v2 conversion dropped `tob3`'s whole `ACTION` column (2 rows for 397 creatures) while `v1/tob3/Monster.json` kept all 1,373. `mapCreatures` backfills from v1 into empty buckets only. 2880/2885; the 5 left are Frogs, Seahorses, Shriekers and Berberoka — actionless in both sources. |
+| ✅ | `size_ref` | **100%** (was 99.9% before the 2026-08-13 promotion) | ~~`L`~~ **B9 done** | Was 2 titanic-size creatures logged in `unmapped_report.json`. **A1 was right that this was not a source limit** — `a5e-mm/Size.json` holds `titanic`; B9 loads it, seeds a `Titanic` size row in `open5e-a5e-mm` and hard-refs it. 2885/2885. Was `S`. |
 | 🟡 | `alignment_ref` | 97% | `S` | 70 fuzzy 3rd-party alignments, logged. **A1: genuinely `S` — 29 distinct free-text expressions (`any evil alignment`, `chaotic neutral or chaotic evil`) with no fixture behind them, plus `'Titan)'`/`'Shapechanger)'` corrupt at the source → B10.** |
 | 🔴 | `tags_line` | 0% | `M` | the `type` subtype split never reaches the field |
 | 🔴 | `lair_action_refs` | 0% | `M`/`S` | mapper emits it; no shipped creature has one |
@@ -1822,11 +1861,10 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       feature with no `ClassFeatureItem` invents none.
       **Two deliberate non-closures**, both recorded in §5.2: the 101st subclass
       (`Path of Hellfire`) has zero upstream `ClassFeature` rows, and the wizard-side
-      assertion for the now-filled `granted_at_level` stays on **U2** because the
-      scratch-only rebuild makes no user-visible change yet.
-      *Not done: `bundled_pack_resolve_test` still cannot show a bundled subclass
-      feature — `assets/open5e_packs/` predates B1 and promoting the rebuild is
-      Stage D's decision, not B1's. That assertion is a Stage D gate.*
+      assertion for the now-filled `granted_at_level` stays on **U2**.
+      *Follow-up, now unblocked: `bundled_pack_resolve_test` could not show a bundled
+      subclass feature while `assets/open5e_packs/` predated B1. Since the 2026-08-13
+      promotion it can — that assertion is **M1**'s.*
 - [x] **B2 — ~~Class tables~~. The four target fields have no source; the 171 rows
       were being dropped. Done 2026-07-31.**
       *Filed as: `feature_type == CORE_TRAITS_TABLE` + `column_value` →
@@ -1971,8 +2009,9 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       child. Honest cost: `creature-action.attack_kind`/`damage_dice` drop 41% →
       35% / 40% → 34% as *shares* — the absolute counts are unchanged (3,549 /
       3,464), the denominator grew by 1,286 prose-only rows. Guarded by
-      `test/tool/creature_action_fallback_test.dart` (8 cases). **Not promoted** —
-      scratch-only, per the Stage D decision.
+      `test/tool/creature_action_fallback_test.dart` (8 cases). **Promoted
+      2026-08-13** — the 1,286 recovered actions are in the shipped assets and
+      `gate_packs`' `monster-actionless` is 0.
 - [x] **B9 — Load the Tier-0 vocabulary fixtures. Done 2026-07-30.** *(new phase,
       filed by A1.)* New `tool/open5e_import/vocab.dart` reads every vocabulary file
       under every `data/v2/<publisher>/<doc>/` — the 11 `open5e/core` files plus the
@@ -2029,8 +2068,8 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       including the two negative cases that keep the change honest — a value with no
       fixture is still unmapped, and with no seeder installed the old
       drop-and-log behaviour is byte-for-byte unchanged.
-      **Not promoted:** as with B1 the rebuild stays scratch-only, so the shipped
-      assets still carry the old empty fields (Stage D).
+      **Promoted 2026-08-13**, so the seeded Tier-0 rows ship; the recorded cost
+      (6 packs × a one-row `Void Speech`) is now visible in §3.2's `language` row.
       *Exit (met): `unmapped_report.json` loses all 72 `language` and both `size`
       entries (144 → 70), and no pack references a Tier-0 name that is not installed —
       i.e. `dupe_census` section C's "nothing installed" stays 0.*
@@ -2220,14 +2259,25 @@ has a value" into "the value produced the right number on a sheet".
 
 ### Stage D — deliver it (nothing above reaches a user without this)
 
-- [ ] **D1 — Version and publish.** Decide and implement the versioning rule:
-      `emit.dart` must stop hardcoding `pack_version: '1.0.0'` (derive it from the
-      source rev + a content hash, or bump it explicitly per release), because
-      `r2_path` is `package/<slug>@<version>.json.gz` and `publish_catalog` skips
-      an object that already exists. Then rebuild the catalog and publish.
-      *Exit: `build_catalog.dart` → `publish_catalog.dart --dry-run` reports every
-      changed pack as an **upload**, not a skip; `requires`, `counts` and
-      `size_bytes` are current (§3.3 drift cleared); no `--force` needed.*
+- [x] **D1 — Version and publish** — *implemented 2026-08-13; the upload itself is
+      still owed.* The versioning rule is a **hand-bumped semver constant**,
+      `emit.packVersion`, now `1.1.0` (§3.3 for why not a content hash: `r2_path`
+      immutability only needs the version to move per release, and semver ordering
+      is what makes D2's check a comparison). Done with it:
+      - the rebuild was graded in a scratch dir and then promoted over
+        `assets/open5e_packs/` (§4 A0's last box);
+      - `build_catalog` re-run — 19 entries at `1.1.0`, fresh `r2_path`s, `counts`
+        and `size_bytes` current, so §3.3's drift is cleared and every pack is an
+        upload rather than a skip with no `--force`;
+      - `requires` is still `[]` on all 19 — that is **L2**'s data, not D1's wiring.
+
+      **Not done: the publish.** `publish_catalog --dry-run` still needs a real
+      `DMT_WORKER_URL` (and the real run an `ADMIN_TOKEN`); both are CI secrets and
+      neither is set locally, and pointing the tool at a bogus host would make
+      `_exists()` return false and *manufacture* a green dry run. Run it where the
+      secrets live:
+      `dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run`
+      then without `--dry-run`.
 - [ ] **D2 — Upgrade and uninstall paths.** Two holes L1/L2 open:
       (a) an already-installed pack has no upgrade trigger — `FirstPartyInstallNotifier`
       never compares the stored `metadata.catalog_version` against the manifest, so
@@ -2251,7 +2301,7 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
-   (**407 declared (category, field) slots, 125 filled today**) rather than by the
+   (**407 declared (category, field) slots, 133 filled since the 2026-08-13 promotion**) rather than by the
    abridged tables in §5; `verify_packs` (T1) is green; the built-in pack has been
    measured once (T2); and the relational gate (T3) passes — no monster without
    actions, no orphaned child row, every `parent_class_ref` resolving.
@@ -2306,9 +2356,10 @@ dart run tool/open5e_import/bin/build_packs.dart \
     --out  /tmp/packs-rebuild \
     --rev  d4276c586d79f2a27bf2b814aed151cf57605283
 dart run tool/open5e_import/test/monster_mapper_check.dart
-# ^ has ONE pre-existing failure on a clean tree — "Dwarf granted_senses has
-#   Darkvision". It reads the *shipped* asset, which lags the mapper exactly as
-#   §4 A0 classified. Not a regression; it clears when the rebuild is promoted.
+# ^ green since 2026-08-13. (It had one failure on a clean tree — "Dwarf
+#   granted_senses has Darkvision" — which was NOT the asset lag §4 A0 predicted:
+#   the check drives the mapper live and was reading the pre-B3 `granted_senses`
+#   shape. Fixed with the promotion.)
 
 # What did that rebuild change? Aggregates 25 MB of minified JSON into
 # `(category, field, kind) → count` + examples, and carries the spell class-tag
@@ -2344,8 +2395,8 @@ dart run tool/open5e_import/bin/gate_packs.dart --packs /tmp/packs-rebuild \
 dart run tool/catalog_publish/bin/build_catalog.dart
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run
 
-# Importer-side unit tests (drive the mapper, not the shipped asset — the assets
-# predate B1/B2/B3/B4/B8/B9, so only the mapper can be asserted until promotion).
+# Importer-side unit tests (drive the mapper, not the shipped asset — though since
+# the 2026-08-13 promotion the two agree, so asset-side assertions are valid again).
 flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + B8 v1 action backfill (8)
                                    # + B3 background tools / v1 species (12)

@@ -54,7 +54,8 @@
       "counts": {
         "trait": 829,
         "creature-action": 1657,
-        "monster": 586
+        "monster": 586,
+        "size": 1
       }
     },
     {
@@ -69,6 +70,7 @@
         "trait": 776,
         "creature-action": 1339,
         "monster": 360,
+        "language": 1,
         "class": 1,
         "subclass": 1
       }
@@ -84,7 +86,8 @@
       "counts": {
         "trait": 921,
         "creature-action": 1148,
-        "monster": 356
+        "monster": 356,
+        "language": 1
       }
     },
     {
@@ -180,6 +183,7 @@
       "counts": {
         "trait": 1039,
         "creature-action": 1303,
+        "language": 1,
         "monster": 391
       }
     },
@@ -194,7 +198,8 @@
       "counts": {
         "trait": 1021,
         "creature-action": 1658,
-        "monster": 408
+        "monster": 408,
+        "language": 1
       }
     },
     {
@@ -208,7 +213,8 @@
       "counts": {
         "trait": 1014,
         "creature-action": 1209,
-        "monster": 383
+        "monster": 383,
+        "language": 1
       }
     },
     {
@@ -221,8 +227,9 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 812,
-        "creature-action": 291,
-        "monster": 397
+        "creature-action": 1577,
+        "monster": 397,
+        "language": 1
       }
     },
     {

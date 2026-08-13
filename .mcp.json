@@ -1,13 +1,5 @@
 {
   "mcpServers": {
-    "codegraph": {
-      "type": "stdio",
-      "command": "codegraph",
-      "args": [
-        "serve",
-        "--mcp"
-      ]
-    },
     "codebase-memory": {
       "type": "stdio",
       "command": "codebase-memory-mcp",

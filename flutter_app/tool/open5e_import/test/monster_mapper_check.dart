@@ -434,8 +434,10 @@ void _checkChargen(List<SourceDoc> docs) {
 
   // C3: senses + languages parsed from trait rows.
   check('Dwarf granted_senses has Darkvision', () {
+    // Shape since B3: `[{sense_ref: {_lookup, name}, range_ft?}]`.
     final s = (dwarf['granted_senses'] as List?) ?? const [];
-    return s.any((r) => (r as Map)['name'] == 'Darkvision');
+    return s.any((r) => ((r as Map)['sense_ref'] as Map?)?['name'] ==
+        'Darkvision');
   }());
   check('Dwarf languages = Common + Dwarvish', () {
     final l = ((dwarf['granted_languages'] as List?) ?? const [])

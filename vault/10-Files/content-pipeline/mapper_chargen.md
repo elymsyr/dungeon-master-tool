@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/chargen.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-07-31
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -55,8 +55,8 @@ tags: [file]
 - `_addUnique` disambiguates same-slug name collisions (3rd-party docs reuse generic subclass/feat names) by suffixing the parent tag or a counter.
 
 ## Notes
-- ⚠️ **`assets/open5e_packs/` predates B1.** The mapper fills the level table; the shipped assets do not carry it, because promoting a rebuild is a separate decision (audit Stage D). `test/tool/class_feature_levels_test.dart` therefore drives the mapper directly — fixture → `mapClasses` → `CharacterResolver` — rather than reading a bundled asset, which could only prove the old emptiness. `bundled_pack_resolve_test` gains the asset-side assertion at promotion.
-- ⚠️ **`assets/open5e_packs/` predates B2 and B3 too** — same scratch-only rule. `test/tool/chargen_b3_test.dart` (12 cases) drives `parseToolProficiencies` and `mapSpecies` directly; two are honesty guards (a species v2 converted is never overridden; with no v1 index the mapper behaves exactly as before). `test/tool/class_table_test.dart` (9 cases) covers the table renderer, including that a class with no column table is byte-identical to pre-B2 and that B1's exclusion from `features` survives.
+- ~~⚠️ `assets/open5e_packs/` predates B1.~~ **Promoted 2026-08-13 (audit D1)** — the assets now carry the level table, so an asset-side assertion is finally possible (`bundled_pack_resolve_test`, audit phase **M1**). `test/tool/class_feature_levels_test.dart` still drives the mapper directly — fixture → `mapClasses` → `CharacterResolver` — which stays the right level for a mapper guard.
+- **B2 and B3 shipped in the same 2026-08-13 promotion.** `test/tool/chargen_b3_test.dart` (12 cases) drives `parseToolProficiencies` and `mapSpecies` directly; two are honesty guards (a species v2 converted is never overridden; with no v1 index the mapper behaves exactly as before). `test/tool/class_table_test.dart` (9 cases) covers the table renderer, including that a class with no column table is byte-identical to pre-B2 and that B1's exclusion from `features` survives.
 - **One subclass will never have a level**: `Path of Hellfire` (`open5e-toh`) ships a `CharacterClass` row and zero `ClassFeature` rows upstream. 100 of 101, and the 101st is a source hole.
 - "Honest source limits" left empty (not faked): ~~leveled class features, subclass `granted_at_level`~~ (**both fixed by B1** — the level was in `ClassFeatureItem` all along), feat grants/ASI beyond the conservative parses, and any "of your choice" grant — all stay folded in the description. Wiring doc removed after all phases (C1-C7, D1-D9) shipped 2026-06-09; see BG-equipment + official-pkg-chargen-rules memory entries for final state.
 - Retargeted onto the named grant-block fields in the 2026-07-28 rule-system removal (see [[Grant-Resolution]]): the mapper no longer emits `granted_modifiers` or `effects` rows. `tool/open5e_import/test/monster_mapper_check.dart` asserts the new shapes. **Packs built before that date still carry the old rows** — they are converted at install time by [[rule_effects_migration]], but a pack rebuild is the durable fix.
