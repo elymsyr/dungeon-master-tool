@@ -70,6 +70,7 @@ import 'dart:io';
 
 import 'gate.dart' show builtinNameIndex, nameKey;
 import 'loaders.dart';
+import 'mappers/item.dart' show baseItemName;
 import 'mappers/spell.dart' show classTagsFromV2;
 import 'sources.dart';
 
@@ -82,6 +83,15 @@ final _knownClasses = () {
       if (key.startsWith(prefix)) key.substring(prefix.length),
   };
 }();
+
+/// Base-item names a `magic-item.base_item_ref` softRef can land on — the same
+/// filter, over the three categories the schema's relation allows (audit L3).
+final _knownBaseItems = {
+  for (final slug in const ['weapon', 'armor', 'adventuring-gear'])
+    for (final key in builtinNameIndex())
+      if (key.startsWith(nameKey(slug, '')))
+        key.substring(nameKey(slug, '').length),
+};
 
 /// Verify every pack in [packDir] against the fixtures under [dataRoot].
 ///
@@ -545,6 +555,14 @@ final Map<String, List<_Rule>> _rules = {
   ],
   'magic-item': [
     _Rule('rarity_ref', ['rarity'], (r) => _Expect.refName(r['rarity'])),
+    // Audit **L3**. Two columns, one link; a base item with no built-in card
+    // gets no ref, so the expectation is filtered the same way.
+    _Rule('base_item_ref', ['weapon', 'armor'], (r) {
+      final base = baseItemName(r['weapon'] ?? r['armor']);
+      return base != null && _knownBaseItems.contains(base)
+          ? _Expect.refName(base)
+          : _Expect.nothing;
+    }),
     _Rule('magic_category_ref', ['category'], (r) {
       // Two folds the comparison has to expect: the app's nine categories are
       // coarser than Open5e's (shield→Armor, ammunition→Weapons), and it names

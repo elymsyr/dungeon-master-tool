@@ -24,7 +24,7 @@ tags: [file]
 - **Exits 1 on any `disagree`** — a mapping defect. Holes and fabrications report but do not fail.
 
 ## Dependencies & Links
-- Depends on: [[loaders]], [[sources]], [[gate]] (`builtinNameIndex`, for the class-name filter L3's `spell.class_refs` rule restates) and one mapper helper, `classTagsFromV2` from [[mapper_spell]] — the slug→name transform, shared rather than re-implemented. **Calls no [[normalize]]** — see below.
+- Depends on: [[loaders]], [[sources]], [[gate]] (`builtinNameIndex`, for the class-name filter L3's `spell.class_refs` rule restates) and two mapper helpers, `classTagsFromV2` from [[mapper_spell]] and `baseItemName` from [[mapper_item]] — the slug→name transforms, shared rather than re-implemented. **Calls no [[normalize]]** — see below.
 - Sibling of: [[audit_packs]] (presence), [[dupe_census]] (redundancy), [[diff_packs]] (rebuild delta), [[gate_packs]] (relations — T3, and the owner of the `creature-action`/`trait` rows this tool's scope excludes).
 - Consumers: `flutter_app/docs/open5e_content_audit.md` §3.6.
 - Domain map: [[Content-Pipeline]]
@@ -39,4 +39,5 @@ tags: [file]
 - **The rule table was wrong before any mapper was.** The first run reported 893 disagreements and **all 893** were the verifier misstating how a correct value is spelled (pluralised magic-item categories, three-letter ability codes, a5e's "transformation" school, `D10` hit dice, and — most worth remembering — **B9's pack-local Tier-0 rows referenced by resolved uuid rather than a `{_lookup, name}` placeholder**, so a name comparison has to follow the id). All five are pinned by `test/tool/verify_packs_test.dart` so the next rule inherits the lesson.
 - Adding a field to the gate means a `_Rule` in `verify.dart` (**not** in `bin/`) plus a case in that test.
 - **`spell.class_refs`** (audit **L3**, 2026-08-13) is the newest rule and shows the `unverifiable` escape used honestly: only the 311 spells whose v2 `classes` column is non-empty can be judged; the other 986 get their class list from the **v1** fixtures this tool does not read, and the rule says so instead of pretending to check them.
+- **`magic-item.base_item_ref`** (audit **L3**, 2026-08-13) needs no such escape: both source columns (`weapon`, `armor`) are read verbatim, so all 379 shipped refs are judged `ok` and the 684 rows with neither column expect nothing. The expectation restates the mapper's `knownBaseItems` filter from `builtinNameIndex()`, the same way the class rule does — a base item with no built-in card must expect no ref, or the filter would read as a disagreement.
 - An undeclared derivation is indistinguishable from a fabrication; that is why `unverifiable` names a reason per rule instead of skipping the field silently.

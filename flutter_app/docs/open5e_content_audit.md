@@ -123,7 +123,21 @@ packs**. `gate_packs` green, `dupe_census` section C **135 → 3,576 refs, 0
 dangling**, `verify_packs` **0 disagreements** with a new `class_refs` rule
 (311 rows judged against the v2 `classes` column; the other 986 declared
 `unverifiable` because their list comes from v1, which the verifier does not
-read). Remaining in L3: feat prerequisites and `magic-item.base_item_ref`.
+read).
+
+**L3 is closed — 2026-08-13.** Its two remaining clauses went opposite ways and
+both are settled. `magic-item.base_item_ref` **shipped**: upstream keeps the
+base item in two structured columns (`MagicItem.weapon` / `.armor`, e.g.
+`srd_longsword`), which nobody had read — **379 of `open5e-vom`'s 1,063 items
+(36%)** now softRef the built-in weapon/armor/gear card, and 379 is the ceiling,
+because the other 684 rows leave both columns empty. Feat prerequisites are
+**not fixable and never were**: all 78 `prerequisite` strings in the snapshot
+(every document, not just the shipped ones) were grepped for the twelve class
+and twelve species names, and **zero** name one — they gate on ability scores,
+levels, proficiencies and class *features* ("the Ki class feature"), never on a
+class. `prereq_class_refs` / `prereq_species_refs` are an `S` gap, so §5.5's
+worked example ("Prerequisite: Paladin") is a hypothetical, not a description of
+this corpus.
 
 **Next action right now:** **publish** (one command with the two secrets — the
 only thing between the promoted assets and users; the assets moved again with
@@ -233,7 +247,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
-| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,576 refs after L3), and `requires` is non-empty for every linker |
+| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3), and `requires` is non-empty for every linker |
 | 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
@@ -364,11 +378,12 @@ the gear stubs. Read 20.9% as a collision surface; the policy table drives the
 work. → §2, §3.2, phases ~~L0~~–L2.
 
 **Gap 3 — refs written as prose.** Where a card *should* point at another card, the
-importer mostly writes English instead. `feat.prereq_class_refs` is 0% because the
-prerequisite class is named in the description text. **`spell.class_refs` is
-fixed — 0% → 92% (1,204 spells), L3 2026-08-13** — and with it cross-package
-refs went **135 → 3,576**, all resolving. The rest of the gap (feat
-prerequisites, `magic-item.base_item_ref`) is still prose. → §2.3, and a gate on
+importer mostly writes English instead. **`spell.class_refs` is fixed — 0% → 92%
+(1,204 spells) — and `magic-item.base_item_ref` with it — 0% → 36% (379 items),
+both L3 2026-08-13**; cross-package refs went **135 → 3,955**, all resolving.
+What is left of this gap is not prose the importer failed to parse: feat
+`prereq_class_refs` is 0% because **no feat in the snapshot names a class in its
+prerequisite at all** (§5.5) — an `S` gap, not an `M` one. → §2.3, and a gate on
 every B phase.
 
 **Gap 4 — readers that cannot see a correct ref.** The sheet resolves every
@@ -501,6 +516,9 @@ or `_refs`, and it is the main way a B phase can quietly make things worse.
 
 The worked example: an official pack's feat has "Prerequisite: Paladin" in its
 description. There are three ways to "fix" `prereq_class_refs`, and two are wrong.
+(L3 measured this one on 2026-08-13: **no feat in the snapshot actually says
+that** — see §5.5. The example is kept because the rule it teaches is the rule
+`spell.class_refs` and `magic-item.base_item_ref` were both filled under.)
 
 | | What it does | Verdict |
 |---|---|---|
@@ -541,9 +559,10 @@ Three facts about how a softRef lands, all of which matter when deciding:
   the second reason to delete duplicates rather than tolerate them: they make ref
   resolution nondeterministic in a way no test asserts.
 
-The census tracks this surface directly (§3.2 C). It is **3,576** refs since
-L3 filled `spell.class_refs` (was 135) — 3,547 to the built-in pack, 29 that
-could be in-pack hard refs, 0 dangling, and **0 to another bundled pack**.
+The census tracks this surface directly (§3.2 C). It is **3,955** refs since
+L3 filled `spell.class_refs` and `magic-item.base_item_ref` (was 135) — 3,926 to
+the built-in pack, 29 that could be in-pack hard refs, 0 dangling, and **0 to
+another bundled pack**.
 
 ### 2.3.1 A correct ref is not a visible ref — check the reader first
 
@@ -593,7 +612,7 @@ These were correct when written and are not any more. Each is re-opened in §5:
 | Row | Old rationale | Why it no longer holds |
 |---|---|---|
 | ~~`spell.class_refs` (required, 0%)~~ **closed by L3 2026-08-13, now 92%** | "spell packs ship no class entities, so a `_ref` would dangle" | a softRef to a built-in class does not dangle — it is exactly what 97 subclasses already do, and 1,204 spells now do it too |
-| `magic-item.base_item_ref` (0%) | "no base items ship in item packs" | the built-in pack ships weapons, armor and gear; softRef by name |
+| ~~`magic-item.base_item_ref` (0%)~~ **closed by L3 2026-08-13, now 36%** | "no base items ship in item packs" | the built-in pack ships weapons, armor and gear; softRef by name — and the source names the base item in a column, not in prose |
 | `background.default_inventory_refs` / `class.default_inventory_refs` | superseded by `equipment_choice_groups`, backed by 159 synthesised gear stubs | link built-in gear instead of synthesising stubs (§6 B6) |
 | `monster.gear_refs`, `monster.spell_refs` | ⚪ no counterpart | the *targets* now exist and resolve; whether the source names them is a separate `S` question to re-check |
 
@@ -707,8 +726,9 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
 | `trait` | 6423 | 8 | 46 | 3 |
 | `adventuring-gear` | 159 | 6 | 8 | 4 |
 
-**134 of 407 declared (category, field) slots are filled** (125 before the
-2026-08-13 promotion, 133 after it, +1 for L3's `spell.class_refs`). The eight
+**135 of 407 declared (category, field) slots are filled** (125 before the
+2026-08-13 promotion, 133 after it, +1 for L3's `spell.class_refs` and +1 for its
+`magic-item.base_item_ref`). The eight
 that moved on promotion are B1's `subclass.features` /
 `granted_at_level`, B2's `class.features`, B3's `background.granted_tool_refs` /
 `granted_tool_variant_group`, and B4's `spell.area_shape_ref` / `area_size_ft` /
@@ -820,15 +840,15 @@ Bucketed the way the app resolves, not the way the old census matched:
 
 | softRef target | Count |
 |---|--:|
-| built-in pack | 3,547 |
+| built-in pack | 3,926 |
 | another bundled pack | 0 |
 | own pack | 29 |
 | **nothing installed** | **0** |
-| **total** | **3,576** |
+| **total** | **3,955** |
 
-3,576 refs across 22,005 entities (135 before the 2026-08-13 promotion, 158 after
-it, **3,576 after L3 filled `spell.class_refs`** — 3,441 of the growth is that one
-field, on 1,204 spells). The 29 self-targeting softRefs are candidates
+3,955 refs across 22,005 entities (135 before the 2026-08-13 promotion, 158 after
+it, **3,955 after L3** — 3,441 of the growth is `spell.class_refs` on 1,204
+spells and 379 is `magic-item.base_item_ref`). The 29 self-targeting softRefs are candidates
 for hard `ref()` (build-gated instead of best-effort). **This table is the guard
 rail for every B phase: it must grow, and its "nothing installed" row must stay at
 0.**
@@ -975,7 +995,7 @@ the shipped assets, 9 parent categories, 5,514 of 5,515 entities matched:
 
 | Verdict | Count | What it means |
 |---|--:|---|
-| `ok` | 67,503 → **68,115** | the shipped value **is** the source's value |
+| `ok` | 67,503 → **68,494** | the shipped value **is** the source's value (the last +379 is L3's `base_item_ref`, judged against `MagicItem.weapon`/`.armor`) |
 | `disagree` | **0** → **0** | no shipped value contradicts its source column |
 | `absent` | 371 → **70** | the source has a value the pack does not |
 | `unsourced` | 3,663 → **3,303** | the pack has a value the source does not |
@@ -1671,7 +1691,7 @@ the worked example in §2.3.
 |:--:|---|---|:--:|--:|:--:|---|
 | ✅⚠ | `category_ref` | Identity | **yes** | 100% | `S` | every one of the 73 is `General` — the shipped docs predate the 2024 categories |
 | 🟡 | `prerequisite` + `prereq_clauses` | Identity | | 37% / 30% | | parsed gates: ability/level/spellcasting/armor/weapon/skill |
-| 🔴 | `prereq_class_refs`, `prereq_species_refs` | Identity | | 0% | `M`🔗 | named in prose; **softRef the built-in class/species — never mint one** (§2.3) |
+| ⚪ | `prereq_class_refs`, `prereq_species_refs` | Identity | | 0% | `S` | **Reclassified by L3 (2026-08-13): not a gap.** Was `🔴 M🔗` "named in prose". It is not in the prose either — all **78** `prerequisite` strings in the snapshot (every document, shipped or not) were matched against the twelve class and twelve species names and **none matches**, nor does any `desc` sentence gate on a class. Upstream gates on ability scores, levels, proficiencies and class *features* ("the Ki class feature", "the Shadow Traveler shadow fey trait"), never on class membership. The `M`🔗 rule still stands for the day a document does name one: **softRef the built-in class/species — never mint one** (§2.3). |
 | ✅⚠ | `repeatable` | Identity | **yes** | 100% | `M` | hardcoded `false` |
 | 🔴 | `chooseable` | Identity | | 0% | ⚪ | defaults true |
 | 🟡 | `asi_amount` / `_max_score` / `_ability_options` | Rules | | 31% | | two phrasings + "of your choice" |
@@ -1749,7 +1769,7 @@ editions, per §2.5.
 | 🟡 | `weight_lb` | 10% | `S` | |
 | 🔴 | `attunement_prereq` + `attunement_*` | 0% | `M`🔗 | `attunement_detail` is in the source; class/species gates are softRefs |
 | 🔴 | `charges_max`, `charge_regain`, `command_word`, `body_slot_ref`, `sentient_*` | 0% | `M` | in `desc` prose |
-| 🔴 | `base_item_ref` | 0% | `M`🔗 | **re-opened** — was ⛔ "no base items ship in item packs"; the built-in pack ships weapons/armor/gear (§2.4) |
+| 🟡 | `base_item_ref` | 0% → **36%** | `M`🔗 | **Fixed by L3 (2026-08-13).** The link was never prose: `MagicItem.weapon` / `MagicItem.armor` are structured slug columns (`srd_longsword`) nobody read. 379 of 1,063 `vom` items now softRef the built-in weapon/armor/gear card; **36% is the ceiling** — the other 684 rows fill neither column. The slug→name transform is title-case after the document prefix, plus a 10-entry alias table for the rows where the built-in name differs (2024 renamed the armors, "plate" → **Plate Armor**; upstream orders the crossbows "crossbow-hand" → **Hand Crossbow**). Filtered by the same rule as `class_refs`: no built-in card, no ref. `srd_net` lands on the **adventuring-gear** Net — the target slug follows the card, not the column, which is why the filter is a `name → slug` map. Historical note: was ⛔ "no base items ship in item packs"; the built-in pack ships weapons/armor/gear (§2.4). |
 
 **`trait` (6423)** — `trait_kind` is `Other` on all 6423 (⚠ hardcoded). The 43
 grant-block keys are all 0%: a monster trait is display-only text. 1,550 share a
@@ -1908,9 +1928,11 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       present, both resolve), `assets/first_party/manifest.json` shows non-empty
       `requires` on the packs that now link, and installing a linker from the
       catalog pulls its target (`FirstPartyInstallNotifier.install`).*
-- [ ] **L3 — Turn existing prose into refs.** *(Main clause — `spell.class_refs`
-      — **done 2026-08-13**, see the sub-box below; feat prerequisites and
-      `magic-item.base_item_ref` are what is left.)* *(Unblocked 2026-08-13: U1 fixed
+- [x] **L3 — Turn existing prose into refs. Done 2026-08-13.** *(All three
+      clauses settled: the dangling ref fixed, `spell.class_refs` filled to 92%,
+      `magic-item.base_item_ref` to 36%, and feat prerequisites measured out of
+      scope — the snapshot has no class/species prerequisite to link. Sub-boxes
+      below.)* *(Unblocked 2026-08-13: U1 fixed
       the readers, U2 built the gate and pinned the floor — **1,212 of 1,297
       packaged spells are visible through `tags` and 0 through `class_refs`**, so
       fill `class_refs` and re-run `wizard_pack_families_test` **before**
@@ -1959,11 +1981,45 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
             test/presentation/character_creation/ test/domain/services/
             test/application/character_creation/` → 435 passing;
             `flutter analyze lib test tool` → 16 issues, 0 errors (baseline).
+      - [x] **`magic-item.base_item_ref` — 0% → 36%. Done 2026-08-13.** The
+            premise reversed the same way B4's did, and one step earlier: the
+            base item was never in prose. `MagicItem.weapon` and
+            `MagicItem.armor` are structured slug columns (`srd_longsword`,
+            `srd_plate`) that no mapper read. `mapMagicItems` now turns the
+            populated one into a softRef — title-case after the document prefix,
+            through a 10-row alias table for the names the built-in pack files
+            differently (the 2024 armors, "plate" → **Plate Armor**; the
+            crossbows, "crossbow-hand" → **Hand Crossbow**) — filtered through a
+            `knownBaseItems` `name → slug` map `build_packs` derives from
+            `builtinNameIndex()` over the three categories the schema's relation
+            allows (`weapon`, `armor`, `adventuring-gear`). The map is `name →
+            slug`, not a set, because the target slug follows the **card**, not
+            the source column: `srd_net` is a weapon upstream and
+            adventuring-gear here. Result: **379 of `open5e-vom`'s 1,063 items**,
+            and 379 is the ceiling — the other 684 fill neither column. Rebuilt
+            off `d4276c58`: `diff_packs` reports **379 added `base_item_ref` and
+            nothing else changed in any of the 19 packs**, `gate_packs`
+            **green**, `dupe_census` C **3,576 → 3,955 refs / 0 dangling / 0
+            nothing-installed**, `audit_packs` **134 → 135** filled slots,
+            `verify_packs` **0 disagreements** with a new `base_item_ref` rule
+            (`ok` +379; nothing new declared `unverifiable` — both columns are
+            read verbatim).
+            *Check:* `bundled_pack_resolve_test` gained an `open5e-vom` group —
+            all 379 refs resolve to a built-in card in one of the three allowed
+            categories (not just "resolve"), plus a named spot check that
+            Akaasit Blade points at the weapon Dagger.
+      - [x] **Feat prerequisites — measured out of scope 2026-08-13.** No code
+            change: **zero** of the snapshot's 78 `prerequisite` strings name a
+            class or a species, and no `desc` sentence gates on one either. The
+            corpus gates on ability scores, levels, proficiencies and class
+            *features*. `prereq_class_refs` / `prereq_species_refs` are an `S`
+            gap; §5.5's row is reclassified ⚪ and §2.3's worked example is
+            flagged as the hypothetical it is.
       *Exit: `dupe_census.dart` section C grows, "nothing installed" reaches **0**,
       `bundled_pack_resolve_test` proves one such ref reaching a sheet, and — for
       `spell.class_refs` — the wizard test from U2 proves the spell list is not
-      empty **before** the `tags` route is retired.* — **all four met for
-      `spell.class_refs`**; the box stays open for the feat/magic-item clauses.
+      empty **before** the `tags` route is retired.* — **all four met**, the last
+      of them by the `vom` group in `bundled_pack_resolve_test`.
 
 ### Stage U — make the wizard see it (outcome 4)
 

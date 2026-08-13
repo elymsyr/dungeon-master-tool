@@ -113,5 +113,14 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   dangling or unresolvable. [[build_packs]] runs it
   over its own output, so §3.5 cannot repeat silently. **Stage T is closed**;
   next is the rebuild and **D1**.
+  **L3 done 2026-08-13**: prose → refs, and two of its three clauses turned out
+  not to be prose at all. `spell.class_refs` **0% → 92%** (1,204 spells) reuses
+  the class list [[mapper_spell]] already computed for `tags`, and
+  `magic-item.base_item_ref` **0% → 36%** (379 items) reads the structured
+  `MagicItem.weapon`/`.armor` slug columns nobody had opened; both softRef the
+  built-in card and both are filtered against `builtinNameIndex()`, because an
+  unresolvable softRef is a [[gate_packs]] violation. In-card softRefs
+  **135 → 3,955**, 0 dangling. Feat prerequisites are an `S` gap — no
+  `prerequisite` string in the snapshot names a class or species at all.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.

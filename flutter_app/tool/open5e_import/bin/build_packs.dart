@@ -58,10 +58,21 @@ void main(List<String> args) {
   // Class names a spell's `class_refs` softRef can actually land on (audit L3).
   // The built-in pack is in scope in every world (§2.1), so its twelve classes
   // are the safe targets; a tag naming anything else stays a tag only.
+  final builtinNames = builtinNameIndex();
   final classPrefix = nameKey('class', '');
   final knownClasses = {
-    for (final key in builtinNameIndex())
+    for (final key in builtinNames)
       if (key.startsWith(classPrefix)) key.substring(classPrefix.length),
+  };
+
+  // Base items a magic item's `base_item_ref` softRef can land on (audit L3) —
+  // `name → slug` over the three categories the schema's relation allows. Same
+  // rule as above: no built-in card, no ref.
+  final knownBaseItems = <String, String>{
+    for (final slug in const ['weapon', 'armor', 'adventuring-gear'])
+      for (final key in builtinNames)
+        if (key.startsWith(nameKey(slug, '')))
+          key.substring(nameKey(slug, '').length): slug,
   };
 
   // v1 `Race.json` species index (audit B3) — same gap, same rule: consulted
@@ -127,6 +138,7 @@ void main(List<String> args) {
         norm: norm,
         source: doc.title,
         items: loadFixtures(doc.v2File('MagicItem.json')),
+        knownBaseItems: knownBaseItems,
       );
     }
     if (doc.hasClasses) {
