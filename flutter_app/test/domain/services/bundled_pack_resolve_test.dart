@@ -193,6 +193,40 @@ void main() {
     });
   });
 
+  // L3: a magic item names the mundane weapon/armor it is built on with a
+  // softRef into the built-in pack. The pack ships no base items itself, so
+  // every one of these has to land on a built-in card or the link is dead.
+  group('open5e-vom (base_item_ref)', () {
+    late final pack = installPack('open5e-vom.pkg.json');
+    late final world = {...srd, ...pack};
+
+    test('her base_item_ref gömülü bir temel eşyaya çözülür', () {
+      const allowed = {'weapon', 'armor', 'adventuring-gear'};
+      final withRef = <Entity>[
+        for (final e in pack.values)
+          if (e.fields['base_item_ref'] != null) e,
+      ];
+      expect(withRef, hasLength(379));
+      final broken = <String>[];
+      for (final item in withRef) {
+        final id = resolveEntityRef(item.fields['base_item_ref'], world);
+        final target = id == null ? null : world[id];
+        if (target == null || !allowed.contains(target.categorySlug)) {
+          broken.add('${item.name} → ${item.fields['base_item_ref']}');
+        }
+      }
+      expect(broken, isEmpty);
+    });
+
+    test('Akaasit Blade temel eşya olarak Dagger gösterir', () {
+      final blade = find(world, 'magic-item', 'Akaasit Blade');
+      final base =
+          world[resolveEntityRef(blade.fields['base_item_ref'], world)];
+      expect(base?.name, 'Dagger');
+      expect(base?.categorySlug, 'weapon');
+    });
+  });
+
   group('placeholders in bundled packs point at rows that exist', () {
     test('no converted grant field resolves to an empty ref', () {
       // `resolveLookupPlaceholder` returns '' for a Tier-0 row the campaign
