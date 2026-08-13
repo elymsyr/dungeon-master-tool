@@ -125,6 +125,26 @@ class Normalizer {
   }
 }
 
+/// Title case for a *proper name* — minor words stay lowercase unless they open
+/// or close the name ("spare the dying" -> "Spare the Dying", "protection from
+/// evil and good" -> "Protection from Evil and Good"). Prose-derived soft refs
+/// have to match a target name byte-for-byte (the resolver is case-sensitive),
+/// and no D&D spell capitalises its articles — plain [titleCase] emitted
+/// `"Spare The Dying"`, which dangled (audit L3).
+String titleCaseName(String s) {
+  const minor = {
+    'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'from', 'in', 'into',
+    'nor', 'of', 'on', 'or', 'the', 'to', 'with',
+  };
+  final words = titleCase(s).split(' ');
+  return [
+    for (var i = 0; i < words.length; i++)
+      (i > 0 && i < words.length - 1 && minor.contains(words[i].toLowerCase()))
+          ? words[i].toLowerCase()
+          : words[i],
+  ].join(' ');
+}
+
 /// "neutral good" -> "Neutral Good", "deep_speech" -> "Deep Speech".
 String titleCase(String s) {
   final cleaned = s.replaceAll(RegExp(r'[_\-]+'), ' ').trim();

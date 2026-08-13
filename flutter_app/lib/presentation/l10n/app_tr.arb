@@ -80,6 +80,8 @@
   "@packageLinkedAlsoInstalled": { "placeholders": { "count": { "type": "int" } } },
   "packageDeleteLinkedWarning": "{count} paket bunu bağlıyor: {names}. Bağlantıları artık çözülmeyecek.",
   "@packageDeleteLinkedWarning": { "placeholders": { "count": { "type": "int" }, "names": { "type": "String" } } },
+  "packageUpdateTo": "v{version} sürümüne güncelle",
+  "@packageUpdateTo": { "placeholders": { "version": { "type": "String" } } },
   "packageAlreadyExists": "Bu isimde paket zaten var",
   "noPackages": "Paket bulunamadı.",
   "importPackage": "Paket İçe Aktar",

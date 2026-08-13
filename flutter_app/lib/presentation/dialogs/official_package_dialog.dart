@@ -39,6 +39,17 @@ class OfficialPackageDialog extends ConsumerWidget {
     final installedName = entry.title.isEmpty ? entry.slug : entry.title;
     final installed = installedNames.contains(installedName) ||
         status.phase == CatalogInstallPhase.done;
+    // D2: an install stamps `metadata.catalog_version`; a newer catalog turns
+    // the flat "Installed" state back into an actionable Update. Re-running
+    // `install` is the upgrade — the importer saves over the same row name and
+    // carries the declared links across.
+    final installedVersion = ref.watch(
+      packageMetadataProvider(installedName)
+          .select((a) => a.valueOrNull?['catalog_version'] as String?),
+    );
+    final updatable = installed &&
+        status.phase != CatalogInstallPhase.done &&
+        isCatalogUpdateAvailable(installedVersion, entry.version);
 
     final pills = <Widget>[
       if (entry.gameSystem.isNotEmpty)
@@ -174,7 +185,8 @@ class OfficialPackageDialog extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.btnCancel),
         ),
-        _action(context, ref, l10n, palette, installed, status),
+        _action(context, ref, l10n, palette, installed && !updatable, status,
+            updatable: updatable),
       ],
     );
   }
@@ -185,8 +197,9 @@ class OfficialPackageDialog extends ConsumerWidget {
     L10n l10n,
     DmToolColors palette,
     bool installed,
-    CatalogInstallStatus status,
-  ) {
+    CatalogInstallStatus status, {
+    bool updatable = false,
+  }) {
     if (installed) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -217,8 +230,12 @@ class OfficialPackageDialog extends ConsumerWidget {
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.white),
             )
-          : const Icon(Icons.download, size: 18),
-      label: Text(isError ? l10n.soundpackRetry : l10n.marketplaceGet),
+          : Icon(updatable ? Icons.upgrade : Icons.download, size: 18),
+      label: Text(isError
+          ? l10n.soundpackRetry
+          : updatable
+              ? l10n.packageUpdateTo(entry.version)
+              : l10n.marketplaceGet),
     );
   }
 }

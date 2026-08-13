@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/first_party_catalog_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-07-30
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -22,8 +22,9 @@ tags: [file]
 
 **Outputs**
 - `firstPartyInstallProvider` — `Map<String, CatalogInstallStatus>` per slug (`idle` / `installing` / `done` / `error`).
+- `isCatalogUpdateAvailable(installedVersion, catalogVersion)` — pure semver compare used by [[official_package_dialog]] to offer an upgrade (audit D2).
 - A local `packages` row per installed entry, stamped `metadata.installed_from = 'official'`, `metadata.catalog_version = entry.version`, plus `cover_image_path` when a banner downloaded.
-- Invalidates `packageListProvider` after each install.
+- Invalidates `packageListProvider` **and `packageMetadataProvider`** (whole family) after each install — the latter so the stored `catalog_version` an update check reads is re-fetched.
 
 ## Dependencies & Links
 - Depends on: [[first_party_catalog_service]], [[package_payload_importer]], `CoverImageBundler`, `AssetsPackInstaller`, `AppPaths`.
@@ -34,8 +35,10 @@ tags: [file]
 ## Key Logic / Variables
 - **Dependency install order**: `install(entry)` runs a cycle-safe post-order DFS over `entry.requires` against the manifest (mirrors `PackageLinkService.closure`), installs dependencies first, and **fails the whole install** if a dependency install fails. A required slug that is absent from the manifest is skipped — the link simply dangles, matching the soft-ref rule that a missing target is a warning, never a failure.
 - **Naming**: the local package row is named after `metadata.title` (see [[package_payload_importer]]), which is why a `metadata.links` entry must carry the **title** in `name` and the **catalog slug** in `slug` — two different strings, one for each side. See [[Package-Links]].
+- **Upgrade check (D2, 2026-08-13)**: `isCatalogUpdateAvailable` parses both sides as strict `major.minor.patch` and compares component-wise (so `1.9.0 → 1.10.0` *is* an update). Fail-soft: a null, empty or non-semver version on either side returns false — no nagging on data we don't understand. An upgrade is just `install(entry)` again; [[package_payload_importer]] saves over the same row name and carries declared links across.
 - **Banner**: `fetchBanner(slug)` → base64 → `CoverImageBundler.restore` into `AppPaths.packagesDir`, so the Packages tab shows the same art as the catalog card.
 
 ## Notes
-- ⚠️ **Install-only: there is no upgrade path.** The notifier stores `metadata.catalog_version` but never compares it against the manifest, and `statusFor(...) == done` short-circuits dependencies only within a session. A user who installed `@1.0.0` keeps that payload forever — combined with [[emit]]'s hardcoded `pack_version: '1.0.0'` and [[publish_catalog]]'s skip-if-exists, regenerated official content currently cannot reach an existing install at all. Audit doc (`flutter_app/docs/open5e_content_audit.md`) phases **D1/D2** own this.
-- ⚠️ **Uninstall does not consider reverse links.** Once the official packs stop duplicating content and start linking one owner (audit phase L2), deleting the owner strips content from every linker. `PackageLinkService.reverseLinks` exists for that warning but is not wired into this path.
+- ✅ **Upgrade path exists since 2026-08-13 (audit D2).** The notifier is still install-only; the *comparison* lives here and the UI lives in [[official_package_dialog]]. With [[emit]]'s `packVersion` now a hand-bumped semver const and the catalog rebuilt, a user on `@1.0.0` sees "Update to v1.1.0". Guarded by `test/application/providers/first_party_catalog_update_test.dart`.
+- ⚠️ **Still unpublished.** The upgrade only fires once `publish_catalog` has actually uploaded the new version — see [[publish_catalog]]; that run needs `DMT_WORKER_URL` + `ADMIN_TOKEN`.
+- **Uninstall + reverse links**: handled outside this file. Official packs are ordinary local rows deleted through the Packages tab, which warns via `PackageLinkService.reverseLinks` ([[package_link_service]]). `AssetsPackInstaller.uninstallAll` deliberately does not — it is an admin bulk toggle with no per-pack decision.

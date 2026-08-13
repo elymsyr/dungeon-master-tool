@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/normalize.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-07-30
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -26,7 +26,8 @@ tags: [file]
   - `lookupRefList(slug, raws, {context})` → list of placeholders, skipping unknowns.
   - `namesFor(slug)` → all canonical names seeded for a slug (used by mappers that scan free text for any canonical value).
 - `UnmappedSink unmapped` — accumulates `<slug> → {value(+context) → count}`; `toJson()` is written to `unmapped_report.json` by [[emit]].
-- `String titleCase(String)` — "neutral good" → "Neutral Good", "deep_speech" → "Deep Speech".
+- `String titleCase(String)` — "neutral good" → "Neutral Good", "deep_speech" → "Deep Speech". Capitalises **every** word.
+- `String titleCaseName(String)` — title case for a *proper name*: interior minor words ("the", "of", "from", "with", …) stay lowercase, first and last always capitalised. "spare the dying" → "Spare the Dying". Added 2026-08-13 for audit **L3**: soft refs are resolved case-sensitively, and `titleCase` on a prose-derived spell name emitted `"Spare The Dying"`, the corpus's one dangling ref. Used by [[mapper_chargen]]'s `_parseSpellGrants`; the other 15 `titleCase` call sites are vocabulary values, not names, and are unchanged.
 
 ## Dependencies & Links
 - Depends on: [[builtin_schema]] (`buildTier0Lookups`, `lookups.dart`), [[srd_helpers]] (`lookup`), [[vocab]] (the second canon; the import is mutual — [[vocab]] uses `titleCase`).

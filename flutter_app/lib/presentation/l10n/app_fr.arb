@@ -80,6 +80,8 @@
   "@packageLinkedAlsoInstalled": { "placeholders": { "count": { "type": "int" } } },
   "packageDeleteLinkedWarning": "{count} paquet(s) lient celui-ci : {names}. Leurs liens ne se résoudront plus.",
   "@packageDeleteLinkedWarning": { "placeholders": { "count": { "type": "int" }, "names": { "type": "String" } } },
+  "packageUpdateTo": "Mettre à jour vers v{version}",
+  "@packageUpdateTo": { "placeholders": { "version": { "type": "String" } } },
   "packageAlreadyExists": "Le paquet existe déjà",
   "noPackages": "Aucun paquet trouvé.",
   "importPackage": "Importer un paquet",
