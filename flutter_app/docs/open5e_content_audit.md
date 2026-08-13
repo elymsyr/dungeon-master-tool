@@ -58,7 +58,8 @@ output of the pinned snapshot with B1/B2/B3/B4/B8/B9/B11 in it, and the split th
 file spent three weeks describing — "the importer is fixed and the shipped assets
 are not" — is closed. Graded before promotion by all three tools and re-run after:
 `verify_packs` **0 disagreements**, `absent` **371 → 70**, `unsourced` **3,663 →
-3,303**; `gate_packs` **198 → 1** violation (only L3's `"Spare The Dying"`);
+3,303**; `gate_packs` **198 → 1** violation (only L3's `"Spare The Dying"` — now
+**0**, see below);
 `audit_packs` filled slots **125 → 133 of 407**; `diff_packs` 1,391 changed values
 in 30 classes, every one attributable to a filed phase. Entity total 20,712 →
 **22,005** (+1,286 recovered tob3 actions, +6 `language`, +1 `size`).
@@ -68,10 +69,28 @@ the catalog is rebuilt (19 entries at `1.1.0`, fresh `r2_path`s, `counts` /
 The upload itself has **not** run — it needs `DMT_WORKER_URL` + `ADMIN_TOKEN`,
 which are CI secrets, not available locally.
 
-**Next action right now:** **publish** (one command with the two secrets), then
-**D2** (upgrade + uninstall paths — an installed `@1.0.0` still has no trigger to
-move to `1.1.0`). Everything still open in Stage B (B5, B6, B10) plus L1 needs a
-target-shape call first, so they are the slower path, not the blocked one.
+**D2 is done — 2026-08-13.** The install dialog now diffs the stored
+`metadata.catalog_version` against the manifest and turns the flat "Installed"
+state back into an **Update to v1.1.0** action (`isCatalogUpdateAvailable`, a
+fail-soft semver compare with its own test). The uninstall half was already
+wired — the Packages-tab delete has warned via `PackageLinkService.reverseLinks`
+since L0 — and the dangling-ref policy is now stated (§3.3).
+
+**L3's dangling ref is fixed — 2026-08-13.** `_parseSpellGrants` ran prose spell
+names through `titleCase`, which capitalises *every* word, so `toh`'s Favored
+shipped a soft ref to `"Spare The Dying"` against a corpus that spells it
+`"Spare the Dying"` — case-sensitively resolved, therefore dropped. New
+`titleCaseName` in `normalize.dart` keeps interior minor words lowercase; the one
+shipped value was patched in place (a full rebuild would drag in unrelated drift:
+the local snapshot clone is at `7d44bb0e`, not A0's pinned `d4276c58`).
+**`dupe_census` section C "nothing installed" is now 0, and `gate_packs` is
+green — 0 violations, from 198.** The rest of L3 (turning prose into refs) is
+still open and still waits on U1.
+
+**Next action right now:** **publish** (one command with the two secrets — the
+only thing between the promoted assets and users). After that Stage D is closed
+and the roadmap is back to content: B5, B6, B10 and L1 each need a target-shape
+call first, so they are the slower path, not a blocked one.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -176,7 +195,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
 | 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (1 today), and `requires` is non-empty for every linker |
 | 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
-| — | The work reaches users | **D1, D2** | `pack_version` bumped, catalog rebuilt, `publish_catalog` uploads instead of skipping, installed packs upgrade |
+| — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
 Outcome 1 was the doc's original subject. Outcomes 2–4 were **assumed** by the
 original roadmap and are why Stages M, U, T and D exist: filling a field proves
@@ -762,13 +781,16 @@ for hard `ref()` (build-gated instead of best-effort). **This table is the guard
 rail for every B phase: it must grow, and its "nothing installed" row must stay at
 0.**
 
-> **The row was never 0.** L0 found the one ref the app drops that the old census
-> counted as resolved — `open5e-toh`'s `subspecies` **"Favored"** points at
-> `spell "Spare The Dying"`, and every pack in scope spells it **"Spare the
-> Dying"**. Capital T, silently dropped, no warning at build and none at read.
-> That is the §3.4 claim made concrete: the fix belongs in the mapper (emit the
-> target's exact name — §2.3), and it is the smallest possible worked example of
-> why L3 has to be case-exact.
+> **The row was never 0 — it is now (2026-08-13).** L0 found the one ref the app
+> drops that the old census counted as resolved: `open5e-toh`'s `subspecies`
+> **"Favored"** pointed at `spell "Spare The Dying"`, while every pack in scope
+> spells it **"Spare the Dying"**. Capital T, silently dropped, no warning at
+> build and none at read. That was the §3.4 claim made concrete. **Fixed under
+> L3:** the cause was `_parseSpellGrants` calling `titleCase` (capitalises every
+> word) on a name lifted from prose; `titleCaseName` lowercases interior minor
+> words, so the emitted name is the target's exact name (§2.3). Census section C
+> "nothing installed" **1 → 0**, `gate_packs` **1 → 0** violations. The guard rail
+> above is now a real 0, not a baseline of 1.
 
 ### 3.3 Catalog state
 
@@ -799,9 +821,25 @@ Consequences this audit has to plan for (§6 Stage D):
   `ADMIN_TOKEN`, which live as CI secrets.
 - `--force` overwriting a versioned path contradicts the immutability contract and
   leaves clients with no signal that anything changed.
-- There is still no installed-pack upgrade path: `FirstPartyInstallNotifier`
-  installs, it never diffs a stored `catalog_version` against the manifest — so a
-  user on `@1.0.0` stays there. **D2**, and the bump is what makes it matter.
+- ~~There is still no installed-pack upgrade path~~ — **closed by D2
+  (2026-08-13).** `OfficialPackageDialog` watches the installed row's
+  `metadata.catalog_version` and calls `isCatalogUpdateAvailable(installed,
+  entry.version)`; a strictly newer semver replaces "Installed" with **Update to
+  v1.1.0**, which re-runs `install` (the importer saves over the same row name
+  and carries declared links across, so an upgrade is a reinstall). Fail-soft by
+  design: a missing or non-semver version on either side reports *no* update
+  rather than nagging.
+- **Dangling-ref policy after an L1/L2 deletion** (the call §6 D2 asked for):
+  ids are uuidv5 and stable, so a deleted entity leaves a live ref in existing
+  characters/worlds. The policy is **soft-ref semantics everywhere, no
+  cascade**: the ref is dropped at read time and surfaced as a warning on
+  `EffectiveCharacter`, never a crash and never a silent rewrite of user data.
+  What that buys is reversibility — reinstalling the pack that owned the entity
+  restores the reference, because the id did not change. What it costs is that
+  "the monster lost half its actions" is a legitimate user-visible outcome of a
+  dedupe, so **L1/L2 may not delete an entity another pack's rows point at
+  unless the survivor keeps the same uuidv5** — the dedupe rewrites the *owner*,
+  not the id.
 - In debug, `BundledPacksBootstrap` sidesteps all of this with a content hash
   (`metadata.bundled_content_hash`) — which is exactly why the problem is easy to
   miss while developing. Release builds do not ship the assets at all.
@@ -815,7 +853,7 @@ exist. Fixing the tools is cheaper than re-doing a phase that passed a bad gate.
 |---|---|---|
 | ~~"`audit_packs` says 100%, so the field is right"~~ | **Fixed by T1 2026-07-31, and it was hiding a real defect:** `verify_packs.dart` compares every value to its fixture column. 0 disagreements corpus-wide — but **3,663 `unsourced`** values the census read as coverage, including 360 `monster.hp_dice` that are a mapper fallback on a pack whose source column is null throughout (§3.6, filed as **B11** and fixed 2026-08-10 — that field is now omitted, not defaulted) | ~~T1~~ |
 | ~~"The bundled packs are audited, so the content is audited"~~ | **Fixed by T2 2026-08-10, and it was hiding a dead field:** `audit_packs --builtin` measures the link target too (§3.7). `skill.ability_ref` is required and **0% filled** — the seed rows write `_ability_name_` for a bootstrap step that does not exist, so the wizard's skill ability-mod chip has never rendered (filed **T2-1**) | ~~T2~~ |
-| ~~"Section C says 0 dangling, so every ref lands"~~ | **Fixed by L0 2026-07-30, and it was a real defect:** section C now resolves the way `findEntityIdByName` does, and "nothing installed" is **1**, not 0 — `"Spare The Dying"` vs `"Spare the Dying"` (§3.2) | ~~L0~~ |
+| ~~"Section C says 0 dangling, so every ref lands"~~ | **Fixed by L0 2026-07-30, and it was a real defect:** section C now resolves the way `findEntityIdByName` does, and "nothing installed" was **1**, not 0 — `"Spare The Dying"` vs `"Spare the Dying"` (§3.2). Fixed in the mapper by L3 on 2026-08-13; the row is a real 0 now | ~~L0~~ |
 | ~~"A `(slug, name)` collision means duplicated content"~~ | **Fixed by L0:** sections A and B split every collision into same-text / name-only / no-text-either-side. 7 of 1,660 section-A rows say the same thing; 1,749 of 2,540 section-B names only share a name (§3.2) | ~~L0~~ |
 | "The census matches the runtime, so its collisions are the app's collisions" | **Only section C does, deliberately.** Identity and resolution are different questions: the resolver's trailing-parenthetical retry would call 3,501 qualified statblock rows ("Legendary Resistance (3/Day)") duplicates of built-in cards. A/B fold case and never strip; C mirrors the resolver exactly. The 3,501 are a *resolution* hazard — a softRef naming a qualified child lands on the generic built-in card | **T3** |
 | "The field is filled and the resolver reads it, so it works" | The wizard has its own readers, several of which take raw ids only (§2.3.1) | **U1** |
@@ -1015,8 +1053,8 @@ softRef this audit writes lands here, and until now nothing had ever counted it.
 
 **No planned softRef dangles on a missing name.** Every category the audit links
 into ships rows — 38 tools, 107 gear, 341 spells, 305 feats, 2,717 `(slug, name)`
-pairs in scope — and the one dangling ref anyone has found is `dupe_census`
-section C's `"Spare The Dying"`, already filed on **L3**. T2 measures fill, not
+pairs in scope — and the one dangling ref anyone has found was `dupe_census`
+section C's `"Spare The Dying"` — L3 fixed it 2026-08-13. T2 measures fill, not
 resolution; resolution stays L3's and T3's question.
 
 **Fixes are deliberately not part of T2** (its own exit says so): the built-in
@@ -1031,11 +1069,11 @@ the relations it must have?"**. Seven rules, run over all 19 packs, exit 1 on an
 violation — and `build_packs` runs the same gate over what it just wrote, so §3.5
 can never happen silently again.
 
-| Rule | Violations (2026-08-10 assets) | → after the 2026-08-13 promotion | Reading |
+| Rule | Violations (2026-08-10 assets) | → after the 2026-08-13 promotion + L3 casing fix | Reading |
 |---|--:|--:|---|
 | `monster-actionless` | **196** | **0** | all `open5e-tob3`; B8's backfill shipped |
 | `bucket-skew` | **1** | **0** | `open5e-tob3` — was 2 `action_refs` against 307 situational |
-| `dangling-soft-ref` | **1** | **1** | `open5e-toh` Favored → `spell/"Spare The Dying"` (L3) |
+| `dangling-soft-ref` | **1** | **0** | was `open5e-toh` Favored → `spell/"Spare The Dying"`; L3 fixed the casing 2026-08-13 |
 | `orphan-child` | 0 | 0 | every `creature-action` / `trait` is reachable from a statblock |
 | `dangling-hard-ref` | 0 | 0 | as the build gate already promised |
 | `qualifier-strip` | 0 | 0 | the L0 hazard is latent, and now asserted latent |
@@ -1044,8 +1082,9 @@ can never happen silently again.
 **Nothing new is broken — that is the finding.** Every violation was an
 already-filed defect, and all but one was one pack: the assets predated B8, so
 tob3's statblocks stayed actionless until the rebuild was promoted. **That
-prediction held exactly** — the promoted assets gate at **1 violation**, the L3
-ref, which was T3's stated acceptance test for D1. The four zero rows are the new information —
+prediction held exactly** — the promoted assets gated at **1 violation**, the L3
+ref, which was T3's stated acceptance test for D1; with that casing fixed the
+gate is **green, 0 violations**. The four zero rows are the new information —
 `orphan-child` and `empty-equipment-option` had never been checked at all, and
 the hypothesis behind §3.2's dedup proposals was that a name-based merge might
 already have stranded rows. It has not.
@@ -1053,7 +1092,8 @@ already have stranded rows. It has not.
 **`dangling-soft-ref` found the L3 ref independently**, from the pack side rather
 than from `dupe_census`' section C. Two tools disagreeing about it would have
 meant one of them was wrong about how the runtime resolves; they agree, so the
-`"Spare The Dying"` / "Spare the Dying" case fold is a real miss.
+`"Spare The Dying"` / "Spare the Dying" case fold was a real miss — and both
+tools read 0 after the fix.
 
 **The `qualifier-strip` rule is an alarm, not a report.** L0 measured 3,501
 bundled rows whose stripped name ("Legendary Resistance (3/Day)" →
@@ -1711,8 +1751,9 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
 1. **§2.3 ref gate** — it may not increase `dupe_census.dart`'s "nothing
    installed" count, and any `_ref` it writes must resolve to existing content.
    *(Trustworthy since L0 2026-07-30: section C resolves the way
-   `findEntityIdByName` does. The baseline the gate compares against is **1**, not
-   0 — `"Spare The Dying"`, §3.2.)*
+   `findEntityIdByName` does. The baseline was **1** — `"Spare The Dying"`, §3.2 —
+   and since L3's casing fix on 2026-08-13 it is **0**, so any dangle a phase
+   introduces is now visible on its own.)*
 2. **§2.3.1 reader gate** — for every `_ref` field it fills, the readers of that
    field are on `resolveEntityRef`, or the phase does not ship.
 3. **Repo gate** — `flutter analyze && flutter test` on the touched area, the
@@ -1810,11 +1851,21 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
 - [ ] **L3 — Turn existing prose into refs.** *(blocked by U1.)* The 🔗 rows in §5
       that already ship in some form: `subclass` parent tags, feat prerequisites,
       `spell.class_refs`, `magic-item.base_item_ref`.
-      - [ ] **Fix the one ref that already dangles** — `open5e-toh`'s `subspecies`
-            "Favored" emits `spell "Spare The Dying"` against a corpus that spells
-            it `"Spare the Dying"` (§3.2). Found by L0; it is one mapper-side
-            casing fix and it takes section C's "nothing installed" to 0. Do it
-            first — it is the worked example for the rest of L3.
+      - [x] **Fix the one ref that already dangles. Done 2026-08-13.**
+            `open5e-toh`'s `subspecies` "Favored" emitted `spell "Spare The Dying"`
+            against a corpus that spells it `"Spare the Dying"` (§3.2). The cause
+            was not a one-off typo: `_parseSpellGrants` sends every prose-derived
+            name through `titleCase`, which capitalises **every** word, so any
+            granted spell with an article in it would have dangled the same way.
+            New `titleCaseName` in `normalize.dart` (interior minor words stay
+            lowercase, first and last always capitalised) is the fix, used by both
+            the cantrip and the spell branch; `test/tool/spell_grant_casing_test.dart`
+            drives the Favored trait through `mapSpecies` and asserts the emitted
+            name. The one shipped value was patched in place rather than rebuilt —
+            the local snapshot clone is `7d44bb0e`, not A0's pinned `d4276c58`, so
+            a rebuild would carry unrelated drift; the next full rebuild off the
+            pinned SHA reproduces it. *Result: `dupe_census` section C
+            "nothing installed" **1 → 0**, `gate_packs` **1 → 0** (green).*
       *Exit: `dupe_census.dart` section C grows, "nothing installed" reaches **0**,
       `bundled_pack_resolve_test` proves one such ref reaching a sheet, and — for
       `spell.class_refs` — the wizard test from U2 proves the spell list is not
@@ -2278,22 +2329,33 @@ has a value" into "the value produced the right number on a sheet".
       secrets live:
       `dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> --dry-run`
       then without `--dry-run`.
-- [ ] **D2 — Upgrade and uninstall paths.** Two holes L1/L2 open:
-      (a) an already-installed pack has no upgrade trigger — `FirstPartyInstallNotifier`
-      never compares the stored `metadata.catalog_version` against the manifest, so
-      a user who installed `@1.0.0` keeps the duplicated, empty-field version
-      forever; (b) once one pack owns content others link, uninstalling the owner
-      silently strips content from the linkers — `PackageLinkService.reverseLinks`
-      exists for exactly this warning but is not wired into the official-pack
-      uninstall path.
-      *Exit: the Packages tab offers an update when a newer catalog version
-      exists, and uninstalling a linked-to official pack warns with the list of
-      packs that link it.*
-      *Also decide and record:* what happens to a character or world that
-      references an entity L1/L2 deleted. Ids are uuidv5 and stable, so a dropped
-      entity is a dangling ref in existing data — the soft-ref rule makes it a
-      warning rather than a crash, but "the monster lost half its actions" is a
-      user-visible regression that needs a stated policy.
+- [x] **D2 — Upgrade and uninstall paths** — *done 2026-08-13.* Two holes L1/L2
+      open, and one of them turned out to be already closed:
+      - **(a) the upgrade trigger — built.** `OfficialPackageDialog` watches
+        `packageMetadataProvider(<title>)` for the stored
+        `metadata.catalog_version` and compares it to the manifest through
+        `isCatalogUpdateAvailable` (`first_party_catalog_provider.dart`): a
+        strictly newer `major.minor.patch` replaces the flat "Installed" state
+        with an **Update to v1.1.0** button that re-runs `install`. Two details
+        that matter: `_installOne` now also invalidates `packageMetadataProvider`
+        (whole family — the row is keyed by *title*, which only the importer
+        resolves), so the button clears itself after the upgrade; and the compare
+        is numeric per component, so `1.9.0 → 1.10.0` is an update where a string
+        compare would say no. Guarded by
+        `test/application/providers/first_party_catalog_update_test.dart`.
+      - **(b) the uninstall warning — already wired, verified not rebuilt.**
+        Official packs are ordinary local rows, so they are removed through the
+        Packages-tab delete, which has warned via
+        `PackageLinkService.reverseLinks` (→ `packageDeleteLinkedWarning`) since
+        L0. The only path lacking it is `AssetsPackInstaller.uninstallAll`, a
+        debug/admin bulk toggle that removes *every* `installed_from == 'assets'`
+        row at once — no per-pack decision to warn about, so it stays as is.
+      - **(c) the dangling-ref policy — stated** in §3.3: soft-ref semantics, no
+        cascade, and L1/L2 may not delete an entity another pack points at unless
+        the survivor keeps the same uuidv5.
+      Not done: an update badge on the *card* (the catalog card shows "Get"
+      unconditionally today and knows nothing about install state — the dialog is
+      where that lives), and l10n beyond the four shipped locales.
 
 ### Done when
 
@@ -2315,8 +2377,9 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    `requires`.
 4. **Character creation** — a wizard test per pack family passes (U2), and no
    chargen filter reads a `*_ref` field as a raw id (U1).
-5. **Delivery** — a published catalog whose packs upload rather than skip (D1),
-   with an upgrade path for existing installs (D2).
+5. **Delivery** — a published catalog whose packs upload rather than skip (D1 —
+   bumped and rebuilt, **upload still owed**), with an upgrade path for existing
+   installs (D2 — done 2026-08-13).
 
 In app terms: installing a third-party pack and picking one of its subclasses
 produces a character sheet with that subclass's features on it; the user's pickers

@@ -932,19 +932,20 @@ void _parseAltSpeeds(String desc, Map<String, int> out) {
 }
 
 /// Innate spell/cantrip names named in a trait. Requires the "the" article to
-/// avoid the generic "cast a spell" phrasing; names are titlecased for ref
-/// matching. ("know the thaumaturgy cantrip" → cantrip Thaumaturgy; "cast the
+/// avoid the generic "cast a spell" phrasing; names go through [titleCaseName]
+/// (not [titleCase]) because the resolver matches case-sensitively and no spell
+/// name capitalises its articles. ("know the thaumaturgy cantrip" → cantrip Thaumaturgy; "cast the
 /// hellish rebuke spell" → spell Hellish Rebuke.)
 ({List<String> cantrips, List<String> spells}) _parseSpellGrants(String desc) {
   final cantrips = <String>{};
   final spells = <String>{};
   for (final m in RegExp(r"\b(?:know|knows|learn)\s+the\s+([a-z][a-z' -]+?)\s+cantrip\b",
       caseSensitive: false).allMatches(desc)) {
-    cantrips.add(titleCase(m.group(1)!));
+    cantrips.add(titleCaseName(m.group(1)!));
   }
   for (final m in RegExp(r"\bcast\s+the\s+([a-z][a-z' -]+?)\s+spell\b",
       caseSensitive: false).allMatches(desc)) {
-    spells.add(titleCase(m.group(1)!));
+    spells.add(titleCaseName(m.group(1)!));
   }
   return (cantrips: cantrips.toList(), spells: spells.toList());
 }

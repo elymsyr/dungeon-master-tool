@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/gate.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-10
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -38,5 +38,5 @@ tags: [file]
 - **Exceptions are allow-listed by name, with a checked reason.** `_actionlessUpstream` holds `a5e-mm`'s Frog and Seahorse: the snapshot has no `CreatureAction` row parented to either and neither name is in any v1 `Monster.json`, so B8's backfill has nothing to recover. By name, so a pack that loses a *different* creature's actions still fails.
 
 ## Notes
-- First run over the shipped assets: **198 violations, every one already filed** — 196 `monster-actionless` + 1 `bucket-skew` (both tob3, fixed in the importer by B8, red until the rebuild is promoted) and 1 `dangling-soft-ref` (`"Spare The Dying"`, L3's, found independently of [[dupe_census]]). The four rules that came back **0** are the new information: `orphan-child` and `empty-equipment-option` had never been checked at all.
+- First run over the shipped assets: **198 violations, every one already filed** — 196 `monster-actionless` + 1 `bucket-skew` (both tob3, fixed in the importer by B8, red until the rebuild is promoted) and 1 `dangling-soft-ref` (`"Spare The Dying"`, L3's, found independently of [[dupe_census]]). **As of 2026-08-13 the gate is green: 0 violations** — the D1 promotion cleared the 197 tob3 rows and L3's casing fix cleared the soft ref. The four rules that came back **0** are the new information: `orphan-child` and `empty-equipment-option` had never been checked at all.
 - Adding a rule means adding it in `gate.dart` (**not** in `bin/`) plus a provoking case *and* a healthy case in `flutter_app/test/tool/gate_packs_test.dart` — a rule that never fires looks exactly like a clean corpus, which is how 396 actionless statblocks shipped.

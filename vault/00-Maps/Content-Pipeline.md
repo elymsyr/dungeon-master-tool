@@ -49,7 +49,9 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   collision three ways by text, and buckets monster-owned children — actionable
   redundancy is **1,178 (5.7%)**, not 20.9%; matching A/B like the resolver would
   have called 3,501 qualified statblock rows duplicates (refiled on **T3**), and
-  section C's "0 dangling" was really **1** (`"Spare The Dying"`, filed on **L3**).
+  section C's "0 dangling" was really **1** (`"Spare The Dying"`, fixed by **L3**
+  on 2026-08-13 — the mapper title-cased prose spell names; see [[normalize]]'s
+  `titleCaseName`).
   **B1 done 2026-07-30**: `ClassFeatureItem.json` is loaded and
   [[mapper_chargen]]'s `_levelFeatures` turns it into the `classFeatures` level
   table + `subclass.granted_at_level` — 572 rows, 100 of 101 subclasses, exactly
@@ -107,7 +109,8 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   is measured, never edited, by this audit. **T3 done 2026-08-10**: [[gate_packs]]
   gates the relations a field census cannot express — 198 violations, all already
   filed (197 tob3's, waiting on the B8 rebuild; 1 the `"Spare The Dying"` ref L3
-  owns), and nothing orphaned, dangling or unresolvable. [[build_packs]] runs it
+  owns — **both cleared 2026-08-13, the gate is green**), and nothing orphaned,
+  dangling or unresolvable. [[build_packs]] runs it
   over its own output, so §3.5 cannot repeat silently. **Stage T is closed**;
   next is the rebuild and **D1**.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).

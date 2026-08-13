@@ -32,6 +32,28 @@ final firstPartyCatalogProvider = FutureProvider<List<CatalogEntry>>((ref) {
   return ref.read(firstPartyCatalogServiceProvider).fetchManifest();
 });
 
+/// True when [catalogVersion] is a strictly newer `major.minor.patch` than the
+/// version stamped into an installed pack's `metadata.catalog_version` (audit
+/// D2). Fail-soft: an absent or non-semver version on either side reports "no
+/// update" rather than nagging — `emit.packVersion` is semver by contract, so
+/// anything else is data we don't understand.
+bool isCatalogUpdateAvailable(String? installedVersion, String catalogVersion) {
+  final a = _semver(catalogVersion);
+  final b = _semver(installedVersion);
+  if (a == null || b == null) return false;
+  for (var i = 0; i < 3; i++) {
+    if (a[i] != b[i]) return a[i] > b[i];
+  }
+  return false;
+}
+
+List<int>? _semver(String? v) {
+  final m = RegExp(r'^(\d+)\.(\d+)\.(\d+)$').firstMatch(v?.trim() ?? '');
+  return m == null
+      ? null
+      : [for (var i = 1; i <= 3; i++) int.parse(m.group(i)!)];
+}
+
 /// Per-slug install status for the official catalog cards.
 enum CatalogInstallPhase { idle, installing, done, error }
 
@@ -128,6 +150,10 @@ class FirstPartyInstallNotifier
         extraMetadata: extra,
       );
       _ref.invalidate(packageListProvider);
+      // Re-read metadata so a reinstall flips the stored `catalog_version` the
+      // update check reads (D2) — the family is invalidated whole because the
+      // row is keyed by title, which only the importer resolves.
+      _ref.invalidate(packageMetadataProvider);
       _set(entry.slug,
           const CatalogInstallStatus(phase: CatalogInstallPhase.done));
       return true;

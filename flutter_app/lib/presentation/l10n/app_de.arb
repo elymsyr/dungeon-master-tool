@@ -80,6 +80,8 @@
   "@packageLinkedAlsoInstalled": { "placeholders": { "count": { "type": "int" } } },
   "packageDeleteLinkedWarning": "{count} Paket(e) verknüpfen dieses: {names}. Ihre Verknüpfungen laufen ins Leere.",
   "@packageDeleteLinkedWarning": { "placeholders": { "count": { "type": "int" }, "names": { "type": "String" } } },
+  "packageUpdateTo": "Auf v{version} aktualisieren",
+  "@packageUpdateTo": { "placeholders": { "version": { "type": "String" } } },
   "packageAlreadyExists": "Paket existiert bereits",
   "noPackages": "Keine Pakete gefunden.",
   "importPackage": "Paket importieren",
