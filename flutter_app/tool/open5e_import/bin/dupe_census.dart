@@ -150,6 +150,10 @@ void main(List<String> args) {
     census.printList(listSlug);
     return;
   }
+  if (args.contains('--list-shared')) {
+    census.printSharedList();
+    return;
+  }
   if (markdown) {
     census.printMarkdown();
   } else {
@@ -317,6 +321,24 @@ class _Census {
   var _bNamesNoText = 0;
   var _bCopiesSameText = 0;
 
+  /// The rows behind [_bNamesSameText], keyed by identity key — L2's candidate
+  /// set, printed by `--list-shared`. A name is only a link candidate if no
+  /// copy is a statblock's child row (§2.5), so the rows are kept whole and the
+  /// ownership call is made at print time.
+  final _bSameText = <String, List<_Row>>{};
+
+  /// The no-prose half of the same question (audit **L2**, 2026-08-13): names
+  /// whose copies carry no text *and* a byte-identical `attributes` body. §2.5
+  /// said this bucket "needs an attributes-level comparison"; this is it.
+  var _bNamesSameAttrs = 0;
+  final _bSameAttrs = <String, List<_Row>>{};
+
+  /// Every entity id in the corpus → its `slug␀name`. A statblock's child refs
+  /// are per-pack uuids, so two byte-identical copies never *encode* the same;
+  /// dereferencing the ids to names is what makes [_canonAttrs] compare content
+  /// rather than id minting.
+  final _idName = <String, String>{};
+
   /// Identity key → the first name spelling seen for it. The key folds case, so
   /// printing `_nameOf(key)` would show `scoundrel` for `Scoundrel`.
   final _displayName = <String, String>{};
@@ -336,6 +358,11 @@ class _Census {
     final strictKeys = <String>{};
     final allPackKeys = <String>{};
 
+    for (final pack in packs) {
+      for (final e in pack.byId.values) {
+        _idName[e.id] = _key(e.slug, e.name);
+      }
+    }
     _collectOwnedIds();
 
     for (final pack in packs) {
@@ -400,9 +427,18 @@ class _Census {
       final texts = rows.map((r) => r.entity.text).toSet();
       if (texts.length == 1 && texts.first.isEmpty) {
         _bNamesNoText++;
+        // No prose on any copy is not evidence either way (§2.5), so fall
+        // through to the card body: canonical JSON of `attributes`, which for a
+        // `monster` is the whole statblock. One distinct body = a real
+        // duplicate; more = the copies differ and the name is all they share.
+        if (rows.map((r) => _canonAttrs(r.entity)).toSet().length == 1) {
+          _bNamesSameAttrs++;
+          _bSameAttrs[key] = rows;
+        }
       } else if (texts.length == 1) {
         _bNamesSameText++;
         _bCopiesSameText += rows.length - 1;
+        _bSameText[key] = rows;
       } else {
         _bNamesDiffText++;
       }
@@ -599,7 +635,8 @@ class _Census {
     print('   names whose copies are textually identical  $_bNamesSameText '
         '($_bCopiesSameText cop(ies))');
     print('   names that only share a name                $_bNamesDiffText');
-    print('   names with no text on any copy (no evidence) $_bNamesNoText');
+    print('   names with no text on any copy               $_bNamesNoText '
+        '(of which identical card body: $_bNamesSameAttrs)');
     for (final e in _sorted(_sharedBySlug)) {
       print('     ${e.key.padRight(20)} ${e.value}');
     }
@@ -671,6 +708,64 @@ class _Census {
   /// Every colliding name in one category, so a decision can be made per row.
   /// `=` / `≠` is text agreement; `[owned]` marks a monster's own child row,
   /// which §2.5 keeps out of L1/L2 regardless of what the text says.
+  /// The card body as content: keys sorted, in-pack uuid refs replaced by the
+  /// name they point at.
+  String _canonAttrs(_PackEntity e) => jsonEncode(_canon(e.attributes));
+
+  /// How many ids [_canon] actually resolved. Printed by `--list-shared`: if a
+  /// bug left this at 0 the statblock comparison would be comparing per-pack
+  /// uuids and could only ever report "different", which is the one way this
+  /// measurement could be wrong and still look plausible.
+  var _derefs = 0;
+
+  Object? _canon(Object? v) {
+    if (v is String) {
+      final hit = _idName[v];
+      if (hit != null) _derefs++;
+      return hit ?? v;
+    }
+    if (v is List) return [for (final x in v) _canon(x)];
+    if (v is Map) {
+      final keys = v.keys.map((k) => k.toString()).toList()..sort();
+      return {for (final k in keys) k: _canon(v[k])};
+    }
+    return v;
+  }
+
+  /// L2's candidate set: every section-B name whose copies are textually
+  /// identical, split by whether a statblock owns any copy. Only the unowned
+  /// half is link work — an owned child row belongs to its creature (§2.5).
+  void printSharedList() {
+    final free = <String>[];
+    final owned = <String>[];
+    _bSameText.forEach((key, rows) {
+      final packNames = (rows.map((r) => r.pack).toSet().toList()..sort());
+      final line = '  ${_slugOf(key).padRight(18)} '
+          '${_displayName[key]}  [${packNames.join(", ")}]';
+      (rows.any((r) => _ownedIds.contains(r.entity.id)) ? owned : free)
+          .add(line);
+    });
+    free.sort();
+    owned.sort();
+    print('# section B, identical text — no statblock owns a copy '
+        '(${free.length} name(s))');
+    free.forEach(print);
+    print('');
+    print('# section B, identical text — a statblock owns a copy: not link '
+        'work (${owned.length} name(s))');
+    owned.forEach(print);
+    print('');
+    print('# section B, no text on any copy but an identical card body '
+        '($_bNamesSameAttrs name(s), $_derefs child ref(s) dereferenced)');
+    final byBody = _bSameAttrs.keys.map((key) {
+      final packNames = _sharedKeys[key]!;
+      return '  ${_slugOf(key).padRight(18)} '
+          '${_displayName[key]}  [${packNames.join(", ")}]';
+    }).toList()
+      ..sort();
+    byBody.forEach(print);
+  }
+
   void printList(String slug) {
     final builtinById = <String, String>{};
     builtin.forEach((k, text) => builtinById.putIfAbsent(_loosen(k), () => text));

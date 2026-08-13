@@ -1,7 +1,7 @@
 ---
 type: system
 domain: world-content
-updated: 2026-07-30
+updated: 2026-08-13
 tags: [system]
 ---
 
@@ -28,6 +28,17 @@ own copies of SRD-overlapping content — measured 2026-07-30 by [[dupe_census]]
 **4,331 of 20,712 bundled entities (20.9%)**, and every pack still emits
 `requires: []`. Deduplicating them is separate work that this unblocks; the plan
 is `flutter_app/docs/open5e_content_audit.md` §2 + Stage L.
+
+> [!warning] The pack→pack half has no producer, and that is now a decision
+> (audit **L2**, 2026-08-13). After the audit's own ownership policy, the whole
+> bundled corpus yields **one** name a pack could link instead of copy — a
+> one-row `language` "Void Speech" in six packs. Declaring it would make each
+> linker pull **2.9 MB** of Tome of Beasts at install, since `requires` is
+> resolved transitively *before* the requested pack and a failed dependency
+> fails the install. It was kept duplicated. So `emit.assemblePack` writes no
+> `links` key, every catalog `requires` is `[]`, and the only live producer of a
+> link is the user, through [[link_package_dialog]]. Nothing below is
+> speculative — the mechanism is used — but the first-party packs do not use it.
 
 **Declaring a link in a built pack takes both keys.** A `metadata.links` entry is
 read by two different consumers that look at different fields:

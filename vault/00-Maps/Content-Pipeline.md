@@ -122,5 +122,27 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   unresolvable softRef is a [[gate_packs]] violation. In-card softRefs
   **135 → 3,955**, 0 dangling. Feat prerequisites are an `S` gap — no
   `prerequisite` string in the snapshot names a class or species at all.
+  **L2 closed by measurement 2026-08-13, no asset changed**: "one owner per
+  shared name, the rest link" has a candidate set of **one**. [[dupe_census]]
+  gained `--list-shared` (three buckets) and a card-body comparison for the
+  names with no prose — child refs dereferenced to names first, so per-pack uuid
+  minting cannot fake a difference — and it reports **0 of 588 shared monster
+  names have the same statblock**; the only identical bodies are the 15 gear
+  stubs **B6** drops. Of the 189 identical-text names, 188 are statblock-owned.
+  The survivor, `language` "Void Speech" in six packs, was **priced and kept
+  duplicated**: `requires` is installed transitively, so the link would pull
+  2.9 MB of Tome of Beasts for a one-row card. Consequence recorded in
+  [[Package-Links]]: `metadata.links` ships with **no producer** — [[emit]]
+  writes no `links` key and every catalog `requires` is `[]` by decision.
+  **A2's last box closed 2026-08-13 — Stage A is fully green.** The
+  publisher-wide WotC skip was verified by building it: mapped behind a
+  temporary env gate off `d4276c58` and diffed against `builtinNameIndex()`.
+  `srd-2024` adds **0** chargen names, **0** magic items (551 misses = 409
+  qualifier variants + 127 per-weapon expansions of one generic built-in card)
+  and **1** monster; 94 of its 95 monster misses are built-in `animal`/`mount`
+  rows. `srd-2014` is SRD 5.1, so its extras are edition content. The one real
+  cost is the spell-slot tables — **660 `slots-Nth` rows in `srd-2024`, 0 in
+  every non-WotC document** — which [[build_packs]] never reads; that is a
+  **T2-2** harvest into [[srd_core_pack]], not a reason to ship a WotC pack.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.
