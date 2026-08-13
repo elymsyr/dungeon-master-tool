@@ -2,14 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Always CodeGraph First
+## Always Codebase Memory First
 
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+This repo is indexed in the `codebase-memory` MCP server as project
+**`home-eren-GitHub-dungeon-master-tool`**. Reach for it BEFORE grep/find or
+reading files when you need to understand or locate code. If the tools are
+listed but deferred, load them by name via tool search
+(`select:mcp__codebase-memory__search_code,...`).
 
-- **MCP tools** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them. `codegraph_node` returns one symbol's source + callers, or reads a whole file with line numbers. If the tools are listed but deferred, load them by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` and `codegraph node <symbol-or-file>` print the same output.
+| Tool | Use for |
+|---|---|
+| `search_code` | semantic/keyword search — where does X live |
+| `search_graph` / `query_graph` | find symbols, traverse callers/callees/other edges grep can't follow |
+| `get_code_snippet` | verbatim source of a symbol found above |
+| `trace_path` | how two symbols connect (call paths) |
+| `get_architecture` | high-level layout before diving in |
+| `get_graph_schema` | node/edge kinds available to `query_graph` |
+| `detect_changes` | after edits, what drifted from the index |
+| `list_projects` / `index_status` | confirm the index exists and is fresh |
+| `index_repository` | re-index — **the user's decision, offer it, don't run it unasked** |
+| `manage_adr` | read/record architecture decisions in the graph |
 
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+Index freshness is tied to a commit SHA; if `index_status` is behind HEAD or
+`detect_changes` shows drift, say so rather than trusting stale results, and
+fall back to Read/Grep/Glob.
 
 ## Read the vault only needed
 
@@ -24,8 +40,6 @@ Its rules (mirrored from [vault/90-Meta/SOP.md](vault/90-Meta/SOP.md)):
 Granularity is hybrid: notes exist for services, DAOs, resolvers, mappers, worker modules, logic providers, schema cores, and CI/config — not for trivial models, generated `*.g.dart`/`*.freezed.dart`, pure-layout widgets, or l10n.
 
 Start at [vault/Home.md](vault/Home.md) → [vault/00-Maps/_Architecture-Overview.md](vault/00-Maps/_Architecture-Overview.md).
-
-CodeGraph is also indexed at `flutter_app/.codegraph/` — `codegraph explore "<symbols or question>"` (run from `flutter_app/`) beats grep for locating code and call paths.
 
 ## Commands
 
