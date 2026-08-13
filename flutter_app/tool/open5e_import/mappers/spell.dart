@@ -3,13 +3,17 @@
 // Depth = stats + descriptive text (per plan): every typed field the app's
 // spell schema carries is filled (level, school, casting time, range,
 // components, duration, save, damage types, conditions). The originating class
-// list is stored as entity *tags* rather than `class_refs` — a spell package
-// ships no class entities of its own, so an inter-entity `_ref` would dangle.
+// list is written **both** as entity `tags` and — audit **L3** — as
+// `class_refs` softRefs to whichever class is in scope at resolve time (the
+// built-in one, §2.3 case 2). A hard `_ref` would dangle, a softRef does not.
+// `tags` stays: 8 of the 1,212 tagged spells name a class no pack ships
+// (Artificer, Herald, Anti Paladin), so retiring it would lose them.
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/_helpers.dart';
 
 import '../loaders.dart';
 import '../normalize.dart';
 import '../refgraph.dart';
+import 'chargen.dart' show softRef;
 
 /// v2 `school` slug → canonical app spell-school name. Most title-case 1:1;
 /// only the a5e variant "transformation" needs folding.
@@ -20,12 +24,17 @@ const _schoolAlias = {'transformation': 'Transmutation'};
 /// [v1ClassByName] maps `spellNameLower → v1 dnd_class` string and is used to
 /// recover class linkage for spells whose v2 `classes` field is empty (true for
 /// most 3rd-party docs — KP/ToH/Warlock/A5E). See `bin/build_packs.dart`.
+///
+/// [knownClasses] is the set of class **names** a softRef can land on (the
+/// built-in pack's twelve). A tag outside it — Artificer, Herald — gets no
+/// ref: an unresolvable softRef is a `dangling-soft-ref` gate violation.
 void mapSpells({
   required PackBuilder pack,
   required Normalizer norm,
   required String source,
   required List<Fixture> spells,
   Map<String, String> v1ClassByName = const {},
+  Set<String> knownClasses = const {},
 }) {
   for (final s in spells) {
     final name = (s['name'] as String?)?.trim();
@@ -118,13 +127,18 @@ void mapSpells({
     final trigger = _reactionTrigger((s['reaction_condition'] as String?) ?? '');
     if (trigger != null) attrs['reaction_trigger'] = trigger;
 
-    // Classes → tags (descriptive; not inter-entity refs). v2 carries the
-    // linkage in `classes`; when empty (most 3rd-party docs) fall back to the
-    // v1 `dnd_class` string indexed by spell name.
+    // Classes → tags + `class_refs` (audit L3). v2 carries the linkage in
+    // `classes`; when empty (most 3rd-party docs) fall back to the v1
+    // `dnd_class` string indexed by spell name.
     final v2classes = (s['classes'] as List?)?.cast<String>() ?? const [];
     final tags = v2classes.isNotEmpty
-        ? _classTags(v2classes)
+        ? classTagsFromV2(v2classes)
         : _classTagsFromV1(v1ClassByName[name.toLowerCase()]);
+    final classRefs = [
+      for (final c in tags)
+        if (knownClasses.contains(c)) softRef('class', c),
+    ];
+    if (classRefs.isNotEmpty) attrs['class_refs'] = classRefs;
 
     pack.add(packEntity(
       slug: 'spell',
@@ -236,7 +250,9 @@ String? _reactionTrigger(String raw) {
 }
 
 /// `['srd_wizard', 'kp_cleric']` → `['Wizard', 'Cleric']` (deduped, ordered).
-List<String> _classTags(List<String> classes) {
+/// Public because `verify.dart` restates the `class_refs` contract from the
+/// same column and must not re-implement the slug→name transform.
+List<String> classTagsFromV2(List<String> classes) {
   final seen = <String>{};
   final out = <String>[];
   for (final c in classes) {

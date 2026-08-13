@@ -55,6 +55,15 @@ void main(List<String> args) {
   // bucket the v2 fixtures leave empty; see `mapCreatures`.
   final v1Actions = _v1ActionIndex(dataRoot);
 
+  // Class names a spell's `class_refs` softRef can actually land on (audit L3).
+  // The built-in pack is in scope in every world (§2.1), so its twelve classes
+  // are the safe targets; a tag naming anything else stays a tag only.
+  final classPrefix = nameKey('class', '');
+  final knownClasses = {
+    for (final key in builtinNameIndex())
+      if (key.startsWith(classPrefix)) key.substring(classPrefix.length),
+  };
+
   // v1 `Race.json` species index (audit B3) — same gap, same rule: consulted
   // only for a species the v2 fixtures gave zero trait rows.
   final v1Species = _v1SpeciesIndex(dataRoot);
@@ -109,6 +118,7 @@ void main(List<String> args) {
         source: doc.title,
         spells: loadFixtures(doc.v2File('Spell.json')),
         v1ClassByName: v1ForDoc,
+        knownClasses: knownClasses,
       );
     }
     if (doc.hasMagicItems) {
