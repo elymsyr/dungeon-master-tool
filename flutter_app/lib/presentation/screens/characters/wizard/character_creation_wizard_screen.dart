@@ -463,8 +463,8 @@ class _CharacterCreationWizardScreenState
     final spellCount = entities.values
         .where((e) =>
             e.categorySlug == 'spell' &&
-            (e.fields['class_refs'] is List) &&
-            (e.fields['class_refs'] as List).contains(draft.classId))
+            resolveEntityRefList(e.fields['class_refs'], entities)
+                .contains(draft.classId))
         .length;
     if (spellCount == 0) return null;
 
@@ -870,11 +870,9 @@ Map<String, dynamic> buildSeedFields({
     ...draft.skillChoiceIds,
     for (final id in featSkillIds)
       if (!draft.skillChoiceIds.contains(id)) id,
-    if (background?.fields['granted_skill_refs'] is List)
-      ...(background!.fields['granted_skill_refs'] as List).whereType<String>(),
-    if (race?.fields['granted_skill_proficiencies'] is List)
-      ...(race!.fields['granted_skill_proficiencies'] as List)
-          .whereType<String>(),
+    ...resolveEntityRefList(background?.fields['granted_skill_refs'], entities),
+    ...resolveEntityRefList(
+        race?.fields['granted_skill_proficiencies'], entities),
   };
   final skillNames = <String>{
     for (final id in skillEntityIdSet)

@@ -731,8 +731,8 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       if (!cantripOnly && (lvl < 1 || lvl > maxLvl)) continue;
       // SRD spells link by UUID (`class_refs`); imported packs carry the bare
       // class name in `tags`. Accept either so packaged spells appear on level-up.
-      final refs = f['class_refs'];
-      final byRef = refs is List && refs.contains(classId);
+      final byRef = resolveEntityRefList(f['class_refs'], widget.entities)
+          .contains(classId);
       final byTag = className != null &&
           e.tags.any((t) => t.toLowerCase() == className);
       if (!byRef && !byTag) continue;
@@ -1158,8 +1158,9 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           // SRD spells link by UUID (`class_refs`); imported packs carry the
           // bare class name in `tags`. Accept either so packaged spells appear
           // in feat spell-list choices (e.g. Magic Initiate).
-          final refs = e.fields['class_refs'];
-          final byRef = refs is List && refs.contains(classId);
+          final byRef =
+              resolveEntityRefList(e.fields['class_refs'], widget.entities)
+                  .contains(classId);
           final byTag =
               e.tags.any((t) => t.toLowerCase() == listValue.toLowerCase());
           if (!byRef && !byTag) continue;

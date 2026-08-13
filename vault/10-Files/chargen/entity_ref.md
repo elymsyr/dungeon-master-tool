@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/entity_ref.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -22,7 +22,7 @@ tags: [file]
 - Events / triggers: none.
 
 **Outputs**
-- Public API: `String? resolveEntityRef(Object? raw, Map<String,Entity> byId)`; `String? findEntityIdByName(Map<String,Entity> byId, String slug, String name)`.
+- Public API: `String? resolveEntityRef(Object? raw, Map<String,Entity> byId)`; `List<String> resolveEntityRefList(Object? raw, Map<String,Entity> byId)`; `String? findEntityIdByName(Map<String,Entity> byId, String slug, String name)`.
 
 ## Dependencies & Links
 - Depends on: `entity.dart` (reads `Entity.categorySlug`, `.name`, `.id`).
@@ -34,6 +34,7 @@ tags: [file]
 ## Key Logic / Variables
 - Three envelope shapes: (1) plain entity-id `String` (`ref()` resolved at build, or a `_lookup` that became a Tier-0 UUID at load); (2) `{_ref: <id>, name}`; (3) `softRef` `{slug, name}` left intact for runtime name-resolution against installed content (subclass→base class, background→origin feat, species→innate spell).
 - `resolveEntityRef`: bare String returns it only if present in `byId` (else null); Map reads `_ref` **or** `slug` plus `name` and delegates to `findEntityIdByName`.
+- `resolveEntityRefList` (added 2026-08-13, audit **U1**): maps a `*_refs` list through `resolveEntityRef` in order and **drops** what does not resolve — the soft-ref contract, where a missing target is never an error. It exists because the raw idioms it replaces, `(list as List).contains(id)` and `list.whereType<String>()`, both discard every Map envelope silently: a correctly written packaged ref simply became invisible. Every chargen reader of a `*_refs` field goes through it; use it rather than re-deriving the loop.
 - `findEntityIdByName`: O(1) via a per-map `(slug,name)→id` index built lazily into an `Expando<Map<String,String>>` keyed weakly on the `byId` instance. Safe because the maps are unmodifiable and rebuilt as a *new* instance whenever contents change (`wizardEntitiesProvider`), so a cached index can never go stale. Key format is `"$slug $name"`; first-writer-wins matches the old linear "first match".
 - Qualifier-tolerant: on a miss it strips a trailing parenthetical (`"Magic Initiate (Cleric)"` → `"Magic Initiate"`) and retries, so a softRef naming a specific variant lands on the generic entity the pack ships.
 - **Case sensitive.** The index key is the raw `"$slug $name"` — `"thieves' tools"` does not find `"Thieves' Tools"`. Anything *emitting* a softRef must use the target's exact name; [[dupe_census]] lowercases when it audits this surface, so it will report such a ref as resolved while this function drops it.
@@ -41,4 +42,5 @@ tags: [file]
 
 ## Notes
 - Performance note in source: `CharacterResolver` resolves 20+ refs against the *same* `entitiesById` per character — without the Expando cache each was an O(n) scan (twice on a qualifier miss) over the whole merged map.
-- ⚠️ **Adoption is incomplete on the chargen side (2026-07-30).** [[character_resolver]] routes every `_ref` through here (`_readRefList`/`_resolveRef`), but several wizard/level-up filters still compare raw id strings and so cannot see a softRef Map at all: `wizard/steps/spells_step.dart` `_classRefs`, `wizard/character_creation_wizard_screen.dart` (the `spellCount` check that decides **whether the spells step is shown**), `wizard/steps/feats_step.dart`, and `pending_choice_resolver_dialog.dart` (×2) — all on `spell.class_refs`. Packaged spells reach those lists only via a parallel bare-name `tags` fallback. Consequence: filling `class_refs` with softRefs (audit phase L3) while retiring `tags` would remove every bundled spell from character creation with no test failing. Audit doc §2.3.1 / phase **U1** puts these readers on `resolveEntityRef` first.
+- ✅ **Chargen adoption closed 2026-08-13 (audit U1).** Six readers previously compared raw id strings and could not see a softRef Map: `wizard/steps/spells_step.dart` `_classRefs`, `wizard/character_creation_wizard_screen.dart` (the `spellCount` check that decides **whether the spells step is shown**, plus the `skillEntityIdSet` that collects background/species granted skills), `wizard/steps/feats_step.dart`, and `pending_choice_resolver_dialog.dart` (×2) — all but one on `spell.class_refs`. All now call `resolveEntityRefList`. Test: `test/domain/services/entity_ref_list_test.dart`.
+- ⚠️ The parallel bare-name `tags` fallback is **still live and still load-bearing**: `class_refs` is 0% filled in the packs, so `tags` is what actually makes bundled spells visible today. Retiring it belongs to audit L3, and only after U2's per-family wizard test proves the spell list is non-empty without it. Writing `class_refs` as softRefs and dropping `tags` in one change still removes every bundled spell from character creation.
