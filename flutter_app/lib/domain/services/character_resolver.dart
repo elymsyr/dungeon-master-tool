@@ -195,10 +195,14 @@ class CharacterResolver {
     final autoGrantedTraitIds = <String>[];
 
     /// Read an ability relation-list field down to `STR`/`DEX`/… abbreviations.
+    /// Ids, `{_lookup, name}` envelopes and plain ability names all appear in
+    /// this shape depending on where the card came from — see
+    /// [abilityAbbrevFromRef].
     List<String> abilityAbbrevs(Object? raw) {
       final out = <String>[];
-      for (final id in _readRefList(raw, entitiesById)) {
-        final abbrev = _abilityAbbrev(entitiesById[id]?.name ?? '');
+      if (raw is! List) return out;
+      for (final entry in raw) {
+        final abbrev = abilityAbbrevFromRef(entry, entitiesById);
         if (abbrev != null && !out.contains(abbrev)) out.add(abbrev);
       }
       return out;
@@ -591,12 +595,10 @@ class CharacterResolver {
           });
         } else {
           // Heuristic: bump first option ability that isn't already capped.
-          final opts = _readMapList(feat.fields['asi_ability_options']);
-          for (final opt in opts) {
-            final name = opt['name'];
-            if (name is! String) continue;
-            final abbrev = _abilityAbbrev(name);
-            if (abbrev == null) continue;
+          // The option list is a relation list, so after an install it holds
+          // ids, not `{_lookup, name}` maps — reading only the map shape meant
+          // no packaged feat ever applied its ASI (audit M1).
+          for (final abbrev in abilityAbbrevs(feat.fields['asi_ability_options'])) {
             final cur = abilities[abbrev] ?? 10;
             if (cur + asiAmount <= asiMax) {
               abilities[abbrev] = cur + asiAmount;

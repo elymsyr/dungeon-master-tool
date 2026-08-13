@@ -54,4 +54,27 @@ void main() {
     expect(resolveEntityRefList(null, world), isEmpty);
     expect(resolveEntityRefList('c-wiz', world), isEmpty);
   });
+
+  // ── Audit phase M1 — feat ASI never applied to a packaged feat ────────
+  // `asi_ability_options` is an ability *relation* list, so the same card
+  // carries a different shape depending on where it came from: an installed
+  // pack resolved its envelopes to ids, an as-authored card still holds the
+  // envelope, and parts of the built-in pack ship plain names. The resolver
+  // read only the envelope, so no bundled feat ever bumped an ability.
+  test('an ability option reads the same in all three shapes', () {
+    final abilities = <String, Entity>{
+      'a-str': ent('a-str', 'ability', 'Strength'),
+    };
+    for (final raw in <Object>[
+      'a-str', // installed: resolved id
+      {'slug': 'ability', 'name': 'Strength'}, // soft ref
+      {'_lookup': 'ability', 'name': 'Strength'}, // as authored, unresolved
+      'Strength', // built-in plain name
+      'STR', // abbreviation
+    ]) {
+      expect(abilityAbbrevFromRef(raw, abilities), 'STR', reason: '$raw');
+    }
+    expect(abilityAbbrevFromRef('Luck', abilities), isNull);
+    expect(abilityAbbrevFromRef(null, abilities), isNull);
+  });
 }
