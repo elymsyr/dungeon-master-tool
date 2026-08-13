@@ -171,10 +171,21 @@ void main() {
           expect(visible, isNotEmpty,
               reason: 'paketin hiçbir büyüsü hiçbir sınıfın listesine düşmüyor '
                   '— adım boş render eder');
-          // Bugünkü görünürlük tamamen `tags` üzerinden; L3 `class_refs`'e
-          // geçerken bu sayının altına inmemeli.
           final total = visible.values.fold<int>(0, (a, b) => a + b);
           expect(total, greaterThan(0));
+
+          // L3: görünürlük artık `tags`'e ek olarak `class_refs` üzerinden de
+          // var. `tags` hâlâ duruyor (Artificer/Herald etiketli 8 büyünün tek
+          // yolu o), ama her paketin büyülerinin bir kısmı ref yoluyla da
+          // görünmeli — yoksa L3 o paket için yazılmamış demektir.
+          final classIds = {for (final c in classes) c.id};
+          final viaRefs = byCat['spell']!
+              .where((s) => resolveEntityRefList(s.fields['class_refs'], world)
+                  .any(classIds.contains))
+              .length;
+          expect(viaRefs, greaterThan(0),
+              reason: 'paketin hiçbir büyüsü `class_refs` ile bir sınıfa '
+                  'bağlanmıyor — `tags` emekliye ayrılırsa adım boşalır');
         });
       }
 

@@ -45,10 +45,13 @@ tags: [file]
 ## Key Logic / Variables
 - **Büyü → sınıf eşleşmesi iki yollu.** SRD büyüleri `class_refs` (UUID) taşır;
   içe aktarılan Open5e paketlerinde bu alan **her satırda boş**, sınıf adı
-  sadece `tags` içinde. Ölçüm (2026-08-13): 1.297 paket büyüsünün **1.212'si
-  yalnız `tags` ile görünüyor, 0'ı `class_refs` ile**, 85'i hiçbir yolla
-  görünmüyor. `tags` bir yedek değil, tek yol — L3 önce `class_refs`'i
-  doldurmadan `tags`'i emekliye ayıramaz.
+  sadece `tags` içindeydi. U2 ölçümü (2026-08-13): 1.297 paket büyüsünün
+  **1.212'si yalnız `tags` ile görünüyor, 0'ı `class_refs` ile**, 85'i hiçbir
+  yolla görünmüyordu. **L3 (2026-08-13) `class_refs`'i doldurdu: 1.204 büyü**
+  artık gömülü sınıflara softRef taşıyor. `tags` yine de kalıyor — kalan 8 büyü
+  yalnızca hiçbir pakette karşılığı olmayan sınıf adları (Artificer, Herald,
+  Anti Paladin) ile etiketli, o yüzden `tags`'i emekliye ayırmak içerik
+  kaybettirir. İki yol da okunmaya devam ediyor.
 - **`parent_class_ref` / `parent_species_ref` iki şekilli**: paket içi hedef için
   düz uuid, başka pakette/gömülüyse softRef `{slug, name}`. `resolveEntityRef`
   ikisini de çözer; çözülmeyen satır **hata değil**, listeden düşer.

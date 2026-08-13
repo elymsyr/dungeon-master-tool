@@ -68,8 +68,20 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'gate.dart' show builtinNameIndex, nameKey;
 import 'loaders.dart';
+import 'mappers/spell.dart' show classTagsFromV2;
 import 'sources.dart';
+
+/// Class names a spell's `class_refs` softRef can land on — the mapper's filter
+/// (audit L3), restated from the built-in pack rather than copied from it.
+final _knownClasses = () {
+  final prefix = nameKey('class', '');
+  return {
+    for (final key in builtinNameIndex())
+      if (key.startsWith(prefix)) key.substring(prefix.length),
+  };
+}();
 
 /// Verify every pack in [packDir] against the fixtures under [dataRoot].
 ///
@@ -517,6 +529,19 @@ final Map<String, List<_Rule>> _rules = {
     _Rule('attack_type', ['attack_roll'], (r) => r['attack_roll'] == true
         ? _Expect.why('melee/ranged is inferred from the range, not a column')
         : _Expect.nothing),
+    // Audit **L3**. Only the built-in classes are emitted as refs — a tag
+    // naming a class no pack ships (Artificer, Herald) would dangle — so the
+    // expectation is filtered the same way.
+    _Rule('class_refs', ['classes'], (r) {
+      final cs = (r['classes'] as List?)?.cast<String>() ?? const [];
+      if (cs.isEmpty) {
+        return _Expect.why('v2 leaves `classes` empty for most 3rd-party '
+            'documents; the class list is recovered from the v1 `dnd_class` '
+            'column, which this tool does not read');
+      }
+      return _Expect.refNames(
+          classTagsFromV2(cs).where(_knownClasses.contains));
+    }),
   ],
   'magic-item': [
     _Rule('rarity_ref', ['rarity'], (r) => _Expect.refName(r['rarity'])),

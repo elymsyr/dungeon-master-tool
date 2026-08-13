@@ -109,10 +109,27 @@ alone and 0 through `class_refs`** — 85 are invisible today under any path. So
 *before* retiring it, not after. Verified by mutation: dropping the `tags` half
 of the predicate fails 11 of the 39 cases.
 
+**L3's main clause is done — 2026-08-13.** `spell.class_refs` is filled:
+**1,204 of 1,297 packaged spells** (92%) now carry softRefs to the built-in
+classes they are tagged for, up from 0. The class list was already being
+computed for `tags`; the mapper now emits it twice, filtered to the names a
+softRef can actually land on (the built-in twelve — an unresolvable softRef is a
+`dangling-soft-ref` gate violation, and Artificer / Herald / Anti Paladin have
+no class card anywhere). **`tags` stays**, exactly as U2's floor demanded: 8
+tagged spells name only those three classes and would vanish with it. Rebuilt
+off A0's pinned `d4276c58`, so the diff is *only* the new field — `diff_packs`
+reports 1,204 added `class_refs` values and **no other change in any of the 19
+packs**. `gate_packs` green, `dupe_census` section C **135 → 3,576 refs, 0
+dangling**, `verify_packs` **0 disagreements** with a new `class_refs` rule
+(311 rows judged against the v2 `classes` column; the other 986 declared
+`unverifiable` because their list comes from v1, which the verifier does not
+read). Remaining in L3: feat prerequisites and `magic-item.base_item_ref`.
+
 **Next action right now:** **publish** (one command with the two secrets — the
-only thing between the promoted assets and users). After that Stage D is closed
-and the roadmap is back to content: **L3** is now unblocked (U2 is its gate and
-the 1,212 figure is its floor), while B5, B6, B10 and L1 each need a
+only thing between the promoted assets and users; the assets moved again with
+L3, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
+`assets/first_party/manifest.json` is rebuilt for the new sizes). After that
+Stage D is closed; on the content side B5, B6, B10 and L1 each need a
 target-shape call first.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
@@ -216,7 +233,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
-| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (1 today), and `requires` is non-empty for every linker |
+| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,576 refs after L3), and `requires` is non-empty for every linker |
 | 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
@@ -348,9 +365,10 @@ work. → §2, §3.2, phases ~~L0~~–L2.
 
 **Gap 3 — refs written as prose.** Where a card *should* point at another card, the
 importer mostly writes English instead. `feat.prereq_class_refs` is 0% because the
-prerequisite class is named in the description text; `spell.class_refs` is 0%
-because of a policy note that package links have now invalidated. Only **135**
-cross-package refs exist in the entire 20,712-entity corpus. → §2.3, and a gate on
+prerequisite class is named in the description text. **`spell.class_refs` is
+fixed — 0% → 92% (1,204 spells), L3 2026-08-13** — and with it cross-package
+refs went **135 → 3,576**, all resolving. The rest of the gap (feat
+prerequisites, `magic-item.base_item_ref`) is still prose. → §2.3, and a gate on
 every B phase.
 
 **Gap 4 — readers that cannot see a correct ref.** The sheet resolves every
@@ -523,9 +541,9 @@ Three facts about how a softRef lands, all of which matter when deciding:
   the second reason to delete duplicates rather than tolerate them: they make ref
   resolution nondeterministic in a way no test asserts.
 
-The census tracks this surface directly (§3.2 C). It is currently 135 refs —
-106 to the built-in pack, 29 that could be in-pack hard refs, 0 dangling, and
-**0 to another bundled pack**.
+The census tracks this surface directly (§3.2 C). It is **3,576** refs since
+L3 filled `spell.class_refs` (was 135) — 3,547 to the built-in pack, 29 that
+could be in-pack hard refs, 0 dangling, and **0 to another bundled pack**.
 
 ### 2.3.1 A correct ref is not a visible ref — check the reader first
 
@@ -574,7 +592,7 @@ These were correct when written and are not any more. Each is re-opened in §5:
 
 | Row | Old rationale | Why it no longer holds |
 |---|---|---|
-| `spell.class_refs` (required, 0%) | "spell packs ship no class entities, so a `_ref` would dangle" | a softRef to a built-in class does not dangle — it is exactly what 97 subclasses already do |
+| ~~`spell.class_refs` (required, 0%)~~ **closed by L3 2026-08-13, now 92%** | "spell packs ship no class entities, so a `_ref` would dangle" | a softRef to a built-in class does not dangle — it is exactly what 97 subclasses already do, and 1,204 spells now do it too |
 | `magic-item.base_item_ref` (0%) | "no base items ship in item packs" | the built-in pack ships weapons, armor and gear; softRef by name |
 | `background.default_inventory_refs` / `class.default_inventory_refs` | superseded by `equipment_choice_groups`, backed by 159 synthesised gear stubs | link built-in gear instead of synthesising stubs (§6 B6) |
 | `monster.gear_refs`, `monster.spell_refs` | ⚪ no counterpart | the *targets* now exist and resolve; whether the source names them is a separate `S` question to re-check |
@@ -682,15 +700,16 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
 | `subspecies` | 30 | 2 | 48 | 10 |
 | `background` | 53 | 6 | 11 | 6 |
 | `feat` | 73 | 3 | 60 | 13 |
-| `spell` | 1297 | 8 | 25 | 21 |
+| `spell` | 1297 | 8 | 25 | 22 |
 | `magic-item` | 1063 | 1 | 64 | 8 |
 | `monster` | 2885 | 8 | 40 | 35 |
 | `creature-action` | 9901 | 8 | 19 | 13 |
 | `trait` | 6423 | 8 | 46 | 3 |
 | `adventuring-gear` | 159 | 6 | 8 | 4 |
 
-**133 of 407 declared (category, field) slots are filled** (was 125 before the
-2026-08-13 promotion). The eight that moved are B1's `subclass.features` /
+**134 of 407 declared (category, field) slots are filled** (125 before the
+2026-08-13 promotion, 133 after it, +1 for L3's `spell.class_refs`). The eight
+that moved on promotion are B1's `subclass.features` /
 `granted_at_level`, B2's `class.features`, B3's `background.granted_tool_refs` /
 `granted_tool_variant_group`, and B4's `spell.area_shape_ref` / `area_size_ft` /
 `reaction_trigger`. `creature-action` grew by 1,286 rows (B8's tob3 recovery), and
@@ -770,7 +789,7 @@ disagree, and the disagreement is the point:
 | A: collision only a case-folded key sees (the app holds two distinct entities) | 3 |
 | A: **not** a collision, but the resolver's strip lands it on a built-in card | **3,791** |
 | B: shared names — identity key / resolver key | 2,576 / 2,548 |
-| C: refs the old census called resolved that the app **drops** | **1** |
+| C: refs the old census called resolved that the app **drops** | **0** (was 1, fixed under L3) |
 | C: refs the app resolves that the old census called dangling | 0 |
 
 **A — per pack, vs the built-in pack**
@@ -801,15 +820,15 @@ Bucketed the way the app resolves, not the way the old census matched:
 
 | softRef target | Count |
 |---|--:|
-| built-in pack | 128 |
+| built-in pack | 3,547 |
 | another bundled pack | 0 |
 | own pack | 29 |
-| **nothing installed** | **1** |
-| **total** | **158** |
+| **nothing installed** | **0** |
+| **total** | **3,576** |
 
-158 refs across 22,005 entities is the measure of Gap 3 (135 before the 2026-08-13
-promotion — B3's `background.granted_tool_refs` is the growth), and the bad news is how
-little is expressed as a ref at all. The 29 self-targeting softRefs are candidates
+3,576 refs across 22,005 entities (135 before the 2026-08-13 promotion, 158 after
+it, **3,576 after L3 filled `spell.class_refs`** — 3,441 of the growth is that one
+field, on 1,204 spells). The 29 self-targeting softRefs are candidates
 for hard `ref()` (build-gated instead of best-effort). **This table is the guard
 rail for every B phase: it must grow, and its "nothing installed" row must stay at
 0.**
@@ -956,14 +975,15 @@ the shipped assets, 9 parent categories, 5,514 of 5,515 entities matched:
 
 | Verdict | Count | What it means |
 |---|--:|---|
-| `ok` | 67,503 → **67,804** | the shipped value **is** the source's value |
+| `ok` | 67,503 → **68,115** | the shipped value **is** the source's value |
 | `disagree` | **0** → **0** | no shipped value contradicts its source column |
 | `absent` | 371 → **70** | the source has a value the pack does not |
 | `unsourced` | 3,663 → **3,303** | the pack has a value the source does not |
-| `unverifiable` | 13,397 → **13,397** | the mapper derives it from more than one column; a rule declares the reason |
+| `unverifiable` | 13,397 → **14,383** | the mapper derives it from more than one column; a rule declares the reason (the growth is L3's `spell.class_refs`: 986 spells whose class list comes from the v1 fixtures this tool does not read) |
 
-(Right-hand column re-measured 2026-08-13 against the promoted assets; the arrows
-are the B4/B9/B11 predictions this section made, now shipped rather than pending.)
+(Right-hand column re-measured 2026-08-13 against the promoted assets **plus
+L3**; the arrows are the B4/B9/B11 predictions this section made, now shipped
+rather than pending.)
 
 **The headline is the zero.** Every value the importer copied, it copied
 correctly — across 2,885 monsters, 1,297 spells, 1,063 magic items and the
@@ -1289,9 +1309,11 @@ answers the second "known reason" this section used to list.
    `deepm` 75/515 untagged, `kp` 7/31, `a5e-ag` 3/371. A further 8 spells carry
    tags that match no class name (`deepmx` 3, `kp` 3, `a5e-ag` 2 — v1's
    non-class tokens like "Ritual Caster"). This is the floor `spell.class_refs`
-   (**L3**) has to beat. **U2 asserted it 2026-08-13** and independently
+   (**L3**) had to beat. **U2 asserted it 2026-08-13** and independently
    reproduced the same split from the shipped assets: 1,297 packaged spells,
-   1,212 visible via `tags`, 0 via `class_refs`, 85 invisible.
+   1,212 visible via `tags`, 0 via `class_refs`, 85 invisible. **L3 landed on
+   1,204 via `class_refs`** — the same 85 stay invisible (no upstream class at
+   all, an `S` gap) and the 8 non-class-name tags keep `tags` alive.
 3. **`open5e/core` and `open5e/elderberry-inn-icons` are the two silently-dropped
    documents** (§4 A2's last box). `core` holds only Tier-0 vocabulary
    (`Ability`, `Alignment`, `Condition`, `CreatureType`, `DamageType`,
@@ -1666,12 +1688,12 @@ the worked example in §2.3.
 
 ### 5.6 Non-chargen categories
 
-**`spell` (1297)** — every required field green except `class_refs`. 314 collide
-with a built-in spell (313 of them A5E — see §2.5).
+**`spell` (1297)** — every required field green, `class_refs` included since
+L3. 314 collide with a built-in spell (313 of them A5E — see §2.5).
 
 | | Field | Fill | Cause | Source |
 |:--:|---|--:|:--:|---|
-| 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row. The reader fix (U1) shipped 2026-08-13 — the four chargen readers now resolve softRefs — but `tags` is still what makes packaged spells visible today, so it is retired last. U2 (2026-08-13) measured exactly how much rests on it: 1,212 of 1,297 packaged spells, against 0 via `class_refs`.** |
+| 🟡 | `class_refs` (**required**) | 0% → **92%** | `M`🔗 | **Fixed by L3 (2026-08-13).** 1,204 of 1,297 spells carry `softRef('class', …)` for each class name the mapper was already computing for `tags`, filtered to the twelve the built-in pack ships — a tag naming a class no pack ships (Artificer 93, Herald 47, Anti Paladin 6) gets no ref, because a `dangling-soft-ref` fails the T3 gate. 92% *is* the ceiling under that filter: 85 spells carry no class at all upstream and 8 carry only those three names. **`tags` stays** — it is the only route for those 8, and U2's 1,212 floor is a floor, not a target to replace. Historical note: **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row. The reader fix (U1) shipped 2026-08-13 — the four chargen readers now resolve softRefs — but `tags` is still what makes packaged spells visible today, so it is retired last. U2 (2026-08-13) measured exactly how much rests on it: 1,212 of 1,297 packaged spells, against 0 via `class_refs`.** |
 | 🟡 | `area_shape_ref`, `area_size_ft` | 0% → **7%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.shape_type` is a 5-value enum (cone/cube/cylinder/line/sphere), every value already a built-in `area-shape` Tier-0 row, so all 103 resolve and none reach the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit occurs anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 7% *is* the ceiling: only 103 of 1,297 spells have an area upstream. |
 | 🟡 | `reaction_trigger` | 0% → **3%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.reaction_condition` is non-empty on 51 rows, all 51 with `casting_time: reaction`. Upstream writes it as the tail of the casting-time line ("1 reaction, *which you take when…*"), so 46 of 51 open with a dangling relative clause; the lead-in is stripped and the remainder made a sentence, since the app's field stands alone. 3% is the ceiling. |
 | ⚪ | `at_higher_levels_text` | 0% | `P` | **Reclassified by A1 (2026-07-30): not a gap.** `Spell.higher_level` prose is already shipped, appended to `description` as *"At Higher Levels"*. `SpellCastingOption.json` adds **zero** spells on top of that in any document, so this field is a formatting preference (split the prose out of `description`), not missing content. Was `🔴 L`. |
@@ -1886,7 +1908,9 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       present, both resolve), `assets/first_party/manifest.json` shows non-empty
       `requires` on the packs that now link, and installing a linker from the
       catalog pulls its target (`FirstPartyInstallNotifier.install`).*
-- [ ] **L3 — Turn existing prose into refs.** *(Unblocked 2026-08-13: U1 fixed
+- [ ] **L3 — Turn existing prose into refs.** *(Main clause — `spell.class_refs`
+      — **done 2026-08-13**, see the sub-box below; feat prerequisites and
+      `magic-item.base_item_ref` are what is left.)* *(Unblocked 2026-08-13: U1 fixed
       the readers, U2 built the gate and pinned the floor — **1,212 of 1,297
       packaged spells are visible through `tags` and 0 through `class_refs`**, so
       fill `class_refs` and re-run `wizard_pack_families_test` **before**
@@ -1908,10 +1932,38 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
             a rebuild would carry unrelated drift; the next full rebuild off the
             pinned SHA reproduces it. *Result: `dupe_census` section C
             "nothing installed" **1 → 0**, `gate_packs` **1 → 0** (green).*
+      - [x] **`spell.class_refs` — 0% → 92%. Done 2026-08-13.** The class list
+            was already being computed for `tags`; `mapSpells` now emits it a
+            second time as `softRef('class', name)`, filtered by a
+            `knownClasses` set `build_packs` derives from the built-in pack
+            (`builtinNameIndex()`, the same index the T3 gate resolves against).
+            The filter is not tidiness — an unresolvable softRef **is** a
+            `dangling-soft-ref` gate violation, and 146 tag values name a class
+            no pack ships (Artificer 93, Herald 47, Anti Paladin 6). Result:
+            **1,204 of 1,297 spells** carry refs; the remaining 93 are the 85
+            with no upstream class (an `S` gap) and the 8 whose only tags are
+            those three names. **`tags` is untouched**, per U2's floor — it is
+            still the only route for those 8, so retiring it would *lose*
+            content, not clean up. Rebuilt off A0's pinned `d4276c58`:
+            `diff_packs` reports **1,204 added `class_refs` and no other changed
+            value in any of the 19 packs**, `gate_packs` **green**,
+            `dupe_census` C **158 → 3,576 refs / 0 dangling**, `audit_packs`
+            **133 → 134** filled slots, `verify_packs` **0 disagreements** under
+            a new `class_refs` rule (311 rows checked against the v2 `classes`
+            column, 986 declared `unverifiable` — their list comes from the v1
+            fixtures the verifier does not read).
+            *Check:* `wizard_pack_families_test` gained a per-pack assertion
+            that packaged spells reach a class list **through `class_refs`
+            alone**; mutating the field name fails 8 of the now-39 cases, and
+            the pre-existing `tags` assertion still passes. `flutter test
+            test/presentation/character_creation/ test/domain/services/
+            test/application/character_creation/` → 435 passing;
+            `flutter analyze lib test tool` → 16 issues, 0 errors (baseline).
       *Exit: `dupe_census.dart` section C grows, "nothing installed" reaches **0**,
       `bundled_pack_resolve_test` proves one such ref reaching a sheet, and — for
       `spell.class_refs` — the wizard test from U2 proves the spell list is not
-      empty **before** the `tags` route is retired.*
+      empty **before** the `tags` route is retired.* — **all four met for
+      `spell.class_refs`**; the box stays open for the feat/magic-item clauses.
 
 ### Stage U — make the wizard see it (outcome 4)
 
