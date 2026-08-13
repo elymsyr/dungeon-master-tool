@@ -10,6 +10,18 @@ import 'dart:io';
 
 import 'sources.dart';
 
+/// Version stamped into every pack's `metadata.pack_version`.
+///
+/// `build_catalog` derives the **immutable** `r2_path`
+/// (`package/<slug>@<version>.json.gz`) from this, and `publish_catalog` skips
+/// an object that already exists — so a rebuild published without bumping this
+/// reaches no user. **Bump it on every content release.** Semver-ordered on
+/// purpose: the installed-vs-catalog upgrade check (audit D2) is a plain
+/// comparison.
+///
+/// 1.1.0 — audit phases B1/B2/B3/B4/B8/B9/B11 (2026-08-13).
+const packVersion = '1.1.0';
+
 class PackResult {
   final SourceDoc doc;
   final Map<String, dynamic> payload;
@@ -37,7 +49,7 @@ PackResult assemblePack({
       'game_system': doc.gameSystem,
       'source': doc.title,
       'source_doc_slug': doc.slug,
-      'pack_version': '1.0.0',
+      'pack_version': packVersion,
       'source_data_rev': sourceDataRev,
       'is_srd_overlap': doc.isSrdOverlap,
       'counts': counts,

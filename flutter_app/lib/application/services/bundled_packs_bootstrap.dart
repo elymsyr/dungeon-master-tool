@@ -26,9 +26,9 @@ import 'package_payload_importer.dart';
 /// guards on `kDebugMode`, so it is a deliberate no-op in release — where the
 /// official R2 catalog is the real delivery channel.
 ///
-/// Freshness gate: `pack_version` / `source_data_rev` are NOT bumped between
-/// regenerations (both stay `1.0.0` / `staging-…`), so a version compare can't
-/// detect a content change. Instead we hash the raw payload and store the digest
+/// Freshness gate: `pack_version` is bumped per *release* (`emit.packVersion`),
+/// not per regeneration, so two rebuilds inside one release ship the same
+/// version and a version compare can't detect a content change. Instead we hash the raw payload and store the digest
 /// under `metadata.bundled_content_hash`; a pack is skipped only when its stored
 /// hash still matches the on-disk file. Each row is stamped
 /// `installed_from = 'assets'` so the admin uninstall path keeps recognising it.

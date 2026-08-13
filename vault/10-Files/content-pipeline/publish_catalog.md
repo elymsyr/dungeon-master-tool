@@ -5,7 +5,7 @@ path: flutter_app/tool/catalog_publish/bin/publish_catalog.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -40,4 +40,4 @@ tags: [file]
 
 ## Notes
 - Worker not yet deployed per the First-Party Catalog memory; legal/R2 publish approval is the remaining gate for the Open5e packs (P2). Run [[build_catalog]] first or it errors.
-- ⚠️ **Immutability + a constant `pack_version` means a content rebuild publishes nothing.** [[emit]] hardcodes `pack_version: '1.0.0'`, so every Open5e pack's `r2_path` is `package/<slug>@1.0.0.json.gz` and `_exists()` skips it. Republishing regenerated packs therefore reports *"19 skipped"* and no client sees the change; `--force` would overwrite a path the contract calls immutable and still gives clients no upgrade signal ([[first_party_catalog_provider]] never re-checks `catalog_version`). The fix is a real version bump upstream, not a flag here — audit doc phase **D1**.
+- ⚠️ **Immutability means a content rebuild publishes nothing unless the version moves.** `r2_path` is `package/<slug>@<pack_version>.json.gz` and `_exists()` skips a path that exists, so republishing at an unchanged version reports *"19 skipped"* and no client sees the change. `--force` is not the fix: it overwrites a path the contract calls immutable and still gives clients no upgrade signal. **Fixed upstream 2026-08-13 (D1)** — [[emit]]'s `packVersion` is now a hand-bumped const at `1.1.0`, so the catalog points at unwritten paths and all 19 upload. The upload itself needs `DMT_WORKER_URL` + `ADMIN_TOKEN` (CI secrets). Client-side upgrade detection is still missing ([[first_party_catalog_provider]] never re-checks `catalog_version`) — audit phase **D2**.

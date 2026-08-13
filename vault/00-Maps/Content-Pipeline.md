@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-08-10
+updated: 2026-08-13
 tags: [moc]
 ---
 
@@ -76,9 +76,9 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   a third v2 conversion gap — `toh`'s **Shade** ships zero trait rows and is
   recovered from `v1/toh/Race.json`. `size_ref` at 100% is unreachable: four
   species say the subrace decides and the subraces never say, and v1's
-  `size_raw`/`speed_json` are default-filled traps. All four rebuilds stay
-  scratch-only, so the shipped assets carry none of these fixes yet (promotion is
-  Stage D). **B2 done 2026-07-31**: the four fields it was filed to fill
+  `size_raw`/`speed_json` are default-filled traps. All four rebuilds were
+  scratch-only until **2026-08-13, when the rebuild was promoted over
+  `assets/open5e_packs/` (audit D1)** — B1/B2/B3/B4/B8/B9/B11 now ship. **B2 done 2026-07-31**: the four fields it was filed to fill
   (`cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level`,
   `extra_attack_count_by_level`) need `CORE_TRAITS_TABLE`/`SPELL_SLOTS`, which
   exist **only in the two skipped WotC documents** — but the 171 `column_value`

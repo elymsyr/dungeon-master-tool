@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/diff_packs.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-07-30
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -49,3 +49,4 @@ tags: [file]
 ## Notes
 - Not to be confused with the audit's planned **T1** `verify_packs.dart`, which diffs **source fixture ↔ asset** (is the value *right*?). This one diffs **asset ↔ asset** (did the value *move*?). They are complementary and neither subsumes the other.
 - First run (A0, 2026-07-30, snapshot `d4276c58`) found the shipped assets reproducible: 17 values in 4 classes across 20,712 entities, zero entity churn, spell tags unchanged. Full classification in the audit's §4 A0.
+- Promotion run (D1, 2026-08-13, same snapshot): **1,391 values in 30 classes**, +1,293 entities (1,286 tob3 actions recovered by B8, 6 `language` + 1 `size` Tier-0 seeds by B9), spell class-tag coverage unchanged in all 8 spell packs. Every class attributable to a filed phase — this is the run that closed the importer-vs-assets split.
