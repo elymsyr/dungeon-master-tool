@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/sources.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-13
 tags: [file]
 ---
 
@@ -35,7 +35,7 @@ tags: [file]
 - `_mappedFiles` — the 7 parent content fixtures recognized: `Creature.json`, `Spell.json`, `MagicItem.json`, `CharacterClass.json`, `Species.json`, `Background.json`, `Feat.json`. A doc with none of these is skipped.
 - `_publisherNames` maps publisher slugs to display names (e.g. `kobold-press → Kobold Press`); unknown slugs are title-cased.
 - `_preferredLicense`: picks the most permissive single license to attribute under — `ogl-10a` > `cc-by-40` > `cc0`. Drives `attributionFor`.
-- `isSrdOverlap = publisherSlug == 'wizards-of-the-coast'` — flags SRD 5.1/5.2 docs so [[build_packs]] discovers but never writes them.
+- `isSrdOverlap = publisherSlug == 'wizards-of-the-coast'` — flags SRD 5.1/5.2 docs so [[build_packs]] discovers but never writes them. **Confirmed correct by measurement, audit A2 2026-08-13**: mapping them anyway yields 0 chargen names, 0 magic items and 1 monster the built-in pack lacks; the only real loss is `srd-2024`'s 660 spell-slot rows, which belong in [[srd_core_pack]] rather than in a shipped WotC pack. See [[build_packs]].
 - Three attribution constants embedded in every pack's metadata: `_ogl10aAttribution`, `_ccBy4Attribution`, `_cc0Attribution`.
 
 ## Notes
