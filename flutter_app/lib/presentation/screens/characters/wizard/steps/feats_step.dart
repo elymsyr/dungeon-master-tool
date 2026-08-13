@@ -295,8 +295,7 @@ class _FeatsCache {
         // packaged spells show in creation-time feat spell-list picks (Magic
         // Initiate, etc.) — mirrors the level-up path
         // (pending_choice_resolver_dialog `_featChoiceOptions`, `byRef||byTag`).
-        final refs = e.fields['class_refs'];
-        final refList = refs is List ? refs : const [];
+        final refList = resolveEntityRefList(e.fields['class_refs'], entities);
         for (final entry in classIdsByName.entries) {
           final byRef = refList.contains(entry.value);
           final byTag =

@@ -1,7 +1,7 @@
 ---
 type: system
 domain: content-pipeline
-updated: 2026-06-09
+updated: 2026-08-13
 tags: [system]
 ---
 
@@ -14,6 +14,7 @@ tags: [system]
 - [[entity_ref]] — `EntityRef` model + resolution helpers (slug, name, packageId).
 - [[refgraph]] — build-time hard-ref minting + rewrite.
 - [[character_resolver]] — runtime soft-ref lookup.
+- Chargen wizard / level-up UI — reads the same envelopes via `resolveEntityRef` / `resolveEntityRefList`.
 
 ## Flow
 **Hard ref (intra-package):** [[Pack-Build-Two-Pass-Refgraph]] mints uuidv5 ids (pass 1), rewrites every `_ref` placeholder → uuid (pass 2). Build **fails** on any unresolved `_ref`.
@@ -23,6 +24,7 @@ tags: [system]
 ## Key Constants / Invariants
 - Hard refs cannot dangle (build gate). Soft refs may legitimately be absent (content from an uninstalled pack).
 - Subclass parent coverage: 125/125 (28 hard + 97 soft) per chargen audit.
+- **A resolvable soft ref is not a visible one.** Resolution is only as good as the reader: a filter that does `(fields[x] as List).contains(id)` or `whereType<String>()` drops every Map envelope, so a correctly written ref renders nothing and no test fails. Every chargen reader was put on `resolveEntityRefList` on 2026-08-13 (audit U1); the rule for any *new* reader is to call it rather than index the list directly.
 
 ## Related
 - MoCs: [[Content-Pipeline]], [[Character-System]], [[World-and-Content]]

@@ -7,6 +7,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../../domain/services/entity_ref.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
 import '../../../../widgets/source_badge.dart';
@@ -68,7 +69,7 @@ class SpellsStep extends ConsumerWidget {
     // either so packaged spells aren't silently filtered out.
     final className = classEntity.name.toLowerCase();
     final classSpells = allSpells.where((e) =>
-        _classRefs(e).contains(draft.classId) ||
+        _classRefs(e, entities).contains(draft.classId) ||
         e.tags.any((t) => t.toLowerCase() == className));
     final cantrips = classSpells.where((e) => _level(e) == 0).toList();
     final leveled = classSpells
@@ -146,11 +147,8 @@ class SpellsStep extends ConsumerWidget {
     );
   }
 
-  static List<String> _classRefs(Entity e) {
-    final v = e.fields['class_refs'];
-    if (v is! List) return const [];
-    return v.whereType<String>().toList();
-  }
+  static List<String> _classRefs(Entity e, Map<String, Entity> entities) =>
+      resolveEntityRefList(e.fields['class_refs'], entities);
 
   static int _level(Entity e) {
     final v = e.fields['level'];

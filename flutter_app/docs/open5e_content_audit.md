@@ -85,12 +85,22 @@ shipped value was patched in place (a full rebuild would drag in unrelated drift
 the local snapshot clone is at `7d44bb0e`, not A0's pinned `d4276c58`).
 **`dupe_census` section C "nothing installed" is now 0, and `gate_packs` is
 green — 0 violations, from 198.** The rest of L3 (turning prose into refs) is
-still open and still waits on U1.
+still open.
+
+**U1 is done — 2026-08-13.** The chargen UI can now *see* a softRef. Six readers
+(the five in §2.3.1 plus the granted-skill set the table missed) matched
+`*_refs` entries by raw `String` equality or `whereType<String>()`, so a
+correctly written `{slug, name}` matched nothing; they now share one helper,
+`resolveEntityRefList`. The `tags` fallback stays until U2 proves the spell list
+is non-empty without it — U1 only *adds* visibility, so nothing that renders
+today can stop rendering. This was L3's stated blocker; L3's remaining gate is
+now U2.
 
 **Next action right now:** **publish** (one command with the two secrets — the
 only thing between the promoted assets and users). After that Stage D is closed
-and the roadmap is back to content: B5, B6, B10 and L1 each need a target-shape
-call first, so they are the slower path, not a blocked one.
+and the roadmap is back to content: **U2** is the natural next build (it gates
+the rest of L3 and is the only proof of outcome 4), while B5, B6, B10 and L1
+each need a target-shape call first.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -511,6 +521,13 @@ The census tracks this surface directly (§3.2 C). It is currently 135 refs —
 chargen UI is not uniformly on that path, and a `_ref` field it filters on is
 therefore a **two-sided change**: importer *and* reader.
 
+> **Fixed 2026-08-13 (U1).** Every call site below now goes through
+> `resolveEntityRefList`, so a `{slug, name}` in `class_refs` matches. The table
+> is kept as the record of what the defect was — and as the list of readers to
+> re-check when L3 finally writes those refs. The `tags` fallback is still in
+> place and still the only route bundled spells actually use *today*; L3 retires
+> it, not U1.
+
 The live case is `spell.class_refs` (§5.6, phases L3/B7). Four call sites read it
 as a list of plain id strings:
 
@@ -532,8 +549,11 @@ name as a bare tag, recovered from the v1 fixtures — §4 A0). So:
 > likely to ship.
 
 Rule: before filling any `*_ref`/`*_refs` field, grep for its readers. If a reader
-is not on `resolveEntityRef`, put it on `resolveEntityRef` **first** (Stage U1),
-keep the old route alive until the new one is proven, and only then retire it.
+is not on `resolveEntityRef`, put it on `resolveEntityRef` **first** (Stage U1 —
+done for the chargen readers 2026-08-13), keep the old route alive until the new
+one is proven, and only then retire it. The rule still applies to every field
+this audit has not touched yet: `resolveEntityRefList` exists now, so complying
+is one call, but nothing forces a new reader to use it.
 
 ### 2.4 Policy rows that package links have invalidated
 
@@ -1633,7 +1653,7 @@ with a built-in spell (313 of them A5E — see §2.5).
 
 | | Field | Fill | Cause | Source |
 |:--:|---|--:|:--:|---|
-| 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row: four chargen readers take raw ids only, and `tags` is what makes packaged spells visible today. Reader fix (U1) ships first; the `tags` route is retired last.** |
+| 🔴 | `class_refs` (**required**) | 0% | `M`🔗 | **re-opened** — was ⛔ "a `_ref` would dangle"; a softRef to a built-in class does not (§2.4). Currently routed to `tags` (recovered from the **v1** fixtures — §4 A0). **Read §2.3.1 before touching this row. The reader fix (U1) shipped 2026-08-13 — the four chargen readers now resolve softRefs — but `tags` is still what makes packaged spells visible today, so it is retired last, after U2.** |
 | 🟡 | `area_shape_ref`, `area_size_ft` | 0% → **7%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.shape_type` is a 5-value enum (cone/cube/cylinder/line/sphere), every value already a built-in `area-shape` Tier-0 row, so all 103 resolve and none reach the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit occurs anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 7% *is* the ceiling: only 103 of 1,297 spells have an area upstream. |
 | 🟡 | `reaction_trigger` | 0% → **3%** | `M` | **Fixed by B4 (2026-07-31).** `Spell.reaction_condition` is non-empty on 51 rows, all 51 with `casting_time: reaction`. Upstream writes it as the tail of the casting-time line ("1 reaction, *which you take when…*"), so 46 of 51 open with a dangling relative clause; the lead-in is stripped and the remainder made a sentence, since the app's field stands alone. 3% is the ceiling. |
 | ⚪ | `at_higher_levels_text` | 0% | `P` | **Reclassified by A1 (2026-07-30): not a gap.** `Spell.higher_level` prose is already shipped, appended to `description` as *"At Higher Levels"*. `SpellCastingOption.json` adds **zero** spells on top of that in any document, so this field is a formatting preference (split the prose out of `description`), not missing content. Was `🔴 L`. |
@@ -1848,7 +1868,9 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       present, both resolve), `assets/first_party/manifest.json` shows non-empty
       `requires` on the packs that now link, and installing a linker from the
       catalog pulls its target (`FirstPartyInstallNotifier.install`).*
-- [ ] **L3 — Turn existing prose into refs.** *(blocked by U1.)* The 🔗 rows in §5
+- [ ] **L3 — Turn existing prose into refs.** *(U1 shipped 2026-08-13 — the
+      readers no longer block this; the remaining gate is U2, which has to prove
+      the spell list is non-empty before the `tags` route is retired.)* The 🔗 rows in §5
       that already ship in some form: `subclass` parent tags, feat prerequisites,
       `spell.class_refs`, `magic-item.base_item_ref`.
       - [x] **Fix the one ref that already dangles. Done 2026-08-13.**
@@ -1873,13 +1895,25 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
 
 ### Stage U — make the wizard see it (outcome 4)
 
-- [ ] **U1 — Put every chargen ref reader on `resolveEntityRef`.** *(no snapshot
-      needed.)* The five call sites in §2.3.1 plus any other chargen filter that
-      does `(fields[x] as List).contains(id)`. Keep the `tags` fallback in place;
-      this phase only *adds* the ability to see a softRef.
-      *Exit: no chargen filter matches ids by raw `String` equality against a
-      `*_ref`/`*_refs` field; a unit test feeds each reader a `{slug, name}` Map
-      and a plain id and gets the same answer.*
+- [x] **U1 — Put every chargen ref reader on `resolveEntityRef`. Done
+      2026-08-13.** All five §2.3.1 call sites, plus one more the table missed
+      (`character_creation_wizard_screen` `skillEntityIdSet`, which built the
+      background/species granted-skill set with `whereType<String>()` — same
+      defect, different verb), now route through one new helper
+      `resolveEntityRefList` in `domain/services/entity_ref.dart`. It maps a
+      `*_refs` list through `resolveEntityRef` and drops what does not resolve,
+      so all three envelopes behave identically and a missing target is still
+      never an error. Six readers, one shared path — the per-site fix would have
+      been six copies of the same three lines and the next reader written would
+      have been a seventh raw `.contains`.
+      The `tags` fallback is untouched: this phase only *adds* the ability to see
+      a softRef, so nothing that renders today can stop rendering. Retiring
+      `tags` belongs to L3, which this unblocks.
+      *Check:* `test/domain/services/entity_ref_list_test.dart` — plain id,
+      `{_ref, name}` and `{slug, name}` resolve to the same id; a soft ref passes
+      the membership test the raw `.contains` failed; unresolvable/garbage
+      entries drop instead of throwing. `flutter test test/presentation/character_creation/ test/domain/services/`
+      → 225 passing, `flutter analyze lib test` → 16 issues, 0 errors (baseline).
 - [ ] **U2 — Wizard-level test per pack family.** One test per family
       (`toh`, `a5e-*`, `tob*`, `open5e`, …) that picks the pack as a source
       package and walks Identity → Class → Subclass → Proficiencies → Spells →
@@ -2376,7 +2410,7 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    resolver's own matching, and every linker ships both link keys plus a non-empty
    `requires`.
 4. **Character creation** — a wizard test per pack family passes (U2), and no
-   chargen filter reads a `*_ref` field as a raw id (U1).
+   chargen filter reads a `*_ref` field as a raw id (U1 — done 2026-08-13).
 5. **Delivery** — a published catalog whose packs upload rather than skip (D1 —
    bumped and rebuilt, **upload still owed**), with an upgrade path for existing
    installs (D2 — done 2026-08-13).
