@@ -12,6 +12,7 @@ import '../../../../application/character_creation/character_draft.dart';
 import '../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../application/character_creation/origin_constants.dart';
 import '../../../../application/character_creation/weapon_mastery_resolver.dart';
+import '../../../../application/character_creation/wizard_options.dart';
 import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/package_provider.dart';
@@ -460,11 +461,13 @@ class _CharacterCreationWizardScreenState
             classEntity.fields['prepared_spells_by_level'], draft.level) ??
         defaultPreparedSpells(kind, draft.level);
 
+    // Adımın kendi yüklemiyle aynı olmalı: sadece `class_refs`'e bakan eski
+    // sayım, paket büyülerinde (hepsinde `class_refs` boş) 0 döndürüp
+    // kontrolü tamamen susturuyordu.
     final spellCount = entities.values
         .where((e) =>
             e.categorySlug == 'spell' &&
-            resolveEntityRefList(e.fields['class_refs'], entities)
-                .contains(draft.classId))
+            spellMatchesClass(e, classEntity, entities))
         .length;
     if (spellCount == 0) return null;
 
@@ -1206,12 +1209,7 @@ Map<String, dynamic> buildSeedFields({
     Entity? sub = entities[key];
     if (sub == null || sub.categorySlug != 'subspecies') {
       sub = null;
-      for (final e in entities.values) {
-        if (e.categorySlug != 'subspecies') continue;
-        if (resolveEntityRef(e.fields['parent_species_ref'], entities) !=
-            race.id) {
-          continue;
-        }
+      for (final e in subspeciesForSpecies(race.id, entities)) {
         if (e.name == key ||
             e.fields['legacy_subspecies_key']?.toString() == key) {
           sub = e;
@@ -2186,12 +2184,7 @@ class _RaceStep extends ConsumerWidget {
     if (species == null) return const [];
     final out = <({String id, String title, String description})>[];
     final seen = <String>{};
-    for (final e in entities.values) {
-      if (e.categorySlug != 'subspecies') continue;
-      if (resolveEntityRef(e.fields['parent_species_ref'], entities) !=
-          species.id) {
-        continue;
-      }
+    for (final e in subspeciesForSpecies(species.id, entities)) {
       out.add((id: e.id, title: e.name, description: e.description));
       seen.add(e.name);
     }

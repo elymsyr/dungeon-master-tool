@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
+import '../../../../../application/character_creation/wizard_options.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../../domain/services/entity_ref.dart';
@@ -278,29 +279,21 @@ class _FeatsCache {
       }
     }
 
-    final classIdsByName = <String, String>{};
+    final classesByName = <String, Entity>{};
     if (spellListNames.isNotEmpty) {
       for (final e in classes) {
-        if (spellListNames.contains(e.name)) classIdsByName[e.name] = e.id;
+        if (spellListNames.contains(e.name)) classesByName[e.name] = e;
       }
     }
 
     final spellsByKey = <String, List<Entity>>{};
-    if (classIdsByName.isNotEmpty && spellLevels.isNotEmpty) {
+    if (classesByName.isNotEmpty && spellLevels.isNotEmpty) {
       for (final e in spells) {
         final lvl = e.fields['level'];
         if (lvl is! int || !spellLevels.contains(lvl)) continue;
-        // SRD spells link to classes by UUID (`class_refs`); imported packs
-        // carry the bare class name in `tags` instead. Accept either so
-        // packaged spells show in creation-time feat spell-list picks (Magic
-        // Initiate, etc.) — mirrors the level-up path
-        // (pending_choice_resolver_dialog `_featChoiceOptions`, `byRef||byTag`).
-        final refList = resolveEntityRefList(e.fields['class_refs'], entities);
-        for (final entry in classIdsByName.entries) {
-          final byRef = refList.contains(entry.value);
-          final byTag =
-              e.tags.any((t) => t.toLowerCase() == entry.key.toLowerCase());
-          if (!byRef && !byTag) continue;
+        // `class_refs` ya da `tags` — paket büyüleri sadece ikincisini taşıyor.
+        for (final entry in classesByName.entries) {
+          if (!spellMatchesClass(e, entry.value, entities)) continue;
           spellsByKey
               .putIfAbsent('${entry.key}|$lvl', () => <Entity>[])
               .add(e);
