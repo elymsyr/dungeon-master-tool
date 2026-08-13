@@ -360,7 +360,7 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (opts is List) {
       _featAsiAbilityOptions = [
         for (final o in opts)
-          if (_asiOptionToAbbrev(o, widget.entities) case final a? when a.isNotEmpty)
+          if (abilityAbbrevFromRef(o, widget.entities) case final a? when a.isNotEmpty)
             a,
       ];
     }
@@ -371,48 +371,6 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (amt is int && amt > 0) _featAsiAmount = amt;
     final max = e.fields['asi_max_score'];
     if (max is int && max > 0) _featAsiMaxScore = max;
-  }
-
-  /// Accept either a full ability name ("Strength"), an abbreviation
-  /// ("STR"), or an entity ref map / id pointing at an ability entity.
-  static String? _asiOptionToAbbrev(Object? o, Map<String, Entity> entities) {
-    if (o is String) {
-      // Could be abbreviation or entity id.
-      final e = entities[o];
-      if (e != null) return _abilityNameToAbbrev(e.name);
-      return _abilityNameToAbbrev(o);
-    }
-    if (o is Map) {
-      final id = o['id']?.toString();
-      if (id != null) {
-        final e = entities[id];
-        if (e != null) return _abilityNameToAbbrev(e.name);
-      }
-      final name = o['name']?.toString();
-      if (name != null) return _abilityNameToAbbrev(name);
-    }
-    return null;
-  }
-
-  static String? _abilityNameToAbbrev(String raw) {
-    final s = raw.toUpperCase();
-    const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
-    if (valid.contains(s)) return s;
-    switch (raw.toLowerCase()) {
-      case 'strength':
-        return 'STR';
-      case 'dexterity':
-        return 'DEX';
-      case 'constitution':
-        return 'CON';
-      case 'intelligence':
-        return 'INT';
-      case 'wisdom':
-        return 'WIS';
-      case 'charisma':
-        return 'CHA';
-    }
-    return null;
   }
 
   /// Skills the PC is currently proficient in but doesn't yet have expertise

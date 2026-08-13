@@ -173,6 +173,19 @@ turns T2-2's "author the tables" exit into a transform of pinned source data.
 `srd-2014` is SRD 5.1 and its extras are 5.1-only content (Half-Elf,
 Half-Orc, 4 subclasses, 31 monsters). **Stage A is now fully green.**
 
+**M1 is done — 2026-08-13, and it found a live bug.** The sweep is data-driven
+over all 19 assets: **68 (pack, mechanic field) pairs, 227 sheet assertions, 0
+partial** (`bundled_pack_resolve_test`). It caught that **feat ASI never applied
+to a single packaged feat** — `asi_ability_options` is a relation list, so after
+an install it holds ids, while the resolver's fallback read only the
+`{_lookup, name}` shape no installed card still has. Fixed once, in
+`abilityAbbrevFromRef` (`domain/services/entity_ref.dart`), now the single reader
+for both ability relation lists and for the resolver dialog's private copy.
+Second finding, no code: `granted_language_count` is written on **24
+backgrounds** and read by **nothing** — filed on B7. The sweep is scoped to
+player-facing cards on purpose; `monster` writes the same key names (807
+`speed_fly_ft`, 2,713 `trait_refs`) but is never handed to a resolver.
+
 **Next action right now:** **publish** (one command with the two secrets — the
 only thing between the promoted assets and users; the assets moved again with
 L3, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
@@ -2369,6 +2382,10 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       (`class.primary_ability_ref`, `background.origin_feat_ref`,
       `background.asi_distribution_options`, `spell.class_refs`): fill, or relax the
       requirement for third-party content.
+      **M1 added one to the list (2026-08-13): `granted_language_count`** — 24
+      backgrounds write it, nothing in `lib/` reads it, so the decision is "wire
+      a language pick into the wizard" or "stop emitting it". Until then it is
+      pinned by `unreadByAnyone` in `bundled_pack_resolve_test`.
 - [x] **B8 — ToB3's actions were never converted, not mis-bucketed. Done
       2026-07-31.** The phase was filed as a bucketing bug; the pinned snapshot
       says the opposite. `tob3/CreatureAction.json` has 309 rows for 397
@@ -2516,17 +2533,48 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
 Fill percentage is not a mechanic working. These phases are what turn "the field
 has a value" into "the value produced the right number on a sheet".
 
-- [ ] **M1 — Extend `bundled_pack_resolve_test` to every pack.** *(no snapshot
-      needed.)* Today it covers 3 of 19 assets with ~6 assertions, all about the
-      three files `migrate_pack_assets.dart` rewrote. Make it data-driven: for each
-      of the 19 assets, for each grant/typed mechanic key the asset actually
-      writes, resolve one carrying entity through `CharacterResolver` and assert
-      the effect appears (ability bonus applied, proficiency id present, sense
-      listed, pool created, note rendered). The existing "no grant ref resolves to
-      an empty string" sweep extends to all 19 for free.
-      *Exit: for every (pack, mechanic field) pair present in the assets there is
-      at least one passing sheet assertion, and the count is printed so a new
-      field cannot land untested.*
+- [x] **M1 — Extend `bundled_pack_resolve_test` to every pack. Done 2026-08-13.**
+      *(no snapshot needed.)* It covered 3 of 19 assets with ~6 hand-picked
+      assertions; it is now data-driven over all 19 — **68 (pack, mechanic field)
+      pairs, 227 sheet assertions, 0 partial**, the counts printed on every run.
+      Each pair takes the first ≤5 cards that write the field, attaches one to a
+      throwaway character the way the wizard would (`race_id` / `subspecies_id` /
+      `feat_ids` / `class_levels` / `subclass_id` / `background_id` / equipped
+      `inventory`), resolves, and requires the effect on `EffectiveCharacter`.
+      The empty-ref sweep now walks the directory instead of three named files.
+      *Exit met*, plus the closure that makes it hold: every field a pack writes
+      is in **one of three lists** — a sheet probe, `notResolverRead` (24 fields,
+      each naming the reader that owns it), or `unreadByAnyone`. Anything else
+      fails the run, so a new mapper field cannot land untested, and the
+      unread list is asserted as a *closed set* so filling one fails here too.
+      - [x] **The bug it was written to find: feat ASI has never applied to a
+            packaged feat.** `asi_ability_options` is a `relation` list, so the
+            card holds ids after an install, `{_lookup, name}` before one, and
+            bare names (`'Strength'`) in parts of the built-in pack. The
+            resolver's fallback heuristic read `_readMapList(...)['name']` — the
+            one shape no installed card has — so all 23 a5e-ag + toh feats with
+            `asi_amount > 0` silently bumped nothing. Fixed at the shared point:
+            `abilityAbbrevFromRef` in `domain/services/entity_ref.dart` reads all
+            three shapes, and it is now the single reader for
+            `asi_ability_options`, `unarmored_ac_abilities` **and** the pending-
+            choice dialog's private copy of the same logic (deleted). *Check:*
+            `entity_ref_list_test` pins the five shapes; M1 fails without the
+            fix.
+      - [x] **`granted_language_count` has no reader anywhere.** 24 backgrounds
+            ship it (`chargen.dart` writes it, `monster_mapper_check` verifies
+            it) and nothing in `lib/` reads it — the wizard has no "pick N
+            languages" step. Recorded in `unreadByAnyone` rather than quietly
+            skipped; **filed on B7** with the other required-but-unwired fields.
+      - [x] **Scope: statblock categories are out, and that is the finding.** A
+            naive "every grant key the corpus writes" sweep is dominated by
+            `monster` — 807 `speed_fly_ft`, 446 swim, 378 climb, 227 burrow,
+            2,713 `trait_refs` — which share names with the grant block but are
+            never handed to `CharacterResolver` (§2.5: those traits are owned
+            children). Counting them would make the mechanic surface look 20×
+            larger than the chargen surface actually is. Three flags are also
+            written-but-never-true (`is_cursed` / `is_sentient` on all 1,063 vom
+            items, `repeatable` on every feat); `false` counts as absent, so the
+            day one is true it arrives as an undeclared field.
 - [ ] **M2 — `mechanical_notes` is measurable, not just written.** B5 routes
       abandoned prose into it; this phase proves it arrives. Add a per-category
       `mechanical_notes` fill line to the audit output, a resolver assertion that
@@ -2835,7 +2883,11 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
                                    # + T2 built-in census row shapes (2)
                                    # + T3 relational gate rules (9)
 
-# Proves a mechanic reaches the sheet, not just the file.
+# Proves a mechanic reaches the sheet, not just the file. Since M1 this is
+# data-driven over all 19 assets and prints its own coverage —
+# "M1: 68 (pack, mechanic field) pairs, 227 sheet assertions, 0 partial".
+# A field a pack writes must land in a sheet probe, in `notResolverRead`
+# (with the reader that owns it) or in `unreadByAnyone`; anything else fails.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
 # The link mechanism itself (not content):
 flutter test test/application/services/package_link_service_test.dart
@@ -2878,7 +2930,10 @@ PY
 landed: it walks an asset the way an install does — resolve every `{_lookup, name}`
 against the campaign's Tier-0 rows, then hand the entity to `CharacterResolver` —
 so it catches the case where a field is written but nothing reads it, and the case
-where a ref points at a card that no longer ships.
+where a ref points at a card that no longer ships. Since **M1** it does that for
+every asset rather than three, and the "nothing reads it" case is a first-class
+outcome: `granted_language_count` is recorded there as written-by-24-backgrounds,
+read-by-nobody.
 
 **Drift-backed tests on Linux:** `package:sqlite3` opens `libsqlite3.so`, which only
 exists with `libsqlite3-dev` installed. `test/support/test_database.dart`
