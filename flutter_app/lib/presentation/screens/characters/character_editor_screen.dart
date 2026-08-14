@@ -3777,6 +3777,12 @@ class _StatChipsHeader extends ConsumerWidget {
     final useCampaign = character.worldId != null &&
         activeWorldId == character.worldId;
 
+    // Non-builtin source packages the character was built from. Empty map (and
+    // no extra watch) for builtin-only characters, so UI-2's scoped selects
+    // still hold for the common case.
+    final pkgEntities =
+        withCharacterPackages(ref.watch, const <String, Entity>{}, character);
+
     String resolve(String? id) {
       if (id == null) return '—';
       if (useCampaign) {
@@ -3787,9 +3793,9 @@ class _StatChipsHeader extends ConsumerWidget {
       final builtinName = ref.watch(
         builtinSrdEntitiesProvider.select((m) => m[id]?.name),
       );
-      return (builtinName != null && builtinName.isNotEmpty)
-          ? builtinName
-          : '—';
+      if (builtinName != null && builtinName.isNotEmpty) return builtinName;
+      final pkgName = pkgEntities[id]?.name;
+      return (pkgName != null && pkgName.isNotEmpty) ? pkgName : '—';
     }
 
     // On phone the header is squeezed by the 200-px portrait, so the chip

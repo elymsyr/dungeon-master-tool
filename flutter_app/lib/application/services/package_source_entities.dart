@@ -140,6 +140,22 @@ Map<String, Entity> layerCharacterPackages(
   );
 }
 
+/// [layerCharacterPackages] for the common case: the packages are the ones
+/// stamped on [character] and each is read through [packageEntitiesProvider].
+/// Every card surface that resolves species/class names goes through this, so
+/// a character built from a non-builtin pack renders the same everywhere.
+Map<String, Entity> withCharacterPackages(
+  PackageWatch watch,
+  Map<String, Entity> base,
+  Character character,
+) =>
+    layerCharacterPackages(
+      watch,
+      base,
+      sourcePackagesOf(character),
+      (name) => watch(packageEntitiesProvider(name)).valueOrNull,
+    );
+
 /// Merges the built-in SRD map with every package in [packageNames] *and the
 /// packages those link*, packages layering on top (later names win id
 /// collisions). Package maps still loading contribute nothing yet — the caller

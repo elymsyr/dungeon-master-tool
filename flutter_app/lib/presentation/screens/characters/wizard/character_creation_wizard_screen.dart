@@ -613,9 +613,11 @@ class _CharacterCreationWizardScreenState
         entities: entities,
       );
       // Stamp the chosen standalone packages so the editor can re-resolve
-      // species/class/spell refs that live outside the built-in pack. Only
-      // set in built-in mode — world-bound chars resolve via the campaign.
-      if (resolvedWorldId == null && draft.sourcePackages.isNotEmpty) {
+      // species/class/spell refs that live outside the built-in pack. Stamped
+      // even when the char binds to a world: the cold-open fallback above can
+      // bind one the user never picked, and the campaign map doesn't
+      // necessarily carry the packages the wizard resolved against.
+      if (draft.sourcePackages.isNotEmpty) {
         seed['source_packages'] = List<String>.from(draft.sourcePackages);
       }
 

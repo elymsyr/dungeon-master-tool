@@ -12,6 +12,7 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_characters_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
+import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/online/world_member.dart';
@@ -670,7 +671,7 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
     // builtin SRD as fallback.
     final activeWorldId = ref.watch(activeCampaignIdProvider).valueOrNull;
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final Map<String, Entity> entities;
+    Map<String, Entity> entities;
     if (character == null ||
         character.worldId == null ||
         character.worldId != activeWorldId) {
@@ -682,6 +683,9 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
           : UnmodifiableMapView<String, Entity>(
               CombinedMapView<String, Entity>([campaign, builtin]),
             );
+    }
+    if (character != null) {
+      entities = withCharacterPackages(ref.watch, entities, character);
     }
 
     return InkWell(

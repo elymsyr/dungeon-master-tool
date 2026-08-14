@@ -12,6 +12,7 @@ import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
+import '../../application/services/package_source_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/character_ext.dart';
 import '../../domain/entities/entity.dart';
@@ -393,16 +394,17 @@ class _OfflineCharacterRowState
         ref.watch(activeCampaignIdProvider).valueOrNull;
     final builtin = ref.watch(builtinSrdEntitiesProvider);
     final campaign = ref.watch(entityProvider);
-    final Map<String, Entity> entities;
+    final Map<String, Entity> base;
     if (c.worldId == null || c.worldId != activeWorldId) {
-      entities = builtin;
+      base = builtin;
     } else {
-      entities = campaign.isEmpty
+      base = campaign.isEmpty
           ? builtin
           : UnmodifiableMapView<String, Entity>(
               CombinedMapView<String, Entity>([campaign, builtin]),
             );
     }
+    final entities = withCharacterPackages(ref.watch, base, c);
     return InkWell(
       borderRadius: palette.br,
       onTap: _busy ? null : widget.onOpen,

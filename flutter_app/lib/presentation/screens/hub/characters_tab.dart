@@ -15,6 +15,7 @@ import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
+import '../../../application/services/package_source_entities.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character_ext.dart';
@@ -115,9 +116,13 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
             CombinedMapView<String, Entity>([campaign, builtin]),
           );
     Map<String, Entity> entitiesFor(Character c) {
-      if (c.worldId == null) return builtin;
-      if (c.worldId != activeWorldId) return builtin;
-      return merged;
+      final base = (c.worldId == null || c.worldId != activeWorldId)
+          ? builtin
+          : merged;
+      // Layer the character's own source packages — without them a character
+      // built from a non-builtin pack renders "—" for species/class. No-op
+      // (and no extra watch) for characters with no source packages.
+      return withCharacterPackages(ref.watch, base, c);
     }
 
     final charactersAsync = ref.watch(characterListProvider);

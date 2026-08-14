@@ -255,12 +255,7 @@ Map<String, Entity> readCharacterEntities(WidgetRef ref, Character character) {
   // Layer the character's standalone source packages so official-package
   // species/class/subclass refs resolve in the header chips (issue: blank
   // chips for worldless chars built from official content).
-  return layerCharacterPackages(
-    ref.watch,
-    base,
-    sourcePackagesOf(character),
-    (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
-  );
+  return withCharacterPackages(ref.watch, base, character);
 }
 
 /// Compact chip strip rendering [characterStatLines]. Used by the editor
