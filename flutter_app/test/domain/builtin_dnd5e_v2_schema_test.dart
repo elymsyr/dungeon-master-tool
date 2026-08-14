@@ -95,13 +95,21 @@ void main() {
       );
     });
 
-    test('skill category has 18 seed rows, each with ability linkage hint', () {
+    test('skill category has 18 seed rows, each with a resolvable ability_ref',
+        () {
+      final abilityNames =
+          build.seedRows['ability']!.map((r) => r['name']).toSet();
       final rows = build.seedRows['skill']!;
       expect(rows.length, 18);
       for (final r in rows) {
         final fields = r['fields'] as Map<String, dynamic>;
-        expect(fields.containsKey('_ability_name_'), true,
-            reason: '${r['name']} must have _ability_name_ for bootstrap');
+        expect(fields.containsKey('_ability_name_'), false,
+            reason: '${r['name']} must not carry the dead placeholder key');
+        final ref = fields['ability_ref'];
+        expect(ref, isA<Map>(), reason: '${r['name']} needs an ability_ref');
+        expect((ref as Map)['_lookup'], 'ability');
+        expect(abilityNames, contains(ref['name']),
+            reason: '${r['name']} points at a real Ability seed row');
       }
     });
 

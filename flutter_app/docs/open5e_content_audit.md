@@ -349,8 +349,8 @@ before the one above it is ticked:
 
 | # | Phase | One line |
 |:--:|---|---|
-| 1 | **T2-2** | author the spell-slot / cantrips / prepared tables in the built-in pack — the only mechanic nothing anywhere ships |
-| 2 | **T2-1** | `skill.ability_ref` resolves, so the wizard's ability-mod chip renders |
+| ~~1~~ | ~~**T2-2**~~ | **done 2026-08-14** — the SRD 5.2.1 cantrip / prepared tables are authored on all 8 built-in casters and the Paladin/Ranger slot table with them; the Full/Pact slot presets were checked against the same source and left in code, not copied into data (below) |
+| ~~2~~ | ~~**T2-1**~~ | **done 2026-08-14** — the 18 skill seed rows now ship the standard `_lookup` placeholder in `ability_ref`, which the synthesiser already resolved for every other Tier-0 link; the dead `_ability_name_` key is gone and the chip renders (below) |
 | 3 | **T2-3** | the four built-in spell fields the Open5e packs now beat |
 | 4 | **L4** | **no duplicate cards** — a card the built-in pack already ships must not be re-emitted by an official pack, and the same card must not ship in two packs |
 | 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
@@ -363,6 +363,64 @@ and the doc measures the result. L4 and U3 are new: L4 finishes what L1 left
 are genuinely the same card), and U3 is the first phase about *reading* a card
 rather than building one. **Stage M is therefore no longer closed** — M1–M3 hold,
 M4 is open, and outcome 2 goes back to "not met" until it lands.
+
+**T2-2 is done — 2026-08-14, and two of its three open items dissolved on
+measurement.** The tables are a **transform of the pinned snapshot**, exactly as
+A2 predicted: `srd-2024/ClassFeatureItem.json`'s `cantrips` (120 rows, 6
+classes), `prepared-spells` (160 rows, 8 classes) and `slots-Nth` columns are now
+`cantrips_known_by_level` / `prepared_spells_by_level` on all 8 built-in casters,
+plus `spell_slots_by_level` on Paladin and Ranger — `srdCorePackVersion` **1.0.5
+→ 1.0.6**. What the harvest settled, in the note's own priority order:
+1. **The decision is written down** (here, §5.1 and `vault/10-Files/chargen/caster_progression.md`):
+   `caster_kind` preset owns Full and Pact slots, data owns everything else. The
+   presets were checked cell for cell against the source — `_fullCasterSlots` and
+   `_pactSlots` agree on **all 20 levels of all 6 classes**, so copying them into
+   data would have duplicated knowledge the resolver already has, and they were
+   deliberately **not** authored.
+2. **"Packaged casters silently inherit the SRD preset" is false as shipped** —
+   measured over all 19 assets: the only two packaged classes (`a5e-ag`'s
+   Marshal, `bfrd`'s Mechanist) both carry `caster_kind: 'None'`, so nothing
+   inherits anything. The preset reaches no packaged class today; the day one
+   ships a `caster_kind`, this row comes back.
+3. **The harvest found a real defect the preset was hiding.** SRD 5.2.1 grants
+   Paladins and Rangers **2 first-level slots at level 1**; the half-caster
+   preset grants **0** (the 2014 shape) and matches the source at every other
+   level. Fixed in data rather than in the preset, because every bundled pack is
+   `game_system: 5e-2014` — the built-in pack states its own edition, the
+   fallback keeps serving the packs. The approximate curves also stop deciding
+   anything for SRD content: a level-1 Sorcerer had 3 cantrips against the SRD's
+   4, and a level-20 Wizard 23 prepared spells against 25.
+*Exit met, both halves of it*: the tables are authored **and** the alternative
+("the resolver computes them from `caster_kind`") is a written, measured
+decision rather than an undocumented accident. Pinned by
+`test/domain/srd_core_spellcasting_tables_test.dart` (4 cases: the per-class
+numbers, that data beats the preset at Paladin L1, and that no Full/Pact class
+ships a slot table). **Next in the queue: T2-1.**
+
+**T2-1 is done — 2026-08-14, and the fix was one line because the machinery
+already existed.** The phase said "check which id the wizard actually reads
+before picking a side"; the answer is that there is only one side.
+`world_entities` never holds a built-in Tier-0 row (the F1 decouple) —
+`synthesizeWorldBuiltins` reads `package_entities` and, on the way, calls
+`PackageImportService.resolveLookupPlaceholder` over every row's fields with a
+`slug → name → synth id` index built from those same rows. That is exactly how
+every other built-in Tier-0 link resolves. The skill rows simply never used it:
+they wrote a bespoke `_ability_name_: 'Dexterity'` key for a bootstrap step that
+was never written, so the required `ability_ref` stayed empty and
+`skillAbilityModFor` bailed on its first guard. So the fix is the placeholder
+the rest of the pack already speaks —
+`'ability_ref': {'_lookup': 'ability', 'name': …}` in `lookups.dart` — with
+`srdCorePackVersion` **1.0.6 → 1.0.7** so existing installs re-mirror the seed
+rows. No resolver, no bootstrap step, no migration was added.
+*Exit met, all three parts*: the chip renders (proved end to end by
+`test/domain/skill_ability_ref_test.dart`, which rebuilds the synthesiser's
+index in memory and asks `skillAbilityModFor` for DEX 16 +2 racial → `+4`),
+`_ability_name_` is gone from the codebase (the census footer's undeclared key
+with it), and `builtin_dnd5e_v2_schema_test` now asserts the new shape — each of
+the 18 rows carries a `_lookup: 'ability'` pointing at a name the ability seed
+list actually ships, and carries no `_ability_name_`. `skill.ability_ref` goes
+0/18 → **18/18** on the next `audit_packs --builtin` run. **Next in the queue:
+T2-3.**
 
 **L1 is done — 2026-08-14, and it deleted nothing.** The prediction in the line
 above held: section A's 1,643 rows shrink to a drop set of **zero** once §2.5's
@@ -1403,12 +1461,21 @@ softRef this audit writes lands here, and until now nothing had ever counted it.
   [`skill_mod_helper.dart`](../lib/presentation/screens/characters/wizard/steps/skill_mod_helper.dart):
   `skillAbilityModFor` bails on the first guard for every skill, so the wizard's
   ability-mod chip beside an unpicked skill has never rendered. Filed **T2-1**.
+  **Closed 2026-08-14** — the seed rows now write the standard
+  `{'_lookup': 'ability', 'name': …}` placeholder that `synthesizeWorldBuiltins`
+  already resolves for every other built-in Tier-0 link, so `ability_ref` reads
+  **18/18** and `_ability_name_` no longer exists anywhere in the repo.
 - **The four class spellcasting tables B2 could not fill are empty here too**
   (`cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level`
   0/12; `extra_attack_count_by_level` 0/305 on `feat`). B2 closed on "the source
   only has them in the two skipped WotC documents" — §3.7 says the built-in pack
   is not the fallback either, so **nothing in the app ships a slot table**. Filed
-  **T2-2**; it is a prerequisite for Stage M, not a Stage B item.
+  **T2-2**; it is a prerequisite for Stage M, not a Stage B item. **Closed
+  2026-08-14** — the built-in side is now 8/12 for `cantrips_known_by_level`
+  (6/12, the six classes with cantrips) and `prepared_spells_by_level` (8/12),
+  2/12 for `spell_slots_by_level`, harvested from `srd-2024`; the remaining
+  slot tables are the preset's on purpose, verified equal to the source. The
+  Open5e side is unchanged and stays a source limit.
 - **B4's two spell fields are 0% on the built-in side**: `area_shape_ref` /
   `area_size_ft` 0/341, `reaction_trigger` 0/341, `at_higher_levels_text` 0/341.
   The Open5e packs now carry the first two at their source ceiling (7%), so the
@@ -1877,7 +1944,7 @@ still subject to the re-verification pass (§6 V1).
 | 🔴 | `l1_order_feat_category`, `weapon_mastery_filter`, `complexity` | Progression | | 0% | ⚪ | app-only concepts |
 | 🔴 | `casting_ability_ref`, `spellcasting_focus_ref` | Spellcasting | | 0% | `M`🔗 | Spellcasting feature prose; the focus is a built-in item |
 | ✅ | `caster_kind` | Spellcasting | **yes** | 100% | | `caster_type`, else inferred from feature names |
-| 🔴 | `cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level` | Spellcasting | | 0% | ~~**`L`**~~ **`S`** | ~~`feature_type == CORE_TRAITS_TABLE` + `ClassFeatureItem.column_value`~~ — **B2 reclassified these.** `CORE_TRAITS_TABLE` exists in 1 document and `SPELL_SLOTS` in 2, **all of them the skipped WotC pair**; the `Cantrips Known` / `Prepared Spells` / `Spell Slots` columns exist nowhere else. There is no source, so this is a source limit, not a loader gap |
+| 🔴 | `cantrips_known_by_level`, `prepared_spells_by_level`, `spell_slots_by_level` | Spellcasting | | 0% | ~~**`L`**~~ **`S`** | ~~`feature_type == CORE_TRAITS_TABLE` + `ClassFeatureItem.column_value`~~ — **B2 reclassified these.** `CORE_TRAITS_TABLE` exists in 1 document and `SPELL_SLOTS` in 2, **all of them the skipped WotC pair**; the `Cantrips Known` / `Prepared Spells` / `Spell Slots` columns exist nowhere else. There is no source, so this is a source limit, not a loader gap. **Still 0% in the packs and that is final; the *built-in* side was filled by T2-2 (2026-08-14)** from `srd-2024/ClassFeatureItem.json` — cantrips 6/12, prepared 8/12, slots 2/12 (Paladin + Ranger, where SRD 5.2.1 disagrees with the `caster_kind` preset at level 1). Full/Pact slots stay in the preset, checked equal to the source cell for cell |
 | ✅ | **`features`** | Features | | **100%** (0% before the 2026-08-13 promotion) | ~~`L`~~ **B1 done** | `ClassFeatureItem.level`; each row's `granted_feat_refs` is still empty — a 🔗 under §0 rule 3, left to B5 |
 | ✅ | `description` — the class table | Features | | 100%, but **2 of 2 table-bearing classes were shipping it broken** | **B2 done** | The 171 `column_value` rows B1 excluded from `features` had no other home, so every number was dropped while the column's *empty* heading (`a5e-ag`) or `[Column data]` placeholder (`bfrd`) was folded in. Now rendered as a `### Class Table` markdown table. **Neither census tool can see this** — `description` counted as filled either way (§3.4, → T1) |
 
@@ -3301,7 +3368,8 @@ has a value" into "the value produced the right number on a sheet".
   > chip; T2-3 last because it is completeness, not function. All three edit the
   > built-in pack, so each ships with an `srdCorePackVersion` bump and a re-run
   > of `audit_packs --builtin` (§3.7) — this file measures them, never holds them.
-  - [ ] **T2-1 — `skill.ability_ref` is never resolved.** 18 Tier-0 skill rows
+  - [x] **T2-1 — `skill.ability_ref` is never resolved. Done 2026-08-14.**
+        18 Tier-0 skill rows
         ship `_ability_name_: 'Dexterity'` and an empty required `ability_ref`;
         `srd_core_package_bootstrap` writes `row['fields']` through verbatim, so
         the placeholder reaches the DB unchanged and `skillAbilityModFor` bails
@@ -3312,7 +3380,21 @@ has a value" into "the value produced the right number on a sheet".
         *Exit: the chip renders in the wizard's skill step, the undeclared
         `_ability_name_` key is gone from the census footer, and
         `builtin_dnd5e_v2_schema_test`'s assertion is updated to the new shape.*
-  - [ ] **T2-2 — No spell-slot table ships anywhere.** `class.spell_slots_by_level`,
+        > **Done — and "check which id the wizard reads" had one answer
+        > (2026-08-14).** Built-in Tier-0 rows are never materialised in
+        > `world_entities` (F1 decouple), so the only read path is
+        > `synthesizeWorldBuiltins`, which already runs
+        > `PackageImportService.resolveLookupPlaceholder` over each row's fields
+        > with a `slug → name → synth id` index built from the pack rows
+        > themselves. The skill rows just never used it. Replacing
+        > `_ability_name_` with `{'_lookup': 'ability', 'name': …}` in
+        > `lookups.dart` (plus `srdCorePackVersion` 1.0.6 → 1.0.7 so installs
+        > re-mirror the seeds) closes all three exits; new
+        > `test/domain/skill_ability_ref_test.dart` proves the chip end to end
+        > and `builtin_dnd5e_v2_schema_test` now asserts the placeholder points
+        > at a real Ability seed row. Full write-up in §0.
+  - [x] **T2-2 — No spell-slot table ships anywhere. Done 2026-08-14.**
+        `class.spell_slots_by_level`,
         `cantrips_known_by_level`, `prepared_spells_by_level` are 0/12 on the
         built-in pack and 0% on the Open5e side (B2: the source only has them in
         the two skipped WotC documents). ~~Blocks Stage M — a resolver cannot fold
@@ -3352,6 +3434,34 @@ has a value" into "the value produced the right number on a sheet".
         source into `srd_core/classes.dart`**, not hand-authoring from the PDF —
         and it stays in the built-in pack, because §2 says the built-in pack owns
         SRD content and A2 says the WotC documents are never shipped.
+        > **Done, and the harvest ran as described (2026-08-14).** Result in
+        > `srd_core/classes.dart` (`srdCorePackVersion` **1.0.5 → 1.0.6**):
+        > `cantrips_known_by_level` on Bard/Cleric/Druid/Sorcerer/Warlock/Wizard,
+        > `prepared_spells_by_level` on those six **plus Paladin and Ranger**,
+        > `spell_slots_by_level` on **Paladin and Ranger only**. Three findings,
+        > each of which changed what shipped:
+        > * **The Full and Pact presets are correct.** Every cell of
+        >   `_fullCasterSlots` (6 classes × 20 levels) and `_pactSlots` (warlock's
+        >   `spell-slots` + `slot-level` columns) equals the source. Authoring
+        >   them would be duplicated knowledge with two places to drift, so they
+        >   are **not** in data — the written decision *is* the first exit.
+        > * **The Half preset is wrong at exactly one level.** SRD 5.2.1 gives
+        >   Paladin/Ranger `{1: 2}` at level 1; `_halfCasterSlots` gives `{}`,
+        >   and agrees at levels 2–20. Fixed in the built-in data, **not** in the
+        >   preset, because the preset's 2014 shape is right for the packs
+        >   (`game_system: 5e-2014` on all 19).
+        > * **Item 2 above was wrong.** Neither packaged class inherits the
+        >   preset: `a5e-ag`'s Marshal and `bfrd`'s Mechanist both ship
+        >   `caster_kind: 'None'` (B2 renders their bespoke columns as a markdown
+        >   table instead). Nothing in the corpus is a packaged caster, so there
+        >   is no silent inheritance to declare — re-file the day one appears.
+        > *Exit met:* tables authored + version bumped **and** the `caster_kind`
+        > alternative written down. `flutter analyze` clean on the touched files;
+        > `flutter test test/domain/ test/application/character_creation/` → the
+        > same 13 pre-existing failures as the stashed tree, 0 new. New test
+        > `test/domain/srd_core_spellcasting_tables_test.dart` pins the numbers,
+        > the override-beats-preset path at Paladin L1, and the "no slot table
+        > for Full/Pact" rule that keeps the duplication out.
   - [ ] **T2-3 — Built-in spell/pack fields the Open5e side now beats.**
         `spell.area_shape_ref` / `area_size_ft` / `reaction_trigger` /
         `at_higher_levels_text` all 0/341 (B4 filled the first two in the packs),
