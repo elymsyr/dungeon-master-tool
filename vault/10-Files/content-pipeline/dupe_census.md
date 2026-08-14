@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/dupe_census.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -16,7 +16,8 @@ tags: [file]
 
 ## Inputs / Outputs
 **Inputs**
-- `dart run tool/open5e_import/bin/dupe_census.dart [--packs <dir>] [--only <slugs>] [--markdown] [--list <slug>] [--list-shared]`
+- `dart run tool/open5e_import/bin/dupe_census.dart [--packs <dir>] [--only <slugs>] [--markdown] [--list <slug>] [--list-shared] [--list-builtin-same]`
+- **The text comparison is no longer private to this file** — audit **L4** moved `normText` / `cardText` / the built-in index into [[dupe]], which [[build_packs]] also imports. This tool's exit criteria *are* census numbers, so a build that dropped duplicates by its own notion of "identical" could have gone green while shipping something else. `--list-builtin-same` prints section A's same-text rows themselves (L4's drop set), the way `--list-shared` prints section B's.
 - Reads the shipped assets plus the built-in pack (`generateBuiltinDnd5eV2Schema().seedRows` + `buildSrdCorePack()`, both pure Dart — no DB, no Flutter binding, **no source snapshot**).
 
 **Outputs** — a headline, a fidelity block and three censuses:

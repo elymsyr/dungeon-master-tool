@@ -43,6 +43,24 @@ class PackBuilder {
   /// True if a (slug, name) is already registered.
   bool has(String slug, String name) => _refIndex[slug]?.containsKey(name) ?? false;
 
+  /// Drop an entity and its `_ref` index entry (audit **L4** — a card the
+  /// built-in pack already ships verbatim must not be re-emitted).
+  ///
+  /// Must be called **before** [resolveRefs], and every placeholder aimed at
+  /// the removed row has to be re-aimed in the same pass: once the index entry
+  /// is gone, pass 2 would report the ref unresolved and fail the build. That
+  /// pairing is what `dupe.dart`'s `dropBuiltinDuplicates` exists to guarantee.
+  Map<String, dynamic>? remove(String id) {
+    final row = entities.remove(id);
+    if (row is Map) {
+      final slug = row['type'];
+      final name = row['name'];
+      if (slug is String && name is String) _refIndex[slug]?.remove(name);
+      return row.cast<String, dynamic>();
+    }
+    return null;
+  }
+
   /// Pass 2: rewrite `_ref` placeholders to ids. Returns the list of
   /// `slug:name` refs that could not be resolved (empty = healthy pack).
   List<String> resolveRefs() {

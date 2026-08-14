@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/build_packs.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -39,6 +39,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - Per document: build a fresh `PackBuilder`, call `mapCreatures` / `mapSpells` / `mapMagicItems` / `mapClasses` / `mapSpecies` / `mapBackgrounds` / `mapFeats` for each present content type, then `pack.resolveRefs()` (Pass 2). Non-empty unresolved list → log + `hadError = true` + skip writing that pack.
+- **Built-in duplicate drop before Pass 2** (audit **L4**, 2026-08-15): `builtinCards = builtinCardIndex()` is built once alongside `knownClasses`/`knownBaseItems`, and each pack passes through [[dupe]]'s `dropBuiltinDuplicates` **between mapping and `resolveRefs()`**. Order is load-bearing, not stylistic: the drop deletes the row's `_ref` index entry, so a placeholder left pointing at it makes Pass 2 report an unresolved ref and this tool exit 1 — a forgotten retarget cannot ship. Each pointer becomes a soft ref under the built-in's own spelling. Result on the pinned snapshot: **7 cards dropped, 15 refs retargeted** (`open5e-a5e-mm` 2/9, `open5e-bfrd` 5/6), printed per pack and totalled at the end. Only the built-in direction is dropped — bundled↔bundled duplicates are kept in both packs, see [[dupe]].
 - **Relational gate after the write** (audit **T3**, 2026-08-10): once every pack is emitted, `gatePackDir(outDir)` ([[gate_packs]]) runs over the output and any violation sets `hadError`. `resolveRefs()` above only proves the refs a pack *has* resolve; this proves it has the ones it must — §3.5's 396 actionless statblocks passed the ref gate cleanly. A build without `data/v1` now fails `monster-actionless` instead of shipping.
 - **SRD overlap skip**: documents whose publisher is `wizards-of-the-coast` (`doc.isSrdOverlap`) are discovered but never written — the app ships the hand-authored built-in SRD 5.2.1 pack instead (see [[srd_core_pack]]).
   - ✅ **Measured and confirmed correct — audit A2, 2026-08-13.** The skip was built rather than argued: `isSrdOverlap` was temporarily gated on an env var, both documents were mapped into a scratch dir off the pinned `d4276c58`, and every name was diffed against `builtinNameIndex()`. `open5e-srd-2024` (2,639 entities) contributes **0** chargen names the built-in lacks, **0** new magic items (of 551 misses, 409 are qualifier variants and 127 per-weapon expansions of one generic built-in card — 27 *Flame Tongue \<weapon\>* against one **Flame Tongue**, 32 *Vicious \<weapon\>* against one **Vicious Weapon**), and **1** monster (*Giant Fly*); 94 of its other 95 "missing" monsters are built-in `animal`/`mount` rows. Its four backgrounds carry `origin_feat_ref` + `asi_distribution_options` — and so do all **16** built-in ones. `srd-2014` is SRD **5.1**, so its genuine extras (Half-Elf, Half-Orc, 4 subclasses, 31 monsters) are edition content, not a gap. Mapping the two would also add **16** [[gate_packs]] violations to a corpus at 0. The env gate does not exist in the tool.

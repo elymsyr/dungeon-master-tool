@@ -84,13 +84,13 @@
       "requires": [],
       "counts": {
         "trait": 829,
-        "creature-action": 1657,
+        "creature-action": 1655,
         "monster": 586,
         "size": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-mm.pkg.json",
       "r2_path": "package/open5e-a5e-mm@1.1.0.json.gz",
-      "size_bytes": 3267486,
+      "size_bytes": 3266605,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.polygon.com/24172797/dnd-dungeons-dragons-core-rulebook-cover-art-gallery-phb-dmg-mm/"
@@ -108,8 +108,8 @@
       "is_srd_overlap": false,
       "requires": [],
       "counts": {
-        "trait": 776,
-        "creature-action": 1339,
+        "trait": 772,
+        "creature-action": 1338,
         "monster": 360,
         "language": 1,
         "class": 1,
@@ -117,7 +117,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-bfrd.pkg.json",
       "r2_path": "package/open5e-bfrd@1.1.0.json.gz",
-      "size_bytes": 2215493,
+      "size_bytes": 2213260,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/digital-painting-ancient-warships-traveling-rough-seas_14402173.htm#fromView=author&page=2&position=29&uuid=58d47109-a946-4252-8521-1cdd09b52a60"

@@ -14,6 +14,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../dupe.dart';
 import '../emit.dart';
 import '../gate.dart';
 import '../loaders.dart';
@@ -46,6 +47,8 @@ void main(List<String> args) {
   final docs = sourceDocs(dataRoot);
   final results = <PackResult>[];
   var hadError = false;
+  var dropTotal = 0;
+  var retargetTotal = 0;
 
   // v1 `Spell.dnd_class` index — the v2 fixtures leave `Spell.classes` empty for
   // most 3rd-party docs, so spells ship with no class link. v1 still carries the
@@ -79,6 +82,11 @@ void main(List<String> args) {
         if (key.startsWith(nameKey(slug, '')))
           key.substring(nameKey(slug, '').length): slug,
   };
+
+  // Cards the built-in pack already ships, with their prose (audit L4). A pack
+  // that re-emits one verbatim is not adding content, it is shadowing content
+  // already in scope, so the card is dropped and its pointers re-aimed.
+  final builtinCards = builtinCardIndex();
 
   // v1 `Race.json` species index (audit B3) — same gap, same rule: consulted
   // only for a species the v2 fixtures gave zero trait rows.
@@ -190,6 +198,18 @@ void main(List<String> args) {
       );
     }
 
+    // Audit **L4** — drop before pass 2 mints ids into the refs, never after.
+    final drop = dropBuiltinDuplicates(pack, builtinCards);
+    if (!drop.isEmpty) {
+      print('    L4: dropped ${drop.dropped.length} card(s) the built-in pack '
+          'already ships, retargeted ${drop.retargeted} ref(s)');
+      for (final line in drop.dropped) {
+        print('        $line');
+      }
+      dropTotal += drop.dropped.length;
+      retargetTotal += drop.retargeted;
+    }
+
     final unresolved = pack.resolveRefs();
     if (unresolved.isNotEmpty) {
       hadError = true;
@@ -209,6 +229,11 @@ void main(List<String> args) {
         .map((e) => '${e.value} ${e.key}')
         .join(', ');
     print('  ✓ ${doc.packageName}: $summary  → $outDir/${doc.packageName}.pkg.json');
+  }
+
+  if (dropTotal > 0) {
+    print('Audit L4: $dropTotal built-in duplicate(s) dropped, '
+        '$retargetTotal ref(s) retargeted to the built-in card.');
   }
 
   final merged = mergeOpen5eOriginals(results, outDir, rev);

@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/refgraph.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -26,6 +26,7 @@ tags: [file]
   - `bool has(slug, name)` — dedup/disambiguation check used by mappers.
   - `String stableId(slug, name)` — UUIDv5 helper.
   - `List<String> resolveRefs()` — Pass 2; returns `slug:name` refs that could NOT be resolved (empty = healthy pack).
+  - `Map<String, dynamic>? remove(String id)` — drops an entity **and** its `_ref` index entry (audit **L4**). Must run before `resolveRefs`, and every placeholder aimed at the removed row must be re-aimed in the same pass: once the index entry is gone, pass 2 reports the ref unresolved and the build fails. That pairing is exactly what [[dupe]]'s `dropBuiltinDuplicates` exists to guarantee — the failure mode is a feature, since it makes a forgotten retarget impossible to ship.
 
 ## Dependencies & Links
 - Depends on: `package:uuid` only.

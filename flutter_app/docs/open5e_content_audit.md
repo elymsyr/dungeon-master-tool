@@ -340,6 +340,22 @@ closed**: B10, B6, L1, B5 **and B7** all landed on 2026-08-14, each on a
 measurement rather than a preference, so the local verification run is the last
 thing between the promoted assets and publish.
 
+**L4 is done — 2026-08-15, and half of it closed by measurement.** No bundled
+pack re-ships a card the built-in pack has verbatim: **7 dropped, 15 pointers
+retargeted** to the built-in card as soft refs, `dupe_census` section A "same
+text" **7 → 0**, section C **4,059 → 4,074 refs with 0 dangling** (the rise *is*
+the retarget), `diff_packs` showing exactly those two change classes and nothing
+else in any of the 19 packs. The prerequisite landed first — the definition of
+"same card" moved out of the census script into `tool/open5e_import/dupe.dart`,
+which the build now imports, so the phase cannot grade itself against a rule it
+did not apply. The bundled↔bundled half was **not** implemented, on measurement:
+**188 of its 189 candidate names are monster-owned children** across `tob` ⟷
+`tob-2023` and `a5e-mm` ⟷ `bfrd`, each belonging to a different statblock, so
+electing an owner would delete a monster's own attack whenever the owning pack is
+not installed — L2's transitive-install price where the cost is content rather
+than megabytes. The asymmetry is now §2.5 policy: **drop toward the built-in
+pack, never toward another bundled pack.**
+
 **The roadmap is not finished — reopened 2026-08-14 as a six-item queue in a
 fixed order.** Every *filed* phase closed; three things no phase ever covered
 did not — the built-in pack's own holes (T2-1/2/3, measured but never fixed),
@@ -352,7 +368,7 @@ before the one above it is ticked:
 | ~~1~~ | ~~**T2-2**~~ | **done 2026-08-14** — the SRD 5.2.1 cantrip / prepared tables are authored on all 8 built-in casters and the Paladin/Ranger slot table with them; the Full/Pact slot presets were checked against the same source and left in code, not copied into data (below) |
 | ~~2~~ | ~~**T2-1**~~ | **done 2026-08-14** — the 18 skill seed rows now ship the standard `_lookup` placeholder in `ability_ref`, which the synthesiser already resolved for every other Tier-0 link; the dead `_ability_name_` key is gone and the chip renders (below) |
 | ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — 72/341 areas, 4/4 reaction triggers, 109/341 upcast clauses, `pack.content_quantities` 7/7. Two sources, in that order: what the rows' own prose already states, then the pinned snapshot for what SRD 5.2.1 says and this file's abridged prose dropped. Both columns are now at the corpus ceiling — 0 rows remain unharvested (below) |
-| 4 | **L4** | **no duplicate cards** — a card the built-in pack already ships must not be re-emitted by an official pack, and the same card must not ship in two packs |
+| ~~4~~ | ~~**L4**~~ | **done 2026-08-15** — 7 cards the built-in pack ships verbatim are no longer re-emitted and their 15 pointers are re-aimed at the built-in card; the bundled↔bundled half is closed by measurement instead, because every candidate is a different statblock's own child row (below) |
 | 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
 | 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
 
@@ -361,7 +377,7 @@ T2-1/2/3 edit the **built-in** pack, which §2/"Scope" puts out of bounds for th
 and the doc measures the result. L4 and U3 are new: L4 finishes what L1 left
 (L1 kept every collision and fixed *which* one wins — L4 removes the ones that
 are genuinely the same card), and U3 is the first phase about *reading* a card
-rather than building one. **Stage M is therefore no longer closed** — M1–M3 hold,
+rather than building one. **U3 is now the top of the queue.** **Stage M is therefore no longer closed** — M1–M3 hold,
 M4 is open, and outcome 2 goes back to "not met" until it lands.
 
 **T2-2 is done — 2026-08-14, and two of its three open items dissolved on
@@ -1145,6 +1161,33 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
   a name collision against the built-in card**, on every entity-source path
   (§6 L1).
 
+**Ownership, decided by L4 on 2026-08-15 — the direction of a drop is the whole
+question.** L1 settled *which copy wins* a collision that stays; L4 settled
+*which copy may be removed*, and the two directions are not symmetric:
+
+- **Toward the built-in pack — drop.** The built-in SRD 5.2.1 Core pack is in
+  scope for every world, package and character implicitly (§2.1), so a card it
+  already ships **verbatim** can be removed and every pointer re-aimed at it for
+  free: nothing extra is installed, downloaded or declared. Seven rows qualified
+  and were dropped; the per-row list is `dupe_census --list-builtin-same` and
+  the phase note in §6 L4.
+- **Toward another bundled pack — keep, in both.** A link makes the target pack
+  a transitive install dependency, so the loser's content disappears whenever
+  the owner is not installed. Measured, this is not a trade-off but a pure loss:
+  **188 of the 189 textually-identical shared names are monster-owned children**
+  (174 `open5e-tob` ⟷ `open5e-tob-2023`, 13 `open5e-a5e-mm` ⟷ `open5e-bfrd`),
+  each belonging to a *different* statblock, and the 189th is L2's `Void Speech`.
+  Electing an owner would delete a monster's own bite to save a row no picker
+  lists. **There is therefore no per-name winner list, because there is no
+  contested name** — the alphabetical-slug tiebreak L4 floated is deliberately
+  unimplemented, and `dupe.dart`'s `kBundledSharedPolicy` says so at the point a
+  future rebuild would reach for it.
+
+The matching rule for both directions is the same and is **not** name alone:
+same `(category, name)` case-folded **and** the same prose, with blank-vs-blank
+excluded as absence of evidence and no qualifier stripping. It lives in
+`tool/open5e_import/dupe.dart` so the census and the build cannot drift apart.
+
 ---
 
 ## 3. What ships today
@@ -1189,15 +1232,25 @@ are in the skipped SRD documents — **no entity is being lost**.
 
 ### 3.2 Duplication census — fidelity-fixed by L0 (2026-07-30)
 
-`dart run tool/open5e_import/bin/dupe_census.dart` — 19 packs, 22,005 entities,
-against 2,717 `(slug, name)` rows the built-in pack puts in scope. **Re-measured
-2026-08-13 against the promoted rebuild**; the pre-promotion figures were 20,712
-entities / 4,331 union / 1,178 actionable.
+`dart run tool/open5e_import/bin/dupe_census.dart` — 19 packs, **21,839**
+entities, against 2,717 `(slug, name)` rows the built-in pack puts in scope.
+**Re-measured 2026-08-15 after L4**; it was 21,846 after B6, and 22,005 /
+4,462 union / 1,183 actionable at the 2026-08-13 promotion. The current union is
+**4,419 (20.2%)**, of which 3,279 are statblock-owned rows, so actionable
+redundancy is **1,140 (5.2%)**.
 
-**Union: 4,462 of 22,005 bundled entities (20.3%) share a `(slug, name)` key with
+> **Section A "same text" is now 0 (was 7), and that is L4's exit.** No bundled
+> pack re-ships a card the built-in pack has word for word. Section B's
+> "textually identical" stays at **189 names / 193 copies** by decision, not by
+> omission — §2.5 records why every one of them is kept.
+
+**Union: 4,419 of 21,839 bundled entities (20.2%) share a `(slug, name)` key with
 content already in scope — of which 3,279 are rows owned by one statblock, so the
-actionable redundancy is 1,183 (5.4%).** A and B below overlap (a trait can be in
+actionable redundancy is 1,140 (5.2%).** A and B below overlap (a trait can be in
 the built-in pack *and* in six bundled packs), so do not add them.
+L4 did **not** move the actionable figure, and that is expected rather than
+disappointing: its seven drops were monster-owned children, which the headline
+deliberately excludes. Stated here so the phase is not read as having missed.
 
 > **The census now prints that split itself**, and the actionable figure is what
 > L1/L2 are graded on. "Section A went down" is still the wrong progress metric.
@@ -2731,88 +2784,90 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       empty **before** the `tags` route is retired.* — **all four met**, the last
       of them by the `vom` group in `bundled_pack_resolve_test`.
 
-- [ ] **L4 — No duplicate cards. Filed 2026-08-14, queue position 4.**
-      *(needs the snapshot — it is a mapper change plus a rebuild.)*
+- [x] **L4 — No duplicate cards. Done 2026-08-15, and one of its two halves
+      closed by measurement rather than by code.**
       The rule, in the requester's words: **a card the built-in SRD pack already
       ships must not also ship in an official pack, and the same card must not
-      ship in two packs.** The app can read the built-in one directly (§2.1: it
-      is in scope on all three paths without a declaration), so a second copy
-      buys nothing and costs a duplicate row in every picker.
-      **The decided matching rule is same `(category, name)` *and* same text** —
-      not name alone. L1 measured why: of the 1,643 built-in name collisions
-      **1,636 say something different** (A5E and Black Flag restats), so a
-      name-only rule would delete the A5E *Fireball* a user installed *Adventurer's
-      Guide* to get. Name-only was considered and rejected on that measurement;
-      if it is ever wanted anyway, it is a policy change to §2.5, not a bug fix.
-      Target set, straight from `dupe_census` on the promoted assets:
-      * **section A "same text" — 7 rows** (3 `creature-action`, 4 `trait`) that
-        the built-in pack already ships verbatim → not emitted. Note what they
-        are: all seven are **monster-owned children**, so dropping one is the
-        retarget case below, not a delete — the owning statblock's `trait_refs`
-        / `action_refs` must come out pointing at the built-in row, and T3's
-        no-orphan rule is the thing that will catch it if they do not;
-      * **section B "textually identical" — 189 names / 193 copies** shipped by
-        more than one bundled pack. One owner keeps it, the rest drop it —
-        **and "which one owns it" is not yet decided; decide it before writing
-        code.** It cannot be arbitrary, because the winner's uuid is what every
-        retargeted ref lands on and pack install order is not stable. Two
-        defensible rules: *(a)* if the built-in pack also has the card, nobody
-        owns it — all copies drop and every ref goes to built-in (this covers
-        most of the set and needs no ordering at all); *(b)* otherwise the
-        alphabetically-first pack slug wins, purely so the choice is
-        reproducible across rebuilds. Write the chosen rule into §2.5 with the
-        per-name winner list, so a later rebuild cannot quietly re-elect a
-        different owner. Note
-        L2's price before reaching for `metadata.links`: a link makes the whole
-        target pack a transitive install dependency (2.9 MB for a one-row card),
-        so for a card the **built-in** pack also has, drop-and-rely-on-built-in
-        beats linking; a link is only for content that exists nowhere else.
-      * the 588 names with **no text on any copy** stay out of scope — L2
-        already dereferenced their child refs and found **0 of 588 statblocks
-        identical**.
-      **Deleting is only half of it — every pointer at the deleted card has to
-      be re-aimed at the survivor.** This is the part that makes L4 a rewrite
-      rather than a filter, and it is why the phase cannot be done by grepping
-      the entity list. Worked example, the one that named the requirement: an
-      official pack ships its own *Fireball* **and** a monster whose spell list
-      hard-refs it. Drop the spell and the monster's list points at nothing —
-      so the drop must **retarget that reference to the built-in *Fireball***
-      (soft ref by name), not merely survive the build. The same holds in every
-      direction a ref can run, and the sweep must be over **all** of them, not
-      the fields this paragraph happens to name:
-      * monster spell lists, `trait_refs`, `action_refs`;
-      * `base_item_ref` and equipment rows on chargen cards;
-      * anything under §2.3's ref contract, in the dropped card's own pack **and
-        in the other 18** — a cross-pack soft ref by name keeps resolving only
-        because the *name* survives somewhere, so a drop that also removes the
-        last card of that name is a different, worse defect.
-      Rule of thumb: **the reference count before and after must match; only the
-      target changes.** A ref that resolved to the pack's copy resolves to the
-      built-in (or owner-pack) copy afterwards, and nothing silently becomes
-      empty.
-      **One thing has to move before any of this can be written: the definition
-      of "same card" lives in a script.** `dupe_census.dart` is 835 lines under
-      `bin/` and its text comparison is private to it, while `build_packs` can
-      only reach the shared modules (`gate.dart`, `verify.dart`, `emit.dart`,
-      `refgraph.dart`). Extract the comparison into a shared module first, the
-      way T1 and T3 did, so the census and the build apply **one** rule; two
-      copies of "identical" is how a phase whose exit is a census number goes
-      green while shipping something else.
-      Where it lands: the emit side, not a mapper — the drop and the retarget
-      have to happen before `refgraph` mints ids, or an in-pack hard ref will
-      dangle and `gate_packs` will (correctly) fail the build. A dropped card
-      that anything points at must leave a **soft ref by name** behind, never a
-      hard ref to a deleted uuid (§3.3's policy).
-      *Exit: `dupe_census` section A "same text" **0** and section B "textually
-      identical" **0**; **section C's total ref count does not drop** and
-      "nothing installed" stays **0** — that pair is what proves the retarget
-      worked; `gate_packs` green (no orphan, no dangling hard ref, no
-      `empty-equipment-option` that was non-empty before); `diff_packs` shows
-      removals **plus the retargeted ref values** and nothing else;
-      `verify_packs` `disagree` 0; and two tests — one that installs two packs
-      sharing a dropped name and asserts the picker lists it exactly once, and
-      one that resolves a **monster whose spell list named a dropped card** and
-      asserts it now lands on the built-in card.*
+      ship in two packs.** The matching rule shipped as decided — same
+      `(category, name)` **and** same text, never name alone: of the 1,643
+      built-in name collisions **1,636 say something different** (A5E and Black
+      Flag restats), so a name-only rule would delete the A5E *Fireball* a user
+      installed *Adventurer's Guide* to get.
+
+      **The prerequisite went in first, exactly as filed.** The definition of
+      "same card" lived in a private function inside an 835-line script while
+      the build could only reach the shared modules, so the two sides could
+      disagree by construction — a phase whose exit *is* a census number going
+      green while shipping something else. It now lives in
+      `tool/open5e_import/dupe.dart` (`normText` / `cardText` / `identityKey` /
+      `builtinSameCard`), which `dupe_census` and `build_packs` both import.
+
+      **The built-in half shipped: 7 cards dropped, 15 refs retargeted.** They
+      are 3 `creature-action` and 4 `trait` rows in `open5e-a5e-mm` and
+      `open5e-bfrd` — *Nimble Escape* (twice), *Teleport (Blink Dog)*, *False
+      Appearance (Gargoyle)*, *Hold Breath (Octopus)*, *Speak with Beasts and
+      Plants*, *Spider Climb (Roper)* — listed by
+      `dupe_census --list-builtin-same`, a mode added so the drop set can be
+      read rather than inferred from a count. All seven are monster-owned
+      children, so all seven are the **retarget** case: the drop runs on the
+      emit side before `refgraph` mints ids, removes the row from the pack's
+      `_ref` index, and rewrites every placeholder aimed at it into a soft ref
+      under the **built-in's own spelling** (`findEntityIdByName` is
+      case-sensitive, so echoing the pack's casing would dangle — that is L3's
+      `"Spare The Dying"` defect waiting to be re-committed).
+      **The retarget is not merely tested, it is structurally forced:** deleting
+      the index entry makes pass 2 report the ref unresolved and `build_packs`
+      exit 1. Verified by mutation — disabling the rewrite fails the build with
+      **9 + 6 = 15 unresolved refs**, the same 15.
+
+      **The bundled↔bundled half has an empty target set, and that is the
+      finding.** L4 filed 189 names / 193 copies and left "which pack owns it"
+      open with two candidate rules. Measured, the question dissolves:
+      **188 of the 189 are monster-owned children**, in exactly two pack pairs —
+      `open5e-tob` ⟷ `open5e-tob-2023` (**174**, one book and its 2023 reprint)
+      and `open5e-a5e-mm` ⟷ `open5e-bfrd` (**13**, two systems restating the
+      same SRD creature) — and the 189th is `language` "Void Speech", which
+      **L2** already priced and kept. Each copy is a *different statblock's*
+      internals: "Bite (Amphiptere)" in `tob` belongs to `tob`'s Amphiptere and
+      the one in `tob-2023` to `tob-2023`'s. Electing an owner and pointing the
+      loser's monster at it would delete that monster's bite whenever the owning
+      pack is not installed. That is L2's transitive-install price with a
+      sharper edge — **the cost is content, not megabytes** — and a broken
+      statblock is strictly worse than a duplicate child row no picker lists.
+      So the alphabetical-slug tiebreak L4 floated is **deliberately not
+      implemented**, and the asymmetry is the rule worth carrying forward:
+      dropping toward the **built-in** pack is free (§2.1 — in scope on all
+      three paths, no declaration, no download), dropping toward **another
+      bundled pack** never is. Written into §2.5 and into
+      `dupe.dart`'s `kBundledSharedPolicy` so a later rebuild cannot quietly
+      re-elect an owner.
+      *Exit met, with one criterion reworded against what the corpus turned out
+      to hold:* `dupe_census` section A "same text" **7 → 0**; section B
+      "textually identical" stays **189**, by the measured decision above rather
+      than by omission. Section C's ref total **does not drop — it rises
+      4,059 → 4,074**, which is the 15 retargets converting a hard ref into a
+      soft one, and "nothing installed" stays **0**. `gate_packs` **green**
+      (no orphan, no dangling hard or soft ref, no newly empty equipment
+      option); `diff_packs` shows **exactly two change classes** — 7 entities
+      removed and 15 `monster.trait_refs`/`bonus_action_refs` values retargeted,
+      **no other value changed in any of the 19 packs**; `verify_packs`
+      **68,561 ok / 0 disagree / 0 absent**, unchanged; `audit_packs` filled
+      slots unchanged at **136 of 408** (only denominators moved: `trait`
+      6,423 → 6,419, `creature-action` 9,901 → 9,898). Corpus **21,846 →
+      21,839**; actionable redundancy stays **1,140**, because the seven were
+      monster-owned children and were never inside that figure — stated rather
+      than hidden. Seven tests in
+      `test/tool/builtin_dupe_drop_test.dart`, including the two the exit named:
+      two packs that both shipped *Nimble Escape* now list it **exactly once**
+      (and the survivor is the built-in card), and **Blink Dog**, whose
+      `bonus_action_refs` named a dropped row, resolves the same number of refs
+      as before with the teleport now landing on the built-in card.
+      *(L4's worked example was a monster whose **spell list** hard-refs a
+      dropped *Fireball*; no spell is in the drop set, so the shipped test is
+      the same shape on the field that actually carries it.)*
+      Assets re-promoted, `manifest.json` and the first-party catalog rebuilt;
+      `pack_version` stays **1.1.0** because it was never uploaded, so no
+      immutable `r2_path` exists to collide with.
 
 ### Stage U — make the wizard see it (outcome 4)
 
