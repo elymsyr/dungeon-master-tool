@@ -351,7 +351,7 @@ before the one above it is ticked:
 |:--:|---|---|
 | ~~1~~ | ~~**T2-2**~~ | **done 2026-08-14** — the SRD 5.2.1 cantrip / prepared tables are authored on all 8 built-in casters and the Paladin/Ranger slot table with them; the Full/Pact slot presets were checked against the same source and left in code, not copied into data (below) |
 | ~~2~~ | ~~**T2-1**~~ | **done 2026-08-14** — the 18 skill seed rows now ship the standard `_lookup` placeholder in `ability_ref`, which the synthesiser already resolved for every other Tier-0 link; the dead `_ability_name_` key is gone and the chip renders (below) |
-| 3 | **T2-3** | the four built-in spell fields the Open5e packs now beat |
+| ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — every one of the four fields is now lifted out of the prose the SRD rows already carry (64/341 areas, 4/4 reaction triggers, 50/341 upcast clauses), and `pack.content_quantities` is 7/7 once the "id→qty" key its label promised is admitted to be impossible (below) |
 | 4 | **L4** | **no duplicate cards** — a card the built-in pack already ships must not be re-emitted by an official pack, and the same card must not ship in two packs |
 | 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
 | 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
@@ -421,6 +421,84 @@ the 18 rows carries a `_lookup: 'ability'` pointing at a name the ability seed
 list actually ships, and carries no `_ability_name_`. `skill.ability_ref` goes
 0/18 → **18/18** on the next `audit_packs --builtin` run. **Next in the queue:
 T2-3.**
+
+**T2-3 is done — 2026-08-14, and none of it was authored from scratch.** The
+phase's exit allowed either "filled from SRD 5.2.1 text" or "declared
+deliberately empty", and the finding is that the first option needed no new
+text: the four fields were all already *stated*, in prose, on the rows that own
+them. Nothing here re-types the SRD — it lifts what the description says into
+the typed field beside it, and a test re-reads the description to prove the lift
+is faithful.
+
+| Field | Before | After | Where it came from |
+|---|--:|--:|---|
+| `spell.area_shape_ref` / `area_size_ft` | 0/341 | **64/341** | one `_areas` table in `spells.dart`, `name → (shape, ft)` |
+| `spell.reaction_trigger` | 0/341 | **4/4** | the four Reaction-cast spells, written standalone |
+| `spell.at_higher_levels_text` | 0/341 | **50/341** | the upcast clause parsed off the description's own heading |
+| `pack.content_quantities` | 0/7 | **7/7** | the `contents` map each pack was already built from |
+
+*Areas.* 64 of 341 spells state an area template. It is a table rather than a
+parameter on 64 call sites because the whole set has to be reviewable against
+the prose in one screen — and because two shapes carry two numbers, which a
+naive parse gets wrong: a **Cylinder** stores the radius (`Reverse Gravity` is
+50, not its 100-foot height) and a **Line** stores the length, not the width.
+The guard is `test/domain/srd_core_spell_fields_test.dart`, which for every
+filled row asserts the shape word and the number both appear in that row's own
+description — so the table can neither drift nor invent — and then sweeps the
+other direction: any spell whose description matches `N-foot <Shape>` and
+carries no shape fails. That sweep found the one row the extraction pass missed
+by eye, and it is **not** a hole: `Antipathy/Sympathy`'s two Cubes cap the
+*target's* size, they are not an area. It joins `Wall of Force` and
+`Private Sanctum` — whose shape is the caster's choice at cast time — as the
+three recorded exceptions. **64/341 is the ceiling here, not a shortfall**: the
+other 277 spells have no area in SRD 5.2.1 either.
+
+*Reaction triggers.* Only 4 SRD spells are Reaction-cast (`Hellish Rebuke`,
+`Shield`, `Counterspell`, `Feather Fall`), so this is **4/4**, not 4/341. They
+are written standalone — the SRD states them as the tail of the casting-time
+line ("…, which you take when…"), the same lead-in the Open5e mapper strips in
+`_reactionTrigger`. The test asserts the biconditional: every Reaction spell has
+a trigger **and** no non-Reaction spell does, so a fifth Reaction spell fails
+the build until its trigger is authored.
+
+*Upcast clauses.* The field is `levelTextTable` — `Map<int,String>` — and the
+50 rows that scale get exactly one entry, keyed at `level + 1`, the lowest slot
+level that buys anything. One row and not eight because SRD 5.2.1 states upcast
+as a per-slot-level *formula* ("increases by 1d6 for each spell slot level above
+3"), and expanding that into eight literal rows would be this audit's own
+definition of fabrication. The text is `substring`'d verbatim off the
+description's heading — three of which the file uses interchangeably
+(`**Higher-Level Slot.**`, `*Using a Higher-Level Spell Slot.*`,
+`**At Higher Levels.**`), all matched — and the test asserts
+`description.endsWith(text)` so it stays verbatim. **Cantrip Upgrade is
+deliberately excluded**: its 13 rows scale on *character* level, which is not
+what a slot-level-keyed field means. Note the Open5e side does not fill this
+field either — its mapper folds `higher_level` into the description prose — so
+after this the built-in pack is the only place in the app where upcast is
+machine-readable.
+
+*`pack.content_quantities` — the label was promising something the type cannot
+hold.* It is declared `fb.levelTable(...)`, i.e. `Map<int,int>`, and labelled
+"(id→qty)", and `packs.dart` carried a header comment deferring the fill "until
+the resolver plumbing is extended to rewrite quantities by id". That extension
+can never arrive: a UUID is not an `int`, and `_resolveRefs` walks map *values*
+only — a key is never rewritten. So the key is the item's **position in
+`content_refs`**, which fits the declared type, needs no plumbing, and cannot
+drift, because both lists are built from the same `contents` map in the same
+order. The label now says so, which is a cosmetic schema change and the reason
+the built-in `WorldSchema` goes **2.5.0 → 2.5.1** (shape unchanged, no
+migration). All 7 packs fill it; a Burglar's Pack now knows it holds 10 Candles.
+
+`srdCorePackVersion` **1.0.7 → 1.0.8** so existing installs re-mirror the spell
+and pack rows. *Exit met:* every one of the five columns is either filled from
+SRD 5.2.1 text or has a recorded reason, and the reasons are pinned by tests
+rather than by this paragraph. `flutter analyze` clean on the five touched
+files; `flutter test test/domain/ test/application/` → 56 failures on the
+stashed tree, 57 with the change, the one extra being `content_store_test`'s
+known-flaky `write + read roundtrip` (it dies in `tearDown` deleting a `/tmp`
+dir that is already gone — nothing to do with spells). New test
+`test/domain/srd_core_spell_fields_test.dart`, 8 cases. **Next in the queue:
+L4.**
 
 **L1 is done — 2026-08-14, and it deleted nothing.** The prediction in the line
 above held: section A's 1,643 rows shrink to a drop set of **zero** once §2.5's
@@ -1479,10 +1557,23 @@ softRef this audit writes lands here, and until now nothing had ever counted it.
 - **B4's two spell fields are 0% on the built-in side**: `area_shape_ref` /
   `area_size_ft` 0/341, `reaction_trigger` 0/341, `at_higher_levels_text` 0/341.
   The Open5e packs now carry the first two at their source ceiling (7%), so the
-  hand-authored SRD spells are the ones lagging. Filed **T2-3**.
+  hand-authored SRD spells are the ones lagging. Filed **T2-3**. **Closed
+  2026-08-14** — all four are now lifted out of the prose the rows already
+  carry: `area_shape_ref`/`area_size_ft` **64/341** (the corpus ceiling; three
+  recorded exceptions), `reaction_trigger` **4/4** (only 4 SRD spells are
+  Reaction-cast), `at_higher_levels_text` **50/341** keyed at `level + 1`, with
+  the 13 Cantrip Upgrades excluded because they scale on character level. The
+  Open5e side still does not fill `at_higher_levels_text` at all — its mapper
+  folds `higher_level` into the description — so the built-in pack now leads on
+  that column instead of trailing.
 - **`pack.content_quantities` 0/7** while `content_refs` is 100% — a Burglar's
   Pack knows it contains ball bearings, not that it contains 1,000 of them.
-  Folded into **T2-3**.
+  Folded into **T2-3**. **Closed 2026-08-14 — 7/7**, and the reason it was 0/7
+  is that its label promised a key its type cannot hold: the field is a
+  `levelTable` (`Map<int,int>`) labelled "id→qty", and `_resolveRefs` rewrites
+  map values only, so no plumbing extension could ever have made a UUID the
+  key. It is now keyed by position in `content_refs` — same source map, same
+  order, cannot drift — and the label says so (schema **2.5.0 → 2.5.1**).
 - **10 `⚠ const` columns, all confirmed deliberate**: `is_sentient` (no SRD
   sentient item ships), `animal`/`species` `creature_type_ref` (Beast /
   Humanoid), `subclass.granted_at_level` (SRD 5.2.1 gives every subclass at 3),
@@ -3462,12 +3553,33 @@ has a value" into "the value produced the right number on a sheet".
         > `test/domain/srd_core_spellcasting_tables_test.dart` pins the numbers,
         > the override-beats-preset path at Paladin L1, and the "no slot table
         > for Full/Pact" rule that keeps the duplication out.
-  - [ ] **T2-3 — Built-in spell/pack fields the Open5e side now beats.**
-        `spell.area_shape_ref` / `area_size_ft` / `reaction_trigger` /
-        `at_higher_levels_text` all 0/341 (B4 filled the first two in the packs),
-        and `pack.content_quantities` 0/7 while `content_refs` is 100%. *Exit:
-        filled from SRD 5.2.1 text with a version bump, or each declared
-        deliberately empty.*
+  - [x] **T2-3 — Built-in spell/pack fields the Open5e side now beats. Done
+        2026-08-14.** `spell.area_shape_ref` / `area_size_ft` /
+        `reaction_trigger` / `at_higher_levels_text` all 0/341 (B4 filled the
+        first two in the packs), and `pack.content_quantities` 0/7 while
+        `content_refs` is 100%. *Exit: filled from SRD 5.2.1 text with a version
+        bump, or each declared deliberately empty.*
+        > **Done — and no SRD text was retyped (2026-08-14).** All four fields
+        > were already *stated* in the prose of the rows that own them; the
+        > change lifts them into their typed fields and a test re-reads the
+        > description to prove the lift is faithful. `area_shape_ref`/
+        > `area_size_ft` **64/341** (the corpus ceiling — Cylinder stores the
+        > radius, Line the length; `Wall of Force`, `Private Sanctum` and
+        > `Antipathy/Sympathy` are recorded exceptions, the last found by the
+        > test's reverse sweep). `reaction_trigger` **4/4** — only four SRD
+        > spells are Reaction-cast, and the test asserts the biconditional so a
+        > fifth fails the build. `at_higher_levels_text` **50/341**, one entry
+        > keyed at `level + 1` because the SRD states upcast as a formula, not a
+        > table; the 13 Cantrip Upgrades are excluded (character level, not slot
+        > level). `pack.content_quantities` **7/7**, keyed by position in
+        > `content_refs` — its "id→qty" label promised a key a `Map<int,int>`
+        > can never hold, so the label changed too (schema **2.5.0 → 2.5.1**).
+        > *Exit met:* filled where the source has it, recorded reason where it
+        > does not, `srdCorePackVersion` **1.0.7 → 1.0.8**. `flutter analyze`
+        > clean; `test/domain/ test/application/` 56 → 57, the extra being
+        > `content_store_test`'s known-flaky `write + read roundtrip`. New test
+        > `test/domain/srd_core_spell_fields_test.dart` (8). Full write-up in
+        > §0.
 - [x] **T3 — Relational sanity gate — done 2026-08-10.** *(no snapshot needed.)*
       `tool/open5e_import/gate.dart` + `bin/gate_packs.dart`: seven per-entity
       rules over all 19 packs, exit 1 on any violation, and `build_packs` runs
