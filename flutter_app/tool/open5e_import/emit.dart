@@ -19,7 +19,10 @@ import 'sources.dart';
 /// purpose: the installed-vs-catalog upgrade check (audit D2) is a plain
 /// comparison.
 ///
-/// 1.1.0 — audit phases B1/B2/B3/B4/B8/B9/B11 (2026-08-13).
+/// 1.1.0 — audit phases B1/B2/B3/B4/B8/B9/B11 (2026-08-13), plus L3's
+/// `class_refs`/`base_item_ref` and B5's `mechanical_notes` (2026-08-14).
+/// Not bumped for B5: 1.1.0 was never uploaded, so no immutable `r2_path`
+/// exists for it and folding is safe. Bump on the next release after publish.
 const packVersion = '1.1.0';
 
 class PackResult {

@@ -322,6 +322,11 @@ void main() {
           p.eff.effectiveAbilities.values.any((v) => v != 10),
       'asi_max_score': (p) =>
           p.eff.effectiveAbilities.values.every((v) => v <= 20),
+      // B5/M2 — the rules no typed field could carry. Each source row is one
+      // line, so "it arrived" is the card's own line count reaching the sheet.
+      'mechanical_notes': (p) =>
+          p.eff.mechanicalNotes.length >=
+          '${p.card.fields['mechanical_notes']}'.split('\n').length,
       'granted_skill_proficiencies': (p) => p.eff.proficiencies.skillIds.isNotEmpty,
       'granted_skill_refs': (p) => p.eff.proficiencies.skillIds.isNotEmpty,
       'granted_tool_refs': (p) => p.eff.proficiencies.toolIds.isNotEmpty,
