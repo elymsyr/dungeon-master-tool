@@ -83,6 +83,22 @@ const _actionlessUpstream = <String>{
   'open5e-a5e-mm/Seahorse',
 };
 
+/// `pack/name / option` of equipment options whose kit names **nothing the
+/// SRD 5.2.1 catalog ships** (audit **B6**). Each was read: they ask for a
+/// generic category rather than an item ("a set of artisan's tools", "one
+/// musical instrument of your choice"), or for gear 5.2.1 dropped ("common
+/// clothes", "cold-weather clothes", "vestments", "snowshoes", "donkey"). A
+/// holy symbol is three cards (Amulet / Emblem / Reliquary), so picking one
+/// would be a coercion. All four still grant their gold, and the option label
+/// still shows the prose. Same contract as [_actionlessUpstream]: by name, so a
+/// *different* option going empty still fails the gate.
+const _kitlessUpstream = <String>{
+  'open5e-tdcs/Recovered Cultist / A',
+  'open5e-toh/Mysterious Origins / A',
+  'open5e-toh/Northern Minstrel / A',
+  'open5e-toh/Trophy Hunter / A',
+};
+
 class GateViolation {
   GateViolation(this.pack, this.rule, this.subject, this.detail);
 
@@ -241,16 +257,25 @@ GateReport gatePacks(
 
       for (final option in _equipmentOptions(attrs)) {
         final items = option['items'];
+        // Audit **B6**: an option's items are a mix of in-pack uuids and
+        // cross-pack soft refs at the built-in catalog, and `resolveEntityRef`
+        // grants both. Counting only the uuid would call every linked option
+        // empty — the exact blindness that let the gear stubs look correct.
         final resolved = items is List
             ? items.where((i) =>
-                i is Map && i['ref'] is String && entities.containsKey(i['ref']))
+                i is Map &&
+                (i['ref'] is String
+                    ? entities.containsKey(i['ref'])
+                    : i['ref'] is Map &&
+                        nameIndex.contains(nameKey(
+                            (i['ref']['slug'] ?? i['ref']['_lookup'] ?? '')
+                                .toString(),
+                            (i['ref']['name'] ?? '').toString()))))
             : const [];
-        if (resolved.isEmpty) {
-          report.violations.add(GateViolation(
-              pack,
-              'empty-equipment-option',
-              '$name / ${option['option_id'] ?? '?'}',
-              'option resolves no item'));
+        final subject = '$name / ${option['option_id'] ?? '?'}';
+        if (resolved.isEmpty && !_kitlessUpstream.contains('$pack/$subject')) {
+          report.violations.add(GateViolation(pack, 'empty-equipment-option',
+              subject, 'option resolves no item'));
         }
       }
 

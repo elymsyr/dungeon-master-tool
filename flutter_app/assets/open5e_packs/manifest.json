@@ -12,7 +12,6 @@
         "spell": 371,
         "class": 1,
         "subclass": 3,
-        "adventuring-gear": 44,
         "background": 21,
         "feat": 59
       }
@@ -26,7 +25,6 @@
       "game_system": "a5e",
       "is_srd_overlap": false,
       "counts": {
-        "adventuring-gear": 9,
         "background": 4
       }
     },
@@ -39,7 +37,6 @@
       "game_system": "a5e",
       "is_srd_overlap": false,
       "counts": {
-        "adventuring-gear": 10,
         "background": 2
       }
     },
@@ -138,7 +135,6 @@
         "spell": 2,
         "subclass": 17,
         "subspecies": 1,
-        "adventuring-gear": 8,
         "background": 2
       }
     },
@@ -167,7 +163,6 @@
         "creature-action": 10,
         "monster": 4,
         "subclass": 4,
-        "adventuring-gear": 13,
         "background": 5,
         "feat": 1
       }
@@ -245,7 +240,6 @@
         "subclass": 76,
         "subspecies": 29,
         "species": 11,
-        "adventuring-gear": 75,
         "background": 19,
         "feat": 13
       }

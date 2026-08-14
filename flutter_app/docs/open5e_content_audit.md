@@ -208,7 +208,8 @@ value change in any of the 19 packs**; `verify_packs` **0 disagreements**,
 `gate_packs` green, `dupe_census` section C **0 dangling**, `audit_packs` filled
 slots **133 → 138 of 407**. Assets re-promoted and `manifest.json` rebuilt;
 (**139 of 407** after the `tags_line` fix below; **140 of 408** after B10 adds
-`monster.alignment_note`.)
+`monster.alignment_note`; **136 of 408** after B6 deletes the gear stubs, whose
+only filled fields were the four constants the synthesiser wrote.)
 `pack_version` stays **1.1.0** because it was never uploaded, so no immutable
 `r2_path` exists to collide with.
 
@@ -263,6 +264,54 @@ the whole `absent` column) with the mapper's three-way rule restated
 independently on the fixture side; `audit_packs` **140 of 408** filled. Built-in
 schema version **2.4.0 → 2.5.0** for the new field.
 
+**B6 is done — 2026-08-14, and it was a reader bug wearing a content bug's
+clothes.** The 159 `adventuring-gear` stubs existed to make one hard ref resolve;
+`_synthGearRef` minted an entity with `cost_cp` 0, `weight_lb` 0 and an empty
+description for every token a background's equipment prose named. They are gone —
+**`adventuring-gear` 159 → 0** — and a kit token now links the built-in catalog
+by **soft ref**, under the catalog's own name. Three things had to move together:
+
+- **the mapper.** `_gearRef` resolves in-pack → hard ref, built-in card → soft
+  ref, neither → **no item row at all**. What falls through is background
+  flavour ("pet monkey wearing a tiny fez", "stories you know", "memento of your
+  destiny") and generic categories ("a set of artisan's tools", "one musical
+  instrument of your choice") — not equipment. Shipping a knowingly dangling
+  soft ref instead of a stub would only have moved the lie into T3's gate;
+  nothing is lost either way, because the option's `label` is the kit prose
+  verbatim. Matching is three mechanical rules over `builtinNameIndex()` — the
+  same index L3 aims `class_refs` and `base_item_ref` at — plus plural,
+  `" of "`-tail and leading-measure-word forgiveness: **104 item rows now link a
+  real card** where the stub era linked 159 empty ones.
+- **the A/B path.** `_equipOptionFromBody` emitted a ref *only* when the item
+  shipped in-pack, and per **A1** no shipped document carries a mundane-equipment
+  fixture — so a class or background A/B option granted **nothing**. It now
+  routes through the same helper.
+- **the reader.** `_buildFieldsFromDraft` granted `items[].ref` only `if (ref is
+  String)`. Every cross-pack soft ref is a Map, so the wizard listed the item
+  (`_resolveItemLines` reads `ref['name']` regardless) and the sheet never got
+  it. It now calls `resolveEntityRef`, which reads all three envelopes. **This is
+  the half B6's exit insisted on**, and it is why the exit could never have been
+  met by an importer-only change.
+
+T3's `empty-equipment-option` rule had the same blindness as the old reader — it
+counted only in-pack uuids — so it now counts a resolvable soft ref too, and
+**4 of 50 options** stay empty against a documented by-name allowlist
+(`_kitlessUpstream`, same contract as `_actionlessUpstream`): their kits name
+only generic categories, gear SRD 5.2.1 dropped ("common clothes",
+"cold-weather clothes", "vestments", "snowshoes", "donkey"), or a holy symbol,
+which is three cards (Amulet / Emblem / Reliquary) — picking one is B10's
+coercion again. Two backgrounds (`Folk Hero`, `Crime Syndicate Member`) lose the
+field entirely and fall back to `equipment_step`'s prose note. `diff_packs`
+reports exactly two change classes — **159 gear entities removed, 52 background
+`equipment_choice_groups` rewritten, nothing else touched in any of the 19
+packs**; gate green; `verify_packs` unchanged at **68,561 ok / 0 disagree /
+0 absent** (the stubs had no fixture to verify against, which was the tell);
+`dupe_census` corpus **22,005 → 21,846** entities, section A 1,666 → **1,643**,
+actionable redundancy 1,178 → **1,140**, section C **4,059** soft refs with
+**0** resolving to nothing; `audit_packs` **140 → 136 of 408** — the four slots
+lost are exactly the four constants `_synthGearRef` wrote, which is what a
+fabricated field looks like on the way out.
+
 **Publish is deliberately held until the whole system is verified locally
 (decided 2026-08-14).** It is one command with the two secrets and the only
 thing between the promoted assets and users — the assets moved again with L3 and
@@ -270,9 +319,9 @@ B5, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
 `assets/first_party/manifest.json` is rebuilt for the new sizes — but it ships
 an **immutable** `r2_path`, so it goes last, after a local run proves the packs
 install, resolve and render. Until then the next actions are on the content
-side: B5's remainder, B6 and L1 each need a target-shape call first (B10 made
-its own on 2026-08-14) — and **L1 should be read against L2's result before it
-starts**: section A is 1,666 rows but only **7** carry the same text as the
+side: B5's remainder and L1 each need a target-shape call first (B10 and B6 made
+their own on 2026-08-14) — and **L1 should be read against L2's result before it
+starts**: section A is 1,643 rows (1,666 before B6) but only **7** carry the same text as the
 built-in card, so the same "the candidate set is smaller than the collision
 surface" arithmetic is likely to decide it.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
@@ -377,7 +426,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
-| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178 today) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3), and `requires` is non-empty for every linker |
+| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker |
 | 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
@@ -510,7 +559,7 @@ work. → §2, §3.2, phases ~~L0~~, L1, ~~L2~~ (closed by measurement: after po
 **Gap 3 — refs written as prose.** Where a card *should* point at another card, the
 importer mostly writes English instead. **`spell.class_refs` is fixed — 0% → 92%
 (1,204 spells) — and `magic-item.base_item_ref` with it — 0% → 36% (379 items),
-both L3 2026-08-13**; cross-package refs went **135 → 3,955**, all resolving.
+both L3 2026-08-13**; cross-package refs went **135 → 3,955** (**4,059** after B6), all resolving.
 What is left of this gap is not prose the importer failed to parse: feat
 `prereq_class_refs` is 0% because **no feat in the snapshot names a class in its
 prerequisite at all** (§5.5) — an `S` gap, not an `M` one. → §2.3, and a gate on
@@ -743,7 +792,7 @@ These were correct when written and are not any more. Each is re-opened in §5:
 |---|---|---|
 | ~~`spell.class_refs` (required, 0%)~~ **closed by L3 2026-08-13, now 92%** | "spell packs ship no class entities, so a `_ref` would dangle" | a softRef to a built-in class does not dangle — it is exactly what 97 subclasses already do, and 1,204 spells now do it too |
 | ~~`magic-item.base_item_ref` (0%)~~ **closed by L3 2026-08-13, now 36%** | "no base items ship in item packs" | the built-in pack ships weapons, armor and gear; softRef by name — and the source names the base item in a column, not in prose |
-| `background.default_inventory_refs` / `class.default_inventory_refs` | superseded by `equipment_choice_groups`, backed by 159 synthesised gear stubs | link built-in gear instead of synthesising stubs (§6 B6) |
+| ~~`background.default_inventory_refs` / `class.default_inventory_refs`~~ **closed by B6 2026-08-14** | superseded by `equipment_choice_groups`, backed by 159 synthesised gear stubs | the stubs are gone (159 → 0) and `equipment_choice_groups` soft-refs the built-in catalog: 104 item rows on a real card, and the reader grants them |
 | `monster.gear_refs`, `monster.spell_refs` | ⚪ no counterpart | the *targets* now exist and resolve; whether the source names them is a separate `S` question to re-check |
 
 ### 2.5 A name collision is not proof the content is identical — measured
@@ -796,7 +845,7 @@ figure added section A and B without their overlap):
 
 | Category | Actionable (measured) | Why |
 |---|--:|---|
-| `adventuring-gear` | 43 | synthesised stubs, no description/cost/weight — drop unconditionally (§6 B6) |
+| ~~`adventuring-gear`~~ | ~~43~~ **0** | **dropped 2026-08-14 (B6)** — the whole category is gone from the packs, so its redundancy is too |
 | `monster` | 802 → **per document** | ToB 2016 vs ToB 2023 are deliberate separate editions; A5E restats. Only same-edition reprints drop |
 | `spell` | 318 → **~5** | 313 are A5E restats (keep) |
 | `background` | 13 | 12 are A5E (keep unless the restat is cosmetic) + 1 cross-pack |
@@ -818,7 +867,7 @@ evidence either way and the decision has to come from `attributes`.
 > statblock: 0 of 588.** The per-document policy below did not have to arbitrate
 > anything — the pack pairs are 336 ToB 2016 ⟷ ToB 2023 and 249 A5E MM ⟷ Black
 > Flag, and *every* row in both differs. The only identical bodies in the bucket
-> are the 15 gear stubs **B6** already drops unconditionally.
+> are the 15 gear stubs **B6** dropped on 2026-08-14.
 
 Two documents where dropping the bundled copy would destroy real content:
 
@@ -834,9 +883,9 @@ filters on it, so it cannot carry the decision automatically. The decision is
 per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
 
 - monster-owned `trait` / `creature-action` rows → **keep** (above);
-- synthesised `adventuring-gear` stubs → drop unconditionally (§6 B6 — they carry
-  no description, no cost and no weight, and include parse artifacts such as
-  "pet monkey wearing a tiny fez");
+- ~~synthesised `adventuring-gear` stubs → drop unconditionally~~ **done
+  2026-08-14 (B6)** — they carried no description, no cost and no weight, and
+  included parse artifacts such as "pet monkey wearing a tiny fez";
 - statblocks and spells → per document, and A5E most likely keeps its own.
 
 ---
@@ -860,11 +909,12 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
 | `monster` | 2885 | 8 | 40 | 35 |
 | `creature-action` | 9901 | 8 | 19 | 13 |
 | `trait` | 6423 | 8 | 46 | 3 |
-| `adventuring-gear` | 159 | 6 | 8 | 4 |
+| ~~`adventuring-gear`~~ | ~~159~~ **0** | ~~6~~ 0 | 8 | ~~4~~ **0** | *(B6, 2026-08-14 — category deleted)* |
 
 **135 of 407 declared (category, field) slots are filled** (125 before the
 2026-08-13 promotion, 133 after it, +1 for L3's `spell.class_refs` and +1 for its
-`magic-item.base_item_ref`). The eight
+`magic-item.base_item_ref`). *Now 136 of 408 — B10 added `monster.alignment_note`
+and B6 removed the gear stubs' four fabricated constants (2026-08-14).* The eight
 that moved on promotion are B1's `subclass.features` /
 `granted_at_level`, B2's `class.features`, B3's `background.granted_tool_refs` /
 `granted_tool_variant_group`, and B4's `spell.area_shape_ref` / `area_size_ft` /
@@ -901,7 +951,7 @@ the built-in pack *and* in six bundled packs), so do not add them.
 |---|--:|---|
 | `monster` | 802 | per-document decision: ToB 2016 vs 2023 are separate editions, A5E restats |
 | `spell` | 318 | 313 are A5E restats → keep; ~5 genuine |
-| `adventuring-gear` | 43 | synthesised stubs, no text at all → drop (B6) |
+| ~~`adventuring-gear`~~ | ~~43~~ **0** | dropped 2026-08-14 (B6) |
 | `background` | 13 | 12 A5E + 1 cross-pack (`Scoundrel`) |
 | `language` | 5 | B9's recorded cost: 6 packs each seed their own one-row `Void Speech` |
 | `feat` | 1 | inspect |
@@ -948,7 +998,7 @@ all three buckets.
 |---|--:|---|
 | identical text, no statblock owns a copy | 1 | **1** — `language` "Void Speech" |
 | identical text, statblock-owned | 188 | 0 (per-creature children) |
-| no text, identical card body | 15 | 0 — all gear stubs, **B6** drops them |
+| no text, identical card body | 15 | 0 — all gear stubs, **B6** dropped them 2026-08-14 |
 | no text, differing card body | 588 | 0 — 336 ToB 2016 vs 2023, 249 A5E vs Black Flag, 3 strays |
 | name only | 1,784 | 0 |
 
@@ -1875,7 +1925,7 @@ name — an A5E `D` decision under §2.5.
 | 🔴 | `origin_feat_ref` | Grants | **yes** | 0% | `S`🔗 | only SRD-2024 backgrounds carry a `feat` benefit and those docs are skipped — but where prose names a feat, softRef the built-in one (`mapBackgrounds` already has the code path) |
 | 🔴 | `starting_gold_gp`, `gold_alternative_gp` | Grants | | 0% | `M` | gold is parsed into the equipment group but never onto these fields |
 | 🔴 | `default_inventory_refs` | Equipment | | 0% | ⛔🔗 | superseded by `equipment_choice_groups` — re-decide once gear links built-in items (§2.4) |
-| 🟡 | `equipment_choice_groups` | Equipment | | 98% | `D` | A/B parse, else fixed-kit fallback; its refs point at the 159 synthesised stubs (§6 B6) |
+| 🟡 | `equipment_choice_groups` | Equipment | | 98% | ~~`D`~~ **B6 done** | A/B parse, else fixed-kit fallback. **Fixed by B6 (2026-08-14):** its refs used to point at 159 synthesised stubs; they now soft-ref the built-in catalog (104 item rows), and `_buildFieldsFromDraft` grants soft refs instead of only bare ids. 4 of 50 options resolve no item and are allowlisted by name in T3's gate — generic categories and gear SRD 5.2.1 does not ship |
 
 > Three **required** fields sit at 0–50%. Decide whether the requirement is wrong for
 > third-party content or whether the SRD-overlap skip (§4 A2) needs revisiting.
@@ -2005,12 +2055,15 @@ air and water."), and the built-in pack itself ships both `Amphibious` and
 `Amphibious (Dragon)`. Each row is hard-`_ref`ed from one monster's `trait_refs`.
 **Keep**; the real work here is `mechanical_notes` (B5), not deletion.
 
-**`adventuring-gear` (159)** — not real content. `_synthGearRef` invents these so
-background equipment refs resolve; `cost_cp` is `0` and `weight_lb` is `0` on all
-159 ⚠, and **all 159 have an empty description**. 23 collide with built-in gear
-("Backpack", "Waterskin", "Healer's Kit") and 24 are cross-pack copies; the rest
-include parse artifacts ("pet monkey wearing a tiny fez", "feet of rope"). This
-category should not exist in the packs at all (§6 B6).
+**`adventuring-gear` (~~159~~ 0)** — **deleted 2026-08-14 (B6).** `_synthGearRef`
+invented these so background equipment refs resolve; `cost_cp` was `0` and
+`weight_lb` `0` on all 159 ⚠, **all 159 had an empty description**, 23 collided
+with built-in gear ("Backpack", "Waterskin", "Healer's Kit"), 24 were cross-pack
+copies and the rest were parse artifacts ("pet monkey wearing a tiny fez", "feet
+of rope"). The category now ships **0 entities in 0 packs**; a kit item soft-refs
+the built-in catalog instead, and what does not land on a card ships no item row
+at all. The four census slots it used to "fill" were the four constants the
+synthesiser wrote, which is why `audit_packs` reads 136 rather than 140.
 
 ### 5.7 The shared grant block
 
@@ -2480,7 +2533,7 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
         `test/tool/monster_tags_line_test.dart` pins the four cases.
 
       **Still open:** the sourced grant keys.
-- [ ] **B6 — Kill the gear stubs.** The 159 synthesised `adventuring-gear` entities
+- [x] **B6 — Kill the gear stubs.** *Done 2026-08-14.* The 159 synthesised `adventuring-gear` entities
       carry no description, cost or weight, 47 of them are duplicates, and several
       are parse artifacts. Point background/class equipment refs at built-in gear
       by softRef and delete `_synthGearRef`. ~~import `Item.json`/`Weapon.json`/
@@ -2495,6 +2548,49 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       check must be resolver-side, because `equipment_step._resolveItemLines`
       renders `ref['name']` even when the ref resolves to nothing, so a broken
       gear link looks perfect in the wizard and silently vanishes on the sheet.*
+
+      **Exit (met, with the second half amended and measured).**
+      `adventuring-gear` is **0 entities in 0 packs**, and `_synthGearRef` is
+      deleted. The resolver-side half was the real defect: `_gearRef` emits a
+      cross-pack **soft ref** at the built-in catalog, and
+      `_buildFieldsFromDraft` granted `items[].ref` only `if (ref is String)` —
+      so every soft ref was listed in the wizard and dropped on the sheet,
+      exactly the failure this exit was written to catch. It now calls
+      `resolveEntityRef`, the shared three-envelope reader. T3's
+      `empty-equipment-option` rule had the identical blindness (it counted only
+      in-pack uuids) and now counts a resolvable soft ref too — which is what
+      makes "non-empty inventory per option" a checkable claim rather than a
+      restatement of the bug.
+
+      **"Every option" is amended to "every option whose kit names something the
+      catalog ships", and the exceptions are enumerated, not waved at.** 46 of 50
+      options link at least one real card (**104 item rows**). The remaining 4 are
+      allowlisted by name in `_kitlessUpstream`, same contract as
+      `_actionlessUpstream`: `tdcs/Recovered Cultist`, `toh/Mysterious Origins`,
+      `toh/Northern Minstrel`, `toh/Trophy Hunter`. Each was read. They ask for a
+      generic category ("a set of artisan's tools", "one musical instrument of
+      your choice"), for gear SRD 5.2.1 does not ship ("common clothes",
+      "cold-weather clothes", "vestments", "snowshoes", "donkey"), or for a holy
+      symbol — which is three cards (Amulet / Emblem / Reliquary), so picking one
+      is **B10**'s coercion again. All four still grant their gold and still show
+      the kit prose as the option label. Two backgrounds (`Folk Hero`,
+      `Crime Syndicate Member`) lose `equipment_choice_groups` entirely and fall
+      back to `equipment_step`'s prose note. The allowlist is by name, so a
+      *different* option going empty still fails the build.
+
+      *Measured:* gate green · `diff_packs` two change classes only (159 gear
+      entities removed, 52 background `equipment_choice_groups` rewritten,
+      **no other value changed in any of the 19 packs**) · corpus 22,005 →
+      **21,846** entities · section A 1,666 → **1,643**, actionable redundancy
+      1,178 → **1,140** · section C **4,059** soft refs, **0** resolving to
+      nothing · `verify_packs` unchanged at **68,561 ok / 0 disagree / 0 absent**
+      · `audit_packs` 140 → **136 of 408** (the 4 lost slots are the four
+      constants the synthesiser wrote) · `flutter analyze` clean ·
+      `test/tool/` **113 passing**, and the app-side suites diffed against a
+      stashed baseline show **0 regressions** (44 → 42 pre-existing failures).
+      `test/tool/background_equipment_test.dart` pins both halves: what
+      `builtinItem` may and may not match, and that the ref it emits survives
+      `resolveEntityRef`.
 - [ ] **B7 — Close the policy rows.** Every `P`/`N`/⛔/⚪ row gets a one-line
       rationale **re-derived against §2.4**, so it stops reading as a bug. Decide
       what to do about the required-but-empty fields
@@ -2874,8 +2970,9 @@ has a value" into "the value produced the right number on a sheet".
         remove — so it stays `Other`, with the verdict recorded in §3.6 and
         §5.6. *(The cost is a `trait_kind` filter that cannot discriminate; that
         is a schema/product question, not a verification one.)*
-      - **the gear stubs' `cost_cp` / `weight_lb`** — **no fixture at all**;
-        owned by **B6**, which deletes the category rather than filling it.
+      - ~~**the gear stubs' `cost_cp` / `weight_lb`** — **no fixture at all**~~;
+        **resolved by B6 on 2026-08-14** by deletion, as filed: the category ships
+        0 entities, so there is no unsourced field left to explain.
 
       **Coverage of what `verify_packs` cannot reach, named as the exit requires:**
       the two child categories (`trait` 6,423, `creature-action` 8,615) are absent
@@ -2949,15 +3046,16 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
-   (**408 declared (category, field) slots, 140 filled since B10's 2026-08-14 promotion**) rather than by the
+   (**408 declared (category, field) slots, 136 filled after B6's 2026-08-14 deletion — 140 before it, and the 4 lost are the gear stubs' fabricated constants**) rather than by the
    abridged tables in §5; `verify_packs` (T1) is green; the built-in pack has been
    measured once (T2); and the relational gate (T3) passes — no monster without
    actions, no orphaned child row, every `parent_class_ref` resolving.
    **V1 closed the verification half of this outcome (2026-08-14): every ✅/✅⚠
    row now has a recorded verdict, the last one — `trait.trait_kind` — refuted
    as a mapper defect and confirmed as a null source column.** What remains under
-   outcome 1 is content, not proof: L1, B5's remainder, B6, B7. **B10 closed
-   2026-08-14**, emptying `verify_packs`'s `absent` column.
+   outcome 1 is content, not proof: L1, B5's remainder, B7. **B10 closed
+   2026-08-14**, emptying `verify_packs`'s `absent` column, and **B6 closed the
+   same day**, taking the `adventuring-gear` category to 0.
 2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
    done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source

@@ -16,13 +16,12 @@
         "spell": 371,
         "class": 1,
         "subclass": 3,
-        "adventuring-gear": 44,
         "background": 21,
         "feat": 59
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ag.pkg.json",
       "r2_path": "package/open5e-a5e-ag@1.1.0.json.gz",
-      "size_bytes": 1134902,
+      "size_bytes": 1119725,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/two-travelers-discovered-ruins-ancient-city-dense-forest-3d-illustration_15174550.htm#fromView=author&page=1&position=11&uuid=58d47109-a946-4252-8521-1cdd09b52a60"
@@ -40,12 +39,11 @@
       "is_srd_overlap": false,
       "requires": [],
       "counts": {
-        "adventuring-gear": 9,
         "background": 4
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-ddg.pkg.json",
       "r2_path": "package/open5e-a5e-ddg@1.1.0.json.gz",
-      "size_bytes": 28863,
+      "size_bytes": 26006,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://fistfulofmeeples.wordpress.com/wp-content/uploads/2020/11/gauntlgrym.png"
@@ -63,12 +61,11 @@
       "is_srd_overlap": false,
       "requires": [],
       "counts": {
-        "adventuring-gear": 10,
         "background": 2
       },
       "bundled_asset": "assets/open5e_packs/open5e-a5e-gpg.pkg.json",
       "r2_path": "package/open5e-a5e-gpg@1.1.0.json.gz",
-      "size_bytes": 19825,
+      "size_bytes": 16932,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.goodfon.com/fantasy/wallpaper-nikolai-lebedev-kingdom-of-ashland-art.html"
@@ -232,12 +229,11 @@
         "spell": 2,
         "subclass": 17,
         "subspecies": 1,
-        "adventuring-gear": 8,
         "background": 2
       },
       "bundled_asset": "assets/open5e_packs/open5e-open5e.pkg.json",
       "r2_path": "package/open5e-open5e@1.1.0.json.gz",
-      "size_bytes": 222530,
+      "size_bytes": 219829,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://screenrant.com/dnd-best-free-adventures/"
@@ -281,13 +277,12 @@
         "creature-action": 10,
         "monster": 4,
         "subclass": 4,
-        "adventuring-gear": 13,
         "background": 5,
         "feat": 1
       },
       "bundled_asset": "assets/open5e_packs/open5e-tdcs.pkg.json",
       "r2_path": "package/open5e-tdcs@1.1.0.json.gz",
-      "size_bytes": 111384,
+      "size_bytes": 106324,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.dndspeak.com/wp-content/uploads/2022/02/art-city-town-paint-painting-fantastic-deviantart-fantasy-wo.jpg"
@@ -409,13 +404,12 @@
         "subclass": 76,
         "subspecies": 29,
         "species": 11,
-        "adventuring-gear": 75,
         "background": 19,
         "feat": 13
       },
       "bundled_asset": "assets/open5e_packs/open5e-toh.pkg.json",
       "r2_path": "package/open5e-toh@1.1.0.json.gz",
-      "size_bytes": 1516680,
+      "size_bytes": 1490398,
       "banner_credit": {
         "creator": "liuzishan",
         "link": "https://www.magnific.com/free-photo/challenger-stands-front-spooky-castle-illustration_14402210.htm#fromView=search&page=1&position=11&uuid=37bc4aac-de5b-4771-b758-f3ced966bee5&query=Dnd+art"

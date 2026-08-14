@@ -39,6 +39,7 @@
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/_helpers.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/tools.dart';
 
+import '../gate.dart' show builtinNameIndex, nameKey;
 import '../loaders.dart';
 import '../normalize.dart';
 import '../refgraph.dart';
@@ -1028,7 +1029,7 @@ List<Map<String, dynamic>>? _parseEquipmentChoiceProse(
 /// idempotent (PackBuilder.add dedupes by slug+name), so a token shared across
 /// backgrounds ("Common Clothes") yields one entity reused by all.
 List<Map<String, dynamic>>? _fixedEquipmentGroup(
-    PackBuilder pack, String source, String desc) {
+    PackBuilder pack, String desc) {
   final body = desc.trim().replaceAll(RegExp(r'[;.\s]+$'), '');
   if (body.isEmpty) return null;
   int? gold;
@@ -1036,7 +1037,7 @@ List<Map<String, dynamic>>? _fixedEquipmentGroup(
   if (gm != null) gold = int.parse(gm.group(1)!);
   final items = [
     for (final it in _kitItems(body))
-      _synthGearRef(pack, source, it.name, it.qty),
+      if (_gearRef(pack, it.name, it.qty) case final Map<String, dynamic> r) r,
   ];
   if (items.isEmpty && gold == null) return null;
   return [
@@ -1056,28 +1057,101 @@ List<Map<String, dynamic>>? _fixedEquipmentGroup(
   ];
 }
 
-/// Resolve a kit item to an `eqItem` ref. Prefers an existing in-pack item
-/// (weapon/armor/tool/gear); otherwise synthesises a minimal `adventuring-gear`
-/// entity in [pack] so the hard ref always resolves at build + grants at commit.
-Map<String, dynamic> _synthGearRef(
-    PackBuilder pack, String source, String name, int qty) {
+/// Resolve a kit item to an `eqItem`-shaped entry. Audit **B6**: nothing is
+/// synthesised any more. Three outcomes, in order:
+///
+///  * an item this pack genuinely ships → hard `ref`;
+///  * a built-in catalog card → `softRef` under the **built-in's own** name, so
+///    it name-resolves at commit and lands in the PC's inventory;
+///  * neither → **no item row at all**. What falls through here is background
+///    flavour — "pet monkey wearing a tiny fez", "stories you know", "memento of
+///    your destiny" — which is not a catalog item in any pack; minting an empty
+///    `adventuring-gear` stub for it was the bug (159 entities with no
+///    description, cost or weight, 47 of them dupes), and shipping a knowingly
+///    dangling soft ref instead would only move the lie into T3's gate. Nothing
+///    is hidden: the option's `label` is the kit prose verbatim.
+Map<String, dynamic>? _gearRef(PackBuilder pack, String name, int qty) {
   final existing = _resolveItemSlug(pack, name);
   if (existing != null) return eqItem(existing, name, qty: qty);
-  if (!pack.has('adventuring-gear', name)) {
-    pack.add(packEntity(
-      slug: 'adventuring-gear',
-      name: name,
-      source: source,
-      attributes: const {
-        'cost_cp': 0,
-        'weight_lb': 0.0,
-        'consumable': false,
-        'is_focus': false,
-      },
-    ));
-  }
-  return eqItem('adventuring-gear', name, qty: qty);
+  final builtin = builtinItem(name);
+  if (builtin == null) return null;
+  return {'ref': softRef(builtin.slug, builtin.name), 'quantity': qty};
 }
+
+/// `name → (slug, name)` over every built-in item category a starting-equipment
+/// line can land on. Indexed under three spellings, all mechanical: the catalog
+/// name itself, the inverted form of its comma names ("Bullseye Lantern" for
+/// "Lantern, Bullseye") and the parenthetical-free form ("Staff" for "Staff
+/// (Arcane Focus)"). First writer wins, like the runtime's own name index.
+final _builtinItems = () {
+  final out = <String, ({String slug, String name})>{};
+  final index = builtinNameIndex();
+  for (final slug in const [
+    'adventuring-gear',
+    'tool',
+    'weapon',
+    'armor',
+    'ammunition',
+    'pack',
+    'mount',
+    'vehicle',
+    'animal',
+  ]) {
+    final prefix = nameKey(slug, '');
+    for (final key in index) {
+      if (!key.startsWith(prefix)) continue;
+      final name = key.substring(prefix.length);
+      void put(String k) =>
+          out.putIfAbsent(k.toLowerCase(), () => (slug: slug, name: name));
+      put(name);
+      final comma = name.split(', ');
+      if (comma.length == 2) put('${comma[1]} ${comma[0]}');
+      final bare = name.replaceFirst(RegExp(r'\s*\([^)]*\)$'), '').trim();
+      if (bare.isNotEmpty) put(bare);
+    }
+  }
+  return out;
+}();
+
+/// Built-in catalog entry for a kit token, or null. Three forgiving rules, all
+/// mechanical, none of them guessing *which* card the prose meant:
+///
+///  * a plural ("Torches" → Torch, "Candles" → Candle);
+///  * the tail after the last ` of `, because the measure is not the item
+///    ("Bottle Of Ink" → Ink, "50 Sheets Of Parchment" → Parchment);
+///  * a leading measure word ("Days Rations" → Rations, "Person Tent" → Tent).
+///
+/// Each rule only ever *lands* on a real catalog name, so a token whose tail is
+/// not an item ("Collection Of Bones", "Memento Of Your Destiny") still misses —
+/// which is the point. A wrong grant is worse than none.
+({String slug, String name})? builtinItem(String raw) {
+  final s = raw.trim().toLowerCase();
+  final exact = _plural(s);
+  if (exact != null) return exact;
+  final of = s.lastIndexOf(' of ');
+  if (of >= 0) {
+    final tail = _plural(s.substring(of + 4));
+    if (tail != null) return tail;
+  }
+  final space = s.indexOf(' ');
+  if (space > 0 && _measureWords.contains(s.substring(0, space))) {
+    return _plural(s.substring(space + 1));
+  }
+  return null;
+}
+
+({String slug, String name})? _plural(String s) =>
+    _builtinItems[s] ??
+    (s.endsWith('es') ? _builtinItems[s.substring(0, s.length - 2)] : null) ??
+    (s.endsWith('s') ? _builtinItems[s.substring(0, s.length - 1)] : null);
+
+/// Units a kit line counts an item in. None of them is itself a catalog card,
+/// so dropping one can never hide a real item ("pouch" is deliberately absent —
+/// the catalog ships one).
+const _measureWords = <String>{
+  'day', 'days', 'foot', 'feet', 'sheet', 'sheets', 'piece', 'pieces',
+  'bottle', 'bottles', 'person', //
+};
 
 /// Tokenise a background equipment kit prose into `(name, qty)` item rows.
 /// Splits on commas / "and" / "or" / ";", strips leading articles + quantity +
@@ -1151,8 +1225,11 @@ Map<String, dynamic> _equipOptionFromBody(
     }
     final name = part.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
     if (name.isEmpty) continue;
-    final slug = _resolveItemSlug(pack, name);
-    if (slug != null) items.add(eqItem(slug, name, qty: qty));
+    // Audit **B6**: same resolution as the fixed-kit path. This used to emit a
+    // ref only when the item shipped in-pack — and no shipped document carries
+    // a mundane-equipment fixture (A1), so a class A/B option granted nothing.
+    final item = _gearRef(pack, name, qty);
+    if (item != null) items.add(item);
   }
   return eqOption(
     optionId: id,
@@ -1342,7 +1419,7 @@ void mapBackgrounds({
     final equipText = descOfType('equipment');
     if (equipText != null) {
       final groups = _parseEquipmentChoiceProse(pack, equipText) ??
-          _fixedEquipmentGroup(pack, source, equipText);
+          _fixedEquipmentGroup(pack, equipText);
       if (groups != null && groups.isNotEmpty) {
         attrs['equipment_choice_groups'] = groups;
       }

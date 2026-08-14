@@ -1089,11 +1089,15 @@ Map<String, dynamic> buildSeedFields({
         if (items is List) {
           for (final i in items) {
             if (i is! Map) continue;
-            final ref = i['ref'];
             final qty = i['quantity'] is int ? i['quantity'] as int : 1;
-            if (ref is String && ref.isNotEmpty) {
+            // Audit **B6**: `ref` is a plain id only for in-pack items. A
+            // packaged background links the built-in catalog by softRef Map,
+            // which `ref is String` silently dropped — the wizard listed the
+            // item and the sheet never got it.
+            final id = resolveEntityRef(i['ref'], entities);
+            if (id != null) {
               for (var n = 0; n < qty; n++) {
-                equipmentItemIds.add(ref);
+                equipmentItemIds.add(id);
               }
             }
           }
