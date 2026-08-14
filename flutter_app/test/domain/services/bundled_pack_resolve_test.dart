@@ -307,8 +307,12 @@ void main() {
     /// so filling one, or a mapper adding another, fails here first.
     const unreadByAnyone = <String, String>{
       'granted_language_count':
-          'written on 24 backgrounds by chargen.dart; no reader in lib/ — '
-              'the wizard offers no "pick N languages" step (audit B7)',
+          'written on 24 backgrounds by chargen.dart; no reader in lib/ — and '
+              'B7 decided it keeps none: the wizard already grants every '
+              'character OriginConstants.standardLanguageChoiceCount (2) '
+              'origin languages, which is the same allowance a pre-2024 '
+              'background spells out, so wiring it would stack a second pool. '
+              'Display-only on the card, deliberately inert (audit §5.8)',
     };
 
     /// One resolve, plus the ability to re-resolve the same card at another

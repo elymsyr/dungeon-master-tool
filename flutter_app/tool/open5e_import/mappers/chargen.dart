@@ -451,6 +451,7 @@ void mapSpecies({
     // / condition immunity / skill prof / alt speeds); spells use an in-pack hard
     // ref when the spell ships here, else a runtime-resolving softRef.
     final senses = <Map<String, String>>[];
+    final senseRanges = <String, int>{};
     final langs = <Map<String, String>>[];
     final abilityBonuses = <String, int>{};
     final dmgRes = <Map<String, String>>[];
@@ -473,9 +474,15 @@ void mapSpecies({
       final tn = (t['name'] as String?)?.trim().toLowerCase() ?? '';
       final d = (t['desc'] as String?) ?? '';
       final grantsBefore = grantCount();
-      if (tn == 'darkvision') {
-        final s = norm.lookupRef('sense', 'Darkvision', context: name);
-        if (s != null) senses.add(s);
+      final sense = _senseWordIn(tn);
+      if (sense != null) {
+        final s = norm.lookupRef('sense', sense, context: name);
+        if (s != null) {
+          senses.add(s);
+          final r = _senseRangeFt(d);
+          final key = s['name'] ?? sense;
+          if (r != null && r > (senseRanges[key] ?? 0)) senseRanges[key] = r;
+        }
       }
       if (tn == 'languages') langs.addAll(_refListFromText(norm, 'language', d));
       if (tn == 'ability score increase') {
@@ -533,11 +540,15 @@ void mapSpecies({
       final dd = _dedupeByName(v);
       if (dd.isNotEmpty) attrs[key] = dd;
     }
-    // `granted_senses` rows use the {sense_ref, range_ft} shape; prose gives
-    // no reliable range, so rows carry only the ref.
+    // `granted_senses` rows use the {sense_ref, range_ft} shape (audit B5).
     if (senses.isNotEmpty) {
       attrs['granted_senses'] = [
-        for (final ref in _dedupeByName(senses)) {'sense_ref': ref},
+        for (final ref in _dedupeByName(senses))
+          {
+            'sense_ref': ref,
+            if (senseRanges[ref['name']] != null)
+              'range_ft': senseRanges[ref['name']]!,
+          },
       ];
     }
     put('granted_languages', langs);
@@ -563,6 +574,36 @@ const _flavourTraitNames = {
   'age', 'alignment', 'size', 'speed', 'creature type', 'type',
   'languages', 'language', 'ability score increase', 'ability scores',
 };
+
+// ── Species senses (audit B5) ──────────────────────────────────────────────
+//
+// The trait *name* is the key, not the prose: a monster-style "you have
+// blindsight out to 30 feet" sentence inside some other trait is a conditional
+// or an action, and the shipped species data has none of them anyway —
+// measured on the pinned snapshot, all **9** sense-bearing SpeciesTrait rows in
+// shipping documents are named `Darkvision` (7) or `Superior Darkvision` (2),
+// and every one states its range. The old exact `name == 'darkvision'` test
+// dropped both Superior rows on the floor (derro, drow — they had *no*
+// darkvision at all) and never read a range, so 9 species shipped
+// `{sense_ref}` with no `range_ft` while the built-in SRD cards next to them
+// carry 60/120. `CharacterResolver.addSense` keeps the largest range per
+// sense, so a subspecies' 120 correctly beats an inherited 60.
+
+/// The canonical sense name a trait called [lowercaseName] grants, or null.
+String? _senseWordIn(String lowercaseName) {
+  for (final s in const ['Darkvision', 'Blindsight', 'Tremorsense', 'Truesight']) {
+    if (lowercaseName.contains(s.toLowerCase())) return s;
+  }
+  return null;
+}
+
+/// The `within 60 feet` / `out to 30 feet` range in a sense trait's prose.
+int? _senseRangeFt(String desc) => int.tryParse(
+    RegExp(r'(?:within|out to|to a (?:range|distance) of)\s+(\d+)\s*(?:feet|foot|ft)',
+                caseSensitive: false)
+            .firstMatch(desc)
+            ?.group(1) ??
+        '');
 
 /// One `mechanical_notes` line: `**Name.** text`, newlines collapsed because
 /// the field is one rule per line. Empty text yields no line.

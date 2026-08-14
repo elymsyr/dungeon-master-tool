@@ -175,8 +175,12 @@ void main() {
       expect(s['granted_languages'], [
         {'_lookup': 'language', 'name': 'Common'},
       ]);
+      // `range_ft` comes from the recovered v1 prose (audit B5).
       expect(s['granted_senses'], [
-        {'sense_ref': {'_lookup': 'sense', 'name': 'Darkvision'}},
+        {
+          'sense_ref': {'_lookup': 'sense', 'name': 'Darkvision'},
+          'range_ft': 60,
+        },
       ]);
       expect(s['description'], contains('Darkvision'));
     });

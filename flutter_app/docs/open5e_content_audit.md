@@ -224,12 +224,28 @@ the v2 conversion moved the subtype to its own column and dropped it. v1 still
 has it, so it is B8's backfill shape again — **0% → 10%, 292 monsters**, one
 change class in `diff_packs` and nothing else, pinned by
 `test/tool/monster_tags_line_test.dart` and declared in `verify_packs`' rule
-table. **The rest of B5 — the sourced grant keys — is still open.**
+table.
+
+**B5 is fully closed — 2026-08-14.** The sourced grant keys went the same way
+as the two rows above: measured, and only one of the three had anything to fix.
+`granted_senses` did — and the missing `range_ft` was the smaller half, because
+the exact `name == 'darkvision'` test left toh's **Derro** and **Drow** with no
+darkvision at all. Name-matching the sense word and reading the trait's own
+`within N feet` clause takes species coverage to **10/11** with every range
+sourced, in **one** `diff_packs` change class (12 values, all
+`species.granted_senses`). The other two are ⛔ by source, not by mapper: every
+tool proficiency in the corpus is "of your choice" and feat grants are **0
+rows**; `resource_pool_grants`/`extra_attack_count_by_level` sit on the
+feat/species block that `class` is deliberately off, so B1/B2 never unblocked
+them, and the corpus holds **0** extra-attack rows and **1** real pool. See
+§5.7 items 2–4.
 
 **M2's sheet assertion is in — 2026-08-14.** `mechanical_notes` is now a probe in
 `bundled_pack_resolve_test`'s M1 sweep: every card's note lines have to arrive on
-`EffectiveCharacter.mechanicalNotes`. **73 (pack, mechanic field) pairs, 248 sheet
-assertions, 0 partial**, up from 68/227. The audit tool already prints a
+`EffectiveCharacter.mechanicalNotes`. **73 (pack, mechanic field) pairs, 247 sheet
+assertions, 1 partial**, up from 68/227 (the partial is `open5e-tdcs`
+`background.equipment_choice_groups` at 2/3 — one card's group resolves no item,
+which a pair-level "lands once" rule reports rather than fails). The audit tool already prints a
 per-category `mechanical_notes` fill line, so M2's remaining clause is the
 **`trait` half of its exit** — see the note on that phase in §6.
 
@@ -319,8 +335,10 @@ B5, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
 `assets/first_party/manifest.json` is rebuilt for the new sizes — but it ships
 an **immutable** `r2_path`, so it goes last, after a local run proves the packs
 install, resolve and render. Until then the next actions are on the content
-side: B5's remainder needs a target-shape call first (B10, B6 and L1 made their
-own on 2026-08-14).
+side: ~~**B7 is the only content phase left**~~ — **every content phase is now
+closed**: B10, B6, L1, B5 **and B7** all landed on 2026-08-14, each on a
+measurement rather than a preference, so the local verification run is the last
+thing between the promoted assets and publish.
 
 **L1 is done — 2026-08-14, and it deleted nothing.** The prediction in the line
 above held: section A's 1,643 rows shrink to a drop set of **zero** once §2.5's
@@ -826,7 +844,7 @@ These were correct when written and are not any more. Each is re-opened in §5:
 | ~~`spell.class_refs` (required, 0%)~~ **closed by L3 2026-08-13, now 92%** | "spell packs ship no class entities, so a `_ref` would dangle" | a softRef to a built-in class does not dangle — it is exactly what 97 subclasses already do, and 1,204 spells now do it too |
 | ~~`magic-item.base_item_ref` (0%)~~ **closed by L3 2026-08-13, now 36%** | "no base items ship in item packs" | the built-in pack ships weapons, armor and gear; softRef by name — and the source names the base item in a column, not in prose |
 | ~~`background.default_inventory_refs` / `class.default_inventory_refs`~~ **closed by B6 2026-08-14** | superseded by `equipment_choice_groups`, backed by 159 synthesised gear stubs | the stubs are gone (159 → 0) and `equipment_choice_groups` soft-refs the built-in catalog: 104 item rows on a real card, and the reader grants them |
-| `monster.gear_refs`, `monster.spell_refs` | ⚪ no counterpart | the *targets* now exist and resolve; whether the source names them is a separate `S` question to re-check |
+| ~~`monster.gear_refs`, `monster.spell_refs`~~ **closed by B7 2026-08-14, still 0%** | "⚪ no counterpart" | the *targets* now exist and resolve — but the source still does not name them: v2 `Creature` has no gear/item/spell column, and v1's `spells_json` covers **4** shipping monsters (§5.8) |
 
 ### 2.5 A name collision is not proof the content is identical — measured
 
@@ -1812,7 +1830,7 @@ still subject to the re-verification pass (§6 V1).
 
 | | Field | Group | Req | Fill | Cause | Source |
 |:--:|---|---|:--:|--:|:--:|---|
-| 🔴 | `primary_ability_ref` | Core Traits | **yes** | 0% | `S` | `CharacterClass.primary_abilities` — mapped, but empty in both shipped docs |
+| 🔴 | `primary_ability_ref` | Core Traits | **yes** | 0% | ~~`S`~~ ⚪ | `CharacterClass.primary_abilities` — mapped, and **`[]` on all 26 base classes in all 8 documents**, srd-2024 included. **B7 closed it**: unreachable from this source at any skip setting (§5.8) |
 | 🔴 | `secondary_ability_ref` | Core Traits | | 0% | ⚪ | no counterpart |
 | ✅ | `hit_die` | Core Traits | **yes** | 100% | | `hit_dice` |
 | ✅ | `saving_throw_refs` | Core Traits | **yes** | 100% | | `saving_throws` |
@@ -1961,7 +1979,7 @@ name — an A5E `D` decision under §2.5.
 | ✅ | `granted_skill_refs` | Grants | **yes** | 96% | `S` | benefit `type == 'skill_proficiency'`. **B3 measured the 2 misses and 96% is the ceiling:** `tdcs`/Fate-Touched has no `skill_proficiency` row at all, and `a5e-ag`/Guildmember's says "Two of your choice" — a pick with no field to hold it (there is no `granted_skill_count`). Neither is a mapper gap |
 | 🟡 | **`granted_tool_refs`** | Grants | | ~~0%~~ **35%** (19/53) | `M`🔗 | benefit `type == 'tool_proficiency'` — **B3**: `descOfType` now asks for it; 23 softRefs, all resolving to built-in tool cards |
 | 🟡 | `granted_tool_variant_group` | Grants | | ~~0%~~ **22%** (12/53) | `M` | **B3**: "one type of gaming set" → `gaming_set`. The wizard knows three families (`gaming_set`, `musical_instrument`, `artisans_tools`) |
-| 🟡 | `granted_language_count` | Grants | | 58% | `M` | benefit `type == 'language'` |
+| 🟡 | `granted_language_count` | Grants | | 58% (31/53 — 19×`1`, 5×`2`, 7×explicit `0`) | `M`/⛔ | benefit `type == 'language'`. **B7: kept and deliberately inert** — the wizard already grants 2 origin languages to everyone, so wiring this would stack a second pool (§5.8) |
 | 🟡 | `ability_score_options` | Grants | **yes** | 50% | `S`/`M` | benefit `type == 'ability_score'`; pre-2024 docs have none |
 | 🔴 | `asi_distribution_options` | Grants | **yes** | 0% | `S` | SRD-2024 concept; only emitted when 3 abilities are offered |
 | 🔴 | `origin_feat_ref` | Grants | **yes** | 0% | `S`🔗 | only SRD-2024 backgrounds carry a `feat` benefit and those docs are skipped — but where prose names a feat, softRef the built-in one (`mapBackgrounds` already has the code path) |
@@ -1969,11 +1987,16 @@ name — an A5E `D` decision under §2.5.
 | 🔴 | `default_inventory_refs` | Equipment | | 0% | ⛔🔗 | superseded by `equipment_choice_groups` — re-decide once gear links built-in items (§2.4) |
 | 🟡 | `equipment_choice_groups` | Equipment | | 98% | ~~`D`~~ **B6 done** | A/B parse, else fixed-kit fallback. **Fixed by B6 (2026-08-14):** its refs used to point at 159 synthesised stubs; they now soft-ref the built-in catalog (104 item rows), and `_buildFieldsFromDraft` grants soft refs instead of only bare ids. 4 of 50 options resolve no item and are allowlisted by name in T3's gate — generic categories and gear SRD 5.2.1 does not ship |
 
-> Three **required** fields sit at 0–50%. Decide whether the requirement is wrong for
-> third-party content or whether the SRD-overlap skip (§4 A2) needs revisiting.
-> B3 narrows this: `asi_distribution_options` and `origin_feat_ref` are **only**
-> reachable from `srd-2024` benefit rows, so their 0% is entirely the skip, not
-> the mapper — `mapBackgrounds` has had working code for both since before B3.
+> Three **required** fields sit at 0–50%. ~~Decide whether the requirement is wrong
+> for third-party content or whether the SRD-overlap skip (§4 A2) needs
+> revisiting.~~ **Decided by B7, 2026-08-14: the requirement is wrong for imported
+> content, and the skip stays.** B3 had already narrowed it — `asi_distribution_options`
+> and `origin_feat_ref` are **only** reachable from `srd-2024` benefit rows (4 and
+> 4), and `mapBackgrounds` has had working code for both since before B3 — and B7
+> measured the rest: every other document's `ability_score` benefit is A5E's
+> "+1 to X and one other", which belongs on `ability_score_options`. The built-in
+> pack fills both on all 16 SRD backgrounds, so the concept ships; a pre-2024
+> third-party background simply does not have one (§5.8).
 
 **What B3 refused to emit, and why** (`parseToolProficiencies`, 40 rows). Both
 ways of being wrong here are silent, so the parser is conservative in two
@@ -2015,8 +2038,11 @@ the worked example in §2.3.
 | 🔴 | the other 38 grant keys | Grants | | 0% | `M` | see §5.7 |
 
 > `prereq_clauses` is written by the mapper and read by the UI but is **not a declared
-> schema field** — it is invisible and uneditable in the card editor. Either declare it
-> or stop writing it.
+> schema field** — it is invisible and uneditable in the card editor. ~~Either declare it
+> or stop writing it.~~ **B7 kept it undeclared (§5.8):** declaring a heterogeneous
+> list of typed clause maps means a new `FieldType` under the four-edit contract, to
+> expose one computed list whose editable twin — the `prerequisite` string — is
+> already on the card. M1 records it in `notResolverRead` as "feats_step gating".
 
 ### 5.6 Non-chargen categories
 
@@ -2141,11 +2167,75 @@ Highest value first:
    card is one rule, not a list of rows, and its description already renders
    where the item does. The per-row split that makes a note meaningful only
    exists upstream for `SpeciesTrait` and `FeatBenefit`.
-2. `granted_senses` — needs `range_ft` parsed out of the trait text.
-3. `granted_tool_proficiencies`, `granted_feat_refs` — both have a
-   `MODIFICATION_TYPES` source tag that the mapper never reads; both 🔗.
-4. `resource_pool_grants`, `extra_attack_count_by_level` — these are `{lvl: value}`
-   tables, not formulas; they only become fillable after B1/B2 land the level data.
+2. ~~`granted_senses` — needs `range_ft` parsed out of the trait text.~~
+   **Done 2026-08-14.** The range was never the only gap: the parser tested
+   `name == 'darkvision'` exactly, so toh's two **Superior Darkvision** species
+   (Derro, Drow) had *no sense at all*, and the other 7 shipped a rangeless row
+   beside built-in SRD cards carrying 60/120. All **9** sense-bearing
+   `SpeciesTrait` rows in shipping documents state their range in prose, so
+   nothing is guessed: name-match on the four sense words, range from the
+   trait's own `within N feet` clause. **10/11 species** (the 11th, Shade, has
+   no darkvision in v1 either). `diff_packs`: **one category, 12 values, all
+   `species.granted_senses`** — 8 rows gain `range_ft`, 2 species gain the sense
+   they were missing, and those same 2 drop the now-redundant
+   `mechanical_notes` line. `CharacterResolver.addSense` already kept the
+   largest range per sense, so 120 correctly beats an inherited 60.
+   Pinned by `test/tool/species_senses_test.dart`.
+3. ~~`granted_tool_proficiencies`, `granted_feat_refs`~~ — **both ⛔, closed
+   2026-08-14, and neither is a `MODIFICATION_TYPES` problem** (B3 already
+   showed `SpeciesTrait.type` is null on 100% of the rows we ship). Measured
+   over the snapshot's species/feat/background benefit rows: **every** tool
+   proficiency any of them grants is "of your choice" — *one skill and one tool
+   of your choice*, *two tools of your choice*, *thieves' tools, the poisoner's
+   kit, or a rare weapon* (6 rows, 0 fixed grants) — which is §5.7's stated
+   source limit and already lands in `mechanical_notes`. **Feat grants: 0 rows
+   corpus-wide.** No code change can move either off 0%.
+4. `resource_pool_grants`, `extra_attack_count_by_level` — **⛔ for the grant
+   block, 2026-08-14, and not for the filed reason.** These keys live on
+   `feat`/`species`/`subspecies` only (class is deliberately off the block,
+   §5.7), so B1/B2's level tables were never going to fill them. Measured:
+   **zero** extra-attack rows in any species trait or feat benefit, and exactly
+   **one** genuine pool in the whole corpus — a5e-ag's fate-point feat ("You
+   gain 3 fate points" + "You regain all expended fate points when you finish a
+   long rest"), which needs a two-row parser to serve **1 of 73 feats** whose
+   prose already renders under Other Effects. Not written.
+
+### 5.8 The policy rows, re-derived — B7, 2026-08-14
+
+Every `P` / `N` / ⛔ / ⚪ row in §5, checked against §2.4 (package links) and
+against the pinned snapshot rather than against the rationale it was filed with.
+**None of them moved.** Three had the wrong reason on file, and those are marked.
+
+| Row | Verdict | Measured |
+|---|:--:|---|
+| `class.primary_ability_ref` (**required**) | ⚪ | **Reason was wrong.** Filed `S` "mapped, but empty in both shipped docs" — it is empty in *every* doc: `CharacterClass.primary_abilities` is `[]` on **all 26 base-class rows in all 8 documents**, srd-2024 included. Unskipping WotC would not fill it. The built-in SRD 5.2.1 classes carry it, so the requirement is right for hand-authored content and unreachable for imported |
+| `class.secondary_ability_ref` | ⚪ | no ability column exists at all beyond the empty one above — the whole v2 `CharacterClass` shape is 8 keys (`caster_type`, `desc`, `document`, `hit_dice`, `name`, `primary_abilities`, `saving_throws`, `subclass_of`) |
+| `class.l1_order_feat_category`, `weapon_mastery_filter`, `complexity` | ⚪ | app-only concepts, no upstream column — unchanged |
+| `species.subspecies_options` | ⛔ | subspecies ship as their own 30 entities with `parent_species_ref`; a second list would be the same relation twice |
+| `background.origin_feat_ref`, `asi_distribution_options` (**required**) | ⛔ | 2024-only concepts: `feat` benefit rows exist in **srd-2024 alone (4 rows)** and the only 3-ability `ability_score` rows are the same document's 4. A5E's 21 are "+1 to X and one other", which is `ability_score_options`, not a distribution. Skipped publisher ⇒ 0% is structural. The built-in pack fills both on all 16 SRD backgrounds, so **relax the requirement for imported content**; do not synthesise |
+| `background.granted_language_count` (58%, read by nothing) | ⛔ **decided** | Keep emitting, do **not** wire. The wizard already hands every character `OriginConstants.standardLanguageChoiceCount` = **2** origin languages; a pre-2024 background's "one additional language" *is* that same allowance under the older rules, so honouring it would stack a second pool on top. It is a declared, editable field that renders on the background card — display-correct and deliberately inert. M1's `unreadByAnyone` map stays its pin, now carrying the decision rather than the open question: a reader appearing, or the mapper stopping, fails that closed-set assertion first |
+| `background.default_inventory_refs` | ⛔ | superseded by `equipment_choice_groups`, and **B6 closed §2.4's re-open**: the groups now soft-ref the built-in catalog, so the link the row was waiting for exists on the other field |
+| `feat.benefits` | ⛔ | one row per `FeatBenefit` would duplicate what **B5 routed to `mechanical_notes`** (feat 68/73), which has a reader and renders under Other Effects |
+| `feat.chooseable` | ⚪ | no counterpart; the default `true` is what the feat picker tests, and only hand-authored cards ever set `false` |
+| `feat.prereq_class_refs`, `prereq_species_refs` | ⚪ | closed by L3 — 0 of 78 `prerequisite` strings names a class or species (§5.5) |
+| `spell.at_higher_levels_text` | `P` | the prose already ships inside `description`; splitting it is formatting, and `SpellCastingOption.json` adds zero spells (A1) |
+| `spell.effects`, `creature-action.effects` | ⚪ | M3's scope boundary: a live field with an editor but **no reader in `domain/` or `application/`**, and no structured damage rows upstream to fill it from |
+| `creature-action.damage_type_ref` | ⛔ | closed by B5: all 576 typed attack rows are in the two skipped WotC documents |
+| `creature-action.recharge` | ⚪ | narrative twin of the typed `recharge_kind`, which is filled |
+| `monster.lair_action_refs` | ⚪ | **Reason was wrong** — filed `M`/`S` "mapper emits it; no shipped creature has one". `CreatureAction.action_type` has exactly four values corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873 · `REACTION` 579). There is no lair bucket in *any* document, shipped or skipped |
+| `monster.gear_refs`, `monster.spell_refs` | ⛔ | **§2.4's last open re-open, closed here.** v2 `Creature` has no gear, item or spell column at all; v1's `spells_json` is populated on **41 of 3,207** monsters, **37 of them in the skipped `wotc-srd`** — the ceiling in shipping documents is **4 monsters (tdcs)**, whose Spellcasting trait already prints the list. A B8-shaped v1 backfill for 0.14% of the category is not written |
+| `monster.cr_helper` | ⚪ | app-only encounter-building aid |
+| `magic-item.cost_gp` | ⛔ | **the "confirm the source really is 0" row, confirmed.** `MagicItem.cost` is `0.00` on **1,063 of 1,063** shipping (`vom`) rows and on 1,255 of 1,256 SRD rows. Writing anything would be pricing invention |
+| `trait` grant block (43 keys, 6,423 rows) | ⛔ | a monster trait is a statblock child, never handed to `CharacterResolver` (§2.5, B5 item 1) |
+
+**One non-policy decision B7 also owed** — `feat.prereq_clauses` is written by the
+mapper and read by two UI sites but is **not a declared schema field** (§5.5).
+**Verdict: keep it undeclared.** It is a heterogeneous list of typed clause maps;
+declaring it means a new `FieldType` under the four-edit contract (§ *Adding a
+field type*) to expose one importer-computed list, and the human-readable
+`prerequisite` string next to it is the field a DM edits. The known cost is that
+editing that prose does not update the clauses — the gate falls back to the flat
+fields only when `prereq_clauses` is absent, never when it is stale.
 
 ---
 
@@ -2581,7 +2671,7 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       **struck by A1:** the mapper already appends `Spell.higher_level` prose,
       and **zero** spells in any document have casting-option payload without
       that prose. There is nothing to recover.
-- [ ] **B5 — Grant block (§5.7).** ~~Start with `mechanical_notes`: route every rule
+- [x] **B5 — Grant block (§5.7). Done 2026-08-14.** ~~Start with `mechanical_notes`: route every rule
       the mapper currently abandons in prose into it, one per line, so it reaches
       the sheet.~~ **Done 2026-08-14** — 229 lines on 105 cards (species 11/11,
       subspecies 26/30, feat 68/73), one per unconsumed source row; `trait` and
@@ -2608,7 +2698,32 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
         292 `tags_line` added, no other value changed in any of the 19 packs.**
         `test/tool/monster_tags_line_test.dart` pins the four cases.
 
-      **Still open:** the sourced grant keys.
+      **The sourced grant keys are closed the same day, and only one of the
+      three was actionable (§5.7 items 2–4):**
+      - **`granted_senses` — fixed.** Not just the missing `range_ft`: the
+        exact `name == 'darkvision'` test meant toh's **Derro** and **Drow**
+        carried no darkvision at all. Name-match on the sense word + the
+        trait's own `within N feet` clause → **10/11 species**, every range
+        sourced. `diff_packs`: **one category, 12 values, all
+        `species.granted_senses`**, nothing else moved in any of the 19 packs.
+        `test/tool/species_senses_test.dart`.
+      - **`granted_tool_proficiencies` / `granted_feat_refs` — ⛔.** All 6
+        tool-granting benefit rows in the corpus say "of your choice" (§5.7's
+        declared source limit, already in `mechanical_notes`); feat grants are
+        **0 rows corpus-wide**. Not a `MODIFICATION_TYPES` gap — B3 settled
+        that.
+      - **`resource_pool_grants` / `extra_attack_count_by_level` — ⛔.** They
+        sit on `feat`/`species`/`subspecies`, never on `class`, so B1/B2 was
+        never their unblock. **0** extra-attack rows and exactly **1** real
+        pool (a5e-ag's fate-point feat) in the corpus; a two-row parser for one
+        card whose prose already renders is not worth writing.
+
+      *Measured:* gate green · `verify_packs` unchanged at **68,561 ok /
+      0 disagree / 0 absent** · `dupe_census` section C **4,059 softRefs, 0
+      resolving to nothing** · `audit_packs` **136 of 408** slots filled
+      (`species.granted_senses` 73% → **90%**) · `flutter analyze` clean ·
+      `test/tool` **113 passing** (`chargen_b3_test`'s Shade assertion now
+      expects the sourced `range_ft: 60`).
 - [x] **B6 — Kill the gear stubs.** *Done 2026-08-14.* The 159 synthesised `adventuring-gear` entities
       carry no description, cost or weight, 47 of them are duplicates, and several
       are parse artifacts. Point background/class equipment refs at built-in gear
@@ -2667,16 +2782,49 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       `test/tool/background_equipment_test.dart` pins both halves: what
       `builtinItem` may and may not match, and that the ref it emits survives
       `resolveEntityRef`.
-- [ ] **B7 — Close the policy rows.** Every `P`/`N`/⛔/⚪ row gets a one-line
-      rationale **re-derived against §2.4**, so it stops reading as a bug. Decide
-      what to do about the required-but-empty fields
-      (`class.primary_ability_ref`, `background.origin_feat_ref`,
-      `background.asi_distribution_options`, `spell.class_refs`): fill, or relax the
-      requirement for third-party content.
-      **M1 added one to the list (2026-08-13): `granted_language_count`** — 24
-      backgrounds write it, nothing in `lib/` reads it, so the decision is "wire
-      a language pick into the wizard" or "stop emitting it". Until then it is
-      pinned by `unreadByAnyone` in `bundled_pack_resolve_test`.
+- [x] **B7 — Close the policy rows. Done 2026-08-14, and nothing moved off 0%.**
+      Every `P`/`N`/⛔/⚪ row in §5 re-derived against §2.4 and against the pinned
+      snapshot, in one table: **§5.8**. Package links invalidated none of them a
+      second time — but **three carried the wrong reason**, and those are the
+      phase's actual output:
+      * `class.primary_ability_ref` was filed `S` "empty in both shipped docs".
+        `primary_abilities` is `[]` on **all 26 base classes in all 8 documents**,
+        srd-2024 included, so no re-fetch and no un-skip reaches it. ⚪.
+      * `monster.lair_action_refs` was filed `M`/`S` "mapper emits it, no shipped
+        creature has one". `CreatureAction.action_type` has **four** values
+        corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873
+        · `REACTION` 579) — there is no lair bucket in *any* document. ⚪.
+      * `monster.gear_refs` / `spell_refs` were §2.4's **last open re-open**: the
+        link targets exist now, but v2 `Creature` has no gear/item/spell column
+        and v1's `spells_json` covers **41 of 3,207** monsters, **37 of them in
+        the skipped `wotc-srd`** — a ceiling of **4 shipping monsters**, whose
+        Spellcasting trait already prints the list. ⛔, and §2.4's table is now
+        fully closed.
+      **The required-but-empty fields, decided — relax the requirement for
+      imported content, fill nothing.** `background.origin_feat_ref` and
+      `asi_distribution_options` are reachable **only** from srd-2024 (4 `feat`
+      benefit rows, 4 three-ability rows); every other document's `ability_score`
+      benefit is A5E's "+1 to X and one other", which belongs on
+      `ability_score_options`. The built-in pack fills both on all 16 SRD
+      backgrounds, so the 2024 concept ships — a pre-2024 third-party background
+      simply does not have one. `spell.class_refs` was already filled by **L3**
+      (92%), which is the shape of the only honest fill available here.
+      **`granted_language_count`: kept, deliberately inert.** The wizard already
+      grants every character `OriginConstants.standardLanguageChoiceCount` = 2
+      origin languages, and a pre-2024 background's "one additional language" *is*
+      that allowance under the older rules — wiring it would stack a second pool.
+      It stays a declared, editable field on the card; M1's `unreadByAnyone` now
+      carries the decision instead of the open question, and its closed-set
+      assertion still fails the day a reader appears or the mapper stops.
+      **One non-policy decision it also owed:** `feat.prereq_clauses` stays
+      **undeclared** — a new `FieldType` under the four-edit contract to expose one
+      computed list, whose editable twin (`prerequisite`) is already on the card,
+      buys nothing; the known cost (editing the prose leaves the clauses stale) is
+      recorded in §5.5.
+      **Measured:** no code path changed, so `diff_packs` is empty by construction;
+      the snapshot counts behind every row are reproducible from the §7 snippet.
+      `flutter analyze` at the 16-issue baseline, `test/tool` **113 passing**,
+      `bundled_pack_resolve_test` green with the reworded `unreadByAnyone`.
 - [x] **B8 — ToB3's actions were never converted, not mis-bucketed. Done
       2026-07-31.** The phase was filed as a bucketing bug; the pinned snapshot
       says the opposite. `tob3/CreatureAction.json` has 309 rows for 397
@@ -2894,7 +3042,7 @@ has a value" into "the value produced the right number on a sheet".
         (68/73)**.
       * **Sheet assertion** — a `mechanical_notes` probe in the M1 sweep
         (`bundled_pack_resolve_test`) requires every card's note lines to reach
-        `EffectiveCharacter.mechanicalNotes`. **73 pairs, 248 assertions, 0
+        `EffectiveCharacter.mechanicalNotes`. **73 pairs, 247 assertions, 1
         partial**, from 68/227.
       * **Routing rate** — **100% of rule-bearing source rows**, and nothing is
         logged to `unmapped_report.json` because nothing is dropped: every
@@ -3128,14 +3276,25 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    actions, no orphaned child row, every `parent_class_ref` resolving.
    **V1 closed the verification half of this outcome (2026-08-14): every ✅/✅⚠
    row now has a recorded verdict, the last one — `trait.trait_kind` — refuted
-   as a mapper defect and confirmed as a null source column.** What remains under
-   outcome 1 is content, not proof: B5's remainder and B7. **B10 closed
+   as a mapper defect and confirmed as a null source column.**
+   **B7 closed the last filed phase 2026-08-14 — and measured what that does
+   *not* finish.** Of the 37 🔴 rows left in §5, §5.8 gives ⚪/⛔ terminal causes
+   to twelve; the other **25 are 🔴 `M`** — mapper work in prose that **no phase
+   ever claimed**: `class`'s proficiency / equipment / multiclass /
+   spellcasting-focus prose (2 entities), `subclass`'s prose grants and
+   `flavor_description`, `species.age`, `background.starting_gold_gp`, three
+   `feat` pick-count keys, `applied_condition_refs` on `spell` and
+   `creature-action` (plus `save_dc`), and `magic-item`'s attunement / charges /
+   body-slot block. The roadmap is therefore empty while **this criterion is not
+   yet true**: closing it needs either a new prose-parsing phase or a written
+   decision that a rule already rendering in `description` — and, for the chargen
+   categories, in `mechanical_notes` since B5 — is where it stays. **B10 closed
    2026-08-14**, emptying `verify_packs`'s `absent` column, **B6 closed the
    same day**, taking the `adventuring-gear` category to 0, and **L1 the same
    day** at zero deletions — every section-A collision has a written keep
    verdict, and the collision now resolves to the picked package everywhere.
 2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
-   done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
+   done 2026-08-13, now 73 pairs / 247 assertions, 1 partial), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source
    rows**, nothing dropped), and what stays non-mechanical is written down (M3 —
    done 2026-08-14). **Outcome 2 is met.** Three exclusions are declared, not
@@ -3252,7 +3411,10 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
 
 # Proves a mechanic reaches the sheet, not just the file. Since M1 this is
 # data-driven over all 19 assets and prints its own coverage —
-# "M1: 68 (pack, mechanic field) pairs, 227 sheet assertions, 0 partial".
+# "M1: 73 (pack, mechanic field) pairs, 247 sheet assertions, 1 partial" as of
+# B7 (2026-08-14) — the one partial is open5e-tdcs background.equipment_choice_groups
+# 2/3: a pair only has to land once, so a card whose group resolves no item is
+# reported rather than failed.
 # A field a pack writes must land in a sheet probe, in `notResolverRead`
 # (with the reader that owns it) or in `unreadByAnyone`; anything else fails.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
@@ -3290,6 +3452,33 @@ for f in glob.glob('assets/open5e_packs/*.pkg.json'):
 multi=[v for v in rows.values() if len(v)>1]
 diff=[v for v in multi if len(set(v))>1]
 print(f'shared names {len(multi)}, differing text {len(diff)} ({100*len(diff)/len(multi):.1f}%)')
+PY
+```
+
+**§5.8's policy figures (B7)** are snapshot counts, not tool output — every one
+of them is a column that is empty or absent, which is exactly what no census can
+show. Reproduce from `open5e-api-staging/data/v2` (rows are Django fixtures, so
+the columns live under `fields`):
+
+```sh
+python3 - <<'PY'
+import json,glob,collections
+def rows(pat, base='.'):
+    for f in glob.glob(f'{base}/{pat}'):
+        for r in json.load(open(f)): yield f.split('/')[-2], r['fields']
+# class.primary_ability_ref — [] on every base class, in every document
+print(collections.Counter((d, str(f['primary_abilities'])) for d,f in
+      rows('*/*/CharacterClass.json') if not f.get('subclass_of')))
+# background.origin_feat_ref / asi_distribution_options — srd-2024 only
+print(collections.Counter((f.get('type'), d) for d,f in
+      rows('*/*/BackgroundBenefit.json') if f.get('type') in ('feat','ability_score')))
+# monster.lair_action_refs — four buckets corpus-wide, no lair one
+print(collections.Counter(f.get('action_type') for _,f in rows('*/*/CreatureAction.json')))
+# magic-item.cost_gp — 0.00 on all 1,063 shipping rows
+print(collections.Counter((d, str(f.get('cost'))) for d,f in rows('*/*/MagicItem.json')))
+# monster.gear_refs / spell_refs — no v2 column; v1 has 41 rows, 37 of them WotC
+print(collections.Counter(d for d,f in rows('*/Monster.json', '../v1')
+      if f.get('spells_json') not in (None,'','[]','null')))
 PY
 ```
 
