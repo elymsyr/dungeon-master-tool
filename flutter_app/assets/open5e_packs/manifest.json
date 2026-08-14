@@ -50,7 +50,7 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 829,
-        "creature-action": 1657,
+        "creature-action": 1655,
         "monster": 586,
         "size": 1
       }
@@ -64,8 +64,8 @@
       "game_system": "5e-2014",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 776,
-        "creature-action": 1339,
+        "trait": 772,
+        "creature-action": 1338,
         "monster": 360,
         "language": 1,
         "class": 1,

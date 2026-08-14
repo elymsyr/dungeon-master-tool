@@ -4,6 +4,8 @@
 //                                                    [--only trait,monster,...]
 //                                                    [--markdown]
 //                                                    [--list <slug>]
+//                                                    [--list-shared]
+//                                                    [--list-builtin-same]
 //
 // Sibling of `audit_packs.dart`. That tool asks "are the fields filled?"; this
 // one asks "should this entity exist at all?".
@@ -70,6 +72,8 @@ import 'dart:math';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 
+import '../dupe.dart';
+
 /// `(slug, name)` join key, **case-sensitive** — byte-for-byte what
 /// `findEntityIdByName` indexes on, separator included. A slug never contains a
 /// space, so [_slugOf] / [_nameOf] split on the *first* one; splitting on the
@@ -106,13 +110,11 @@ String? _resolveKey(Set<String> index, String slug, String name) {
   return index.contains(retry) ? retry : null;
 }
 
-/// Comparison form for description prose: whitespace collapsed, ends trimmed,
-/// case preserved (a case edit in a rules sentence is a real edit). §2.5's
-/// python snippet hashed the raw string, so this reports marginally fewer
-/// divergences — reflowed-only copies now count as identical, which is the
-/// reading L1/L2 need.
-String _normText(String? s) =>
-    (s ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+/// Comparison form for description prose — **defined in `../dupe.dart`**, which
+/// the build imports too. Audit L4 moved it there: this tool's exit criterion
+/// is a census number, and a build that drops duplicates by its own private
+/// notion of "identical" would go green while shipping something else.
+const _normText = normText;
 
 /// The five `monster` fields whose targets exist for that one statblock.
 const _childRefKeys = <String>[
@@ -154,6 +156,10 @@ void main(List<String> args) {
     census.printSharedList();
     return;
   }
+  if (args.contains('--list-builtin-same')) {
+    census.printBuiltinSameList();
+    return;
+  }
   if (markdown) {
     census.printMarkdown();
   } else {
@@ -190,16 +196,9 @@ Map<String, String> _builtinIndex() {
   return out;
 }
 
-/// Description as the app would show it: the top-level wire key, falling back
-/// to `attributes.description` (the importer writes both; hand-authored SRD
-/// cards sometimes only carry one).
-String _textOf(Map row) {
-  final top = _normText(row['description'] as String?);
-  if (top.isNotEmpty) return top;
-  final attrs = row['attributes'];
-  if (attrs is Map) return _normText(attrs['description'] as String?);
-  return '';
-}
+/// Description as the app would show it — also shared, same reason as
+/// [_normText].
+const _textOf = cardText;
 
 class _Pack {
   final String name;
@@ -344,6 +343,11 @@ class _Census {
   final _displayName = <String, String>{};
 
   /// Per-slug text split for the markdown table.
+  /// The section-A same-text rows themselves, not just their count — this is
+  /// L4's drop set, and `--list-builtin-same` prints it so the phase's target
+  /// can be read rather than inferred from a number.
+  final _aSameTextRows = <String>[];
+
   final _sameTextBySlug = <String, int>{};
   final _diffTextBySlug = <String, int>{};
   final _noTextBySlug = <String, int>{};
@@ -403,6 +407,8 @@ class _Census {
         } else if (builtinText == e.text) {
           _aSameText++;
           _sameTextBySlug.update(e.slug, (n) => n + 1, ifAbsent: () => 1);
+          _aSameTextRows.add('  ${e.slug.padRight(18)} ${e.name}  '
+              '[${pack.name}]${_ownedIds.contains(e.id) ? "  [owned]" : ""}');
         } else {
           _aDiffText++;
           _diffTextBySlug.update(e.slug, (n) => n + 1, ifAbsent: () => 1);
@@ -730,6 +736,16 @@ class _Census {
       return {for (final k in keys) k: _canon(v[k])};
     }
     return v;
+  }
+
+  /// L4's drop set: every bundled row the built-in pack already ships
+  /// verbatim. `[owned]` marks a monster's own child row — for section A that
+  /// is not an exemption but a *retarget*, since the owning statblock's
+  /// `trait_refs` / `action_refs` must come out pointing at the built-in card.
+  void printBuiltinSameList() {
+    final rows = [..._aSameTextRows]..sort();
+    print('# section A, identical to a built-in card (${rows.length} row(s))');
+    rows.forEach(print);
   }
 
   /// L2's candidate set: every section-B name whose copies are textually
