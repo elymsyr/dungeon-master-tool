@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/gate.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -39,4 +39,5 @@ tags: [file]
 
 ## Notes
 - First run over the shipped assets: **198 violations, every one already filed** — 196 `monster-actionless` + 1 `bucket-skew` (both tob3, fixed in the importer by B8, red until the rebuild is promoted) and 1 `dangling-soft-ref` (`"Spare The Dying"`, L3's, found independently of [[dupe_census]]). **As of 2026-08-13 the gate is green: 0 violations** — the D1 promotion cleared the 197 tob3 rows and L3's casing fix cleared the soft ref. The four rules that came back **0** are the new information: `orphan-child` and `empty-equipment-option` had never been checked at all.
+- **`empty-equipment-option` counted only in-pack uuids until audit B6 (2026-08-14)** — the same blindness the wizard's commit flow had, and the reason 159 empty gear stubs looked correct: a synthesised in-pack ref counted, a real cross-pack softRef did not. It now resolves a softRef item against `nameIndex` too. With B6's links in place 46 of 50 options resolve at least one card; the other 4 sit in **`_kitlessUpstream`**, a by-name allowlist with the same contract as `_actionlessUpstream` (a *different* option going empty still fails). Their kits name only generic categories ("a set of artisan's tools"), gear SRD 5.2.1 does not ship ("common clothes", "snowshoes", "donkey"), or a holy symbol — which is three cards, so picking one is a coercion.
 - Adding a rule means adding it in `gate.dart` (**not** in `bin/`) plus a provoking case *and* a healthy case in `flutter_app/test/tool/gate_packs_test.dart` — a rule that never fires looks exactly like a clean corpus, which is how 396 actionless statblocks shipped.

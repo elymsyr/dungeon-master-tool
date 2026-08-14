@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/dupe_census.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -40,7 +40,7 @@ tags: [file]
 - **A name collision is not proof of identical content — the census now measures it per row.** Three buckets, not two: same text / **name only** / **no text on either side**. The third exists because `monster` ships an empty top-level `description` in every pack (the statblock lives in `attributes`) and the synthesised gear stubs have no prose at all — a two-bucket column would have reported 588 monster names and 15 gear names as "identical content". Result: **7 of 1,660** section-A collisions genuinely say the same thing; in section B, 188 of 2,540 names are identical, 1,749 only share a name, 603 have no prose to compare. Text is normalized by collapsing whitespace (so a reflow is not a divergence).
 - **`creature-action` / `trait` rows are monster-owned children, not library entities.** `_collectOwnedIds` walks the five `monster` child-ref lists (`action_refs`, `bonus_action_refs`, `reaction_refs`, `legendary_action_refs`, `trait_refs`) and marks every id they reach; collapsing those by name reassigns another creature's text to this creature. **16,324 of 22,005 entities (74.2%) are owned rows, and 3,279 of the 4,462 redundant copies are** — which is why the census's headline is now **actionable redundancy 1,183 (5.4%)** and both categories report 0. `--list` marks them `[owned]`. See [[Package-Links]] and audit doc §2.5.
 - **The card body, when there is no prose to compare** (audit **L2**, 2026-08-13). `_canonAttrs` encodes `attributes` with keys sorted **and every in-pack uuid child ref replaced by the `slug␀name` it points at** — without that deref two byte-identical statblocks could never compare equal, because their child ids are minted per pack, and the tool would report "everything differs" no matter what the content said. `--list-shared` prints how many refs it resolved (**7,925**) so that failure mode is visible rather than plausible. Result: of the 603 no-prose shared names, **15 have an identical body and all 15 are gear stubs — `monster` is 0 of 588**. §2.5's deferred "needs an `attributes`-level comparison" is answered.
-- **`--only <slug>` is the L1/L2 work list**: per category, actionable = `monster` 802, `spell` 318, `adventuring-gear` 43, `background` 13, `feat` 1, `magic-item` 1, `creature-action`/`trait` 0 — summing to exactly the 1,178 headline.
+- **`--only <slug>` is the L1/L2 work list**: per category, actionable = `monster` 802, `spell` 318, ~~`adventuring-gear` 43~~ (**0 after B6, 2026-08-14** — the category is gone from the packs), `background` 13, `feat` 1, `magic-item` 1, `creature-action`/`trait` 0 — summing to the 1,178 headline, **1,140** after B6.
 - Level Up: Advanced 5e (`game_system: a5e`) deliberately restats SRD material — 313 of *Adventurer's Guide*'s 371 spells collide by name and most should be **kept**. `game_system` is display-only metadata, so it cannot carry the decision automatically; the tool reports candidates, policy is per document.
 - **`_redundantTotal`** is the A ∪ B union, not their sum (a trait can be in the built-in pack *and* in six packs): a name the built-in ships makes every bundled copy redundant, a name only packs ship makes all but one redundant.
 - **`_walkSoftRefs`** recurses the whole `attributes` tree for the `{slug, name}` envelope and deliberately skips `{_ref, name}` (in-pack hard ref, build-gated) and `{_lookup, name}` (Tier-0, resolved at import).
