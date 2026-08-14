@@ -319,11 +319,41 @@ B5, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
 `assets/first_party/manifest.json` is rebuilt for the new sizes — but it ships
 an **immutable** `r2_path`, so it goes last, after a local run proves the packs
 install, resolve and render. Until then the next actions are on the content
-side: B5's remainder and L1 each need a target-shape call first (B10 and B6 made
-their own on 2026-08-14) — and **L1 should be read against L2's result before it
-starts**: section A is 1,643 rows (1,666 before B6) but only **7** carry the same text as the
-built-in card, so the same "the candidate set is smaller than the collision
-surface" arithmetic is likely to decide it.
+side: B5's remainder needs a target-shape call first (B10, B6 and L1 made their
+own on 2026-08-14).
+
+**L1 is done — 2026-08-14, and it deleted nothing.** The prediction in the line
+above held: section A's 1,643 rows shrink to a drop set of **zero** once §2.5's
+per-document policy is applied to every one of them, and the phase's real
+finding was underneath. The policy, complete:
+
+| Section-A rows | Verdict | Why |
+|--:|---|---|
+| 906 `creature-action` + `trait` | **keep** | every one monster-owned (§2.5); the 7 same-text rows in the whole corpus are all in here and all owned |
+| 409 `monster` | **keep** | `open5e-a5e-mm` (204) + `open5e-bfrd` (205) — A5E and Black Flag restats, and L2 measured 0 of 588 shared statblocks identical |
+| 313 `spell` + 12 `background` + 1 `feat` | **keep** | all `open5e-a5e-ag`; A5E restats by document policy |
+| 1 `spell` — "Ray of Sickness" (`open5e-open5e`) | **keep** | Open5e Originals' replacement for a non-SRD spell; its own text says so, and it carries an At Higher Levels clause the SRD card lacks |
+| 1 `magic-item` — "Feather Token" (`open5e-vom`) | **keep** | Vault of Magic's card opens "The following are **additional** feather token options" — four items that exist nowhere else. The clearest case in the audit that a name collision is not a duplicate |
+
+**So the collisions stay, and that turns the phase into a different question:
+when both cards are installed, which one does a name ref land on?** Ids never
+collide — they are uuidv5 of `(pack, slug, name)` — so *both* entities are
+always in the merged map and `findEntityIdByName` picks by **insertion order**
+(first writer wins). The three entity-source paths disagreed:
+`wizardEntitiesProvider`'s world branch drops the built-in row when the campaign
+supplies the same `(slug, name)`, and `layerCharacterPackages` puts the package
+maps first — but `mergeBuiltinWithPackages` built `{...builtin, ...packages}`,
+handing all 1,643 collisions to the built-in card. The same worldless character
+resolved a soft ref one way in the wizard and the other way on the sheet.
+`layerCharacterPackages` had a second-order version of the same bug: its
+`CombinedMapView` resolves in list order, so the *linked* package beat the
+package the user actually picked, contradicting its own doc comment.
+Both now route through `layerPackagesOverBuiltin`, packages first and last-wins
+within the closure, pinned by `test/application/services/package_shadowing_test.dart`.
+The measurement is what makes this a fix rather than a preference: nothing in
+section A is a duplicate, so a user who ticks A5E's *Adventurer's Guide* is
+asking for A5E's "Fireball". No pack asset changed, so every census figure below
+is unmoved.
 **B11 is done** (2026-08-10): the fabricated `hp_dice` is omitted rather than
 derived, 360 removals confined to `open5e-bfrd`, corpus `unsourced` 3,663 →
 3,303 (§3.6).
@@ -426,7 +456,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
-| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0~~ (done), L1–L3 | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker |
+| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0–L3~~ (all done) | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker |
 | 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
@@ -554,7 +584,10 @@ are rows owned by a single statblock**, and of the 2,540 cross-pack shared names
 only 188 carry identical prose while 1,749 say different things (§3.2). The
 actionable set is **1,178 entities (5.7%)**, dominated by `monster` reprints and
 the gear stubs. Read 20.9% as a collision surface; the policy table drives the
-work. → §2, §3.2, phases ~~L0~~, L1, ~~L2~~ (closed by measurement: after policy, section B has **no** link candidate worth taking).
+work. → §2, §3.2, phases ~~L0~~, ~~L1~~, ~~L2~~ — **both closed by measurement:
+after policy, section A has no row worth dropping and section B no link worth
+taking.** What L1 delivered instead is that the surviving collisions resolve to
+the package the user picked, on every path (§6 L1).
 
 **Gap 3 — refs written as prose.** Where a card *should* point at another card, the
 importer mostly writes English instead. **`spell.class_refs` is fixed — 0% → 92%
@@ -846,10 +879,14 @@ figure added section A and B without their overlap):
 | Category | Actionable (measured) | Why |
 |---|--:|---|
 | ~~`adventuring-gear`~~ | ~~43~~ **0** | **dropped 2026-08-14 (B6)** — the whole category is gone from the packs, so its redundancy is too |
-| `monster` | 802 → **per document** | ToB 2016 vs ToB 2023 are deliberate separate editions; A5E restats. Only same-edition reprints drop |
-| `spell` | 318 → **~5** | 313 are A5E restats (keep) |
-| `background` | 13 | 12 are A5E (keep unless the restat is cosmetic) + 1 cross-pack |
-| `feat`, `magic-item` | 2 | inspect individually |
+| `monster` | 802 → **0 dropped** | ToB 2016 vs ToB 2023 are deliberate separate editions; A5E and Black Flag restat. L2 measured 0 of 588 shared statblocks identical, so there is no same-edition reprint to drop |
+| `spell` | 318 → **0 dropped** | 313 A5E restats; the one non-A5E collision, "Ray of Sickness" (`open5e-open5e`), is Open5e Originals' declared replacement for a non-SRD spell and has rules text the SRD card lacks |
+| `background` | 13 → **0 dropped** | 12 A5E + `Scoundrel`, which is section B and shipped by two packs, not by the built-in |
+| `feat`, `magic-item` | 2 → **0 dropped** | `Survivor` is A5E; `Feather Token` (`open5e-vom`) is explicitly *additional* options — dropping it deletes four items nothing else ships |
+
+> **L1 closed on this table, 2026-08-14, at zero deletions** — and the phase's
+> outcome moved to §6 L1: since the collisions stay, *which* card a name ref
+> lands on had to be made consistent, and it was not.
 
 So "20.9% redundant" is the **collision surface**, not the work item. The work
 item after policy is 1,178 entities, and §6 L1/L2 exit criteria are written
@@ -887,6 +924,11 @@ per-document policy, made once and recorded in §6 L1/L2, not per-row guesswork:
   2026-08-14 (B6)** — they carried no description, no cost and no weight, and
   included parse artifacts such as "pet monkey wearing a tiny fez";
 - statblocks and spells → per document, and A5E most likely keeps its own.
+  **Settled 2026-08-14 (L1): A5E keeps everything, and so does every other
+  document — the drop set is 0.** What replaced the deletions is a resolution
+  rule, since the shadowing is now permanent: **the package the user picked wins
+  a name collision against the built-in card**, on every entity-source path
+  (§6 L1).
 
 ---
 
@@ -2179,7 +2221,41 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       lists. 15,038 of 20,712 entities (72.6%) are owned rows; 3,153 of the 4,331
       redundant copies are, which is what took the headline from 20.9% to 5.7%.
       Both `creature-action` and `trait` now report 0 actionable.
-- [ ] **L1 — Drop what the built-in pack already ships.** Build a `(slug, name)`
+- [x] **L1 — Drop what the built-in pack already ships. Done 2026-08-14 — the
+      drop set is zero, and the defect was in who wins the collision.** Every
+      one of the 1,643 section-A rows now has a written verdict in §2.5's policy
+      table (§0 reproduces it): 906 monster-owned children, 409 restatted
+      statblocks, 326 A5E cards, and two non-A5E singletons that inspection
+      settled — "Ray of Sickness" is Open5e Originals' *replacement* for a
+      non-SRD spell and says so in its own text, "Feather Token" is Vault of
+      Magic's *additional* options, four items that exist nowhere else. Dropping
+      either destroys content.
+      - [x] **The `(slug, name)` index this phase asked for already exists** —
+            `builtinNameIndex()` in `gate.dart`, built for L3 and reused by
+            T3 and B6. No new tooling was needed; what was missing was the
+            policy, and now the tool output and the policy agree at 0.
+      - [x] **The real finding: three entity-source paths resolved a name
+            collision three different ways.** Ids are uuidv5 of
+            `(pack, slug, name)` and never collide, so both cards sit in the
+            merged map and `findEntityIdByName` picks the **first** one it
+            iterates. `mergeBuiltinWithPackages` built `{...builtin, ...packs}`
+            → built-in won; `layerCharacterPackages` put packs first → pack won,
+            but the *linked* pack beat the picked one; the world branch of
+            `wizardEntitiesProvider` suppresses the built-in row by
+            `(slug, lowercased name)` → campaign won. A worldless character with
+            A5E ticked got the SRD card in the wizard and the A5E card on the
+            sheet. Both merge paths now go through
+            `layerPackagesOverBuiltin` — packages first, last-in-closure wins —
+            and `test/application/services/package_shadowing_test.dart` pins all
+            four cases (shadow, closure order, empty/unloaded, built-in-only
+            name).
+      *Exit (met): every section-A row is covered by a written keep policy, the
+      dropped-entity count matches the policy table at 0 = 0, and section C is
+      unchanged at 0 "nothing installed" — no asset moved, so it could not
+      rise.* The original exit's third clause said "not 'section A is 0'", and
+      that is exactly how it closed: section A stays 1,643 and is now understood
+      rather than reduced.
+      *Original plan, kept for the reasoning:* Build a `(slug, name)`
       index of the built-in pack inside the importer (both
       `generateBuiltinDnd5eV2Schema().seedRows` and `buildSrdCorePack()` are pure
       Dart and already importable from `tool/` — `dupe_census.dart` does exactly
@@ -3053,9 +3129,11 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    **V1 closed the verification half of this outcome (2026-08-14): every ✅/✅⚠
    row now has a recorded verdict, the last one — `trait.trait_kind` — refuted
    as a mapper defect and confirmed as a null source column.** What remains under
-   outcome 1 is content, not proof: L1, B5's remainder, B7. **B10 closed
-   2026-08-14**, emptying `verify_packs`'s `absent` column, and **B6 closed the
-   same day**, taking the `adventuring-gear` category to 0.
+   outcome 1 is content, not proof: B5's remainder and B7. **B10 closed
+   2026-08-14**, emptying `verify_packs`'s `absent` column, **B6 closed the
+   same day**, taking the `adventuring-gear` category to 0, and **L1 the same
+   day** at zero deletions — every section-A collision has a written keep
+   verdict, and the collision now resolves to the picked package everywhere.
 2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
    done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source

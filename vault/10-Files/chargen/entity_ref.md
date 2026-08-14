@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/entity_ref.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -37,6 +37,7 @@ tags: [file]
 - `resolveEntityRefList` (added 2026-08-13, audit **U1**): maps a `*_refs` list through `resolveEntityRef` in order and **drops** what does not resolve — the soft-ref contract, where a missing target is never an error. It exists because the raw idioms it replaces, `(list as List).contains(id)` and `list.whereType<String>()`, both discard every Map envelope silently: a correctly written packaged ref simply became invisible. Every chargen reader of a `*_refs` field goes through it; use it rather than re-deriving the loop.
 - `abilityAbbrevFromRef` (added 2026-08-13, audit **M1**): one entry of an **ability relation list** (`asi_ability_options`, `unarmored_ac_abilities`) → `STR`…`CHA`. The same card carries a different shape depending on provenance — an installed package resolved its `{_lookup, name}` envelopes to **ids**, an as-authored card still holds the envelope, and parts of [[srd_core_pack]] ship plain names (`'Strength'`) — and all three mean the same ability. Reading one shape only is exactly how feat ASI stopped applying to every packaged feat (see Notes). Falls through id → `{id}` → `{name}`/`{_lookup,name}` → bare name/abbreviation, null on anything else.
 - `findEntityIdByName`: O(1) via a per-map `(slug,name)→id` index built lazily into an `Expando<Map<String,String>>` keyed weakly on the `byId` instance. Safe because the maps are unmodifiable and rebuilt as a *new* instance whenever contents change (`wizardEntitiesProvider`), so a cached index can never go stale. Key format is `"$slug $name"`; first-writer-wins matches the old linear "first match".
+- **First-writer-wins makes merge order a content decision.** Ids are uuidv5 of `(pack, slug, name)`, so an SRD card and a pack's restat of the same spell never collide by id — both are in `byId`, and this function returns whichever the map iterates first. Who that is belongs to [[package_source_entities]], which since audit **L1** (2026-08-14) layers packages *ahead* of the built-in on every path, so the pack the user picked wins. Before that fix the wizard and the sheet disagreed on the same ref.
 - Qualifier-tolerant: on a miss it strips a trailing parenthetical (`"Magic Initiate (Cleric)"` → `"Magic Initiate"`) and retries, so a softRef naming a specific variant lands on the generic entity the pack ships.
 - **Case sensitive.** The index key is the raw `"$slug $name"` — `"thieves' tools"` does not find `"Thieves' Tools"`. Anything *emitting* a softRef must use the target's exact name; [[dupe_census]] lowercases when it audits this surface, so it will report such a ref as resolved while this function drops it.
 - **Qualifier tolerance cuts both ways.** [[srd_core_pack]] ships both `Amphibious` and `Amphibious (Dragon)`; a softRef to `"Amphibious (Aboleth)"` therefore resolves *successfully* onto the generic row and puts the wrong text on the sheet. It is a fallback, never a naming strategy — a wrong-but-resolvable name is worse than a dangling one, because nothing warns.
