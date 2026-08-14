@@ -340,6 +340,30 @@ closed**: B10, B6, L1, B5 **and B7** all landed on 2026-08-14, each on a
 measurement rather than a preference, so the local verification run is the last
 thing between the promoted assets and publish.
 
+**The roadmap is not finished — reopened 2026-08-14 as a six-item queue in a
+fixed order.** Every *filed* phase closed; three things no phase ever covered
+did not — the built-in pack's own holes (T2-1/2/3, measured but never fixed),
+duplicate cards (**L4**, new) and cards that cannot be opened from a ref
+(**U3**, new). Work them **in this order**, top to bottom, and do not start one
+before the one above it is ticked:
+
+| # | Phase | One line |
+|:--:|---|---|
+| 1 | **T2-2** | author the spell-slot / cantrips / prepared tables in the built-in pack — the only mechanic nothing anywhere ships |
+| 2 | **T2-1** | `skill.ability_ref` resolves, so the wizard's ability-mod chip renders |
+| 3 | **T2-3** | the four built-in spell fields the Open5e packs now beat |
+| 4 | **L4** | **no duplicate cards** — a card the built-in pack already ships must not be re-emitted by an official pack, and the same card must not ship in two packs |
+| 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
+| 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
+
+T2-1/2/3 edit the **built-in** pack, which §2/"Scope" puts out of bounds for the
+`B`/`L` phases; they ship as their own change with an `srdCorePackVersion` bump
+and the doc measures the result. L4 and U3 are new: L4 finishes what L1 left
+(L1 kept every collision and fixed *which* one wins — L4 removes the ones that
+are genuinely the same card), and U3 is the first phase about *reading* a card
+rather than building one. **Stage M is therefore no longer closed** — M1–M3 hold,
+M4 is open, and outcome 2 goes back to "not met" until it lands.
+
 **L1 is done — 2026-08-14, and it deleted nothing.** The prediction in the line
 above held: section A's 1,643 rows shrink to a drop set of **zero** once §2.5's
 per-document policy is applied to every one of them, and the phase's real
@@ -473,9 +497,9 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 | # | Outcome | Owning phases | Gate that proves it |
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
-| 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3) |
-| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0–L3~~ (all done) | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker |
-| 4 | Character creation works with every pack | **U1, U2** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef` |
+| 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3**, **M4** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3); **and the spell-slot table T2-2 authors reaches a sheet (M4)** — open |
+| 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0–L3~~ (done), **L4** | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker; **plus L4: section A's "same text" count and section B's "textually identical" count are both 0** — open |
+| 4 | Character creation works with every pack | **U1, U2**, **U3** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef`; **plus U3: a resolvable ref rendered read-only opens its target card** — open |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
 Outcome 1 was the doc's original subject. Outcomes 2–4 were **assumed** by the
@@ -606,6 +630,11 @@ work. → §2, §3.2, phases ~~L0~~, ~~L1~~, ~~L2~~ — **both closed by measure
 after policy, section A has no row worth dropping and section B no link worth
 taking.** What L1 delivered instead is that the surviving collisions resolve to
 the package the user picked, on every path (§6 L1).
+**L4 (filed 2026-08-14) picks up the residue those two left**: policy explains
+why a *differently worded* card stays, but 7 built-in collisions and 189
+cross-pack names are word-for-word the same card and are still shipped twice.
+Those are deletions, and the rule is same name **and** same text — never name
+alone (§6 L4).
 
 **Gap 3 — refs written as prose.** Where a card *should* point at another card, the
 importer mostly writes English instead. **`spell.class_refs` is fixed — 0% → 92%
@@ -623,6 +652,10 @@ the softRef Map that §2.3 tells you to write matches *nothing* there — and to
 packaged spells are visible only through a `tags` fallback that the same fix would
 retire. Filling a field is therefore not the last step; §2.3.1 and Stage U are. →
 outcome 4.
+**U1/U2 closed the filter half; the display half is still open.** A ref that
+resolves correctly still renders as **dead text** — no card view opens when a
+spell in a spell list is tapped, because the read-only relation widget has no
+gesture and no screen exposes an "open this entity" entry point. → §6 U3.
 
 **Gap 5 — nothing published.** `emit.dart` hardcoded `pack_version: '1.0.0'`,
 `build_catalog` derives the immutable `r2_path` from that version, and
@@ -2508,6 +2541,89 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       empty **before** the `tags` route is retired.* — **all four met**, the last
       of them by the `vom` group in `bundled_pack_resolve_test`.
 
+- [ ] **L4 — No duplicate cards. Filed 2026-08-14, queue position 4.**
+      *(needs the snapshot — it is a mapper change plus a rebuild.)*
+      The rule, in the requester's words: **a card the built-in SRD pack already
+      ships must not also ship in an official pack, and the same card must not
+      ship in two packs.** The app can read the built-in one directly (§2.1: it
+      is in scope on all three paths without a declaration), so a second copy
+      buys nothing and costs a duplicate row in every picker.
+      **The decided matching rule is same `(category, name)` *and* same text** —
+      not name alone. L1 measured why: of the 1,643 built-in name collisions
+      **1,636 say something different** (A5E and Black Flag restats), so a
+      name-only rule would delete the A5E *Fireball* a user installed *Adventurer's
+      Guide* to get. Name-only was considered and rejected on that measurement;
+      if it is ever wanted anyway, it is a policy change to §2.5, not a bug fix.
+      Target set, straight from `dupe_census` on the promoted assets:
+      * **section A "same text" — 7 rows** (3 `creature-action`, 4 `trait`) that
+        the built-in pack already ships verbatim → not emitted. Note what they
+        are: all seven are **monster-owned children**, so dropping one is the
+        retarget case below, not a delete — the owning statblock's `trait_refs`
+        / `action_refs` must come out pointing at the built-in row, and T3's
+        no-orphan rule is the thing that will catch it if they do not;
+      * **section B "textually identical" — 189 names / 193 copies** shipped by
+        more than one bundled pack. One owner keeps it, the rest drop it —
+        **and "which one owns it" is not yet decided; decide it before writing
+        code.** It cannot be arbitrary, because the winner's uuid is what every
+        retargeted ref lands on and pack install order is not stable. Two
+        defensible rules: *(a)* if the built-in pack also has the card, nobody
+        owns it — all copies drop and every ref goes to built-in (this covers
+        most of the set and needs no ordering at all); *(b)* otherwise the
+        alphabetically-first pack slug wins, purely so the choice is
+        reproducible across rebuilds. Write the chosen rule into §2.5 with the
+        per-name winner list, so a later rebuild cannot quietly re-elect a
+        different owner. Note
+        L2's price before reaching for `metadata.links`: a link makes the whole
+        target pack a transitive install dependency (2.9 MB for a one-row card),
+        so for a card the **built-in** pack also has, drop-and-rely-on-built-in
+        beats linking; a link is only for content that exists nowhere else.
+      * the 588 names with **no text on any copy** stay out of scope — L2
+        already dereferenced their child refs and found **0 of 588 statblocks
+        identical**.
+      **Deleting is only half of it — every pointer at the deleted card has to
+      be re-aimed at the survivor.** This is the part that makes L4 a rewrite
+      rather than a filter, and it is why the phase cannot be done by grepping
+      the entity list. Worked example, the one that named the requirement: an
+      official pack ships its own *Fireball* **and** a monster whose spell list
+      hard-refs it. Drop the spell and the monster's list points at nothing —
+      so the drop must **retarget that reference to the built-in *Fireball***
+      (soft ref by name), not merely survive the build. The same holds in every
+      direction a ref can run, and the sweep must be over **all** of them, not
+      the fields this paragraph happens to name:
+      * monster spell lists, `trait_refs`, `action_refs`;
+      * `base_item_ref` and equipment rows on chargen cards;
+      * anything under §2.3's ref contract, in the dropped card's own pack **and
+        in the other 18** — a cross-pack soft ref by name keeps resolving only
+        because the *name* survives somewhere, so a drop that also removes the
+        last card of that name is a different, worse defect.
+      Rule of thumb: **the reference count before and after must match; only the
+      target changes.** A ref that resolved to the pack's copy resolves to the
+      built-in (or owner-pack) copy afterwards, and nothing silently becomes
+      empty.
+      **One thing has to move before any of this can be written: the definition
+      of "same card" lives in a script.** `dupe_census.dart` is 835 lines under
+      `bin/` and its text comparison is private to it, while `build_packs` can
+      only reach the shared modules (`gate.dart`, `verify.dart`, `emit.dart`,
+      `refgraph.dart`). Extract the comparison into a shared module first, the
+      way T1 and T3 did, so the census and the build apply **one** rule; two
+      copies of "identical" is how a phase whose exit is a census number goes
+      green while shipping something else.
+      Where it lands: the emit side, not a mapper — the drop and the retarget
+      have to happen before `refgraph` mints ids, or an in-pack hard ref will
+      dangle and `gate_packs` will (correctly) fail the build. A dropped card
+      that anything points at must leave a **soft ref by name** behind, never a
+      hard ref to a deleted uuid (§3.3's policy).
+      *Exit: `dupe_census` section A "same text" **0** and section B "textually
+      identical" **0**; **section C's total ref count does not drop** and
+      "nothing installed" stays **0** — that pair is what proves the retarget
+      worked; `gate_packs` green (no orphan, no dangling hard ref, no
+      `empty-equipment-option` that was non-empty before); `diff_packs` shows
+      removals **plus the retargeted ref values** and nothing else;
+      `verify_packs` `disagree` 0; and two tests — one that installs two packs
+      sharing a dropped name and asserts the picker lists it exactly once, and
+      one that resolves a **monster whose spell list named a dropped card** and
+      asserts it now lands on the built-in card.*
+
 ### Stage U — make the wizard see it (outcome 4)
 
 - [x] **U1 — Put every chargen ref reader on `resolveEntityRef`. Done
@@ -2561,6 +2677,38 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       the softRef half of the subclass parent lookup fails 11 of the 39 cases.
       `flutter test test/presentation/ test/application/character_creation/ test/domain/services/`
       → 559 passing, `flutter analyze lib test` → 16 issues, 0 errors (baseline).
+
+- [ ] **U3 — Every ref on a card is a link. Filed 2026-08-14, queue position 5.**
+      *(no snapshot needed — app-side only.)* Reported from use: **tapping a
+      spell in a spell list does not open that spell's card.** It never has.
+      U1/U2 made a ref *resolve*; U3 makes it *navigable*. The rule: **every
+      value on a card that is a ref to another card is a link when a card for it
+      exists** — spells on a class or character sheet, `base_item_ref` on a
+      magic item, `parent_class_ref` on a subclass, granted feats/traits,
+      equipment rows, monster `trait_refs` / `action_refs`.
+      What is actually in the way (checked 2026-08-14, three separate things):
+      * **the widget.** A read-only relation value renders as a bare `Text` —
+        `_MiniRelationField` (`structured_list_field_widgets.dart:278`) prints
+        `entities[id]?.name` or the soft ref's `name` with no gesture at all;
+        the only `InkWell` on it is the editable clear/pick affordance.
+        Same for the list-shaped variants.
+      * **the resolution.** The tapped value can be a uuid, a `{slug, name}`
+        soft ref, or a `{_lookup, name}` — so the tap has to go through
+        `resolveEntityRef` / `findEntityIdByName` (`domain/services/entity_ref.dart`),
+        the same readers U1 standardised, and **render as plain text when it
+        resolves to nothing** (an uninstalled pack's card). A link that opens an
+        empty dialog is worse than no link.
+      * **the navigation.** There is no shared "open this entity" entry point:
+        selection is screen-local `setState` — `_selectedEntityId` in
+        `main_screen.dart:67` and `package_screen.dart:247` — so a widget nested
+        in a field has no way to ask for it. This phase's real design decision
+        is that entry point (a callback threaded through the field widgets, or a
+        provider both screens already listen to). Pick one; do not add a third
+        copy of the selection state.
+      *Exit: a widget test taps a ref inside a rendered card and asserts the
+      target card is shown; an unresolvable ref stays non-interactive; and the
+      link path is the same `resolveEntityRef` U1 put the wizard on — no new
+      envelope reader.*
 
 ### Stage B — fill the fields
 
@@ -3069,6 +3217,37 @@ has a value" into "the value produced the right number on a sheet".
       scope boundary instead of leaving it as an implicit 0%.
       *Exit: one paragraph in §5.6 and a line in "Done when"; no phase promises
       `effects`.*
+- [ ] **M4 — The spell-slot table lands on a sheet. Filed 2026-08-14, queue
+      position 6 — this is what "finish Stage M" now means.** M1–M3 proved every
+      mechanic **a pack writes** reaches `EffectiveCharacter`. They could not
+      cover the one mechanic **nobody writes**: `spell_slots_by_level`,
+      `cantrips_known_by_level` and `prepared_spells_by_level` are 0 in the
+      built-in pack and 0% in the packs (T2-2).
+      **Corrected the day it was filed** — the check T2-2's own box now records:
+      the slots are *not* missing. `caster_progression.dart` computes them from
+      `caster_kind`, the wizard stores the grid on the character's `spell_slots`
+      field at commit, and the sheet renders that. So M4 is not "a mechanic with
+      no value" but **the one mechanic whose value never comes from the card**,
+      which is why the M1 sweep — built entirely around "a field a pack writes
+      reaches `EffectiveCharacter`" — structurally cannot see it.
+      What M4 therefore owes:
+      * a probe that a **packaged caster class** (a5e-ag Marshal, bfrd
+        Mechanist) produces a slot grid at all, and one that pins **override
+        beats preset** when T2-2 authors a table — today nothing fails if the
+        override is silently ignored;
+      * `spell_slots_by_level` / `cantrips_known_by_level` /
+        `prepared_spells_by_level` moved out of `unreadByAnyone` into the
+        declared list naming `caster_progression` as their reader — the same
+        closure rule M1 applies to every other field;
+      * the note that this path is **wizard-side, not resolver-side**:
+        `character_resolver.dart` has no slot logic at all, so a level-up that
+        does not go through the wizard's commit does not recompute the grid.
+        Decide whether that is a defect or the design, and write it down.
+      **Blocked on T2-2** only for the override half.
+      *Exit: those probes in `bundled_pack_resolve_test` (or a named
+      wizard-side test where the logic actually lives), the three fields out of
+      `unreadByAnyone`, and the wizard/resolver split written down. Then
+      outcome 2 is met again.*
 
 ### Stage T — prove the values are right (outcome 1)
 
@@ -3115,6 +3294,13 @@ has a value" into "the value produced the right number on a sheet".
       missing *name*; the only known dangling ref stays L3's.
       *Exit met: §3.7 added; every hole either explained (10 ⚠ const columns are
       authored rules) or filed as T2-1/2/3 below.*
+  > **Order fixed 2026-08-14: T2-2 → T2-1 → T2-3, and T2-2 is next.** They are
+  > the top of the whole roadmap now (§0's queue). T2-2 first because it is the
+  > only *missing mechanic* of the three — a spellcaster has no slots today, and
+  > **M4 cannot start until it lands**; T2-1 next because it is one invisible UI
+  > chip; T2-3 last because it is completeness, not function. All three edit the
+  > built-in pack, so each ships with an `srdCorePackVersion` bump and a re-run
+  > of `audit_packs --builtin` (§3.7) — this file measures them, never holds them.
   - [ ] **T2-1 — `skill.ability_ref` is never resolved.** 18 Tier-0 skill rows
         ship `_ability_name_: 'Dexterity'` and an empty required `ability_ref`;
         `srd_core_package_bootstrap` writes `row['fields']` through verbatim, so
@@ -3129,10 +3315,33 @@ has a value" into "the value produced the right number on a sheet".
   - [ ] **T2-2 — No spell-slot table ships anywhere.** `class.spell_slots_by_level`,
         `cantrips_known_by_level`, `prepared_spells_by_level` are 0/12 on the
         built-in pack and 0% on the Open5e side (B2: the source only has them in
-        the two skipped WotC documents). Blocks Stage M — a resolver cannot fold
-        what nobody authored. *Exit: the SRD 5.2.1 tables authored in
+        the two skipped WotC documents). ~~Blocks Stage M — a resolver cannot fold
+        what nobody authored.~~ *Exit: the SRD 5.2.1 tables authored in
         `srd_core/classes.dart` with an `srdCorePackVersion` bump, or a written
         decision that the resolver computes them from `caster_kind`.*
+        > **Re-measured 2026-08-14, before starting: the second exit is already
+        > taken in code, and this phase is much smaller than filed.**
+        > `lib/application/character_creation/caster_progression.dart` ships the
+        > full SRD progression — `defaultSpellSlotsByLevel(CasterKind, level)`
+        > for full/half/third/pact, plus cantrip and prepared-spell fallbacks —
+        > and `spellSlotsForClass` reads the entity's `spell_slots_by_level` as
+        > an **override**, falling back to the preset keyed off `caster_kind`.
+        > The wizard computes the grid at commit and stores it on the character's
+        > `spell_slots` field (`{max, remaining}`), which the sheet then reads.
+        > So a built-in caster **does** get slots today; "no table ships" is true
+        > of the *data* and false of the *app*. What is actually open, in
+        > priority order:
+        > 1. **write the decision down** — the preset is undocumented duplicated
+        >    SRD knowledge with no note in §5.1 or here saying it is the chosen
+        >    exit;
+        > 2. **packaged casters silently inherit it** — `open5e-a5e-ag`'s
+        >    Marshal and `open5e-bfrd`'s Mechanist have a `caster_kind` and no
+        >    table, so a non-SRD A5E/Black Flag progression is rendered with the
+        >    SRD one and nothing says so. That is the case an authored table (or
+        >    a declared limitation) exists for;
+        > 3. only then the harvest from `srd-2024/ClassFeatureItem.json` below,
+        >    which is now an accuracy/no-duplicate-knowledge job, not a missing
+        >    mechanic.
         **The first exit is cheaper than it reads — A2 located the source
         (2026-08-13).** `srd-2024/ClassFeatureItem.json` carries the whole table
         machine-readably: 660 `slots-Nth` rows keyed
@@ -3297,7 +3506,10 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    done 2026-08-13, now 73 pairs / 247 assertions, 1 partial), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source
    rows**, nothing dropped), and what stays non-mechanical is written down (M3 —
-   done 2026-08-14). **Outcome 2 is met.** Three exclusions are declared, not
+   done 2026-08-14). ~~**Outcome 2 is met.**~~ **Reopened the same day by M4:**
+   M1–M3 cover every mechanic a pack *writes*; the spell-slot table nobody
+   writes (T2-2) is a missing mechanic, not a tested one, so outcome 2 is met
+   again only when M4 asserts slots on a sheet. Three exclusions are declared, not
    deferred: `spell.effects` / `creature-action.effects` (no reader in `domain/`,
    no structured source — §5.6), and `mechanical_notes` on `trait` /
    `magic-item` (the card *is* the rule; a note would be a verbatim copy of a
@@ -3308,10 +3520,16 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
    resolver's own matching (**met since L3**), and every linker ships both link
    keys plus a non-empty `requires` — **vacuously met: L2 found no pack that
    should link another**, so the test is that `requires` stays `[]` for a written
-   reason, not that it becomes non-empty.
+   reason, not that it becomes non-empty. **L4 adds the half none of L0–L3
+   delivered (filed 2026-08-14):** the copies that *are* the same card — 7
+   against the built-in pack, 189 names / 193 copies between packs — are still
+   shipped, and this outcome is not met until both counts are 0.
 4. **Character creation** — a wizard test per pack family passes (U2 — done
    2026-08-13, 12 chargen-bearing packs, 39 cases), and no chargen filter reads
-   a `*_ref` field as a raw id (U1 — done 2026-08-13). **Outcome 4 is met.**
+   a `*_ref` field as a raw id (U1 — done 2026-08-13). ~~**Outcome 4 is met.**~~
+   **Reopened by U3 (2026-08-14):** the wizard can *build* with a pack, but a
+   ref on a rendered card is dead text — tapping a spell in a spell list opens
+   nothing, so a user cannot read what they just picked.
    **V2 (2026-08-14) closed the two layers below it that nothing had ever run.**
    Every check up to here reads pack JSON in memory: no pack had ever gone
    through the *install* path, and no widget had ever been handed pack data.
