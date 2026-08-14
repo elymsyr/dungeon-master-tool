@@ -24,6 +24,7 @@ tags: [moc]
 - [[first_party_catalog_provider]] — official catalog **install** side: `requires` closure, banner, `installedFrom: 'official'`. Install-only — no upgrade path for an already-installed pack.
 - [[bundled_packs_bootstrap]] — first-boot SRD install.
 - [[builtin_package_provider]] — SRD pack id + read-only SRD reference overlay (`srdReferenceEntitiesProvider`).
+- [[package_source_entities]] — installed packages as an entity map, and the **one ordering rule** for layering them over the built-in SRD: the package the user picked wins a name collision (audit L1).
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.

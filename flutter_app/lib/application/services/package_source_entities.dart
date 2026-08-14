@@ -131,8 +131,12 @@ Map<String, Entity> layerCharacterPackages(
     if (m != null && m.isNotEmpty) maps.add(m);
   }
   if (maps.isEmpty) return base;
+  // Reversed for the same reason as [layerPackagesOverBuiltin]: a
+  // `CombinedMapView` resolves a key — and is iterated by
+  // `findEntityIdByName` — in list order, so *first* wins. Dependency order
+  // puts the picked package last, and it is the one that should win.
   return UnmodifiableMapView<String, Entity>(
-    CombinedMapView<String, Entity>([...maps, base]),
+    CombinedMapView<String, Entity>([...maps.reversed, base]),
   );
 }
 
@@ -147,13 +151,52 @@ Map<String, Entity> mergeBuiltinWithPackages(
   List<String> packageNames,
 ) {
   if (packageNames.isEmpty) return builtin;
-  final merged = <String, Entity>{...builtin};
+  final maps = <Map<String, Entity>>[];
   // Closure is dependency-ordered (links first), so a picked package still
   // wins an id collision against the packages it borrows from.
   for (final name in expandedPackageNames(ref.watch, packageNames)) {
     final map = ref.watch(packageEntitiesProvider(name)).valueOrNull;
-    if (map == null) continue;
-    merged.addAll(map);
+    if (map != null) maps.add(map);
+  }
+  return layerPackagesOverBuiltin(builtin, maps);
+}
+
+/// Built-in map with [packages] layered on top, in list order.
+///
+/// **A package wins a *name* collision, not just an id collision** (audit
+/// **L1**). Ids never actually collide across packs — they are uuidv5 of
+/// `(pack, slug, name)` — so the merge order that matters is the one
+/// `findEntityIdByName` sees: it indexes `byId.values` with *first writer
+/// wins*, i.e. insertion order. Building the map as `{...builtin, ...packs}`
+/// therefore handed every one of the 1,643 section-A collisions (409 monsters,
+/// 314 spells, 12 A5E backgrounds, …) to the built-in card, while the two
+/// sibling paths gave them to the package: [layerCharacterPackages] puts the
+/// package maps first in its `CombinedMapView`, and `wizardEntitiesProvider`'s
+/// world branch drops the built-in row outright when the campaign supplies the
+/// same `(slug, name)`. The same worldless character resolved a soft ref one
+/// way in the wizard and the other way on the sheet.
+///
+/// L1's measurement is why this is a fix and not a preference: **nothing in
+/// section A is a duplicate worth deleting** — A5E restats, separate ToB
+/// editions, and two additive singletons (§2.5) — so a user who ticks A5E's
+/// Adventurer's Guide is asking for A5E's "Fireball", and the shadowing has to
+/// point at the pack they picked.
+Map<String, Entity> layerPackagesOverBuiltin(
+  Map<String, Entity> builtin,
+  List<Map<String, Entity>> packages,
+) {
+  final merged = <String, Entity>{};
+  // Reversed + putIfAbsent: the closure is dependency-ordered (links first,
+  // the package the user actually picked last), and *last wins* — for the id
+  // collision this always documented, and now for the name collision too.
+  for (final map in packages.reversed) {
+    for (final entry in map.entries) {
+      merged.putIfAbsent(entry.key, () => entry.value);
+    }
+  }
+  if (merged.isEmpty) return builtin;
+  for (final entry in builtin.entries) {
+    merged.putIfAbsent(entry.key, () => entry.value);
   }
   return Map<String, Entity>.unmodifiable(merged);
 }
