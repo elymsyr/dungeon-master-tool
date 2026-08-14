@@ -23,6 +23,10 @@ typedef V1ActionIndex = Map<String, Map<String, List<Map<String, String>>>>;
 ///
 /// [v1Actions] backfills a bucket the v2 fixtures leave **completely empty** for
 /// a creature; it can never override a bucket v2 populated. See B8 below.
+///
+/// [v1Subtypes] (`lowercased name → subtype`) is the same kind of backfill for
+/// `tags_line`: v2's `Creature.type` is a bare enum and the subtype column was
+/// dropped in the v2 conversion. See `_creatureType`.
 void mapCreatures({
   required PackBuilder pack,
   required Normalizer norm,
@@ -32,6 +36,7 @@ void mapCreatures({
   required List<Fixture> attacks,
   required List<Fixture> traits,
   V1ActionIndex v1Actions = const {},
+  Map<String, String> v1Subtypes = const {},
 }) {
   final actionsByCreature = groupBy(actions, 'parent');
   final traitsByCreature = groupBy(traits, 'parent');
@@ -159,6 +164,7 @@ void mapCreatures({
       reactionRefs: reactionRefs,
       legendaryRefs: legendaryRefs,
       lairRefs: lairRefs,
+      v1Subtype: v1Subtypes[rawName.toLowerCase()],
     ));
   }
 }
@@ -451,6 +457,7 @@ Map<String, dynamic> _monsterRow({
   required List<Map<String, String>> reactionRefs,
   required List<Map<String, String>> legendaryRefs,
   required List<Map<String, String>> lairRefs,
+  String? v1Subtype,
 }) {
   final name = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
   final stats = {
@@ -487,7 +494,7 @@ Map<String, dynamic> _monsterRow({
   // Identity refs (skip silently-unknown → logged in sink).
   final size = norm.lookupRef('size', (c['size'] as String?) ?? '', context: name);
   if (size != null) attrs['size_ref'] = size;
-  _creatureType(c['type'] as String?, name, norm, attrs);
+  _creatureType(c['type'] as String?, name, norm, attrs, v1Subtype: v1Subtype);
   final align = c['alignment'] as String?;
   if (align != null && align.trim().isNotEmpty) {
     final r = norm.lookupRef('alignment', align, context: name);
@@ -557,7 +564,8 @@ Map<String, dynamic> _monsterRow({
 }
 
 void _creatureType(
-    String? raw, String name, Normalizer norm, Map<String, dynamic> attrs) {
+    String? raw, String name, Normalizer norm, Map<String, dynamic> attrs,
+    {String? v1Subtype}) {
   if (raw == null || raw.trim().isEmpty) return;
   // "humanoid (elf)" → type "humanoid", tags "(elf)".
   final m = RegExp(r'^([^(]+?)\s*(\(.*\))?$').firstMatch(raw.trim());
@@ -565,7 +573,16 @@ void _creatureType(
   final tag = m?.group(2);
   final r = norm.lookupRef('creature-type', base, context: name);
   if (r != null) attrs['creature_type_ref'] = r;
-  if (tag != null && tag.isNotEmpty) attrs['tags_line'] = tag;
+  // The parenthesised form never occurs in v2 — measured 0 of 3,541 rows: the
+  // v2 conversion moved the subtype into its own column and then dropped it.
+  // v1's `Monster.subtype` still has it, so `tags_line` is a v1 backfill for
+  // the same reason B8's actions are (audit B5).
+  final sub = (tag != null && tag.isNotEmpty)
+      ? tag
+      : (v1Subtype != null && v1Subtype.trim().isNotEmpty)
+          ? '(${v1Subtype.trim()})'
+          : null;
+  if (sub != null) attrs['tags_line'] = sub;
 }
 
 void _speed(dynamic v, String key, Map<String, dynamic> attrs) {

@@ -206,9 +206,22 @@ added on 105 entities (68 feat / 26 subspecies / 11 species) and **no other
 value change in any of the 19 packs**; `verify_packs` **0 disagreements**,
 `gate_packs` green, `dupe_census` section C **0 dangling**, `audit_packs` filled
 slots **133 → 138 of 407**. Assets re-promoted and `manifest.json` rebuilt;
+(**139 of 407** after the `tags_line` fix below.)
 `pack_version` stays **1.1.0** because it was never uploaded, so no immutable
-`r2_path` exists to collide with. **The rest of B5 — the sourced grant keys,
-`creature-action.damage_type_ref`, `monster.tags_line` — is still open.**
+`r2_path` exists to collide with.
+
+**B5's two "confirm before filing" rows are closed the same day, and both
+suspicions were wrong.** `creature-action.damage_type_ref` is **not** a
+regression: the mapper reads and resolves the column fine, but all **576** source
+attack rows that carry a damage type live in the two WotC documents this build
+skips publisher-wide — every shipping row is null, so 0% is the ceiling (⛔).
+`monster.tags_line` was **not** the subtype split failing either: the
+parenthesised `"humanoid (elf)"` form occurs on **0 of 3,541** v2 rows, because
+the v2 conversion moved the subtype to its own column and dropped it. v1 still
+has it, so it is B8's backfill shape again — **0% → 10%, 292 monsters**, one
+change class in `diff_packs` and nothing else, pinned by
+`test/tool/monster_tags_line_test.dart` and declared in `verify_packs`' rule
+table. **The rest of B5 — the sourced grant keys — is still open.**
 
 **M2's sheet assertion is in — 2026-08-14.** `mechanical_notes` is now a probe in
 `bundled_pack_resolve_test`'s M1 sweep: every card's note lines have to arrive on
@@ -216,6 +229,18 @@ slots **133 → 138 of 407**. Assets re-promoted and `manifest.json` rebuilt;
 assertions, 0 partial**, up from 68/227. The audit tool already prints a
 per-category `mechanical_notes` fill line, so M2's remaining clause is the
 **`trait` half of its exit** — see the note on that phase in §6.
+
+**V1 is closed — 2026-08-14, and its last open ⚠ turned out to be upstream's,
+not the mapper's.** `trait.trait_kind` is `Other` on all 6,423 shipped rows
+because `CreatureTrait.json` **does** carry a `type` column and it is **null on
+all 8,613 source rows, in every document in the snapshot** — there is nothing to
+map. Deriving a kind from the trait's name or text would be exactly the
+fabrication B11 was filed to remove, so the constant stands with a recorded
+verdict (§3.6). The other leftover, the gear stubs' `cost_cp` / `weight_lb`, has
+no fixture at all and is **B6's**, not a verification question. Re-measured on
+the promoted assets: `verify_packs` **68,494 ok / 0 disagree**, and the child
+categories it structurally cannot reach (`trait`, `creature-action`) are covered
+instead by T3's relational gate plus `_ensureChild`'s content-hash dedupe (§3.6).
 
 **Publish is deliberately held until the whole system is verified locally
 (decided 2026-08-14).** It is one command with the two secrets and the only
@@ -1136,6 +1161,7 @@ behind it:
 | ~~360~~ **0** | `monster.hp_dice` | **A real defect, fixed by B11 2026-08-10.** `open5e-bfrd` has `hit_dice: null` on all 360 creatures and shipped the mapper's `'1d4'` fallback for every one — including a 165-HP Aboleth — while `audit_packs` read 100% filled. The mapper now omits the field when the column is null. |
 | 73 | `feat.repeatable` | **Confirmed constant** — no column, and `false` is the safe default. |
 | 41 | `species` / `subspecies` `creature_type_ref` | **Confirmed constant, and §5 already said so:** `Species.json` has no type column, and the mapper writes the literal `'Humanoid'`. Defensible; now measured rather than assumed. |
+| 6,423 | `trait.trait_kind` | **Confirmed constant — V1 answered 2026-08-14.** Not counted above: `verify_packs` does not reach child categories, so this was measured directly against the fixtures. `CreatureTrait.json` carries a `type` column and it is **null on all 8,613 rows across every document**; `Other` is the only honest value. Classifying by name or `desc` would invent a field the source does not have — the B11 mistake. |
 
 The 890 `magic-item.magic_category_ref` and 93 `monster.language_refs` entries
 that looked like defects on the first run were **not**: see below.
@@ -1906,7 +1932,7 @@ is hard-`_ref`ed from exactly one statblock.
 
 | | Field | Fill | Cause | Notes |
 |:--:|---|--:|:--:|---|
-| 🔴 | `damage_type_ref` | 0% | `M` | `open5e_import_roadmap.md` §4 says `damage_type` → `damage_type_ref` is mapped. It is not landing. **Confirm before filing.** |
+| ⛔ | `damage_type_ref` | 0% | ~~`M`~~ `S` | **Confirmed 2026-08-14 (B5): not a mapping bug, and not fixable.** The mapper does read `CreatureActionAttack.damage_type` and does resolve it. Measured over the snapshot: of 5,244 attack rows, **576 carry a damage type and every single one is in `srd-2014` (537) or `srd-2024` (40)** — the two WotC documents this build **skips publisher-wide** (§4 A2). Every attack row in a *shipping* document has `damage_type: null`. 0% is the ceiling, and the 532 `thunder` values in srd-2014 look like an upstream data defect anyway. Reclassified ⛔. |
 | 🔴 | `save_dc`, `save_ability_ref`, `applied_condition_refs` | 0% | `M` | in the action `desc` |
 | 🔴 | `recharge` | 0% | ⚪ | narrative twin of the typed `recharge_kind`, which is filled |
 | 🔴 | `effects` | 0% | ⚪ | same `spellEffectList` field as above — no reader, no source |
@@ -1925,7 +1951,7 @@ editions, per §2.5.
 | ✅ | `action_refs` | **99.8%** (was 86% before the 2026-08-13 promotion) | ~~`S`~~ **B8 done** | The category's headline defect, and it was never a mapping bug: upstream's v2 conversion dropped `tob3`'s whole `ACTION` column (2 rows for 397 creatures) while `v1/tob3/Monster.json` kept all 1,373. `mapCreatures` backfills from v1 into empty buckets only. 2880/2885; the 5 left are Frogs, Seahorses, Shriekers and Berberoka — actionless in both sources. |
 | ✅ | `size_ref` | **100%** (was 99.9% before the 2026-08-13 promotion) | ~~`L`~~ **B9 done** | Was 2 titanic-size creatures logged in `unmapped_report.json`. **A1 was right that this was not a source limit** — `a5e-mm/Size.json` holds `titanic`; B9 loads it, seeds a `Titanic` size row in `open5e-a5e-mm` and hard-refs it. 2885/2885. Was `S`. |
 | 🟡 | `alignment_ref` | 97% | `S` | 70 fuzzy 3rd-party alignments, logged. **A1: genuinely `S` — 29 distinct free-text expressions (`any evil alignment`, `chaotic neutral or chaotic evil`) with no fixture behind them, plus `'Titan)'`/`'Shapechanger)'` corrupt at the source → B10.** |
-| 🔴 | `tags_line` | 0% | `M` | the `type` subtype split never reaches the field |
+| 🟡 | `tags_line` | 0% → **10%** | ~~`M`~~ `S` | **Fixed by B5 (2026-08-14) — and it was never the split.** `_creatureType` correctly turns `"humanoid (elf)"` into type + tag; the parenthesised form simply **never occurs**: 0 of 3,541 v2 `Creature.type` rows have one, because the v2 conversion moved the subtype into its own column and then dropped it. v1's `Monster.subtype` still carries it — 367 rows, **293 of them in documents that ship** (tob 84, cc 78, blackflag 74, tob2 52, tdcs 4, tob3 1) — so this is the same v1 backfill shape as **B8**'s actions, keyed by the same `_v1DocForCreatures` map. 292 land (one v1 name has no v2 twin). A v2 tag would still win, so the backfill can never override a sourced value; `verify_packs` declares the rest **`unverifiable`** with that reason rather than letting 2,885 rows read as fabrication. 10% is the ceiling — the other 2,593 monsters have no subtype in either source. Pinned by `test/tool/monster_tags_line_test.dart`. |
 | 🔴 | `lair_action_refs` | 0% | `M`/`S` | mapper emits it; no shipped creature has one |
 | 🔴 | `gear_refs`, `spell_refs` | 0% | `S`🔗 | **re-opened** — the targets exist in the built-in pack now (§2.4); the open question is whether the source names them |
 | 🔴 | `cr_helper` | 0% | ⚪ | |
@@ -1941,7 +1967,10 @@ editions, per §2.5.
 | 🔴 | `charges_max`, `charge_regain`, `command_word`, `body_slot_ref`, `sentient_*` | 0% | `M` | in `desc` prose |
 | 🟡 | `base_item_ref` | 0% → **36%** | `M`🔗 | **Fixed by L3 (2026-08-13).** The link was never prose: `MagicItem.weapon` / `MagicItem.armor` are structured slug columns (`srd_longsword`) nobody read. 379 of 1,063 `vom` items now softRef the built-in weapon/armor/gear card; **36% is the ceiling** — the other 684 rows fill neither column. The slug→name transform is title-case after the document prefix, plus a 10-entry alias table for the rows where the built-in name differs (2024 renamed the armors, "plate" → **Plate Armor**; upstream orders the crossbows "crossbow-hand" → **Hand Crossbow**). Filtered by the same rule as `class_refs`: no built-in card, no ref. `srd_net` lands on the **adventuring-gear** Net — the target slug follows the card, not the column, which is why the filter is a `name → slug` map. Historical note: was ⛔ "no base items ship in item packs"; the built-in pack ships weapons/armor/gear (§2.4). |
 
-**`trait` (6423)** — `trait_kind` is `Other` on all 6423 (⚠ hardcoded). The 43
+**`trait` (6423)** — `trait_kind` is `Other` on all 6423, and **V1 confirmed
+that is correct** (2026-08-14): upstream's `CreatureTrait.type` is null on all
+8,613 rows, so there is no kind to map and deriving one would be fabrication
+(§3.6). The 43
 grant-block keys are all 0%: a monster trait is display-only text. 1,550 share a
 name with something already in scope (452 built-in + 1,098 cross-pack) — but this
 is **not** the dedup win the previous revision claimed. 81% of the shared names
@@ -2403,9 +2432,29 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       the sheet.~~ **Done 2026-08-14** — 229 lines on 105 cards (species 11/11,
       subspecies 26/30, feat 68/73), one per unconsumed source row; `trait` and
       `magic-item` are declared out of scope with a reason in §5.7. `diff_packs`
-      shows this and nothing else. **Still open:** the sourced keys, and
-      confirm/fix the `creature-action.damage_type_ref` regression and
-      `monster.tags_line`.
+      shows this and nothing else.
+
+      **The two "confirm before filing" rows are both answered — 2026-08-14, and
+      neither was the mapping bug §5.6 suspected:**
+      - **`creature-action.damage_type_ref` — ⛔, closed.** The mapper reads and
+        resolves `CreatureActionAttack.damage_type` correctly. All **576** of the
+        5,244 source attack rows that carry a damage type are in `srd-2014` /
+        `srd-2024`, the two documents this build skips publisher-wide; every
+        attack row in a shipping document has `damage_type: null`. 0% is the
+        ceiling and no code change can move it. Reclassified `M` → `S`/⛔.
+      - **`monster.tags_line` — fixed, 0% → 10% (292 monsters).** Also not the
+        split: the parenthesised `"humanoid (elf)"` form occurs on **0 of 3,541**
+        v2 rows. v1's `Monster.subtype` still has it, so this is B8's backfill
+        shape again — new `_v1SubtypeIndex` in `build_packs`, threaded through
+        `mapCreatures(v1Subtypes:)` into `_creatureType`, keyed by the existing
+        `_v1DocForCreatures` map. A v2 tag wins where one exists, so the backfill
+        can never override a sourced value, and `verify_packs` gained the rule
+        declaring the remainder **`unverifiable`** with that reason instead of
+        letting 2,885 rows read as fabrication. `diff_packs`: **one change class,
+        292 `tags_line` added, no other value changed in any of the 19 packs.**
+        `test/tool/monster_tags_line_test.dart` pins the four cases.
+
+      **Still open:** the sourced grant keys.
 - [ ] **B6 — Kill the gear stubs.** The 159 synthesised `adventuring-gear` entities
       carry no description, cost or weight, 47 of them are duplicates, and several
       are parse artifacts. Point background/class equipment refs at built-in gear
@@ -2759,7 +2808,7 @@ has a value" into "the value produced the right number on a sheet".
 
 ### Stage V — verify what already ships
 
-- [ ] **V1 — Re-verify every green row.** The from-scratch requirement in §0:
+- [x] **V1 — Re-verify every green row. Done 2026-08-14.** The from-scratch requirement in §0:
       each ✅ and ✅⚠ row in §5 is checked against the source once, not assumed.
       **T1 did the parent categories** (2026-07-31): 67,503 judgements, **0
       disagreements**, and every ⚠ constant it covers now has a recorded verdict
@@ -2768,14 +2817,34 @@ has a value" into "the value produced the right number on a sheet".
       refuted and filed as **B11**. `feat.category_ref`'s "every one is General"
       turns out to be **sourced**, not defaulted: it agrees with `Feat.type` on
       all 73 rows, so the ⚠ is upstream's uniformity, not the mapper's.
-      What is left is what T1's rule table does not reach: `trait.trait_kind`
-      (hardcoded `Other` on all 6,423 — child rows have no by-name fixture match,
-      so this needs a per-parent check or T3's relational pass) and the gear stubs'
-      `cost_cp` / `weight_lb`, which have **no fixture at all** and are B6's, not
-      a verification question.
-      *Exit: no ⚠ marker left without a recorded "this default is correct"
-      rationale; `verify_packs` covers every ✅ row it structurally can, and the
-      rows it cannot are named with the phase that owns them.*
+      What was left is what T1's rule table does not reach, and both are now
+      answered:
+      - **`trait.trait_kind`** (hardcoded `Other` on all 6,423) — measured
+        directly against the fixtures rather than through `verify_packs`, since
+        child rows have no by-name match. `CreatureTrait.json` **does** carry a
+        `type` column, and it is **null on all 8,613 rows in every document in
+        the snapshot**. So the constant is not a mapper shortcut: there is no
+        source. Deriving a kind from the trait's name or `desc` would invent a
+        field upstream does not have — the exact defect **B11** was filed to
+        remove — so it stays `Other`, with the verdict recorded in §3.6 and
+        §5.6. *(The cost is a `trait_kind` filter that cannot discriminate; that
+        is a schema/product question, not a verification one.)*
+      - **the gear stubs' `cost_cp` / `weight_lb`** — **no fixture at all**;
+        owned by **B6**, which deletes the category rather than filling it.
+
+      **Coverage of what `verify_packs` cannot reach, named as the exit requires:**
+      the two child categories (`trait` 6,423, `creature-action` 8,615) are absent
+      from its match table by construction — a child row has no independent
+      fixture identity. They are held instead by **T3**'s relational gate (every
+      child is `_ref`ed by exactly one parent, 0 orphans) and by `_ensureChild`'s
+      **content-hash** dedupe, which is why 905 shared rows are legitimately
+      shared (§3.6). Re-measured on the promoted assets 2026-08-14:
+      **68,494 `ok` / 0 `disagree`**, 70 `absent` (all **B10**'s free-text
+      alignments), 3,303 `unsourced` and 14,383 `unverifiable` — every one of the
+      latter two carrying a declared rule.
+      *Exit met: no ⚠ marker is left without a recorded "this default is correct"
+      rationale, and each row `verify_packs` cannot structurally cover is named
+      with the phase or tool that owns it.*
 
 ### Stage D — deliver it (nothing above reaches a user without this)
 
@@ -2833,10 +2902,14 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
-   (**407 declared (category, field) slots, 138 filled since B5's 2026-08-14 promotion**) rather than by the
+   (**407 declared (category, field) slots, 139 filled since B5's 2026-08-14 promotions**) rather than by the
    abridged tables in §5; `verify_packs` (T1) is green; the built-in pack has been
    measured once (T2); and the relational gate (T3) passes — no monster without
    actions, no orphaned child row, every `parent_class_ref` resolving.
+   **V1 closed the verification half of this outcome (2026-08-14): every ✅/✅⚠
+   row now has a recorded verdict, the last one — `trait.trait_kind` — refuted
+   as a mapper defect and confirmed as a null source column.** What remains under
+   outcome 1 is content, not proof: L1, B5's remainder, B6, B7, B10.
 2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
    done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source
