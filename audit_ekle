@@ -1,0 +1,9 @@
+flutter_app/docs/open5e_content_audit.md roadmap'e şunları da ekleyelim
+
+şuan app'i kullanmak için kayıt olmak zorunlu. artık bu zorunluluğu kaldıralım. kullanıcı offline olarak girip kullanabilsin. mağaza kısmını ve online özellikleri kullanmak için kayıt olmak zorunlu olsun. biri offline kullanırken kayıt olursa ya da hesap açarsa, offline bölümde yaptıüı şeyler hesabına eklensin, kaybolmasın.
+
+lutter_app/docs/open5e_content_audit.md roadmap tamamen bittiğinde son adıma geçelim. (bu kısmı da roadmap'e son adım olarak ekle) bu roadmap'i uyguladık ama çok fazla içerik var ve atlamış olabiliriz. sırayla official ve built-in paketleri ele alalım. Her paketteki her içeriği roadmap'e uygun mu diye kontrol edelim. Şöyle başlayabiliriz: roadmap'e bakarak bir checklist hazırla. içerik kontrolünde bu checklist'e uygun olup olmadıklarını kontrol et. Önce bir checklist hazırla (yeni bir md). kendin için detay yazarken, benim okuyup kolayca anlamam için daha basit açıklamalar ve örnekler ekle her maddeye, alt maddeler de olabilir. checklist tamam dediğimizde paket paket uygulamaya geçebiliriz. 
+
+uygulamaya geçtiğimiz sırada, bir paketteki içeriğin tamamını okumana gerek yok. Adım adım, bir kısmını oku (hafızanı doldurma) kontrol et, eksikleri bul ve ayrı bir md'ye not et. sonra yapılacak işlem için danış. ayrıca bu süreci nasıl yöneteceğin konusunda da yeni bir md oluştur.
+
+yani 3 md: 1- checklist, 2- kontrol planı ve ilerleme durumu, 3- bulunan eksik listesi ve bulgular
