@@ -145,7 +145,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-ccdx.pkg.json",
       "r2_path": "package/open5e-ccdx@1.1.0.json.gz",
-      "size_bytes": 2562661,
+      "size_bytes": 2563224,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2024/08/dnd-dungeons-dragson-5.5e-monster-manual-skeletons-header.jpg"
@@ -312,7 +312,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob.pkg.json",
       "r2_path": "package/open5e-tob@1.1.0.json.gz",
-      "size_bytes": 2924831,
+      "size_bytes": 2925180,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://drawyourweapon.com/dungeons-and-dragons-art/"
@@ -337,7 +337,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob-2023.pkg.json",
       "r2_path": "package/open5e-tob-2023@1.1.0.json.gz",
-      "size_bytes": 3300956,
+      "size_bytes": 3301448,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.wargamer.com/wp-content/sites/wargamer/2022/11/dnd-displacer-beast-5e-and-monsters.jpg"
@@ -362,7 +362,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob2.pkg.json",
       "r2_path": "package/open5e-tob2@1.1.0.json.gz",
-      "size_bytes": 2803301,
+      "size_bytes": 2803666,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://arstechnica.com/gaming/2016/02/reviewed-dungeons-dragons-5th-edition/"
@@ -387,7 +387,7 @@
       },
       "bundled_asset": "assets/open5e_packs/open5e-tob3.pkg.json",
       "r2_path": "package/open5e-tob3@1.1.0.json.gz",
-      "size_bytes": 2866908,
+      "size_bytes": 2867576,
       "banner_credit": {
         "creator": "unknown",
         "link": "https://www.belloflostsouls.net/wp-content/uploads/2025/07/Dnd-gelatinous-cube-2025-e1753770574655.jpg"

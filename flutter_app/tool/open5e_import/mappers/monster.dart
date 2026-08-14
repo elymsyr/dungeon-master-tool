@@ -495,11 +495,7 @@ Map<String, dynamic> _monsterRow({
   final size = norm.lookupRef('size', (c['size'] as String?) ?? '', context: name);
   if (size != null) attrs['size_ref'] = size;
   _creatureType(c['type'] as String?, name, norm, attrs, v1Subtype: v1Subtype);
-  final align = c['alignment'] as String?;
-  if (align != null && align.trim().isNotEmpty) {
-    final r = norm.lookupRef('alignment', align, context: name);
-    if (r != null) attrs['alignment_ref'] = r;
-  }
+  _alignment(c['alignment'] as String?, name, norm, attrs);
   final acDetail = (c['armor_detail'] as String?)?.trim();
   if (acDetail != null && acDetail.isNotEmpty) attrs['ac_note'] = acDetail;
 
@@ -584,6 +580,39 @@ void _creatureType(
           : null;
   if (sub != null) attrs['tags_line'] = sub;
 }
+
+/// Audit **B10**. `Creature.alignment` is free text and only some of it is one
+/// of the nine canonical alignments. Three outcomes, in order:
+///
+/// * canonical (`"neutral good"`) → `alignment_ref`;
+/// * an alignment *expression* — wildcards (`"any evil alignment"`), compounds
+///   (`"chaotic neutral or chaotic evil"`), weights (`"neutral evil (50%) …"`) →
+///   `alignment_note` prose with **no** ref. A single relation cannot hold
+///   "any chaotic", and coercing one would be B11's fabrication again;
+/// * neither → dropped and logged. This is only the three rows corrupt in
+///   `Creature.json` itself (`"Titan)"`, `"Shapechanger)"`), which are not
+///   alignments at all and must not be shipped as prose.
+void _alignment(
+    String? raw, String name, Normalizer norm, Map<String, dynamic> attrs) {
+  final v = raw?.trim() ?? '';
+  if (v.isEmpty) return;
+  if (norm.canonical('alignment', v) != null) {
+    final r = norm.lookupRef('alignment', v, context: name);
+    if (r != null) attrs['alignment_ref'] = r;
+    return;
+  }
+  if (_alignmentWords.hasMatch(v)) {
+    attrs['alignment_note'] = v;
+    return;
+  }
+  norm.unmapped.add('alignment', v, context: name);
+}
+
+/// Any word that only appears in an alignment expression: the axis names plus
+/// `any`, which is what every wildcard form opens with (`"any non-lawful"`).
+final _alignmentWords =
+    RegExp(r'\b(any|lawful|chaotic|neutral|good|evil|unaligned)\b',
+        caseSensitive: false);
 
 void _speed(dynamic v, String key, Map<String, dynamic> attrs) {
   final n = _int(v);

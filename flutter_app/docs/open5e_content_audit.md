@@ -22,7 +22,8 @@ reference Tier-0 rows by **fixture pk**, so the vocabulary is what turns
 title-casing alone can never reach — and what proves `void-speech` / `titanic` are
 real third-party vocabulary rather than typos, so they are seeded as Tier-0 rows
 **in the pack** (§2: never in the built-in schema). `unmapped_report.json` went
-**144 → 70** (only the free-text `alignment` bucket left, which is **B10**), and
+**144 → 70** (only the free-text `alignment` bucket left, which is **B10**, and
+which took it to **3** on 2026-08-14), and
 `monster.size_ref` reached **100%** (2885/2885). Cost, recorded not hidden: 6 packs
 each ship their own one-row `Void Speech`, so actionable redundancy moves
 **1,178 → 1,183 on the rebuild** (§3.2's shipped figure is unchanged) — filed on
@@ -206,7 +207,8 @@ added on 105 entities (68 feat / 26 subspecies / 11 species) and **no other
 value change in any of the 19 packs**; `verify_packs` **0 disagreements**,
 `gate_packs` green, `dupe_census` section C **0 dangling**, `audit_packs` filled
 slots **133 → 138 of 407**. Assets re-promoted and `manifest.json` rebuilt;
-(**139 of 407** after the `tags_line` fix below.)
+(**139 of 407** after the `tags_line` fix below; **140 of 408** after B10 adds
+`monster.alignment_note`.)
 `pack_version` stays **1.1.0** because it was never uploaded, so no immutable
 `r2_path` exists to collide with.
 
@@ -242,6 +244,25 @@ the promoted assets: `verify_packs` **68,494 ok / 0 disagree**, and the child
 categories it structurally cannot reach (`trait`, `creature-action`) are covered
 instead by T3's relational gate plus `_ensureChild`'s content-hash dedupe (§3.6).
 
+**B10 is done — 2026-08-14, and the answer was a second field, not a
+normalizer.** None of the 70 unmapped alignments reduce to one of the nine
+canonical values: they are wildcards (`any alignment` ×26), compounds
+(`chaotic neutral or chaotic evil`) and weighted pairs
+(`Neutral Evil (50%) or Lawful Evil (50%)`). A single Tier-0 relation has no
+home for "any chaotic", and picking one arm of an "or" is B11's fabrication
+wearing a different hat — so `monster` gained **`alignment_note`**, prose that
+ships *beside* a null ref, and `_alignment` in the mapper now routes each value
+three ways: canonical → the relation, an alignment expression → the note,
+neither → dropped and still logged. That last branch is exactly the three rows
+corrupt in `Creature.json` itself (`Titan)`, `Shapechanger)` ×2), which are not
+alignments and must not ship as prose. **`unmapped_report.json` 70 → 3**, and
+those 3 are the source's. `diff_packs` reports one change class — **67 added
+`alignment_note`, no other value changed in any of the 19 packs**;
+`verify_packs` **68,561 ok / 0 disagree / 0 absent** (the alignment class *was*
+the whole `absent` column) with the mapper's three-way rule restated
+independently on the fixture side; `audit_packs` **140 of 408** filled. Built-in
+schema version **2.4.0 → 2.5.0** for the new field.
+
 **Publish is deliberately held until the whole system is verified locally
 (decided 2026-08-14).** It is one command with the two secrets and the only
 thing between the promoted assets and users — the assets moved again with L3 and
@@ -249,7 +270,8 @@ B5, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
 `assets/first_party/manifest.json` is rebuilt for the new sizes — but it ships
 an **immutable** `r2_path`, so it goes last, after a local run proves the packs
 install, resolve and render. Until then the next actions are on the content
-side: B5's remainder, B6, B10 and L1 each need a target-shape call first — and **L1 should be read against L2's result before it
+side: B5's remainder, B6 and L1 each need a target-shape call first (B10 made
+its own on 2026-08-14) — and **L1 should be read against L2's result before it
 starts**: section A is 1,666 rows but only **7** carry the same text as the
 built-in card, so the same "the candidate set is smaller than the collision
 surface" arithmetic is likely to decide it.
@@ -331,8 +353,8 @@ pack; `monster.hp_dice` `unsourced` → **0**, corpus `unsourced` **3,663 →
 inference, and it would have owed an `unverifiable` rule declaring the field
 unmeasurable rather than actually sourcing it.
 
-Also unblocked and independent: **B10** (the 70 free-text alignments B9 left, which needs
-a target-shape decision first), **U1** (wizard readers), **M1**. ~~T2/T3
+Also unblocked and independent: ~~**B10** (the 70 free-text alignments B9
+left)~~ — done 2026-08-14, **U1** (wizard readers), **M1**. ~~T2/T3
 (tooling)~~ — both shipped 2026-08-10.
 **L1** now has a real target list rather than a headline: §3.2's per-category
 actionable split.
@@ -1142,9 +1164,10 @@ rather than pending.)
 correctly — across 2,885 monsters, 1,297 spells, 1,063 magic items and the
 chargen categories. The other three columns are where the work is.
 
-**`absent` — was 371; 301 of them are now fixed in the assets.** Only 70 are
-left: B10's free-text alignments (`any alignment`, `neutral good (50%)`),
-which no column-level fix reaches. The 301 that close are `spell.area_shape_ref`
+**`absent` — was 371, and it is now 0.** 301 were fixed by the B4/B9 assets;
+the last 70 were B10's free-text alignments (`any alignment`,
+`neutral good (50%)`), which no column-level fix reached and which B10 closed on
+2026-08-14 by giving them their own field instead of a ref (§5.6). The 301 that close are `spell.area_shape_ref`
 + `area_size_ft` (206, B4), `monster.language_refs` (93, B9's `void-speech`) and
 `monster.size_ref` (2, B9's `titanic`). That is **B4 and B9 re-confirmed from the
 source side**, by a tool that shares no code with either.
@@ -1561,13 +1584,14 @@ them look like one — **B9 closed the first (144 → 70), B10 owns the second**
 |---|--:|---|---|---|
 | ~~`language`~~ | ~~72~~ **0** | `void-speech` (70), `thieves-cant` (2) | Both exist as fixtures: `kobold-press/tob/Language.json` **is** `void-speech`; `thieves-cant` is in `open5e/core/Language.json`. We shipped neither because we loaded neither. **Closed by B9** — and it split in two: `thieves-cant`'s upstream name is `Thieves' Cant`, which the built-in pack *already ships*, so it was never third-party; only `void-speech` is new and gets seeded in-pack. | ~~**B9**~~ **done** |
 | ~~`size`~~ | ~~2~~ **0** | `titanic` | `en-publishing/a5e-mm/Size.json` **is** `titanic` (its only row). **Closed by B9** — seeded in `open5e-a5e-mm`, taking `monster.size_ref` to 100%. | ~~**B9**~~ **done** |
-| `alignment` | 70 | 29 distinct — `any alignment` (26), `any evil alignment` (6), `any non-good alignment` (3), `chaotic neutral or chaotic evil`, `Lawful Neutral or Lawful Evil`, … | **Not a vocabulary gap.** `core/Alignment.json` holds exactly the 9 canonical values and upstream `Creature.alignment` is free text: compound expressions, "any"-wildcards, and two values that are corrupt **at the source** (`'Titan)'`, `'Shapechanger)'` — verified in `Creature.json`, not our parse). No fixture can fix this; it needs a normalizer. | **B10** |
+| `alignment` | ~~70~~ **3** | 29 distinct — `any alignment` (26), `any evil alignment` (6), `any non-good alignment` (3), `chaotic neutral or chaotic evil`, `Lawful Neutral or Lawful Evil`, … | **Not a vocabulary gap.** `core/Alignment.json` holds exactly the 9 canonical values and upstream `Creature.alignment` is free text: compound expressions, "any"-wildcards, and two values that are corrupt **at the source** (`'Titan)'`, `'Shapechanger)'` — verified in `Creature.json`, not our parse). No fixture can fix this, and **it did not need a normalizer either** — not one of the 29 reduces to a canonical value, so B10 gave them a `monster.alignment_note` prose field beside a null ref. The 3 that remain are the source-corrupt ones, which are not alignments and stay dropped. | ~~**B10**~~ **done** |
 
 So loading the vocabulary files closes **74 of 144** unmapped values (all of `size`
 and `language`) and adds 6 conditions (`bloodied`, `confused`, `doomed`,
 `encumbered`, `rattled`, `slowed`), 2 skills (`culture`, `engineering`), 1 spell
 school (`transformation`) and 1 environment (`badlands`) that third-party documents
-genuinely introduce. The remaining 70 are B10's parsing problem.
+genuinely introduce. The remaining 70 were B10's, and B10 took them to **3** on
+2026-08-14 by adding a prose field rather than by parsing them into a relation.
 
 *Exit criterion met: no `[ ] decide` rows remain. Two rows became `load` (one of
 them newly discovered), six became `do not load` — five of those because the file
@@ -1950,7 +1974,8 @@ editions, per §2.5.
 |:--:|---|--:|:--:|---|
 | ✅ | `action_refs` | **99.8%** (was 86% before the 2026-08-13 promotion) | ~~`S`~~ **B8 done** | The category's headline defect, and it was never a mapping bug: upstream's v2 conversion dropped `tob3`'s whole `ACTION` column (2 rows for 397 creatures) while `v1/tob3/Monster.json` kept all 1,373. `mapCreatures` backfills from v1 into empty buckets only. 2880/2885; the 5 left are Frogs, Seahorses, Shriekers and Berberoka — actionless in both sources. |
 | ✅ | `size_ref` | **100%** (was 99.9% before the 2026-08-13 promotion) | ~~`L`~~ **B9 done** | Was 2 titanic-size creatures logged in `unmapped_report.json`. **A1 was right that this was not a source limit** — `a5e-mm/Size.json` holds `titanic`; B9 loads it, seeds a `Titanic` size row in `open5e-a5e-mm` and hard-refs it. 2885/2885. Was `S`. |
-| 🟡 | `alignment_ref` | 97% | `S` | 70 fuzzy 3rd-party alignments, logged. **A1: genuinely `S` — 29 distinct free-text expressions (`any evil alignment`, `chaotic neutral or chaotic evil`) with no fixture behind them, plus `'Titan)'`/`'Shapechanger)'` corrupt at the source → B10.** |
+| ✅ | `alignment_ref` | 97% | ~~`S`~~ **B10 done** | 97% is the ceiling and the missing 3% are now *held*, not lost. **A1 was right that this is genuinely `S`** — 29 distinct free-text expressions (`any evil alignment`, `chaotic neutral or chaotic evil`) with no fixture behind them, plus `'Titan)'`/`'Shapechanger)'` corrupt at the source. B10 (2026-08-14) measured that **none of the 29 reduce to a canonical value**, so no normalizer could raise this number, and routed them to `alignment_note` instead. 2815/2885. |
+| 🟡 | `alignment_note` | **2%** | ~~n/a~~ **B10 new** | New field, 67/2885 — every monster whose upstream alignment is an expression rather than one of the nine values, kept verbatim beside a null `alignment_ref`. 2% is the ceiling by construction: the other 2,815 have a real ref and 3 are source-corrupt. Coercing an "or" to one arm would be **B11**'s `hp_dice` again. Pinned by `test/tool/monster_alignment_test.dart`. |
 | 🟡 | `tags_line` | 0% → **10%** | ~~`M`~~ `S` | **Fixed by B5 (2026-08-14) — and it was never the split.** `_creatureType` correctly turns `"humanoid (elf)"` into type + tag; the parenthesised form simply **never occurs**: 0 of 3,541 v2 `Creature.type` rows have one, because the v2 conversion moved the subtype into its own column and then dropped it. v1's `Monster.subtype` still carries it — 367 rows, **293 of them in documents that ship** (tob 84, cc 78, blackflag 74, tob2 52, tdcs 4, tob3 1) — so this is the same v1 backfill shape as **B8**'s actions, keyed by the same `_v1DocForCreatures` map. 292 land (one v1 name has no v2 twin). A v2 tag would still win, so the backfill can never override a sourced value; `verify_packs` declares the rest **`unverifiable`** with that reason rather than letting 2,885 rows read as fabrication. 10% is the ceiling — the other 2,593 monsters have no subtype in either source. Pinned by `test/tool/monster_tags_line_test.dart`. |
 | 🔴 | `lair_action_refs` | 0% | `M`/`S` | mapper emits it; no shipped creature has one |
 | 🔴 | `gear_refs`, `spell_refs` | 0% | `S`🔗 | **re-opened** — the targets exist in the built-in pack now (§2.4); the open question is whether the source names them |
@@ -2553,7 +2578,8 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       `tier0Slugs`, so it has no home. `ItemCategory.json` stays out for A1's
       reason.
       **Measured on the rebuild:** `unmapped_report.json` **144 → 70**, one bucket
-      left (`alignment`, which is **B10** and which no fixture can fix);
+      left (`alignment`, which was **B10**'s and which no fixture could fix —
+      B10 took it to 3 on 2026-08-14);
       `monster.size_ref` **99.9% → 100%** (2885/2885); `monster.language_refs`
       1389 → 1409. `diff_packs --old <B1 rebuild> --new <B9 rebuild>` is surgical:
       **3 change classes, 95 monsters, 7 new entities** (6 × `Void Speech`,
@@ -2582,7 +2608,8 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       *Exit (met): `unmapped_report.json` loses all 72 `language` and both `size`
       entries (144 → 70), and no pack references a Tier-0 name that is not installed —
       i.e. `dupe_census` section C's "nothing installed" stays 0.*
-- [ ] **B10 — Normalize compound alignment.** *(new phase, filed by A1.)* The
+- [x] **B10 — Normalize compound alignment.** *(new phase, filed by A1; done
+      2026-08-14.)* The
       remaining 70 unmapped values are 29 distinct free-text alignment expressions
       upstream — `any alignment` (26), `any evil alignment` (6),
       `chaotic neutral or chaotic evil`, mixed case throughout — plus `'Titan)'` and
@@ -2591,8 +2618,26 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       is a single Tier-0 relation, so a monster that is legitimately "any chaotic
       alignment" has no home in it and the honest answer may be prose alongside a
       null ref, not a coerced pick.
-      *Exit: `unmapped_report.json`'s `alignment` list is empty or contains only the
-      two source-corrupt values, with a written rule for each of the 29 inputs.*
+      **Answered: prose alongside a null ref.** Measured first — **not one** of
+      the 29 inputs reduces to a canonical value, so a synonym normalizer would
+      have converted 0 of 70. `monster` gained a `text` field
+      **`alignment_note`** next to `alignment_ref` (built-in schema
+      **2.4.0 → 2.5.0**) and `_alignment` (`mappers/monster.dart`) replaced the
+      old two-line lookup with one rule covering all 29 inputs at once:
+      canonical → `alignment_ref`; matches an alignment word
+      (`any|lawful|chaotic|neutral|good|evil|unaligned`) → `alignment_note`
+      verbatim, no ref; neither → dropped and logged. The third branch is the
+      three source-corrupt rows and nothing else, so the corruption is not
+      laundered into a prose field. `verify.dart` restates the same three-way
+      split from the fixture side (its own canonical list, so the verifier stays
+      independent of the mapper), which is why the 70 `absent` verdicts turned
+      into 67 `ok` rather than into 67 `unsourced`.
+      *Exit (met): `unmapped_report.json`'s `alignment` list holds **only** the
+      three source-corrupt values (70 → 3); `diff_packs` shows one change class,
+      67 added `alignment_note`, nothing else changed in any of the 19 packs;
+      `verify_packs` **68,561 ok / 0 disagree / 0 absent**; gate green,
+      `dupe_census` section C 0 dangling; `test/tool/monster_alignment_test.dart`
+      pins all three branches (6 cases).*
 - [x] **B11 — Stop fabricating `hp_dice`.** *(filed by T1 2026-07-31, done
       2026-08-10 — §3.6.)* `_monsterRow` wrote `hp_dice: (c['hit_dice'] as String?) ?? '1d4'`,
       and **`open5e-bfrd` has `hit_dice: null` on all 360 of its creatures**, so
@@ -2724,7 +2769,7 @@ has a value" into "the value produced the right number on a sheet".
       `open5e-open5e`'s "Abjurationist", which upstream has since renamed to
       "School of Abjuring and Warding"):
       **0 disagreements** — no shipped value contradicts its source column.
-      **70 `absent`**, all of them B10's free-text alignments; the B4 rebuild
+      **70 `absent`**, all of them B10's free-text alignments (0 since B10, 2026-08-14); the B4 rebuild
       closes the other 301 (`spell.area_*` 206, `monster.language_refs` 93,
       `size_ref` 2), which independently re-confirms B4 and B9 *from the source
       side*. **3,663 `unsourced`**, itemised in §3.6 — and one of them is a new
@@ -2841,7 +2886,9 @@ has a value" into "the value produced the right number on a sheet".
       shared (§3.6). Re-measured on the promoted assets 2026-08-14:
       **68,494 `ok` / 0 `disagree`**, 70 `absent` (all **B10**'s free-text
       alignments), 3,303 `unsourced` and 14,383 `unverifiable` — every one of the
-      latter two carrying a declared rule.
+      latter two carrying a declared rule. **After B10 (2026-08-14):
+      68,561 `ok` / 0 `disagree` / 0 `absent`** — the `absent` column is empty
+      for the first time.
       *Exit met: no ⚠ marker is left without a recorded "this default is correct"
       rationale, and each row `verify_packs` cannot structurally cover is named
       with the phase or tool that owns it.*
@@ -2902,14 +2949,15 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
-   (**407 declared (category, field) slots, 139 filled since B5's 2026-08-14 promotions**) rather than by the
+   (**408 declared (category, field) slots, 140 filled since B10's 2026-08-14 promotion**) rather than by the
    abridged tables in §5; `verify_packs` (T1) is green; the built-in pack has been
    measured once (T2); and the relational gate (T3) passes — no monster without
    actions, no orphaned child row, every `parent_class_ref` resolving.
    **V1 closed the verification half of this outcome (2026-08-14): every ✅/✅⚠
    row now has a recorded verdict, the last one — `trait.trait_kind` — refuted
    as a mapper defect and confirmed as a null source column.** What remains under
-   outcome 1 is content, not proof: L1, B5's remainder, B6, B7, B10.
+   outcome 1 is content, not proof: L1, B5's remainder, B6, B7. **B10 closed
+   2026-08-14**, emptying `verify_packs`'s `absent` column.
 2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
    done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
    stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source

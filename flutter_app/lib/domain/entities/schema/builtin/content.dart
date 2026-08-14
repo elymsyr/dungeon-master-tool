@@ -1247,6 +1247,10 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.text('tags_line', 'Tags (e.g. "(goblinoid)")');
   fb.relation('alignment_ref', 'Alignment', const ['alignment']);
+  // Audit B10: `alignment_ref` is a single Tier-0 relation, so "any alignment"
+  // and "chaotic neutral or chaotic evil" have no home in it. They ship as
+  // prose beside a null ref rather than as a coerced pick.
+  fb.text('alignment_note', 'Alignment Note');
   // Combat
   fb.integer('ac', 'AC', required_: true, min: 0, max: 30, g: grpCombat);
   fb.text('ac_note', 'AC Note', g: grpCombat);

@@ -460,8 +460,21 @@ final Map<String, List<_Rule>> _rules = {
               'does not read')
           : _text(tag);
     }),
-    _Rule('alignment_ref', ['alignment'],
-        (r) => _Expect.refName(r['alignment'])),
+    // Audit **B10**. Only the nine canonical values reach the relation; every
+    // wildcard/compound expression ships as `alignment_note` prose instead.
+    _Rule('alignment_ref', ['alignment'], (r) {
+      final a = _str(r['alignment']).trim();
+      return _canonicalAlignments.contains(a.toLowerCase())
+          ? _Expect.refName(a)
+          : _Expect.nothing;
+    }),
+    _Rule('alignment_note', ['alignment'], (r) {
+      final a = _str(r['alignment']).trim();
+      return (!_canonicalAlignments.contains(a.toLowerCase()) &&
+              _alignmentWords.hasMatch(a))
+          ? _text(a)
+          : _Expect.nothing;
+    }),
     _Rule('telepathy_ft', ['telepathy_range'],
         (r) => _positive(r['telepathy_range'])),
     for (final e in _senseColumns.entries)
@@ -682,6 +695,20 @@ String _typeTag(Object? raw) {
   if (s.isEmpty) return '';
   return RegExp(r'^[^(]+?\s*(\(.*\))$').firstMatch(s)?.group(1) ?? '';
 }
+
+/// The nine canonical alignments plus `unaligned`, lowercased — restated here
+/// rather than imported so the verifier stays independent of the mapper
+/// (audit **B10**).
+const _canonicalAlignments = {
+  'lawful good', 'neutral good', 'chaotic good',
+  'lawful neutral', 'neutral', 'chaotic neutral',
+  'lawful evil', 'neutral evil', 'chaotic evil',
+  'unaligned',
+};
+
+final _alignmentWords =
+    RegExp(r'\b(any|lawful|chaotic|neutral|good|evil|unaligned)\b',
+        caseSensitive: false);
 
 /// `"kobold-press_tob_goblin"` / `"srd-2014_elf"` → the trailing segment.
 String _lastSegment(String s) {
