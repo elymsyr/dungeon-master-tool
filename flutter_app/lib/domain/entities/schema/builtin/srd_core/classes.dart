@@ -39,6 +39,78 @@ Map<String, dynamic> _fg(
       if (feats.isNotEmpty) 'granted_feat_refs': feats,
     };
 
+// ─── Spellcasting tables (audit phase T2-2) ──────────────────────────────
+//
+// Harvested from the pinned Open5e snapshot `d4276c58`,
+// `data/v2/wizards-of-the-coast/srd-2024/ClassFeatureItem.json` — the only
+// document in the dump carrying the SRD's per-level spellcasting columns
+// (`cantrips`, `prepared-spells`, `slots-Nth`). That document is
+// publisher-skipped by `build_packs` (§4 A2), so the numbers live here, in the
+// built-in pack that owns SRD content.
+//
+// `spell_slots_by_level` is deliberately NOT written for the six full casters
+// and the Warlock: `defaultSpellSlotsByLevel` (caster_progression.dart) was
+// checked cell for cell against the same source and agrees on all 20 levels of
+// Full and Pact, so authoring them would duplicate knowledge the resolver
+// already has. Half casters are the exception and the reason this block
+// exists — see `_halfCasterSlots2024`.
+
+/// `{level: value}` level table from 20 values, index 0 = level 1. Keys are
+/// stringified for JSON round-tripping (`levelTableValue` parses either).
+Map<String, int> _levelTable(List<int> byLevel) => {
+      for (var i = 0; i < byLevel.length; i++) '${i + 1}': byLevel[i],
+    };
+
+/// `{level: {spellLevel: count}}` progression from rows of `[1st..5th]`.
+/// Zero cells are dropped so a row reads like the SRD table's blanks.
+Map<String, Map<String, int>> _slotTable(List<List<int>> rows) => {
+      for (var i = 0; i < rows.length; i++)
+        '${i + 1}': {
+          for (var s = 0; s < rows[i].length; s++)
+            if (rows[i][s] > 0) '${s + 1}': rows[i][s],
+        },
+    };
+
+/// Paladin / Ranger slots, SRD 5.2.1 — identical for both classes.
+///
+/// The generic `caster_kind: 'Half'` preset matches this table at levels 2–20
+/// and differs at **level 1**, where 5.2.1 grants 2 first-level slots and the
+/// preset (2014-shaped, which is what every bundled Open5e pack is —
+/// `game_system: 5e-2014`) grants none. The preset stays as it is; the built-in
+/// pack states its own edition in data.
+const _halfCasterSlots2024 = <List<int>>[
+  [2, 0, 0, 0, 0],
+  [2, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 2],
+  [4, 3, 3, 3, 2],
+];
+
+const _cantripsBard = [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]; // = Druid, Warlock
+const _cantripsCleric = [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]; // = Wizard
+const _cantripsSorcerer = [4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6];
+
+const _preparedFull = [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22]; // Bard, Cleric, Druid
+const _preparedSorcerer = [2, 4, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22];
+const _preparedWizard = [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25];
+const _preparedHalf = [2, 3, 4, 5, 6, 6, 7, 7, 9, 9, 10, 10, 11, 11, 12, 12, 14, 14, 15, 15]; // Paladin, Ranger
+const _preparedWarlock = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15];
+
 List<Map<String, dynamic>> srdClasses() => [
       // ─── Barbarian ───────────────────────────────────────────────────────
       packEntity(
@@ -202,6 +274,8 @@ List<Map<String, dynamic>> srdClasses() => [
           'armor_training_refs': [lookup('armor-category', 'Light')],
           'caster_kind': 'Full',
           'casting_ability_ref': lookup('ability', 'Charisma'),
+          'cantrips_known_by_level': _levelTable(_cantripsBard),
+          'prepared_spells_by_level': _levelTable(_preparedFull),
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
@@ -291,6 +365,8 @@ List<Map<String, dynamic>> srdClasses() => [
           ],
           'caster_kind': 'Full',
           'casting_ability_ref': lookup('ability', 'Wisdom'),
+          'cantrips_known_by_level': _levelTable(_cantripsCleric),
+          'prepared_spells_by_level': _levelTable(_preparedFull),
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Wisdom')],
           'multiclass_prereq_min_score': 13,
@@ -381,6 +457,8 @@ List<Map<String, dynamic>> srdClasses() => [
           ],
           'caster_kind': 'Full',
           'casting_ability_ref': lookup('ability', 'Wisdom'),
+          'cantrips_known_by_level': _levelTable(_cantripsBard),
+          'prepared_spells_by_level': _levelTable(_preparedFull),
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Wisdom')],
           'multiclass_prereq_min_score': 13,
@@ -717,6 +795,8 @@ List<Map<String, dynamic>> srdClasses() => [
           ],
           'caster_kind': 'Half',
           'casting_ability_ref': lookup('ability', 'Charisma'),
+          'prepared_spells_by_level': _levelTable(_preparedHalf),
+          'spell_slots_by_level': _slotTable(_halfCasterSlots2024),
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [
             lookup('ability', 'Strength'),
@@ -828,6 +908,8 @@ List<Map<String, dynamic>> srdClasses() => [
           ],
           'caster_kind': 'Half',
           'casting_ability_ref': lookup('ability', 'Wisdom'),
+          'prepared_spells_by_level': _levelTable(_preparedHalf),
+          'spell_slots_by_level': _slotTable(_halfCasterSlots2024),
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [
             lookup('ability', 'Dexterity'),
@@ -1027,6 +1109,8 @@ List<Map<String, dynamic>> srdClasses() => [
           'weapon_proficiency_categories': [lookup('weapon-category', 'Simple')],
           'caster_kind': 'Full',
           'casting_ability_ref': lookup('ability', 'Charisma'),
+          'cantrips_known_by_level': _levelTable(_cantripsSorcerer),
+          'prepared_spells_by_level': _levelTable(_preparedSorcerer),
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
@@ -1105,6 +1189,8 @@ List<Map<String, dynamic>> srdClasses() => [
           'armor_training_refs': [lookup('armor-category', 'Light')],
           'caster_kind': 'Pact',
           'casting_ability_ref': lookup('ability', 'Charisma'),
+          'cantrips_known_by_level': _levelTable(_cantripsBard),
+          'prepared_spells_by_level': _levelTable(_preparedWarlock),
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
@@ -1183,6 +1269,8 @@ List<Map<String, dynamic>> srdClasses() => [
           'weapon_proficiency_categories': [lookup('weapon-category', 'Simple')],
           'caster_kind': 'Full',
           'casting_ability_ref': lookup('ability', 'Intelligence'),
+          'cantrips_known_by_level': _levelTable(_cantripsCleric),
+          'prepared_spells_by_level': _levelTable(_preparedWizard),
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Intelligence')],
           'multiclass_prereq_min_score': 13,

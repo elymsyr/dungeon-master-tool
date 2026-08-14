@@ -551,14 +551,17 @@ Tier0CategoryBuild _skillCategory(String schemaId, String now) {
     {'name': 'Stealth', 'ability': 'Dexterity', 'summary': 'Move unseen and unheard.'},
     {'name': 'Survival', 'ability': 'Wisdom', 'summary': 'Track, hunt, and navigate the wilderness.'},
   ];
-  // ability_ref will be resolved at bootstrap time by looking up the Ability
-  // row whose name matches the 'ability' key here.
+  // `ability_ref` ships as the standard Tier-0 `_lookup` placeholder, the same
+  // shape `srd_core/_helpers.dart:ref()` writes. `synthesizeWorldBuiltins`
+  // resolves it to the per-world synth id of the Ability row at read time
+  // (audit T2-1) — the earlier `_ability_name_` key named a bootstrap step
+  // that never existed, so the wizard's ability-mod chip never rendered.
   final seed = rows
       .map((r) => {
             'name': r['name'],
             'fields': {
               'summary': r['summary'],
-              '_ability_name_': r['ability'], // bootstrap resolves to entityId
+              'ability_ref': {'_lookup': 'ability', 'name': r['ability']},
             },
           })
       .toList();
