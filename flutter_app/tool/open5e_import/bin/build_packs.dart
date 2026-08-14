@@ -55,6 +55,11 @@ void main(List<String> args) {
   // bucket the v2 fixtures leave empty; see `mapCreatures`.
   final v1Actions = _v1ActionIndex(dataRoot);
 
+  // v1 `Monster.subtype` index (audit B5) — same gap as the actions: v2's
+  // `Creature.type` is a bare enum with the subtype conversion-dropped, so
+  // `tags_line` has no v2 source at all. Keyed by the same doc map.
+  final v1Subtypes = _v1SubtypeIndex(dataRoot);
+
   // Class names a spell's `class_refs` softRef can actually land on (audit L3).
   // The built-in pack is in scope in every world (§2.1), so its twelve classes
   // are the safe targets; a tag naming anything else stays a tag only.
@@ -113,6 +118,7 @@ void main(List<String> args) {
         attacks: loadFixtures(doc.v2File('CreatureActionAttack.json')),
         traits: loadFixtures(doc.v2File('CreatureTrait.json')),
         v1Actions: (v1Doc == null ? null : v1Actions[v1Doc]) ?? const {},
+        v1Subtypes: (v1Doc == null ? null : v1Subtypes[v1Doc]) ?? const {},
       );
     }
     if (doc.hasSpells) {
@@ -395,6 +401,28 @@ Map<String, V1ActionIndex> _v1ActionIndex(String dataRoot) {
         if (rows.isNotEmpty) buckets[col.value] = rows;
       }
       if (buckets.isNotEmpty) byName[name.toLowerCase()] = buckets;
+    }
+    if (byName.isNotEmpty) out[slug] = byName;
+  }
+  return out;
+}
+
+/// Build `v1doc → {lowercased monster name: subtype}` from every
+/// `v1/<doc>/Monster.json`. Only rows with a non-empty `subtype` are indexed;
+/// see `_creatureType` for why v2 cannot supply this.
+Map<String, Map<String, String>> _v1SubtypeIndex(String dataRoot) {
+  final out = <String, Map<String, String>>{};
+  final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
+  if (!v1.existsSync()) return out;
+  for (final ent in v1.listSync().whereType<Directory>()) {
+    final slug = ent.path.split(Platform.pathSeparator).last;
+    final byName = <String, String>{};
+    for (final m
+        in loadFixtures('${ent.path}${Platform.pathSeparator}Monster.json')) {
+      final name = (m['name'] as String?)?.trim();
+      final sub = (m['subtype'] as String?)?.trim();
+      if (name == null || name.isEmpty || sub == null || sub.isEmpty) continue;
+      byName[name.toLowerCase()] = sub;
     }
     if (byName.isNotEmpty) out[slug] = byName;
   }

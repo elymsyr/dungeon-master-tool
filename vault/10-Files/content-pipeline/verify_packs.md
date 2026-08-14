@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/verify.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -38,6 +38,7 @@ tags: [file]
 ## Notes
 - **The rule table was wrong before any mapper was.** The first run reported 893 disagreements and **all 893** were the verifier misstating how a correct value is spelled (pluralised magic-item categories, three-letter ability codes, a5e's "transformation" school, `D10` hit dice, and — most worth remembering — **B9's pack-local Tier-0 rows referenced by resolved uuid rather than a `{_lookup, name}` placeholder**, so a name comparison has to follow the id). All five are pinned by `test/tool/verify_packs_test.dart` so the next rule inherits the lesson.
 - Adding a field to the gate means a `_Rule` in `verify.dart` (**not** in `bin/`) plus a case in that test.
+- **`monster.tags_line`** (audit **B5**, 2026-08-14) is the newest rule and the second one shaped this way: v2's `type` never carries the parenthesised subtype, so a row with no tag returns `_Expect.why(...)` naming the v1 `Monster.subtype` column this tool does not read. Without it the 292 backfilled values read as `unsourced` — the fabrication class — and the other 2,593 as nothing at all.
 - **`spell.class_refs`** (audit **L3**, 2026-08-13) is the newest rule and shows the `unverifiable` escape used honestly: only the 311 spells whose v2 `classes` column is non-empty can be judged; the other 986 get their class list from the **v1** fixtures this tool does not read, and the rule says so instead of pretending to check them.
 - **`magic-item.base_item_ref`** (audit **L3**, 2026-08-13) needs no such escape: both source columns (`weapon`, `armor`) are read verbatim, so all 379 shipped refs are judged `ok` and the 684 rows with neither column expect nothing. The expectation restates the mapper's `knownBaseItems` filter from `builtinNameIndex()`, the same way the class rule does — a base item with no built-in card must expect no ref, or the filter would read as a disagreement.
 - An undeclared derivation is indistinguishable from a fabrication; that is why `unverifiable` names a reason per rule instead of skipping the field silently.

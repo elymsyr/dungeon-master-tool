@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/build_packs.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -20,6 +20,7 @@ tags: [file]
 - Reads `data/v2/<publisher>/<doc>/*.json` Django fixtures via `loadFixtures` (Creature, Spell, MagicItem, CharacterClass, Species, Background, Feat + their child files), plus the Tier-0 vocabulary files across every document ([[vocab]]).
 - Reads `data/v1/<doc>/Spell.json` to build a `spellNameLower → dnd_class` fallback index (v2 leaves `Spell.classes` empty for most 3rd-party docs).
 - Reads `data/v1/<doc>/Monster.json` to build the B8 action index (`_v1ActionIndex`), recovering action buckets upstream's v2 conversion never wrote.
+- Reads the same file for the B5 subtype index (`_v1SubtypeIndex`), recovering `monster.tags_line` — v2 dropped the subtype column entirely.
 - Reads `data/v1/<doc>/Race.json` to build the B3 species index (`_v1SpeciesIndex`), recovering a species v2 converted with no traits at all.
 - Document registry from `sourceDocs(dataRoot)` (see `sources`).
 
@@ -46,6 +47,7 @@ tags: [file]
 - **`knownBaseItems`** (audit **L3**, 2026-08-13): same idea, same source index, for `mapMagicItems`' `base_item_ref` — but a `name → slug` map rather than a set, over the three categories the schema's relation allows (`weapon`, `armor`, `adventuring-gear`), because the ref's slug follows the built-in card and not the upstream column (`srd_net` is a weapon upstream, `adventuring-gear` here). `builtinNameIndex()` is called once and shared with `knownClasses`.
 - **v1 class recovery**: `_v1ClassIndex` reads every `v1/<doc>/Spell.json`; `_v1DocForV2` maps each v2 doc slug to the v1 doc holding its `dnd_class` linkage (e.g. `wz→warlock`, `a5e-ag→a5e`, `deepm→dmag`); `_v1GlobalPref` is the cross-doc canonical fallback order (`wotc-srd`, `o5e`, `a5e`, `dmag`, …). Doc-scoped overlay wins over the global fallback.
 - **v1 action recovery** (audit **B8**, 2026-07-31): `_v1ActionIndex` reads every `v1/<doc>/Monster.json` into `v1doc → lowercased monster name → action_type bucket → [{name, desc}]`, decoding the `actions_json` / `bonus_actions_json` / `reactions_json` / `legendary_actions_json` columns (each a JSON *string*). `_v1DocForCreatures` maps the 8 v2 document slugs verified on the snapshot by monster-count **and** name parity (`a5e-mm→menagerie`, `bfrd→blackflag`, `ccdx→cc`, `tdcs→taldorei`, `tob`, `tob2`, `tob-2023`, `tob3`); the SRD documents are deliberately absent (skipped before this point, and `wotc-srd` is not row-parity with `srd-2014`). [[mapper_monster]] consumes it and fills **only** a bucket v2 left entirely empty — see that note for why the looser rule was rejected.
+- **v1 subtype recovery** (audit **B5**, 2026-08-14): the second column that turned out to be v1-only. `_v1SubtypeIndex` reads the same `v1/<doc>/Monster.json` files into `v1doc → lowercased name → subtype` and reuses `_v1DocForCreatures` unchanged. v2's `Creature.type` is a bare enum — the parenthesised `"humanoid (elf)"` form is on **0 of 3,541** rows — so `tags_line` had no v2 source at all; 367 v1 rows carry one, 293 in shipping documents, 292 land. Per the rule above this stayed a per-column decision: `subtype` is genuinely sourced prose, unlike the `size_raw`/`speed_json` columns below.
   - ⚠️ **This is the second undetectable `data/v1` dependency, and the bigger one.** Without `v1/tob3/Monster.json` the build is clean and green while 396 statblocks ship with an empty Actions block — exactly how the defect survived. Unlike the spell tags it *is* visible to [[audit_packs]] (`monster.action_refs` 86% vs 99.8%), so check that number after any rebuild.
 - **v1 species recovery** (audit **B3**, 2026-07-31): `_v1SpeciesIndex` reads every `v1/<doc>/Race.json` into `v1doc → lowercased species name → [{name, desc}]`. v1 keeps a race's traits as one markdown blob rather than rows, so `_v1TraitRows` splits it on its `***Name.***` headers; the single-value prose columns (`size`, `speed_desc`, `asi_desc`, `languages`, `age`, `alignment`, `vision`) map to the v2 trait name they stand in for. `_v1DocForSpecies` lists the only two non-SRD documents shipping a `Species.json` (`toh→toh`, `open5e→o5e`). [[mapper_chargen]] fills **only** a species v2 gave zero trait rows — exactly one on the snapshot, `toh`'s **Shade**.
   - ⚠️ **This is the third undetectable `data/v1` dependency.** Three independent v2 conversion gaps — spell classes, ToB3's actions, Shade's traits — now rest on a directory that is `.gitignore`d, absent by default, and silently skipped when missing.

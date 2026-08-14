@@ -449,7 +449,17 @@ final Map<String, List<_Rule>> _rules = {
     // "humanoid (elf)" → type `humanoid`, tags_line `(elf)`.
     _Rule('creature_type_ref', ['type'],
         (r) => _Expect.refName(_typeBase(r['type']))),
-    _Rule('tags_line', ['type'], (r) => _text(_typeTag(r['type']))),
+    // Audit **B5**. v2's `type` is a bare enum — the parenthesised form occurs
+    // on 0 of 3,541 source rows — so the subtype is recovered from the v1
+    // `Monster.subtype` column, which this tool does not read.
+    _Rule('tags_line', ['type'], (r) {
+      final tag = _typeTag(r['type']);
+      return tag.isEmpty
+          ? _Expect.why('v2 dropped the subtype in conversion; `tags_line` is '
+              'recovered from the v1 `Monster.subtype` column, which this tool '
+              'does not read')
+          : _text(tag);
+    }),
     _Rule('alignment_ref', ['alignment'],
         (r) => _Expect.refName(r['alignment'])),
     _Rule('telepathy_ft', ['telepathy_range'],
