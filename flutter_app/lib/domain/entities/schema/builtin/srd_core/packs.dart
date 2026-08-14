@@ -1,9 +1,14 @@
 // SRD 5.2.1 Equipment Packs (bodies pp. 96–97). content_refs point to
 // `adventuring-gear` rows by name; ammunition + weapons present in the
-// canonical pack lists also referenced. content_quantities maps each
-// referenced item id → quantity at import time (we encode `(slug, name)`
-// → qty here as a parallel narrative until the resolver plumbing is
-// extended to rewrite quantities by id).
+// canonical pack lists also referenced.
+//
+// `content_quantities` is keyed by **position in `content_refs`**, not by
+// entity id (audit T2-3). The label said "id→qty", but the field is a
+// `levelTable` — `Map<int,int>` — so a UUID can never be a key, and the ref
+// resolver rewrites map *values* only, never keys. Position is the one key
+// shape that both fits the type and survives id assignment, and the two lists
+// are built from the same `contents` map in the same order, so they cannot
+// drift apart.
 
 import '_helpers.dart';
 
@@ -23,6 +28,9 @@ Map<String, dynamic> _p({
   final attrs = <String, dynamic>{
     'cost_gp': costGp,
     'content_refs': refs,
+    'content_quantities': {
+      for (final (i, qty) in contents.values.indexed) '$i': qty,
+    },
     'contents': narrative,
   };
   if (weightLb != null) attrs['weight_lb'] = weightLb;

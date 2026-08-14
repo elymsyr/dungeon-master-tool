@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/{classes,subclasse
 layer: domain
 language: dart
 status: stable
-updated: 2026-07-29
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -53,6 +53,8 @@ tags: [file]
 - **Monster ↔ child wiring**: `monsters.dart`/`animals.dart` reference `trait` and `creature-action` rows by name via `ref(...)`, so `traits.dart` + `creature_actions.dart` must build BEFORE monsters in `_rawRowsBySlug`. Open5e mappers replicate this exact pattern.
 - **Feat folding**: class/subclass auto-grant feats + per-feature option feats (Metamagic, Eldritch Invocations, Pact Boon, Hunter picks, …) live in `feats_class.dart` and are concatenated into the single `feat` slug so the resolver's auto-grant and feature-option dialogs find them.
 - **Card mechanics are named fields.** `feats_class.dart`, `feats.dart` and `subspecies.dart` were converted off the `effect()` / `granted_modifiers` DSL on 2026-07-28; a card now sets grant-block keys directly (`granted_damage_resistances`, `extra_attack_count_by_level`, `resource_pool_grants`, `active_while_state_ref`, `mechanical_notes`, …). `_helpers.dart` no longer exports effect builders. See [[Grant-Resolution]].
+- **`spells.dart` derives three fields from each spell's own description (audit T2-3, 2026-08-14) rather than from a parameter.** `_areas` is a `name → (area-shape, size ft)` table feeding `area_shape_ref`/`area_size_ft` (**64/341**; Cylinder stores the radius, Line the length; `Wall of Force`, `Private Sanctum`, `Antipathy/Sympathy` are recorded non-areas). `_reactionTriggers` covers all **4** Reaction-cast spells. `_upcastHeading` lifts the upcast clause verbatim into `at_higher_levels_text` as a single entry keyed at `level + 1` (**50/341**) — the SRD states upcast as a formula, not a table, and Cantrip Upgrade is excluded because it scales on character level. `test/domain/srd_core_spell_fields_test.dart` re-reads every description to prove nothing was invented, and sweeps the other way so a new spell with an area but no shape fails.
+- **`packs.dart` fills `content_quantities` keyed by position in `content_refs`**, not by entity id: the field is a `levelTable` (`Map<int,int>`) and `_resolveRefs` rewrites map values only, so a UUID key was never reachable. Both lists come from the same `contents` map in the same order. The schema label was corrected to match ([[builtin_schema]] `2.5.0 → 2.5.1`).
 - Counts are author-progress proxies (`spells.dart` notes the full SRD has ~350; this covers the canonical, most-played slice). Bump `srdCorePackVersion` on any row change.
 
 ## Notes

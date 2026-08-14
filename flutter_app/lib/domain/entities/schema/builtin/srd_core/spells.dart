@@ -17,6 +17,117 @@ const _v = 'Verbal';
 const _s = 'Somatic';
 const _m = 'Material';
 
+/// Audit **T2-3** — the area-of-effect template each spell's own description
+/// states, as `name → (area-shape row, size in feet)`. Kept as one table
+/// instead of a parameter on every call site: 62 of 341 spells have an area,
+/// and `srd_core_spell_fields_test.dart` re-reads each row's description and
+/// fails if the shape word or the number is not in it, so the table can
+/// neither drift nor invent.
+///
+/// Conventions, because the prose carries two numbers for some shapes:
+///  * **Cylinder** → the radius (the height stays narrative — the field is a
+///    single `area_size_ft`, and the radius is what a DM measures on the map);
+///  * **Line** → the length, not the width.
+///
+/// Deliberately absent: `Wall of Force` and `Private Sanctum`, whose shape is
+/// the caster's choice at cast time with no fixed template, and
+/// `Antipathy/Sympathy`, whose Cubes cap the *target's* size rather than
+/// describing an area. The test's `freeform` set is the same list.
+const _areas = <String, (String, int)>{
+  // Cantrips + Level 1
+  'Minor Illusion': ('Cube', 5),
+  'Burning Hands': ('Cone', 15),
+  'Color Spray': ('Cone', 15),
+  'Sleep': ('Emanation', 5),
+  'Thunderwave': ('Cube', 15),
+  'Alarm': ('Cube', 20),
+  'Create or Destroy Water': ('Cube', 30),
+  'Fog Cloud': ('Sphere', 20),
+  'Faerie Fire': ('Cube', 20),
+  'Silent Image': ('Cube', 15),
+  'Purify Food and Drink': ('Sphere', 5),
+  // Level 2
+  'Web': ('Cube', 20),
+  'Silence': ('Sphere', 20),
+  'Spike Growth': ('Sphere', 20),
+  'Moonbeam': ('Cylinder', 5),
+  'Calm Emotions': ('Sphere', 20),
+  'Darkness': ('Sphere', 15),
+  'Shatter': ('Sphere', 10),
+  'Zone of Truth': ('Sphere', 15),
+  'Dragon\'s Breath': ('Cone', 15),
+  'Phantasmal Force': ('Cube', 10),
+  // Level 3
+  'Fireball': ('Sphere', 20),
+  'Lightning Bolt': ('Line', 100),
+  'Hypnotic Pattern': ('Cube', 30),
+  'Slow': ('Cube', 40),
+  'Daylight': ('Sphere', 60),
+  'Major Image': ('Cube', 20),
+  'Sleet Storm': ('Cylinder', 20),
+  'Fear': ('Cone', 30),
+  'Magic Circle': ('Cylinder', 10),
+  'Plant Growth': ('Sphere', 100),
+  'Stinking Cloud': ('Sphere', 20),
+  'Spirit Guardians': ('Emanation', 15),
+  'Call Lightning': ('Cylinder', 60),
+  'Gust of Wind': ('Line', 60),
+  // Level 4
+  'Confusion': ('Sphere', 10),
+  'Ice Storm': ('Cylinder', 20),
+  'Hallucinatory Terrain': ('Cube', 150),
+  'Vitriolic Sphere': ('Sphere', 20),
+  'Aura of Life': ('Emanation', 30),
+  'Control Water': ('Cube', 100),
+  // Level 5
+  'Cone of Cold': ('Cone', 60),
+  'Mass Cure Wounds': ('Sphere', 30),
+  'Cloudkill': ('Sphere', 20),
+  'Conjure Elemental': ('Cube', 10),
+  'Flame Strike': ('Cylinder', 10),
+  'Insect Plague': ('Sphere', 20),
+  'Antilife Shell': ('Emanation', 10),
+  'Creation': ('Cube', 5),
+  'Freezing Sphere': ('Sphere', 60),
+  // Level 6+
+  'Circle of Death': ('Sphere', 60),
+  'Sunbeam': ('Line', 60),
+  'Guards and Wards': ('Cube', 10),
+  'Programmed Illusion': ('Cube', 30),
+  'Delayed Blast Fireball': ('Sphere', 20),
+  'Prismatic Spray': ('Cone', 60),
+  'Reverse Gravity': ('Cylinder', 50),
+  'Holy Aura': ('Emanation', 30),
+  'Incendiary Cloud': ('Sphere', 20),
+  'Fire Storm': ('Cube', 10),
+  'Sunburst': ('Sphere', 60),
+  'Weird': ('Sphere', 30),
+  'Antimagic Field': ('Sphere', 10),
+  'Meteor Swarm': ('Sphere', 40),
+};
+
+/// Audit **T2-3** — `reaction_trigger` for the four Reaction-cast SRD spells,
+/// written standalone (the SRD states them as the tail of the casting-time
+/// line, "…, which you take when…"). `srd_core_spell_fields_test.dart` asserts
+/// every Reaction spell appears here, so a new one fails the build until its
+/// trigger is authored.
+const _reactionTriggers = <String, String>{
+  'Hellish Rebuke':
+      'When you take damage from a creature within 60 feet of yourself that you can see.',
+  'Shield':
+      'When you are hit by an attack roll or targeted by the Magic Missile spell.',
+  'Counterspell':
+      'When you see a creature within 60 feet of yourself casting a spell.',
+  'Feather Fall': 'When you or a creature within 60 feet of yourself falls.',
+};
+
+/// Audit **T2-3** — the upcast clause every SRD spell body ends with, under one
+/// of three headings the file uses interchangeably. Cantrip Upgrade is
+/// deliberately *not* matched: it scales on character level, while
+/// `at_higher_levels_text` is keyed by the slot level that buys the effect.
+final _upcastHeading = RegExp(
+    r'\*{1,2}(?:Using a Higher-Level Spell Slot|Higher-Level Slot|At Higher Levels)\.\*{1,2}');
+
 /// Compact spell builder. `range`: 'Self' / 'Touch' / int (ft) / 'Sight' /
 /// 'Unlimited'. `duration`: pass 'Instantaneous' or `${amount} ${unit}` like
 /// '1 Minute', '10 Minutes', '8 Hours', '1 Round', '24 Hours'.
@@ -82,6 +193,12 @@ Map<String, dynamic> _spell({
     }
   }
 
+  // Audit T2-3: area template, Reaction trigger and upcast clause all come
+  // from what this row already states — the table/regex only lift them into
+  // their typed fields.
+  final area = _areas[name];
+  final upcast = _upcastHeading.firstMatch(description);
+
   return packEntity(
     slug: 'spell',
     name: name,
@@ -116,6 +233,17 @@ Map<String, dynamic> _spell({
         'applied_condition_refs': [
           for (final c in conditions) lookup('condition', c),
         ],
+      if (area != null) ...{
+        'area_shape_ref': lookup('area-shape', area.$1),
+        'area_size_ft': area.$2,
+      },
+      'reaction_trigger': ?_reactionTriggers[name],
+      // Keyed at the lowest slot level that changes anything — one row, since
+      // the SRD states the scaling as a per-slot-level formula, not a table.
+      if (level > 0 && upcast != null)
+        'at_higher_levels_text': {
+          '${level + 1}': description.substring(upcast.end).trim(),
+        },
     },
   );
 }

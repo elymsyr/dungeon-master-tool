@@ -1069,10 +1069,13 @@ EntityCategorySchema _packCategory(String schemaId, String now, int orderIndex) 
   fb.relation('content_refs', 'Content Items',
       const ['adventuring-gear', 'weapon', 'armor', 'tool', 'ammunition'],
       isList: true, g: grpRules);
-  // Map<entity_id, quantity> — paired with content_refs to give per-item counts
-  // (e.g. "10 torches"). Stored as levelTable shape (Map<String,int>) since FieldType
-  // does not have a generic "id->int" map; key is item entity ID, value is quantity.
-  fb.levelTable('content_quantities', 'Content Quantities (id→qty)', g: grpRules);
+  // Map<index, quantity> — paired with content_refs to give per-item counts
+  // (e.g. "10 torches"). levelTable shape (Map<String,int>), so the key is the
+  // item's **position in `content_refs`**: FieldType has no generic "id→int"
+  // map, and the ref resolver rewrites map values only — a key can never
+  // become a UUID (audit T2-3).
+  fb.levelTable('content_quantities', 'Content Quantities (by content_refs index)',
+      g: grpRules);
   fb.markdown('contents', 'Contents (narrative)', g: grpRules);
 
   return _mk(

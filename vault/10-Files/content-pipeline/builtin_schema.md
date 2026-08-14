@@ -20,7 +20,7 @@ tags: [file]
 
 **Outputs**
 - `generateBuiltinDnd5eV2Schema()` → `BuiltinDnd5eV2Build{schema, seedRows}`.
-  - `schema`: `WorldSchema` (version `2.5.0` — bumped 2026-08-14 for `monster.alignment_note`, audit **B10**; see [[mapper_monster]], baseSystem `dnd5e`) with all categories + a default encounter layout/config.
+  - `schema`: `WorldSchema` (version `2.5.1` — 2.5.0 added `monster.alignment_note` (audit **B10**), 2.5.1 relabelled `pack.content_quantities` to say its key is the `content_refs` **index**, not an entity id (audit **T2-3**, cosmetic, no migration); see [[mapper_monster]], baseSystem `dnd5e`) with all categories + a default encounter layout/config.
   - `seedRows`: `slug → List<row>` — only Tier-0 categories carry rows; Tier-1 and Tier-2 ship shape-only (empty rows).
 - `buildTier0Lookups({schemaId, now})` → `List<Tier0CategoryBuild>` (category + canonical seed rows). Also exports `tier0Slugs` (the canonical ordered slug list).
 - `buildTier1Content({schemaId, now, startOrderIndex})` → Tier-1 `EntityCategorySchema` list.
