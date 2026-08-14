@@ -104,6 +104,19 @@ const _areas = <String, (String, int)>{
   'Weird': ('Sphere', 30),
   'Antimagic Field': ('Sphere', 10),
   'Meteor Swarm': ('Sphere', 40),
+  // Sourced from the pinned snapshot's `srd-2024/Spell.json` `shape_type` /
+  // `shape_size`, not from the description: SRD 5.2.1 gives these eight an
+  // area that this file's abridged prose does not repeat. The test's
+  // `_fromSnapshot` set carries the same eight names, so they are exempt from
+  // the prose cross-check and from nothing else.
+  'Acid Splash': ('Sphere', 5),
+  'Earthquake': ('Sphere', 100),
+  'Fabricate': ('Cube', 10),
+  'Freedom of Movement': ('Sphere', 60),
+  'Heroes\' Feast': ('Cube', 10),
+  'Magnificent Mansion': ('Cube', 10),
+  'Symbol': ('Sphere', 60),
+  'Teleportation Circle': ('Sphere', 5),
 };
 
 /// Audit **T2-3** — `reaction_trigger` for the four Reaction-cast SRD spells,
@@ -127,6 +140,189 @@ const _reactionTriggers = <String, String>{
 /// `at_higher_levels_text` is keyed by the slot level that buys the effect.
 final _upcastHeading = RegExp(
     r'\*{1,2}(?:Using a Higher-Level Spell Slot|Higher-Level Slot|At Higher Levels)\.\*{1,2}');
+
+/// Audit **T2-3** — the upcast clauses SRD 5.2.1 states but this file's
+/// abridged prose dropped, harvested verbatim from the pinned snapshot
+/// (`d4276c58`, `srd-2024/Spell.json` → `higher_level`) exactly as T2-2
+/// harvested the spellcasting tables. A row here is also appended to the
+/// spell's description under the standard heading, so the card renders it and
+/// the field is never ahead of the text a DM reads.
+///
+/// Leveled spells only — the snapshot's `higher_level` on a cantrip is the
+/// Cantrip Upgrade, which scales on character level and so has no place in a
+/// slot-level-keyed field.
+const _upcasts = <String, String>{
+  'Bane':
+      'You can target one additional creature for each spell slot level '
+      'above 1.',
+  'Command':
+      'You can affect one additional creature for each spell slot level '
+      'above 1.',
+  'Major Image':
+      'The spell lasts until dispelled, without requiring Concentration, '
+      'if cast with a level 4+ spell slot.',
+  'Animal Friendship':
+      'You can target one additional Beast for each spell slot level '
+      'above 1.',
+  'Hunter\'s Mark':
+      'Your Concentration can last longer with a spell slot of level 3–4 '
+      '(up to 8 hours) or 5+ (up to 24 hours).',
+  'Jump':
+      'You can target one additional creature for each spell slot level '
+      'above 1.',
+  'Longstrider':
+      'You can target one additional creature for each spell slot level '
+      'above 1.',
+  'Hideous Laughter':
+      'You can target one additional creature for each spell slot level '
+      'above 1.',
+  'Animal Messenger':
+      'The spell\'s duration increases by 48 hours for each spell slot '
+      'level above 2.',
+  'Enhance Ability':
+      'You can target one additional creature for each spell slot level '
+      'above 2. You can choose a different ability for each target.',
+  'Bestow Curse':
+      'If you cast this spell using a level 4 spell slot, you can '
+      'maintain Concentration on it for up to 10 minutes. If you use a '
+      'level 5+ spell slot, the spell doesn\'t require Concentration, and '
+      'the duration becomes 8 hours (level 5–6 slot) or 24 hours (level '
+      '7–8 slot). If you use a level 9 spell slot, the spell lasts until '
+      'dispelled.',
+  'Gaseous Form':
+      'You can target one additional creature for each spell slot level '
+      'above 3.',
+  'Glyph of Warding':
+      'The damage of an explosive rune increases by 1d8 for each spell '
+      'slot level above 3. If you create a spell glyph, you can store any '
+      'spell of up to the same level as the spell slot you use for the '
+      'Glyph of Warding.',
+  'Freedom of Movement':
+      'You can target one additional creature for each spell slot level '
+      'above 4.',
+  'Phantasmal Killer':
+      'The damage increases by 1d10 for each spell slot level above 4.',
+  'Animate Objects':
+      'The creature\'s Slam damage increases by 1d4 (Medium or smaller), '
+      '1d6 (Large), or 1d12 (Huge) for each spell slot level above 5.',
+  'Conjure Elemental':
+      'The damage increases by 1d8 for each spell slot level above 5.',
+  'Modify Memory':
+      'You can alter the target\'s memories of an event that took place up '
+      'to 7 days ago (level 6 spell slot), 30 days ago (level 7 spell '
+      'slot), 365 days ago (level 8 spell slot), or any time in the '
+      'creature\'s past (level 9 spell slot).',
+  'Planar Binding':
+      'The duration increases with a spell slot of level 6 (10 days), 7 '
+      '(30 days), 8 (180 days), and 9 (366 days).',
+  'Mass Suggestion':
+      'The duration is longer with a spell slot of level 7 (10 days), 8 '
+      '(30 days), or 9 (366 days).',
+  'Delayed Blast Fireball':
+      'The base damage increases by 1d6 for each spell slot level above '
+      '7.',
+  'Etherealness':
+      'You can target up to three willing creatures (including yourself) '
+      'for each spell slot level above 7. The creatures must be within 10 '
+      'feet of you when you cast the spell.',
+  'Dominate Monster':
+      'Your Concentration can last longer with a level 9 spell slot (up '
+      'to 8 hours).',
+  'Find Steed':
+      'Use the spell slot\'s level for the spell\'s level in the stat '
+      'block.',
+  'Conjure Animals':
+      'The damage increases by 1d10 for each spell slot level above 3.',
+  'Conjure Minor Elementals':
+      'The damage increases by 1d8 for each spell slot level above 4.',
+  'Conjure Woodland Beings':
+      'The damage increases by 1d8 for each spell slot level above 4.',
+  'Conjure Fey':
+      'The damage increases by 1d12 for each spell slot level above 6.',
+  'Dominate Beast':
+      'Your Concentration can last longer with a spell slot of level 5 '
+      '(up to 10 minutes), 6 (up to 1 hour), or 7+ (up to 8 hours).',
+  'Dominate Person':
+      'Your Concentration can last longer with a spell slot of level 6 '
+      '(up to 10 minutes), 7 (up to 1 hour), or 8+ (up to 8 hours).',
+  'Flaming Sphere':
+      'The damage increases by 1d6 for each spell slot level above 2.',
+  'Heat Metal':
+      'The damage increases by 1d8 for each spell slot level above 2.',
+  'Hex':
+      'Your Concentration can last longer with a spell slot of level 2 '
+      '(up to 4 hours), 3–4 (up to 8 hours), or 5+ (24 hours).',
+  'Mind Spike':
+      'The damage increases by 1d8 for each spell slot level above 2.',
+  'Prayer of Healing':
+      'The healing increases by 1d8 for each spell slot level above 2.',
+  'Spirit Guardians':
+      'The damage increases by 1d8 for each spell slot level above 3.',
+  'Wall of Thorns':
+      'Both types of damage increase by 1d8 for each spell slot level '
+      'above 6.',
+  'Blight':
+      'The damage increases by 1d8 for each spell slot level above 4.',
+  'Charm Monster':
+      'You can target one additional creature for each spell slot level '
+      'above 4.',
+  'Chromatic Orb':
+      'The damage increases by 1d8 for each spell slot level above 1. The '
+      'orb can leap a maximum number of times equal to the level of the '
+      'slot expended, and a creature can be targeted only once by each '
+      'casting of this spell.',
+  'Create or Destroy Water':
+      'You create or destroy 10 additional gallons of water, or the size '
+      'of the Cube increases by 5 feet, for each spell slot level above '
+      '1.',
+  'Creation':
+      'The Cube increases by 5 feet for each spell slot level above 5.',
+  'Ensnaring Strike':
+      'The damage increases by 1d6 for each spell slot level above 1.',
+  'False Life':
+      'You gain 5 additional Temporary Hit Points for each spell slot '
+      'level above 1.',
+  'Flame Blade':
+      'The damage increases by 1d6 for each spell slot level above 2.',
+  'Fog Cloud':
+      'The fog\'s radius increases by 20 feet for each spell slot level '
+      'above 1.',
+  'Freezing Sphere':
+      'The damage increases by 1d6 for each spell slot level above 6.',
+  'Giant Insect':
+      'Use the spell slot\'s level for the spell\'s level in the stat '
+      'block.',
+  'Heroism':
+      'You can target one additional creature for each spell slot level '
+      'above 1.',
+  'Ice Knife':
+      'The Cold damage increases by 1d6 for each spell slot level above '
+      '1.',
+  'Private Sanctum':
+      'You can increase the size of the Cube by 100 feet for each spell '
+      'slot level above 4.',
+  'Ray of Sickness':
+      'The damage increases by 1d8 for each spell slot level above 1.',
+  'Spider Climb':
+      'You can target one additional creature for each spell slot level '
+      'above 2.',
+  'Vitriolic Sphere':
+      'The initial damage increases by 2d4 for each spell slot level '
+      'above 4.',
+  'Arcane Hand':
+      'The damage of the Clenched Fist increases by 2d8 and the damage of '
+      'the Grasping Hand increases by 2d6 for each spell slot level above '
+      '5.',
+  'Divine Smite':
+      'The damage increases by 1d8 for each spell slot level above 1.',
+  'Searing Smite':
+      'All the damage increases by 1d6 for each spell slot level above 1.',
+  'Shining Smite':
+      'The damage increases by 1d6 for each spell slot level above 2.',
+  'Summon Dragon':
+      'Use the spell slot\'s level for the spell\'s level in the stat '
+      'block.',
+};
 
 /// Compact spell builder. `range`: 'Self' / 'Touch' / int (ft) / 'Sight' /
 /// 'Unlimited'. `duration`: pass 'Instantaneous' or `${amount} ${unit}` like
@@ -197,7 +393,17 @@ Map<String, dynamic> _spell({
   // from what this row already states — the table/regex only lift them into
   // their typed fields.
   final area = _areas[name];
-  final upcast = _upcastHeading.firstMatch(description);
+  // Prose wins; the snapshot fills in where the prose is silent, and when it
+  // does the clause is appended to the description under the standard heading
+  // so the card text and the field never disagree.
+  final inProse = _upcastHeading.firstMatch(description);
+  final harvested = inProse == null ? _upcasts[name] : null;
+  final upcastText =
+      inProse != null ? description.substring(inProse.end).trim() : harvested;
+  if (harvested != null) {
+    description =
+        '$description\n\n**Using a Higher-Level Spell Slot.** $harvested';
+  }
 
   return packEntity(
     slug: 'spell',
@@ -240,10 +446,8 @@ Map<String, dynamic> _spell({
       'reaction_trigger': ?_reactionTriggers[name],
       // Keyed at the lowest slot level that changes anything — one row, since
       // the SRD states the scaling as a per-slot-level formula, not a table.
-      if (level > 0 && upcast != null)
-        'at_higher_levels_text': {
-          '${level + 1}': description.substring(upcast.end).trim(),
-        },
+      if (level > 0 && upcastText != null)
+        'at_higher_levels_text': {'${level + 1}': upcastText},
     },
   );
 }

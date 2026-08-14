@@ -15,9 +15,25 @@ void main() {
   String nameOf(Map<String, dynamic> s) => s['name'] as String;
 
   group('area_shape_ref / area_size_ft', () {
+    // Areas SRD 5.2.1 states in `srd-2024/Spell.json` but this file's abridged
+    // prose does not repeat. Exempt from the prose cross-check below and from
+    // nothing else; the same eight names are commented in `spells.dart`.
+    const fromSnapshot = {
+      'Acid Splash',
+      'Earthquake',
+      'Fabricate',
+      'Freedom of Movement',
+      "Heroes' Feast",
+      'Magnificent Mansion',
+      'Symbol',
+      'Teleportation Circle',
+    };
+
     test('every filled area is stated by the spell\'s own description', () {
-      final filled =
-          spells.where((s) => attrs(s).containsKey('area_shape_ref')).toList();
+      final filled = spells
+          .where((s) => attrs(s).containsKey('area_shape_ref'))
+          .where((s) => !fromSnapshot.contains(nameOf(s)))
+          .toList();
       expect(filled.length, greaterThanOrEqualTo(60));
       for (final s in filled) {
         final a = attrs(s);
@@ -86,7 +102,7 @@ void main() {
       final filled = spells
           .where((s) => attrs(s).containsKey('at_higher_levels_text'))
           .toList();
-      expect(filled.length, greaterThanOrEqualTo(45));
+      expect(filled.length, greaterThanOrEqualTo(100));
       for (final s in filled) {
         final level = attrs(s)['level'] as int;
         final table = attrs(s)['at_higher_levels_text'] as Map;

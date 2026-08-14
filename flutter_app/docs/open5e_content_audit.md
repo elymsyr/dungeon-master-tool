@@ -351,7 +351,7 @@ before the one above it is ticked:
 |:--:|---|---|
 | ~~1~~ | ~~**T2-2**~~ | **done 2026-08-14** — the SRD 5.2.1 cantrip / prepared tables are authored on all 8 built-in casters and the Paladin/Ranger slot table with them; the Full/Pact slot presets were checked against the same source and left in code, not copied into data (below) |
 | ~~2~~ | ~~**T2-1**~~ | **done 2026-08-14** — the 18 skill seed rows now ship the standard `_lookup` placeholder in `ability_ref`, which the synthesiser already resolved for every other Tier-0 link; the dead `_ability_name_` key is gone and the chip renders (below) |
-| ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — every one of the four fields is now lifted out of the prose the SRD rows already carry (64/341 areas, 4/4 reaction triggers, 50/341 upcast clauses), and `pack.content_quantities` is 7/7 once the "id→qty" key its label promised is admitted to be impossible (below) |
+| ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — 72/341 areas, 4/4 reaction triggers, 109/341 upcast clauses, `pack.content_quantities` 7/7. Two sources, in that order: what the rows' own prose already states, then the pinned snapshot for what SRD 5.2.1 says and this file's abridged prose dropped. Both columns are now at the corpus ceiling — 0 rows remain unharvested (below) |
 | 4 | **L4** | **no duplicate cards** — a card the built-in pack already ships must not be re-emitted by an official pack, and the same card must not ship in two packs |
 | 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
 | 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
@@ -432,12 +432,29 @@ is faithful.
 
 | Field | Before | After | Where it came from |
 |---|--:|--:|---|
-| `spell.area_shape_ref` / `area_size_ft` | 0/341 | **64/341** | one `_areas` table in `spells.dart`, `name → (shape, ft)` |
+| `spell.area_shape_ref` / `area_size_ft` | 0/341 | **72/341** | 64 from the rows' own prose, 8 from the pinned snapshot |
 | `spell.reaction_trigger` | 0/341 | **4/4** | the four Reaction-cast spells, written standalone |
-| `spell.at_higher_levels_text` | 0/341 | **50/341** | the upcast clause parsed off the description's own heading |
+| `spell.at_higher_levels_text` | 0/341 | **109/341** | 50 from the description's own heading, 59 from the snapshot |
 | `pack.content_quantities` | 0/7 | **7/7** | the `contents` map each pack was already built from |
 
-*Areas.* 64 of 341 spells state an area template. It is a table rather than a
+> **The first pass of this phase stopped one source short, and the correction is
+> the finding worth keeping.** Lifting from the rows' own prose got 64 areas and
+> 50 upcast clauses, and it was tempting to call those the ceiling because the
+> extraction was provably complete — the test proves every row's prose was read.
+> But *complete extraction from an incomplete source is not coverage*. This
+> file's descriptions are an abridged authoring of SRD 5.2.1, and the abridging
+> dropped clauses: `Chromatic Orb` and `Blight` both scale in the SRD and
+> neither description says so. The check that settles it is the one T2-2 already
+> established — measure against the **pinned snapshot** (`d4276c58`,
+> `srd-2024/Spell.json`), which carries `shape_type` / `shape_size` /
+> `reaction_condition` / `higher_level` as structured columns. It has 52 rows
+> with a shape (all 52 now covered, plus 20 the snapshot lacks and the prose
+> has), 4 with a reaction condition (**exactly ours**), and 107 leveled rows
+> with `higher_level`. **A phase that measures its fill against its own text
+> can only ever report that its own text is self-consistent.**
+
+*Areas.* **72/341**, from two sources. 64 spells state an area template in
+their own description; It is a table rather than a
 parameter on 64 call sites because the whole set has to be reviewable against
 the prose in one screen — and because two shapes carry two numbers, which a
 naive parse gets wrong: a **Cylinder** stores the radius (`Reverse Gravity` is
@@ -450,8 +467,13 @@ carries no shape fails. That sweep found the one row the extraction pass missed
 by eye, and it is **not** a hole: `Antipathy/Sympathy`'s two Cubes cap the
 *target's* size, they are not an area. It joins `Wall of Force` and
 `Private Sanctum` — whose shape is the caster's choice at cast time — as the
-three recorded exceptions. **64/341 is the ceiling here, not a shortfall**: the
-other 277 spells have no area in SRD 5.2.1 either.
+three recorded exceptions. The other 8 come from the snapshot's `shape_type` /
+`shape_size` on rows whose prose is silent (`Acid Splash`, `Earthquake`,
+`Fabricate`, `Freedom of Movement`, `Heroes' Feast`, `Magnificent Mansion`,
+`Symbol`, `Teleportation Circle`); the test carries the same eight names as
+`fromSnapshot` and exempts them from the prose cross-check and from nothing
+else. **72 is the ceiling**: every snapshot row with a shape is covered, and the
+remaining 269 spells have no area in either source.
 
 *Reaction triggers.* Only 4 SRD spells are Reaction-cast (`Hellish Rebuke`,
 `Shield`, `Counterspell`, `Feather Fall`), so this is **4/4**, not 4/341. They
@@ -461,16 +483,22 @@ line ("…, which you take when…"), the same lead-in the Open5e mapper strips 
 a trigger **and** no non-Reaction spell does, so a fifth Reaction spell fails
 the build until its trigger is authored.
 
-*Upcast clauses.* The field is `levelTextTable` — `Map<int,String>` — and the
-50 rows that scale get exactly one entry, keyed at `level + 1`, the lowest slot
-level that buys anything. One row and not eight because SRD 5.2.1 states upcast
+*Upcast clauses.* **109/341** (of 314 leveled spells). The field is
+`levelTextTable` — `Map<int,String>` — and each scaling row gets exactly one
+entry, keyed at `level + 1`, the lowest slot level that buys anything. One row and not eight because SRD 5.2.1 states upcast
 as a per-slot-level *formula* ("increases by 1d6 for each spell slot level above
 3"), and expanding that into eight literal rows would be this audit's own
 definition of fabrication. The text is `substring`'d verbatim off the
 description's heading — three of which the file uses interchangeably
 (`**Higher-Level Slot.**`, `*Using a Higher-Level Spell Slot.*`,
 `**At Higher Levels.**`), all matched — and the test asserts
-`description.endsWith(text)` so it stays verbatim. **Cantrip Upgrade is
+`description.endsWith(text)` so it stays verbatim. The other 59 are harvested
+from the snapshot's `higher_level` — the same file and the same pinned commit
+T2-2 took the spellcasting tables from — and each harvested clause is **also
+appended to the description** under the standard heading, so the field is never
+ahead of the text a DM reads and the single `endsWith` assertion still covers
+both sources. Prose wins where both exist. 0 leveled snapshot rows remain
+unharvested. **Cantrip Upgrade is
 deliberately excluded**: its 13 rows scale on *character* level, which is not
 what a slot-level-keyed field means. Note the Open5e side does not fill this
 field either — its mapper folds `higher_level` into the description prose — so
@@ -1559,10 +1587,14 @@ softRef this audit writes lands here, and until now nothing had ever counted it.
   The Open5e packs now carry the first two at their source ceiling (7%), so the
   hand-authored SRD spells are the ones lagging. Filed **T2-3**. **Closed
   2026-08-14** — all four are now lifted out of the prose the rows already
-  carry: `area_shape_ref`/`area_size_ft` **64/341** (the corpus ceiling; three
-  recorded exceptions), `reaction_trigger` **4/4** (only 4 SRD spells are
-  Reaction-cast), `at_higher_levels_text` **50/341** keyed at `level + 1`, with
-  the 13 Cantrip Upgrades excluded because they scale on character level. The
+  carry, then from the pinned snapshot for what SRD 5.2.1 states and the abridged
+  prose dropped: `area_shape_ref`/`area_size_ft` **72/341** (64 prose + 8
+  snapshot; three recorded non-areas), `reaction_trigger` **4/4** (only 4 SRD
+  spells are Reaction-cast, and the snapshot agrees exactly),
+  `at_higher_levels_text` **109/341** keyed at `level + 1` (50 prose + 59
+  snapshot), with the Cantrip Upgrades excluded because they scale on character
+  level. Both columns sit at the corpus ceiling — 0 snapshot rows unharvested.
+  The
   Open5e side still does not fill `at_higher_levels_text` at all — its mapper
   folds `higher_level` into the description — so the built-in pack now leads on
   that column instead of trailing.
@@ -3563,10 +3595,11 @@ has a value" into "the value produced the right number on a sheet".
         > were already *stated* in the prose of the rows that own them; the
         > change lifts them into their typed fields and a test re-reads the
         > description to prove the lift is faithful. `area_shape_ref`/
-        > `area_size_ft` **64/341** (the corpus ceiling — Cylinder stores the
+        > `area_size_ft` **72/341** — 64 lifted from prose (Cylinder stores the
         > radius, Line the length; `Wall of Force`, `Private Sanctum` and
-        > `Antipathy/Sympathy` are recorded exceptions, the last found by the
-        > test's reverse sweep). `reaction_trigger` **4/4** — only four SRD
+        > `Antipathy/Sympathy` are recorded non-areas, the last found by the
+        > test's reverse sweep) plus 8 harvested from the pinned snapshot's
+        > `shape_type`, which the prose is silent on. `reaction_trigger` **4/4** — only four SRD
         > spells are Reaction-cast, and the test asserts the biconditional so a
         > fifth fails the build. `at_higher_levels_text` **50/341**, one entry
         > keyed at `level + 1` because the SRD states upcast as a formula, not a
