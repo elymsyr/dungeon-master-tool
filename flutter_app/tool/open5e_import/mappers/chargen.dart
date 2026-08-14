@@ -460,9 +460,18 @@ void mapSpecies({
     final spellRefs = <Map<String, String>>[];
     final cantripRefs = <Map<String, String>>[];
     final altSpeeds = <String, int>{};
+    // B5 — every trait row none of the parsers below consumed becomes one
+    // `mechanical_notes` line, so the rule reaches the sheet's "Other Effects"
+    // instead of living only in the species description.
+    final notes = <String>[];
+    int grantCount() =>
+        senses.length + langs.length + abilityBonuses.length + dmgRes.length +
+        dmgImm.length + dmgVuln.length + condImm.length + skillProf.length +
+        spellRefs.length + cantripRefs.length + altSpeeds.length;
     for (final t in kids) {
       final tn = (t['name'] as String?)?.trim().toLowerCase() ?? '';
       final d = (t['desc'] as String?) ?? '';
+      final grantsBefore = grantCount();
       if (tn == 'darkvision') {
         final s = norm.lookupRef('sense', 'Darkvision', context: name);
         if (s != null) senses.add(s);
@@ -513,7 +522,12 @@ void mapSpecies({
       for (final n in sg.spells) {
         spellRefs.add(pack.has('spell', n) ? ref('spell', n) : softRef('spell', n));
       }
+      if (grantCount() == grantsBefore && !_flavourTraitNames.contains(tn)) {
+        final line = _noteLine((t['name'] as String?)?.trim() ?? '', d);
+        if (line != null) notes.add(line);
+      }
     }
+    if (notes.isNotEmpty) attrs['mechanical_notes'] = notes.join('\n');
     void put(String key, List<Map<String, String>> v) {
       final dd = _dedupeByName(v);
       if (dd.isNotEmpty) attrs[key] = dd;
@@ -539,6 +553,22 @@ void mapSpecies({
     _addUnique(pack, slug: subOf != null ? 'subspecies' : 'species', name: name,
         source: source, description: desc, tags: tags, attributes: attrs);
   }
+}
+
+/// Species trait rows that are flavour or already have a typed home on the card
+/// (`size_ref`, `speed_ft`, `creature_type_ref`), so they are not routed into
+/// `mechanical_notes` even when no grant parser touches them.
+const _flavourTraitNames = {
+  'age', 'alignment', 'size', 'speed', 'creature type', 'type',
+  'languages', 'language', 'ability score increase', 'ability scores',
+};
+
+/// One `mechanical_notes` line: `**Name.** text`, newlines collapsed because
+/// the field is one rule per line. Empty text yields no line.
+String? _noteLine(String name, String desc) {
+  final text = desc.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (text.isEmpty) return null;
+  return name.isEmpty ? text : '**$name.** $text';
 }
 
 /// Sentences that scope a benefit to the duration of an activated trait, so a
@@ -1373,6 +1403,24 @@ void mapFeats({
     _parseFeatGrants(benefitText, attrs);
     final choices = _parseFeatChoiceGroups(benefitText);
     if (choices.isNotEmpty) attrs['player_choices'] = choices;
+    // B5 — one `mechanical_notes` line per benefit row the parsers above left
+    // untyped. A feat with no `Benefit` rows carries its rule in its own desc,
+    // so that row stands in (unnamed: the name is the card's).
+    final notes = <String>[];
+    for (final row in kids.isEmpty ? [f] : kids) {
+      final rowText = (row['desc'] as String?)?.trim() ?? '';
+      if (rowText.isEmpty) continue;
+      final probe = <String, dynamic>{};
+      _parseFeatGrants(rowText, probe);
+      if (_parseFeatAsi(rowText) != null) probe['asi'] = true;
+      if (_parseFeatChoiceGroups(rowText).isNotEmpty) probe['choices'] = true;
+      if (probe.isNotEmpty) continue;
+      final line = _noteLine(
+          identical(row, f) ? '' : (row['name'] as String?)?.trim() ?? '',
+          rowText);
+      if (line != null) notes.add(line);
+    }
+    if (notes.isNotEmpty) attrs['mechanical_notes'] = notes.join('\n');
     _addUnique(pack, slug: 'feat', name: name, source: source,
         description: desc, tags: const [], attributes: attrs);
   }

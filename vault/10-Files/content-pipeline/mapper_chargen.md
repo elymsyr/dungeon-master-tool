@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/chargen.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -52,6 +52,9 @@ tags: [file]
   - A `PROFICIENCY_BONUS` column matching the standard 5e progression is **dropped**, not rendered — the app computes it (`proficiencyTableDefault`) and shipping it would duplicate a derived value as content. A deviating one is rendered.
   - `bfrd` ships two distinct columns both named `Augment Effects Known`; the second is numbered rather than merged.
   - ⚠️ **Neither census tool can see this fix.** `description` counted as 100% filled while holding empty headings and a placeholder, and `dupe_census`/`audit_packs` output is byte-identical before and after. Presence is not correctness — audit §3.4, and the reason **T1** exists.
+- **`mechanical_notes` — the rules no typed field could carry** (audit **B5**, 2026-08-14). Upstream already ships one rule per `SpeciesTrait` / `FeatBenefit` row, so the routing unit is the **source row**, not a sentence: every row that no grant parser consumed becomes one `**Name.** text` line via `_noteLine`, joined with `\n` into the textarea `CharacterResolver` reads into `EffectiveCharacter.mechanicalNotes`. Consumption is detected positionally — `grantCount()` sums the typed collections before and after each trait row, so a new parser is covered without touching this code.
+  - Two buckets are deliberately **not** routed: `_flavourTraitNames` (`Age`, `Alignment`, `Size`, `Speed`, `Creature Type`, `Languages`, `Ability Score Increase` — flavour, or already typed as `size_ref`/`speed_ft`/`creature_type_ref`), and a feat's own `desc` when it has `FeatBenefit` children (**40 of 91 feats**, every one a lead-in: *"You gain the following benefits."*). A feat with no benefit rows carries its rule in `desc`, and there that row **is** the note.
+  - Result: species **11/11**, subspecies **26/30**, feat **68/73**, **229 lines**; `diff_packs` shows this field and nothing else across all 19 packs. `trait` and `magic-item` stay 0% on purpose — the card *is* the rule and its `description` already renders, so a note would be a verbatim copy with no new reader.
 - `_addUnique` disambiguates same-slug name collisions (3rd-party docs reuse generic subclass/feat names) by suffixing the parent tag or a counter.
 
 ## Notes

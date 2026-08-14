@@ -186,12 +186,45 @@ backgrounds** and read by **nothing** — filed on B7. The sweep is scoped to
 player-facing cards on purpose; `monster` writes the same key names (807
 `speed_fly_ft`, 2,713 `trait_refs`) but is never handed to a resolver.
 
-**Next action right now:** **publish** (one command with the two secrets — the
-only thing between the promoted assets and users; the assets moved again with
-L3, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
-`assets/first_party/manifest.json` is rebuilt for the new sizes). After that
-Stage D is closed; on the content side B5, B6, B10 and L1 each need a
-target-shape call first — and **L1 should be read against L2's result before it
+**B5's first clause is done — 2026-08-14.** `mechanical_notes` was **0% on every
+bundled category**; it is now **100% of species (11/11)**, **86% of subspecies
+(26/30)** and **93% of feats (68/73)** — **229 rule lines** that previously
+existed only inside the card's `description` and never reached a sheet.
+The routing unit is the **source row**, not a sentence: upstream already ships
+one rule per `SpeciesTrait` / `FeatBenefit` row, so the mapper emits a note for
+every row **no typed grant parser consumed**, `**Name.** text` per line. Two
+buckets are deliberately not routed, both measured rather than assumed:
+* the flavour/typed-home species traits (`Age`, `Alignment`, `Size`, `Speed`,
+  `Creature Type`, `Languages`, `Ability Score Increase`) — `_flavourTraitNames`;
+* a feat's own `desc` when it has `FeatBenefit` children. **40 of 91 feats** in
+  the snapshot have both, and every one of those descs is a lead-in
+  ("*You gain the following benefits.*"), not a rule. A feat with **no** benefit
+  rows carries its rule in `desc`, and there that row *is* the note.
+Everything else lands: no feat-benefit row and no species-trait row is dropped
+any more. `diff_packs` reports the change as **exactly** `mechanical_notes`
+added on 105 entities (68 feat / 26 subspecies / 11 species) and **no other
+value change in any of the 19 packs**; `verify_packs` **0 disagreements**,
+`gate_packs` green, `dupe_census` section C **0 dangling**, `audit_packs` filled
+slots **133 → 138 of 407**. Assets re-promoted and `manifest.json` rebuilt;
+`pack_version` stays **1.1.0** because it was never uploaded, so no immutable
+`r2_path` exists to collide with. **The rest of B5 — the sourced grant keys,
+`creature-action.damage_type_ref`, `monster.tags_line` — is still open.**
+
+**M2's sheet assertion is in — 2026-08-14.** `mechanical_notes` is now a probe in
+`bundled_pack_resolve_test`'s M1 sweep: every card's note lines have to arrive on
+`EffectiveCharacter.mechanicalNotes`. **73 (pack, mechanic field) pairs, 248 sheet
+assertions, 0 partial**, up from 68/227. The audit tool already prints a
+per-category `mechanical_notes` fill line, so M2's remaining clause is the
+**`trait` half of its exit** — see the note on that phase in §6.
+
+**Publish is deliberately held until the whole system is verified locally
+(decided 2026-08-14).** It is one command with the two secrets and the only
+thing between the promoted assets and users — the assets moved again with L3 and
+B5, still at `pack_version` 1.1.0 since nothing was ever uploaded, and
+`assets/first_party/manifest.json` is rebuilt for the new sizes — but it ships
+an **immutable** `r2_path`, so it goes last, after a local run proves the packs
+install, resolve and render. Until then the next actions are on the content
+side: B5's remainder, B6, B10 and L1 each need a target-shape call first — and **L1 should be read against L2's result before it
 starts**: section A is 1,666 rows but only **7** carry the same text as the
 built-in card, so the same "the candidate set is smaller than the collision
 surface" arithmetic is likely to decide it.
@@ -1947,10 +1980,18 @@ built-in content.
 
 Highest value first:
 
-1. **`mechanical_notes`** — 0% on all 6,423 traits and all 73 feats. Everything the
-   §5 tables describe as "stays in prose" is meant to land here, one rule per
-   line, and render under "Other Effects". Nothing else in this list makes a
-   previously invisible rule visible.
+1. ~~**`mechanical_notes`**~~ — **done 2026-08-14 for the categories a character
+   carries**: species **11/11**, subspecies **26/30**, feat **68/73**, 229 rule
+   lines. Everything the §5 tables describe as "stays in prose" now lands here,
+   one source row per line, and renders under "Other Effects".
+   **`trait` stays 0/6,423 on purpose.** The `trait` slug in these packs is a
+   *monster* trait — an owned child of a statblock (§2.5), never handed to
+   `CharacterResolver`. Its `description` **is** the rule and already renders on
+   the statblock, so a note field would be a verbatim second copy of the same
+   text with no new reader. Same reasoning for `magic-item` (0/1,063): the item
+   card is one rule, not a list of rows, and its description already renders
+   where the item does. The per-row split that makes a note meaningful only
+   exists upstream for `SpeciesTrait` and `FeatBenefit`.
 2. `granted_senses` — needs `range_ft` parsed out of the trait text.
 3. `granted_tool_proficiencies`, `granted_feat_refs` — both have a
    `MODIFICATION_TYPES` source tag that the mapper never reads; both 🔗.
@@ -2357,10 +2398,14 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       **struck by A1:** the mapper already appends `Spell.higher_level` prose,
       and **zero** spells in any document have casting-option payload without
       that prose. There is nothing to recover.
-- [ ] **B5 — Grant block (§5.7).** Start with `mechanical_notes`: route every rule
+- [ ] **B5 — Grant block (§5.7).** ~~Start with `mechanical_notes`: route every rule
       the mapper currently abandons in prose into it, one per line, so it reaches
-      the sheet. Then the sourced keys. Also confirm/fix the
-      `creature-action.damage_type_ref` regression and `monster.tags_line`.
+      the sheet.~~ **Done 2026-08-14** — 229 lines on 105 cards (species 11/11,
+      subspecies 26/30, feat 68/73), one per unconsumed source row; `trait` and
+      `magic-item` are declared out of scope with a reason in §5.7. `diff_packs`
+      shows this and nothing else. **Still open:** the sourced keys, and
+      confirm/fix the `creature-action.damage_type_ref` regression and
+      `monster.tags_line`.
 - [ ] **B6 — Kill the gear stubs.** The 159 synthesised `adventuring-gear` entities
       carry no description, cost or weight, 47 of them are duplicates, and several
       are parse artifacts. Point background/class equipment refs at built-in gear
@@ -2575,16 +2620,35 @@ has a value" into "the value produced the right number on a sheet".
             written-but-never-true (`is_cursed` / `is_sentient` on all 1,063 vom
             items, `repeatable` on every feat); `false` counts as absent, so the
             day one is true it arrives as an undeclared field.
-- [ ] **M2 — `mechanical_notes` is measurable, not just written.** B5 routes
-      abandoned prose into it; this phase proves it arrives. Add a per-category
-      `mechanical_notes` fill line to the audit output, a resolver assertion that
-      the note reaches `EffectiveCharacter.mechanicalNotes`, and a recorded
-      **routing rate** (rules moved vs. rules the mapper still drops) so "the
-      cheapest real win" has a number attached.
-      *Exit: `mechanical_notes` non-zero on `feat` and `trait`, a sheet assertion
-      per source card type, and a stated routing rate with the remainder logged to
-      `unmapped_report.json`.*
-- [ ] **M3 — Declare what stays non-mechanical.** `spell.effects` and
+- [x] **M2 — `mechanical_notes` is measurable, not just written. Done
+      2026-08-14.** All three deliverables are in:
+      * **Fill line** — `audit_packs` already prints `mechanical_notes` per
+        category (it is a declared field); no tool change was needed. It now
+        reads species **100% (11/11)**, subspecies **86% (26/30)**, feat **93%
+        (68/73)**.
+      * **Sheet assertion** — a `mechanical_notes` probe in the M1 sweep
+        (`bundled_pack_resolve_test`) requires every card's note lines to reach
+        `EffectiveCharacter.mechanicalNotes`. **73 pairs, 248 assertions, 0
+        partial**, from 68/227.
+      * **Routing rate** — **100% of rule-bearing source rows**, and nothing is
+        logged to `unmapped_report.json` because nothing is dropped: every
+        `SpeciesTrait` and `FeatBenefit` row now ends in a typed grant field or
+        in a note. The only rows not routed are the two buckets §0 measures —
+        seven flavour/typed-home trait names, and the "*You gain the following
+        benefits.*" feat lead-in (40 of 91 feats have one; none is a rule).
+      *Exit amended:* the filed exit said "non-zero on `feat` **and `trait`**".
+      `trait` is a monster child, never resolved onto a character, and its
+      `description` is already the rule — routing it would be a verbatim copy
+      with no new reader. The `trait` half is replaced by that written reason
+      (§5.7) plus `species`/`subspecies`, which the filed text missed.
+- [x] **M3 — Declare what stays non-mechanical. Done 2026-08-14.** The §5.6
+      paragraph and the "Done when" line are both written, and the boundary is
+      enforced in code: `bundled_pack_resolve_test`'s `notResolverRead` names
+      `effects` as "declared non-mechanical by M3", so a reader appearing later
+      has to delete that line to pass. B5 added a second exclusion in the same
+      shape — `mechanical_notes` on `trait` / `magic-item` (§5.7). No phase
+      promises `effects`. Original text:
+      `spell.effects` and
       `creature-action.effects` have a live editor but **no reader** in `domain/`
       or `application/`, and Open5e has no structured damage rows — so spell and
       action damage stays descriptive text under this audit. Write that down as a
@@ -2769,13 +2833,19 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
-   (**407 declared (category, field) slots, 133 filled since the 2026-08-13 promotion**) rather than by the
+   (**407 declared (category, field) slots, 138 filled since B5's 2026-08-14 promotion**) rather than by the
    abridged tables in §5; `verify_packs` (T1) is green; the built-in pack has been
    measured once (T2); and the relational gate (T3) passes — no monster without
    actions, no orphaned child row, every `parent_class_ref` resolving.
-2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1),
-   `mechanical_notes` has a stated routing rate (M2), and what stays
-   non-mechanical is written down (M3).
+2. **Mechanics** — every (pack, mechanic field) pair has a sheet assertion (M1 —
+   done 2026-08-13, now 73 pairs / 248 assertions), `mechanical_notes` has a
+   stated routing rate (M2 — done 2026-08-14, **100% of rule-bearing source
+   rows**, nothing dropped), and what stays non-mechanical is written down (M3 —
+   done 2026-08-14). **Outcome 2 is met.** Three exclusions are declared, not
+   deferred: `spell.effects` / `creature-action.effects` (no reader in `domain/`,
+   no structured source — §5.6), and `mechanical_notes` on `trait` /
+   `magic-item` (the card *is* the rule; a note would be a verbatim copy of a
+   `description` that already renders — §5.7).
 3. **Linking** — `dupe_census.dart` (fidelity-fixed by L0) reports **actionable
    redundancy** no recorded policy explains — the figure to drive down is that one,
    not the 20.9% collision surface — section C's "nothing installed" is 0 under the
