@@ -3312,6 +3312,27 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 4. **Character creation** — a wizard test per pack family passes (U2 — done
    2026-08-13, 12 chargen-bearing packs, 39 cases), and no chargen filter reads
    a `*_ref` field as a raw id (U1 — done 2026-08-13). **Outcome 4 is met.**
+   **V2 (2026-08-14) closed the two layers below it that nothing had ever run.**
+   Every check up to here reads pack JSON in memory: no pack had ever gone
+   through the *install* path, and no widget had ever been handed pack data.
+   Two data-driven tests now do both, and the second found a live crash.
+   - `test/application/services/pack_install_roundtrip_test.dart` — all 19
+     bundled packs through the real `PackagePayloadImporter` into a Drift DB and
+     back out via `PackageRepository.load`: same entity set, per-entity
+     name/type/attributes identical, every category slug known to the built-in
+     schema, `installed_from` + `catalog_version` + source metadata preserved,
+     re-install idempotent. **All 19 green, nothing lost in the column split.**
+   - `test/presentation/pack_field_render_test.dart` — each (category, field)
+     pair once with its real value, read-only and editable, over the 19 packs
+     **and the built-in SRD**: 438 pairs, 876 pumps. **Found: `species.
+     granted_senses` threw on render** — `RangedSenseListFieldWidget` cast
+     `row['sense_ref'] as String?`, but a sense ref is a **soft ref Map**, which
+     is what B5's mapper writes *and* what `lookup('sense', 'Darkvision')` puts
+     on hand-authored SRD cards. So every Dragonborn/Elf/Dwarf sheet hit it too
+     — a built-in bug the pack work merely surfaced. Fixed at the shared reader:
+     `_MiniRelationField.value` takes `Object?` and renders a soft ref by its
+     `name`/`slug`, which also un-blanks `pool_ref` and `spell_ref` (they were
+     silently showing "—" for soft refs behind an `is String` guard).
 5. **Delivery** — a published catalog whose packs upload rather than skip (D1 —
    bumped and rebuilt, **upload still owed**), with an upgrade path for existing
    installs (D2 — done 2026-08-13).

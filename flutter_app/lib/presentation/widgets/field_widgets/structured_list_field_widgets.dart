@@ -277,7 +277,11 @@ Widget _badge(String text, Color color) {
 
 class _MiniRelationField extends StatelessWidget {
   final String label;
-  final String? value;
+
+  /// Hard ref (uuid `String`) **veya** soft ref (`{slug/_lookup, name}` Map).
+  /// Built-in SRD kartları da paketler de soft ref yazıyor (`lookup('sense',
+  /// 'Darkvision')`), bu yüzden `String?` cast'i gerçek veride patlıyordu.
+  final Object? value;
   final List<String> allowedTypes;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
@@ -296,8 +300,14 @@ class _MiniRelationField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasValue = value != null && value!.isNotEmpty;
-    final displayName = hasValue ? (entities?[value!]?.name ?? value!) : '—';
+    final v = value;
+    final String? label0 = switch (v) {
+      String s when s.isNotEmpty => entities?[s]?.name ?? s,
+      Map m => (m['name'] ?? m['slug'] ?? m['_lookup'])?.toString(),
+      _ => null,
+    };
+    final hasValue = label0 != null && label0.isNotEmpty;
+    final displayName = hasValue ? label0 : '—';
     return SizedBox(
       width: 200,
       child: InputDecorator(
@@ -465,7 +475,7 @@ class RangedSenseListFieldWidget extends StatelessWidget {
           children: [
             _MiniRelationField(
               label: 'Sense',
-              value: row['sense_ref'] as String?,
+              value: row['sense_ref'],
               allowedTypes: const ['sense'],
               entities: entities,
               ref: ref,
@@ -774,7 +784,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
           children: [
             _miniEnum(
               label: 'Kind',
-              value: row['kind'] as String?,
+              value: row['kind'],
               options: _spellEffectKinds,
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'kind': v}),
@@ -789,7 +799,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
             ),
             _MiniRelationField(
               label: 'Damage Type',
-              value: row['type_ref'] as String?,
+              value: row['type_ref'],
               allowedTypes: const ['damage-type'],
               entities: entities,
               ref: ref,
@@ -798,7 +808,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
             ),
             _MiniRelationField(
               label: 'Save Ability',
-              value: row['save_ability_ref'] as String?,
+              value: row['save_ability_ref'],
               allowedTypes: const ['ability'],
               entities: entities,
               ref: ref,
@@ -807,7 +817,7 @@ class SpellEffectListFieldWidget extends StatelessWidget {
             ),
             _miniEnum(
               label: 'Save Effect',
-              value: row['save_effect'] as String?,
+              value: row['save_effect'],
               options: _spellSaveEffects,
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'save_effect': v ?? ''}),
@@ -1265,9 +1275,7 @@ class ResourcePoolGrantsFieldWidget extends StatelessWidget {
               children: [
                 _MiniRelationField(
                   label: 'Pool',
-                  value: row['pool_ref'] is String
-                      ? row['pool_ref'] as String
-                      : null,
+                  value: row['pool_ref'],
                   allowedTypes: const ['resource-pool'],
                   entities: entities,
                   ref: ref,
@@ -1495,7 +1503,7 @@ class SpellsAtLevelFieldWidget extends StatelessWidget {
         children: [
           _MiniRelationField(
             label: 'Spell',
-            value: row['spell_ref'] is String ? row['spell_ref'] as String : null,
+            value: row['spell_ref'],
             allowedTypes: const ['spell'],
             entities: entities,
             ref: ref,
