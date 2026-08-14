@@ -22,7 +22,7 @@ tags: [file]
 
 **Outputs**
 - `packageEntitiesProvider` (FutureProvider.family by package name) — one package's entities, `_lookup` placeholders already resolved against the built-in Tier-0 ids.
-- `sourcePackagesOf(Character)`, `expandedPackageNames(watch, names)`, `layerCharacterPackages(...)`, `mergeBuiltinWithPackages(...)`, `layerPackagesOverBuiltin(builtin, packages)`.
+- `sourcePackagesOf(Character)`, `expandedPackageNames(watch, names)`, `layerCharacterPackages(...)`, `withCharacterPackages(watch, base, character)`, `mergeBuiltinWithPackages(...)`, `layerPackagesOverBuiltin(builtin, packages)`.
 
 ## Dependencies & Links
 - Depends on: [[packages_dao]], [[package_import_service]] (`resolveLookupPlaceholder`), [[builtin_package_provider]], [[package_link_service]], [[bundled_packs_bootstrap]].
@@ -40,4 +40,5 @@ tags: [file]
 ## Notes
 - ✅ **Three paths, three answers — fixed 2026-08-14 (audit L1).** `mergeBuiltinWithPackages` built `{...builtin, ...packages}` → the **built-in** card won all 1,643 section-A name collisions; `layerCharacterPackages` put packages first → the **package** won, but the *linked* pack beat the picked one, contradicting its own doc comment; `wizardEntitiesProvider`'s world branch suppresses the built-in row by `(slug, lowercased name)` → the **campaign** won. A worldless character with A5E ticked got the SRD card in the wizard and the A5E card on the sheet. All three now agree: the package the user picked wins.
 - The rule is only defensible because L1 measured the collisions and dropped **none** of them — A5E restats, separate Tome of Beasts editions, monster-owned children and two additive singletons (`docs/open5e_content_audit.md` §2.5). Since the shadowing is permanent, it has to point at the pack the user asked for.
-- Test: `test/application/services/package_shadowing_test.dart` — shadow direction, closure order, empty/unloaded, and a built-in-only name still resolving.
+- ✅ **Kart yüzeyleri paketleri atlıyordu — düzeltildi 2026-08-14.** `characters_tab` (H3 perf birleştirmesi), `characters_sidebar`, `world_characters_view` ve editör başlığı `_StatChipsHeader` kendi entity haritalarını kuruyor ve karakterin `source_packages`'ını **katmıyordu**; built-in dışı bir paketle kurulan karakterin Species/Class çipleri "—" görünüyordu. Dördü de artık `withCharacterPackages` üzerinden geçiyor (paketi olmayan karakterde ekstra watch yok, `base` kimliğiyle döner). Ayrıca sihirbaz `source_packages`'ı **yalnız worldsuz modda** damgalıyordu; cold-open fallback'i karakteri aktif world'e bağlayınca damga hiç yazılmıyordu — artık `draft.sourcePackages` doluysa her zaman yazılıyor.
+- Test: `test/application/services/package_shadowing_test.dart` — shadow direction, closure order, empty/unloaded, and a built-in-only name still resolving. `test/application/services/character_package_entities_test.dart` — `withCharacterPackages` katmanlaması + paketsiz karakterde kimlik dönüşü.
