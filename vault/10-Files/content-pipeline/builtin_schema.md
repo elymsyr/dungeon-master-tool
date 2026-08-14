@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/{builtin_dnd5e_v2_schema.da
 layer: domain
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-14
 tags: [file]
 ---
 
@@ -20,7 +20,7 @@ tags: [file]
 
 **Outputs**
 - `generateBuiltinDnd5eV2Schema()` → `BuiltinDnd5eV2Build{schema, seedRows}`.
-  - `schema`: `WorldSchema` (version `2.4.0`, baseSystem `dnd5e`) with all categories + a default encounter layout/config.
+  - `schema`: `WorldSchema` (version `2.5.0` — bumped 2026-08-14 for `monster.alignment_note`, audit **B10**; see [[mapper_monster]], baseSystem `dnd5e`) with all categories + a default encounter layout/config.
   - `seedRows`: `slug → List<row>` — only Tier-0 categories carry rows; Tier-1 and Tier-2 ship shape-only (empty rows).
 - `buildTier0Lookups({schemaId, now})` → `List<Tier0CategoryBuild>` (category + canonical seed rows). Also exports `tier0Slugs` (the canonical ordered slug list).
 - `buildTier1Content({schemaId, now, startOrderIndex})` → Tier-1 `EntityCategorySchema` list.
