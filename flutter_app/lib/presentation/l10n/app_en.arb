@@ -342,6 +342,7 @@
   "signOutConfirmTitle": "Sign out?",
   "signOutConfirmBody": "You will be signed out and returned to the sign-in screen. Make sure any pending changes have been saved or backed up.",
   "signOut": "Sign Out",
+  "signOutLocalDataNote": "Your worlds, characters and packages stay in your account and come back the next time you sign in. The offline workspace on this device starts empty.",
 
   "settingsVolume": "Volume",
   "settingsData": "Data",

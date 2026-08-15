@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/app_database.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -47,6 +47,7 @@ tags: [file]
 - **Index block** `_v12Indexes` (S1 perf): hot-path indexes incl. `idx_world_entities_world`, `idx_world_entities_category (world_id, category_slug)`, `idx_world_characters_owner/updated`, `idx_outbox_next_attempt (next_attempt_at, created_at)`, `idx_outbox_table_pk (target_table, target_pk, op_type)` for outbox coalescing, `idx_trash_kind_deleted`.
 - **`beforeOpen` one-time repairs** (gated via `migration_progress`): `subspecies_reclassify_v1` promotes legacy `species` rows whose description starts `*Subspecies of X.*` to `category_slug='subspecies'` + injects `parent_species_ref` softRef via `json_set`; plus best-effort `trashDao.purgeOlderThan(now-30d)`.
 - **DB file path / fresh-cut** (`_openConnectionForUser`): `AppPaths.dataRoot/db/dmt.sqlite` (or `.../users/{userId}/db/dmt.sqlite`). Legacy `getApplicationSupportDirectory/DungeonMasterTool/...` file copied once (marked `.moved_to_dataroot`). Any pre-v12 file is renamed to `dmt.sqlite.legacy.<unix-ms>` (marker `.v12_cut_applied`), kept 30 days then purged. Uses `NativeDatabase.createInBackground`.
+- **⚠️ Fresh-cut kesİmİ (O4, 2026-08-15 düzeltildi) — veri kaybettiriyordu.** İşaretçi (`.v12_cut_applied`) yalnızca *kesim sırasında* yazılıyordu; sıfırdan yaratılan bir DB için hiç yazılmıyordu. Sonuç: yeni dosya bir sonraki açılışta "işaretsiz" görünüyor ve kesim **onun üstünde** çalışıyordu. Ölçüm: `AppDatabase.forUser('u1')` — ilk oturum **1 satır**, ikinci oturum **0 satır**. Aynı tuzak [[guest_promotion_service]]'in terfisini de yiyordu (kopyalanan DB işaretçisiz geliyor). Düzeltme: dosya yokken de (yani Drift'in birazdan yaratacağı dosya tanım gereği v12 iken) işaretçi hemen yazılıyor; gerçekten pre-v12 olan dosyalar için kesim aynen duruyor. Test: `test/application/services/guest_account_switch_test.dart` — iki vaka doğrudan bunu tutuyor ve **gerçek açılış yolundan** (`AppDatabase.forUser`) geçiyor; `forTesting` bu fonksiyonu atladığı için O3'ün testleri hatayı göremiyordu.
 
 ## Notes
 - Companion `database_provider.dart`: `activeUserIdProvider` (StateProvider) + `appDatabaseProvider` (Provider) — changing the active user opens a new user-scoped DB and disposes the old one, cascade-invalidating all downstream DAO/repo providers.

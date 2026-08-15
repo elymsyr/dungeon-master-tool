@@ -340,6 +340,7 @@
   "signOutConfirmTitle": "Çıkış yapılsın mı?",
   "signOutConfirmBody": "Çıkış yapılacak ve giriş ekranına dönülecek. Bekleyen değişikliklerin kaydedildiğinden veya yedeklendiğinden emin olun.",
   "signOut": "Çıkış Yap",
+  "signOutLocalDataNote": "Dünyalarınız, karakterleriniz ve paketleriniz hesabınızda kalır; bir sonraki girişinizde geri gelir. Bu cihazdaki çevrimdışı çalışma alanı boş başlar.",
 
   "settingsVolume": "Ses Düzeyi",
   "settingsData": "Veri",

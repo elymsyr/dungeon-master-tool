@@ -340,6 +340,7 @@
   "signOutConfirmTitle": "Se déconnecter ?",
   "signOutConfirmBody": "Vous serez déconnecté et redirigé vers l'écran de connexion. Assurez-vous que les modifications en attente ont été enregistrées ou sauvegardées.",
   "signOut": "Se déconnecter",
+  "signOutLocalDataNote": "Vos mondes, personnages et paquets restent dans votre compte et reviendront à votre prochaine connexion. L'espace de travail hors ligne de cet appareil repart vide.",
 
   "settingsVolume": "Volume",
   "settingsData": "Données",
