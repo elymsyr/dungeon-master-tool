@@ -24,6 +24,7 @@ import '../asset_ref_image.dart';
 import '../markdown_text_area.dart';
 import '../perf/image_cache_size.dart';
 import '../quota_snackbar.dart';
+import 'entity_link.dart';
 import 'structured_list_field_widgets.dart';
 
 /// Resolve a relation field value to an entity UUID. Handles three formats
@@ -31,21 +32,18 @@ import 'structured_list_field_widgets.dart';
 ///   * String UUID (normal resolved relation).
 ///   * `{_lookup: <slug>, name: <row>}` — Tier-0 placeholder that escaped
 ///     import-time resolution (stale data from earlier app version).
-///   * `{_ref: <slug>, name: <row>}` — Tier-1 placeholder, treated the same.
-/// Returns the matching entity's UUID or '' when nothing fits.
+///   * `{_ref: <slug>, name: <row>}` — Tier-1 placeholder, treated the same,
+///     as is the soft ref `{slug, name}` a package writes for a cross-pack
+///     target (audit **U3** — that fourth shape used to fall through to `''`,
+///     which is why a packaged spell never rendered as a link).
+/// Returns the matching entity's UUID or '' when nothing fits. The lookup
+/// itself lives in [entityLinkTarget] → `resolveEntityRef`; this wrapper only
+/// keeps the `''`-instead-of-null convention its call sites are written to.
 String resolveRelationId(dynamic value, Map<String, Entity>? entities) {
+  // A bare String is passed through even when it isn't in [entities]: callers
+  // fall back to showing the raw id so a broken hard ref stays debuggable.
   if (value is String) return value;
-  if (value is Map) {
-    final slug = (value['_lookup'] ?? value['_ref']);
-    final name = value['name'];
-    if (slug is String && name is String && entities != null) {
-      for (final e in entities.values) {
-        if (e.categorySlug == slug && e.name == name) return e.id;
-      }
-    }
-    return '';
-  }
-  return '';
+  return entityLinkTarget(value, entities) ?? '';
 }
 
 /// Short subtitle for a related entity, surfaced under the chip name in
@@ -100,18 +98,12 @@ String? _relationSubtitle(Entity e) {
   }
 }
 
-/// Set the entity-navigation provider so the database screen opens [id]
-/// in the OPPOSITE panel from [sourcePanel]. Call site (relation chip
-/// tap) supplies the source panel; null source → default routing.
-void _navigateToEntity(WidgetRef ref, String id, String? sourcePanel) {
-  final target = switch (sourcePanel) {
-    'left' => 'right',
-    'right' => 'left',
-    _ => null,
-  };
-  ref.read(entityNavigationTargetPanelProvider.notifier).state = target;
-  ref.read(entityNavigationProvider.notifier).state = id;
-}
+/// Open [id] in the OPPOSITE panel from [sourcePanel]. Call site (relation chip
+/// tap) supplies the source panel; null source → default routing. The write
+/// itself is [navigateToEntity] in `entity_link.dart` — the single entry point
+/// audit U3 settled on, shared with the structured-list mini fields.
+void _navigateToEntity(WidgetRef ref, String id, String? sourcePanel) =>
+    navigateToEntity(ref, id, sourcePanel: sourcePanel);
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -2410,8 +2402,13 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
     if (value is! List) return [];
     return value.map<Map<String, dynamic>>((e) {
       if (e is Map) {
-        if (e['_lookup'] != null || e['_ref'] != null) {
-          return {'id': resolveRelationId(e, entities), 'equipped': false};
+        // Audit **U3**: every ref envelope, not just `_lookup`/`_ref`. A soft
+        // `{slug, name}` used to fall through to the `{id, equipped}` branch
+        // and land with a null id — which is how a packaged spell on a
+        // character's spell list rendered as nothing to tap.
+        final resolved = entityLinkTarget(e, entities);
+        if (resolved != null) {
+          return {'id': resolved, 'equipped': e['equipped'] == true};
         }
         return Map<String, dynamic>.from(e);
       }
@@ -2449,15 +2446,20 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     this.panelId,
   });
 
+  /// Ids for a relation **list**. Every envelope goes through
+  /// [entityLinkTarget]; the `{id: ...}` shape stays because the selector
+  /// dialog writes it, and a bare String stays raw for the debug fallback
+  /// below. Audit **U3**: a `{slug, name}` soft ref used to fall to
+  /// `e['id']` → `''` → dropped, so a packaged spell was not merely
+  /// untappable, it was invisible.
   List<String> _parseIds(dynamic v) {
     if (v is! List) return const [];
     return v
         .map<String>((e) {
           if (e is String) return e;
           if (e is Map) {
-            if (e['_lookup'] != null || e['_ref'] != null) {
-              return resolveRelationId(e, entities);
-            }
+            final resolved = entityLinkTarget(e, entities);
+            if (resolved != null) return resolved;
             return (e['id']?.toString() ?? '');
           }
           return e.toString();

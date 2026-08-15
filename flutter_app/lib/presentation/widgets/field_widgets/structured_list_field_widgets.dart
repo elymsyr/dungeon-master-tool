@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import 'entity_link.dart';
 
 /// Typed structured-list editors for the structured list FieldTypes:
 ///   - classFeatures
@@ -308,6 +309,12 @@ class _MiniRelationField extends StatelessWidget {
     };
     final hasValue = label0 != null && label0.isNotEmpty;
     final displayName = hasValue ? label0 : '—';
+    // Audit **U3** — the value is a link when a card for it exists. It stays
+    // plain text otherwise (an uninstalled pack's ref), and the underline is
+    // the affordance, so it only appears where the tap lands somewhere.
+    // No `sourcePanel`: these rows sit inside a structured-list editor, which
+    // is not panel-scoped, so the default routing applies.
+    final linkId = entityLinkTarget(v, entities);
     return SizedBox(
       width: 200,
       child: InputDecorator(
@@ -320,13 +327,20 @@ class _MiniRelationField extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                displayName,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: hasValue ? null : Theme.of(context).colorScheme.outline,
+              child: EntityLink(
+                targetId: linkId,
+                ref: ref,
+                child: Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        hasValue ? null : Theme.of(context).colorScheme.outline,
+                    decoration:
+                        linkId != null ? TextDecoration.underline : null,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (!readOnly && hasValue)
@@ -397,16 +411,27 @@ class _MiniRelationListField extends StatelessWidget {
           runSpacing: 4,
           children: [
             for (final id in values)
-              Chip(
-                label: Text(
-                  entities?[id]?.name ?? id,
-                  style: const TextStyle(fontSize: 11),
+              // Audit **U3**: same rule as the single-value field — tappable
+              // only when the id resolves to a card that is actually here.
+              EntityLink(
+                targetId: entityLinkTarget(id, entities),
+                ref: ref,
+                child: Chip(
+                  label: Text(
+                    entities?[id]?.name ?? id,
+                    style: TextStyle(
+                      fontSize: 11,
+                      decoration: entities?[id] != null
+                          ? TextDecoration.underline
+                          : null,
+                    ),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onDeleted: readOnly
+                      ? null
+                      : () => onChanged([...values]..remove(id)),
                 ),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                onDeleted: readOnly
-                    ? null
-                    : () => onChanged([...values]..remove(id)),
               ),
             if (!readOnly)
               InkWell(
