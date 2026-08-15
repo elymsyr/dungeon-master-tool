@@ -654,4 +654,93 @@ void main() {
       });
     });
   });
+
+  /// **Audit phase O8.** A character made without an account has a null owner,
+  /// and the hub's character tab is own-only - it reads a null owner as "mine"
+  /// only while nobody is signed in. So promoted characters landed in the
+  /// account's database and appeared on none of its screens. Reported, after
+  /// the worlds and the packages were already coming across, as simply
+  /// "karakter hala gelmiyor".
+  group('characters that arrive without an owner', () {
+    Future<void> seedCharacter(
+      File file, {
+      required String id,
+      required String worldId,
+      String? ownerId,
+      bool withWorld = true,
+    }) async {
+      await Directory(p.dirname(file.path)).create(recursive: true);
+      final db = openTestDatabaseAt(file);
+      if (withWorld) {
+        await db.into(db.worlds).insert(
+              WorldsCompanion.insert(id: worldId, worldName: worldId),
+            );
+      }
+      await db.into(db.worldCharacters).insert(
+            WorldCharactersCompanion.insert(
+              id: id,
+              worldId: worldId,
+              templateId: 'dnd5e',
+              templateName: 'D&D 5e',
+              ownerId: Value(ownerId),
+            ),
+          );
+      await db.close();
+    }
+
+    test('a world-bound guest character becomes the account\'s', () async {
+      // World-bound is the case the existing backfill deliberately skips,
+      // because there a null owner normally means "released".
+      await seedCharacter(guestDb(), id: 'c1', worldId: 'w1');
+
+      await service.copyIntoAccount(_userId);
+      final report = await withAccountDatabase(
+          (db) => service.finalizePromotion(_userId, db));
+      expect(report.charactersClaimed, 1);
+
+      await withAccountDatabase((db) async {
+        final rows = await db.select(db.worldCharacters).get();
+        expect(rows.single.id, 'c1');
+        expect(rows.single.ownerId, _userId,
+            reason: 'otherwise the character tab hides it');
+      });
+    });
+
+    test('merged into an existing account database, same result', () async {
+      // The common path: the account already has a database on this device.
+      await seedCharacter(accountDb(), id: 'a1', worldId: 'w0',
+          ownerId: _userId);
+      await seedCharacter(guestDb(), id: 'c1', worldId: 'w1');
+
+      final copied = await service.copyIntoAccount(_userId);
+      expect(copied.outcome, GuestPromotionOutcome.mergedIntoAccountDatabase);
+      final report = await withAccountDatabase(
+          (db) => service.finalizePromotion(_userId, db));
+      expect(report.charactersClaimed, 1);
+
+      await withAccountDatabase((db) async {
+        final rows = await db.select(db.worldCharacters).get();
+        expect({for (final r in rows) r.id: r.ownerId},
+            {'a1': _userId, 'c1': _userId});
+      });
+    });
+
+    test("an account's own released character keeps its null owner", () async {
+      // A null owner on a row the account already had means the release RPC
+      // put it there. Promotion must not undo that.
+      await seedCharacter(accountDb(), id: 'released', worldId: 'w0');
+      await seedCharacter(guestDb(), id: 'c1', worldId: 'w1');
+
+      await service.copyIntoAccount(_userId);
+      final report = await withAccountDatabase(
+          (db) => service.finalizePromotion(_userId, db));
+      expect(report.charactersClaimed, 1, reason: 'the guest row only');
+
+      await withAccountDatabase((db) async {
+        final rows = await db.select(db.worldCharacters).get();
+        expect({for (final r in rows) r.id: r.ownerId},
+            {'released': null, 'c1': _userId});
+      });
+    });
+  });
 }
