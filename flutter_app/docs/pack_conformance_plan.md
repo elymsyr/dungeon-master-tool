@@ -95,10 +95,10 @@ yol haritasından):
 | `dupe_census` B "textually identical" | 189 ad / 193 kopya (**karar gereği**, ihmal değil) |
 | `dupe_census` C | 4.074 ref / **0 dangling** |
 | `gate_packs` | **0 ihlal** |
-| `verify_packs` | 68.561 ok / **0 disagree** / **0 absent** / 3.303 unsourced / 14.383 unverifiable |
+| `verify_packs` | 68.561 ok / **0 disagree** / **0 absent** / 3.303 unsourced / **17.268** unverifiable (F0 2026-08-15'te yeniden ölçtü; V1'in 14.383'ü `monster.tags_line` kuralından önceydi) |
 | `unmapped_report.json` | 3 satır |
 | M1 | 73 çift / 247 iddia / 1 kısmi |
-| Korpüs | 21.839 varlık (19 paket) + 2.719 (built-in) |
+| Korpüs | 21.839 varlık (19 paket) + 2.719 (built-in) — **`audit_packs`'in paydası 21.832**, dışarıda 6 `language` + 1 `size` (F0) |
 
 **Bu sayılardan sapma, taramanın ilk bulgusudur** — çünkü sapma, yol haritasının
 kapandığı günden bu yana bir şeyin kaydı olmadan değiştiği anlamına gelir.

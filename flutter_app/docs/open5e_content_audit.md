@@ -76,6 +76,11 @@ F reads all **20 units** (built-in + 19 official, 24,558 entities) one at a time
 against a written checklist — [`pack_conformance_checklist.md`](pack_conformance_checklist.md),
 [`pack_conformance_plan.md`](pack_conformance_plan.md),
 [`pack_conformance_findings.md`](pack_conformance_findings.md).
+**F0 approved the yardstick on 2026-08-15** by running it rather than reading
+it: 31 items (not the 30 filed), every citation and every named command checked,
+all accept lines re-measured — and three defects fixed before any pack is
+scanned, the sharpest being **B5, which had misread §2.2 and would have filed a
+fabricated finding against all 19 packs**. **The next open phase is F1.**
 
 ---
 
@@ -4259,12 +4264,51 @@ procedure, and the ledger have different lifetimes:
 
 | Document | Role |
 |---|---|
-| [`pack_conformance_checklist.md`](pack_conformance_checklist.md) | **the yardstick** — 30 items in 7 groups (A identity · B linking · C field coverage · D correctness · E mechanics · F reaches-the-user · G packaging), each with the technical rule, the command that proves it, a plain-language reading and a worked example |
+| [`pack_conformance_checklist.md`](pack_conformance_checklist.md) | **the yardstick** — **31** items in 7 groups (A identity · B linking · C field coverage · D correctness · E mechanics · F reaches-the-user · G packaging), each with the technical rule, the command that proves it, a plain-language reading and a worked example. **Approved 2026-08-15 (F0)**, and the approval block at its end records what was re-measured to get there |
 | [`pack_conformance_plan.md`](pack_conformance_plan.md) | **the procedure and the progress board** — two passes, four waves, 20 scan units, the reading budget, the handoff protocol |
 | [`pack_conformance_findings.md`](pack_conformance_findings.md) | **the ledger** — one entry per finding, with evidence, a proposed cause code and options; plus the six known-open items that must not be re-discovered as findings |
 
-- [ ] **F0 — The checklist.** Derived from this file, not invented: every item
-      names the phase that created the rule.
+- [x] **F0 — The checklist. Approved 2026-08-15 — and the approval was earned by
+      running it, not by reading it.** The yardstick is **31** items in 7 groups
+      (the filing said 30; counted, 31). Every item's `Kaynak` line resolves:
+      30 phase codes (`V1`, `L1–L4`, `B1–B11`, `M1–M4`, `T1`, `T2-1..3`, `T3`,
+      `U1–U3`, `D1`, `D2`, `V2`) and 21 `§` headings were looked up one by one;
+      one wrong address (A1 sent the reader to §6 Stage V for V2, which lives in
+      §7 outcome 4). All **10 named command targets exist** — 5 CLIs + 5 test
+      files — and every flag they use (`--only`, `--packs`, `--builtin`,
+      `--markdown`, `--list-shared`, `--list-builtin-same`, `--examples`,
+      `--data`, `--doc`) is declared in the tools' own parsers.
+      **Accept lines re-measured today, and one had gone stale:** `gate_packs`
+      green / 0 violations · `dupe_census` A "same text" **0**, B 189 names /
+      193 copies (unchanged, by decision), C 4,074 refs with **"nothing
+      installed" 0** · `audit_packs` **136 of 408** filled slots ·
+      `unmapped_report.json` **3** rows · `verify_packs` **68,561 ok / 0
+      disagree / 0 absent / 3,303 unsourced** — but **unverifiable is 17,268,
+      not V1's 14,383**. The difference is exactly one monster-wide rule
+      (2,885 = the monster count): `monster.tags_line`, added by `622f910`'s v1
+      subtype recovery. `ok` never moved, so this is new content the mapper
+      started writing, not a regression — corrected in the checklist and in the
+      plan's Pass 0 table before anyone baselines against it.
+      **Three defects found in the yardstick itself, all fixed:** (1) **four of
+      31 items could not be checked at all** — E2, G2 and G3 had no
+      `Nasıl bakılır` line, and E3's pointed at "M4, still the only open phase"
+      instead of a command; all four now name a real check (E3's only became
+      possible when M4 closed on 2026-08-15), and the four items missing the
+      worked example the document promises (D2, E2, G1, G3) got one. (2) **B5
+      had misread §2.2**: it demanded `metadata.links` **and** `requires` in the
+      pack payload, but §2.2's "both keys" are `slug` + `name` *inside a link
+      record*, and `requires` is not a pack field at all — it is what
+      `build_catalog` derives from `links` into the manifest entry. Measured:
+      **0 of 19 packs carry `metadata.links`; 19 of 19 manifest entries carry
+      `requires: []`**. Left alone, the sweep would have filed a fabricated
+      finding against every pack. (3) **`audit_packs`' denominator is not the
+      corpus**: the packs ship **13** entity types and the tool tables **12** —
+      **21,832 of 21,839**. The 7 outside it are Tier-0 rows shipped by packs:
+      6 `language` (all *Void Speech*, in six packs) + 1 `size` (*Titanic*,
+      `a5e-mm`) — invisible to every C-group check, so C7 now names them as a
+      by-hand stop. (`dupe_census` does see them: section B's `language 5`.)
+      No `*.pkg.json` was touched; F4's "the sweep changes no content" holds for
+      F0 too.
       *Exit: approved. **No pack is scanned before that** — a sweep run against an
       unapproved yardstick has to be run twice.*
 - [ ] **F1 — The procedure and the board.** Two passes, because most checklist

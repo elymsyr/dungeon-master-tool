@@ -65,7 +65,8 @@ Paketin içindeki kart, "kart" sayılabilecek şekilde mi duruyor?
   olmalı ki içine koyabilsin. Kutu yoksa kart yok olur, hata da vermez.
 - **Örnek.** ✅ `spell`, `monster`, `creature-action` · ❌ `spell-variant` (şemada
   yok → 0 kart görünür, sessizce).
-- **Kaynak.** V2 (`pack_install_roundtrip_test`), §6 Stage V.
+- **Kaynak.** V2 (`pack_install_roundtrip_test`) — §7 outcome 4'te tanımlı, §6
+  Stage V'de **değil** (Stage V yalnız V1'i taşır).
 
 ### A2 — Kategorinin zorunlu alanları dolu
 
@@ -194,9 +195,17 @@ paket yeniden getirmez.**
 
 ### B5 — Paket→paket bağı iki anahtarla beyan edilir
 
-- **Kural (teknik).** Bir paket başka bir paketin içeriğine bağlanıyorsa
-  `metadata.links` **ve** `requires` dolu olmalı — ikisi birden, biri değil.
-- **Nasıl bakılır.** Paketin `metadata` bloğunu oku (küçük, güvenli okuma).
+- **Kural (teknik).** §2.2'nin "iki anahtar"ı `links` + `requires` değil, **bir
+  link kaydının içindeki iki anahtar**: `metadata.links[] = {slug, name}`. `slug`
+  hedefin katalog slug'ı (`open5e-toh`), `name` ise hedefin `metadata.title`'ı
+  (`Tome of Heroes`) — `build_catalog._requiredSlugs` birincisini okur,
+  `PackageLink.fromJson` `slug`'ı **hiç okumaz** ve ikincisine bakar. Tek anahtarlı
+  link iki farklı yerde sessizce düşer. `requires` paketin içinde **yoktur**;
+  `build_catalog`'un `links`'ten türetip manifest girdisine yazdığı alandır.
+- **Nasıl bakılır.** İki dosya, iki yer: paket `metadata.links` (küçük, güvenli
+  okuma) ve `assets/first_party/manifest.json` girdisinin `requires`'ı. Bugün
+  ölçüldü (2026-08-15): **19 paketin 0'ında `metadata.links` var**, 19 manifest
+  girdisinin hepsinde `requires: []`.
 - **Ne demek.** "Bu paket şu pakete muhtaç" bilgisi yazılı olmazsa, kullanıcı
   eksik paketle kurar ve içerik yarım gelir.
 - **Örnek.** ✅ Bugün 19 paketin hepsinde `requires: []` — ve bu **doğru**: L2
@@ -299,7 +308,11 @@ dolu görüyor. Bu bölüm, o 136'nın doğru 136 olup olmadığını sorar.
   Tier-0 satırlar fixture pk üzerinden çözülmeli; serbest metin kalmamalı.
   `unmapped_report.json` bugün **3** satır.
 - **Nasıl bakılır.** `assets/open5e_packs/unmapped_report.json` (küçük dosya,
-  tam okunabilir).
+  tam okunabilir; bugün tek anahtar `alignment`, 3 satır). **Ayrıca:** paketler
+  Tier-0 satırı da **gönderiyor** — 6 `language` (hepsi *Void Speech*, altı
+  pakette) + 1 `size` (*Titanic*, `a5e-mm`). Bu 7 satır `audit_packs` tablosunun
+  **dışında** kalır (aşağıdaki onay notuna bakın), yani C grubunun geri kalanı
+  onları hiç görmez; örneklem okumada elle bakılacak yer burasıdır.
 - **Ne demek.** `thieves-cant` kullanıcıya `Thieves' Cant` diye görünmeli.
   Sadece baş harf büyütmek buna asla ulaşamaz — sözlük satırı gerekir.
 - **Örnek.** ✅ B9: unmapped 144 → 70, `monster.size_ref` 2885/2885. ✅ B10:
@@ -342,11 +355,18 @@ Alan dolu olması, değerin **doğru** olması demek değil.
 ### D2 — `unsourced` / `unverifiable` beyan edilmiş kuralla geliyor
 
 - **Kural (teknik).** Bu iki kovadaki her alan `verify.dart`'ta bir `_Rule`
-  taşımalı. Bugün 3.303 `unsourced` + 14.383 `unverifiable`, hepsi kurallı.
+  taşımalı. Bugün (F0'da yeniden ölçüldü, 2026-08-15) **3.303 `unsourced` +
+  17.268 `unverifiable`**, hepsi kurallı. V1'in yazdığı 14.383 rakamı **eski**:
+  aradaki 2.885 tam olarak bir canavar-geneli kural, `monster.tags_line`
+  (`622f910`, v1 subtype recovery) — mapper alanı yazmaya başladı, `ok` 68.561'de
+  sabit kaldı, yani gerileme değil yeni içerik.
 - **Nasıl bakılır.** Aynı komut; kovaların alan listesini `verify.dart` ile
   karşılaştır.
 - **Ne demek.** "Doğrulayamadım" demek serbest değil — **neden**
   doğrulayamadığın yazılı olmalı.
+- **Örnek.** ✅ `monster.xp` → `experience_points_integer` sütunundan türetiliyor,
+  kuralı yazılı. ❌ Kovada görünen ama `verify.dart`'ta `_Rule`'u olmayan bir alan
+  — "doğrulanamadı" demenin imzasız hâli.
 - **Kaynak.** T1, V1.
 
 ### D3 — İlişkisel tutarlılık
@@ -381,7 +401,15 @@ Alan dolu olması, değerin **doğru** olması demek değil.
 
 - **Kural (teknik).** M3'ün beyan listesi. Yeni bir alan bu listeye eklenmeden
   mekanik dışı sayılamaz.
+- **Nasıl bakılır.** `flutter test test/domain/services/bundled_pack_resolve_test.dart`
+  — beyan listesi kodda duruyor: `notResolverRead` (satır 279) ve `unreadByAnyone`
+  (satır 322). Kapı **iki yönlü**: beyansız alan düşer, *ve* `expect(unreadSeen,
+  unreadByAnyone.keys.toSet())` sayesinde artık okunan bir alanın beyanı listede
+  kalırsa da düşer.
 - **Ne demek.** "Bu sadece süs metin" demek serbest değil, imzalı olmalı.
+- **Örnek.** ✅ `effects` → `notResolverRead`'de, gerekçesi "declared
+  non-mechanical by M3". ❌ Aynı alana bir okuyucu gelir de satır silinmezse test
+  düşer — beyan eskiyemez.
 - **Kaynak.** M3, §5.6, §5.7.
 
 ### E3 — Büyücülük ilerlemesi
@@ -389,7 +417,9 @@ Alan dolu olması, değerin **doğru** olması demek değil.
 - **Kural (teknik).** Kartın `spell_slots_by_level`'ı **override**'dır;
   varsayılan `caster_progression.dart`'ın `caster_kind`'dan hesapladığı SRD
   ilerlemesidir. Öncelik: **override > preset.**
-- **Nasıl bakılır.** M4 (yol haritasında hâlâ açık olan tek faz).
+- **Nasıl bakılır.** `flutter test test/application/character_creation/spell_slot_grid_reach_test.dart`
+  (M4 — 2026-08-15'te kapandı; bu madde yazıldığında hâlâ açıktı, o yüzden
+  komutu yoktu).
 - **Ne demek.** Paket kendi tablosunu vermezse SRD tablosu devreye girer; verirse
   onunki kazanır.
 - **Örnek.** ✅ Korpüs taraması: tek iki paket sınıfı (`a5e-ag` Marshal,
@@ -463,12 +493,20 @@ kurulum ve gerçek widget yolunu sorar.
 - **Nasıl bakılır.** `dart run tool/catalog_publish/bin/build_catalog.dart` →
   drift var mı.
 - **Ne demek.** Kullanıcı "Güncelle" düğmesini ancak sürüm ilerlerse görür.
+- **Örnek.** ✅ `open5e-a5e-ag` → `version 1.1.0`, `r2_path
+  package/open5e-a5e-ag@1.1.0.json.gz` — ikisi aynı sürümü söylüyor. ❌ İçerik
+  değişmiş ama `version` aynı kalmış: `r2_path` değişmez olduğu için yeni içerik
+  hiçbir zaman yüklenemez.
 - **Kaynak.** D1, D2, §3.3.
 
 ### G2 — Lisans, yayıncı, kaynak metadata'sı doğru
 
 - **Kural (teknik).** `publisher`, `license`, `game_system`, `is_srd_overlap`
   manifest'te ve paket `metadata`'sında tutarlı.
+- **Nasıl bakılır.** İki tarafı karşılaştır — `assets/first_party/manifest.json`
+  girdisi (`publisher`, `license`, `game_system`, `is_srd_overlap`) ile paketin
+  `metadata` bloğundaki aynı dört anahtar. Dört alan da her iki dosyada var;
+  farklıysa bulgu.
 - **Ne demek.** OGL / CC-BY yükümlülüğü. Yanlış lisans etiketi hukuki sorun,
   teknik sorun değil.
 - **Örnek.** `open5e-a5e-ag` → EN Publishing / `ogl-10a` / `a5e`.
@@ -479,8 +517,15 @@ kurulum ve gerçek widget yolunu sorar.
 - **Kural (teknik).** SRD-overlap atlaması **yayıncı geneli**, iki belge değil.
   `game_system` etiketleri (`5e-2014`, `a5e`, `5e-2024`) kartın hangi kurala göre
   yazıldığını taşır.
+- **Nasıl bakılır.** `is_srd_overlap` bayrağı manifest girdisinde ve paket
+  `metadata`'sında; atlanan belgelerin listesi importer'ın yayıncı-geneli skip
+  kuralında (§4 A2). Bayrağı `true` olan bir paketin **gönderilmiş** olması
+  bulgudur.
 - **Ne demek.** WotC'nin kendi SRD'sini yeniden paketlemiyoruz; gömülü paket
   zaten o.
+- **Örnek.** ✅ `open5e-a5e-ag` → `is_srd_overlap: false`, `game_system: a5e`.
+  ❌ SRD belgesinin bir kısmının ayrı paket olarak gelmesi — kullanıcı gömülü
+  kartın kopyasını görür (B1'in aynı hatası, paket düzeyinde).
 - **Kaynak.** §4 A2, §2.1.
 
 ---
@@ -498,7 +543,7 @@ kurulum ve gerçek widget yolunu sorar.
 | B2 | Paketler arası kopya kart yok (çocuk satır hariç) | `dupe_census --list-shared` |
 | B3 | Düzyazı yerine ref | `audit_packs` ref doluluğu |
 | B4 | Her ref çözülür | `gate_packs` = 0, census C "nothing installed" = 0 |
-| B5 | `links` + `requires` yazılı gerekçeli | paket `metadata` |
+| B5 | Link kaydı iki anahtarlı (`slug`+`name`) | paket `metadata.links` + manifest `requires` |
 | C1 | class/subclass seviye tablosu | `audit_packs --only class,subclass` |
 | C2 | species/background/feat alanları | `audit_packs --only …` |
 | C3 | spell alanları | `audit_packs --only spell` |
@@ -512,7 +557,7 @@ kurulum ve gerçek widget yolunu sorar.
 | D3 | İlişkisel tutarlılık | `gate_packs` |
 | E1 | Mekanik sayfaya iniyor | `bundled_pack_resolve_test` |
 | E2 | Mekanik olmayan beyan edilmiş | M3 listesi |
-| E3 | Büyücülük ilerlemesi | M4 (açık) |
+| E3 | Büyücülük ilerlemesi | `spell_slot_grid_reach_test` (M4) |
 | F1 | Kurulum kayıpsız | `pack_install_roundtrip_test` |
 | F2 | Render çökmüyor | `pack_field_render_test` |
 | F3 | Sihirbaz görüyor | `wizard_pack_families_test` |
@@ -523,5 +568,60 @@ kurulum ve gerçek widget yolunu sorar.
 
 ---
 
-**Checklist onaylanmadan paket taramasına başlanmaz.** Onay geldiğinde
-`pack_conformance_plan.md`'deki sıraya göre başlanır.
+---
+
+## F0 onayı — 2026-08-15
+
+**Onaylandı.** Ölçüt kullanıma hazır; `pack_conformance_plan.md`'deki sıraya göre
+taramaya başlanabilir. Onay, dosyayı okumakla değil **denemekle** verildi.
+
+**Ne denendi.**
+
+- **31 madde / 7 grup** (yol haritası "30" diyordu — sayıldı, 31; yol haritası
+  düzeltildi). Her maddenin `Kaynak` satırı var ve her biri bu dosyada gerçekten
+  bulunan bir faza/`§`'a çıkıyor — 30 faz kodu (`V1`, `L1–L4`, `B1–B11`, `M1–M4`,
+  `T1`, `T2-1..3`, `T3`, `U1–U3`, `D1`, `D2`, `V2`) ve 21 `§` başlığı tek tek
+  arandı. Tek yanlış adres: A1 "§6 Stage V" diyordu, V2 orada değil — düzeltildi.
+- **Adı geçen 10 komut hedefinin 10'u da var** (5 CLI + 5 test dosyası) ve
+  kullandıkları bayrakların hepsi araçların parser'ında tanımlı: `--only`,
+  `--packs`, `--builtin`, `--markdown`, `--list-shared`, `--list-builtin-same`,
+  `--examples`, `--data`, `--doc`.
+- **Kabul çizgileri yeniden ölçüldü** (aşağıdaki tablo); biri eskimişti.
+
+**Bugün ölçülen kabul çizgileri (2026-08-15, snapshot `d4276c58`):**
+
+| Ne | Ölçülen | Beklenen |
+|---|---|---|
+| `gate_packs` | green, 0 ihlal | 0 ✅ |
+| `dupe_census` A "same text" | **0** | 0 ✅ |
+| `dupe_census` B textually identical | 189 ad / 193 kopya | değişmedi ✅ |
+| `dupe_census` C softRef | 4.074 toplam, **"nothing installed" 0** | 0 ✅ |
+| `audit_packs` dolu yuva | **136 / 408** | 136/408 ✅ |
+| `unmapped_report.json` | 3 satır (`alignment`) | 3 ✅ |
+| `verify_packs` | 68.561 ok / **0 disagree** / **0 absent** | 0/0 ✅ |
+| `verify_packs` unsourced | 3.303 | 3.303 ✅ |
+| `verify_packs` unverifiable | **17.268** | ~~14.383~~ ❗ düzeltildi |
+| Korpüs | 21.839 (19 paket) + 2.719 (built-in) | doğru ✅ |
+
+**Onay sırasında ölçüt hakkında bulunan üç şey — düzeltildi:**
+
+1. **Dört maddenin çalıştırılabilir bir kontrolü yoktu.** E2, G2, G3'te
+   `Nasıl bakılır` satırı **hiç yoktu**; E3'ünki komut değil "M4 (açık faz)"
+   diyordu. Dosyanın kendi kuralı "her maddede beş parça var" — dördü onu
+   çiğniyordu. Dördüne de gerçek kontrol yazıldı (E3'ünki M4 kapandığı için artık
+   mümkün). Ayrıca `Örnek`'i eksik dört madde (D2, E2, G1, G3) tamamlandı.
+2. **B5 kaynağını yanlış okumuştu.** "İki anahtar" diye `links` + `requires`
+   yazıyordu; §2.2'nin kastettiği **bir link kaydının içindeki** `slug` + `name`.
+   `requires` paket dosyasında hiç yok — ölçüldü: 19 paketin **0'ında**
+   `metadata.links`, 19 manifest girdisinin **hepsinde** `requires: []`. Eski
+   hâliyle tarama 19 paketin her birinde uydurma bir bulgu üretirdi.
+3. **`audit_packs`'in paydası korpüsün tamamı değil.** Paketler **13** tip
+   gönderiyor, `audit_packs` **12**'sini tabloluyor: 21.839'un **21.832**'si.
+   Dışarıda kalan 7 satır Tier-0: 6 `language` (*Void Speech*, altı pakette) +
+   1 `size` (*Titanic*, `a5e-mm`). C grubu bunları hiç görmüyor; C7'ye elle
+   bakılacak yer olarak yazıldı. (`dupe_census` görüyor — B bölümündeki
+   `language 5` bu.)
+
+**Değişmeyen karar.** Tarama içinde hiçbir şey düzeltilmez (F4). Bu onay
+bloğundaki düzeltmeler **ölçütün kendisine** ait, içeriğe değil — hiçbir
+`*.pkg.json` satırına dokunulmadı.

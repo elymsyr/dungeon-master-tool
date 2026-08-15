@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-08-13
+updated: 2026-08-15
 tags: [moc]
 ---
 
@@ -146,4 +146,11 @@ Open5e fixtures → [[normalize]] → [[mapper_monster|mappers]] → [[refgraph]
   every non-WotC document** — which [[build_packs]] never reads; that is a
   **T2-2** harvest into [[srd_core_pack]], not a reason to ship a WotC pack.
 - `flutter_app/docs/open5e_import_roadmap.md`; chargen wiring doc removed after all phases shipped (2026-06-09).
+- **Stage F'in ölçütü onaylı (F0, 2026-08-15)** — `flutter_app/docs/pack_conformance_checklist.md`
+  (31 madde, 7 grup) + `pack_conformance_plan.md` + `pack_conformance_findings.md`.
+  Onay sırasında iki temel sayı düzeltildi, ikisi de burada geçerli: `verify_packs`
+  **unverifiable 17.268** (V1'in 14.383'ü `monster.tags_line` kuralından önceydi;
+  `ok` 68.561'de sabit, gerileme yok) ve **`audit_packs`'in paydası 21.832 / 21.839** —
+  paketlerin gönderdiği 13 tipin 12'si tabloda; dışarıda 6 `language` (*Void Speech*)
+  + 1 `size` (*Titanic*, `a5e-mm`).
 - Memories: `open5e_import_initiative`, `open5e_pack_consolidation_jun2026`, `subspecies_category_jun2026`, `official_pkg_chargen_rules_jun2026`, `bg_equipment_chargen_jun9`.
