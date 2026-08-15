@@ -365,6 +365,28 @@ LazyDatabase _openConnection() => _openConnectionForUser(null);
 /// Legacy support for `{getApplicationSupportDirectory}/DungeonMasterTool/...`
 /// is also handled — that file is copied (not renamed) once and marked with
 /// `.moved_to_dataroot`, then v12 fresh-cut applies normally.
+/// The `user_version` of a SQLite file, straight out of its header — a 4-byte
+/// big-endian integer at offset 60 of page 1, defined by the file format. Null
+/// when the file is too short or unreadable to be a database at all.
+///
+/// Deliberately not a `PRAGMA`: [_openConnectionForUser] runs before any
+/// connection exists and `package:sqlite3` is a dev-only dependency here.
+Future<int?> _userVersionOf(File file) async {
+  try {
+    final handle = await file.open();
+    try {
+      await handle.setPosition(60);
+      final bytes = await handle.read(4);
+      if (bytes.length < 4) return null;
+      return bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3];
+    } finally {
+      await handle.close();
+    }
+  } catch (_) {
+    return null;
+  }
+}
+
 LazyDatabase _openConnectionForUser(String? userId) {
   return LazyDatabase(() async {
     final base = userId != null
@@ -373,19 +395,38 @@ LazyDatabase _openConnectionForUser(String? userId) {
     final dbDir = Directory(p.join(base, 'db'));
     if (!dbDir.existsSync()) dbDir.createSync(recursive: true);
     final newFile = File(p.join(dbDir.path, 'dmt.sqlite'));
+    final marker = File(p.join(dbDir.path, '.v12_cut_applied'));
 
     // Legacy support directory copy (pre-Apr-2026 install layout).
-    if (!newFile.existsSync()) {
+    //
+    // **O5 — this import is one-shot, and the marker is what makes it one.**
+    // The only guard used to be "there is no database here", which is true
+    // again every time the file legitimately goes away — and O4 made that a
+    // routine event: retiring a spent guest tree *moves* `dmt.sqlite` into
+    // `guest_archive/`. The next open then re-imported the pre-Apr-2026
+    // support-directory database, and because `.v12_cut_applied` was already
+    // sitting in this directory the v12 cut did not touch it. Measured on the
+    // reporter's device: the signed-out workspace came back holding a
+    // **schema v5** file (`map_pins.campaign_id`, no `world_id`), so Drift ran
+    // `onUpgrade` → `createAll()` kept the ancient tables → the very first
+    // index statement threw `no such column: world_id` and the hub showed a
+    // SqliteException instead of a world list.
+    //
+    // The marker means "this directory has been past the v12 cut". Nothing
+    // pre-v12 may enter after that, so the import is skipped — an *empty*
+    // directory here is a deliberately empty workspace, not a fresh install.
+    if (!newFile.existsSync() && !marker.existsSync()) {
       try {
         final support = await getApplicationSupportDirectory();
         final legacyBase = userId != null
             ? p.join(support.path, 'DungeonMasterTool', 'users', userId)
             : p.join(support.path, 'DungeonMasterTool');
+        // Belt and braces: the import writes this receipt, so honour it too.
+        final receipt = File(p.join(legacyBase, '.moved_to_dataroot'));
         final legacyFile = File(p.join(legacyBase, 'dmt.sqlite'));
-        if (legacyFile.existsSync()) {
+        if (legacyFile.existsSync() && !receipt.existsSync()) {
           await legacyFile.copy(newFile.path);
-          await File(p.join(legacyBase, '.moved_to_dataroot'))
-              .writeAsString(newFile.path);
+          await receipt.writeAsString(newFile.path);
         }
       } catch (_) {
         // path_provider unavailable (e.g. tests) — create fresh DB.
@@ -395,9 +436,18 @@ LazyDatabase _openConnectionForUser(String? userId) {
     // v12 fresh-cut: any DB at the new location is pre-v12 (since v12 ships
     // for the first time in this PR). Rename to forensic backup, then v12
     // onCreate will populate a fresh file.
-    final marker = File(p.join(dbDir.path, '.v12_cut_applied'));
+    //
+    // **O5 — the marker is no longer the only evidence.** It records that this
+    // directory has been past the cut, which says nothing about the file
+    // sitting in it *now*: a pre-v12 database that arrives after the marker was
+    // written (see the resurrection above) used to sail straight through and
+    // blow up in `onUpgrade`. The file's own `user_version` is asked as well,
+    // and it is the stronger answer — it is read from the SQLite header, which
+    // needs no sqlite3 handle and therefore no dependency this layer lacks.
     if (newFile.existsSync()) {
-      if (!marker.existsSync()) {
+      final onDisk = await _userVersionOf(newFile);
+      final isPreV12 = onDisk != null && onDisk > 0 && onDisk < 12;
+      if (!marker.existsSync() || isPreV12) {
         final ts = DateTime.now().millisecondsSinceEpoch;
         final legacyTarget = File(p.join(dbDir.path, 'dmt.sqlite.legacy.$ts'));
         await newFile.rename(legacyTarget.path);
