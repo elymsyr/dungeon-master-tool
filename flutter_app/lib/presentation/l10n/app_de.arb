@@ -340,6 +340,7 @@
   "signOutConfirmTitle": "Abmelden?",
   "signOutConfirmBody": "Sie werden abgemeldet und zum Anmeldebildschirm zurückgebracht. Stellen Sie sicher, dass ausstehende Änderungen gespeichert oder gesichert wurden.",
   "signOut": "Abmelden",
+  "signOutLocalDataNote": "Ihre Welten, Charaktere und Pakete bleiben in Ihrem Konto und sind bei der nächsten Anmeldung wieder da. Der Offline-Arbeitsbereich auf diesem Gerät beginnt leer.",
 
   "settingsVolume": "Lautstärke",
   "settingsData": "Daten",

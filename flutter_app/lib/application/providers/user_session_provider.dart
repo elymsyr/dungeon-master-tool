@@ -26,7 +26,9 @@ class UserSessionNotifier extends StateNotifier<bool> {
   /// bulur.
   Future<void> activate(String userId) async {
     final promotion = GuestPromotionService(dataRoot: AppPaths.dataRoot);
-    final promoting = !promotion.isPromoted(userId) && promotion.hasGuestData();
+    // **O4** folded the three questions into one: not promoted yet, nobody else
+    // has spent the guest tree, and there is something in it.
+    final promoting = promotion.canPromote(userId);
 
     if (promoting) {
       try {
@@ -63,7 +65,28 @@ class UserSessionNotifier extends StateNotifier<bool> {
   }
 
   /// Kullanıcı oturumunu sonlandır — global path'lere dön.
+  ///
+  /// **O4 — çıkış temiz bir misafir alanına iner.** Global kök, terfi edilmiş
+  /// misafir ağacının ta kendisi; hiçbir şey yapılmazsa çıkan kullanıcı kendi
+  /// hesabının bayat bir kopyasına düşer (ve o cihazı sonra kim açarsa onun
+  /// dünyalarını görür). Yollar kullanıcıdan çıkmadan **önce** hak sahibi
+  /// işaretlenmiş ağaç arşive taşınır; taşıma idempotent olduğu için yarıda
+  /// kalmış bir terfi de burada iyileşir. Sıra kritik: `setUser(null)` +
+  /// `activeUserIdProvider = null` misafir DB'sini yeniden açar, dolayısıyla
+  /// dosyaların o andan önce yerinden alınmış olması gerekir.
   Future<void> deactivate() async {
+    try {
+      final promotion = GuestPromotionService(dataRoot: AppPaths.dataRoot);
+      final report = await promotion.retireClaimedGuestTree();
+      if (report.movedAnything) {
+        debugPrint('Guest tree retired: $report');
+      }
+    } catch (e, st) {
+      // Arşivleme başarısızsa oturum yine de kapanır — bir sonraki çıkışta
+      // tekrar denenir, veri hâlâ hesabın altında duruyor.
+      debugPrint('Guest tree retirement failed: $e\n$st');
+    }
+
     await AppPaths.setUser(null);
     _ref.read(activeUserIdProvider.notifier).state = null;
     _invalidateAll();

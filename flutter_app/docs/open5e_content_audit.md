@@ -60,12 +60,16 @@ is not gated at all. **O3 closed the handover the same day**: signing up copies
 the guest Drift database — closed, WAL pair included, guest tree read-only — into
 `users/{id}/` and rewrites the media paths inside it
 (`guest_promotion_service.dart`), which is what the migration it replaces never
-did. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
-simply unreachable; the store and the online features stay account-gated; and the
-guest→account handover has to move the **Drift** database, which the migration
-that exists today explicitly does not
-(`user_session_provider.dart` — *"we can't easily copy here"*), even though every
-piece of structured content has lived there since the v12 fresh cut.
+did. **O4 closed Stage O the same day** — and found that O3 had never actually
+worked: the v12 fresh-cut renames any `dmt.sqlite` with no `.v12_cut_applied`
+beside it, so the first real open threw the promoted database away and handed
+the account an empty one (measured: **0 worlds**), and the same guard was eating
+*every* database this app creates on its second open (measured: **1 row, then
+0**). With that fixed, the policy is written down: the guest tree is scratch
+space exactly one account may claim, claiming it archives it under
+`guest_archive/<ts>/`, and a second account on the device absorbs nothing.
+Offline mode already existed in `AppPaths`/`openAppDatabase` and was simply
+unreachable; the store and the online features stay account-gated.
 **Stage F — the terminal step:** every phase in this file was graded by a
 corpus-wide aggregate, which cannot say whether one card in one pack is right.
 F reads all **20 units** (built-in + 19 official, 24,558 entities) one at a time
@@ -3936,11 +3940,18 @@ has a value" into "the value produced the right number on a sheet".
       unconditionally today and knows nothing about install state — the dialog is
       where that lives), and l10n beyond the four shipped locales.
 
-### Stage O — the app without an account (filed 2026-08-15)
+### Stage O — the app without an account (filed 2026-08-15, closed 2026-08-15)
 
 **Runs after every phase above.** Nothing here is content work; it is the reason
-the content reaches anyone at all. Today, on a build carrying the three Supabase
-defines, it reaches nobody who has not registered.
+the content reaches anyone at all. As filed, on a build carrying the three
+Supabase defines, it reached nobody who had not registered.
+
+**All four boxes are ticked.** O1 made the offline entry reachable, O2 made "this
+needs an account" one predicate, O3 carried the guest database into the account,
+and O4 decided what happens to the guest tree afterwards — and found, on the way,
+that the v12 fresh-cut guard had been quietly renaming away every database the
+app created, O3's promotion included. **The next open phase is Stage F**, which
+is terminal and was always meant to run after this one.
 
 **The mechanism, measured** (as filed — **replaced by O1 on 2026-08-15**, see
 its box). The gate was four lines — `appRouter`'s redirect
@@ -4150,15 +4161,82 @@ than writing a second merge.**
       touches": O3 touched `user_session_provider` and nothing else in
       `lib/application/providers/`, so they are still uncollected. Recorded in
       the vault rather than quietly dropped.
-- [ ] **O4 — Sign-out, and the second account on one device.** Today
-      `deactivate()` returns the paths to the global root — which *is* the guest
-      database — so after a sign-out the user lands back in their pre-registration
-      data, while the `migrated_{userId}` sentinel says that data has already been
-      absorbed. Whether the guest DB is a scratch space any account may claim
-      **once**, or is consumed at first promotion and reset, is a decision nobody
-      has taken.
-      *Exit: the policy is written down (here and in the vault), and a test proves
-      a second account cannot silently absorb the first account's promoted data.*
+- [x] **O4 — Sign-out, and the second account on one device. Done 2026-08-15.**
+      **The decision, taken: the guest tree is scratch space that exactly one
+      account may claim, and claiming it consumes it.** Three rules, in
+      `guest_promotion_service.dart`:
+      (1) **Claimed once** — the account whose promotion *finishes* writes
+      `.guest_claimed` at the guest root naming itself and what it took, and no
+      other account ever promotes from that tree again
+      (`GuestPromotionOutcome.guestAlreadyClaimed`).
+      (2) **Consumed, not deleted** — the claim is followed by
+      `retireClaimedGuestTree()`, which *moves* the absorbed database and media
+      into `guest_archive/<ts>/` and keeps them 30 days, the same shape and the
+      same clock as the v12 cut's `dmt.sqlite.legacy.<ts>`. This is the one place
+      O3's never-move rule is relaxed, and only because the completion marker is
+      proof the same bytes now exist twice: that rule protected a *sole* copy,
+      and after a finished promotion there is no sole copy left.
+      (3) **Sign-out lands in a fresh guest space** — because the retirement
+      emptied the guest root, `deactivate()` → `AppPaths.setUser(null)` opens a
+      new, empty database instead of a stale duplicate of the account. A shared
+      device stops showing the previous account's worlds to whoever picks it up,
+      and the second account is stopped *by construction*, not only by the claim
+      check. Retirement is idempotent and also runs from `deactivate()`, so a
+      promotion that died between the claim and the move heals on the next
+      sign-out or offline entry.
+      **The phase's premise was one release out of date and it hid the real
+      bug.** The `migrated_{userId}` sentinel the box describes had already been
+      replaced by a file marker in O3, so that half was moot. Reading the
+      sign-out path for the *second* account instead turned up something worse:
+      **O3 had never actually worked.** `_openConnectionForUser` treats any
+      `dmt.sqlite` with no `.v12_cut_applied` beside it as pre-v12 and renames it
+      to `dmt.sqlite.legacy.<ts>` before Drift creates an empty one — and a
+      promoted database arrives in exactly that state. Measured: after a
+      promotion that reported `db: true`, `AppDatabase.forUser('u1')` returned
+      **0 worlds**, with the copy sitting beside it under a legacy name. O3's
+      tests could not see it because they open through `AppDatabase.forTesting`,
+      which skips that function entirely.
+      **The same guard was eating every database this app creates.** The marker
+      is only ever written *by* the cut, never when a database is created fresh,
+      so a new file is unmarked on its second open and the cut fires on it.
+      Measured on a plain `AppDatabase.forUser('u1')`: **first session 1 row,
+      second session 0 rows.** Both halves are fixed where they belong — the open
+      path records the cut when it creates a fresh v12 file, and the promotion
+      writes the marker next to the database it copies.
+      **What O3 promised and O4 moved:** "the guest database is still sitting
+      there afterwards" is now "the guest database is in the archive,
+      byte-for-byte". Three of O3's eleven cases were retargeted at
+      `guest_archive/<ts>/db/dmt.sqlite` rather than weakened — same bytes, same
+      open, same paths inside it.
+      *Exit met:* the policy is written here, in the service's own doc comment,
+      and in [`vault/10-Files/multiplayer/guest_promotion_service.md`](../../vault/10-Files/multiplayer/guest_promotion_service.md);
+      `test/application/services/guest_account_switch_test.dart` — **14 cases,
+      all green**, all of them through the *real* open path: the second account
+      gets `guestAlreadyClaimed`, copies no database, has no `worlds/` and reads
+      **zero** of the first account's rows; putting new files into the emptied
+      guest space does not reopen the door (the claim closes it, not the
+      emptiness); an unparseable claim file still counts as a claim; the spent
+      tree is readable in the archive; the signed-out session opens empty while
+      the account still has its world; retirement is idempotent and never
+      overwrites an archive; and a promotion that absorbed nothing
+      (`accountAlreadyHasData`) does **not** spend the tree, so the next account
+      may still claim it. With the two fixes reverted, exactly the three cases
+      that assert data survival fail. The last two cases drive
+      `UserSessionNotifier` itself through a `ProviderContainer` — sign in, sign
+      out, sign in as somebody else — because the ordering *is* the policy here:
+      `activate` promotes before it switches the paths, `deactivate` retires
+      before `appDatabaseProvider` reopens the guest database, and the second
+      account comes up empty.
+      **Localized**, as Stage O requires: `signOutLocalDataNote` (en → tr/de/fr)
+      appears in the sign-out dialog only when this device's guest workspace has
+      actually been spent.
+      *Not covered, stated rather than implied:* the cloud half is unchanged —
+      nothing here pushes, `BetaEnterMergeService` is still the only merge, and
+      it still cannot run under `flutter test`. The archive's 30-day purge is
+      implemented and read but not clock-tested. And the fix to the v12 cut does
+      not recover the databases it has already renamed away on real installs:
+      those files are still on disk as `dmt.sqlite.legacy.<ts>` for 30 days, and
+      deciding whether to offer them back is not this phase's call.
 
 **Stage O inherits the repo gate like every other phase**, and adds one: every
 new user-facing string lands in `app_en.arb` first, then `app_tr` / `app_de` /

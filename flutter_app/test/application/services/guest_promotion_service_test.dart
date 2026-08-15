@@ -11,8 +11,17 @@ import '../../support/test_database.dart';
 
 /// **Audit phase O3.** The roundtrip the roadmap asks for: a guest builds a
 /// world, a character and a package, signs up, and finds all of it under the
-/// new user id — with the guest tree still sitting there untouched, because the
+/// new user id — with the guest tree still intact byte for byte, because the
 /// failure mode this phase exists to prevent is a move that half-succeeds.
+///
+/// **O4 moved where "intact" lives.** A promotion that *finishes* now claims
+/// the guest tree and parks it under `guest_archive/<ts>/`, so that the next
+/// signed-out session opens a clean workspace instead of a stale duplicate of
+/// somebody's account. Nothing here got weaker: the three cases below still
+/// compare the same bytes and still open the same database, they just look for
+/// it where the policy now keeps it. What O3 forbade — losing the guest copy
+/// while the account copy is still in flight — is untouched, because the move
+/// happens strictly after the completion marker exists.
 ///
 /// The cloud half is deliberately absent. Once the rows are under
 /// `users/{id}/` they are ordinary local rows, and `BetaEnterMergeService`'s
@@ -47,6 +56,15 @@ void main() {
   File guestDb() => File(p.join(root.path, 'db', 'dmt.sqlite'));
   File accountDb() =>
       File(p.join(root.path, 'users', _userId, 'db', 'dmt.sqlite'));
+
+  /// Where O4's retirement parks the guest database once it has been spent.
+  File archivedGuestDb() {
+    final archives =
+        Directory(p.join(root.path, GuestPromotionService.archiveDirName));
+    final stamped = archives.listSync().whereType<Directory>().toList();
+    expect(stamped, hasLength(1), reason: 'exactly one retirement per device');
+    return File(p.join(stamped.single.path, 'db', 'dmt.sqlite'));
+  }
 
   /// Everything a guest can accumulate: a world with an entity that carries an
   /// absolute media path (both as a column and inside a JSON blob), a
@@ -203,8 +221,10 @@ void main() {
 
       await promote();
 
-      expect(guestDb().existsSync(), isTrue);
-      expect(await guestDb().readAsBytes(), before);
+      // O4: the same bytes, in the archive the claim moved them to.
+      expect(guestDb().existsSync(), isFalse);
+      expect(archivedGuestDb().existsSync(), isTrue);
+      expect(await archivedGuestDb().readAsBytes(), before);
     });
 
     test('the guest database still opens and still holds its own paths after '
@@ -212,7 +232,7 @@ void main() {
       await seedGuestDatabase();
       await promote();
 
-      final db = openTestDatabaseAt(guestDb());
+      final db = openTestDatabaseAt(archivedGuestDb());
       final entity = (await db.select(db.worldEntities).get()).single;
       expect(entity.imagePath, startsWith(guestWorldsDir()));
       expect(entity.imagePath, isNot(contains('users')));
@@ -243,7 +263,7 @@ void main() {
           File(p.join(root.path, 'users', _userId, '.promotion_in_progress'))
               .existsSync(),
           isFalse);
-      expect(await guestDb().readAsBytes(), guestBytes);
+      expect(await archivedGuestDb().readAsBytes(), guestBytes);
       await withAccountDatabase((db) async {
         expect((await db.select(db.worlds).get()).length, 1);
       });

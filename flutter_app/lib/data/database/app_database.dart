@@ -395,14 +395,23 @@ LazyDatabase _openConnectionForUser(String? userId) {
     // v12 fresh-cut: any DB at the new location is pre-v12 (since v12 ships
     // for the first time in this PR). Rename to forensic backup, then v12
     // onCreate will populate a fresh file.
+    final marker = File(p.join(dbDir.path, '.v12_cut_applied'));
     if (newFile.existsSync()) {
-      final marker = File(p.join(dbDir.path, '.v12_cut_applied'));
       if (!marker.existsSync()) {
         final ts = DateTime.now().millisecondsSinceEpoch;
         final legacyTarget = File(p.join(dbDir.path, 'dmt.sqlite.legacy.$ts'));
         await newFile.rename(legacyTarget.path);
         await marker.writeAsString(legacyTarget.path);
       }
+    } else if (!marker.existsSync()) {
+      // **O4.** Nothing on disk, so the file Drift is about to create is v12 by
+      // definition and the cut has nothing to do here. The marker must still be
+      // written *now*: it is the only record that this directory has been past
+      // the cut, and without it the next open would find an unmarked `dmt.sqlite`
+      // — the one this session is about to fill — and rename it away as if it
+      // were pre-v12. Measured before the fix: a database created and written in
+      // one session came back empty on the second open, every time.
+      await marker.writeAsString('fresh v12');
     }
 
     // Purge legacy backups older than 30 days.

@@ -38,3 +38,4 @@ tags: [file]
 
 ## Notes
 - **O3 (2026-08-15) o boşluğu kapattı:** terfi artık `clear()`'ın yanında değil, `UserSessionNotifier.activate` içinde [[guest_promotion_service]] ile yapılıyor — Drift veritabanı da (kapalıyken, WAL çifti dahil) kopyalanıyor, medya ağaçlarına `characters/` de eklendi. `clear()` hâlâ yalnız bayrağı siler; doğru yerde durur, çünkü terfi oturumun açılmasına bağlı, seçimin unutulmasına değil.
+- **O4 (2026-08-15)** bayrağın *arkasındaki* alanın ne olduğunu tanımladı: bir hesap misafir ağacını talep ettiyse ([[guest_promotion_service]]), tekrar misafir olarak girmek artık **boş** bir çalışma alanına girmektir — eski içerik arşivde durur ama misafir oturumu onu görmez. Bayrak hâlâ sadece "kullanıcı bunu seçti"yi hatırlar; "o veriler kimin" sorusunun cevabı talep dosyasında.
