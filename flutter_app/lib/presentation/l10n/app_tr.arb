@@ -109,6 +109,8 @@
   "landingAccountBanned": "Hesap Yasaklandı",
   "landingOk": "Tamam",
   "landingOr": "VEYA",
+  "landingContinueWithoutAccount": "Hesap açmadan devam et",
+  "landingOfflineHint": "Dünyalar, karakterler ve pakete gömülü içerik tamamen çevrimdışı çalışır. Daha sonra giriş yapabilirsin.",
   "landingOauthGoogle": "Google ile devam et",
   "landingOauthGithub": "GitHub ile devam et",
   "landingFieldEmail": "E-posta",

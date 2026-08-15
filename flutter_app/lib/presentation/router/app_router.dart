@@ -13,18 +13,22 @@ import '../screens/main_screen.dart';
 import '../screens/package_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/templates/template_editor_screen.dart';
+import 'route_access.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
-    // When Supabase is configured, require authentication for all
-    // routes except the landing page.
-    if (!SupabaseConfig.isConfigured) return null;
-    final isLanding = state.matchedLocation == '/';
-    final isAuthenticated =
-        Supabase.instance.client.auth.currentSession != null;
-    if (!isAuthenticated && !isLanding) return '/';
-    return null;
+    // O1 — a per-route capability check, not a session check. A guest reaches
+    // every local-only screen; only the account-only routes bounce to the
+    // landing page. The decision itself lives in `route_access.dart` so it can
+    // be tested without a live Supabase (`isConfigured` is a compile-time
+    // define a test can never flip).
+    return resolveRedirect(
+      supabaseConfigured: SupabaseConfig.isConfigured,
+      hasSession: SupabaseConfig.isConfigured &&
+          Supabase.instance.client.auth.currentSession != null,
+      location: state.matchedLocation,
+    );
   },
   routes: [
     GoRoute(
