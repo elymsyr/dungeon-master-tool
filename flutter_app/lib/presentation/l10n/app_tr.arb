@@ -817,5 +817,13 @@
   "profileMenuAdminPanel": "Yönetici Paneli",
   "profileMenuReportBug": "Hata bildir",
   "profileMenuSupport": "Destek",
-  "profileMenuSupportBody": "Aracı beğendiysen aşağıdaki kanallardan birinden destek olabilirsin. Teşekkürler!"
+  "profileMenuSupportBody": "Aracı beğendiysen aşağıdaki kanallardan birinden destek olabilirsin. Teşekkürler!",
+
+  "accountRequiredTitle": "Hesap gerekli",
+  "accountRequiredBody": "Bunu kullanmak için giriş yap. Dünyaların, karakterlerin ve kurulu paketlerin her durumda bu cihazda kalır.",
+  "accountRequiredSignIn": "Giriş Yap",
+  "accountRequiredMarketplace": "Pazar yeri içeriği hesaplar arasında paylaşır, bu yüzden bir hesap ister.",
+  "accountRequiredCloudBackup": "Bulut yedeği bu öğeyi hesabına kopyalar. Yerel kayıt onsuz da çalışır.",
+  "accountRequiredOnlineSync": "Çevrimiçi eşitleme bunu diğer cihazlarınla aynı hizada tutar.",
+  "accountRequiredWorldSharing": "Paylaşılan dünyalar, davetler ve oyuncu koltukları sunucuda durur."
 }

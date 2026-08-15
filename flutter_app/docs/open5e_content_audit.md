@@ -52,7 +52,11 @@ the 19 packs hold **2 class cards**, both `caster_type: NONE` at the source
 user at all. **O1 closed the first half 2026-08-15** — the redirect is a
 per-route capability check now (`route_access.dart`), the landing page has a
 "continue without an account" action, and only `/profile` and `/admin` still
-need a session. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
+need a session. **O2 followed the same day**: the three states a device can be
+in are one predicate (`account_gate.dart`), and a guest now sees the gated
+surfaces with a sign-in prompt instead of a blank — except the first-party
+catalog, which the Worker serves publicly (`worker.ts:331`) and which therefore
+is not gated at all. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
 simply unreachable; the store and the online features stay account-gated; and the
 guest→account handover has to move the **Drift** database, which the migration
 that exists today explicitly does not
@@ -4004,24 +4008,80 @@ than writing a second merge.**
       form; a router test asserts `/hub`, `/main` and `/character/new` no longer
       redirect to `/` for a null session; the new strings exist in all four
       `.arb` locales.*
-- [ ] **O2 — One predicate for "this needs an account".** There are **~100**
-      `SupabaseConfig.isConfigured` call sites and **25** direct
-      `auth.currentUser` / `currentSession` reads. Neither answers the question
-      O1 creates: `isConfigured` says *"was this build wired for online"*, a
-      session read says *"is someone logged in"* — and a guest on a configured
-      build is a third state neither one names. One gate, read everywhere,
-      instead of a hundred patched call sites.
-      **The store boundary falls out of the architecture, not out of a policy:**
-      bundled `assets/open5e_packs` installs are local file reads and stay open
-      to guests; the catalog download path goes through the Worker's
-      JWT-verify → RLS → rate-limit chain, so R2 content is account-gated by
-      construction. What has to be *decided* is the UI: a guest sees the store
-      and is asked to sign in, rather than not seeing it.
-      *Exit: a data-driven test enumerates the online surfaces — first-party
-      catalog download, marketplace, cloud backup, world sharing / multiplayer,
-      profile / follows / notifications, admin — and asserts each renders a
-      sign-in call to action in guest mode and never constructs a Supabase
-      client; plus the inverse, that no offline surface is gated.*
+- [x] **O2 — One predicate for "this needs an account". Done 2026-08-15, and
+      the store boundary the phase assumed is off by one surface.** The measured
+      starting point: **102** `SupabaseConfig.isConfigured` call sites (the box
+      said ~100) and **25** direct `auth.currentUser` / `currentSession` reads.
+      Neither answers the question O1 creates: `isConfigured` says *"was this
+      build wired for online"*, a session read says *"is someone logged in"* —
+      and a guest on a configured build is a third state neither one names.
+      - [x] **The three states are named once**, in
+            `lib/application/providers/account_gate.dart`:
+            `AccountAccess.offlineBuild | guest | signedIn`, plus an `AppSurface`
+            table that says per surface whether it needs an account and a
+            `SurfaceAccess.open | signInRequired | hidden` answer for every
+            (surface, state) pair. The table is pure and takes booleans for the
+            same reason O1's `route_access.dart` is — `isConfigured` is a
+            compile-time define, so `accountGateProvider` is the seam a widget
+            test overrides to *be* a guest. `flutter test` can never make the
+            real one report anything but `offlineBuild`.
+      - [x] **The split of the 102 was the finding.** **48** of them already
+            wrote `!isConfigured || auth == null` — the correct predicate,
+            copied 48 times — and the rest read `isConfigured` alone, which
+            since O1 is simply wrong. Every bare read in the UI was a promise of
+            cloud to someone who has no account: `save_sync_indicator` drew the
+            cloud icon and the storage bar, `save_info_section` and
+            `character_editor_screen` computed `hasCloud = isConfigured`,
+            `package_screen` offered "make this package online", `worlds_tab`
+            offered "Join World", and `join_world_dialog` took a guest to an
+            invite-code field whose RPC has no session to run under.
+            **Presentation went from 27 sites in 15 files to 10 in 6**, and
+            every survivor is a build-level read that is correct as it stands:
+            the router pair, `route_access`'s doc comment, the landing page's
+            own auth form, the player sub-window's `Supabase.initialize`, and
+            two sites that already pair it with a session read
+            (`startup_sync_gate`, the hub's sign-out listener).
+      - [x] **The premise about the store is wrong, and the correction makes
+            the phase smaller.** The box said the catalog download "goes through
+            the Worker's JWT-verify → RLS → rate-limit chain, so R2 content is
+            account-gated by construction". It does not:
+            `cloudflare/src/worker.ts:331` documents `GET /catalog/{key}` as
+            **public, no JWT** — *"official content is world-readable"* — and
+            `FirstPartyCatalogService` sends no `Authorization` header and falls
+            back to `assets/first_party/` when the request fails. That chain is
+            the *user asset* path (`asset_service.dart:_requireToken`), a
+            different route. So `firstPartyCatalog` sits on the **ungated** side
+            of the table with the bundled installs: gating it would take content
+            away from guests that the server already hands to anyone. The gated
+            set is the other six the exit names — marketplace, cloud backup,
+            world sharing, profile, follows, notifications, admin.
+      - [x] **A guest is asked, not stonewalled.** `AccountGatedSurface` takes
+            the surface as a `WidgetBuilder`, not a `Widget`, so an ungranted
+            surface is never *constructed* — which is how "never constructs a
+            Supabase client" is checked structurally rather than hoped for. A
+            guest gets `SignInRequiredNotice` (localized in en/tr/de/fr, seven
+            new keys) whose button lands on `/`, where O1 put the auth form.
+            The marketplace panel used to return `SizedBox.shrink()` for a
+            guest — the marketplace did not exist for them; the packages tab
+            told them, in untranslated English, to "configure Supabase".
+            **`cloudBackupSignInPrompt` had been sitting in all four `.arb`
+            files with no renderer at all** — the storage block of the Save &
+            Sync dialog is now the cloud-backup surface and prompts there.
+      *Exit met:* `test/application/providers/account_gate_test.dart` — **48
+      tests, all green.** It enumerates the roadmap's online surfaces as a
+      literal set and fails if the enum drifts from this file; asserts every
+      (surface, state) pair has an answer; asserts a guest gets the call to
+      action, the surface builder is never invoked, and the button reaches the
+      auth form, for each of the six gated surfaces; and asserts the inverse —
+      all eight local surfaces (catalog, bundled installs, worlds, characters,
+      templates, packages, battlemap, second screen) render for a guest in every
+      state. `flutter analyze lib` is clean (11 pre-existing infos, none in a
+      touched file).
+      *Left for O3:* the 48-times-copied predicate is collapsed in the UI but
+      not in `lib/application/providers/` — `cloud_backup_provider` and the
+      other 20 provider files still spell it out per provider. They are
+      *correct*, so this is de-duplication, not a defect, and it belongs with
+      whatever O3 touches rather than as a 90-site sweep for its own sake.
 - [ ] **O3 — Guest → account promotion, with nothing lost.** The real work, and
       the one with a data-loss failure mode. The local handover must happen with
       the database **closed**, must be a copy-then-flip-a-sentinel (never a

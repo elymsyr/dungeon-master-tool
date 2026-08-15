@@ -819,5 +819,13 @@
   "profileMenuAdminPanel": "Admin Panel",
   "profileMenuReportBug": "Report a bug",
   "profileMenuSupport": "Support",
-  "profileMenuSupportBody": "If you enjoy the tool, you can support development through any of the channels below. Thank you!"
+  "profileMenuSupportBody": "If you enjoy the tool, you can support development through any of the channels below. Thank you!",
+
+  "accountRequiredTitle": "Account required",
+  "accountRequiredBody": "Sign in to use this. Your worlds, characters and installed packs stay on this device either way.",
+  "accountRequiredSignIn": "Sign In",
+  "accountRequiredMarketplace": "The marketplace shares content between accounts, so it needs one.",
+  "accountRequiredCloudBackup": "Cloud backup copies this item to your account. Local saves keep working without it.",
+  "accountRequiredOnlineSync": "Online sync keeps this in step with your other devices.",
+  "accountRequiredWorldSharing": "Shared worlds, invites and player seats live on the server."
 }

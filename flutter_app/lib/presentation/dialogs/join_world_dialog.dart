@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/world_join_provider.dart';
-import '../../core/config/supabase_config.dart';
+import '../../application/providers/account_gate.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/network/no_op_world_membership_service.dart';
 import '../../application/providers/world_membership_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/account_gated_surface.dart';
 
 /// "Join with code" dialog. 8 karakter base32 (ambigous-free) kodu kabul eder.
 class JoinWorldDialog extends ConsumerStatefulWidget {
@@ -85,7 +87,11 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final offline = !SupabaseConfig.isConfigured ||
+    // O2: the no-op service is picked when the build is unconfigured, so this
+    // caught an offline *build* and let a guest through to a code field whose
+    // RPC has no session to run under.
+    final access = ref.watch(surfaceAccessProvider(AppSurface.worldSharing));
+    final offline = access != SurfaceAccess.open ||
         ref.watch(worldMembershipServiceProvider) is NoOpWorldMembershipService;
 
     return AlertDialog(
@@ -96,7 +102,10 @@ class _JoinWorldDialogState extends ConsumerState<JoinWorldDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (offline)
+            if (access == SurfaceAccess.signInRequired)
+              SignInRequiredNotice(
+                  message: L10n.of(context)!.accountRequiredWorldSharing)
+            else if (offline)
               Text(
                 'Online features require sign-in and Supabase configuration.',
                 style: TextStyle(

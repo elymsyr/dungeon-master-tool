@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
@@ -16,11 +17,12 @@ import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
-import '../../core/config/supabase_config.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/network/network_providers.dart';
 import '../../application/services/media_bundler.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'account_gated_surface.dart';
 import 'online_world_widgets.dart';
 import 'save_info_section.dart';
 import 'save_sync_shared.dart';
@@ -37,7 +39,9 @@ class SaveSyncIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final hasCloud = SupabaseConfig.isConfigured;
+    // O2: a guest on a configured build has no cloud. `isConfigured` alone
+    // used to promise one.
+    final hasCloud = ref.watch(hasAccountProvider);
 
     // Compact (hub) mode: independent of any item's sync state — just a
     // static cloud / save icon that opens the storage panel.
@@ -190,7 +194,7 @@ class _SaveSyncDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final hasCloud = SupabaseConfig.isConfigured;
+    final hasCloud = ref.watch(hasAccountProvider);
     final outbox = hasCloud
         ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
             OutboxStatus.empty)
@@ -255,13 +259,24 @@ class _SaveSyncDialog extends ConsumerWidget {
                 ],
 
                 // ── Storage ──
-                if (hasCloud) ...[
-                  if (!compact) const SizedBox(height: 16),
-                  if (compact) _SectionLabel('Storage', palette),
-                  if (!compact) _SectionLabel('Storage', palette),
-                  const SizedBox(height: 8),
-                  _StorageUsageBar(palette: palette),
-                ],
+                // O2: the storage block *is* the cloud-backup surface, so a
+                // guest is asked to sign in here instead of being shown
+                // nothing. `cloudBackupSignInPrompt` had been sitting in all
+                // four .arb files since before this phase with no renderer.
+                AccountGatedSurface(
+                  surface: AppSurface.cloudBackup,
+                  message: L10n.of(context)!.accountRequiredCloudBackup,
+                  builder: (context) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!compact) const SizedBox(height: 16),
+                      _SectionLabel('Storage', palette),
+                      const SizedBox(height: 8),
+                      _StorageUsageBar(palette: palette),
+                    ],
+                  ),
+                ),
 
                 // ── Outbox status (full mode only) ──
                 if (!compact && outbox != null && outbox.pending > 0) ...[

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
@@ -18,7 +19,6 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
 import '../../domain/entities/online/world_role.dart';
-import '../../core/config/supabase_config.dart';
 import '../../application/services/pending_write_buffer.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -462,12 +462,12 @@ class _PackageScreenContentState
           // Online toggle — personal multi-device sync. Built-in pack
           // can't be made online (read-only on every device). Phone
           // collapses this into the overflow menu below.
-          if (SupabaseConfig.isConfigured &&
+          if (ref.watch(hasAccountProvider) &&
               widget.packageName != srdCorePackageName &&
               getScreenType(context) != ScreenType.phone)
             _PackageOnlineButton(packageName: widget.packageName),
           // PR-SYNC-5: DM-only — share this package into the active world.
-          if (SupabaseConfig.isConfigured &&
+          if (ref.watch(hasAccountProvider) &&
               widget.packageName != srdCorePackageName)
             _ShareToWorldButton(packageName: widget.packageName),
           // Linked Packages — borrow another package's content instead of
@@ -518,7 +518,7 @@ class _PackageScreenContentState
           // shows the inline _PackageOnlineButton above). Built-in /
           // unconfigured packages have nothing to collapse here.
           if (getScreenType(context) == ScreenType.phone &&
-              SupabaseConfig.isConfigured &&
+              ref.watch(hasAccountProvider) &&
               widget.packageName != srdCorePackageName)
             Builder(builder: (_) {
               final isOnline = ref

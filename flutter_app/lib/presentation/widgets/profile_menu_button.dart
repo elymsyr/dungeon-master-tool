@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/admin_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/hub_tab_provider.dart';
 import '../../application/providers/profile_provider.dart';
-import '../../core/config/supabase_config.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
 import '../dialogs/support_dialog.dart';
@@ -24,7 +24,7 @@ class ProfileMenuButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    if (!SupabaseConfig.isConfigured) {
+    if (ref.watch(accountGateProvider) == AccountAccess.offlineBuild) {
       // Even without auth the user still needs a way to reach Settings on
       // mobile (where the Settings tab is hidden). Show a compact gear.
       return IconButton(

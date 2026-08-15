@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/auth_provider.dart';
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
-import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../dialogs/publish_snapshot_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import 'account_gated_surface.dart';
 import 'my_snapshots_panel.dart';
 
 /// Marketplace controls for a single local item:
@@ -63,9 +63,16 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (!SupabaseConfig.isConfigured) return const SizedBox.shrink();
-    if (ref.watch(authProvider) == null) return const SizedBox.shrink();
+    // O2: a guest used to get `SizedBox.shrink()` here — the marketplace did
+    // not exist for them, rather than being one sign-in away.
+    return AccountGatedSurface(
+      surface: AppSurface.marketplace,
+      message: L10n.of(context)!.accountRequiredMarketplace,
+      builder: _buildPanel,
+    );
+  }
 
+  Widget _buildPanel(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final ownedAsync = ref.watch(ownedSnapshotsProvider(_key));
     final sourceAsync = ref.watch(marketplaceSourceProvider(_key));

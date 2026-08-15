@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/auth_provider.dart';
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
@@ -12,7 +12,6 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
-import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -47,8 +46,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final offline = !SupabaseConfig.isConfigured ||
-        ref.watch(authProvider) == null;
+    final offline = !ref.watch(hasAccountProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/bug_report_provider.dart';
-import '../../core/config/supabase_config.dart';
+import '../../application/providers/account_gate.dart';
 import '../../core/constants.dart';
 import '../../core/services/log_buffer.dart';
 import '../../data/datasources/remote/bug_reports_remote_ds.dart';
@@ -21,7 +21,8 @@ class BugReportDialog extends ConsumerStatefulWidget {
   const BugReportDialog({super.key});
 
   static Future<void> show(BuildContext context) {
-    if (!SupabaseConfig.isConfigured) {
+    // O2: the gate, without changing the signature eight call sites use.
+    if (!ProviderScope.containerOf(context).read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Bug reporting requires cloud sign-in.'),

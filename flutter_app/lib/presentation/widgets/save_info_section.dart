@@ -3,13 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../application/providers/auth_provider.dart';
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/outbox_status_provider.dart';
-import '../../core/config/supabase_config.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
 import '../l10n/app_localizations.dart';
@@ -51,7 +50,7 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
   }
 
   void _refreshCloud() {
-    if (!SupabaseConfig.isConfigured || ref.read(authProvider) == null) {
+    if (!ref.read(hasAccountProvider)) {
       _cloudFuture = Future.value(null);
       return;
     }
@@ -84,8 +83,10 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final hasCloud = SupabaseConfig.isConfigured;
-    final isAuthed = ref.watch(authProvider) != null;
+    // O2: one read. `hasCloud && isAuthed` was this file's spelling of the
+    // gate — a configured build *and* an account — and it is the correct one,
+    // so it collapses rather than changes meaning.
+    final hasCloud = ref.watch(hasAccountProvider);
 
     // Re-fetch whenever cloud backup list is invalidated (e.g. after a
     // successful syncNow). Without this, the section is stuck on the
@@ -120,7 +121,6 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
       future: _cloudFuture,
       builder: (context, snapshot) {
         final loading = hasCloud &&
-            isAuthed &&
             snapshot.connectionState != ConnectionState.done;
         final cloudAt = snapshot.data;
         final hasError = snapshot.hasError;
@@ -138,7 +138,7 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
             if (mirrorRow != null) ...[
               const SizedBox(height: 6),
               mirrorRow,
-            ] else if (hasCloud && isAuthed && _itemOnCloud()) ...[
+            ] else if (hasCloud && _itemOnCloud()) ...[
               const SizedBox(height: 6),
               _row(
                 icon: Icons.cloud_outlined,

@@ -817,5 +817,13 @@
   "profileMenuAdminPanel": "Admin-Panel",
   "profileMenuReportBug": "Fehler melden",
   "profileMenuSupport": "Unterstützung",
-  "profileMenuSupportBody": "Wenn dir das Tool gefällt, kannst du die Entwicklung über die folgenden Kanäle unterstützen. Danke!"
+  "profileMenuSupportBody": "Wenn dir das Tool gefällt, kannst du die Entwicklung über die folgenden Kanäle unterstützen. Danke!",
+
+  "accountRequiredTitle": "Konto erforderlich",
+  "accountRequiredBody": "Melde dich an, um das zu nutzen. Deine Welten, Charaktere und installierten Pakete bleiben ohnehin auf diesem Gerät.",
+  "accountRequiredSignIn": "Anmelden",
+  "accountRequiredMarketplace": "Der Marktplatz teilt Inhalte zwischen Konten und braucht deshalb eines.",
+  "accountRequiredCloudBackup": "Die Cloud-Sicherung kopiert dieses Element in dein Konto. Lokales Speichern funktioniert auch ohne.",
+  "accountRequiredOnlineSync": "Die Online-Synchronisierung hält das mit deinen anderen Geräten im Gleichklang.",
+  "accountRequiredWorldSharing": "Geteilte Welten, Einladungen und Spielerplätze liegen auf dem Server."
 }

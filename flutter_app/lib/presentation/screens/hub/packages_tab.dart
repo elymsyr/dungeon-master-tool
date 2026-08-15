@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
@@ -12,8 +13,6 @@ import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/personal_online_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
 import '../../../application/providers/beta_provider.dart';
-import '../../../application/providers/auth_provider.dart';
-import '../../../core/config/supabase_config.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
@@ -24,6 +23,7 @@ import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/value_objects/media_kind.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/account_gated_surface.dart';
 import '../../widgets/banner_metrics.dart';
 import '../../widgets/hub_filter_button.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -782,11 +782,13 @@ class _PackageOnlineSectionState extends ConsumerState<_PackageOnlineSection> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final offline =
-        !SupabaseConfig.isConfigured || ref.watch(authProvider) == null;
-    final isOnline = ref
-        .watch(personalOnlinePackageNamesProvider)
-        .contains(widget.packageName);
+    // O2: this file spelled the gate out by hand and then rendered an
+    // untranslated sentence that told a guest to "configure Supabase".
+    final access = ref.watch(surfaceAccessProvider(AppSurface.cloudBackup));
+    final isOnline = access == SurfaceAccess.open &&
+        ref
+            .watch(personalOnlinePackageNamesProvider)
+            .contains(widget.packageName);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -804,12 +806,15 @@ class _PackageOnlineSectionState extends ConsumerState<_PackageOnlineSection> {
           ],
         ),
         const SizedBox(height: 8),
-        if (offline)
+        if (access == SurfaceAccess.hidden)
           Text(
-            'Sign in and configure Supabase to enable online sync.',
+            L10n.of(context)!.accountRequiredOnlineSync,
             style:
                 TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
           )
+        else if (access == SurfaceAccess.signInRequired)
+          SignInRequiredNotice(
+              message: L10n.of(context)!.accountRequiredOnlineSync)
         else
           Container(
             padding: const EdgeInsets.all(12),
