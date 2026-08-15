@@ -20,6 +20,8 @@ tags: [moc]
 - [[auth_provider]] — Supabase auth state.
 - [[route_access]] — rota başına "bu hesap ister mi" kararı (O1); misafir yerel her ekrana girer, yalnız `/profile` ve `/admin` kapalıdır.
 - [[guest_mode_provider]] — "hesapsız devam et" seçiminin kalıcılığı (O1).
+- [[account_gate]] — "bu yüzey hesap ister mi" tek yüklemi + yüzey tablosu (O2); misafir/offline-build/oturumlu üç durumu adlandırır.
+- [[account_gated_surface]] — kapılı yüzeyin çizimi: misafire giriş çağrısı, auth'suz build'de hiç (O2).
 - [[heartbeat_service]] — keep `profiles.last_active_at` fresh (15 min).
 - [[beta_enter_gate]] — beta entry merge gates (data-loss protection).
 

@@ -817,5 +817,13 @@
   "profileMenuAdminPanel": "Panneau Admin",
   "profileMenuReportBug": "Signaler un bug",
   "profileMenuSupport": "Soutenir",
-  "profileMenuSupportBody": "Si l'outil te plaît, tu peux soutenir le développement via les canaux ci-dessous. Merci !"
+  "profileMenuSupportBody": "Si l'outil te plaît, tu peux soutenir le développement via les canaux ci-dessous. Merci !",
+
+  "accountRequiredTitle": "Compte requis",
+  "accountRequiredBody": "Connecte-toi pour utiliser ceci. Tes mondes, personnages et packs installés restent sur cet appareil dans tous les cas.",
+  "accountRequiredSignIn": "Se connecter",
+  "accountRequiredMarketplace": "La place de marché partage du contenu entre comptes, elle en demande donc un.",
+  "accountRequiredCloudBackup": "La sauvegarde cloud copie cet élément dans ton compte. La sauvegarde locale fonctionne sans.",
+  "accountRequiredOnlineSync": "La synchronisation en ligne garde ceci aligné avec tes autres appareils.",
+  "accountRequiredWorldSharing": "Les mondes partagés, les invitations et les places de joueur vivent sur le serveur."
 }

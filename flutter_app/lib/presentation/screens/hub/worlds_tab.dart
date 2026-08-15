@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
@@ -16,7 +17,6 @@ import '../../../application/providers/world_membership_provider.dart';
 import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/world_reconciler.dart';
 import '../../../core/config/app_paths.dart';
-import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -147,7 +147,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-                  if (SupabaseConfig.isConfigured) ...[
+                  if (ref.watch(surfaceAccessProvider(
+                          AppSurface.worldSharing)) ==
+                      SurfaceAccess.open) ...[
                     const SizedBox(width: 4),
                     OutlinedButton.icon(
                       onPressed: () => JoinWorldDialog.show(context),

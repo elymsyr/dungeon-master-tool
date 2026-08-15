@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/social_providers.dart';
-import '../../../core/config/supabase_config.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/connection_error_view.dart';
 import '../../widgets/online_restriction_banner.dart';
@@ -30,10 +29,13 @@ class SocialTab extends ConsumerStatefulWidget {
 class _SocialTabState extends ConsumerState<SocialTab> {
   @override
   Widget build(BuildContext context) {
-    if (!SupabaseConfig.isConfigured) return const _NotConfigured();
-
-    final auth = ref.watch(authProvider);
-    if (auth == null) return const _NotSignedIn();
+    // O2: the two reads this tab used to do by hand. The feed, messages,
+    // listings and marketplace sub-tabs all sit on the same account-scoped
+    // rows (follows / notifications / profiles), so one surface answers for
+    // the whole shell.
+    final access = ref.watch(surfaceAccessProvider(AppSurface.follows));
+    if (access == SurfaceAccess.hidden) return const _NotConfigured();
+    if (access == SurfaceAccess.signInRequired) return const _NotSignedIn();
 
     final currentTab = ref.watch(socialSubTabProvider);
     final messageUnread =

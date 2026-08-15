@@ -4,6 +4,7 @@
 *.jks.b64
 key.properties
 
+.tmp/
 .env
 open5e-api-staging
 supabase/.temp

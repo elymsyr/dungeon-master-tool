@@ -35,4 +35,4 @@ tags: [file]
 - **Neden ayrı dosya:** `SupabaseConfig.isConfigured` derleme zamanı define'ı; bir widget testi onu `true` yapamaz. Karar saf fonksiyona çıkarılmasa O1'in çıkış kriteri olan router testi yazılamazdı. `test/presentation/router/route_access_test.dart` (8 vaka).
 
 ## Notes
-- O2 bunun üstüne "bu **eylem** hesap ister mi" yüklemini kuracak (~100 çağrı noktası); bu dosya yalnız **rota** düzeyini yanıtlar.
+- O2 bunun üstüne "bu **yüzey** hesap ister mi" yüklemini kurdu (2026-08-15, [[account_gate]] — ölçülen 102 çağrı noktasının 48'i yüklemi zaten elle yazıyormuş); bu dosya yalnız **rota** düzeyini yanıtlar.

@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/multiclass_helper.dart';
 import '../../../application/character_creation/pending_choices.dart';
+import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
@@ -36,7 +37,6 @@ import '../../../data/network/network_providers.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import 'pending_choice_resolver_dialog.dart';
-import '../../../core/config/supabase_config.dart';
 import '../../../core/services/perf_probe.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character/effective_character.dart';
@@ -3508,10 +3508,11 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final hasCloud = SupabaseConfig.isConfigured;
+    // O2: one read — `isConfigured` alone drew a cloud icon for a guest.
+    final hasCloud = ref.watch(hasAccountProvider);
     // 039+040: personal_characters retired. Char is "online" iff user is
     // signed in — world_characters RLS auto-mirrors every owned row.
-    final isOnline = hasCloud && ref.watch(authProvider) != null;
+    final isOnline = hasCloud;
 
     final (icon, color) = _resolveIcon(palette, hasCloud, isOnline);
 
@@ -3563,7 +3564,7 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final hasCloud = SupabaseConfig.isConfigured;
+    final hasCloud = ref.watch(hasAccountProvider);
     final outbox = hasCloud
         ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
             OutboxStatus.empty)
