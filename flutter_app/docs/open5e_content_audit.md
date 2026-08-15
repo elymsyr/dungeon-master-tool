@@ -39,6 +39,22 @@ in §0.1 and found to cover only the first. Stages **U** (readers + wizard),
 (delivery) exist because of that pass; §2.5/§3.2 were corrected against measured
 text divergence; and §3.5 records a shipped defect the field census could not
 see — **396 of `open5e-tob3`'s 397 monsters have no actions**.
+**Two late stages filed 2026-08-15, after everything else here (§6).**
+**Stage O — the app without an account:** a build carrying the Supabase defines
+bounces every route to the landing page until the user registers
+(`app_router.dart:19`), so none of the content above reaches an unregistered
+user at all. Offline mode already exists in `AppPaths`/`openAppDatabase` and is
+simply unreachable; the store and the online features stay account-gated; and the
+guest→account handover has to move the **Drift** database, which the migration
+that exists today explicitly does not
+(`user_session_provider.dart` — *"we can't easily copy here"*), even though every
+piece of structured content has lived there since the v12 fresh cut.
+**Stage F — the terminal step:** every phase in this file was graded by a
+corpus-wide aggregate, which cannot say whether one card in one pack is right.
+F reads all **20 units** (built-in + 19 official, 24,558 entities) one at a time
+against a written checklist — [`pack_conformance_checklist.md`](pack_conformance_checklist.md),
+[`pack_conformance_plan.md`](pack_conformance_plan.md),
+[`pack_conformance_findings.md`](pack_conformance_findings.md).
 
 ---
 
@@ -3864,9 +3880,156 @@ has a value" into "the value produced the right number on a sheet".
       unconditionally today and knows nothing about install state — the dialog is
       where that lives), and l10n beyond the four shipped locales.
 
+### Stage O — the app without an account (filed 2026-08-15)
+
+**Runs after every phase above.** Nothing here is content work; it is the reason
+the content reaches anyone at all. Today, on a build carrying the three Supabase
+defines, it reaches nobody who has not registered.
+
+**The mechanism, measured.** The gate is four lines — `appRouter`'s redirect
+([lib/presentation/router/app_router.dart:19](../lib/presentation/router/app_router.dart#L19)):
+if `SupabaseConfig.isConfigured` and `auth.currentSession == null`, every route
+except `/` bounces to `/`. `LandingScreen` then shows the auth form
+(`landing_screen.dart:100`) and offers no way past it. There is no guest state in
+the router: **offline is not a mode a user can choose, it is what a build without
+Supabase defines happens to be.**
+
+**The offline half already exists and is unreachable.** `AppPaths.setUser(null)`
+is documented as guest mode and falls back to the global paths, and
+`openAppDatabase` reads `AppPaths.dataRoot/db/dmt.sqlite` for a null user
+(`app_database.dart:371`). A guest therefore already has a complete, isolated,
+working v12 database. The app simply never lets anyone be one.
+
+**The promotion path is half-built, and the missing half is the one that
+matters.** `UserSessionNotifier.activate` runs `_migrateGlobalDataIfNeeded` on
+first sign-in, behind a `migrated_{userId}` SharedPreferences sentinel; it copies
+`worlds/` and `packages/` — the **media** subtrees — into `users/{id}/`. The
+Drift DB is not copied, and the code says so in a comment: *"We can't easily copy
+here because the DB is managed by Drift."* Since the v12 fresh cut **all
+structured data is in Drift** — campaigns, entities, characters, packages,
+every choice a character has made. So the migration that exists today moves the
+pictures and leaves the content behind.
+
+**The cloud half, by contrast, is built.** `BetaEnterMergeService` already pushes
+every owned local row to Supabase *before* any cloud→local applier runs, with a
+stated first-enter conflict policy (**local wins**) and an idempotent per-user
+sentinel — precisely so a stale cloud row cannot wipe offline work. Guest
+promotion is that problem with a different trigger, so **O3 extends it rather
+than writing a second merge.**
+
+- [ ] **O1 — Make the offline entry reachable.** `LandingScreen` gains an explicit
+      "continue without an account" action, and the router redirect stops being a
+      session check and becomes a per-route capability check. Guest mode must be
+      the *same* code path a Supabase-less build already takes — a second offline
+      implementation is the failure mode to avoid.
+      *Exit: with all three defines set, launching → continue → creating a world,
+      creating a character and installing a bundled pack never shows the auth
+      form; a router test asserts `/hub`, `/main` and `/character/new` no longer
+      redirect to `/` for a null session; the new strings exist in all four
+      `.arb` locales.*
+- [ ] **O2 — One predicate for "this needs an account".** There are **~100**
+      `SupabaseConfig.isConfigured` call sites and **25** direct
+      `auth.currentUser` / `currentSession` reads. Neither answers the question
+      O1 creates: `isConfigured` says *"was this build wired for online"*, a
+      session read says *"is someone logged in"* — and a guest on a configured
+      build is a third state neither one names. One gate, read everywhere,
+      instead of a hundred patched call sites.
+      **The store boundary falls out of the architecture, not out of a policy:**
+      bundled `assets/open5e_packs` installs are local file reads and stay open
+      to guests; the catalog download path goes through the Worker's
+      JWT-verify → RLS → rate-limit chain, so R2 content is account-gated by
+      construction. What has to be *decided* is the UI: a guest sees the store
+      and is asked to sign in, rather than not seeing it.
+      *Exit: a data-driven test enumerates the online surfaces — first-party
+      catalog download, marketplace, cloud backup, world sharing / multiplayer,
+      profile / follows / notifications, admin — and asserts each renders a
+      sign-in call to action in guest mode and never constructs a Supabase
+      client; plus the inverse, that no offline surface is gated.*
+- [ ] **O3 — Guest → account promotion, with nothing lost.** The real work, and
+      the one with a data-loss failure mode. The local handover must happen with
+      the database **closed**, must be a copy-then-flip-a-sentinel (never a
+      move-then-fail), and must carry what the media copy already carries plus
+      what it does not: `asset_refs` rows and media paths are `dataRoot`-relative,
+      so rewriting them is part of the copy, not a follow-up. Once the rows are
+      under `users/{id}/`, the cloud push is `BetaEnterMergeService`'s existing
+      local-wins first-enter merge.
+      *Exit: a roundtrip test — a guest creates a world, a character and installs
+      a pack, then signs up; every row is present under the new user id, the sync
+      outbox has them queued, re-running the promotion changes nothing
+      (idempotent), and a promotion interrupted mid-way leaves the guest database
+      readable and intact. Sign-up and sign-in of an existing account are both
+      covered — a user who registers after a month offline and a user who signs
+      into an account that already has cloud rows are different merges.*
+- [ ] **O4 — Sign-out, and the second account on one device.** Today
+      `deactivate()` returns the paths to the global root — which *is* the guest
+      database — so after a sign-out the user lands back in their pre-registration
+      data, while the `migrated_{userId}` sentinel says that data has already been
+      absorbed. Whether the guest DB is a scratch space any account may claim
+      **once**, or is consumed at first promotion and reset, is a decision nobody
+      has taken.
+      *Exit: the policy is written down (here and in the vault), and a test proves
+      a second account cannot silently absorb the first account's promoted data.*
+
+**Stage O inherits the repo gate like every other phase**, and adds one: every
+new user-facing string lands in `app_en.arb` first, then `app_tr` / `app_de` /
+`app_fr`.
+
+### Stage F — read every pack against the roadmap (filed 2026-08-15)
+
+**The terminal step. It runs after everything above, Stage O included** — it
+audits the result, and auditing a moving target produces findings that expire
+before they are read.
+
+**Why it exists.** Every phase in this file was graded by an aggregate. `136 of
+408 filled slots`, `68,561 ok / 0 disagree`, `0 gate violations` — all true, all
+corpus-wide, and none of them able to say whether *this* card in *this* pack is
+right. **21,839 entities across 19 packs**, plus the built-in pack's **2,719**,
+went through phases measured by counting. Stage F is the pass that reads them.
+
+Three documents carry it, and they are deliberately separate — the yardstick, the
+procedure, and the ledger have different lifetimes:
+
+| Document | Role |
+|---|---|
+| [`pack_conformance_checklist.md`](pack_conformance_checklist.md) | **the yardstick** — 30 items in 7 groups (A identity · B linking · C field coverage · D correctness · E mechanics · F reaches-the-user · G packaging), each with the technical rule, the command that proves it, a plain-language reading and a worked example |
+| [`pack_conformance_plan.md`](pack_conformance_plan.md) | **the procedure and the progress board** — two passes, four waves, 20 scan units, the reading budget, the handoff protocol |
+| [`pack_conformance_findings.md`](pack_conformance_findings.md) | **the ledger** — one entry per finding, with evidence, a proposed cause code and options; plus the six known-open items that must not be re-discovered as findings |
+
+- [ ] **F0 — The checklist.** Derived from this file, not invented: every item
+      names the phase that created the rule.
+      *Exit: approved. **No pack is scanned before that** — a sweep run against an
+      unapproved yardstick has to be run twice.*
+- [ ] **F1 — The procedure and the board.** Two passes, because most checklist
+      items are already corpus-wide gates and re-running them per pack is waste:
+      **Pass 0** runs `audit_packs` / `dupe_census` / `gate_packs` /
+      `verify_packs` and the five test suites **once** and records the baseline;
+      **Pass 1** is per-pack sampling, which is the only part no tool covers.
+      The reading discipline is part of the exit, not advice: **a pack file is
+      never read whole** (the largest is 3.3 MB), the unit is ≤5 entities per
+      category read in full, the budget is ~600 lines per pack, and findings are
+      written before the next pack starts.
+      *Exit: order fixed (built-in first — every soft ref lands there; then the
+      six chargen packs, five spell packs, `vom`, and the seven monster packs
+      last, because their structure repeats), board present, handoff protocol
+      written.*
+- [ ] **F2 — The findings ledger.** *Exit: format fixed; every entry carries a
+      checklist item, an affected-entity count, reproducible evidence, a proposed
+      cause code and options — and **nothing is fixed inside the sweep**.*
+- [ ] **F3 — Run it.** 20 scan units in four waves.
+      *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
+      at the end are where they started or better.*
+- [ ] **F4 — Decide, then file.** A finding is not a task until a decision turns
+      it into one.
+      *Exit: every finding has a verdict — fixed, given a written rationale, or
+      declared out of scope. A "fix" verdict becomes a **new phase in this §6**,
+      carrying the same three gates as every other phase; the sweep itself
+      changes no content.*
+
 ### Done when
 
-All four outcomes in §0.1 are demonstrable, not just ticked:
+All four outcomes in §0.1 are demonstrable, not just ticked — plus the two
+stages this file picked up on 2026-08-15, which are **later** than everything
+else here and gated on it (§6 Stage O, Stage F):
 
 1. **Content** — every row in §5 is ✅, ⛔ or ⚪ (no 🔴/🟡 without a cause code
    that says it cannot be fixed), measured by `audit_packs.dart`'s full output
@@ -3945,12 +4108,28 @@ All four outcomes in §0.1 are demonstrable, not just ticked:
 5. **Delivery** — a published catalog whose packs upload rather than skip (D1 —
    bumped and rebuilt, **upload still owed**), with an upgrade path for existing
    installs (D2 — done 2026-08-13).
+6. **Reach** — the app is usable without an account (**Stage O**, filed
+   2026-08-15, runs after 1–5). A guest can open the app, build worlds and
+   characters and install bundled packs; the store and every online feature ask
+   for an account instead of being the price of entry; and a guest who registers
+   later keeps everything — which today's code does **not** deliver, because
+   `_migrateGlobalDataIfNeeded` copies the media subtrees and explicitly leaves
+   the Drift database, where every piece of structured content has lived since
+   the v12 fresh cut.
+7. **Conformance** — the per-pack sweep has run (**Stage F**, the terminal step).
+   Every phase above was graded by a corpus-wide aggregate; F is the pass that
+   reads **20 scan units** — the built-in pack plus 19 official ones, 24,558
+   entities between them — one at a time against a written checklist, and turns
+   what the aggregates could not see into filed findings with decisions on them.
 
 In app terms: installing a third-party pack and picking one of its subclasses
 produces a character sheet with that subclass's features on it; the user's pickers
-show each piece of content exactly once; and the pack the user downloads today is
-the pack this audit fixed. At that point this file becomes a record, and
-`open5e_import_roadmap.md` goes back to being the primary doc.
+show each piece of content exactly once; the pack the user downloads today is
+the pack this audit fixed; a user who never registers can still play, and one who
+registers on their thirtieth day loses nothing; and every one of those claims has
+been checked pack by pack rather than in aggregate. At that point this file
+becomes a record, and `open5e_import_roadmap.md` goes back to being the primary
+doc.
 
 ---
 
