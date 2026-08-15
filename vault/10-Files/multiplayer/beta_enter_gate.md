@@ -39,4 +39,5 @@ tags: [file]
 - **Lifecycle**: unset on fresh install / after `clear`; set by `BetaEnterMergeService.merge()` on success (PR-B2); cleared by `BetaNotifier.leaveBeta()` so a re-enter re-runs the local-wins merge against possibly-new local content.
 
 ## Notes
+- **O3 (2026-08-15)** bu merge'e yeni bir tetikleyici değil, yeni **girdi** kazandırdı: misafirken üretilmiş satırlar artık kayıt anında `users/{id}/` altına kopyalanıyor ([[guest_promotion_service]]), dolayısıyla ilk-giriş local-wins merge'i onları da buluta itiyor. Sıra: `landing_screen` `activate`'i await eder, merge sonra `startup_sync_gate`'ten koşar.
 - Per-device, not synced — each device runs its own first-enter merge once. Part of the Beta Data-Loss Fix (May 26) work.

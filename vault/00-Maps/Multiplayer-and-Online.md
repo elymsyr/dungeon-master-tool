@@ -22,6 +22,7 @@ tags: [moc]
 - [[guest_mode_provider]] — "hesapsız devam et" seçiminin kalıcılığı (O1).
 - [[account_gate]] — "bu yüzey hesap ister mi" tek yüklemi + yüzey tablosu (O2); misafir/offline-build/oturumlu üç durumu adlandırır.
 - [[account_gated_surface]] — kapılı yüzeyin çizimi: misafire giriş çağrısı, auth'suz build'de hiç (O2).
+- [[guest_promotion_service]] — misafir ağacının hesaba devri (O3): DB kapalıyken kopya, yollar yeniden yazılır, sentinel en sonda.
 - [[heartbeat_service]] — keep `profiles.last_active_at` fresh (15 min).
 - [[beta_enter_gate]] — beta entry merge gates (data-loss protection).
 
