@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/caster_progression.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -43,3 +43,5 @@ tags: [file]
 ## Notes
 - Default cantrip/prepared curves are deliberately approximate "middle" values when the class entity has nothing populated; the UI surfaces a "populate the class table for exact counts" hint.
 - **Audit T2-2 (2026-08-14) — division of labour, now data-backed.** The 12 built-in classes ship their own `cantrips_known_by_level` / `prepared_spells_by_level` (and Paladin/Ranger `spell_slots_by_level`), harvested from the pinned snapshot's `srd-2024/ClassFeatureItem.json` into `srd_core/classes.dart`, so the approximate curves above no longer decide anything for SRD content — they remain the fallback for packaged classes only. The slot tables here were checked cell for cell against that same source: `_fullCasterSlots` and `_pactSlots` agree on all 20 levels (so nothing duplicates them in data), `_halfCasterSlots` agrees at levels 2–20 and differs at **level 1** — SRD 5.2.1 gives Paladin/Ranger 2 first-level slots, the 2014-shaped preset gives none. The preset is deliberately left 2014-shaped because every bundled Open5e pack is `game_system: 5e-2014`; the edition difference is stated in the built-in pack's data instead. Pinned by `test/domain/srd_core_spellcasting_tables_test.dart`.
+
+- **Audit M4 (2026-08-15) — bu dosya "sayfaya iniyor mu" sorusunun cevaplandığı yer.** `spell_slots_by_level` / `cantrips_known_by_level` / `prepared_spells_by_level` `CharacterResolver`'a hiç uğramaz; `spellSlotsForClass` yalnız **iki** noktadan çağrılır — `character_creation_wizard_screen`'in commit'i ve seviye atlama diyaloğunun apply'ı — ve sonuç karakterin kendi `spell_slots` alanına yazılır. Bu **tasarım**: alan DM tarafından düzenlenebilir bir pip ızgarası, resolver'da yeniden hesaplamak elle girilen max/remaining değerlerini her okumada ezerdi. Bilinen boşluk: `class_levels`'ı diyalog dışında elle yükseltmek ızgarayı uyarısızca bayat bırakır. `test/application/character_creation/spell_slot_grid_reach_test.dart` şunları pinler: 8 gömülü büyücü sınıfının hepsi ızgara üretir; yazılmış tablo preset'i yener (Paladin/Ranger L1 `{1: 2}`, preset boş); paketlerde **0 büyücü sınıf** vardır (19 pakette 2 sınıf kartı, ikisi de kaynakta `caster_type: NONE`) — bir paket büyücü gönderdiği gün test düşer.
