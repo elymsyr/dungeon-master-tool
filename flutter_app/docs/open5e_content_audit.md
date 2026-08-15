@@ -356,6 +356,29 @@ not installed — L2's transitive-install price where the cost is content rather
 than megabytes. The asymmetry is now §2.5 policy: **drop toward the built-in
 pack, never toward another bundled pack.**
 
+**U3 is done — 2026-08-15, and the reported bug was the smaller half of it.**
+The symptom was that tapping a spell in a spell list did not open that spell's
+card. The gesture was indeed missing, but underneath it the presentation layer
+carried **its own envelope readers** — `resolveRelationId`'s O(n) scan,
+`_parseIds`, `_parseItems` — which knew `_lookup` and `_ref` and **not** the soft
+`{slug, name}` a package writes for a cross-pack target. Those fell through to
+`e['id']` → null → dropped, so a packaged spell was not merely untappable, it was
+**never rendered**. All three now resolve through `entityLinkTarget` →
+`resolveEntityRef`, the reader U1 standardised the wizard on, and `_lookup` moved
+into that one reader so two do not disagree again. The phase's stated design
+decision — callback or provider — closed on measurement rather than taste:
+`entityNavigationProvider` already existed, `main_screen` already listened, and
+the relation chips and markdown links already wrote to it; what was missing was
+that `structured_list_field_widgets` could not reach it and **`package_screen`
+never listened at all**, so every link inside a package was a dead tap. New
+`entity_link.dart` lifts the write out of `field_widget_factory` and nothing
+gained a second copy of the selection state. An unresolvable ref stays plain
+text, underline included, because the affordance must not promise a tap that
+will not land. `test/presentation/entity_link_navigation_test.dart` (5 cases)
+pins it, both link halves are mutation-checked, and the failure set of
+`test/domain` + `test/application` + `test/presentation` is **the same 58
+environmental failures** on a clean tree and on this one.
+
 **The roadmap is not finished — reopened 2026-08-14 as a six-item queue in a
 fixed order.** Every *filed* phase closed; three things no phase ever covered
 did not — the built-in pack's own holes (T2-1/2/3, measured but never fixed),
@@ -369,7 +392,7 @@ before the one above it is ticked:
 | ~~2~~ | ~~**T2-1**~~ | **done 2026-08-14** — the 18 skill seed rows now ship the standard `_lookup` placeholder in `ability_ref`, which the synthesiser already resolved for every other Tier-0 link; the dead `_ability_name_` key is gone and the chip renders (below) |
 | ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — 72/341 areas, 4/4 reaction triggers, 109/341 upcast clauses, `pack.content_quantities` 7/7. Two sources, in that order: what the rows' own prose already states, then the pinned snapshot for what SRD 5.2.1 says and this file's abridged prose dropped. Both columns are now at the corpus ceiling — 0 rows remain unharvested (below) |
 | ~~4~~ | ~~**L4**~~ | **done 2026-08-15** — 7 cards the built-in pack ships verbatim are no longer re-emitted and their 15 pointers are re-aimed at the built-in card; the bundled↔bundled half is closed by measurement instead, because every candidate is a different statblock's own child row (below) |
-| 5 | **U3** | **every ref on a card is a link** — tapping a spell in a spell list opens that spell's card; today it renders as dead text |
+| ~~5~~ | ~~**U3**~~ | **done 2026-08-15** — every ref envelope on a card now resolves through `resolveEntityRef` and opens its target through the one navigation provider both screens listen to; an unresolvable ref stays plain text. The reported symptom was the smaller half: a soft `{slug, name}` was not read by the presentation layer at all, so a packaged spell was invisible before it was untappable (below) |
 | 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
 
 T2-1/2/3 edit the **built-in** pack, which §2/"Scope" puts out of bounds for the
@@ -377,7 +400,7 @@ T2-1/2/3 edit the **built-in** pack, which §2/"Scope" puts out of bounds for th
 and the doc measures the result. L4 and U3 are new: L4 finishes what L1 left
 (L1 kept every collision and fixed *which* one wins — L4 removes the ones that
 are genuinely the same card), and U3 is the first phase about *reading* a card
-rather than building one. **U3 is now the top of the queue.** **Stage M is therefore no longer closed** — M1–M3 hold,
+rather than building one. **M4 is now the top of the queue, and the last item in it.** **Stage M is therefore no longer closed** — M1–M3 hold,
 M4 is open, and outcome 2 goes back to "not met" until it lands.
 
 **T2-2 is done — 2026-08-14, and two of its three open items dissolved on
@@ -679,7 +702,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
 | 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3**, **M4** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3); **and the spell-slot table T2-2 authors reaches a sheet (M4)** — open |
 | 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0–L3~~ (done), **L4** | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker; **plus L4: section A's "same text" count and section B's "textually identical" count are both 0** — open |
-| 4 | Character creation works with every pack | **U1, U2**, **U3** | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef`; **plus U3: a resolvable ref rendered read-only opens its target card** — open |
+| 4 | Character creation works with every pack | ~~**U1, U2**, **U3**~~ (done) | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef`; **and U3: a resolvable ref rendered read-only opens its target card** — met 2026-08-15, `entity_link_navigation_test.dart` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
 
 Outcome 1 was the doc's original subject. Outcomes 2–4 were **assumed** by the
@@ -832,10 +855,13 @@ the softRef Map that §2.3 tells you to write matches *nothing* there — and to
 packaged spells are visible only through a `tags` fallback that the same fix would
 retire. Filling a field is therefore not the last step; §2.3.1 and Stage U are. →
 outcome 4.
-**U1/U2 closed the filter half; the display half is still open.** A ref that
-resolves correctly still renders as **dead text** — no card view opens when a
-spell in a spell list is tapped, because the read-only relation widget has no
-gesture and no screen exposes an "open this entity" entry point. → §6 U3.
+**U1/U2 closed the filter half; U3 closed the display half on 2026-08-15.** A ref
+that resolved correctly still rendered as **dead text** — and the cause ran a
+layer deeper than the missing gesture: the presentation layer kept its own
+envelope readers, which did not know the soft `{slug, name}` shape, so a
+packaged spell was dropped before anything could be tapped. All of them now
+resolve through `resolveEntityRef`, and the "open this entity" entry point turned
+out to already exist — `package_screen` simply was not listening to it. → §6 U3.
 
 **Gap 5 — nothing published.** `emit.dart` hardcoded `pack_version: '1.0.0'`,
 `build_catalog` derives the immutable `r2_path` from that version, and
@@ -2923,7 +2949,7 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       `flutter test test/presentation/ test/application/character_creation/ test/domain/services/`
       → 559 passing, `flutter analyze lib test` → 16 issues, 0 errors (baseline).
 
-- [ ] **U3 — Every ref on a card is a link. Filed 2026-08-14, queue position 5.**
+- [x] **U3 — Every ref on a card is a link. Filed 2026-08-14, done 2026-08-15.**
       *(no snapshot needed — app-side only.)* Reported from use: **tapping a
       spell in a spell list does not open that spell's card.** It never has.
       U1/U2 made a ref *resolve*; U3 makes it *navigable*. The rule: **every
@@ -2954,6 +2980,61 @@ Ordered by leverage. Each phase has an exit criterion an audit tool can check.
       target card is shown; an unresolvable ref stays non-interactive; and the
       link path is the same `resolveEntityRef` U1 put the wizard on — no new
       envelope reader.*
+
+      **Closed 2026-08-15. All three blockers were real; two of them were
+      smaller than filed and the third was larger.**
+
+      **The widget (as filed).** `_MiniRelationField` and
+      `_MiniRelationListField` had no gesture; they now wrap their value in
+      `EntityLink`. The underline appears on exactly the condition the tap does,
+      so it cannot promise a link that goes nowhere.
+
+      **The resolution (larger than filed).** The phase read this as "the tap
+      has to go through `resolveEntityRef`". It was worse: the presentation
+      layer had **three private envelope readers** — `resolveRelationId`'s O(n)
+      scan, `_InlineRelationListFieldWidget._parseIds`, and
+      `_ReferenceListFieldWidgetState._parseItems` — and none of them knew the
+      soft `{slug, name}` shape §2.3 tells packs to write. A soft ref fell
+      through to `e['id']` → null → dropped, which means **the reported spell
+      was not rendering at all**, and "dead text" understated the defect. All
+      three now call `entityLinkTarget` → `resolveEntityRef`, and `_lookup` was
+      folded into that reader so the domain and the presentation layer cannot
+      drift apart again. `resolveRelationId` keeps its `''`-not-null convention
+      and its bare-String passthrough, so a broken hard ref is still visible for
+      debugging rather than silently hidden.
+
+      **The navigation (smaller than filed — it already existed).** The phase
+      asked for a decision between a threaded callback and a provider. Neither
+      was needed: `entityNavigationProvider` had been there all along,
+      `main_screen` listened to it, and the relation chips and `markdown_text_area`
+      already wrote to it. Two things were missing — `structured_list_field_widgets`
+      could not reach the private `_navigateToEntity`, and **`package_screen` never
+      listened**, so every link on a card inside a package was a dead tap
+      regardless of the widget. New `lib/presentation/widgets/field_widgets/entity_link.dart`
+      lifts the write out of `field_widget_factory` (which now delegates to it in
+      one line) and `package_screen` gained the listener. **No third copy of the
+      selection state**, as the phase required: both screens keep their own
+      `_selectedEntityId` and both clear the provider after handling it.
+
+      **Verification.** New `test/presentation/entity_link_navigation_test.dart`,
+      5 cases: a soft-ref spell in a spell list opens its card; a mini relation
+      field inside a structured row opens its card; an unresolvable ref neither
+      underlines nor navigates; and two asserting `entityLinkTarget` **is**
+      `resolveEntityRef` for all four shapes, which is what "no new envelope
+      reader" has to mean to be checkable. The harness is not a screen but a
+      stand-in that does what both screens do with the provider — listen, select,
+      clear — so the assertion runs through the real entry point. **Both link
+      halves are mutation-checked**: stubbing the mini field's target or
+      re-narrowing `_parseItems` to `_lookup`/`_ref` fails two tests each time.
+      `flutter analyze` is clean on the touched files (13 pre-existing info
+      issues repo-wide, none of them here), and `test/domain` + `test/application`
+      + `test/presentation` produces **the identical 58 environmental failures**
+      on a stashed clean tree and on this one — an empty difference, so no
+      regression.
+
+      *Not claimed:* this makes refs navigable wherever a **field widget**
+      renders them. Bespoke card surfaces that print a name themselves are out of
+      scope and were not surveyed.
 
 ### Stage B — fill the fields
 

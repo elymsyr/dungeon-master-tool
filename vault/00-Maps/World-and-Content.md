@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: world-content
-updated: 2026-07-29
+updated: 2026-08-15
 tags: [moc]
 ---
 
@@ -25,6 +25,7 @@ tags: [moc]
 - [[bundled_packs_bootstrap]] — first-boot SRD install.
 - [[builtin_package_provider]] — SRD pack id + read-only SRD reference overlay (`srdReferenceEntitiesProvider`).
 - [[package_source_entities]] — installed packages as an entity map, and the **one ordering rule** for layering them over the built-in SRD: the package the user picked wins a name collision (audit L1).
+- [[entity_link]] — the single "open this entity" entry point every ref renderer taps through, and the test for whether a ref is openable at all (audit U3).
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.

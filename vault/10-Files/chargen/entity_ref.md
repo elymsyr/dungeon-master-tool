@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/services/entity_ref.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-15
 tags: [file]
 ---
 
@@ -26,14 +26,14 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `entity.dart` (reads `Entity.categorySlug`, `.name`, `.id`).
-- Used by: [[character_resolver]] (as `_resolveRef`/`_findEntityIdByName`, and `abilityAbbrevFromRef` for both ability relation lists), and the chargen wizard / level-up selection UI (`pending_choice_resolver_dialog` reads feat ASI options through it).
+- Used by: [[entity_link]] (every ref rendered on a card is a link through it, or plain text when it returns null), [[character_resolver]] (as `_resolveRef`/`_findEntityIdByName`, and `abilityAbbrevFromRef` for both ability relation lists), and the chargen wizard / level-up selection UI (`pending_choice_resolver_dialog` reads feat ASI options through it).
 - Domain map: [[Character-System]]
 - System flow: [[Ref-Resolution-Hard-vs-Soft]]
 - Spec / reference: see `tool/open5e_import/refgraph.dart` + [[mapper_chargen]] for how the envelopes are emitted at pack-build time.
 
 ## Key Logic / Variables
 - Three envelope shapes: (1) plain entity-id `String` (`ref()` resolved at build, or a `_lookup` that became a Tier-0 UUID at load); (2) `{_ref: <id>, name}`; (3) `softRef` `{slug, name}` left intact for runtime name-resolution against installed content (subclass→base class, background→origin feat, species→innate spell).
-- `resolveEntityRef`: bare String returns it only if present in `byId` (else null); Map reads `_ref` **or** `slug` plus `name` and delegates to `findEntityIdByName`.
+- `resolveEntityRef`: bare String returns it only if present in `byId` (else null); Map reads `_ref`, `slug` **or** `_lookup` plus `name` and delegates to `findEntityIdByName`. `_lookup` joined the list on 2026-08-15 (audit **U3**) — the presentation layer had been carrying its own O(n) reader for that one spelling, and two readers of one envelope set is how a soft `{slug, name}` ended up understood by the sheet and not by the card renderer.
 - `resolveEntityRefList` (added 2026-08-13, audit **U1**): maps a `*_refs` list through `resolveEntityRef` in order and **drops** what does not resolve — the soft-ref contract, where a missing target is never an error. It exists because the raw idioms it replaces, `(list as List).contains(id)` and `list.whereType<String>()`, both discard every Map envelope silently: a correctly written packaged ref simply became invisible. Every chargen reader of a `*_refs` field goes through it; use it rather than re-deriving the loop.
 - `abilityAbbrevFromRef` (added 2026-08-13, audit **M1**): one entry of an **ability relation list** (`asi_ability_options`, `unarmored_ac_abilities`) → `STR`…`CHA`. The same card carries a different shape depending on provenance — an installed package resolved its `{_lookup, name}` envelopes to **ids**, an as-authored card still holds the envelope, and parts of [[srd_core_pack]] ship plain names (`'Strength'`) — and all three mean the same ability. Reading one shape only is exactly how feat ASI stopped applying to every packaged feat (see Notes). Falls through id → `{id}` → `{name}`/`{_lookup,name}` → bare name/abbreviation, null on anything else.
 - `findEntityIdByName`: O(1) via a per-map `(slug,name)→id` index built lazily into an `Expando<Map<String,String>>` keyed weakly on the `byId` instance. Safe because the maps are unmodifiable and rebuilt as a *new* instance whenever contents change (`wizardEntitiesProvider`), so a cached index can never go stale. Key format is `"$slug $name"`; first-writer-wins matches the old linear "first match".

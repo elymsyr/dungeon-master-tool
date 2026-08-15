@@ -14,6 +14,7 @@ import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/sync_engine_provider.dart';
+import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
 import '../../domain/entities/online/world_role.dart';
@@ -347,6 +348,18 @@ class _PackageScreenContentState
 
   @override
   Widget build(BuildContext context) {
+    // Audit **U3** — a ref tapped on a card inside a package has to open its
+    // target here too. `main_screen` already listened to this provider; the
+    // package screen did not, so every link in it was a dead tap. Same
+    // provider, no second copy of the selection state — the panel hint is
+    // `main_screen`'s two-panel concern and is simply cleared here.
+    ref.listen<String?>(entityNavigationProvider, (_, entityId) {
+      if (entityId == null) return;
+      setState(() => _selectedEntityId = entityId);
+      ref.read(entityNavigationProvider.notifier).state = null;
+      ref.read(entityNavigationTargetPanelProvider.notifier).state = null;
+    });
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     final (canUndoVN, canRedoVN) = dispatcher.activeNotifiers(0);
