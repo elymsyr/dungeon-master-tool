@@ -106,3 +106,8 @@ tags: [meta, changelog]
 ## 2026-08-15 — O7: devirde paket kimlikleri eşleniyor
 - `guest_promotion_service.mergeGuestRows`: yerleşik SRD paketi her DB'de rastgele `uuid.v4()` id alırken içindeki satırlar `uuid.v5` ile her yerde aynı id'yi taşıyor; `package_entities` yalnızca `id` üzerinde anahtarlı olduğu için misafir paketi eklenip entity'lerinin tamamı eleniyor, devredilen dünya içi boş bir pakete bağlı kalıyordu. `_guestPackageRemap` artık aynı isim + en az bir ortak entity id'si taşıyan paketleri eşleyip `package_id` referanslarını hesabın kimliğine çeviriyor.
 - Testler: `guest_promotion_service_test.dart` → `packages that exist on both sides` grubu (3 vaka).
+
+## 2026-08-15 — O8: devredilen karakterler sahipleniyor
+- `guest_promotion_service.claimGuestCharacters`: hesapsız oluşturulan karakterlerin `owner_id`'si `NULL`; hub karakter sekmesi own-only olduğu için (`characters_tab._isOwned`) devredilen karakterler veritabanında olup hiçbir ekranda görünmüyordu. `_backfillWorldlessOwnership` dünyaya bağlı satırları bilerek atladığından (orada `NULL` = "serbest bırakıldı") kurtarmıyordu. Devir artık misafir kökenli satırları sahipleniyor: kopya yolunda tüm `NULL` sahipler, merge yolunda yalnızca misafir DB'sinde id'si bulunanlar — hesabın kendi serbest bıraktığı karakterler korunuyor.
+- `GuestFinalizeReport.charactersClaimed` eklendi.
+- Testler: `guest_promotion_service_test.dart` → `characters that arrive without an owner` grubu (3 vaka).

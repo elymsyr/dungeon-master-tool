@@ -54,6 +54,32 @@ tags: [file]
 - **Emeklilik idempotent** ve `UserSessionNotifier.deactivate` her çıkışta/çevrimdışı girişte çağırır: talep ile taşıma arasında ölen bir terfi orada iyileşir. Sıra önemli — **önce talep** (tek küçük yazma, ikinci hesabı durduran şey), **sonra taşıma** (yavaş ve daha kırılgan yarı).
 - **O4'ün bulduğu asıl hata:** `_openConnectionForUser` yanında `.v12_cut_applied` olmayan her `dmt.sqlite`'ı pre-v12 sayar ve `dmt.sqlite.legacy.<ts>`'e taşır — terfi eden DB tam da o durumda geliyordu. Ölçüm: `db: true` diyen bir terfiden sonra `AppDatabase.forUser('u1')` **0 dünya** döndürdü. Yani **O3 hiç çalışmamıştı**; O3'ün testleri `forTesting` kullandığı için bu fonksiyonu hiç görmedi. Bkz. [[drift_database]].
 
+### O8 — karakterler geldi ama görünmedi (2026-08-15)
+
+Dünyalar ve paketler artık aktarılıyordu; geriye kalan şikâyet tek cümlelikti: "karakter hala gelmiyor."
+
+**Kök neden — satırlar oradaydı, ekran onları başkasının sanıyordu.** Hesapsız oluşturulan karakterin `owner_id`'si `NULL`. Hub'ın karakter sekmesi ise **yalnızca kendine ait** olanları gösteriyor:
+
+```dart
+bool _isOwned(Character c, String? selfUid) {
+  if (c.ownerId == null) return selfUid == null;   // characters_tab.dart:84
+  return c.ownerId == selfUid;
+}
+```
+
+Yani `NULL` sahip, "kimse giriş yapmamışken benim" demek — giriş yapıldığı anda "başkasının". Devredilen her karakter hesabın veritabanındaydı ve hiçbir ekranında değildi.
+
+**Neden mevcut kurtarma yetmiyor.** `CharacterListNotifier._backfillWorldlessOwnership` tam bu iş için var ama **dünyaya bağlı** satırları bilerek atlıyor: orada `NULL` sahip, `release_character` RPC'sinin bıraktığı "serbest bırakıldı" anlamına geliyor ve her yenilemede sahiplenmek serbest bırakılan karakterleri diriltiyordu. Kullanıcının karakterleri de dünyaya bağlıydı.
+
+**Çözüm — `claimGuestCharacters`, devrin içinde.** Devir, bu belirsizliğin var olmadığı tek yer: bu satırlar hiç hesabı olmamış bir çalışma alanından geliyor, dolayısıyla hiçbiri kimse tarafından serbest bırakılmış olamaz — sahipsizler çünkü sahiplenecek kimse yoktu. Sekmenin dayandığı kuralı gevşetmek yerine sahiplenmeyi buraya koymak, `release` akışını olduğu gibi bırakıyor.
+
+- **Tam dosya kopyası yolunda** (`pending.database`): hesabın veritabanı zaten misafir dosyasının kendisi, `NULL` sahipli her satır misafir doğumlu.
+- **Merge yolunda**: yalnızca `guest.world_characters` içinde id'si bulunan satırlar sahipleniliyor — hesabın kendi serbest bıraktığı karakterler `NULL` kalıyor.
+
+`GuestFinalizeReport.charactersClaimed` kaç satırın sahiplenildiğini raporluyor.
+
+Testler: **`characters that arrive without an owner`** grubu (3 vaka) — kopya yolu, merge yolu ve hesabın serbest bıraktığı karakterin korunması. Düzeltme geri alındığında ilk vaka düşüyor — doğrulandı.
+
 ### O7 — devredilen dünyanın paketleri boş geliyordu (2026-08-15)
 
 O6 devri tekrar çalışır hale getirdi; hemen ardından: "oldu mesela dünya aktarırken builtin packages içeriği gelmedi."

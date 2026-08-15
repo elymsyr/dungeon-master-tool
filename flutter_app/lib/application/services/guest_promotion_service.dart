@@ -445,6 +445,15 @@ class GuestPromotionService {
       rowsMerged = await mergeGuestRows(db);
     }
 
+    // **O8.** Whatever arrived, arrived ownerless - see [claimGuestCharacters].
+    final charactersClaimed = (pending?.database ?? false) || rowsMerged > 0
+        ? await claimGuestCharacters(
+            db,
+            userId,
+            wholeDatabase: pending?.database ?? false,
+          )
+        : 0;
+
     final rewritten = await rewriteGuestPaths(db, userId);
     final tookDatabase = (pending?.database ?? false) || rowsMerged > 0;
     final tookMedia = pending?.media ?? const <String>[];
@@ -487,9 +496,67 @@ class GuestPromotionService {
     return GuestFinalizeReport(
       pathsRewritten: rewritten,
       rowsMerged: rowsMerged,
+      charactersClaimed: charactersClaimed,
       absorbedAnything: absorbedAnything,
       retirement: retirement,
     );
+  }
+
+  /// **Audit phase O8 - the characters arrived and stayed invisible.**
+  ///
+  /// A character made without an account has `owner_id IS NULL`, and the hub's
+  /// character tab is own-only: `_isOwned` reads a null owner as "mine" exactly
+  /// while nobody is signed in, and as somebody else's the moment there is a
+  /// `uid`. So every promoted character was in the account's database and on
+  /// none of its screens.
+  ///
+  /// `CharacterListNotifier._backfillWorldlessOwnership` exists for this and
+  /// does not cover it: it deliberately skips world-bound rows, because there a
+  /// null owner means *deliberately released* by the `release_character` RPC
+  /// and re-adopting it would resurrect released characters on every refresh.
+  ///
+  /// Promotion is the one place where that ambiguity does not exist. These rows
+  /// come out of a workspace that had no account at all, so nothing in them was
+  /// ever released by anyone - they are unowned only because there was no one
+  /// to own them. Claiming them here, rather than loosening the rule the tab
+  /// relies on, is what keeps release working.
+  ///
+  /// [wholeDatabase] says the account's database *is* the promoted guest file,
+  /// so every ownerless row in it is guest-born. Otherwise the guest rows were
+  /// merged into an existing account database and only those are claimed - an
+  /// account's own released characters keep their null owner.
+  Future<int> claimGuestCharacters(
+    AppDatabase db,
+    String userId, {
+    required bool wholeDatabase,
+  }) async {
+    final owner = _sqlString(userId);
+    try {
+      if (wholeDatabase) {
+        return await db.customUpdate(
+          'UPDATE world_characters SET owner_id = $owner '
+          'WHERE owner_id IS NULL',
+          updates: const {},
+        );
+      }
+      final guest = _guestDatabase();
+      if (!guest.existsSync()) return 0;
+      await db.customStatement('ATTACH DATABASE ? AS guest', [guest.path]);
+      try {
+        return await db.customUpdate(
+          'UPDATE world_characters SET owner_id = $owner '
+          'WHERE owner_id IS NULL '
+          'AND id IN (SELECT id FROM guest.world_characters)',
+          updates: const {},
+        );
+      } finally {
+        await db.customStatement('DETACH DATABASE guest');
+      }
+    } catch (_) {
+      // Ownership is a repair, not the handover itself: a database shaped
+      // differently than expected must not cost the user the rows.
+      return 0;
+    }
   }
 
   /// **O5 — the row-level half of the handover.**
@@ -964,12 +1031,17 @@ class GuestFinalizeReport {
   const GuestFinalizeReport({
     this.pathsRewritten = 0,
     this.rowsMerged = 0,
+    this.charactersClaimed = 0,
     this.absorbedAnything = false,
     this.retirement,
   });
 
   final int pathsRewritten;
   final int rowsMerged;
+
+  /// **O8.** Promoted characters whose null owner was turned into this account,
+  /// which is what puts them back on the character tab.
+  final int charactersClaimed;
 
   /// What the retirement pass that follows the claim did with the guest tree.
   /// The only place the claim is still observable after the fact: under O6 it
@@ -982,8 +1054,8 @@ class GuestFinalizeReport {
 
   @override
   String toString() => 'GuestFinalizeReport(paths: $pathsRewritten, '
-      'rows: $rowsMerged, absorbed: $absorbedAnything, '
-      'retired: $retirement)';
+      'rows: $rowsMerged, characters: $charactersClaimed, '
+      'absorbed: $absorbedAnything, retired: $retirement)';
 }
 
 @immutable
