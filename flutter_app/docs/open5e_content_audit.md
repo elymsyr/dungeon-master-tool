@@ -39,6 +39,12 @@ in §0.1 and found to cover only the first. Stages **U** (readers + wizard),
 (delivery) exist because of that pass; §2.5/§3.2 were corrected against measured
 text divergence; and §3.5 records a shipped defect the field census could not
 see — **396 of `open5e-tob3`'s 397 monsters have no actions**.
+**M4 done 2026-08-15 — Stage M is closed and outcome 2 is met again.** The one
+mechanic no card carries — the spell-slot grid — is proven on a sheet, and the
+authored table is proven to beat the `caster_kind` preset. M4 also refuted its
+own filed plan: it was to probe "a packaged caster class", and there is none —
+the 19 packs hold **2 class cards**, both `caster_type: NONE` at the source
+(§6 Stage M).
 **Two late stages filed 2026-08-15, after everything else here (§6).**
 **Stage O — the app without an account:** a build carrying the Supabase defines
 bounces every route to the landing page until the user registers
@@ -409,15 +415,17 @@ before the one above it is ticked:
 | ~~3~~ | ~~**T2-3**~~ | **done 2026-08-14** — 72/341 areas, 4/4 reaction triggers, 109/341 upcast clauses, `pack.content_quantities` 7/7. Two sources, in that order: what the rows' own prose already states, then the pinned snapshot for what SRD 5.2.1 says and this file's abridged prose dropped. Both columns are now at the corpus ceiling — 0 rows remain unharvested (below) |
 | ~~4~~ | ~~**L4**~~ | **done 2026-08-15** — 7 cards the built-in pack ships verbatim are no longer re-emitted and their 15 pointers are re-aimed at the built-in card; the bundled↔bundled half is closed by measurement instead, because every candidate is a different statblock's own child row (below) |
 | ~~5~~ | ~~**U3**~~ | **done 2026-08-15** — every ref envelope on a card now resolves through `resolveEntityRef` and opens its target through the one navigation provider both screens listen to; an unresolvable ref stays plain text. The reported symptom was the smaller half: a soft `{slug, name}` was not read by the presentation layer at all, so a packaged spell was invisible before it was untappable (below) |
-| 6 | **M4** | Stage M's last mechanic — the tables T2-2 authors have to land on a sheet |
+| ~~6~~ | ~~**M4**~~ | **done 2026-08-15** — the tables T2-2 authors land on a sheet: 8 built-in casters get a grid, the authored Paladin/Ranger table beats the 2014-shaped preset, and the wizard-side path is written down as the design. The filed probe could not be written as filed — the corpus has **2 class cards and 0 casters**, both `caster_type: NONE` at the source (below) |
 
 T2-1/2/3 edit the **built-in** pack, which §2/"Scope" puts out of bounds for the
 `B`/`L` phases; they ship as their own change with an `srdCorePackVersion` bump
 and the doc measures the result. L4 and U3 are new: L4 finishes what L1 left
 (L1 kept every collision and fixed *which* one wins — L4 removes the ones that
 are genuinely the same card), and U3 is the first phase about *reading* a card
-rather than building one. **M4 is now the top of the queue, and the last item in it.** **Stage M is therefore no longer closed** — M1–M3 hold,
-M4 is open, and outcome 2 goes back to "not met" until it lands.
+rather than building one. ~~**M4 is now the top of the queue, and the last item in it.**~~
+**M4 closed it 2026-08-15 — the queue is empty and Stage M is done again**:
+M1–M3 hold, M4 landed the slot grid on a sheet with the override pinned, and
+outcome 2 is met.
 
 **T2-2 is done — 2026-08-14, and two of its three open items dissolved on
 measurement.** The tables are a **transform of the pinned snapshot**, exactly as
@@ -716,7 +724,7 @@ cannot be run, the outcome is not delivered no matter how many boxes are ticked.
 | # | Outcome | Owning phases | Gate that proves it |
 |:--:|---|---|---|
 | 1 | Every official **and built-in** pack is processed correctly: entities present, fields populated **from the source** | A0–A2, B1–B8, V1, **T1–T3** | `verify_packs.dart` (T1) reports no field whose sampled value disagrees with the fixture; `audit_packs --builtin` (T2) has no unexplained ⚠; the relational gate (T3) is green — no actionless monster, no orphaned child row |
-| 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3**, **M4** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3); **and the spell-slot table T2-2 authors reaches a sheet (M4)** — open |
+| 2 | Every field carrying a mechanic is tested and confirmed to work | B5, **M1–M3**, **M4** | `bundled_pack_resolve_test` covers **all 19 packs** and asserts one resolved sheet value per mechanic field each pack writes; what stays non-mechanical is declared (M3); **and the spell-slot table T2-2 authors reaches a sheet (M4)** — met 2026-08-15, `spell_slot_grid_reach_test.dart` |
 | 3 | Packs link instead of duplicating; no duplicate content, no redundant fields | ~~L0–L3~~ (done), **L4** | `dupe_census`'s **actionable redundancy** (fidelity-fixed 2026-07-30 — 1,178, and **1,140** after B6's 2026-08-14 deletion) is fully explained by §2.5's policy table, section C's "nothing installed" is 0 under the resolver's own matching (**0 today**, and C itself is 3,955 refs after L3, **4,059** after B6 links gear), and `requires` is non-empty for every linker; **plus L4: section A's "same text" count and section B's "textually identical" count are both 0** — open |
 | 4 | Character creation works with every pack | ~~**U1, U2**, **U3**~~ (done) | a wizard-level test per pack family builds a committable draft, and every `_ref` field the wizard filters on is read through `resolveEntityRef`; **and U3: a resolvable ref rendered read-only opens its target card** — met 2026-08-15, `entity_link_navigation_test.dart` |
 | — | The work reaches users | ~~D1~~, ~~D2~~ (code done 2026-08-13) | `pack_version` bumped ✅, catalog rebuilt ✅, installed packs offered an upgrade ✅ — **the publish itself has not run** (CI secrets), so this row is not yet demonstrable |
@@ -3559,8 +3567,45 @@ has a value" into "the value produced the right number on a sheet".
       scope boundary instead of leaving it as an implicit 0%.
       *Exit: one paragraph in §5.6 and a line in "Done when"; no phase promises
       `effects`.*
-- [ ] **M4 — The spell-slot table lands on a sheet. Filed 2026-08-14, queue
-      position 6 — this is what "finish Stage M" now means.** M1–M3 proved every
+- [x] **M4 — The spell-slot table lands on a sheet. Done 2026-08-15.**
+      New test `test/application/character_creation/spell_slot_grid_reach_test.dart`
+      (4 cases, green), the three fields declared in `bundled_pack_resolve_test`,
+      and the wizard/resolver split decided below. **One measurement refuted the
+      filed plan:** the probe was to be written against "a packaged caster class
+      (a5e-ag Marshal, bfrd Mechanist)". Neither is a caster. The bundled corpus
+      holds **2 class cards in 19 packs** — Marshal and Mechanist — and both are
+      `caster_type: NONE` **at the source** (checked in the pinned snapshot's
+      `CharacterClass.json`, not inferred from the pack), so the mapper's
+      `caster_kind: 'None'` is correct and there is no packaged caster to probe.
+      What shipped instead:
+      * **8 built-in caster classes** (Bard/Cleric/Druid/Sorcerer/Wizard full,
+        Warlock pact, Paladin/Ranger half) each produce a non-empty grid, first
+        slot at level 1 for all 8, still non-empty at 20.
+      * **Override beats preset, proven on shipped data rather than a fixture:**
+        the preset is 2014-shaped and gives a half caster nothing at L1, T2-2's
+        authored `spell_slots_by_level` gives Paladin and Ranger `{1: 2}`, and
+        `spellSlotsForClass` returns the authored row — so an ignored override
+        now fails a test. The Wizard pins the other direction: nothing authored,
+        result identical to the preset.
+      * **The corpus fact is pinned, not assumed:** 2 class cards, 0 casters,
+        0 authored level tables. The day a pack ships either, that test fails
+        and the probe gets rewritten against the real card.
+      * A **real pack card** (Marshal, read out of the asset) carries the
+        override probe: as shipped it yields no grid, with `caster_kind` added
+        it yields the preset, with a table added it yields the table at that row
+        and the preset at the next.
+      **Wizard-side is the design, with one named gap.** `character_resolver.dart`
+      has no slot logic and gains none: `spell_slots` is a *stored, DM-editable*
+      character field (the pip grid in `character_editor_screen`), so a
+      resolver-side recompute would overwrite hand-edited maxes and remaining
+      counts on every read. It is written at exactly two points —
+      `character_creation_wizard_screen`'s commit and the level-up dialog's
+      apply, both through `spellSlotsForClass`. The gap that follows: raising
+      `class_levels` by hand, outside the level-up dialog, leaves the old grid
+      in place with no warning. That is the supported-path cost of keeping the
+      field editable, and it is recorded here rather than filed as a phase.
+      *Original text, filed 2026-08-14 at queue position 6 — this is what
+      "finish Stage M" meant:* M1–M3 proved every
       mechanic **a pack writes** reaches `EffectiveCharacter`. They could not
       cover the one mechanic **nobody writes**: `spell_slots_by_level`,
       `cantrips_known_by_level` and `prepared_spells_by_level` are 0 in the
@@ -4063,7 +4108,12 @@ else here and gated on it (§6 Stage O, Stage F):
    done 2026-08-14). ~~**Outcome 2 is met.**~~ **Reopened the same day by M4:**
    M1–M3 cover every mechanic a pack *writes*; the spell-slot table nobody
    writes (T2-2) is a missing mechanic, not a tested one, so outcome 2 is met
-   again only when M4 asserts slots on a sheet. Three exclusions are declared, not
+   again only when M4 asserts slots on a sheet. **M4 done 2026-08-15 —
+   outcome 2 is met again**: 8 built-in caster classes produce a slot grid,
+   the authored table beats the preset on shipped Paladin/Ranger data, the
+   three `*_by_level` fields have a declared reader, and the corpus fact that
+   no pack ships a caster class (2 class cards, 0 casters) is pinned rather
+   than assumed. Three exclusions are declared, not
    deferred: `spell.effects` / `creature-action.effects` (no reader in `domain/`,
    no structured source — §5.6), and `mechanical_notes` on `trait` /
    `magic-item` (the card *is* the rule; a note would be a verbatim copy of a
@@ -4227,6 +4277,11 @@ flutter test test/tool/            # B1 level table (7) + B9 vocabulary (10)
 # A field a pack writes must land in a sheet probe, in `notResolverRead`
 # (with the reader that owns it) or in `unreadByAnyone`; anything else fails.
 flutter test test/domain/services/bundled_pack_resolve_test.dart
+# The one mechanic that never passes through the resolver (M4): the slot grid is
+# computed wizard-side and stored on the character's own `spell_slots` field, so
+# it is proven here instead. Also pins the corpus fact the probe depends on —
+# 2 packaged class cards, 0 casters, 0 authored level tables.
+flutter test test/application/character_creation/spell_slot_grid_reach_test.dart
 # The link mechanism itself (not content):
 flutter test test/application/services/package_link_service_test.dart
 flutter test test/application/services/world_package_installer_test.dart

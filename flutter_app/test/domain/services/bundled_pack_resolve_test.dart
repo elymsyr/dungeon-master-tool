@@ -286,6 +286,20 @@ void main() {
       'prereq_min_score': 'feats_step gating',
       'prereq_requires_spellcasting': 'feats_step gating',
       'caster_kind': 'spells_step + level_up_planner',
+      // M4 — the three per-level spellcasting tables. Their reader is
+      // `caster_progression.dart`, called at wizard commit and by the level-up
+      // planner; the grid it returns is stored on the character's own
+      // `spell_slots` field, so it never passes through the resolver. No
+      // bundled pack writes them today (0 of 2 packaged class cards, both
+      // `caster_type: NONE` upstream) — measured and pinned by
+      // `test/application/character_creation/spell_slot_grid_reach_test.dart`,
+      // which also fails the day a pack ships one.
+      'spell_slots_by_level':
+          'caster_progression.spellSlotsForClass → wizard commit + level_up_planner',
+      'cantrips_known_by_level':
+          'caster_progression.levelTableValue → spells_step cantrip cap',
+      'prepared_spells_by_level':
+          'caster_progression.levelTableValue → spells_step prepared cap',
       'hit_die': 'HP math in the wizard / character_editor (hitDieFaces)',
       'skill_proficiency_choice_count': 'proficiencies_step choice UI',
       'skill_proficiency_options': 'proficiencies_step choice UI',
