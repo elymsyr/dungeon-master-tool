@@ -18,8 +18,13 @@ import '../theme/dm_tool_colors.dart';
 Future<void> confirmAndSignOut(BuildContext context, WidgetRef ref) async {
   final l10n = L10n.of(context)!;
   final palette = Theme.of(context).extension<DmToolColors>()!;
-  final guestTreeSpent =
-      GuestPromotionService(dataRoot: AppPaths.dataRoot).readClaim() != null;
+  // **O6.** The claim used to be the flag here, but it is now deleted as soon
+  // as the content it names reaches the archive, so it is false almost every
+  // time the dialog opens. The question the line answers is "did *this* account
+  // absorb the workspace", and that is what the account's own marker records.
+  final userId = AppPaths.currentUserId;
+  final guestTreeSpent = userId != null &&
+      GuestPromotionService(dataRoot: AppPaths.dataRoot).isPromoted(userId);
 
   final confirmed = await showDialog<bool>(
     context: context,

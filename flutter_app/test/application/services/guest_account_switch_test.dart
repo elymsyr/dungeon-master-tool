@@ -20,6 +20,16 @@ import '../../support/test_database.dart';
 /// `dmt.sqlite.legacy.<ts>` and handed the account an empty one. A test that
 /// opens the database the way the app opens it is the only kind that could have
 /// caught it.
+///
+/// **O6 narrowed the claim to the generation it was written over.** O4's claim
+/// lived at the guest root forever, which made "one account may spend this
+/// content" mean "this device may hand over once, ever" — sign out, build a
+/// world offline, sign back in, and nothing happened. Retirement now drops the
+/// claim together with the content it archives, so the cases below assert the
+/// same protection over a *live* tree and the reopened door over an emptied
+/// one. Nothing here got weaker: the second account still never sees the first
+/// account's worlds, because those worlds are in the archive rather than merely
+/// behind a flag.
 void main() {
   late Directory tmp;
   late GuestPromotionService promotion;
@@ -63,6 +73,15 @@ void main() {
     final report = await promotion.copyIntoAccount(userId);
     final db = AppDatabase.forUser(userId);
     await promotion.finalizePromotion(userId, db);
+    await db.close();
+    return report;
+  }
+
+  /// The same path, when the test needs to see what phase 2 did.
+  Future<GuestFinalizeReport> promoteAndReport(String userId) async {
+    await promotion.copyIntoAccount(userId);
+    final db = AppDatabase.forUser(userId);
+    final report = await promotion.finalizePromotion(userId, db);
     await db.close();
     return report;
   }
@@ -121,9 +140,13 @@ void main() {
       await seedGuestMedia();
       await promote('u1');
 
+      // The strongest form of "absorbs nothing": there is nothing here to
+      // absorb. O4 stopped the second account with a flag over content that was
+      // still lying around; the retirement it introduced took the content away,
+      // and O6 stopped pretending the flag was the part doing the work.
       expect(promotion.canPromote('u2'), isFalse);
       final second = await promotion.copyIntoAccount('u2');
-      expect(second.outcome, GuestPromotionOutcome.guestAlreadyClaimed);
+      expect(second.outcome, GuestPromotionOutcome.nothingToPromote);
       expect(second.databaseCopied, isFalse);
       expect(second.mediaSubtreesCopied, isEmpty);
 
@@ -134,19 +157,26 @@ void main() {
           isFalse);
     });
 
-    test('cannot claim the tree by putting something back in it', () async {
+    test('gets what was made after the first account left, and nothing else',
+        () async {
       await seedGuestWorld('Barrowmoor');
       await promote('u1');
 
-      // A signed-out session doing work in the emptied guest space does not
-      // reopen the door: the claim, not the emptiness, is what closes it.
+      // **O6.** Work done in the emptied guest space belongs to whoever signs
+      // in next — it is theirs, made after the previous tree was archived, and
+      // O4's claim outliving that tree is precisely the bug that made the
+      // handover a once-per-device event. What the second account must not get
+      // is the *first* account's work, and it does not: that is in the archive.
       await seedGuestMedia();
       expect(promotion.hasGuestData(), isTrue);
-      expect(promotion.canPromote('u2'), isFalse);
-      expect(
-        (await promotion.copyIntoAccount('u2')).outcome,
-        GuestPromotionOutcome.guestAlreadyClaimed,
-      );
+      expect(promotion.canPromote('u2'), isTrue);
+
+      final second = await promoteAndReport('u2');
+      expect(second.absorbedAnything, isTrue);
+      expect(File(p.join(tmp.path, 'users', 'u2', 'worlds', 'w1', 'map.png'))
+          .existsSync(), isTrue);
+      expect(await worldsOf('u2'), isEmpty,
+          reason: "the first account's world is archived, not on offer");
     });
 
     test('the claiming account is told it has already been through this',
@@ -163,17 +193,18 @@ void main() {
     });
 
     test('an unspent tree is still open to the next account', () async {
-      // The account already had a database here, so the promotion took no
-      // database — and an account that absorbed nothing does not get to spend
-      // the scratch space.
+      // The account already had a database here, so the copy phase takes no
+      // database — the rows are merged in phase 2 instead, and until that has
+      // run nothing has been absorbed and nothing may be claimed.
       final existing = File(p.join(tmp.path, 'users', 'u1', 'db', 'dmt.sqlite'));
       await existing.parent.create(recursive: true);
       await existing.writeAsString('pre-existing');
       await seedGuestWorld('Barrowmoor');
 
       final report = await promotion.copyIntoAccount('u1');
-      expect(report.outcome, GuestPromotionOutcome.accountAlreadyHasData);
+      expect(report.outcome, GuestPromotionOutcome.mergedIntoAccountDatabase);
       expect(report.databaseCopied, isFalse);
+      expect(report.databaseMergePending, isTrue);
       expect(await existing.readAsString(), 'pre-existing');
 
       expect(promotion.readClaim(), isNull);
@@ -225,7 +256,10 @@ void main() {
 
       final again = await promotion.retireClaimedGuestTree();
       expect(again.movedAnything, isFalse);
-      expect(again.claim, isNotNull);
+      // **O6.** Nothing to move because nothing is left to claim: the first
+      // pass archived the content and dropped the claim with it.
+      expect(again.claim, isNull);
+      expect(promotion.readClaim(), isNull);
       expect(namesIn(archiveRoot), before);
     });
 
@@ -243,13 +277,19 @@ void main() {
     test('records who spent the tree and what they took', () async {
       await seedGuestWorld('Barrowmoor');
       await seedGuestMedia();
-      await promote('u1');
+      final report = await promoteAndReport('u1');
 
-      final claim = promotion.readClaim()!;
+      // Read from the retirement it drove: under O6 the claim is deleted the
+      // moment the content it names reaches the archive, so the file is gone by
+      // the time the caller gets here. What it said is what is asserted.
+      final claim = report.retirement!.claim!;
       expect(claim.claimedBy, 'u1');
       expect(claim.database, isTrue);
       expect(claim.media, contains('worlds'));
       expect(claim.claimedAt, isNotNull);
+      expect(claim.generation, isNotNull);
+      expect(report.retirement!.claimCleared, isTrue);
+      expect(promotion.readClaim(), isNull);
     });
 
     test('an unreadable claim still counts as a claim', () async {
@@ -288,7 +328,8 @@ void main() {
       expect((await worldsInContainer(container)).single.worldName,
           'Barrowmoor');
       expect(promotion.isPromoted('u1'), isTrue);
-      expect(promotion.readClaim()!.claimedBy, 'u1');
+      // The claim did its job and went with the content it named.
+      expect(promotion.readClaim(), isNull);
 
       await session.deactivate();
       expect(await worldsInContainer(container), isEmpty,
@@ -318,7 +359,7 @@ void main() {
 
       expect(await worldsInContainer(container), isEmpty);
       expect(promotion.isPromoted('u2'), isFalse);
-      expect(promotion.readClaim()!.claimedBy, 'u1');
+      expect(promotion.readClaim(), isNull);
     });
   });
 }
