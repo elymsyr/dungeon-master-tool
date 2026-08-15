@@ -109,6 +109,8 @@
   "landingAccountBanned": "Compte banni",
   "landingOk": "OK",
   "landingOr": "OU",
+  "landingContinueWithoutAccount": "Continuer sans compte",
+  "landingOfflineHint": "Les mondes, les personnages et le contenu fourni fonctionnent entièrement hors ligne. Vous pourrez vous connecter plus tard.",
   "landingOauthGoogle": "Continuer avec Google",
   "landingOauthGithub": "Continuer avec GitHub",
   "landingFieldEmail": "E-mail",

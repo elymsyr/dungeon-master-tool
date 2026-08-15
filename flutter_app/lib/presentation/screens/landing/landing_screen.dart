@@ -4,12 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/guest_mode_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
+
+/// **O1** — the stored guest choice skips the landing page, but only **once per
+/// launch**. Without this the guest could never get back to the auth form: the
+/// hub's "sign in" button navigates to `/`, and an unconditional auto-skip
+/// would bounce them straight back to the hub.
+bool _guestAutoEntryUsed = false;
 
 class LandingScreen extends ConsumerStatefulWidget {
   const LandingScreen({super.key});
@@ -39,9 +46,19 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final auth = ref.read(authProvider);
         if (mounted && auth != null) {
+          await ref.read(guestModeProvider.notifier).clear();
           await ref.read(userSessionProvider.notifier).activate(auth.uid);
           if (!mounted) return;
           context.go('/hub');
+          return;
+        }
+        // O1 — hesapsız devam etmeyi bir kez seçen kullanıcıya her açılışta
+        // auth formu gösterilmez; aynı offline yoluna doğrudan girilir.
+        final isGuest = await ref.read(guestModeProvider.notifier).load();
+        if (isGuest && !_guestAutoEntryUsed && mounted) {
+          _guestAutoEntryUsed = true;
+          await _enterOffline();
+          return;
         }
         // Startup sonrası ban dialog'u zaten set olmuşsa hemen göster.
         _maybeShowBanDialog();
@@ -54,10 +71,29 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         ..addListener(_maybeShowBanDialog);
     } else {
       // Supabase off — no auth flow exists, skip landing entirely.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/hub');
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) await _enterOffline();
       });
     }
+  }
+
+  /// **O1 — the one offline entry.** A Supabase-less build and a user who
+  /// tapped "continue without an account" take this exact path: the session
+  /// goes back to the guest root (`AppPaths.setUser(null)` inside
+  /// `deactivate`), and the hub opens on the local database. There is
+  /// deliberately no second offline implementation to keep in step.
+  Future<void> _enterOffline() async {
+    await ref.read(userSessionProvider.notifier).deactivate();
+    if (!mounted) return;
+    context.go('/hub');
+  }
+
+  /// The button's handler: remember the choice, then take the same path.
+  Future<void> _continueWithoutAccount() async {
+    _guestAutoEntryUsed = true;
+    await ref.read(guestModeProvider.notifier).enter();
+    if (!mounted) return;
+    await _enterOffline();
   }
 
   @override
@@ -193,6 +229,46 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         ),
 
                         SizedBox(height: isWide ? 16 : 10),
+
+                        // ── O1 — the offline entry. Everything the app
+                        // stores locally (worlds, characters, templates,
+                        // bundled packs) works without an account; only the
+                        // online half needs one.
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton.icon(
+                                onPressed: _loading
+                                    ? null
+                                    : _continueWithoutAccount,
+                                icon: Icon(
+                                  Icons.cloud_off,
+                                  size: 16,
+                                  color: palette.tabActiveText,
+                                ),
+                                label: Text(
+                                  l10n.landingContinueWithoutAccount,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: palette.tabActiveText,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.landingOfflineHint,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: palette.sidebarLabelSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),

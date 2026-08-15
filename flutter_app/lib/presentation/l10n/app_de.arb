@@ -109,6 +109,8 @@
   "landingAccountBanned": "Konto gesperrt",
   "landingOk": "OK",
   "landingOr": "ODER",
+  "landingContinueWithoutAccount": "Ohne Konto fortfahren",
+  "landingOfflineHint": "Welten, Charaktere und mitgelieferte Inhalte funktionieren vollständig offline. Du kannst dich später anmelden.",
   "landingOauthGoogle": "Mit Google fortfahren",
   "landingOauthGithub": "Mit GitHub fortfahren",
   "landingFieldEmail": "E-Mail",

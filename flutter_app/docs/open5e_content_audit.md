@@ -47,9 +47,12 @@ the 19 packs hold **2 class cards**, both `caster_type: NONE` at the source
 (§6 Stage M).
 **Two late stages filed 2026-08-15, after everything else here (§6).**
 **Stage O — the app without an account:** a build carrying the Supabase defines
-bounces every route to the landing page until the user registers
-(`app_router.dart:19`), so none of the content above reaches an unregistered
-user at all. Offline mode already exists in `AppPaths`/`openAppDatabase` and is
+~~bounces~~ *bounced* every route to the landing page until the user registered
+(`app_router.dart:19`), so none of the content above reached an unregistered
+user at all. **O1 closed the first half 2026-08-15** — the redirect is a
+per-route capability check now (`route_access.dart`), the landing page has a
+"continue without an account" action, and only `/profile` and `/admin` still
+need a session. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
 simply unreachable; the store and the online features stay account-gated; and the
 guest→account handover has to move the **Drift** database, which the migration
 that exists today explicitly does not
@@ -3931,7 +3934,8 @@ has a value" into "the value produced the right number on a sheet".
 the content reaches anyone at all. Today, on a build carrying the three Supabase
 defines, it reaches nobody who has not registered.
 
-**The mechanism, measured.** The gate is four lines — `appRouter`'s redirect
+**The mechanism, measured** (as filed — **replaced by O1 on 2026-08-15**, see
+its box). The gate was four lines — `appRouter`'s redirect
 ([lib/presentation/router/app_router.dart:19](../lib/presentation/router/app_router.dart#L19)):
 if `SupabaseConfig.isConfigured` and `auth.currentSession == null`, every route
 except `/` bounces to `/`. `LandingScreen` then shows the auth form
@@ -3962,11 +3966,39 @@ sentinel — precisely so a stale cloud row cannot wipe offline work. Guest
 promotion is that problem with a different trigger, so **O3 extends it rather
 than writing a second merge.**
 
-- [ ] **O1 — Make the offline entry reachable.** `LandingScreen` gains an explicit
-      "continue without an account" action, and the router redirect stops being a
-      session check and becomes a per-route capability check. Guest mode must be
-      the *same* code path a Supabase-less build already takes — a second offline
-      implementation is the failure mode to avoid.
+- [x] **O1 — Make the offline entry reachable. Done 2026-08-15.** The redirect is
+      no longer a session check. `resolveRedirect` /`routeRequiresAccount` live in
+      a new **Flutter-free** `lib/presentation/router/route_access.dart`, and
+      `appRouter` is their only caller. Two prefixes need an account —
+      `/profile` (renders a Supabase `profiles` row) and `/admin` (calls
+      `is_admin()`); `/hub`, `/main`, `/package`, `/character/*` and
+      `/template/*` read the local Drift database and are open to a guest.
+      **Why a separate pure file, not an inline predicate:**
+      `SupabaseConfig.isConfigured` is a compile-time define, so no widget test
+      can ever make it true — the exit criterion's router test is unwritable
+      until the decision is a pure function. `route_access_test.dart` (8 cases)
+      asserts exactly the named regression: `/hub`, `/main`, `/character/new`
+      all return null for a null session, `/profile/me` and `/admin` still
+      return `/`, `/profiles-of-monsters` is not caught by the `/profile`
+      prefix, and a build without the defines gates nothing.
+      `LandingScreen` gained the "continue without an account" action plus a
+      one-line offline hint; both strings are in all four `.arb` locales and
+      `flutter gen-l10n` has been re-run.
+      **Guest mode is not a second implementation:** the button and the
+      Supabase-less build take the same `_enterOffline()` →
+      `userSession.deactivate()` → `AppPaths.setUser(null)` → `/hub` path.
+      The choice is remembered (`guest_mode_provider.dart`, SharedPreferences,
+      3 cases) so the auth form does not reappear on every launch.
+      **One defect found and fixed while building it:** an unconditional
+      auto-skip is a trap — the hub's existing "Sign in" button navigates to
+      `/`, so a remembered guest would have been bounced straight back to the
+      hub and could never reach the auth form again. The skip is therefore
+      once per launch (`_guestAutoEntryUsed`).
+      *Not covered, stated rather than implied:* the exit's "launching →
+      continue → creating a world … never shows the auth form" is a manual
+      check on a build carrying the three defines. It cannot be automated here
+      for the same compile-time-define reason, and `flutter test` runs with the
+      defines unset.
       *Exit: with all three defines set, launching → continue → creating a world,
       creating a character and installing a bundled pack never shows the auth
       form; a router test asserts `/hub`, `/main` and `/character/new` no longer

@@ -109,6 +109,8 @@
   "landingAccountBanned": "Account Banned",
   "landingOk": "OK",
   "landingOr": "OR",
+  "landingContinueWithoutAccount": "Continue without an account",
+  "landingOfflineHint": "Worlds, characters and bundled content work fully offline. You can sign in later.",
   "landingOauthGoogle": "Continue with Google",
   "landingOauthGithub": "Continue with GitHub",
   "landingFieldEmail": "Email",
