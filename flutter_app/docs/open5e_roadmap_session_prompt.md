@@ -55,6 +55,10 @@ yarım iş bırakma.
 
 ## 3. Build / test / analyze — her fazda
 
+`flutter` bu makinede PATH'te **değil**; SDK `C:\src\flutter\bin`. PowerShell'de
+her oturumda bir kez:
+`$env:PATH = "C:\src\flutter\bin;C:\src\flutter\bin\cache\dart-sdk\bin;$env:PATH"`
+
 ```sh
 cd flutter_app
 flutter pub get
