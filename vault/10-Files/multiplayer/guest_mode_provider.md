@@ -37,4 +37,4 @@ tags: [file]
 - `test/application/providers/guest_mode_provider_test.dart` (3 vaka) kalıcılığı pinler.
 
 ## Notes
-- **O3** misafir→hesap terfisini bu bayrağın temizlendiği anda yapacak: bugün `clear()` yalnız bayrağı siler, Drift veritabanı taşınmaz ([[user_session_provider]]'ın `_migrateGlobalDataIfNeeded`'ı hâlâ sadece `worlds/` ve `packages/` medya ağaçlarını kopyalıyor).
+- **O3 (2026-08-15) o boşluğu kapattı:** terfi artık `clear()`'ın yanında değil, `UserSessionNotifier.activate` içinde [[guest_promotion_service]] ile yapılıyor — Drift veritabanı da (kapalıyken, WAL çifti dahil) kopyalanıyor, medya ağaçlarına `characters/` de eklendi. `clear()` hâlâ yalnız bayrağı siler; doğru yerde durur, çünkü terfi oturumun açılmasına bağlı, seçimin unutulmasına değil.

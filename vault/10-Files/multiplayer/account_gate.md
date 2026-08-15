@@ -39,5 +39,5 @@ tags: [file]
 - Ölçüm (2026-08-15): repoda **102** `isConfigured` çağrısı vardı; **48'i** zaten `!isConfigured || auth == null` yazıyordu, gerisi çıplak okuyordu. Presentation tarafı **27 çağrı / 15 dosya → 10 / 6**'ya indi; kalan altısı build düzeyinde okumalar (router, landing auth formu, player alt-penceresi, `startup_sync_gate`, hub sign-out listener).
 
 ## Notes
-- `lib/application/providers/` içindeki ~21 dosya hâlâ yüklemi elle yazıyor. **Doğrular**, yani bu bir kusur değil tekrar; O3 dokunduğunda toplanacak.
+- `lib/application/providers/` içindeki ~21 dosya hâlâ yüklemi elle yazıyor. **Doğrular**, yani bu bir kusur değil tekrar. O3 (2026-08-15) o dosyaların yanından geçmedi — terfi `user_session_provider` + [[guest_promotion_service]] ile sınırlı kaldı — dolayısıyla toplama işi hâlâ sahipsiz; kendi başına bir 90-nokta süpürmesi olarak değil, o provider'lara dokunan ilk faz sırasında yapılmalı.
 - Yeni bir yüzey eklerken: enum'a bir değer + `requiresAccount`. Test `_roadmapOnlineSurfaces` kümesiyle karşılaştırdığı için, kapılı bir yüzey eklemek audit dokümanını da güncellemeyi zorunlu kılar.

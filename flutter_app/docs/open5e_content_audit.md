@@ -56,7 +56,11 @@ need a session. **O2 followed the same day**: the three states a device can be
 in are one predicate (`account_gate.dart`), and a guest now sees the gated
 surfaces with a sign-in prompt instead of a blank — except the first-party
 catalog, which the Worker serves publicly (`worker.ts:331`) and which therefore
-is not gated at all. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
+is not gated at all. **O3 closed the handover the same day**: signing up copies
+the guest Drift database — closed, WAL pair included, guest tree read-only — into
+`users/{id}/` and rewrites the media paths inside it
+(`guest_promotion_service.dart`), which is what the migration it replaces never
+did. Offline mode already exists in `AppPaths`/`openAppDatabase` and was
 simply unreachable; the store and the online features stay account-gated; and the
 guest→account handover has to move the **Drift** database, which the migration
 that exists today explicitly does not
@@ -4082,21 +4086,70 @@ than writing a second merge.**
       other 20 provider files still spell it out per provider. They are
       *correct*, so this is de-duplication, not a defect, and it belongs with
       whatever O3 touches rather than as a 90-site sweep for its own sake.
-- [ ] **O3 — Guest → account promotion, with nothing lost.** The real work, and
-      the one with a data-loss failure mode. The local handover must happen with
-      the database **closed**, must be a copy-then-flip-a-sentinel (never a
-      move-then-fail), and must carry what the media copy already carries plus
-      what it does not: `asset_refs` rows and media paths are `dataRoot`-relative,
-      so rewriting them is part of the copy, not a follow-up. Once the rows are
-      under `users/{id}/`, the cloud push is `BetaEnterMergeService`'s existing
-      local-wins first-enter merge.
-      *Exit: a roundtrip test — a guest creates a world, a character and installs
-      a pack, then signs up; every row is present under the new user id, the sync
-      outbox has them queued, re-running the promotion changes nothing
-      (idempotent), and a promotion interrupted mid-way leaves the guest database
-      readable and intact. Sign-up and sign-in of an existing account are both
-      covered — a user who registers after a month offline and a user who signs
-      into an account that already has cloud rows are different merges.*
+- [x] **O3 — Guest → account promotion, with nothing lost. Done 2026-08-15.**
+      The handover is `lib/application/services/guest_promotion_service.dart`,
+      called from `UserSessionNotifier.activate` in two phases: **copy while the
+      database is closed**, then — once the account database is open — rewrite
+      the stored paths and only then write the completion marker. The guest tree
+      is read-only throughout: there is no move, no delete and no in-place
+      rename, so an interruption can cost the promotion but never the data. The
+      copy carries `dmt.sqlite` plus its `-wal`/`-shm` pair (the DB runs in WAL,
+      `app_database.dart:152`) through `.incoming` temp names, so a `dmt.sqlite`
+      at the destination only ever exists complete.
+      **Two things this box claimed that measurement contradicted.** First,
+      `asset_refs` needs no rewriting at all: its `uri` values are scheme URIs
+      (`dmt-asset://`, `dmt-public://`, `dmt-transient://`) and raw filesystem
+      paths are kept *out* of that graph on purpose
+      (`reference_indexer.dart:19`) — they are location-independent, so the
+      table survives a move untouched. What does carry absolute paths is JSON
+      blobs and columns like `world_entities.image_path`, which is why the F11
+      `RawPathMigrator` exists; the rewrite is therefore a sweep over every TEXT
+      column of every table (**154 declared `TextColumn`s across 25 Drift
+      tables**, plus the four raw-DDL side tables) rather than a targeted
+      `asset_refs` update. Second, the rewrite **cannot** be anchored on the
+      data root: the account root *contains* the guest root as a prefix, so
+      root → account-root would produce `users/{id}/users/{id}/…` on a second
+      pass. It is anchored per media subtree (`{root}/worlds` →
+      `{root}/users/{id}/worlds`) instead, which makes it idempotent — a second
+      pass rewrites **0** values, asserted.
+      **A third gap the box did not name:** the migration being replaced
+      (`_migrateGlobalDataIfNeeded`) copied `worlds/` and `packages/` only —
+      `charactersDir` was never in the list. All three subtrees ride along now,
+      each with the same never-clobber rule as the database.
+      **No second merge was written**, as instructed. `BetaEnterMergeService`
+      already claims ownership locally when `ownerId == null`
+      (`beta_enter_merge_service.dart:141`) and enqueues every row through
+      `syncEngine.enqueue*`; ordering was measured, not assumed —
+      `landing_screen` awaits `activate(uid)` **before** `context.go('/hub')`,
+      and the merge runs later from `startup_sync_gate`, so it finds the
+      promoted rows in place.
+      **Sign-up and sign-in-to-an-existing-account are different merges, and the
+      code says so:** if the account already has a database on this device the
+      guest database is *not* copied over it (`accountAlreadyHasData`); their
+      rows stay, the guest tree stays readable, and the cloud merge reconciles.
+      The old `migrated_{uid}` SharedPreferences sentinel is gone — the sentinel
+      is a file under the account root, so an existing user who never had one
+      takes exactly that never-clobber branch on their next sign-in.
+      *Exit met:* `test/application/services/guest_promotion_service_test.dart`
+      — **11 cases, all green**, over a real file-backed v12 database: rows for
+      world / entity / character / package all present under the new user id;
+      media copied including `characters/`; the two path-carrying values
+      rewritten (exactly **2**, column and blob, the same count on POSIX and on
+      Windows where the blob's doubled backslashes are a third spelling); the
+      guest database **byte-for-byte unchanged** after the promotion and still
+      holding its own paths; an interrupted promotion leaving no completion
+      marker and finishing on the next attempt; a repeat promotion a no-op; an
+      occupied account left alone; a never-offline device promoting nothing.
+      *Not covered, stated rather than implied:* "the sync outbox has them
+      queued" is **not** asserted by a test. `BetaEnterMergeService` needs a
+      `SupabaseClient`, so the enqueue can only be shown by reading it; writing
+      a testable stand-in would be the second merge this phase was told not to
+      write. The sign-out side — that `deactivate()` returns the user to the
+      guest database that has now been absorbed — is untouched here; it is O4.
+      And O2 left the ~21 remaining copies of its predicate "with whatever O3
+      touches": O3 touched `user_session_provider` and nothing else in
+      `lib/application/providers/`, so they are still uncollected. Recorded in
+      the vault rather than quietly dropped.
 - [ ] **O4 — Sign-out, and the second account on one device.** Today
       `deactivate()` returns the paths to the global root — which *is* the guest
       database — so after a sign-out the user lands back in their pre-registration

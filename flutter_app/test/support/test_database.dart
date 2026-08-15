@@ -14,13 +14,20 @@ import 'package:sqlite3/open.dart';
 /// resolver that falls back to the versioned name so these tests run without
 /// an extra apt install; on a machine that has the symlink this is a no-op.
 AppDatabase openTestDatabase() {
-  _registerSqliteFallback();
+  registerSqliteFallback();
   return AppDatabase.forTesting(NativeDatabase.memory());
+}
+
+/// Same resolver, for tests that need a **file**-backed database rather than an
+/// in-memory one (the guest-promotion roundtrip copies a real `.sqlite` file).
+AppDatabase openTestDatabaseAt(File file) {
+  registerSqliteFallback();
+  return AppDatabase.forTesting(NativeDatabase(file));
 }
 
 var _registered = false;
 
-void _registerSqliteFallback() {
+void registerSqliteFallback() {
   if (_registered || !Platform.isLinux) return;
   _registered = true;
   open.overrideFor(OperatingSystem.linux, () {
