@@ -10,26 +10,36 @@
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
 > (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` + `a5e-ddg`
-> bitti (2026-08-17).** 20 tarama biriminin 3'ü kapandı, defterde **8 bulgu** var:
-> F-pass0-01 (checklist F2), F-builtin-01 (C4), F-builtin-02 (C8), F-pass0-02
-> (C2 — 30 background seçimli becerilerin hepsini hediye ediyor), F-pass0-03
-> (A5 — `ability_score_options` 27/27 aynı altı yetenek), F-pass0-04
-> (A3 — 6 kartın gövdesi `"[No description provided]"` ile açılıyor), F-pass0-05
-> (D1 — `granted_language_count` 31 satırın 2'sinde yanlış), F-pass0-06
-> (B3 — background ekipmanında adı yazılı eşya envantere girmiyor).
-> Sekizi de ❓ danışılacak.
+> + `open5e` bitti (2026-08-17).** 20 tarama biriminin 4'ü kapandı, defterde
+> **11 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4), F-builtin-02
+> (C8), F-pass0-02 (C2 — 30 background seçimli becerilerin hepsini hediye
+> ediyor), F-pass0-03 (A5 — `ability_score_options` 27/27 aynı altı yetenek),
+> F-pass0-04 (A3 — 6 kartın gövdesi `"[No description provided]"` ile açılıyor),
+> F-pass0-05 (D1 — `granted_language_count` 31 satırın 2'sinde yanlış),
+> F-pass0-06 (B3 — background ekipmanında adı yazılı eşya envantere girmiyor),
+> **F-pass0-07** (A4 — 19 kart adı built-in bir adın yazım varyantı, 9 pakette),
+> **F-open5e-01** (G3 — 5e-2024 belgesi 5e-2014 etiketli pakete karışıyor),
+> **F-open5e-02** (E3 — üçte-bir büyücü 2 subclass hiç slot almıyor).
+> On biri de ❓ danışılacak.
 >
-> **Sıradaki iş: Dalga 1 → `open5e-open5e`** (22 varlık: subclass 17, spell 2,
-> background 2, subspecies 1 — dalganın **ilk çok kategorili** paketi).
-> Dört uyarı hazır: (1) bu pakette `verify_packs` gerçekten **ölçüyor** —
-> `subclass` ve `spell` kuralları var, yani D1/D2 ilk kez araçla gelecek,
-> `--doc open5e --only subclass,spell` ile; (2) `background` 2 satırı yine
-> okumayla, ve dört yayılan bulgunun dağılım tablolarında `open5e` şu an
-> **yalnız F-pass0-06'da** (6 düşen sözcük) + `granted_language_count` 1 satır
-> (doğru) — C2/A3/A5 satırlarında yok, yani orada **yeni** bir şey çıkarsa
-> dağılım tablosuna satır eklenir; (3) `subclass` 17 varlık × 18 satır ≈ 306
-> satır, bütçe içinde ama `--picks 3` hazır dursun; (4) `a5e-ddg`'nin keskinleşmiş
-> yöntem notu geçerli: **kaynak kaç tane diyor, pakette kaç tane var.**
+> **Sıradaki iş: Dalga 1 → `open5e-tdcs`** (35 varlık: trait 11,
+> creature-action 10, background 5, monster 4, subclass 4, feat 1 — dalganın
+> **ilk canavarlı** paketi ve ilk `feat`'i).
+> Dört uyarı hazır: (1) `audit_packs`'i **`--only` olmadan çalıştırma** — bu
+> paket §4 Adım 1'in ölçülmüş örneği, 474 satır → 221; (2) `monster` varlık
+> başına 50 satır, `--picks 3` ile gir, ve `trait`/`creature-action` satırları
+> **F-pass0-07'nin ana kovası** (19'un 14'ü çocuk satırı) — `tdcs`'in 4 kartı
+> bu ölçümde çıkmadı, çıkarsa dağılım tablosuna satır eklenir; (3) üç yayılan
+> bulgunun dağılımında `tdcs` **zaten var**: F-pass0-06 (9 düşen sözcük),
+> F-pass0-05 (3 dolu satır, 0 yanlış), ve §5.4'ün yazılı alet-kaybı satırı
+> (Crime Syndicate Member) — bunlar yeniden bulgu değil, **doğrulama**;
+> (4) `verify_packs --doc tdcs --only monster,subclass,feat` ölçer,
+> `background` + `trait` + `creature-action` **ölçmez** (§4 Uyarı 2), oralar
+> okumayla.
+>
+> **Bu birimin eklediği üçüncü soru** (`open5e` sonucundan): kartın taşıdığı
+> mekanik **şemada bir eve sahip mi**, ve o ev **doğru belgeden** mi
+> dolduruluyor? İkisi de doluluk tablosunda görünmez.
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -315,7 +325,7 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 |---|--:|---|:--:|---|---|
 | `open5e-a5e-gpg` | 2 | background 2 | ⚠️ | 2026-08-17 | F-pass0-02, F-pass0-03, F-pass0-04 |
 | `open5e-a5e-ddg` | 4 | background 4 | ⚠️ | 2026-08-17 | F-pass0-02…06 |
-| `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⬜ | — | — |
+| `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⚠️ | 2026-08-17 | F-open5e-01, F-open5e-02, F-pass0-06, F-pass0-07 |
 | `open5e-tdcs` | 35 | trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 | ⬜ | — | — |
 | `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⬜ | — | — |
 | `open5e-a5e-ag` | 455 | spell 371, feat 59, background 21, subclass 3, class 1 | ⬜ | — | — |
@@ -447,6 +457,69 @@ kapsamı `pass0`; paketin kendi sayacı 0 kalıyor.
 > bildirmiyor; `verify_packs` `background` kuralı boş olduğu için 0 ok basıyor;
 > `gate_packs` softRef'leri gate'lemiyor. Bu birimde **31 maddenin 5'i** yalnız
 > okumayla bulundu, ve 5'i de bulgu çıktı.
+
+#### `open5e-open5e` sonucu — 2026-08-17
+
+22 varlık, **dalganın ilk çok kategorili paketi** (subclass 17, spell 2,
+background 2, subspecies 1). 31 maddenin **4'ü bulgu**, 1'i yazılı-açık,
+2'si ➖, 2'si ⛔, 22'si ✅. Bulguların **2'si bu pakete ait** (dalgada bir paketin
+kendi sayacının ilk kez artması), 1'i yeni yayılan bulgu, 1'i doğrulama.
+
+| Madde | Verdict | Dayanak |
+|---|:--:|---|
+| A1 | ✅ | 4 `type` (`subclass`/`spell`/`background`/`subspecies`), dördü de şemada; `audit_packs` dördünü de tabloluyor, sayılar manifest `counts` ile birebir (17/2/2/1) |
+| A2 | ⛔ | `background`'ın 4 zorunlusundan 3'ü boş (`ability_score_options`, `asi_distribution_options`, `origin_feat_ref`) — §5.8'de yazılı ⛔ → K7. Diğer üç kategoride zorunlu alanların **hepsi** dolu (`subclass` 2/2 × 17, `spell` 11/11 × 2, `subspecies` 1/1) |
+| A3 | ✅ | `granted_at_level` sabit değil, **veriden** geliyor (cleric/warlock/sorcerer 1, wizard/druid 2, fighter/rogue/bard/paladin/monk 3 — `min(ClassFeatureItem.level)`); iki background'ın gövdesi gerçek metin (F-pass0-04 buraya inmiyor); subspecies'in ASI'si `asi_json`'dan |
+| A4 | ⚠️ | **F-pass0-07 (yeni, yayılan)** — `Eye bite` built-in `Eyebite`'ın yazım varyantı; korpüs geneli ölçüm **19 kart / 9 paket** |
+| A5 | ✅ | `audit_packs` bu pakette hiç ⚠ basmıyor (22 varlık, `_constMinSample` altı) — el ile bakıldı: tek-değerli sütunların hepsi 1–2 satırlık kategorilerde, yani "kapsama değil default" durumu oluşmuyor |
+| B1 | ✅ | census A "same text" **0**. Paket built-in ile tek ad paylaşıyor (`Ray of Sickness`) ve metin farklı — kartın kendi gövdesi sebebini yazıyor: *"This Open5e spell replaces a like-named non-SRD spell"* |
+| B2 | ✅ | `Scoundrel` background'ı `toh`'ta da var, ama **ad-paylaşımı**: difflib oranı 0.396 (kişilik tabloları tamamen farklı), mekanikler aynı. B2'nin "yalnız unowned identical text taşınır" kuralına göre ikisi de kalır |
+| B3 | ⚠️ | **F-pass0-06 doğrulandı** — Con Artist'in `pouch`'u, Scoundrel'ın `ball bearings` + `common clothes`'u `label`'da kalıyor, `items`'a girmiyor (dağılım tablosundaki 6 sözcük) |
+| B4 | ✅ | `gate_packs --packs /tmp/one` **green**; census C korpüs geneli **0 dangling**; paketin softRef'leri (`class` Wizard/Fighter/…, `species` Halfling, `tool`, `adventuring-gear`) built-in'e iniyor |
+| B5 | ✅ | `metadata.links` yok + katalog girdisi `requires: []` — L2'nin yazılı kararı |
+| C1 | ✅ | `subclass.features` 17/17 ve `granted_at_level` 17/17; seviye tabloları 4–7 satır |
+| C2 | 🟡 | `background` becerileri **doğru** (iki kaynak satırı da iki sabit beceri veriyor → kart iki veriyor; F-pass0-02 bu pakete inmiyor). Ama Con Artist'in `"Two of your choice"` alet hakkı hiç yazılmıyor — §5.4'ün 40 satırlık tablosunda *"correctly empty"* diye **yazılı**, dolayısıyla K7 gereği bulgu değil. Ölçüldü: kaynağı alet veren 42 background'ın **4'ü** pakette alet almıyor (`Con Artist`, `tdcs` Crime Syndicate Member, `toh` Mercenary Company Scion / Mysterious Origins) — dördünün de gerekçesi §5.4'te |
+| C3 | ✅ | 2 büyünün 2'si kaynakla okunarak karşılaştırıldı: `Eye bite` (self / 1 dk / konsantrasyon / Wisdom / 4 sınıf) ve `Ray of Sickness` (60 ft / instantaneous / Con / Ranged / poison) — hepsi `Spell.json` ile aynı. `at_higher_levels_text` boş, ama prose `description`'a ekli ve sebebi §5.8'de `P` |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ✅ | `mechanical_notes` boş; subspecies'in ASI'si ve poison direnci tipli evlerinde (`ability_bonuses`, `granted_damage_resistances`), zehir kurtarma **avantajı** prose'da — subspecies şemasında karşılığı yok (§5.3) |
+| C7 | ✅ | `_lookup` zarfları (`skill`, `ability`, `damage-type`, `creature-type`, `spell-school`, `casting-time-unit`, `duration-unit`, `casting-component`) çözülüyor; `unmapped_report.json`'ın 3 satırının hiçbiri bu paketten değil |
+| C8 | ✅ | 0% kalan alanların hepsi yazılı: `subclass`'ın 4 🔴'ı §5.2 (`M`, feature prose), `background`'ınkiler §5.4 + §5.8, `spell.at_higher_levels_text` `P`, subspecies grant bloğu §5.3. **Not:** C8 yalnız *beyan edilmiş* alanı sorabiliyor — E3'ün bulduğu boşluk (subclass'ta `caster_kind` **alanı yok**) bu maddenin kör noktası |
+| D1 | ✅ | Dalga 1'de **ilk kez araçla** ölçüldü: `verify_packs --doc open5e --only subclass,spell` → **14 ok / 0 disagree / 0 absent** |
+| D2 | ✅ | 6 `unverifiable`, dördü de beyanlı kuralla geliyor (`casting_time` öneksiz, v2 `classes` boş → v1 `dnd_class`, `attack_roll` menzilden çıkarım, `range_ft` `range_text`'ten); `unsourced` 0 |
+| D3 | ✅ | `gate_packs` green |
+| E1 | ✅ | M1 73 çift yeşil (Pass 0); paketin yazdığı alanlar sayfaya iniyor |
+| E2 | ✅ | M3 beyan listesine yeni alan gerekmedi |
+| E3 | ⚠️ | **F-open5e-02 (yeni)** — `Arcane Warrior` + `Eldritch Trickster` üçte-bir büyücü; `caster_kind` yalnız `class`'tan okunuyor, korpüste `'Third'` taşıyan **0** kart var. Checklist E3'ün "paketli bir büyücü çıkarsa yeniden dosyalanır" notu tetiklendi |
+| F1 | ✅ | `pack_install_roundtrip_test` 19 pakette yeşil |
+| F2 | ⛔ | `pack_field_render_test`: paket tarafı **224 çift / 446 pump yeşil**, `builtin SRD fields render` vakası **F-pass0-01** yüzünden kırık (temiz ağaçta da kırık — taban) |
+| F3 | ✅ | `wizard_pack_families_test` yeşil (17 subclass `granted_at_level` + parent sınıf iddiası bu paketi de kapsıyor) |
+| F4 | ✅ | `entity_link_navigation_test` yeşil |
+| G1 | ✅ | `pack_version` 1.1.0 = katalog `version` = `r2_path @1.1.0`; `size_bytes` **219.829** = dosyanın gerçek boyutu; `counts` üç dosyada aynı |
+| G2 | ✅ | `publisher` / `license` / `game_system` / `is_srd_overlap` paket ve katalogda aynı (Open5e · `ogl-10a` · `5e-2014` · false) |
+| G3 | ⚠️ | **F-open5e-01 (yeni)** — `mergeOpen5eOriginals` `open5e-2024` belgesini (`gamesystem: 5e-2024`) `5e-2014` etiketli pakete katıyor; `Abjurationist` etiketsiz kalıyor ve `verify_packs --doc open5e` onu 17'de 1 "unmatched" olarak görüyor |
+
+**Sayım: 22 ✅ · 2 ➖ · 2 ⛔ · 4 ⚠️ · 1 🟡.**
+
+> **Okuma bütçesi.** `scan_pack.py open5e` + 4 kategori (`subclass --picks 3`) =
+> ~330 satır; kaynak tarafı `Background.json` 2 + `Spell.json` 2 + `Subrace.json` 1
+> + `CharacterClass.json` iki belge (ad listesi) ≈ 60 satır. Bütçenin altında
+> kalındı, `--picks 3` gerçekten gerekliydi (17 × 18 ≈ 306 satır olurdu).
+>
+> **Yöntem notu — soru bir kademe daha genişledi.** `a5e-ddg` "kaynak kaç tane
+> diyor, pakette kaç tane var" diye sormayı öğretmişti. Bu paketin iki bulgusu
+> **o soruya da yakalanmıyordu**: F-open5e-01'de sayı doğru (17 kart, 17 kaynak
+> satırı), yanlış olan **hangi kaynaktan** geldikleri; F-open5e-02'de kayıp bir
+> değerde değil, **var olmayan bir alanda**. Yani çok kategorili paketlerde üçüncü
+> soru: *kartın taşıdığı mekanik, şemada bir eve sahip mi — ve o ev doğru
+> belgeden mi dolduruluyor?* Doluluk tablosu ikisini de göremez; ikisi de
+> örneklem okumasından çıktı.
+>
+> **İlk kez ölçen araç.** Bu birimde `verify_packs`'in kural tablosu gerçekten
+> çalıştı (`subclass` + `spell`): 14 ok / 0 disagree. Yani D1 ilk iki paketteki
+> gibi "ölçülmemiş" değil, **ölçülmüş ve temiz** — ve tam da o çıktı,
+> `Abjurationist`'i "unmatched" diye raporlayarak G3 bulgusunun ikinci kanıtını
+> verdi.
 
 ### Dalga 2 — Büyü paketleri
 
