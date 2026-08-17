@@ -3,8 +3,8 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk üç paketi bitti
-> (2026-08-17), 11 bulgu.** Sıradaki iş **Dalga 1 → `open5e-tdcs`**.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk dört paketi bitti
+> (2026-08-17), 13 bulgu.** Sıradaki iş **Dalga 1 → `open5e-toh`**.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -92,18 +92,18 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 11 | 0 | 0 | 0 | 0 | **11** |
+| 0 | 13 | 0 | 0 | 0 | 0 | **13** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
 | Madde | Bulgu | Madde | Bulgu | Madde | Bulgu |
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 0 |
-| A2 | 0 | B2 | 0 | C2 | 1 |
+| A2 | 0 | B2 | 0 | C2 | 2 |
 | A3 | 1 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
-| D1 | 1 | E1 | 0 | C6 | 0 |
+| D1 | 1 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 1 | C8 | 1 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
@@ -114,7 +114,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 7 | `open5e-vom` | 0 |
+| `pass0` | 9 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -1063,6 +1063,174 @@ o tablo bu iki subclass için sonsuza kadar boş kalır.
    5 "Potent Spellcasting" satırını yanlış sınıflandırmamak için ek kural gerekir.
 3. **Kapsam dışı** — 2 kart, ve slot sayıları kaynakta yok; karar "prose olarak
    kalır" diye yazılır, `CasterKind.third`'ün ölü kod olduğu da kayda geçer.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-08 — 24 subclass büyü listesi yalnız düzyazı tablosu: `features` satırının büyü anahtarı yok, B5'in yazılı kuralı da bunlara yetişmiyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 3 pakete yayılı (Dalga 1 / `tdcs`'te bulundu) |
+| **Checklist** | checklist E1 (mekanik sayfaya iniyor) |
+| **Kategori / etki** | `subclass` — 101 subclass'ın **523** `features` satırından **0'ı** hiçbir grant anahtarı taşımıyor; bunların **24'ü** düzyazının içine gömülü **büyü listesi tablosu** (domain / circle / expanded spells): `toh` 15, `open5e` 8, `tdcs` 1 |
+| **Cause code (öneri)** | `M` — `classFeatures` satır şemasında büyü anahtarı **hiç yok** (`granted_feat_refs` var, `always_prepared_spell_refs` yok); mapper tabloyu `description` metnine bırakıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Built-in SRD'de bir subclass'ın büyü listesi, `always_prepared_spell_refs`
+taşıyan bir **feat kartına** yazılıyor (`srd_core/feats_class.dart:945, 980, 1039…`)
+ve `features` satırı o karta `granted_feat_refs` ile bağlanıyor. Open5e paketlerinde
+o zincirin **hiçbir halkası** yok: `features` satırları yalnız `{level, name,
+description}` taşıyor, ve domain/circle büyü listesi feature'ın `description`'ı
+içinde markdown boru tablosu olarak duruyor:
+
+```
+Blood Domain Spells (table)
+Cleric Level | Spells                                |
+ |--------------|-------------------------------------------|
+ | 1st          | *sleep*, *ray of sickness*                |
+```
+
+Bu, F-open5e-02 ile **aynı sınıftan** bir açık ama farklı yeri: orada mekaniğin
+alanı vardı (`caster_kind`) ve yanlış kategoriden okunuyordu; burada satırda
+**alan yok**. Doluluk tablosu ikisini de göremez — C8 yalnız *beyan edilmiş*
+alanları sorar.
+
+**Yol haritasının B5 notu bunu kapatmıyor.** §5'te (`open5e_content_audit.md:2224`)
+`granted_feat_refs`'in boş olduğu yazılı ve "left to B5" deniyor; B5'in yazılı
+kuralı ise `granted_feat_refs` için **"softRef the built-in feat, never mint one"**
+(§5, satır 2343). Blood Domain / Circle of Bees / Storm Domain büyü listelerinin
+built-in'de karşılığı **yok** — bunlar pakete ait içerik. Yani B5 tamamlansa bile
+bu 24 tablo düzyazıda kalır; kapatmak için ya satır şemasına büyü anahtarı, ya da
+pakete ait feat kartı basma izni gerekir. B5'in kapsamı bu yüzden burada
+**yetersiz**, bulgu da bu yüzden yazıldı (K7 ihlali değil).
+
+**Kanıt.**
+```sh
+# flutter_app'ten — subclass features satırlarında grant anahtarı ve büyü tablosu sayımı
+python3 - <<'EOF'
+import json, glob, collections
+c = collections.Counter()
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    slug = p.split('/')[-1].replace('open5e-', '').replace('.pkg.json', '')
+    for e in json.load(open(p))['entities'].values():
+        if e['type'] != 'subclass':
+            continue
+        c['subclass'] += 1
+        for f in e['attributes'].get('features') or []:
+            c['rows'] += 1
+            if set(f) - {'level', 'name', 'description'}:
+                c['rows_with_grant'] += 1
+            d = f.get('description') or ''
+            if '|' in d and 'spell' in d.split('\n')[0].lower():
+                c['spelltable_' + slug] += 1
+print(c)
+EOF
+# → subclass 101, rows 523, rows_with_grant 0,
+#   spelltable_toh 15, spelltable_open5e 8, spelltable_tdcs 1
+```
+
+**Dağılım.**
+
+| Paket | Büyü tablosu | Örnek |
+|---|--:|---|
+| `open5e-toh` | 15 | Circle of Bees "Circle Spells", Hunt/Mercy/Portal/Serpent/Shadow/Vermin/Wind Domain Spells |
+| `open5e-open5e` | 8 | Demise/Mischief/Storm Domain Spells, The Ancient Fey Court "Expanded Spell List" |
+| `open5e-tdcs` | 1 | Blood Domain "Blood Domain Spells (table)" |
+| **Toplam** | **24** | 7 tablo daha var ama büyü listesi değil (Totem Dragon, Combat Engineer gibi düzyazı içi tablolar) |
+
+**Neden önemli.** Cleric domain büyüleri 5e'de "her zaman hazır" mekaniğidir —
+oyuncu onları hazırlamak zorunda değildir ve hazırlık limitine saymazlar. Şu an
+paket subclass'ı seçen karakterin sayfasında **tek bir büyü** görünmüyor; kural
+yalnız feature metninde okunuyor. Aynı mekanik built-in Cleric domain'lerinde
+çalışıyor, yani kullanıcı iki subclass arasında **davranış farkı** görüyor.
+17 tablonun metninde ayrıca `\r\n` var ve tablo başlığı satır başında boru
+taşımıyor; bu ayrı bir render sorusu (checklist F2), burada yalnız anılıyor.
+
+**Seçenekler.**
+1. **Satır şemasına anahtar ekle** — `classFeatures` satırına
+   `always_prepared_spell_refs` (+ resolver Pass 4b'de okuyucu). Dört koordineli
+   düzenleme (grant sözleşmesi), sonra mapper tablo satırlarını softRef'e çevirir;
+   "1st | *sleep*, *ray of sickness*" seviye→büyü eşlemesi ayrıştırılabilir bir
+   kalıp (24 tablonun hepsi aynı iki sütunlu şekilde).
+2. **Pakete ait feat kartı bas** — built-in'in yaptığı şeyi mapper yapar: her
+   büyü tablosu için bir `feat` kartı + `granted_feat_refs`. B5'in "never mint one"
+   kuralının **gevşetilmesi** demektir; ref kapısı (§2 (a)) 24 yeni kart anlamına
+   gelir, kopya üretmez ama karar senindir.
+3. **Kapsam dışı** — "düzyazı olarak kalır" yazılır; o zaman F-open5e-02 ile
+   birlikte, paket subclass'larının **hiçbir** büyü mekaniği taşımadığı kayda
+   geçer.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-09 — background'un adı verilmiş dili düşüyor: Thieves' Cant ve Sylvan hiçbir alana yazılamıyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 2 pakete yayılı (Dalga 1 / `tdcs`'te bulundu) |
+| **Checklist** | checklist C2 (species/background/feat alanları) |
+| **Kategori / etki** | `background` — kaynakta dil sütunu dolu **24** satırın **22'si** "seçim" (`granted_language_count` doğru yazılıyor), **2'si adı verilmiş dil**: `tdcs` Crime Syndicate Member → `Thieves' Cant`, `toh` Forest Dweller → `Sylvan`. İkisi de pakette **hiç** görünmüyor |
+| **Cause code (öneri)** | `N` — `background` şemasında yalnız `granted_language_count` var (`content.dart:759`); `granted_languages` alanı **yok**, yani mapper'ın yazacağı yer de yok |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `background` şeması dili **sayı** olarak modelliyor: "One of your
+choice" → 1. Kaynak bazen dilin **adını** veriyor, ve o ad hiçbir yere sığmıyor —
+`granted_language_count` yazılamaz (sayı değil), `granted_languages` diye bir alan
+yok. Sonuç: Crime Syndicate Member seçen karakter Thieves' Cant'i almıyor ve
+kartında bunun **yazılı bir izi de yok** (feature metni ayrı bir alanda değil,
+`description` düzyazısının içinde).
+
+Alan `trait`, `feat`, `species` kategorilerinde **var** (`granted_languages`,
+grant bloğu); yalnız `background` onu taşımıyor. Bu, 2024 SRD'nin background
+tasarımından geliyor (dil hakları origin/species'e taşındı), yani şema 2024'e
+göre doğru — ama korpüsün 19 paketinin çoğu **5e-2014** ve orada background dil
+adı verebiliyor.
+
+**Kanıt.**
+```sh
+# repo kökünden — kaynakta adı verilmiş dil taşıyan background satırları
+python3 - <<'EOF'
+import json, glob, re, collections
+c, named = collections.Counter(), []
+for p in glob.glob('open5e-api-staging/data/v1/*/Background.json'):
+    for r in json.load(open(p)):
+        f = r.get('fields', r)
+        L = (f.get('languages') or '').strip()
+        if not L or L.lower() in ('none', '-'):
+            c['empty'] += 1
+        elif re.search(r'choice|choose|any', L, re.I):
+            c['choice'] += 1
+        else:
+            c['named'] += 1
+            named.append((p.split('/')[-2], f.get('name'), L))
+print(c, named)
+EOF
+# → Counter({'empty': 18, 'choice': 17, 'named': 7})
+#   named'in 5'i "No additional languages" (yani gerçekte 0), kalan 2'si:
+#   ('taldorei', 'Crime Syndicate Member', 'Thieves’ Cant')
+#   ('toh', 'Forest Dweller', 'Sylvan')
+```
+
+**Dağılım.**
+
+| Paket | Kart | Kaynaktaki dil |
+|---|---|---|
+| `open5e-tdcs` | Crime Syndicate Member | Thieves' Cant |
+| `open5e-toh` | Forest Dweller | Sylvan |
+
+**Neden önemli.** İki satır küçük bir sayı, ama F-pass0-05 ile aynı alanın iki
+farklı kusuru: orada sayı **yanlış** yazılıyor, burada değer **yazılamıyor**.
+İkisinin de kararı aynı alana dokunuyor, o yüzden birlikte görülmeli. Thieves'
+Cant ayrıca boş bir bayrak değil — 2014'te Rogue sınıfının imza dilidir ve
+karakterin dil listesinde görünmesi beklenir.
+
+**Seçenekler.**
+1. **Alanı ekle** — `background`'a `granted_languages` (grant bloğundakiyle aynı
+   şekil, `CharacterResolver.grantFieldKeys` zaten okuyor). İki satır dolar;
+   şema değişikliği + mapper'da tek dallanma.
+2. **`description`'a düş** — mapper adı bulduğunda `mechanical_notes` benzeri bir
+   yere yazar; kullanıcı görür ama mekanik değildir.
+3. **Kapsam dışı** — 24 satırda 2; "şema 2024'e göre doğru, 2014 background dil
+   adları düzyazıda kalır" kararı yazılır.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
