@@ -1,20 +1,8 @@
-flutter_app/docs/open5e_content_audit.md roadmap'e şunları da ekleyelim
-
-şuan app'i kullanmak için kayıt olmak zorunlu. artık bu zorunluluğu kaldıralım. kullanıcı offline olarak girip kullanabilsin. mağaza kısmını ve online özellikleri kullanmak için kayıt olmak zorunlu olsun. biri offline kullanırken kayıt olursa ya da hesap açarsa, offline bölümde yaptıüı şeyler hesabına eklensin, kaybolmasın.
-
-lutter_app/docs/open5e_content_audit.md roadmap tamamen bittiğinde son adıma geçelim. (bu kısmı da roadmap'e son adım olarak ekle) bu roadmap'i uyguladık ama çok fazla içerik var ve atlamış olabiliriz. sırayla official ve built-in paketleri ele alalım. Her paketteki her içeriği roadmap'e uygun mu diye kontrol edelim. Şöyle başlayabiliriz: roadmap'e bakarak bir checklist hazırla. içerik kontrolünde bu checklist'e uygun olup olmadıklarını kontrol et. Önce bir checklist hazırla (yeni bir md). kendin için detay yazarken, benim okuyup kolayca anlamam için daha basit açıklamalar ve örnekler ekle her maddeye, alt maddeler de olabilir. checklist tamam dediğimizde paket paket uygulamaya geçebiliriz. 
-
-uygulamaya geçtiğimiz sırada, bir paketteki içeriğin tamamını okumana gerek yok. Adım adım, bir kısmını oku (hafızanı doldurma) kontrol et, eksikleri bul ve ayrı bir md'ye not et. sonra yapılacak işlem için danış. ayrıca bu süreci nasıl yöneteceğin konusunda da yeni bir md oluştur.
-
-yani 3 md: 1- checklist, 2- kontrol planı ve ilerleme durumu, 3- bulunan eksik listesi ve bulgular
-
-
-
-Bu repoda tek hedefin var: flutter_app/docs/open5e_content_audit.md §6 yol haritasını
+Bu repoda şuanki hedef şu: flutter_app/docs/open5e_content_audit.md §6 yol haritasını
 bitirmek. Tam otonom çalış — soru sorma, onay bekleme, plan modu açma. Bu oturumda 
 sıradaki BİR açık fazı baştan sona bitir ve commit'le; yarım iş bırakma.
 
-0.0) Okuma disiplini — bağlam bütçesi (her adımda geçerli)
+0) Okuma disiplini — bağlam bütçesi (her adımda geçerli)
 - Önce hedefi daralt, sonra oku. Faz seçildiği anda .tmp/session-scope.md'ye 5 satır
   yaz: (1) faz kodu, (2) çıkış kriteri, (3) dokunulacak dosya listesi (tahmini),
   (4) ölçülecek komutlar, (5) dokunulmayacaklar. Bu liste dışına çıkacaksan önce bu
@@ -23,9 +11,9 @@ sıradaki BİR açık fazı baştan sona bitir ve commit'le; yarım iş bırakma
   aralığı Read (offset/limit). Tam dosya okuma yalnızca dosya <300 satırsa ya da
   gerçekten baştan sona değişecekse.
 - Üretilmiş/veri dosyalarını (assets/open5e_packs/*.json, open5e-api-staging/data/**,
-  .tmp/packs-rebuild/**) ASLA Read ile açma. Bunlar hakkında bilgi = araç çıktısı:
+  .tmp/packs-rebuild/**) ASLA Tek Parça Read ile açma. Bunlar hakkında bilgi = araç çıktısı:
   audit_packs / dupe_census / verify_packs / diff_packs, ya da jq/grep/wc ile tek
-  satırlık sorgu. Kanıt sayıdır, dosya içeriği değil. (Bkz. K2.)
+  satırlık sorgu. Ayrıca iöeriği okuman gerektiğinde parça para ilerle.
 - Arama gürültüsü ana bağlama girmesin: geniş tarama, "hangi dosyada" keşfi ve
   çok-dosyalı okuma gerektiren işler için Task/subagent kullan; geri dönmesini
   istediğin şey dosya içerikleri değil, "dosya:satır + tek cümle bulgu" listesidir.
@@ -43,17 +31,6 @@ sıradaki BİR açık fazı baştan sona bitir ve commit'le; yarım iş bırakma
 - Uzun komut çıktısını ekrana boca etme: `| tail -30`, `| grep -E '<ilgili>'`,
   `--reporter compact` gibi filtrelerle koş; tam çıktı gerekiyorsa .tmp/ altına
   yönlendir ve sadece özetini oku.
-
-0) Bağlam ve sınırlar
-- Branch new-system-win. Yeni branch yok, PR yok, push yok, rebase/force yok. Tüm
-  commit'ler doğrudan bu branch'e.
-- CLAUDE.md'deki her kural geçerli. Tek istisna: bu görevde codebase-memory MCP'sini
-  KULLANMA — kodu bulmak/anlamak için vault/ kullan: vault/Home.md →
-  vault/00-Maps/_Architecture-Overview.md → vault/10-Files/<domain>/<basename>.md.
-  Not yoksa/bayatsa Read/Grep/Glob'a düş ve notu güncelle (vault/90-Meta/SOP.md).
-- Komutlar flutter_app/ içinden çalışır. Open5e snapshot'ı repo kökünde
-  open5e-api-staging/ (flutter_app'ten ../open5e-api-staging/data), pinned rev
-  d4276c586d79f2a27bf2b814aed151cf57605283.
 
 1) İlk iş: ne yapacağını seç
 - flutter_app/docs/open5e_content_audit.md §0 "Start here" ve §6 Roadmap'i oku.
@@ -121,5 +98,5 @@ FARKI regresyon say. Hedefli koşular tek güvenilir sinyaldir.
   komutlar. Sonuna: Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 - Push yok, PR yok, branch değiştirme yok. git status temiz bırakılır.
 
-7) Kapanış çıktısı (kısa)
+7) Kapanış çıktısı (kısa, basit ve anlaşılır)
 Hangi faz · ne ölçüldü/değişti · hangi komutlar yeşil · commit SHA · sıradaki faz.
