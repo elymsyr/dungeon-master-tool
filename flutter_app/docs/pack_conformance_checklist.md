@@ -276,12 +276,16 @@ dolu görüyor. Bu bölüm, o 136'nın doğru 136 olup olmadığını sorar.
 ### C5 — `magic-item`
 
 - **Kural (teknik).** `rarity`, `requires_attunement`, `charges`, `body_slot_ref`,
-  `cost_gp`. Bilinen durum: `cost_gp` **1.063 satırın hepsinde 0.00** (kaynakta
-  sütun yok → ⚪) ve attunement / charges / body-slot bloğu §5.8'de 🔴 `M`.
+  `cost_gp`. Bilinen durum: **kaynaktaki** `MagicItem.cost` 1.063 satırın
+  hepsinde `0.00` olduğu için mapper hiçbir şey yazmıyor — pakette `cost_gp`
+  **1.063/1.063 `null`**, yani alan `0/1.063` dolu (§5.8'de ⛔, F1 2026-08-17'de
+  ölçtü) — ve attunement / charges / body-slot bloğu §5.8'de 🔴 `M`.
 - **Nasıl bakılır.** `audit_packs --only magic-item` (`vom` paketi, 1.063 varlık).
-- **Ne demek.** Fiyatı 0 görünen 1.063 eşya, "bedava" demek değil "bilmiyoruz"
-  demek — ve UI bunu ayırt edemiyor.
-- **Örnek.** ❌ `cost_gp: 0.00` her satırda → A5 maddesindeki ⚠ tuzağı.
+- **Ne demek.** Fiyatı olmayan 1.063 eşya, "bedava" demek değil "bilmiyoruz"
+  demek — ve kaynak da bilmiyor, o yüzden yazılan `0.00` fiyat uydurması olurdu.
+- **Örnek.** ✅ `cost_gp` yok → ⛔ gerekçesi §5.8'de yazılı, bulgu değil (plan K7).
+  ❌ Bir gün `cost_gp: 0.00` her satırda görünürse → A5 maddesindeki ⚠ tuzağı:
+  sabit bir uydurmanın alanı doldurmuş gibi görünmesi.
 - **Kaynak.** §5.6, §5.8.
 
 ### C6 — Grant bloğu ve `mechanical_notes`
