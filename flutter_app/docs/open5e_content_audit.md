@@ -102,15 +102,17 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 6 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
-`a5e-ddg`, `open5e`, `tdcs`, `toh`) and the ledger holds **15** findings, all
-still ❓ — `check_findings.py` clean. The last unit (`toh`, 239 entities, six
-categories — the wave's broadest) measured `verify_packs` at **661 ok / 0 disagree / 0 absent**
-and scored its 31 items **24 ✅ · 2 ➖ · 1 ⛔ · 4 ⚠️**, adding **F-toh-01**
-(one subclass unlocks at level 1 because its spell-slot row is level 1) and
-**F-toh-02** (the same `Scoundrel` background ships in two packs), growing
-**F-pass0-10** from 2 to 4 cards, and disproving five candidates by asking
-whether the blank is in the pack or in the source.
+**F3 is running: 7 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
+`a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`) and the ledger holds **17** findings,
+all still ❓ — `check_findings.py` clean. The last unit (`a5e-ag`, 455 entities —
+Wave 1's largest, and the only one carrying a `class` card) measured
+`verify_packs` at **2,362 ok / 0 disagree / 0 absent**, with full match coverage
+in all five categories, and scored its 31 items **24 ✅ · 2 ➖ · 0 ⛔ · 5 ⚠️**.
+It added **F-a5e-ag-01** (`Tenacious`'s save proficiency is dropped although
+`grants_save_prof_from_asi` is declared *and* read — only the mapper never writes
+it, 0/73 corpus-wide) and **F-a5e-ag-02** (`Marshal`'s level table falls from 30
+to 10 feet at level 14 and back to 45 at 15 — the source says the same, so
+`verify_packs` passes it), while five more candidates died on measurement.
 **The next open phase is F3** (continues at `open5e-bfrd`'s class/subclass rows,
 the last unit of Wave 1).
 
@@ -4426,10 +4428,10 @@ procedure, and the ledger have different lifetimes:
       ledger still holds zero real findings). All met; **the next open phase is
       F3**.*
 - [ ] **F3 — Run it.** 20 scan units in four waves.
-      **bitti (2026-08-17): 6 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
-      `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs` and **`toh`**. The ledger holds **15**
-      findings, all ❓ (`python3 tool/check_findings.py` → *16 kayıt, 15 sayaca
-      giriyor, temiz*). `open5e` (22 entities) produced the first pack-owned
+      **bitti (2026-08-17): 7 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
+      `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh` and **`a5e-ag`**. The ledger
+      holds **17** findings, all ❓ (`python3 tool/check_findings.py` →
+      *18 kayıt, 17 sayaca giriyor, temiz*). `open5e` (22 entities) produced the first pack-owned
       findings — **F-open5e-01** (`mergeOpen5eOriginals` folds the `open5e-2024`
       document, `gamesystem: 5e-2024`, into a pack labelled `5e-2014`) and
       **F-pass0-10**, filed that day as `F-open5e-02` (`Arcane Warrior` /
@@ -4498,8 +4500,44 @@ procedure, and the ledger have different lifetimes:
       F-pass0-07's distribution (it does not; zero near-name collisions) and
       F-pass0-10's own evidence command. K7 means *a gap with a written source*,
       not *a gap someone remembers*.
-      **kaldı: 14 unit** — Dalga 1's `a5e-ag` (next, 455 entities) and `bfrd`'s
-      2 class/subclass rows; Dalga 2–4 untouched. Next
+      **`a5e-ag` (455 entities) was the wave's largest unit and the only one with
+      a `class` card**, and it too fit one session without ever opening the 1.07 MB
+      pack file whole. `verify_packs --doc a5e-ag --only spell,feat,background,class,subclass`
+      → **2,362 ok / 0 disagree / 0 absent / 59 unsourced / 867 unverifiable**,
+      match coverage complete in all five categories (371 spell + 59 feat +
+      21 background + 3 subclass + 1 class — the first unit where `background`
+      was verifiable at all); `gate_packs` green; census "nothing installed"
+      still **0** and the pack appears in no `--list-shared` row; 31 items scored
+      **24 ✅ · 2 ➖ · 0 ⛔ · 5 ⚠️**. Two pack-scoped findings:
+      **F-a5e-ag-01** (C2 — `Tenacious` grants a save proficiency alongside its
+      ASI, exactly like the built-in `Resilient`; `grants_save_prof_from_asi` is
+      declared in `content.dart:836` and read twice in
+      `pending_choice_resolver_dialog.dart`, but `tool/` never writes it, so the
+      field sits at **0 / 73** corpus-wide while exactly **1** card in the corpus
+      states the mechanic) and **F-a5e-ag-02** (D1 — `Marshal`'s progression
+      table reads 30 feet at level 13, **10 feet** at 14, 45 feet at 15; the
+      upstream `ClassFeatureItem` row says the same, so the pack is faithful and
+      `verify_packs` is right to pass it — of 103 class/subclass cards the corpus
+      has exactly 2 decreasing numeric steps, and the other one is a trap list,
+      not a progression).
+
+      **Five more candidates died here too.** The `class` card's twenty empty
+      slots (`spell_slots_by_level`, `equipment_choice_groups`, `multiclass_*`)
+      are `S` — upstream `CharacterClass` carries only five columns. The 113
+      dropped table rows were not dropped: the mapper renders them as a 20-row
+      markdown table in `description` (chasing them is what surfaced
+      F-a5e-ag-02). `material_*` 0/371 is `S` again but for a *different* reason
+      than `toh`'s — here `material` is a **bool** and `material_specified` is
+      empty, so the number came from the command, not from the previous unit.
+      `Guildmember`'s skills and `Folk Hero`'s equipment are both written by
+      name in §5.4 and B7 (K7). And the five feats without `mechanical_notes`
+      have their mechanics in typed fields, which is the correct behaviour.
+      **The unit's own lesson is a one-step test**: for any `🔴 0%` field, grep
+      it in `lib/` and in `tool/` — a reader with no writer is cause `M`, and the
+      fill table cannot tell the two apart. That test is what found F-a5e-ag-01.
+
+      **kaldı: 13 unit** — Dalga 1 closes with `bfrd`'s 2 class/subclass rows
+      (next); Dalga 2–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

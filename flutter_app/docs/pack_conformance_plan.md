@@ -10,8 +10,8 @@
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
 > (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` + `a5e-ddg`
-> + `open5e` + `tdcs` + `toh` bitti (2026-08-17).** 20 tarama biriminin 6'sı
-> kapandı, defterde **15 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4),
+> + `open5e` + `tdcs` + `toh` + `a5e-ag` bitti (2026-08-17).** 20 tarama
+> biriminin 7'si kapandı, defterde **17 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4),
 > F-builtin-02 (C8), F-pass0-02 (C2 — 30 background seçimli becerilerin hepsini
 > hediye ediyor), F-pass0-03 (A5 — `ability_score_options` 27/27 aynı altı
 > yetenek), F-pass0-04 (A3 — 6 kartın gövdesi `"[No description provided]"` ile
@@ -25,24 +25,27 @@
 > feature satırının 0'ı grant taşıyor), **F-pass0-09** (C2 — background'un adı
 > verilmiş dili yazılacak alan bulamıyor, 2 satır), **F-toh-01** (C1 —
 > `Underfoot` 1. seviyede seçilebilen rogue arketipi), **F-toh-02** (B2 —
-> `Scoundrel` background'u iki pakette, %83 aynı metin).
-> On beşi de ❓ danışılacak.
+> `Scoundrel` background'u iki pakette, %83 aynı metin), **F-a5e-ag-01** (C2 —
+> `Tenacious`'ın kurtarma yeterliliği düşüyor; alanı ve okuyucusu var, yazanı
+> yok), **F-a5e-ag-02** (D1 — `Marshal`'ın seviye tablosu 14'te 30→10 feet
+> geriliyor, kaynak da öyle diyor).
+> On yedisi de ❓ danışılacak.
 >
-> **Sıradaki iş: Dalga 1 → `open5e-a5e-ag`** (455 varlık: spell 371, feat 59,
-> background 21, subclass 3, class 1 — dalganın **gerçek en büyüğü**; sonra
-> `bfrd`'nin 2 satırı Dalga 1'i kapatır).
-> Beş uyarı hazır: (1) `audit_packs`'i **`--only` olmadan çalıştırma**,
-> örneklemde `--picks 2` yeter; (2) 371 büyü tek kategori — `toh`'un spell
-> ölçümleri (material 0/91 `S`, higher_level prose'a gömülü) burada **yeniden
-> ölçülür, varsayılmaz**: `a5e-ag`'nin kaynağında `material` 217/371 dolu,
-> `material_specified` ise 0 → aynı `S`, ama sayıyı komut söylesin;
-> (3) paketin **1 `class` + 3 `subclass`** kartı var — F-pass0-10'un "korpüste
-> `'Third'` taşıyan 0 kart" iddiası ve F-toh-01'in `granted_at_level` kuralı
-> burada sınanır (a5e sisteminin arketip seviyesi 2014'ünkinden farklı olabilir,
-> **önce kaynağa bak**); (4) `game_system: a5e` — G3 için 2014/2024 değil, ayrı
-> bir sistem; §4'ün SRD örtüşme sorusu buraya farklı iner; (5) 21 background,
-> F-pass0-02…06'nın hepsinin dağılımında zaten var → **doğrulama**, ama
-> `toh`'un dersi gereği dağılım tablosuna bakarak.
+> **Sıradaki iş: Dalga 1 → `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı**
+> (2 varlık — dalganın son ve en ucuz birimi; paketin 205 `monster`'ı Dalga 4'te).
+> Dört uyarı hazır: (1) `bfrd` **`cc-by-40`** lisanslı ve `game_system: 5e-2014`
+> — 19 paketin `license` alanında `ogl-10a` dışına çıkan iki paketten biri, G2
+> iki dosyayı da okusun; (2) `Mechanist` korpüsteki **öteki** paketli sınıf
+> kartı ve `caster_kind: 'None'` taşıyor (§5.8'de yazılı) — `a5e-ag`'nin
+> `Marshal`'ında yapılan ölçümlerin ikizi burada **yeniden** yapılır, kopyalanmaz;
+> (3) F-pass0-07 dağılımında `bfrd` **3** satırla var → doğrulama, ama komutu
+> yeniden çalıştırarak; (4) yeni kontrol: `🔴 0%` her alan için
+> `grep -rn <alan> lib/` **ve** `tool/` — okuyucu var yazan yoksa cause `M`,
+> ikisi de yoksa `S`. F-a5e-ag-01 bu kontrolle bulundu.
+>
+> **Dalga 1 bittiğinde** 8/20 birim kapanır ve Dalga 2 (beş büyü paketi, 833
+> büyü) başlar; onun ortak riski `class_refs` / `tags` ikilisi ve F-kuru-01'in
+> `deepm: 75` satırı.
 >
 > **Test dosyalarının yeri** (geçen oturumda yanlış yol arandı): F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
@@ -59,7 +62,10 @@
 > 0 disagree derken `Underfoot`'un 1. seviyesi oradaydı; kaynak sadık, kural
 > değil. Ve **altıncı**, süreç sorusu: *devir notunun "zaten biliniyor" satırı
 > ölçüldü mü?* Bu birimde bir uyarı (F-pass0-07 dağılımı) ve bir kayıt kanıtı
-> (F-pass0-10'un komutu) ölçümde yanlış çıktı.
+> (F-pass0-10'un komutu) ölçümde yanlış çıktı. `a5e-ag`'nin eklediği **yedinci**
+> soru en ucuzu: *boş alanın **okuyucusu** var mı, **yazanı** var mı?* —
+> `grep -rn <alan> lib/` dolu + `grep -rn <alan> tool/` boş ⇒ cause `M`, ve
+> doluluk tablosunun `🔴 0%`'ı `S` diye geçilemez (F-a5e-ag-01).
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -348,7 +354,7 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 | `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⚠️ | 2026-08-17 | F-open5e-01, F-pass0-10 (eski F-open5e-02), F-pass0-06, F-pass0-07 |
 | `open5e-tdcs` | 35 | trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 | ⚠️ | 2026-08-17 | F-pass0-08, F-pass0-09 |
 | `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⚠️ | 2026-08-17 | F-toh-01, F-toh-02, F-pass0-10 (+2 kart) |
-| `open5e-a5e-ag` | 455 | spell 371, feat 59, background 21, subclass 3, class 1 | ⬜ | — | — |
+| `open5e-a5e-ag` | 455 | spell 371, feat 59, background 21, subclass 3, class 1 | ⚠️ | 2026-08-17 | F-a5e-ag-01, F-a5e-ag-02 |
 
 > `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı da **bu dalgada** bakılır
 > (ucuz); canavarları Dalga 4'te.
@@ -698,6 +704,88 @@ kayıtların doğrulanması/büyümesi; 🟡 yok).
 > `pass0` oldu. Ders: **bir bulgunun kanıt komutu, sonraki paketlerde
 > yeniden çalıştırıldığında sayıyı büyütebilir — bu, kaydın kusuru değil kuralı**
 > (yayılan bulgu, madde 4).
+
+#### `open5e-a5e-ag` sonucu — 2026-08-17
+
+Dalga 1'in **gerçek en büyüğü** (455 varlık) ve dalganın tek `class` kartını
+taşıyan birim. `verify_packs --doc a5e-ag --only spell,feat,background,class,subclass`:
+**2.362 ok · 0 disagree · 0 absent · 59 unsourced · 867 unverifiable**, eşleşme
+kapsaması **371/371 spell · 59/59 feat · 21/21 background · 3/3 subclass · 1/1 class**
+(korpüste ilk kez `background` da doğrulanabildi). `gate_packs --packs /tmp/one`
+yeşil, `dupe_census` "nothing installed" **0**, `--list-shared` çıktısında paket
+**hiç geçmiyor**.
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | 5 kategori (spell, feat, background, subclass, class) şemada; roundtrip yeşil |
+| A2 | ✅ | zorunlu alanların tek boşluğu `class.primary_ability_ref` — kaynak `primary_abilities: []`, §5.8'de **⚪ yazılı** (B7). K7 |
+| A3 | ✅ | 0 disagree / 0 absent; 59 unsourced'ın hepsi `feat.repeatable` (kaynakta sütun yok) |
+| A4 | ⚠️ | **F-pass0-07 doğrulandı** — 1 varyant ad: `Meld Into Stone` ⟷ built-in `Meld into Stone` (dağılım tablosunun `a5e-ag: 1` satırı, komut yeniden çalıştırıldı) |
+| A5 | ⚠️ | **F-pass0-03 doğrulandı** (21/21 aynı altı yetenek). Ayrıca `feat.category_ref` 73/73 `General` ve `repeatable` 73/73 `false` — ikisi de kaynakta **sütun yok** (`S`), bulgu değil |
+| B1 | ✅ | census "nothing installed" 0; 326 A-bölümü ad çakışması = A5E restat politikası (§4, yazılı) |
+| B2 | ✅ | `--list-shared` çıktısında paket yok |
+| B3 | ⚠️ | **F-pass0-06 doğrulandı** (dağılım `a5e-ag: 33`). `equipment_choice_groups` 20/21 — boş olan `Folk Hero`, §B7'de **adıyla yazılı** allowlist satırı. K7 |
+| B4 | ✅ | gate yeşil, census C "nothing installed" 0 |
+| B5 | ✅ | `metadata.links` yok + katalog `requires: []` — L2'nin yazılı kararı |
+| C1 | ⚠️ | `granted_at_level` 3/3 = **kaynakla aynı** (`min(ClassFeatureItem.level)` üç arketipte de 3, tablo satırı yok) → F-toh-01'in kuralı burada **doğru** çalışıyor. Ama `Marshal`'ın 20 satırlık ilerleme tablosu (`Maneuvers Known` / `Maneuver Degree` / `Lessons Known` / `Followers` / `Commanding Presence`) yalnız `description` düzyazısında → **F-a5e-ag-02** |
+| C2 | ⚠️ | **F-a5e-ag-01 (yeni)** — `Tenacious`'ın kurtarma yeterliliği; `grants_save_prof_from_asi` korpüste 0/73 ama okuyucusu var. Ayrıca **F-pass0-02 doğrulandı** (dağılım `a5e-ag: 20`) ve `Guildmember`'ın `"Two of your choice"`'u §5.4'te **yazılı** → K7 |
+| C3 | ✅ | `material_specified` kaynakta **0/371** (`material` bir *bool*, metin sütunu boş) → `S`, `toh`'un sonucu **yeniden ölçüldü**. `higher_level` 191 satırın **191'i** `description`'a gömülü, kayıp yok. `class_refs` 366/371; boş 5'in 3'ü **F-kuru-01'in ⚪ dağılımı** (komut yeniden çalıştırıldı), 2'si `tags` yoluyla görünüyor |
+| C4 | ➖ | `monster` / çocuk satır kategorisi yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ✅ | `mechanical_notes` 54/59; boş 5'in (`Skillful`, `Tenacious`, üç `Outfitted`) mekaniği **tipli alanlarda** (`asi_*`, `granted_armor_proficiencies`, `player_choices`) — tek istisna F-a5e-ag-01'in yarım cümlesi |
+| C7 | ✅ | gate yeşil; `_lookup` sözlükleri (ability, armor-category, feat-category, casting-*) çözülüyor |
+| C8 | ⚠️ | F-a5e-ag-01 bu maddenin karşı örneği: `🔴 0%` bir alan `S` sanılıp geçilirse cause code **yanlış** yazılır — 0%'ın sebebi burada `M` |
+| D1 | ⚠️ | **2.362 ok / 0 disagree / 0 absent** — lafzen tam; ama **F-a5e-ag-02**: `Commanding Presence` 13→14→15 = 30 / **10** / 45 feet, kaynak da öyle diyor |
+| D2 | ✅ | 59 unsourced + 867 unverifiable'ın **hepsinin** `verify.dart`'ta yazılı kuralı var (370 `class_refs` v1 kolonu, 304 casting_time, 163 range, 23 attack, 6 reaction, 1 caster_kind) |
+| D3 | ✅ | gate yeşil |
+| E1 | ⚠️ | **F-pass0-08 doğrulandı** — 3 arketipin **16** `features` satırı yalnız `{level, name, description}`, 0 grant. Bu pakette **büyü tablosu yok** (0 satırda `\|`), yani F-pass0-08'in 24'lük sayısı **büyümüyor** |
+| E2 | ✅ | mekanik olmayan alanlar (`description`, `prerequisite`) beyan edilmiş |
+| E3 | ✅ | `Marshal` `caster_kind: 'None'` = kaynak `caster_type: NONE`; üç arketip de büyücü değil → **F-pass0-10 büyümüyor** (plan uyarısı 3 böylece kapandı) |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil (455 varlık kayıpsız) |
+| F2 | ✅ | paket tarafı yeşil (224 çift, 446 pump); F-pass0-01 yalnız built-in grubunu kesiyor |
+| F3 | ✅ | `wizard_pack_families_test` yeşil |
+| F4 | ✅ | `entity_link_navigation_test` yeşil |
+| G1 | ✅ | manifest `size_bytes` **1.119.725** = dosyanın kendisi; `counts` beşi de birebir |
+| G2 | ✅ | `publisher` / `license` / `game_system` / `is_srd_overlap` iki dosyada aynı (EN Publishing · `ogl-10a` · `a5e` · false) |
+| G3 | ✅ | `is_srd_overlap: false`, `game_system: a5e`; 326 ad çakışması §4'ün yazılı "A5E her şeyi tutar" kararı |
+
+**Sayım: 24 ✅ · 2 ➖ · 0 ⛔ · 5 ⚠️.**
+
+**Okuma bütçesi.** Paket dosyası (1,07 MB) **hiç baştan sona açılmadı**; tüm
+bilgi araç çıktısından ve tek satırlık python sorgularından geldi. Kaynaktan
+okunan: `CharacterClass.json` (4 satır), `ClassFeature`/`ClassFeatureItem`
+(sayım), `Background.json` + `BackgroundBenefit.json` (2 kart), `Spell.json`
+(sütun sayımı). Toplam ~120 satır kaynak, 0 satır paket.
+
+**Beş aday ölçümde düştü.**
+> 1. `class` kartının 20 boş alanı (`spell_slots_by_level`, `equipment_choice_groups`,
+>    `multiclass_*` …) → kaynakta **sütun yok**; `CharacterClass` yalnız
+>    `caster_type / hit_dice / primary_abilities / saving_throws / subclass_of`
+>    taşıyor. `S`.
+> 2. `Marshal`'ın 113 tablo satırı "düşüyor" sanılmıştı → **düşmüyor**,
+>    `description`'a 20 satırlık markdown tablo olarak yazılıyor. Bunu kovalarken
+>    çıkan tek gerçek kusur F-a5e-ag-02.
+> 3. `material_*` 0/371 → kaynağın `material` sütunu **bool**, `material_specified`
+>    **boş**. `S` (deepm ve spells-that-dont-suck'ta dolu; onlar Dalga 2'nin işi).
+> 4. `Guildmember` (beceri) ve `Folk Hero` (ekipman) boşlukları → ikisi de
+>    §5.4 ve B7'de **adıyla yazılı**. K7.
+> 5. 5 feat'in `mechanical_notes`'u boş → mekanikleri tipli alanlara inmiş;
+>    kayıp değil, **doğru** davranış.
+
+**Dalganın beşinci sorusu ilk cevabını verdi.** *"Alan dolu ve kaynakla aynı, ama
+değer kuralla uyuşuyor mu?"* — F-a5e-ag-02 tam olarak bu: `verify_packs` 0
+disagree diyor ve haklı, ama 14. seviyede menzil dörtte birine düşüyor. Korpüs
+geneli tarandı: `class`/`subclass` tablolarında azalan sayısal geçiş **2** tane,
+biri ilerleme tablosu bile değil. Yani bu sınıftan hata **nadir ama görünmez** —
+hiçbir kapı kaynağın kendi içinde tutarlı olup olmadığını sormuyor.
+
+**Ve bir bulgu türü daha görüldü: alanı da okuyucusu da hazır olan mekanik.**
+F-a5e-ag-01'de eksik olan tek şey mapper satırı — `grants_save_prof_from_asi`
+şemada beyan edilmiş, `pending_choice_resolver_dialog` iki yerde okuyor,
+built-in `Resilient` onunla çalışıyor, `tool/` altında ise **hiç geçmiyor**.
+Yeni kontrol, sonraki birimler için: *"bu alanı okuyan var mı, yazan var mı?"* —
+`grep -rn <alan> lib/ | wc -l` ve `grep -rn <alan> tool/ | wc -l` ikilisi
+`🔴 0%` bir satırın `S` mi `M` mi olduğunu tek adımda söylüyor.
 
 ### Dalga 2 — Büyü paketleri
 
