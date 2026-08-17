@@ -80,7 +80,29 @@ against a written checklist — [`pack_conformance_checklist.md`](pack_conforman
 it: 31 items (not the 30 filed), every citation and every named command checked,
 all accept lines re-measured — and three defects fixed before any pack is
 scanned, the sharpest being **B5, which had misread §2.2 and would have filed a
-fabricated finding against all 19 packs**. **The next open phase is F1.**
+fabricated finding against all 19 packs**.
+**F1 approved the procedure the same way on 2026-08-17** — the board's 20 rows
+re-counted from the assets (all match: 21,839 + 2,719, Tier-0 exactly 369),
+isolation and per-doc narrowing run live, and **four defects fixed before any
+pack is read**: all four reading steps were dead code (wrong interpreter, and
+`entities` is a **map** whose fields live under **`attributes`**, not a list of
+`fields`), the ~600-line budget was unreachable under the sample rule (5
+monsters = 691 lines raw, 285 through the new
+[`tool/scan_pack.py`](../tool/scan_pack.py)), `audit_packs --packs` without
+`--only` spends 474 lines on a 35-entity pack, and `verify_packs`' `0 disagree`
+means *unmeasured* for `background` / `trait` / `creature-action`. C5 in the
+approved checklist was corrected too: shipped `cost_gp` is `null` on all 1,063
+`vom` rows, not `0.00`.
+**F2 approved the ledger on 2026-08-17 the same way** — by filling its template
+with a *measured* entry instead of the invented one it shipped with (which broke
+checklist A3 inside the audit's own ledger). Doing that broke the format in four
+places: the six cause codes cover only content loss and had nothing for a
+render/wizard/catalog finding (code **`A`** added), a defect spanning packs had no
+filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
+collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
+`cost_gp` error. The exit is runnable now:
+[`tool/check_findings.py`](../tool/check_findings.py).
+**The next open phase is F3.**
 
 ---
 
@@ -4311,22 +4333,88 @@ procedure, and the ledger have different lifetimes:
       F0 too.
       *Exit: approved. **No pack is scanned before that** — a sweep run against an
       unapproved yardstick has to be run twice.*
-- [ ] **F1 — The procedure and the board.** Two passes, because most checklist
-      items are already corpus-wide gates and re-running them per pack is waste:
-      **Pass 0** runs `audit_packs` / `dupe_census` / `gate_packs` /
+- [x] **F1 — The procedure and the board. Approved 2026-08-17 — and, like F0,
+      by running it rather than reading it, which is the only reason the sweep
+      will not open with twenty fabricated findings.** Two passes, because most
+      checklist items are already corpus-wide gates and re-running them per pack
+      is waste: **Pass 0** runs `audit_packs` / `dupe_census` / `gate_packs` /
       `verify_packs` and the five test suites **once** and records the baseline;
       **Pass 1** is per-pack sampling, which is the only part no tool covers.
-      The reading discipline is part of the exit, not advice: **a pack file is
-      never read whole** (the largest is 3.3 MB), the unit is ≤5 entities per
-      category read in full, the budget is ~600 lines per pack, and findings are
-      written before the next pack starts.
+      **The board is measured, not transcribed:** all 19 pack rows re-counted
+      from `assets/open5e_packs/` — entity totals *and* category splits match to
+      the row, **21,839**; the built-in row re-counted with `audit_packs
+      --builtin` — **59 categories / 2,719**, Tier-0 exactly **369**
+      (`ability`…`resource-pool`). Isolation proven live: `--packs <dir>` on
+      `audit_packs`/`gate_packs`, and `verify_packs --doc a5e-gpg --only
+      background` in 3 s; the snapshot Pass 0 needs is on disk.
+      **Four defects in the procedure, all fixed.** (1) **All four of the
+      reading steps were dead code**: they call `python` (this box has only
+      `python3`), iterate `d['entities']` as a **list** when it is an id→entity
+      **map** (`AttributeError` on the first row), and read `e['fields']` /
+      `e['category']` when a pack writes **`attributes`** / **`type`** — a
+      transcriber who fixed only the crash would have measured every field as
+      empty and filed "this pack is blank" against all 20 units. The four
+      snippets are now one reader, [`tool/scan_pack.py`](../tool/scan_pack.py),
+      with a `--selfcheck` that fails if the file shape moves again.
+      (2) **The budget contradicted the sample rule**: raw `indent=1` JSON spends
+      one line per uuid, so 5 monsters cost **691 lines** — one category over the
+      whole ~600-line pack budget — and `tob3`'s four categories **872**. The
+      reader folds scalar arrays onto one line: same sample **285**, whole pack
+      **433**. The one remaining overflow is `toh` at 670, which `--picks 3`
+      takes to 437. (3) **`audit_packs --packs` prints all 12 tabled categories
+      regardless of what the pack holds** — **474 lines for 35-entity `tdcs`**,
+      221 with `--only`; step 1 now carries `--only` and step 2 prints the list.
+      (4) **`verify_packs`' "0 disagree" is not one claim**: its rule table knows
+      9 categories and `background`'s list is **empty**, with `creature-action`,
+      `trait`, `language`, `size` absent entirely — so `--doc a5e-gpg` returning
+      `2/2 matched, ok 0` means *unmeasured*, not clean, and wave 1's first two
+      packs fall back to reading alone.
+      **One defect in the approved checklist too:** C5 read §5.8's
+      "`MagicItem.cost` is 0.00 on 1,063 of 1,063" as the *shipped* value.
+      Measured: `cost_gp` is **`null` on all 1,063** — 0% filled, the source
+      column is what holds 0.00. The scanner would have hunted a constant that
+      is not there and filed a loss against `vom`.
       *Exit: order fixed (built-in first — every soft ref lands there; then the
       six chargen packs, five spell packs, `vom`, and the seven monster packs
       last, because their structure repeats), board present, handoff protocol
-      written.*
-- [ ] **F2 — The findings ledger.** *Exit: format fixed; every entry carries a
-      checklist item, an affected-entity count, reproducible evidence, a proposed
-      cause code and options — and **nothing is fixed inside the sweep**.*
+      written. All three met; **the next open phase is F2**.*
+- [x] **F2 — The findings ledger. Approved 2026-08-17 — by filling it, not by
+      reading it.** The template's own example was **invented** (`F-örnek-00`,
+      `73/76`, sample `#12/#40/#57`) — checklist **A3** violated inside the audit's
+      own ledger, and it proved nothing about whether the evidence a finding
+      demands can actually be produced. It was replaced with a **measured** entry
+      built on a gap the roadmap already owns (known-open #4, so K7 keeps it out
+      of the ledger's counts): `class_refs` empty on **93** spells, **85** of them
+      carrying no class name in `tags` either, and the command reproduces to
+      **`{deepm: 75, kp: 7, a5e-ag: 3}`** — a distribution U2 never had.
+      Filling it broke the format in four places, all fixed. (1) **The cause-code
+      vocabulary was not in the ledger at all**, and all six codes describe
+      *content loss* landing in `build_packs.dart`/`mappers` — the sweep's **E/F/G**
+      items (does the mechanic reach the page, does the wizard see it, is the
+      catalog right) land in `presentation`/`application` instead and had **no
+      code**, so a scanner would have written a wrong one or left it blank; code
+      **`A`** now covers them. (2) **No rule for a defect that spans packs** — the
+      dry run is exactly that shape, one cause across three packs, and with
+      per-pack sessions it would have been filed three times or filed once and
+      lost; it is now filed once under `pass0` with a distribution table, and only
+      `pass0` increments. (3) **The checklist's F1–F4 collide with this §6's
+      F1–F4** (and finding ids start with `F-`) — resolved with a spelling rule
+      (`checklist F3` vs `§6 F3`) rather than renaming an approved document, plus
+      a one-entry-one-item rule without which the per-item counter cannot sum.
+      (4) **Known-open #5 repeated the very defect F1 found in C5** — `cost_gp`
+      `0.00` is the *source* column; the pack ships `null` on all 1,063.
+      The exit is now runnable rather than remembered:
+      [`tool/check_findings.py`](../tool/check_findings.py) asserts every entry
+      carries a checklist item, an affected-entity count, an evidence block, a
+      cause code, a status and options, and that the three summary counters agree
+      with the real entries — verified live (clean today; `--selftest` catches 6
+      omissions in a malformed entry; adding an entry without touching the tables
+      makes all three counters fail).
+      *Exit: format fixed; every entry carries a checklist item, an affected-entity
+      count, reproducible evidence, a proposed cause code and options — and
+      **nothing is fixed inside the sweep** (no `*.pkg.json` line changed, and the
+      ledger still holds zero real findings). All met; **the next open phase is
+      F3**.*
 - [ ] **F3 — Run it.** 20 scan units in four waves.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

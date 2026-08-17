@@ -7,9 +7,13 @@
 
 ## Sonraki adım
 
-> **Şu an:** Checklist onay bekliyor. Onaydan **önce** hiçbir paket taranmaz.
-> Onay geldiğinde ilk iş **Pass 0** (korpüs geneli temel ölçüm), sonra
+> **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
+> (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
+> (F2, 2026-08-17 — `pack_conformance_findings.md`). Sıradaki iş **F3**: önce
+> **Pass 0** (korpüs geneli temel ölçüm, §6 tablosunu doldurur), ardından
 > **Dalga 0 → built-in SRD paketi**.
+>
+> Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
 *(Bu blok her oturum sonunda güncellenir. Yeni bir oturum önce bunu okur.)*
 
@@ -124,91 +128,89 @@ Pass 0'ın **göremediği** şeyler burada bakılır. Araçlar "alan dolu mu" de
 
 ## 4. Bir paket nasıl taranır — 7 adım
 
+> **Paket dosyasının şekli** — elle bir şey yazmadan önce bilinmesi gereken üç
+> nokta (F1 ölçtü; planın ilk hâlindeki snippet'ler üçünü de yanlış varsayıyordu):
+> `entities` bir **liste değil, id → varlık sözlüğü**; kategori anahtarı
+> `category` değil **`type`**; alanlar `fields` değil **`attributes`** altında.
+> Ayrıca bu makinede `python` yok, **`python3`** var.
+
 ### Adım 1 — Paketi izole et (araçları tek pakete daraltmak için)
 
 Araçlarda `--pack` bayrağı **yok**; `--packs <dizin>` var ve dizindeki
-`*.pkg.json` dosyalarını tarıyor. O yüzden tek paketi ayrı bir dizine kopyala:
+`*.pkg.json` dosyalarını tarıyor. O yüzden tek paketi ayrı bir dizine kopyala —
+ve **`--only` olmadan çalıştırma**: `audit_packs` tablolanan 12 kategorinin
+hepsini basar, 35 varlıklık bir pakette bile **474 satır** (bütçenin %79'u);
+pakette gerçekten bulunan kategorilerle daraltınca **221**.
 
 ```sh
 cd flutter_app
 mkdir -p /tmp/one && rm -f /tmp/one/*.pkg.json
 cp assets/open5e_packs/open5e-toh.pkg.json /tmp/one/
 
-dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --markdown
+# --only listesini Adım 2 hazır basıyor
+dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --markdown \
+    --only background,feat,species,spell,subclass,subspecies
 dart run tool/open5e_import/bin/gate_packs.dart  --packs /tmp/one --examples 20
 ```
 
-> **Uyarı.** `dupe_census` paketler **arası** kopyayı ölçtüğü için tek pakete
+> **Uyarı 1.** `dupe_census` paketler **arası** kopyayı ölçtüğü için tek pakete
 > daraltılmaz — o hep korpüs genelinde çalışır (Pass 0).
-> `verify_packs` için daraltma yolu `--doc <belge>` + `--only <kategori>`.
+>
+> **Uyarı 2.** `verify_packs` için daraltma yolu `--doc <belge slug>` +
+> `--only <kategori>` (ölçüldü: `--doc a5e-gpg` 3 saniye). Ama **kural tablosu
+> 9 kategori tanıyor** — `monster`, `spell`, `magic-item`, `feat`, `class`,
+> `subclass`, `species`, `subspecies` ve **kuralı boş olan `background`**.
+> `creature-action`, `trait`, `language`, `size` ve `background` için çıktı
+> `0 ok / 0 disagree`'dir: **temiz değil, ölçülmemiş** demektir. Dalga 1'in ilk
+> iki paketi (`a5e-gpg`, `a5e-ddg`) sadece `background` taşıdığı için A3'ün
+> tamamı orada **okumayla** yapılır.
 
-### Adım 2 — Kategori haritasını çıkar (okuma değil, sayım)
+### Adım 2–5 — Tek araç: `tool/scan_pack.py`
 
-```sh
-python -c "
-import json,collections
-d=json.load(open('assets/open5e_packs/open5e-toh.pkg.json',encoding='utf-8'))
-c=collections.Counter(e.get('category') or e.get('type') for e in d['entities'])
-print(d['package_name'], sum(c.values()))
-for k,v in c.most_common(): print(f'  {k:22} {v}')
-"
-```
-
-→ Checklist **A1**. Çıkan slug'lar şemada tanımlı mı.
-
-### Adım 3 — Alan doluluk tablosu (yine sayım, içerik değil)
+Planın ilk hâlindeki dört ayrı snippet tek bir okuyucuya toplandı; her oturumda
+yeniden yazılan bir heredoc, taramanın kendisinden daha kırılgandı.
 
 ```sh
-python -c "
-import json,collections
-CAT='spell'
-d=json.load(open('assets/open5e_packs/open5e-toh.pkg.json',encoding='utf-8'))
-rows=[e for e in d['entities'] if (e.get('category') or e.get('type'))==CAT]
-n=len(rows); f=collections.Counter()
-for e in rows:
-    for k,v in (e.get('fields') or {}).items():
-        if v not in (None,'',[],{},0): f[k]+=1
-print(CAT,n)
-for k,v in sorted(f.items(),key=lambda x:-x[1]): print(f'  {k:32} {v:5}/{n}')
-"
+cd flutter_app
+python3 tool/scan_pack.py --selfcheck          # araç hâlâ doğru mu (0,1 sn)
+
+python3 tool/scan_pack.py toh                  # Adım 2 + Adım 5
+python3 tool/scan_pack.py toh --cat spell      # Adım 3 + Adım 4
+python3 tool/scan_pack.py toh --cat spell --picks 3
 ```
 
-→ Checklist **A2, C1–C5**. `0/n` çıkan alanlar C8'in adayları.
+- **`scan_pack.py <slug>`** → paket adı, varlık sayısı, kategori haritası, Adım
+  1'e yapıştırılacak hazır `--only` satırı ve `metadata` bloğu.
+  Checklist **A1, B5, G1–G3** (+ `assets/open5e_packs/manifest.json`'daki karşılığı).
+- **`--cat <kategori>`** → o kategorinin alan doluluk tablosu (checklist **A2,
+  C1–C5**; tabloda hiç görünmeyen şema alanı = `0/n` → **C8** adayı) ve ardından
+  örneklem: ilk, son ve aradan üç varlık — indeksle seçildiği için tekrarlanabilir.
 
-### Adım 4 — Örneklem oku (tek gerçek okuma — sınırı aşma)
+**Okuma bütçesi: paket başına ~600 satır**, ve bu artık ölçülmüş bir sayı:
 
-Kategori başına **en fazla 5** varlık, tam hâliyle. Seçim: ilk, son ve aradan
-üç tane (rastgele değil, tekrarlanabilir olsun diye indeksle).
+| Kategori | Varlık başına satır (`scan_pack`) | Ham `indent=1` JSON (medyan) |
+|---|--:|--:|
+| `trait` / `creature-action` | 11–13 | 16–18 |
+| `background` | 12–14 | 69 |
+| `subclass` / `feat` | 18 | 27–48 |
+| `magic-item` | 19 | 26 |
+| `species` / `subspecies` | 20 | 33–50 |
+| `class` | 21 | 237 |
+| `spell` | 28–31 | 65 |
+| **`monster`** | **50** | **236** |
 
-```sh
-python -c "
-import json
-CAT='spell'; PICKS=5
-d=json.load(open('assets/open5e_packs/open5e-toh.pkg.json',encoding='utf-8'))
-rows=[e for e in d['entities'] if (e.get('category') or e.get('type'))==CAT]
-idx=sorted({0,len(rows)-1,len(rows)//4,len(rows)//2,3*len(rows)//4})[:PICKS]
-for i in idx: print('#',i); print(json.dumps(rows[i],ensure_ascii=False,indent=1)[:2500]); print('-'*60)
-"
-```
-
-**Okuma bütçesi: paket başına ~600 satır.** Aşılıyorsa örneklem küçültülür,
-paket bölünmez.
+Fark canavarda: ham JSON `trait_refs` / `action_refs` / `skill_bonuses.rows`
+dizilerini satır satır bastığı için 5 canavarlık bir örneklem **tek başına 691
+satır** — bütçenin üstü. `scan_pack.py` skaler dizileri tek satıra topladığı için
+aynı örneklem doluluk tablosuyla birlikte **285 satır**, ve `tob3`'ün dört
+kategorisinin tamamı **433** (ham hâli 872). Yani "kategori başına 5 varlık"
+kuralı ile bütçe artık çelişmiyor. Ölçülen tek istisna **`toh`**: 6 kategori ×
+5 varlık = **670 satır** → `--picks 3` ile **437**. Kural: bütçe aşılıyorsa
+**örneklem küçültülür, paket bölünmez.**
 
 Örneklemde bakılacaklar: **A3** (bu değer kaynaktan mı geliyor, yoksa makul
 görünen bir uydurma mı), **A4** (ad yazımı), **B3** (düzyazıda duran ref adayı),
 **C3/C6** (alan semantiği, `mechanical_notes` yönlendirmesi).
-
-### Adım 5 — Metadata satırı
-
-```sh
-python -c "
-import json
-d=json.load(open('assets/open5e_packs/open5e-toh.pkg.json',encoding='utf-8'))
-print(json.dumps(d.get('metadata'),ensure_ascii=False,indent=1)[:2000])
-"
-```
-
-→ Checklist **B5, G1–G3** (+ `assets/open5e_packs/manifest.json`'daki karşılığı).
 
 ### Adım 6 — Bulguları yaz
 
@@ -272,8 +274,12 @@ paketleri.
 |---|--:|---|:--:|---|---|
 | `open5e-vom` | 1.063 | magic-item 1.063 | ⬜ | — | — |
 
-> Bilinen giriş noktası: `cost_gp` 1.063/1.063 = `0.00` ve §5.8'in 🔴 `M`
-> attunement / charges / body-slot bloğu (checklist C5, A5).
+> Bilinen giriş noktası: `cost_gp` ve §5.8'in 🔴 `M` attunement / charges /
+> body-slot bloğu (checklist C5, A5). **F1 düzeltmesi:** `0.00` olan **kaynak**
+> sütunu (`MagicItem.cost`, 1.063/1.063), pakette yazan değil — ölçüldü, pakette
+> `cost_gp` **1.063 satırın hepsinde `null`**, yani alan `0/1.063` dolu. Yani
+> aranacak şey "her yerde 0 fiyat" değil, **hiç fiyat olmaması**; §5.8 buna ⛔
+> gerekçesi yazdığı için tek başına bulgu değildir (K7).
 
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
@@ -293,6 +299,13 @@ paketleri.
 > kaynağı; checklist B2'nin istisnası burada test edilir.
 
 **Toplam:** 1 built-in + 19 official = **20 tarama birimi.**
+
+> **F1 doğrulaması (2026-08-17).** Yukarıdaki dört dalganın **19 satırının
+> tamamı** — varlık sayısı ve kategori dağılımı — `assets/open5e_packs/`'ten
+> yeniden sayıldı: **hepsi birebir tutuyor, toplam 21.839.** Built-in satırı da
+> `audit_packs --builtin` ile sayıldı: **59 kategori, 2.719 varlık**, ve
+> 2.350/369 ayrımı da doğru (`resource-pool`'a kadarki 39 Tier-0 kategorisi tam
+> **369** ediyor).
 
 ---
 
@@ -343,3 +356,63 @@ Tarama düzeltmez; **iş kalemi üretir.** Bir bulgu kapatılırken izlenecek yo
 - Pass 0 kapıları tarama sonunda **başladığı yerde veya daha iyi**,
 - ve `open5e_content_audit.md` "Done when" bölümündeki beş çıktının hiçbiri
   bu tarama yüzünden yeniden açılmamış.
+
+---
+
+## 10. F1 onayı — 2026-08-17
+
+**Onaylandı.** Sıra, tahta ve devir protokolü kullanıma hazır. F0'ın kuralı
+burada da uygulandı: onay **prosedürü çalıştırarak** verildi, okuyarak değil — ve
+prosedür ilk hâliyle **çalışmıyordu.**
+
+**Çalıştırılarak doğrulananlar.**
+
+- **Sıra ve tahta.** 19 paket satırının varlık sayısı ve kategori dağılımı
+  asset'lerden yeniden sayıldı — **19'u da birebir**, toplam **21.839**.
+  Built-in satırı: `audit_packs --builtin` → **59 kategori / 2.719 varlık**,
+  Tier-0 ayrımı **369** (tam olarak `ability`…`resource-pool` arası 39 kategori),
+  Tier-1 **2.350**. Sıra yol haritasının F1 çıkışıyla aynı: built-in → 6 chargen
+  → 5 büyü → `vom` → 7 canavar = 19.
+- **İzolasyon gerçekten çalışıyor.** `audit_packs --packs <dizin>` ve
+  `gate_packs --packs <dizin>` tek paketle koştu (`tdcs`: gate green).
+  `verify_packs --doc a5e-gpg --only background` **3 saniyede** döndü.
+- **Snapshot yerinde:** `../open5e-api-staging/data` var, yani Pass 0'ın
+  `verify_packs` adımı engelli değil.
+
+**Onay sırasında planda bulunan dört şey — düzeltildi.**
+
+1. **Adım 2–5'in dördü de çalışmıyordu, üç ayrı sebepten.** `python` bu makinede
+   yok (`python3` var); `d['entities']` **liste değil sözlük** (`.get` çağrısı
+   `AttributeError` ile patlıyor); alanlar `fields` değil **`attributes`** altında
+   ve kategori anahtarı `category` değil `type` — yani snippet düzeltilse bile
+   doluluk tablosu her alanı **0** sayardı ve "paket boş" diye 20 uydurma bulgu
+   üretirdi. Dört snippet tek bir okuyucuya toplandı: **`tool/scan_pack.py`**
+   (`--selfcheck` dahil, dosya şekli değişirse tarama başlamadan patlar).
+2. **Bütçe ile örneklem kuralı çelişiyordu.** "Paket başına ~600 satır" ve
+   "kategori başına 5 varlık, tam hâliyle" aynı anda tutmuyordu: ham `indent=1`
+   JSON ile 5 canavar **691 satır** — tek kategori, tek başına bütçenin üstü — ve
+   `tob3`'ün dört kategorisi toplam **872**. Sebep uuid dizilerinin satır satır
+   basılması. `scan_pack.py` skaler dizileri tek satıra topluyor: aynı 5 canavar
+   doluluk tablosuyla birlikte **285**, `tob3`'ün tamamı **433**. Ölçülen satır
+   maliyeti tablosu §4'e yazıldı. Kalan tek taşma **`toh`** (6 kategori, 5'er
+   varlık = **670**); `--picks 3` onu **437**'ye indiriyor — kuralın "aşılıyorsa
+   örneklem küçültülür" cümlesi artık gerçekten uygulanabilir bir kural.
+3. **`--only` yoksa bütçe daha ilk komutta gidiyor.** `audit_packs --packs` tek
+   paketle bile tablolanan 12 kategorinin hepsini basıyor: 35 varlıklık `tdcs`
+   için **474 satır**, pakette bulunan 6 kategoriye daraltınca **221**.
+   Adım 1 artık `--only` ile yazılı, listeyi de Adım 2 basıyor.
+4. **`verify_packs`'in "0 disagree"i her kategoride aynı şeyi söylemiyor.**
+   Kural tablosu **9 kategori** tanıyor ve `background`'ınki **boş**;
+   `creature-action`, `trait`, `language`, `size` hiç yok. Ölçüldü:
+   `--doc a5e-gpg --only background` → `2/2 eşleşti, ok 0`. Bu "temiz" değil
+   **"ölçülmemiş"** demek — Dalga 1'in ilk iki paketi (`a5e-gpg`, `a5e-ddg`,
+   yalnız `background`) tamamen okumaya kalıyor. §4 Uyarı 2'ye yazıldı.
+
+**Ayrıca ölçütte bir şey düzeltildi.** Checklist **C5** ve bu planın Dalga 3
+notu, §5.8'in "`MagicItem.cost` 1.063/1.063 `0.00`" cümlesini **pakette yazan
+değer** sanıyordu. Pakette `cost_gp` **1.063'ünde de `null`** (0/1.063 dolu);
+`0.00` olan kaynağın sütunu. Eski hâliyle tarayıcı "her satırda 0.00" arar,
+bulamaz ve `vom`'a kayıp-değer bulgusu yazardı.
+
+**Değişmeyen karar.** Tarama içinde hiçbir şey düzeltilmez (K1 / F4). Bu onayda
+dokunulanlar **prosedür ve ölçüt**; hiçbir `*.pkg.json` satırı değişmedi.

@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: content-pipeline
-updated: 2026-08-15
+updated: 2026-08-17
 tags: [moc]
 ---
 
@@ -24,6 +24,8 @@ tags: [moc]
 - [[dupe]] — the single definition of *"the same card"* (L4), shared by [[dupe_census]] and [[build_packs]] so the census and the build cannot drift apart, plus the build-time drop that acts on it. Records the asymmetry that decides every duplicate: **drop toward the built-in pack, never toward another bundled pack** — the built-in one is in scope implicitly, a bundled one would become a transitive install dependency.
 - [[gate_packs]] — the **relational** gate (T3): seven per-entity rules the field censuses structurally cannot express (actionless monster, orphaned child row, dangling ref, qualifier-strip mis-resolution, empty equipment option, skewed action buckets). No snapshot needed, exits non-zero on any violation, and [[build_packs]] runs it over what it just wrote.
 - [[verify_packs]] — the correctness gate beside those three: *is the shipped value the one the fixture column holds?* Needs the pinned snapshot, exits non-zero on a disagreement, and is the only tool that can see a **fabricated** value (a mapper default with no source behind it).
+- [[check_findings]] — the sweep's bookkeeping gate (audit **F2**): validates every entry in the findings ledger (checklist item, affected-entity count, evidence block, cause code, options) and fails when the three summary counters drift from the real entries. `--selftest` proves the validator still bites.
+- [[scan_pack]] — the **reading** tool beside all of those counting ones (audit **F1**): opens one pack's category map, per-field fill table, sample entities and `metadata` inside a ~600-line budget, so Stage F's sweep can ask *is the filled value the right value* without reading a 3.3 MB file whole.
 
 ## Key Files — SRD core + catalog
 - [[srd_core_pack]] — hand-authored SRD 5.2.1 package builder (two-pass).
