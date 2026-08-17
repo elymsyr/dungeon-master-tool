@@ -9,22 +9,27 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
-> (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` bitti
-> (2026-08-17).** 20 tarama biriminin 2'si kapandı, defterde **6 bulgu** var:
+> (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` + `a5e-ddg`
+> bitti (2026-08-17).** 20 tarama biriminin 3'ü kapandı, defterde **8 bulgu** var:
 > F-pass0-01 (checklist F2), F-builtin-01 (C4), F-builtin-02 (C8), F-pass0-02
 > (C2 — 30 background seçimli becerilerin hepsini hediye ediyor), F-pass0-03
 > (A5 — `ability_score_options` 27/27 aynı altı yetenek), F-pass0-04
-> (A3 — 6 kartın gövdesi `"[No description provided]"` ile açılıyor).
-> Altısı da ❓ danışılacak.
+> (A3 — 6 kartın gövdesi `"[No description provided]"` ile açılıyor), F-pass0-05
+> (D1 — `granted_language_count` 31 satırın 2'sinde yanlış), F-pass0-06
+> (B3 — background ekipmanında adı yazılı eşya envantere girmiyor).
+> Sekizi de ❓ danışılacak.
 >
-> **Sıradaki iş: Dalga 1 → `open5e-a5e-ddg`** (4 varlık, yalnız `background`).
-> Dört uyarı hazır: (1) `verify_packs`'in kural tablosunda `background` **boş**,
-> A3 okumayla yapılır (§4 Uyarı 2); (2) F-pass0-01 yalnız built-in render
-> grubunu kesiyor, paket tarafı yeşil; (3) `a5e-ddg` üç yayılan bulgunun
-> **üçünde de** var (4 kart / 4 fazla beceri, 4 satır altı-yetenek, 4
-> placeholder gövde) — yeni kayıt açılmaz, dağılım tablolarına satır zaten
-> yazılı, doğrulanır; (4) `a5e-gpg`'nin yöntem notu geçerli: **boş alana değil,
-> dolu alanın değerine bak.**
+> **Sıradaki iş: Dalga 1 → `open5e-open5e`** (22 varlık: subclass 17, spell 2,
+> background 2, subspecies 1 — dalganın **ilk çok kategorili** paketi).
+> Dört uyarı hazır: (1) bu pakette `verify_packs` gerçekten **ölçüyor** —
+> `subclass` ve `spell` kuralları var, yani D1/D2 ilk kez araçla gelecek,
+> `--doc open5e --only subclass,spell` ile; (2) `background` 2 satırı yine
+> okumayla, ve dört yayılan bulgunun dağılım tablolarında `open5e` şu an
+> **yalnız F-pass0-06'da** (6 düşen sözcük) + `granted_language_count` 1 satır
+> (doğru) — C2/A3/A5 satırlarında yok, yani orada **yeni** bir şey çıkarsa
+> dağılım tablosuna satır eklenir; (3) `subclass` 17 varlık × 18 satır ≈ 306
+> satır, bütçe içinde ama `--picks 3` hazır dursun; (4) `a5e-ddg`'nin keskinleşmiş
+> yöntem notu geçerli: **kaynak kaç tane diyor, pakette kaç tane var.**
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -309,7 +314,7 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
 | `open5e-a5e-gpg` | 2 | background 2 | ⚠️ | 2026-08-17 | F-pass0-02, F-pass0-03, F-pass0-04 |
-| `open5e-a5e-ddg` | 4 | background 4 | ⬜ | — | — |
+| `open5e-a5e-ddg` | 4 | background 4 | ⚠️ | 2026-08-17 | F-pass0-02…06 |
 | `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⬜ | — | — |
 | `open5e-tdcs` | 35 | trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 | ⬜ | — | — |
 | `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⬜ | — | — |
@@ -325,6 +330,16 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 ölçülemiyor, 20'si ✅. **Üç bulgu da mapper kusuru, yani kapsamı `pass0`** —
 paketin kendi sayacı 0 kalıyor (yayılan bulgu kuralı).
 
+> **Geriye dönük düzeltme — 2026-08-17, `a5e-ddg` taranırken.** `a5e-ddg`'de
+> bulunan iki yeni yayılan bulgunun ikisi de bu pakete de dokunuyor, yani bu
+> tablo iki satırda **fazla iyimserdi**: `B3` ✅ → ⚠️ (F-pass0-06) ve `D1`
+> 🟡 → ⚠️ (F-pass0-05). Düzeltilmiş sayım: **19 ✅ · 6 ➖ · 1 ⛔ · 5 ⚠️.**
+> İkisi de aynı sebeple kaçtı: **dolu alanın içine bir kademe daha inilmedi** —
+> `equipment_choice_groups`'un grubu vardı (içindeki eşya satırı eksikti),
+> `granted_language_count`'un sayısı vardı (sayı yanlıştı). Dalga 1'in geri
+> kalanı için kural buna göre keskinleşti: *dolu alanın değerine bak* yetmiyor,
+> **değerin kaynaktaki karşılığını say.**
+
 | Madde | Verdict | Dayanak |
 |---|:--:|---|
 | A1 | ✅ | tek `type` = `background`, şemada var, `audit_packs` 11 alanla tabloluyor |
@@ -334,7 +349,7 @@ paketin kendi sayacı 0 kalıyor (yayılan bulgu kuralı).
 | A5 | ⚠️ | **F-pass0-03** — `ability_score_options` 27/27 satırda aynı altı-yetenek listesi, ve `isConstant` %100 dolu istediği için ⚠ basılmıyor |
 | B1 | ✅ | Pass 0 same-text 0; iki ad built-in'in 16 background'ıyla çakışmıyor (ölçüldü) |
 | B2 | ✅ | iki ad korpüste yalnız bu pakette var (ölçüldü) |
-| B3 | ✅ | beceri / dil / ekipman düzyazısının tipli evi var ve yazılmış; **seçim semantiği** kayıp ama o C2'nin işi |
+| B3 | ⚠️ | *(2026-08-17'de `a5e-ddg` taranırken geriye dönük düzeltildi: ✅ değil)* — **F-pass0-06**, bu pakette 1 düşen ekipman sözcüğü (Haunted) |
 | B4 | ✅ | `gate_packs --packs /tmp/one` **green**; 9 ekipman softRef'i built-in gear'a çözülüyor |
 | B5 | ✅ | `metadata.links` yok + manifest `requires: []` — L2'nin yazılı kararı |
 | C1 | ➖ | `class` / `subclass` yok |
@@ -345,7 +360,7 @@ paketin kendi sayacı 0 kalıyor (yayılan bulgu kuralı).
 | C6 | ✅ | M1 yeşil; `granted_language_count` B7'de "bilerek inert" olarak yazılı. Düzyazıdaki *Accursed* Intimidation expertise'ının tipli evi yok → bilinen açık #1 |
 | C7 | ✅ | `_lookup` zarfları (`skill`, `ability`) + gear softRef'leri; `unmapped_report.json`'da bu paketten satır yok, paket kendi Tier-0 tohumunu göndermiyor |
 | C8 | ✅ | 6 🔴 alanın **altısının** da yazılı sebebi var: 2 ⛔ (§5.8), `granted_tool_refs`/`_variant_group` `S` (kaynakta `tool_proficiency` satırı yok), `starting_gold_gp`/`gold_alternative_gp` bilinen açık #1, `default_inventory_refs` ⛔ |
-| D1 | 🟡 | **ölçülmedi:** `verify_packs --doc a5e-gpg --only background` → `2/2 eşleşti, ok 0` (§4 Uyarı 2). Okumayla yapıldı ve iki sapma buldu (F-pass0-02, -04) |
+| D1 | ⚠️ | **ölçülmedi:** `verify_packs --doc a5e-gpg --only background` → `2/2 eşleşti, ok 0` (§4 Uyarı 2). Okumayla yapıldı ve iki sapma buldu (F-pass0-02, -04); *(2026-08-17'de üçüncüsü eklendi: **F-pass0-05**, Haunted'ın dil sayısı 2 yerine 1 — geçen birimde kaçtı, 🟡 → ⚠️)* |
 | D2 | ➖ | ölçüm olmadığı için kova da yok (`unsourced` 0 / `unverifiable` 0) |
 | D3 | ✅ | `gate_packs` green |
 | E1 | ✅ | M1 73 çift yeşil — paketin 5 alanı sayfaya iniyor (F-pass0-02 tam bu yüzden acıtıyor: yanlış sayı iniyor) |
@@ -369,6 +384,69 @@ paketin kendi sayacı 0 kalıyor (yayılan bulgu kuralı).
 > genişletilmiş yetenek listesi, placeholder metin). Boş alanların hepsinin
 > (C8 ✅) yazılı sebebi vardı. Dalga 1'in geri kalanı için kural: **doluluk
 > tablosuna değil, dolu satırın değerine bak.**
+
+#### `open5e-a5e-ddg` sonucu — 2026-08-17
+
+4 varlık, tek kategori (`background`), 11 beyan edilmiş alanın 6'sı dolu
+(gpg'den bir fazla: `granted_tool_refs` 4/4, çünkü kaynakta `tool_proficiency`
+satırı var). 31 maddenin **5'i bulgu** — 3'ü `a5e-gpg`'den gelen yayılan
+bulgunun doğrulanması, **2'si yeni** ve ikisi de yine mapper kusuru, yani
+kapsamı `pass0`; paketin kendi sayacı 0 kalıyor.
+
+| Madde | Verdict | Dayanak |
+|---|:--:|---|
+| A1 | ✅ | tek `type` = `background`, `audit_packs` 11 alanla tabloluyor |
+| A2 | ⛔ | 4 zorunlu alanın 2'si dolu; `asi_distribution_options` + `origin_feat_ref` **0%**, ikisi de §5.8'de yazılı ⛔ → K7. Not: ASI sütunu burada **zorunlu olarak** boş — dört kaynak satırının dördü de "one other ability score" diyor, yani `floating` dalı, yani mapper hiç yazmıyor |
+| A3 | ⚠️ | **F-pass0-04** doğrulandı: 4 kartın 4'ünde `desc` = `"[No description provided]"` (kaynakta da öyle) |
+| A4 | ✅ | 4 ad title case; 12 ref hedefinin **12'si** built-in kartlarda birebir var (`Leatherworker's/Cartographer's/Thieves' Tools`, `Disguise Kit`, `Chalk`, `Clothes, Traveler's`, `Hunting Trap`, `Pick, Miner's`, `Shovel`) |
+| A5 | ⚠️ | **F-pass0-03** doğrulandı: `ability_score_options` 4/4 satırda aynı altı yetenek. Bu paket ⚠ körlüğünün **ikinci** yüzünü de gösteriyor: 4 varlık `_constMinSample`'ın altında, yani doluluk %100 olsa bile ⚠ basılmazdı |
+| B1 | ✅ | 4 ad built-in'in 16 background'ıyla çakışmıyor (ölçüldü) |
+| B2 | ✅ | 4 ad korpüsün diğer 18 paketindeki background adlarıyla çakışmıyor (ölçüldü) |
+| B3 | ⚠️ | **F-pass0-06 (yeni)** — `Common clothes` ×2 ve `Cartographers' tools` ×1 yalnız `label` düzyazısında kalıyor, `items` satırı olmuyor |
+| B4 | ✅ | `gate_packs --packs /tmp/one` **green**; 8 gear/tool softRef'inin hepsi built-in'de var |
+| B5 | ✅ | `metadata.links` yok + manifest `requires: []` — L2'nin yazılı kararı |
+| C1 | ➖ | `class` / `subclass` yok |
+| C2 | ⚠️ | **F-pass0-02** doğrulandı, dağılım tam çıktı: 4 kaynak satırının 4'ü de "X, and either Y or Z" (2 beceri) diyor, kart 3 veriyor → **4 fazla yetkinlik** |
+| C3 | ➖ | `spell` yok |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ✅ | M1 yeşil (Pass 0, K4); grant bloğunun 6 alanı yazılı. `granted_language_count`'un **değeri** yanlış ama o D1'in işi (F-pass0-05) |
+| C7 | ✅ | `_lookup` zarfları (`skill`, `ability`) + gear/tool softRef'leri; `unmapped_report.json`'ın 3 satırının hiçbiri bu paketten değil |
+| C8 | ✅ | 5 🔴 alanın hepsinin yazılı sebebi var: 2 ⛔ (§5.8), `granted_tool_variant_group` `S` (dört kaynak satırı da tek alet adı, "of your choice" yok), `starting_gold_gp`/`gold_alternative_gp` bilinen açık #1, `default_inventory_refs` ⛔ |
+| D1 | ⚠️ | **F-pass0-05 (yeni)** — Dungeon Robber'ın dil hakkı kaynakta "Any six", pakette **0**. `verify_packs --doc a5e-ddg --only background` → `4/4 eşleşti, ok 0` (§4 Uyarı 2), yani yine ölçüm değil okuma buldu |
+| D2 | ➖ | ölçüm olmadığı için kova da yok (`unsourced` 0 / `unverifiable` 0) |
+| D3 | ✅ | `gate_packs` green |
+| E1 | ✅ | M1 73 çift yeşil; paketin 6 alanı sayfaya iniyor |
+| E2 | ✅ | M3 beyan listesine yeni alan gerekmedi |
+| E3 | ➖ | `class` / büyücülük yok |
+| F1 | ✅ | `pack_install_roundtrip_test` 19 pakette yeşil (Pass 0) |
+| F2 | ✅ | paket tarafı 141 çift yeşil; `background` çiftlerini `seen` kümesi yüzünden `a5e-ag` kapıyor (gpg'de yazılan not burada da geçerli) |
+| F3 | ✅ | `wizard_pack_families_test` → `open5e-a5e-ddg` 2 vaka (+6, +7) yeşil (çalıştırıldı) |
+| F4 | ✅ | `entity_link_navigation_test` yeşil (Pass 0) |
+| G1 | ✅ | `pack_version` 1.1.0 = manifest `version` = `r2_path @1.1.0`; `counts.background` 4; `size_bytes` **26.006** = dosyanın gerçek boyutu (ölçüldü) |
+| G2 | ✅ | `publisher` / `license` / `game_system` / `is_srd_overlap` iki dosyada aynı (EN Publishing · `ogl-10a` · `a5e` · false) |
+| G3 | ✅ | `is_srd_overlap: false`, `game_system: a5e` |
+
+**Sayım: 19 ✅ · 6 ➖ · 1 ⛔ · 5 ⚠️.**
+
+> **Okuma bütçesi.** `scan_pack.py a5e-ddg --cat background` = 4 varlığın tamamı,
+> ~55 satır. Kaynak tarafı: `Background.json` 4 satır + `BackgroundBenefit.json`
+> 29 satır — A3/D1 okumayla yapıldığı için (§4 Uyarı 2) zorunluydu ve ucuzdu.
+>
+> **Yöntem notu — gpg'nin notu bir kademe derinleşti.** gpg'de kural "boş alana
+> değil, dolu alanın değerine bak"tı. Bu paket onun yetmediğini gösterdi: iki
+> yeni bulgunun ikisi de **değerin içinde** duruyor. `equipment_choice_groups`
+> dolu ve grup doğru, ama grubun `items` dizisi kaynağın saydığı eşyaları
+> saymıyor; `granted_language_count` dolu ve tek hücre, ama o hücre yanlış sayı.
+> Yani sıradaki paketlerde sorulacak soru: **kaynak kaç tane diyor, pakette kaç
+> tane var.** Beceri (F-pass0-02), yetenek (F-pass0-03), dil (F-pass0-05) ve
+> ekipman (F-pass0-06) — dördü de aynı soruya "eşit değil" cevabı verdi.
+>
+> **Küçük paket, kör araç.** 4 varlıkta `audit_packs`'in ⚠ dedektörü
+> `_constMinSample`'ın altında kaldığı için hiçbir "tek sabit" sütunu
+> bildirmiyor; `verify_packs` `background` kuralı boş olduğu için 0 ok basıyor;
+> `gate_packs` softRef'leri gate'lemiyor. Bu birimde **31 maddenin 5'i** yalnız
+> okumayla bulundu, ve 5'i de bulgu çıktı.
 
 ### Dalga 2 — Büyü paketleri
 

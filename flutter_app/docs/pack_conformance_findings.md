@@ -3,8 +3,8 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk paketi bitti
-> (2026-08-17), 6 bulgu.** Sıradaki iş **Dalga 1 → `open5e-a5e-ddg`**.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk iki paketi bitti
+> (2026-08-17), 8 bulgu.** Sıradaki iş **Dalga 1 → `open5e-open5e`**.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -92,7 +92,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 6 | 0 | 0 | 0 | 0 | **6** |
+| 0 | 8 | 0 | 0 | 0 | 0 | **8** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -100,10 +100,10 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 0 |
 | A2 | 0 | B2 | 0 | C2 | 1 |
-| A3 | 1 | B3 | 0 | C3 | 0 |
+| A3 | 1 | B3 | 1 | C3 | 0 |
 | A4 | 0 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
-| D1 | 0 | E1 | 0 | C6 | 0 |
+| D1 | 1 | E1 | 0 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 0 | C8 | 1 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
@@ -114,7 +114,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 4 | `open5e-vom` | 0 |
+| `pass0` | 6 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -615,6 +615,207 @@ genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çı
 2. **Gerekçe yaz** — kaynak böyle, ⛔ olarak §5.4'e işlenir; kullanıcı görmeye
    devam eder.
 3. **Kapsam dışı** — 53 background'ta 6; karar yazılı bırakılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-05 — `granted_language_count`: "Any six" 0 olarak, "Two … one of which" 1 olarak yazılmış
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 2 pakete yayılı (Dalga 1 / `a5e-ddg`'de bulundu) |
+| **Checklist** | checklist D1 (değer kaynakla aynı) |
+| **Kategori / etki** | `background` — 31 dolu satırın **2'si yanlış**: `a5e-ddg` Dungeon Robber 6 → **0**, `a5e-gpg` Haunted 2 → **1** |
+| **Cause code (öneri)** | `M` — sayı sözcüğü tablosu `five`'da bitiyor ve **ilk eşleşen kazanıyor**; `\bno\b` "no longer spoken" içinde eşleşiyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `_parseLanguageCount` (`mappers/chargen.dart:1329-1334`) önce
+`_numberWord`'e soruyor, o da `_numberWords` sözlüğünü **sırayla** geziyor:
+
+```dart
+const _numberWords = {
+  'no': 0, 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+};
+```
+
+İki şekilde yanlış cevap veriyor:
+
+- **Dungeon Robber** — kaynak: `"Any six (three of them no longer spoken)."`
+  `six` tabloda **yok**; `no` ise `"no longer"` içinde `\bno\b` olarak eşleşiyor
+  ve sözlüğün **ilk** girdisi olduğu için kazanıyor → **0**. Altı dil hakkı
+  "hiç dil yok"a dönüyor.
+- **Haunted** (`a5e-gpg`, geçen birimde kaçtı) — kaynak: `"Two of your choice,
+  one of which is the spirit's native language."` Metinde hem `two` hem `one`
+  var; `one` sözlükte önce geldiği için → **1**.
+
+Doğru yazılan 29 satırın hepsi tek sayı sözcüğü taşıyor (`One of your choice`,
+`Two of your choice`, `No additional languages`) — yani tablo yalnızca **cümle
+karmaşıklaştığında** yanılıyor.
+
+Alanın şemadaki tanımı `max: 5` (`builtin/content.dart:759`), yani "six" bu
+alanda **temsil edilemiyor** bile; mapper'ın tavanı şemanın tavanı. Kusur
+tavanın kendisi değil, tavanın üstündeki bir değerin **sessizce 0'a** düşmesi.
+
+**Kanıt.**
+```sh
+# repo kökünden — 33 kaynak satırının hepsi + mapper'ın vereceği cevap
+python3 - <<'EOF'
+import json,glob,re
+nw={'no':0,'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5}
+for f in glob.glob('open5e-api-staging/data/v2/*/*/BackgroundBenefit.json'):
+    for r in json.load(open(f)):
+        fl=r['fields']
+        if fl['type']!='language': continue
+        t=' '.join(fl['desc'].split()); hit=None
+        for k,v in nw.items():
+            if re.search(r'\b%s\b'%k,t,re.I): hit=v; break
+        print(f.split('/')[-2], hit, '|', t[:70])
+EOF
+# … a5e-ddg 0 | Any six (three of them no longer spoken).
+# … a5e-gpg 1 | Two of your choice, one of which is the spirit's native language.
+# 33 satır, 31'i pakete iniyor, 29'u doğru
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü)*
+
+| Paket | Dolu satır | Yanlış |
+|---|--:|--:|
+| `open5e-toh` | 16 | 0 |
+| `open5e-a5e-ag` | 5 | 0 |
+| `open5e-tdcs` | 3 | 0 |
+| `open5e-a5e-gpg` | 2 | **1** |
+| `open5e-a5e-ddg` | 1 | **1** |
+| `open5e-open5e` | 1 | 0 |
+
+**Neden önemli.** İki ayrı şey aynı yere bakıyor:
+
+1. `granted_language_count`'u **hiçbir resolver okumuyor** (`lib/` içinde tek
+   geçtiği yer şema beyanı) — B7'nin yazılı "bilerek inert" kararı. Yani bugün
+   mekanik zarar yok, ama alan **kartta render ediliyor**: Dungeon Robber'ı açan
+   oyuncu "Granted Language Count: 0" okuyor, kaynak altı dil verirken.
+2. `audit_packs` bu sütunu `a5e-ddg`'de **🟡 25% (1/4)** diye gösteriyor — ve o
+   *tek dolu hücre* yanlış olan hücre. Doluluk ölçen bir araç için bu kusursuz
+   bir kör nokta: üç boş hücre doğru (kaynakta `language` satırı yok), dolu olan
+   tek hücre yanlış.
+
+`verify_packs`'in `background` kuralı boş olduğu için D1 bunu da göremiyor
+(§4 Uyarı 2) — F-pass0-04 ile aynı kapı, farklı alan.
+
+**Seçenekler.**
+1. **Düzelt (küçük)** — `_numberWords`'ü 10'a kadar uzat, `\bno\b` yerine
+   `"no additional"`/`"none"` gibi bağlamlı kalıp kullan, ve birden fazla sayı
+   sözcüğü eşleşirse **ilkini metin sırasına göre** seç. Üç satırlık değişiklik;
+   `max: 5` şema sınırı ayrıca kararı bekler (6 → 5'e kırpmak mı, alanı 10'a
+   çıkarmak mı).
+2. **Alanı sil** — inert bir alanın yanlış değeri, kartta yanlış bilgi demek;
+   B7'nin "bilerek inert" kararı alanı **gizlemiyor**. Render'dan çıkarmak da
+   bir çözüm.
+3. **Kapsam dışı** — 31 satırda 2, alan inert; karar yazılı bırakılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-06 — background başlangıç ekipmanında adı yazılı olan eşya envantere girmiyor: 23 "pouch"un 17'si, 20 "common clothes"un 20'si
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 6 pakete yayılı (Dalga 1 / `a5e-ddg`'de bulundu) |
+| **Checklist** | checklist B3 (düzyazıda duran şey ref olmalı) |
+| **Kategori / etki** | `background` — **42** kartta **120** eşya sözcüğü yalnız `label` düzyazısında kalıyor, `items` satırı olmuyor; ölçülen en büyük üç kalıp: `pouch` 23 anımsatmanın **6'sında** ref var, `ball bearings` 2/**0**, `prayer book` 2/**0**, `common clothes` 20/**0** |
+| **Cause code (öneri)** | `M` — `builtinItem` yalnız üç bağışlayıcı kural tanıyor (çoğul, son ` of ` kuyruğu, ölçü sözcüğü); **öndeki niteleyici** ("belt pouch", "prayer book") ve **parantez içi liste** hiç denenmiyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `_gearRef`'in yazılı sözleşmesi (`mappers/chargen.dart:1099-1113`)
+şöyle: pakette olan → hard `ref`, built-in katalogda olan → `softRef`, ikisi de
+değilse **satır yok**, ve düşenler "background flavour — 'pet monkey wearing a
+tiny fez', 'memento of your destiny'". Ölçüm bu gerekçenin **yarısını**
+doğruluyor: 120 düşen sözcüğün çoğu gerçekten uydurulamaz flavour, ama içinde
+**katalogda birebir duran eşyalar** da var:
+
+| Kaynak düzyazısı | Katalogdaki kart | Neden düşüyor |
+|---|---|---|
+| `belt pouch containing 10 gp` | `Pouch` | öndeki `belt` niteleyicisi bağışlanmıyor (`pouch` bilerek `_measureWords`'te değil — yazar kartı biliyor) |
+| `bag of 1,000 ball bearings` | `Ball Bearings` | `of` kuyruğu `1000 ball bearings`, ölçü sözcüğü `bag` listede yok |
+| `prayer book` | `Book` | öndeki `prayer` |
+| `(amulet or reliquary)` | `Amulet (Holy Symbol)` | parantez içi **baştan siliniyor** (`_kitItems:1209`) |
+| `Common clothes` | **yok** | SRD 5.2.1 kataloğunda yalnız `Clothes, Fine` + `Clothes, Traveler's` var — 2024 listesi "common clothes"u düşürdü → bu satırın cause code'u `N`, `M` değil |
+
+Parantez kuralı ayrı bir mekanizma ve ölçülebilir: 11 parantezin **6'sının**
+içinde verilmeyen bir katalog eşyası var — `tdcs` Elemental Warden'ın
+`(a shortbow with 20 arrows, or a hunting trap)`'i (Shortbow + Arrows + Hunting
+Trap), `a5e-ag` Acolyte/Cultist'in `(amulet or reliquary)`'si, `a5e-ag` Farmer'ın
+`(rations)`'ı. Kodun yorumu parantez silmeyi tam bu `(amulet or reliquary)`
+örneğiyle gerekçelendiriyor — "virgülde parçalanmasın" diye; sonuç, parçalanmak
+yerine **tamamen kaybolması**.
+
+Ölçümün en okunaklı kanıtı **aynı dosyanın içindeki asimetri**:
+`parseToolProficiencies` noktalama-duyarsız eşleştirme yapıyor ve gerekçesi
+yazılı — "upstream `Cartographers’ tools` yazıyor, katalog `Cartographer's
+Tools`". Ekipman yolu aynı upstream alışkanlığına karşı **çıplak**: `a5e-ddg`
+Dungeon Robber'ın `Cartographers’ tools`'u alet yetkinliği olarak doğru
+eşleşiyor (`granted_tool_refs` dolu), ama başlangıç ekipmanı olarak düşüyor.
+Aynı sözcük, aynı kart, iki farklı eşleştirici, iki farklı sonuç.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — label'de adı geçip items'a girmeyen kalıplar
+python3 - <<'EOF'
+import json,glob
+pat=[('pouch','Pouch'),('rope','Rope'),('ball bearings','Ball Bearings'),
+     ('prayer book','Book'),('common clothes','Clothes')]
+res={k:[0,0] for k,_ in pat}
+for f in glob.glob('assets/open5e_packs/*.pkg.json'):
+    for e in json.load(open(f))['entities'].values():
+        if e['type']!='background': continue
+        for g in e['attributes'].get('equipment_choice_groups',[]) or []:
+            for o in g['options']:
+                lab=o['label'].lower().replace('’',"'")
+                items=[i['ref']['name'].lower() for i in o.get('items',[])]
+                for k,want in pat:
+                    if k in lab:
+                        res[k][0]+=1
+                        if any(want.lower() in n for n in items): res[k][1]+=1
+print(res)
+EOF
+# {'pouch': [23, 6], 'rope': [3, 2], 'ball bearings': [2, 0],
+#  'prayer book': [2, 0], 'common clothes': [20, 0]}
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü — düşen sözcük sayısı)*
+
+| Paket | Düşen sözcük |
+|---|--:|
+| `open5e-toh` | 68 |
+| `open5e-a5e-ag` | 33 |
+| `open5e-tdcs` | 9 |
+| `open5e-open5e` | 6 |
+| `open5e-a5e-ddg` | 3 |
+| `open5e-a5e-gpg` | 1 |
+
+*(120 sözcüğün tamamı kusur değildir — flavour olanlar B6'nın yazılı kararıyla
+zaten düşmeli. Kusur, bu kümenin içinde **katalogda karşılığı olan** eşyaların
+bulunması ve gerekçenin bunu kapsamadığını sanması.)*
+
+**Neden önemli.** Bu alan sihirbazda **verilen** ekipman: oyuncu kartı seçince
+`items` envantere düşüyor, `label` yalnız okunuyor. Yani "adı yazılı ama satırı
+yok" demek, oyuncunun kaynağa göre hakkı olan kesenin / bilyelerin / kutsal
+sembolün **envanterine hiç girmemesi** ve bunu ancak düzyazıyı okuyup fark
+etmesi. Hiçbir kapı göremiyor: `gate_packs` green (softRef gate'lemiyor,
+üstelik burada ref **hiç yazılmamış**), `audit_packs`
+`equipment_choice_groups` sütununu **100% dolu** görüyor (grup var, içi eksik),
+`verify_packs`'in `background` kuralı boş. F-pass0-02 ile aynı aile: **dolu alan,
+eksik içerik.**
+
+**Seçenekler.**
+1. **Düzelt (iki küçük kural)** — (a) parantez içini silmek yerine ayrı bir
+   segment olarak tokenize et; (b) `builtinItem`'a "son sözcükten geriye doğru
+   katalog araması" ekle (`belt pouch` → `pouch`), yalnız gerçek bir kart adına
+   **oturursa** kabul. İkisi de "yanlış kart verme" ilkesini bozmadan yapılabilir.
+2. **`common clothes` için karşılık kararı** — 20 anımsatma tek bir eksik karta
+   bakıyor: ya built-in kataloğa `Clothes, Common` eklenir (SRD 5.2.1 dışı içerik
+   demek), ya `Clothes, Traveler's`'a eşlenir (yaklaşık), ya `N` olarak §5.4'e
+   yazılır.
+3. **Kapsam dışı** — B6'nın gerekçesi genişletilip "katalogda olanlar da düşebilir,
+   çünkü eşleme mekanik" diye yazılır; `label` düzyazısı kullanıcıya görünmeye
+   devam ettiği için bilgi kaybı değil, **otomasyon** kaybı sayılır.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
