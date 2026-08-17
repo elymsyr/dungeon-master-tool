@@ -3,8 +3,8 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in beş paketi bitti
-> (2026-08-17), 15 bulgu.** Sıradaki iş **Dalga 1 → `open5e-bfrd`'nin
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in altı paketi bitti
+> (2026-08-17), 17 bulgu.** Sıradaki iş **Dalga 1 → `open5e-bfrd`'nin
 > class/subclass satırları** (Dalga 1'in son birimi).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
@@ -93,18 +93,18 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 15 | 0 | 0 | 0 | 0 | **15** |
+| 0 | 17 | 0 | 0 | 0 | 0 | **17** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
 | Madde | Bulgu | Madde | Bulgu | Madde | Bulgu |
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
-| A2 | 0 | B2 | 1 | C2 | 2 |
+| A2 | 0 | B2 | 1 | C2 | 3 |
 | A3 | 1 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
-| D1 | 1 | E1 | 1 | C6 | 0 |
+| D1 | 2 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 1 | C8 | 1 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
@@ -122,7 +122,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | `open5e-open5e` | 1 | `open5e-tob` | 0 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
 | `open5e-toh` | 2 | `open5e-a5e-mm` | 0 |
-| `open5e-a5e-ag` | 0 | `open5e-tob-2023` | 0 |
+| `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 0 |
 | `open5e-kp` | 0 | | |
 | `open5e-wz` | 0 | | |
 | `open5e-deepmx` | 0 | | |
@@ -1408,6 +1408,140 @@ satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
    (`toh`'ta `metadata.links` **yok**).
 3. **Kapsam dışı** — "iki ayrı yayıncı belgesi, iki ayrı kart" yazılır; o zaman
    kullanıcının iki `Scoundrel` görmesi bilinçli kabul edilmiş olur.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-a5e-ag-01 — `Tenacious` feat'inin kurtarma yeterliliği düşüyor: alanı var, okuyanı var, yazanı yok
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-a5e-ag` — korpüs geneli tarandı, **tek kart** |
+| **Checklist** | checklist C2 (species/background/feat alanları) |
+| **Kategori / etki** | `feat` — `grants_save_prof_from_asi` korpüsteki **73 feat kartının 0'ında** dolu; kaynağı bu mekaniği yazan **1** kart var (`a5e-ag` `Tenacious`) ve o da alamıyor. Kartın ASI'si tam doğru yazılmış (`asi_amount: 1`, `asi_max_score: 20`, altı yetenek), yalnız cümlenin ikinci yarısı kayıp |
+| **Cause code (öneri)** | `M` — alan **beyan edilmiş** (`builtin/content.dart:836`), **okuyanı da var** (`pending_choice_resolver_dialog.dart:793, 1203`, built-in `Resilient` bununla çalışıyor); yazan yalnız mapper tarafında yok |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `Tenacious`'ın gövdesi: *"Choose one ability score. The chosen ability
+score increases by 1, to a maximum of 20, **and you gain proficiency in saving
+throws using it**."* Bu, built-in `Resilient`'in birebir aynı mekaniği
+(`srd_core/feats.dart:471` → `'grants_save_prof_from_asi': true`). Paket kartında
+ASI yarısı tipli alanlara inmiş, kurtarma yarısı yalnız düzyazıda kalmış.
+
+Bu bulgunun diğerlerinden farkı: burada **eksik olan tek şey mapper satırı**.
+F-pass0-08'de alan yoktu, F-pass0-09'da alan yoktu, F-pass0-10'da alan yanlış
+kategorideydi. Burada alan da okuyucu da yerinde — kart seçildiğinde diyalog
+`grants_save_prof_from_asi == true` görseydi kurtarma yeterliliğini soracaktı.
+
+**Neden önemli.** Doluluk tablosu bunu `🔴 0%` diye gösteriyor ama 0%'ın burada
+"kaynakta yok" (`S`) demediğini hiçbir kapı söylemiyor — korpüste bu mekaniği
+yazan tam bir kart var ve o kart pakette. C8'in "her boşluğun cause code'u var"
+sorusu bu alanda `S` sanılıp geçilirse yanlış cevaplanır.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — mekaniği düzyazıda yazan ama tipli alanı boş olan feat'ler
+python3 - <<'EOF'
+import json,glob,os,re,collections
+pat=re.compile(r'proficiency in saving throws|saving throw proficiency|'
+               r'proficient in .{0,20}saving throw',re.I)
+hits=collections.defaultdict(list)
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    doc=os.path.basename(p)[7:-9]
+    for e in json.load(open(p))['entities'].values():
+        if e['type']!='feat': continue
+        a=e['attributes']
+        if (pat.search(a.get('description') or '')
+                and not a.get('grants_save_prof_from_asi')
+                and not a.get('granted_save_proficiencies')):
+            hits[doc].append(e['name'])
+print(dict(hits))
+EOF
+# {'a5e-ag': ['Tenacious']}
+
+dart run tool/open5e_import/bin/audit_packs.dart --only feat | grep save_prof
+#    🔴   grants_save_prof_from_asi              0%  (0/73)
+grep -rn "grants_save_prof_from_asi" lib/ | wc -l   # 4 — 1 şema, 2 okuma, 1 built-in kart
+grep -rn "grants_save_prof_from_asi" tool/ | wc -l  # 0 — yazan yok
+```
+
+**Seçenekler.**
+1. **Mapper'a tek kural** — `feat` gövdesinde ASI cümlesiyle aynı yerde kurtarma
+   yeterliliği geçiyorsa `grants_save_prof_from_asi: true`. Metin eşlemesi, yani
+   §5.3'ün "kırılgan" uyarısı geçerli; ama okuyucu hazır olduğu için diff tek satır.
+2. **Elle kür** — tek kart, `migrate_pack_assets.dart` tarzı hedefli düzeltme.
+   Ölçek bugün 1; yarın yeni bir belge gelirse tekrar kaçar.
+3. **Kapsam dışı** — o zaman C8'e yazılı bir satır girmeli: "`grants_save_prof_from_asi`
+   paket tarafında hiç yazılmaz, yalnız built-in kartların alanıdır."
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-a5e-ag-02 — `Marshal`'ın seviye tablosu 14. seviyede geriliyor: 30 feet → 10 feet → 45 feet
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-a5e-ag` — korpüs geneli tarandı, **tek kart / tek hücre** |
+| **Checklist** | checklist D1 (değer kaynakla aynı) |
+| **Kategori / etki** | `class` — `Marshal`'ın `description`'ındaki 20 satırlık ilerleme tablosunda `Commanding Presence` sütunu 13'te 30 feet, **14'te 10 feet**, 15'te 45 feet. Korpüsteki 103 `class`/`subclass` kartının tablolarında azalan geçiş **2** tane; öteki (`toh` `Sapper`) ilerleme tablosu değil, tuzak listesi |
+| **Cause code (öneri)** | `S` — kaynak `ClassFeatureItem` satırı da `14 → "10 feet"` diyor; paket kaynağı **birebir** yeniden üretiyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `verify_packs` bu paketi **0 disagree / 0 absent** ile geçiriyor ve
+haklı: yazılan değer kaynaktaki değer. Ama kural düzeyinde yanlış — bir sınıf
+özelliğinin menzili 14. seviyede dörtte birine düşüp 15'te dört buçuk katına
+çıkmıyor. Upstream'in dizgi hatası, paketten kullanıcıya kesintisiz geçiyor.
+
+**Neden önemli.** Bu, dalganın beşinci sorusunun ilk somut karşılığı: *"alan dolu
+ve kaynakla aynı, ama değer kuralla uyuşuyor mu?"* D1'in **lafzı** geçiyor,
+**amacı** kalıyor. Tarama araçlarının tamamı kaynağa karşı ölçüm yapıyor; hiçbiri
+"kaynak kendi içinde tutarlı mı" diye sormuyor, dolayısıyla bu sınıftan her hata
+sessizce taşınır.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — sınıf/arketip tablolarında azalan sayısal geçişler
+python3 - <<'EOF'
+import json,glob,os,re
+nums=lambda c:(lambda m:int(m.group(1)) if m else None)(re.match(r'^(\d+)',c.strip()))
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    for e in json.load(open(p))['entities'].values():
+        if e['type'] not in ('class','subclass'): continue
+        L=[l for l in (e['attributes'].get('description') or '').split('\n')
+           if l.strip().startswith('|')]
+        if len(L)<4: continue
+        hdr=[c.strip() for c in L[0].strip('|').split('|')]
+        body=[[c.strip() for c in l.strip('|').split('|')] for l in L[2:]]
+        for i,col in enumerate(hdr[1:],1):
+            seq=[(r[0],nums(r[i])) for r in body if len(r)>i and nums(r[i]) is not None]
+            for a,b in zip(seq,seq[1:]):
+                if b[1]<a[1]:
+                    print(os.path.basename(p),e['name'],col,f'{a[0]}:{a[1]}→{b[0]}:{b[1]}')
+EOF
+# open5e-toh.pkg.json  Sapper  Time Required to Build Trap  ...   (tablo değil, liste)
+# open5e-a5e-ag.pkg.json  Marshal  Commanding Presence  13:30→14:10
+
+# kaynak da aynı şeyi diyor
+python3 - <<'EOF'
+import json,glob
+d=glob.glob('../open5e-api-staging/data/v2/*/a5e-ag')[0]
+cf={x['pk']:x.get('fields',x) for x in json.load(open(d+'/ClassFeature.json'))}
+ci=[x.get('fields',x) for x in json.load(open(d+'/ClassFeatureItem.json'))]
+print(sorted((it['level'],it['column_value']) for it in ci
+             if cf.get(it['parent'],{}).get('name')=='Commanding Presence'
+             and it['column_value'])[12:15])
+EOF
+# [(13, '30 feet'), (14, '10 feet'), (15, '45 feet')]
+```
+
+**Seçenekler.**
+1. **Kaynak hatasını düzeltme, işaretle** — importer'a bir *tutarlılık uyarısı*
+   ekle (monoton olması beklenen sütunda gerileme → `unmapped_report.json`'a
+   satır). Değer değişmez, ama bir daha sessiz geçmez. Bugün bilinen ölçek: 1 hücre.
+2. **Yerinde düzelt** — 14. seviyeyi 30 feet yap (a5e basılı tablosuna bakılarak).
+   D1'i **kırar**: paket artık kaynakla birebir değil, ve `verify_packs` disagree
+   üretir; o zaman allowlist gerekir.
+3. **Kapsam dışı** — "upstream ne diyorsa o" yazılır. Politika olarak savunulabilir
+   (paket = belgenin aynası), ama o zaman §5'e yazılı girmeli, çünkü şu an
+   hiçbir yerde yazılı değil.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
