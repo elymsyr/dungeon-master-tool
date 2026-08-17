@@ -102,15 +102,14 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 4 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
-`a5e-ddg`, `open5e`) and the ledger holds **11** findings, all still ❓. The
-newest three came from the wave's first multi-category unit: a 5e-2024 document
-merged into a pack labelled `5e-2014` (**F-open5e-01**), two third-caster
-subclasses that can never receive a spell slot because `caster_kind` is read from
-the class only (**F-open5e-02**, and `'Third'` appears on **0** cards corpus-wide),
-and **19** pack cards whose names are spelling variants of a built-in card —
-a number the dedup key reports as **3** (**F-pass0-07**).
-**The next open phase is F3** (continues at `open5e-tdcs`).
+**F3 is running: 5 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
+`a5e-ddg`, `open5e`, `tdcs`) and the ledger holds **13** findings, all still ❓ —
+`check_findings.py` clean. The last unit measured `verify_packs` at **73 ok /
+0 disagree / 0 absent** and scored its 31 items **25 ✅ · 2 ➖ · 1 ⛔ · 3 ⚠️**,
+adding two spreading findings (**F-pass0-08** subclass spell tables reach nothing,
+**F-pass0-09** background named languages have no field) and disproving three
+candidates by asking whether the blank is in the pack or in the source.
+**The next open phase is F3** (continues at `open5e-toh`).
 
 ---
 
@@ -4424,32 +4423,45 @@ procedure, and the ledger have different lifetimes:
       ledger still holds zero real findings). All met; **the next open phase is
       F3**.*
 - [ ] **F3 — Run it.** 20 scan units in four waves.
-      **bitti (2026-08-17): 4 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
-      `a5e-gpg`, `a5e-ddg` and **`open5e`**. The ledger holds **11** findings, all
-      ❓ (`python3 tool/check_findings.py` → *12 kayıt, 11 sayaca giriyor, temiz*).
-      `open5e` was the wave's first multi-category unit (subclass 17, spell 2,
-      background 2, subspecies 1) and the first where `verify_packs` actually
-      measures: **14 ok / 0 disagree / 0 absent / 6 unverifiable**, `gate_packs`
-      green, 31 items scored **22 ✅ · 2 ➖ · 2 ⛔ · 4 ⚠️ · 1 🟡**. It produced the
-      first pack-owned findings — **F-open5e-01** (`mergeOpen5eOriginals` folds the
-      `open5e-2024` document, `gamesystem: 5e-2024`, into a pack labelled
-      `5e-2014`; `Abjurationist` ships unmarked next to its own 2014 twin) and
+      **bitti (2026-08-17): 5 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
+      `a5e-gpg`, `a5e-ddg`, `open5e` and **`tdcs`**. The ledger holds **13**
+      findings, all ❓ (`python3 tool/check_findings.py` → *14 kayıt, 13 sayaca
+      giriyor, temiz*). `open5e` (22 entities) produced the first pack-owned
+      findings — **F-open5e-01** (`mergeOpen5eOriginals` folds the `open5e-2024`
+      document, `gamesystem: 5e-2024`, into a pack labelled `5e-2014`) and
       **F-open5e-02** (`Arcane Warrior` / `Eldritch Trickster` are third casters,
-      and `caster_kind` is read from the **class** only — **0** cards in the whole
-      corpus carry `'Third'`, so `CasterKind.third` and its slot table are
-      unreachable code) — plus one spreading finding, **F-pass0-07**: loosen the
-      dedup key from *lowercased name* to *letters only* and the built-in
-      name-collision count goes **3 → 19** across 9 packs (`Eye bite`/`Eyebite`,
-      `Counter Spell`/`Counterspell`, `Battle Axe`/`Battleaxe`…), 14 of them
-      statblock child rows. Two measurements corrected an assumption: the wave's
-      sharpened question ("what does the source count, what does the pack hold")
-      catches neither of the pack-owned findings — one is about *which document*
-      a right-looking value came from, the other about a mechanic with **no field
-      to live in**, which `C8` cannot see because C8 only asks about *declared*
-      fields.
-      **kaldı: 16 unit** — Dalga 1's `tdcs` (next), `toh`, `a5e-ag`, `bfrd`'s
-      class/subclass rows; Dalga 2–4 untouched. Next session starts at
-      `pack_conformance_plan.md`'s "Sonraki adım" block.
+      but `caster_kind` is read from the **class** only — **0** cards in the
+      corpus carry `'Third'`, so `CasterKind.third` is unreachable code) — plus
+      **F-pass0-07** (letters-only dedup key takes the built-in name-collision
+      count **3 → 19** across 9 packs).
+
+      **`tdcs` (35 entities) was the wave's first unit with monsters and its
+      first `feat`**: `verify_packs --doc tdcs --only monster,subclass,feat` →
+      **73 ok / 0 disagree / 0 absent / 1 unsourced / 20 unverifiable**,
+      `gate_packs` green, 31 items scored **25 ✅ · 2 ➖ · 1 ⛔ · 3 ⚠️**. Two new
+      spreading findings: **F-pass0-08** (E1 — of **523** subclass `features`
+      rows across 101 subclasses, **0** carry any grant key, and **24** of them
+      are domain/circle spell-list tables living as markdown text: `toh` 15,
+      `open5e` 8, `tdcs` 1; §5's "left to B5" note does **not** cover them,
+      because B5's written rule is *softRef the built-in feat, never mint one*
+      and these lists are pack-owned) and **F-pass0-09** (C2 — `background` has
+      only `granted_language_count`, no `granted_languages`, so a named language
+      has nowhere to go: `Thieves' Cant` and `Sylvan`, 2 rows corpus-wide).
+
+      **The measurement that mattered most here was the one that killed three
+      finding candidates**, and it is the wave's fourth question — *is this blank
+      blank in the pack, or in the source?* (1) `monster.skill_bonuses` 0/4 looked
+      like F-builtin-01 spreading; the packs actually fill it on **1,963 / 2,885**
+      monsters and tdcs's four are empty because all 18 v2 `skill_bonus_*` columns
+      are null for them. (2) `monster.spell_refs` 0/4 — §5.8's ⛔ says the ceiling
+      is "4 monsters (tdcs)"; re-measured and exact: `MonsterSpell.json` holds
+      **43 rows / 4 creatures** here, and 336 of the corpus's 379 rows are in the
+      skipped `wotc-srd`. (3) `Fate-Touched` grants nothing because the source row
+      is empty in all four columns. One source column per category prevented three
+      false findings.
+      **kaldı: 15 unit** — Dalga 1's `toh` (next, 239 entities — may not fit one
+      session), `a5e-ag`, `bfrd`'s class/subclass rows; Dalga 2–4 untouched. Next
+      session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*
 - [ ] **F4 — Decide, then file.** A finding is not a task until a decision turns
