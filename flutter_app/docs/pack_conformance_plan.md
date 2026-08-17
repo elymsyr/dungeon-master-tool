@@ -10,8 +10,8 @@
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
 > (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` + `a5e-ddg`
-> + `open5e` + `tdcs` bitti (2026-08-17).** 20 tarama biriminin 5'i kapandı,
-> defterde **13 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4),
+> + `open5e` + `tdcs` + `toh` bitti (2026-08-17).** 20 tarama biriminin 6'sı
+> kapandı, defterde **15 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4),
 > F-builtin-02 (C8), F-pass0-02 (C2 — 30 background seçimli becerilerin hepsini
 > hediye ediyor), F-pass0-03 (A5 — `ability_score_options` 27/27 aynı altı
 > yetenek), F-pass0-04 (A3 — 6 kartın gövdesi `"[No description provided]"` ile
@@ -19,27 +19,30 @@
 > yanlış), F-pass0-06 (B3 — background ekipmanında adı yazılı eşya envantere
 > girmiyor), F-pass0-07 (A4 — 19 kart adı built-in bir adın yazım varyantı,
 > 9 pakette), F-open5e-01 (G3 — 5e-2024 belgesi 5e-2014 etiketli pakete
-> karışıyor), F-open5e-02 (E3 — üçte-bir büyücü 2 subclass hiç slot almıyor),
+> karışıyor), F-pass0-10 (E3 — üçte-bir büyücü 4 subclass hiç slot almıyor; `toh`
+> taramasında kapsamı `pass0`'a çıktı, eski kimliği F-open5e-02),
 > **F-pass0-08** (E1 — 24 subclass büyü listesi yalnız düzyazı tablosu, 523
 > feature satırının 0'ı grant taşıyor), **F-pass0-09** (C2 — background'un adı
-> verilmiş dili yazılacak alan bulamıyor, 2 satır).
-> On üçü de ❓ danışılacak.
+> verilmiş dili yazılacak alan bulamıyor, 2 satır), **F-toh-01** (C1 —
+> `Underfoot` 1. seviyede seçilebilen rogue arketipi), **F-toh-02** (B2 —
+> `Scoundrel` background'u iki pakette, %83 aynı metin).
+> On beşi de ❓ danışılacak.
 >
-> **Sıradaki iş: Dalga 1 → `open5e-toh`** (239 varlık: spell 91, subclass 76,
-> subspecies 29, background 19, feat 13, species 11 — dalganın **en büyüğü** ve
-> Dalga 1'in son paketi; `bfrd`'nin class/subclass satırları ondan sonra).
-> Beş uyarı hazır: (1) 239 varlık **tek oturuma sığmayabilir** — sığmazsa §6 F3
-> kutusu açık bırakılır ve "bitti / kaldı" satırı kategori adıyla yazılır
-> (örn. "spell + subclass bitti, background + feat + species kaldı");
-> (2) `audit_packs`'i **`--only` olmadan çalıştırma**, ve örneklemde `--picks 2`
-> yeter — 76 subclass × 18 satır bütçeyi tek başına yer; (3) `toh` **dört
-> yayılan bulgunun dağılımında zaten var**: F-pass0-08 (15 büyü tablosu),
-> F-pass0-09 (Forest Dweller → Sylvan), F-pass0-06, F-pass0-07 — bunlar
-> **doğrulama**, yeniden bulgu değil; (4) `verify_packs --doc toh --only
-> spell,subclass,feat,species` ölçer, `background` + `subspecies` **ölçmez**
-> (§4 Uyarı 2); (5) §5.2'nin yazılı istisnası burada: `Path of Hellfire`
-> subclass'ı `granted_at_level` taşımıyor çünkü kaynakta **hiç** ClassFeature
-> satırı yok — kaynak açığı, bulgu değil (K7).
+> **Sıradaki iş: Dalga 1 → `open5e-a5e-ag`** (455 varlık: spell 371, feat 59,
+> background 21, subclass 3, class 1 — dalganın **gerçek en büyüğü**; sonra
+> `bfrd`'nin 2 satırı Dalga 1'i kapatır).
+> Beş uyarı hazır: (1) `audit_packs`'i **`--only` olmadan çalıştırma**,
+> örneklemde `--picks 2` yeter; (2) 371 büyü tek kategori — `toh`'un spell
+> ölçümleri (material 0/91 `S`, higher_level prose'a gömülü) burada **yeniden
+> ölçülür, varsayılmaz**: `a5e-ag`'nin kaynağında `material` 217/371 dolu,
+> `material_specified` ise 0 → aynı `S`, ama sayıyı komut söylesin;
+> (3) paketin **1 `class` + 3 `subclass`** kartı var — F-pass0-10'un "korpüste
+> `'Third'` taşıyan 0 kart" iddiası ve F-toh-01'in `granted_at_level` kuralı
+> burada sınanır (a5e sisteminin arketip seviyesi 2014'ünkinden farklı olabilir,
+> **önce kaynağa bak**); (4) `game_system: a5e` — G3 için 2014/2024 değil, ayrı
+> bir sistem; §4'ün SRD örtüşme sorusu buraya farklı iner; (5) 21 background,
+> F-pass0-02…06'nın hepsinin dağılımında zaten var → **doğrulama**, ama
+> `toh`'un dersi gereği dağılım tablosuna bakarak.
 >
 > **Test dosyalarının yeri** (geçen oturumda yanlış yol arandı): F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
@@ -50,8 +53,13 @@
 > **Bu birimin eklediği sorular.** `open5e`'den: kartın taşıdığı mekanik
 > **şemada bir eve sahip mi**, ve o ev **doğru belgeden** mi dolduruluyor?
 > `tdcs`'ten: bir alan boşsa, boşluk **pakette mi kaynakta mı**? Bu ikinci soru
-> `tdcs`'te üç yanlış bulguyu birden önledi (`skill_bonuses`, `spell_refs`,
-> Fate-Touched) — kategori başına tek bir kaynak sütunu saymak yetiyor.
+> `tdcs`'te üç, `toh`'ta beş yanlış bulguyu önledi — kategori başına tek bir
+> kaynak sütunu saymak yetiyor. `toh`'un eklediği **beşinci soru**: *alan dolu
+> ve kaynakla aynı, ama **değer** kuralla uyuşuyor mu?* — `verify_packs` 661 ok /
+> 0 disagree derken `Underfoot`'un 1. seviyesi oradaydı; kaynak sadık, kural
+> değil. Ve **altıncı**, süreç sorusu: *devir notunun "zaten biliniyor" satırı
+> ölçüldü mü?* Bu birimde bir uyarı (F-pass0-07 dağılımı) ve bir kayıt kanıtı
+> (F-pass0-10'un komutu) ölçümde yanlış çıktı.
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -337,9 +345,9 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 |---|--:|---|:--:|---|---|
 | `open5e-a5e-gpg` | 2 | background 2 | ⚠️ | 2026-08-17 | F-pass0-02, F-pass0-03, F-pass0-04 |
 | `open5e-a5e-ddg` | 4 | background 4 | ⚠️ | 2026-08-17 | F-pass0-02…06 |
-| `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⚠️ | 2026-08-17 | F-open5e-01, F-open5e-02, F-pass0-06, F-pass0-07 |
+| `open5e-open5e` | 22 | subclass 17, spell 2, background 2, subspecies 1 | ⚠️ | 2026-08-17 | F-open5e-01, F-pass0-10 (eski F-open5e-02), F-pass0-06, F-pass0-07 |
 | `open5e-tdcs` | 35 | trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 | ⚠️ | 2026-08-17 | F-pass0-08, F-pass0-09 |
-| `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⬜ | — | — |
+| `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⚠️ | 2026-08-17 | F-toh-01, F-toh-02, F-pass0-10 (+2 kart) |
 | `open5e-a5e-ag` | 455 | spell 371, feat 59, background 21, subclass 3, class 1 | ⬜ | — | — |
 
 > `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı da **bu dalgada** bakılır
@@ -502,7 +510,7 @@ kendi sayacının ilk kez artması), 1'i yeni yayılan bulgu, 1'i doğrulama.
 | D3 | ✅ | `gate_packs` green |
 | E1 | ✅ | M1 73 çift yeşil (Pass 0); paketin yazdığı alanlar sayfaya iniyor |
 | E2 | ✅ | M3 beyan listesine yeni alan gerekmedi |
-| E3 | ⚠️ | **F-open5e-02 (yeni)** — `Arcane Warrior` + `Eldritch Trickster` üçte-bir büyücü; `caster_kind` yalnız `class`'tan okunuyor, korpüste `'Third'` taşıyan **0** kart var. Checklist E3'ün "paketli bir büyücü çıkarsa yeniden dosyalanır" notu tetiklendi |
+| E3 | ⚠️ | **F-pass0-10 (yeni; o gün F-open5e-02)** — `Arcane Warrior` + `Eldritch Trickster` üçte-bir büyücü; `caster_kind` yalnız `class`'tan okunuyor, korpüste `'Third'` taşıyan **0** kart var. Checklist E3'ün "paketli bir büyücü çıkarsa yeniden dosyalanır" notu tetiklendi |
 | F1 | ✅ | `pack_install_roundtrip_test` 19 pakette yeşil |
 | F2 | ⛔ | `pack_field_render_test`: paket tarafı **224 çift / 446 pump yeşil**, `builtin SRD fields render` vakası **F-pass0-01** yüzünden kırık (temiz ağaçta da kırık — taban) |
 | F3 | ✅ | `wizard_pack_families_test` yeşil (17 subclass `granted_at_level` + parent sınıf iddiası bu paketi de kapsıyor) |
@@ -521,7 +529,7 @@ kendi sayacının ilk kez artması), 1'i yeni yayılan bulgu, 1'i doğrulama.
 > **Yöntem notu — soru bir kademe daha genişledi.** `a5e-ddg` "kaynak kaç tane
 > diyor, pakette kaç tane var" diye sormayı öğretmişti. Bu paketin iki bulgusu
 > **o soruya da yakalanmıyordu**: F-open5e-01'de sayı doğru (17 kart, 17 kaynak
-> satırı), yanlış olan **hangi kaynaktan** geldikleri; F-open5e-02'de kayıp bir
+> satırı), yanlış olan **hangi kaynaktan** geldikleri; F-pass0-10'da kayıp bir
 > değerde değil, **var olmayan bir alanda**. Yani çok kategorili paketlerde üçüncü
 > soru: *kartın taşıdığı mekanik, şemada bir eve sahip mi — ve o ev doğru
 > belgeden mi dolduruluyor?* Doluluk tablosu ikisini de göremez; ikisi de
@@ -566,7 +574,7 @@ Bu birimin özelliği: **bulgu adayı sayısı, bulgu sayısından fazla** — �
 | D3 | ✅ | `gate_packs` green — 4 canavarın 15 çocuk satır ref'i çözülüyor |
 | E1 | ⚠️ | **F-pass0-08 (yeni)** — Blood Domain'in domain büyüleri `features[].description` içinde markdown tablosu; korpüste 523 subclass feature satırının **0'ı** grant anahtarı taşıyor, 24'ü büyü listesi tablosu. Statblok tarafı sayfaya iniyor (M1 73 çift yeşil) |
 | E2 | ✅ | M3 beyan listesine yeni alan gerekmedi |
-| E3 | ✅ | 4 subclass'ın hiçbiri büyücü değil (Blood Domain cleric'in **kendi** ilerlemesini kullanır); F-open5e-02'nin üçte-bir vakası buraya inmiyor |
+| E3 | ✅ | 4 subclass'ın hiçbiri büyücü değil (Blood Domain cleric'in **kendi** ilerlemesini kullanır); F-pass0-10'un üçte-bir vakası buraya inmiyor |
 | F1 | ✅ | `pack_install_roundtrip_test`: `open5e-tdcs installs and reads back unchanged` yeşil (19 paketin tamamı yeşil) |
 | F2 | ⛔ | `pack_field_render_test` paket tarafı **224 çift / 446 pump yeşil**; `builtin SRD fields render` **F-pass0-01** yüzünden kırık (temiz ağaçta da kırık — taban) |
 | F3 | ✅ | `wizard_pack_families_test` yeşil |
@@ -600,6 +608,96 @@ doğrulama satırı; 🟡 yok).
 > Yani dalganın üçüncü sorusu (mekaniğin evi var mı) yanına dördüncüsü eklendi:
 > **"boş alan bu pakette mi boş, yoksa kaynakta mı?"** — kategori başına tek bir
 > kaynak sütunu saymak, üç yanlış bulguyu birden önledi.
+
+#### `open5e-toh` sonucu — 2026-08-17
+
+239 varlık — dalganın **en çok kategorili** paketi (altı kategori; varlık
+sayısında `a5e-ag` 455 ile önde)
+(spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11).
+31 maddenin **3'ü bulgu** (ikisi paket kapsamlı, biri var olan bir kaydın
+büyümesi), 5'i doğrulama, 1'i ➖, 1'i ⛔, 24'ü ✅. Bu birimin özelliği: **beş
+bulgu adayı ölçümde düştü** ve **bir önceki oturumun bir sayısı yanlış çıktı**
+(aşağıda).
+
+| Madde | Verdict | Dayanak |
+|---|:--:|---|
+| A1 | ✅ | 6 `type`, altısı da şemada; manifest `counts` paketle birebir (91/76/29/19/13/11 = 239) |
+| A2 | ⛔ | `background`'ın 3 zorunlusu (`ability_score_options`, `asi_distribution_options`, `origin_feat_ref`) 0/19 — §5.8'de yazılı ⛔ → K7 (paket `5e-2014`). Diğerleri tam: `spell` 12/12 × 91, `subclass` `parent_class_ref` 76/76, `species` `creature_type_ref` 11/11, `subspecies` `parent_species_ref` 29/29, `feat` 2/2 × 13. `subclass.granted_at_level` 75/76 — eksik olan `Path of Hellfire`, kaynakta **hiç** ClassFeature satırı yok (K7, §5.2) |
+| A3 | ✅ | `verify_packs` **unsourced 24**, hepsi kurallı: `feat.repeatable` 13 (sütun yok), `species.creature_type_ref` 11 (sütun yok, hepsi Humanoid). `disagree 0 / absent 0` |
+| A4 | ✅ | 239 adın **hiçbiri** built-in bir adın yazım varyantı değil; çapraz-paket yakın-ad (yalnız-harf anahtarı) eşleşmesi de **0**. **Planın 3. uyarısı yanlıştı**: `toh`, F-pass0-07'nin 19'luk kovasında **yok** |
+| A5 | ✅ | `audit_packs` üç ⚠ basıyor (`species`/`subspecies` `creature_type_ref`, `feat` `category_ref` + `repeatable`); üçü de veriden doğru sabit — 11 tür de Humanoid, 13 feat de genel kategori ve tekrarlanamaz |
+| B1 | ✅ | census A'da `toh` **hiç geçmiyor** — 76 subclass + 91 büyüde built-in adla tek çakışma yok |
+| B2 | ⚠️ | **F-toh-02 (yeni)** — `Scoundrel` background'u `open5e-open5e`'de de var, aynı iki beceri, %83 aynı metin. Diğer tek ad çakışması (`Misdirection` büyüsü) gerçek çakışma değil. Çocuk satır hariç korpüste **birebir aynı** metinli çift sayısı 1 (bir `language`) |
+| B3 | ⚠️ | **F-pass0-06 doğrulandı** (19 background'un ekipman parantezleri); `granted_tool_refs` 8/19 + `granted_tool_variant_group` 5/19 kaynakla uyumlu |
+| B4 | ✅ | `gate_packs --packs /tmp/one` **green**; census C "nothing installed" **0**. 76 subclass'ın `parent_class_ref`'i 12 built-in sınıfın hepsine dağılıyor (Druid/Cleric/Barbarian/Monk 7'şer, gerisi 6'şar), yazımlar built-in ile birebir |
+| B5 | ✅ | `metadata.links` yok + katalog `requires: []` — L2'nin yazılı kararı (F-toh-02'nin 2. seçeneği bunu tartışıyor) |
+| C1 | ⚠️ | **F-toh-01 (yeni)** — `granted_at_level` 75/76 dolu ama `Underfoot` (Rogue) **1** diyor; 3'ten küçük 46 değerin diğer 45'i 2014 kuralına göre doğru. `features` 75/76, **389 seviye satırı** |
+| C2 | ⚠️ | **F-pass0-09 doğrulandı** (Forest Dweller → Sylvan). `granted_language_count` **19/19 doğru** (kaynakla tek tek karşılaştırıldı: 0 ×5, 1 ×11, 2 ×3) — F-pass0-05'in 2 hatalı satırı bu pakette **yok**. `species.granted_languages` 11/11, `granted_senses` 10/11, `ability_bonuses` 10/11 |
+| C3 | ✅ | `spell` 91'de 12 alan %100 (`level`, `school_ref`, `casting_time_*`, `components`, `duration_unit_ref`, `requires_concentration`, `class_refs`, `range_type`, `is_ritual`, `description`). `material_*` 0/91 ve `at_higher_levels_text` 0/91 → ölçümde düştü, aşağıya bak |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ✅ | `mechanical_notes`: species 11/11, feat 13/13, subspecies 26/29. Boş 3'ün (Derro Heritage, Elf/Shadow Fey Heritage, Uncorrupted) trait metni `description` içinde duruyor — kayıp yok, yerleşim tutarsız |
+| C7 | ✅ | `unmapped_report.json`'da `toh` **hiç geçmiyor**; `_lookup` zarfları (`skill`, `ability`, `casting-component`, `creature-type`, `damage-type`, `school`) çözülüyor |
+| C8 | ✅ | 0% kalanların hepsi yazılı: `subclass`'ın 5 🔴'ı §5.2:2242, `feat.benefits` §5.8 ⛔, `prereq_class_refs` §5.5 ⚪ (L3), `at_higher_levels_text` §5.8 ⚪ (A1), `size_ref`/`speed_ft` §5.3 + §6 B3 |
+| D1 | ✅ | `verify_packs --doc toh --only spell,subclass,feat,species` → **661 ok / 0 disagree / 0 absent**; eşleşme 91/91 + 76/76 + 13/13 + 11/11 (dalganın en büyük doğrulaması). Mapper kaynağın yazım hatasını da düzeltiyor: v1 `dnd_class` "Sorceror" → `Sorcerer` |
+| D2 | ✅ | 233 `unverifiable` + 24 `unsourced`, hepsi beyanlı kuralla (`class_refs` v1'den, `casting_time_amount` örtük 1, `range_ft` `range_text`'ten, `size_ref`/`speed_ft` trait satırından, `reaction_trigger` yeniden cümlelenmiş, `attack_type` menzilden) |
+| D3 | ✅ | `gate_packs` green — 29 subspecies → 11 species zinciri ve 76 subclass → built-in sınıf softRef'i çözülüyor |
+| E1 | ⚠️ | **F-pass0-08 doğrulandı ve büyüdü**: `toh`'un 76 subclass'ında **389 features satırının 0'ı** grant anahtarı taşıyor; kaydın `toh` payı 15 büyü tablosu |
+| E2 | ✅ | M3 beyan listesine yeni alan gerekmedi |
+| E3 | ⚠️ | **F-pass0-10 iki kart büyüdü** — `Underfoot` (Rogue, druid ilerlemesi) ve `Soulspy` (Rogue, cleric ilerlemesi) üçte-bir büyücü; kayıt 2 karttan **4**'e çıktı ve kapsamı `pass0`'a taşındı. Kaydın eski kanıt komutu satır **adına** baktığı için ikisini de kaçırmıştı |
+| F1 | ✅ | `pack_install_roundtrip_test`: `open5e-toh installs and reads back unchanged` yeşil (19 paketin tamamı + idempotency yeşil) |
+| F2 | ⛔ | `pack_field_render_test` paket tarafı **224 çift / 446 pump yeşil**; `builtin SRD fields render` **F-pass0-01** yüzünden kırık (temiz ağaçta da kırık — taban) |
+| F3 | ✅ | `wizard_pack_families_test` yeşil — ama F-toh-01 tam bu testin kör noktası: iddia "`granted_at_level` dolu ve aralıkta", 1 de aralıkta |
+| F4 | ✅ | `entity_link_navigation_test` yeşil |
+| G1 | ✅ | `pack_version` 1.1.0 = katalog `version` = `r2_path @1.1.0`; `size_bytes` **1.490.197** = dosyanın gerçek boyutu; `counts` üç dosyada aynı |
+| G2 | ✅ | `publisher` Kobold Press · `license` `ogl-10a` — kaynak `Document.json` (`publisher: kobold-press`) ile aynı |
+| G3 | ✅ | `is_srd_overlap: false`, `game_system: 5e-2014` = kaynak `Document.gamesystem`; tek belge, tek `source_doc_slug` — F-open5e-01'in belge karışması burada yok |
+
+**Sayım: 24 ✅ · 2 ➖ · 1 ⛔ · 4 ⚠️** (⚠️'lerden 2'si yeni bulgu, 2'si var olan
+kayıtların doğrulanması/büyümesi; 🟡 yok).
+
+> **Okuma bütçesi.** `scan_pack.py toh` + `audit_packs --only` (249 satır,
+> filtreli okundu) + kategori başına birer küçük toplama (subclass features,
+> background dil sayısı, feat prereq, species size/speed, spell material) ≈ 300
+> satır; kaynak tarafı `Spell.json` sütun listesi + `SpeciesTrait` 3 ebeveyn +
+> `ClassFeatureItem` 8 satır + `Document.json` ≈ 60 satır. 1,49 MB'lık paket
+> dosyası bir kez bile baştan sona açılmadı (K2).
+>
+> **Yöntem notu — dördüncü soru beş adayı birden düşürdü.** "Boş alan bu pakette
+> mi boş, kaynakta mı?" bu birimde şunları kapattı:
+> 1. `spell.material_description` / `material_cost_gp` / `material_consumed`
+>    0/91 → kaynakta `material_specified` **91 satırın 91'inde boş** (v2'nin
+>    tamamında yalnız `deepm`, `stds`, `srd-*` doldurmuş). Cause `S`.
+> 2. `spell.at_higher_levels_text` 0/91 → §5.8 ⚪ `P` (A1, 2026-07-30) ve doğru:
+>    kaynakta `higher_level` taşıyan **44** büyünün **44'ünde** metin
+>    `description` içine *"At Higher Levels"* olarak eklenmiş.
+> 3. `species.size_ref` 7/11, `speed_ft` 8/11 → §5.3 + §6 B3'te ölçülü yazılı;
+>    ölçüm **birebir** aynı çıktı (üç ebeveyn "alt ırk belirler" diyor, 29 alt
+>    ırkın hiçbiri söylemiyor, 19'u o üç ebeveynden iniyor). K7.
+> 4. `feat.prereq_class_refs` 0/13 → §5.5 ⚪ `S` (L3). Ölçüm L3'ün **kendi
+>    örneklerini** bu pakette buldu ("the Ki class feature", "the Shadow Traveler
+>    shadow fey trait"); 10 prereq metninin 8'i `prereq_clauses`'a dönüyor,
+>    dönmeyen 3'ü (beden, adı verilmiş trait, silah **kategorisi**) korpüste
+>    toplam 5 satır — L3'ün kapsam kararının içinde.
+> 5. `subspecies.mechanical_notes` 26/29 → boş 3'ün trait metni `description`'da;
+>    kayıp yok.
+>
+> **Bir önceki oturumun bir sayısı yanlıştı.** Planın bu birim için yazdığı
+> 3. uyarı "`toh` F-pass0-07'nin (yakın-ad kopyaları) dağılımında zaten var"
+> diyordu; ölçüm **0** dedi — `toh`'un 239 adının hiçbiri built-in bir adın
+> yazım varyantı değil, ve `dupe_census` çıktısında `toh` kelimesi hiç geçmiyor.
+> Uyarı, dağılım tablosuna bakılmadan yazılmıştı. Ders: **devir notundaki
+> "zaten biliniyor" satırları da ölçülmeden kullanılmaz** — K7 bir kestirme
+> değil, kaynağı gösterilmiş bir iddia demek.
+>
+> **Ve bir kanıt komutu yanlış ölçüyordu.** F-pass0-10 (eski F-open5e-02)
+> `features` satırının **adında** "spellcasting" arıyordu; `toh`'un iki
+> üçte-bir büyücüsünün biri slot tablosunu `Spell Slots` adlı satırda, diğeri
+> gövdede taşıyor. Kayıt "toh'un hepsi büyücü sınıf üstünde" diyordu, yanlıştı.
+> Komut gövdeye bakacak şekilde düzeltildi ve kayıt 2 → **4 kart**, kapsamı da
+> `pass0` oldu. Ders: **bir bulgunun kanıt komutu, sonraki paketlerde
+> yeniden çalıştırıldığında sayıyı büyütebilir — bu, kaydın kusuru değil kuralı**
+> (yayılan bulgu, madde 4).
 
 ### Dalga 2 — Büyü paketleri
 

@@ -3,8 +3,9 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk dört paketi bitti
-> (2026-08-17), 13 bulgu.** Sıradaki iş **Dalga 1 → `open5e-toh`**.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in beş paketi bitti
+> (2026-08-17), 15 bulgu.** Sıradaki iş **Dalga 1 → `open5e-bfrd`'nin
+> class/subclass satırları** (Dalga 1'in son birimi).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -92,14 +93,14 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 13 | 0 | 0 | 0 | 0 | **13** |
+| 0 | 15 | 0 | 0 | 0 | 0 | **15** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
 | Madde | Bulgu | Madde | Bulgu | Madde | Bulgu |
 |---|--:|---|--:|---|--:|
-| A1 | 0 | B1 | 0 | C1 | 0 |
-| A2 | 0 | B2 | 0 | C2 | 2 |
+| A1 | 0 | B1 | 0 | C1 | 1 |
+| A2 | 0 | B2 | 1 | C2 | 2 |
 | A3 | 1 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
@@ -114,13 +115,13 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 9 | `open5e-vom` | 0 |
+| `pass0` | 10 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
-| `open5e-open5e` | 2 | `open5e-tob` | 0 |
+| `open5e-open5e` | 1 | `open5e-tob` | 0 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
-| `open5e-toh` | 0 | `open5e-a5e-mm` | 0 |
+| `open5e-toh` | 2 | `open5e-a5e-mm` | 0 |
 | `open5e-a5e-ag` | 0 | `open5e-tob-2023` | 0 |
 | `open5e-kp` | 0 | | |
 | `open5e-wz` | 0 | | |
@@ -992,13 +993,18 @@ kalacak.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
-### F-open5e-02 — üçte-bir büyücü 2 subclass hiç büyü slotu almıyor: `CasterKind.third` korpüste hiçbir kartla ulaşılamıyor
+### F-pass0-10 — üçte-bir büyücü 4 subclass hiç büyü slotu almıyor: `CasterKind.third` korpüste hiçbir kartla ulaşılamıyor
+
+> **Eski kimlik `F-open5e-02`.** Dalga 1 / `toh` taramasında (2026-08-17) aynı
+> kusurun üçüncü kartı **başka bir pakette** ölçüldü, yayılan bulgu kuralı
+> gereği kapsam `pass0`'a çıktı ve kimlik ona göre yenilendi. Diğer belgelerdeki
+> `F-open5e-02` atıfları bu kaydı gösterir.
 
 | | |
 |---|---|
-| **Kapsam** | `open5e-open5e` |
+| **Kapsam** | `pass0` — korpüs geneli, 2 pakete yayılı (ilk `open5e-open5e`'de bulundu) |
 | **Checklist** | checklist E3 (büyücülük ilerlemesi) |
-| **Kategori / etki** | `subclass` — 2 kart (`Arcane Warrior` / Fighter, `Eldritch Trickster` / Rogue) 3. seviyede wizard listesinden büyü veriyor; karakter sayfasında **0 slot, 0 cantrip, büyü adımı yok**. Korpüste `caster_kind: 'Third'` taşıyan **0** kart var (built-in 12 sınıf + paketli 2 sınıf ölçüldü) |
+| **Kategori / etki** | `subclass` — **4 kart** (`Arcane Warrior` / Fighter, `Eldritch Trickster` / Rogue, `Soulspy` / Rogue, `Underfoot` / Rogue) kendi büyü ilerlemesini veriyor; karakter sayfasında **0 slot, 0 cantrip, büyü adımı yok**. Korpüste `caster_kind: 'Third'` taşıyan **0** kart var (built-in 12 sınıf + paketli 2 sınıf ölçüldü) |
 | **Cause code (öneri)** | `A` — `level_up_planner.dart:473` `caster_kind`'ı **yalnız `classEntity`'den** okuyor; `subclass` şemasında böyle bir alan hiç **yok** (8 beyan edilmiş alan) |
 | **Durum** | ❓ danışılacak |
 
@@ -1015,6 +1021,16 @@ yerde değil. Paketli iki `class` kartının ikisi de `caster_kind: 'None'`
   table" diyor, ama `ClassFeatureItem.json`'da bu iki subclass için
   `column_value` taşıyan **tek satır bile** yok. Yani B1'in bilerek atladığı
   sınıf-tablosu satırları burada zaten mevcut değil (`S`).
+- **`toh`'ta iki kart daha (2026-08-17 eklendi).** `Underfoot` (Rogue, erina'ya
+  kısıtlı) `Spell Slots` · `Spells Known of 1st-Level and Higher` · `Cantrips`
+  satırlarıyla **kendi druid ilerlemesini**, `Soulspy` (Rogue) ise 3. seviyede
+  **cleric ilerlemesini** taşıyor; ikisinin de slot tablosu feature gövdesinde
+  markdown tablosu olarak duruyor (F-pass0-08'in kardeşi, ama orada büyü listesi,
+  burada slot sütunları). İlk ölçümün komutu ikisini de kaçırmıştı: tarama
+  `features` satırının **adında** "spellcasting" arıyordu, Underfoot'un slot
+  satırının adı `Spell Slots`, Soulspy'ınki ise gövdede. Kaydın "`toh`'un hepsi
+  büyücü sınıf üstünde" notu bu yüzden **yanlıştı**; komut aşağıda düzeltildi ve
+  artık ada değil gövdeye bakıyor.
 - Uygulama tarafında tablo **hazır duruyor**: `CasterKind.third` tanımlı,
   `defaultSpellSlotsByLevel` üçte-bir ilerlemesini hesaplıyor, `spells_step`
   "Third caster" etiketini basıyor. Hiçbir içerik bu dalı **seçtiremiyor**,
@@ -1026,42 +1042,64 @@ bugüne kadar **ölü kod**du ve bunu ilk gösteren şey bu paket.
 
 **Kanıt.**
 ```sh
-# flutter_app'ten — korpüsteki bütün "Spellcasting/Pact Magic" özellikli subclass'lar
+# flutter_app'ten — büyücü OLMAYAN sınıfın altında kendi ilerlemesini taşıyan subclass'lar
+# (2026-08-17: satır adına değil, satır gövdesine bakılıyor — ilk komut Underfoot'u kaçırdı)
 python3 - <<'EOF'
-import json,glob
+import json,glob,re
+NONCASTER={'Fighter','Rogue','Barbarian','Monk'}
+PAT=re.compile(r'spell slots you have to cast|cast spells from the wizard spell list|Spells Known\s*\|',re.I)
 for f in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
-    for e in json.load(open(f))['entities'].values():
+    d=json.load(open(f)); names={k:v['name'] for k,v in d['entities'].items()}
+    for e in d['entities'].values():
         if e['type']!='subclass': continue
-        hit=[r['name'] for r in (e['attributes'].get('features') or [])
-             if 'spellcasting' in r['name'].lower() or 'pact magic' in r['name'].lower()]
-        if hit: print(f.split('/')[-1][:-9], e['name'], '|', e['attributes']['parent_class_ref']['name'], '|', hit[0])
+        p=e['attributes'].get('parent_class_ref')
+        pc=p.get('name') if isinstance(p,dict) else names.get(p)
+        if pc not in NONCASTER: continue
+        hit=[r.get('name') for r in (e['attributes'].get('features') or [])
+             if PAT.search(r.get('description') or '')]
+        if hit: print(f.split('/')[-1][:-9],'|',pc,'|',e['name'],'|',hit[0])
 EOF
-# open5e-open5e Arcane Warrior      | Fighter | Spellcasting     <- yeni ilerleme
-# open5e-open5e Eldritch Trickster  | Rogue   | Spellcasting     <- yeni ilerleme
-# open5e-toh    Cantrip Adept       | Wizard  | Potent Spellcasting   (zaten büyücü sınıf)
-# open5e-toh    Resonant Body / Shadow Domain / … 5 satır, hepsi büyücü sınıf üstünde
+# open5e-open5e | Fighter | Arcane Warrior     | Spellcasting
+# open5e-open5e | Rogue   | Eldritch Trickster | Spellcasting
+# open5e-toh    | Rogue   | Soulspy            | Spellcasting   <- 2026-08-17
+# open5e-toh    | Rogue   | Underfoot          | Spell Slots    <- 2026-08-17
 
 grep -rn "caster_kind" lib/application/character_creation/level_up_planner.dart
 #   473:  final kind = parseCasterKind(classEntity?.fields['caster_kind']);
 grep -c "'caster_kind': 'Third'" lib/domain/entities/schema/builtin/srd_core/classes.dart   # 0
 ```
 
+**Dağılım.**
+
+| Paket | Kart | Ana sınıf | Aldığı liste |
+|---|---|---|---|
+| `open5e-open5e` | Arcane Warrior | Fighter | wizard |
+| `open5e-open5e` | Eldritch Trickster | Rogue | wizard |
+| `open5e-toh` | Soulspy | Rogue | cleric |
+| `open5e-toh` | Underfoot | Rogue | druid |
+| **Toplam** | **4** | 2 paket | — |
+
 **Neden önemli.** Bu, "alan boş" değil "alan yok" kusuru — C8 bile göremez,
 çünkü C8 **beyan edilmiş** alanların boşluğunu sorar. Oyuncu Arcane Warrior
 seçtiğinde kart doğru okunuyor (özellik metni sayfada), ama sihirbazın büyü
 adımı hiç açılmıyor: 3. seviyede iki cantrip ve üç 1. seviye büyü hakkı olan
 karakterin **hiçbir yerde** slotu yok. M4 slot tablosunu sayfaya indirdi;
-o tablo bu iki subclass için sonsuza kadar boş kalır.
+o tablo bu dört subclass için sonsuza kadar boş kalır.
 
 **Seçenekler.**
 1. **`caster_kind`'ı subclass şemasına ekle** (+ `level_up_planner`'da
    `subclassEntity?.fields['caster_kind'] ?? classEntity…` sırası). Alan zaten
    var olan enum'u kullanır, `CasterKind.third` ilk kez ulaşılabilir olur;
-   mapper tarafı ayrı bir iş (prose'dan "you can cast spells" çıkarımı, 2 kart).
+   mapper tarafı ayrı bir iş (prose'dan "you can cast spells" çıkarımı, 4 kart).
+   `toh`'un iki kartında slot sütunları **feature gövdesindeki tabloda** yazılı,
+   yani orada sayı da ayrıştırılabilir — `open5e`'nin ikisinde değil.
 2. **Yalnız uygulama tarafı** — subclass özelliklerinde `Spellcasting` başlığı
    varsa üçte-bir kabul et. Kod değişikliği küçük, ama sezgisel: `toh`'un
-   5 "Potent Spellcasting" satırını yanlış sınıflandırmamak için ek kural gerekir.
-3. **Kapsam dışı** — 2 kart, ve slot sayıları kaynakta yok; karar "prose olarak
+   5 "Potent Spellcasting" satırını (hepsi zaten büyücü sınıf üstünde) yanlış
+   sınıflandırmamak için ana sınıfın `caster_kind`'ına da bakmak gerekir —
+   bu kaydın kanıt komutunun ilk sürümü tam bu yüzden 2 kart kaçırdı.
+3. **Kapsam dışı** — 4 kart, ve `open5e`'nin ikisinde slot sayıları kaynakta yok;
+   karar "prose olarak
    kalır" diye yazılır, `CasterKind.third`'ün ölü kod olduğu da kayda geçer.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
@@ -1231,6 +1269,145 @@ karakterin dil listesinde görünmesi beklenir.
    yere yazar; kullanıcı görür ama mekanik değildir.
 3. **Kapsam dışı** — 24 satırda 2; "şema 2024'e göre doğru, 2014 background dil
    adları düzyazıda kalır" kararı yazılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-toh-01 — `Underfoot` 1. seviyede seçilebiliyor: rogue arketipi, slot tablosunun ilk satırından seviye alıyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-toh` |
+| **Checklist** | checklist C1 (class/subclass seviye tablosu) |
+| **Kategori / etki** | `subclass` — 101 paketli subclass'ın **1'i**: `Underfoot` (Rogue) `granted_at_level: 1`. 3'ten küçük 46 değerin diğer **45'i doğru** (2014'te Cleric/Sorcerer/Warlock 1, Wizard/Druid 2); yanlış olan tek kart bu |
+| **Cause code (öneri)** | `S` — kaynağın `ClassFeatureItem` satırı gerçekten `level: 1` diyor (`toh_underfoot_spell-slots`); paket sadık, ama B1'in "tablo satırlarını dışarıda bırak" kuralı burada tutmuyor çünkü upstream o satırlara `column_value` yazmamış (`M` sonucu) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `granted_at_level` §5.2'nin kuralıyla hesaplanıyor:
+`min(ClassFeatureItem.level)` — subclass'ın **tablo olmayan** özellikleri
+üzerinden. "Tablo satırı" testi `column_value` dolu mu diye bakıyor. `toh`'ta
+`Underfoot`'un büyü ilerleme tablosu **düzyazı** olarak geliyor, satırların
+`column_value`'su boş, dolayısıyla `Spell Slots` (level 1) ve `Spells Known of
+1st-Level and Higher` (level 1) normal özellik sayılıyor ve minimum 1 çıkıyor.
+Oysa kartın kendi `Spellcasting` satırı **3. seviyede** ve 2014 kuralında rogue
+arketipi 3'te seçilir. Sonuç: sihirbazın subclass adımı bu tek kartı **1. seviye
+rogue'a** açıyor, diğer 5 `toh` rogue arketipi 3'te kilitli kalıyor.
+
+Kart aynı zamanda F-pass0-10'un üçüncü kartı (üçte-bir büyücü); orada mekaniğin
+**alanı yok**, burada alan var ve **değeri yanlış** — iki ayrı madde, o yüzden
+iki ayrı kayıt (bir kayıt = bir checklist maddesi).
+
+**Kanıt.**
+```sh
+# flutter_app'ten — 3'ten küçük granted_at_level değerleri ve ana sınıfları
+python3 - <<'EOF'
+import json,glob,os
+OK={'Cleric':1,'Sorcerer':1,'Warlock':1,'Wizard':2,'Druid':2}
+for p in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
+    d=json.load(open(p)); names={k:v['name'] for k,v in d['entities'].items()}
+    for e in d['entities'].values():
+        if e['type']!='subclass': continue
+        a=e['attributes']; g=a.get('granted_at_level')
+        r=a.get('parent_class_ref'); pc=r.get('name') if isinstance(r,dict) else names.get(r)
+        if isinstance(g,int) and g<3 and OK.get(pc)!=g:
+            print(os.path.basename(p)[7:-9],'|',pc,'|',e['name'],'| granted_at_level',g)
+EOF
+# open5e-toh | Rogue | Underfoot | granted_at_level 1     <- tek satır
+
+# kaynak sadık mı — evet, upstream'in kendi seviyesi 1
+python3 -c "
+import json
+rows=[r['fields'] for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/toh/ClassFeatureItem.json'))]
+print([(r['level'],r['parent'],r['column_value']) for r in rows if 'underfoot' in r['parent']])"
+# → (1, 'toh_underfoot_spell-slots', None) … column_value None olduğu için
+#   satır 'tablo satırı' sayılmıyor ve minimuma giriyor
+```
+
+**Neden önemli.** §5.2 bu alanın **sihirbaz davranışını doğrudan değiştirdiğini**
+yazıyor: `subclass_step.dart` `_grantedAtLevel` eksik değeri 1 kabul ediyordu,
+B1 alanı doldurunca 3. seviye kilidi canlıya çıktı. O kilit şimdi 100 kartta
+doğru, 1 kartta yanlış tarafa açılıyor — ve `wizard_pack_families_test`'in
+yazılı iddiası "alan dolu ve aralıkta" olduğu için 1 değeri testten geçiyor.
+Yanlış yön de kötü olan yön: kilidi gevşetiyor, karakter 1. seviyede alması
+mümkün olmayan bir arketipi alıyor.
+
+**Seçenekler.**
+1. **Ana sınıfın arketip seviyesini taban al** — `granted_at_level` hesabında
+   `max(min(ClassFeatureItem.level), archetypeLevel(parentClass))`. 2014 için
+   tablo bilinen ve kısa (Cleric/Sorcerer/Warlock 1, Wizard/Druid 2, gerisi 3);
+   45 doğru değeri bozmadan tek yanlışı düzeltir, ama mapper'a **kural bilgisi**
+   koymak demektir.
+2. **Tablo satırı testini genişlet** — `column_value` boş olsa da adı
+   `Spell Slots` / `Spells Known…` olan satırları minimumdan dışla. Daha dar
+   düzeltme, ama ad eşlemesi (§5.3'ün `SpeciesTrait` adıyla eşleme dersi:
+   kırılgan).
+3. **Kapsam dışı** — "kaynak öyle diyor" yazılır; o zaman tek kartın 1. seviyede
+   göründüğü ve testin bunu yakalamadığı kayda geçer.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-toh-02 — `Scoundrel` background'u iki pakette birden: aynı iki beceri, %83 aynı metin, iki ayrı satır
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-toh` (ikizi `open5e-open5e`'de) |
+| **Checklist** | checklist B2 (paketler arası kopya kart yok) |
+| **Kategori / etki** | `background` — **1 kart** çifti. Statblok çocuk satırları dışarıda tutulduğunda korpüste **metni birebir aynı** olan paketler-arası kart sayısı **1** (bir `language`); bu çift ise birebir değil, **%83** benzer, ama mekaniği aynı |
+| **Cause code (öneri)** | `D` — iki paket aynı içeriği ayrı kart olarak taşıyor; dedup ya da link kaydı yok |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `open5e-toh`'un `Scoundrel`'ı ile `open5e-open5e`'nin `Scoundrel`'ı
+aynı cümleyle açılıyor, aynı iki beceriyi veriyor (`Athletics`,
+`Sleight of Hand`), ikisinde de `granted_language_count: 0`. Metin uzunlukları
+3.973 ve 5.371 karakter; `SequenceMatcher` oranı **0,83**. `source` alanları
+farklı: *Tome of Heroes* ve *Open5e Originals*. İkisi de kuruluysa sihirbazın
+background listesinde **iki `Scoundrel`** yan yana duruyor ve aralarındaki fark
+yalnız düzyazının uzunluğu.
+
+`dupe_census` bunu göremiyor: A bölümü built-in'e, B bölümü **birebir aynı**
+metne bakıyor; bu çift B'nin "yalnız adı paylaşıyor" (1.782) kovasına düşüyor.
+`toh`'un korpüsteki tek diğer ad çakışması `Misdirection` büyüsü ve o **gerçek
+bir çakışma değil** — iki farklı büyü (210 vs 862 karakter, farklı etki).
+
+**Kanıt.**
+```sh
+# flutter_app'ten — çocuk satırlar hariç, birebir aynı metinli paketler-arası kart
+python3 - <<'EOF'
+import json,glob,os,collections,difflib
+g=collections.defaultdict(list)
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    slug=os.path.basename(p)[7:-9]
+    for e in json.load(open(p))['entities'].values():
+        g[(e['type'],e['name'].lower())].append((slug,e.get('description') or ''))
+ident=collections.Counter()
+for (t,n),v in g.items():
+    if len({s for s,_ in v})<2: continue
+    txt={d for _,d in v if d}
+    if len(txt)==1: ident[t]+=1
+print(dict(ident))                       # {'trait':125,'creature-action':63,'language':1}
+v=g[('background','scoundrel')]
+print([s for s,_ in v],                  # ['open5e','toh']
+      round(difflib.SequenceMatcher(None,v[0][1],v[1][1]).ratio(),2))   # 0.83
+EOF
+```
+
+**Neden önemli.** Kopya kartın maliyeti listede iki satır değil, **seçim**:
+oyuncu hangisini seçerse seçsin aynı mekaniği alıyor ama karakteri farklı bir
+pakete bağlanıyor; paket kaldırıldığında biri kayboluyor, diğeri kalıyor.
+B2'nin sorduğu şey tam bu. Sayı küçük (1 çift) ama **ölçüm yöntemi eksik**:
+birebir eşitlik testi %83'lük çifti göremiyor, yani korpüste bunun gibi kaç
+çift olduğu **bilinmiyor**. Bir ön tarama (ucuz `quick_ratio`, üst sınır)
+1.130 ad grubunu 0,80 üstünde işaretledi, ama bunların çoğu statblok çocuk
+satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
+
+**Seçenekler.**
+1. **Ölç, sonra karar ver** — `dupe_census`'a çocuk satırları hariç tutan bir
+   yakın-kopya modu (`--near <oran>`) ekle; B2 bugün yalnız birebir eşitliği
+   ölçüyor ve bu çifti kaçırıyor. Karar bu sayıdan sonra verilir.
+2. **Link kaydı** — `metadata.links` ile `toh` → `open5e` yönünde "aynı kart"
+   ilişkisi yazılır; sihirbaz tek satır gösterir. B5'in link altyapısı zaten var
+   (`toh`'ta `metadata.links` **yok**).
+3. **Kapsam dışı** — "iki ayrı yayıncı belgesi, iki ayrı kart" yazılır; o zaman
+   kullanıcının iki `Scoundrel` görmesi bilinçli kabul edilmiş olur.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

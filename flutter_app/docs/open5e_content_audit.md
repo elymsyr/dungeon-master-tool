@@ -102,14 +102,17 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 5 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
-`a5e-ddg`, `open5e`, `tdcs`) and the ledger holds **13** findings, all still ❓ —
-`check_findings.py` clean. The last unit measured `verify_packs` at **73 ok /
-0 disagree / 0 absent** and scored its 31 items **25 ✅ · 2 ➖ · 1 ⛔ · 3 ⚠️**,
-adding two spreading findings (**F-pass0-08** subclass spell tables reach nothing,
-**F-pass0-09** background named languages have no field) and disproving three
-candidates by asking whether the blank is in the pack or in the source.
-**The next open phase is F3** (continues at `open5e-toh`).
+**F3 is running: 6 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
+`a5e-ddg`, `open5e`, `tdcs`, `toh`) and the ledger holds **15** findings, all
+still ❓ — `check_findings.py` clean. The last unit (`toh`, 239 entities, six
+categories — the wave's broadest) measured `verify_packs` at **661 ok / 0 disagree / 0 absent**
+and scored its 31 items **24 ✅ · 2 ➖ · 1 ⛔ · 4 ⚠️**, adding **F-toh-01**
+(one subclass unlocks at level 1 because its spell-slot row is level 1) and
+**F-toh-02** (the same `Scoundrel` background ships in two packs), growing
+**F-pass0-10** from 2 to 4 cards, and disproving five candidates by asking
+whether the blank is in the pack or in the source.
+**The next open phase is F3** (continues at `open5e-bfrd`'s class/subclass rows,
+the last unit of Wave 1).
 
 ---
 
@@ -4423,13 +4426,14 @@ procedure, and the ledger have different lifetimes:
       ledger still holds zero real findings). All met; **the next open phase is
       F3**.*
 - [ ] **F3 — Run it.** 20 scan units in four waves.
-      **bitti (2026-08-17): 5 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
-      `a5e-gpg`, `a5e-ddg`, `open5e` and **`tdcs`**. The ledger holds **13**
-      findings, all ❓ (`python3 tool/check_findings.py` → *14 kayıt, 13 sayaca
+      **bitti (2026-08-17): 6 / 20 unit** — Pass 0, Dalga 0 (built-in), Dalga 1's
+      `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs` and **`toh`**. The ledger holds **15**
+      findings, all ❓ (`python3 tool/check_findings.py` → *16 kayıt, 15 sayaca
       giriyor, temiz*). `open5e` (22 entities) produced the first pack-owned
       findings — **F-open5e-01** (`mergeOpen5eOriginals` folds the `open5e-2024`
       document, `gamesystem: 5e-2024`, into a pack labelled `5e-2014`) and
-      **F-open5e-02** (`Arcane Warrior` / `Eldritch Trickster` are third casters,
+      **F-pass0-10**, filed that day as `F-open5e-02` (`Arcane Warrior` /
+      `Eldritch Trickster` are third casters,
       but `caster_kind` is read from the **class** only — **0** cards in the
       corpus carry `'Third'`, so `CasterKind.third` is unreachable code) — plus
       **F-pass0-07** (letters-only dedup key takes the built-in name-collision
@@ -4459,8 +4463,43 @@ procedure, and the ledger have different lifetimes:
       skipped `wotc-srd`. (3) `Fate-Touched` grants nothing because the source row
       is empty in all four columns. One source column per category prevented three
       false findings.
-      **kaldı: 15 unit** — Dalga 1's `toh` (next, 239 entities — may not fit one
-      session), `a5e-ag`, `bfrd`'s class/subclass rows; Dalga 2–4 untouched. Next
+
+      **`toh` (239 entities, six categories) was the wave's broadest unit and it fit
+      one session** — `a5e-ag`'s 455 entities are the wave's largest count.
+      `verify_packs --doc toh --only spell,subclass,feat,species` → **661 ok /
+      0 disagree / 0 absent / 24 unsourced / 233 unverifiable** with match
+      coverage 91/91 + 76/76 + 13/13 + 11/11; `gate_packs` green; census
+      "nothing installed" still **0**; 31 items scored **24 ✅ · 2 ➖ · 1 ⛔ ·
+      4 ⚠️**. Two pack-scoped findings: **F-toh-01** (C1 — `Underfoot` (Rogue)
+      carries `granted_at_level: 1`, because §5.2's `min(ClassFeatureItem.level)`
+      picks up its `Spell Slots` row, which upstream ships at level 1 without a
+      `column_value`; the other 45 sub-3 values in the corpus are all correct for
+      2014, and the wizard unlocks this one archetype two levels early) and
+      **F-toh-02** (B2 — `Scoundrel` ships in both `toh` and `open5e`, same two
+      skills, 0.83 text similarity; excluding statblock child rows the corpus has
+      exactly **1** byte-identical cross-pack card, so the identity test B2 uses
+      cannot see this pair). **F-pass0-10** — the third-caster finding filed that
+      day as `F-open5e-02` — grew from **2 to 4** cards and moved to `pass0`
+      scope: `toh`'s `Underfoot` (druid progression) and `Soulspy` (cleric) are
+      both third casters, and the record's original evidence command missed them
+      because it matched on the *name* of the `features` row.
+
+      **Five more candidates died in measurement here**, all to the same fourth
+      question: `spell.material_*` 0/91 (upstream `material_specified` is empty in
+      **91 of 91** rows), `at_higher_levels_text` 0/91 (§5.8's ⚪ `P` verified —
+      **44 of 44** spells with `higher_level` prose carry it inside `description`),
+      `species.size_ref` 7/11 (§5.3's written analysis reproduced exactly — three
+      species defer size to a subrace and all 29 subraces stay silent, 19 of them
+      descending from those three), `feat.prereq_class_refs` 0/13 (L3's ⚪, whose
+      two written examples both live in this pack), and
+      `subspecies.mechanical_notes` 26/29 (the three blanks keep their trait prose
+      in `description`). **A sixth lesson is procedural**: two "already known"
+      claims failed when measured — the handover's warning that `toh` appears in
+      F-pass0-07's distribution (it does not; zero near-name collisions) and
+      F-pass0-10's own evidence command. K7 means *a gap with a written source*,
+      not *a gap someone remembers*.
+      **kaldı: 14 unit** — Dalga 1's `a5e-ag` (next, 455 entities) and `bfrd`'s
+      2 class/subclass rows; Dalga 2–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*
