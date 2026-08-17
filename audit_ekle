@@ -69,7 +69,7 @@ Mapper/asset/içerik dokunduysan ek olarak:
   dart run tool/open5e_import/bin/diff_packs.dart --new ../.tmp/packs-rebuild
 build_packs arg parser'ı yalnız "--k v" biçimini alır; --out=X sessizce yok sayılır
 ve assets/open5e_packs'e yazar — dikkat.
-Test caveat (CLAUDE.md): tam flutter test koşusunda değişikliğinle ilgisiz, tabana ait
+Test caveat (AGENTS.md): tam flutter test koşusunda değişikliğinle ilgisiz, tabana ait
 çevresel hatalar var. Emin değilsen git stash ile temiz ağaçta aynı dosyayı koştur,
 FARKI regresyon say. Hedefli koşular tek güvenilir sinyaldir.
 
@@ -95,7 +95,7 @@ FARKI regresyon say. Hedefli koşular tek güvenilir sinyaldir.
 6) Commit
 - Sadece new-system-win üzerinde. Mesaj: "<faz kodu>: <ne yapıldı>" (örn.
   "M4: spell-slot table lands on the sheet"), gövdede ölçülen sayılar ve yeşil koşan
-  komutlar. Sonuna: Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+  komutlar.
 - Push yok, PR yok, branch değiştirme yok. git status temiz bırakılır.
 
 7) Kapanış çıktısı (kısa, basit ve anlaşılır)
