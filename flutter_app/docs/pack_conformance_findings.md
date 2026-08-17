@@ -3,9 +3,10 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 bitti (2026-08-17), 3 bulgu.** Sıradaki
-> iş **Dalga 1 → `open5e-a5e-gpg`**. Format **F2'de onaylandı (2026-08-17)** —
-> yazılarak değil, gerçek bir ölçümü şablona **doldurarak** (§ "Kuru çalışma").
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk paketi bitti
+> (2026-08-17), 6 bulgu.** Sıradaki iş **Dalga 1 → `open5e-a5e-ddg`**.
+> Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
+> şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
 > checklist maddesi, etkilenen varlık sayısı, kanıt bloğu, cause code'u ve
 > seçenekleri var mı — ve üç özet sayaç gerçek kayıtlarla aynı şeyi söylüyor mu.
@@ -91,17 +92,17 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 3 | 0 | 0 | 0 | 0 | **3** |
+| 0 | 6 | 0 | 0 | 0 | 0 | **6** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
 | Madde | Bulgu | Madde | Bulgu | Madde | Bulgu |
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 0 |
-| A2 | 0 | B2 | 0 | C2 | 0 |
-| A3 | 0 | B3 | 0 | C3 | 0 |
+| A2 | 0 | B2 | 0 | C2 | 1 |
+| A3 | 1 | B3 | 0 | C3 | 0 |
 | A4 | 0 | B4 | 0 | C4 | 1 |
-| A5 | 0 | B5 | 0 | C5 | 0 |
+| A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 0 | E1 | 0 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 0 | C8 | 1 |
@@ -113,7 +114,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 1 | `open5e-vom` | 0 |
+| `pass0` | 4 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -388,7 +389,234 @@ kayıt bu bulgunun kendisi. Sonraki kişi ya 205 grant satırını gereksiz yere
 
 ### Dalga 1 — karakter yaratma paketleri
 
-*(henüz yok)*
+> Üçü de `a5e-gpg` taranırken bulundu ama kusur mapper'da, o yüzden kapsam
+> `pass0` ve her birinin dağılım tablosu var (yayılan bulgu kuralı).
+
+### F-pass0-02 — 30 background, kaynağın "şunlardan birini seç" dediği becerilerin hepsini hediye ediyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 5 pakete yayılı (Dalga 1 / `a5e-gpg`'de bulundu) |
+| **Checklist** | checklist C2 (species/subspecies/background/feat alanları) |
+| **Kategori / etki** | `background` — kaynak satırı seçim ifadesi taşıyan **30** kart (kaynakla eşleşen 52'nin %58'i); karakter sayfasına **32 fazladan yetkinlik** iniyor. Dağılım aşağıda |
+| **Cause code (öneri)** | `M` — `mapBackgrounds` seçim ifadesini okumuyor, metindeki her beceri adını grant yazıyor (`mappers/chargen.dart:1406-1410`) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `descOfType('skill_proficiency')` benefit satırının **tamamını**
+`_refListFromText`'e veriyor; fonksiyon metinde adı geçen her beceriyi bulup
+`granted_skill_refs`'e koyuyor. Kaynak ise çoğu satırda seçim yazıyor:
+
+| Kart | Kaynak satırı | Kitabın verdiği | Kartın verdiği |
+|---|---|--:|--:|
+| `a5e-gpg` **Cursed** | "Perception, and either Arcana, Nature, or Religion…" | 2 | **4** |
+| `a5e-ag` **Sage** | "History, and either Arcana, Culture, Engineering, or Religion." | 2 | **3** |
+| `tdcs` **Lyceum Student** | "Your choice of two from among Arcana, History, and Persuasion." | 2 | **3** |
+
+Alan **grant**, seçim değil: `proficiencies_step.dart:59-62` onu
+`grantedSkillIds`'e, `character_creation_wizard_screen.dart:1064` de commit'te
+beceri tablosuna yazıyor — oyuncu seçmiyor, hepsi işaretli geliyor.
+
+**Kanıt.**
+```sh
+# repo kökünden — kaynağı "seç" diyen kartlara kaç alternatif hediye edildi
+python3 - <<'EOF'
+import json,glob,re,os,collections
+src={}
+for f in glob.glob('open5e-api-staging/data/v2/*/*/Background.json'):
+    doc=os.path.basename(os.path.dirname(f))
+    bg={r['pk']:r['fields']['name'] for r in json.load(open(f))}
+    bf=os.path.join(os.path.dirname(f),'BackgroundBenefit.json')
+    if not os.path.exists(bf): continue
+    for r in json.load(open(bf)):
+        fl=r['fields']
+        if fl.get('type')=='skill_proficiency' and fl['parent'] in bg:
+            src[(doc,bg[fl['parent']])]=fl['desc']
+KEY=re.compile(r'either|choice of|one of your choice|of your choice',re.I)
+per=collections.Counter(); extra=0
+for p in sorted(glob.glob('flutter_app/assets/open5e_packs/*.pkg.json')):
+    d=json.load(open(p)); doc=d['metadata']['source_doc_slug']
+    for e in d['entities'].values():
+        t=src.get((doc,e['name'])) if e['type']=='background' else None
+        if not t or not (m:=KEY.search(t)): continue
+        alts={r['name'] for r in e['attributes'].get('granted_skill_refs',[])
+              if re.search(rf"\b{re.escape(r['name'])}\b",t[m.start():],re.I)}
+        if len(alts)>1: per[os.path.basename(p)[:-9]]+=1; extra+=len(alts)-1
+print(sum(per.values()), extra, dict(per))
+EOF
+# 30 32 {'open5e-a5e-ag': 20, 'open5e-a5e-ddg': 4, 'open5e-a5e-gpg': 1,
+#         'open5e-tdcs': 3, 'open5e-toh': 2}
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü)*
+
+| Paket | Etkilenen kart | Fazla yetkinlik |
+|---|--:|--:|
+| `open5e-a5e-ag` | 20 | 21 |
+| `open5e-a5e-ddg` | 4 | 4 |
+| `open5e-tdcs` | 3 | 3 |
+| `open5e-toh` | 2 | 2 |
+| `open5e-a5e-gpg` | 1 | 2 |
+
+**Neden önemli.** Üç kapı da bunu **yeşil** görüyor: M1 "her (paket, mekanik alan)
+çifti sayfaya iniyor" diyor — iniyor, yanlış sayıda; `wizard_pack_families_test`
+`a5e-gpg` için taslağı commit ediyor; `verify_packs`'in `background` kuralı boş
+olduğu için D1 hiç bakmıyor (plan §4 Uyarı 2). Yani bu, taramanın "araç doluluk
+görür, doğruluk görmez" cümlesinin ilk somut örneği. Yön de tek taraflı değil:
+aynı fonksiyon `Haunted`'ın "Religion, and any one skill of your choice"'unda
+**1** grant yazıyor (serbest seçim düşüyor) — §5.4'ün `Guildmember` notu ("Two of
+your choice" → 0) bunun bilinen ucu; **eksik veren hâli yazılı, fazla veren hâli
+değil.**
+
+**Seçenekler.**
+1. **Düzelt (iki taraflı)** — mapper yalnız sabit kısmı grant yazsın, alternatifler
+   bir seçim alanına gitsin. Alan yok: `granted_skill_count` / seçenek listesi
+   şema tarafında açılmalı (§5.4 "there is no `granted_skill_count`"). Yeni faz.
+2. **Düzelt (yalnız mapper)** — seçim ifadesinden **sonrasını** hiç okuma: 30 kart
+   eksik verir ama uydurma vermez (A3'ün "bilmiyorsan boş bırak" ilkesi).
+   Küçük diff, tek dosya.
+3. **Kapsam dışı** — o zaman §5.4'e yazılı bir ⛔ girmeli: "seçimli beceri satırı
+   hepsini verir", çünkü şu an hiçbir yerde yazılı değil.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-03 — `ability_score_options` 27 satırın 27'sinde aynı altı yetenek: kaynağın zorunlu +1'i kayıp
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 3 pakete yayılı (Dalga 1 / `a5e-gpg`'de bulundu) |
+| **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok — ⚠ tuzağı) |
+| **Kategori / etki** | `background` — alanın dolu olduğu **27** satırın **27**'si birebir aynı altı-yetenek listesi; kaynak her birinde **bir** yeteneği zorunlu kılıyor (`a5e-ag` 21, `a5e-ddg` 4, `a5e-gpg` 2) |
+| **Cause code (öneri)** | `A` — "sabit +1 X + serbest +1"in şemada evi yok; resolver kapısı mapper'ın elini bağlıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Kaynak: `"+1 Charisma and one other ability score."` Pakette
+`ability_score_options` = altı yeteneğin tamamı. Genişletme **bilinçli** ve
+gerekçesi kodda da, vault'ta da yazılı (`mappers/chargen.dart:1414-1421`,
+[[mapper_chargen]]): `character_resolver`'ın `background_asi` kapısı yalnız
+`ability_score_options` içindekilere izin veriyor, tek adlı liste oyuncunun
+serbest +1'ini sessizce düşürürdü. Yazılı **olmayan** şey bunun içerik bedeli:
+liste altı olduğu için Cursed'ı seçen oyuncu iki puanı Güç/Beceri'ye koyup
+Karizma'ya hiç dokunmayabilir — kartın zorunlu kıldığı yetenek kartta artık yok.
+Resolver'ın "listede olmayan yetenek" uyarısı da hiçbir zaman tetiklenmiyor.
+
+İkinci yarısı ölçüt tarafı: **A5'in aracı bunu göremiyor.**
+`audit_packs`'in `isConstant`'ı `filled[key] == total` istiyor
+(`audit_packs.dart:141-145`), sütun 27/53 olduğu için satır `🟡 50%` basılıyor,
+`⚠` basılmıyor. Yani "dolu olanların %100'ü aynı sabit" durumu, sütun %100 dolu
+olmadıkça ⚠ tuzağına hiç yakalanmıyor.
+
+**Kanıt.**
+```sh
+# repo kökünden — kaç satır dolu, kaç farklı değer var
+python3 - <<'EOF'
+import json,glob,collections
+per=collections.Counter(); vals=set()
+for p in sorted(glob.glob('flutter_app/assets/open5e_packs/*.pkg.json')):
+    for e in json.load(open(p))['entities'].values():
+        o=(e['attributes'] or {}).get('ability_score_options') if e['type']=='background' else None
+        if not o: continue
+        per[p.split('open5e-',1)[1][:-9]]+=1; vals.add(json.dumps(o))
+print(sum(per.values()), 'satır ·', len(vals), 'farklı değer ·', dict(per))
+EOF
+# 27 satır · 1 farklı değer · {'a5e-ag': 21, 'a5e-ddg': 4, 'a5e-gpg': 2}
+
+cd flutter_app && dart run tool/open5e_import/bin/audit_packs.dart \
+    --markdown --only background | grep '`ability_score_options`'
+# | 🟡 | `ability_score_options` | Grants | **yes** | 50% (27/53) |   ← ⚠ yok
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü)*
+
+| Paket | Etkilenen |
+|---|--:|
+| `open5e-a5e-ag` | 21 |
+| `open5e-a5e-ddg` | 4 |
+| `open5e-a5e-gpg` | 2 |
+
+**Neden önemli.** Bu kayıt iki şeyi birden söylüyor: A5E'nin 27 background'ında
+zorunlu yetenek bilgisi pakette **hiç yok** (düzyazıda var, alanda yok — B3'ün
+tersi), ve ölçütün ⚠ dedektörü bu şekli tanımıyor. İkincisi daha pahalı: Dalga
+2–4'te aynı desen (dolu satırların hepsi aynı, ama sütun %100 değil) hiçbir
+pakette otomatik yakalanmayacak.
+
+**Seçenekler.**
+1. **Düzelt (uygulama tarafı)** — sabit yeteneği taşıyan bir alan (`asi_fixed_ability_ref`
+   + serbest sayaç) ve resolver'da onu okuyan bir geçiş; mapper adı oraya yazar,
+   `ability_score_options` gerçekten "seçenek" olur. Yeni faz, şema + resolver.
+2. **Düzelt (yalnız ölçüt)** — `isConstant`'ı "dolu satırların hepsi aynı" hâline
+   çevir (tek satırlık koşul), 27 satır ⚠ olarak görünür ve karar F4'e kalır.
+   İçeriği düzeltmez, körlüğü kapatır.
+3. **Kapsam dışı** — genişletme kalır, ama A5 için yazılı bir istisna gerekir:
+   "27 A5E background'ında sabit yetenek düzyazıda kalır" (bugün yazılı değil).
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-04 — 6 background kartının gövdesi "[No description provided]" ile açılıyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 2 pakete yayılı (Dalga 1 / `a5e-gpg`'de bulundu) |
+| **Checklist** | checklist A3 (uydurma değer yok — "bilmiyorsan boş bırak") |
+| **Kategori / etki** | `background` — **6** kart (`a5e-gpg` 2 + `a5e-ddg` 4); dize gövdenin **ilk satırı**, kart açılınca ilk görünen şey |
+| **Cause code (öneri)** | `S` — kaynakta açıklama yok; kaynak bunu düzyazı olarak yazıyor, mapper da olduğu gibi taşıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Open5e'nin `Background.json`'ı bu altı satırda `desc` alanına gerçek
+metin değil `"[No description provided]"` yazmış. `_fold` onu benefit
+bölümlerinin **önüne** koyduğu için kart şöyle açılıyor:
+
+```
+[No description provided]
+
+### Ability Score Increase
++1 Charisma and one other ability score.
+```
+
+D1 temiz sayıyor (değer kaynakla birebir aynı), `verify_packs`'in `background`
+kuralı da boş — yani hiçbir kapı bunu göremez, yalnız okuma görür.
+
+**Kanıt.**
+```sh
+# repo kökünden
+grep -c '\[No description provided\]' \
+    open5e-api-staging/data/v2/en-publishing/a5e-*/Background.json
+# a5e-ddg/Background.json:4   a5e-gpg/Background.json:2   a5e-ag/Background.json:0
+
+python3 -c "
+import json,glob,os
+n=[(os.path.basename(p)[:-9],e['name'])
+   for p in glob.glob('flutter_app/assets/open5e_packs/*.pkg.json')
+   for e in json.load(open(p))['entities'].values()
+   if '[No description provided]' in json.dumps(e)]
+print(len(n),n)"
+# 6 [('open5e-a5e-ddg','Deep Hunter'), ('open5e-a5e-ddg','Dungeon Robber'),
+#    ('open5e-a5e-ddg','Escapee from Below'), ('open5e-a5e-ddg','Imposter'),
+#    ('open5e-a5e-gpg','Cursed'), ('open5e-a5e-gpg','Haunted')]
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü)*
+
+| Paket | Etkilenen |
+|---|--:|
+| `open5e-a5e-ddg` | 4 |
+| `open5e-a5e-gpg` | 2 |
+
+**Neden önemli.** A3'ün ilkesi "boş alan görünür, uydurma değer doğru sanılır".
+Burada kaynak "bilmiyorum" diyor ve o cümle kullanıcıya **içerik olarak**
+gösteriliyor — boş bırakmaktan kötü, çünkü kart eksik değil **bozuk** görünüyor.
+Altısı da Dalga 1'in ilk iki paketinde, yani `a5e-ddg` taranırken aynı şey
+yeniden keşfedilmesin diye buraya yazıldı. Ayrıca `a5e-ag`'nin
+`SpellSchool.json`'unda da aynı dize var (pakete inmiyor), yani bu Open5e'nin
+genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çıkabilir.
+
+**Seçenekler.**
+1. **Düzelt** — mapper bilinen placeholder'ı düşürsün (`_fold`'da tek koşul);
+   6 kart benefit bölümleriyle açılır, hiçbir şey kaybolmaz. En ucuz.
+2. **Gerekçe yaz** — kaynak böyle, ⛔ olarak §5.4'e işlenir; kullanıcı görmeye
+   devam eder.
+3. **Kapsam dışı** — 53 background'ta 6; karar yazılı bırakılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ### Dalga 2 — büyü paketleri
 
