@@ -9,9 +9,16 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
-> (F2, 2026-08-17 — `pack_conformance_findings.md`). Sıradaki iş **F3**: önce
-> **Pass 0** (korpüs geneli temel ölçüm, §6 tablosunu doldurur), ardından
-> **Dalga 0 → built-in SRD paketi**.
+> (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 bitti (2026-08-17).**
+> 20 tarama biriminin 1'i kapandı, defterde **3 bulgu** var: F-pass0-01
+> (checklist F2), F-builtin-01 (checklist C4 — 345 statblokta kurtarma/beceri
+> satırı yok), F-builtin-02 (checklist C8 — built-in'in 419 boş yuvasının yazılı
+> sebebi yok). Üçü de ❓ danışılacak.
+>
+> **Sıradaki iş: Dalga 1 → `open5e-a5e-gpg`** (2 varlık, yalnız `background`).
+> İki uyarı hazır: (1) `verify_packs`'in kural tablosunda `background` **boş**,
+> yani A3'ün tamamı okumayla yapılır (§4 Uyarı 2); (2) F-pass0-01 kapatılmadan
+> hiçbir birimin checklist F2 satırı "temiz" yazamaz — Dalga 0 onu ⛔ yazdı.
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -236,10 +243,60 @@ paketleri.
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
-| **built-in SRD** (`srd_core/` + Tier-0 seeds) | 2.719 | 59 kategori (2.350 Tier-1 + 369 Tier-0) | ⬜ | — | — |
+| **built-in SRD** (`srd_core/` + Tier-0 seeds) | 2.719 | 59 kategori (2.350 Tier-1 + 369 Tier-0) | ⚠️ | 2026-08-17 | F-builtin-01, F-builtin-02 |
 
 > Neden ilk: her paketin yumuşak ref'i buraya iniyor. Burada bir ad yanlışsa
 > 19 paketin ref'i birden ölür.
+
+#### Dalga 0 sonucu — 2026-08-17
+
+31 maddenin **2'si bulgu**, 10'u bu birime uygulanmıyor (built-in ne kaynak
+snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
+
+| Madde | Verdict | Dayanak |
+|---|:--:|---|
+| A1 | ✅ | `audit_packs --builtin` 59 kategorinin tamamını sayıyor ve toplam **2.719** — şema dışı `type` kalmış olsa toplam düşerdi |
+| A2 | ✅ | **zorunlu ve boş alan 0** (725 yuva tarandı) |
+| A3 | ✅ | ⚠ satırlarının 10'u da SRD'nin gerçek tek değeri (aşağıda); uydurma yok |
+| A4 | ✅ | Pass 0 `dupe_census` C: **4.045** paket ref'i built-in'e iniyor, **0 dangling** — yazım korpüsçe doğrulanmış |
+| A5 | ✅ | 10 ⚠ satırı okundu: `class.multiclass_prereq_min_score`=13 ·`subclass.granted_at_level`=3 (SRD 5.2.1'de 12 sınıfın hepsi 3. seviye) · `species.creature_type_ref`=Humanoid (9/9) · `animal.creature_type_ref`=Beast (97/97) · `background.asi_distribution_options`=`['+2/+1','+1/+1/+1']` · `background.gold_alternative_gp`=50 · `mount.is_trained` · `magic-item.is_sentient`=false (286/286, `sentient_*` bloğu da 0%) · `trait`/`creature-action`.`source`=`'SRD 5.2.1'`. Hepsi kural gereği sabit |
+| B1 | ✅ | Pass 0: same-text 0 |
+| B2 | ➖ | paketler arası kural |
+| B3 | ✅ | Tier-0 ilişkileri `lookup()`, Tier-1 arası `ref()` — düzyazıda ad bırakılmıyor (`srd_core/_helpers.dart`) |
+| B4 | ✅ | `gate_packs` green + census C 0 dangling |
+| B5 | ➖ | built-in `metadata.links` taşımaz; manifest'te girdisi yok (19 satır hepsi `open5e-*`) |
+| C1 | ✅ | `class.features` 12/12, `subclass.features` 12/12 + `granted_at_level` |
+| C2 | 🟡→C8 | `species` 39 / `subspecies` 34 / `feat` 16 🔴 yuva — hepsi grant bloğu, tasarım gereği; hesabı **F-builtin-02**'de |
+| C3 | ✅ | `spell` 25 yuvanın 24'ü dolu; tek 🔴 `effects` (M3'te beyanlı) |
+| C4 | ⚠️ | **F-builtin-01** — `save_bonuses` / `skill_bonuses` 345 statblokta 0% |
+| C5 | 🟡→C8 | `magic-item` 64 yuvanın 51'i 🔴 (sentient + attunement + grant blokları); `cost_gp` 2/286 |
+| C6 | ✅ | `mechanical_notes` boş ama grant alanları tipli evlerinde; `grant_contract_test` + `grant_field_isolation_test` yeşil |
+| C7 | ✅ | çözünürlük tarafı temiz (`unmapped_report` 3, hepsi paket tarafı); **gövde** tarafı F-builtin-02 |
+| C8 | ⚠️ | **F-builtin-02** — 419 🔴 yuvanın yazılı sebebi yok |
+| D1 | ➖ | `verify_packs` fixture snapshot'ıyla karşılaştırır; built-in'in kaynağı PDF |
+| D2 | ➖ | aynı sebep |
+| D3 | ✅ | `gate_packs` green (built-in ref hedefi olarak da doğrulanıyor) |
+| E1 | ✅ | `wizard_pack_families_test` 39 vakanın tamamında built-in tabanı kullanıyor |
+| E2 | ✅ | M3 beyan listesi built-in alanlarını da kapsıyor (`spell.effects`, `creature-action.effects`) |
+| E3 | ✅ | 12 SRD sınıfının `caster_kind`'ı preset'i besliyor (M4 kapandı) |
+| F1 | ➖ | built-in kurulmuyor, gömülü geliyor |
+| F2 | ⛔ | kapı **F-pass0-01** yüzünden 306 çiftin 83'ünü ölçüyor — bu birim için ölçülmemiş sayılır |
+| F3 | ✅ | aynı wizard testi |
+| F4 | ✅ | `entity_link_navigation_test` yeşil |
+| G1 | ➖ | katalog sürümü yerine `srdCorePackVersion` (bugün `1.0.8`) |
+| G2 | ➖ | manifest girdisi yok |
+| G3 | ➖ | SRD örtüşme kuralı **bu paketin kendisi** |
+
+> **Okuma bütçesi.** Built-in `*.pkg.json` değil, 21.690 satır Dart. K2'nin
+> "5 varlık" kuralı burada "alan tablosundan gidip **yalnız şüpheli satırın**
+> kaynağını grep'lemek" oldu: 10 ⚠ satırının değeri + 1 tam statblok
+> (Adult Red Dragon, `monsters.dart:176`) + `_commonLookupFields` + `_helpers.dart`
+> — toplam ~250 satır okuma.
+>
+> **Vault düzeltmesi (K1 dışı, doküman).** `vault/40-Reference/SRD-5.2.1.md`'nin
+> "Coverage in code" sayıları eskimişti (71 class / 55 subclass / 29 background /
+> 236 feat / 364 spell); ölçülen 12 / 12 / 16 / 305 / 341 + `animal` 97 satırı hiç
+> yazılmamış. Not bugünkü ölçümle güncellendi.
 
 ### Dalga 1 — Karakter yaratma paketleri (küçükten büyüğe)
 
@@ -311,18 +368,34 @@ paketleri.
 
 ## 6. Pass 0 temel ölçümü (tarama başlayınca doldurulacak)
 
+**Ölçüldü: 2026-08-17 (F3).** Dokuz kapının sekizi tabanında; onuncu satır
+(render testi) tabanının **altında** ve taramanın ilk bulgusu oldu.
+
 | Kapı | Beklenen | Ölçülen | Tarih | Not |
 |---|---|---|---|---|
-| `audit_packs` dolu yuva | 136 / 408 | — | — | — |
-| `audit_packs --builtin` | — | — | — | — |
-| `dupe_census` A | 0 | — | — | — |
-| `dupe_census` B | 189 / 193 | — | — | — |
-| `dupe_census` C | 4.074 / 0 dangling | — | — | — |
-| `gate_packs` | 0 ihlal | — | — | — |
-| `verify_packs` | 68.561 / 0 / 0 | — | — | — |
-| `unmapped_report.json` | 3 | — | — | — |
-| M1 çiftleri | 73 / 247 / 1 | — | — | — |
-| Korpüs | 21.839 + 2.719 | — | — | — |
+| `audit_packs` dolu yuva | 136 / 408 | **136 / 408** ✅ | 2026-08-17 | 44 ✅ + 84 🟡 + 8 `✅ ⚠` · 264 🔴 · 8 `—` |
+| `audit_packs --builtin` | — | **306 / 725** (59 kategori, 2.719 varlık) | 2026-08-17 | Yeni taban. 142 ✅ + 154 🟡 + 10 `✅ ⚠` · 419 🔴 |
+| `dupe_census` A | 0 | **0 same text** ✅ | 2026-08-17 | 1.636 ad çakışması, %100'ü farklı metin |
+| `dupe_census` B | 189 / 193 | **189 ad / 193 kopya** ✅ | 2026-08-17 | `--list-builtin-same` → 0 satır |
+| `dupe_census` C | 4.074 / 0 dangling | **4.074 / 0** ✅ | 2026-08-17 | 4.045 built-in'e, 29 kendi paketine |
+| `gate_packs` | 0 ihlal | **green** ✅ | 2026-08-17 | — |
+| `verify_packs` | 68.561 / 0 / 0 | **68.561 / 0 / 0** ✅ | 2026-08-17 | 3.303 unsourced · 17.268 unverifiable · 5.514/5.515 eşleşme (tek boşluk "Abjurationist", §6'da yazılı → K7) |
+| `unmapped_report.json` | 3 | **3** ✅ | 2026-08-17 | üçü de `alignment` |
+| M1 çiftleri | 73 / 247 / 1 | **73 / 247 / 1** ✅ | 2026-08-17 | — |
+| Korpüs | 21.839 + 2.719 | **21.839 + 2.719** ✅ | 2026-08-17 | audit paydası 21.832 + 6 `language` + 1 `size` |
+| 5 test süiti | hepsi yeşil | **+94 −1** ⚠️ | 2026-08-17 | `pack_field_render_test` → **F-pass0-01** |
+
+### Pass 1 için Pass 0'dan düşen iş
+
+- **A5 (⚠ tuzağı) — 8 satır**, hepsi tek sabit değerli: `species.creature_type_ref`
+  (11/11) · `subspecies.creature_type_ref` (30/30) · `feat.category_ref` (73/73) ·
+  `feat.repeatable` (73/73) · `magic-item.is_cursed` / `activation` / `is_sentient`
+  (1.063/1.063) · `trait.trait_kind` (6.419/6.419). Sekizi de `verify_packs`'te
+  **`unsourced`** olarak dönüyor — yani "kaynakta böyle bir sütun yok, değeri
+  mapper koydu". Dalga 1 (`species`/`subspecies`/`feat`), Dalga 3 (`magic-item`)
+  ve Dalga 4 (`trait`) bunları okumayla doğrular.
+- **Ham çıktılar** oturum bazlıdır, saklanmaz — bir daha gerekirse komut yeniden
+  çalıştırılır (K4 bir kez çalışmayı söyler, tekrar çalıştırmayı yasaklamaz).
 
 ---
 
