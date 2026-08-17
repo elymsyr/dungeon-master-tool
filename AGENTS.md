@@ -2,30 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Always Codebase Memory First
+## Code search (codebase-memory MCP)
 
-This repo is indexed in the `codebase-memory` MCP server as project
-**`home-eren-GitHub-dungeon-master-tool`**. Reach for it BEFORE grep/find or
-reading files when you need to understand or locate code. If the tools are
-listed but deferred, load them by name via tool search
-(`select:mcp__codebase-memory__search_code,...`).
+This workspace is indexed as **one** project — pass this `project` name to every tool:
 
-| Tool | Use for |
-|---|---|
-| `search_code` | semantic/keyword search — where does X live |
-| `search_graph` / `query_graph` | find symbols, traverse callers/callees/other edges grep can't follow |
-| `get_code_snippet` | verbatim source of a symbol found above |
-| `trace_path` | how two symbols connect (call paths) |
-| `get_architecture` | high-level layout before diving in |
-| `get_graph_schema` | node/edge kinds available to `query_graph` |
-| `detect_changes` | after edits, what drifted from the index |
-| `list_projects` / `index_status` | confirm the index exists and is fresh |
-| `index_repository` | re-index — **the user's decision, offer it, don't run it unasked** |
-| `manage_adr` | read/record architecture decisions in the graph |
+- `home-eren-GitHub-dungeon-master-tool` — indexed `full`: the Flutter app (`flutter_app/lib/`, `tool/`, `test/`), the Supabase surface (`supabase/migrations/` + edge functions), the Cloudflare worker (`cloudflare/src/`), and the `vault/` markdown. Gitignored generated files (`*.g.dart`/`*.freezed.dart`) and large binary assets are not in the index.
 
-Index freshness is tied to a commit SHA; if `index_status` is behind HEAD or
-`detect_changes` shows drift, say so rather than trusting stale results, and
-fall back to Read/Grep/Glob.
+**Use the graph before grep/find.** codebase-memory is the primary way to understand and navigate code — its results are deduplicated and structure-aware, and far cheaper in tokens than raw grep + Read. If the tools are listed but deferred, load them by name via tool search (`select:mcp__codebase-memory__search_code,...`).
+
+- **Find symbols** — `search_graph` (natural-language `query`, `name_pattern`, or `semantic_query` for vocabulary-bridging). Use it INSTEAD of grep to locate definitions.
+- **Read code** — `get_code_snippet` fetches a single symbol's source INSTEAD of Reading whole files; `include_neighbors` shows callers/callees.
+- **Text search** — `search_code` is grep augmented by the graph (matches deduplicated into containing functions, definitions ranked first). Prefer it over raw Grep.
+- **Callers / impact** — `trace_path` (inbound/outbound) before editing or removing a function.
+- **Overview / cross-cutting** — `get_architecture` for the layer/cluster layout; `query_graph` (Cypher) for dead code, hot paths, unused symbols; `get_graph_schema` for node/edge kinds.
+- **Architecture decisions** — `manage_adr` to read/record ADRs in the graph.
+- **Index health** — `index_status` tells whether the index is behind HEAD; `detect_changes` shows what drifted after edits. If stale, offer (don't run unasked) `index_repository(repo_path=..., mode="full")` — it is incremental (~2s). Use `mode="full"`, not `moderate`: moderate drops the `vault/` docs and `test/`/`tool/` code.
 
 ## Read the vault only needed
 
