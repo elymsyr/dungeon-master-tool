@@ -3,8 +3,8 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk iki paketi bitti
-> (2026-08-17), 8 bulgu.** Sıradaki iş **Dalga 1 → `open5e-open5e`**.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in ilk üç paketi bitti
+> (2026-08-17), 11 bulgu.** Sıradaki iş **Dalga 1 → `open5e-tdcs`**.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -92,7 +92,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 8 | 0 | 0 | 0 | 0 | **8** |
+| 0 | 11 | 0 | 0 | 0 | 0 | **11** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -101,24 +101,24 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | A1 | 0 | B1 | 0 | C1 | 0 |
 | A2 | 0 | B2 | 0 | C2 | 1 |
 | A3 | 1 | B3 | 1 | C3 | 0 |
-| A4 | 0 | B4 | 0 | C4 | 1 |
+| A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 1 | E1 | 0 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
-| D3 | 0 | E3 | 0 | C8 | 1 |
+| D3 | 0 | E3 | 1 | C8 | 1 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
 | F2 | 1 | F4 | 0 | G2 | 0 |
-| | | | | G3 | 0 |
+| | | | | G3 | 1 |
 
 **Pakete göre**
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 6 | `open5e-vom` | 0 |
+| `pass0` | 7 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
-| `open5e-open5e` | 0 | `open5e-tob` | 0 |
+| `open5e-open5e` | 2 | `open5e-tob` | 0 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
 | `open5e-toh` | 0 | `open5e-a5e-mm` | 0 |
 | `open5e-a5e-ag` | 0 | `open5e-tob-2023` | 0 |
@@ -816,6 +816,253 @@ eksik içerik.**
 3. **Kapsam dışı** — B6'nın gerekçesi genişletilip "katalogda olanlar da düşebilir,
    çünkü eşleme mekanik" diye yazılır; `label` düzyazısı kullanıcıya görünmeye
    devam ettiği için bilgi kaybı değil, **otomasyon** kaybı sayılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-07 — 19 paket kartının adı built-in bir kartın adından yalnız boşluk/noktalama kadar farklı: dedup anahtarı da ref çözümü de göremiyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, 9 pakete yayılı (Dalga 1 / `open5e-open5e`'de bulundu) |
+| **Checklist** | checklist A4 (ad ve yazım kuralı) |
+| **Kategori / etki** | 19 kart — `trait` 11, `monster` 3, `creature-action` 3, `spell` 2. Ad, harf dışı her karakter atılınca bir built-in kartla **birebir** aynı, literal olarak **farklı**: `Eye bite`→`Eyebite`, `Meld Into Stone`→`Meld into Stone`, `Counter Spell`→`Counterspell`, `Battle Axe`→`Battleaxe`, `War Horse Skeleton`→`Warhorse Skeleton`, `Devil’s Sight`→`Devil's Sight` (kıvrık kesme işareti, 3 pakette) |
+| **Cause code (öneri)** | `S` — 19'unun 19'u upstream'de de böyle yazılı; `titleCaseName` (L3) yalnız **büyük/küçük harfi** düzeltir, sözcük bölmesini ve kesme işaretini değil |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `dupe_census`'un A bölümü `(slug, lowercased name)` anahtarıyla
+çalışıyor ve "case-only" kovasında **3** satır bildiriyor. Anahtarı bir adım
+gevşetince — harf dışı her karakteri de düşürünce — sayı **19**'a çıkıyor. Yani
+korpüste, built-in'in zaten getirdiği bir kartın **yazım varyantı** olan 16 kart
+daha var ve hiçbir kapı onları görmüyor:
+
+- **B1 göremiyor** — eşleme anahtarı `(kategori, ad)`; `Eye bite` ile `Eyebite`
+  iki ayrı ad, dolayısıyla "aynı kart" sayılmıyor. Kullanıcı listede iki kart
+  görüyor.
+- **A4 göremiyor** — bugüne dek A4 "ref hedefi çözülüyor mu" diye ölçüldü
+  (`gate_packs`, census C: **0 dangling**). Bu 19 kartın hiçbiri bir ref
+  *hedefi* değil, ref *kaynağı* da değil — kimse onlara ad ile bağlanmıyor, o
+  yüzden hiçbir kapı kırmızıya dönmüyor.
+- **`findEntityIdByName` göremiyor** — büyük/küçük harfe duyarlı, tek denemesi
+  sondaki parantezi atmak. `Eyebite` diye arayan bir soft ref `Eye bite`'a
+  **hiçbir zaman** inmez; tersi de geçerli.
+
+Bulunduğu yer `open5e-open5e`: pakette **Eye bite** (2014 metni, level 6,
+Necromancy, Self, 1 dakika, Bard/Sorcerer/Warlock/Wizard, Wisdom kurtarma)
+duruyor; built-in'de **Eyebite** (SRD 5.2.1 metni, aynı altı özellik) duruyor.
+İkisi aynı büyü, iki kart, ve kaynak `Spell.json`'da adı gerçekten
+`"Eye bite"`.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — built-in adları srd_core'dan, paket adları asset'lerden;
+# anahtar: harf-dışı her şey atılmış küçük harf
+python3 - <<'EOF'
+import json,glob,re,collections
+names=set()
+for f in glob.glob('lib/domain/entities/schema/builtin/srd_core/*.dart'):
+    for m in re.finditer(r"name:\s*'((?:[^'\\]|\\.)*)'", open(f).read()):
+        names.add(m.group(1).replace("\\'","'"))
+key=lambda s: re.sub(r'[^a-z0-9]','',s.lower())
+bykey=collections.defaultdict(set)
+for n in names: bykey[key(n)].add(n)
+hits=[]
+for f in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
+    pk=f.split('/')[-1][:-9]
+    for e in json.load(open(f))['entities'].values():
+        if e['name'] in names: continue
+        if key(e['name']) in bykey:
+            hits.append((pk,e['type'],e['name'],sorted(bykey[key(e['name'])])[0]))
+print(len(hits)); [print(' ',*h) for h in hits]
+EOF
+# 19 — a5e-mm 5, ccdx 4, bfrd 3, tob 2, a5e-ag 1, open5e 1, tob-2023 1, tob2 1, tob3 1
+```
+
+**Dağılım** *(2026-08-17'de ölçüldü)*
+
+| Paket | Varyant ad |
+|---|--:|
+| `open5e-a5e-mm` | 5 |
+| `open5e-ccdx` | 4 |
+| `open5e-bfrd` | 3 |
+| `open5e-tob` | 2 |
+| `open5e-a5e-ag` | 1 |
+| `open5e-open5e` | 1 |
+| `open5e-tob-2023` | 1 |
+| `open5e-tob2` | 1 |
+| `open5e-tob3` | 1 |
+
+**Neden önemli.** 19'un 14'ü statblock çocuk satırı (`trait` /
+`creature-action`) — orada zarar küçük, çünkü satır zaten sahibine bağlı. Geri
+kalan 5'i **kendi başına duran kart**: 2 büyü (`Eye bite`, `Meld Into Stone`),
+3 canavar (`Will-o-Wisp`, `Cultist, Fanatic`, `War Horse Skeleton`). Onlarda
+iki ayrı sonuç doğuyor: (1) kullanıcı built-in kartın
+neredeyse aynısını ikinci kez görüyor ve hangisinin "gerçek" olduğunu bilmiyor;
+(2) ileride bu kartlara ad ile bağlanacak her `*_ref` — B3'ün doldurmayı
+planladığı alanlar dahil — kanonik yazımı kullanırsa paket kartını **hiç**
+bulamayacak. Bugün ölçülen zarar 0 dangling'dir; bu bulgu, o 0'ın
+**anahtarın darlığından** geldiğini söylüyor.
+
+**Seçenekler.**
+1. **Alias tablosu** — `normalize.dart`'a ölçülmüş 19 satırlık bir kanonikleştirme
+   listesi (`Herbalist kit → Herbalism Kit` zaten böyle duruyor, §5.4). Küçük,
+   denetlenebilir, ama listeyi elle beslemek gerekir.
+2. **Anahtarı gevşet** — `dupe_census` A ve `findEntityIdByName` harf-dışı
+   karakterleri normalize eden ikinci bir deneme yapsın. Tek yerde çözer, ama
+   `findEntityIdByName` bilerek katı (§2.3) — gevşetmek yanlış eşleşme riski.
+3. **Kapsam dışı** — upstream yazımı korunur (`S`), 8 tekil kartın kopya
+   görünmesi kabul edilir; kayıt burada durur.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-open5e-01 — 5e-2024 belgesinden gelen 1 subclass, `game_system: 5e-2014` etiketli paketin içinde eriyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-open5e` |
+| **Checklist** | checklist G3 (`game_system` etiketi kartın hangi kurala göre yazıldığını taşır) |
+| **Kategori / etki** | `subclass` — 17'nin **1'i** (`Abjurationist`) `open5e-2024` belgesinden geliyor (`gamesystem: 5e-2024`), paket ve katalog girdisi ise **`5e-2014`** diyor. Kartın üzerinde 2024 olduğunu söyleyen hiçbir alan yok: `source` = `"Open5e Originals"`, diğer 16'sıyla aynı |
+| **Cause code (öneri)** | `M` — `mergeOpen5eOriginals` (`tool/open5e_import/emit.dart:71-102`) ikinci belgenin **varlıklarını** alıyor, **metadata'sını** almıyor; birincil `doc` ile yeniden `assemblePack` çağrılıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Open5e kendi homebrew'unu iki belge olarak yayınlıyor: `open5e`
+(`gamesystem: 5e-2014`, 16 subclass) ve `open5e-2024` (`gamesystem: 5e-2024`,
+1 subclass). `mergeOpen5eOriginals` ikisini tek pakette birleştiriyor — bu
+**yazılı ve gerekçeli** bir karar (yorum: "we present them as a single 'Open5e
+Originals' package"). Birleşmenin götürdüğü şey belgenin oyun sistemi:
+`assemblePack` metadata'yı `doc`'tan yazdığı için sonuç `game_system: 5e-2014`,
+`source_doc_slug: open5e` oluyor ve 17. kart bu etiketin altında görünmez hâle
+geliyor.
+
+İki ölçülebilir izi var:
+
+- **`verify_packs --doc open5e` 17 subclass'ın 16'sını eşleştiriyor**,
+  `Abjurationist` "unmatched" düşüyor — çünkü kaynağı `--doc open5e`'nin
+  altında değil. D1 kapısı o kart için **hiç çalışmıyor**, ve çıktı bunu
+  "bir kart kaynakta yok" gibi gösteriyor.
+- **Aynı okulun iki sürümü yan yana duruyor.** `School of Abjuring and Warding`
+  (2014, `granted_at_level: 2`) ve `Abjurationist` (2024,
+  `granted_at_level: 3`) aynı wizard abjuration nişini dolduruyor; ikisi de
+  aynı `parent_class_ref` (Wizard) ile listeleniyor, ikisi de aynı "Open5e
+  Originals" damgasını taşıyor. Seviye farkı sihirbazda **görünür**: biri 2.
+  seviyede seçilebilir, diğeri 3.
+- `granted_at_level` **doğru** (her ikisi de kendi belgesinin ilk özellik
+  seviyesinden okunuyor) — yani bu bir mapper hatası değil, iki kural setinin
+  aynı pakette etiketsiz durması.
+
+**Kanıt.**
+```sh
+# repo kökünden
+python3 -c "
+import json
+for d in ('open5e','open5e-2024'):
+    j=json.load(open(f'open5e-api-staging/data/v2/open5e/{d}/Document.json'))
+    print(d, j[0]['fields']['gamesystem'], len(json.load(open(f'open5e-api-staging/data/v2/open5e/{d}/CharacterClass.json'))))
+p=json.load(open('flutter_app/assets/open5e_packs/open5e-open5e.pkg.json'))
+print('pack game_system =', p['metadata']['game_system'], '| source_doc_slug =', p['metadata']['source_doc_slug'])
+print([ (e['name'], e['attributes']['granted_at_level']) for e in p['entities'].values()
+        if e['name'] in ('Abjurationist','School of Abjuring and Warding') ])
+"
+# open5e 5e-2014 16
+# open5e-2024 5e-2024 1
+# pack game_system = 5e-2014 | source_doc_slug = open5e
+# [('Abjurationist', 3), ('School of Abjuring and Warding', 2)]
+
+cd flutter_app && dart run tool/open5e_import/bin/verify_packs.dart \
+    --data ../open5e-api-staging/data --doc open5e --only subclass,spell
+# open5e-open5e  subclass  16/17  1 unmatched — e.g. Abjurationist
+```
+
+**Neden önemli.** G3'ün yazılı gerekçesi tam olarak bu: etiket, kartın hangi
+kurala göre yazıldığını taşır. Bugün etiket yalnız katalog kartında bir çip
+olarak görünüyor (`official_packages_catalog_view.dart:113`) — mekanik etkisi
+yok — ama 2014 masası kuran bir DM "5e-2014" yazan paketi kurup içinde 2024
+kuralıyla yazılmış bir subclass buluyor, üstelik onun 2014 karşılığıyla yan
+yana. Filtreleme bir gün `game_system`'a bakarsa, bu kart yanlış tarafta
+kalacak.
+
+**Seçenekler.**
+1. **Varlığa etiket** — birleşmede ikinci belgenin kartlarına `source`'u
+   belgeden yazdır (`"Open5e Originals (2024)"`) ya da `tags`'e `5e-2024` ekle.
+   En küçük değişiklik, kayıp yok, kullanıcı ayrımı görüyor.
+2. **Birleştirmeyi geri al** — iki paket olarak ship et (`open5e-open5e` +
+   `open5e-open5e-2024`), her biri kendi `game_system`'ıyla. Katalogda iki satır,
+   ama etiketler dürüst; `verify_packs` de her iki belgeyi ölçer.
+3. **Kapsam dışı** — birleşme kararı yazılı, etiket bugün yalnız gösterimlik;
+   `metadata`'ya `"contains: [5e-2014, 5e-2024]"` gibi bir not düşülüp bırakılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-open5e-02 — üçte-bir büyücü 2 subclass hiç büyü slotu almıyor: `CasterKind.third` korpüste hiçbir kartla ulaşılamıyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-open5e` |
+| **Checklist** | checklist E3 (büyücülük ilerlemesi) |
+| **Kategori / etki** | `subclass` — 2 kart (`Arcane Warrior` / Fighter, `Eldritch Trickster` / Rogue) 3. seviyede wizard listesinden büyü veriyor; karakter sayfasında **0 slot, 0 cantrip, büyü adımı yok**. Korpüste `caster_kind: 'Third'` taşıyan **0** kart var (built-in 12 sınıf + paketli 2 sınıf ölçüldü) |
+| **Cause code (öneri)** | `A` — `level_up_planner.dart:473` `caster_kind`'ı **yalnız `classEntity`'den** okuyor; `subclass` şemasında böyle bir alan hiç **yok** (8 beyan edilmiş alan) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Checklist E3'ün kendi örneği bu maddeyi "paketli bir büyücü çıkarsa
+yeniden dosyalanır" diye bırakmıştı; ölçüm o koşulu karşılıyor — ama beklenen
+yerde değil. Paketli iki `class` kartının ikisi de `caster_kind: 'None'`
+(T2-2 bunu ölçmüştü ve doğru). Çıkan büyücü **subclass** tarafında:
+
+- `Arcane Warrior` (Fighter) ve `Eldritch Trickster` (Rogue) — SRD'nin Eldritch
+  Knight / Arcane Trickster kalıbı, yani **üçte-bir büyücü**. Özellik metni
+  açık: *"Beginning at 3rd level, you can cast spells from the wizard spell
+  list"*, ardından `Cantrips` / `Spell Slots` / `Spells Known` alt başlıkları.
+- Slot sayıları **kaynakta yok**: prose "as shown on the Arcane Warrior Spells
+  table" diyor, ama `ClassFeatureItem.json`'da bu iki subclass için
+  `column_value` taşıyan **tek satır bile** yok. Yani B1'in bilerek atladığı
+  sınıf-tablosu satırları burada zaten mevcut değil (`S`).
+- Uygulama tarafında tablo **hazır duruyor**: `CasterKind.third` tanımlı,
+  `defaultSpellSlotsByLevel` üçte-bir ilerlemesini hesaplıyor, `spells_step`
+  "Third caster" etiketini basıyor. Hiçbir içerik bu dalı **seçtiremiyor**,
+  çünkü tek okuma noktası sınıf kartının `caster_kind`'ı.
+
+Built-in SRD 5.2.1 bunu hiç zorlamadı: 2024 SRD'nin Fighter'ı Champion,
+Rogue'u Thief getiriyor — ikisi de büyücü değil. Yani `CasterKind.third`
+bugüne kadar **ölü kod**du ve bunu ilk gösteren şey bu paket.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — korpüsteki bütün "Spellcasting/Pact Magic" özellikli subclass'lar
+python3 - <<'EOF'
+import json,glob
+for f in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
+    for e in json.load(open(f))['entities'].values():
+        if e['type']!='subclass': continue
+        hit=[r['name'] for r in (e['attributes'].get('features') or [])
+             if 'spellcasting' in r['name'].lower() or 'pact magic' in r['name'].lower()]
+        if hit: print(f.split('/')[-1][:-9], e['name'], '|', e['attributes']['parent_class_ref']['name'], '|', hit[0])
+EOF
+# open5e-open5e Arcane Warrior      | Fighter | Spellcasting     <- yeni ilerleme
+# open5e-open5e Eldritch Trickster  | Rogue   | Spellcasting     <- yeni ilerleme
+# open5e-toh    Cantrip Adept       | Wizard  | Potent Spellcasting   (zaten büyücü sınıf)
+# open5e-toh    Resonant Body / Shadow Domain / … 5 satır, hepsi büyücü sınıf üstünde
+
+grep -rn "caster_kind" lib/application/character_creation/level_up_planner.dart
+#   473:  final kind = parseCasterKind(classEntity?.fields['caster_kind']);
+grep -c "'caster_kind': 'Third'" lib/domain/entities/schema/builtin/srd_core/classes.dart   # 0
+```
+
+**Neden önemli.** Bu, "alan boş" değil "alan yok" kusuru — C8 bile göremez,
+çünkü C8 **beyan edilmiş** alanların boşluğunu sorar. Oyuncu Arcane Warrior
+seçtiğinde kart doğru okunuyor (özellik metni sayfada), ama sihirbazın büyü
+adımı hiç açılmıyor: 3. seviyede iki cantrip ve üç 1. seviye büyü hakkı olan
+karakterin **hiçbir yerde** slotu yok. M4 slot tablosunu sayfaya indirdi;
+o tablo bu iki subclass için sonsuza kadar boş kalır.
+
+**Seçenekler.**
+1. **`caster_kind`'ı subclass şemasına ekle** (+ `level_up_planner`'da
+   `subclassEntity?.fields['caster_kind'] ?? classEntity…` sırası). Alan zaten
+   var olan enum'u kullanır, `CasterKind.third` ilk kez ulaşılabilir olur;
+   mapper tarafı ayrı bir iş (prose'dan "you can cast spells" çıkarımı, 2 kart).
+2. **Yalnız uygulama tarafı** — subclass özelliklerinde `Spellcasting` başlığı
+   varsa üçte-bir kabul et. Kod değişikliği küçük, ama sezgisel: `toh`'un
+   5 "Potent Spellcasting" satırını yanlış sınıflandırmamak için ek kural gerekir.
+3. **Kapsam dışı** — 2 kart, ve slot sayıları kaynakta yok; karar "prose olarak
+   kalır" diye yazılır, `CasterKind.third`'ün ölü kod olduğu da kayda geçer.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
