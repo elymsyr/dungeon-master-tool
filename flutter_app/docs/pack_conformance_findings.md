@@ -3,9 +3,9 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk iki
-> birimi tarandı** (`kp` + `wz`, 2026-08-18), 22 bulgu.** Sıradaki iş **Dalga 2'nin
-> 3. birimi: `open5e-deepmx`** (64 büyü), sonra `spells-that-dont-suck` (180),
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk üç
+> birimi tarandı** (`kp`, `wz`, `deepmx` — 2026-08-18), 24 bulgu.** Sıradaki iş
+> **Dalga 2'nin 4. birimi: `open5e-spells-that-dont-suck`** (180 büyü), sonra
 > `deepm` (515).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
@@ -94,7 +94,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 22 | 0 | 0 | 0 | 0 | **22** |
+| 0 | 24 | 0 | 0 | 0 | 0 | **24** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -102,7 +102,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 6 | B3 | 1 | C3 | 0 |
+| A3 | 8 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
@@ -116,7 +116,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 12 | `open5e-vom` | 0 |
+| `pass0` | 14 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -1867,6 +1867,140 @@ for e in p['entities'].values():
    built-in şema değişikliği.
 3. **Kapsam dışı** — 3 kart; o hâlde "`Special` kabul edilebilir kayıptır"
    kararı §5.6'ya yazılmalı, bugün yazılı değil.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-13 — koşullu ve değişken süreler karta düz sayı olarak iniyor: "2-12 hours" → `Hours 12`
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 4 kart (`open5e-deepmx` 2, `open5e-deepm` 2) |
+| **Checklist** | checklist A3 (kaynağın söylemediği kesinlik) |
+| **Kategori / etki** | `spell` — `duration_amount`; kaynak "2-12 saat" ya da "24 saat **ya da** şu olana kadar" derken kart tek bir sayı iddia ediyor |
+| **Cause code (öneri)** | `M` — `mappers/spell.dart:238`; süre regexi metindeki ilk sayı+birim çiftini alıp kuyruğu atıyor, aralığın alt sınırı ve "…until" koşulu düşüyor. Şemada serbest metin süre alanı yok (`N` yanı) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** İki ayrı metin şekli, aynı satırda birleşiyor:
+
+- **Aralık:** `Risen Road` kaynakta `2-12 hours` (gövdesi "2d6 saat sonra biter"
+  diyor), kartta `Hours 12` — regex `2` ile `-` çiftini eşleyemeyip `12 hours`'ı
+  yakalıyor, yani sessizce **üst sınırı** seçiyor.
+- **Koşul:** `Gift of Azathoth` kaynakta `24 hours or until the target attempts a
+  third death saving throw`, kartta `Hours 24`; `Grasp of the Tupilak`
+  (`1 hour or until triggered`) ve `Mass Surge Dampener`
+  (`1 minute, or until expended`) aynı şekilde koşulsuz iniyor.
+
+**Neden önemli.** F-pass0-12 kaynağın verdiği sayıyı siliyordu, bu kayıt tersini
+yapıyor: kaynağın **belirsiz** bıraktığı süreyi kart kesin sayı olarak yazıyor.
+Ne `verify_packs` ne gate görüyor, çünkü `duration_unit_ref` kural tablosunda yok
+(F-pass0-11/12 ile aynı kör nokta). Mapper'ın kendi `Special` dalı bu satırlar
+için dürüst değer olurdu — nitekim `kp`/`Feed the Worms` (`until destroyed`) hiç
+dalla eşleşmediği için `Special`/`null` iniyor ve **kayıp yok**; kayıp yalnız
+metin bir sayıyla başladığında oluşuyor.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-deepmx` | 2 (`Risen Road`, `Gift of Azathoth`) |
+| `open5e-deepm` | 2 (`Grasp of the Tupilak`, `Mass Surge Dampener`) |
+| **Toplam** | **4** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynak süresi aralık ya da "…or until" olan satırlar + kartın değeri
+python3 - <<'EOF'
+import json,glob,re
+pat=re.compile(r'\d+\s*[-–]\s*\d+|or,? until')
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=p.split('/')[4]
+    src={r['fields']['name']:r['fields'] for r in json.load(open(p,encoding='utf-8'))}
+    try: pk=json.load(open('assets/open5e_packs/open5e-%s.pkg.json'%doc,encoding='utf-8'))['entities']
+    except FileNotFoundError: continue
+    for e in pk.values():
+        f=src.get(e['name'])
+        if f and pat.search((f.get('duration') or '').lower()):
+            a=e['attributes']
+            print(doc, e['name'], '|', f['duration'], '->', a['duration_unit_ref']['name'], a.get('duration_amount'))
+EOF
+# deepmx Gift of Azathoth | 24 hours or until ... -> Hours 24
+# deepmx Risen Road       | 2-12 hours            -> Hours 12
+# deepm  Grasp of the Tupilak | 1 hour or until triggered -> Hours 1
+# deepm  Mass Surge Dampener  | 1 minute, or until expended -> Minutes 1
+```
+
+**Seçenekler.**
+1. **Belirsizse `Special` yaz** — regex eşleşmesinden önce aralık/koşul deseni
+   ara, bulursan mapper'ın kendi `Special` dalına düş. Dört kart, iki satır kod;
+   kesin ama yanlış sayı yerine dürüst boşluk.
+2. **`duration_text` alanı** — serbest metni taşı (F-wz-01 ve F-pass0-12 de bunu
+   çözer); built-in şema değişikliği, üç kaydı birden kapatır.
+3. **Kapsam dışı** — 4 kart; o hâlde "süre alanı yalnız üst sınırı taşır" kararı
+   §5.6'ya yazılmalı, bugün yazılı değil.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-14 — kuralları "konsantrasyonu kaybedersen" diyen 7 büyünün kartı `requires_concentration: false`
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 7 kart, 5 pakete yayılı (`deepmx` 2, `deepm` 2, `toh` 1, `wz` 1, `a5e-ag` 1) |
+| **Checklist** | checklist A3 (kartın kendi gövdesiyle çelişen zorunlu alan) |
+| **Kategori / etki** | `spell` — `requires_concentration`; 7 kartın düzyazısı "konsantrasyonu bırakırsan büyü biter" derken **zorunlu** alan `false` |
+| **Cause code (öneri)** | `S` — kaynağın `Spell.concentration` bool sütunu bu satırlarda `false`; `deepmx`'te 64 satırın 64'ü `false`, v1 `dmag-e` sütunu ise 64/64 `null`. Mapper sadık kopyalıyor (`spell.dart:46`) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `Shadow Realm Gateway` gövdesi *"the portal remains open for one minute
+or until you lose concentration on it"* diyor; `Summon Old One's Avatar`
+*"each round you maintain concentration on the spell…"* diyor. İkisinin de bool'u
+`false`, dolayısıyla kart "konsantrasyon gerekmez" iddiasında. Aynı desen beş
+belgede 7 kartta var. `wz`/`Storm of Axes` bu listede ama zaten **F-wz-02** olarak
+yazılı (orada delil `duration` metniydi, burada gövde metni) — aynı kart, iki
+farklı okumadan görüldü.
+
+**Neden önemli.** F-wz-02 mapper'ın bakmadığı bir sütunu (`duration` metni)
+gösteriyordu; bu kayıt kaynağın sütununun **kendisinin** yanlış olduğunu
+gösteriyor, yani kod düzeltmesiyle kapanmaz. Alan zorunlu ve oyunda doğrudan
+mekanik: "konsantrasyon gerekmez" diyen bir kart, masada aynı anda ikinci bir
+konsantrasyon büyüsüne izin verir.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-deepmx` | 2 (`Shadow Realm Gateway`, `Summon Old One's Avatar`) |
+| `open5e-deepm` | 2 (`Caustic Touch`, `Stench of Rot`) |
+| `open5e-toh` | 1 (`Gale`) |
+| `open5e-wz` | 1 (`Storm of Axes` — F-wz-02 ile aynı kart) |
+| `open5e-a5e-ag` | 1 (`Plane Shift`) |
+| **Toplam** | **7** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — bool false ama gövde konsantrasyon kuralı yazıyor
+python3 - <<'EOF'
+import json,glob,re,collections
+pat=re.compile(r'lose concentration|maintain(ing)? concentration|stop concentrating|concentrating on (the|this) spell', re.I)
+c=collections.Counter()
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    for r in json.load(open(p,encoding='utf-8')):
+        f=r['fields']
+        if not f.get('concentration') and pat.search(f.get('desc') or ''):
+            print(p.split('/')[4], f['name']); c[p.split('/')[4]]+=1
+print(dict(c))
+EOF
+# {'deepmx': 2, 'deepm': 2, 'toh': 1, 'wz': 1, 'a5e-ag': 1}
+```
+
+**Seçenekler.**
+1. **Gövdeden çıkar** — düzyazıda konsantrasyon kuralı geçen ve bool'u `false`
+   olan satırlarda `true` yaz. 7 kart; ama metin sezgisi, yanlış pozitif riski
+   var (`deepmx`/`Extract Foyson` "concentrating it into a powder" diyor ve
+   büyüyle ilgisi yok — bu yüzden desen "lose/maintain/stop concentrating on the
+   spell" kalıplarıyla sınırlandı).
+2. **Yukarı bildir** — kusur kaynakta; Open5e tarafına satır satır bildir,
+   pakette dokunma. Kayıt açık kalır, `S` gerekçesi §5.6'ya yazılır.
+3. **Kapsam dışı** — 7 kart; "kaynak ne derse o" kararı yazılır.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

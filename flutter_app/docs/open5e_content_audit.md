@@ -102,25 +102,29 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 10 of the 20 units are scanned — Wave 2 is under way** (Pass 0,
+**F3 is running: 11 of the 20 units are scanned — Wave 2 is under way** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
-class/subclass rows, `kp`, `wz`) and the ledger holds **22** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`wz`, 43 spells) measured
-`verify_packs --doc wz --only spell` at **288 ok / 0 disagree / 0 absent /
-0 unsourced / 96 unverifiable**, match coverage **43/43**, and scored its 31 items
-**22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** — its 43 descriptions are **byte-identical** to the
-source, and `class_refs` is 43/43 here (it was 21/31 in `kp`, so A2 is measured per
-unit, never inherited). All three of its new findings sit in the **duration**
-field and none of them tripped a gate, because `duration_unit_ref` is absent from
-`verify.dart`'s rule table: **F-wz-01** (source `1 hour/caster level` ships as a
-flat `Hours 1`), **F-wz-02** (a spell whose source duration reads
-`concentration + 1 round` ships with the required `requires_concentration` set to
-`false`, since the mapper reads only the boolean column), and **F-pass0-12**
-(spreading — `1 year` durations collapse to `Special` with a null amount; 3 cards,
-`deepm` 2 + `wz` 1). One inherited warning was re-measured and held: F-pass0-11
-expected **0** `permanent` rows in `wz`, and the source has 0.
-**The next open phase is F3** (continues at Wave 2's third unit — `open5e-deepmx`,
-64 spells).
+class/subclass rows, `kp`, `wz`, `deepmx`) and the ledger holds **24** findings, all
+still ❓ — `check_findings.py` clean. The latest unit (`deepmx`, 64 spells) measured
+`verify_packs --doc deepmx --only spell` at **466 ok / 0 disagree / 0 absent /
+0 unsourced / 100 unverifiable**, match coverage **64/64**, and scored its 31 items
+**19 ✅ · 6 ➖ · 0 ⛔ · 6 ⚠️**. Two new findings, both spreading and both invisible
+to every gate: **F-pass0-13** — conditional and variable durations ship as a flat
+number (`2-12 hours` → `Hours 12`, `24 hours or until …` → `Hours 24`; 4 cards,
+`deepmx` 2 + `deepm` 2), the mirror of F-pass0-12, which deletes a number the
+source *did* state; and **F-pass0-14** — `requires_concentration` is `false` on 7
+cards whose own rules text says "until you lose concentration", cause `S` (the
+source's boolean column is wrong, so no code fix closes it). Two method
+corrections came out of this unit: the cheap description check must compare
+against the **rule-applied** string (the mapper appends `**At Higher Levels.**`
+from `higher_level`, which produced 17 false diffs until it was accounted for),
+and **A5 is a live item** — `requires_concentration` was a single constant across
+all 64 rows, which is how F-pass0-14 was found. Two inherited warnings were
+re-measured and held (F-pass0-11 expects 1 `permanent` row here, F-pass0-12
+expects 0), and `SpellCastingOption.json` died a second time under the same
+`desc`-column rationale (K7).
+**The next open phase is F3** (continues at Wave 2's fourth unit —
+`open5e-spells-that-dont-suck`, 180 spells).
 
 ---
 
@@ -4630,8 +4634,29 @@ procedure, and the ledger have different lifetimes:
       "do not load" rationale rests on the `desc` column, and all 9 spells with a
       payload do have `higher_level` prose — so K7 holds, no finding.
 
-      **kaldı: 10 unit** — Dalga 2 continues at `deepmx` (64), then
-      `spells-that-dont-suck` (180), `deepm` (515); Dalga 3–4 untouched. Next
+      **`deepmx` (64 spells, 2026-08-18)** — 466 ok / 0 disagree / 0 absent /
+      0 unsourced / 100 unverifiable at 64/64, gate green, census 0, no catalog
+      drift; 31 items at **19 ✅ · 6 ➖ · 0 ⛔ · 6 ⚠️**. **F-pass0-13** (A3,
+      spreading): the duration regex takes the first number+unit pair, so
+      `2-12 hours` ships as a certain `Hours 12` and `24 hours or until the
+      target attempts a third death saving throw` as a flat `Hours 24` — 4 cards
+      (`deepmx` 2, `deepm` 2); the counter-example proves the rule, `kp`'s
+      `until destroyed` matches no branch at all and honestly ships `Special`.
+      **F-pass0-14** (A3, spreading, cause `S`): 7 cards across 5 packs say
+      "until you lose concentration" in their own rules text while
+      `requires_concentration` is `false`, because the source column is `false`
+      — `deepmx` has it `false` on all 64 rows and v1 `dmag-e` has it `null` on
+      all 64. Two method corrections: the cheap `desc` check must build the
+      **rule-applied** string first (`spell.dart:158` appends
+      `**At Higher Levels.**`, 17 false diffs otherwise), and A5 — "no filled
+      column is a single constant" — is the item that surfaced F-pass0-14.
+      `class_refs` 61/64, the three gaps all `Anti-Paladin`, i.e. §5.6's written
+      ref filter (K7); F-pass0-11 and F-pass0-12 re-measured and held;
+      `SpellCastingOption.json` died a second time (169 rows, 42 carrying data,
+      `desc` null on all of them, 8/8 payload spells carry `higher_level`).
+
+      **kaldı: 9 unit** — Dalga 2 continues at `spells-that-dont-suck` (180),
+      then `deepm` (515); Dalga 3–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

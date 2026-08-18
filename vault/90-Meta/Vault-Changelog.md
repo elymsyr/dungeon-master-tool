@@ -181,3 +181,30 @@ tags: [meta, changelog]
   A2 birime göre **ölçülür**, devralınmaz. Ucuz `desc` bayt karşılaştırması ikinci
   kez de 43/43 tuttu.
 - Kod değişmedi (tarama kuralı K1).
+
+## 2026-08-18 — F3 / Dalga 2'nin 3. birimi: open5e-deepmx tarandı (11/20)
+
+- `open5e-deepmx` (64 büyü, tek kategori, 128.216 bayt) checklist'e karşı okundu.
+  `verify_packs --doc deepmx --only spell` → **466 ok · 0 disagree · 0 absent ·
+  0 unsourced · 100 unverifiable**, eşleşme **64/64**; `gate_packs` yeşil;
+  `dupe_census` C "nothing installed" **0**; `unmapped_report.json` sıfır satır;
+  `build_catalog` sonrası ağaç temiz (`size_bytes 128.216`, `counts {spell: 64}`).
+- 31 madde: **19 ✅ · 6 ➖ · 0 ⛔ · 6 ⚠️** (⚠️: A2, A3, A5, C3, C8, F3).
+- **İki yeni yayılan bulgu.** **F-pass0-13** — koşullu/değişken süreler karta düz
+  sayı iniyor (`2-12 hours` → `Hours 12`, `24 hours or until …` → `Hours 24`;
+  4 kart, `deepmx` 2 + `deepm` 2), F-pass0-12'nin aynası. **F-pass0-14** — gövdesi
+  "konsantrasyonu kaybedersen" diyen 7 kartın `requires_concentration` alanı
+  `false`; cause **`S`**, kaynağın bool sütunu yanlış (deepmx'te 64/64 `false`,
+  v1 `dmag-e` 64/64 `null`) — kod düzeltmesiyle kapanmaz.
+- **İki yöntem düzeltmesi.** (1) Ucuz `desc` karşılaştırması **ham** `desc` ile
+  yapılmaz: mapper `higher_level` dolu satırlara `**At Higher Levels.**` ekliyor
+  (`spell.dart:158`), beklenen dize kurulunca 64/64 birebir — aksi hâlde 17 sahte
+  fark. (2) **A5 canlı bir madde**: `requires_concentration` 64/64 `false` çıktı
+  ve F-pass0-14 tam oradan bulundu; dolu sütunların ayrık değer sayısı sayılmalı.
+- `class_refs` 61/64 — boş kalan üçünün v1 sınıfı `Anti-Paladin`, §5.6'nın yazılı
+  ref filtresi (K7); F-kuru-01'in 93−85 aralığında (⚪).
+- Devralınan uyarılar yeniden ölçüldü: F-pass0-11 `deepmx` için 1 bekliyordu
+  (`Extract Foyson`, tuttu), F-pass0-12 için 0 (tuttu). `SpellCastingOption.json`
+  ikinci kez öldü (169 satır, 42'si veri, `desc` 169/169 `null`, payload taşıyan
+  8 büyünün 8'inde `higher_level`) → K7.
+- Kod değişmedi (tarama kuralı K1).

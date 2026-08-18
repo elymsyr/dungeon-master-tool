@@ -9,35 +9,36 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2'nin ilk iki birimi
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2'nin ilk üç birimi
 > tarandı** — `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17),
-> `bfrd`'nin class/subclass satırları, `kp` ve `wz` (2026-08-18). **20 tarama
-> biriminin 10'u kapandı**, defterde **22 bulgu** var, yirmi ikisi de ❓ danışılacak
-> (`python3 tool/check_findings.py` → *23 kayıt, 22 sayaca giriyor, temiz*).
-> `wz` üç yeni bulgu üretti ve **üçü de `spell`'in süre alanında**: **F-wz-01**
-> (`1 hour/caster level` → `Hours 1`), **F-wz-02** (`concentration + 1 round`
-> yazan büyü kartta `requires_concentration: false`), **F-pass0-12** (yayılan —
-> `1 year` süreler `Special` + `null`, korpüste 3 kart).
+> `bfrd`'nin class/subclass satırları, `kp`, `wz` ve `deepmx` (2026-08-18).
+> **20 tarama biriminin 11'i kapandı**, defterde **24 bulgu** var, yirmi dördü de
+> ❓ danışılacak (`python3 tool/check_findings.py` → *25 kayıt, 24 sayaca giriyor,
+> temiz*). `deepmx` iki yeni **yayılan** bulgu üretti: **F-pass0-13** (koşullu ve
+> değişken süreler karta düz sayı iniyor — `2-12 hours` → `Hours 12`, 4 kart) ve
+> **F-pass0-14** (gövdesi "konsantrasyonu kaybedersen" diyen 7 kartın
+> `requires_concentration` alanı `false`, cause `S`).
 >
-> **Sıradaki iş: Dalga 2'nin 3. birimi → `open5e-deepmx` (64 büyü).** Sonra
-> `spells-that-dont-suck` (180) → `deepm` (515). `wz`'den çıkan beş uyarı:
-> (1) **süre alanı bu dalganın sıcak noktası** — üç bulgunun üçü oradan çıktı ve
-> hiçbiri araca düşmedi; her büyü paketinde kaynağın `duration` metnini kartın
-> `duration_unit_ref` + `duration_amount` çiftiyle **tek tabloda** karşılaştır
-> (`collections.Counter((src_duration, unit, amount))` — 43 satırlık paket için
-> 15 satırlık çıktı verdi);
-> (2) `requires_concentration` **yalnız** kaynağın bool sütunundan geliyor
-> (`spell.dart:46`) — süre metninde `concentration` geçen satırları ayrıca ara;
-> (3) **F-pass0-12'nin dağılım tablosu** `deepm` 2 satırını bekliyor
-> (`Bloom`, `Desolation`), F-pass0-11'inki `deepmx` 1 / `spells-that-dont-suck` 1
-> / `deepm` 9 — o birimlerde yeni kayıt açılmaz, komut **yeniden çalıştırılır**;
-> (4) `SpellCastingOption.json` dolu olabilir (`wz`'de 161 satır, 60'ı veri) ama
-> "atlandı" gerekçesi **`desc` sütununun boşluğu** üzerine kurulu — kontrol edilecek
-> şey satır sayısı değil, *payload taşıyıp `higher_level` düzyazısı olmayan büyü
-> sayısı* (`wz`: 0/9);
-> (5) `class_refs` `kp`'de 21/31, `wz`'de 43/43 — yani A2'nin ⚠️/✅'i birime göre
-> değişiyor, devralınmaz, **ölçülür**; ucuz `desc` bayt karşılaştırması ikinci kez
-> de 43/43 tuttu, her büyü paketinde tekrarlanmalı.
+> **Sıradaki iş: Dalga 2'nin 4. birimi → `open5e-spells-that-dont-suck`
+> (180 büyü).** Sonra `deepm` (515). `deepmx`'ten çıkan beş uyarı:
+> (1) **ucuz `desc` karşılaştırması ham `desc` ile yapılmaz** — mapper
+> `higher_level` dolu satırlara `\n\n**At Higher Levels.** …` ekliyor
+> (`spell.dart:158`); beklenen dizeyi kurup karşılaştır, yoksa `deepmx`'teki gibi
+> 17 sahte fark çıkar (`spells-that-dont-suck`'ta bu sayı büyük olabilir);
+> (2) **A5 artık canlı bir madde** — `requires_concentration` `deepmx`'te 64/64
+> `false` çıktı ve bulgu oradan geldi; her büyü paketinde dolu sütunların ayrık
+> değer sayısını **say**, 1 olan sütun kaynak sütunu ölü demektir;
+> (3) F-pass0-14'ün deseni gövde metninde (`lose/maintain concentration`,
+> `stop concentrating`) — `spells-that-dont-suck` bu tabloda **0** satırla
+> görünüyor, `deepm` **2** ile; F-pass0-13 `spells-that-dont-suck` için **0**,
+> F-pass0-11 için **1**, F-pass0-12 için **0** bekliyor. Komutlar yeniden
+> çalıştırılır, yeni kayıt açılmaz;
+> (4) `SpellCastingOption.json` ikinci kez öldü (`deepmx`: 169 satır, 42'si veri,
+> `desc` 169/169 `null`, payload taşıyan 8 büyünün 8'inde `higher_level`) —
+> aynı üç sayıyı ölç, gerekçe ayakta kaldıkça K7;
+> (5) `class_refs` birime göre değişiyor (`kp` 21/31, `wz` 43/43, `deepmx` 61/64);
+> boş kalan satırın v1 `dnd_class` değerine **bak** — "Anti-Paladin" gibi bir ad
+> yazılı ref filtresidir (K7), boş sütun ise F-kuru-01'dir (⚪).
 >
 > **Dalga 2 bittiğinde** 13/20 birim kapanır ve Dalga 3 (sihirli eşya paketleri)
 > başlar; onun bilinen açığı `magic-item.cost_gp` (bilinen açık #5, ⛔).
@@ -889,7 +890,7 @@ gördü; Dalga 2'den itibaren kategori çeşitliliği düşüyor, tekrar artıyo
 |---|--:|---|:--:|---|---|
 | `open5e-kp` | 31 | spell 31 | ⚠️ | 2026-08-18 | F-pass0-11 |
 | `open5e-wz` | 43 | spell 43 | ⚠️ | 2026-08-18 | F-wz-01, F-wz-02, F-pass0-12 |
-| `open5e-deepmx` | 64 | spell 64 | ⬜ | — | — |
+| `open5e-deepmx` | 64 | spell 64 | ⚠️ | 2026-08-18 | F-pass0-13, F-pass0-14 |
 | `open5e-spells-that-dont-suck` | 180 | spell 180 | ⬜ | — | — |
 | `open5e-deepm` | 515 | spell 515 | ⬜ | — | — |
 
@@ -1060,6 +1061,102 @@ var; kaynak "malzeme gerekir" diyor, "hangi malzeme" demiyor.)
 
 **Sayım: 22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** — ⚠️'ler A3, C3, C8;
 ➖'ler C1, C2, C4, C5, C6, E3 (tek kategorili paket).
+
+#### `open5e-deepmx` sonucu — 2026-08-18
+
+64 varlık, tek kategori (`spell` 64), 128.216 bayt. `verify_packs --doc deepmx
+--only spell` → **466 ok · 0 disagree · 0 absent · 0 unsourced · 100
+unverifiable**, eşleşme **64/64**. `gate_packs --packs /tmp/one` yeşil;
+`dupe_census` C "nothing installed" **0** ve `deepmx` iki kopya listesinde de yok;
+`unmapped_report.json`'da **sıfır** satır. `build_catalog` yeniden çalıştı, ağaç
+temiz; katalog satırı `size_bytes 128.216` = dosya, `counts {spell: 64}` = gerçek,
+`license ogl-10a` + `publisher Kobold Press` kaynağın `Document.json`'ıyla birebir.
+
+**Metin sadakati — ucuz kontrolün doğru biçimi.** `wz`'de "bayt bayt aynı" diye
+yazılan kontrol burada **17 kartta ayrıştı**; fark tamamen mapper'ın yazılı
+kuralı: kaynakta `higher_level` dolu olan 17 satırda `spell.dart:158`
+`desc + "\n\n**At Higher Levels.** " + higher_level` yazıyor. Beklenen dize
+kurulup karşılaştırıldığında **64/64 birebir**. Yani bu kontrol ham `desc` ile
+değil, *kural uygulanmış* dizeyle yapılmalı — `wz`'de 0 satır `higher_level`
+taşıdığı için fark görünmemişti.
+
+**Bu birimin farkı: `class_refs` 61/64 ve sebep `kp` ile aynı.** v2 `classes`
+61 satırda dolu; boş kalan 3 satırın v1 `dmag-e` karşılığı **"Anti-Paladin"**
+(`Borrowing`, `Risen Road`, `Strength of the Underworld`). §5.6'nın yazılı ref
+filtresi bu adı elemek zorunda — hiçbir paket böyle bir sınıf göndermiyor, softRef
+yazılsa `gate` `dangling-soft-ref` verirdi. Kartlar `tags: ["Anti Paladin"]`
+taşımaya devam ediyor; F-kuru-01'in "93 kartın 85'i" ayrımındaki 8 karttan üçü
+bunlar, yani **yazılı açık** → K7, yeni kayıt yok.
+
+**İki yeni bulgu, ikisi de yayılan** (`verify` yine 0 disagree diyor — süre alanı
+da bool sütunu da kural tablosunda yok):
+
+1. **F-pass0-13** — koşullu/değişken süre kuyruğu düşüyor, kart düz sayı iddia
+   ediyor: `Risen Road` kaynakta `2-12 hours`, kartta `Hours 12`;
+   `Gift of Azathoth` kaynakta `24 hours or until the target attempts a third
+   death saving throw`, kartta `Hours 24`. Korpüste 4 kart (`deepmx` 2,
+   `deepm` 2). Karşı örnek: `kp`/`Feed the Worms` (`until destroyed`) hiçbir
+   dalla eşleşmediği için `Special`/`null` iniyor ve kayıp yok — kayıp yalnız
+   metin **bir sayıyla başladığında** oluşuyor.
+2. **F-pass0-14** — `requires_concentration` **64/64 `false`**; ama
+   `Shadow Realm Gateway` ("until you lose concentration on it") ve
+   `Summon Old One's Avatar` ("each round you maintain concentration") gövdesinde
+   kuralı yazıyor. Kaynağın `concentration` sütunu bu satırlarda `false`, v1
+   `dmag-e` sütunu ise 64/64 `null` → cause `S`. Korpüste 7 kart, 5 paket
+   (`deepmx` 2, `deepm` 2, `toh` 1, `wz` 1 = F-wz-02'nin kartı, `a5e-ag` 1).
+
+**Doğrulanan devir uyarıları** *(komutlar yeniden çalıştırıldı, yeni kayıt
+açılmadı)*. F-pass0-11 `deepmx` için **1** bekliyordu — kaynakta `permanent` ile
+başlayan satır 1 (`Extract Foyson`), kart `Until Dispelled`. F-pass0-12 `deepmx`
+için **0** bekliyordu — `year`/`week`/`month` ölçekli satır 0. `wz`'nin 2.
+uyarısı (süre metninde `concentration` ara) burada **0** satır verdi; bulgu
+gövde metninden çıktı, bu yüzden desen genişletildi.
+
+**Ölen aday, ikinci kez: `SpellCastingOption.json`.** 169 satır, 42'si veri
+taşıyor (`damage_roll` 23, `duration` 14, `range` 5), ama `desc` 169 satırın
+hepsinde `null` ve payload taşıyan **8** büyünün **8'inin de** `higher_level`
+düzyazısı var → audit:2025'in gerekçesi ayakta, K7.
+
+**`material_*`'ın `S` gerekçesi (C8, birim başına).** Kaynakta `material`
+64/64 bool (37 `true`), `material_specified` 64/64 boş, `material_cost` 64/64
+`null` — boşluk pakette değil kaynakta.
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | `spell` şemada; roundtrip yeşil (`open5e-deepmx installs and reads back unchanged`) |
+| A2 | ⚠️ | `class_refs` **zorunlu** ama 61/64 — 3 kart `Anti-Paladin` (§5.6'nın yazılı ref filtresi, K7). Diğer 10 zorunlu alan 64/64 |
+| A3 | ⚠️ | 0 unsourced; ama **F-pass0-13** (kesin olmayan süre kesin yazılıyor) ve **F-pass0-14** (gövdesi konsantrasyon diyen kart `false`) |
+| A4 | ✅ | 64/64 ad kaynakla aynı; built-in'de karşılığı yok. Korpüste tek ad çakışması `Overclock` ve o bir `creature-action` (`a5e-mm`), farklı kategori |
+| A5 | ⚠️ | 19 dolu sütunun **biri tek sabit**: `requires_concentration` 64/64 `false` — tam da F-pass0-14'ün alanı. Diğerlerinin en düşük ayrık değeri 2 |
+| B1 | ✅ | `--list-builtin-same`'de `deepmx` yok |
+| B2 | ✅ | `--list-shared`'da `deepmx` yok; 64 büyü adının hiçbiri başka pakette **büyü** olarak geçmiyor |
+| B3 | ✅ | okul, süre birimi, atış birimi, bileşen, hasar tipi, kurtarma yeteneği, alan şekli hepsi ref (7 Tier-0 sözlüğü + `class` softRef ×150) |
+| B4 | ✅ | gate yeşil, census C "nothing installed" 0 |
+| B5 | ✅ | `metadata.links` yok + `requires` yok — tüm ref'ler built-in'e (§2.1) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ⚠️ | 25 şema alanının 19'u dolu. Boşlar: `at_higher_levels_text` `P` (17 satırın metni `description`'ın sonuna eklenmiş), `effects` ⚪, `applied_condition_refs` `M`, `material_*` `S` (yukarıda ölçüldü) |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ➖ | `spell`'de grant bloğu yok |
+| C7 | ✅ | 7 ayrı Tier-0 sözlüğüne ref, hepsi kanonik satır; `unmapped_report.json`'da `deepmx` sıfır |
+| C8 | ⚠️ | 6 boş alanın 5'inin §5.6'da satırı var; `material_*`'ın **yok** — bu birimin `S` gerekçesi yukarıda (`wz` ile aynı) |
+| D1 | ✅ | 466 ok · 0 disagree · 0 absent · 0 unsourced |
+| D2 | ✅ | 100 unverifiable, beşi de yazılı kuralla: `casting_time_amount` (öneksiz, 52), `range_ft` (`range_text`'ten, 41), `attack_type` (menzilden çıkarım, 3), `class_refs` (v1 sütunu, 3), `reaction_trigger` (cümleye çevriliyor, 1) |
+| D3 | ✅ | gate yeşil |
+| E1 | ✅ | `spell`'in mekanik alanları grant alanı değil; render matrisi F2'de yeşil |
+| E2 | ✅ | `effects` `notResolverRead`'de; `bundled_pack_resolve_test` yeşil |
+| E3 | ➖ | paket sınıf göndermiyor; slot ilerlemesi bu birimde ölçülemez |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil (75/75) |
+| F2 | ✅ | paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ⚠️ | `wizard_pack_families_test` yeşil (39/39, `open5e-deepmx spell adımı` dahil); ama 64 büyünün **61'i** bir sınıf listesinde görünüyor — 3 `Anti-Paladin` kartı F-kuru-01'in yazılı 93−85 aralığında (⚪) |
+| F4 | ✅ | `entity_link_navigation_test` yeşil; kartın her ref'i built-in bir karta gidiyor |
+| G1 | ✅ | `build_catalog` yeniden çalıştı, ağaç temiz; `size_bytes` 128.216 = dosya, `counts {spell: 64}` = gerçek |
+| G2 | ✅ | `licenses: ["ogl-10a"]`, `publisher: kobold-press`, `gamesystem: 5e-2014` kaynağın `Document.json`'ıyla birebir |
+| G3 | ✅ | `is_srd_overlap: false` ve doğru — built-in'le çakışan büyü adı yok |
+
+**Sayım: 19 ✅ · 6 ➖ · 0 ⛔ · 6 ⚠️** — ⚠️'ler A2, A3, A5, C3, C8, F3
+(A5 bu dalgada ilk kez ⚠️); ➖'ler C1, C2, C4, C5, C6, E3 (tek kategorili paket).
 
 ### Dalga 3 — Sihirli eşyalar
 
