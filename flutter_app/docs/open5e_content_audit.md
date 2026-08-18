@@ -102,46 +102,73 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 14 of the 20 units are scanned — Wave 3 is done** (Pass 0,
+**F3 is running: 15 of the 20 units are scanned — Wave 4 has started** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
 class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`,
-`vom`) and the ledger holds **31** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`vom`, 1,063 magic items — the first
-non-`spell` unit since Wave 1) measured `verify_packs --doc vom --only
-magic-item` at **3,682 ok / 0 disagree / 0 absent / 0 unverifiable /
-3,189 unsourced**, match coverage **1,063/1,063**, and scored its 31 items
-**20 ✅ · 7 ➖ · 1 ⛔ · 3 ⚠️**. The unsourced 3,189 is exactly 3 × 1,063 — the
-three declared constants (`activation` / `is_cursed` / `is_sentient`) — and all
-three ⚠️ point at the same place: not the empty fields, but **the written
-reasons** given for them in §5.8. **F-vom-01** (C8, `S`): §5.8 closes
-`attunement_prereq` + the six `attunement_*` fields with `M`🔗 because
-"`attunement_detail` is in the source", but that column exists on **0 of the
-2,319** v2 `MagicItem` rows (both publishers) — and `mappers/item.dart:100`
-reads it today, so the branch is dead code; the 71 `desc` rows that mention
-attunement are effect sentences, **0** of them name a gate. **F-vom-02** (A5,
-`S`): `is_cursed` is the constant `false` on 1,063/1,063 with the written reason
-"`false` is the correct 5e default", yet **4** items say otherwise in their own
-rules text (`Cap of Thorns`, `Fellforged Armor`, `Thirsting Scalpel`,
-`Thirsting Thorn`) — the pattern matched 21 rows and 17 were the spells *remove
-curse* / *bestow curse*, dropped by reading. **F-vom-03** (C8, `N`): the same
-§5.8 line bundles `sentient_*` with `charges_max` / `charge_regain` /
-`command_word` / `body_slot_ref` as "in `desc` prose"; the prose is really there
-for those four (**161** "has N charges", **152** dawn-recharge, **137** "command
-word") but **not** for sentience — `sentient` appears in 0 of 1,063 descriptions,
-and the 10 "Intelligence of N" rows are all about the *creature* facing the item.
-Known-open #5 was re-measured and **stands**: `MagicItem.cost` is `0.00` on
-1,063/1,063, and F-pass0-16's question — is the price in the prose? — came back
-**no**: only 15 rows match `\d[\d,]*\s*gp` and every one is a crafting cost or
-a residual value, not the item's price, so the ⛔ rationale is intact (K7). Also
-measured and *not* filed: the 11→9 category fold (`ammunition`→Weapons,
-`shield`→Armor) matches the built-in canon exactly (222+15 = 237, 159+14 = 173),
-`base_item_ref` lands 114 armor + 265 weapon = **379/379** with nothing dropped,
-and `weight_lb`'s 10% is the source's (949 of 1,063 `weight` values are `0.000`).
-**The next open phase is F3** (continues at Wave 4's first unit — `open5e-ccdx`,
-2,426 entities; the wave where `monster` + `trait` + `creature-action` are read
-together and B2's "the owning row does not move" exception is tested for the
-first time).
+`vom`, `ccdx`) and the ledger holds **35** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`ccdx`, 2,426 entities — the first
+`monster` unit, four categories read together) measured `verify_packs --doc
+ccdx` at **7,009 ok / 0 disagree / 0 absent / 0 unsourced / 1,780
+unverifiable**, match coverage **356/356**, and scored its 31 items
+**19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**. The pack's own data is clean; **all four ⚠️ are
+corpus-wide mapper defects**, so all four records are scoped `pass0` and the
+pack counter stays 0.
 
+**F-pass0-17** (D1, `D`): `_ensureChild`'s content hash is type + description +
+attributes — **the name is not in it** — and statblock attack text is formulaic,
+so two different weapons with the same numbers collapse into one entity and the
+first name wins. **382** child rows across 7 packs now render under another
+creature's name: the Elite Kobold's *Mining Pick* is `Bite (Ahuizotl)`, the
+Light Cavalry's *Cavalry Saber* is `Claw (Bathhouse Drake)`. On **6** traits the
+name carries a mechanic, so the merge rewrites it — `Shadow Traveler (1/Day)`
+ships as `(3/Day)`. Neither gate sees it: `verify_packs` only judges `monster`
+rows, and `gate_packs` is green because the ref resolves — to the wrong card.
+
+**F-pass0-18** (C8, `M`): §5.8 closes `creature-action.damage_type_ref` with
+"all 576 typed attack rows are in the two skipped WotC documents". The count is
+right for the column it reads — `CreatureActionAttack.damage_type` is filled
+only in `srd-2014` (536) and `srd-2024` (40) — but the type is next door:
+when a row has no real extra damage (`extra_damage_die_type` empty),
+`extra_damage_type` holds the **primary** damage type. That is **3,479** rows in
+shipping documents (`a5e-mm` 828, `tob` 652, `bfrd` 512, `tob2` 506,
+`tob-2023` 505, `ccdx` 473, `tdcs` 3). The column is overloaded, not ambiguous:
+the remaining 828 filled rows all carry a genuine second damage.
+
+**F-pass0-19** (A3, `M`): upstream splits "from nonmagical attacks" across two
+columns — the flat `damage_resistances` list and a `nonmagical_attack_resistance`
+boolean — and the mapper reads only the list, so **618** creatures (514
+resistance + 104 immunity, 7 packs) ship **unconditional** bludgeoning/piercing/
+slashing resistance. `verify_packs` calls those rows `ok`: the loss is *between*
+columns, where a one-column verifier cannot look.
+
+**F-pass0-20** (C8, `M`): `Creature.languages_desc` is never read, so **769**
+creatures whose structured `languages` list is empty ship with no language line
+at all while the source says *"understands Common but can't speak"* (10 in
+`ccdx`), *"understands the languages of its creator"* (22), *"all, telepathy
+120 ft."* (12). Even filled lists lose names the prose keeps — `Umbral` ×13,
+`Darakhul` ×5, `Aquan` ×4.
+
+Three §5.8 reasons were measured and **stand** (K7): `lair_action_refs` (there
+is no `LAIR_ACTION` in any of the 12,228 v2 action rows, and v1 `cc` never says
+"lair"), `gear_refs`/`spell_refs` (v1 `spells_json` is filled on 41 rows corpus-
+wide, 37 of them in the skipped `wotc-srd`, **0** in `cc`), and Pass 0's two A5
+constants — `trait.trait_kind` (`CreatureTrait.type` is null on 1,016/1,016) and
+`legendary_action_uses` = 3 (v1 says "can take 3 legendary actions" on 20/20;
+the corpus's only two exceptions are in `tob`, handed to that unit). Also
+measured and *not* filed: child coverage is 2,253 refs from 2,254 source rows
+(one mis-segmented row dropped), `alignment_ref` 341 + `alignment_note` 15 =
+356/356, all 17 source languages resolve, and the 828 genuine second-damage rows
+have no schema counterpart at all (`N`).
+
+**Wave 4's opening decision:** `bfrd`'s monster rows are read **inside the
+`a5e-mm` unit** rather than as a separate unit — the `a5e-mm` ⟷ `bfrd` pair is
+B2's test case and splitting it would measure the same duplication twice. Wave 4
+is therefore **6 units** and the total stays 20.
+
+**The next open phase is F3** (continues at Wave 4's second unit —
+`open5e-tob2`, 2,607 entities; its share of the four new `pass0` records is
+already measured — 30 / 506 / 107 / 99 — and the unit's job is to **verify**
+those rows into the distribution tables, not to open new records).
 ---
 
 ## 0. Start here
@@ -2627,11 +2654,13 @@ against the pinned snapshot rather than against the rationale it was filed with.
 | `feat.prereq_class_refs`, `prereq_species_refs` | ⚪ | closed by L3 — 0 of 78 `prerequisite` strings names a class or species (§5.5) |
 | `spell.at_higher_levels_text` | `P` | the prose already ships inside `description`; splitting it is formatting, and `SpellCastingOption.json` adds zero spells (A1) |
 | `spell.effects`, `creature-action.effects` | ⚪ | M3's scope boundary: a live field with an editor but **no reader in `domain/` or `application/`**, and no structured damage rows upstream to fill it from |
-| `creature-action.damage_type_ref` | ⛔ | closed by B5: all 576 typed attack rows are in the two skipped WotC documents |
+| `creature-action.damage_type_ref` | ⚠️ | **Reason reads the wrong column — re-opened by F3/`ccdx`, 2026-08-18.** B5's count is right for `CreatureActionAttack.damage_type` (536 `srd-2014` + 40 `srd-2024`), but when a row has no real extra damage (`extra_damage_die_type` empty) the neighbouring `extra_damage_type` holds the **primary** damage type — **3,479 rows in shipping documents** (`a5e-mm` 828, `tob` 652, `bfrd` 512, `tob2` 506, `tob-2023` 505, `ccdx` 473, `tdcs` 3). The column is overloaded, not ambiguous: the other 828 filled rows all carry a genuine second damage, which has no schema counterpart at all. See **F-pass0-18** |
 | `creature-action.recharge` | ⚪ | narrative twin of the typed `recharge_kind`, which is filled |
-| `monster.lair_action_refs` | ⚪ | **Reason was wrong** — filed `M`/`S` "mapper emits it; no shipped creature has one". `CreatureAction.action_type` has exactly four values corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873 · `REACTION` 579). There is no lair bucket in *any* document, shipped or skipped |
-| `monster.gear_refs`, `monster.spell_refs` | ⛔ | **§2.4's last open re-open, closed here.** v2 `Creature` has no gear, item or spell column at all; v1's `spells_json` is populated on **41 of 3,207** monsters, **37 of them in the skipped `wotc-srd`** — the ceiling in shipping documents is **4 monsters (tdcs)**, whose Spellcasting trait already prints the list. A B8-shaped v1 backfill for 0.14% of the category is not written |
+| `monster.lair_action_refs` | ⚪ | **Reason was wrong** — filed `M`/`S` "mapper emits it; no shipped creature has one". `CreatureAction.action_type` has exactly four values corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873 · `REACTION` 579). There is no lair bucket in *any* document, shipped or skipped. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — 0 `LAIR_ACTION` in 12,228 v2 rows, and the v1 fallback has none either (`cc`'s `legendary_desc` and `desc` never say "lair") |
+| `monster.gear_refs`, `monster.spell_refs` | ⛔ | **§2.4's last open re-open, closed here.** v2 `Creature` has no gear, item or spell column at all; v1's `spells_json` is populated on **41 of 3,207** monsters, **37 of them in the skipped `wotc-srd`** — the ceiling in shipping documents is **4 monsters (tdcs)**, whose Spellcasting trait already prints the list. A B8-shaped v1 backfill for 0.14% of the category is not written. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — `cc`'s `spells_json` is empty on 356/356 |
 | `monster.cr_helper` | ⚪ | app-only encounter-building aid |
+| `monster.resistance_refs` / `damage_immunity_refs` (the "nonmagical" qualifier) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** Upstream splits the qualifier across two columns: the flat list (`['bludgeoning','piercing','slashing']`) and a `nonmagical_attack_resistance` / `…_immunity` boolean, with the full sentence in `damage_*_display`. The mapper reads only the list, so **618 shipping creatures** (514 resistance + 104 immunity) claim the resistance **unconditionally** — a magic weapon reads as resisted. `verify_packs` calls these rows `ok`; the loss is *between* columns. The schema has no `resistance_note` twin for `alignment_note`, so the decision is "read it" **and** "where to write it". See **F-pass0-19** |
+| `monster.language_refs` (the qualified statements) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** `Creature.languages_desc` is filled on 354 of `ccdx`'s 356 rows and is never read. **769 shipping creatures** whose structured `languages` list is empty ship with no language line at all, though the source says *"understands Common but can't speak"* (10), *"understands the languages of its creator"* (22), *"all, telepathy 120 ft."* (12). Filled lists lose names too — `Umbral` ×13, `Darakhul` ×5, `Aquan` ×4, `Common` ×3 appear only in the prose. The 17 languages the list *does* carry all resolve (B9's `void-speech` included). See **F-pass0-20** |
 | `magic-item.cost_gp` | ⛔ | **the "confirm the source really is 0" row, confirmed.** `MagicItem.cost` is `0.00` on **1,063 of 1,063** shipping (`vom`) rows and on 1,255 of 1,256 SRD rows. Writing anything would be pricing invention |
 | `trait` grant block (43 keys, 6,423 rows) | ⛔ | a monster trait is a statblock child, never handed to `CharacterResolver` (§2.5, B5 item 1) |
 
@@ -4760,10 +4789,36 @@ procedure, and the ledger have different lifetimes:
       `['poison','psychic']` on all 1,063) have no home in the schema and are
       read by nobody.
 
-      **kaldı: 6 unit** — Dalga 3 **closed** at 14/20; Dalga 4 (`ccdx` first,
-      then `tob2`, `tob`, `tob3`, `a5e-mm`, `tob-2023`) is next — `bfrd` already
-      counted as a unit in Wave 1, so its monster rows need a call at the wave's
-      start. Next
+      `ccdx` (2026-08-18, unit 15/20, Wave 4's first) read 2,426 entities in
+      four categories — **7,009 ok / 0 disagree / 0 absent / 0 unsourced /
+      1,780 unverifiable**, 356/356 coverage, gate green, census 0, no catalog
+      drift, **19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**. The pack's own data is clean and all
+      four ⚠️ are corpus-wide mapper defects, so all four records are `pass0`:
+      **F-pass0-17** (D1, `D`) the child content hash omits the name, so 382
+      rows in 7 packs render under another creature's name and 6 traits have
+      their per-day count rewritten (`Shadow Traveler (1/Day)` → `(3/Day)`);
+      **F-pass0-18** (C8, `M`) §5.8 closes `damage_type_ref` by counting
+      `damage_type`, but the type sits in `extra_damage_type` on **3,479**
+      shipping rows whenever there is no real extra damage;
+      **F-pass0-19** (A3, `M`) the `nonmagical_attack_*` booleans are never
+      read, so **618** creatures claim unconditional b/p/s resistance;
+      **F-pass0-20** (C8, `M`) `languages_desc` is never read, so **769**
+      creatures ship with no language line while the source states one.
+      Three §5.8 reasons and Pass 0's two A5 constants were measured and
+      **stand** (K7): `lair_action_refs` (no `LAIR_ACTION` in any of 12,228 v2
+      rows), `gear_refs`/`spell_refs` (v1 `spells_json` 41 corpus-wide, 0 in
+      `cc`), `trait.trait_kind` (source column null on 1,016/1,016) and
+      `legendary_action_uses` = 3 (v1 says 3 on 20/20; the corpus's two
+      exceptions are `tob`'s). Measured and not filed: 2,253 child refs from
+      2,254 source rows, `alignment_ref` 341 + `alignment_note` 15 = 356/356,
+      17/17 languages resolved, and the 828 genuine second-damage rows that
+      have no schema counterpart (`N`).
+
+      **kaldı: 5 unit** — Dalga 4 opened at 15/20 and its `bfrd` question is
+      **decided**: `bfrd`'s monster rows are read inside the `a5e-mm` unit (the
+      pair is B2's test case), so the wave is 6 units and the total stays 20.
+      Order from here: `tob2`, `tob`, `tob3`, `a5e-mm` (+`bfrd`), `tob-2023`.
+      Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

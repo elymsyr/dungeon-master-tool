@@ -328,3 +328,58 @@ tags: [meta, changelog]
 - **Dalga 3 kapandı** — 20 tarama biriminin 14'ü bitti; sıradaki iş Dalga 4'ün
   ilk birimi `open5e-ccdx` (2.426 varlık). `bfrd` birim olarak Dalga 1'de
   sayıldığı için Dalga 4'te **6 birim** kaldı.
+
+## 2026-08-18 — F3 / Dalga 4 başladı: open5e-ccdx tarandı (15/20), dört yeni `pass0` bulgusu
+
+- **`open5e-ccdx`** — 2.426 varlık, dört kategori (`creature-action` 1.148,
+  `trait` 921, `monster` 356, `language` 1); taramanın **ilk canavar birimi**.
+  `verify_packs --doc ccdx` → eşleşme **356/356**, **7.009 ok · 0 disagree ·
+  0 absent · 0 unsourced · 1.780 unverifiable** (tam olarak 5 × 356, beşinin de
+  beyan edilmiş kuralı var). `gate_packs --packs /tmp/one` yeşil;
+  `dupe_census` "nothing installed" **0**, `--list-builtin-same` 0 satır;
+  `unmapped_report.json` yine 3 `alignment` satırı ve **üçü de `tob`/`tob-2023`'ün**;
+  `build_catalog` sonrası ağaç temiz, manifest satırı `Document.json` ile birebir
+  (*Creature Codex* / Kobold Press / `ogl-10a` / `5e-2014` / `1.1.0`).
+- 31 madde: **19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️** (⚠️: A3, B3, C8, D1).
+- **Dört yeni bulgu, dördü de `pass0`** — dördü de tek mapper'ın korpüs geneline
+  yayılan kusuru, bu yüzden paket sayacı 0'da kaldı. Defter 31 → **35**;
+  `check_findings.py` → *36 kayıt, 35 sayaca giriyor, temiz*.
+  - **F-pass0-17** (D1, `D`) — `_ensureChild`'ın içerik-hash'i **adı okumuyor**;
+    statblock saldırı metni kalıplı olduğu için aynı sayılara sahip iki farklı
+    silah tek varlıkta birleşiyor ve ilk ad kazanıyor. 7 pakette **382** çocuk
+    satır başka bir canavarın satırının adıyla render oluyor (Elite Kobold'un
+    *Mining Pick*'i `Bite (Ahuizotl)`); 6 `trait`'te ad mekanik taşıdığı için
+    kullanım sayısı da değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`).
+    Ne `verify_packs` (yalnız `monster`) ne `gate_packs` (ref çözülüyor, yanlış
+    karta) görebiliyor.
+  - **F-pass0-18** (C8, `M`) — §5.8 `damage_type_ref`'i "tipli 576 satırın hepsi
+    atlanan WotC belgelerinde" diye kapatıyor; sayı doğru ama **yanlış sütunu**
+    sayıyor: gerçek ek hasar yoksa `extra_damage_type` **birincil** hasar tipini
+    taşıyor — yayınlanan belgelerde **3.479 satır**.
+  - **F-pass0-19** (A3, `M`) — `nonmagical_attack_resistance/_immunity`
+    booleanları hiç okunmuyor; **618 canavar** koşulsuz b/p/s direnci/bağışıklığı
+    gösteriyor, büyülü silah dirençli görünüyor. Kayıp sütunlar **arasında**,
+    `verify_packs` satırları `ok` sayıyor.
+  - **F-pass0-20** (C8, `M`) — `languages_desc` hiç okunmuyor; yapılandırılmış
+    listesi boş **769 canavar** dilsiz görünüyor ("understands Common but can't
+    speak" 10, "…languages of its creator" 22, "all, telepathy 120 ft." 12).
+    Dolu listelerde de düzyazıdaki adlar düşüyor (`Umbral` 13, `Darakhul` 5).
+- **Ölçülüp doğrulanan, bulgu sayılmayan (K7):** `lair_action_refs` (12.228 v2
+  aksiyon satırında **0** `LAIR_ACTION`, v1 `cc`'de "lair" geçmiyor),
+  `gear_refs`/`spell_refs` (v1 `spells_json` korpüste 41, 37'si atlanan
+  `wotc-srd`, `cc`'de **0**), Pass 0'ın iki A5 sabiti — `trait.trait_kind`
+  (kaynak sütunu 1.016/1.016 `null`) ve `legendary_action_uses` = 3 (v1 20/20
+  "can take 3"; korpüsteki iki istisna `tob`'da, o birime devredildi). Ayrıca
+  çocuk kapsaması 2.254 kaynak satırından **2.253** ref, `alignment_ref` 341 +
+  `alignment_note` 15 = 356/356, 17 dilin 17'si çözülüyor, ve 828 gerçek ikinci
+  hasar satırının şemada karşılığı yok (`N`).
+- **Dalganın açılış kararı:** `bfrd`'nin canavar satırları **`a5e-mm` biriminin
+  içinde** okunur (çift, B2 istisnasının test vakası) — ayrı birim açılmaz,
+  Dalga 4 = 6 birim, toplam 20/20 korunur.
+- Kod değişmedi (tarama kuralı K1); `assets/open5e_packs/` değişmedi.
+  Güncellenen notlar: [[mapper_monster]]; `docs/pack_conformance_findings.md`,
+  `docs/pack_conformance_plan.md`, `docs/open5e_content_audit.md` (§0 · §5.8'de
+  üç satır düzeltildi/doğrulandı + iki yeni satır · §6 F3).
+- **Sıradaki:** Dalga 4'ün ikinci birimi `open5e-tob2` (2.607 varlık); dört yeni
+  `pass0` kaydının `tob2` payı ölçüldü (30 / 506 / 107 / 99) — o birimin işi
+  bunları **doğrulayıp** dağılım tablolarına yazmak, yeni kayıt açmak değil.
