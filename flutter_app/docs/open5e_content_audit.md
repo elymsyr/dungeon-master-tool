@@ -102,17 +102,19 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 15 of the 20 units are scanned — Wave 4 has started** (Pass 0,
+**F3 is running: 16 of the 20 units are scanned — Wave 4 is under way** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
 class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`,
-`vom`, `ccdx`) and the ledger holds **35** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`ccdx`, 2,426 entities — the first
-`monster` unit, four categories read together) measured `verify_packs --doc
-ccdx` at **7,009 ok / 0 disagree / 0 absent / 0 unsourced / 1,780
-unverifiable**, match coverage **356/356**, and scored its 31 items
-**19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**. The pack's own data is clean; **all four ⚠️ are
-corpus-wide mapper defects**, so all four records are scoped `pass0` and the
-pack counter stays 0.
+`vom`, `ccdx`, `tob2`) and the ledger holds **36** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`tob2`, 2,607 entities) measured
+`verify_packs --doc tob2` at **7,664 ok / 0 disagree / 0 absent / 0 unsourced /
+1,915 unverifiable**, match coverage **383/383**, and scored its 31 items
+**19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**. Its child side is cleaner than `ccdx`'s: all
+**2,345** source child rows are referenced by their parent and the unique ref
+union is exactly the 1,209 `creature-action` entities the pack ships — **0 lost
+rows, 0 orphans**. `tob2` **confirmed** all four of `ccdx`'s corpus records by
+independent measurement (F-pass0-17 → 30, -18 → 506, -19 → 107, -20 → 99) and
+opened **one** new one, also corpus-scoped.
 
 **F-pass0-17** (D1, `D`): `_ensureChild`'s content hash is type + description +
 attributes — **the name is not in it** — and statblock attack text is formulaic,
@@ -148,6 +150,18 @@ at all while the source says *"understands Common but can't speak"* (10 in
 120 ft."* (12). Even filled lists lose names the prose keeps — `Umbral` ×13,
 `Darakhul` ×5, `Aquan` ×4.
 
+**F-pass0-21** (A3, `M`, opened by `tob2`): `CreatureAction.limited_to_form` is
+never read. Aniwye — an ogre/giant/skunk shapechanger — has `Rock` marked
+*Giant Form Only* and `Bite`/`Claw` marked *Skunk Form Only* upstream; all three
+ship unconditional, so the card grants a permission the source withholds. The
+qualifier lives in the column on **262** rows corpus-wide (**218** in shipping
+documents; `a5e-mm` 60, `tob-2023` 48, `bfrd` 37, `tob2` 30, `ccdx` 24, `tob` 18,
+`tob3` 1) and only **1** of those repeats it in the prose. Upstream's *other*
+convention — writing `(Skunk Form Only)` at the head of `desc` — is used on 13
+rows, and on those the information does reach the card, which is what makes the
+loss visible: the same creature's `Deadly Musk` keeps its qualifier while its
+`Bite` does not.
+
 Three §5.8 reasons were measured and **stand** (K7): `lair_action_refs` (there
 is no `LAIR_ACTION` in any of the 12,228 v2 action rows, and v1 `cc` never says
 "lair"), `gear_refs`/`spell_refs` (v1 `spells_json` is filled on 41 rows corpus-
@@ -156,19 +170,26 @@ constants — `trait.trait_kind` (`CreatureTrait.type` is null on 1,016/1,016) a
 `legendary_action_uses` = 3 (v1 says "can take 3 legendary actions" on 20/20;
 the corpus's only two exceptions are in `tob`, handed to that unit). Also
 measured and *not* filed: child coverage is 2,253 refs from 2,254 source rows
-(one mis-segmented row dropped), `alignment_ref` 341 + `alignment_note` 15 =
-356/356, all 17 source languages resolve, and the 828 genuine second-damage rows
-have no schema counterpart at all (`N`).
+(one mis-segmented row dropped in `ccdx`, **none** in `tob2`), `alignment_ref` +
+`alignment_note` sum to the full category in both units, all source languages
+resolve, and the 828 genuine second-damage rows have no schema counterpart at
+all (`N`). `tob2` re-read both A5 constants and both held there too
+(`CreatureTrait.type` null on 1,060/1,060; v1 `legendary_desc` "can take 3" on
+9/9), and its `legendary_action_cost` (29 filled rows) has no schema twin but
+already rides in the action name (*"Wing Attack (Costs 2 Actions)"*).
 
 **Wave 4's opening decision:** `bfrd`'s monster rows are read **inside the
 `a5e-mm` unit** rather than as a separate unit — the `a5e-mm` ⟷ `bfrd` pair is
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**The next open phase is F3** (continues at Wave 4's second unit —
-`open5e-tob2`, 2,607 entities; its share of the four new `pass0` records is
-already measured — 30 / 506 / 107 / 99 — and the unit's job is to **verify**
-those rows into the distribution tables, not to open new records).
+**The next open phase is F3** (continues at Wave 4's third unit —
+`open5e-tob`, 2,734 entities. Two jobs are already named for it: the corpus's
+only two *"can take 1 legendary action"* creatures are `tob`'s, so the
+`legendary_action_uses` = 3 constant is **wrong there** and a record should be
+opened; and `tob` ⟷ `tob-2023` is L4's real duplication pair, where B2's
+exception is actually tested — `tob2`'s family overlap was 155–176 shared names
+with **zero** `monster` collisions).
 ---
 
 ## 0. Start here
@@ -2659,6 +2680,7 @@ against the pinned snapshot rather than against the rationale it was filed with.
 | `monster.lair_action_refs` | ⚪ | **Reason was wrong** — filed `M`/`S` "mapper emits it; no shipped creature has one". `CreatureAction.action_type` has exactly four values corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873 · `REACTION` 579). There is no lair bucket in *any* document, shipped or skipped. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — 0 `LAIR_ACTION` in 12,228 v2 rows, and the v1 fallback has none either (`cc`'s `legendary_desc` and `desc` never say "lair") |
 | `monster.gear_refs`, `monster.spell_refs` | ⛔ | **§2.4's last open re-open, closed here.** v2 `Creature` has no gear, item or spell column at all; v1's `spells_json` is populated on **41 of 3,207** monsters, **37 of them in the skipped `wotc-srd`** — the ceiling in shipping documents is **4 monsters (tdcs)**, whose Spellcasting trait already prints the list. A B8-shaped v1 backfill for 0.14% of the category is not written. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — `cc`'s `spells_json` is empty on 356/356 |
 | `monster.cr_helper` | ⚪ | app-only encounter-building aid |
+| `creature-action` (the form qualifier) | ⚠️ | **New row, F3/`tob2` 2026-08-18.** `CreatureAction.limited_to_form` (*"Skunk Form Only"*, *"Giant Form Only"*) is filled on **262** rows corpus-wide, **218** in shipping documents, and is never read — so a shapechanger's form-locked attack ships as unconditional. Only **1** of the 262 repeats the qualifier in `desc`; a separate 13 rows carry it *only* in `desc` and those do reach the card, which is how the loss shows: Aniwye's `Deadly Musk` keeps its qualifier, its `Rock` does not. No schema field exists, but the name suffix (`Wing Attack (Costs 2 Actions)`) and the prose prefix are both established conventions. See **F-pass0-21** |
 | `monster.resistance_refs` / `damage_immunity_refs` (the "nonmagical" qualifier) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** Upstream splits the qualifier across two columns: the flat list (`['bludgeoning','piercing','slashing']`) and a `nonmagical_attack_resistance` / `…_immunity` boolean, with the full sentence in `damage_*_display`. The mapper reads only the list, so **618 shipping creatures** (514 resistance + 104 immunity) claim the resistance **unconditionally** — a magic weapon reads as resisted. `verify_packs` calls these rows `ok`; the loss is *between* columns. The schema has no `resistance_note` twin for `alignment_note`, so the decision is "read it" **and** "where to write it". See **F-pass0-19** |
 | `monster.language_refs` (the qualified statements) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** `Creature.languages_desc` is filled on 354 of `ccdx`'s 356 rows and is never read. **769 shipping creatures** whose structured `languages` list is empty ship with no language line at all, though the source says *"understands Common but can't speak"* (10), *"understands the languages of its creator"* (22), *"all, telepathy 120 ft."* (12). Filled lists lose names too — `Umbral` ×13, `Darakhul` ×5, `Aquan` ×4, `Common` ×3 appear only in the prose. The 17 languages the list *does* carry all resolve (B9's `void-speech` included). See **F-pass0-20** |
 | `magic-item.cost_gp` | ⛔ | **the "confirm the source really is 0" row, confirmed.** `MagicItem.cost` is `0.00` on **1,063 of 1,063** shipping (`vom`) rows and on 1,255 of 1,256 SRD rows. Writing anything would be pricing invention |
@@ -4814,11 +4836,30 @@ procedure, and the ledger have different lifetimes:
       17/17 languages resolved, and the 828 genuine second-damage rows that
       have no schema counterpart (`N`).
 
-      **kaldı: 5 unit** — Dalga 4 opened at 15/20 and its `bfrd` question is
-      **decided**: `bfrd`'s monster rows are read inside the `a5e-mm` unit (the
-      pair is B2's test case), so the wave is 6 units and the total stays 20.
-      Order from here: `tob2`, `tob`, `tob3`, `a5e-mm` (+`bfrd`), `tob-2023`.
-      Next
+      `tob2` (2026-08-18, unit 16/20) read 2,607 entities — **7,664 ok /
+      0 disagree / 0 absent / 0 unsourced / 1,915 unverifiable**, 383/383
+      coverage, gate green, census 0, no catalog drift, **19 ✅ · 7 ➖ · 1 ⛔ ·
+      4 ⚠️**. Its child side has **no** loss at all: 2,345/2,345 source rows
+      referenced, unique ref union exactly the 1,209 shipped `creature-action`
+      entities, 0 orphans. All four of `ccdx`'s corpus records were re-measured
+      independently and **held** (F-pass0-17 → 30, -18 → 506, -19 → 107,
+      -20 → 99); F-pass0-17 also survived a stricter parent-scoped re-run
+      (which is worth applying to `a5e-mm`'s 106 in its own unit). One new
+      record, again `pass0`: **F-pass0-21** (A3, `M`) — `limited_to_form` is
+      never read, so **218** shipping attack rows drop a shapechanger's form
+      restriction and read as unconditional. Confirmed and not filed: `tob2`'s
+      only action-less monster (`Boomer`) is honest — its single source row is a
+      `REACTION` and landed in `reaction_refs`; both A5 constants hold here
+      (`CreatureTrait.type` null 1,060/1,060, v1 "can take 3" on 9/9); the
+      family overlap is 155–176 shared names against `tob`/`tob3`/`tob-2023`
+      with **zero** `monster` collisions, which is exactly B2's written
+      exception; and none of `unmapped_report`'s three `alignment` rows are
+      `tob2`'s.
+
+      **kaldı: 4 unit** — Wave 4's `bfrd` question is **decided**: `bfrd`'s
+      monster rows are read inside the `a5e-mm` unit (the pair is B2's test
+      case), so the wave is 6 units and the total stays 20. Order from here:
+      `tob`, `tob3`, `a5e-mm` (+`bfrd`), `tob-2023`. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

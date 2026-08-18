@@ -4,19 +4,16 @@
 · **Yol haritası:** `open5e_content_audit.md`
 
 > **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
-> **Dalga 4 başladı** (`ccdx` — 2026-08-18), 35 bulgu.** 20 tarama biriminin
-> **15'i** kapandı. Sıradaki iş **Dalga 4'ün ikinci birimi: `tob2`**
-> (`tob`, `tob3`, `a5e-mm`, `tob-2023` ve `bfrd`'nin canavar satırları onu
-> izliyor). `ccdx` birimi dört yeni kayıt açtı ve dördü de **`pass0`**
-> kapsamında, çünkü dördü de tek mapper'ın korpüs geneline yayılan kusuru —
-> **F-pass0-17** (içerik-hash'i adı okumuyor, 382 çocuk satır başka bir
-> canavarın satırının adıyla render oluyor; 6'sında kullanım sayısı değişiyor),
-> **F-pass0-18** (`damage_type_ref` 0%, tip komşu `extra_damage_type`
-> sütununda, 3.479 yayınlanan satırda), **F-pass0-19**
-> (`nonmagical_attack_*` booleanları okunmuyor, 618 canavar koşulsuz b/p/s
-> direnci gösteriyor), **F-pass0-20** (`languages_desc` okunmuyor, 769 canavar
-> dilsiz görünüyor). `ccdx`'in kendi verisi temiz: `verify_packs` 7.009 `ok`
-> / 0 `disagree` / 0 `absent` / 0 `unsourced`, eşleşme 356/356.
+> **Dalga 4 sürüyor** (`ccdx`, `tob2` — 2026-08-18), 36 bulgu.** 20 tarama
+> biriminin **16'sı** kapandı. Sıradaki iş **Dalga 4'ün üçüncü birimi: `tob`**
+> (`tob3`, `a5e-mm` (+`bfrd` canavarları) ve `tob-2023` onu izliyor).
+> `tob2` birimi `ccdx`'in dört `pass0` kaydını **doğruladı** (F-pass0-17 → 30,
+> -18 → 506, -19 → 107, -20 → 99; dördü de bağımsız ölçümle tuttu) ve **bir**
+> yeni kayıt açtı: **F-pass0-21** (`limited_to_form` okunmuyor — şekil değiştiren
+> canavarların yalnız tek biçimde kullanabildiği 218 saldırı satırı kartta
+> koşulsuz duruyor). O da `pass0`, çünkü kusur mapper'ın. `tob2`'nin kendi
+> verisi temiz: `verify_packs` 7.664 `ok` / 0 `disagree` / 0 `absent` /
+> 0 `unsourced`, eşleşme 383/383, çocuk satır kaybı **0** (2.345/2.345).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -104,7 +101,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 35 | 0 | 0 | 0 | 0 | **35** |
+| 0 | 36 | 0 | 0 | 0 | 0 | **36** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -112,7 +109,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 11 | B3 | 1 | C3 | 1 |
+| A3 | 12 | B3 | 1 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 2 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
@@ -126,7 +123,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 20 | `open5e-vom` | 3 |
+| `pass0` | 21 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -2521,7 +2518,7 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 (16.317 çocuk satırın %74,7'si korpüsün kopya yükü, §3.2) — kusur, hash'in
 **adı dışarıda bırakması**.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | `creature-action` | `trait` | Etkilenen |
 |---|--:|--:|--:|
@@ -2620,7 +2617,7 @@ Kapatma gerekçesi doğru sütunu sayıyor ama yanlış soruyu soruyor (taraman�
 gerçek ek hasar satırının ikinci hasarı şemada hiç karşılığı olmayan bir veri —
 o ayrı bir açık, bu bulgunun konusu değil.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | `extra_damage_type` birincil tipi taşıyan satır |
 |---|--:|
@@ -2699,7 +2696,7 @@ ref listesi, `alignment_note`'un `alignment_ref` yanında yaptığı işi yapan 
 `resistance_note` yok — yani karar yalnız "oku/okuma" değil, "nereye yaz"ı da
 kapsıyor.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | direnç | bağışıklık | Etkilenen |
 |---|--:|--:|--:|
@@ -2788,7 +2785,7 @@ telepati kısmı yedekli; asıl kayıp cümlenin dil kısmı. Şema tarafında d
 `language_refs` düz bir ref listesi — nitelikli ifadeyi taşıyacak yer yok
 (F-pass0-19'la aynı biçimsel sorun, farklı alan).
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | Listesi boş, düzyazısı dolu canavar |
 |---|--:|
@@ -2831,6 +2828,104 @@ EOF
 3. **Aynen bırak** — §5.8'e "`languages_desc` okunmuyor; nitelikli dil ifadeleri
    düşüyor" satırı yazılır (C8), alan kaynağın yapılandırılmış kısmının sadık
    yansıması sayılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-21 — biçim niteliği düşüyor: şekil değiştiren canavarın yalnız tek biçimde kullanabildiği saldırı kartta koşulsuz duruyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 218 aksiyon satırı (7 yayınlanan belge; `open5e-tob2` 30) |
+| **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
+| **Kategori / etki** | `creature-action` — `CreatureAction.limited_to_form` hiç okunmuyor; şekil değiştiren 218 satırda kart *"Giant Form Only"* / *"Skunk Form Only"* niteliğini düşürüyor, saldırı her biçimde kullanılabilir görünüyor |
+| **Cause code (öneri)** | `M` — kaynakta ayrı bir sütun var (`limited_to_form`, korpüste 262 satırda dolu), `mappers/monster.dart` `_actionRow` bu sütuna hiç bakmıyor; şemada karşılığı olan alan yok ama **upstream'in kendi ikinci geleneği** (niteliği `desc`'in başına parantezle yazmak) 13 satırda zaten kullanılıyor ve o satırlarda bilgi karta iniyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `tob2`'nin Aniwye'si (ogre / dev / kokarca üç biçimli) dört saldırı
+satırı taşıyor ve her birinin kaynakta bir biçim niteliği var: `Bite` ve `Claw`
+*Skunk Form Only*, `Rock` *Giant Form Only*, `Slam` *Giant or Ogre Form Only*.
+Pakete inen dört `creature-action` varlığının hiçbirinde bu nitelik yok — ne
+adda, ne metinde, ne bir öznitelikte. Kart kokarca biçimindeki canavara
+*"Rock — Ranged Weapon Attack: +7 to hit, range 60/240 ft."* diyor.
+
+Nitelik kaynakta **iki ayrı gelenekle** duruyor ve mapper yalnız ikincisini
+taşıyor:
+
+- **Sütun** (`limited_to_form`): korpüste **262** satır, yalnız **1**'i niteliği
+  `desc` metninde de tekrarlıyor → 261 satırda bilgi sütundan başka yerde yok;
+- **Düzyazı** (`desc` *"(Skunk Form Only) The aniwye releases…"*): 13 satır,
+  sütunu boş → `description` aynen indiği için bu 13'ünde bilgi karta ulaşıyor.
+
+Aynı canavarın `Deadly Musk` satırı ikinci gelenekle yazılmış, bu yüzden kartta
+niteliğiyle duruyor; `Bite`/`Claw`/`Rock`/`Slam` birinci gelenekle yazılmış ve
+niteliksiz. Yani kaybın sebebi verinin yokluğu değil, upstream'in tutarsızlığı
+ve mapper'ın tek geleneği okuması.
+
+**Neden önemli.** Şekil değiştiren canavar masada biçim biçim oynanır; hangi
+saldırının hangi biçimde açık olduğu statblock'un mekanik çekirdeği. Kart bu
+niteliği düşürünce **kaynağın koymadığı bir izin** veriliyor (A3), ve hata
+sessiz: `verify_packs` yalnız `monster` satırlarını doğruluyor, `gate_packs`
+ref'lere bakıyor, ikisi de çocuk satırın metnini okumuyor. `Multiattack`
+satırları biçimleri düzyazıda anlatıyor (*"In ogre or giant form, the aniwye
+makes two slam attacks…"*), yani kart kendi kendisiyle çelişiyor: multiattack
+biçimden söz ediyor, tekil saldırılar etmiyor.
+
+*Not:* aynı ebeveynde metni birebir aynı olup **biçimi farklı** satır korpüste
+**yok** (0), yani F-pass0-17'nin birleştirmesi bu bilgiyi ayrıca bozmuyor —
+iki kusur bağımsız.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | `limited_to_form` dolu aksiyon satırı |
+|---|--:|
+| `open5e-a5e-mm` | 60 |
+| `open5e-tob-2023` | 48 |
+| `open5e-bfrd` | 37 |
+| `open5e-tob2` | 30 |
+| `open5e-ccdx` | 24 |
+| `open5e-tob` | 18 |
+| `open5e-tob3` | 1 |
+| **Toplam (yayınlanan)** | **218** |
+| *(atlanan `srd-2014` 27 + `srd-2024` 17)* | *44* |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — nitelik sütunda mı, düzyazıda mı
+python3 - <<'EOF'
+import json,glob,collections,re
+col=collections.Counter(); prose=collections.Counter(); both=0
+pat=re.compile(r'^\(([^)]*Only)\)')
+for p in sorted(glob.glob('../open5e-api-staging/data/v2/*/*/CreatureAction.json')):
+    slug=p.split('/')[-2]
+    for x in json.load(open(p,encoding='utf-8')):
+        f=x['fields']; d=(f.get('desc') or '').strip(); lf=f.get('limited_to_form')
+        if lf:
+            col[slug]+=1
+            if lf.lower() in d.lower(): both+=1
+        elif pat.match(d): prose[slug]+=1
+print('sütunda:',dict(col.most_common()),'toplam',sum(col.values()))
+print('  metinde de tekrarlanan:',both)
+print('yalnız düzyazıda:',dict(prose.most_common()),'toplam',sum(prose.values()))
+EOF
+# sütunda: {'a5e-mm': 60, 'tob-2023': 48, 'bfrd': 37, 'tob2': 30, 'srd-2014': 27,
+#           'ccdx': 24, 'tob': 18, 'srd-2024': 17, 'tob3': 1} toplam 262
+#   metinde de tekrarlanan: 1
+# yalnız düzyazıda: {'tob-2023': 8, 'ccdx': 3, 'tob': 1, 'tob2': 1} toplam 13
+```
+
+**Seçenekler.**
+1. **Adın sonuna ekle** — `_actionRow` adı `Rock (Giant Form Only)` yapar.
+   Upstream'in "Wing Attack (Costs 2 Actions)" geleneğiyle aynı biçim, ek şema
+   alanı gerekmez, F-pass0-17'nin ad birleşmesini de bu satırlarda çözer
+   (ad artık ayırt edici). Karşılığı: ad uzuyor.
+2. **Metnin başına ekle** — `description`'ın önüne `(Skunk Form Only) `
+   yazılır; upstream'in 13 satırda zaten kullandığı gelenek, 218 satır ona
+   hizalanır. Ad bozulmaz, kart metni kaynağa birebir benzer.
+3. **Aynen bırak** — §5.8'e "`limited_to_form` okunmuyor; şekil değiştiren
+   canavarların biçim niteliği düşüyor" satırı yazılır (C8), kayıp bilinçli
+   kabul edilir.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
