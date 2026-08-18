@@ -3,9 +3,10 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + **Dalga 1 bitti** (2026-08-18),
-> 18 bulgu.** Sıradaki iş **Dalga 2 → beş büyü paketi** (`kp`, `wz`, `deepm`,
-> `deepmx`, `spells-that-dont-suck`; 833 büyü).
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2 başladı**
+> (`kp`, 2026-08-18), 19 bulgu.** Sıradaki iş **Dalga 2'nin 2. birimi:
+> `open5e-wz`** (43 büyü), sonra `deepmx` (64), `spells-that-dont-suck` (180),
+> `deepm` (515).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -93,7 +94,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 18 | 0 | 0 | 0 | 0 | **18** |
+| 0 | 19 | 0 | 0 | 0 | 0 | **19** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -101,7 +102,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 2 | B3 | 1 | C3 | 0 |
+| A3 | 3 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
@@ -115,7 +116,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 10 | `open5e-vom` | 0 |
+| `pass0` | 11 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -1611,7 +1612,86 @@ for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFe
 
 ### Dalga 2 — büyü paketleri
 
-*(henüz yok)*
+### F-pass0-11 — kaynağın `permanent` dediği 25 büyü kartta `Until Dispelled` yazıyor: sözlükte "kalıcı" satırı yok, mapper en yakınına yuvarlıyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli, beş büyü paketine yayılı (dağılım aşağıda) |
+| **Checklist** | checklist A3 (uydurma değer yok) |
+| **Kategori / etki** | `spell` — `duration_unit_ref`; kaynağın `duration` sütunu `permanent` (22), `permanent until discharged` (2), `permanent; one generation` (1) diyen **25** satırda karta `Until Dispelled` yazılıyor. `kp`'de 2 kart: `Curse of Formlessness`, `Incantation of Lies Made Truth` |
+| **Cause code (öneri)** | `M` — `mappers/spell.dart:237` (`if (d.startsWith('permanent')) return (null, 'Until Dispelled');`); Tier-0 `duration-unit` sözlüğünde yedi satır var (`lookups.dart:1388-1396`) ve hiçbiri "kalıcı" değil |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Mapper'ın yazılı kuralı "serbest metin süreleri altı kanonik satıra
+oturt, oturmayan `Special` olsun" (satır 229-231). `instantaneous`, `10 minutes`,
+`until dispelled` bu kurala uyuyor. `permanent` ise **ayrı bir satırla** ele
+alınıp `Until Dispelled`'a gönderiliyor — yani "oturmuyorsa `Special`" yolundan
+çıkarılıp karta kaynağın söylemediği bir mekanik iddia yazılıyor: büyü
+*dağıtılabilir*. `permanent; one generation` ve `permanent until discharged`
+satırlarında kayıp daha da somut — kaynağın verdiği bitiş koşulu düşüyor.
+
+`verify_packs --doc kp --only spell` **200 ok / 0 disagree / 0 absent /
+0 unsourced** diyor ve haklı: kural tablosunda `duration_unit_ref` için
+karşılaştırma yok, süre metni serbest metin. Bu bulgu da ölçümden değil
+**okumadan** geldi (plan §4 Adım 3-4).
+
+**Neden önemli.** Aynı kart gövdesinde süre düzyazısı yok — `kp`'nin iki büyüsünün
+`description`'ı süreye hiç değinmiyor — yani kullanıcının süreyi göreceği tek yer
+bu alan. `Special` "kartın gövdesine bak" der; `Until Dispelled` "*dispel magic*
+bunu bitirir" der. İkincisi kaynağın yazmadığı bir kuraldır.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynakta kaç satır "permanent" ile başlıyor, hangi pakette
+python3 - <<'EOF'
+import json,glob,collections,os
+per=collections.Counter(); raw=collections.Counter()
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=os.path.basename(os.path.dirname(f))
+    for r in json.load(open(f,encoding='utf-8')):
+        d=(r['fields'].get('duration') or '').strip().lower()
+        if d.startswith('permanent'): per[doc]+=1; raw[d]+=1
+print(sum(per.values()), dict(per), dict(raw))
+EOF
+# 25 {'spells-that-dont-suck': 1, 'deepmx': 1, 'deepm': 9, 'kp': 2, 'a5e-ag': 12}
+#    {'permanent': 22, 'permanent; one generation': 1, 'permanent until discharged': 2}
+
+# kartta ne yazıyor
+python3 -c "
+import json
+p=json.load(open('assets/open5e_packs/open5e-kp.pkg.json'))
+for e in p['entities'].values():
+    if e['name'] in ('Curse of Formlessness','Incantation of Lies Made Truth'):
+        print(e['name'], '->', e['attributes']['duration_unit_ref']['name'])"
+# Curse of Formlessness -> Until Dispelled
+# Incantation of Lies Made Truth -> Until Dispelled
+```
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-a5e-ag` | 12 |
+| `open5e-deepm` | 9 |
+| `open5e-kp` | 2 |
+| `open5e-deepmx` | 1 |
+| `open5e-spells-that-dont-suck` | 1 |
+| **Toplam** | **25** |
+
+**Seçenekler.**
+1. **`permanent` → `Special`** — tek satır silmek (`spell.dart:237`); kart
+   "özel" der, kullanıcı gövdeye bakar, uydurma iddia kalkar. `dispelled`
+   içeren 2 satır zaten bir üstteki kuraldan `Until Dispelled` alır ve orada
+   kalır. Ölçek: 23 kart değişir, 19 paketin 5'i.
+2. **Tier-0'a `Permanent` satırı ekle** — sözlük 7 → 8 satır
+   (`is_concentration_compatible: false`); en sadık yol, ama built-in şema
+   değişikliği ve şema sürümü demek, üstelik SRD'nin kendi büyülerinde
+   karşılığı yok.
+3. **Kapsam dışı** — 5e'de kalıcı büyülerin çoğu fiilen *dispel magic*'e
+   açıktır; mapper bunu kural olarak yazmış sayılır. O hâlde gerekçe koddan
+   §5.6'ya taşınmalı (bugün yalnız satır içi bir kod satırı, yazılı karar değil).
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ### Dalga 3 — sihirli eşyalar
 
