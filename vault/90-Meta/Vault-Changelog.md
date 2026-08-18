@@ -157,3 +157,27 @@ tags: [meta, changelog]
 - **Tek kategorili paketin ucuz kontrolü işe yaradı:** 31 kartın `description`'ı kaynağın `desc`'iyle **bayt bayt aynı** (9 satırdaki `**At Higher Levels.**` eki dahil), adlar 31/31 aynı — hatta kaynağın kendi bozuk cümlesi (`Selfish Wish`) aynen geliyor, yani metin kaybı bu pakette yok ve bulgu ölçümden değil okumadan geldi (`duration_unit_ref` `verify.dart`'ın kural tablosunda **yok**).
 - **Bir aday düştü, bir ⚠️ yapısal.** `shape_size_unit` 5 alan kartının hepsinde null ama `area_size_ft` yazılıyor — mapper ve §5.6 "snapshot'ta feet dışında birim yok" diyor (K7). `class_refs` **required** olduğu hâlde 21/31: 7 kartta kaynakta sınıf yok (F-kuru-01 yeniden ölçüldü — 93/85, `kp 7 · deepm 75 · a5e-ag 3`, değişmedi), 3 kart yalnız `Anti Paladin` taşıyor ve o sınıfı hiçbir paket göndermiyor; ikisi de ⚪, ama zorunlu alan boş olduğu için A2 ✅ değil **⚠️**. `material_*` 0/31 = `S` (kaynakta `material` bir bool), korpüs geneli 369/1.297 dolu olduğu için §5.6'da satırı yok — gerekçe plana yazıldı (C8).
 - Kod değişmedi (tarama kuralı K1). → `flutter_app/docs/pack_conformance_plan.md` (Dalga 2 tablosu + `kp` sonuç bölümü + "Sonraki adım" → `open5e-wz`), `flutter_app/docs/pack_conformance_findings.md`, `flutter_app/docs/open5e_content_audit.md` §0 · §6 F3, [[mapper_spell]]
+
+## 2026-08-18 — F3 / Dalga 2'nin 2. birimi: open5e-wz tarandı (10/20)
+
+- `open5e-wz` (43 büyü, tek kategori) checklist'e karşı okundu:
+  `verify_packs --doc wz --only spell` **288 ok / 0 disagree / 0 absent /
+  0 unsourced / 96 unverifiable**, eşleşme 43/43; `gate_packs` yeşil,
+  `dupe_census` C "nothing installed" 0, `unmapped_report.json`'da sıfır satır,
+  `build_catalog` sonrası ağaç temiz. 31 madde: **22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️**.
+- **Üç yeni bulgu ve üçü de `spell`'in süre alanında** — hiçbiri araca düşmedi,
+  çünkü `duration_unit_ref` `verify.dart`'ın kural tablosunda yok:
+  **F-wz-01** (`1 hour/caster level` → `Hours 1`), **F-wz-02**
+  (`concentration + 1 round` yazan büyünün **zorunlu** `requires_concentration`
+  alanı `false`; mapper yalnız bool sütununu okuyor), **F-pass0-12** (yayılan —
+  `1 year` süreler `Special` + `null`, korpüste 3 kart: `deepm` 2, `wz` 1).
+  Defter 19 → 22, `check_findings.py` temiz. [[mapper_spell]] üç satırla güncellendi.
+- **Devralınan uyarı ölçüldü ve tuttu:** F-pass0-11 `wz` için 0 bekliyordu,
+  kaynakta `permanent` ile başlayan satır 0.
+- **Ölen aday:** `wz`'nin `SpellCastingOption.json`'ı boş değil (161 satır, 60'ı
+  veri taşıyor) — ama "yükleme" kararının yazılı gerekçesi `desc` sütunu üzerine
+  kurulu ve payload taşıyan 9 büyünün 9'unun da `higher_level` düzyazısı var (K7).
+- **Ders:** `class_refs` `kp`'de 21/31, `wz`'de 43/43 — aynı alan, farklı verdict.
+  A2 birime göre **ölçülür**, devralınmaz. Ucuz `desc` bayt karşılaştırması ikinci
+  kez de 43/43 tuttu.
+- Kod değişmedi (tarama kuralı K1).

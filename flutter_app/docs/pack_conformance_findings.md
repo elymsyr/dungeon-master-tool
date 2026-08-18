@@ -3,9 +3,9 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2 başladı**
-> (`kp`, 2026-08-18), 19 bulgu.** Sıradaki iş **Dalga 2'nin 2. birimi:
-> `open5e-wz`** (43 büyü), sonra `deepmx` (64), `spells-that-dont-suck` (180),
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk iki
+> birimi tarandı** (`kp` + `wz`, 2026-08-18), 22 bulgu.** Sıradaki iş **Dalga 2'nin
+> 3. birimi: `open5e-deepmx`** (64 büyü), sonra `spells-that-dont-suck` (180),
 > `deepm` (515).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
@@ -94,7 +94,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 19 | 0 | 0 | 0 | 0 | **19** |
+| 0 | 22 | 0 | 0 | 0 | 0 | **22** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -102,7 +102,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 3 | B3 | 1 | C3 | 0 |
+| A3 | 6 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
@@ -116,7 +116,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 11 | `open5e-vom` | 0 |
+| `pass0` | 12 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -125,7 +125,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | `open5e-toh` | 2 | `open5e-a5e-mm` | 0 |
 | `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 0 |
 | `open5e-kp` | 0 | | |
-| `open5e-wz` | 0 | | |
+| `open5e-wz` | 2 | | |
 | `open5e-deepmx` | 0 | | |
 | `open5e-spells-that-dont-suck` | 0 | | |
 | `open5e-deepm` | 0 | | |
@@ -1690,6 +1690,183 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 5e'de kalıcı büyülerin çoğu fiilen *dispel magic*'e
    açıktır; mapper bunu kural olarak yazmış sayılır. O hâlde gerekçe koddan
    §5.6'ya taşınmalı (bugün yalnız satır içi bir kod satırı, yazılı karar değil).
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-wz-01 — kaynak "1 hour/caster level" diyor, kart düpedüz "1 Hour" yazıyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-wz` — 1 kart (`Order of Revenge`); korpüs geneli de 1 (ölçüldü) |
+| **Checklist** | checklist A3 (uydurma değer yok) |
+| **Kategori / etki** | `spell` — `duration_amount` + `duration_unit_ref`; kaynağın `duration` sütunu `1 hour/caster level`, kartta `Hours` / `1` |
+| **Cause code (öneri)** | `M` — `mappers/spell.dart:238` — süre regexi ilk sayı+birim çiftini kapıp arkasındaki `/caster level`'ı görmezden geliyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Regex serbest metnin ilk sayı+birim çiftini alıyor, kalanına bakmıyor.
+`1 hour/caster level` böylece `Hours 1` oluyor: 10. seviye bir büyücünün 10 saati
+karta 1 saat olarak iniyor. Fonksiyonun kendi yedeği (`spell.dart:248`,
+`return (null, 'Special')`) bu satır için dürüst olanı verirdi — "özel, gövdeye
+bak" der, yanlış bir sayı vermez.
+
+**Neden önemli.** Süre kartta yalnız bu iki alanda yaşıyor; `Order of Revenge`'in
+`description`'ı süreden hiç söz etmiyor ("…until the spell expires"), yani
+kullanıcının okuyabileceği başka yer yok. F-pass0-11 kaynağın söylemediği bir
+mekanik ekliyordu; bu kayıt kaynağın söylediği ölçeği **küçültüyor**.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — korpüsteki "…/level", "per …" süreleri
+python3 - <<'EOF'
+import json,glob
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    for r in json.load(open(f,encoding='utf-8')):
+        d=(r['fields'].get('duration') or '').lower()
+        if 'level' in d or ' per ' in d or '/' in d:
+            print(f.split('/data/')[1], r['fields']['name'], repr(d))
+EOF
+# v2/kobold-press/wz/Spell.json Order of Revenge '1 hour/caster level'
+
+python3 -c "
+import json
+p=json.load(open('assets/open5e_packs/open5e-wz.pkg.json'))
+for e in p['entities'].values():
+    if e['name']=='Order of Revenge':
+        a=e['attributes']; print(a['duration_unit_ref']['name'], a.get('duration_amount'))"
+# Hours 1
+```
+
+**Seçenekler.**
+1. **Regex'i kuyruk kontrolüyle sıkılaştır** — eşleşmeden sonra kalan metinde
+   `/`, `per`, `level` varsa `Special`'a düş. Tek satır, ölçek 1 kart.
+2. **`duration_text` alanı** — serbest metni olduğu gibi taşıyan bir alan
+   (F-pass0-12 de bunu çözer), ama built-in şema değişikliği demek.
+3. **Kapsam dışı** — 1 kart; o hâlde "ilk sayı yeterlidir" kararı `§5.6`'ya
+   yazılmalı, bugün yazılı değil.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-wz-02 — kaynağın süresi "concentration + 1 round", kart `requires_concentration: false` diyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-wz` — 1 kart (`Storm of Axes`); v2'de korpüs geneli de 1 (ölçüldü) |
+| **Checklist** | checklist A3 (uydurma değer yok) |
+| **Kategori / etki** | `spell` — `requires_concentration` (zorunlu alan); kaynağın `duration` sütunu `concentration + 1 round`, `concentration` sütunu `false` → kart `false` + `Rounds 1` |
+| **Cause code (öneri)** | `M` — `mappers/spell.dart:46` (`'requires_concentration': s['concentration'] == true`) yalnız bool sütunu okuyor, `duration` metnine hiç bakmıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Kaynak aynı mekaniği iki yere yazmış: `concentration` bool'u ve
+`duration` metni. `Storm of Axes`'te bool `false`, metin `concentration + 1 round`.
+Mapper bool'a inanıyor, kart "konsantrasyon gerekmez" diyor — kaynağın kendi
+satırıyla çelişen bir iddia. Süre tarafı da kırpılıyor: `Rounds 1`, yani
+"konsantrasyon boyunca + 1 tur" yerine yalnız 1 tur.
+
+İkinci satır aynı ailede ama sebebi farklı: `Eternal Echo`'nun **v1**
+`duration`'ı `Concentration`, **v2**'si `special`; bool iki tarafta da boş/`false`.
+Mapper v2 okuyor, kart `Special` + konsantrasyonsuz. Burada kayıp mapper'da değil
+kaynağın iki sürümü arasında (`S`), ama sonucu kullanıcı için aynı.
+
+**Neden önemli.** `requires_concentration` **zorunlu** bir şema alanı ve oyunda
+sert bir kural: aynı anda tek konsantrasyon büyüsü. Yanlış `false`, sihirbazın ve
+kart görünümünün taşıdığı en sık kullanılan kısıtı sessizce kaldırıyor.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — süre metninde "concentration" geçen satırlar
+python3 - <<'EOF'
+import json,glob
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json')+glob.glob('../open5e-api-staging/data/v1/*/Spell.json'):
+    for r in json.load(open(f,encoding='utf-8')):
+        fl=r['fields']; d=(fl.get('duration') or '').lower()
+        if 'concentration' in d:
+            print(f.split('/data/')[1], fl['name'], repr(fl.get('duration')), 'bool=', fl.get('concentration'))
+EOF
+# v2/kobold-press/wz/Spell.json  Storm of Axes  'concentration + 1 round' bool= False
+# v1/warlock/Spell.json          Eternal Echo   'Concentration'           bool= None
+# v1/warlock/Spell.json          Storm of Axes  'Concentration + 1 round' bool= None
+
+python3 -c "
+import json
+p=json.load(open('assets/open5e_packs/open5e-wz.pkg.json'))
+for e in p['entities'].values():
+    if e['name'] in ('Storm of Axes','Eternal Echo'):
+        a=e['attributes']; print(e['name'], a['requires_concentration'], a['duration_unit_ref']['name'], a.get('duration_amount'))"
+# Storm of Axes False Rounds 1
+# Eternal Echo  False Special None
+```
+
+**Seçenekler.**
+1. **Bool'u metinle birlikte oku** — `duration` metni `concentration` içeriyorsa
+   `requires_concentration: true`. İki satırlık mapper değişikliği; v2'de ölçek
+   1 kart, ama kural bütün paketler için doğru olur.
+2. **Yalnız kaydet, düzeltme** — kaynak tutarsızlığı olarak `S` say ve §5.6'ya
+   "bool otoritedir" cümlesini yaz. Bugün böyle bir cümle yok.
+3. **Kapsam dışı** — 1 kart. Ama alan zorunlu olduğu için sessiz yanlış değer,
+   boş alandan daha pahalı.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-12 — "1 year" süreler karta `Special` olarak iniyor, sayı büsbütün kayboluyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 3 kart (`open5e-wz` 1, `open5e-deepm` 2) |
+| **Checklist** | checklist A3 (uydurma değer yok — burada *eksik* değer) |
+| **Kategori / etki** | `spell` — `duration_unit_ref` + `duration_amount`; kaynağın `1 year` dediği satırlar kartta `Special` / `null` |
+| **Cause code (öneri)** | `M` — `mappers/spell.dart:238` regexi yalnız tur/dakika/saat/gün tanıyor, `year` yok; `lookups.dart:1388-1396` sözlüğünün en büyük birimi `Days` |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Kaynak ölçülebilir bir süre veriyor (`1 year`), kart hiçbir sayı
+taşımıyor. `Special` kanonik bir satır olduğu için ne `unmapped_report.json`'a
+ne de `verify_packs`'e düşüyor — `duration_unit_ref` kural tablosunda yok
+(F-pass0-11 ile aynı kör nokta). Şemada serbest metin süre alanı da olmadığı için
+"1 yıl" bilgisi paketten tamamen çıkıyor.
+
+**Neden önemli.** F-pass0-11 kaynağın söylemediğini ekliyor, bu kayıt kaynağın
+söylediğini siliyor — ikisi de aynı kök nedenden: yedi satırlık Tier-0 süre
+sözlüğü, üçüncü taraf metinlerinin kuyruğunu taşımıyor. `Days 365` yazılabilir
+olduğu için burada kayıp gereksiz.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-deepm` | 2 (`Bloom`, `Desolation`) |
+| `open5e-wz` | 1 (`Toxic Pollen`) |
+| **Toplam** | **3** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — yıl/hafta/ay ölçekli süreler
+python3 - <<'EOF'
+import json,glob
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    for r in json.load(open(f,encoding='utf-8')):
+        d=(r['fields'].get('duration') or '').lower()
+        if any(w in d for w in ('year','week','month')):
+            print(f.split('/data/')[1], r['fields']['name'], repr(d))
+EOF
+# v2/kobold-press/deepm/Spell.json Bloom '1 year'
+# v2/kobold-press/deepm/Spell.json Desolation '1 year'
+# v2/kobold-press/wz/Spell.json    Toxic Pollen '1 year'
+
+python3 -c "
+import json
+p=json.load(open('assets/open5e_packs/open5e-wz.pkg.json'))
+for e in p['entities'].values():
+    if e['name']=='Toxic Pollen':
+        a=e['attributes']; print(a['duration_unit_ref']['name'], a.get('duration_amount'))"
+# Special None
+```
+
+**Seçenekler.**
+1. **`year`/`week`/`month`'u güne çevir** — regexe üç birim ekle, `Days 365` /
+   `Days 7` / `Days 30` yaz. Ölçek 3 kart, sözlük değişmez.
+2. **`duration_text` alanı** — serbest metni taşı (F-wz-01 de bunu çözer);
+   built-in şema değişikliği.
+3. **Kapsam dışı** — 3 kart; o hâlde "`Special` kabul edilebilir kayıptır"
+   kararı §5.6'ya yazılmalı, bugün yazılı değil.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
