@@ -9,42 +9,46 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2'nin ilk dört
-> birimi tarandı** — `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`
-> (2026-08-17), `bfrd`'nin class/subclass satırları, `kp`, `wz`, `deepmx` ve
-> `spells-that-dont-suck` (2026-08-18).
-> **20 tarama biriminin 12'si kapandı**, defterde **27 bulgu** var, yirmi yedisi
-> de ❓ danışılacak (`python3 tool/check_findings.py` → *28 kayıt, 27 sayaca
-> giriyor, temiz*). `spells-that-dont-suck` üç bulgu üretti: **F-spells-that-dont-suck-01**
-> (`Self (60-foot radius)` menzilinin yarıçapı hiçbir alana yazılmıyor, 8 kart),
-> **F-spells-that-dont-suck-02** (malzeme metni fiyatı söylerken
-> `material_cost_gp` `0`, 5 kart) ve **F-pass0-15** (yayılan — `spell.effects`'in
-> ⚪ gerekçesinin "kaynakta yapılandırılmış hasar yok" yarısı yanlış;
-> `damage_roll` gönderilen belgelerde 303/1.297 dolu).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 bitti** — `a5e-gpg`,
+> `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17), `bfrd`'nin
+> class/subclass satırları, `kp`, `wz`, `deepmx`, `spells-that-dont-suck` ve
+> `deepm` (2026-08-18).
+> **20 tarama biriminin 13'ü kapandı**, defterde **28 bulgu** var, yirmi sekizi
+> de ❓ danışılacak (`python3 tool/check_findings.py` → *29 kayıt, 28 sayaca
+> giriyor, temiz*). `deepm` bir yeni kayıt açtı — **F-pass0-16** (45 kartın
+> malzeme metni fiyatı söylüyor, `material_cost_gp` boş) — ve **iki eski kaydı
+> düzeltti**: F-pass0-14 **7 → 4** kart (3 yanlış pozitif: metin *hedefin*
+> konsantrasyonundan söz ediyordu), F-pass0-13 **4 → 5** kart (`1 minute or
+> 1 hour` biçimi).
 >
-> **Sıradaki iş: Dalga 2'nin son birimi → `open5e-deepm` (515 büyü).** Bitince
-> Dalga 2 kapanır (13/20) ve Dalga 3 (sihirli eşyalar, `open5e-vom`) başlar.
-> `spells-that-dont-suck`'tan çıkan beş uyarı:
-> (1) **`deepm` bu dalganın en büyük birimi** (515 kart, 4 belge dosyası) —
-> örneklem kuralına sıkı sıkı uy, tam tablo taraması yalnız araç çıktısından
-> gelsin (K2);
-> (2) `deepm` üç devralınan kaydın **beklenen** tarafında duruyor: F-pass0-11
-> **9** satır, F-pass0-12 **2**, F-pass0-13 **2**, F-pass0-14 **2**
-> (`Caustic Touch`, `Stench of Rot`).
-> Komutlar yeniden çalıştırılır, sayı tutuyorsa **yeni kayıt açılmaz**;
-> (3) **`material_*` `deepm`'de canlı** — `material_description` 288/515 dolu ve
-> `material_cost_gp == 0` olan kart **0**; F-spells-that-dont-suck-02'nin `deepm`
-> beklentisi bu sıfırdır, doğrula ve geç;
-> (4) `SpellCastingOption.json`'ın "ölü" gerekçesi artık `desc`'in boşluğuna
-> değil, **içeriğin ebeveynin `higher_level`'ında zaten olmasına** dayanıyor
-> (`spells-that-dont-suck`: 60 satır, `desc` 37'sinde **dolu**, ama hepsi slot
-> bazlı kısaltma) — `deepm`'de aynı biçimde sına;
-> (5) ucuz `desc` karşılaştırması **kural uygulanmış** dizeyle yapılır
-> (`spell.dart:158`); `spells-that-dont-suck`'ta 87 satır `higher_level`
-> taşıyordu ve kural uygulanınca 180/180 birebir çıktı.
+> **Sıradaki iş: Dalga 3'ün tek birimi → `open5e-vom` (1.063 sihirli eşya).**
+> Dalga 2'den çıkan beş uyarı:
+> (1) **Kategori değişiyor.** `spell`'in beş birimi bitti; `magic-item`'ın
+> tarandığı ilk birim bu. `spell` için biriken sezgiler (süre regexi, malzeme
+> sütunları, `class_refs`) burada **hiç** işe yaramaz — checklist'i sıfırdan
+> uygula, C5'i C3 gibi okuma;
+> (2) **Bilinen açık #5 ⛔** (`magic-item.cost_gp`): pakette alan **0/1.063**,
+> yani "her yerde 0 fiyat" değil **hiç fiyat yok**; kaynak sütunu
+> (`MagicItem.cost`) 1.063/1.063 `0.00`. §5.8'in yazılı ⛔ gerekçesi var → tek
+> başına bulgu değil (K7). Ama F-pass0-16'nın sorusunu burada da sor: **fiyat
+> eşyanın `desc` metninde yazılı mı?** `spell` tarafında tam olarak bu oldu;
+> `\d[\d,]*\s*gp` taraması bir satırlık iş;
+> (3) §5.8'in 🔴 `M` üçlüsü — attunement / charges / body-slot — önce kaynağın
+> `MagicItem.json` sütun adları listelenip (bir `sorted(fields.keys())`)
+> karşılığı olan sütunla **karşılaştırılarak** ölçülür: alan boşsa boşluk
+> kaynakta mı pakette mi (taramanın 3. sorusu). `M`
+> iddiası ancak `grep -rn <alan> lib/` dolu + `tool/` boşsa doğrudur (6. soru);
+> (4) **Devir notunun sayılarını ölçmeden yazma.** `deepm`'de bu kural iki
+> kaydı düzeltti: bir kalıbın *eşleşmesi* ile kusurun *gerçekliği* aynı şey
+> değil — eşleşen her satır okunmalı. Aynı özenle: bu blokta `vom` için yazılan
+> "1.063/1.063 `0.00`" da yeniden ölçülsün;
+> (5) **Kanıt blokları çalıştırılabilir olmalı.** `deepm` birimi iki eski
+> bloktaki `p.split('/')[4]` hatasını buldu (belge slug'ı `[5]`, `[4]` yayıncı
+> dizini). Yeni blok yazarken bir kez **çalıştırıp** çıktısını yorum satırına
+> koy.
 >
-> **Dalga 2 bittiğinde** 13/20 birim kapanır ve Dalga 3 (sihirli eşya paketleri)
-> başlar; onun bilinen açığı `magic-item.cost_gp` (bilinen açık #5, ⛔).
+> **Dalga 3 bittiğinde** 14/20 birim kapanır ve Dalga 4 (6 canavar paketi,
+> yapıları birbirinin tekrarı) başlar.
 >
 > **Test dosyalarının yeri**: F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
@@ -60,18 +64,19 @@
 > 1. Kartın taşıdığı mekanik **şemada bir eve sahip mi**? (`open5e`)
 > 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
 > 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
->    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3 yanlış bulgu
->    önledi.
+>    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3, `deepm`'de 1
+>    yanlış bulgu önledi.
 > 4. Alan dolu ve kaynakla aynı, ama **değer kuralla uyuşuyor mu**? (`toh`,
 >    `a5e-ag`)
 > 5. Devir notunun **"zaten biliniyor"** satırı ölçüldü mü? — `toh`'ta iki,
->    `bfrd`'de bir tane yanlış çıktı (a5e-ag'nin *"class kartının boş alanları
->    `S`"* cümlesi; §5.1 onlara `M`🔗 diyor ve haklı).
+>    `bfrd`'de bir, **`deepm`'de üç** tane yanlış çıktı (F-pass0-14'ün 3 yanlış
+>    pozitifi); bu soru şimdiye kadar 6 hatalı satır temizledi.
 > 6. Boş alanın **okuyucusu** var mı, **yazanı** var mı? — `grep -rn <alan> lib/`
 >    dolu + `tool/` boş ⇒ cause `M` (`a5e-ag`). `bfrd`'de 5 alana uygulandı,
 >    beşinin de cause code'u zaten doğruydu.
 > 7. Bulduğun kusurun **doğrusu kaynağın kendisinde** başka bir alanda duruyor mu?
->    (`bfrd` — `name` yanlış, `pk` doğru; F-a5e-ag-02'nin tersi durum.)
+>    (`bfrd` — `name` yanlış, `pk` doğru; `deepm` — `material_cost` boş, fiyat
+>    `material_specified` metninde → F-pass0-16.)
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -897,7 +902,7 @@ gördü; Dalga 2'den itibaren kategori çeşitliliği düşüyor, tekrar artıyo
 | `open5e-wz` | 43 | spell 43 | ⚠️ | 2026-08-18 | F-wz-01, F-wz-02, F-pass0-12 |
 | `open5e-deepmx` | 64 | spell 64 | ⚠️ | 2026-08-18 | F-pass0-13, F-pass0-14 |
 | `open5e-spells-that-dont-suck` | 180 | spell 180 | ⚠️ | 2026-08-18 | F-spells-that-dont-suck-01, -02, F-pass0-15 |
-| `open5e-deepm` | 515 | spell 515 | ⬜ | — | — |
+| `open5e-deepm` | 515 | spell 515 | ⚠️ | 2026-08-18 | F-pass0-16; F-pass0-13/-14 **düzeltildi** |
 
 > Bu dalganın ortak riski tek: **U2'nin ölçtüğü 85 görünmez büyü** ve
 > `class_refs` / `tags` ikilisi (checklist B3, F3). İlk birim (`kp`, 2026-08-18)
@@ -1270,6 +1275,125 @@ yani alanlar ilk kez gerçekten ölçülebildi: `material_description` 81/180
 C5, C6, E3 (tek kategorili paket). Dalga 2'nin **en temiz** birimi: zorunlu
 alanların hepsi tam, `class_refs` eksiksiz, kayıp yalnız iki dar desende
 (parantezli Self menzili, sıfırla doldurulmuş malzeme fiyatı).
+
+#### `open5e-deepm` sonucu — 2026-08-18
+
+515 varlık, tek kategori (`spell` 515), 1.228.225 bayt — dalganın **en büyük**
+birimi ve tek başına Dalga 2'nin diğer dört biriminin toplamının 1,6 katı.
+`verify_packs --doc deepm --only spell` → **4.027 ok · 0 disagree · 0 absent ·
+0 unsourced · 1.213 unverifiable**, eşleşme **515/515**. `gate_packs --packs
+/tmp/one` yeşil; `dupe_census` C "nothing installed" **0**, paket iki kopya
+listesinde de yok; `unmapped_report.json`'da `spell` satırı **yok** (tek içerik
+`alignment`'ın 3 canavar satırı). `build_catalog` yeniden çalıştı, ağaç temiz;
+katalog satırı `size_bytes 1.228.225` = dosya, `counts {spell: 515}` = gerçek,
+`licenses ["ogl-10a"]` + `publisher kobold-press` + `gamesystem 5e-2014`
+kaynağın `Document.json`'ıyla birebir.
+
+**Devir notunun beş uyarısı: üçü tuttu, biri düzeltildi, biri genişledi.**
+(1) Örneklem kuralına uyuldu; tam tablo bilgisi yalnız araç/tek satırlık
+sorgulardan geldi (K2). (2) **F-pass0-11 → 9** (`permanent` 6 + `permanent until
+discharged` 2 + `permanent; one generation` 1; kartların 16'sı `Until Dispelled`,
+7'si kaynakta zaten "dispelled" diyor → 9 tanesi eklenen iddia) ve
+**F-pass0-12 → 2** (`1 year` ×2) — ikisi de beklendiği gibi, yeni kayıt yok.
+(3) **F-spells-that-dont-suck-02'nin `deepm` beklentisi doğrulandı**:
+`material_cost_gp == 0` olan kart **0**, çünkü sütun burada `null`. Ama aynı
+ölçüm **yeni bir kusur** çıkardı → F-pass0-16 (aşağıda). (4)
+`SpellCastingOption.json` dördüncü kez ölçüldü: **2.105 satır**, `desc`
+**0'ında** dolu — yani `spells-that-dont-suck`'ın kırdığı "hepsi `null`" biçimi
+burada geri geliyor — ama satırlar boş değil (`damage_roll` 272, `target_count`
+221, `duration` 197, `range` 29, `shape_size` 4). Payload taşıyan **93** ebeveyn
+büyünün **93'ünde** `higher_level` düzyazısı dolu ve o düzyazı karta zaten
+`**At Higher Levels.**` bloğu olarak iniyor → §5.8'in "*`SpellCastingOption`
+hiçbir belgede üstüne bir büyü eklemiyor*" gerekçesi korpüsün **en büyük**
+belgesinde de ayakta, K7, bulgu yok. (5) Metin sadakati kural uygulanmış dizeyle
+ölçüldü → **515/515 birebir** (223 satır `higher_level` taşıyor; ham `desc` ile
+ölçülseydi 223 sahte fark çıkardı).
+
+**Devralınan iki kayıt bu birimde düzeltildi** — taramanın 5. sorusunun
+(*"devir notunun 'zaten biliniyor' satırı ölçüldü mü?"*) şimdiye kadarki en
+büyük getirisi:
+
+- **F-pass0-14: 7 → 4 kart.** Devir notu `deepm`'e 2 kart (`Caustic Touch`,
+  `Stench of Rot`) yazıyordu. İkisi de okundu: metin **hedefin** konsantrasyonundan
+  söz ediyor (*"…disadvantage on its Constitution saving throw to maintain
+  concentration"*), büyünün kendisinden değil. Aynı yanlış pozitif `toh`/`Gale`'de
+  de var (*"if a creature is concentrating in the spell's area…"*). Üçü de
+  listeden düştü; kalan 4 kart tek tek doğrulandı. Ek kanıt: v1 `dmag`'ın
+  `requires_concentration` sütunu `deepm`'in **514/514** satırında v2
+  `concentration` ile aynı (212 `true`) — bu belgede sütun sağlam.
+- **F-pass0-13: 4 → 5 kart.** Kaydın kalıbı (`N-M` aralığı, `…or until`)
+  `deepm`'de tam 2 kart buluyor, yani devir notu doğruydu; ama üçüncü bir biçim
+  ortaya çıktı: `Gluey Globule` kaynakta `1 minute or 1 hour` — iki *ayrı*
+  seçenekten kart yalnız ilkini (`Minutes 1`) yazıyor. Aynı mapper satırı
+  (`spell.dart:238`), aynı kusur ailesi → yeni kayıt yerine kaydın dağılımı
+  genişletildi. Korpüste bu biçimin tek örneği.
+
+*(Ayrıca iki kanıt bloğundaki `p.split('/')[4]` düzeltildi — `[4]` yayıncı
+dizinini veriyor, belge slug'ı `[5]`; bloklar olduğu gibi çalıştırılınca hiçbir
+paket bulamıyordu.)*
+
+**Yeni bulgu: F-pass0-16** (checklist C3, cause `S`, yayılan) — `deepm`'in 288
+malzemeli kartından yalnız **12'sinde** `material_cost` sütunu dolu; **41'inde**
+sütun `null` olduğu hâlde malzeme metni fiyatı yazıyor (`Afflict Line`
+*"…statuette carved in the likeness of the victim worth 1,250 gp"*). Kart fiyatı
+düzyazı olarak gösteriyor, tipli alan boş kalıyor — yani süzme/sıralama yok.
+Korpüste 45 kart (`deepm` 41, `spells-that-dont-suck` 4) ve
+**F-spells-that-dont-suck-02'nin 5 kartıyla kesişmiyor**: orada sütun `'0'`
+(kart yalan söylüyor), burada `null` (kart susuyor). Aynı sütunun iki ucu.
+
+**Ölçülüp bulgu sayılmayanlar.** (a) `class_refs` **440/515**; boş 75 kartın
+75'i **F-kuru-01'in yazılı dağılımı** (`deepm` 75, `kp` 7, `a5e-ag` 3) ve
+sebebi kaynakta: v2 `classes` bu satırlarda boş, v1 `dmag`'ın `dnd_class`
+sütunu ise **`''`** — 75'inin de v1 satırı var, sütun boş, yani `S` (taramanın
+3. sorusu). (b) `range_ft` 266/515, ama `range_text`'inde sayı olup karta
+inmeyen **sıfır** satır var — `Self (N-foot radius)` deseni (F-spells-that-dont-suck-01)
+bu belgede **hiç yok**. (c) Kaynağın `target_type` (515/515: creature 383,
+point 70, area 36, object 26) ve `target_count` (515/515) sütunlarının şemada
+karşılığı yok (`N`); bilgi düzyazıda duruyor, checklist'in hiçbir maddesi
+"kullanılmayan kaynak sütunu"nu ölçmüyor → önceki birimlerle tutarlı biçimde
+bulgu açılmadı. (d) Belgenin kendi tanıtımı *"700 new spells"* diyor, snapshot
+515 satır taşıyor (v1 `dmag` 514) — eksik, pipeline'ın değil **snapshot'ın**
+kapsamı; paket kaynağın 515'inin 515'ini gönderiyor.
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | `spell` şemada; roundtrip yeşil (`open5e-deepm installs and reads back unchanged`) |
+| A2 | ✅ | 10 zorunlu alan **515/515**; `class_refs` 440/515, boşluğun tamamı F-kuru-01'in yazılı dağılımı + kaynakta `''` |
+| A3 | ✅ | 0 unsourced; `range_text`'te sayı olup karta inmeyen satır **0**; malzeme kusuru bu pakette *yalan* değil *boşluk* (→ C3) |
+| A4 | ✅ | 515/515 ad kaynakla aynı; census'un iki kopya listesinde de paket yok |
+| A5 | ✅ | 22 dolu sütunun **hiçbiri** tek değerli değil (dalgada ilk kez sıfır aday) |
+| B1 | ✅ | `--list-builtin-same`'de paket yok |
+| B2 | ✅ | `--list-shared`'da paket yok |
+| B3 | ✅ | 7 Tier-0 sözlüğüne ref (`spell-school` 515, `casting-time-unit` 515, `casting-component` 1.252, `duration-unit` 515, `ability` 266, `damage-type` 117, `area-shape` 43) + `class` softRef ×1.557 |
+| B4 | ✅ | gate yeşil, census C "nothing installed" 0 |
+| B5 | ✅ | `metadata.links` yok + `requires` yok — tüm ref'ler built-in'e (§2.1) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ⚠️ | 25 şema alanının **22'si** dolu; **F-pass0-16** — `material_cost_gp` 12/515, 41 kartta fiyat yalnız metinde. Boş üçlü: `at_higher_levels_text` `P` (223 satırın metni `description` sonunda), `effects` ⚪ (gerekçesi yarım → F-pass0-15), `applied_condition_refs` `M` |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ➖ | `spell`'de grant bloğu yok |
+| C7 | ✅ | 7 Tier-0 sözlüğünün her satırı kanonik; `unmapped_report.json`'da `spell` satırı yok |
+| C8 | ⚠️ | 3 boş alanın ikisinin gerekçesi doğru (`P` — 93/93 payload ebeveyninin `higher_level`'ı dolu, ölçüldü; `M`); `effects`'inki yarı yanlış → F-pass0-15 (`damage_roll` bu belgede 116/515) |
+| D1 | ✅ | 4.027 ok · 0 disagree · 0 absent · 0 unsourced |
+| D2 | ✅ | 1.213 unverifiable, beşi de yazılı kuralla: `casting_time_amount` (öneksiz, 454), `class_refs` (v1'den kurtarılıyor, 446), `range_ft` (`range_text`'ten, 249), `attack_type` (menzilden çıkarım, 36), `reaction_trigger` (cümleye çevriliyor, 28) |
+| D3 | ✅ | gate yeşil |
+| E1 | ✅ | `spell`'in mekanik alanları grant alanı değil; render matrisi F2'de yeşil |
+| E2 | ✅ | `effects` `notResolverRead`'de; `bundled_pack_resolve_test` yeşil (75/75) |
+| E3 | ➖ | paket sınıf göndermiyor; slot ilerlemesi bu birimde ölçülemez |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil (75/75) |
+| F2 | ✅ | paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ✅ | `wizard_pack_families_test` yeşil (39/39); 515 büyünün 440'ı bir sınıf listesinde, kalan 75 F-kuru-01 |
+| F4 | ✅ | `entity_link_navigation_test` yeşil; kartın her ref'i built-in bir karta gidiyor |
+| G1 | ✅ | `build_catalog` yeniden çalıştı, ağaç temiz; `size_bytes` 1.228.225 = dosya, `counts {spell: 515}` = gerçek |
+| G2 | ✅ | `licenses: ["ogl-10a"]`, `publisher: kobold-press`, `gamesystem: 5e-2014` kaynağın `Document.json`'ıyla birebir; atıf metni OGL 1.0a |
+| G3 | ✅ | `is_srd_overlap: false` ve doğru — built-in'le çakışan büyü adı yok |
+
+**Sayım: 27 ✅ · 6 ➖ · 0 ⛔ · 2 ⚠️** — ⚠️'ler C3 ve C8; ➖'ler C1, C2, C4, C5,
+C6, E3 (tek kategorili paket). **Dalga 2'nin en temiz birimi** ve korpüsün en
+temiz büyük paketi: 515 kartın 515'i kaynakla birebir, tek sabit sütun yok, menzil
+kaybı yok, tek gerçek eksik metinde duran malzeme fiyatı. **Dalga 2 kapandı —
+20 tarama biriminin 13'ü bitti.**
 
 ### Dalga 3 — Sihirli eşyalar
 
