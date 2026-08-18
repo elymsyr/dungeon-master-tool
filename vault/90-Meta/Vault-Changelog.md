@@ -208,3 +208,39 @@ tags: [meta, changelog]
   ikinci kez öldü (169 satır, 42'si veri, `desc` 169/169 `null`, payload taşıyan
   8 büyünün 8'inde `higher_level`) → K7.
 - Kod değişmedi (tarama kuralı K1).
+
+## 2026-08-18 — F3 / Dalga 2'nin 4. birimi: open5e-spells-that-dont-suck tarandı (12/20)
+
+- `open5e-spells-that-dont-suck` (180 büyü, tek kategori, 511.977 bayt) checklist'e
+  karşı okundu. `verify_packs --doc spells-that-dont-suck --only spell` →
+  **1.678 ok · 0 disagree · 0 absent · 0 unsourced · 253 unverifiable**, eşleşme
+  **180/180**; `gate_packs` yeşil; `dupe_census` "nothing installed" **0** ve paket
+  iki kopya listesinde de yok; `unmapped_report.json` sıfır satır; `build_catalog`
+  sonrası ağaç temiz (`size_bytes 511.977`, `counts {spell: 180}`, `cc-by-40`).
+- 31 madde: **25 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** (⚠️: A3, C3, C8) — Dalga 2'nin en temiz
+  birimi: 11 zorunlu alanın 11'i 180/180, `class_refs` ilk kez eksiksiz, 25 şema
+  alanının 22'si dolu.
+- **Üç yeni bulgu.** **F-spells-that-dont-suck-01** (A3, `M`) — `Self (60-foot
+  radius)` biçimindeki 8 menzilde ne sayı ne şekil karta iniyor; `_range` `self`
+  sözcüğünde duruyor, kaynağın `range` sütunu o satırlarda `0`, korpüste bu deseni
+  yazan tek belge bu. **F-spells-that-dont-suck-02** (A3, `S`) — 5 kart
+  `material_cost_gp: 0` gönderiyor, aynı kartın malzeme metni fiyatı söylüyor;
+  kaynak sütunu `'0'`, 18 satırda ise gerçek sayı, yani `0` "girilmemiş" demek.
+  **F-pass0-15** (C8, `A`, yayılan) — §5.8'in `spell.effects` ⚪ gerekçesinin
+  ikinci yarısı ("kaynakta yapılandırılmış hasar yok") ölçümle çürüyor:
+  `damage_roll` gönderilen 1.297 büyünün **303'ünde** dolu (285'i saf zar).
+  Verdict ⚪ kalıyor (okuyucu yok), düzeltilecek olan gerekçe.
+- **`material_*` ilk kez ölçülebildi**: `material_specified` 81/180 dolu (dalganın
+  önceki üç biriminde kaynak sütunu boştu). `deepm` aynı verinin zararsız biçimi —
+  sütun `null`, `if (cost != null)` alanı hiç yazmıyor, 288 malzemeli kartın
+  **0**'ında sıfır fiyat var.
+- Devralınan dört beklenti de tuttu (F-pass0-11 → 1 `permanent`, F-pass0-12 → 0,
+  F-pass0-13 → 0, F-pass0-14 → 0). Kural uygulanmış `desc` karşılaştırması
+  **180/180** birebir (87 satır `higher_level` taşıyor — `deepmx`'in beş katı).
+  A5 sayıldı: `casting_time_amount` 180/180 `1`, ama kaynağın `casting_time`
+  sütununda 1'den başka sayı yok → sabitlik dürüst, bulgu değil.
+- **`SpellCastingOption.json` üçüncü kez ölçüldü, gerekçesi değişti**: 60 satır,
+  `desc` 37'sinde **dolu** (önceki iki birimde 0'dı), ama hepsi ebeveynin
+  `higher_level` düzyazısının slot bazlı kısaltması ve o düzyazı karta zaten
+  iniyor → K7 ayakta, ama "‘`desc` boş’ olduğu için ölü" biçimi artık kullanılamaz.
+- `mapper_spell.md` üç bulgu notuyla güncellendi. Kod değişmedi (tarama kuralı K1).
