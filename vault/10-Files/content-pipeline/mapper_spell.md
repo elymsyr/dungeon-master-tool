@@ -48,18 +48,29 @@ tags: [file]
   - **F-wz-01 (F3 / Dalga 2, 2026-08-18, ❓ open):** the numeric grab takes the first `number + unit` pair and ignores the tail, so `1 hour/caster level` ships as a flat `Hours 1` (1 card corpus-wide, `wz`'s `Order of Revenge`).
   - **F-pass0-12 (F3 / Dalga 2, 2026-08-18, ❓ open):** the regex knows only round/minute/hour/day and the canon tops out at `Days`, so `1 year` durations fall through to `Special` with a null amount — a stated number lost on 3 cards (`deepm` 2, `wz` 1). `Days 365` is writable today.
   - **F-pass0-13 (F3 / Dalga 2, 2026-08-18, ❓ open):** the same numeric grab turns
-    ranges and conditions into certainties — `2-12 hours` → `Hours 12` (the upper
-    bound, silently) and `24 hours or until …` → `Hours 24`; 4 cards (`deepmx` 2,
-    `deepm` 2). Text that matches *no* branch is honest (`until destroyed` →
+    ranges, conditions and alternatives into certainties — `2-12 hours` →
+    `Hours 12` (the upper bound, silently), `24 hours or until …` → `Hours 24`,
+    and `1 minute or 1 hour` → `Minutes 1` (the second option dropped); 5 cards
+    (`deepm` 3, `deepmx` 2). Text that matches *no* branch is honest (`until destroyed` →
     `Special`), so the loss only happens when the string starts with a number.
 - `requires_concentration`: the source's `concentration` boolean only.
   - **F-wz-02 (F3 / Dalga 2, 2026-08-18, ❓ open):** upstream also states concentration inside the free-text `duration`; `Storm of Axes` has `duration = 'concentration + 1 round'` with the boolean `false`, so the required field ships `false`. Reading the duration text alongside the boolean is a two-line fix; corpus-wide the v2 snapshot has 1 such row.
   - **F-pass0-14 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):** the upstream
-    column itself is wrong on 7 cards across 5 packs whose rules text says "until
-    you lose concentration" (`deepmx` 2, `deepm` 2, `toh` 1, `wz` 1, `a5e-ag` 1).
+    column itself is wrong on **4** cards across 3 packs whose rules text says
+    "until you lose concentration" (`deepmx` 2, `wz` 1, `a5e-ag` 1).
     `deepmx` ships the boolean `false` on all 64 rows and v1 `dmag-e` has it
-    `null` on all 64 — no code change closes this one.
+    `null` on all 64 — no code change closes this one. *(Was 7 across 5 packs;
+    the `deepm` unit read the matches and dropped 3 — `Caustic Touch`,
+    `Stench of Rot`, `toh`/`Gale` all describe the **target's** concentration.
+    In `deepm` the column is sound: v1 `dmag`'s `requires_concentration` agrees
+    with v2 on 514/514 rows, 212 of them `true`.)*
 - Components: V/S/M booleans → Tier-0 `casting-component` rows; material spec adds `material_description` / `material_cost_gp` / `material_consumed`.
+  - **F-pass0-16 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):** `material_cost`
+    is `null` on 45 rows whose `material_specified` text names a price in the
+    `worth <N> gp` pattern (`deepm` 41 of its 288 material rows, `spells-that-dont-suck`
+    4), so the `if (cost != null)` guard leaves `material_cost_gp` empty and the
+    price survives only as prose. The mirror image of F-spells-that-dont-suck-02,
+    and disjoint from it.
   - **F-spells-that-dont-suck-02 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):**
     `material_cost` is written straight through, and in `spells-that-dont-suck`
     the column is `'0'` on 63 of its 81 material rows — 5 of them while the

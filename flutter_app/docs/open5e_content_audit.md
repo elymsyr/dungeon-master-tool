@@ -102,46 +102,43 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 12 of the 20 units are scanned — Wave 2 is one unit from
-done** (Pass 0, built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`,
-`a5e-ag`, `bfrd`'s class/subclass rows, `kp`, `wz`, `deepmx`,
-`spells-that-dont-suck`) and the ledger holds **27** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`spells-that-dont-suck`, 180 spells)
-measured `verify_packs --doc spells-that-dont-suck --only spell` at **1,678 ok /
-0 disagree / 0 absent / 0 unsourced / 253 unverifiable**, match coverage
-**180/180**, and scored its 31 items **25 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** — Wave 2's
-cleanest unit: all 11 required fields at 180/180, `class_refs` complete for the
-first time in the wave, and 22 of 25 schema fields filled. Three new findings.
-**F-spells-that-dont-suck-01** (A3, `M`): 8 cards write their range as
-`Self (60-foot radius)` / `Self (10-foot dome)` / `Self (1-mile radius)` and the
-card keeps neither the number nor the shape — `_range` ends its branch at the
-`self` keyword and nothing reads the parenthetical, while the source's numeric
-`range` column is `0` on those rows; no other document in the corpus writes
-`Self (N …)` at all. **F-spells-that-dont-suck-02** (A3, `S`): 5 cards ship
-`material_cost_gp: 0` — "free" — while their own `material_description` names a
-price (`…obsidian chalice worth at least 665 gp`); the source's `material_cost`
-column is `'0'` there and a real number on 18 other rows, so `0` means "not
-entered", not "no cost". This is the first unit where `material_*` could be
-measured at all (81/180 filled; the wave's earlier units had the source columns
-empty), and `deepm` shows the harmless shape of the same data: its column is
-`null`, the mapper's `if (cost != null)` never writes the field, and **0** of its
-288 material cards carry a zero. **F-pass0-15** (C8, `A`, spreading): §5.8 closes
-`spell.effects` as ⚪ on two reasons and the second one — "no structured damage
-rows upstream to fill it from" — does not survive measurement: `Spell.json`'s
-`damage_roll` column is filled on **303 of the 1,297 shipping spells** (285 of
-them plain dice expressions), alongside `damage_types` and
-`saving_throw_ability`. The verdict stays ⚪ on the reader half; what needs
-correcting is the written reason, the same shape as the
-`monster.lair_action_refs` "Reason was wrong" row. All four inherited
-expectations were re-measured and held (F-pass0-11 → 1, F-pass0-12 → 0,
-F-pass0-13 → 0, F-pass0-14 → 0), the rule-applied description check came out
-**180/180** identical (87 rows carry `higher_level` here — five times `deepmx`'s
-17, so the method correction paid for itself), and `SpellCastingOption.json`
-survived a third reading with a **changed** rationale: its `desc` column is
-filled on 37 of 60 rows here, but every one is a slot-level abbreviation of the
-parent's `higher_level` prose, which already ships inside `description` (K7).
-**The next open phase is F3** (continues at Wave 2's last unit — `open5e-deepm`,
-515 spells; finishing it closes Wave 2 at 13/20 and opens Wave 3).
+**F3 is running: 13 of the 20 units are scanned — Wave 2 is done** (Pass 0,
+built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
+class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`) and
+the ledger holds **28** findings, all still ❓ — `check_findings.py` clean. The
+latest unit (`deepm`, 515 spells — the corpus's largest spell document) measured
+`verify_packs --doc deepm --only spell` at **4,027 ok / 0 disagree / 0 absent /
+0 unsourced / 1,213 unverifiable**, match coverage **515/515**, and scored its 31
+items **27 ✅ · 6 ➖ · 0 ⛔ · 2 ⚠️** — the cleanest unit of the whole scan so far:
+ten required fields at 515/515, not one single-valued column, no range text left
+unparsed, and the rule-applied description check identical on **515/515** (223
+rows carry `higher_level`). One new finding and **two corrections to inherited
+records**. **F-pass0-16** (C3, `S`, spreading): only 12 of `deepm`'s 288 material
+cards carry `material_cost_gp`, while **41** more name a price in their own
+material text (`…statuette carved in the likeness of the victim worth 1,250 gp`)
+with the source's `material_cost` column `null` — 45 cards corpus-wide (`deepm`
+41, `spells-that-dont-suck` 4), and disjoint from F-spells-that-dont-suck-02's 5:
+there the column says `'0'` and the card lies, here it says `null` and the card
+stays silent. **F-pass0-14 corrected 7 → 4 cards**: the original pattern counted
+`maintain concentration` without asking *whose*, and three rows were false
+positives whose text is about the **target's** concentration (`deepm`'s
+`Caustic Touch` and `Stench of Rot`, `toh`'s `Gale`); the remaining 4 were read
+one by one, and v1 `dmag`'s own `requires_concentration` column agrees with v2 on
+**514 of 514** rows (212 `true`), so this document's column is sound.
+**F-pass0-13 corrected 4 → 5 cards**: the record's own pattern found exactly the
+2 predicted `deepm` rows, but a third shape turned up — `Gluey Globule`'s
+`1 minute or 1 hour`, two *alternative* durations of which the card keeps only
+the first. (Both evidence blocks also had `p.split('/')[4]` where the document
+slug is `[5]`, so they matched nothing when re-run; fixed.) `SpellCastingOption.json`
+was measured a fourth time: 2,105 rows with `desc` filled on **0**, but real
+payload elsewhere (`damage_roll` 272, `target_count` 221, `duration` 197) — and
+all **93** parents carrying payload have `higher_level` prose that already ships
+inside `description`, so §5.8's "adds zero spells" rationale holds on the largest
+document too (K7). `class_refs` 440/515, and every one of the 75 empties is
+F-kuru-01's written distribution with `''` in v1 `dmag`'s `dnd_class` (`S`).
+**The next open phase is F3** (continues at Wave 3's only unit — `open5e-vom`,
+1,063 magic items; the first non-`spell` unit since Wave 1, with known-open #5
+`magic-item.cost_gp` ⛔ waiting in it).
 
 ---
 
@@ -4663,7 +4660,8 @@ procedure, and the ledger have different lifetimes:
       "until you lose concentration" in their own rules text while
       `requires_concentration` is `false`, because the source column is `false`
       — `deepmx` has it `false` on all 64 rows and v1 `dmag-e` has it `null` on
-      all 64. Two method corrections: the cheap `desc` check must build the
+      all 64. *(Count corrected to **4 cards across 3 packs** by the `deepm`
+      unit below — three of the seven were about the target's concentration.)* Two method corrections: the cheap `desc` check must build the
       **rule-applied** string first (`spell.dart:158` appends
       `**At Higher Levels.**`, 17 false diffs otherwise), and A5 — "no filled
       column is a single constant" — is the item that surfaced F-pass0-14.
@@ -4700,8 +4698,35 @@ procedure, and the ledger have different lifetimes:
       rationale — `desc` filled on 37 of 60 rows, but every one a slot-level
       abbreviation of the parent's `higher_level` prose (K7).
 
-      **kaldı: 8 unit** — Dalga 2 finishes at `deepm` (515); Dalga 3–4
-      untouched. Next
+      **`deepm` (515 spells, 2026-08-18)** — 4,027 ok / 0 disagree / 0 absent /
+      0 unsourced / 1,213 unverifiable at 515/515, gate green, census 0, no
+      catalog drift; 31 items at **27 ✅ · 6 ➖ · 0 ⛔ · 2 ⚠️**, the cleanest unit
+      of the scan so far (ten required fields 515/515, no single-valued column,
+      no unparsed numeric range, rule-applied `desc` identical on 515/515 with
+      223 `higher_level` rows). **F-pass0-16** (C3, `S`, spreading): 12 of 288
+      material cards carry `material_cost_gp` while **41** more name a price only
+      in their material text (`…worth 1,250 gp`) because the source's
+      `material_cost` column is `null`; 45 cards corpus-wide (`deepm` 41,
+      `spells-that-dont-suck` 4), disjoint from F-spells-that-dont-suck-02 —
+      there the column says `'0'` and the card lies, here it says `null` and the
+      card stays silent. **Two inherited records were corrected by question 5.**
+      **F-pass0-14 7 → 4**: the first pass matched `maintain concentration`
+      without asking whose, and three rows are about the **target's**
+      concentration (`Caustic Touch`, `Stench of Rot`, `toh`'s `Gale`); v1
+      `dmag`'s own `requires_concentration` agrees with v2 on **514 of 514** rows
+      (212 `true`). **F-pass0-13 4 → 5**: the record's pattern found its 2
+      predicted `deepm` rows, plus a third shape — `Gluey Globule`'s
+      `1 minute or 1 hour`, of two alternatives the card keeps one. Both evidence
+      blocks carried `p.split('/')[4]` where the document slug is `[5]` and so
+      matched nothing when re-run; fixed. `SpellCastingOption.json` measured a
+      fourth time (2,105 rows, `desc` 0, but `damage_roll` 272 / `target_count`
+      221 / `duration` 197) and §5.8's "adds zero spells" rationale holds: all
+      **93** payload parents have `higher_level` prose already shipping inside
+      `description` (K7). `class_refs` 440/515, all 75 empties F-kuru-01's
+      written distribution with `''` upstream (`S`).
+
+      **kaldı: 7 unit** — Dalga 2 **closed** at 13/20; Dalga 3 (`vom`, 1,063
+      magic items) is next, Dalga 4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

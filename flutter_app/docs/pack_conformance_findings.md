@@ -3,10 +3,12 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk dört
-> birimi tarandı** (`kp`, `wz`, `deepmx`, `spells-that-dont-suck` — 2026-08-18),
-> 27 bulgu.** Sıradaki iş **Dalga 2'nin son birimi: `open5e-deepm`** (515 büyü);
-> onunla Dalga 2 kapanır ve Dalga 3 (sihirli eşyalar) başlar.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + **Dalga 2 bitti**
+> (`kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm` — 2026-08-18),
+> 28 bulgu.** 20 tarama biriminin **13'ü** kapandı. Sıradaki iş **Dalga 3:
+> `open5e-vom`** (1.063 sihirli eşya). `deepm` birimi bir yeni kayıt
+> (**F-pass0-16**) açtı ve iki eski kaydı **düzeltti**: F-pass0-14 7 → **4** kart
+> (3 yanlış pozitif okundu ve elendi), F-pass0-13 4 → **5** kart.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -94,7 +96,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 27 | 0 | 0 | 0 | 0 | **27** |
+| 0 | 28 | 0 | 0 | 0 | 0 | **28** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -102,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 10 | B3 | 1 | C3 | 0 |
+| A3 | 10 | B3 | 1 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
@@ -116,7 +118,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 15 | `open5e-vom` | 0 |
+| `pass0` | 16 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -1874,7 +1876,7 @@ for e in p['entities'].values():
 
 | | |
 |---|---|
-| **Kapsam** | `pass0` — korpüs geneli 4 kart (`open5e-deepmx` 2, `open5e-deepm` 2) |
+| **Kapsam** | `pass0` — korpüs geneli 5 kart (`open5e-deepm` 3, `open5e-deepmx` 2) — *`deepm` birimi 2026-08-18'de bir kart daha ekledi* |
 | **Checklist** | checklist A3 (kaynağın söylemediği kesinlik) |
 | **Kategori / etki** | `spell` — `duration_amount`; kaynak "2-12 saat" ya da "24 saat **ya da** şu olana kadar" derken kart tek bir sayı iddia ediyor |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238`; süre regexi metindeki ilk sayı+birim çiftini alıp kuyruğu atıyor, aralığın alt sınırı ve "…until" koşulu düşüyor. Şemada serbest metin süre alanı yok (`N` yanı) |
@@ -1889,6 +1891,10 @@ for e in p['entities'].values():
   third death saving throw`, kartta `Hours 24`; `Grasp of the Tupilak`
   (`1 hour or until triggered`) ve `Mass Surge Dampener`
   (`1 minute, or until expended`) aynı şekilde koşulsuz iniyor.
+- **Seçenek:** `deepm`/`Gluey Globule` kaynakta `1 minute or 1 hour` — iki
+  *ayrı* süreden büyücünün seçtiği geçerli; kart `Minutes 1` diyor, yani ikinci
+  seçenek tümden düşüyor. Bu üçüncü biçim `deepm` birimi taranırken (2026-08-18)
+  bulundu ve korpüste **tek** örneği bu.
 
 **Neden önemli.** F-pass0-12 kaynağın verdiği sayıyı siliyordu, bu kayıt tersini
 yapıyor: kaynağın **belirsiz** bıraktığı süreyi kart kesin sayı olarak yazıyor.
@@ -1903,17 +1909,17 @@ metin bir sayıyla başladığında oluşuyor.
 | Paket | Etkilenen kart |
 |---|--:|
 | `open5e-deepmx` | 2 (`Risen Road`, `Gift of Azathoth`) |
-| `open5e-deepm` | 2 (`Grasp of the Tupilak`, `Mass Surge Dampener`) |
-| **Toplam** | **4** |
+| `open5e-deepm` | 3 (`Grasp of the Tupilak`, `Mass Surge Dampener`, `Gluey Globule`) |
+| **Toplam** | **5** |
 
 **Kanıt.**
 ```sh
 # flutter_app'ten — kaynak süresi aralık ya da "…or until" olan satırlar + kartın değeri
 python3 - <<'EOF'
 import json,glob,re
-pat=re.compile(r'\d+\s*[-–]\s*\d+|or,? until')
+pat=re.compile(r'\d+\s*[-–]\s*\d+|,? or until|or \d+\s*(round|minute|hour|day)')
 for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
-    doc=p.split('/')[4]
+    doc=p.split('/')[5]   # [4] yayıncı dizini, [5] belge slug'ı
     src={r['fields']['name']:r['fields'] for r in json.load(open(p,encoding='utf-8'))}
     try: pk=json.load(open('assets/open5e_packs/open5e-%s.pkg.json'%doc,encoding='utf-8'))['entities']
     except FileNotFoundError: continue
@@ -1927,6 +1933,7 @@ EOF
 # deepmx Risen Road       | 2-12 hours            -> Hours 12
 # deepm  Grasp of the Tupilak | 1 hour or until triggered -> Hours 1
 # deepm  Mass Surge Dampener  | 1 minute, or until expended -> Minutes 1
+# deepm  Gluey Globule        | 1 minute or 1 hour          -> Minutes 1
 ```
 
 **Seçenekler.**
@@ -1940,21 +1947,21 @@ EOF
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
-### F-pass0-14 — kuralları "konsantrasyonu kaybedersen" diyen 7 büyünün kartı `requires_concentration: false`
+### F-pass0-14 — kuralları "konsantrasyonu kaybedersen" diyen 4 büyünün kartı `requires_concentration: false`
 
 | | |
 |---|---|
-| **Kapsam** | `pass0` — korpüs geneli 7 kart, 5 pakete yayılı (`deepmx` 2, `deepm` 2, `toh` 1, `wz` 1, `a5e-ag` 1) |
+| **Kapsam** | `pass0` — korpüs geneli 4 kart, 3 pakete yayılı (`deepmx` 2, `wz` 1, `a5e-ag` 1) — *sayı `deepm` biriminde düzeltildi, aşağıya bak* |
 | **Checklist** | checklist A3 (kartın kendi gövdesiyle çelişen zorunlu alan) |
-| **Kategori / etki** | `spell` — `requires_concentration`; 7 kartın düzyazısı "konsantrasyonu bırakırsan büyü biter" derken **zorunlu** alan `false` |
+| **Kategori / etki** | `spell` — `requires_concentration`; 4 kartın düzyazısı "konsantrasyonu bırakırsan büyü biter" derken **zorunlu** alan `false` |
 | **Cause code (öneri)** | `S` — kaynağın `Spell.concentration` bool sütunu bu satırlarda `false`; `deepmx`'te 64 satırın 64'ü `false`, v1 `dmag-e` sütunu ise 64/64 `null`. Mapper sadık kopyalıyor (`spell.dart:46`) |
 | **Durum** | ❓ danışılacak |
 
 **Bulgu.** `Shadow Realm Gateway` gövdesi *"the portal remains open for one minute
 or until you lose concentration on it"* diyor; `Summon Old One's Avatar`
 *"each round you maintain concentration on the spell…"* diyor. İkisinin de bool'u
-`false`, dolayısıyla kart "konsantrasyon gerekmez" iddiasında. Aynı desen beş
-belgede 7 kartta var. `wz`/`Storm of Axes` bu listede ama zaten **F-wz-02** olarak
+`false`, dolayısıyla kart "konsantrasyon gerekmez" iddiasında. Aynı desen üç
+belgede 4 kartta var. `wz`/`Storm of Axes` bu listede ama zaten **F-wz-02** olarak
 yazılı (orada delil `duration` metniydi, burada gövde metni) — aynı kart, iki
 farklı okumadan görüldü.
 
@@ -1969,27 +1976,42 @@ konsantrasyon büyüsüne izin verir.
 | Paket | Etkilenen kart |
 |---|--:|
 | `open5e-deepmx` | 2 (`Shadow Realm Gateway`, `Summon Old One's Avatar`) |
-| `open5e-deepm` | 2 (`Caustic Touch`, `Stench of Rot`) |
-| `open5e-toh` | 1 (`Gale`) |
 | `open5e-wz` | 1 (`Storm of Axes` — F-wz-02 ile aynı kart) |
 | `open5e-a5e-ag` | 1 (`Plane Shift`) |
-| **Toplam** | **7** |
+| **Toplam** | **4** |
+
+**Düzeltme — 2026-08-18, `deepm` birimi (taramanın 5. sorusu).** İlk ölçüm
+`maintain(ing)? concentration` kalıbını **kimin** konsantre olduğuna bakmadan
+saydı ve 3 kart yanlışlıkla listeye girdi: `deepm`/`Caustic Touch`
+(*"if the target was concentrating on a spell, it has disadvantage on its
+Constitution saving throw to maintain concentration"*), `deepm`/`Stench of Rot`
+(*"…disadvantage on Constitution saving throws to maintain concentration on
+spells"*) ve `toh`/`Gale` (*"if a creature is concentrating in the spell's area…
+or lose concentration"*). Üçü de **hedefin/başkasının** konsantrasyonundan söz
+ediyor, büyünün kendisinden değil — yani `requires_concentration: false`
+doğru. Kalan 4 kart okundu ve doğrulandı. Ek kanıt: v1 `dmag` sütunu
+(`requires_concentration`) `deepm`'in 514 satırının **514'ünde** v2
+`concentration` ile birebir aynı (212 `true`), yani bu belgede sütun sağlam.
 
 **Kanıt.**
 ```sh
 # flutter_app'ten — bool false ama gövde konsantrasyon kuralı yazıyor
 python3 - <<'EOF'
 import json,glob,re,collections
+# NOT: kalıp geniş — çıkan her satır okunmalı, çünkü metin *hedefin*
+# konsantrasyonundan da söz edebilir (2026-08-18'de 7 aday → 4 gerçek).
 pat=re.compile(r'lose concentration|maintain(ing)? concentration|stop concentrating|concentrating on (the|this) spell', re.I)
 c=collections.Counter()
 for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=p.split('/')[5]   # [4] yayıncı dizini, [5] belge slug'ı
     for r in json.load(open(p,encoding='utf-8')):
         f=r['fields']
         if not f.get('concentration') and pat.search(f.get('desc') or ''):
-            print(p.split('/')[4], f['name']); c[p.split('/')[4]]+=1
+            print(doc, f['name']); c[doc]+=1
 print(dict(c))
 EOF
-# {'deepmx': 2, 'deepm': 2, 'toh': 1, 'wz': 1, 'a5e-ag': 1}
+# aday: {'deepmx': 2, 'deepm': 2, 'toh': 1, 'wz': 1, 'a5e-ag': 1}
+# okunduktan sonra gerçek: {'deepmx': 2, 'wz': 1, 'a5e-ag': 1}
 ```
 
 **Seçenekler.**
@@ -2212,6 +2234,70 @@ EOF
    sınırını genişletir; ölçülmesi gereken ilk şey `spellEffectList`'in şeması.
 3. **Aynen bırak** — ⚪ verdict'i değişmediği için gerekçenin yarısı yanlış
    kalsın; kayıt "kabul edildi" diye kapanır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-16 — malzeme metni "worth 1,250 gp" derken `material_cost_gp` boş: fiyat kaynağın komşu sütununda duruyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 45 kart (`open5e-deepm` 41, `open5e-spells-that-dont-suck` 4) |
+| **Checklist** | checklist C3 (doldurulabilir `spell` alanı boş kalıyor) |
+| **Kategori / etki** | `spell` — `material_cost_gp`; 45 kartın `material_description`'ı fiyatı yazıyor, tipli alan boş → fiyata göre süzme/sıralama yok, alan kartta hiç görünmüyor |
+| **Cause code (öneri)** | `S` — kaynağın `Spell.material_cost` sütunu bu 45 satırda `null`, mapper'ın `if (cost != null)` koruması (`mappers/spell.dart:76`) doğru davranıyor. Ama doğru değer **aynı satırın** `material_specified` metninde yazılı (taramanın 7. sorusu) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `deepm`'in 288 malzemeli kartından yalnız **12'sinde** `material_cost`
+sütunu dolu; **41'inde** sütun `null` olduğu hâlde malzeme metni fiyatı açıkça
+söylüyor: `Acid Gate` *"a vial of acid and a polished silver mirror worth
+125 gp"*, `Afflict Line` *"…statuette carved in the likeness of the victim worth
+1,250 gp"*, `Ancient Shade` *"burning candles of planar origin worth 500 gp"*.
+Aynı desen `spells-that-dont-suck`'ta 4 kartta daha var. Kart fiyatı **düzyazı
+olarak** gösteriyor (metin `material_description`'a iniyor), tipli alan boş.
+
+**Neden önemli.** F-spells-that-dont-suck-02 ile aynı sütunun iki ucu:
+orada sütun `'0'` yazıp kartı *yalan* söyletiyordu, burada `null` yazıp alanı
+*boş* bırakıyor. İkincisi zararsız görünüyor ama 45 kartın yarısından çoğunda
+fiyat 100 gp'nin üstünde — pahalı bileşen büyünün kullanım sıklığını belirleyen
+bir mekanik, ve tipli alan boş kaldıkça ne süzme ne toplama mümkün. Sayı
+metinde **yapılandırılmamış** değil, düpedüz `worth <sayı> gp` kalıbında duruyor:
+45 satırın 45'i tek bir regexle okunur.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-deepm` | 41 (288 malzemeli karttan; sütun dolu olan 12) |
+| `open5e-spells-that-dont-suck` | 4 (F-spells-that-dont-suck-02'nin 5 kartıyla **kesişmiyor** — orada sütun `'0'`) |
+| **Toplam** | **45** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — malzeme metni gp diyor ama material_cost sütunu boş
+python3 - <<'EOF'
+import json,glob,re,collections
+c=collections.Counter()
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=p.split('/')[5]
+    for r in json.load(open(p,encoding='utf-8')):
+        f=r['fields']
+        m=(f.get('material_specified') or '')
+        if re.search(r'\d[\d,]*\s*gp', m, re.I) and not f.get('material_cost'):
+            c[doc]+=1
+print(dict(c), 'toplam', sum(c.values()))
+EOF
+# {'deepm': 41, 'spells-that-dont-suck': 4} toplam 45
+```
+
+**Seçenekler.**
+1. **Metinden oku** — `material_specified` içindeki `worth (at least )?N gp`
+   kalıbını yakalayıp `material_cost_gp`'yi doldur; sütun doluysa sütun kazansın.
+   45 kart kazanır, kaynak sütunu bozulmadan kalır; risk, metnin fiyatı büyünün
+   *etkisi* için söylediği satırlar (ölçülen 45'te böyle bir satır yok).
+2. **Aynen bırak** — fiyat düzyazıda görünüyor, tipli alan kaynağın sadık
+   yansıması olarak boş kalsın; §5.8'e bir satır gerekçe yazılır (C8).
+3. **Yukarı taşı** — Open5e'ye `material_cost` düzeltmesi bildirilsin; pipeline
+   değişmez, ama düzelme tarihi bize bağlı olmaz.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

@@ -244,3 +244,44 @@ tags: [meta, changelog]
   `higher_level` düzyazısının slot bazlı kısaltması ve o düzyazı karta zaten
   iniyor → K7 ayakta, ama "‘`desc` boş’ olduğu için ölü" biçimi artık kullanılamaz.
 - `mapper_spell.md` üç bulgu notuyla güncellendi. Kod değişmedi (tarama kuralı K1).
+
+## 2026-08-18 — F3 / Dalga 2'nin son birimi: open5e-deepm tarandı (13/20), Dalga 2 kapandı
+
+- **`open5e-deepm` (515 büyü, korpüsün en büyük büyü belgesi)** 31 maddelik
+  checklist'e karşı okundu: `verify_packs --doc deepm --only spell` →
+  **4.027 ok · 0 disagree · 0 absent · 0 unsourced · 1.213 unverifiable**,
+  eşleşme **515/515**; `gate_packs --packs /tmp/one` yeşil; `dupe_census`
+  "nothing installed" **0**; `unmapped_report.json`'da `spell` satırı yok;
+  `build_catalog` sonrası ağaç temiz (`size_bytes` 1.228.225, `counts
+  {spell: 515}`, `ogl-10a` / `kobold-press`). **Sayım: 27 ✅ · 6 ➖ · 0 ⛔ · 2 ⚠️**
+  — taramanın şimdiye kadarki en temiz birimi.
+- **Yeni bulgu F-pass0-16** (checklist C3, cause `S`, yayılan): 288 malzemeli
+  kartın 12'sinde `material_cost_gp` var, **41'inde** fiyat yalnız malzeme
+  metninde (`…worth 1,250 gp`) çünkü kaynağın `material_cost` sütunu `null`.
+  Korpüste 45 kart (`deepm` 41, `spells-that-dont-suck` 4) ve
+  F-spells-that-dont-suck-02'nin 5 kartıyla **kesişmiyor** — orada sütun `'0'`
+  (kart yalan söylüyor), burada `null` (kart susuyor).
+- **İki devralınan kayıt düzeltildi** (taramanın 5. sorusunun en büyük getirisi):
+  **F-pass0-14 7 → 4 kart** — ilk ölçüm `maintain concentration` kalıbını
+  *kimin* konsantre olduğuna bakmadan saymış; `Caustic Touch`, `Stench of Rot`
+  ve `toh`/`Gale` **hedefin** konsantrasyonundan söz ediyor, elendi. Ek kanıt:
+  v1 `dmag`'ın `requires_concentration` sütunu v2 ile **514/514** aynı (212
+  `true`). **F-pass0-13 4 → 5 kart** — kaydın kalıbı `deepm`'de beklenen 2'yi
+  buldu, üstüne üçüncü bir biçim çıktı: `Gluey Globule` `1 minute or 1 hour`,
+  kart iki seçenekten yalnız ilkini yazıyor.
+- **Kanıt blokları çalıştırılabilir hâle geldi**: iki eski blokta
+  `p.split('/')[4]` vardı — `[4]` yayıncı dizini, belge slug'ı `[5]`; olduğu gibi
+  çalıştırıldıklarında hiçbir paket bulamıyorlardı.
+- **Ölçülüp bulgu sayılmayanlar**: `class_refs` 440/515 ve boş 75'in 75'i
+  F-kuru-01'in yazılı dağılımı (v1 `dmag`'ın `dnd_class`'ı `''`, cause `S`);
+  `SpellCastingOption.json` dördüncü ölçüm — 2.105 satır, `desc` **0**, ama
+  `damage_roll` 272 / `target_count` 221 / `duration` 197 dolu, payload taşıyan
+  **93** ebeveynin **93'ünde** `higher_level` düzyazısı var ve karta zaten
+  iniyor → §5.8'in "üstüne büyü eklemiyor" gerekçesi en büyük belgede de ayakta
+  (K7); kaynağın `target_type`/`target_count` sütunlarının şemada karşılığı yok
+  (`N`, checklist bunu ölçmüyor); `range_text`'te sayı olup karta inmeyen satır
+  **0**.
+- `mapper_spell.md` üç kayıtla güncellendi (F-pass0-16 eklendi, F-pass0-13/-14
+  düzeltildi). Kod değişmedi (tarama kuralı K1).
+- **Dalga 2 kapandı** — 20 tarama biriminin 13'ü bitti; sıradaki iş Dalga 3'ün
+  tek birimi `open5e-vom` (1.063 sihirli eşya).
