@@ -102,21 +102,21 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 8 of the 20 units are scanned — Wave 1 is closed** (Pass 0,
+**F3 is running: 9 of the 20 units are scanned — Wave 2 has started** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
-class/subclass rows) and the ledger holds **18** findings, all still ❓ —
-`check_findings.py` clean. The last unit (`bfrd`, 2 entities — the wave's
-cheapest) measured `verify_packs` at **2 ok / 0 disagree / 0 absent**, full match
-coverage in both categories, and scored its 31 items
-**20 ✅ · 5 ➖ · 0 ⛔ · 6 ⚠️**. It added **F-bfrd-01** (`Mechanist`'s class table
-heads its second column `Augment Effects Known (2)` — upstream gives both columns
-the same `name`, and the right one is sitting in the same file as the row's `pk`,
-`augmented-items`), and it disproved a sentence the previous unit wrote: the
-class card's empty equipment/tool slots are **not** `S`, because the source keeps
-them in `ClassFeature` rows rather than in `CharacterClass` — which is exactly
-what §5.1 has said (`M`🔗) all along.
-**The next open phase is F3** (continues at Wave 2 — five spell packs,
-833 spells).
+class/subclass rows, `kp`) and the ledger holds **19** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`kp`, 31 spells — Wave 2's smallest)
+measured `verify_packs --doc kp --only spell` at **200 ok / 0 disagree / 0 absent
+/ 0 unsourced / 74 unverifiable**, match coverage **31/31**, and scored its 31
+items **20 ✅ · 6 ➖ · 0 ⛔ · 5 ⚠️**. All 31 descriptions are **byte-identical**
+to the source (the documented `**At Higher Levels.**` append included), so its one
+new finding came from reading, not from a gate: **F-pass0-11** — the 25 spells
+whose source duration reads `permanent` are shipped as `Until Dispelled`, a claim
+the source never makes, because the Tier-0 `duration-unit` vocabulary has seven
+rows and none of them is "permanent" (`a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1,
+`spells-that-dont-suck` 1).
+**The next open phase is F3** (continues at Wave 2's second unit — `open5e-wz`,
+43 spells).
 
 ---
 
@@ -4565,8 +4565,37 @@ procedure, and the ledger have different lifetimes:
       F-pass0-07's `bfrd: 3` is real but all three rows are `monster` /
       `creature-action`, so they belong to Dalga 4, not to this unit.
 
-      **kaldı: 12 unit** — Dalga 2 (five spell packs, 833 spells) starts next;
-      Dalga 3–4 untouched. Next
+      **`kp` opened Dalga 2 on 2026-08-18 (9 / 20)** — 31 spells, one category.
+      `verify_packs --doc kp --only spell` → **200 ok / 0 disagree / 0 absent /
+      0 unsourced / 74 unverifiable** (31/31 match coverage, and all 74 carry a
+      written rule), `gate_packs` green, census "nothing installed" **0**, `kp`
+      absent from both duplicate lists and from `unmapped_report.json`,
+      `build_catalog` leaves the tree clean; 31 items scored
+      **20 ✅ · 6 ➖ · 0 ⛔ · 5 ⚠️**. The cheap fidelity check that a single-category
+      pack allows — compare every card's `description` with the source `desc`
+      byte for byte — came back **31/31**, the documented `**At Higher Levels.**`
+      append included, and even reproduces upstream's own broken prose
+      (`Selfish Wish`), so text loss is not where this pack's defect lives.
+      The defect is in a vocabulary: **F-pass0-11** (A3, `pass0` — the spreading
+      rule) — the Tier-0 `duration-unit` list has seven rows and none means
+      "permanent", so `mappers/spell.dart:237` sends every source duration
+      starting with `permanent` to **`Until Dispelled`**, printing a mechanical
+      claim (dispel ends it) the source never made, and dropping the end
+      condition on `permanent until discharged` / `permanent; one generation`.
+      Corpus-wide **25** cards: `a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1,
+      `spells-that-dont-suck` 1. `Special` — the mapper's own written fallback —
+      is the honest value; that is option 1 in the ledger.
+      **One candidate died and one ⚠️ is structural.** `shape_size_unit` is null
+      on all 5 area rows while the pack writes `area_size_ft`, but the mapper and
+      §5.6 both state that no unit other than feet occurs anywhere in the
+      snapshot (K7). And `class_refs` is a **required** field sitting at 21/31:
+      7 cards have no class upstream (F-kuru-01, re-measured — 93/85 with
+      `kp 7 · deepm 75 · a5e-ag 3`, unchanged) and 3 carry only `Anti Paladin`,
+      which no pack ships, so §5.6's written ref filter blocks it — both are ⚪,
+      yet A2 scores ⚠️, not ✅, because a required field is empty on the card.
+
+      **kaldı: 11 unit** — Dalga 2 continues at `wz` (43), then `deepmx` (64),
+      `spells-that-dont-suck` (180), `deepm` (515); Dalga 3–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

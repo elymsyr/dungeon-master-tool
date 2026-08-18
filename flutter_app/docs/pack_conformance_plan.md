@@ -9,29 +9,33 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1'in tamamı bitti** — `a5e-gpg`,
-> `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17) ve `bfrd`'nin
-> class/subclass satırları (2026-08-18). **20 tarama biriminin 8'i kapandı**,
-> defterde **18 bulgu** var, on sekizi de ❓ danışılacak
-> (`python3 tool/check_findings.py` → *19 kayıt, 18 sayaca giriyor, temiz*).
-> Dalga 1'in son birimi tek yeni bulgu üretti: **F-bfrd-01** (A3 — `Mechanist`
-> ilerleme tablosunun 2. sütunu `Augment Effects Known (2)` diye başlıklanıyor,
-> çünkü kaynak iki ayrı sütuna aynı `name`'i vermiş; doğru ad kaynağın `pk`'sinde
-> duruyor: `augmented-items`).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2 başladı** —
+> `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17), `bfrd`'nin
+> class/subclass satırları (2026-08-18) ve `kp` (2026-08-18). **20 tarama biriminin
+> 9'u kapandı**, defterde **19 bulgu** var, on dokuzu da ❓ danışılacak
+> (`python3 tool/check_findings.py` → *20 kayıt, 19 sayaca giriyor, temiz*).
+> Dalga 2'nin ilk birimi tek yeni bulgu üretti: **F-pass0-11** (A3 — kaynağın
+> `permanent` dediği 25 büyünün süresi karta `Until Dispelled` yazılıyor; Tier-0
+> `duration-unit` sözlüğünde "kalıcı" satırı yok, mapper `Special` yerine
+> dağıtılabilirlik iddiasını seçiyor).
 >
-> **Sıradaki iş: Dalga 2 → beş büyü paketi, 833 büyü.** Sıra küçükten büyüğe:
-> `kp` (31) → `wz` (43) → `deepmx` (64) → `spells-that-dont-suck` (180) →
-> `deepm` (515). Dört uyarı hazır: (1) dalganın ortak riski **`class_refs` /
-> `tags` ikilisi** — F-kuru-01'in dağılımı `deepm: 75, kp: 7, a5e-ag: 3`, yani
-> ilk ve son paket ikisi de bu ⚪'nin içinde; komut **yeniden çalıştırılır**,
-> sayı elle taşınmaz; (2) `material_*` iki ayrı sebeple boş olabiliyor —
-> `toh`'ta `material_specified` boştu, `a5e-ag`'de `material` bir **bool**;
-> `deepm` ve `spells-that-dont-suck`'ta **dolu** olması bekleniyor, yani bu
-> dalga o beklentiyi ölçen ilk yer; (3) `verify_packs --doc <slug> --only spell`
-> bu kategoride **tam** çalışıyor (kural tablosu `spell`'i tanıyor), dolayısıyla
-> A3/D1 araçla ölçülür, okumayla değil; (4) beş paket de tek kategorili → 31
-> maddenin ~10'u ➖ olacak, ama **F/G grubu yine de ölçülür** (paket başına
-> `size_bytes` + `counts` + lisans).
+> **Sıradaki iş: Dalga 2'nin 2. birimi → `open5e-wz` (43 büyü).** Sonra `deepmx`
+> (64) → `spells-that-dont-suck` (180) → `deepm` (515). `kp`'den çıkan beş uyarı:
+> (1) **F-pass0-11'in dağılım tablosu** `deepm` 9, `deepmx` 1,
+> `spells-that-dont-suck` 1 satırını bekliyor — o birimlerde yeni kayıt açılmaz,
+> tabloya bakılır ve komut **yeniden çalıştırılır** (`wz`'de 0 bekleniyor);
+> (2) `class_refs` **required** olduğu hâlde dolu değil — `kp`'de 21/31; F-kuru-01
+> (7) ve §5.6'nın yazılı ref filtresi (`Anti Paladin` 3) birlikte açıklıyor,
+> ikisi de ⚪, ama **A2 bu yüzden ⚠️ puanlanır**, ✅ değil; (3) `material_*`
+> **üçüncü** bir sebeple boş olabiliyor: `kp`'de kaynak `material` bir bool
+> (`a5e-ag` gibi); korpüs geneli 369/1.297 dolu, yani §5.6'da satırı yok ve
+> gerekmiyor — birim başına `S` gerekçesi bu plana yazılır (C8);
+> (4) `verify_packs --doc <slug> --only spell` gerçekten tam çalışıyor
+> (`kp`: 200 ok / 0 disagree) **ama** `duration_unit_ref` kural tablosunda **yok**
+> — F-pass0-11 tam bu boşlukta yaşıyor, yani süre/okul gibi ref alanları
+> **okunarak** kontrol edilir; (5) metin sadakati bayt bayt karşılaştırılabiliyor
+> (`desc` + `**At Higher Levels.**` eki) — 31/31 tuttu, bu ucuz kontrol her
+> büyü paketinde tekrarlanmalı.
 >
 > **Dalga 2 bittiğinde** 13/20 birim kapanır ve Dalga 3 (sihirli eşya paketleri)
 > başlar; onun bilinen açığı `magic-item.cost_gp` (bilinen açık #5, ⛔).
@@ -881,14 +885,94 @@ gördü; Dalga 2'den itibaren kategori çeşitliliği düşüyor, tekrar artıyo
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
-| `open5e-kp` | 31 | spell 31 | ⬜ | — | — |
+| `open5e-kp` | 31 | spell 31 | ⚠️ | 2026-08-18 | F-pass0-11 |
 | `open5e-wz` | 43 | spell 43 | ⬜ | — | — |
 | `open5e-deepmx` | 64 | spell 64 | ⬜ | — | — |
 | `open5e-spells-that-dont-suck` | 180 | spell 180 | ⬜ | — | — |
 | `open5e-deepm` | 515 | spell 515 | ⬜ | — | — |
 
 > Bu dalganın ortak riski tek: **U2'nin ölçtüğü 85 görünmez büyü** ve
-> `class_refs` / `tags` ikilisi (checklist B3, F3).
+> `class_refs` / `tags` ikilisi (checklist B3, F3). İlk birim (`kp`, 2026-08-18)
+> bu riski doğruladı ve **ayrı bir kusur** buldu: süre sözlüğünde "kalıcı" satırı
+> yok (F-pass0-11).
+
+#### `open5e-kp` sonucu — 2026-08-18
+
+31 varlık, tek kategori (`spell` 31), 74.597 bayt. `verify_packs --doc kp --only
+spell` → **200 ok · 0 disagree · 0 absent · 0 unsourced · 74 unverifiable**,
+eşleşme **31/31**. `gate_packs --packs /tmp/one` yeşil; `dupe_census` C "nothing
+installed" **0**, A/B listelerinde `kp` **hiç geçmiyor**. `unmapped_report.json`
+yalnız üç `alignment` satırı taşıyor (canavar paketlerinden), `kp`'den sıfır.
+Okuma bütçesi: `scan_pack.py` iki mod (~170 satır) + kaynağın 4 alan sorgusu;
+paket dosyası **açılmadı** (K2).
+
+**Bu birimin üç ölçümü.**
+
+1. **Metin sadakati birebir.** 31 kartın `description`'ı kaynağın `desc`'iyle
+   **bayt bayt aynı** (9 satırda kuralın yazdığı `**At Higher Levels.**` eki
+   dahil), adlar 31/31 aynı. Kaynağın kendi bozuk cümlesi de aynen geliyor
+   (`Selfish Wish`: kapanmayan parantez, madde işaretleri düz metne yapışmış) —
+   **upstream kusuru, `S`**, mapper'ın eklediği/kaybettiği bir şey yok.
+2. **`material_*` 0/31 = `S`** — kaynakta `material` bir **bool** (31/31 satırda),
+   `material_specified` boş. `a5e-ag`'nin sebebiyle aynı, `toh`'unkiyle farklı.
+   Korpüs geneli bu alan **369/1.297 dolu** (`deepm` 288, `spells-that-dont-suck`
+   81), yani §5.6'da satırı **yok** ve olmasına da gerek yok — 0% olan bir alan
+   değil. Bu birimin `S` gerekçesi burada yazılıdır (C8).
+3. **`class_refs` 21/31 (alan `required`)** — 7 kart hiçbir sınıf taşımıyor
+   (F-kuru-01 komutu yeniden çalıştırıldı: **93 / 85**, dağılım `kp 7 · deepm 75 ·
+   a5e-ag 3` — değişmedi), 3 kart yalnız `Anti Paladin` etiketi taşıyor ve o sınıfı
+   hiçbir paket göndermiyor, yani §5.6'nın yazılı filtresi gereği ref alamıyor.
+   İkisi de yazılı açık; bu birimde **büyümediler**.
+
+**Yeni bulgu: F-pass0-11** (checklist A3) — kaynağın `permanent` dediği süre karta
+`Until Dispelled` yazılıyor. `kp`'de 2 kart, korpüste **25** (`a5e-ag` 12,
+`deepm` 9, `kp` 2, `deepmx` 1, `spells-that-dont-suck` 1). Tier-0 `duration-unit`
+sözlüğünde yedi satır var, "kalıcı" yok; mapper `Special` yerine `Until Dispelled`
+seçiyor, yani karta kaynağın söylemediği bir mekanik (*dispel magic* bitirir)
+giriyor. Bulgu ölçümden değil **okumadan** geldi — `duration_unit_ref` kural
+tablosunda yok, bu yüzden 0 disagree ile birlikte yaşıyor.
+
+**Ölen aday: `shape_size_unit`.** 5 alan kartının hepsinde kaynak birimi `None`,
+paket `area_size_ft` yazıyor. Mapper'ın yazılı gerekçesi var
+(`mappers/spell.dart:108-115`: snapshot'ta feet dışında birim **yok**) ve §5.6
+aynı cümleyi taşıyor → K7, bulgu değil.
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | `spell` şemada; roundtrip yeşil |
+| A2 | ⚠️ | `class_refs` **required** ama 21/31 — 7 kartta kaynakta sınıf yok (F-kuru-01, ⚪), 3 kartta `Anti Paladin` (§5.6'nın yazılı ref filtresi). Diğer 10 zorunlu alan 31/31 |
+| A3 | ⚠️ | 0 unsourced; ama **F-pass0-11 (yeni)** — `permanent` → `Until Dispelled` |
+| A4 | ✅ | 31/31 ad kaynakla aynı; built-in'de karşılığı olan tek ad yok |
+| A5 | ✅ | 16 dolu sütunun hiçbiri tek sabit değil (en düşük ayrık değer 2: `is_ritual` 27/4) |
+| B1 | ✅ | `--list-builtin-same`'de `kp` yok |
+| B2 | ✅ | `--list-shared`'da `kp` yok; korpüsteki 4 paylaşılan `spell` adı başka paketlerden |
+| B3 | ✅ | okul, süre, atış birimi, bileşen, hasar tipi, kurtarma yeteneği hepsi ref; düzyazıda kalan mekanik yok |
+| B4 | ✅ | gate yeşil, census C "nothing installed" 0; 4.045 softRef'in hepsi built-in'e |
+| B5 | ✅ | `metadata.links` yok + `requires: []` — doğru: tüm ref'ler built-in'e (§2.1) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ⚠️ | 25 şema alanının 17'si dolu. Boşların hepsinin sebebi yazılı: `at_higher_levels_text` `P` (9 satırın metni `description`'da), `effects` ⚪, `applied_condition_refs` `M`, `attack_type`/`reaction_trigger`/`material_*` `S` (kaynakta `attack_roll` 0/31, `reaction_condition` 0/31) |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ➖ | `spell`'de grant bloğu yok |
+| C7 | ✅ | 7 ayrı Tier-0 sözlüğüne ref var, `unmapped_report.json`'da `kp` sıfır satır |
+| C8 | ⚠️ | 8 boş alanın 7'sinin §5.6'da satırı var; `material_*`'ın **yok** — çünkü korpüste 0% değil (369/1.297). Bu birimin `S` gerekçesi yukarıda yazıldı |
+| D1 | ✅ | 200 ok · 0 disagree · 0 absent |
+| D2 | ✅ | 74 unverifiable, üçü de yazılı kuralla: `class_refs` (v1 sütunu), `casting_time_amount` (öneksiz), `range_ft` (`range_text`'ten ayrıştırılıyor) |
+| D3 | ✅ | gate yeşil |
+| E1 | ✅ | `spell`'in mekanik alanları grant alanı değil, M1'in 73 çiftine girmiyor; sayfaya inişi F2'nin render matrisi ölçüyor (yeşil) |
+| E2 | ✅ | `effects` `notResolverRead`'de; `bundled_pack_resolve_test` iki yönlü kapı yeşil |
+| E3 | ➖ | paket sınıf göndermiyor; slot ilerlemesi bu birimde ölçülemez |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil |
+| F2 | ✅ | paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ⚠️ | `wizard_pack_families_test` yeşil, ama `kp`'nin 7 büyüsü hiçbir sınıf listesinde görünmüyor (F-kuru-01) + 3 `Anti Paladin` büyüsü yalnız etiketten |
+| F4 | ✅ | `entity_link_navigation_test` yeşil; kartın her ref'i built-in bir karta gidiyor |
+| G1 | ✅ | `build_catalog` yeniden çalıştı, ağaç temiz; `size_bytes` 74.597 = dosya, `counts: {spell: 31}` = gerçek |
+| G2 | ✅ | `licenses: ["ogl-10a"]`, `publisher: kobold-press` kaynağın `Document.json`'ıyla birebir; `attribution` metni de OGL metni |
+| G3 | ✅ | `is_srd_overlap: false` ve doğru — built-in'le tek çakışan ad yok |
+
+**Sayım: 20 ✅ · 6 ➖ · 0 ⛔ · 5 ⚠️** — ⚠️'ler A2, A3, C3, C8, F3;
+➖'ler C1, C2, C4, C5, C6, E3 (tek kategorili paket).
 
 ### Dalga 3 — Sihirli eşyalar
 
