@@ -383,3 +383,61 @@ tags: [meta, changelog]
 - **Sıradaki:** Dalga 4'ün ikinci birimi `open5e-tob2` (2.607 varlık); dört yeni
   `pass0` kaydının `tob2` payı ölçüldü (30 / 506 / 107 / 99) — o birimin işi
   bunları **doğrulayıp** dağılım tablolarına yazmak, yeni kayıt açmak değil.
+
+## 2026-08-18 — F3 / Dalga 4 sürüyor: open5e-tob2 tarandı (16/20), dört kayıt doğrulandı, bir yeni `pass0` bulgusu
+
+- **`open5e-tob2`** — 2.607 varlık, dört kategori (`creature-action` 1.209,
+  `trait` 1.014, `monster` 383, `language` 1). `verify_packs --doc tob2` →
+  eşleşme **383/383**, **7.664 ok · 0 disagree · 0 absent · 0 unsourced ·
+  1.915 unverifiable** (tam olarak 5 × 383, beşi `ccdx`'teki beyan edilmiş
+  kuralların aynısı). `gate_packs --packs /tmp/one` yeşil; `dupe_census`
+  "nothing installed" **0**, `--list-builtin-same` 0 satır; `unmapped_report`'un
+  üç `alignment` satırının **hiçbiri `tob2`'den değil**; `build_catalog` sonrası
+  ağaç temiz, manifest satırı `Document.json` ile birebir (*Tome of Beasts 2* /
+  Kobold Press / `ogl-10a` / `5e-2014` / `1.1.0`).
+- **Çocuk tarafında kayıp yok:** kaynak 1.285 `CreatureAction` (1.215 ACTION +
+  41 REACTION + 29 LEGENDARY) + 1.060 `CreatureTrait` = **2.345 satırın
+  2.345'i** ebeveyni tarafından ref'leniyor; tekil ref birleşimi (kesişim 0)
+  **1.209** ve bu paketin `creature-action` varlık sayısının tam kendisi →
+  öksüz varlık **0**. `ccdx`'in tek satırlık `_cleanChildName` kaybının burada
+  karşılığı yok.
+- 31 madde: **19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️** (⚠️: A3, B3, C8, D1).
+- **`ccdx`'in dört `pass0` kaydı bağımsız ölçümle doğrulandı** (kopyalanmadı):
+  F-pass0-17 → **30**, F-pass0-18 → **506**, F-pass0-19 → **107** (96 direnç +
+  11 bağışıklık), F-pass0-20 → **99**. Dördünün dağılım tablosuna doğrulama
+  notu düşüldü. F-pass0-17 ayrıca **daha sıkı** bir yöntemle de sınandı (ad
+  kaybı paket geneli yerine ebeveynin kendi ref listesi içinde arandı) ve `tob2`
+  yine 30 verdi; aynı sıkı ölçüm `a5e-mm` için 106 yerine 85 veriyor — o birimin
+  işi, sayı değiştirilmedi.
+- **Tek yeni bulgu, o da `pass0`.** Defter 35 → **36**; `check_findings.py` →
+  *37 kayıt, 36 sayaca giriyor, temiz*.
+  - **F-pass0-21** (A3, `M`) — `CreatureAction.limited_to_form` hiç okunmuyor.
+    Aniwye'nin (ogre/dev/kokarca) `Rock`'ı kaynakta *Giant Form Only*,
+    `Bite`/`Claw`'u *Skunk Form Only*; kartta üçü de koşulsuz, yani kaynağın
+    vermediği bir izin veriliyor. Sütun korpüste **262** satırda dolu (**218**
+    yayınlanan: `a5e-mm` 60, `tob-2023` 48, `bfrd` 37, `tob2` 30, `ccdx` 24,
+    `tob` 18, `tob3` 1) ve yalnız **1**'i niteliği `desc`'te tekrarlıyor.
+    Upstream'in ikinci geleneği — niteliği `desc`'in başına parantezle yazmak —
+    13 satırda kullanılıyor ve orada bilgi karta iniyor: aynı canavarın
+    `Deadly Musk`'ı niteliğini koruyor, `Bite`'ı kaybediyor.
+- **Ölçülüp doğrulanan, bulgu sayılmayan (K7):** aksiyonsuz görünen tek canavar
+  (`Boomer`) dürüst — kaynaktaki tek çocuk aksiyonu bir `REACTION` ve doğru
+  alana inmiş; A5'in iki sabiti burada da ayakta (`CreatureTrait.type`
+  1.060/1.060 `null`, v1 `legendary_desc` 9/9 "can take 3" — korpüsün iki
+  istisnası hâlâ `tob`'da); `alignment_ref` 373 + `alignment_note` 10 = 383/383;
+  17 tekil dilin 17'si, listesi dolu 180 canavarın 180'i ref alıyor;
+  `uses_type`/`recharge` sütunları eksiksiz iniyor; `legendary_action_cost`
+  (29 satır) şemada evsiz ama bilgi adın içinde (*"(Costs 2 Actions)"*).
+- **B2 istisnası `tob` ailesinde ölçüldü:** `tob2`'nin 77 paylaşılan adı
+  (64 `trait`, 13 `creature-action`) hepsi statblock çocuğu; aile içi çakışma
+  `tob` 155, `tob3` 174, `tob-2023` 176 ad ve **`monster` çakışması üçünde de
+  0** — kopya yükünün tamamı çocuk satır + bilinçli `Void Speech` (B9).
+- Kod değişmedi (tarama kuralı K1); `assets/open5e_packs/` değişmedi.
+  Güncellenen notlar: [[mapper_monster]]; `docs/pack_conformance_findings.md`,
+  `docs/pack_conformance_plan.md`, `docs/open5e_content_audit.md` (§0 · §5.8'e
+  bir yeni satır · §6 F3).
+- **Sıradaki:** Dalga 4'ün üçüncü birimi `open5e-tob` (2.734 varlık). İki iş
+  önceden adlandırıldı: korpüsün tek iki *"can take 1 legendary action"*
+  canavarı `tob`'da, yani `legendary_action_uses` = 3 sabiti orada **yanlış** ve
+  bulgu açılmalı; `tob` ⟷ `tob-2023` çifti L4'ün asıl kopya kaynağı, B2 istisnası
+  asıl orada sınanır.

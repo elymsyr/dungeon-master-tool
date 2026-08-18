@@ -10,41 +10,37 @@
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
 > **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
-> Dalga 4 başladı** — son okunan birim `ccdx` (2026-08-18).
-> **20 tarama biriminin 15'i kapandı**, defterde **35 bulgu** var, otuz beşi de
-> ❓ danışılacak (`python3 tool/check_findings.py` → *36 kayıt, 35 sayaca
-> giriyor, temiz*). `ccdx` dört yeni kayıt açtı ve **dördü de `pass0`** —
-> **F-pass0-17** (içerik-hash'i adı okumuyor: 382 çocuk satır başka bir
-> canavarın satırının adıyla render oluyor, 6'sında kullanım sayısı da
-> değişiyor), **F-pass0-18** (`damage_type_ref` 0%, tip komşu
-> `extra_damage_type` sütununda — 3.479 yayınlanan satır), **F-pass0-19**
-> (`nonmagical_attack_*` booleanları okunmuyor, 618 canavar koşulsuz b/p/s
-> direnci gösteriyor), **F-pass0-20** (`languages_desc` okunmuyor, 769 canavar
-> dilsiz görünüyor). `ccdx`'in kendi verisi temiz: **7.009 ok · 0 disagree ·
-> 0 absent · 0 unsourced · 1.780 unverifiable**, eşleşme 356/356.
+> Dalga 4 sürüyor** — son okunan birim `tob2` (2026-08-18).
+> **20 tarama biriminin 16'sı kapandı**, defterde **36 bulgu** var, otuz altısı
+> da ❓ danışılacak (`python3 tool/check_findings.py` → *37 kayıt, 36 sayaca
+> giriyor, temiz*). `tob2` birimi `ccdx`'in dört `pass0` kaydını **bağımsız
+> ölçümle doğruladı** (F-pass0-17 → 30, -18 → 506, -19 → 107, -20 → 99, dördü de
+> tuttu) ve **tek** yeni kayıt açtı: **F-pass0-21** (`limited_to_form` hiç
+> okunmuyor — şekil değiştiren canavarların yalnız tek biçimde kullanabildiği
+> **218 yayınlanan saldırı satırı** kartta koşulsuz duruyor; `tob2` payı 30).
+> `tob2`'nin kendi verisi temiz: **7.664 ok · 0 disagree · 0 absent ·
+> 0 unsourced · 1.915 unverifiable**, eşleşme 383/383 ve çocuk tarafında
+> **0 kayıp satır** (2.345/2.345 ref'leniyor, öksüz varlık 0).
 >
-> **Dalganın açılış kararı verildi:** `bfrd`'nin canavar satırları **`a5e-mm`
-> biriminin içinde** okunur (B2 istisnasının test vakası olan çifti bölmemek
-> için), ayrı birim açılmaz → Dalga 4 = **6 birim**, toplam 20/20 korunur.
->
-> **Sıradaki iş: Dalga 4'ün ikinci birimi → `open5e-tob2` (2.607 varlık;
-> creature-action 1.209, trait 1.014, monster 383, language 1).**
-> `ccdx`'ten çıkan dört uyarı:
-> (1) **Dört `pass0` kaydının dağılım tablosuna satır eklemek bu birimin
-> işidir, yeni kayıt açmak değil** (yayılan bulgu kuralı 2). `tob2`'nin payı
-> ölçüldü bile: F-pass0-17 → 30, F-pass0-18 → 506, F-pass0-19 → 107,
-> F-pass0-20 → 99; okuma bunları **doğrulamalı**, kopyalamamalı;
-> (2) **Canavar biriminin asıl işi çocuk satırlarda.** `verify_packs` yalnız
-> `monster`'ı doğruluyor (`ccdx`'te 7.009 ok / 0 disagree), `trait` ve
-> `creature-action` onun kör noktasında — kaynak satır sayısıyla ebeveyn ref
-> toplamını karşılaştırmak tek görünür ölçü;
-> (3) **`tob2` `tob`/`tob-2023` ile aynı ailede.** B2 istisnası `ccdx`'te 87
-> paylaşılan adla sınandı ve geçti; `tob` ailesinde sayı çok daha büyük
-> olacak, `dupe_census --list-shared` çıktısı orada kanıt;
-> (4) **A5'in iki sabiti artık okunmuş sayılır** (`trait_kind`,
-> `legendary_action_uses`) — ama `legendary_action_uses` için korpüste **iki
-> istisna** var ve ikisi de `tob`'da ("can take 1 legendary action"); o birim
-> bunu bulgu olarak açmalı.
+> **Sıradaki iş: Dalga 4'ün üçüncü birimi → `open5e-tob` (2.734 varlık;
+> creature-action 1.303, trait 1.039, monster 391, language 1).**
+> `tob2`'den çıkan dört uyarı:
+> (1) **`legendary_action_uses` istisnası bu birimin işi.** Korpüsteki iki
+> "can take 1 legendary action" satırının ikisi de `tob`'da; `tob2`'de 9/9
+> "can take 3" çıktı, yani sabit orada dürüst, burada değil — **bulgu açılmalı**
+> (checklist A5/A3, cause `M`);
+> (2) **Beş `pass0` kaydının `tob` payı ölçülmeli, kopyalanmamalı:**
+> F-pass0-17 → 53, F-pass0-18 → 652, F-pass0-19 → 124 (100 direnç + 24
+> bağışıklık), F-pass0-20 → 72, F-pass0-21 → 18;
+> (3) **`tob` ⟷ `tob-2023` çifti L4'ün asıl kopya kaynağı.** `tob2` aile içi
+> çakışmayı ölçtü: `tob2 ∩ tob` 155 ad, **`monster` çakışması 0**. `tob` ⟷
+> `tob-2023` çiftinde `monster` adlarının da çakışması beklenir — B2 istisnası
+> orada gerçekten sınanır, `dupe_census --list-shared` çıktısı kanıt;
+> (4) **`unmapped_report`'un üç `alignment` satırı `tob` ailesinden.** İki
+> Nkosi satırı (`Shapechanger)  (Nkosi`, `… (Nkosi Pridelord`) hem `tob`'da hem
+> `tob-2023`'te var, üçüncüsü (`Titan)  (Hraesvelgr`) yalnız `tob-2023`'te;
+> üçünde de parantez bozuk, `_cleanMonsterName`/hizalama ayrıştırması kaynaklı.
+> `tob` birimi bunun bulgu mu bilinen açık mı olduğuna karar vermeli.
 >
 > **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
 > **F4 — "Karar ver, sonra görev aç"**a gelir.
@@ -1630,13 +1626,133 @@ e. **Kaynağın okunmayan sütunları.** `environments` / `category` /
 dördü de **mapper'ın korpüs geneline yayılan** kusuru, bu yüzden dördü de
 `pass0`. **Dalga 4 başladı — 20 tarama biriminin 15'i bitti.**
 
+#### open5e-tob2 sonucu — 2026-08-18
+
+**Ölçüm.** 2.607 varlık, dört kategori: `creature-action` 1.209, `trait` 1.014,
+`monster` 383, `language` 1 (devir notunun yazdığı dağılımla birebir).
+`verify_packs --doc tob2` → eşleşme **383/383**, **7.664 ok · 0 disagree ·
+0 absent · 0 unsourced · 1.915 unverifiable** — unverifiable tam olarak 5 × 383
+ve beşi `ccdx`'teki beş beyan edilmiş kuralın aynısı (`initiative_modifier`,
+`proficiency_bonus`, `xp`, `tags_line`, `legendary_action_uses`).
+`gate_packs --packs /tmp/one` yeşil; `dupe_census` "nothing installed" **0**,
+`--list-builtin-same` **0 satır**; `unmapped_report.json`'daki üç `alignment`
+satırının **hiçbiri `tob2`'den değil** (Hraesvelgr `tob-2023`, iki Nkosi
+`tob`+`tob-2023`). `build_catalog` sonrası ağaç temiz; manifest satırı
+`Document.json` ile birebir (*Tome of Beasts 2* / Kobold Press / `ogl-10a` /
+`5e-2014` / `1.1.0` / `counts {trait: 1014, creature-action: 1209, monster: 383,
+language: 1}`).
+
+**Çocuk satır kapsaması — kayıp 0.** Kaynak 1.285 `CreatureAction`
+(1.215 `ACTION` + 41 `REACTION` + 29 `LEGENDARY_ACTION`) + 1.060
+`CreatureTrait`; ebeveynlerin ref toplamı **1.215 + 41 + 29 + 1.060** — yani
+**2.345/2.345**, `ccdx`'teki tek satırlık `_cleanChildName` kaybının burada
+karşılığı yok. Tekil ref birleşimi (1.146 + 41 + 22, kesişim 0) **1.209** ve bu
+paketteki `creature-action` varlık sayısının tam kendisi → **öksüz varlık 0**,
+`trait` tarafında 1.014 = 1.014. Aradaki fark (2.345 kaynak satırı → 2.223
+varlık) tamamen içerik-hash'li birleştirme.
+
+**Devralınan dört uyarının cevabı.**
+* **(1) Dört `pass0` kaydının payı — dördü de doğrulandı, kopyalanmadı.**
+  F-pass0-17 → **30**, F-pass0-18 → **506**, F-pass0-19 → **107**
+  (96 direnç + 11 bağışıklık), F-pass0-20 → **99**. Dördü de bağımsız ölçümle
+  devir notunun yazdığı sayıyı verdi; kayıtların dağılım tablolarına doğrulama
+  notu düşüldü. F-pass0-17 ayrıca **daha sıkı** bir yöntemle de ölçüldü
+  (ad kaybı paket geneli yerine **ebeveynin kendi ref listesi** içinde aranarak):
+  `tob2` yine **30**. *Aynı sıkı ölçüm `a5e-mm` için 106 yerine 85 veriyor;
+  fark muhtemelen a5e'nin `bonus_action_refs` dışındaki ekstra aksiyon
+  alanlarından geliyor — o birimin işi, sayı burada değiştirilmedi.*
+* **(2) Asıl iş çocuk satırlarda.** `verify_packs`'in kör noktası ölçüldü:
+  2.345 kaynak çocuk satırının **hepsinin** metni ebeveyninin ref listesinde
+  bulundu (`metni bulunamayan 0`), ama **30'unda ad tutmuyor** — D1'in kör
+  noktası, F-pass0-17.
+* **(3) B2 istisnası `tob` ailesinde.** `tob2`'nin başka bir official pakette de
+  bulunan **77 adı** var (64 `trait`, 13 `creature-action`) — hepsi statblock
+  çocuk satırı. Aile içi çakışma çok daha büyük: `tob2 ∩ tob` **155 ad**,
+  `∩ tob3` **174**, `∩ tob-2023` **176** — ve **`monster` adı çakışması
+  üçünde de 0**. Yani ailenin kopya yükünün tamamı çocuk satır + tek `language`
+  (`Void Speech`, B9'un bilinçli kararı), B2'nin yazılı istisnası birebir bu.
+  Paylaşılan adların yalnız 1–5'i metin olarak da aynı; gerisi aynı ad, farklı
+  statblock.
+* **(4) `legendary_action_uses` istisnası burada değil.** `tob2`'nin 9 efsanevi
+  canavarının **9'unda** v1 `legendary_desc` *"can take 3 legendary actions"*
+  diyor; kaynağın hiçbir satırında "can take 1/2" geçmiyor. Sabit `tob2` için
+  dürüst — istisna `tob` biriminde açılacak. `trait_kind` da yeniden okundu:
+  kaynağın `CreatureTrait.type` sütunu **1.060/1.060 `null`**, paketteki 1.014
+  `Other` karşılıksız değil, sabit.
+
+**Yeni bulgu — bir tane, o da `pass0`.** **F-pass0-21** (checklist A3, cause
+`M`): `CreatureAction.limited_to_form` hiç okunmuyor. Aniwye'nin `Rock`'ı
+kaynakta *Giant Form Only*, `Bite`/`Claw`'u *Skunk Form Only*; kartta üçü de
+koşulsuz. Korpüste **218 yayınlanan satır** (`tob2` 30). Kusur mapper'ın olduğu
+için yayılan-bulgu kuralı gereği kapsam `pass0`, `open5e-tob2` sayacı **0'da
+kalıyor**. Defter 35 → **36**; `check_findings.py` → *37 kayıt okundu, 36 tanesi
+sayaca giriyor — temiz*.
+
+**Ölçülüp bulgu sayılmayanlar.**
+a. **Aksiyonsuz görünen tek canavar dürüst.** `action_refs` 382/383; boş olan
+   `Boomer`'ın kaynakta **tek** çocuk aksiyonu var ve o bir `REACTION`
+   (*Shriek*), doğru alana (`reaction_refs`) inmiş. C4'ün teknik kuralı bu
+   satırda ihlal değil.
+b. **Hizalama.** `alignment_ref` 373 + `alignment_note` 10 = **383/383**.
+c. **Diller çözülüyor.** Kaynakta 17 tekil dil, **17'si** ref'e dönüyor;
+   listesi dolu 180 canavarın **180'i** ref alıyor. Kayıp yine listede değil
+   düzyazıda (F-pass0-20 → 99).
+d. **Kullanım/şarj sütunları eksiksiz.** Kaynak `uses_type`: 148
+   `RECHARGE_ON_ROLL` + 25 `PER_DAY` + 3 `RECHARGE_AFTER_REST`; pakette
+   `recharge_kind` 147 `Roll` + 3 `Short Rest`, `uses_per_day` 25 — aradaki tek
+   fark birleştirme, kayıp yok.
+e. **`legendary_action_cost` karşılıksız.** Kaynakta 29 satırda dolu (1/2/3),
+   `creature-action` şemasında karşılığı yok (cause `N`); bilgi zaten adın
+   içinde iniyor (*"Wing Attack (Costs 2 Actions)"*), bu yüzden kayıp değil.
+f. **`order_in_statblock`** okunmuyor — ref listesinin sırası kaynak sırasını
+   zaten koruyor.
+
+| Madde | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | dört kategori slug'ı da built-in şemada tanımlı |
+| A2 | ✅ | `ac`/`hp_average`/`cr`/`xp`/`stat_block`/`size_ref`/`creature_type_ref` 383/383 |
+| A3 | ⚠️ | iki ayrı nitelik düşüyor: "nonmagical" 107 canavarda (**F-pass0-19**), biçim niteliği 30 aksiyonda (**F-pass0-21**) |
+| A4 | ✅ | adlar `titleCaseName`'den geçmiş; çocuk ad temizliği bu pakette hiçbir satırı düşürmüyor |
+| A5 | ✅ | iki sabit de yeniden okundu: `trait_kind` (kaynak sütunu 1.060/1.060 null), `legendary_action_uses` (v1 9/9 "can take 3") |
+| B1 | ✅ | `--list-builtin-same` 0 satır |
+| B2 | ✅ | 77 paylaşılan ad, hepsi statblock çocuğu; aile içi 155–176 ad, `monster` çakışması 0 |
+| B3 | ⚠️ | 99 canavarda dil bilgisi düzyazıda kalıyor → **F-pass0-20** |
+| B4 | ✅ | gate yeşil; `dupe_census` C bölümü "nothing installed" 0 |
+| B5 | ➖ | paket→paket bağı yok (`requires: []`) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ✅ | kaynak çocuk satırının **2.345/2.345'i** ref'leniyor, öksüz varlık 0, `size_ref`/`creature_type_ref` eksik 0 |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ⛔ | `trait` grant bloğu §5.8'de ⛔ (statblock çocuğu `CharacterResolver`'a inmez) |
+| C7 | ✅ | `size`/`creature-type`/`alignment`/`condition`/`damage-type`/`language` çözülüyor; `unmapped_report`'ta `tob2` satırı yok |
+| C8 | ⚠️ | iki boş alanın yazılı gerekçesi ölçümle uyuşmuyor → **F-pass0-18** (506 satır), **F-pass0-20** |
+| D1 | ⚠️ | `monster` tarafı 7.664 ok / 0 disagree; çocuk tarafında 30 satır yanlış adla → **F-pass0-17** |
+| D2 | ✅ | 1.915 `unverifiable` = 5 × 383, beşinin de beyan edilmiş kuralı var; `unsourced` 0 |
+| D3 | ✅ | `gate_packs` yeşil |
+| E1 | ✅ | `bundled_pack_resolve_test` yeşil |
+| E2 | ✅ | mekanik olmayan alan yok; `description` canavarda boş, kural çocuk satırlarda |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `open5e-tob2 installs and reads back unchanged` |
+| F2 | ✅ | `pack_field_render` paket tarafı yeşil; tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ➖ | sihirbaz `monster` satırı göstermiyor (chargen ailesi değil) |
+| F4 | ✅ | `entity_link_navigation` yeşil |
+| G1 | ✅ | manifest satırı güncel, `build_catalog` sonrası drift yok |
+| G2 | ✅ | *Tome of Beasts 2* / Kobold Press / `ogl-10a` / `5e-2014` — `Document.json` ile birebir |
+| G3 | ✅ | `is_srd_overlap: false` |
+
+**Sayım: 19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️** — `tob2`'nin **kendi** verisi `ccdx`'ten de
+temiz (0 disagree, 0 absent, 0 unsourced, 0 dangling, 383/383 eşleşme ve çocuk
+tarafında **0 kayıp satır**); dört ⚠️'nin dördü de mapper'ın korpüs geneline
+yayılan kusuru. **20 tarama biriminin 16'sı bitti.**
+
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
 | `open5e-ccdx` | 2.426 | creature-action 1.148, trait 921, monster 356, language 1 | ⚠️ | 2026-08-18 | F-pass0-17; -18; -19; -20 |
 | `open5e-bfrd` | 2.473 | creature-action 1.338, trait 772, monster 360, language 1, class 1, subclass 1 | ⬜ | — | — |
-| `open5e-tob2` | 2.607 | creature-action 1.209, trait 1.014, monster 383, language 1 | ⬜ | — | — |
+| `open5e-tob2` | 2.607 | creature-action 1.209, trait 1.014, monster 383, language 1 | ⚠️ | 2026-08-18 | F-pass0-21 (+17; -18; -19; -20 doğrulandı) |
 | `open5e-tob` | 2.734 | creature-action 1.303, trait 1.039, monster 391, language 1 | ⬜ | — | — |
 | `open5e-tob3` | 2.787 | creature-action 1.577, trait 812, monster 397, language 1 | ⬜ | — | — |
 | `open5e-a5e-mm` | 3.071 | creature-action 1.655, trait 829, monster 586, size 1 | ⬜ | — | — |
