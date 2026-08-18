@@ -441,3 +441,74 @@ tags: [meta, changelog]
   canavarı `tob`'da, yani `legendary_action_uses` = 3 sabiti orada **yanlış** ve
   bulgu açılmalı; `tob` ⟷ `tob-2023` çifti L4'ün asıl kopya kaynağı, B2 istisnası
   asıl orada sınanır.
+
+## 2026-08-18 — F3 / Dalga 4 sürüyor: open5e-tob tarandı (17/20), beş kayıt doğrulandı, üç yeni bulgu (biri paketin kendi kaydı)
+
+- **`open5e-tob`** — 2.734 varlık, dört kategori (`creature-action` 1.303,
+  `trait` 1.039, `monster` 391, `language` 1). `verify_packs --doc tob` →
+  eşleşme **391/391**, **7.836 ok · 0 disagree · 0 absent · 0 unsourced ·
+  1.955 unverifiable** (tam olarak 5 × 391, beşi `ccdx`/`tob2` ile aynı beyan
+  edilmiş kurallar). `gate_packs --packs /tmp/one` yeşil; `dupe_census`
+  "nothing installed" **0**, `--list-builtin-same` 0 satır; `build_catalog`
+  sonrası ağaç temiz, manifest satırı `Document.json` ile birebir
+  (*Tome of Beasts* / Kobold Press / `ogl-10a` / `5e-2014` / `1.1.0`).
+- **Çocuk tarafında yine kayıp yok:** kaynak 1.427 `CreatureAction`
+  (1.305 ACTION + 37 REACTION + 85 LEGENDARY) + 1.123 `CreatureTrait` =
+  **2.550 satırın 2.550'si** ref'leniyor; tekil ref birleşimi (kesişim 0)
+  **1.303** ve paketin `creature-action` varlık sayısının tam kendisi, `trait`
+  1.039 = 1.039 → **öksüz varlık 0, dangling 0**.
+- **Beş devralınan `pass0` kaydının payı bağımsız ölçüldü ve beşi de tuttu:**
+  F-pass0-17 → **53** (52 `creature-action` + 1 `trait`), -18 → **652**,
+  -19 → **124** (100 direnç + 24 bağışıklık), -20 → **72**, -21 → **18**.
+  F-pass0-17 sıkı (ebeveyn kapsamlı) yöntemle de **53** verdi — iki yöntem
+  burada birebir aynı, yani `a5e-mm`'deki 106 ⟷ 85 farkı a5e'ye özgü.
+- **F-tob-01** (checklist A5, cause `M`, ❓) — Dalga 4'ün ilk **paket kapsamlı**
+  kaydı: `legendary_action_uses` sabiti 27 efsanevi canavarın **3'ünde** yanlış.
+  v1 `legendary_desc` `Jotun Giant` ve `Zmey` için *"can take 1 legendary
+  action"* diyor, `Vampire Warlock - Variant` için hiçbir sayı vermiyor; üçünde
+  de kart **3** gösteriyor. Giriş cümlesi pakete hiç inmediği için kullanıcı
+  sayının uydurma olduğunu göremiyor. Korpüsün geri kalanı sabitle uyumlu.
+- **F-pass0-22** (checklist A3, cause `S`, ❓) — upstream efsanevi aksiyonu
+  **iki kez** yayınlıyor: bir `LEGENDARY_ACTION` + `legendary_action_cost`, bir
+  de `ACTION` + adın sonunda `(Costs N Actions)`. `_contentHash` tipi de
+  hash'lediği için ikisi ayrı varlık oluyor ve ebeveyn ikisine birden ref
+  veriyor → `Aboleth, Nihilith`'in **normal aksiyon** listesinde
+  `Psychic Drain (Costs 2 Actions)` duruyor. **114 satır** (`bfrd` 58,
+  `ccdx` 24, `tob` 19, `tob2` 13); 114'ünün de aynı ebeveynde metni birebir aynı
+  bir efsanevi satırı var, maliyet uyuşmazlığı 0. `tob2`'nin
+  "`legendary_action_cost` adın içinde iniyor, kayıp değil" kararının öbür yüzü.
+- **F-pass0-23** (checklist B3, cause `M`, ❓) — `senses` yalnız v2'nin dört
+  sütunundan doluyor ve Tier-0 `sense` kanonu da yalnız o dört satırı taşıyor,
+  bu yüzden v1 `Monster.senses` düzyazısında adı geçen başka duyular düşüyor.
+  Black Flag darkvision yerine **keensense** kullanıyor ve v2'sinde
+  `darkvision_range` sütunu **hiç yok**: **90** `bfrd` canavarı tek duyusunu
+  kaybediyor, **41'i** tamamen boş `senses` ile yayınlanıyor. `tob`'un 6'sı
+  (*blood sense*, *blindsense*, *devil sight*, *impaired sight*) ve `ccdx`'in
+  1'iyle toplam **97 canavar**.
+- **Ölçülüp bulgu sayılmayanlar (K7):** `tags_line` 84/391 = v1 `subtype`
+  84/391; `bonus_action_refs`/`spell_refs`/`gear_refs` boşluğu dürüst
+  (v1 `bonus_actions_json`, `spells_json`, `group` **0** satır); şarj eksiksiz
+  (133 kaynak `RECHARGE_ON_ROLL` → 128 tekil metin → pakette 128, eksik 0);
+  `alignment_ref` 381 + `alignment_note` 10 = 391/391; `trait_kind` sabiti
+  burada da dürüst (`CreatureTrait.type` 1.123/1.123 null);
+  `Environment.json` + `normal_sight_range` yol haritasında yazılı açık.
+- **B2 en zor çiftinde sınandı ve ayakta:** `tob` ⟷ `tob-2023` **326 ortak
+  `monster` adı** taşıyor (391'in %83'ü), ama **254'ünün sayısal gövdesi
+  farklı** (`Adult Cave Dragon` CR 16/243 hp ⟷ CR 19/270 hp) — iki basım, iki
+  kopya değil. Aile içi başka `monster` çakışması yok (`tob2`/`tob3`/`ccdx` → 0).
+- **Devir notunun bir varsayımı düzeltildi:** `unmapped_report`'un üç bozuk
+  `alignment` satırı (`'Shapechanger)'`, `'Titan)'`) `tob`'un değil —
+  `tob`'un kendi satırları temiz (`lawful neutral`, `neutral`); bozukluk
+  **`tob-2023`'ün kaynak verisinde** (cause `S`), karar o birimin.
+- Defter 36 → **39**, [[check_findings]] → *40 kayıt okundu, 39 tanesi sayaca
+  giriyor — temiz*. Kod değişmedi (tarama kuralı K1); `flutter analyze` 0 hata
+  (17 eski info), F grubu testleri **75/75**, `pack_field_render` `+19 -1`
+  (kesen tek grup bilinen F-pass0-01).
+- **Sıradaki:** Dalga 4'ün dördüncü birimi `open5e-tob3` (2.787 varlık). İlk iş
+  ölçülüp devredildi: `tob3`'ün kaynağında **`CreatureActionAttack.json` yok**
+  ve paketin 1.577 `creature-action` satırının **0'ında** `attack_kind` /
+  `attack_bonus` / `damage_dice` / `reach_ft` var — boşluk kaynakta mı (`S`)
+  yükleyicide mi (`L`) sorusu o birimin. → `flutter_app/docs/pack_conformance_plan.md`
+  (`tob` sonucu + yeni devir bloğu), `flutter_app/docs/pack_conformance_findings.md`,
+  `flutter_app/docs/open5e_content_audit.md` §0/§5.8/§6, [[mapper_monster]],
+  [[check_findings]]
