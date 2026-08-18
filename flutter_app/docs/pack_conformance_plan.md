@@ -9,45 +9,42 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti** —
-> `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17),
-> `bfrd`'nin class/subclass satırları, `kp`, `wz`, `deepmx`,
-> `spells-that-dont-suck`, `deepm` ve `vom` (2026-08-18).
-> **20 tarama biriminin 14'ü kapandı**, defterde **31 bulgu** var, otuz biri de
-> ❓ danışılacak (`python3 tool/check_findings.py` → *32 kayıt, 31 sayaca
-> giriyor, temiz*). `vom` üç yeni kayıt açtı — **F-vom-01** (§5.8'in dayandığı
-> `attunement_detail` sütunu 2.319 v2 satırının hiçbirinde yok; mapper'ın
-> `item.dart:100`'deki dalı ölü kod), **F-vom-02** (`is_cursed` 1.063/1.063
-> sabit `false`, 4 eşyanın kuralı taşıyıcıyı lanetliyor), **F-vom-03**
-> (`sentient_*` "düzyazıda" deniyor, oysa 1.063 `desc`'in 0'ı duyarlılıktan
-> söz ediyor) — ve **bilinen açık #5'i doğruladı**: `MagicItem.cost`
-> 1.063/1.063 `0.00`, fiyat `desc`'te de yok, ⛔ gerekçesi ayakta (K7).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
+> Dalga 4 başladı** — son okunan birim `ccdx` (2026-08-18).
+> **20 tarama biriminin 15'i kapandı**, defterde **35 bulgu** var, otuz beşi de
+> ❓ danışılacak (`python3 tool/check_findings.py` → *36 kayıt, 35 sayaca
+> giriyor, temiz*). `ccdx` dört yeni kayıt açtı ve **dördü de `pass0`** —
+> **F-pass0-17** (içerik-hash'i adı okumuyor: 382 çocuk satır başka bir
+> canavarın satırının adıyla render oluyor, 6'sında kullanım sayısı da
+> değişiyor), **F-pass0-18** (`damage_type_ref` 0%, tip komşu
+> `extra_damage_type` sütununda — 3.479 yayınlanan satır), **F-pass0-19**
+> (`nonmagical_attack_*` booleanları okunmuyor, 618 canavar koşulsuz b/p/s
+> direnci gösteriyor), **F-pass0-20** (`languages_desc` okunmuyor, 769 canavar
+> dilsiz görünüyor). `ccdx`'in kendi verisi temiz: **7.009 ok · 0 disagree ·
+> 0 absent · 0 unsourced · 1.780 unverifiable**, eşleşme 356/356.
 >
-> **Sıradaki iş: Dalga 4'ün ilk birimi → `open5e-ccdx` (2.426 varlık;
-> creature-action 1.148, trait 921, monster 356, language 1).** Dalga 4'ün
-> tablosunda 7 satır var ama `bfrd` birim olarak Dalga 1'de sayıldı (yalnız
-> `class`+`subclass` satırları okundu) — yani **kalan 6 birim**; `bfrd`'nin
-> canavar satırlarının bu dalgaya takılıp takılmayacağı dalganın başında
-> karara bağlanmalı.
-> Dalga 3'ten çıkan beş uyarı:
-> (1) **Kategori yine değişiyor ve bu kez dört tane var.** `monster` +
-> `trait` + `creature-action` (+ 1 `language`) birlikte okunur: checklist C4
-> tam olarak bu üçlüyü ölçer, çocuk satırlar ebeveyniyle örneklenir (plan
-> Dalga 4 notu). `magic-item` sezgileri (sabit sütunlar, `base_item_ref`)
-> burada işe yaramaz;
-> (2) **Bu dalganın kendi kopya sorusu var.** `tob` ⟷ `tob-2023` ve
-> `a5e-mm` ⟷ `bfrd` çiftleri L4'ün 188 kopyasının kaynağı; checklist B2'nin
-> "sahibi olan satır taşınmaz" istisnası **ilk kez** burada sınanır.
-> `dupe_census --list-shared` çıktısı bu dalgada kanıt, gürültü değil;
-> (3) **§5.8'in gerekçelerini ölç, verdict'i değil.** `vom` üç ⚠️'sinin
-> üçünü de yazılı gerekçelerden çıkardı (veri temizdi, belge yanlıştı).
-> `monster` bloğunda `lair_action_refs` (0%, `M`/`S`) ve
-> `gear_refs`/`spell_refs` (`S`🔗, "re-opened") aynı türden açık satırlar —
-> kaynağın sütun listesiyle karşılaştırılmadan bırakılmasın;
-> (4) **Devir notunun sayılarını ölçmeden yazma.** `deepm` iki kaydı bu
-> kuralla düzeltti, `vom` iki gerekçeyi bu kuralla düşürdü;
-> (5) **Kanıt blokları çalıştırılabilir olmalı.** Yeni blok yazıldıktan sonra
-> bir kez çalıştırılıp çıktısı yorum satırına konur (`vom`'un üç bloğu öyle).
+> **Dalganın açılış kararı verildi:** `bfrd`'nin canavar satırları **`a5e-mm`
+> biriminin içinde** okunur (B2 istisnasının test vakası olan çifti bölmemek
+> için), ayrı birim açılmaz → Dalga 4 = **6 birim**, toplam 20/20 korunur.
+>
+> **Sıradaki iş: Dalga 4'ün ikinci birimi → `open5e-tob2` (2.607 varlık;
+> creature-action 1.209, trait 1.014, monster 383, language 1).**
+> `ccdx`'ten çıkan dört uyarı:
+> (1) **Dört `pass0` kaydının dağılım tablosuna satır eklemek bu birimin
+> işidir, yeni kayıt açmak değil** (yayılan bulgu kuralı 2). `tob2`'nin payı
+> ölçüldü bile: F-pass0-17 → 30, F-pass0-18 → 506, F-pass0-19 → 107,
+> F-pass0-20 → 99; okuma bunları **doğrulamalı**, kopyalamamalı;
+> (2) **Canavar biriminin asıl işi çocuk satırlarda.** `verify_packs` yalnız
+> `monster`'ı doğruluyor (`ccdx`'te 7.009 ok / 0 disagree), `trait` ve
+> `creature-action` onun kör noktasında — kaynak satır sayısıyla ebeveyn ref
+> toplamını karşılaştırmak tek görünür ölçü;
+> (3) **`tob2` `tob`/`tob-2023` ile aynı ailede.** B2 istisnası `ccdx`'te 87
+> paylaşılan adla sınandı ve geçti; `tob` ailesinde sayı çok daha büyük
+> olacak, `dupe_census --list-shared` çıktısı orada kanıt;
+> (4) **A5'in iki sabiti artık okunmuş sayılır** (`trait_kind`,
+> `legendary_action_uses`) — ama `legendary_action_uses` için korpüste **iki
+> istisna** var ve ikisi de `tob`'da ("can take 1 legendary action"); o birim
+> bunu bulgu olarak açmalı.
 >
 > **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
 > **F4 — "Karar ver, sonra görev aç"**a gelir.
@@ -1511,11 +1508,133 @@ kartın **boş** alanları değil, o boşlukların **yazılı gerekçeleri**. Ve
 kendisi temiz (0 disagree, 0 absent, 0 dangling, 1.063/1.063 eşleşme); kusur
 belgede. **Dalga 3 kapandı — 20 tarama biriminin 14'ü bitti.**
 
+#### open5e-ccdx sonucu — 2026-08-18
+
+**Dalganın açılış kararı — `bfrd`.** Dalga 4'ün tablosunda 7 satır var ama
+`bfrd` birim olarak **Dalga 1'de sayıldı** (yalnız `class` + `subclass`
+satırları okundu); 360 canavarı ve 2.110 çocuk satırı okunmadı. **Karar:
+`bfrd`'nin canavar satırları `a5e-mm` biriminin içinde okunur**, ayrı birim
+açılmaz. Gerekçe: `a5e-mm` ⟷ `bfrd` çifti B2 istisnasının test vakası, ikisini
+ayrı oturumlarda okumak aynı kopyayı iki kez ölçmek olur. Dalga 4 böylece
+**6 birim** (`ccdx`, `tob2`, `tob`, `tob3`, `a5e-mm` (+`bfrd` canavarları),
+`tob-2023`) ve toplam **20/20** korunur.
+
+**Ölçüm.** 2.426 varlık, dört kategori: `creature-action` 1.148, `trait` 921,
+`monster` 356, `language` 1. `verify_packs --doc ccdx` → eşleşme **356/356**,
+**7.009 ok · 0 disagree · 0 absent · 0 unsourced · 1.780 unverifiable** —
+unverifiable tam olarak 5 × 356 ve beşinin de beyan edilmiş kuralı var
+(`initiative_modifier` DEX'ten, `proficiency_bonus` CR'den, `xp` CR→XP
+tablosundan, `tags_line` v1 `subtype`'tan, `legendary_action_uses` SRD
+varsayılanı). `gate_packs --packs /tmp/one` yeşil; `dupe_census` "nothing
+installed" **0**, `--list-builtin-same` **0 satır**; `unmapped_report.json`
+yine yalnız `alignment` (3 satır) ve **üçü de `tob`/`tob-2023`'ün**, `ccdx`'in
+değil. `build_catalog` sonrası ağaç temiz; manifest satırı `Document.json` ile
+birebir (*Creature Codex* / Kobold Press / `ogl-10a` / `5e-2014` / `1.1.0` /
+`counts {monster: 356, trait: 921, creature-action: 1148, language: 1}`).
+
+**Çocuk satır kapsaması.** Kaynak 1.238 `CreatureAction` + 1.016
+`CreatureTrait`; canavarların ref toplamı **1.237 + 1.016** — yani
+`_cleanChildName` yalnız **1** satır düşürüyor (`Centaur Chieftain`'in
+mis-segmente *"Leadership die at a time"* satırı) ve öksüz/eşleşmeyen ebeveyn
+**0**. Paketteki varlık sayısının daha düşük olması (1.148 / 921) tamamen
+içerik-hash'li birleştirme; kayıp değil — **ama adı yutuyor** (F-pass0-17).
+
+**Devralınan uyarıların cevabı.**
+* **(1) Dört kategori.** C4'ün teknik kuralı ölçüldü: aksiyonsuz canavar **0**,
+  `size_ref` eksik **0**, `creature_type_ref` eksik **0**, gate yeşil. Çocuk
+  satırlar ebeveyniyle örneklendi (Aatxe, Droth ve dört saldırı satırı).
+* **(2) B2 istisnası.** `ccdx`'in başka bir official pakette de bulunan
+  **87 adı** var (70 `trait`, 17 `creature-action`) — hepsi statblock çocuk
+  satırı, yani B2'nin "sahibi olan satır taşınmaz" istisnası birebir bu.
+  `--list-builtin-same` 0; B bölümünün 189/193 tabanı da yerinde.
+* **(3) §5.8'in gerekçelerini ölç.** Üç satır ölçüldü, **ikisi ayakta bir
+  tanesi düştü**: `lair_action_refs`'in B7'de düzeltilmiş gerekçesi doğru
+  (`LAIR_ACTION` korpüsün 12.228 v2 aksiyon satırının **hiçbirinde** yok, v1
+  `cc`'nin `legendary_desc`/`desc` metinlerinde de "lair" geçmiyor);
+  `gear_refs`/`spell_refs`'in gerekçesi de doğru (`v1 spells_json` korpüste
+  **41** satır, 37'si atlanan `wotc-srd`, 4'ü `taldorei` — `cc`'de **0**);
+  ama `damage_type_ref`'inki **yanlış sütuna bakıyor** → F-pass0-18.
+* **(4) Devir notunun sayıları.** Devir notunun yazdığı dağılım
+  (creature-action 1.148 / trait 921 / monster 356 / language 1) `scan_pack.py`
+  ile yeniden sayıldı, birebir tutuyor.
+* **(5) Kanıt blokları.** Dört yeni blok da yazıldıktan sonra çalıştırıldı,
+  çıktıları yorum satırı olarak kayıtların içinde duruyor.
+
+**Yeni bulgular — dördü de `pass0`.** F-pass0-17 (D1, `D`), F-pass0-18
+(C8, `M`), F-pass0-19 (A3, `M`), F-pass0-20 (C8, `M`). Dördü de tek mapper'ın
+korpüs geneline yayılan kusuru olduğu için yayılan-bulgu kuralı gereği paket
+sayacı **0'da kalıyor**; dağılım tabloları kimin etkilendiğini söylüyor.
+Defter 31 → **35**; `check_findings.py` → *36 kayıt okundu, 35 tanesi sayaca
+giriyor — temiz*.
+
+**Ölçülüp bulgu sayılmayanlar.**
+a. **A5'in iki sabiti doğrulandı.** `trait.trait_kind` 921/921 `Other` —
+   kaynağın `CreatureTrait.type` sütunu **1.016/1.016 `null`**, yani karşılığı
+   yok, sabit dürüst (Pass 0'ın A5 listesindeki 6.419 satırlık maddenin
+   `ccdx` payı 921, ilk kez burada okundu). `monster.legendary_action_uses` 20/20 `3` — v1 `cc`'nin
+   `legendary_desc` metni **20/20 "can take 3 legendary actions"** diyor,
+   yani sabit doğru. *Korpüste iki istisna var (`tob`, "can take 1"), o birime
+   devrediliyor.*
+b. **Hizalama.** `alignment_ref` 341 + `alignment_note` 15 = **356/356**;
+   notlu 15'in hepsi *"any alignment"* biçimli ifade (`Kappa` → *"chaotic
+   neutral or chaotic evil"*), ref'lenemez ve not olarak iniyor — doğru
+   davranış.
+c. **Diller çözülüyor.** Kaynağın 17 dilinin **17'si** ref'e dönüyor;
+   kanonda olmayan `void-speech` paketin kendi `language` varlığı olarak
+   gönderiliyor. Kayıp, listede değil düzyazıda (F-pass0-20).
+d. **828 ikincil hasar satırı.** `extra_damage_die_count/type/bonus` gerçek ek
+   hasarı taşıyan 828 satırda okunmuyor — `creature-action` şemasında ikinci
+   bir hasar çifti **yok** (cause `N`), ve tam cümle zaten `description`'da
+   iniyor. F-pass0-18'in konusu değil; ayrı bir açık olarak burada duruyor.
+e. **Kaynağın okunmayan sütunları.** `environments` / `category` /
+   `subcategory` / `weight` / `unit` / `illustration` / `normal_sight_range` —
+   `monster` şemasında evi olmayan Django alanları; `damage_*_display` ise
+   F-pass0-19'un konusu.
+
+| Madde | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | dört kategori slug'ı da (`monster`/`trait`/`creature-action`/`language`) built-in şemada tanımlı |
+| A2 | ✅ | `ac`/`hp_average`/`cr`/`xp`/`stat_block`/`action_refs`/`size_ref`/`creature_type_ref` 356/356 |
+| A3 | ⚠️ | 88 canavarda "nonmagical" niteliği düşüyor, kart koşulsuz direnç gösteriyor → **F-pass0-19** |
+| A4 | ✅ | adlar `titleCaseName`'den geçmiş; `_cleanMonsterName`/`_cleanChildName` yazımı bozmuyor |
+| A5 | ✅ | iki sabit de okunarak doğrulandı: `trait_kind` (kaynak sütunu 1.016/1.016 null) ve `legendary_action_uses` (v1 20/20 "3") |
+| B1 | ✅ | `--list-builtin-same` 0 satır |
+| B2 | ✅ | 87 paylaşılan ad, hepsi statblock çocuk satırı — B2'nin yazılı istisnası |
+| B3 | ⚠️ | dil bilgisi 118 canavarda düzyazıda kalıyor, ref'e dönmüyor → **F-pass0-20** |
+| B4 | ✅ | gate yeşil; `dupe_census` C bölümü "nothing installed" 0 |
+| B5 | ➖ | paket→paket bağı yok (`requires: []`) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ✅ | aksiyonsuz canavar 0, `size_ref` eksik 0, öksüz çocuk 0, kaynak satırının 2.253/2.254'ü ref'leniyor |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ⛔ | `trait` grant bloğu §5.8'de ⛔ (statblock çocuğu `CharacterResolver`'a inmez) |
+| C7 | ✅ | `size`/`creature-type`/`alignment`/`condition`/`damage-type`/`language` çözülüyor; `unmapped_report`'ta `ccdx` satırı yok |
+| C8 | ⚠️ | iki boş alanın yazılı gerekçesi ölçümle uyuşmuyor → **F-pass0-18**, **F-pass0-20** |
+| D1 | ⚠️ | `monster` tarafı 7.009 ok / 0 disagree, ama çocuk satırlar doğrulayıcının kör noktasında: 382 satır yanlış adla → **F-pass0-17** |
+| D2 | ✅ | 1.780 `unverifiable` = 5 × 356, beşinin de beyan edilmiş kuralı var; `unsourced` 0 |
+| D3 | ✅ | `gate_packs` yeşil |
+| E1 | ✅ | `bundled_pack_resolve_test` yeşil |
+| E2 | ✅ | mekanik olmayan alan yok; `description` canavarda boş, kural çocuk satırlarda |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `open5e-ccdx installs and reads back unchanged` |
+| F2 | ✅ | `pack_field_render` paket tarafı yeşil; tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ➖ | sihirbaz `monster` satırı göstermiyor (chargen ailesi değil) |
+| F4 | ✅ | `entity_link_navigation` yeşil; `trait_refs`/`action_refs` sert ref, Tier-0 refleri tıklanabilir |
+| G1 | ✅ | manifest satırı güncel, `build_catalog` sonrası drift yok |
+| G2 | ✅ | *Creature Codex* / Kobold Press / `ogl-10a` / `5e-2014` — `Document.json` ile birebir |
+| G3 | ✅ | `is_srd_overlap: false`; SRD canavarları (`wotc-srd`) gönderilmiyor |
+
+**Sayım: 19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️** — `ccdx`'in **kendi** verisi temiz
+(0 disagree, 0 absent, 0 unsourced, 0 dangling, 356/356 eşleşme); dört ⚠️'nin
+dördü de **mapper'ın korpüs geneline yayılan** kusuru, bu yüzden dördü de
+`pass0`. **Dalga 4 başladı — 20 tarama biriminin 15'i bitti.**
+
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
-| `open5e-ccdx` | 2.426 | creature-action 1.148, trait 921, monster 356, language 1 | ⬜ | — | — |
+| `open5e-ccdx` | 2.426 | creature-action 1.148, trait 921, monster 356, language 1 | ⚠️ | 2026-08-18 | F-pass0-17; -18; -19; -20 |
 | `open5e-bfrd` | 2.473 | creature-action 1.338, trait 772, monster 360, language 1, class 1, subclass 1 | ⬜ | — | — |
 | `open5e-tob2` | 2.607 | creature-action 1.209, trait 1.014, monster 383, language 1 | ⬜ | — | — |
 | `open5e-tob` | 2.734 | creature-action 1.303, trait 1.039, monster 391, language 1 | ⬜ | — | — |

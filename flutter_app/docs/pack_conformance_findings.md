@@ -3,16 +3,20 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + Dalga 2 + **Dalga 3 bitti**
-> (`vom` — 2026-08-18), 31 bulgu.** 20 tarama biriminin **14'ü** kapandı.
-> Sıradaki iş **Dalga 4: 6 canavar paketi** (`ccdx`, `tob`, `tob2`, `tob3`,
-> `a5e-mm`, `tob-2023`). `vom` birimi üç yeni kayıt açtı — **F-vom-01**
-> (§5.8'in dayandığı `attunement_detail` sütunu korpüsün 2.319 satırının
-> hiçbirinde yok, mapper'ın dalı ölü kod), **F-vom-02** (`is_cursed` sabit
-> `false`, 4 eşyanın kuralı taşıyıcıyı lanetliyor), **F-vom-03**
-> (`sentient_*` "düzyazıda" deniyor, düzyazıda da yok) — ve bilinen açık #5'i
-> (`cost_gp`) ölçerek doğruladı: kaynak sütunu 1.063/1.063 `0.00`, fiyat
-> `desc` metninde de yok, yani ⛔ gerekçesi ayakta (K7).
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
+> **Dalga 4 başladı** (`ccdx` — 2026-08-18), 35 bulgu.** 20 tarama biriminin
+> **15'i** kapandı. Sıradaki iş **Dalga 4'ün ikinci birimi: `tob2`**
+> (`tob`, `tob3`, `a5e-mm`, `tob-2023` ve `bfrd`'nin canavar satırları onu
+> izliyor). `ccdx` birimi dört yeni kayıt açtı ve dördü de **`pass0`**
+> kapsamında, çünkü dördü de tek mapper'ın korpüs geneline yayılan kusuru —
+> **F-pass0-17** (içerik-hash'i adı okumuyor, 382 çocuk satır başka bir
+> canavarın satırının adıyla render oluyor; 6'sında kullanım sayısı değişiyor),
+> **F-pass0-18** (`damage_type_ref` 0%, tip komşu `extra_damage_type`
+> sütununda, 3.479 yayınlanan satırda), **F-pass0-19**
+> (`nonmagical_attack_*` booleanları okunmuyor, 618 canavar koşulsuz b/p/s
+> direnci gösteriyor), **F-pass0-20** (`languages_desc` okunmuyor, 769 canavar
+> dilsiz görünüyor). `ccdx`'in kendi verisi temiz: `verify_packs` 7.009 `ok`
+> / 0 `disagree` / 0 `absent` / 0 `unsourced`, eşleşme 356/356.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -100,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 31 | 0 | 0 | 0 | 0 | **31** |
+| 0 | 35 | 0 | 0 | 0 | 0 | **35** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -108,12 +112,12 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 10 | B3 | 1 | C3 | 1 |
+| A3 | 11 | B3 | 1 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 2 | B5 | 0 | C5 | 0 |
-| D1 | 2 | E1 | 1 | C6 | 0 |
+| D1 | 3 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
-| D3 | 0 | E3 | 1 | C8 | 4 |
+| D3 | 0 | E3 | 1 | C8 | 6 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
 | F2 | 1 | F4 | 0 | G2 | 0 |
 | | | | | G3 | 1 |
@@ -122,7 +126,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 16 | `open5e-vom` | 3 |
+| `pass0` | 20 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -2480,7 +2484,355 @@ EOF
 
 ### Dalga 4 — canavar paketleri
 
-*(henüz yok)*
+### F-pass0-17 — içerik-hash'li çocuk birleştirme adı yutuyor: bir canavarın "Mining Pick"i başka bir canavarın "Bite"ı olarak render oluyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 382 satır (7 canavar paketi; `open5e-ccdx` 57) |
+| **Checklist** | checklist D1 (değer kaynakla aynı değil) |
+| **Kategori / etki** | `creature-action` 328 + `trait` 54 satır: ebeveyn canavar, kendi satırının adı yerine metni aynı olan **başka** bir canavarın satırının adına ref veriyor; 6 `trait`'te ad kullanım sayısı taşıdığı için mekanik de değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`) |
+| **Cause code (öneri)** | `D` — `mappers/monster.dart` `_ensureChild` içerik-hash'iyle (`_contentHash`, tip + `description` + öznitelikler) birleştiriyor; **ad hash'e girmiyor**, bu yüzden metni birebir aynı olan iki farklı silah tek varlıkta toplanıyor ve ilk gelenin adı kazanıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Statblock saldırı metni kalıplı: *"Melee Weapon Attack: +5 to hit,
+reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage."* Aynı vuruş
+sayılarına sahip iki farklı silah, adları farklı olsa da birebir aynı metni
+taşıyor. `_contentHash` adı okumadığı için bu iki satır tek `creature-action`
+varlığına iniyor; ebeveynler ise `ref('creature-action', name)` ile **kazanan
+adı** referanslıyor. `ccdx`'te sonuç:
+
+- Elite Kobold'un **Mining Pick**'i kartta `Bite (Ahuizotl)` olarak duruyor,
+- Light Cavalry'nin **Cavalry Saber**'ı `Claw (Bathhouse Drake)`,
+- Shadow Goblin'in **Kitchen Knife**'ı `Dagger (Korrigan)`,
+- Orthrus'un **Bite (Canine Head)**'i `Bite (Ahuizotl)`.
+
+Aynı desen `trait`te daha az ama daha zararlı: `Shadow Traveler` özelliğinin
+metni dört farklı kullanım sayısında birebir aynı (sayı **yalnız adda** duruyor),
+bu yüzden Pattern Dancer'ın `(1/Day)`'i, Shadow Fey Poisoner'ın `(4/Day)`'i ve
+Shadow Fey Ambassador'ın `(5/Day)`'i kartta `Shadow Traveler (3/Day)` oluyor —
+biri günde bir kez ışınlanan canavara **üç** kullanım veriyor.
+
+**Neden önemli.** `verify_packs` bu birimde 7.009 `ok` / **0 `disagree`**
+veriyor, çünkü yalnız `monster` satırlarını doğruluyor; çocuk satırlar onun
+görüş alanı dışında (D1'in kör noktası, §3.4). `gate_packs` de yeşil — ref
+çözülüyor, yalnız *yanlış kartı* çözüyor. Yani mevcut kapıların hiçbiri bu
+kaybı göremiyor; ölçmek için kaynak satırının adını paketteki metnin adıyla
+karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım kararı
+(16.317 çocuk satırın %74,7'si korpüsün kopya yükü, §3.2) — kusur, hash'in
+**adı dışarıda bırakması**.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | `creature-action` | `trait` | Etkilenen |
+|---|--:|--:|--:|
+| `open5e-a5e-mm` | 106 | 20 | 126 |
+| `open5e-bfrd` | 53 | 4 | 57 |
+| `open5e-ccdx` | 51 | 6 | 57 |
+| `open5e-tob` | 52 | 1 | 53 |
+| `open5e-tob-2023` | 34 | 2 | 36 |
+| `open5e-tob2` | 30 | 0 | 30 |
+| `open5e-tob3` | 2 | 21 | 23 |
+| `open5e-tdcs` | 0 | 0 | 0 |
+| **Toplam** | **328** | **54** | **382** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynak satırının adı, metni aynı olan paket varlığında yok
+python3 - <<'EOF'
+import json,glob,os,collections
+tot=collections.Counter()
+for d in sorted(glob.glob('../open5e-api-staging/data/v2/*/*')):
+    slug=os.path.basename(d)
+    pf='assets/open5e_packs/open5e-%s.pkg.json'%slug
+    if not os.path.exists(pf) or not os.path.exists(d+'/CreatureAction.json'): continue
+    ents=list(json.load(open(pf,encoding='utf-8'))['entities'].values())
+    out=[]
+    for cat,model in [('creature-action','CreatureAction'),('trait','CreatureTrait')]:
+        bd=collections.defaultdict(list)
+        for e in ents:
+            if e['type']==cat: bd[e['description'].strip()].append(e['name'])
+        lost=0
+        for r in (x['fields'] for x in json.load(open('%s/%s.json'%(d,model),encoding='utf-8'))):
+            n=(r['name'] or '').strip(); cand=bd.get((r['desc'] or '').strip())
+            if cand and not any(c==n or c.startswith(n+' (') for c in cand): lost+=1
+        out.append('%s %d'%(cat,lost)); tot[cat]+=lost
+    print(' ',slug,'|',' | '.join(out))
+print('  toplam', dict(tot))
+EOF
+#   a5e-mm | creature-action 106 | trait 20
+#   tdcs | creature-action 0 | trait 0
+#   bfrd | creature-action 53 | trait 4
+#   ccdx | creature-action 51 | trait 6
+#   tob | creature-action 52 | trait 1
+#   tob-2023 | creature-action 34 | trait 2
+#   tob2 | creature-action 30 | trait 0
+#   tob3 | creature-action 2 | trait 21
+#   toplam {'creature-action': 328, 'trait': 54}
+```
+
+**Seçenekler.**
+1. **Adı hash'e kat** — `_contentHash`'e `name` eklenir; metni aynı, adı farklı
+   iki satır ayrı varlık olur. 382 satır kendi adına kavuşur, korpüs ~382 varlık
+   büyür (%1,8'in altında). En küçük değişiklik, en doğrudan çözüm.
+2. **Yalnız `trait`te adı kat** — mekanik kaybı (kullanım sayısı) kapatır,
+   silah adlarını olduğu gibi bırakır. Daha küçük diff, ama "Mining Pick"i
+   `Bite` olarak göstermeye devam eder.
+3. **Aynen bırak** — birleştirme kopya yükünü düşürüyor, kural metni doğru;
+   §3.2'ye "ad birleşmede kaybolabilir" satırı yazılır (C8). Kartın yanlış ad
+   göstermesi bilinçli kabul edilmiş olur.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-18 — §5.8 `damage_type_ref`'i "tipli satırların hepsi atlanan WotC belgelerinde" diye kapatıyor; tip komşu sütunda, 3.479 yayınlanan satırda
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 3.479 saldırı satırı (7 yayınlanan belge; `open5e-ccdx` 473) |
+| **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
+| **Kategori / etki** | `creature-action` — `damage_type_ref` 0/1.148 (`ccdx`); hasar tipi yalnız `description` düzyazısında, tipli alan boş → hasar tipine göre süzme, direnç/bağışıklık eşleştirmesi ve `damage_dice` ile birlikte anlamlı bir saldırı satırı yok |
+| **Cause code (öneri)** | `M` — kaynakta değer var, mapper okumuyor: `mappers/monster.dart` yalnız `attack['damage_type']`'a bakıyor, oysa `CreatureActionAttack.damage_type` korpüsün 5.244 satırının **576'sında** dolu ve hepsi atlanan iki WotC belgesinde; üçüncü taraf belgelerde aynı bilgi `extra_damage_type` sütununda duruyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** §5.8 satırı (B5, 2026-08-14) şunu diyor: *"closed by B5: all 576 typed
+attack rows are in the two skipped WotC documents"*. Ölçüm bunu doğruluyor —
+`damage_type` gerçekten yalnız `srd-2014` (536) ve `srd-2024` (40) satırlarında
+dolu. Ama **tip kaybolmuş değil**: upstream'in `extra_damage_type` sütunu, satırda
+gerçek bir *ek* hasar yoksa (`extra_damage_die_type` boşsa) **birincil** hasar
+tipini taşıyor. `ccdx`'in 604 saldırı satırının 473'ünde durum tam olarak bu:
+
+```
+Gore attack | die 3 D8 bonus 6 | extra — — — piercing
+   desc: The aatxe makes one gore attack.
+Bite attack | die 2 D10 bonus 6 | extra — — — piercing
+   desc: Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage.
+```
+
+Sütun **aşırı yüklü**: kalan 828 satırda (gerçek ek hasar var) aynı sütun
+*ikincil* tipi tutuyor — `Bite | 1d4+1 piercing plus 1d4 acid | extra_damage_type
+= acid`. Yani sütun körlemesine okunamaz; ayrım `extra_damage_die_type`'ın dolu
+olup olmamasıyla yapılır ve bu ayrım korpüsün 4.724 dolu satırının tamamında
+kesin (3.896 birincil + 828 ikincil).
+
+**Neden önemli.** `creature-action.damage_type_ref` şemada tanımlı, editörü var
+ve karta iniyor; bugün korpüsün **hiçbir** yayınlanan satırında dolu değil.
+Kapatma gerekçesi doğru sütunu sayıyor ama yanlış soruyu soruyor (taramanın
+7. sorusu: doğru değer kaynağın **başka** sütununda mı duruyor). Ayrıca 828
+gerçek ek hasar satırının ikinci hasarı şemada hiç karşılığı olmayan bir veri —
+o ayrı bir açık, bu bulgunun konusu değil.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | `extra_damage_type` birincil tipi taşıyan satır |
+|---|--:|
+| `open5e-a5e-mm` | 828 |
+| `open5e-tob` | 652 |
+| `open5e-bfrd` | 512 |
+| `open5e-tob2` | 506 |
+| `open5e-tob-2023` | 505 |
+| `open5e-ccdx` | 473 |
+| `open5e-tdcs` | 3 |
+| **Toplam (yayınlanan)** | **3.479** |
+| *(atlanan `srd-2024` 350 + `srd-2014` 67)* | *417* |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — damage_type nerede dolu, extra_damage_type neyi taşıyor
+python3 - <<'EOF'
+import json,glob,collections
+prim=collections.Counter(); sec=0; tot=0; dt=collections.Counter()
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/CreatureActionAttack.json'):
+    doc=f.split('/')[-2]
+    for r in (x['fields'] for x in json.load(open(f,encoding='utf-8'))):
+        tot+=1
+        if r.get('damage_type'): dt[doc]+=1
+        if r.get('extra_damage_type'):
+            if r.get('extra_damage_die_type'): sec+=1
+            else: prim[doc]+=1
+print('attack satırı',tot,'| damage_type dolu:',dict(dt))
+print('birincil tip:',dict(prim.most_common()),'toplam',sum(prim.values()),'| ikincil:',sec)
+EOF
+# attack satırı 5244 | damage_type dolu: {'srd-2024': 40, 'srd-2014': 536}
+# birincil tip: {'a5e-mm': 828, 'tob': 652, 'bfrd': 512, 'tob2': 506, 'tob-2023': 505,
+#                'ccdx': 473, 'srd-2024': 350, 'srd-2014': 67, 'tdcs': 3} toplam 3896 | ikincil: 828
+```
+
+**Seçenekler.**
+1. **Sütunu koşullu oku** — `damage_type` boşsa ve `extra_damage_die_type` da
+   boşsa `extra_damage_type` birincil tip kabul edilip `damage_type_ref`'e
+   yazılır. 3.479 satır tiplenir, aşırı yükleme riski ölçülmüş ayrımla kapanır.
+2. **§5.8'i düzelt, alanı boş bırak** — gerekçe "yalnız `damage_type` sütununa
+   bakıldı, tip `extra_damage_type`'ta duruyor ama sütun aşırı yüklü olduğu için
+   okunmuyor" diye yeniden yazılır; ⛔ verdict'i kalır.
+3. **Yukarı taşı** — Open5e'ye sütun ayrımı bildirilsin (`damage_type` birincil,
+   `extra_damage_*` yalnız ek hasar); pipeline değişmez.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-19 — "nonmagical saldırılara karşı" kaydı düşüyor: kart 88 canavarda koşulsuz bludgeoning/piercing/slashing direnci gösteriyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 618 canavar (7 yayınlanan belge; `open5e-ccdx` 104) |
+| **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
+| **Kategori / etki** | `monster` — `resistance_refs` / `damage_immunity_refs`; 514 canavarda direnç, 104'ünde bağışıklık **koşulsuz** yazılıyor, oysa kaynak "yalnız büyülü olmayan saldırılardan" diyor → büyülü silah taşıyan oyuncuya kart yanlış bilgi veriyor |
+| **Cause code (öneri)** | `M` — kaynakta iki ayrı boolean sütun var (`Creature.nonmagical_attack_resistance`, `…_immunity`) ve `mappers/monster.dart`'ın `_dmgList` çağrıları ikisini de hiç okumuyor; liste sütunu (`damage_resistances`) niteliksiz üç tipi düz olarak veriyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Upstream niteliği **iki yere** bölüyor: `damage_resistances` listesi
+`['bludgeoning','piercing','slashing']` derken, `damage_resistances_display`
+metni tam cümleyi yazıyor — *"fire; bludgeoning, piercing, and slashing from
+nonmagical attacks"* — ve `nonmagical_attack_resistance` booleanı `True`.
+Mapper yalnız listeyi okuyor, boolean da display sütunu da yerde kalıyor.
+`ccdx`'te 88 canavar (356'nın %25'i) bu durumda; 16'sında aynı desen
+*bağışıklık* olarak var (Alabaster Tree, Alnaar, Adult Light Dragon …).
+
+Kartta çıkan sonuç, kuralın tersi: 5e'de "nonmagical attacks" niteliği bu üç
+tipin direncini **büyülü silahlarla aşılabilir** kılar; niteliksiz yazıldığında
+canavar +1 kılıca da dirençli görünüyor. Bu, boş alan değil — **yanlış dolu**
+alan.
+
+**Neden önemli.** `verify_packs` bu satırları `ok` sayıyor: liste sütunuyla
+paket listesi birebir aynı. Doğruluk kaybı sütunlar **arasında**, tek sütuna
+bakan bir doğrulayıcının göremeyeceği yerde (A5'in "tek sabit" tuzağının
+kardeşi). Şemada niteliği taşıyacak bir alan da yok: `resistance_refs` düz bir
+ref listesi, `alignment_note`'un `alignment_ref` yanında yaptığı işi yapan bir
+`resistance_note` yok — yani karar yalnız "oku/okuma" değil, "nereye yaz"ı da
+kapsıyor.
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | direnç | bağışıklık | Etkilenen |
+|---|--:|--:|--:|
+| `open5e-tob-2023` | 106 | 21 | 127 |
+| `open5e-tob` | 100 | 24 | 124 |
+| `open5e-tob2` | 96 | 11 | 107 |
+| `open5e-ccdx` | 88 | 16 | 104 |
+| `open5e-a5e-mm` | 87 | 24 | 111 |
+| `open5e-bfrd` | 27 | 6 | 33 |
+| `open5e-tob3` | 10 | 2 | 12 |
+| **Toplam (yayınlanan)** | **514** | **104** | **618** |
+| *(atlanan `srd-2014`)* | *40* | *18* | *58* |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — mapper'ın hiç okumadığı iki boolean
+python3 - <<'EOF'
+import json,glob,collections
+ni=collections.Counter(); nr=collections.Counter()
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Creature.json'):
+    doc=f.split('/')[-2]
+    for r in (x['fields'] for x in json.load(open(f,encoding='utf-8'))):
+        if r.get('nonmagical_attack_immunity'): ni[doc]+=1
+        if r.get('nonmagical_attack_resistance'): nr[doc]+=1
+print('resistance:',dict(nr.most_common()),'toplam',sum(nr.values()))
+print('immunity :',dict(ni.most_common()),'toplam',sum(ni.values()))
+EOF
+# resistance: {'tob-2023': 106, 'tob': 100, 'tob2': 96, 'ccdx': 88, 'a5e-mm': 87,
+#              'srd-2014': 40, 'bfrd': 27, 'tob3': 10} toplam 554
+# immunity : {'tob': 24, 'a5e-mm': 24, 'tob-2023': 21, 'srd-2014': 18, 'ccdx': 16,
+#             'tob2': 11, 'bfrd': 6, 'tob3': 2} toplam 122
+```
+
+**Seçenekler.**
+1. **Not alanı aç** — `monster`'a `alignment_note` kalıbında bir
+   `resistance_note` / `immunity_note` eklenir, boolean `True` iken
+   `damage_*_display` metni oraya yazılır. Şema değişikliği (dört-düzenleme
+   sözleşmesi), ama kart tam cümleyi gösterir.
+2. **Nitelikli üçlüyü listeden düş** — boolean `True` iken b/p/s satırları
+   `resistance_refs`'ten çıkarılır, kalan tipler (örn. `fire`) durur. Yanlış
+   bilgi biter, bilgi eksilir; kural metni yine `description`'da yok (canavarın
+   `description`'ı boş).
+3. **Aynen bırak** — §5.8'e "üç tip koşulsuz yazılıyor, nitelik kaynağın
+   `nonmagical_attack_*` booleanlarında duruyor ve okunmuyor" satırı eklenir
+   (C8); kartın fazla direnç göstermesi bilinçli kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-20 — dil düzyazısı hiç okunmuyor: 118 canavar kartı dilsiz görünüyor, oysa kaynak "understands Common but can't speak" diyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 769 canavar (7 yayınlanan belge; `open5e-ccdx` 118) |
+| **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
+| **Kategori / etki** | `monster` — `language_refs` `ccdx`'te 173/356; kalan 183'ün **118'inde** kaynak dil bilgisi var ama yapılandırılmamış, 65'i gerçekten dilsiz → kart bu 118 canavarda dil satırını hiç göstermiyor |
+| **Cause code (öneri)** | `M` — `Creature.languages_desc` 354/356 dolu ve tam cümleyi taşıyor; mapper yalnız yapılandırılmış `languages` M2M listesini okuyor (`mappers/monster.dart`, `norm.lookupRefList('language', …)`), düzyazı sütununa hiç bakmıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `ccdx`'in 356 canavarının 173'ünde `languages` listesi dolu ve
+**17 dilin 17'si** çözülüyor (`Void Speech` dahil — paketin kendi `language`
+varlığına sert ref). Kalan 183 canavarın 65'i gerçekten dilsiz (`languages_desc`
+`-` ya da boş), **118'i** ise şunu yazıyor:
+
+| `languages_desc` | Canavar |
+|---|--:|
+| `understands the languages of its creator but can't speak` | 22 |
+| `all, telepathy 120 ft.` | 12 |
+| `understands Common but can't speak` | 10 |
+| `the languages it knew in life` | 8 |
+| `any languages it knew in life` | 7 |
+| `all` | 4 |
+| `Auran` | 3 |
+| *(kalanı tekil cümleler)* | 52 |
+
+Kayıp yalnız listesi boş olanlarda değil: listesi **dolu** olan canavarlarda da
+düzyazı listede olmayan dil adları sayıyor — `Umbral` 13, `Darakhul` 5, `Aquan`
+4, `Terran` 4, `Common` 3, `Simian` 3, `Ignan` 2, `Void Speech` 2, `Trollkin` 2
+kez. Devil Shark'ın listesi `['deep-speech']`, düzyazısı *"Aquan, Deep Speech,
+telepathy 120 ft."*
+
+**Neden önemli.** Dil, DM'in masada en sık baktığı statblock satırlarından biri
+ve "anlıyor ama konuşamıyor" ayrımı doğrudan oynanışı değiştiriyor. Bugün bu
+118 kartta satır **hiç görünmüyor** — boş alan, "kaynakta yok" gibi okunuyor,
+oysa kaynak yazıyor. `telepathy_ft` zaten ayrı sütundan okunduğu için düzyazının
+telepati kısmı yedekli; asıl kayıp cümlenin dil kısmı. Şema tarafında da
+`language_refs` düz bir ref listesi — nitelikli ifadeyi taşıyacak yer yok
+(F-pass0-19'la aynı biçimsel sorun, farklı alan).
+
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+
+| Paket | Listesi boş, düzyazısı dolu canavar |
+|---|--:|
+| `open5e-a5e-mm` | 189 |
+| `open5e-tob3` | 123 |
+| `open5e-ccdx` | 118 |
+| `open5e-tob2` | 99 |
+| `open5e-tob-2023` | 91 |
+| `open5e-bfrd` | 77 |
+| `open5e-tob` | 72 |
+| **Toplam (yayınlanan)** | **769** |
+| *(atlanan `srd-2014` 67 + `srd-2024` 9)* | *76* |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — yapılandırılmış liste boş, düzyazı dolu
+python3 - <<'EOF'
+import json,glob,collections
+d=collections.Counter()
+for f in glob.glob('../open5e-api-staging/data/v2/*/*/Creature.json'):
+    doc=f.split('/')[-2]
+    for r in (x['fields'] for x in json.load(open(f,encoding='utf-8'))):
+        ld=(r.get('languages_desc') or '').strip()
+        if not r.get('languages') and ld and ld!='-': d[doc]+=1
+print(dict(d.most_common()),'toplam',sum(d.values()))
+EOF
+# {'a5e-mm': 189, 'tob3': 123, 'ccdx': 118, 'tob2': 99, 'tob-2023': 91,
+#  'bfrd': 77, 'tob': 72, 'srd-2014': 67, 'srd-2024': 9} toplam 845
+```
+
+**Seçenekler.**
+1. **`language_note` alanı** — `alignment_note` kalıbı: liste boşsa ya da
+   düzyazı listeden fazlasını söylüyorsa `languages_desc` nota yazılır. 769
+   canavar dil satırına kavuşur, tipli liste bozulmadan kalır.
+2. **Düzyazıdan ad çıkar** — `languages_desc`'teki büyük harfli sözcükler
+   Tier-0 `language` kanonuyla eşleştirilip `language_refs`'e eklenir.
+   `Umbral`/`Darakhul` gibi kanonda olmayan adlar paket-içi `language` varlığı
+   olarak açılabilir (`Void Speech` zaten öyle); "understands but can't speak"
+   niteliği yine kaybolur.
+3. **Aynen bırak** — §5.8'e "`languages_desc` okunmuyor; nitelikli dil ifadeleri
+   düşüyor" satırı yazılır (C8), alan kaynağın yapılandırılmış kısmının sadık
+   yansıması sayılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ---
 
