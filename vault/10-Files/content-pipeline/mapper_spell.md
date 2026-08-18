@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/spell.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-18
 tags: [file]
 ---
 
@@ -39,8 +39,18 @@ tags: [file]
   - **F-pass0-11 (F3 / Dalga 2, 2026-08-18, ❓ open):** the `permanent` special case sends 25 cards to `Until Dispelled` — a claim the source never makes, since the Tier-0 `duration-unit` canon has no "permanent" row (`a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1, `spells-that-dont-suck` 1). `Special`, the function's own fallback, is the honest value; see `flutter_app/docs/pack_conformance_findings.md`.
   - **F-wz-01 (F3 / Dalga 2, 2026-08-18, ❓ open):** the numeric grab takes the first `number + unit` pair and ignores the tail, so `1 hour/caster level` ships as a flat `Hours 1` (1 card corpus-wide, `wz`'s `Order of Revenge`).
   - **F-pass0-12 (F3 / Dalga 2, 2026-08-18, ❓ open):** the regex knows only round/minute/hour/day and the canon tops out at `Days`, so `1 year` durations fall through to `Special` with a null amount — a stated number lost on 3 cards (`deepm` 2, `wz` 1). `Days 365` is writable today.
+  - **F-pass0-13 (F3 / Dalga 2, 2026-08-18, ❓ open):** the same numeric grab turns
+    ranges and conditions into certainties — `2-12 hours` → `Hours 12` (the upper
+    bound, silently) and `24 hours or until …` → `Hours 24`; 4 cards (`deepmx` 2,
+    `deepm` 2). Text that matches *no* branch is honest (`until destroyed` →
+    `Special`), so the loss only happens when the string starts with a number.
 - `requires_concentration`: the source's `concentration` boolean only.
   - **F-wz-02 (F3 / Dalga 2, 2026-08-18, ❓ open):** upstream also states concentration inside the free-text `duration`; `Storm of Axes` has `duration = 'concentration + 1 round'` with the boolean `false`, so the required field ships `false`. Reading the duration text alongside the boolean is a two-line fix; corpus-wide the v2 snapshot has 1 such row.
+  - **F-pass0-14 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):** the upstream
+    column itself is wrong on 7 cards across 5 packs whose rules text says "until
+    you lose concentration" (`deepmx` 2, `deepm` 2, `toh` 1, `wz` 1, `a5e-ag` 1).
+    `deepmx` ships the boolean `false` on all 64 rows and v1 `dmag-e` has it
+    `null` on all 64 — no code change closes this one.
 - Components: V/S/M booleans → Tier-0 `casting-component` rows; material spec adds `material_description` / `material_cost_gp` / `material_consumed`.
 - Spell attack: `attack_roll == true` → `attack_type` Ranged if range>5 ft else Melee.
 - **Area of effect** (audit **B4**, 2026-07-31): `shape_type` → `area_shape_ref` via the built-in `area-shape` Tier-0 canon, `shape_size` → `area_size_ft`. Upstream uses exactly five shapes (cone/cube/cylinder/line/sphere) and every one is already a built-in row, so nothing reaches the unmapped sink. `shape_size_unit` is null on ~⅔ of rows and `ft`/`feet` on the rest — **no other unit exists anywhere in the snapshot**, so the size is unconditionally feet; no row carries a size without a shape. 103 of 1,297 shipping spells have an area at all, so 7% is the ceiling.
