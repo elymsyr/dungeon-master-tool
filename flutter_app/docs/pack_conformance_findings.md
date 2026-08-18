@@ -3,10 +3,10 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk üç
-> birimi tarandı** (`kp`, `wz`, `deepmx` — 2026-08-18), 24 bulgu.** Sıradaki iş
-> **Dalga 2'nin 4. birimi: `open5e-spells-that-dont-suck`** (180 büyü), sonra
-> `deepm` (515).
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 bitti, **Dalga 2'nin ilk dört
+> birimi tarandı** (`kp`, `wz`, `deepmx`, `spells-that-dont-suck` — 2026-08-18),
+> 27 bulgu.** Sıradaki iş **Dalga 2'nin son birimi: `open5e-deepm`** (515 büyü);
+> onunla Dalga 2 kapanır ve Dalga 3 (sihirli eşyalar) başlar.
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -94,7 +94,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 24 | 0 | 0 | 0 | 0 | **24** |
+| 0 | 27 | 0 | 0 | 0 | 0 | **27** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -102,12 +102,12 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 8 | B3 | 1 | C3 | 0 |
+| A3 | 10 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
-| D3 | 0 | E3 | 1 | C8 | 1 |
+| D3 | 0 | E3 | 1 | C8 | 2 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
 | F2 | 1 | F4 | 0 | G2 | 0 |
 | | | | | G3 | 1 |
@@ -116,7 +116,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 14 | `open5e-vom` | 0 |
+| `pass0` | 15 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -127,7 +127,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | `open5e-kp` | 0 | | |
 | `open5e-wz` | 2 | | |
 | `open5e-deepmx` | 0 | | |
-| `open5e-spells-that-dont-suck` | 0 | | |
+| `open5e-spells-that-dont-suck` | 2 | | |
 | `open5e-deepm` | 0 | | |
 
 ---
@@ -2001,6 +2001,217 @@ EOF
 2. **Yukarı bildir** — kusur kaynakta; Open5e tarafına satır satır bildir,
    pakette dokunma. Kayıt açık kalır, `S` gerekçesi §5.6'ya yazılır.
 3. **Kapsam dışı** — 7 kart; "kaynak ne derse o" kararı yazılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-spells-that-dont-suck-01 — "Self (60-foot radius)" yazan menzilin yarıçapı hiçbir alana yazılmıyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-spells-that-dont-suck` — 8 kart (korpüste bu deseni kullanan tek belge) |
+| **Checklist** | checklist A3 (kaynakta yazılı bir sayı kartta hiç görünmüyor) |
+| **Kategori / etki** | `spell` — `range_ft` / `area_size_ft`; **8 kartta** `range_text` parantezindeki yarıçap/çap düşüyor, kart yalnız `range_type: Self` diyor |
+| **Cause code (öneri)** | `M` — `_range` (`mappers/spell.dart:~120`) `range_text` içinde `self` görünce dalı orada bitiriyor; parantezin içindeki sayıyı okuyan kod yok. Kaynak sütunu (`range`) bu satırlarda `0`, yani sayı yalnızca metinde |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Kaynağın 8 satırı menzili *"Self (60-foot radius)"*, *"Self (10-foot
+dome)"*, *"Self (1-mile radius)"* biçiminde yazıyor. Kart bunların hepsinde
+`range_type: Self`, `range_ft: null`, `area_shape_ref: null`,
+`area_size_ft: null` taşıyor — yani **sayı da şekil de yok**. `Drink Life`'ın
+60 feetlik küresi, `Alter Weather`'ın 1 millik alanı ve `Arcane Shelter`'ın
+10 feetlik kubbesi kartta hiçbir yerde durmuyor.
+
+**Neden önemli.** Bunlar alan büyüleri: yarıçap büyünün tek nicel etkisi.
+Şemada iki uygun ev de **var** (`area_shape_ref` + `area_size_ft`, B4'ün açtığı
+çift) ve `sphere`/`cylinder` satırları Tier-0 kanonunda zaten duruyor. Kaynak
+`shape_type`/`shape_size` sütunlarını bu 8 satırda doldurmamış, ama metin
+tek anlamlı. `verify_packs` bunu göremiyor: `range_ft` zaten "yazılı kural ile
+`range_text`'ten türetiliyor" diye **unverifiable** sayılıyor (68 satır).
+
+**Dağılım** *(2026-08-18'de ölçüldü — korpüste `Self (N …)` yazan başka belge yok)*
+
+| Paket | Etkilenen kart |
+|---|--:|
+| `open5e-spells-that-dont-suck` | 8 (`Alter Weather`, `Arcane Shelter`, `Drink Life`, `Earth Forming`, `Earth Rumble`, `Eldritch Rift`, `Flickering Strikes`, `Glacial Orbs`) |
+| **Toplam** | **8** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynakta parantezli sayı var, kartta ne range_ft ne area_size_ft
+python3 - <<'EOF'
+import json,glob,os,re,collections
+pat=re.compile(r'self\s*\((.*?)\)',re.I); num=re.compile(r'(\d[\d,]*)[- ]?(?:foot|feet|ft|mile)',re.I)
+packs={}
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    pk=json.load(open(p,encoding='utf-8'))
+    packs[pk['metadata'].get('source_doc_slug')]={e['name']:e['attributes']
+                                                  for e in pk['entities'].values() if e['type']=='spell'}
+c=collections.Counter()
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=os.path.basename(os.path.dirname(p))
+    if doc not in packs: continue
+    for r in json.load(open(p,encoding='utf-8')):
+        f=r['fields']; m=pat.search(f.get('range_text') or '')
+        a=packs[doc].get(f['name'])
+        if m and num.search(m.group(1)) and a and not a.get('range_ft') and not a.get('area_size_ft'):
+            print(doc, f['name'], '|', f['range_text']); c[doc]+=1
+print(dict(c))
+EOF
+# {'spells-that-dont-suck': 8}
+```
+
+**Seçenekler.**
+1. **Parantezi oku** — `self (N-foot radius|dome|cube|cone|line)` kalıbını
+   `area_shape_ref` + `area_size_ft`'e çevir (mil → ×5280). 8 kart; şekil sözcüğü
+   beşi de kanonda var, `dome` yalnızca `sphere`e yuvarlanır (tek kart).
+2. **Yalnız sayıyı kurtar** — şekil tahmini yapma, `area_size_ft` yerine
+   `range_ft` yaz. Daha ucuz, ama "Self" bir menzil değil alan olduğu için
+   `range_ft`'i yanlış anlamda kullanır.
+3. **Kapsam dışı** — 8 kart, tek belge; sayı `description` metninde zaten
+   okunuyor. Gerekçe §5.6'ya yazılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-spells-that-dont-suck-02 — malzeme metni "worth at least 665 gp" diyor, kart "Material Cost (gp): 0" yazıyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-spells-that-dont-suck` — 5 kart |
+| **Checklist** | checklist A3 (kartın kendi başka alanıyla çelişen değer) |
+| **Kategori / etki** | `spell` — `material_cost_gp`; **5 kartta** alan `0` yazıyor, aynı kartın `material_description`'ı fiyatı açıkça söylüyor |
+| **Cause code (öneri)** | `S` — kaynağın `material_cost` sütunu bu satırlarda `'0'`; doğru değer kaynağın **başka** sütununda (`material_specified` metni). Mapper sadık kopyalıyor (`spell.dart:78-79`) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `Devil Binding`'in malzemesi *"a vial of blood and an obsidian chalice
+worth at least 665 gp"*, `Arcanist's Sword`'ünki *"…worth 250 gp"*. İkisinde de
+`material_cost` sütunu `'0'`, dolayısıyla kart **Material Cost (gp): 0** — yani
+"bedava" — diye okunuyor. Aynı belgede sütunu gerçekten dolduran 18 satır da var
+(`Befriend` → `0.01`, `100`, `250`, `500`, `1500`), yani `0` burada "ücretsiz"
+değil "girilmemiş" anlamına geliyor.
+
+**Neden önemli.** Bu belge, korpüste `material_specified`'ı dolduran **iki**
+belgeden biri (öbürü `deepm`) — yani alanın hiç ölçülmediği bir bölge.
+`deepm`'de aynı desen zarar vermiyor: orada `material_cost` `null` kalıyor,
+mapper'ın `if (cost != null)` koşulu alanı **hiç yazmıyor** ve kart sessiz
+kalıyor (288 malzemeli kartın **0**'ında `material_cost_gp == 0`). Zarar yalnız
+sütunun sıfırla doldurulduğu bu belgede oluşuyor: yazılmamış bir değerle
+"masrafsız" iddiası arasındaki fark, pahalı bileşenli büyülerde doğrudan oyun
+kararı.
+
+**Dağılım** *(2026-08-18'de ölçüldü)*
+
+| Paket | `material_cost_gp == 0` **ve** metinde fiyat |
+|---|--:|
+| `open5e-spells-that-dont-suck` | 5 (`Arcanist's Sword`, `Devil Binding`, `Divine Temple`, `Sparking Shot`, `Wayfinding`) |
+| `open5e-deepm` | 0 (sütun `null`, alan hiç yazılmıyor) |
+| **Toplam** | **5** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kartta 0, kartın kendi malzeme metninde fiyat
+python3 - <<'EOF'
+import json,glob,re,collections
+pat=re.compile(r'worth (?:at least )?([\d,]+(?:\.\d+)?)\s*(gp|gold|sp|cp|pp)\b', re.I)
+c=collections.Counter()
+for p in glob.glob('assets/open5e_packs/*.pkg.json'):
+    pk=json.load(open(p,encoding='utf-8'))
+    for e in pk['entities'].values():
+        if e['type']!='spell': continue
+        a=e['attributes']
+        if a.get('material_cost_gp')==0 and pat.search(a.get('material_description') or ''):
+            print(pk['package_name'], e['name'], '|', a['material_description']); c[pk['package_name']]+=1
+print(dict(c))
+EOF
+# {'open5e-spells-that-dont-suck': 5}
+```
+
+**Seçenekler.**
+1. **Sıfırı yazma** — `if (cost != null && cost > 0)`; 63 kartta alan boşalır,
+   5 çelişkili kart susar. En küçük diff, ama gerçekten bedava malzemeyi de
+   susturur (bu belgede öyle bir satır ayırt edilemiyor).
+2. **Metinden oku** — `material_description` içindeki `worth (at least) N gp`
+   kalıbını sütun `0`/`null` iken kullan; 5 kartta doğru fiyat, `cp`/`sp`
+   çevrimi gerekir (`Sparking Shot` 1 cp = 0.01 gp — kaynağın kendi `Befriend`
+   satırı bu çevrimi zaten yapıyor).
+3. **Yukarı bildir / kapsam dışı** — kusur kaynağın sütununda; 5 kart için
+   gerekçe §5.6'ya yazılır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-15 — `spell.effects`'in ⚪ gerekçesinin ikinci yarısı ölçümle uyuşmuyor: kaynakta zar sütunu var
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — yazılı gerekçe korpüs geneli; ölçüm 8 belgede **303** satır |
+| **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
+| **Kategori / etki** | `spell` — `effects` 0/1.297; gerekçenin "yukarıda doldurulacak yapılandırılmış hasar satırı yok" yarısı **303 kartta** yanlış |
+| **Cause code (öneri)** | `A` — alanın gerçek sebebi uygulama tarafı ("`domain/`/`application/` içinde okuyucusu yok", M3'ün kapsam sınırı) ve o yarı **ayakta**; düzeltilmesi gereken şey verdict değil, yazılı gerekçe |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `open5e_content_audit.md` §5.8, `spell.effects`'i ⚪ ile kapatırken iki
+sebep yazıyor: *"editörü olan ama `domain/` ya da `application/` içinde okuyucusu
+olmayan canlı bir alan"* **ve** *"onu dolduracak yapılandırılmış hasar satırı
+yukarıda yok"*. İkincisi ölçülünce tutmuyor: v2 `Spell.json` bir `damage_roll`
+sütunu taşıyor ve gönderilen 8 büyü belgesinde **303 satırda** dolu
+(`deepm` 116, `spells-that-dont-suck` 94, `a5e-ag` 46, `toh` 25, `deepmx` 9,
+`wz` 8, `kp` 4, `open5e` 1). Değerlerin **285'i** düpedüz zar ifadesi
+(`2d6`, `4d8`, `1d8 + 4`); yanına `damage_types` (85 satır bu pakette) ve
+`saving_throw_ability` sütunları da geliyor — yani tipli bir efekt satırının
+üç bileşeninden üçü de kaynakta duruyor.
+
+**Neden önemli.** Bu, `monster.lair_action_refs`'in §5.8'de "**Reason was
+wrong**" diye düzeltilen satırıyla aynı desen: verdict doğru olabilir ama
+gerekçe ölçüme dayanmıyorsa bir sonraki faz onu "zaten baktık" diye atlar.
+Burada verdict muhtemelen ⚪ kalır — okuyucu yokluğu tek başına yeterli sebep —
+ama gerekçenin "veri yok" yarısı silinmeli, yoksa `effects` bir okuyucu
+kazandığı gün kimse kaynağa yeniden bakmaz.
+
+**Dağılım** *(2026-08-18'de ölçüldü — yalnız gönderilen büyü belgeleri)*
+
+| Belge | `damage_roll` dolu |
+|---|--:|
+| `deepm` | 116 / 515 |
+| `spells-that-dont-suck` | 94 / 180 |
+| `a5e-ag` | 46 / 371 |
+| `toh` | 25 / 91 |
+| `deepmx` | 9 / 64 |
+| `wz` | 8 / 43 |
+| `kp` | 4 / 31 |
+| `open5e` | 1 / 2 |
+| **Toplam** | **303 / 1.297** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — gönderilen büyü belgelerinde damage_roll doluluğu
+python3 - <<'EOF'
+import json,glob,os,re,collections
+ship={'a5e-ag','deepm','deepmx','kp','open5e','spells-that-dont-suck','toh','wz'}
+tot=collections.Counter(); n=collections.Counter(); vals=collections.Counter()
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/Spell.json'):
+    doc=os.path.basename(os.path.dirname(p))
+    if doc not in ship: continue
+    rows=[x['fields'] for x in json.load(open(p,encoding='utf-8'))]
+    n[doc]=len(rows)
+    for f in rows:
+        v=(f.get('damage_roll') or '').strip()
+        if v: tot[doc]+=1; vals[v]+=1
+print({d:f'{tot[d]}/{n[d]}' for d in sorted(ship)}, 'toplam', sum(tot.values()))
+print('saf zar ifadesi:', sum(c for v,c in vals.items() if re.fullmatch(r'\d+d\d+(\s*[+-]\s*\d+)?', v)))
+EOF
+# toplam 303, saf zar ifadesi 285
+# okuyucu yarısı: grep -rn "effects" lib/domain lib/application --include=*.dart | grep -v spellEffect
+```
+
+**Seçenekler.**
+1. **Gerekçeyi düzelt** — §5.8'in `spell.effects` satırından "yapılandırılmış
+   hasar satırı yok" yarısını çıkar, yerine ölçümü yaz (303/1.297 `damage_roll`),
+   verdict ⚪ kalsın; sebep tek ayak üstünde ama **doğru** ayakta durur.
+   Kod değişmez.
+2. **Alanı aç** — `damage_roll` + `damage_types` + `saving_throw_ability`
+   üçlüsünden tipli efekt satırı üret. Okuyucu hâlâ yok, yani M3'ün kapsam
+   sınırını genişletir; ölçülmesi gereken ilk şey `spellEffectList`'in şeması.
+3. **Aynen bırak** — ⚪ verdict'i değişmediği için gerekçenin yarısı yanlış
+   kalsın; kayıt "kabul edildi" diye kapanır.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
