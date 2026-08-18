@@ -3,12 +3,16 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + **Dalga 2 bitti**
-> (`kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm` — 2026-08-18),
-> 28 bulgu.** 20 tarama biriminin **13'ü** kapandı. Sıradaki iş **Dalga 3:
-> `open5e-vom`** (1.063 sihirli eşya). `deepm` birimi bir yeni kayıt
-> (**F-pass0-16**) açtı ve iki eski kaydı **düzeltti**: F-pass0-14 7 → **4** kart
-> (3 yanlış pozitif okundu ve elendi), F-pass0-13 4 → **5** kart.
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + Dalga 2 + **Dalga 3 bitti**
+> (`vom` — 2026-08-18), 31 bulgu.** 20 tarama biriminin **14'ü** kapandı.
+> Sıradaki iş **Dalga 4: 6 canavar paketi** (`ccdx`, `tob`, `tob2`, `tob3`,
+> `a5e-mm`, `tob-2023`). `vom` birimi üç yeni kayıt açtı — **F-vom-01**
+> (§5.8'in dayandığı `attunement_detail` sütunu korpüsün 2.319 satırının
+> hiçbirinde yok, mapper'ın dalı ölü kod), **F-vom-02** (`is_cursed` sabit
+> `false`, 4 eşyanın kuralı taşıyıcıyı lanetliyor), **F-vom-03**
+> (`sentient_*` "düzyazıda" deniyor, düzyazıda da yok) — ve bilinen açık #5'i
+> (`cost_gp`) ölçerek doğruladı: kaynak sütunu 1.063/1.063 `0.00`, fiyat
+> `desc` metninde de yok, yani ⛔ gerekçesi ayakta (K7).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -96,7 +100,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 28 | 0 | 0 | 0 | 0 | **28** |
+| 0 | 31 | 0 | 0 | 0 | 0 | **31** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -106,10 +110,10 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | A2 | 0 | B2 | 1 | C2 | 3 |
 | A3 | 10 | B3 | 1 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
-| A5 | 1 | B5 | 0 | C5 | 0 |
+| A5 | 2 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
-| D3 | 0 | E3 | 1 | C8 | 2 |
+| D3 | 0 | E3 | 1 | C8 | 4 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
 | F2 | 1 | F4 | 0 | G2 | 0 |
 | | | | | G3 | 1 |
@@ -118,7 +122,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 16 | `open5e-vom` | 0 |
+| `pass0` | 16 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -2303,7 +2307,176 @@ EOF
 
 ### Dalga 3 — sihirli eşyalar
 
-*(henüz yok)*
+### F-vom-01 — §5.8 "`attunement_detail` kaynakta var" diyor; sütun korpüsün hiçbir satırında yok, mapper'ın dalı ölü kod
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-vom` — 1.063 eşya; sütun kontrolü korpüs geneli (**2.319** v2 `MagicItem` satırı) |
+| **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
+| **Kategori / etki** | `magic-item` — `attunement_prereq` + 6 `attunement_*` alanı **0/1.063**; gerekçenin dayandığı sütun **0/2.319** satırda var |
+| **Cause code (öneri)** | `S` — §5.8 `M`🔗 yazıyor ("mapper okumadı"), oysa mapper **okuyor**; okunacak sütun yok |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `open5e_content_audit.md` §5.8'in `magic-item` bloğu
+`attunement_prereq` + `attunement_*` satırını `M`🔗 ile kapatıyor ve gerekçe
+olarak *"`attunement_detail` is in the source"* yazıyor. Ölçüm bunu tutmuyor:
+v2 `MagicItem.json`'ın sütun listesinde (`sorted(fields.keys())`, 20 sütun)
+`attunement_detail` **yok** — ne `kobold-press/vom`'da (1.063 satır) ne
+`wizards-of-the-coast`'ta (1.256 satır), yani **2.319 satırın hiçbirinde**.
+Kaynakta attunement hakkında duran tek şey `requires_attunement` booleanı
+(vom'da 452 `true`), ve düzyazı da yardım etmiyor: 1.063 `desc`'in
+**71'i** "attun" kökünü içeriyor ama **0'ı** *"requires attunement by a
+wizard"* biçiminde bir kapı adlandırıyor — hepsi *"while attuned to the
+idol…"* gibi etki cümleleri.
+
+**Neden önemli.** `mappers/item.dart:100` bu sütunu bugün **okuyor**
+(`it['attunement_detail']`), yani kodda bir dal var, hiç çalışmıyor ve
+kimse fark etmiyor. Yazılı gerekçe `M` olduğu için bir sonraki faz burayı
+"mapper'a iki satır eklenecek iş" sanır; gerçekte kaynakta veri yok, bu satır
+`S` (ya da attunement_* refleri için `N`). Aynı desen F-pass0-15'te
+`spell.effects` için, §5.8'in `lair_action_refs` satırında da "**Reason was
+wrong**" diye görülmüştü.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — sütun korpüste var mı
+python3 - <<'EOF'
+import json,glob
+tot=has=0
+for p in glob.glob('../open5e-api-staging/data/v2/*/*/MagicItem.json'):
+    d=json.load(open(p,encoding='utf-8')); tot+=len(d)
+    if d and 'attunement_detail' in d[0]['fields']: has+=len(d)
+print('v2 magic-item satırı', tot, '| attunement_detail sütunu olan satır', has)
+EOF
+# v2 magic-item satırı 2319 | attunement_detail sütunu olan satır 0
+grep -n "attunement_detail" tool/open5e_import/mappers/item.dart
+# 100:    final attuneDetail = (it['attunement_detail'] as String?)?.trim() ?? '';
+```
+
+**Seçenekler.**
+1. **Gerekçeyi düzelt** — §5.8'in satırı `M`🔗 yerine `S` alsın, notu
+   "`attunement_detail` is in the source" yerine ölçümü yazsın (0/2.319).
+   Kod değişmez; ölü dal dursun ya da tek satır silinsin.
+2. **Düzyazıdan türet** — 71 "attun" satırını okuyup `attunement_prereq`'i
+   metinden çıkar. Kazanç düşük: ölçülen 71 satırın hiçbiri kapı cümlesi
+   değil, yani üretilecek şey A3'ün yasakladığı uydurmaya yakın.
+3. **Aynen bırak** — verdict (🔴, boş alan) zaten doğru; yanlış olan tek şey
+   sebep. Ama sebep yanlış kaldıkça kod tarafındaki ölü dal da kalır.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-vom-02 — `is_cursed` 1.063/1.063 `false` ve gerekçe "doğru varsayılan" diyor; dört eşyanın kendi kuralı taşıyıcıyı lanetliyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-vom` — 1.063 eşyanın **4'ü** |
+| **Checklist** | checklist A5 (dolu ama tek sabit olan sütun — ⚠ tuzağı) |
+| **Kategori / etki** | `magic-item` — `is_cursed` 1.063/1.063 sabit `false`; **4 kart** kendi kural metnine göre yanlış |
+| **Cause code (öneri)** | `S` — kaynakta lanet sütunu yok, bilgi yalnız `desc` düzyazısında duruyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** §5.6/§3.6 `is_cursed`'ü "confirmed constant" diye kapatıyor:
+*"`MagicItem.json` has no such column and Open5e never will; `false` is the
+correct 5e default"*. İlk yarısı doğru (sütun yok, `verify_packs` üç sabiti
+`unsourced` sayıyor: 3.189 = 3 × 1.063). İkinci yarısı **dört kartta** yanlış:
+`Cap of Thorns` (taç saç derisiyle kaynaşıyor, yalnız ölümle ya da
+*remove curse* ile çıkıyor), `Fellforged Armor` (*"As long as you remain
+cursed…"*), `Thirsting Scalpel` (*"as a result of the curse"*),
+`Thirsting Thorn` (*"As long as you remain cursed, you are unwilling to part
+with the sword"*). Vault of Magic'in lanetli eşyaları kartta lanetsiz görünüyor.
+
+**Neden önemli.** A5'in ⚠ tuzağı tam olarak bu: alan %100 dolu göründüğü için
+kimse bakmıyor, oysa sabit değer bir **varsayım**. `false` varsayımı 1.059
+kartta doğru — ama lanet, oyuncunun eşyayı takmadan **önce** bilmek istediği
+tek bit; yanlış olduğu 4 kart, boş bırakılsa görünecekti. Kalıp taraması 21
+satır getiriyor, 17'si *remove curse* / *bestow curse* **büyü adları**;
+dördü okunarak ayrıldı (taramanın 5. sorusu, `deepm` biriminde 3 yanlış
+pozitif elemişti).
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kalıbı eşleşen satırları okuyup ayıklayan tarama
+python3 - <<'EOF'
+import json,re
+rows=[x['fields'] for x in json.load(open(
+    '../open5e-api-staging/data/v2/kobold-press/vom/MagicItem.json', encoding='utf-8'))]
+hit=[r for r in rows if re.search(r'\bcursed?\b', r['desc'], re.I)]
+real=[r for r in hit if re.search(r'(remain cursed|result of the curse'
+                                  r'|removed only .{0,40}remove curse)', r['desc'], re.I)]
+print('desc "curse" geçen', len(hit), '| taşıyıcıyı lanetleyen', len(real),
+      [r['name'] for r in real])
+EOF
+# desc "curse" geçen 21 | taşıyıcıyı lanetleyen 4
+# ['Cap of Thorns', 'Fellforged Armor', 'Thirsting Scalpel', 'Thirsting Thorn']
+```
+
+**Seçenekler.**
+1. **Gerekçeyi daralt** — §3.6/§5.6'daki "correct 5e default" cümlesi
+   "kaynakta sütun yok, dolayısıyla **bilinmiyor**; 4 karttaki lanet yalnız
+   düzyazıda" olarak yazılsın. Kod değişmez, yanlış güven kalkar.
+2. **Düzyazıdan işaretle** — yukarıdaki dar kalıbı mapper'a taşı, 4 kartta
+   `is_cursed: true` yaz. Kalıp bugün ölçülmüş 4 satırı getiriyor, ama
+   kaynağa dayanmadığı için A3 sınırında gezer; ölçüm her yeni snapshot'ta
+   tekrarlanmalı.
+3. **Aynen bırak** — 1.059/1.063 doğru; hatanın maliyeti 4 kart.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-vom-03 — `sentient_*` yedilisinin gerekçesi "`desc` düzyazısında" diyor; vom'da düzyazıda da yok
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-vom` — 1.063 eşya |
+| **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
+| **Kategori / etki** | `magic-item` — 7 `sentient_*` alanı **0/1.063**; 1.063 `desc`'in **0'ı** duyarlılıktan söz ediyor |
+| **Cause code (öneri)** | `N` — karşılığı yok; §5.8 aynı satırda `M` ("in `desc` prose") yazıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** §5.8 tek satırda beş şeyi birleştiriyor: *"`charges_max`,
+`charge_regain`, `command_word`, `body_slot_ref`, `sentient_*` — 0%, `M`,
+in `desc` prose"*. İlk üçü için gerekçe **ayakta**: 1.063 `desc`'in 161'i
+*"has N charges"*, 152'si şafakta dolan bir yenilenme, 137'si *"command word"*
+diyor. `sentient_*` için ayakta **değil**: `sentient` kelimesi **0** satırda,
+*"its own personality"* 0, *"special purpose"* 0, *"ego"* 0 geçiyor.
+Tek yakın kalıp *"Intelligence of N"* (10 satır) ve onların onu da eşyanın
+değil, **karşıdaki yaratığın** zekâsından söz ediyor (`Crab Gloves`,
+`Shark Tooth Crown`, `Potion of Bad Taste` …). Vault of Magic duyarlı eşya
+yayımlamıyor.
+
+**Neden önemli.** `M` ile `N` aynı satırda durunca 7 alan "mapper'ın atladığı
+iş" gibi görünüyor; gerçekte yapacak iş yok. Bu, F4'ün ("karar ver, sonra
+görev aç") yanlış görev üreteceği yer: bir faz `sentient_*` için düzyazı
+ayrıştırıcısı yazmaya oturur ve ayrıştıracak cümle bulamaz.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — aynı §5.8 satırındaki beş alanın düzyazı karşılığı
+python3 - <<'EOF'
+import json,re
+rows=[x['fields'] for x in json.load(open(
+    '../open5e-api-staging/data/v2/kobold-press/vom/MagicItem.json', encoding='utf-8'))]
+def n(p): return sum(1 for r in rows if re.search(p, r['desc'], re.I))
+print('sentient', n(r'\bsentient\b'), '| kendi kişiliği', n(r'\bits own personality\b'),
+      '| özel amaç', n(r'\bspecial purpose\b'), '| ego', n(r'\bego\b'),
+      '| "Intelligence of N"', n(r'\bIntelligence of \d'))
+print('command word', n(r'command word'), '| has N charges', n(r'has \d+ charges'),
+      '| şafakta dolan', n(r'regains? .{0,30}(at dawn|daily)'))
+EOF
+# sentient 0 | kendi kişiliği 0 | özel amaç 0 | ego 0 | "Intelligence of N" 10
+# command word 137 | has N charges 161 | şafakta dolan 152
+```
+
+**Seçenekler.**
+1. **Satırı ikiye ayır** — `charges_max` / `charge_regain` / `command_word` /
+   `body_slot_ref` `M` olarak kalsın (düzyazı ölçüldü: 161 / 152 / 137 satır),
+   `sentient_*` yedilisi `N` alsın ve "vom duyarlı eşya yayımlamıyor" notunu
+   taşısın.
+2. **Sonraki eşya belgesini bekle** — `wizards-of-the-coast`'ın 1.256 satırı
+   henüz paket olarak gönderilmiyor; duyarlı eşya oradan gelirse `N` yeniden
+   `M` olur. O zamana kadar satır ölçülmemiş kalır.
+3. **Aynen bırak** — verdict 🔴 doğru; yalnız cause code yanlış.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ### Dalga 4 — canavar paketleri
 

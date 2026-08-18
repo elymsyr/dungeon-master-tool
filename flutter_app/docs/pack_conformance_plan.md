@@ -9,46 +9,48 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 bitti** — `a5e-gpg`,
-> `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17), `bfrd`'nin
-> class/subclass satırları, `kp`, `wz`, `deepmx`, `spells-that-dont-suck` ve
-> `deepm` (2026-08-18).
-> **20 tarama biriminin 13'ü kapandı**, defterde **28 bulgu** var, yirmi sekizi
-> de ❓ danışılacak (`python3 tool/check_findings.py` → *29 kayıt, 28 sayaca
-> giriyor, temiz*). `deepm` bir yeni kayıt açtı — **F-pass0-16** (45 kartın
-> malzeme metni fiyatı söylüyor, `material_cost_gp` boş) — ve **iki eski kaydı
-> düzeltti**: F-pass0-14 **7 → 4** kart (3 yanlış pozitif: metin *hedefin*
-> konsantrasyonundan söz ediyordu), F-pass0-13 **4 → 5** kart (`1 minute or
-> 1 hour` biçimi).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti** —
+> `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17),
+> `bfrd`'nin class/subclass satırları, `kp`, `wz`, `deepmx`,
+> `spells-that-dont-suck`, `deepm` ve `vom` (2026-08-18).
+> **20 tarama biriminin 14'ü kapandı**, defterde **31 bulgu** var, otuz biri de
+> ❓ danışılacak (`python3 tool/check_findings.py` → *32 kayıt, 31 sayaca
+> giriyor, temiz*). `vom` üç yeni kayıt açtı — **F-vom-01** (§5.8'in dayandığı
+> `attunement_detail` sütunu 2.319 v2 satırının hiçbirinde yok; mapper'ın
+> `item.dart:100`'deki dalı ölü kod), **F-vom-02** (`is_cursed` 1.063/1.063
+> sabit `false`, 4 eşyanın kuralı taşıyıcıyı lanetliyor), **F-vom-03**
+> (`sentient_*` "düzyazıda" deniyor, oysa 1.063 `desc`'in 0'ı duyarlılıktan
+> söz ediyor) — ve **bilinen açık #5'i doğruladı**: `MagicItem.cost`
+> 1.063/1.063 `0.00`, fiyat `desc`'te de yok, ⛔ gerekçesi ayakta (K7).
 >
-> **Sıradaki iş: Dalga 3'ün tek birimi → `open5e-vom` (1.063 sihirli eşya).**
-> Dalga 2'den çıkan beş uyarı:
-> (1) **Kategori değişiyor.** `spell`'in beş birimi bitti; `magic-item`'ın
-> tarandığı ilk birim bu. `spell` için biriken sezgiler (süre regexi, malzeme
-> sütunları, `class_refs`) burada **hiç** işe yaramaz — checklist'i sıfırdan
-> uygula, C5'i C3 gibi okuma;
-> (2) **Bilinen açık #5 ⛔** (`magic-item.cost_gp`): pakette alan **0/1.063**,
-> yani "her yerde 0 fiyat" değil **hiç fiyat yok**; kaynak sütunu
-> (`MagicItem.cost`) 1.063/1.063 `0.00`. §5.8'in yazılı ⛔ gerekçesi var → tek
-> başına bulgu değil (K7). Ama F-pass0-16'nın sorusunu burada da sor: **fiyat
-> eşyanın `desc` metninde yazılı mı?** `spell` tarafında tam olarak bu oldu;
-> `\d[\d,]*\s*gp` taraması bir satırlık iş;
-> (3) §5.8'in 🔴 `M` üçlüsü — attunement / charges / body-slot — önce kaynağın
-> `MagicItem.json` sütun adları listelenip (bir `sorted(fields.keys())`)
-> karşılığı olan sütunla **karşılaştırılarak** ölçülür: alan boşsa boşluk
-> kaynakta mı pakette mi (taramanın 3. sorusu). `M`
-> iddiası ancak `grep -rn <alan> lib/` dolu + `tool/` boşsa doğrudur (6. soru);
-> (4) **Devir notunun sayılarını ölçmeden yazma.** `deepm`'de bu kural iki
-> kaydı düzeltti: bir kalıbın *eşleşmesi* ile kusurun *gerçekliği* aynı şey
-> değil — eşleşen her satır okunmalı. Aynı özenle: bu blokta `vom` için yazılan
-> "1.063/1.063 `0.00`" da yeniden ölçülsün;
-> (5) **Kanıt blokları çalıştırılabilir olmalı.** `deepm` birimi iki eski
-> bloktaki `p.split('/')[4]` hatasını buldu (belge slug'ı `[5]`, `[4]` yayıncı
-> dizini). Yeni blok yazarken bir kez **çalıştırıp** çıktısını yorum satırına
-> koy.
+> **Sıradaki iş: Dalga 4'ün ilk birimi → `open5e-ccdx` (2.426 varlık;
+> creature-action 1.148, trait 921, monster 356, language 1).** Dalga 4'ün
+> tablosunda 7 satır var ama `bfrd` birim olarak Dalga 1'de sayıldı (yalnız
+> `class`+`subclass` satırları okundu) — yani **kalan 6 birim**; `bfrd`'nin
+> canavar satırlarının bu dalgaya takılıp takılmayacağı dalganın başında
+> karara bağlanmalı.
+> Dalga 3'ten çıkan beş uyarı:
+> (1) **Kategori yine değişiyor ve bu kez dört tane var.** `monster` +
+> `trait` + `creature-action` (+ 1 `language`) birlikte okunur: checklist C4
+> tam olarak bu üçlüyü ölçer, çocuk satırlar ebeveyniyle örneklenir (plan
+> Dalga 4 notu). `magic-item` sezgileri (sabit sütunlar, `base_item_ref`)
+> burada işe yaramaz;
+> (2) **Bu dalganın kendi kopya sorusu var.** `tob` ⟷ `tob-2023` ve
+> `a5e-mm` ⟷ `bfrd` çiftleri L4'ün 188 kopyasının kaynağı; checklist B2'nin
+> "sahibi olan satır taşınmaz" istisnası **ilk kez** burada sınanır.
+> `dupe_census --list-shared` çıktısı bu dalgada kanıt, gürültü değil;
+> (3) **§5.8'in gerekçelerini ölç, verdict'i değil.** `vom` üç ⚠️'sinin
+> üçünü de yazılı gerekçelerden çıkardı (veri temizdi, belge yanlıştı).
+> `monster` bloğunda `lair_action_refs` (0%, `M`/`S`) ve
+> `gear_refs`/`spell_refs` (`S`🔗, "re-opened") aynı türden açık satırlar —
+> kaynağın sütun listesiyle karşılaştırılmadan bırakılmasın;
+> (4) **Devir notunun sayılarını ölçmeden yazma.** `deepm` iki kaydı bu
+> kuralla düzeltti, `vom` iki gerekçeyi bu kuralla düşürdü;
+> (5) **Kanıt blokları çalıştırılabilir olmalı.** Yeni blok yazıldıktan sonra
+> bir kez çalıştırılıp çıktısı yorum satırına konur (`vom`'un üç bloğu öyle).
 >
-> **Dalga 3 bittiğinde** 14/20 birim kapanır ve Dalga 4 (6 canavar paketi,
-> yapıları birbirinin tekrarı) başlar.
+> **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
+> **F4 — "Karar ver, sonra görev aç"**a gelir.
 >
 > **Test dosyalarının yeri**: F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
@@ -65,7 +67,8 @@
 > 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
 > 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
 >    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3, `deepm`'de 1
->    yanlış bulgu önledi.
+>    yanlış bulgu önledi. `vom`'da bir adım öteye gitti: sütun **listesi**
+>    çıkarılınca §5.8'in adını verdiği sütunun hiç var olmadığı görüldü.
 > 4. Alan dolu ve kaynakla aynı, ama **değer kuralla uyuşuyor mu**? (`toh`,
 >    `a5e-ag`)
 > 5. Devir notunun **"zaten biliniyor"** satırı ölçüldü mü? — `toh`'ta iki,
@@ -76,7 +79,8 @@
 >    beşinin de cause code'u zaten doğruydu.
 > 7. Bulduğun kusurun **doğrusu kaynağın kendisinde** başka bir alanda duruyor mu?
 >    (`bfrd` — `name` yanlış, `pk` doğru; `deepm` — `material_cost` boş, fiyat
->    `material_specified` metninde → F-pass0-16.)
+>    `material_specified` metninde → F-pass0-16.) Cevabın **hayır** olması da
+>    ölçüm: `vom`'da fiyat `desc`'te de yoktu, o yüzden `cost_gp` bulgu değil.
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -1399,7 +1403,7 @@ kaybı yok, tek gerçek eksik metinde duran malzeme fiyatı. **Dalga 2 kapandı 
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
-| `open5e-vom` | 1.063 | magic-item 1.063 | ⬜ | — | — |
+| `open5e-vom` | 1.063 | magic-item 1.063 | ⚠️ | 2026-08-18 | F-vom-01; F-vom-02; F-vom-03 |
 
 > Bilinen giriş noktası: `cost_gp` ve §5.8'in 🔴 `M` attunement / charges /
 > body-slot bloğu (checklist C5, A5). **F1 düzeltmesi:** `0.00` olan **kaynak**
@@ -1407,6 +1411,105 @@ kaybı yok, tek gerçek eksik metinde duran malzeme fiyatı. **Dalga 2 kapandı 
 > `cost_gp` **1.063 satırın hepsinde `null`**, yani alan `0/1.063` dolu. Yani
 > aranacak şey "her yerde 0 fiyat" değil, **hiç fiyat olmaması**; §5.8 buna ⛔
 > gerekçesi yazdığı için tek başına bulgu değildir (K7).
+
+#### open5e-vom sonucu — 2026-08-18
+
+**Ölçüm.** `magic-item` 1.063 kart, tek kategori. `verify_packs --doc vom
+--only magic-item` → eşleşme **1.063/1.063**, **3.682 ok · 0 disagree ·
+0 absent · 0 unverifiable · 3.189 unsourced** — unsourced'ın tamamı üç sabit
+(`activation` / `is_cursed` / `is_sentient`, 3 × 1.063), üçünün de §3.6'da
+yazılı gerekçesi var (V1, 2026-08-14). `gate_packs --packs /tmp/one` yeşil;
+`dupe_census` "nothing installed" **0** ve paket ne `--list-builtin-same` ne
+`--list-shared` listesinde; `unmapped_report.json` bugün de yalnız
+`alignment` (3 satır), `magic-item` satırı yok. `build_catalog` sonrası ağaç
+temiz; manifest satırı `Document.json` ile birebir (*Vault of Magic* /
+kobold-press / `ogl-10a` / `5e-2014` / `1.1.0` / `counts {magic-item: 1063}`).
+Tier-0: `magic-item-category` 1.063 + `rarity` 1.063 çözülüyor; ayrıca
+**379 softRef** (`base_item_ref`) built-in silah/zırh kartına iniyor.
+
+**Devralınan uyarıların cevabı.**
+* **(2) Bilinen açık #5 — `cost_gp`.** Yeniden ölçüldü: `MagicItem.cost`
+  **1.063/1.063 `0.00`** (tek benzersiz değer). F-pass0-16'nın sorusu da
+  soruldu — fiyat `desc` metninde duruyor mu? **Hayır.** `\d[\d,]*\s*gp`
+  yalnız **15** satırda eşleşiyor ve on beşinin de okunduğunda eşyanın fiyatı
+  olmadığı görülüyor: golem el kitaplarının malzeme masrafı, "kullanılınca
+  25 gp'lik pirinç kalır" artık değeri, shabti'lerin *"100 gp değer başına
+  10 dakika"* çalışma hızı. Yani ⛔ gerekçesi ayakta, bulgu değil (K7).
+* **(3) §5.8'in 🔴 `M` üçlüsü.** Kaynağın sütun listesi çıkarıldı
+  (`sorted(fields.keys())`, 20 sütun) ve satır satır karşılaştırıldı — sonuç
+  ikiye ayrıldı: `charges_max` / `charge_regain` / `command_word` /
+  `body_slot_ref` için gerekçe **ayakta** (`desc`'te 161 *"has N charges"*,
+  152 şafakta yenilenme, 137 *"command word"*), ama `attunement_*` için
+  gerekçenin dayandığı `attunement_detail` sütunu **hiç yok** (F-vom-01) ve
+  `sentient_*` için düzyazı da yok (F-vom-03).
+* **(4) Devir notunun sayısı.** Bu bloğun kendi yazdığı "1.063/1.063 `0.00`"
+  ölçülüp doğrulandı. Buna karşılık **§5.8'in iki yazılı gerekçesi ölçülünce
+  düştü** — kural yine iş gördü.
+* **(5) Kanıt blokları.** Üç yeni blok da yazıldıktan sonra çalıştırıldı,
+  çıktıları yorum satırı olarak kaydın içinde duruyor.
+
+**Yeni bulgular.** F-vom-01 (C8, `S`), F-vom-02 (A5, `S`), F-vom-03 (C8, `N`).
+Defter 28 → **31**; `check_findings.py` → *32 kayıt okundu, 31 tanesi sayaca
+giriyor — temiz*.
+
+**Ölçülüp bulgu sayılmayanlar.**
+a. **Kategori katlaması.** Kaynakta 11 kategori var, pakette 9: `ammunition`
+   (15) → *Weapons*, `shield` (14) → *Armor*. Katlama built-in
+   `magic-item-category` kanonunun dokuz DMG satırıyla birebir örtüşüyor ve
+   `_categoryAlias`'ta yazılı; sayılar da tutuyor (222+15 = **237**,
+   159+14 = **173**).
+b. **`base_item_ref` tavanı.** 114 `armor` + 265 `weapon` = **379**, pakette
+   de tam 379 — iki sütunu dolduran her satır bir built-in karta indi, düşen
+   yok. Kalan 684 satır iki sütunu da boş bırakıyor (L3'ün yazdığı %36 tavanı).
+c. **`weight_lb` %10.** Kaynak `weight` 1.063/1.063 dolu ama **949'u
+   `0.000`**; mapper `> 0` şartıyla yazıyor, sonuç 114 — yani boşluk kaynakta
+   (taramanın 3. sorusu), §5.8'de `S` olarak zaten yazılı.
+d. **Kaynağın ölü sütunları.** `armor_class` 0, `hit_points` 0, `size`
+   *tiny*, `hit_dice` null, `nonmagical_attack_*` false, `damage_immunities`
+   **1.063/1.063 `['poison','psychic']`** — Django modelinin nesne-statı
+   varsayılanları, hiçbirinin `magic-item` şemasında evi yok ve mapper hiçbirini
+   okumuyor. Kaynak tarafı gürültü olduğu için bulgu değil, ama not: bir gün
+   biri `damage_immunities`'i "kaynak var" diye eşlemeye kalkarsa 1.063 eşyaya
+   zehir bağışıklığı dağıtır.
+
+| Madde | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | `magic-item` built-in şemada tanımlı, tek kategori |
+| A2 | ✅ | yedi zorunlu alanın hepsi 1.063/1.063 |
+| A3 | ✅ | `unsourced` kovası tam olarak üç beyan edilmiş sabit; başka uydurma yok |
+| A4 | ✅ | adlar `titleCaseName`'den geçmiş (*Eye of the Golden God*, *Rug of Safe Haven*) |
+| A5 | ⚠️ | üç ⚠ const'un gerekçesi var, ama `is_cursed`'ünki 4 kartta yanlış → **F-vom-02** |
+| B1 | ✅ | built-in ile birebir aynı kart 0 |
+| B2 | ✅ | başka official pakette aynı ad 0 |
+| B3 | ✅ | bağ düzyazıda değil: `weapon`/`armor` sütunları → 379 softRef |
+| B4 | ✅ | gate yeşil; 379 softRef'in hepsi çözülüyor, dangling 0 |
+| B5 | ➖ | paket→paket bağı yok (`requires: []`) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ➖ | `monster` yok |
+| C5 | ⚠️ | `cost_gp` ⛔ gerekçesi doğrulandı, ama attunement/sentient gerekçeleri düştü → **F-vom-01**, **F-vom-03** |
+| C6 | ⛔ | `magic-item.mechanical_notes` C6'da yazılı istisna (kartın kendisi zaten kural) |
+| C7 | ✅ | `magic-item-category` + `rarity` 1.063'er satır çözülüyor, unmapped'te satır yok |
+| C8 | ⚠️ | iki yazılı gerekçe ölçümle uyuşmuyor → **F-vom-01**, **F-vom-03** |
+| D1 | ✅ | 3.682 ok, **0 disagree**, 0 absent |
+| D2 | ✅ | `unverifiable` 0; `unsourced` 3.189'un üçü de beyan edilmiş kural |
+| D3 | ✅ | `gate_packs` yeşil |
+| E1 | ✅ | `bundled_pack_resolve_test` yeşil; paketin yazdığı alanların hepsi ya sayfada ya beyanda |
+| E2 | ✅ | mekanik olmayan `effects` C6'da yazılı |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `open5e-vom installs and reads back unchanged` |
+| F2 | ✅ | `pack_field_render` paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ➖ | sihirbaz `magic-item` satırı göstermiyor (chargen ailesi değil) |
+| F4 | ✅ | `entity_link_navigation` yeşil; kategori/nadirlik/temel eşya refleri tıklanabilir |
+| G1 | ✅ | manifest satırı güncel, `build_catalog` sonrası drift yok |
+| G2 | ✅ | *Vault of Magic* / Kobold Press / `ogl-10a` / `5e-2014` — `Document.json` ile birebir |
+| G3 | ✅ | `is_srd_overlap: false`; SRD sihirli eşyaları (wotc, 1.256 satır) gönderilmiyor |
+
+**Sayım: 20 ✅ · 7 ➖ · 1 ⛔ · 3 ⚠️** — üç ⚠️'nin üçü de aynı yere bakıyor:
+kartın **boş** alanları değil, o boşlukların **yazılı gerekçeleri**. Verilerin
+kendisi temiz (0 disagree, 0 absent, 0 dangling, 1.063/1.063 eşleşme); kusur
+belgede. **Dalga 3 kapandı — 20 tarama biriminin 14'ü bitti.**
 
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
