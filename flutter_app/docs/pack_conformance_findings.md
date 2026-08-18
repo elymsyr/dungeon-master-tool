@@ -3,9 +3,9 @@
 **Ölçüt:** `pack_conformance_checklist.md` · **Süreç:** `pack_conformance_plan.md`
 · **Yol haritası:** `open5e_content_audit.md`
 
-> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1'in altı paketi bitti
-> (2026-08-17), 17 bulgu.** Sıradaki iş **Dalga 1 → `open5e-bfrd`'nin
-> class/subclass satırları** (Dalga 1'in son birimi).
+> **Durum: F3 sürüyor — Pass 0 + Dalga 0 + **Dalga 1 bitti** (2026-08-18),
+> 18 bulgu.** Sıradaki iş **Dalga 2 → beş büyü paketi** (`kp`, `wz`, `deepm`,
+> `deepmx`, `spells-that-dont-suck`; 833 büyü).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -93,7 +93,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 17 | 0 | 0 | 0 | 0 | **17** |
+| 0 | 18 | 0 | 0 | 0 | 0 | **18** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -101,7 +101,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 1 | B3 | 1 | C3 | 0 |
+| A3 | 2 | B3 | 1 | C3 | 0 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
 | A5 | 1 | B5 | 0 | C5 | 0 |
 | D1 | 2 | E1 | 1 | C6 | 0 |
@@ -117,7 +117,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|
 | `pass0` | 10 | `open5e-vom` | 0 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
-| `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 0 |
+| `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
 | `open5e-open5e` | 1 | `open5e-tob` | 0 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
@@ -1542,6 +1542,70 @@ EOF
 3. **Kapsam dışı** — "upstream ne diyorsa o" yazılır. Politika olarak savunulabilir
    (paket = belgenin aynası), ama o zaman §5'e yazılı girmeli, çünkü şu an
    hiçbir yerde yazılı değil.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-bfrd-01 — `Mechanist` ilerleme tablosunun ikinci sütunu `Augment Effects Known (2)` diye başlıklanıyor; kaynağın kendi kimliği ona `Augmented Items` diyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-bfrd` — korpüs geneli tarandı, **tek kart / tek sütun başlığı** |
+| **Checklist** | checklist A3 (uydurma değer yok) |
+| **Kategori / etki** | `class` — `Mechanist`'in `description`'ına render edilen `### Class Table`'ın iki sütunu var ve ikisinin başlığı da `Augment Effects Known`; mapper ikinciyi `Augment Effects Known (2)` diye numaralıyor. Kaynakta iki ayrı `ClassFeature` var — `bfrd_mechanist_augment-effects-known` ve **`bfrd_mechanist_augmented-items`** — ama ikisinin de `name` alanı `Augment Effects Known`. `(2)` korpüste **1** tane: paketli 103 `class`/`subclass` kartının tablolarında başka çakışma yok |
+| **Cause code (öneri)** | `M` — kaynak `name` upstream'de yanlış, ama doğru ad `pk`'de duruyor ve mapper onu hiç okumuyor (`mappers/chargen.dart:1679-1683`, çakışmayı numaralayan blok) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** B2 bu tabloyu 2026-08-14'te "bozuk" durumdan kurtardı: `column_value`
+satırları artık düşmüyor, markdown tablo olarak basılıyor. Kalan kusur başlıkta:
+kullanıcı 2. sütunun neyi saydığını tablodan öğrenemiyor, çünkü 1. sütunla aynı
+adı taşıyor. Sayılar farklı (2/3/3/4… ile 3/3/3/4…), yani iki ayrı mekanik.
+
+`verify_packs --doc bfrd --only class,subclass` **2 ok / 0 disagree / 0 absent**
+diyor ve haklı — `description` alanı kural tablosunda yok, tablo başlığı
+hiçbir kapının ölçtüğü bir değer değil. Bu bulgu ölçümden değil **okumadan**
+geldi (plan §4 Adım 3-4).
+
+**Neden önemli.** Mapper'ın yorumu ("çakışan adı numarala") sadakat değil, bir
+**karar**: kaynak iki farklı şeye aynı adı verdiğinde paket o adı iki kez yazıyor.
+Aynı kaynakta doğru ad zaten var (`pk` slug'ı), yani bu, F-a5e-ag-02'nin tersi
+bir durum — orada kaynak yanlıştı ve başka yerde doğrusu yoktu; burada var.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — korpüste kaç sütun başlığı numaralanmış
+python3 - <<'EOF'
+import json,glob,re,collections
+c=collections.Counter()
+for f in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
+    pk=f.split('/')[-1][:-9]
+    for e in json.load(open(f))['entities'].values():
+        if e['type'] not in ('class','subclass'): continue
+        for hdr in re.findall(r'\| Level \|([^\n]*)\|', e['attributes'].get('description','')):
+            for col in hdr.split('|'):
+                if re.search(r'\(\d+\)\s*$', col.strip()): c[(pk,e['name'],col.strip())]+=1
+print(dict(c))
+EOF
+# {('open5e-bfrd', 'Mechanist', 'Augment Effects Known (2)'): 1}
+
+# kaynağın kimliği ile adı ayrı şeyler söylüyor
+python3 -c "
+import json
+for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFeature.json')):
+    if r['fields'].get('feature_type')=='CLASS_TABLE_DATA':
+        print(r['pk'], '->', r['fields']['name'])"
+# bfrd_mechanist_augment-effects-known -> Augment Effects Known
+# bfrd_mechanist_augmented-items       -> Augment Effects Known
+```
+
+**Seçenekler.**
+1. **`pk` slug'ından başlık türet (çakışma hâlinde)** — `_classTable`'daki
+   numaralama bloğu, ad çakıştığında `pk`'nin son parçasını başlığa çevirsin
+   (`augmented-items` → `Augmented Items`). Bugün bilinen ölçek: 1 sütun,
+   1 kart, 1 paket; `(n)` yolu yedek olarak kalır.
+2. **İki sütunu birleştir** — mapper zaten "sessizce birleştirmemek" için
+   numaralıyordu; birleştirmek bir sütunun sayılarını siler, bu yüzden yanlış.
+3. **Kapsam dışı** — "kaynak ne diyorsa o", F-a5e-ag-02'nin 3. seçeneğiyle aynı
+   politika. Fark: orada doğru değer hiçbir yerde yoktu, burada `pk`'de var.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

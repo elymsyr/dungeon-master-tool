@@ -102,19 +102,21 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 7 of the 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
-`a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`) and the ledger holds **17** findings,
-all still ❓ — `check_findings.py` clean. The last unit (`a5e-ag`, 455 entities —
-Wave 1's largest, and the only one carrying a `class` card) measured
-`verify_packs` at **2,362 ok / 0 disagree / 0 absent**, with full match coverage
-in all five categories, and scored its 31 items **24 ✅ · 2 ➖ · 0 ⛔ · 5 ⚠️**.
-It added **F-a5e-ag-01** (`Tenacious`'s save proficiency is dropped although
-`grants_save_prof_from_asi` is declared *and* read — only the mapper never writes
-it, 0/73 corpus-wide) and **F-a5e-ag-02** (`Marshal`'s level table falls from 30
-to 10 feet at level 14 and back to 45 at 15 — the source says the same, so
-`verify_packs` passes it), while five more candidates died on measurement.
-**The next open phase is F3** (continues at `open5e-bfrd`'s class/subclass rows,
-the last unit of Wave 1).
+**F3 is running: 8 of the 20 units are scanned — Wave 1 is closed** (Pass 0,
+built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
+class/subclass rows) and the ledger holds **18** findings, all still ❓ —
+`check_findings.py` clean. The last unit (`bfrd`, 2 entities — the wave's
+cheapest) measured `verify_packs` at **2 ok / 0 disagree / 0 absent**, full match
+coverage in both categories, and scored its 31 items
+**20 ✅ · 5 ➖ · 0 ⛔ · 6 ⚠️**. It added **F-bfrd-01** (`Mechanist`'s class table
+heads its second column `Augment Effects Known (2)` — upstream gives both columns
+the same `name`, and the right one is sitting in the same file as the row's `pk`,
+`augmented-items`), and it disproved a sentence the previous unit wrote: the
+class card's empty equipment/tool slots are **not** `S`, because the source keeps
+them in `ClassFeature` rows rather than in `CharacterClass` — which is exactly
+what §5.1 has said (`M`🔗) all along.
+**The next open phase is F3** (continues at Wave 2 — five spell packs,
+833 spells).
 
 ---
 
@@ -4536,8 +4538,35 @@ procedure, and the ledger have different lifetimes:
       it in `lib/` and in `tool/` — a reader with no writer is cause `M`, and the
       fill table cannot tell the two apart. That test is what found F-a5e-ag-01.
 
-      **kaldı: 13 unit** — Dalga 1 closes with `bfrd`'s 2 class/subclass rows
-      (next); Dalga 2–4 untouched. Next
+      **`bfrd`'s 2 class/subclass rows closed Dalga 1 on 2026-08-18 (8 / 20)** —
+      the wave's cheapest unit, and the one that measured a handover claim wrong.
+      `verify_packs --doc bfrd --only class,subclass` → **2 ok / 0 disagree /
+      0 absent / 0 unsourced / 1 unverifiable** (1/1 + 1/1 match coverage),
+      `gate_packs` green, census "nothing installed" still **0**, `build_catalog`
+      re-run leaves the tree clean; 31 items scored **20 ✅ · 5 ➖ · 0 ⛔ · 6 ⚠️**.
+      One pack-scoped finding, **F-bfrd-01** (A3 — the `### Class Table` B2 built
+      for `Mechanist` has two columns and both are headed `Augment Effects Known`,
+      the second numbered `(2)` by the mapper; upstream gives both `ClassFeature`
+      rows the same `name`, but its **`pk`** says the second one is
+      `augmented-items`. Corpus-wide there is exactly **1** numbered header). It
+      is F-a5e-ag-02's mirror image: there the source was wrong and held no right
+      answer, here the right answer is in the same file.
+      **Three candidates died, and one of them was a previous unit's sentence.**
+      `a5e-ag` recorded that the class card's empty slots are `S` because
+      "upstream `CharacterClass` carries only five columns" — true of that table,
+      **false as a cause**: `bfrd`'s starting equipment and tool proficiencies are
+      in the source, as `ClassFeature` rows of type `STARTING_EQUIPMENT` /
+      `PROFICIENCIES`, and §5.1 has always called those rows `M`🔗, never `S`. The
+      doc was right and the handover note was wrong. The other two: every feature's
+      text living in both `description` and `features` (all 103 class/subclass
+      cards) is exactly what §5.2's `flavor_description` `M` row already says, and
+      the three `**At this level:** d8` stub feature rows reproduce
+      `ClassFeatureItem.detail` correctly. Also re-measured rather than inherited:
+      F-pass0-07's `bfrd: 3` is real but all three rows are `monster` /
+      `creature-action`, so they belong to Dalga 4, not to this unit.
+
+      **kaldı: 12 unit** — Dalga 2 (five spell packs, 833 spells) starts next;
+      Dalga 3–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

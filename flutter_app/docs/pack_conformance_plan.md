@@ -8,64 +8,58 @@
 ## Sonraki adım
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
-> (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı**
-> (F2, 2026-08-17). **F3 sürüyor: Pass 0 (§6) + Dalga 0 + `a5e-gpg` + `a5e-ddg`
-> + `open5e` + `tdcs` + `toh` + `a5e-ag` bitti (2026-08-17).** 20 tarama
-> biriminin 7'si kapandı, defterde **17 bulgu** var: F-pass0-01 (checklist F2), F-builtin-01 (C4),
-> F-builtin-02 (C8), F-pass0-02 (C2 — 30 background seçimli becerilerin hepsini
-> hediye ediyor), F-pass0-03 (A5 — `ability_score_options` 27/27 aynı altı
-> yetenek), F-pass0-04 (A3 — 6 kartın gövdesi `"[No description provided]"` ile
-> açılıyor), F-pass0-05 (D1 — `granted_language_count` 31 satırın 2'sinde
-> yanlış), F-pass0-06 (B3 — background ekipmanında adı yazılı eşya envantere
-> girmiyor), F-pass0-07 (A4 — 19 kart adı built-in bir adın yazım varyantı,
-> 9 pakette), F-open5e-01 (G3 — 5e-2024 belgesi 5e-2014 etiketli pakete
-> karışıyor), F-pass0-10 (E3 — üçte-bir büyücü 4 subclass hiç slot almıyor; `toh`
-> taramasında kapsamı `pass0`'a çıktı, eski kimliği F-open5e-02),
-> **F-pass0-08** (E1 — 24 subclass büyü listesi yalnız düzyazı tablosu, 523
-> feature satırının 0'ı grant taşıyor), **F-pass0-09** (C2 — background'un adı
-> verilmiş dili yazılacak alan bulamıyor, 2 satır), **F-toh-01** (C1 —
-> `Underfoot` 1. seviyede seçilebilen rogue arketipi), **F-toh-02** (B2 —
-> `Scoundrel` background'u iki pakette, %83 aynı metin), **F-a5e-ag-01** (C2 —
-> `Tenacious`'ın kurtarma yeterliliği düşüyor; alanı ve okuyucusu var, yazanı
-> yok), **F-a5e-ag-02** (D1 — `Marshal`'ın seviye tablosu 14'te 30→10 feet
-> geriliyor, kaynak da öyle diyor).
-> On yedisi de ❓ danışılacak.
+> (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1'in tamamı bitti** — `a5e-gpg`,
+> `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17) ve `bfrd`'nin
+> class/subclass satırları (2026-08-18). **20 tarama biriminin 8'i kapandı**,
+> defterde **18 bulgu** var, on sekizi de ❓ danışılacak
+> (`python3 tool/check_findings.py` → *19 kayıt, 18 sayaca giriyor, temiz*).
+> Dalga 1'in son birimi tek yeni bulgu üretti: **F-bfrd-01** (A3 — `Mechanist`
+> ilerleme tablosunun 2. sütunu `Augment Effects Known (2)` diye başlıklanıyor,
+> çünkü kaynak iki ayrı sütuna aynı `name`'i vermiş; doğru ad kaynağın `pk`'sinde
+> duruyor: `augmented-items`).
 >
-> **Sıradaki iş: Dalga 1 → `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı**
-> (2 varlık — dalganın son ve en ucuz birimi; paketin 205 `monster`'ı Dalga 4'te).
-> Dört uyarı hazır: (1) `bfrd` **`cc-by-40`** lisanslı ve `game_system: 5e-2014`
-> — 19 paketin `license` alanında `ogl-10a` dışına çıkan iki paketten biri, G2
-> iki dosyayı da okusun; (2) `Mechanist` korpüsteki **öteki** paketli sınıf
-> kartı ve `caster_kind: 'None'` taşıyor (§5.8'de yazılı) — `a5e-ag`'nin
-> `Marshal`'ında yapılan ölçümlerin ikizi burada **yeniden** yapılır, kopyalanmaz;
-> (3) F-pass0-07 dağılımında `bfrd` **3** satırla var → doğrulama, ama komutu
-> yeniden çalıştırarak; (4) yeni kontrol: `🔴 0%` her alan için
-> `grep -rn <alan> lib/` **ve** `tool/` — okuyucu var yazan yoksa cause `M`,
-> ikisi de yoksa `S`. F-a5e-ag-01 bu kontrolle bulundu.
+> **Sıradaki iş: Dalga 2 → beş büyü paketi, 833 büyü.** Sıra küçükten büyüğe:
+> `kp` (31) → `wz` (43) → `deepmx` (64) → `spells-that-dont-suck` (180) →
+> `deepm` (515). Dört uyarı hazır: (1) dalganın ortak riski **`class_refs` /
+> `tags` ikilisi** — F-kuru-01'in dağılımı `deepm: 75, kp: 7, a5e-ag: 3`, yani
+> ilk ve son paket ikisi de bu ⚪'nin içinde; komut **yeniden çalıştırılır**,
+> sayı elle taşınmaz; (2) `material_*` iki ayrı sebeple boş olabiliyor —
+> `toh`'ta `material_specified` boştu, `a5e-ag`'de `material` bir **bool**;
+> `deepm` ve `spells-that-dont-suck`'ta **dolu** olması bekleniyor, yani bu
+> dalga o beklentiyi ölçen ilk yer; (3) `verify_packs --doc <slug> --only spell`
+> bu kategoride **tam** çalışıyor (kural tablosu `spell`'i tanıyor), dolayısıyla
+> A3/D1 araçla ölçülür, okumayla değil; (4) beş paket de tek kategorili → 31
+> maddenin ~10'u ➖ olacak, ama **F/G grubu yine de ölçülür** (paket başına
+> `size_bytes` + `counts` + lisans).
 >
-> **Dalga 1 bittiğinde** 8/20 birim kapanır ve Dalga 2 (beş büyü paketi, 833
-> büyü) başlar; onun ortak riski `class_refs` / `tags` ikilisi ve F-kuru-01'in
-> `deepm: 75` satırı.
+> **Dalga 2 bittiğinde** 13/20 birim kapanır ve Dalga 3 (sihirli eşya paketleri)
+> başlar; onun bilinen açığı `magic-item.cost_gp` (bilinen açık #5, ⛔).
 >
-> **Test dosyalarının yeri** (geçen oturumda yanlış yol arandı): F grubu
+> **Test dosyalarının yeri**: F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
 > `test/presentation/character_creation/wizard_pack_families_test.dart`,
 > `test/presentation/pack_field_render_test.dart`,
-> `test/presentation/entity_link_navigation_test.dart`.
+> `test/presentation/entity_link_navigation_test.dart`. `pack_field_render_test`
+> **kırmızı gelir** — kesen tek grup built-in, yani F-pass0-01; paket tarafı
+> (224 çift / 446 pump) yeşil.
 >
-> **Bu birimin eklediği sorular.** `open5e`'den: kartın taşıdığı mekanik
-> **şemada bir eve sahip mi**, ve o ev **doğru belgeden** mi dolduruluyor?
-> `tdcs`'ten: bir alan boşsa, boşluk **pakette mi kaynakta mı**? Bu ikinci soru
-> `tdcs`'te üç, `toh`'ta beş yanlış bulguyu önledi — kategori başına tek bir
-> kaynak sütunu saymak yetiyor. `toh`'un eklediği **beşinci soru**: *alan dolu
-> ve kaynakla aynı, ama **değer** kuralla uyuşuyor mu?* — `verify_packs` 661 ok /
-> 0 disagree derken `Underfoot`'un 1. seviyesi oradaydı; kaynak sadık, kural
-> değil. Ve **altıncı**, süreç sorusu: *devir notunun "zaten biliniyor" satırı
-> ölçüldü mü?* Bu birimde bir uyarı (F-pass0-07 dağılımı) ve bir kayıt kanıtı
-> (F-pass0-10'un komutu) ölçümde yanlış çıktı. `a5e-ag`'nin eklediği **yedinci**
-> soru en ucuzu: *boş alanın **okuyucusu** var mı, **yazanı** var mı?* —
-> `grep -rn <alan> lib/` dolu + `grep -rn <alan> tool/` boş ⇒ cause `M`, ve
-> doluluk tablosunun `🔴 0%`'ı `S` diye geçilemez (F-a5e-ag-01).
+> **Taramanın yedi sorusu** (birim birim biriktiler, hepsi geçerli):
+> 1. Kartın taşıdığı mekanik **şemada bir eve sahip mi**? (`open5e`)
+> 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
+> 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
+>    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3 yanlış bulgu
+>    önledi.
+> 4. Alan dolu ve kaynakla aynı, ama **değer kuralla uyuşuyor mu**? (`toh`,
+>    `a5e-ag`)
+> 5. Devir notunun **"zaten biliniyor"** satırı ölçüldü mü? — `toh`'ta iki,
+>    `bfrd`'de bir tane yanlış çıktı (a5e-ag'nin *"class kartının boş alanları
+>    `S`"* cümlesi; §5.1 onlara `M`🔗 diyor ve haklı).
+> 6. Boş alanın **okuyucusu** var mı, **yazanı** var mı? — `grep -rn <alan> lib/`
+>    dolu + `tool/` boş ⇒ cause `M` (`a5e-ag`). `bfrd`'de 5 alana uygulandı,
+>    beşinin de cause code'u zaten doğruydu.
+> 7. Bulduğun kusurun **doğrusu kaynağın kendisinde** başka bir alanda duruyor mu?
+>    (`bfrd` — `name` yanlış, `pk` doğru; F-a5e-ag-02'nin tersi durum.)
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -355,9 +349,11 @@ snapshot'ından map'leniyor ne katalogdan kuruluyor), 19'u ✅.
 | `open5e-tdcs` | 35 | trait 11, creature-action 10, background 5, monster 4, subclass 4, feat 1 | ⚠️ | 2026-08-17 | F-pass0-08, F-pass0-09 |
 | `open5e-toh` | 239 | spell 91, subclass 76, subspecies 29, background 19, feat 13, species 11 | ⚠️ | 2026-08-17 | F-toh-01, F-toh-02, F-pass0-10 (+2 kart) |
 | `open5e-a5e-ag` | 455 | spell 371, feat 59, background 21, subclass 3, class 1 | ⚠️ | 2026-08-17 | F-a5e-ag-01, F-a5e-ag-02 |
+| `open5e-bfrd` (class + subclass) | 2 | class 1, subclass 1 | ⚠️ | 2026-08-18 | F-bfrd-01 |
 
-> `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı da **bu dalgada** bakılır
-> (ucuz); canavarları Dalga 4'te.
+> `open5e-bfrd`'nin `class` 1 + `subclass` 1 satırı **bu dalgada** bakıldı
+> (2026-08-18); paketin 360 `monster`'ı ve 2.110 çocuk satırı Dalga 4'te.
+> **Dalga 1 kapandı: 8/20 birim.**
 
 #### `open5e-a5e-gpg` sonucu — 2026-08-17
 
@@ -786,6 +782,100 @@ built-in `Resilient` onunla çalışıyor, `tool/` altında ise **hiç geçmiyor
 Yeni kontrol, sonraki birimler için: *"bu alanı okuyan var mı, yazan var mı?"* —
 `grep -rn <alan> lib/ | wc -l` ve `grep -rn <alan> tool/ | wc -l` ikilisi
 `🔴 0%` bir satırın `S` mi `M` mi olduğunu tek adımda söylüyor.
+
+#### `open5e-bfrd` (`class` + `subclass`) sonucu — 2026-08-18
+
+Dalga 1'in **en ucuz ve son** birimi: 2 varlık (`Mechanist` sınıfı, `Metallurgist`
+arketipi). Paketin öteki 2.471 varlığı (`monster` 360, `trait` 772,
+`creature-action` 1.338, `language` 1) **Dalga 4'ün** işi ve bu birimde
+ölçülmedi. `verify_packs --doc bfrd --only class,subclass` → **2 ok · 0 disagree ·
+0 absent · 0 unsourced · 1 unverifiable** (tek unverifiable `caster_kind`, yazılı
+kural: `caster_type` bir enum, kopyalanmıyor), eşleşme **1/1 class · 1/1 subclass**.
+`gate_packs --packs /tmp/one` yeşil; `dupe_census` C "nothing installed" **0**.
+
+**Plandaki dört uyarının hepsi ölçüldü, ikisi düzeltildi.**
+
+1. **Lisans `cc-by-40`** — doğru ve **iki dosyada da** tutarlı; dahası paketin
+   `attribution` metni de CC-BY metni (OGL metni değil), yani lisans etiketi
+   yalnız alanda değil **gövdede** de doğru. G2 ✅.
+2. **`Mechanist` `caster_kind: 'None'`** — kaynak `caster_type: NONE` (yeniden
+   ölçüldü, `a5e-ag`'den kopyalanmadı). İki kartın `description`'ında
+   `Spellcasting` / `spell slots` / `cantrip` / `spell list` geçmiyor: sınıf
+   gerçekten büyücü değil, **F-pass0-10 büyümüyor**.
+3. **F-pass0-07 dağılımı `bfrd: 3`** — komut yeniden çalıştırıldı, toplam yine
+   **19**, `bfrd`'nin 3'ü doğrulandı: `Counter Spell`, `Cultist, Fanatic`,
+   `War Horse Skeleton`. **Ama üçü de `monster` / `creature-action`**, yani bu
+   birimin iki kartına dokunmuyorlar — kayıt Dalga 4'te tekrar bakılacak.
+4. **Okuyucu/yazan testi** (a5e-ag'nin yedinci sorusu) — bu birimde **yeni bulgu
+   üretmedi**: `bonus_skill_pick_count` (lib 7 / tool 0), `flavor_description`
+   (2/0), `tool_proficiency_count` (6/0), `casting_ability_ref` (4/0),
+   `multiclass_requirements` (1/0) hepsi "okuyucu var, yazan yok" = `M`, ve
+   **beşinin de §5.1/§5.2'de `M` yazıyor**. Test doğru çalıştı, cause code'lar
+   zaten doğruydu.
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | `class` + `subclass` şemada; roundtrip yeşil |
+| A2 | ⚠️ | tek boşluk `class.primary_ability_ref` (zorunlu) — kaynak `primary_abilities: []`, §5.8'de ⚪ yazılı (B7). K7, `a5e-ag` ile aynı |
+| A3 | ⚠️ | 0 unsourced; ama **F-bfrd-01 (yeni)** — `### Class Table`'ın 2. sütun başlığı `Augment Effects Known (2)`, mapper'ın ürettiği bir etiket; kaynağın `pk`'si ona `augmented-items` diyor |
+| A4 | ✅ | `Mechanist` / `Metallurgist` korpüste tek; built-in'de karşılığı yok. F-pass0-07'nin `bfrd: 3` satırı **bu iki kartta değil** |
+| A5 | ➖ | tek varlıklı iki kategoride "tek sabit sütun" ölçülemez |
+| B1 | ✅ | `--list-builtin-same` çıktısında `bfrd` **hiç geçmiyor** |
+| B2 | ✅ | `--list-shared`'da `bfrd` var ama satırların hepsi `trait`/`creature-action`/`monster` + `language Void Speech` (L2'nin yazılı kararı); `class`/`subclass` **yok** |
+| B3 | ⚠️ | `Proficiencies` ve `Starting Equipment` özellikleri kaynakta **var** ve `description`'a düzyazı olarak giriyor; `tool_proficiency_*`, `granted_tool_refs`, `equipment_choice_groups`, `default_inventory_refs` boş. §5.1'de **`M`🔗 yazılı** → K7, bulgu değil |
+| B4 | ✅ | gate yeşil; `parent_class_ref` in-pack **hard ref** ve hedefi `class Mechanist` (pakette aynı adda bir `monster` da var — farklı kategori, çakışma değil) |
+| B5 | ✅ | `metadata.links` yok + katalog `requires: []`; softRef'lerin hepsi built-in'e (§2.1, beyan gerekmez) |
+| C1 | ✅ | `class.features` 19 satır (1→20), `subclass.features` 7 satır, `granted_at_level: 3` = `min(ClassFeatureItem.level)` ve **doğru** — F-toh-01'in tuzağı (tablo satırı 1. seviyede) burada yok, çünkü tablo sütunları `_isTableFeature` ile ayrılıyor |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ➖ | `monster` + çocuk satırlar **Dalga 4** |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ✅ | `subclass`'ta grant bloğu **yok** ve bu şemada yazılı bir karar (`content.dart` `_subclassCategory` yorumu); `mechanical_notes` bu iki kategoride beyan edilmemiş |
+| C7 | ✅ | `_lookup` sözlükleri (ability, armor-category, weapon-category, skill) çözülüyor; `unmapped_report.json`'ın 3 satırının hiçbiri `bfrd` değil |
+| C8 | ✅ | `class`'ın 22 boş alanının **22'sinde** §5.1'de cause code var (⚪ 5, `M` 14, `S` 3), `subclass`'ın 5 boşunun 5'inde §5.2'de (`M`) |
+| D1 | ✅ | **2 ok / 0 disagree / 0 absent**; sınıfın parse edilmiş yeterlilikleri (`Light/Medium/Shield`, `Simple/Martial`, 2 beceri / 5 seçenek, CON+INT) kaynak `Proficiencies` düzyazısıyla **birebir** |
+| D2 | ✅ | tek unverifiable `caster_kind`, `verify.dart`'ta yazılı kuralla |
+| D3 | ✅ | gate yeşil |
+| E1 | ⚠️ | 9 dolu `class` alanının **9'unun** da `lib/` içinde okuyucusu var. Ama **F-pass0-08 doğrulandı**: 26 `features` satırının (19 class + 7 subclass) **0'ı** grant anahtarı taşıyor. Büyü listesi tablosu yok → F-pass0-08'in **24**'lük sayısı büyümüyor |
+| E2 | ✅ | mekanik olmayan tek alan `description`, beyan edilmiş |
+| E3 | ✅ | `caster_kind: 'None'` = kaynak `NONE`; iki kartın metninde büyücülük yok → F-pass0-10 büyümüyor |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil |
+| F2 | ✅ | paket tarafı yeşil (224 çift, 446 pump); tek kırmızı hâlâ built-in grubu = F-pass0-01 |
+| F3 | ✅ | `wizard_pack_families_test` yeşil |
+| F4 | ✅ | `entity_link_navigation_test` yeşil |
+| G1 | ✅ | `build_catalog` çalıştırıldı → `git status` temiz, drift yok; `size_bytes` **2.213.260** = dosyanın kendisi, `counts` altı kategoride birebir |
+| G2 | ✅ | `publisher` / `license` / `game_system` / `is_srd_overlap` iki dosyada aynı (Kobold Press · `cc-by-40` · `5e-2014` · false) + CC-BY `attribution` metni |
+| G3 | ✅ | `is_srd_overlap: false`; `bfrd` bir SRD belgesi değil, Kobold Press'in kendi SRD'si |
+
+**Sayım: 20 ✅ · 5 ➖ · 0 ⛔ · 6 ⚠️.**
+
+**Okuma bütçesi.** Paket dosyası (2,11 MB) **hiç baştan sona açılmadı**;
+`scan_pack.py bfrd --cat class/--cat subclass` (~60 satır) + tek satırlık python
+sorguları yetti. Kaynaktan okunan: `CharacterClass.json` (2 satır),
+`ClassFeature.json` / `ClassFeatureItem.json` (sayım + 3 satır düzyazı).
+
+**Üç aday ölçümde düştü.**
+> 1. **"Sınıfın başlangıç ekipmanı ve alet yeterlilikleri düşüyor"** — düşmüyor,
+>    `description`'a giriyor; ve daha önemlisi `a5e-ag`'nin *"class kartının 20
+>    boş alanı `S`, kaynak `CharacterClass` yalnız beş sütun taşıyor"* cümlesi
+>    **bu birimde yanlış çıktı**: ekipman/alet kaynakta var, ama
+>    `CharacterClass`'ta değil, `ClassFeature`'ın `STARTING_EQUIPMENT` /
+>    `PROFICIENCIES` satırlarında. §5.1 zaten `M`🔗 diyor, `S` demiyor — yani
+>    doğru cause code dosyada duruyordu, yanlış olan devir notuydu (altıncı soru).
+> 2. **"Aynı özellik hem `description`'da hem `features`'ta duruyor"** — 103
+>    `class`/`subclass` kartının tamamında böyle (bfrd'de 26/26 satır). Ama §5.2
+>    `flavor_description` satırı bunu **`M` olarak yazmış**: *"everything is folded
+>    into `description`"*. K7 → bulgu değil, o `M` satırının parçası.
+> 3. **`**At this level:** d8` gövdeli yarım feature satırları** — `Heavy Hitter`
+>    9. ve 15. seviyede yalnız yeni zarı yazıyor. Korpüste **3** satır
+>    (`bfrd` 2, `a5e-ag` 1) ve kaynak `ClassFeatureItem.detail` birebir bu; satır
+>    seviyeli ilerlemeyi doğru gösteriyor. Kusur değil.
+
+**Dalga 1'in kapanış dersi.** Sekiz birimde bulunan 18 bulgunun **10'u `pass0`**
+kapsamlı, yani tek tek paketlerin değil mapper'ın kusuru — ve paket başına düşen
+"kendi" bulgusu ortalama **1**. Dalga 1 karakter yaratmayı besleyen her kategoriyi
+(background, feat, species, subspecies, subclass, class, spell) en az bir kez
+gördü; Dalga 2'den itibaren kategori çeşitliliği düşüyor, tekrar artıyor.
 
 ### Dalga 2 — Büyü paketleri
 
