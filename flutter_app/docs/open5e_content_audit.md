@@ -102,21 +102,25 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 9 of the 20 units are scanned — Wave 2 has started** (Pass 0,
+**F3 is running: 10 of the 20 units are scanned — Wave 2 is under way** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
-class/subclass rows, `kp`) and the ledger holds **19** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`kp`, 31 spells — Wave 2's smallest)
-measured `verify_packs --doc kp --only spell` at **200 ok / 0 disagree / 0 absent
-/ 0 unsourced / 74 unverifiable**, match coverage **31/31**, and scored its 31
-items **20 ✅ · 6 ➖ · 0 ⛔ · 5 ⚠️**. All 31 descriptions are **byte-identical**
-to the source (the documented `**At Higher Levels.**` append included), so its one
-new finding came from reading, not from a gate: **F-pass0-11** — the 25 spells
-whose source duration reads `permanent` are shipped as `Until Dispelled`, a claim
-the source never makes, because the Tier-0 `duration-unit` vocabulary has seven
-rows and none of them is "permanent" (`a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1,
-`spells-that-dont-suck` 1).
-**The next open phase is F3** (continues at Wave 2's second unit — `open5e-wz`,
-43 spells).
+class/subclass rows, `kp`, `wz`) and the ledger holds **22** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`wz`, 43 spells) measured
+`verify_packs --doc wz --only spell` at **288 ok / 0 disagree / 0 absent /
+0 unsourced / 96 unverifiable**, match coverage **43/43**, and scored its 31 items
+**22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** — its 43 descriptions are **byte-identical** to the
+source, and `class_refs` is 43/43 here (it was 21/31 in `kp`, so A2 is measured per
+unit, never inherited). All three of its new findings sit in the **duration**
+field and none of them tripped a gate, because `duration_unit_ref` is absent from
+`verify.dart`'s rule table: **F-wz-01** (source `1 hour/caster level` ships as a
+flat `Hours 1`), **F-wz-02** (a spell whose source duration reads
+`concentration + 1 round` ships with the required `requires_concentration` set to
+`false`, since the mapper reads only the boolean column), and **F-pass0-12**
+(spreading — `1 year` durations collapse to `Special` with a null amount; 3 cards,
+`deepm` 2 + `wz` 1). One inherited warning was re-measured and held: F-pass0-11
+expected **0** `permanent` rows in `wz`, and the source has 0.
+**The next open phase is F3** (continues at Wave 2's third unit — `open5e-deepmx`,
+64 spells).
 
 ---
 
@@ -4594,7 +4598,39 @@ procedure, and the ledger have different lifetimes:
       which no pack ships, so §5.6's written ref filter blocks it — both are ⚪,
       yet A2 scores ⚠️, not ✅, because a required field is empty on the card.
 
-      **kaldı: 11 unit** — Dalga 2 continues at `wz` (43), then `deepmx` (64),
+      **`wz` is Dalga 2's second unit (10 / 20, 2026-08-18)** — 43 spells, one
+      category. `verify_packs --doc wz --only spell` → **288 ok / 0 disagree /
+      0 absent / 0 unsourced / 96 unverifiable** (43/43 coverage, five written
+      rules cover all 96), `gate_packs` green, census "nothing installed" **0**,
+      `wz` in neither duplicate list nor `unmapped_report.json`, `build_catalog`
+      leaves the tree clean, and the catalog row's `size_bytes 113,300` /
+      `counts {spell: 43}` / `ogl-10a` all match the file and the source
+      `Document.json`; 31 items scored **22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️**. The byte-for-byte
+      `description` check held a second time (**43/43**), and `class_refs` is
+      **43/43** here against `kp`'s 21/31 — the same field, a different verdict,
+      so A2 is measured per unit and never inherited.
+      **All three new findings live in one field: the spell's duration** — and
+      none of them tripped a gate, because `duration_unit_ref` has no entry in
+      `verify.dart`'s rule table. **F-wz-01** (A3): the source says
+      `1 hour/caster level`, the card says `Hours 1` — the regex takes the first
+      number and drops the tail, shrinking a scale the source did state.
+      **F-wz-02** (A3): `Storm of Axes`'s source duration reads
+      `concentration + 1 round` while its `concentration` boolean is `false`;
+      `mappers/spell.dart:46` reads only the boolean, so the **required**
+      `requires_concentration` field ships `false` and the game's hardest
+      spell constraint quietly disappears. **F-pass0-12** (A3, spreading):
+      `1 year` durations become `Special` with a null amount — the regex knows
+      only round/minute/hour/day and the vocabulary tops out at `Days` — so a
+      stated number vanishes on 3 cards (`deepm` 2, `wz` 1). F-pass0-11 read the
+      other way on the same field: it *adds* a claim, this one *deletes* one.
+      **One inherited warning re-measured and held** (F-pass0-11 expects 0
+      `permanent` rows in `wz`; the source has 0), **and one candidate died**:
+      `wz`'s `SpellCastingOption.json` is not empty (161 rows, 60 carrying
+      `target_count` / `damage_roll` / `range` / `duration`), but §7's written
+      "do not load" rationale rests on the `desc` column, and all 9 spells with a
+      payload do have `higher_level` prose — so K7 holds, no finding.
+
+      **kaldı: 10 unit** — Dalga 2 continues at `deepmx` (64), then
       `spells-that-dont-suck` (180), `deepm` (515); Dalga 3–4 untouched. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured

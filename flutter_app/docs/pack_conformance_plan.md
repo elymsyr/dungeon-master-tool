@@ -9,33 +9,35 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2 başladı** —
-> `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17), `bfrd`'nin
-> class/subclass satırları (2026-08-18) ve `kp` (2026-08-18). **20 tarama biriminin
-> 9'u kapandı**, defterde **19 bulgu** var, on dokuzu da ❓ danışılacak
-> (`python3 tool/check_findings.py` → *20 kayıt, 19 sayaca giriyor, temiz*).
-> Dalga 2'nin ilk birimi tek yeni bulgu üretti: **F-pass0-11** (A3 — kaynağın
-> `permanent` dediği 25 büyünün süresi karta `Until Dispelled` yazılıyor; Tier-0
-> `duration-unit` sözlüğünde "kalıcı" satırı yok, mapper `Special` yerine
-> dağıtılabilirlik iddiasını seçiyor).
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 bitti, Dalga 2'nin ilk iki birimi
+> tarandı** — `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag` (2026-08-17),
+> `bfrd`'nin class/subclass satırları, `kp` ve `wz` (2026-08-18). **20 tarama
+> biriminin 10'u kapandı**, defterde **22 bulgu** var, yirmi ikisi de ❓ danışılacak
+> (`python3 tool/check_findings.py` → *23 kayıt, 22 sayaca giriyor, temiz*).
+> `wz` üç yeni bulgu üretti ve **üçü de `spell`'in süre alanında**: **F-wz-01**
+> (`1 hour/caster level` → `Hours 1`), **F-wz-02** (`concentration + 1 round`
+> yazan büyü kartta `requires_concentration: false`), **F-pass0-12** (yayılan —
+> `1 year` süreler `Special` + `null`, korpüste 3 kart).
 >
-> **Sıradaki iş: Dalga 2'nin 2. birimi → `open5e-wz` (43 büyü).** Sonra `deepmx`
-> (64) → `spells-that-dont-suck` (180) → `deepm` (515). `kp`'den çıkan beş uyarı:
-> (1) **F-pass0-11'in dağılım tablosu** `deepm` 9, `deepmx` 1,
-> `spells-that-dont-suck` 1 satırını bekliyor — o birimlerde yeni kayıt açılmaz,
-> tabloya bakılır ve komut **yeniden çalıştırılır** (`wz`'de 0 bekleniyor);
-> (2) `class_refs` **required** olduğu hâlde dolu değil — `kp`'de 21/31; F-kuru-01
-> (7) ve §5.6'nın yazılı ref filtresi (`Anti Paladin` 3) birlikte açıklıyor,
-> ikisi de ⚪, ama **A2 bu yüzden ⚠️ puanlanır**, ✅ değil; (3) `material_*`
-> **üçüncü** bir sebeple boş olabiliyor: `kp`'de kaynak `material` bir bool
-> (`a5e-ag` gibi); korpüs geneli 369/1.297 dolu, yani §5.6'da satırı yok ve
-> gerekmiyor — birim başına `S` gerekçesi bu plana yazılır (C8);
-> (4) `verify_packs --doc <slug> --only spell` gerçekten tam çalışıyor
-> (`kp`: 200 ok / 0 disagree) **ama** `duration_unit_ref` kural tablosunda **yok**
-> — F-pass0-11 tam bu boşlukta yaşıyor, yani süre/okul gibi ref alanları
-> **okunarak** kontrol edilir; (5) metin sadakati bayt bayt karşılaştırılabiliyor
-> (`desc` + `**At Higher Levels.**` eki) — 31/31 tuttu, bu ucuz kontrol her
-> büyü paketinde tekrarlanmalı.
+> **Sıradaki iş: Dalga 2'nin 3. birimi → `open5e-deepmx` (64 büyü).** Sonra
+> `spells-that-dont-suck` (180) → `deepm` (515). `wz`'den çıkan beş uyarı:
+> (1) **süre alanı bu dalganın sıcak noktası** — üç bulgunun üçü oradan çıktı ve
+> hiçbiri araca düşmedi; her büyü paketinde kaynağın `duration` metnini kartın
+> `duration_unit_ref` + `duration_amount` çiftiyle **tek tabloda** karşılaştır
+> (`collections.Counter((src_duration, unit, amount))` — 43 satırlık paket için
+> 15 satırlık çıktı verdi);
+> (2) `requires_concentration` **yalnız** kaynağın bool sütunundan geliyor
+> (`spell.dart:46`) — süre metninde `concentration` geçen satırları ayrıca ara;
+> (3) **F-pass0-12'nin dağılım tablosu** `deepm` 2 satırını bekliyor
+> (`Bloom`, `Desolation`), F-pass0-11'inki `deepmx` 1 / `spells-that-dont-suck` 1
+> / `deepm` 9 — o birimlerde yeni kayıt açılmaz, komut **yeniden çalıştırılır**;
+> (4) `SpellCastingOption.json` dolu olabilir (`wz`'de 161 satır, 60'ı veri) ama
+> "atlandı" gerekçesi **`desc` sütununun boşluğu** üzerine kurulu — kontrol edilecek
+> şey satır sayısı değil, *payload taşıyıp `higher_level` düzyazısı olmayan büyü
+> sayısı* (`wz`: 0/9);
+> (5) `class_refs` `kp`'de 21/31, `wz`'de 43/43 — yani A2'nin ⚠️/✅'i birime göre
+> değişiyor, devralınmaz, **ölçülür**; ucuz `desc` bayt karşılaştırması ikinci kez
+> de 43/43 tuttu, her büyü paketinde tekrarlanmalı.
 >
 > **Dalga 2 bittiğinde** 13/20 birim kapanır ve Dalga 3 (sihirli eşya paketleri)
 > başlar; onun bilinen açığı `magic-item.cost_gp` (bilinen açık #5, ⛔).
@@ -886,7 +888,7 @@ gördü; Dalga 2'den itibaren kategori çeşitliliği düşüyor, tekrar artıyo
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
 | `open5e-kp` | 31 | spell 31 | ⚠️ | 2026-08-18 | F-pass0-11 |
-| `open5e-wz` | 43 | spell 43 | ⬜ | — | — |
+| `open5e-wz` | 43 | spell 43 | ⚠️ | 2026-08-18 | F-wz-01, F-wz-02, F-pass0-12 |
 | `open5e-deepmx` | 64 | spell 64 | ⬜ | — | — |
 | `open5e-spells-that-dont-suck` | 180 | spell 180 | ⬜ | — | — |
 | `open5e-deepm` | 515 | spell 515 | ⬜ | — | — |
@@ -972,6 +974,91 @@ aynı cümleyi taşıyor → K7, bulgu değil.
 | G3 | ✅ | `is_srd_overlap: false` ve doğru — built-in'le tek çakışan ad yok |
 
 **Sayım: 20 ✅ · 6 ➖ · 0 ⛔ · 5 ⚠️** — ⚠️'ler A2, A3, C3, C8, F3;
+➖'ler C1, C2, C4, C5, C6, E3 (tek kategorili paket).
+
+#### `open5e-wz` sonucu — 2026-08-18
+
+**Ne ölçüldü.** `verify_packs --doc wz --only spell` → **288 ok / 0 disagree /
+0 absent / 0 unsourced / 96 unverifiable**, eşleşme **43/43**. `gate_packs`
+(izole `/tmp/one`) yeşil, `dupe_census` C "nothing installed" **0**, `wz`
+`--list-builtin-same` ve `--list-shared` listelerinin ikisinde de yok,
+`unmapped_report.json`'da **sıfır** satır. `build_catalog` yeniden çalıştı, ağaç
+temiz; katalog satırı `size_bytes 113.300` = dosya, `counts {spell: 43}` = gerçek,
+`license ogl-10a` + `publisher Kobold Press` kaynağın `Document.json`'ıyla birebir.
+
+**Metin sadakati (kp'den gelen ucuz kontrol, tekrar tuttu).** 43 kartın
+`description`'ı kaynağın `desc` + `**At Higher Levels.**` ekiyle **bayt bayt
+aynı**; 43/43 ad da aynı. Metin kaybı yok.
+
+**Bu birimin farkı: `class_refs` 43/43.** `kp`'de yapısal ⚠️ olan alan burada
+tam dolu — kaynağın v1 `dnd_class` sütunu 43 satırın hepsinde yazılı ve sekiz ad
+da kanonik SRD sınıfı (Wizard 27, Warlock 18, Cleric 14, Druid 11, Sorcerer 10,
+Bard 10, Ranger 3, Paladin 2). Bu yüzden A2 ve checklist F3 burada ✅.
+
+**Üç yeni bulgu, üçü de süre alanından ve üçü de okumadan geldi** (`verify` 0
+disagree diyor, çünkü `duration_unit_ref` kural tablosunda yok — `kp`'nin 4.
+uyarısı doğrulandı):
+
+1. **F-wz-01** — `Order of Revenge`: kaynak `1 hour/caster level`, kart `Hours 1`.
+   Regex ilk sayıyı alıp kuyruğu atıyor; kaynağın verdiği ölçek küçülüyor.
+2. **F-wz-02** — `Storm of Axes`: kaynağın `duration`'ı `concentration + 1 round`,
+   `concentration` bool'u `false`; mapper yalnız bool'u okuduğu için **zorunlu**
+   `requires_concentration` alanı `false` iniyor. `Eternal Echo` aynı ailede ama
+   sebebi kaynağın v1/v2 çelişkisi (`Concentration` ↔ `special`).
+3. **F-pass0-12** *(yayılan)* — `1 year` süreler `Special` + `null` oluyor; sayı
+   büsbütün kayboluyor. Korpüste 3 kart (`deepm` 2, `wz` 1).
+
+**Doğrulanan devir uyarısı.** F-pass0-11'in dağılım tablosu `wz` için **0**
+bekliyordu; komut yeniden çalıştırıldı, kaynakta `permanent` ile başlayan satır
+**0** — tablo değişmedi, yeni kayıt açılmadı.
+
+**Ölen aday: `SpellCastingOption.json`.** `wz`'de 161 satır var ve 60'ı gerçekten
+veri taşıyor (`target_count` 25, `damage_roll` 23, `range` 7, `duration` 5) —
+yani "boş dosya" değil. Ama §7'nin (audit:2025) yazılı gerekçesi *"payload taşıyıp
+`Spell.higher_level` düzyazısı olmayan büyü: 0, her belgede"*; `wz`'de ölçüldü:
+payload taşıyan **9** büyünün **9'unun da** düzyazısı var, `desc` sütunu 161
+satırın hepsinde `null`. Gerekçe ayakta → K7, bulgu değil.
+
+**`material_*`'ın `S` gerekçesi (C8, birim başına yazılır).** Kaynakta `material`
+43/43 **bool** (`false`), `material_specified` 43/43 boş, `material_cost` 43/43
+`null` — yani boşluk pakette değil kaynakta. (`components`'te `Material` 30 kartta
+var; kaynak "malzeme gerekir" diyor, "hangi malzeme" demiyor.)
+
+| # | Sonuç | Ölçüm |
+|---|:--:|---|
+| A1 | ✅ | `spell` şemada; roundtrip yeşil |
+| A2 | ✅ | 11 zorunlu alanın hepsi 43/43 (`class_refs` dahil) |
+| A3 | ⚠️ | 0 unsourced; ama **F-wz-01**, **F-wz-02**, **F-pass0-12** — üçü de süre alanında |
+| A4 | ✅ | 43/43 ad kaynakla aynı; built-in'de karşılığı olan ad yok |
+| A5 | ✅ | 19 dolu sütunun hiçbiri tek sabit değil (en düşük ayrık değer 2) |
+| B1 | ✅ | `--list-builtin-same`'de `wz` yok |
+| B2 | ✅ | `--list-shared`'da `wz` yok; 43 büyü adının hiçbiri başka pakette geçmiyor |
+| B3 | ✅ | okul, süre birimi, atış birimi, bileşen, hasar tipi, kurtarma yeteneği, alan şekli hepsi ref |
+| B4 | ✅ | gate yeşil, census C "nothing installed" 0 |
+| B5 | ✅ | `metadata.links` yok + `requires: []` — tüm ref'ler built-in'e (§2.1) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ⚠️ | 25 şema alanının 19'u dolu (`kp`'de 17). Boşlar: `at_higher_levels_text` `P` (16 satırın metni `description`'da), `effects` ⚪, `applied_condition_refs` `M`, `material_*` `S` (yukarıda ölçüldü) |
+| C4 | ➖ | `monster` yok |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ➖ | `spell`'de grant bloğu yok |
+| C7 | ✅ | 7 ayrı Tier-0 sözlüğüne ref var, hepsi kanonik satır; `unmapped_report.json`'da `wz` sıfır |
+| C8 | ⚠️ | 6 boş alanın 5'inin §5.6'da satırı var; `material_*`'ın **yok** (korpüste 0% değil, 369/1.297) — bu birimin `S` gerekçesi yukarıda |
+| D1 | ✅ | 288 ok · 0 disagree · 0 absent |
+| D2 | ✅ | 96 unverifiable, beşi de yazılı kuralla: `class_refs` (v1 sütunu, 43), `casting_time_amount` (öneksiz, 35), `range_ft` (`range_text`'ten, 14), `attack_type` (menzilden çıkarım, 2), `reaction_trigger` (cümleye çevriliyor, 2) |
+| D3 | ✅ | gate yeşil |
+| E1 | ✅ | `spell`'in mekanik alanları grant alanı değil; sayfaya inişi F2'nin render matrisi ölçüyor (yeşil) |
+| E2 | ✅ | `effects` `notResolverRead`'de; `bundled_pack_resolve_test` 10/10 yeşil |
+| E3 | ➖ | paket sınıf göndermiyor; slot ilerlemesi bu birimde ölçülemez |
+| F1 | ✅ | `pack_install_roundtrip_test` yeşil (`open5e-wz installs and reads back unchanged`) |
+| F2 | ✅ | paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ✅ | `wizard_pack_families_test` yeşil; 43 büyünün 43'ü bir sınıf listesinde görünüyor |
+| F4 | ✅ | `entity_link_navigation_test` yeşil; kartın her ref'i built-in bir karta gidiyor |
+| G1 | ✅ | `build_catalog` yeniden çalıştı, ağaç temiz; `size_bytes` 113.300 = dosya, `counts {spell: 43}` = gerçek |
+| G2 | ✅ | `licenses: ["ogl-10a"]`, `publisher: kobold-press`, `gamesystem: 5e-2014` kaynağın `Document.json`'ıyla birebir |
+| G3 | ✅ | `is_srd_overlap: false` ve doğru — built-in'le tek çakışan ad yok |
+
+**Sayım: 22 ✅ · 6 ➖ · 0 ⛔ · 3 ⚠️** — ⚠️'ler A3, C3, C8;
 ➖'ler C1, C2, C4, C5, C6, E3 (tek kategorili paket).
 
 ### Dalga 3 — Sihirli eşyalar
