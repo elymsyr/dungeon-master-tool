@@ -102,19 +102,20 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 16 of the 20 units are scanned — Wave 4 is under way** (Pass 0,
+**F3 is running: 17 of the 20 units are scanned — Wave 4 is under way** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
 class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`,
-`vom`, `ccdx`, `tob2`) and the ledger holds **36** findings, all still ❓ —
-`check_findings.py` clean. The latest unit (`tob2`, 2,607 entities) measured
-`verify_packs --doc tob2` at **7,664 ok / 0 disagree / 0 absent / 0 unsourced /
-1,915 unverifiable**, match coverage **383/383**, and scored its 31 items
-**19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**. Its child side is cleaner than `ccdx`'s: all
-**2,345** source child rows are referenced by their parent and the unique ref
-union is exactly the 1,209 `creature-action` entities the pack ships — **0 lost
-rows, 0 orphans**. `tob2` **confirmed** all four of `ccdx`'s corpus records by
-independent measurement (F-pass0-17 → 30, -18 → 506, -19 → 107, -20 → 99) and
-opened **one** new one, also corpus-scoped.
+`vom`, `ccdx`, `tob2`, `tob`) and the ledger holds **39** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`tob`, 2,734 entities) measured
+`verify_packs --doc tob` at **7,836 ok / 0 disagree / 0 absent / 0 unsourced /
+1,955 unverifiable**, match coverage **391/391**, and scored its 31 items
+**18 ✅ · 7 ➖ · 1 ⛔ · 5 ⚠️**. Its child side is as clean as `tob2`'s: all
+**2,550** source child rows are referenced and the unique ref union is exactly
+the 1,303 `creature-action` entities the pack ships — **0 lost rows, 0 orphans**.
+`tob` **confirmed** all five inherited corpus records by independent measurement
+(F-pass0-17 → 53, -18 → 652, -19 → 124, -20 → 72, -21 → 18; -17 also under the
+stricter parent-scoped method, again 53) and opened **three** new ones — the
+first pack-scoped record a monster unit has produced.
 
 **F-pass0-17** (D1, `D`): `_ensureChild`'s content hash is type + description +
 attributes — **the name is not in it** — and statblock attack text is formulaic,
@@ -162,6 +163,38 @@ rows, and on those the information does reach the card, which is what makes the
 loss visible: the same creature's `Deadly Musk` keeps its qualifier while its
 `Bite` does not.
 
+**F-tob-01** (A5, `M`, opened by `tob`, the first record scoped to a monster
+pack): `legendary_action_uses` is the SRD default 3 on all 27 of `tob`'s
+legendary creatures, but v1 `legendary_desc` says *"can take 1 legendary
+action"* for `Jotun Giant` and *"can take 1 legendary action per head"* for
+`Zmey`, and says nothing at all for `Vampire Warlock - Variant` (its
+`legendary_desc` holds an action option, not the preamble). The prose never
+ships, so the card cannot even contradict itself — the player just sees three
+actions where the source grants one. The constant is honest everywhere else:
+across the six documents with v1 rows those are the corpus's **only two**
+"can take 1" statements, and v2 has no legendary-count column in any document.
+
+**F-pass0-22** (A3, `S`, opened by `tob`): upstream publishes a legendary action
+**twice** — once as `LEGENDARY_ACTION` with `legendary_action_cost`, once as a
+plain `ACTION` whose name ends `(Costs N Actions)`. `_contentHash` includes the
+type, so both survive as separate entities and the parent refs both: `Aboleth,
+Nihilith` lists `Psychic Drain (Costs 2 Actions)` among its **actions** and
+`Psychic Drain` among its legendary actions. **114** rows in 4 packs (`bfrd` 58,
+`ccdx` 24, `tob` 19, `tob2` 13), and all 114 match a same-parent, same-text
+legendary row with no cost disagreement. This is the other half of `tob2`'s
+`legendary_action_cost` verdict: the cost does ride in the name, but the row
+carrying that name sits in the wrong list.
+
+**F-pass0-23** (B3, `M`, opened by `tob`): `senses` is filled only from v2's four
+columns, and the Tier-0 `sense` canon has only those same four rows, so any sense
+upstream names in the v1 `Monster.senses` prose is dropped. Black Flag replaced
+darkvision with **keensense** — its v2 `Creature.json` has no `darkvision_range`
+column at all — so **90** `bfrd` creatures lose their only sense, **41** of them
+shipping an entirely empty `senses` list. With `tob`'s 6 (*blood sense*,
+*blindsense*, *devil sight*, *impaired sight*) and `ccdx`'s 1 that is **97**
+creatures. §5.8 documents `normal_sight_range` as homeless; the prose column
+itself is not documented anywhere.
+
 Three §5.8 reasons were measured and **stand** (K7): `lair_action_refs` (there
 is no `LAIR_ACTION` in any of the 12,228 v2 action rows, and v1 `cc` never says
 "lair"), `gear_refs`/`spell_refs` (v1 `spells_json` is filled on 41 rows corpus-
@@ -176,20 +209,30 @@ resolve, and the 828 genuine second-damage rows have no schema counterpart at
 all (`N`). `tob2` re-read both A5 constants and both held there too
 (`CreatureTrait.type` null on 1,060/1,060; v1 `legendary_desc` "can take 3" on
 9/9), and its `legendary_action_cost` (29 filled rows) has no schema twin but
-already rides in the action name (*"Wing Attack (Costs 2 Actions)"*).
+already rides in the action name (*"Wing Attack (Costs 2 Actions)"*). `tob`
+re-read the first constant (`CreatureTrait.type` null on 1,123/1,123) and broke
+the second — see F-tob-01 — and added four of its own K7 items: `tags_line`
+(v1 `subtype` filled on exactly 84/391, the pack's rate to the row),
+`bonus_action_refs`/`spell_refs`/`gear_refs` (v1 `bonus_actions_json`,
+`spells_json`, `group` are all **0** rows), the recharge columns (133 source
+`RECHARGE_ON_ROLL` rows → 128 distinct texts → 128 in the pack, 0 missing), and
+`Environment.json` (§5.8/B9 already closes it: no `environment` slug in
+`tier0Slugs`).
 
 **Wave 4's opening decision:** `bfrd`'s monster rows are read **inside the
 `a5e-mm` unit** rather than as a separate unit — the `a5e-mm` ⟷ `bfrd` pair is
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**The next open phase is F3** (continues at Wave 4's third unit —
-`open5e-tob`, 2,734 entities. Two jobs are already named for it: the corpus's
-only two *"can take 1 legendary action"* creatures are `tob`'s, so the
-`legendary_action_uses` = 3 constant is **wrong there** and a record should be
-opened; and `tob` ⟷ `tob-2023` is L4's real duplication pair, where B2's
-exception is actually tested — `tob2`'s family overlap was 155–176 shared names
-with **zero** `monster` collisions).
+**The next open phase is F3** (continues at Wave 4's fourth unit —
+`open5e-tob3`, 2,787 entities. Its first job is already measured: upstream ships
+**no `CreatureActionAttack.json`** for `tob3`, and the pack's 1,577
+`creature-action` rows carry `attack_kind`/`attack_bonus`/`damage_dice`/
+`reach_ft` on **zero** of them — the unit has to establish whether that blank is
+the source's (`S`) or the loader's (`L`). Its second job is the inherited
+shares: `tob3` is the one pack where F-pass0-17 lands mostly on `trait` rows
+(2 + 21), and F-pass0-18 and -22 should measure **0** there, which is a check,
+not an assumption.)
 ---
 
 ## 0. Start here
@@ -2681,6 +2724,8 @@ against the pinned snapshot rather than against the rationale it was filed with.
 | `monster.gear_refs`, `monster.spell_refs` | ⛔ | **§2.4's last open re-open, closed here.** v2 `Creature` has no gear, item or spell column at all; v1's `spells_json` is populated on **41 of 3,207** monsters, **37 of them in the skipped `wotc-srd`** — the ceiling in shipping documents is **4 monsters (tdcs)**, whose Spellcasting trait already prints the list. A B8-shaped v1 backfill for 0.14% of the category is not written. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — `cc`'s `spells_json` is empty on 356/356 |
 | `monster.cr_helper` | ⚪ | app-only encounter-building aid |
 | `creature-action` (the form qualifier) | ⚠️ | **New row, F3/`tob2` 2026-08-18.** `CreatureAction.limited_to_form` (*"Skunk Form Only"*, *"Giant Form Only"*) is filled on **262** rows corpus-wide, **218** in shipping documents, and is never read — so a shapechanger's form-locked attack ships as unconditional. Only **1** of the 262 repeats the qualifier in `desc`; a separate 13 rows carry it *only* in `desc` and those do reach the card, which is how the loss shows: Aniwye's `Deadly Musk` keeps its qualifier, its `Rock` does not. No schema field exists, but the name suffix (`Wing Attack (Costs 2 Actions)`) and the prose prefix are both established conventions. See **F-pass0-21** |
+| `creature-action` (the legendary duplicate) | ⚠️ | **New row, F3/`tob` 2026-08-18.** Upstream publishes a legendary action twice — once as `LEGENDARY_ACTION` with `legendary_action_cost`, once as a plain `ACTION` named `… (Costs N Actions)` — and the mapper ships both, so the second copy lands in `action_refs` and the card offers a legendary action at will. **114 rows** in 4 packs (`bfrd` 58, `ccdx` 24, `tob` 19, `tob2` 13); all 114 match a same-parent, same-text legendary row and no cost disagrees, so the pair is unambiguous. See **F-pass0-22** |
+| `monster.senses` (the unnamed senses) | ⚠️ | **New row, F3/`tob` 2026-08-18.** `senses` is written from v2's four range columns only, and the Tier-0 `sense` canon holds those same four rows, so a sense upstream names anywhere else is dropped. Black Flag uses **keensense** instead of darkvision — its v2 `Creature.json` has no `darkvision_range` column — so **90** `bfrd` creatures lose their only sense and **41** of them ship an empty `senses` list; with `tob`'s 6 and `ccdx`'s 1 that is **97** creatures. The value is in v1 `Monster.senses`, a file the pipeline already reads for `tags_line`. See **F-pass0-23** |
 | `monster.resistance_refs` / `damage_immunity_refs` (the "nonmagical" qualifier) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** Upstream splits the qualifier across two columns: the flat list (`['bludgeoning','piercing','slashing']`) and a `nonmagical_attack_resistance` / `…_immunity` boolean, with the full sentence in `damage_*_display`. The mapper reads only the list, so **618 shipping creatures** (514 resistance + 104 immunity) claim the resistance **unconditionally** — a magic weapon reads as resisted. `verify_packs` calls these rows `ok`; the loss is *between* columns. The schema has no `resistance_note` twin for `alignment_note`, so the decision is "read it" **and** "where to write it". See **F-pass0-19** |
 | `monster.language_refs` (the qualified statements) | ⚠️ | **New row, F3/`ccdx` 2026-08-18.** `Creature.languages_desc` is filled on 354 of `ccdx`'s 356 rows and is never read. **769 shipping creatures** whose structured `languages` list is empty ship with no language line at all, though the source says *"understands Common but can't speak"* (10), *"understands the languages of its creator"* (22), *"all, telepathy 120 ft."* (12). Filled lists lose names too — `Umbral` ×13, `Darakhul` ×5, `Aquan` ×4, `Common` ×3 appear only in the prose. The 17 languages the list *does* carry all resolve (B9's `void-speech` included). See **F-pass0-20** |
 | `magic-item.cost_gp` | ⛔ | **the "confirm the source really is 0" row, confirmed.** `MagicItem.cost` is `0.00` on **1,063 of 1,063** shipping (`vom`) rows and on 1,255 of 1,256 SRD rows. Writing anything would be pricing invention |
@@ -4856,10 +4901,35 @@ procedure, and the ledger have different lifetimes:
       exception; and none of `unmapped_report`'s three `alignment` rows are
       `tob2`'s.
 
-      **kaldı: 4 unit** — Wave 4's `bfrd` question is **decided**: `bfrd`'s
+      `tob` (2026-08-18, unit 17/20) read 2,734 entities — **7,836 ok /
+      0 disagree / 0 absent / 0 unsourced / 1,955 unverifiable**, 391/391
+      coverage, gate green, census 0, no catalog drift, **18 ✅ · 7 ➖ · 1 ⛔ ·
+      5 ⚠️**. Child side lossless again: 2,550/2,550 source rows referenced,
+      unique ref union exactly the 1,303 shipped `creature-action` entities,
+      0 orphans, 0 dangling. All **five** inherited corpus records were
+      re-measured and held (F-pass0-17 → 53, -18 → 652, -19 → 124, -20 → 72,
+      -21 → 18), and F-pass0-17 gave 53 under the stricter parent-scoped method
+      too — so the 106 ⟷ 85 gap seen for `a5e-mm` is a5e-specific. Three new
+      records, and for the first time in this wave one of them is the pack's
+      own: **F-tob-01** (A5, `M`) — the `legendary_action_uses` = 3 constant is
+      wrong on 3 of `tob`'s 27 legendary creatures, and the source's own
+      sentence never ships; **F-pass0-22** (A3, `S`) — the legendary/action
+      duplicate, 114 rows in 4 packs; **F-pass0-23** (B3, `M`) — senses named
+      only in the v1 prose (keensense &c.) are dropped on 97 creatures, 41 of
+      them left with no senses at all. Measured and not filed: `tags_line` 84 =
+      v1 `subtype` 84, `bonus_action_refs`/`spell_refs`/`gear_refs` blank
+      because v1 has 0 rows for all three, recharge complete (133 source rows →
+      128 texts → 128 entities, 0 missing), `alignment_ref` 381 + note 10 =
+      391/391, and B2 sustained at its hardest pair: `tob` ⟷ `tob-2023` share
+      **326** monster names but **254** of them differ numerically — two
+      printings, not two copies. Also corrected: `unmapped_report`'s three
+      broken `alignment` values are **`tob-2023`'s source data**, not `tob`'s
+      and not the mapper's.
+
+      **kaldı: 3 unit** — Wave 4's `bfrd` question is **decided**: `bfrd`'s
       monster rows are read inside the `a5e-mm` unit (the pair is B2's test
       case), so the wave is 6 units and the total stays 20. Order from here:
-      `tob`, `tob3`, `a5e-mm` (+`bfrd`), `tob-2023`. Next
+      `tob3`, `a5e-mm` (+`bfrd`), `tob-2023`. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*

@@ -4,16 +4,19 @@
 · **Yol haritası:** `open5e_content_audit.md`
 
 > **Durum: F3 sürüyor — Pass 0 + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
-> **Dalga 4 sürüyor** (`ccdx`, `tob2` — 2026-08-18), 36 bulgu.** 20 tarama
-> biriminin **16'sı** kapandı. Sıradaki iş **Dalga 4'ün üçüncü birimi: `tob`**
-> (`tob3`, `a5e-mm` (+`bfrd` canavarları) ve `tob-2023` onu izliyor).
-> `tob2` birimi `ccdx`'in dört `pass0` kaydını **doğruladı** (F-pass0-17 → 30,
-> -18 → 506, -19 → 107, -20 → 99; dördü de bağımsız ölçümle tuttu) ve **bir**
-> yeni kayıt açtı: **F-pass0-21** (`limited_to_form` okunmuyor — şekil değiştiren
-> canavarların yalnız tek biçimde kullanabildiği 218 saldırı satırı kartta
-> koşulsuz duruyor). O da `pass0`, çünkü kusur mapper'ın. `tob2`'nin kendi
-> verisi temiz: `verify_packs` 7.664 `ok` / 0 `disagree` / 0 `absent` /
-> 0 `unsourced`, eşleşme 383/383, çocuk satır kaybı **0** (2.345/2.345).
+> **Dalga 4 sürüyor** (`ccdx`, `tob2`, `tob` — 2026-08-18), 39 bulgu.** 20 tarama
+> biriminin **17'si** kapandı. Sıradaki iş **Dalga 4'ün dördüncü birimi: `tob3`**
+> (`a5e-mm` (+`bfrd` canavarları) ve `tob-2023` onu izliyor).
+> `tob` birimi devraldığı **beş** `pass0` kaydının payını bağımsız ölçtü ve
+> beşi de tuttu (F-pass0-17 → 53, -18 → 652, -19 → 124, -20 → 72, -21 → 18);
+> F-pass0-17 ayrıca sıkı (ebeveyn kapsamlı) yöntemle de 53 verdi. **Üç** yeni
+> kayıt açıldı: **F-tob-01** (efsanevi aksiyon sayısı sabiti bu pakette yanlış —
+> kaynak "can take 1" derken kart 3 diyor, 3 canavar), **F-pass0-22** (upstream
+> efsanevi aksiyonu ikinci kez normal `ACTION` olarak da yayınlıyor; 114 satır
+> kartın aksiyon listesinde de duruyor) ve **F-pass0-23** (v1 düzyazısındaki adı
+> farklı duyular düşüyor; 97 canavar, 41'i tamamen duyusuz). `tob`'un kendi
+> verisi temiz: `verify_packs` 7.836 `ok` / 0 `disagree` / 0 `absent` /
+> 0 `unsourced`, eşleşme 391/391, çocuk satır kaybı **0** (2.550/2.550).
 > Format **F2'de onaylandı (2026-08-17)** — yazılarak değil, gerçek bir ölçümü
 > şablona **doldurarak** (§ "Kuru çalışma").
 > Defterin kendisi `python3 tool/check_findings.py` ile denetleniyor: her kaydın
@@ -101,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 36 | 0 | 0 | 0 | 0 | **36** |
+| 0 | 39 | 0 | 0 | 0 | 0 | **39** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -109,9 +112,9 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 12 | B3 | 1 | C3 | 1 |
+| A3 | 13 | B3 | 2 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 1 |
-| A5 | 2 | B5 | 0 | C5 | 0 |
+| A5 | 3 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 1 | C8 | 6 |
@@ -123,11 +126,11 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 21 | `open5e-vom` | 3 |
+| `pass0` | 23 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
-| `open5e-open5e` | 1 | `open5e-tob` | 0 |
+| `open5e-open5e` | 1 | `open5e-tob` | 1 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
 | `open5e-toh` | 2 | `open5e-a5e-mm` | 0 |
 | `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 0 |
@@ -2518,7 +2521,7 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 (16.317 çocuk satırın %74,7'si korpüsün kopya yükü, §3.2) — kusur, hash'in
 **adı dışarıda bırakması**.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` ve `open5e-tob` satırları aynı gün `tob2` ve `tob` birimleri tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | `creature-action` | `trait` | Etkilenen |
 |---|--:|--:|--:|
@@ -2617,7 +2620,7 @@ Kapatma gerekçesi doğru sütunu sayıyor ama yanlış soruyu soruyor (taraman�
 gerçek ek hasar satırının ikinci hasarı şemada hiç karşılığı olmayan bir veri —
 o ayrı bir açık, bu bulgunun konusu değil.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` ve `open5e-tob` satırları aynı gün `tob2` ve `tob` birimleri tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | `extra_damage_type` birincil tipi taşıyan satır |
 |---|--:|
@@ -2696,7 +2699,7 @@ ref listesi, `alignment_note`'un `alignment_ref` yanında yaptığı işi yapan 
 `resistance_note` yok — yani karar yalnız "oku/okuma" değil, "nereye yaz"ı da
 kapsıyor.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` ve `open5e-tob` satırları aynı gün `tob2` ve `tob` birimleri tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | direnç | bağışıklık | Etkilenen |
 |---|--:|--:|--:|
@@ -2785,7 +2788,7 @@ telepati kısmı yedekli; asıl kayıp cümlenin dil kısmı. Şema tarafında d
 `language_refs` düz bir ref listesi — nitelikli ifadeyi taşıyacak yer yok
 (F-pass0-19'la aynı biçimsel sorun, farklı alan).
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` satırı aynı gün `tob2` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob2` ve `open5e-tob` satırları aynı gün `tob2` ve `tob` birimleri tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | Listesi boş, düzyazısı dolu canavar |
 |---|--:|
@@ -2876,7 +2879,7 @@ biçimden söz ediyor, tekil saldırılar etmiyor.
 **yok** (0), yani F-pass0-17'nin birleştirmesi bu bilgiyi ayrıca bozmuyor —
 iki kusur bağımsız.
 
-**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü)*
+**Dağılım** *(yayılan bulgu kuralı — 2026-08-18'de ölçüldü; `open5e-tob` satırı aynı gün `tob` birimi tarafından bağımsız yeniden ölçülerek doğrulandı)*
 
 | Paket | `limited_to_form` dolu aksiyon satırı |
 |---|--:|
@@ -2926,6 +2929,222 @@ EOF
 3. **Aynen bırak** — §5.8'e "`limited_to_form` okunmuyor; şekil değiştiren
    canavarların biçim niteliği düşüyor" satırı yazılır (C8), kayıp bilinçli
    kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-tob-01 — "3 efsanevi aksiyon" sabiti `tob`'da yanlış: kaynak "can take 1" derken kart 3 gösteriyor
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-tob` — 3 canavar (27 efsanevi canavarın 3'ü) |
+| **Checklist** | checklist A5 (tek-sabit sütun: sabitin dürüst olmadığı yer) |
+| **Kategori / etki** | `monster` — `legendary_action_uses` 27/391 satırın **3'ünde** kaynağa aykırı: `Jotun Giant` ve `Zmey` v1 `legendary_desc`'te *"can take 1 legendary action"* diyor, `Vampire Warlock - Variant` hiç sayı vermiyor; üçünde de kartta **3** yazıyor → oyuncu tur başına üç kat aksiyon hakkı görüyor |
+| **Cause code (öneri)** | `M` — sayı kaynakta **var** (v1 `Monster.legendary_desc` düzyazısı) ama okunmuyor; `mappers/monster.dart` efsanevi aksiyonu olan her canavara SRD varsayılanı 3'ü yazıyor, `verify_packs` da bunu *"no column — the mapper writes the SRD default of 3"* diye `unverifiable` sayıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Sabit `ccdx` ve `tob2` birimlerinde iki kez sınandı ve orada **dürüst**
+çıktı (`tob2`: 9/9 *"can take 3"*). `tob` korpüsteki tek istisna: v1
+`legendary_desc` sütununda *"can take 1 legendary action"* yazan **iki** satır
+da bu belgede. Üçüncü satır (`Vampire Warlock - Variant`) başka bir biçimde
+kırık — `legendary_desc` giriş cümlesi yerine bir efsanevi aksiyon seçeneğinin
+kendisini taşıyor (*"Misty Step. The vampire warlock uses misty step."*), yani
+kaynak orada hiçbir sayı beyan etmiyor ama kart yine 3 diyor.
+
+Giriş cümlesi pakete **hiç inmiyor** (`Zmey`'in kartında *"per head"* niteliği
+de yok), dolayısıyla kullanıcı sayının uydurma olduğunu kartta göremez.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynağın beyan ettiği sayı ile paketin yazdığı sabit
+python3 - <<'EOF'
+import json,re,collections
+v1=json.load(open('../open5e-api-staging/data/v1/tob/Monster.json',encoding='utf-8'))
+pat=re.compile(r'can take (\d+|one|two|three) legendary action',re.I)
+c=collections.Counter(); odd=[]
+for r in v1:
+    ld=(r['fields'].get('legendary_desc') or '').strip()
+    if not ld: continue
+    m=pat.search(ld); n=m.group(1).lower() if m else 'SAYI-YOK'
+    c[n]+=1
+    if n not in ('3','three'): odd.append(r['fields']['name'])
+print(c, odd)
+p=json.load(open('assets/open5e_packs/open5e-tob.pkg.json',encoding='utf-8'))
+mons=[e for e in p['entities'].values() if e['type']=='monster']
+print(collections.Counter(e['attributes'].get('legendary_action_uses') for e in mons))
+print([(e['name'],e['attributes']['legendary_action_uses']) for e in mons if e['name'] in odd])
+EOF
+# Counter({'3': 24, '1': 2, 'SAYI-YOK': 1}) ['Jotun Giant', 'Vampire Warlock - Variant', 'Zmey']
+# Counter({None: 364, 3: 27})
+# [('Jotun Giant', 3), ('Vampire Warlock - Variant', 3), ('Zmey', 3)]
+```
+
+Korpüsün geri kalanı sabitle uyumlu: v1'i olan altı belgede (`blackflag` 31,
+`tob-2023` 32, `wotc-srd` 30, `cc` 20, `tob` 27, `tob2` 9) *"can take 1/2"*
+diyen **yalnız bu iki satır** var; v2 şemasında ise hiçbir belgede efsanevi
+sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
+
+**Seçenekler.**
+1. **Düzyazıdan oku** — v1 `legendary_desc` zaten `tags_line` için okunan
+   dosyada; `can take (\d+)` yakalanıp `legendary_action_uses`'a yazılır, yoksa
+   3'e düşülür. 3 satır düzelir, `verify_packs` kuralı *"v1 düzyazısından, yoksa
+   SRD varsayılanı"* diye güncellenir.
+2. **Sayı yoksa alanı boş bırak** — sabit yalnız `legendary_desc` *"can take 3"*
+   derken yazılır; belirsiz 3 satırda alan boş kalır (kart sayı göstermez).
+   Uydurma biter, bilgi eksilir.
+3. **Aynen bırak** — §5.8'e "`legendary_action_uses` SRD varsayılanıdır,
+   korpüste 3 satırda kaynağa aykırıdır" satırı yazılır (C8) ve sapma bilinçli
+   kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-22 — efsanevi aksiyon ikinci kez **normal aksiyon** olarak da iniyor: kart "Wing Attack (Costs 2 Actions)"ı at-will saldırı gibi gösteriyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 114 satır (4 yayınlanan belge; `open5e-tob` 19) |
+| **Checklist** | checklist A3 (kaynağın vermediği bir izin kartta duruyor) |
+| **Kategori / etki** | `creature-action` — 114 satır hem `LEGENDARY_ACTION` hem de `ACTION` olarak iki kez yayınlanıyor; ikincisi `action_refs`'e giriyor, yani efsanevi bir aksiyon canavarın **normal aksiyon listesinde** de duruyor (`Aboleth, Nihilith`: `Psychic Drain` hem efsanevi hem aksiyon) |
+| **Cause code (öneri)** | `S` — satır kaynakta **öyle** duruyor: upstream aynı metni bir kez `LEGENDARY_ACTION` + `legendary_action_cost`, bir kez de `ACTION` + adın sonunda `(Costs N Actions)` olarak yazmış; mapper ikisini de sadakatle taşıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `Aboleth, Nihilith`'in kaynak çocuk satırları arasında `Psychic Drain`
+**iki kez** geçiyor: biri `LEGENDARY_ACTION` (`legendary_action_cost: 2`), öteki
+`ACTION` (`legendary_action_cost: None`, ad `Psychic Drain (Costs 2 Actions)`).
+`_contentHash` tipi de hash'lediği için ikisi ayrı varlık oluyor ve ebeveyn
+ikisine birden ref veriyor:
+
+```
+actions   : Enslave, Form Swap, Multiattack, Psychic Drain (Costs 2 Actions),
+            Tail, Tentacle, Withering Touch
+legendary : Detect, Psychic Drain, Tail Swipe
+```
+
+Kartta sonuç: efsanevi aksiyon **turda serbestçe** kullanılabilir bir aksiyon
+gibi görünüyor — kuralın tersi. 114 satırın **114'ünde** aynı ebeveynde metni
+birebir aynı olan bir `LEGENDARY_ACTION` satırı var ve maliyet uyuşmazlığı 0,
+yani eşleşme belirsiz değil: her `(Costs N Actions)` satırı bir efsanevi
+satırın kopyası.
+
+**Dağılım** *(2026-08-18'de `tob` birimi ölçtü)*
+
+| Paket | `ACTION` olarak da inen efsanevi satır |
+|---|--:|
+| `open5e-bfrd` | 58 |
+| `open5e-ccdx` | 24 |
+| `open5e-tob` | 19 |
+| `open5e-tob2` | 13 |
+| **Toplam (yayınlanan)** | **114** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — "(Costs N Actions)" adlı satırlar hangi tipte geliyor
+python3 - <<'EOF'
+import json,glob,re,collections
+pat=re.compile(r'\(costs (\d+) action',re.I)
+per=collections.Counter(); tot=match=0
+for f in sorted(glob.glob('../open5e-api-staging/data/v2/*/*/CreatureAction.json')):
+    doc=f.split('/')[-2]; rows=[x['fields'] for x in json.load(open(f,encoding='utf-8'))]
+    leg=collections.defaultdict(list)
+    for a in rows:
+        if a['action_type']=='LEGENDARY_ACTION':
+            leg[(a['parent'],(a['desc'] or '').strip())].append(a)
+    for a in rows:
+        m=pat.search(a['name'] or '')
+        if not m or a['action_type']=='LEGENDARY_ACTION': continue
+        tot+=1; per[doc]+=1
+        if leg.get((a['parent'],(a['desc'] or '').strip())): match+=1
+print(dict(per.most_common()),'toplam',tot,'| eşleşen efsanevi satır',match)
+EOF
+# {'bfrd': 58, 'ccdx': 24, 'tob': 19, 'tob2': 13} toplam 114 | eşleşen efsanevi satır 114
+```
+
+**Seçenekler.**
+1. **Kopyayı ele** — adı `(Costs N Actions)` ile biten `ACTION` satırı, aynı
+   ebeveynde aynı metinli bir `LEGENDARY_ACTION` satırı varsa atlanır. 114 satır
+   aksiyon listesinden düşer, efsanevi liste zaten eksiksiz; kayıp yok.
+2. **Efsanevi say** — satır atılmak yerine `LEGENDARY_ACTION` kabul edilip
+   `legendary_action_refs`'e yönlendirilir; birleştirme onu mevcut efsanevi
+   varlıkla aynı hash'e getirmez (ad farklı), bu yüzden efsanevi listede kopya
+   ad oluşur. 1. seçenekten zayıf.
+3. **Yukarı taşı, aynen bırak** — Open5e'ye çift satır bildirilir; pipeline
+   kaynağa sadık kalır, §5.8'e "upstream efsanevi aksiyonu iki kez yayınlıyor"
+   satırı yazılır (C8).
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-23 — şemada karşılığı olmayan duyu sessizce düşüyor: 41 canavar kartı tamamen duyusuz, oysa kaynak "keensense 60 ft." diyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — korpüs geneli 97 canavar (3 yayınlanan belge; `open5e-bfrd` 90) |
+| **Checklist** | checklist B3 (düzyazıda duran şey tipli alana da yazılmalı) |
+| **Kategori / etki** | `monster` — `senses`; v1 `Monster.senses` düzyazısı 97 canavarda dört SRD duyusu dışında adı olan bir duyu sayıyor (`keensense` 90, `blindsense` 2, `blood sense` 2, `devil sight`/`impaired sight`/`sight` 1'er), hiçbiri pakete inmiyor; **41 canavarda** `senses` listesi bu yüzden tamamen boş kalıyor |
+| **Cause code (öneri)** | `M` — değer kaynakta var ama iki katmanda birden evsiz: `mappers/monster.dart` yalnız v2'nin dört sütununu okuyor (`darkvision_range`, `blindsight_range`, `tremorsense_range`, `truesight_range`) ve Tier-0 `sense` kanonu da yalnız o dört satırı taşıyor (`lookups.dart` `_senseCategory`); v1 düzyazısı (aynı dosya `tags_line` için zaten okunuyor) hiç okunmuyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Black Flag (`bfrd`) darkvision'ı **keensense** ile değiştiriyor:
+v2 `Creature.json`'ında `darkvision_range` sütunu **hiç yok**, dolu olan tek
+duyu sütunları `truesight_range` (17) ve `tremorsense_range` (8). Bilgi v1
+`blackflag/Monster.json`'ın `senses` düzyazısında duruyor —
+*"keensense 60 ft. (can't sense beyond this radius)"* — ve 90 canavarı
+ilgilendiriyor; bunların **41'inde** paketin `senses` listesi boş, yani kart
+canavarı kör gösteriyor. `tob`'un 6 satırı aynı desenin küçük hâli
+(`Blood Hag`/`Red Hag` *blood sense 90 ft.*, `Sharkjaw Skeleton` *blindsense
+30 ft.*, `Baba Yaga's Horsemen, Black Night` *Devil sight 120ft*).
+
+Bu, §5.8'in yazılı boşluklarından biri **değil**: orada `normal_sight_range`'in
+evsizliği kayıtlı, `senses` düzyazısının kendisi değil.
+
+**Dağılım** *(2026-08-18'de `tob` birimi ölçtü)*
+
+| Paket | Adı olan ama düşen duyu satırı |
+|---|--:|
+| `open5e-bfrd` | 90 |
+| `open5e-tob` | 6 |
+| `open5e-ccdx` | 1 |
+| **Toplam (yayınlanan)** | **97** |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — v1 düzyazısında dört SRD duyusu dışında ne var
+python3 - <<'EOF'
+import json,glob,re,collections
+known=('darkvision','blindsight','truesight','tremorsense','passive perception')
+noise=('-','xx','or'); per=collections.Counter(); kinds=collections.Counter()
+for f in sorted(glob.glob('../open5e-api-staging/data/v1/*/Monster.json')):
+    doc=f.split('/')[-2]
+    for r in (x['fields'] for x in json.load(open(f,encoding='utf-8'))):
+        for part in [x.strip() for x in (r.get('senses') or '').split(',')]:
+            low=part.lower()
+            if not low or any(low.startswith(k) for k in known): continue
+            tok=re.sub(r'[\d.]+.*','',low).strip()
+            if tok in noise: continue
+            per[doc]+=1; kinds[tok]+=1
+print(dict(per.most_common()),'toplam',sum(per.values())); print(kinds.most_common())
+EOF
+# {'blackflag': 90, 'tob': 6, 'cc': 1} toplam 97
+# [('keensense', 90), ('blindsense', 2), ('blood sense', 2), ('devil sight', 1),
+#  ('impaired sight', 1), ('sight', 1)]
+```
+
+**Seçenekler.**
+1. **Kanona satır + düzyazı okuma** — Tier-0 `sense` kanonuna `Keensense`
+   (ve gerekirse `Blindsense`) eklenir, v1 `senses` düzyazısından
+   `<ad> <N> ft.` deseni ayrıştırılıp `senses`'e yazılır. 97 canavar duyusuna
+   kavuşur; kanon değişikliği built-in şemayı büyütür (dört-düzenleme
+   sözleşmesi).
+2. **Paket-içi `sense` varlığı** — `Void Speech`'in `language` için yaptığı:
+   kanonda olmayan duyu, paketin kendi `sense` varlığı olarak açılıp yumuşak
+   ref'lenir. Built-in şema değişmez, `bfrd` kendi duyusunu taşır.
+3. **Aynen bırak** — §5.8'e "`senses` yalnız v2'nin dört sütunundan doluyor;
+   v1 düzyazısındaki adı farklı duyular düşüyor (97 canavar, 41'i tamamen
+   duyusuz)" satırı yazılır (C8) ve kayıp bilinçli kabul edilir.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

@@ -31,7 +31,7 @@ tags: [file]
 - Spec / reference: [[Open5e-API]], [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` ("can take 1"), handed to that scan unit), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
+- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` — **filed 2026-08-18 as F-tob-01**, cause `M`: `Jotun Giant` and `Zmey` say "can take 1", and `Vampire Warlock - Variant` states no count at all, yet all three ship `3`; the preamble sentence itself never reaches the pack, so the card cannot be checked against it), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
   - ✅ **`open5e-tob3`'s empty Actions block was never this switch's fault** (audit **B8**, fixed 2026-07-31). The pack shipped **2** `action_refs` against 136 bonus / 96 reaction / 75 legendary, and the natural reading was a mis-set enum. The pinned snapshot says otherwise: `tob3/CreatureAction.json` genuinely holds 309 rows for 397 creatures with 2 `ACTION` among them, and the three non-`ACTION` buckets match `v1/tob3/Monster.json` **row for row** (136 / 96 / 75). Upstream's v2 conversion dropped one column; the mapper was faithful. Nothing caught it — the refs that existed all resolved, so the build gate passed, and the per-field census still read `action_refs` as "filled". **[[gate_packs]] is that gate, and it shipped 2026-08-10**: `monster-actionless` plus `bucket-skew` ("the base action bucket cannot be outnumbered by the situational ones"), run by [[build_packs]] over its own output.
 - **v1 action backfill** (audit **B8**): after the v2 loop, any of the four buckets **left entirely empty for this creature** is filled from `v1Actions[rawName.toLowerCase()]` through the *same* `_cleanChildName` + `_ensureChild` path, so recovered rows inherit the sanitizer, the content dedup and the `Name (Creature)` disambiguation.
   - **Empty-bucket-only is the safety argument, and it is measured.** The looser "add any v1 row whose name is absent" rule would add **~2,000 rows corpus-wide** — v1 and v2 disagree about action *names*, not about which actions exist, so it would ship duplicates dressed as recoveries. The conservative rule's whole cost is one monster (Abaasy, the single tob3 creature v2 partially converted, keeps 2 and forgoes 5).
@@ -48,7 +48,7 @@ tags: [file]
     `tob2` 506, `tob-2023` 505, `ccdx` 473, `tdcs` 3). The column is overloaded
     rather than ambiguous — the other 828 filled rows all carry a real second
     damage, which has no schema counterpart at all.
-- **`trait_kind` is hardcoded `Other` on every trait row, and that is correct** (audit V1, 2026-08-14; **re-read against `ccdx` and `tob2` 2026-08-18** — `CreatureTrait.type` is null on 1,016/1,016 and 1,060/1,060 there, so the constant is honest). `CreatureTrait.json` carries a `type` column but it is **null on all 8,613 rows in every document** in the pinned snapshot, so there is nothing to map. Do not "improve" this by classifying the trait's name or `desc` into the schema's six-value enum — that invents a field upstream does not have, which is exactly the `hp_dice` fabrication audit phase B11 was filed to remove. The cost is a `trait_kind` filter that cannot discriminate; that is a schema question, not a mapper one.
+- **`trait_kind` is hardcoded `Other` on every trait row, and that is correct** (audit V1, 2026-08-14; **re-read against `ccdx`, `tob2` and `tob` 2026-08-18** — `CreatureTrait.type` is null on 1,016/1,016, 1,060/1,060 and 1,123/1,123 there, so the constant is honest). `CreatureTrait.json` carries a `type` column but it is **null on all 8,613 rows in every document** in the pinned snapshot, so there is nothing to map. Do not "improve" this by classifying the trait's name or `desc` into the schema's six-value enum — that invents a field upstream does not have, which is exactly the `hp_dice` fabrication audit phase B11 was filed to remove. The cost is a `trait_kind` filter that cannot discriminate; that is a schema question, not a mapper one.
 - **Alignment is three-way, and only one branch gets the relation** (audit **B10**, 2026-08-14). `_alignment` routes `Creature.alignment` by shape: one of the nine canonical values → `alignment_ref`; anything else that contains an alignment word (`any|lawful|chaotic|neutral|good|evil|unaligned`) → **`alignment_note`** prose beside a *null* ref; neither → dropped and logged to the [[normalize]] sink. None of the 29 free-text expressions upstream (`any alignment`, `chaotic neutral or chaotic evil`, `Neutral Evil (50%) or Lawful Evil (50%)`) reduce to a canonical value, so a synonym normalizer would have converted 0 of 70 — and picking one arm of an "or" is the `hp_dice` fabrication again. The third branch is exactly the three rows corrupt in `Creature.json` itself (`Titan)`, `Shapechanger)` ×2), which must not be laundered into a prose field. 67 monsters carry a note; `unmapped_report.json` 70 → 3. Pinned by `test/tool/monster_alignment_test.dart`.
 - **Two `Creature` columns the mapper never opens** (F3 / Dalga 4, 2026-08-18):
   - **F-pass0-19 (❓ open, cause `M`):** `nonmagical_attack_resistance` /
@@ -66,6 +66,17 @@ tags: [file]
     creator" 22, "all, telepathy 120 ft." 12). Filled lists lose names too —
     `Umbral` ×13, `Darakhul` ×5, `Aquan` ×4, `Common` ×3 live only in the prose.
     The 17 languages the list does carry all resolve.
+  - **F-pass0-23 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** `senses` is
+    built from four v2 columns only (`darkvision_range`, `blindsight_range`,
+    `tremorsense_range`, `truesight_range`) and the Tier-0 `sense` canon
+    (`lookups.dart` `_senseCategory`) holds those same four rows, so a sense
+    named anywhere else is dropped. Black Flag replaced darkvision with
+    **keensense** and its v2 `Creature.json` has no `darkvision_range` column at
+    all: **90** `bfrd` creatures lose their only sense, **41** of them shipping
+    an empty `senses` list. With `tob`'s 6 (*blood sense*, *blindsense*,
+    *devil sight*, *impaired sight*) and `ccdx`'s 1 that is **97** creatures.
+    The value is in v1 `Monster.senses`, the same file already read for
+    `tags_line`.
 - **Child dedup** (`_ensureChild`): content-hashed (`type|description|sorted-attrs`) so identical actions/traits across creatures are authored once; name collisions on different content are disambiguated with ` (CreatureName)` / ` (CreatureName N)`.
   - **F-pass0-17 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `D`):** **the name is
     not in the hash.** Statblock attack text is formulaic, so two different
@@ -93,6 +104,14 @@ tags: [file]
     only in `desc`, and those do reach the card. `legendary_action_cost` (29 rows
     in `tob2`) is the harmless neighbour — no schema field, but the action name
     already says *"(Costs 2 Actions)"*.
+  - **F-pass0-22 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `S`):** that name is
+    the other half of the story. Upstream emits the same legendary action
+    **twice** — once `LEGENDARY_ACTION` with `legendary_action_cost`, once
+    `ACTION` named `… (Costs N Actions)` — and since `_contentHash` includes the
+    type, both survive; the parent refs both, so `action_refs` offers a
+    legendary action at will (`Aboleth, Nihilith` → `Psychic Drain (Costs 2
+    Actions)`). **114 rows** (`bfrd` 58, `ccdx` 24, `tob` 19, `tob2` 13), each
+    matching a same-parent, same-text legendary row with the same cost.
 
 ## Notes
 - Largest mapper (~24KB). The name-sanitization heuristics are deliberately conservative (real titles like "Keen Hearing and Smell" pass through). Two recent commits (323924a, ac2d186) tuned mis-segmented name handling.
