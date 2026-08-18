@@ -1,7 +1,7 @@
 ---
 type: meta
 domain: meta
-updated: 2026-08-17
+updated: 2026-08-18
 tags: [meta, changelog]
 ---
 
@@ -285,3 +285,46 @@ tags: [meta, changelog]
   düzeltildi). Kod değişmedi (tarama kuralı K1).
 - **Dalga 2 kapandı** — 20 tarama biriminin 13'ü bitti; sıradaki iş Dalga 3'ün
   tek birimi `open5e-vom` (1.063 sihirli eşya).
+
+## 2026-08-18 — F3 / Dalga 3'ün tek birimi: open5e-vom tarandı (14/20), Dalga 3 kapandı
+
+- **`open5e-vom`** — 1.063 sihirli eşya, tek kategori (`magic-item`); Dalga 1'den
+  beri ilk `spell` dışı birim. `verify_packs --doc vom --only magic-item` →
+  **3.682 ok · 0 disagree · 0 absent · 0 unverifiable · 3.189 unsourced**,
+  eşleşme **1.063/1.063**. Unsourced'ın tamamı üç beyan edilmiş sabit
+  (`activation` / `is_cursed` / `is_sentient`, 3 × 1.063).
+- `gate_packs --packs /tmp/one` yeşil; `dupe_census` "nothing installed" **0**,
+  paket ne `--list-builtin-same` ne `--list-shared` listesinde; `unmapped_report`
+  bugün de yalnız `alignment` (3 satır); `build_catalog` sonrası ağaç temiz.
+- 31 madde: **20 ✅ · 7 ➖ · 1 ⛔ · 3 ⚠️**. Verinin kendisi temiz — üç ⚠️'nin
+  üçü de kartın boş alanlarına değil, o boşluklar için **§5.8'e yazılmış
+  gerekçelere** bakıyor.
+- **F-vom-01** (C8, `S`): §5.8 `attunement_*` bloğunu "`attunement_detail`
+  kaynakta var" diye `M`🔗 ile kapatıyor; sütun **2.319 v2 satırının hiçbirinde
+  yok**, üstelik `mappers/item.dart:100` onu okuyor — hiç çalışmayan bir dal.
+  71 `desc` "attun" içeriyor, **0'ı** kapı cümlesi.
+- **F-vom-02** (A5, `S`): `is_cursed` 1.063/1.063 sabit `false` ve gerekçesi
+  "doğru 5e varsayılanı" diyor; **4 eşyanın** kendi kuralı taşıyıcıyı lanetliyor
+  (`Cap of Thorns`, `Fellforged Armor`, `Thirsting Scalpel`, `Thirsting Thorn`).
+  Kalıp 21 satır getirdi, 17'si *remove curse* / *bestow curse* **büyü adı**;
+  dördü okunarak ayrıldı (taramanın 5. sorusu).
+- **F-vom-03** (C8, `N`): aynı §5.8 satırı `sentient_*` yedilisini
+  `charges_max` / `charge_regain` / `command_word` / `body_slot_ref` ile birlikte
+  "düzyazıda" sayıyor. Dördü için doğru (161 "has N charges", 152 şafakta
+  yenilenme, 137 "command word"), duyarlılık için değil: `sentient` **0/1.063**
+  `desc`'te geçiyor, 10 "Intelligence of N" satırının onu da karşıdaki
+  **yaratığın** zekâsı.
+- **Bilinen açık #5 doğrulandı** (K7): `MagicItem.cost` **1.063/1.063 `0.00`**,
+  ve F-pass0-16'nın sorusu bu kez **hayır** — fiyat `desc`'te de yok (15 `gp`
+  eşleşmesinin hepsi imalat masrafı ya da kalıntı değer). ⛔ gerekçesi ayakta.
+- Ölçülüp bulgu sayılmayanlar: 11 → 9 kategori katlaması built-in kanonla
+  birebir (222+15 = 237 *Weapons*, 159+14 = 173 *Armor*); `base_item_ref`
+  114 zırh + 265 silah = **379/379**, düşen yok; `weight_lb` %10'u kaynağın
+  (949/1.063 satır `0.000`); kaynağın ölü nesne-statı sütunları
+  (`armor_class` 0, `size` *tiny*, `damage_immunities`
+  `['poison','psychic']` 1.063/1.063) şemada evsiz ve okunmuyor.
+- Defter 28 → **31**; [[check_findings]] → *32 kayıt, 31 sayaca giriyor, temiz*.
+  [[mapper_item]] üç kayıtla güncellendi. Kod değişmedi (tarama kuralı K1).
+- **Dalga 3 kapandı** — 20 tarama biriminin 14'ü bitti; sıradaki iş Dalga 4'ün
+  ilk birimi `open5e-ccdx` (2.426 varlık). `bfrd` birim olarak Dalga 1'de
+  sayıldığı için Dalga 4'te **6 birim** kaldı.

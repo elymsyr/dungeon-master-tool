@@ -102,43 +102,45 @@ filing rule (now one `pass0` entry with a distribution table), checklist F1–F4
 collide with this §6's phases (spelling rule), and known-open #5 repeated the C5
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
-**F3 is running: 13 of the 20 units are scanned — Wave 2 is done** (Pass 0,
+**F3 is running: 14 of the 20 units are scanned — Wave 3 is done** (Pass 0,
 built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s
-class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`) and
-the ledger holds **28** findings, all still ❓ — `check_findings.py` clean. The
-latest unit (`deepm`, 515 spells — the corpus's largest spell document) measured
-`verify_packs --doc deepm --only spell` at **4,027 ok / 0 disagree / 0 absent /
-0 unsourced / 1,213 unverifiable**, match coverage **515/515**, and scored its 31
-items **27 ✅ · 6 ➖ · 0 ⛔ · 2 ⚠️** — the cleanest unit of the whole scan so far:
-ten required fields at 515/515, not one single-valued column, no range text left
-unparsed, and the rule-applied description check identical on **515/515** (223
-rows carry `higher_level`). One new finding and **two corrections to inherited
-records**. **F-pass0-16** (C3, `S`, spreading): only 12 of `deepm`'s 288 material
-cards carry `material_cost_gp`, while **41** more name a price in their own
-material text (`…statuette carved in the likeness of the victim worth 1,250 gp`)
-with the source's `material_cost` column `null` — 45 cards corpus-wide (`deepm`
-41, `spells-that-dont-suck` 4), and disjoint from F-spells-that-dont-suck-02's 5:
-there the column says `'0'` and the card lies, here it says `null` and the card
-stays silent. **F-pass0-14 corrected 7 → 4 cards**: the original pattern counted
-`maintain concentration` without asking *whose*, and three rows were false
-positives whose text is about the **target's** concentration (`deepm`'s
-`Caustic Touch` and `Stench of Rot`, `toh`'s `Gale`); the remaining 4 were read
-one by one, and v1 `dmag`'s own `requires_concentration` column agrees with v2 on
-**514 of 514** rows (212 `true`), so this document's column is sound.
-**F-pass0-13 corrected 4 → 5 cards**: the record's own pattern found exactly the
-2 predicted `deepm` rows, but a third shape turned up — `Gluey Globule`'s
-`1 minute or 1 hour`, two *alternative* durations of which the card keeps only
-the first. (Both evidence blocks also had `p.split('/')[4]` where the document
-slug is `[5]`, so they matched nothing when re-run; fixed.) `SpellCastingOption.json`
-was measured a fourth time: 2,105 rows with `desc` filled on **0**, but real
-payload elsewhere (`damage_roll` 272, `target_count` 221, `duration` 197) — and
-all **93** parents carrying payload have `higher_level` prose that already ships
-inside `description`, so §5.8's "adds zero spells" rationale holds on the largest
-document too (K7). `class_refs` 440/515, and every one of the 75 empties is
-F-kuru-01's written distribution with `''` in v1 `dmag`'s `dnd_class` (`S`).
-**The next open phase is F3** (continues at Wave 3's only unit — `open5e-vom`,
-1,063 magic items; the first non-`spell` unit since Wave 1, with known-open #5
-`magic-item.cost_gp` ⛔ waiting in it).
+class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`,
+`vom`) and the ledger holds **31** findings, all still ❓ —
+`check_findings.py` clean. The latest unit (`vom`, 1,063 magic items — the first
+non-`spell` unit since Wave 1) measured `verify_packs --doc vom --only
+magic-item` at **3,682 ok / 0 disagree / 0 absent / 0 unverifiable /
+3,189 unsourced**, match coverage **1,063/1,063**, and scored its 31 items
+**20 ✅ · 7 ➖ · 1 ⛔ · 3 ⚠️**. The unsourced 3,189 is exactly 3 × 1,063 — the
+three declared constants (`activation` / `is_cursed` / `is_sentient`) — and all
+three ⚠️ point at the same place: not the empty fields, but **the written
+reasons** given for them in §5.8. **F-vom-01** (C8, `S`): §5.8 closes
+`attunement_prereq` + the six `attunement_*` fields with `M`🔗 because
+"`attunement_detail` is in the source", but that column exists on **0 of the
+2,319** v2 `MagicItem` rows (both publishers) — and `mappers/item.dart:100`
+reads it today, so the branch is dead code; the 71 `desc` rows that mention
+attunement are effect sentences, **0** of them name a gate. **F-vom-02** (A5,
+`S`): `is_cursed` is the constant `false` on 1,063/1,063 with the written reason
+"`false` is the correct 5e default", yet **4** items say otherwise in their own
+rules text (`Cap of Thorns`, `Fellforged Armor`, `Thirsting Scalpel`,
+`Thirsting Thorn`) — the pattern matched 21 rows and 17 were the spells *remove
+curse* / *bestow curse*, dropped by reading. **F-vom-03** (C8, `N`): the same
+§5.8 line bundles `sentient_*` with `charges_max` / `charge_regain` /
+`command_word` / `body_slot_ref` as "in `desc` prose"; the prose is really there
+for those four (**161** "has N charges", **152** dawn-recharge, **137** "command
+word") but **not** for sentience — `sentient` appears in 0 of 1,063 descriptions,
+and the 10 "Intelligence of N" rows are all about the *creature* facing the item.
+Known-open #5 was re-measured and **stands**: `MagicItem.cost` is `0.00` on
+1,063/1,063, and F-pass0-16's question — is the price in the prose? — came back
+**no**: only 15 rows match `\d[\d,]*\s*gp` and every one is a crafting cost or
+a residual value, not the item's price, so the ⛔ rationale is intact (K7). Also
+measured and *not* filed: the 11→9 category fold (`ammunition`→Weapons,
+`shield`→Armor) matches the built-in canon exactly (222+15 = 237, 159+14 = 173),
+`base_item_ref` lands 114 armor + 265 weapon = **379/379** with nothing dropped,
+and `weight_lb`'s 10% is the source's (949 of 1,063 `weight` values are `0.000`).
+**The next open phase is F3** (continues at Wave 4's first unit — `open5e-ccdx`,
+2,426 entities; the wave where `monster` + `trait` + `creature-action` are read
+together and B2's "the owning row does not move" exception is tested for the
+first time).
 
 ---
 
@@ -2507,11 +2509,12 @@ editions, per §2.5.
 
 | | Field | Fill | Cause | Notes |
 |:--:|---|--:|:--:|---|
-| ✅⚠ | `is_cursed`, `is_sentient`, `activation` | 100% | `M` | all three are hardcoded defaults |
-| 🔴 | `cost_gp` | 0% | `S`/`M` | `MagicItem.cost` only written when > 0; confirm the source really is 0 |
+| ✅⚠ | `is_cursed`, `is_sentient`, `activation` | 100% | `M` | all three are hardcoded defaults (no source column; `verify_packs` counts them as the pack's only 3,189 `unsourced` values). **F-vom-02**: `is_cursed`'s default is wrong on 4 `vom` items whose own text curses the bearer |
+| 🔴 | `cost_gp` | 0% | `S` | `MagicItem.cost` only written when > 0 — **confirmed by the `vom` unit (2026-08-18): the source is `0.00` on 1,063/1,063**, and the price is not in the prose either (15 `gp` matches, all crafting costs or residual values) |
 | 🟡 | `weight_lb` | 10% | `S` | |
-| 🔴 | `attunement_prereq` + `attunement_*` | 0% | `M`🔗 | `attunement_detail` is in the source; class/species gates are softRefs |
-| 🔴 | `charges_max`, `charge_regain`, `command_word`, `body_slot_ref`, `sentient_*` | 0% | `M` | in `desc` prose |
+| 🔴 | `attunement_prereq` + `attunement_*` | 0% | ~~`M`🔗~~ `S` | ~~`attunement_detail` is in the source~~ — **measured false by the `vom` unit (2026-08-18, F-vom-01): the column exists on 0 of 2,319 v2 rows**, and `mappers/item.dart:100` reads it anyway. Class/species gates would still be softRefs, if a source ever named one. |
+| 🔴 | `charges_max`, `charge_regain`, `command_word`, `body_slot_ref` | 0% | `M` | in `desc` prose — measured on `vom` (2026-08-18): 161 rows say "has N charges", 152 recharge at dawn, 137 name a command word |
+| 🔴 | `sentient_*` (7 fields) | 0% | ~~`M`~~ `N` | **F-vom-03**: no counterpart at all — `sentient` appears in 0 of 1,063 `vom` descriptions; the 10 "Intelligence of N" rows are about the creature, not the item |
 | 🟡 | `base_item_ref` | 0% → **36%** | `M`🔗 | **Fixed by L3 (2026-08-13).** The link was never prose: `MagicItem.weapon` / `MagicItem.armor` are structured slug columns (`srd_longsword`) nobody read. 379 of 1,063 `vom` items now softRef the built-in weapon/armor/gear card; **36% is the ceiling** — the other 684 rows fill neither column. The slug→name transform is title-case after the document prefix, plus a 10-entry alias table for the rows where the built-in name differs (2024 renamed the armors, "plate" → **Plate Armor**; upstream orders the crossbows "crossbow-hand" → **Hand Crossbow**). Filtered by the same rule as `class_refs`: no built-in card, no ref. `srd_net` lands on the **adventuring-gear** Net — the target slug follows the card, not the column, which is why the filter is a `name → slug` map. Historical note: was ⛔ "no base items ship in item packs"; the built-in pack ships weapons/armor/gear (§2.4). |
 
 **`trait` (6423)** — `trait_kind` is `Other` on all 6423, and **V1 confirmed
@@ -4725,8 +4728,42 @@ procedure, and the ledger have different lifetimes:
       `description` (K7). `class_refs` 440/515, all 75 empties F-kuru-01's
       written distribution with `''` upstream (`S`).
 
-      **kaldı: 7 unit** — Dalga 2 **closed** at 13/20; Dalga 3 (`vom`, 1,063
-      magic items) is next, Dalga 4 untouched. Next
+      **`vom` (1,063 magic items, 2026-08-18)** — Wave 3's only unit and the
+      first non-`spell` unit since Wave 1. 3,682 ok / 0 disagree / 0 absent /
+      0 unverifiable / **3,189 unsourced** at 1,063/1,063, gate green, census 0
+      (in neither `--list-builtin-same` nor `--list-shared`), no catalog drift;
+      31 items at **20 ✅ · 7 ➖ · 1 ⛔ · 3 ⚠️**. The unsourced 3,189 is exactly
+      3 × 1,063 — the declared constants `activation` / `is_cursed` /
+      `is_sentient` — so the data itself is clean and all three ⚠️ land on
+      **§5.8's written reasons** instead. **F-vom-01** (C8, `S`): the
+      `attunement_*` line rests on `attunement_detail`, a column that exists on
+      **0 of 2,319** v2 `MagicItem` rows, while `mappers/item.dart:100` reads it
+      — a live branch that can never fire; 71 `desc` rows mention attunement,
+      **0** name a gate. **F-vom-02** (A5, `S`): `is_cursed` is `false` on
+      1,063/1,063 under the reason "`false` is the correct 5e default", but 4
+      items curse their bearer in their own text (`Cap of Thorns`,
+      `Fellforged Armor`, `Thirsting Scalpel`, `Thirsting Thorn`) — 21 rows
+      matched the pattern and 17 were the *remove curse* / *bestow curse* spell
+      names, dropped by reading (question 5). **F-vom-03** (C8, `N`): the same
+      line's "in `desc` prose" is true for `charges_max` / `charge_regain` /
+      `command_word` / `body_slot_ref` (161 "has N charges", 152 dawn-recharge,
+      137 "command word") and false for `sentient_*` — 0 of 1,063 descriptions
+      mention sentience, and all 10 "Intelligence of N" rows describe the
+      creature facing the item. **Known-open #5 confirmed**: `MagicItem.cost` is
+      `0.00` on 1,063/1,063 and the price is not in the prose either (15 `gp`
+      matches, all crafting costs or residual values), so the ⛔ rationale holds
+      (K7). Measured and not filed: the 11→9 category fold matches the built-in
+      canon (222+15 = 237 Weapons, 159+14 = 173 Armor), `base_item_ref` lands
+      114 + 265 = **379/379**, `weight_lb`'s 10% is the source's (949 of 1,063
+      `weight` values `0.000`), and the source's dead object-stat columns
+      (`armor_class` 0, `size` *tiny*, `damage_immunities`
+      `['poison','psychic']` on all 1,063) have no home in the schema and are
+      read by nobody.
+
+      **kaldı: 6 unit** — Dalga 3 **closed** at 14/20; Dalga 4 (`ccdx` first,
+      then `tob2`, `tob`, `tob3`, `a5e-mm`, `tob-2023`) is next — `bfrd` already
+      counted as a unit in Wave 1, so its monster rows need a call at the wave's
+      start. Next
       session starts at `pack_conformance_plan.md`'s "Sonraki adım" block.
       *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
       at the end are where they started or better.*
