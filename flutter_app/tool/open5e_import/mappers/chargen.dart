@@ -254,7 +254,17 @@ void mapClasses({
       final rows = _levelFeatures(kids, itemsByFeature);
       if (rows.isNotEmpty) {
         attrs['features'] = rows;
-        attrs['granted_at_level'] = rows.first['level'];
+        // R4 / F-toh-01: `toh`'s `Underfoot` ships its spell progression as
+        // prose rows with no `column_value`, so `_isTableFeature` cannot see
+        // them and `Spell Slots` (level 1) dragged the minimum down to 1 — a
+        // rogue archetype openable at level 1. A slot/known row is a table, not
+        // a feature the subclass is taken at; exclude it from the minimum only
+        // (the rows themselves still ship).
+        final own = rows.where((r) => !_isSpellTableRow(r['name'] as String));
+        final base = own.isEmpty ? rows : own;
+        attrs['granted_at_level'] = base
+            .map((r) => r['level'] as int)
+            .reduce((a, b) => a < b ? a : b);
       }
       _addUnique(pack, slug: 'subclass', name: name, source: source,
           description: desc, tags: [parent], attributes: attrs);
@@ -661,6 +671,22 @@ int? _parseSpeed(String desc) {
   return m == null ? null : int.parse(m.group(1)!);
 }
 
+/// R4 / F-pass0-02: the prefix of [text] before the first "pick one of these"
+/// expression. `_refListFromText` grants every skill it can name, so on
+/// "Perception, and either Arcana, Nature, or Religion" it was handing out all
+/// four. Cutting at the choice keeps the guaranteed half and drops the rest —
+/// A3's "leave it empty when you don't know" over a gifted proficiency. The
+/// choice itself has no field yet; opening one is R5's job.
+final _choiceExpr = RegExp(
+    r'\b(?:either|choose|choice of|of your choice|of your choosing|'
+    r'from among|any\s+(?:one|two|three|other))\b',
+    caseSensitive: false);
+
+String _beforeChoice(String text) {
+  final m = _choiceExpr.firstMatch(text);
+  return m == null ? text : text.substring(0, m.start);
+}
+
 /// Every canonical name of [slug] that appears as a whole word in [text] →
 /// `{_lookup}` placeholder. Used to lift an explicit comma/"and" list ("Insight,
 /// Religion") out of benefit prose; "… of your choice" yields nothing (no
@@ -701,15 +727,23 @@ String _inferCasterKind(List<Fixture> kids) {
   return has('cantrips known') ? 'Full' : 'Half';
 }
 
-/// First number word (`no`/`one`/`two`/…) appearing whole-word in [text], or
+/// First number word (`one`/`two`/…/`ten`) appearing whole-word in [text], or
 /// null. Used for "Choose two from …" skill picks and language slot counts.
-int? _numberWord(String text) {
+/// R4 / F-pass0-05: the winner is the earliest match **in text order**, not the
+/// first key of the map — "Two of your choice, one of which …" means two.
+int? _numberWord(String text) => _numberWordMatch(text)?.value;
+
+/// [_numberWord] plus where it matched, so a caller can compare it against
+/// another phrase's position (see [_parseLanguageCount]).
+({int value, int at})? _numberWordMatch(String text) {
+  ({int value, int at})? best;
   for (final e in _numberWords.entries) {
-    if (RegExp('\\b${e.key}\\b', caseSensitive: false).hasMatch(text)) {
-      return e.value;
+    final m = RegExp('\\b${e.key}\\b', caseSensitive: false).firstMatch(text);
+    if (m != null && (best == null || m.start < best.at)) {
+      best = (value: e.value, at: m.start);
     }
   }
-  return null;
+  return best;
 }
 
 const _allAbilities = [
@@ -913,6 +947,15 @@ bool _isJunkPrereq(String s) {
   }
   return null;
 }
+
+/// True when the benefit grants a saving-throw proficiency **in the ability the
+/// feat's own ASI raised** — the `grants_save_prof_from_asi` shape.
+bool _grantsSaveProfFromAsi(String desc) => RegExp(
+      r'proficien\w*\s+(?:in|with)\s+(?:the\s+)?saving throws?\s+'
+      r'(?:using|with|for)\s+(?:it|that|the chosen|this)\b'
+      r'|saving throws?\s+using\s+(?:it|that|the chosen)\b',
+      caseSensitive: false,
+    ).hasMatch(desc);
 
 /// Feat benefit grants → grant-block fields written straight into [attrs]
 /// (see `CharacterResolver.grantFieldKeys`). Conservative: only emits the
@@ -1160,7 +1203,10 @@ final _builtinItems = () {
 ///  * a plural ("Torches" → Torch, "Candles" → Candle);
 ///  * the tail after the last ` of `, because the measure is not the item
 ///    ("Bottle Of Ink" → Ink, "50 Sheets Of Parchment" → Parchment);
-///  * a leading measure word ("Days Rations" → Rations, "Person Tent" → Tent).
+///  * a leading measure word ("Days Rations" → Rations, "Person Tent" → Tent);
+///  * R4 / F-pass0-06: any suffix of the token, longest first ("Belt Pouch" →
+///    Pouch, "Prayer Book" → Book) — the qualifier in front of a catalog name is
+///    upstream's, not a different item.
 ///
 /// Each rule only ever *lands* on a real catalog name, so a token whose tail is
 /// not an item ("Collection Of Bones", "Memento Of Your Destiny") still misses —
@@ -1176,7 +1222,13 @@ final _builtinItems = () {
   }
   final space = s.indexOf(' ');
   if (space > 0 && _measureWords.contains(s.substring(0, space))) {
-    return _plural(s.substring(space + 1));
+    final measured = _plural(s.substring(space + 1));
+    if (measured != null) return measured;
+  }
+  // Longest suffix first, so "belt pouch" prefers Pouch over anything shorter.
+  for (var i = s.indexOf(' '); i > 0; i = s.indexOf(' ', i + 1)) {
+    final hit = _plural(s.substring(i + 1));
+    if (hit != null) return hit;
   }
   return null;
 }
@@ -1203,13 +1255,18 @@ List<({String name, int qty})> _kitItems(String body) {
   // Keep "1,000" intact across the comma split; normalise curly apostrophes.
   var s = body.replaceAllMapped(RegExp(r'(\d),(\d)'), (m) => '${m[1]}${m[2]}');
   s = s.replaceAll('’', "'");
-  // Drop parentheticals up-front — "(amulet or reliquary)" must not fragment on
-  // the comma/or split below — and strip embedded gold ("with 10 gp",
-  // "containing 5 gp", a bare "10 gp") so it never becomes a phantom item.
-  s = s.replaceAll(RegExp(r'\([^)]*\)'), ' ');
+  // Strip embedded gold ("with 10 gp", "containing 5 gp", a bare "10 gp") so it
+  // never becomes a phantom item.
   s = s.replaceAll(
       RegExp(r'\b(?:with|containing)\b[^,;]*?\bgp\b', caseSensitive: false), ' ');
   s = s.replaceAll(RegExp(r'\b\d+\s*gp\b', caseSensitive: false), ' ');
+  // R4 / F-pass0-06: parentheticals used to be deleted here so that
+  // "(amulet or reliquary)" would not fragment on the split below. Deleting them
+  // did not stop the fragmenting — it lost the items entirely (6 of 11
+  // parentheticals hold a card the kit really gives). The brackets become plain
+  // separators instead, and the same "only ever land on a real catalog card"
+  // rule keeps the fragments honest.
+  s = s.replaceAll(RegExp(r'[()]'), ', ');
   final out = <({String name, int qty})>[];
   final seen = <String>{};
   for (var seg in s.split(RegExp(r',|\band\b|\bor\b|;', caseSensitive: false))) {
@@ -1319,15 +1376,27 @@ List<Map<String, String>> _matchCategories(
   return out;
 }
 
+// R4 / F-pass0-05: up to ten, because the source says "Any six". `no` is NOT
+// here — as a bare word it matched inside "no longer spoken" and, being first in
+// the map, beat the real count; it is matched separately as a bound phrase.
 const _numberWords = {
-  'no': 0, 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
+  'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
 };
+
+/// "No additional languages" / "none" — the only phrasings that really mean 0.
+final _zeroPhrase = RegExp(
+    r'\bno\s+(?:additional\s+)?languages?\b|\bnone\b',
+    caseSensitive: false);
 
 /// Background language slot count: a leading number word ("Two of your
 /// choice" → 2, "No additional languages" → 0), else the count of explicit
 /// canonical languages named, else null (unknown).
 int? _parseLanguageCount(Normalizer norm, String text) {
-  final w = _numberWord(text);
+  final zero = _zeroPhrase.firstMatch(text);
+  final wm = _numberWordMatch(text);
+  if (zero != null && (wm == null || zero.start < wm.at)) return 0;
+  final w = wm?.value;
   if (w != null) return w;
   final named = _refListFromText(norm, 'language', text).length;
   return named > 0 ? named : null;
@@ -1405,7 +1474,7 @@ void mapBackgrounds({
 
     final skillText = descOfType('skill_proficiency');
     if (skillText != null) {
-      final skills = _refListFromText(norm, 'skill', skillText);
+      final skills = _refListFromText(norm, 'skill', _beforeChoice(skillText));
       if (skills.isNotEmpty) attrs['granted_skill_refs'] = skills;
     }
     final abilText = descOfType('ability_score');
@@ -1517,6 +1586,15 @@ void mapFeats({
       attrs['asi_amount'] = asi.amount;
       attrs['asi_max_score'] = asi.maxScore;
       attrs['asi_ability_options'] = asi.options;
+      // R4 / F-a5e-ag-01: `Tenacious` is A5E's `Resilient` — the ASI half landed
+      // in typed fields while "and you gain proficiency in saving throws using
+      // it" stayed in prose, although the field and both of its readers already
+      // exist. Only claimed when the sentence points back at the bumped score
+      // ("using it" / "that ability"), never for a feat that grants a *named*
+      // save proficiency.
+      if (_grantsSaveProfFromAsi(benefitText)) {
+        attrs['grants_save_prof_from_asi'] = true;
+      }
     }
     _parseFeatGrants(benefitText, attrs);
     final choices = _parseFeatChoiceGroups(benefitText);
@@ -1574,11 +1652,21 @@ void _addUnique(
 }
 
 /// Parent desc + named child rows → markdown with one `### Name` block each.
+///
+/// R4 / F-pass0-04: Open5e writes the literal `[No description provided]` where
+/// it has no prose (6 background cards, `a5e-ag`'s `SpellSchool.json`). Carrying
+/// it through makes the card look broken rather than short, so the known
+/// placeholder is dropped — A3's "leave it empty" over a value that reads as
+/// content.
+bool _isPlaceholderDesc(String d) =>
+    d.toLowerCase() == '[no description provided]';
+
 String _fold(String parentDesc, List<Fixture> children) {
-  final buf = StringBuffer(parentDesc.trim());
+  final head = parentDesc.trim();
+  final buf = StringBuffer(_isPlaceholderDesc(head) ? '' : head);
   for (final c in children) {
     final d = (c['desc'] as String?)?.trim() ?? '';
-    if (d.isEmpty) continue;
+    if (d.isEmpty || _isPlaceholderDesc(d)) continue;
     final n = (c['name'] as String?)?.trim() ?? '';
     buf.write('\n\n');
     if (n.isNotEmpty) buf.write('### $n\n\n');
@@ -1630,6 +1718,19 @@ String _fold(String parentDesc, List<Fixture> children) {
 // So they are rendered back into the description as a markdown table: no
 // schema change, no invented mechanic, and the numbers stop vanishing.
 
+/// `bfrd_mechanist_augmented-items` → `Augmented Items`. Null when the pk has no
+/// trailing slug segment to read.
+String? _labelFromPk(String pk) {
+  final seg = _lastSegment(pk).replaceAll('-', ' ').trim();
+  return seg.isEmpty ? null : titleCase(seg);
+}
+
+/// A spell-progression table row masquerading as a feature (see F-toh-01).
+bool _isSpellTableRow(String name) {
+  final n = name.toLowerCase();
+  return n.startsWith('spell slots') || n.startsWith('spells known');
+}
+
 /// True when every `ClassFeatureItem` of this feature carries a `column_value`
 /// — B1's test for "this is a class-table column, not a granted feature". No
 /// shipped document mixes the two inside one feature, which is what makes it a
@@ -1677,7 +1778,16 @@ String _classTable(
     // numbering them keeps the header honest instead of silently merging.
     var label = name;
     final clash = columns.where((c) => c.name == name || c.name.startsWith('$name (')).length;
-    if (clash > 0) label = '$name (${clash + 1})';
+    if (clash > 0) {
+      // R4 / F-bfrd-01: upstream gave `bfrd_mechanist_augmented-items` the same
+      // `name` as the column before it, but its own `pk` says what it really is.
+      // Read the identity the source already carries; `(n)` stays as the
+      // fallback for a clash whose slug adds nothing.
+      final fromSlug = _labelFromPk(f['_pk']?.toString() ?? '');
+      label = (fromSlug != null && fromSlug.toLowerCase() != name.toLowerCase())
+          ? fromSlug
+          : '$name (${clash + 1})';
+    }
     columns.add((name: label, byLevel: byLevel));
   }
   if (columns.isEmpty) return '';

@@ -7,8 +7,29 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R4** (chargen mapper'ı tahmin etmeyi bırakır, 7 bulgu —
-> `mappers/chargen.dart`; şema alanı gerektirmiyor, R5 onun şema yarısı).
+> **Sıradaki iş: R5** (chargen'in şema yarısı, 4 bulgu — her biri dört-düzenleme
+> sözleşmesi + resolver geçişi: F-pass0-03, F-pass0-09, F-pass0-10, F-pass0-08).
+>
+> **R4 bitti (2026-08-19) — "chargen mapper'ı tahmin etmeyi bıraktı".**
+> Yedi kayıt (F-pass0-02, F-pass0-04, F-pass0-05, F-pass0-06, F-toh-01,
+> F-a5e-ag-01, F-bfrd-01) `mappers/chargen.dart` içinde kapandı; durum satırı
+> **0 🔎 · 0 ❓ · 10 🛠 · 36 ✅ · 1 ⚪** (toplam 47). Şema yalnız bir tavan:
+> **2.6.0 → 2.6.1**, `background.granted_language_count` `max: 5 → 10`.
+> Ölçüm (`diff_packs`): 30 kartta **62 beceri ref'i** düştü (aşırı-grant
+> sayacı **30/32 → 0/0**; aradaki 30 fark kararın yazılı bedeli — gerçek
+> seçim de artık yazılmıyor, alanı R5 açacak), `[No description provided]`
+> **6 → 0**, dil sayacı Dungeon Robber **0 → 6** / Haunted **1 → 2**,
+> ekipmanda **+35 eşya satırı / 0 kayıp** (`pouch` 6/23 → 21/23;
+> `common clothes` **`N`** — SRD 5.2.1'de karşılığı yok, uydurulmadı),
+> `Underfoot` **1 → 3**, `grants_save_prof_from_asi` **0 → 1**, Mechanist'in
+> ikinci sütunu **`Augmented Items`**. `verify_packs` **0 disagree /
+> 0 absent** (ok 68.926, unsourced 3.303 sabit — `background` kural tablosu
+> boş olduğu için D1 bu yedi kaydı zaten göremezdi), `gate_packs` yeşil,
+> `dupe_census` "nothing installed" **0**. `flutter test test/tool/`
+> **197/197**, `wizard_pack_families_test` **44/44**, `flutter analyze`
+> 0 hata / 0 uyarı. **`assets/open5e_packs/` promote edildi** (R1–R4
+> birikimi: 43 kategori, 10.004 değer; iki manifest yeniden üretildi) —
+> çıkış ölçütü yayınlanan paketi okuyan bir iddia istiyordu.
 >
 > **R3 bitti (2026-08-19) — "şemada evi olmayan dört canavar mekaniği".**
 > Dört kayıt (F-pass0-19, F-pass0-20, F-pass0-23, F-pass0-28) kapandı ve

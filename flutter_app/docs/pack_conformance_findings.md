@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 17 | 29 | 1 | 0 | **47** |
+| 0 | 0 | 10 | 36 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -170,6 +170,57 @@ hash'iyle paylaşıldığı için 267 satır 228 karta düşüyor — canavar ba
 eyleme değer fazlalık 1.141. `flutter test test/tool/` **175/175**,
 `flutter analyze` 0 hata / 0 uyarı. `assets/open5e_packs/` **promote
 edilmedi**.
+
+**R4 uygulandı (2026-08-19).** Yedi kayıt `mappers/chargen.dart` içinde
+kapandı (F-pass0-02, F-pass0-04, F-pass0-05, F-pass0-06, F-toh-01,
+F-a5e-ag-01, F-bfrd-01); 🛠 sayacı 17 → 10, ✅ 29 → 36. Şema `2.6.0 → 2.6.1`:
+tek satır, `background.granted_language_count` tavanı 5 → 10 (kaynak "Any six"
+diyor; kırpmak da uydurmak kadar yanlış). Ölçülen etki (`diff_packs`,
+`../.tmp/packs-rebuild`):
+
+- **F-pass0-02** — 30 kartta **62 beceri** grant'tan düştü; bulgunun kendi
+  ölçüm betiği aşırı-grant'ı **30 kart / 32 fazla yetkinlik → 0 / 0** gösteriyor.
+  Aradaki 30 fark seçenek 2'nin bilinen bedeli: her kartın gerçek **bir**
+  seçimi de artık yazılmıyor (alanı R5 açacak). Bir kart (`tdcs` Lyceum Student,
+  satırın tamamı seçim) sıfıra düştü.
+- **F-pass0-04** — `[No description provided]` korpüste **6 → 0**.
+- **F-pass0-05** — iki yanlış satır düzeldi: `a5e-ddg` Dungeon Robber **0 → 6**,
+  `a5e-gpg` Haunted **1 → 2**; doğru yazılmış 29 satır değişmedi.
+- **F-pass0-06** — 26 kartın ekipman grubunda **+35 eşya satırı**, kayıp 0
+  (toplam 104 → 139): `pouch` 6/23 → **21/23**, `ball bearings` 0/2 → **2/2**,
+  `prayer book` 0/2 → **2/2**, `(amulet or reliquary)` 0 → **2 + 2**,
+  `hunting trap` 3/4 → **4/4**, `rope` 2/3 → **3/3**, ayrıca Ink ×2,
+  Signet Ring, Staff (Arcane Focus), Crystal, Rations, Parchment, Arrows,
+  Brewer's / Alchemist's Supplies. Kaçan 2 `pouch` yazı takımının **içindeki**
+  kese ("small pouch with a quill") — eksik verir, yanlış vermez.
+  **`common clothes` `N` olarak kapandı:** 21 anımsatmanın karşılığı SRD
+  5.2.1'de yok (`Clothes, Fine` + `Clothes, Traveler's` var), SRD dışı kart
+  uydurulmadı; `Clothes, Traveler's`'a eşlemek de yaklaşık olurdu. Satır
+  `label` düzyazısında görünmeye devam ediyor.
+- **F-toh-01** — `toh` `Underfoot` `granted_at_level` **1 → 3**; korpüste
+  `granted_at_level` değişen başka kart yok.
+- **F-a5e-ag-01** — `grants_save_prof_from_asi` korpüste **0 → 1**
+  (`a5e-ag` `Tenacious`, mekaniği yazan tek kart); kural ASI cümlesinin
+  yükselttiği yeteneğe geri işaret eden ("using it" / "that ability") biçimi
+  arıyor, adı yazılı kurtarma yeterliliğini almıyor.
+- **F-bfrd-01** — `bfrd` Mechanist sınıf tablosunun ikinci sütunu
+  `Augment Effects Known (2)` → **`Augmented Items`** (kaynağın kendi
+  `pk`'sinden); `(n)` yolu yedek olarak duruyor ve testi var.
+
+Kapılar: `verify_packs` **0 disagree / 0 absent**, `ok` 68.926 ve `unsourced`
+3.303 sabit (background kural tablosu hâlâ boş — §4 Uyarı 2 geçerli, bu yedi
+kaydın hiçbirini D1 göremezdi), `gate_packs` yeşil, `dupe_census` "nothing
+installed" **0** / eyleme değer fazlalık 1.141, `unmapped_report.json`
+değişmedi (`alignment`, 3 değer). `flutter test test/tool/` **197/197**
+(21 yeni `chargen_r4_test.dart`), `wizard_pack_families_test` **44/44**
+(F-toh-01'in kalıcı iddiası: 1. seviyede açılan alt sınıfın 1. seviyede tablo
+olmayan bir özelliği olmak zorunda), `flutter analyze` 0 hata / 0 uyarı.
+
+> **`assets/open5e_packs/` promote edildi (R1–R4 birikimi).** R4'ün çıkış
+> ölçütü `wizard_pack_families_test`'in *yayınlanan* paketi okuduğu bir iddia
+> istiyor; yayınlanan paket ise R1'den beri dört faz geride kalmıştı. Promote
+> edilen fark (`diff_packs`, eski asset → yeni): **43 kategori, 10.004 değer**.
+> `manifest.json` ve `assets/first_party/manifest.json` yeniden üretildi.
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -477,7 +528,7 @@ kayıt bu bulgunun kendisi. Sonraki kişi ya 205 grant satırını gereksiz yere
 | **Checklist** | checklist C2 (species/subspecies/background/feat alanları) |
 | **Kategori / etki** | `background` — kaynak satırı seçim ifadesi taşıyan **30** kart (kaynakla eşleşen 52'nin %58'i); karakter sayfasına **32 fazladan yetkinlik** iniyor. Dağılım aşağıda |
 | **Cause code (öneri)** | `M` — `mapBackgrounds` seçim ifadesini okumuyor, metindeki her beceri adını grant yazıyor (`mappers/chargen.dart:1406-1410`) |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** `descOfType('skill_proficiency')` benefit satırının **tamamını**
 `_refListFromText`'e veriyor; fonksiyon metinde adı geçen her beceriyi bulup
@@ -554,7 +605,7 @@ değil.**
 3. **Kapsam dışı** — o zaman §5.4'e yazılı bir ⛔ girmeli: "seçimli beceri satırı
    hepsini verir", çünkü şu an hiçbir yerde yazılı değil.
 
-**Karar.** **düzelt** — seçenek 2 (seçim ifadesinden sonrasını okuma); A3'ün "bilmiyorsan boş bırak" ilkesi hediye edilen beceriye tercih edilir. Seçim alanını açmak R5'in işi, R4 önce yanlış grant'ı durdurur. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 2 (seçim ifadesinden sonrasını okuma); A3'ün "bilmiyorsan boş bırak" ilkesi hediye edilen beceriye tercih edilir. Seçim alanını açmak R5'in işi, R4 önce yanlış grant'ı durdurur. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-pass0-03 — `ability_score_options` 27 satırın 27'sinde aynı altı yetenek: kaynağın zorunlu +1'i kayıp
 
@@ -636,7 +687,7 @@ pakette otomatik yakalanmayacak.
 | **Checklist** | checklist A3 (uydurma değer yok — "bilmiyorsan boş bırak") |
 | **Kategori / etki** | `background` — **6** kart (`a5e-gpg` 2 + `a5e-ddg` 4); dize gövdenin **ilk satırı**, kart açılınca ilk görünen şey |
 | **Cause code (öneri)** | `S` — kaynakta açıklama yok; kaynak bunu düzyazı olarak yazıyor, mapper da olduğu gibi taşıyor |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** Open5e'nin `Background.json`'ı bu altı satırda `desc` alanına gerçek
 metin değil `"[No description provided]"` yazmış. `_fold` onu benefit
@@ -693,7 +744,7 @@ genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çı
    devam eder.
 3. **Kapsam dışı** — 53 background'ta 6; karar yazılı bırakılır.
 
-**Karar.** **düzelt** — seçenek 1 (bilinen placeholder düşürülür); tek koşul, kayıp yok, 6 kart gövdesiyle açılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (bilinen placeholder düşürülür); tek koşul, kayıp yok, 6 kart gövdesiyle açılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-pass0-05 — `granted_language_count`: "Any six" 0 olarak, "Two … one of which" 1 olarak yazılmış
 
@@ -703,7 +754,7 @@ genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çı
 | **Checklist** | checklist D1 (değer kaynakla aynı) |
 | **Kategori / etki** | `background` — 31 dolu satırın **2'si yanlış**: `a5e-ddg` Dungeon Robber 6 → **0**, `a5e-gpg` Haunted 2 → **1** |
 | **Cause code (öneri)** | `M` — sayı sözcüğü tablosu `five`'da bitiyor ve **ilk eşleşen kazanıyor**; `\bno\b` "no longer spoken" içinde eşleşiyor |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** `_parseLanguageCount` (`mappers/chargen.dart:1329-1334`) önce
 `_numberWord`'e soruyor, o da `_numberWords` sözlüğünü **sırayla** geziyor:
@@ -788,7 +839,7 @@ EOF
    bir çözüm.
 3. **Kapsam dışı** — 31 satırda 2, alan inert; karar yazılı bırakılır.
 
-**Karar.** **düzelt** — seçenek 1 (sayı sözcükleri 10'a, `\bno\b` yerine bağlamlı kalıp, ilk eşleşme metin sırasına göre). Şema `max: 5` sınırı fazın içinde ölçülüp karara bağlanır. Alanı silmek (seçenek 2) okuyucusu olan bir alanı öldürür. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (sayı sözcükleri 10'a, `\bno\b` yerine bağlamlı kalıp, ilk eşleşme metin sırasına göre). Şema `max: 5` sınırı fazın içinde ölçülüp karara bağlanır. Alanı silmek (seçenek 2) okuyucusu olan bir alanı öldürür. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-pass0-06 — background başlangıç ekipmanında adı yazılı olan eşya envantere girmiyor: 23 "pouch"un 17'si, 20 "common clothes"un 20'si
 
@@ -798,7 +849,7 @@ EOF
 | **Checklist** | checklist B3 (düzyazıda duran şey ref olmalı) |
 | **Kategori / etki** | `background` — **42** kartta **120** eşya sözcüğü yalnız `label` düzyazısında kalıyor, `items` satırı olmuyor; ölçülen en büyük üç kalıp: `pouch` 23 anımsatmanın **6'sında** ref var, `ball bearings` 2/**0**, `prayer book` 2/**0**, `common clothes` 20/**0** |
 | **Cause code (öneri)** | `M` — `builtinItem` yalnız üç bağışlayıcı kural tanıyor (çoğul, son ` of ` kuyruğu, ölçü sözcüğü); **öndeki niteleyici** ("belt pouch", "prayer book") ve **parantez içi liste** hiç denenmiyor |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** `_gearRef`'in yazılı sözleşmesi (`mappers/chargen.dart:1099-1113`)
 şöyle: pakette olan → hard `ref`, built-in katalogda olan → `softRef`, ikisi de
@@ -894,7 +945,7 @@ eksik içerik.**
    çünkü eşleme mekanik" diye yazılır; `label` düzyazısı kullanıcıya görünmeye
    devam ettiği için bilgi kaybı değil, **otomasyon** kaybı sayılır.
 
-**Karar.** **düzelt** — seçenek 1 (parantez ayrı segment + son sözcükten geriye katalog araması, yalnız gerçek karta oturursa). `common clothes` için seçenek 2'nin üçüncü yolu: SRD dışı kart uydurulmaz, `N` olarak R4'ün çıktısında yazılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (parantez ayrı segment + son sözcükten geriye katalog araması, yalnız gerçek karta oturursa). `common clothes` için seçenek 2'nin üçüncü yolu: SRD dışı kart uydurulmaz, `N` olarak R4'ün çıktısında yazılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-pass0-07 — 19 paket kartının adı built-in bir kartın adından yalnız boşluk/noktalama kadar farklı: dedup anahtarı da ref çözümü de göremiyor
 
@@ -1356,7 +1407,7 @@ karakterin dil listesinde görünmesi beklenir.
 | **Checklist** | checklist C1 (class/subclass seviye tablosu) |
 | **Kategori / etki** | `subclass` — 101 paketli subclass'ın **1'i**: `Underfoot` (Rogue) `granted_at_level: 1`. 3'ten küçük 46 değerin diğer **45'i doğru** (2014'te Cleric/Sorcerer/Warlock 1, Wizard/Druid 2); yanlış olan tek kart bu |
 | **Cause code (öneri)** | `S` — kaynağın `ClassFeatureItem` satırı gerçekten `level: 1` diyor (`toh_underfoot_spell-slots`); paket sadık, ama B1'in "tablo satırlarını dışarıda bırak" kuralı burada tutmuyor çünkü upstream o satırlara `column_value` yazmamış (`M` sonucu) |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** `granted_at_level` §5.2'nin kuralıyla hesaplanıyor:
 `min(ClassFeatureItem.level)` — subclass'ın **tablo olmayan** özellikleri
@@ -1419,7 +1470,7 @@ mümkün olmayan bir arketipi alıyor.
 3. **Kapsam dışı** — "kaynak öyle diyor" yazılır; o zaman tek kartın 1. seviyede
    göründüğü ve testin bunu yakalamadığı kayda geçer.
 
-**Karar.** **düzelt** — seçenek 2 (adı `Spell Slots`/`Spells Known` olan satırlar minimumdan dışlanır). Seçenek 1 mapper'a 2014 arketip seviyesi tablosunu, yani kural bilgisini koyar; bu importer'ın işi değil. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 2 (adı `Spell Slots`/`Spells Known` olan satırlar minimumdan dışlanır). Seçenek 1 mapper'a 2014 arketip seviyesi tablosunu, yani kural bilgisini koyar; bu importer'ın işi değil. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-toh-02 — `Scoundrel` background'u iki pakette birden: aynı iki beceri, %83 aynı metin, iki ayrı satır
 
@@ -1495,7 +1546,7 @@ satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
 | **Checklist** | checklist C2 (species/background/feat alanları) |
 | **Kategori / etki** | `feat` — `grants_save_prof_from_asi` korpüsteki **73 feat kartının 0'ında** dolu; kaynağı bu mekaniği yazan **1** kart var (`a5e-ag` `Tenacious`) ve o da alamıyor. Kartın ASI'si tam doğru yazılmış (`asi_amount: 1`, `asi_max_score: 20`, altı yetenek), yalnız cümlenin ikinci yarısı kayıp |
 | **Cause code (öneri)** | `M` — alan **beyan edilmiş** (`builtin/content.dart:836`), **okuyanı da var** (`pending_choice_resolver_dialog.dart:793, 1203`, built-in `Resilient` bununla çalışıyor); yazan yalnız mapper tarafında yok |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** `Tenacious`'ın gövdesi: *"Choose one ability score. The chosen ability
 score increases by 1, to a maximum of 20, **and you gain proficiency in saving
@@ -1549,7 +1600,7 @@ grep -rn "grants_save_prof_from_asi" tool/ | wc -l  # 0 — yazan yok
 3. **Kapsam dışı** — o zaman C8'e yazılı bir satır girmeli: "`grants_save_prof_from_asi`
    paket tarafında hiç yazılmaz, yalnız built-in kartların alanıdır."
 
-**Karar.** **düzelt** — seçenek 1 (ASI cümlesiyle aynı yerde kurtarma yeterliliği geçiyorsa `grants_save_prof_from_asi`); okuyucu hazır, diff tek satır. Elle kür (seçenek 2) yeni belgede tekrar kaçar. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (ASI cümlesiyle aynı yerde kurtarma yeterliliği geçiyorsa `grants_save_prof_from_asi`); okuyucu hazır, diff tek satır. Elle kür (seçenek 2) yeni belgede tekrar kaçar. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### F-a5e-ag-02 — `Marshal`'ın seviye tablosu 14. seviyede geriliyor: 30 feet → 10 feet → 45 feet
 
@@ -1629,7 +1680,7 @@ EOF
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `class` — `Mechanist`'in `description`'ına render edilen `### Class Table`'ın iki sütunu var ve ikisinin başlığı da `Augment Effects Known`; mapper ikinciyi `Augment Effects Known (2)` diye numaralıyor. Kaynakta iki ayrı `ClassFeature` var — `bfrd_mechanist_augment-effects-known` ve **`bfrd_mechanist_augmented-items`** — ama ikisinin de `name` alanı `Augment Effects Known`. `(2)` korpüste **1** tane: paketli 103 `class`/`subclass` kartının tablolarında başka çakışma yok |
 | **Cause code (öneri)** | `M` — kaynak `name` upstream'de yanlış, ama doğru ad `pk`'de duruyor ve mapper onu hiç okumuyor (`mappers/chargen.dart:1679-1683`, çakışmayı numaralayan blok) |
-| **Durum** | 🛠 faz dosyalandı — **R4** |
+| **Durum** | ✅ kapandı — **R4** (2026-08-19) |
 
 **Bulgu.** B2 bu tabloyu 2026-08-14'te "bozuk" durumdan kurtardı: `column_value`
 satırları artık düşmüyor, markdown tablo olarak basılıyor. Kalan kusur başlıkta:
@@ -1683,7 +1734,7 @@ for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFe
 3. **Kapsam dışı** — "kaynak ne diyorsa o", F-a5e-ag-02'nin 3. seçeneğiyle aynı
    politika. Fark: orada doğru değer hiçbir yerde yoktu, burada `pk`'de var.
 
-**Karar.** **düzelt** — seçenek 1 (çakışma hâlinde başlık `pk` slug'ından türetilir, `(n)` yedek kalır). F-a5e-ag-02'den farkı ölçülmüştü: burada doğru ad kaynağın kendisinde duruyor. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (çakışma hâlinde başlık `pk` slug'ından türetilir, `(n)` yedek kalır). F-a5e-ag-02'den farkı ölçülmüştü: burada doğru ad kaynağın kendisinde duruyor. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (2026-08-19)
 
 ### Dalga 2 — büyü paketleri
 

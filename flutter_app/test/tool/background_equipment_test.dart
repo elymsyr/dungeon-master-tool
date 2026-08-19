@@ -48,13 +48,17 @@ void main() {
     expect(builtinItem('Feet Of Rope')?.name, 'Rope');
     expect(builtinItem('Days Rations')?.name, 'Rations');
     expect(builtinItem('Person Tent')?.name, 'Tent');
-    // …but only when the tail is itself a card. These must stay misses, or the
+    // R4 / F-pass0-06: a qualifier in front of a catalog name is upstream's, not
+    // a different item — the suffix rule lands these on the real card.
+    expect(builtinItem('Bottle Of Black Ink')?.name, 'Ink');
+    expect(builtinItem('Belt Pouch')?.name, 'Pouch');
+    expect(builtinItem('Prayer Book')?.name, 'Book');
+    // …but only when a suffix is itself a card. These must stay misses, or the
     // rule has become a guess.
     for (final token in const [
       'Collection Of Bones',
       'Memento Of Your Destiny',
       'Letter Of Introduction From An Old Teacher',
-      'Bottle Of Black Ink',
     ]) {
       expect(builtinItem(token), isNull, reason: token);
     }

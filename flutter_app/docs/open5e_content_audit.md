@@ -125,7 +125,22 @@ reached the card as a pack-local `sense` (senseless monsters **515 → 470**).
 R3 also found, and fixed, the reason none of that would have shown: `senses`
 rows were written as `{sense: …}` while the widget reads `sense_ref`, on 2,370
 packaged monsters **and** 245 built-in SRD rows (**F-pass0-29**, ledger now
-**17 🛠 · 29 ✅ · 1 ⚪**, 47 findings). **The next open phase is R4.**
+**17 🛠 · 29 ✅ · 1 ⚪**, 47 findings).
+
+**R4 (done 2026-08-19)** took the seven chargen-mapper findings. The 30
+backgrounds that granted every skill their source *offered* now grant only the
+fixed half (**62 refs dropped**; the over-grant census reads **30 cards / 32
+extra → 0 / 0**), `[No description provided]` is **6 → 0**, the two wrong
+language counts are right (Dungeon Robber **0 → 6**, which cost the schema a
+`max: 5 → 10` widening — `2.6.0 → 2.6.1`), starting equipment gained **+35 item
+rows with 0 lost** (`pouch` 6/23 → 21/23, and `common clothes` closed as a
+written `N`: SRD 5.2.1 has no such card and R4 refused to mint one),
+`Underfoot` is level **1 → 3**, `Tenacious` finally writes the
+`grants_save_prof_from_asi` its two readers were waiting for, and Mechanist's
+second class-table column is `Augmented Items` instead of `(2)`. Ledger
+**10 🛠 · 36 ✅ · 1 ⚪**. `assets/open5e_packs/` was **promoted** here (R1–R4
+together: 43 categories, 10,004 values) because R4's exit assertion reads the
+shipped pack. **The next open phase is R5.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -5464,25 +5479,71 @@ half** for the same reason. R7 and R8 are independent of everything else.
       once, after its last mapper phase.
 
 
-- [ ] **R4 — The chargen mapper stops guessing.** Seven findings in
-      `mappers/chargen.dart`, none needing a schema field. F-pass0-02 (30
-      backgrounds granting **every** skill the source offered as a choice — read
-      up to the choice expression and stop; the choice field itself is R5's job),
-      F-pass0-04 (6 cards opening with `[No description provided]`),
-      F-pass0-05 (`granted_language_count` writing 0 for "Any six" and 1 for
-      "Two … one of which" — number words to ten, context-bound `no`, first match
-      in text order), F-pass0-06 (named starting equipment that never reaches the
-      inventory: 17 of 23 "pouch", 20 of 20 "common clothes" — tokenize
-      parentheses separately and match backwards from the last word, accepting
-      only a real catalog card), F-toh-01 (`Underfoot` selectable at level 1
-      because a spell-slot table row carries `level: 1` — exclude
-      `Spell Slots` / `Spells Known` rows from the minimum), F-a5e-ag-01
-      (`grants_save_prof_from_asi` never written by any mapper although the field
-      and its reader both exist) and F-bfrd-01 (a colliding class-table heading
-      numbered `(2)` when the correct name is in the source's own `pk`).
-      *Exit: the 30 over-granted backgrounds grant only what the source states,
-      `common clothes` gets a written `N` rather than an invented card, and
-      `wizard_pack_families_test` gains the `Underfoot` level assertion.*
+- [x] **R4 — The chargen mapper stops guessing. Done 2026-08-19.** Seven
+      findings in `mappers/chargen.dart`, each one the mapper answering a
+      question the source had already answered.
+      **F-pass0-02** — reading stops at the choice expression, so the 30
+      over-granting backgrounds lost **62 skill refs** and the finding's own
+      census went **30 cards / 32 extra → 0 / 0**. The gap is the decision's
+      written price: 30 of those 62 were a real single pick that now has no
+      home until R5 opens the field, and one card (`tdcs` Lyceum Student, whose
+      line is choice end to end) dropped to zero.
+      **F-pass0-04** — `[No description provided]` corpus-wide **6 → 0**.
+      **F-pass0-05** — number words run to ten and the earliest match *in text
+      order* wins, with `no` demoted from a bare word to the bound phrase it
+      meant: `a5e-ddg` Dungeon Robber **0 → 6**, `a5e-gpg` Haunted **1 → 2**,
+      the 29 correct rows untouched. Six does not fit a `max: 5` field, and
+      truncating a real count is the same lie as inventing one — so the schema
+      went **2.6.0 → 2.6.1** with the ceiling widened to 10 (permissive, no
+      migration). Measured, not assumed: nothing in `lib/` reads the field yet
+      (B7's "deliberately inert"), but the card renders it.
+      **F-pass0-06** — parentheticals became separators instead of being
+      deleted, and `builtinItem` now tries every suffix of a token (longest
+      first), landing only on a real catalog name. **+35 item rows, 0 lost**
+      (104 → 139): `pouch` 6/23 → **21/23**, `ball bearings` 0 → **2/2**,
+      `prayer book` 0 → **2/2**, `(amulet or reliquary)` 0 → **Amulet ×2 +
+      Reliquary ×2**, `hunting trap` 3 → **4/4**, `rope` 2 → **3/3**, plus Ink,
+      Parchment, Arrows, Rations, Crystal, Signet Ring, Staff (Arcane Focus)
+      and two artisan's supplies. The two `pouch` misses left are a pouch
+      *inside* a writing kit — under-granting, not wrong-granting.
+      **`common clothes` is a written `N`:** 21 kits name it, SRD 5.2.1 ships
+      only `Clothes, Fine` and `Clothes, Traveler's`, and R4 minted neither a
+      new card (out-of-SRD content) nor an approximate match. The prose keeps
+      saying it.
+      **F-toh-01** — `Spell Slots` / `Spells Known` rows are excluded from the
+      `granted_at_level` minimum (they still ship as features): `toh`
+      `Underfoot` **1 → 3**, and no other card moved. The alternative — teaching
+      the importer the 2014 archetype-level table — was rejected as rule
+      knowledge that does not belong in a mapper.
+      **F-a5e-ag-01** — `grants_save_prof_from_asi` corpus-wide **0 → 1**
+      (`a5e-ag` `Tenacious`, the only card whose source writes the mechanic).
+      The rule fires only when the save clause points back at the ability the
+      feat's own ASI raised, so a feat granting a *named* save proficiency is
+      not swept in.
+      **F-bfrd-01** — a clashing class-table column takes its heading from the
+      source's own `pk`: `Augment Effects Known (2)` → **`Augmented Items`**;
+      `(n)` stays as the fallback and has its own test.
+      *Gates:* `verify_packs` **0 disagree / 0 absent**, `ok` 68,926 and
+      `unsourced` 3,303 both steady — the `background` rule table is still
+      empty (§4 Warning 2), so **D1 could not have seen a single one of these
+      seven**, which is the finding set's own point; `gate_packs` green;
+      `dupe_census` "nothing installed" **0**, actionable redundancy 1,141;
+      `unmapped_report.json` unchanged (`alignment`, 3).
+      *Tests:* `flutter test test/tool/` **197/197** with a new
+      `chargen_r4_test.dart` (21 cases, one group per finding);
+      `wizard_pack_families_test` **44/44**, gaining F-toh-01's standing
+      assertion — a subclass opened at level 1 must have a level-1 feature that
+      is not a spell-progression row; `class_table_test` and
+      `background_equipment_test` had their old expectations rewritten, since
+      both encoded exactly the behaviour R4 changed. `flutter analyze` 0 errors
+      / 0 warnings. *Pre-existing, not R4's:* `pack_field_render_test`'s
+      "builtin SRD fields render" still fails identically (`pack.
+      content_quantities`, `levelTable`).
+      **Promoted.** `assets/open5e_packs/` was rebuilt and shipped here — R4's
+      exit assertion reads the *published* pack, and the published pack had
+      been four phases stale. The promoted delta is R1–R4 together: **43
+      categories, 10,004 values**; `manifest.json` and
+      `assets/first_party/manifest.json` regenerated.
 
 - [ ] **R5 — Four chargen mechanics with nowhere to live.** The schema half of
       the chargen work, each one the four-edit contract plus a resolver pass.
