@@ -60,7 +60,7 @@ tags: [file]
     rather than ambiguous — the other 828 filled rows all carry a real second
     damage, which has no schema counterpart at all.
 - **`trait_kind` is hardcoded `Other` on every trait row, and that is correct** (audit V1, 2026-08-14; **re-read against `ccdx`, `tob2`, `tob` and `tob3` 2026-08-18** — `CreatureTrait.type` is null on 1,016/1,016, 1,060/1,060, 1,123/1,123 and 1,230/1,230 there, so the constant is honest). `CreatureTrait.json` carries a `type` column but it is **null on all 8,613 rows in every document** in the pinned snapshot, so there is nothing to map. Do not "improve" this by classifying the trait's name or `desc` into the schema's six-value enum — that invents a field upstream does not have, which is exactly the `hp_dice` fabrication audit phase B11 was filed to remove. The cost is a `trait_kind` filter that cannot discriminate; that is a schema question, not a mapper one.
-- **Alignment is three-way, and only one branch gets the relation** (audit **B10**, 2026-08-14). `_alignment` routes `Creature.alignment` by shape: one of the nine canonical values → `alignment_ref`; anything else that contains an alignment word (`any|lawful|chaotic|neutral|good|evil|unaligned`) → **`alignment_note`** prose beside a *null* ref; neither → dropped and logged to the [[normalize]] sink. None of the 29 free-text expressions upstream (`any alignment`, `chaotic neutral or chaotic evil`, `Neutral Evil (50%) or Lawful Evil (50%)`) reduce to a canonical value, so a synonym normalizer would have converted 0 of 70 — and picking one arm of an "or" is the `hp_dice` fabrication again. The third branch is exactly the three rows corrupt in `Creature.json` itself (`Titan)`, `Shapechanger)` ×2), which must not be laundered into a prose field. 67 monsters carry a note; `unmapped_report.json` 70 → 3. Pinned by `test/tool/monster_alignment_test.dart`.
+- **Alignment is three-way, and only one branch gets the relation** (audit **B10**, 2026-08-14). `_alignment` routes `Creature.alignment` by shape: one of the nine canonical values → `alignment_ref`; anything else that contains an alignment word (`any|lawful|chaotic|neutral|good|evil|unaligned`) → **`alignment_note`** prose beside a *null* ref; neither → dropped and logged to the [[normalize]] sink. None of the 29 free-text expressions upstream (`any alignment`, `chaotic neutral or chaotic evil`, `Neutral Evil (50%) or Lawful Evil (50%)`) reduce to a canonical value, so a synonym normalizer would have converted 0 of 70 — and picking one arm of an "or" is the `hp_dice` fabrication again. The third branch is exactly the three rows corrupt in `Creature.json` itself (`Titan)`, `Shapechanger)` ×2), which must not be laundered into a prose field. 67 monsters carry a note; `unmapped_report.json` 70 → 3. **Re-measured 2026-08-19 by the `tob-2023` unit and confirmed**: those 3 rows are *the whole file*, all `tob-2023`'s, corrupt in v1 too; the document's other 13 unmatched values reach `alignment_note` losslessly, and its `alignment` column carries **21** distinct values, so F-pass0-26 does not spread here. Pinned by `test/tool/monster_alignment_test.dart`.
 - **Two `Creature` columns the mapper never opens** (F3 / Dalga 4, 2026-08-18):
   - **F-pass0-19 (❓ open, cause `M`):** `nonmagical_attack_resistance` /
     `nonmagical_attack_immunity`. Upstream states "from nonmagical attacks" in a
@@ -106,6 +106,31 @@ tags: [file]
     unit, where 30 of the 106 hits turned out to be an artefact of matching an
     **empty** `desc` against the pack's one empty-description entity; on
     non-empty rows the loose and parent-scoped methods agree, 76 ⟷ 76.)*
+- **v2 is read; v1 is only a fallback — and v1 is sometimes the *better* copy.**
+  B8's recovery fills a bucket v2 left **entirely** empty; it never repairs a v2
+  row that exists but is wrong. Two 2026-08-19 findings live in that gap.
+  - **F-tob-2023-01 (F3 / Dalga 4, ❓ open, cause `S`+`M`):** Mirror Hag's
+    *Reconfiguring Curse* is 1,030 characters in `v1/tob-2023/Monster.json` and
+    **333** in v2 — v2 stops exactly where the four named curses (Disfigured,
+    Sickly, Twisted, Withered, all mechanical) begin, and the card ships v2.
+    A corpus-wide v1 ⟷ v2 length sweep finds **exactly one** such row.
+  - **F-pass0-27 (F3 / Dalga 4, ❓ open, cause `S`+`M`):** v2 half-decoded some
+    unicode escapes (`\u00e600e6`), and the residue reaches the card —
+    **8 cards / 3 packs**: `væ00e6ttir` (`tob-2023`, 3 descriptions + one card
+    **name**), `collæ00e1is` (`tob2`, 2), and `tob3`'s two numeric rows where
+    `×` became `æ00d7` (*"2æ00d7 damage dice"*). v1 is clean in all three.
+    No gate sees either one: [[verify_packs]] compares the card against **v2**,
+    so a faithful copy of a broken row is `ok`.
+- **`legendary_action_cost` is never read** (**F-pass0-28**, F3 / Dalga 4,
+  2026-08-19, ❓ open, cause `D`+`M`). The column has no `creature-action`
+  schema field and no reader in `tool/` or `lib/`. Of **267** corpus rows
+  costing 2 or 3 actions, **152** lose the cost, so the card reads as a 1-cost
+  legendary action. Survival is accidental: when B8 recovers the row from v1 the
+  cost rides along inside the name (`Tail Attack (Costs 2 Actions)`), which is
+  why the distribution follows the recovery and not the source — `bfrd` 59/59
+  and `tob2` 13/13 kept, `a5e-mm` 52/52 and `tob-2023` 52/52 lost. Distinct from
+  **F-pass0-22** (the *duplicate* legendary row) and **F-tob-01** (the per-turn
+  `legendary_action_uses` count).
 - **Name sanitization** (Open5e scraper mis-segments stat blocks): `_cleanMonsterName` strips `Npc:` prefix + re-cases small-words. `_cleanChildName` drops trailing periods, lifts roll-table range rows (`1-4: Arm`→`Arm`), recovers a label from desc for purely-numeric names, strips leading list-counts and leaked attack clauses, reduces `Label: effect sentence`→`Label` (gated), and DROPS clearly-spurious full-sentence fragments (`_looksLikeSentenceFragment`: ≥4 lowercase-initial words, multiple sentences, or legendary-action preamble) — returning null skips the ref so no orphan ships.
   - **F-a5e-mm-01 (F3 / Dalga 4, 2026-08-19, ❓ open, cause `M`):** in
     `open5e-a5e-mm` the mis-segmentation runs the *other* way — the rule text is
