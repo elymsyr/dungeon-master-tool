@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/gate.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-19
 tags: [file]
 ---
 
@@ -31,7 +31,11 @@ tags: [file]
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
-- **Seven rules**: `monster-actionless` (all five action buckets empty), `orphan-child` (a `creature-action`/`trait` no statblock references), `dangling-hard-ref` (a uuid `_ref` with no entity behind it), `dangling-soft-ref` (`{slug|_lookup, name}` that resolves nowhere), `qualifier-strip`, `empty-equipment-option`, `bucket-skew`.
+- **Eight rules**: `monster-actionless` (all five action buckets empty), `orphan-child` (a `creature-action`/`trait` no statblock references), `dangling-hard-ref` (a uuid `_ref` with no entity behind it), `dangling-soft-ref` (`{slug|_lookup, name}` that resolves nowhere), `qualifier-strip`, `empty-equipment-option`, `bucket-skew`, `escape-residue`.
+- **R2 (2026-08-19) — `escape-residue`.** Yayınlanan hiçbir `name`/
+  `description` yarım çözülmüş unicode kaçışı (`æ` + dört hex, `Væ00e6ttir`)
+  taşıyamaz. [[mapper_monster]] onarımı yapıyor; bu kural geri gelmesini
+  engelliyor. Yayınlanan pakette 8 ihlal yakalıyor, yeniden üretilende 0.
 - **`bucket-skew` is §3.5's defect stated as a rule, not as a count.** Every statblock has actions and only some have bonus/reaction/legendary/lair ones, so a pack whose base `action_refs` are *strictly* outnumbered is a partial conversion — `open5e-tob3` shipped 2 against 307. Guarded by a 20-monster floor (`tdcs` ships 4 creatures) and strict `<`, so a tie reads as thin, which is [[audit_packs]]' question.
 - **`qualifier-strip` is an alarm, not a report.** [[mapper_monster]]'s `_ensureChild` disambiguates a colliding child with the creature name ("Scimitar (Firetamer)") and `findEntityIdByName` strips exactly that qualifier on a miss, so L0 measured **3,501** bundled rows whose stripped name is a built-in card. Nothing points at them today; the rule fires the day something does, instead of the ref silently landing on the generic card.
 - **Resolution scope matches the runtime**: a soft ref resolves across every installed package, so the index is the built-in pack plus the whole bundled corpus, keyed `(slug, name)` **case-sensitively** and NUL-separated — the same key [[dupe_census]] section C uses.

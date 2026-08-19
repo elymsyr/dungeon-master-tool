@@ -220,6 +220,12 @@ void _verifyPack({
 
     final rows = loadFixtures(doc.v2File(cat.file)).where(cat.owns).toList();
     final index = _indexByName(rows);
+    // **R2 / F-pass0-26.** A column that carries one single value across a
+    // whole document states nothing about any row in it (`a5e-mm` and `bfrd`
+    // say "chaotic evil" 946 times), and the mapper deliberately stops writing
+    // it — so the rule has to stop expecting it too, or the fix reads as a
+    // 946-row regression.
+    _alignmentCollapsed = cat.slug == 'monster' && _collapsed(rows, 'alignment');
 
     var matched = 0;
     var checked = 0;
@@ -463,12 +469,14 @@ final Map<String, List<_Rule>> _rules = {
     // Audit **B10**. Only the nine canonical values reach the relation; every
     // wildcard/compound expression ships as `alignment_note` prose instead.
     _Rule('alignment_ref', ['alignment'], (r) {
+      if (_alignmentCollapsed) return _collapsedAlignmentWhy;
       final a = _str(r['alignment']).trim();
       return _canonicalAlignments.contains(a.toLowerCase())
           ? _Expect.refName(a)
           : _Expect.nothing;
     }),
     _Rule('alignment_note', ['alignment'], (r) {
+      if (_alignmentCollapsed) return _collapsedAlignmentWhy;
       final a = _str(r['alignment']).trim();
       return (!_canonicalAlignments.contains(a.toLowerCase()) &&
               _alignmentWords.hasMatch(a))
@@ -491,8 +499,10 @@ final Map<String, List<_Rule>> _rules = {
     _Rule('condition_immunity_refs', ['condition_immunities'],
         (r) => _Expect.refNames(r['condition_immunities'] as List?)),
     _Rule('legendary_action_uses', const [],
-        (r) => _Expect.why('Open5e ships no count; the mapper writes the '
-            'SRD default of 3 whenever a legendary action exists')),
+        (r) => _Expect.why('v2 ships no count; it is read out of the v1 '
+            '`Monster.legendary_desc` prose ("can take 1 legendary action"), '
+            'which this tool does not load, and falls back to the SRD '
+            'default of 3')),
   ],
   'spell': [
     _Rule('level', ['level'], (r) => _int(r['level'])),
@@ -707,6 +717,27 @@ String _typeTag(Object? raw) {
   final s = _str(raw);
   if (s.isEmpty) return '';
   return RegExp(r'^[^(]+?\s*(\(.*\))$').firstMatch(s)?.group(1) ?? '';
+}
+
+/// Set per document before the `monster` rules run; see F-pass0-26.
+bool _alignmentCollapsed = false;
+
+final _collapsedAlignmentWhy = _Expect.why(
+    'the document\'s `alignment` column collapsed to one value on every row, '
+    'so it states nothing about this creature and the mapper writes nothing');
+
+/// True when [column] holds a single value across a whole document (§A5).
+bool _collapsed(List<Fixture> rows, String column) {
+  final seen = <String>{};
+  var filled = 0;
+  for (final r in rows) {
+    final v = _str(r[column]).trim();
+    if (v.isEmpty) continue;
+    filled++;
+    seen.add(v.toLowerCase());
+    if (seen.length > 1) return false;
+  }
+  return seen.length == 1 && filled > 20;
 }
 
 /// The nine canonical alignments plus `unaligned`, lowercased — restated here

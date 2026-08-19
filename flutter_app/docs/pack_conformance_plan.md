@@ -7,7 +7,22 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R2** (canavar aksiyon sadakati, 11 bulgu).
+> **Sıradaki iş: R3** (şemada evi olmayan dört canavar mekaniği, 4 bulgu).
+>
+> **R2 bitti (2026-08-19) — "canavar aksiyonları, sadakatle".** On bir kayıt
+> (F-pass0-17/18/21/22/24/25/26/27, F-a5e-mm-01, F-tob-01, F-tob-2023-01)
+> `mappers/monster.dart` içinde kapandı; durum satırı
+> **0 🔎 · 0 ❓ · 21 🛠 · 24 ✅ · 1 ⚪**. Ölçüm (`diff_packs`,
+> `../.tmp/packs-rebuild`): 8 canavar paketinde **5.397 değer**, korpüs net
+> **+346 varlık** — 2.768 `damage_type_ref`, −946 `alignment_ref`, 677
+> `is_attack`, 524 `action_refs`, 209 biçim niteliği, 2
+> `legendary_action_uses`. `verify_packs` **0 disagree / 0 absent**,
+> `unsourced` 3.303'te sabit; `verify.dart` çökmüş sütun kuralını öğrendi,
+> `gate.dart`'a `escape-residue` kapısı eklendi (yayınlanan pakette 8 ihlal
+> yakalıyor). `flutter test test/tool/` **158/158**, `flutter analyze` 0 hata.
+> F-pass0-24'ün 11 satırlık ölçümü kodda **161**'e çıktı (aynı kusurun aynı
+> biçimi; gerekçe §6 R2 kutusunda). `assets/open5e_packs/` **promote
+> edilmedi**.
 >
 > **R1 bitti (2026-08-19) — "büyü mapper'ı yuvarlamayı bırakır".** Sekiz kayıt
 > (F-pass0-11, F-wz-01, F-wz-02, F-pass0-12, F-pass0-13, F-pass0-16,

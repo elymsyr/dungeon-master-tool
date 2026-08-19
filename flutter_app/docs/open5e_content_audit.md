@@ -114,7 +114,10 @@ census "nothing installed" **0**, `gate_packs` green, catalog driftless.
 **Stage R**'s eight phases, **5 written rationales** and **1 out of scope**
 (§5.9). **R1 landed 2026-08-19** — the spell mapper stopped rounding, closing
 eight findings and moving **164 values on 140 spell cards** in the scratch
-rebuild (ledger now **32 🛠 · 13 ✅ · 1 ⚪**). **The next open phase is R2.**
+rebuild. **R2 landed 2026-08-19** — the monster mapper stopped speaking for the
+source, closing eleven findings and moving **5,397 values across 8 creature
+packs** (+346 entities net) in the same scratch rebuild (ledger now
+**21 🛠 · 24 ✅ · 1 ⚪**). **The next open phase is R3.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -283,11 +286,13 @@ gap (`S`) and stayed out of the ledger; `is_attack` did not — see F-pass0-25.
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**Stage F is closed and Stage R has begun. The next open phase is R2.**
-R1 landed 2026-08-19 (see its box in §6): eight findings closed in
-`mappers/spell.dart`, **164 values on 140 cards** corrected in
-`../.tmp/packs-rebuild`, `verify_packs --only spell` **0 disagree / 0 absent /
-0 unsourced**. `assets/open5e_packs/` was deliberately **not** promoted — Stage R
+**Stage F is closed and Stage R is under way. The next open phase is R3.**
+R1 and R2 landed 2026-08-19 (see their boxes in §6): eight findings closed in
+`mappers/spell.dart` (**164 values on 140 cards**) and eleven in
+`mappers/monster.dart` (**5,397 values, +346 entities net, across 8 creature
+packs**), all measured in `../.tmp/packs-rebuild`, with `verify_packs`
+**0 disagree / 0 absent** and `unsourced` unmoved at 3,303.
+`assets/open5e_packs/` was deliberately **not** promoted — Stage R
 promotes once, after its last mapper phase, so the assets churn one time instead
 of eight. F4 (2026-08-19) walked all
 **46** findings and gave each a verdict: **40 → fix**, **5 → written rationale**,
@@ -5289,7 +5294,7 @@ half** for the same reason. R7 and R8 are independent of everything else.
       **Not promoted:** `assets/open5e_packs/` is untouched — Stage R promotes
       once, after its last mapper phase.
 
-- [ ] **R2 — Monster actions, faithfully.** Eleven findings, one file
+- [x] **R2 — Monster actions, faithfully. Done 2026-08-19.** Eleven findings, one file
       (`mappers/monster.dart`), no schema change — this is the largest phase in
       Stage R and the one with the most interaction between its parts.
       **Two are upstream damage the pipeline can repair from data it already
@@ -5318,6 +5323,63 @@ half** for the same reason. R7 and R8 are independent of everything else.
       F-pass0-17's dedup change and `dupe_census` "nothing installed" stays 0, and
       `test/tool/creature_action_fallback_test.dart` gains the 10-creature case
       plus a truncation and a mojibake case.*
+
+      **Exit met.** `mappers/monster.dart` grew four rules that read what the
+      source wrote and three that stop writing what it didn't: the child
+      content hash now includes the **name** (F-pass0-17, two creatures'
+      identical attack prose no longer collapse into one card), `is_attack`
+      reads the row's own *"Melee Weapon Attack:"* opener when no attack
+      fixture exists (F-pass0-25), `extra_damage_type` supplies the **primary**
+      damage type whenever `extra_damage_die_type` is empty (F-pass0-18),
+      `limited_to_form` becomes upstream's own `(Skunk Form Only) ` prose
+      prefix (F-pass0-21); `alignment` is **not written at all** for a document
+      whose column collapsed to one value (F-pass0-26), a
+      `… (Costs N Actions)` action that duplicates a legendary row is dropped
+      (F-pass0-22), and `legendary_action_uses` comes from v1's
+      `legendary_desc` prose before falling back to the SRD 3 (F-tob-01). Two
+      upstream defects are repaired from data already loaded: v2's truncated
+      *Reconfiguring Curse* is replaced by v1's full 1,030 characters when one
+      is a strict prefix of the other and markedly longer (F-tob-2023-01), and
+      the half-resolved escape `æ` + four hex digits is restored to the
+      character those digits name (F-pass0-27) — with a new `escape-residue`
+      rule in `gate.dart` so it cannot return silently. A row whose rule text
+      upstream wrote into `name` with an empty `desc` is published rather than
+      dropped, under a shortened title (F-a5e-mm-01), and the v1 recovery's
+      bucket test dropped to the **row**, matched by text (F-pass0-24).
+
+      **Measured** (`diff_packs --new ../.tmp/packs-rebuild`, which still
+      carries R1's 164 spell values on top): **5,397 values on 8 creature
+      packs** — 2,768 `damage_type_ref` added, 946 `alignment_ref` removed, 677
+      `is_attack` corrected, 524 `action_refs` re-pointed, 209 `description`
+      form qualifiers, 8 `damage_dice` and 7 `attack_bonus` corrected by the
+      dedup fix, 2 `legendary_action_uses` 3 → 1. Corpus **+346 entities net**
+      (creature-action +429 / −98, trait +15), inside the phase's <400 budget.
+      `verify_packs` **0 disagree / 0 absent**, `unsourced` **3,303** — bit for
+      bit the pre-phase baseline, so nothing new is fabricated; the 946
+      alignment rows became `unverifiable` **with a stated reason**, because
+      `verify.dart` had to learn the same collapsed-column rule (a corrected
+      card otherwise reads as a 946-row regression). `gate_packs` green on the
+      rebuild and **8 violations** on the shipped assets, which is the new rule
+      proving it fires. `dupe_census` "nothing installed" **0**.
+
+      **F-pass0-24 was under-measured.** The finding priced the per-row
+      recovery at 11 actions on 10 creatures; in code it recovers **161 rows
+      outside tob3** (tob3 already took 1,368 under B8). The extra rows are the
+      same defect in the same shape — v2 converted only the legendary
+      *shortcut* (*"The dragon uses Psionic Wave."*) and left the actual action
+      text in v1 alone, so a5e-mm's Kraken shipped with no `Tentacle` attack at
+      all. Every recovered string is the source's own. Stated limit: v1's prose
+      is punctuated worse than v2's (some commas are missing), so a recovered
+      row reads slightly rougher than a converted one — that is the whole cost
+      of having the rule at all.
+
+      Regression tests: `test/tool/monster_fidelity_test.dart` (**24 tests**,
+      one group per finding) plus `creature_action_fallback_test.dart` reworked
+      for the per-row rule (its "never overrides a populated bucket" case is
+      now "keeps v2 and gains v1's extra rows"). `flutter test test/tool/`
+      **158/158 green**, `flutter analyze` 0 errors / 0 warnings.
+      **Not promoted:** `assets/open5e_packs/` is untouched — Stage R promotes
+      once, after its last mapper phase.
 
 - [ ] **R3 — Four monster mechanics with nowhere to live.** The findings whose
       value is in the source, read or readable, and has **no schema field** —

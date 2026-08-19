@@ -63,6 +63,12 @@ void main(List<String> args) {
   // `tags_line` has no v2 source at all. Keyed by the same doc map.
   final v1Subtypes = _v1SubtypeIndex(dataRoot);
 
+  // v1 `Monster.legendary_desc` index (R2 / F-tob-01) — the count of legendary
+  // actions per round is stated only in that prose ("can take 1 legendary
+  // action"); v2 dropped it and the mapper was writing the SRD default of 3
+  // over the top of it.
+  final v1LegendaryUses = _v1LegendaryUsesIndex(dataRoot);
+
   // Class names a spell's `class_refs` softRef can actually land on (audit L3).
   // The built-in pack is in scope in every world (§2.1), so its twelve classes
   // are the safe targets; a tag naming anything else stays a tag only.
@@ -127,6 +133,8 @@ void main(List<String> args) {
         traits: loadFixtures(doc.v2File('CreatureTrait.json')),
         v1Actions: (v1Doc == null ? null : v1Actions[v1Doc]) ?? const {},
         v1Subtypes: (v1Doc == null ? null : v1Subtypes[v1Doc]) ?? const {},
+        v1LegendaryUses:
+            (v1Doc == null ? null : v1LegendaryUses[v1Doc]) ?? const {},
       );
     }
     if (doc.hasSpells) {
@@ -426,6 +434,32 @@ Map<String, V1ActionIndex> _v1ActionIndex(String dataRoot) {
         if (rows.isNotEmpty) buckets[col.value] = rows;
       }
       if (buckets.isNotEmpty) byName[name.toLowerCase()] = buckets;
+    }
+    if (byName.isNotEmpty) out[slug] = byName;
+  }
+  return out;
+}
+
+/// Build `v1doc → {lowercased monster name: legendary actions per round}` from
+/// every `v1/<doc>/Monster.json`. Only rows whose `legendary_desc` actually
+/// states a number are indexed; a creature the source is silent about keeps the
+/// SRD default. See F-tob-01.
+Map<String, Map<String, int>> _v1LegendaryUsesIndex(String dataRoot) {
+  final out = <String, Map<String, int>>{};
+  final count = RegExp(r'can take (\d+)|take (\d+) legendary', caseSensitive: false);
+  final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
+  if (!v1.existsSync()) return out;
+  for (final ent in v1.listSync().whereType<Directory>()) {
+    final slug = ent.path.split(Platform.pathSeparator).last;
+    final byName = <String, int>{};
+    for (final m
+        in loadFixtures('${ent.path}${Platform.pathSeparator}Monster.json')) {
+      final name = (m['name'] as String?)?.trim();
+      final desc = (m['legendary_desc'] as String?)?.trim() ?? '';
+      if (name == null || name.isEmpty || desc.isEmpty) continue;
+      final hit = count.firstMatch(desc);
+      final n = int.tryParse(hit?.group(1) ?? hit?.group(2) ?? '');
+      if (n != null && n > 0) byName[name.toLowerCase()] = n;
     }
     if (byName.isNotEmpty) out[slug] = byName;
   }

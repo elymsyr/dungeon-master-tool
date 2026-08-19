@@ -99,6 +99,10 @@ const _kitlessUpstream = <String>{
   'open5e-toh/Trophy Hunter / A',
 };
 
+/// See the `escape-residue` rule: `Væ00e6ttir` is `Vættir` with the escape
+/// marker collapsed and the code point left behind as text.
+final _escapeResidue = RegExp(r'æ00[0-9a-fA-F]{2}');
+
 class GateViolation {
   GateViolation(this.pack, this.rule, this.subject, this.detail);
 
@@ -301,6 +305,25 @@ GateReport gatePacks(
         report.violations.add(GateViolation(
             pack, 'dangling-soft-ref', name, '$key → $slug/"$target"'));
       });
+    });
+
+    // **R2 / F-pass0-27.** Upstream's half-resolved unicode escapes (`æ` plus
+    // the four hex digits of the character it stood for) shipped straight to
+    // eight cards, one of them a card *name*, and no gate could see it: the
+    // text matched the source byte for byte. The mapper repairs it; this rule
+    // is what stops it returning silently.
+    entities.forEach((id, raw) {
+      if (raw is! Map) return;
+      for (final key in const ['name', 'description']) {
+        final v = raw[key];
+        if (v is String && _escapeResidue.hasMatch(v)) {
+          report.violations.add(GateViolation(
+              pack,
+              'escape-residue',
+              raw['name']?.toString() ?? id,
+              '$key carries a half-resolved unicode escape'));
+        }
+      }
     });
 
     entities.forEach((id, raw) {

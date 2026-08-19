@@ -31,10 +31,44 @@ tags: [file]
 - Spec / reference: [[Open5e-API]], [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` — **filed 2026-08-18 as F-tob-01**, cause `M`: `Jotun Giant` and `Zmey` say "can take 1", and `Vampire Warlock - Variant` states no count at all, yet all three ship `3`; the preamble sentence itself never reaches the pack, so the card cannot be checked against it. **Widened 2026-08-19 by the `a5e-mm` unit:** the v1 sweep could not see `a5e-mm`, which has no v1 document and puts the count in a v2 `CreatureAction.name` (*"The aboleth can take 2 legendary actions"*) — **16 of 66** declarations there contradict the constant, so the record is corpus-wide at **19**), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
+
+> [!success] R2 — canavar aksiyon sadakati (2026-08-19)
+> On bir bulgu bu dosyada kapandı. Yeni kurallar:
+> - `_ensureChild`'ın içerik-hash'ine **ad** katıldı (F-pass0-17) — metni
+>   birebir aynı iki farklı silah artık tek kartta birleşmiyor.
+> - `is_attack`, attack fixture'ı yoksa satırın kendi metnindeki
+>   *"Melee/Ranged … Attack:"* açılışını okuyor (F-pass0-25, `_descIsAttack`).
+> - `_primaryDamageType`: `damage_type` boş **ve** `extra_damage_die_type` de
+>   boşsa `extra_damage_type` **birincil** tiptir (F-pass0-18).
+> - `_formQualified`: `limited_to_form` upstream'in kendi geleneğiyle
+>   `desc`'in başına `(Skunk Form Only) ` diye yazılıyor (F-pass0-21).
+> - `_collapsedColumn`: bir belgenin `alignment` sütunu tek değere çökmüşse
+>   (`n_distinct == 1 && n_rows > 20`) alan **hiç yazılmıyor** (F-pass0-26);
+>   [[verify_packs]] aynı kuralı öğrendi, yoksa düzelmiş kart `absent` okur.
+> - `_costsActionsName`: aynı ebeveynde aynı metinli `LEGENDARY_ACTION` varsa
+>   `… (Costs N Actions)` adlı `ACTION` satırı atlanıyor (F-pass0-22).
+> - `legendary_action_uses` v1 `legendary_desc` düzyazısından geliyor, yoksa
+>   SRD varsayılanı 3 (F-tob-01; indeks [[build_packs]]'te).
+> - `_repairRow` üç onarımı tek yerde topluyor: `_fixEscapes` (F-pass0-27, `æ`
+>   + dört hex → hex'in adlandırdığı karakter; [[gate_packs]]'e
+>   `escape-residue` kuralı eklendi), v2 kesikse v1'in **önek olan ve belirgin
+>   uzun** kopyası (F-tob-2023-01), ve `desc` boşken kuralı `name`'den alıp
+>   kısaltılmış başlıkla yayımlama (F-a5e-mm-01).
+> - **v1 kurtarması artık satır bazında** ve **metinle** eşleşiyor
+>   (F-pass0-24): kova dolu olsa da metni hiçbir çocukta olmayan v1 satırı
+>   yayımlanıyor. Ölçüm bulgunun 11'i değil **tob3 dışında 161** çıktı — aynı
+>   kusurun aynı biçimi (v2 yalnız efsanevi kısayolu çevirmiş).
+>
+> Ölçüm: 8 canavar paketinde **5.397 değer**, net **+346 varlık**;
+> `verify_packs` 0 disagree / 0 absent, `unsourced` 3.303 sabit; `gate_packs`
+> yeşil; `dupe_census` 0. Testler: `test/tool/monster_fidelity_test.dart` (24)
+> + `creature_action_fallback_test.dart` (yeniden yazıldı), `test/tool/`
+> **158/158**. `assets/open5e_packs/` promote **edilmedi**.
+
+- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` — **filed 2026-08-18 as F-tob-01, fixed by R2 2026-08-19**, cause `M`: `Jotun Giant` and `Zmey` say "can take 1", and `Vampire Warlock - Variant` states no count at all, yet all three ship `3`; the preamble sentence itself never reaches the pack, so the card cannot be checked against it. **Widened 2026-08-19 by the `a5e-mm` unit:** the v1 sweep could not see `a5e-mm`, which has no v1 document and puts the count in a v2 `CreatureAction.name` (*"The aboleth can take 2 legendary actions"*) — **16 of 66** declarations there contradict the constant, so the record is corpus-wide at **19**), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
   - ✅ **`open5e-tob3`'s empty Actions block was never this switch's fault** (audit **B8**, fixed 2026-07-31). The pack shipped **2** `action_refs` against 136 bonus / 96 reaction / 75 legendary, and the natural reading was a mis-set enum. The pinned snapshot says otherwise: `tob3/CreatureAction.json` genuinely holds 309 rows for 397 creatures with 2 `ACTION` among them, and the three non-`ACTION` buckets match `v1/tob3/Monster.json` **row for row** (136 / 96 / 75). Upstream's v2 conversion dropped one column; the mapper was faithful. Nothing caught it — the refs that existed all resolved, so the build gate passed, and the per-field census still read `action_refs` as "filled". **[[gate_packs]] is that gate, and it shipped 2026-08-10**: `monster-actionless` plus `bucket-skew` ("the base action bucket cannot be outnumbered by the situational ones"), run by [[build_packs]] over its own output.
 - **v1 action backfill** (audit **B8**): after the v2 loop, any of the four buckets **left entirely empty for this creature** is filled from `v1Actions[rawName.toLowerCase()]` through the *same* `_cleanChildName` + `_ensureChild` path, so recovered rows inherit the sanitizer, the content dedup and the `Name (Creature)` disambiguation.
-  - **F-pass0-24 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** "entirely
+  - **F-pass0-24 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `M`):** "entirely
     empty" is the wrong granularity. A bucket v2 converted **partially** is not
     empty, so the v1 rows behind it are never read — and B8's write-up puts the
     cost of that at "one monster: Abaasy". Measured by **text** across the
@@ -51,7 +85,7 @@ tags: [file]
   - Result on the rebuild: `monster.action_refs` **86% → 99.8%** (2880/2885), tob3's actionless monsters **396 → 1**. Tests: `flutter_app/test/tool/creature_action_fallback_test.dart` (8 cases).
 - **`tags_line` comes from **v1**, not from splitting `type`** (audit B5, 2026-08-14). `_creatureType` does split `"humanoid (elf)"` correctly, but that form occurs on **0 of 3,541** v2 `Creature.type` rows — the v2 conversion moved the subtype into its own column and then dropped it. `mapCreatures(v1Subtypes:)` takes a `lowercased name → subtype` map built by [[build_packs]]' `_v1SubtypeIndex` from `v1/<doc>/Monster.json`, keyed by the same `_v1DocForCreatures` map B8's action backfill uses. **A v2 tag always wins**, so the backfill can never override a sourced value. 292 of 2,885 shipped monsters carry one; pinned by `test/tool/monster_tags_line_test.dart`.
 - **`damage_type_ref` is 0% and cannot be fixed here** (audit B5). The mapper reads and resolves `CreatureActionAttack.damage_type`; all 576 source rows that carry one are in `srd-2014`/`srd-2024`, which [[build_packs]] skips publisher-wide. Every attack row in a shipping document is null. Don't "fix" the mapper — there is nothing to read.
-  - **F-pass0-18 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** the "nothing
+  - **F-pass0-18 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `M`):** the "nothing
     to read" half is wrong — only the *column that is read* is empty. When an
     attack row has no genuine extra damage (`extra_damage_die_type` null), the
     neighbouring `extra_damage_type` holds the **primary** damage type:
@@ -89,7 +123,7 @@ tags: [file]
     The value is in v1 `Monster.senses`, the same file already read for
     `tags_line`.
 - **Child dedup** (`_ensureChild`): content-hashed (`type|description|sorted-attrs`) so identical actions/traits across creatures are authored once; name collisions on different content are disambiguated with ` (CreatureName)` / ` (CreatureName N)`.
-  - **F-pass0-17 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `D`):** **the name is
+  - **F-pass0-17 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `D`):** **the name is
     not in the hash.** Statblock attack text is formulaic, so two different
     weapons with the same numbers hash identically and merge — the first name
     wins and the other creature's ref lands on it. **382** child rows across 7
@@ -109,12 +143,12 @@ tags: [file]
 - **v2 is read; v1 is only a fallback — and v1 is sometimes the *better* copy.**
   B8's recovery fills a bucket v2 left **entirely** empty; it never repairs a v2
   row that exists but is wrong. Two 2026-08-19 findings live in that gap.
-  - **F-tob-2023-01 (F3 / Dalga 4, ❓ open, cause `S`+`M`):** Mirror Hag's
+  - **F-tob-2023-01 (F3 / Dalga 4 — **fixed by R2, 2026-08-19**, cause `S`+`M`):** Mirror Hag's
     *Reconfiguring Curse* is 1,030 characters in `v1/tob-2023/Monster.json` and
     **333** in v2 — v2 stops exactly where the four named curses (Disfigured,
     Sickly, Twisted, Withered, all mechanical) begin, and the card ships v2.
     A corpus-wide v1 ⟷ v2 length sweep finds **exactly one** such row.
-  - **F-pass0-27 (F3 / Dalga 4, ❓ open, cause `S`+`M`):** v2 half-decoded some
+  - **F-pass0-27 (F3 / Dalga 4 — **fixed by R2, 2026-08-19**, cause `S`+`M`):** v2 half-decoded some
     unicode escapes (`\u00e600e6`), and the residue reaches the card —
     **8 cards / 3 packs**: `væ00e6ttir` (`tob-2023`, 3 descriptions + one card
     **name**), `collæ00e1is` (`tob2`, 2), and `tob3`'s two numeric rows where
@@ -132,7 +166,7 @@ tags: [file]
   **F-pass0-22** (the *duplicate* legendary row) and **F-tob-01** (the per-turn
   `legendary_action_uses` count).
 - **Name sanitization** (Open5e scraper mis-segments stat blocks): `_cleanMonsterName` strips `Npc:` prefix + re-cases small-words. `_cleanChildName` drops trailing periods, lifts roll-table range rows (`1-4: Arm`→`Arm`), recovers a label from desc for purely-numeric names, strips leading list-counts and leaked attack clauses, reduces `Label: effect sentence`→`Label` (gated), and DROPS clearly-spurious full-sentence fragments (`_looksLikeSentenceFragment`: ≥4 lowercase-initial words, multiple sentences, or legendary-action preamble) — returning null skips the ref so no orphan ships.
-  - **F-a5e-mm-01 (F3 / Dalga 4, 2026-08-19, ❓ open, cause `M`):** in
+  - **F-a5e-mm-01 (F3 / Dalga 4, 2026-08-19 — **fixed by R2, 2026-08-19**, cause `M`):** in
     `open5e-a5e-mm` the mis-segmentation runs the *other* way — the rule text is
     in `name` and its continuation in `desc` — so the fragment guard drops the
     row and its rule ships nowhere: **57 rows on 41 monsters**, 19 of them
@@ -146,7 +180,7 @@ tags: [file]
     **lossless** (2,519/2,519).
 - **`hp_dice` is copied or absent, never invented** (audit **B11**, fixed 2026-08-10). `_monsterRow` used to write `hit_dice ?? '1d4'`, and `open5e-bfrd` has `hit_dice: null` on **all 360** of its creatures — so that pack shipped a `1d4` die pool next to a 165-HP Aboleth's own `hp_average`. Neither census could see it (`hp_dice` was a filled string on every row of every pack, so [[audit_packs]] read 100% and the corpus-wide-constant ⚠ could not fire); [[verify_packs]]' `unsourced` column is what caught it. Of the two honest shapes, **omit** was chosen over deriving from `hp_average` + CON + size — a derivation is inference, not source, and would owe an `unverifiable` rule declaring the field unmeasurable. Rebuild effect: 360 removals, **all in `open5e-bfrd`**, no other pack moved; corpus `unsourced` 3,663 → 3,303. Tests: `flutter_app/test/tool/monster_hp_dice_test.dart` (4 cases).
 - **`alignment_ref` is copied, and in two documents the copy is a constant.**
-  - **F-pass0-26 (F3 / Dalga 4, 2026-08-19, ❓ open, cause `S`):** v2
+  - **F-pass0-26 (F3 / Dalga 4, 2026-08-19 — **fixed by R2, 2026-08-19**, cause `S`):** v2
     `Creature.alignment` is `"chaotic evil"` on **946/946** rows of `a5e-mm` +
     `bfrd` — the other eight documents carry 10–21 distinct values — so every
     monster in those two packs, Pixie and Unicorn included, ships as
@@ -156,7 +190,7 @@ tags: [file]
     silence — or `alignment_note` — was available.
 - **Stat derivation**: `_crString` maps decimals to fractions (0.125→`1/8`); `_profForCr` and `_xpByCr` (full CR→XP table 0..30) backfill proficiency bonus + XP when Open5e omits them. `_saveTable`/`_skillTable` reconstruct proficiency tables by back-solving `misc = bonus - abilityMod - PB`.
 - Attack mapping (`_actionRow`): derives `attack_kind` (Melee/Ranged × Weapon/Spell from reach/range/attack_type), `damage_dice` (`XdY±Z`), recharge (`RECHARGE_ON_ROLL`→`recharge_min_roll`, `PER_DAY`→`uses_per_day`).
-  - **F-pass0-25 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** `is_attack`
+  - **F-pass0-25 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `M`):** `is_attack`
     is written as `attack != null` (and hardcoded `false` on the v1 recovery
     path), i.e. "no `CreatureActionAttack` row" is published as the positive
     claim *"not an attack"*. `tob3` has **no attack fixture at all**, so the
@@ -168,7 +202,7 @@ tags: [file]
     reason (§6 B8, cause `S`). The schema field is a plain boolean, so there is
     no "unknown" to write — deriving `true` from the row's own text is the only
     fix that invents nothing.
-  - **F-pass0-21 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** `_actionRow`
+  - **F-pass0-21 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `M`):** `_actionRow`
     never reads `CreatureAction.limited_to_form`, so a shapechanger's form-locked
     attack ships unconditional — Aniwye's `Rock` (*Giant Form Only*) and
     `Bite`/`Claw` (*Skunk Form Only*) all render as always-available. The column
@@ -178,7 +212,7 @@ tags: [file]
     only in `desc`, and those do reach the card. `legendary_action_cost` (29 rows
     in `tob2`) is the harmless neighbour — no schema field, but the action name
     already says *"(Costs 2 Actions)"*.
-  - **F-pass0-22 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `S`):** that name is
+  - **F-pass0-22 (F3 / Dalga 4, 2026-08-18 — **fixed by R2, 2026-08-19**, cause `S`):** that name is
     the other half of the story. Upstream emits the same legendary action
     **twice** — once `LEGENDARY_ACTION` with `legendary_action_cost`, once
     `ACTION` named `… (Costs N Actions)` — and since `_contentHash` includes the
