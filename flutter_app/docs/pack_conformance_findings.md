@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 32 | 13 | 1 | 0 | **46** |
+| 0 | 0 | 21 | 24 | 1 | 0 | **46** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -125,6 +125,30 @@ F-spells-that-dont-suck-01, F-spells-that-dont-suck-02); 🛠 sayacı 40 → 32,
 eklendi, 5 düzeltildi, 6 `area_shape_ref` + 6 `area_size_ft` eklendi, 1
 `requires_concentration`. `verify_packs --only spell`: **0 disagree /
 0 absent / 0 unsourced**.
+
+**R2 uygulandı (2026-08-19).** On bir kayıt koda döküldü ve kapandı
+(F-pass0-17, F-pass0-18, F-pass0-21, F-pass0-22, F-pass0-24, F-pass0-25,
+F-pass0-26, F-pass0-27, F-a5e-mm-01, F-tob-01, F-tob-2023-01); 🛠 sayacı
+32 → 21, ✅ 13 → 24. Ölçülen etki (`diff_packs`, `../.tmp/packs-rebuild`):
+**8 canavar paketinde 5.397 değer** değişti — 2.768 `damage_type_ref` eklendi,
+946 `alignment_ref` silindi, 677 `is_attack` düzeldi, 524 `action_refs`,
+209 `description` biçim niteliği kazandı, 2 `legendary_action_uses` 3 → 1.
+Korpüs **+346 varlık** net büyüdü (+429 / −98 `creature-action`, +15 `trait`).
+`verify_packs`: **0 disagree / 0 absent**, `unsourced` 3.303'te sabit
+(taban ile birebir), 946 hizalama satırı `absent`ten gerekçeli
+`unverifiable`a taşındı. `gate_packs` yeşil ve yeni `escape-residue` kuralı
+yayınlanan pakette **8 ihlali** yakalıyor (yani kapı çalışıyor), `dupe_census`
+"nothing installed" **0**.
+
+> **F-pass0-24 ölçüm düzeltmesi.** Bulgu satır bazlı kurtarmanın bedelini
+> **11 aksiyon / 10 canavar** diye ölçmüştü; kural koda döküldüğünde gerçek
+> sayı **tob3 dışında 161** çıktı (a5e-mm 42, tob-2023 68, bfrd 28, ccdx 9,
+> tob 6, tob2 7, tdcs 1 — tob3 zaten B8 ile 1.368 alıyordu). Bulgunun
+> saydığı 11'in hepsi bunların içinde; fazlası aynı kusurun aynı biçimi:
+> v2 yalnız efsanevi *kısayolu* çevirmiş (`"The dragon uses Psionic Wave."`),
+> asıl aksiyonun metni yalnız v1'de duruyor — a5e-mm Kraken'in `Tentacle`
+> saldırısı kartta hiç yoktu. Metin kaynağın; ölçüm bulguya değil koda göre
+> yazıldı.
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -2512,7 +2536,7 @@ EOF
 | **Checklist** | checklist D1 (değer kaynakla aynı değil) |
 | **Kategori / etki** | `creature-action` 328 + `trait` 54 satır: ebeveyn canavar, kendi satırının adı yerine metni aynı olan **başka** bir canavarın satırının adına ref veriyor; 6 `trait`'te ad kullanım sayısı taşıdığı için mekanik de değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`) |
 | **Cause code (öneri)** | `D` — `mappers/monster.dart` `_ensureChild` içerik-hash'iyle (`_contentHash`, tip + `description` + öznitelikler) birleştiriyor; **ad hash'e girmiyor**, bu yüzden metni birebir aynı olan iki farklı silah tek varlıkta toplanıyor ve ilk gelenin adı kazanıyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** Statblock saldırı metni kalıplı: *"Melee Weapon Attack: +5 to hit,
 reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage."* Aynı vuruş
@@ -2627,7 +2651,7 @@ EOF
    §3.2'ye "ad birleşmede kaybolabilir" satırı yazılır (C8). Kartın yanlış ad
    göstermesi bilinçli kabul edilmiş olur.
 
-**Karar.** **düzelt** — seçenek 1 (`name` içerik-hash'ine katılır); 382 satır kendi adına kavuşur, korpüs %1,8'den az büyür. Yalnız `trait`te düzeltmek (seçenek 2) "Mining Pick"i `Bite` göstermeye devam ederdi. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`name` içerik-hash'ine katılır); 382 satır kendi adına kavuşur, korpüs %1,8'den az büyür. Yalnız `trait`te düzeltmek (seçenek 2) "Mining Pick"i `Bite` göstermeye devam ederdi. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-18 — §5.8 `damage_type_ref`'i "tipli satırların hepsi atlanan WotC belgelerinde" diye kapatıyor; tip komşu sütunda, 3.479 yayınlanan satırda
 
@@ -2637,7 +2661,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
 | **Kategori / etki** | `creature-action` — `damage_type_ref` 0/1.148 (`ccdx`); hasar tipi yalnız `description` düzyazısında, tipli alan boş → hasar tipine göre süzme, direnç/bağışıklık eşleştirmesi ve `damage_dice` ile birlikte anlamlı bir saldırı satırı yok |
 | **Cause code (öneri)** | `M` — kaynakta değer var, mapper okumuyor: `mappers/monster.dart` yalnız `attack['damage_type']`'a bakıyor, oysa `CreatureActionAttack.damage_type` korpüsün 5.244 satırının **576'sında** dolu ve hepsi atlanan iki WotC belgesinde; üçüncü taraf belgelerde aynı bilgi `extra_damage_type` sütununda duruyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** §5.8 satırı (B5, 2026-08-14) şunu diyor: *"closed by B5: all 576 typed
 attack rows are in the two skipped WotC documents"*. Ölçüm bunu doğruluyor —
@@ -2712,7 +2736,7 @@ EOF
 3. **Yukarı taşı** — Open5e'ye sütun ayrımı bildirilsin (`damage_type` birincil,
    `extra_damage_*` yalnız ek hasar); pipeline değişmez.
 
-**Karar.** **düzelt** — seçenek 1 (`damage_type` ve `extra_damage_die_type` boşken `extra_damage_type` birincil tip sayılır); 3.479 satır tiplenir, aşırı yükleme riski ölçülmüş ayrımla kapanıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`damage_type` ve `extra_damage_die_type` boşken `extra_damage_type` birincil tip sayılır); 3.479 satır tiplenir, aşırı yükleme riski ölçülmüş ayrımla kapanıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-19 — "nonmagical saldırılara karşı" kaydı düşüyor: kart 88 canavarda koşulsuz bludgeoning/piercing/slashing direnci gösteriyor
 
@@ -2890,7 +2914,7 @@ EOF
 | **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
 | **Kategori / etki** | `creature-action` — `CreatureAction.limited_to_form` hiç okunmuyor; şekil değiştiren 218 satırda kart *"Giant Form Only"* / *"Skunk Form Only"* niteliğini düşürüyor, saldırı her biçimde kullanılabilir görünüyor |
 | **Cause code (öneri)** | `M` — kaynakta ayrı bir sütun var (`limited_to_form`, korpüste 262 satırda dolu), `mappers/monster.dart` `_actionRow` bu sütuna hiç bakmıyor; şemada karşılığı olan alan yok ama **upstream'in kendi ikinci geleneği** (niteliği `desc`'in başına parantezle yazmak) 13 satırda zaten kullanılıyor ve o satırlarda bilgi karta iniyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** `tob2`'nin Aniwye'si (ogre / dev / kokarca üç biçimli) dört saldırı
 satırı taşıyor ve her birinin kaynakta bir biçim niteliği var: `Bite` ve `Claw`
@@ -2976,7 +3000,7 @@ EOF
    canavarların biçim niteliği düşüyor" satırı yazılır (C8), kayıp bilinçli
    kabul edilir.
 
-**Karar.** **düzelt** — seçenek 2 (`(Skunk Form Only) ` öneki `description`'ın başına); upstream'in 13 satırda zaten kullandığı gelenek, şema büyümüyor, ad bozulmuyor. F-pass0-17 adı zaten hash'e kattığı için seçenek 1'in ek faydası kalmadı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 2 (`(Skunk Form Only) ` öneki `description`'ın başına); upstream'in 13 satırda zaten kullandığı gelenek, şema büyümüyor, ad bozulmuyor. F-pass0-17 adı zaten hash'e kattığı için seçenek 1'in ek faydası kalmadı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -2988,7 +3012,7 @@ EOF
 | **Checklist** | checklist A5 (tek-sabit sütun: sabitin dürüst olmadığı yer) |
 | **Kategori / etki** | `monster` — `legendary_action_uses` 27/391 satırın **3'ünde** kaynağa aykırı: `Jotun Giant` ve `Zmey` v1 `legendary_desc`'te *"can take 1 legendary action"* diyor, `Vampire Warlock - Variant` hiç sayı vermiyor; üçünde de kartta **3** yazıyor → oyuncu tur başına üç kat aksiyon hakkı görüyor; **`a5e-mm`'de 66 beyanın 16'sı aykırı** (aşağıdaki dağılım) |
 | **Cause code (öneri)** | `M` — sayı kaynakta **var** (v1 `Monster.legendary_desc` düzyazısı) ama okunmuyor; `mappers/monster.dart` efsanevi aksiyonu olan her canavara SRD varsayılanı 3'ü yazıyor, `verify_packs` da bunu *"no column — the mapper writes the SRD default of 3"* diye `unverifiable` sayıyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** Sabit `ccdx` ve `tob2` birimlerinde iki kez sınandı ve orada **dürüst**
 çıktı (`tob2`: 9/9 *"can take 3"*). `tob` korpüsteki tek istisna: v1
@@ -3062,7 +3086,7 @@ sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
    korpüste 3 satırda kaynağa aykırıdır" satırı yazılır (C8) ve sapma bilinçli
    kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (v1 `legendary_desc` içindeki `can take (N)`, yoksa SRD varsayılanı 3); dosya `tags_line` için zaten okunuyor, `verify_packs` kuralı da buna göre güncellenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (v1 `legendary_desc` içindeki `can take (N)`, yoksa SRD varsayılanı 3); dosya `tags_line` için zaten okunuyor, `verify_packs` kuralı da buna göre güncellenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3074,7 +3098,7 @@ sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
 | **Checklist** | checklist A3 (kaynağın vermediği bir izin kartta duruyor) |
 | **Kategori / etki** | `creature-action` — 114 satır hem `LEGENDARY_ACTION` hem de `ACTION` olarak iki kez yayınlanıyor; ikincisi `action_refs`'e giriyor, yani efsanevi bir aksiyon canavarın **normal aksiyon listesinde** de duruyor (`Aboleth, Nihilith`: `Psychic Drain` hem efsanevi hem aksiyon) |
 | **Cause code (öneri)** | `S` — satır kaynakta **öyle** duruyor: upstream aynı metni bir kez `LEGENDARY_ACTION` + `legendary_action_cost`, bir kez de `ACTION` + adın sonunda `(Costs N Actions)` olarak yazmış; mapper ikisini de sadakatle taşıyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** `Aboleth, Nihilith`'in kaynak çocuk satırları arasında `Psychic Drain`
 **iki kez** geçiyor: biri `LEGENDARY_ACTION` (`legendary_action_cost: 2`), öteki
@@ -3139,7 +3163,7 @@ EOF
    kaynağa sadık kalır, §5.8'e "upstream efsanevi aksiyonu iki kez yayınlıyor"
    satırı yazılır (C8).
 
-**Karar.** **düzelt** — seçenek 1 (adı `(Costs N Actions)` ile biten `ACTION` satırı, aynı metinli `LEGENDARY_ACTION` varsa atlanır); 114 satır düşer, efsanevi liste eksiksiz, kayıp yok. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (adı `(Costs N Actions)` ile biten `ACTION` satırı, aynı metinli `LEGENDARY_ACTION` varsa atlanır); 114 satır düşer, efsanevi liste eksiksiz, kayıp yok. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3223,7 +3247,7 @@ EOF
 | **Checklist** | checklist C4 (her canavarın aksiyonları eksiksiz inmeli) |
 | **Kategori / etki** | `monster` — `action_refs`; **11 aksiyon** 10 canavarda hiç yayınlanmıyor, çünkü B8'in v1 kurtarması yalnız **tamamen boş** kovaya bakıyor; yarım çevrilmiş kovada v1'in fazladan satırları sessizce düşüyor |
 | **Cause code (öneri)** | `M` — veri yüklü ve elde: `_v1ActionIndex` bu üç belgenin v1 satırlarını zaten kuruyor, `mapCreatures` yalnız `if (b.value.isNotEmpty) continue;` dediği için okumuyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** §6 B8 kurtarmayı anlatırken şunu yazıyor: *"Muhafazakâr kuralın
 bütün bedeli **tek bir canavar**: Abaasy, v2'nin kısmen çevirdiği tek tob3
@@ -3320,7 +3344,7 @@ EOF
    cümlesi "bedeli 10 canavar / 11 aksiyon" olarak düzeltilir ve §5.8'e satır
    yazılır (C8). Kayıp bilinçli kabul edilir, ama artık ölçülmüş sayıyla.
 
-**Karar.** **düzelt** — seçenek 1 (kova kontrolü satır bazına iner: metni hiçbir çocukta geçmeyen v1 satırı eklenir); 11 aksiyon geri gelir, ölçüt metin olduğu için gevşek ad kuralının kopyaları gelmez. `creature_action_fallback_test`'e 10 yaratıklık vaka eklenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (kova kontrolü satır bazına iner: metni hiçbir çocukta geçmeyen v1 satırı eklenir); 11 aksiyon geri gelir, ölçüt metin olduğu için gevşek ad kuralının kopyaları gelmez. `creature_action_fallback_test`'e 10 yaratıklık vaka eklenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-25 — kaynak sessizken `is_attack: false` yazılıyor: metni "Melee Weapon Attack: +7 to hit" olan 681 satır kartta saldırı sayılmıyor
 
@@ -3330,7 +3354,7 @@ EOF
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `creature-action` — `is_attack`; **681 satırda** `false` yazılı, oysa satırın kendi metni *"Melee/Ranged Weapon Attack: +N to hit"* diye başlıyor; `tob3`'te alan 1.577/1.577 `false` olduğu için `audit_packs` da `⚠ const` basıyor |
 | **Cause code (öneri)** | `M` — `mappers/monster.dart:373` `'is_attack': attack != null` yazıyor, yani "`CreatureActionAttack` satırı yok" ⇒ "saldırı değil"; v1'den kurtarılan satırlarda (satır 431) sabit `false`. Kaynak "saldırı değil" demiyor, **hiçbir şey** demiyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** `is_attack` bir üç değerli gerçeğin iki değerli yazımı: alan
 `CreatureActionAttack` satırının **varlığından** türetiliyor. `tob3`'ün
@@ -3399,7 +3423,7 @@ dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creatur
    (`tob3`) hepsi `false`" satırı yazılır (C8) ve yanlış olumsuzlama bilinçli
    kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (attack satırı yokken `desc` *"Melee/Ranged … Attack:"* ile başlıyorsa `is_attack: true`); 681 satır doğru işaretlenir, uydurulan tek şey yok. Alanı hiç yazmamak (seçenek 2) `tob3`'ü %0'a düşürüp bilgiyi de siliyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (attack satırı yokken `desc` *"Melee/Ranged … Attack:"* ile başlıyorsa `is_attack: true`); 681 satır doğru işaretlenir, uydurulan tek şey yok. Alanı hiç yazmamak (seçenek 2) `tob3`'ü %0'a düşürüp bilgiyi de siliyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3411,7 +3435,7 @@ dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creatur
 | **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu) |
 | **Kategori / etki** | `creature-action` 53 + `trait` 4: satırın kural metni kaynakta `name` sütununda duruyor (`desc` ya boş ya devam cümlesi); `_cleanChildName`'in cümle-parçası koruması satırı düşürüyor, ebeveyn de ref vermiyor. **19'u mekanik** (Gelatinous Cube'ün yutma kaçış DC'si, Dread Knight'ın duvar hasarı, Medusa'nın taşlaştırma DC 14'ü, Fallen Solar'ın üç emri), 38'i lore. Ayrıca `desc`'i **tamamen boş** 30 satırın 5'i tek bir **metinsiz** `Luck` kartında birleşiyor ve 3 canavar (Pixie, Unicorn, Corrupted Unicorn) onu ref'liyor — korpüsteki tek boş `description`'lı çocuk varlık budur (`creature-action.description` 2.992/2.993) |
 | **Cause code (öneri)** | `M` — doğru cevap kaynağın kendisinde, komşu sütunda (soru 7): metin `name`'de duruyor, mapper yalnız `desc`'i okuyor. Kaynağın segmentasyonu bozuk (`S`), ama kayıp mapper'ın seçiminden geliyor: cümle gibi görünen ad **atılıyor**, metni hiçbir alana taşınmıyor |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** `a5e-mm`'in yukarı akış statblock ayrıştırıcısı bazı satırları ters
 kurmuş: başlık yerine kuralın kendisi `name`'e, kuralın **devamı** `desc`'e
@@ -3503,7 +3527,7 @@ EOF
    segmentasyonu bozuk olduğu için yayınlanmıyor" satırı yazılır (C8) ve kayıp
    bilinçli kabul edilir; `Luck` kartının boş metni de kabul edilmiş olur.
 
-**Karar.** **düzelt** — seçenek 1 (`desc` boş ve ad bir cümleyse ad metne dönüşür); 30 satır kurtulur, `Luck` kartı metnine kavuşur, metin zaten kaynağın. Ebeveynin `description`'ına eklemek (seçenek 2) mekaniği yapılandırılmamış bırakır. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`desc` boş ve ad bir cümleyse ad metne dönüşür); 30 satır kurtulur, `Luck` kartı metnine kavuşur, metin zaten kaynağın. Ebeveynin `description`'ına eklemek (seçenek 2) mekaniği yapılandırılmamış bırakır. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3515,7 +3539,7 @@ EOF
 | **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok) |
 | **Kategori / etki** | `monster.alignment_ref` — 946/946 satırda `Chaotic Evil`: Pixie, Unicorn, Elk, Blink Dog, Bandit ve 941 kart daha karakter sayfasında kaotik kötü görünüyor; `alignment_note` 0/946 olduğu için kartta "kaynak beyan etmiyor" diye okunabilecek bir işaret de yok |
 | **Cause code (öneri)** | `S` — v2 `Creature.alignment` sütunu bu iki belgede 946/946 satırda `"chaotic evil"`; mapper sadakatle yazıyor, `verify_packs` da haklı olarak `ok` sayıyor. Doğru cevap kaynağın başka bir sütununda da **yok** (soru 7: `bfrd`'nin v1 `alignment`'ı 360/360 boş, `a5e-mm`'in v1'i hiç yok) |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** A5 tam olarak bunun için var: alan **dolu**, kaynakla **birebir**, ve
 yine de yanlış. Korpüsteki diğer sekiz belgenin hepsinde `alignment` 10–21
@@ -3566,7 +3590,7 @@ EOF
    946/946 `chaotic evil`; paket sadıktır" satırı yazılır (C8) ve kartın
    yanlış hizalaması bilinçli kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (belgenin `alignment` sütunu tek değere çökmüşse — `n_distinct == 1 && n_rows > 20` — alan hiç yazılmaz); 946 kartın yanlış iddiası biter. Seçenek 3 reddedildi: sadakat, kaynağın çökmüş sütununu olgu gibi yayımlamayı haklı çıkarmıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (belgenin `alignment` sütunu tek değere çökmüşse — `n_distinct == 1 && n_rows > 20` — alan hiç yazılmaz); 946 kartın yanlış iddiası biter. Seçenek 3 reddedildi: sadakat, kaynağın çökmüş sütununu olgu gibi yayımlamayı haklı çıkarmıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3578,7 +3602,7 @@ EOF
 | **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu — burada satır var, **metni** eksik) |
 | **Kategori / etki** | `creature-action.description` — v2 satırı 333 karakterde *"…one of the following effects of the hag's choice:"* diye bitiyor; devamındaki **dört adlandırılmış lanet** (Disfigured / Sickly / Twisted / Withered) hiç yayınlanmıyor. Dördü de mekanik: Charisma kontrollerinde dezavantaj, Constitution kurtarmalarında dezavantaj + uzun dinlenmede yarım hp, Dexterity dezavantajı + 10 ft hız kaybı, Strength dezavantajı. Kartı okuyan DM "hangi etki?" sorusunun cevabını göremiyor |
 | **Cause code (öneri)** | `S` + `M` — kesik olan kaynağın v2 satırı (`S`), ama doğrusu **aynı veri kümesinde**, pipeline'ın B8 için zaten okuduğu v1 `actions_json` sütununda tam olarak duruyor (soru 7 → evet). Mapper v2 satırını görünce v1'e hiç bakmıyor (`M`) |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** `tob-2023`'ün v1 `Monster.actions_json` satırı 1.030 karakter, v2
 `CreatureAction.desc` satırı **333**. İlk 333 karakter birebir aynı; v2 tam
@@ -3635,7 +3659,7 @@ EOF
 3. **Aynen bırak** — §5.8'e "`tob-2023`'ün bir aksiyonu yukarı akışta kesik"
    satırı yazılır (C8); tek satır olduğu için maliyet kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (aynı (ebeveyn, ad) satırında biri diğerinin öneki ve belirgin uzunsa uzun olan yazılır); seçenek 2'nin kapısı R2'nin regresyon testi olur. Tek satır etkileniyor, metin kaynağın. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (aynı (ebeveyn, ad) satırında biri diğerinin öneki ve belirgin uzunsa uzun olan yazılır); seçenek 2'nin kapısı R2'nin regresyon testi olur. Tek satır etkileniyor, metin kaynağın. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 
@@ -3647,7 +3671,7 @@ EOF
 | **Checklist** | checklist C4 (`monster` + çocuk satırlar — kartın metni kaynağınkiyle aynı mı) |
 | **Kategori / etki** | `creature-action` — 7 `description` + 1 `name`. Kullanıcı kartta ham bozuk metin görüyor: *"the væ00e6ttir spews forth…"*, *"within 100 feet of the collæ00e1is"*, kart adı olarak **`Væ00e6ttir's Greataxe`**. `tob3`'te ikisi **sayısal**: *"a line up to 80' long æ00d7 15 ft. wide"* ve *"Large 2æ00d7 damage dice"* — burada kaybolan karakter `×`, yani ölçü ve hasar çarpanı okunmaz hâlde |
 | **Cause code (öneri)** | `S` + `M` — bozukluk kaynağın v2 tarafında (`æ00e6` = bir kez kaçışı çözülmüş `æ`'nın artığı, `S`), ama doğrusu **v1'de temiz** duruyor (`æ`, `×`) ve pipeline v1'i B8 için zaten okuyor (soru 7 → evet); mapper v2'yi olduğu gibi yazıyor (`M`) |
-| **Durum** | 🛠 faz dosyalandı — **R2** |
+| **Durum** | ✅ kapandı — **R2** (2026-08-19) |
 
 **Bulgu.** Yukarı akışın v2 dönüşümü bazı satırlarda unicode kaçışını yarım
 çözmüş: `æ` → `æ` yazılmış **ve** `00e6` metinde bırakılmış, sonuç
@@ -3709,7 +3733,7 @@ EOF
    yok" kuralı; düzeltmez, ama bir daha sessizce geçmez.
 4. **Aynen bırak** — 8 kart, §5.8'e satır yazılır (C8).
 
-**Karar.** **düzelt** — seçenek 1 (kaçış çözüldükten sonra kalan `00[0-9a-f]{2}` artığı, bir önceki karakterin kod noktasıyla eşleşiyorsa silinir) + seçenek 3'ün `gate_packs` kuralı. Üç belge birden düzelir; v1'i tercih etmek (seçenek 2) yalnız v1 karşılığı olan satırları kurtarırdı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (kaçış çözüldükten sonra kalan `00[0-9a-f]{2}` artığı, bir önceki karakterin kod noktasıyla eşleşiyorsa silinir) + seçenek 3'ün `gate_packs` kuralı. Üç belge birden düzelir; v1'i tercih etmek (seçenek 2) yalnız v1 karşılığı olan satırları kurtarırdı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 · **Uygulandı:** 2026-08-19
 
 ---
 

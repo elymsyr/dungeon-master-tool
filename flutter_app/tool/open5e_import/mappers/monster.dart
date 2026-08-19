@@ -37,10 +37,18 @@ void mapCreatures({
   required List<Fixture> traits,
   V1ActionIndex v1Actions = const {},
   Map<String, String> v1Subtypes = const {},
+  Map<String, int> v1LegendaryUses = const {},
 }) {
   final actionsByCreature = groupBy(actions, 'parent');
   final traitsByCreature = groupBy(traits, 'parent');
   final attacksByAction = groupBy(attacks, 'parent');
+
+  // **R2 / F-pass0-26.** Upstream left `alignment` unfilled in two documents
+  // and the placeholder it left is not harmless: `a5e-mm` and `bfrd` say
+  // "chaotic evil" on 946 of 946 rows, so Pixie and Unicorn ship as chaotic
+  // evil. A column that collapsed to a single value over a whole document is
+  // not a statement about any creature in it — write nothing instead.
+  final alignmentIsCollapsed = _collapsedColumn(creatures, 'alignment');
 
   // Dedup child entities (action/trait) across creatures: content-hash → name.
   final childNameByHash = <String, String>{};
@@ -50,14 +58,25 @@ void mapCreatures({
     final rawName = (c['name'] as String?)?.trim() ?? 'Unknown';
     final cname = _cleanMonsterName(rawName);
 
+    // v1's rows for this creature, flattened by name — the repair source for a
+    // v2 row that upstream truncated (F-tob-2023-01) and the recovery source
+    // for a row v2 never converted (F-pass0-24).
+    final v1 = v1Actions[rawName.toLowerCase()];
+    final v1DescByName = <String, String>{};
+    for (final rows in (v1 ?? const {}).values) {
+      for (final r in rows) {
+        final n = (r['name'] ?? '').trim().toLowerCase();
+        final d = (r['desc'] ?? '').trim();
+        if (n.isEmpty || d.isEmpty) continue;
+        if ((v1DescByName[n]?.length ?? 0) < d.length) v1DescByName[n] = d;
+      }
+    }
+
     // ── Build child trait entities + collect refs ──
     final traitRefs = <Map<String, String>>[];
-    for (final t in traitsByCreature[pk] ?? const <Fixture>[]) {
-      final cleaned = _cleanChildName(
-        (t['name'] as String?)?.trim() ?? 'Trait',
-        (t['desc'] as String?)?.trim() ?? '',
-        'trait',
-      );
+    for (final raw in traitsByCreature[pk] ?? const <Fixture>[]) {
+      final t = _repairRow(raw, null);
+      final cleaned = _childName(t, 'Trait', 'trait');
       if (cleaned == null) continue; // spurious mis-segmented row → drop, no ref.
       final name = _ensureChild(
         pack: pack,
@@ -75,19 +94,35 @@ void mapCreatures({
     final reactionRefs = <Map<String, String>>[];
     final legendaryRefs = <Map<String, String>>[];
     final lairRefs = <Map<String, String>>[];
-    for (final a in actionsByCreature[pk] ?? const <Fixture>[]) {
-      final apk = a['_pk'].toString();
+    final rawActions = actionsByCreature[pk] ?? const <Fixture>[];
+    // **R2 / F-pass0-22.** Upstream writes 114 legendary actions a second time
+    // as plain actions, named "… (Costs 2 Actions)". Published as-is the card
+    // offers a legendary action at will, which is the rule inverted — drop the
+    // copy, the legendary bucket already carries it.
+    final legendaryDescs = {
+      for (final a in rawActions)
+        if ((a['action_type'] as String?)?.toUpperCase() == 'LEGENDARY_ACTION')
+          (a['desc'] as String?)?.trim() ?? '',
+    };
+    final published = <String>{}; // repaired descs, for the v1 recovery below.
+    for (final raw in rawActions) {
+      final apk = raw['_pk'].toString();
       final attack =
           (attacksByAction[apk] ?? const <Fixture>[]).cast<Fixture?>().firstWhere(
                 (x) => true,
                 orElse: () => null,
               );
-      final cleaned = _cleanChildName(
-        (a['name'] as String?)?.trim() ?? 'Action',
-        (a['desc'] as String?)?.trim() ?? '',
-        'creature-action',
-      );
+      final rawDesc = (raw['desc'] as String?)?.trim() ?? '';
+      if (_costsActionsName((raw['name'] as String?) ?? '') &&
+          (raw['action_type'] as String?)?.toUpperCase() != 'LEGENDARY_ACTION' &&
+          legendaryDescs.contains(rawDesc)) {
+        continue;
+      }
+      final a = _repairRow(
+          raw, v1DescByName[((raw['name'] as String?) ?? '').trim().toLowerCase()]);
+      final cleaned = _childName(a, 'Action', 'creature-action');
       if (cleaned == null) continue; // spurious mis-segmented row → drop, no ref.
+      published..add(rawDesc)..add((a['desc'] as String?)?.trim() ?? '');
       final row = _actionRow(a, attack, source, norm);
       final name = _ensureChild(
         pack: pack,
@@ -115,19 +150,18 @@ void mapCreatures({
       }
     }
 
-    // ── B8: backfill buckets upstream's v2 conversion dropped ──
+    // ── B8 + R2/F-pass0-24: recover rows upstream's v2 conversion dropped ──
     // Tome of Beasts 3 ships 309 CreatureAction rows for 397 creatures and
     // exactly 2 of them are ACTION, while v1's `actions_json` holds 1,373 —
-    // the non-ACTION buckets match v1 row for row (136/96/75), so this is a
-    // partial upstream conversion, not a mapping bug and not a mis-set enum.
-    // Only a bucket v2 left entirely empty for this creature is filled, so
-    // every other document is a no-op: their zero-BONUS_ACTION packs are zero
-    // in v1 too, and the handful of actionless creatures elsewhere (Frog,
-    // Seahorse, Shrieker) are actionless in both. v1 rows are prose only —
-    // there is no v1 equivalent of CreatureActionAttack — so a recovered
-    // action carries name + text and no structured attack, which is exactly
-    // what tob3 would have shipped anyway (it has no attack fixture at all).
-    final v1 = v1Actions[rawName.toLowerCase()];
+    // this is a partial upstream conversion, not a mapping bug. B8 only filled
+    // a bucket v2 had left *entirely* empty, which measured the cost wrong:
+    // a half-converted bucket silently dropped v1's extra rows, 11 actions on
+    // 10 creatures across three documents. The test is now per row and by
+    // text, not by bucket and not by name (names are unreliable, F-pass0-17):
+    // a v1 row whose text no child of this creature carries is published.
+    // v1 rows are prose only — there is no v1 equivalent of
+    // CreatureActionAttack — so a recovered action carries name + text and no
+    // structured attack, which is what tob3 would have shipped anyway.
     if (v1 != null) {
       final buckets = <String, List<Map<String, String>>>{
         'ACTION': actionRefs,
@@ -136,12 +170,15 @@ void mapCreatures({
         'LEGENDARY_ACTION': legendaryRefs,
       };
       for (final b in buckets.entries) {
-        if (b.value.isNotEmpty) continue;
         for (final row in v1[b.key] ?? const <Map<String, String>>[]) {
-          final desc = row['desc']?.trim() ?? '';
-          final cleaned =
-              _cleanChildName(row['name']?.trim() ?? 'Action', desc, 'creature-action');
+          final desc = _fixEscapes(row['desc']?.trim() ?? '');
+          if (desc.isEmpty || published.any((p) => _samePublishedText(p, desc))) {
+            continue;
+          }
+          final cleaned = _cleanChildName(
+              _fixEscapes(row['name']?.trim() ?? 'Action'), desc, 'creature-action');
           if (cleaned == null) continue;
+          published.add(desc);
           final name = _ensureChild(
             pack: pack,
             childNameByHash: childNameByHash,
@@ -165,8 +202,112 @@ void mapCreatures({
       legendaryRefs: legendaryRefs,
       lairRefs: lairRefs,
       v1Subtype: v1Subtypes[rawName.toLowerCase()],
+      alignmentIsCollapsed: alignmentIsCollapsed,
+      v1LegendaryUses: v1LegendaryUses[rawName.toLowerCase()],
     ));
   }
+}
+
+/// **R2 / F-pass0-27.** Upstream's v2 conversion half-resolved some unicode
+/// escapes: the escape marker collapsed to `æ` (U+00E6) and the code point it
+/// named was left behind as literal text, so `Vættir` shipped as
+/// `Væ00e6ttir`, `Colláis` as `Collæ00e1is` and `2× damage` as `2æ00d7 damage`.
+/// Every one of the corpus's 13 occurrences has that exact shape — marker plus
+/// four hex digits — so restore the character the digits name. v1 has the same
+/// rows clean, which is how the reading was confirmed.
+final _escapeResidue = RegExp(r'æ(00[0-9a-fA-F]{2})');
+
+String _fixEscapes(String s) => s.contains('æ')
+    ? s.replaceAllMapped(_escapeResidue,
+        (m) => String.fromCharCode(int.parse(m.group(1)!, radix: 16)))
+    : s;
+
+/// Normalize a child row before anything reads it: repair upstream's mangled
+/// escapes (F-pass0-27), take v1's copy of the text when v2's is a truncation
+/// of it (F-tob-2023-01), and move a rule written into `name` down into `desc`
+/// (F-a5e-mm-01). Rows repaired by that last rule are flagged so `_childName`
+/// knows it may shorten a sentence into a title instead of dropping the row.
+Fixture _repairRow(Fixture r, String? v1Desc) {
+  final name = _fixEscapes((r['name'] as String?)?.trim() ?? '');
+  var desc = _fixEscapes((r['desc'] as String?)?.trim() ?? '');
+  // v2 truncated `Reconfiguring Curse` at 333 of 1,030 characters, dropping
+  // four named curses. Only a strict prefix that is markedly longer wins, so
+  // an edited (not truncated) v1 row can never overwrite v2's text.
+  if (v1Desc != null &&
+      v1Desc.length > desc.length * 1.3 &&
+      v1Desc.startsWith(desc)) {
+    desc = v1Desc;
+  }
+  var fromName = false;
+  // `a5e-mm`'s parser inverted 30 rows: the rule sits in `name` and `desc` is
+  // empty, so the row was dropped as a sentence fragment and its text lost.
+  if (desc.isEmpty && name.length >= 40) {
+    desc = name;
+    fromName = true;
+  }
+  return {...r, 'name': name, 'desc': desc, if (fromName) '_fromName': true};
+}
+
+/// The published name for a repaired child row, or null when the row is
+/// spurious. A row whose rule text was recovered out of `name` keeps a
+/// shortened form of that sentence as its title rather than being dropped.
+String? _childName(Fixture r, String fallback, String type) {
+  final raw = (r['name'] as String?)?.trim() ?? fallback;
+  final cleaned =
+      _cleanChildName(raw, (r['desc'] as String?)?.trim() ?? '', type);
+  if (cleaned != null) return cleaned;
+  return r['_fromName'] == true ? _shortTitle(raw) : null;
+}
+
+/// First clause of a sentence, as a card title: "If a swallowed creature deals
+/// 30 or more damage…". Truncation is marked, never hidden.
+String _shortTitle(String sentence) {
+  final head = sentence.split(RegExp(r'[.,;:]')).first.trim();
+  if (head.isNotEmpty && head.length <= 48) return head;
+  final words = (head.isEmpty ? sentence : head).split(RegExp(r'\s+'));
+  final sb = StringBuffer();
+  for (final w in words) {
+    if (sb.length + w.length + 1 > 48) break;
+    if (sb.isNotEmpty) sb.write(' ');
+    sb.write(w);
+  }
+  return '${sb.isEmpty ? words.first : sb}…';
+}
+
+final _costsActions =
+    RegExp(r'\(costs\s+\d+\s+actions?\)\s*$', caseSensitive: false);
+
+bool _costsActionsName(String name) => _costsActions.hasMatch(name.trim());
+
+/// Same statblock text, allowing for markdown and the form qualifier R2 adds.
+/// Used to decide whether a v1 row is genuinely missing from the card; a short
+/// text must match outright, so one-line "Multiattack" rows can't collide.
+bool _samePublishedText(String a, String b) {
+  String n(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r'[*_`]'), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  final x = n(a), y = n(b);
+  if (x == y) return true;
+  final shorter = x.length < y.length ? x : y;
+  final longer = x.length < y.length ? y : x;
+  return shorter.length >= 40 && longer.contains(shorter);
+}
+
+/// True when [column] carries one single value across a whole document's rows
+/// (and there are enough rows for that to mean something). See F-pass0-26.
+bool _collapsedColumn(List<Fixture> rows, String column) {
+  final seen = <String>{};
+  var filled = 0;
+  for (final r in rows) {
+    final v = (r[column] as String?)?.trim() ?? '';
+    if (v.isEmpty) continue;
+    filled++;
+    seen.add(v.toLowerCase());
+    if (seen.length > 1) return false;
+  }
+  return seen.length == 1 && filled > 20;
 }
 
 /// Register a child (trait/creature-action) entity, deduping by content. Returns
@@ -181,7 +322,11 @@ String _ensureChild({
   required Map<String, dynamic> row,
 }) {
   final slug = row['type'] as String;
-  final hash = _contentHash(row);
+  // **R2 / F-pass0-17.** The name is part of the identity: two different
+  // weapons whose statblock text is byte-identical ("Mining Pick" and "Bite")
+  // used to merge into one entity and the first name won, so a creature's card
+  // showed another creature's attack. Same text + same name still merges.
+  final hash = '$baseName|${_contentHash(row)}';
   final existing = childNameByHash[hash];
   if (existing != null) return existing; // identical child already authored.
 
@@ -363,14 +508,14 @@ Map<String, dynamic> _traitRow(Fixture t, String source) {
 
 Map<String, dynamic> _actionRow(
     Fixture a, Fixture? attack, String source, Normalizer norm) {
-  final desc = (a['desc'] as String?)?.trim() ?? '';
+  final desc = _formQualified(a, (a['desc'] as String?)?.trim() ?? '');
   final usesType = (a['uses_type'] as String?)?.toUpperCase();
   final usesParam = _int(a['uses_param']);
   final attrs = <String, dynamic>{
     'source': source,
     'action_type': _actionType(a['action_type'] as String?),
     'description': desc,
-    'is_attack': attack != null,
+    'is_attack': attack != null || _descIsAttack(desc),
     'recharge_kind': _rechargeKind(usesType),
   };
   if (usesType == 'RECHARGE_ON_ROLL' && usesParam != null) {
@@ -397,8 +542,8 @@ Map<String, dynamic> _actionRow(
 
     final dice = _attackDamageDice(attack);
     if (dice != null) attrs['damage_dice'] = dice;
-    final dtype = attack['damage_type'];
-    if (dtype is String && dtype.isNotEmpty) {
+    final dtype = _primaryDamageType(attack);
+    if (dtype != null) {
       final r = norm.lookupRef('damage-type', dtype, context: 'creature-action');
       if (r != null) attrs['damage_type_ref'] = r;
     }
@@ -428,10 +573,47 @@ Map<String, dynamic> _v1ActionRow(
         'source': source,
         'action_type': _actionType(bucket),
         'description': desc,
-        'is_attack': false,
+        'is_attack': _descIsAttack(desc),
         'recharge_kind': 'None',
       },
     );
+
+/// **R2 / F-pass0-25.** `is_attack` used to mean "a CreatureActionAttack row
+/// exists", which is not what the source says: `tob3` ships no attack fixture
+/// at all, so all 1,577 of its actions claimed *not* to be attacks — 681 rows
+/// corpus-wide whose own text opens with "Melee Weapon Attack:". The schema
+/// field is a bool with no "unknown", so read the text the source did write.
+final _attackOpener = RegExp(
+    r'^\**\s*(?:Melee|Ranged)(?:\s+or\s+(?:Melee|Ranged))?\s+'
+    r'(?:Weapon|Spell)\s+Attack\s*:',
+    caseSensitive: false);
+
+bool _descIsAttack(String desc) => _attackOpener.hasMatch(desc.trimLeft());
+
+/// **R2 / F-pass0-21.** `limited_to_form` ("Skunk Form Only") is filled on 262
+/// rows and the schema has no home for it, so a shapechanger's card showed a
+/// form-locked attack as unconditional. Upstream's own second convention is a
+/// parenthesized prefix on the text — 13 rows already ship that way — so write
+/// the qualifier there rather than growing the schema.
+String _formQualified(Fixture a, String desc) {
+  final form = (a['limited_to_form'] as String?)?.trim() ?? '';
+  if (form.isEmpty || desc.contains(form)) return desc;
+  return desc.isEmpty ? '($form)' : '($form) $desc';
+}
+
+/// **R2 / F-pass0-18.** `damage_type` is filled only in the two skipped WotC
+/// documents; every third-party document carries the *primary* type in
+/// `extra_damage_type` instead — but that column is overloaded, holding the
+/// *secondary* type on the 828 rows that really do have extra damage. The
+/// filled-ness of `extra_damage_die_type` separates the two cases exactly.
+String? _primaryDamageType(Fixture attack) {
+  final dtype = attack['damage_type'];
+  if (dtype is String && dtype.isNotEmpty) return dtype;
+  final extraDie = (attack['extra_damage_die_type'] as String?)?.trim() ?? '';
+  if (extraDie.isNotEmpty) return null; // genuine second damage, not the primary
+  final extra = attack['extra_damage_type'];
+  return (extra is String && extra.isNotEmpty) ? extra : null;
+}
 
 /// Build "XdY+Z" from a CreatureActionAttack's primary damage fields.
 String? _attackDamageDice(Fixture attack) {
@@ -458,6 +640,8 @@ Map<String, dynamic> _monsterRow({
   required List<Map<String, String>> legendaryRefs,
   required List<Map<String, String>> lairRefs,
   String? v1Subtype,
+  bool alignmentIsCollapsed = false,
+  int? v1LegendaryUses,
 }) {
   final name = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
   final stats = {
@@ -495,7 +679,9 @@ Map<String, dynamic> _monsterRow({
   final size = norm.lookupRef('size', (c['size'] as String?) ?? '', context: name);
   if (size != null) attrs['size_ref'] = size;
   _creatureType(c['type'] as String?, name, norm, attrs, v1Subtype: v1Subtype);
-  _alignment(c['alignment'] as String?, name, norm, attrs);
+  if (!alignmentIsCollapsed) {
+    _alignment(c['alignment'] as String?, name, norm, attrs);
+  }
   final acDetail = (c['armor_detail'] as String?)?.trim();
   if (acDetail != null && acDetail.isNotEmpty) attrs['ac_note'] = acDetail;
 
@@ -543,7 +729,11 @@ Map<String, dynamic> _monsterRow({
   if (reactionRefs.isNotEmpty) attrs['reaction_refs'] = reactionRefs;
   if (legendaryRefs.isNotEmpty) {
     attrs['legendary_action_refs'] = legendaryRefs;
-    attrs['legendary_action_uses'] = 3; // Open5e omits the count; SRD default.
+    // **R2 / F-tob-01.** v2 has no column for the count, but v1's
+    // `legendary_desc` prose states it ("can take 1 legendary action") and the
+    // pipeline already reads that file for `tags_line`. Where the source is
+    // silent the SRD default of 3 still stands.
+    attrs['legendary_action_uses'] = v1LegendaryUses ?? 3;
   }
   if (lairRefs.isNotEmpty) attrs['lair_action_refs'] = lairRefs;
 

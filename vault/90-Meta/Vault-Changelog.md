@@ -733,3 +733,58 @@ Güncellenen: `vault/10-Files/content-pipeline/mapper_spell.md`.
   `flutter_app/docs/open5e_content_audit.md` (§0, §3.6, §5.8, yeni §5.9, §6
   F4 kutusu + Stage R), `flutter_app/docs/pack_conformance_plan.md` (Sonraki
   adım), [[check_findings]]
+
+## 2026-08-19 — R2 BİTTİ: canavar mapper'ı kaynağın yerine konuşmayı bıraktı, 11 bulgu kapandı
+
+Stage R'nin ikinci ve en büyük fazı. `tool/open5e_import/mappers/monster.dart`
+on bir F3 bulgusunu kapattı (F-pass0-17, -18, -21, -22, -24, -25, -26, -27,
+F-a5e-mm-01, F-tob-01, F-tob-2023-01). Üç kusur ailesi: kaynağın **yazdığını
+okumamak**, kaynağın **demediğini yazmak**, ve yukarı akışın bozduğunu
+**elindeki veriyle onarmamak**.
+
+- **Ad artık çocuk varlığın kimliğinin parçası** (F-pass0-17): statblock metni
+  kalıplı olduğu için metni birebir aynı iki farklı silah tek kartta
+  birleşiyor ve ilk gelenin adı kazanıyordu — Elite Kobold'un *Mining Pick*'i
+  başkasının *Bite*'ı olarak render oluyordu.
+- **`is_attack` satırın kendi metnini okuyor** (F-pass0-25): alan
+  `CreatureActionAttack` satırının *varlığından* türetiliyordu, `tob3` ise hiç
+  attack fixture'ı yayınlamıyor — 677 kart "bu bir saldırı değildir" diye
+  olumlu bir yalan taşıyordu.
+- **`extra_damage_type` birincil tip olabilir** (F-pass0-18): `damage_type` ve
+  `extra_damage_die_type` boşken o sütun birincil tipi taşıyor; 2.768 kart
+  hasar tipine kavuştu.
+- **`limited_to_form` karta iniyor** (F-pass0-21): upstream'in kendi ikinci
+  geleneğiyle `(Skunk Form Only) ` öneki — 209 kart.
+- **Çökmüş sütun yazılmıyor** (F-pass0-26): `a5e-mm` ve `bfrd`'nin `alignment`
+  sütunu 946/946 satırda "chaotic evil"; tek değere çökmüş sütun hiçbir satır
+  hakkında bir şey söylemez. Pixie artık kaotik kötü değil.
+  [[verify_packs]] aynı kuralı öğrendi.
+- **Efsanevi aksiyon ikinci kez normal aksiyon olarak inmiyor** (F-pass0-22) ve
+  **efsanevi aksiyon sayısı v1 düzyazısından geliyor** (F-tob-01; indeks
+  [[build_packs]]'te, `_v1LegendaryUsesIndex`).
+- **`_repairRow` üç onarımı topluyor**: yarım çözülmüş unicode kaçışı
+  (F-pass0-27 — `æ` + dört hex → hex'in adlandırdığı karakter; [[gate_packs]]'e
+  `escape-residue` kuralı eklendi, yayınlanan pakette **8 ihlal** yakalıyor),
+  v2'nin 1.030 karakterlik satırı 333'te kestiği yerde v1'in tam kopyası
+  (F-tob-2023-01), ve kuralı `name`'e yazılmış satırın kurtarılması
+  (F-a5e-mm-01).
+- **v1 kurtarması kova bazından satır bazına indi** (F-pass0-24), ölçüt
+  **metin**: bulgu 11 satır ölçmüştü, kodda tob3 dışında **161** çıktı — aynı
+  kusurun aynı biçimi (v2 yalnız efsanevi kısayolu çevirmiş; a5e-mm Kraken'in
+  `Tentacle` saldırısı kartta hiç yoktu).
+
+**Ölçüm** (`diff_packs`, `../.tmp/packs-rebuild`): 8 canavar paketinde **5.397
+değer**, korpüs net **+346 varlık** (fazın <400 bütçesi içinde). `verify_packs`
+**0 disagree / 0 absent**, `unsourced` **3.303** — tabanla birebir, yani yeni
+uydurma yok. `gate_packs` yeniden üretilende yeşil, `dupe_census` "nothing
+installed" **0**. `flutter test test/tool/` **158/158** (yeni
+`monster_fidelity_test.dart` 24 test), `flutter analyze` 0 hata.
+`assets/open5e_packs/` promote **edilmedi**.
+
+Defter: 🛠 32 → 21, ✅ 13 → 24. Sıradaki faz: **R3** (şemada evi olmayan dört
+canavar mekaniği). Güncellenen:
+`vault/10-Files/content-pipeline/mapper_monster.md`, `verify_packs.md`,
+`gate_packs.md`, `build_packs.md`,
+`flutter_app/docs/open5e_content_audit.md` (§0, §6 R2 kutusu),
+`flutter_app/docs/pack_conformance_findings.md`,
+`flutter_app/docs/pack_conformance_plan.md`.

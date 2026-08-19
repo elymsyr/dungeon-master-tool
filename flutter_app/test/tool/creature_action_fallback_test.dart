@@ -12,15 +12,16 @@ import '../../tool/open5e_import/refgraph.dart';
 /// Actions block. The audit's hypothesis was a mis-set enum; the snapshot says
 /// otherwise — the BONUS_ACTION / REACTION / LEGENDARY_ACTION rows match v1's
 /// `Monster.*_json` columns row for row (136 / 96 / 75), while v1 holds 1,373
-/// actions v2 never converted. `mapCreatures` therefore backfills from v1, and
-/// **only a bucket v2 left entirely empty**.
+/// actions v2 never converted. `mapCreatures` therefore backfills from v1.
 ///
-/// That last clause is the whole safety argument, and it is measured, not
-/// assumed: a name-union rule (add any v1 row whose name is absent) would add
-/// ~2,000 rows across the corpus, because v1 and v2 disagree about action
-/// *names*, not about which actions exist. The cost of the conservative rule is
-/// exactly one monster — Abaasy, the only tob3 creature v2 partially converted,
-/// keeps its 2 v2 rows and forgoes v1's 5.
+/// **R2 / F-pass0-24 narrowed the test from the bucket to the row.** B8 only
+/// filled a bucket v2 had left *entirely* empty, and that clause was the whole
+/// safety argument — but it also silently dropped v1's extra rows wherever the
+/// conversion was half-finished (11 actions on 10 creatures, Abaasy's three
+/// among them). The safety argument survives because the discriminator is the
+/// row's **text**: a name-union rule (add any v1 row whose name is absent)
+/// would add ~2,000 rows, since v1 and v2 disagree about action *names* far
+/// more than about which actions exist.
 ///
 /// Fixture shapes below are the real ones from the pinned snapshot (`d4276c58`),
 /// trimmed to the fields the mapper reads.
@@ -112,67 +113,93 @@ void main() {
     expect(slam['attributes']['action_type'], 'Action');
     expect(slam['attributes']['source'], 'Test Doc');
     // v1 has no CreatureActionAttack equivalent, so the structured attack
-    // fields stay absent rather than being parsed back out of the prose.
-    expect(slam['attributes']['is_attack'], false);
+    // fields stay absent rather than being parsed back out of the prose — but
+    // the row's own text says it is an attack, and since **R2 / F-pass0-25**
+    // that is what `is_attack` reports.
+    expect(slam['attributes']['is_attack'], true);
+    expect(child('Multiattack')['attributes']['is_attack'], false);
     expect(slam['attributes'].containsKey('damage_dice'), isFalse);
     expect(slam['attributes'].containsKey('attack_bonus'), isFalse);
   });
 
-  test('a bucket v2 populated is never overridden — the Abaasy case', () {
+  test('a half-converted bucket keeps v2 and gains v1\'s extra rows', () {
+    // **R2 / F-pass0-24.** B8 tested the whole bucket: a creature with *any*
+    // v2 action kept none of v1's. That measured the cost wrong — 11 actions on
+    // 10 creatures across three documents were silently dropped, Abaasy's three
+    // among them. The test is now per row and by text, so a v1 row the card
+    // already carries is still not re-authored.
     run(
       creatures: [creature('tob3_abaasy', 'Abaasy')],
       actions: [
         action('a1', 'tob3_abaasy', 'Multiattack', 'ACTION',
-            desc: 'Three melee attacks, only one of which can be a Shove.'),
+            desc: 'The abaasy makes three melee attacks, only one of which '
+                'can be a Shield Shove.'),
         action('a2', 'tob3_abaasy', 'Iron Axe', 'ACTION',
-            desc: 'Melee Weapon Attack: +8 to hit, 10 ft., one target.'),
+            desc: 'Melee Weapon Attack: +8 to hit, reach 10 ft., one target. '
+                'Hit: 16 (2d10 + 5) slashing damage.'),
       ],
       v1Actions: {
         'abaasy': {
           'ACTION': [
-            v1Row('Multiattack', 'Three melee attacks.'),
-            v1Row('Iron Axe', 'Melee Weapon Attack: +8 to hit.'),
-            v1Row('Spear', 'Melee Weapon Attack: +8 to hit.'),
-            v1Row('Shield Shove', 'The target is pushed 10 feet.'),
-            v1Row('Rock', 'Ranged Weapon Attack: +8 to hit.'),
+            v1Row(
+                'Multiattack',
+                'The abaasy makes three melee attacks, only one of which '
+                    'can be a Shield Shove.'),
+            v1Row(
+                'Iron Axe',
+                'Melee Weapon Attack: +8 to hit, reach 10 ft., one target. '
+                    'Hit: 16 (2d10 + 5) slashing damage.'),
+            v1Row(
+                'Spear',
+                'Melee Weapon Attack: +8 to hit, reach 5 ft. or range 20/60 '
+                    'ft., one target. Hit: 12 (2d6 + 5) piercing damage.'),
+            v1Row(
+                'Shield Shove',
+                'The abaasy shoves its shield at one creature it can see '
+                    'within 5 feet of it, pushing the target 10 feet away.'),
           ],
         },
       },
     );
 
-    expect(refNames(monster('Abaasy'), 'action_refs'), ['Multiattack', 'Iron Axe']);
+    expect(refNames(monster('Abaasy'), 'action_refs'),
+        ['Multiattack', 'Iron Axe', 'Spear', 'Shield Shove']);
     expect(
       rows().where((e) => e['type'] == 'creature-action').length,
-      2,
-      reason: 'v1 rows for a populated bucket are not authored at all',
+      4,
+      reason: "v1's copies of the two rows v2 did convert are not re-authored",
     );
   });
 
-  test('backfill is per bucket, not per creature', () {
+  test('a v1 row whose text the card already carries is not re-authored', () {
+    // Same rule seen from the other side: matching is by text, not by name,
+    // because v1 and v2 disagree about action *names* far more often than
+    // about which actions exist (a name union would add ~2,000 rows).
+    const shared =
+        'The equitox moves up to its walking speed without provoking '
+        'opportunity attacks.';
     run(
       creatures: [creature('c1', 'Equitox')],
       actions: [
-        action('a1', 'c1', 'Prideful Prowl', 'LEGENDARY_ACTION'),
+        action('a1', 'c1', 'Prideful Prowl', 'LEGENDARY_ACTION', desc: shared),
       ],
       v1Actions: {
         'equitox': {
-          'ACTION': [v1Row('Hooves', 'Melee Weapon Attack: +7 to hit.')],
           'LEGENDARY_ACTION': [
-            v1Row('Prideful Prowl', 'Moves up to its walking speed.'),
-            v1Row('Trunk', 'Makes one Trunk attack.'),
+            v1Row('Prowl', shared),
+            v1Row('Trunk',
+                'The equitox makes one trunk attack against a creature it '
+                    'can see within 10 feet of it.'),
           ],
-          'REACTION': [v1Row('Parry', 'Adds 3 to its AC against one attack.')],
         },
       },
     );
 
-    final m = monster('Equitox');
-    expect(refNames(m, 'action_refs'), ['Hooves']);
-    expect(refNames(m, 'reaction_refs'), ['Parry']);
     expect(
-      refNames(m, 'legendary_action_refs'),
-      ['Prideful Prowl'],
-      reason: 'v2 already filled this bucket, so v1\'s second row is not added',
+      refNames(monster('Equitox'), 'legendary_action_refs'),
+      ['Prideful Prowl', 'Trunk'],
+      reason: 'the row v2 already carries is matched by its text, under a '
+          'different name; the row v2 never converted is recovered',
     );
   });
 

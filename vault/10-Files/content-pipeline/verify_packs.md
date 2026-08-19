@@ -30,6 +30,13 @@ tags: [file]
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
+- **R2 (2026-08-19) — çökmüş sütun kuralı.** `monster.alignment_ref` /
+  `alignment_note`: bir belgenin `alignment` sütunu tek değere çökmüşse
+  (`a5e-mm`, `bfrd` — 946/946 "chaotic evil") kural artık değer beklemiyor,
+  gerekçeli `unverifiable` veriyor. [[mapper_monster]] o belgelerde alanı hiç
+  yazmadığı için aksi hâlde 946 satır `absent` okunurdu — yani düzeltme
+  regresyon gibi görünürdü. `legendary_action_uses`'ın gerekçesi de güncellendi
+  (sayı v1 `legendary_desc` düzyazısında; bu araç v1'i yüklemiyor).
 - **R1 (2026-08-19) — three spell rules follow the mapper.** A rule that reads
   only the column the mapper stopped trusting would mark a *corrected* card
   `disagree`, so: `requires_concentration` reads `concentration` **and** the
