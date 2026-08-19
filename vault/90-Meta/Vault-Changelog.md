@@ -616,3 +616,43 @@ tags: [meta, changelog]
   bloğu), `flutter_app/docs/pack_conformance_findings.md`,
   `flutter_app/docs/open5e_content_audit.md` §0/§6, [[mapper_monster]],
   [[check_findings]]
+
+## 2026-08-19 — F3 BİTTİ: son birim `open5e-tob-2023` tarandı (20/20), üç yeni bulgu, sıra F4'te
+
+- **Birim (20/20).** Dalga 4'ün son ve korpüsün en büyük paketi (3.088 varlık:
+  creature-action 1.658, trait 1.021, monster 408, language 1). Checklist puanı
+  **16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**.
+- **Kapılar.** `verify_packs --doc tob-2023` → **8.052 ok / 0 disagree /
+  0 absent / 0 unsourced / 2.040 unverifiable** (408/408); korpüs geneli
+  **68.561 ok / 0 disagree / 0 absent**; `gate_packs` yeşil, `dupe_census`
+  "nothing installed" **0**, `--list-builtin-same` **0**, katalog driftsiz.
+- **Çocuk kapsaması kayıpsız:** v2'nin 1.778 + 1.099 satırının **hepsi**
+  (2.877/2.877) ebeveyninin kartında birebir; softRef'e düşen yok. Bu yüzden
+  **F-a5e-mm-01 payı 0**, ve **F-tob-01 payı 0** (32 v1 beyanının 32'si de 3).
+- **Üç yeni bulgu:** **F-tob-2023-01** (C4, `S`+`M`) Mirror Hag /
+  *Reconfiguring Curse* v2'de 1.030 → **333** karakterde kesik, dört lanet
+  etkisi kartta yok — korpüste tek örnek; **F-pass0-27** (C4, `S`+`M`) v2'nin
+  yarım çözülmüş unicode kaçışı karta ham iniyor, **8 kart / 3 paket**
+  (`væ00e6ttir`, `collæ00e1is`, ve `tob3`'te `×` yerine `æ00d7` — biri kart
+  **adı**); **F-pass0-28** (C8, `D`+`M`) `legendary_action_cost` sütununun
+  şemada evi yok, bedeli ≥2 olan **267** satırın **152'si** bedelini kaybediyor.
+- **Doğrulananlar:** F-pass0-19 → **106 + 21** (korpüs zirvesi, birebir),
+  F-pass0-21 → **48 + 8**, F-pass0-24 → beş canavarın **beşi**,
+  F-pass0-26 → **21** farklı hizalama, pay **0**. `unmapped_report.json`'ın
+  tamamı (3 satır) bu belgenin bozuk `alignment` verisi — kaçış kapağı
+  tasarlandığı gibi çalışıyor, bulgu değil.
+- **Altı aday ölümü**, biri kurala dönüştü — **taramanın 9. sorusu:** "kayıp"
+  ile "farklı yazılmış"ı ayır. Kaba tam-metin karşılaştırması 14 kayıp verdi,
+  gerçek sayı **6** (6'sı `(… Form Only)` önekiyle, 3'ü mojibake ile farklı,
+  hepsi yayınlanıyor). `trait_kind`=`Other` de bulgu değil: kaynağın `type`
+  sütunu korpüste **8.613/8.613** `null`.
+- **Defter:** 47 kayıt / **46** sayaca giriyor, `python3 tool/check_findings.py`
+  temiz. Kod değişmedi (K1); `flutter analyze` **0 hata / 0 uyarı** (17 eski
+  info), F grubu testleri **36/36** yeşil, `pack_field_render` `+58 -1`
+  (bilinen F-pass0-01).
+- **Sıradaki: F4 — "Karar ver, sonra görev aç."** 46 kaydın her biri için
+  düzelt / gerekçe yaz / kapsam dışı kararı. →
+  `flutter_app/docs/pack_conformance_plan.md` (`tob-2023` sonucu + yeni devir
+  bloğu), `flutter_app/docs/pack_conformance_findings.md`,
+  `flutter_app/docs/open5e_content_audit.md` §0/§6, [[mapper_monster]],
+  [[check_findings]]

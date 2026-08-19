@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 43 | 0 | 0 | 0 | 0 | **43** |
+| 0 | 46 | 0 | 0 | 0 | 0 | **46** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -113,11 +113,11 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
 | A3 | 14 | B3 | 2 | C3 | 1 |
-| A4 | 1 | B4 | 0 | C4 | 3 |
+| A4 | 1 | B4 | 0 | C4 | 5 |
 | A5 | 4 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
-| D3 | 0 | E3 | 1 | C8 | 6 |
+| D3 | 0 | E3 | 1 | C8 | 7 |
 | F1 | 0 | F3 | 0 | G1 | 0 |
 | F2 | 1 | F4 | 0 | G2 | 0 |
 | | | | | G3 | 1 |
@@ -126,14 +126,14 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 26 | `open5e-vom` | 3 |
+| `pass0` | 28 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
 | `open5e-open5e` | 1 | `open5e-tob` | 1 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
 | `open5e-toh` | 2 | `open5e-a5e-mm` | 1 |
-| `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 0 |
+| `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 1 |
 | `open5e-kp` | 0 | | |
 | `open5e-wz` | 2 | | |
 | `open5e-deepmx` | 0 | | |
@@ -3545,6 +3545,226 @@ EOF
 3. **Aynen bırak** — §5.8'e "`a5e-mm` ve `bfrd`'de kaynağın `alignment` sütunu
    946/946 `chaotic evil`; paket sadıktır" satırı yazılır (C8) ve kartın
    yanlış hizalaması bilinçli kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-tob-2023-01 — bir aksiyonun kural metni kaynağın v2 tarafında kesilmiş: 1.030 karakterin 333'ü yayınlanıyor, dört lanet etkisi kartta yok
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-tob-2023` — **1** kart (Mirror Hag / *Reconfiguring Curse*); korpüs geneli tarandı, ikinci örnek **yok** |
+| **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu — burada satır var, **metni** eksik) |
+| **Kategori / etki** | `creature-action.description` — v2 satırı 333 karakterde *"…one of the following effects of the hag's choice:"* diye bitiyor; devamındaki **dört adlandırılmış lanet** (Disfigured / Sickly / Twisted / Withered) hiç yayınlanmıyor. Dördü de mekanik: Charisma kontrollerinde dezavantaj, Constitution kurtarmalarında dezavantaj + uzun dinlenmede yarım hp, Dexterity dezavantajı + 10 ft hız kaybı, Strength dezavantajı. Kartı okuyan DM "hangi etki?" sorusunun cevabını göremiyor |
+| **Cause code (öneri)** | `S` + `M` — kesik olan kaynağın v2 satırı (`S`), ama doğrusu **aynı veri kümesinde**, pipeline'ın B8 için zaten okuduğu v1 `actions_json` sütununda tam olarak duruyor (soru 7 → evet). Mapper v2 satırını görünce v1'e hiç bakmıyor (`M`) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `tob-2023`'ün v1 `Monster.actions_json` satırı 1.030 karakter, v2
+`CreatureAction.desc` satırı **333**. İlk 333 karakter birebir aynı; v2 tam
+olarak lanet listesinin başladığı yerde kesiliyor. Pakete v2 sürümü iniyor,
+çünkü B8'in v1 kurtarması yalnız **hiç olmayan** satırlar için çalışıyor —
+var olan ama eksik bir satırı tamamlamıyor.
+
+**Neden önemli.** Kayıp hiçbir kapıda görünmüyor: `verify_packs --doc tob-2023`
+**8.052 ok / 0 disagree / 0 absent / 0 unsourced** veriyor (kart v2 ile birebir
+aynı, dolayısıyla "ok"), `gate_packs` yeşil, `dupe_census` 0. Kaybı görmenin tek
+yolu v1 ile v2'nin aynı satırını uzunlukça karşılaştırmak — ve korpüs geneli
+yapıldığında **tek** örnek bu çıkıyor, yani sistematik bir kesme değil, tek bir
+bozuk satır.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — v1 ⟷ v2 aynı satır, v2 belirgin biçimde kısa mı
+python3 - <<'EOF'
+import json,re,os,glob
+F=lambda r:r['fields']; key=lambda s:re.sub(r'\s+',' ',(s or '')).strip()
+slug=lambda s:re.sub(r'[^a-z0-9]+','-',s.lower().replace("'",'').replace('’','')).strip('-')
+for v1d,v2d in {'tob-2023':'tob-2023','tob':'tob','tob2':'tob2','tob3':'tob3',
+                'cc':'ccdx','menagerie':'a5e-mm','blackflag':'bfrd'}.items():
+    p1='../../open5e-api-staging/data/v1/%s/Monster.json'%v1d
+    p2=glob.glob('../../open5e-api-staging/data/v2/*/%s/CreatureAction.json'%v2d)[0]
+    byname={}
+    for r in json.load(open(p2,encoding='utf-8')):
+        f=F(r); byname.setdefault((f['parent'].split('_',1)[1],key(f['name']).lower()),[]).append(key(f.get('desc')))
+    out=[]
+    for r in json.load(open(p1,encoding='utf-8')):
+        f=F(r)
+        for col in ('actions_json','legendary_actions_json','bonus_actions_json',
+                    'reactions_json','special_abilities_json'):
+            raw=f.get(col); rows=json.loads(raw) if isinstance(raw,str) and raw.strip() else []
+            for x in rows if isinstance(rows,list) else []:
+                if not isinstance(x,dict): continue
+                d1=key(x.get('desc'))
+                for d2 in byname.get((slug(f['name']),key(x.get('name','')).lower()),[]):
+                    if d2 and d1 and d1.startswith(d2[:60]) and len(d1)>len(d2)*1.3:
+                        out.append((f['name'],x['name'],len(d1),len(d2)))
+    print('%-9s kısaltılmış satır: %d %s'%(v2d,len(out),out))
+EOF
+# tob-2023  kısaltılmış satır: 1 [('Mirror Hag', 'Reconfiguring Curse', 1030, 333)]
+# tob 0 · tob2 0 · tob3 0 · ccdx 0 · a5e-mm 0 · bfrd 0
+```
+
+**Seçenekler.**
+1. **Uzun olanı seç** — mapper v1 ve v2'de aynı (ebeveyn, ad) satırını
+   bulduğunda, biri diğerinin öneki ve belirgin biçimde uzunsa **uzun olanı**
+   yazar. Tek satır etkilenir, uydurma yok (metin kaynağın), B8'in altyapısı
+   zaten v1'i okuyor.
+2. **Kapı ekle** — `verify_packs`'e "v1 karşılığı %30'dan fazla uzun" uyarısı;
+   düzeltmez ama bir daha sessizce olmaz.
+3. **Aynen bırak** — §5.8'e "`tob-2023`'ün bir aksiyonu yukarı akışta kesik"
+   satırı yazılır (C8); tek satır olduğu için maliyet kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-27 — kaynağın çift kaçışlı unicode'u karta göründüğü gibi iniyor: 8 kartta `væ00e6ttir`, `collæ00e1is`, `2æ00d7 damage`
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — 3 yayınlanan paket (`open5e-tob-2023` 4 kart, `open5e-tob2` 2, `open5e-tob3` 2); kaynakta **13** geçiş |
+| **Checklist** | checklist C4 (`monster` + çocuk satırlar — kartın metni kaynağınkiyle aynı mı) |
+| **Kategori / etki** | `creature-action` — 7 `description` + 1 `name`. Kullanıcı kartta ham bozuk metin görüyor: *"the væ00e6ttir spews forth…"*, *"within 100 feet of the collæ00e1is"*, kart adı olarak **`Væ00e6ttir's Greataxe`**. `tob3`'te ikisi **sayısal**: *"a line up to 80' long æ00d7 15 ft. wide"* ve *"Large 2æ00d7 damage dice"* — burada kaybolan karakter `×`, yani ölçü ve hasar çarpanı okunmaz hâlde |
+| **Cause code (öneri)** | `S` + `M` — bozukluk kaynağın v2 tarafında (`æ00e6` = bir kez kaçışı çözülmüş `æ`'nın artığı, `S`), ama doğrusu **v1'de temiz** duruyor (`æ`, `×`) ve pipeline v1'i B8 için zaten okuyor (soru 7 → evet); mapper v2'yi olduğu gibi yazıyor (`M`) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** Yukarı akışın v2 dönüşümü bazı satırlarda unicode kaçışını yarım
+çözmüş: `æ` → `æ` yazılmış **ve** `00e6` metinde bırakılmış, sonuç
+`æ00e6`. JSON okunduğunda bu `æ00e6` oluyor ve karta öyle iniyor. Üç
+belgede üç farklı karakter etkileniyor: `æ` (Vættir), `á` (Colláis), `×`
+(çarpı). v1 `Monster.json` üçünde de **temiz**.
+
+**Neden önemli.** `verify_packs` bunu **ok** sayıyor — kart v2 ile birebir aynı,
+kıyas ölçütü v2. `gate_packs`, `dupe_census`, `audit_packs` metnin içine
+bakmıyor. Yani bugün korpüste, hiçbir kapının göremediği, kullanıcıya doğrudan
+görünen 8 bozuk metin var; biri de kart **adı**, yani listede öyle sıralanıyor.
+
+**Kanıt.**
+```sh
+# kaynakta: yalnız v2, üç belge, 13 geçiş — v1 tertemiz
+cd ../open5e-api-staging/data
+grep -roE '\\u00[0-9a-f]{2}00[0-9a-f]{2}' --include=*.json v2 | sort | uniq -c
+#   6 kobold-press/tob-2023/CreatureAction.json:æ00e6
+#   5 kobold-press/tob2/CreatureAction.json:æ00e1
+#   2 kobold-press/tob3/CreatureAction.json:æ00d7
+grep -roE '\\\\u00[0-9a-f]{2}00[0-9a-f]{2}' --include=*.json v1 | wc -l    # 0
+```
+```sh
+# pakette: hangi kart, hangi alan
+python3 - <<'EOF'
+import json,glob,re
+for fp in sorted(glob.glob('assets/open5e_packs/*.pkg.json')):
+    for e in json.load(open(fp,encoding='utf-8'))['entities'].values():
+        for fld in ('name','description'):
+            m=re.search(r'.{16}00[0-9a-f]{2}.{16}',e.get(fld) or '')
+            if m: print('%-14s %-28s %-11s ...%s...'%(fp[24:-9],e['name'][:28],fld,m.group(0)))
+EOF
+# open5e-tob-2023 Disorienting Gaze (Vættir)   description ...immune to the væ00e6ttir's Disorienting...
+# open5e-tob-2023 Multiattack (Vættir)         description ...then makes two Væ00e6ttir's Greataxe or...
+# open5e-tob-2023 Corpse Breath                description ...The væ00e6ttir spews forth a 15-foot...
+# open5e-tob-2023 Væ00e6ttir's Greataxe        name        ...
+# open5e-tob2     Multiattack (Colláis)        description ...feet of the collæ00e1is that can hear...
+# open5e-tob2     Cry of the Forest            description ...
+# open5e-tob3     Shoving Stampede             description ...up to 80' long æ00d7 15 ft. wide. All...
+# open5e-tob3     Enlarge                      description ...larged is Large 2æ00d7 damage dice on...
+```
+
+**Dağılım** *(yayılan bulgu kuralı)*
+
+| Paket | Bozuk kart | Kaynakta geçiş | Kaybolan karakter |
+|---|--:|--:|---|
+| `open5e-tob-2023` | 4 | 6 | `æ` |
+| `open5e-tob2` | 2 | 5 | `á` |
+| `open5e-tob3` | 2 | 2 | `×` |
+| **Toplam** | **8** | **13** | |
+
+**Seçenekler.**
+1. **Import'ta temizle** — metin yazılmadan önce `\u00XX` çözüldükten sonra
+   arta kalan `00[0-9a-f]{2}` deseni, bir önceki karakterin kod noktasıyla
+   eşleşiyorsa silinir. Üç belgeyi de düzeltir, uydurma yok.
+2. **v1'i tercih et** — F-tob-2023-01'in 1. seçeneğiyle aynı mekanizma: aynı
+   satırın v1 sürümü temizse o yazılır.
+3. **Kapı ekle** — `gate_packs`'e "yayınlanan metinde `00[0-9a-f]{2}` artığı
+   yok" kuralı; düzeltmez, ama bir daha sessizce geçmez.
+4. **Aynen bırak** — 8 kart, §5.8'e satır yazılır (C8).
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-28 — efsanevi aksiyonun bedeli hiçbir yere yazılmıyor: 267 satırın 152'si "2 aksiyona mal olur"unu kaybediyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — 5 yayınlanan paket (`open5e-a5e-mm` 52, `open5e-tob-2023` 52, `open5e-tob3` 39, `open5e-tob` 6, `open5e-ccdx` 3) |
+| **Checklist** | checklist C8 (her boşluğun cause code'u var — burada boşluğun **şemada evi yok**) |
+| **Kategori / etki** | `creature-action` — kaynağın `CreatureAction.legendary_action_cost` sütunu korpüste **267** satırda ≥ 2 (ayrıca 1 olan yüzlerce satır, onlar varsayılan). Şemanın `creature-action` kategorisinde bu bedeli tutacak alan **yok** ve mapper sütunu hiç okumuyor. Kart bedeli göstermeyince tur başına 3 efsanevi aksiyonu olan bir canavarın 2 bedelli saldırısı **üç kez** kullanılabilir görünüyor |
+| **Cause code (öneri)** | `D` + `M` — şemada ev yok (`D`), sütun kaynakta dolu ve mapper onu hiç okumuyor (`M`, soru 6: `grep -rn legendary_action_cost tool/` **boş**) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `monster.legendary_action_uses` (tur başına kaç aksiyon) var —
+F-tob-01'in konusu o. Eksik olan **aksiyon başına bedel**: kaynağın
+`legendary_action_cost` sütunu. Bedeli bugün taşıyan tek yol **tesadüf**: B8'in
+v1 kurtarması satırı v1 `legendary_actions_json`'dan alırsa ad `"Tail Attack
+(Costs 2 Actions)"` olarak geliyor ve bedel adın içinde kalıyor. v2'den gelen
+satırların adı temiz (`"Tail Attack"`), bedel de kayboluyor. Bu yüzden dağılım
+kaynağa değil, hangi belgede v1 kurtarmasının çalıştığına bağlı: `bfrd` 59/59 ve
+`tob2` 13/13 **korunmuş**, `a5e-mm` 52/52 ve `tob-2023` 52/52 **tamamen kayıp**.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — bedeli ≥2 olan satır kaç, kartta izi kalan kaç
+python3 - <<'EOF'
+import json,re,glob,os
+F=lambda r:r['fields']; base=lambda s:re.sub(r'\s*\([^)]*\)\s*$','',s).lower()
+tot=lost=0
+for path in sorted(glob.glob('../open5e-api-staging/data/v2/*/*/CreatureAction.json')):
+    doc=path.split('/')[-2]; fp='assets/open5e_packs/open5e-%s.pkg.json'%doc
+    if not os.path.exists(fp): continue
+    cards={}
+    for e in json.load(open(fp,encoding='utf-8'))['entities'].values():
+        if e['type']=='creature-action': cards.setdefault(base(e['name']),[]).append(e)
+    rows=[F(r) for r in json.load(open(path,encoding='utf-8')) if (F(r).get('legendary_action_cost') or 0)>=2]
+    l=[r for r in rows if not any(re.search(r'cost',(c.get('description') or '')+c['name'],re.I)
+                                  for c in cards.get(base(r['name']),[]))]
+    tot+=len(rows); lost+=len(l)
+    if rows: print('%-9s cost>=2: %3d  kayıp: %3d'%(doc,len(rows),len(l)))
+print('TOPLAM',tot,'kayıp',lost)
+EOF
+# a5e-mm    cost>=2:  52  kayıp:  52
+# bfrd      cost>=2:  59  kayıp:   0
+# ccdx      cost>=2:  27  kayıp:   3
+# tob-2023  cost>=2:  52  kayıp:  52
+# tob       cost>=2:  25  kayıp:   6
+# tob2      cost>=2:  13  kayıp:   0
+# tob3      cost>=2:  39  kayıp:  39
+# TOPLAM 267 kayıp 152
+grep -rn "legendary_action_cost" tool/ lib/ | wc -l    # 0 — ne yazan var ne okuyan
+```
+
+**Dağılım** *(yayılan bulgu kuralı)*
+
+| Paket | Bedel ≥ 2 satır | Kaybolan |
+|---|--:|--:|
+| `open5e-a5e-mm` | 52 | 52 |
+| `open5e-tob-2023` | 52 | 52 |
+| `open5e-tob3` | 39 | 39 |
+| `open5e-tob` | 25 | 6 |
+| `open5e-ccdx` | 27 | 3 |
+| `open5e-bfrd` | 59 | 0 |
+| `open5e-tob2` | 13 | 0 |
+| **Toplam** | **267** | **152** |
+
+**Seçenekler.**
+1. **Alan aç** — `creature-action`'a `legendary_action_cost` (integer, min 1,
+   max 5, `grpRules`) eklenir, mapper sütunu yazar, kart alanı gösterir.
+   Şema değişikliği; F-pass0-19'un `resistance_note`'u gibi yeni bir alan.
+2. **Ada yaz** — bedel ≥ 2 ise ad `"Tail Attack (Costs 2 Actions)"` olarak
+   üretilir. Şema değişmez, bugün korunanların biçimiyle aynı olur, ama mekanik
+   yine düzyazıda kalır (checklist B3'ün karşı olduğu şey).
+3. **Aynen bırak** — §5.8'e "efsanevi aksiyon bedeli yayınlanmıyor" satırı
+   yazılır (C8) ve 152 kartın 1 bedelli görünmesi bilinçli kabul edilir.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 

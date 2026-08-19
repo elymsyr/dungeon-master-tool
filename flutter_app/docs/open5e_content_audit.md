@@ -103,46 +103,52 @@ collide with this §6's phases (spelling rule), and known-open #5 repeated the C
 `cost_gp` error. The exit is runnable now:
 [`tool/check_findings.py`](../tool/check_findings.py).
 
-**F3 is running: 19 of the 20 units are scanned — only `tob-2023` is left**
-(Pass 0, built-in, `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`,
-`bfrd`'s class/subclass rows, `kp`, `wz`, `deepmx`, `spells-that-dont-suck`,
-`deepm`, `vom`, `ccdx`, `tob2`, `tob`, `tob3`, `a5e-mm` + `bfrd`'s monsters)
-and the ledger holds **43** findings, all still ❓ — `check_findings.py` clean.
-The latest unit (`a5e-mm` + `bfrd`, 5,541 entities, the only two-pack unit
-because B2's real exam pair lives there) measured **16,760 ok / 0 disagree /
-0 absent / 0 unsourced / 4,730 unverifiable** at **946/946** coverage and scored
-its 31 items **19 ✅ · 7 ➖ · 1 ⛔ · 6 ⚠️** — the scan's most-warned unit, four of
-the six inherited. It opened **two** records and **corrected three**.
+**F3 is done: all 20 units are scanned** (Pass 0, built-in, `a5e-gpg`,
+`a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s class/subclass rows,
+`kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`, `vom`, `ccdx`, `tob2`,
+`tob`, `tob3`, `a5e-mm` + `bfrd`'s monsters, `tob-2023`) and the ledger holds
+**46** findings, all still ❓ — `check_findings.py` clean. Pass 0's gates end
+where they started: **0 disagree / 0 absent** corpus-wide (68,561 ok),
+census "nothing installed" **0**, `gate_packs` green, catalog driftless.
+**The next open phase is F4.**
 
-**F-a5e-mm-01** (C4, `M`): upstream's statblock segmenter put the rule text in
-`name` and its continuation in `desc`, so `_cleanChildName`'s sentence-fragment
-guard drops the row and the parent never refs it — **57 rows on 41 monsters
-ship nowhere**, 19 of them mechanical (Gelatinous Cube's escape DC, Medusa's
-DC 14 petrification, Dread Knight's wall damage). The 5 rows whose `desc` is
-empty survive as a label but carry no text, and the content hash folds all five
-into **one** `Luck` card that 3 monsters reference — the corpus's only child
-entity with an empty `description` (`creature-action.description` 2,992/2,993).
-`bfrd`'s child side, measured the same way, is **lossless**: 2,519/2,519.
+The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
+measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
+at **408/408** coverage and scored its 31 items **16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**.
+Its child side is **lossless** — all 2,877 source rows sit verbatim in a card
+the parent references, not one via a soft ref — so both **F-a5e-mm-01** and
+**F-tob-01** score **0** here. It opened **three** records and confirmed all
+four inherited warnings exactly (F-pass0-19 → 106 + 21, F-pass0-21 → 48 + 8,
+F-pass0-24 → all five monsters, F-pass0-26 → 21 distinct alignments, share 0).
 
-**F-pass0-26** (A5, `S`): `monster.alignment_ref` is `Chaotic Evil` on
-**946/946** cards in these two packs, because the source's `alignment` column
-has collapsed to a single value in these two documents alone — the other eight
-carry 10–21 distinct values, and `bfrd`'s v1 column is empty on 360/360, so the
-right answer is nowhere in the source either. The mapper is faithful and
-`verify_packs` is right to pass it; the card is still wrong about Pixie,
-Unicorn and Elk. `alignment_ref` is not a required field, so silence was
-available.
+**F-tob-2023-01** (C4, `S`+`M`): Mirror Hag's *Reconfiguring Curse* is 1,030
+characters in v1 and **333** in v2. The card ships v2, so it ends at *"…one of
+the following effects of the hag's choice:"* and the four named curses that
+follow — Disfigured, Sickly, Twisted, Withered, every one of them mechanical —
+are simply absent. A corpus-wide v1 ⟷ v2 length comparison finds **exactly one**
+row like this, so it is a single bad source row, not a systematic truncation.
 
-**Three corrections.** F-pass0-17's `a5e-mm` share is **126 → 96** (corpus
-**487 → 457**): the loose ⟷ strict gap the handover blamed on
-`bonus_action_refs` is the **empty `desc`** — the recipe matches on text, and
-empty text matches the pack's one empty-description entity; on non-empty rows
-both methods give **76 ⟷ 76**. **F-tob-01 is not `tob`-specific** — `a5e-mm`
-has no v1 document and states the count in a v2 `CreatureAction.name`, where
-**16 of 66** declarations contradict the card's constant 3 (corpus **3 → 19**).
-And the unit added the board's eighth question: a loss measurement must count
-**soft refs**, or L1's built-in hand-off (6 rows in `bfrd`, 9 in `a5e-mm`)
-reads as loss.
+**F-pass0-27** (C4, `S`+`M`): v2 half-decoded some unicode escapes
+(`\u00e600e6`) and the residue ships to the card. **8 cards in 3 packs**:
+`væ00e6ttir` (`tob-2023`, three descriptions **and one card name**),
+`collæ00e1is` (`tob2`, two), and `tob3`'s two **numeric** rows — `80' long
+æ00d7 15 ft.` and `2æ00d7 damage dice`, where the lost character is `×`.
+No gate can see it: `verify_packs` compares against v2 and calls it `ok`. v1
+is clean in all three documents.
+
+**F-pass0-28** (C8, `D`+`M`): `CreatureAction.legendary_action_cost` has no
+schema home and the mapper never reads it. Of **267** rows costing 2 or 3
+actions, **152** lose the cost, so a monster with three legendary actions looks
+able to use a 2-cost attack three times. Where the cost survives it is an
+accident — B8's v1 recovery carries it inside the name (`Tail Attack (Costs 2
+Actions)`) — which is why the distribution tracks the recovery rather than the
+source: `bfrd` 59/59 and `tob2` 13/13 kept, `a5e-mm` 52/52 and `tob-2023` 52/52
+lost.
+
+The unit also added the board's **ninth** question: separate *lost* from
+*written differently*. A crude full-text comparison claimed 14 missing v1 rows
+where there are **6** — 6 differ only by F-pass0-21's `(… Form Only)` prefix and
+3 only by F-pass0-27's mojibake, and all of those are published.
 
 **F-pass0-17** (D1, `D`): `_ensureChild`'s content hash is type + description +
 attributes — **the name is not in it** — and statblock attack text is formulaic,
@@ -273,19 +279,19 @@ gap (`S`) and stayed out of the ledger; `is_attack` did not — see F-pass0-25.
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**The next open phase is F3** (continues at Wave 4's fifth unit —
-`open5e-a5e-mm`, read together with `open5e-bfrd`'s monster rows, per Wave 4's
-opening decision. Two jobs are already measured and waiting. First, **F-pass0-23
-belongs to `bfrd`**: 90 of its 97 creatures are Black Flag's, whose v2
-`Creature.json` has no `darkvision_range` column at all, and 41 of them ship an
-empty `senses` list — those two numbers must be re-measured there, not copied.
-Second, **`a5e-mm` is the only pack where F-pass0-17's two methods disagree**
-(loose 106 ⟷ strict 85); `tob2`, `tob` and `tob3` all returned the same number
-under both, so the divergence is a5e-specific and this unit has to name its
-cause. Also pre-measured for verification: F-pass0-25 → 32, F-pass0-20 → 189
-(the corpus's largest), F-pass0-22 and F-pass0-24 → 0. And `bfrd` is the only
-Wave 4 file that steps outside the monster-pack shape — it carries 1 `class` +
-1 `subclass` row, so C1 is a real question there.)
+**The next open phase is F4 — "Decide, then file."** The sweep is over and it
+fixed nothing by design (K1); what it produced is **46 findings, every one of
+them ❓ awaiting a decision**. F4 walks the ledger and gives each record one of
+three outcomes: **fix** (file a new phase in this §6), **write the reason**
+(a §5.8 line, status ✅) or **out of scope** (status ⚪). The plan's §8 is the
+procedure and §9 the finish line — three of its four conditions are already met
+(no ⬜ unit, Pass 0's gates unmoved, no "Done when" output re-opened); the fourth
+is F4's whole job. Four groups make the walk shorter: **no schema home**
+(F-pass0-19, -21, -23, -28 — each needs a new field), **the right value is
+elsewhere in the source** (F-a5e-mm-01, F-tob-2023-01, F-pass0-16, -24, -27,
+F-bfrd-01 — each is a mapper decision), **the source itself collapsed** so no
+value is recoverable (F-pass0-26, and `unmapped_report`'s 3 rows), and
+**gate/test-side only, no user impact** (F-pass0-01).
 ---
 
 ## 0. Start here
@@ -4605,9 +4611,9 @@ procedure, and the ledger have different lifetimes:
       **nothing is fixed inside the sweep** (no `*.pkg.json` line changed, and the
       ledger still holds zero real findings). All met; **the next open phase is
       F3**.*
-- [ ] **F3 — Run it.** 20 scan units in four waves.
-      **bitti: 19 / 20 unit** — only `tob-2023` is left; the ledger holds **43**
-      findings, all ❓ (`python3 tool/check_findings.py` → *44 kayıt, 43 sayaca
+- [x] **F3 — Run it.** 20 scan units in four waves. **done 2026-08-19.**
+      **bitti: 20 / 20 unit** — no ⬜ left on the board; the ledger holds **46**
+      findings, all ❓ (`python3 tool/check_findings.py` → *47 kayıt, 46 sayaca
       giriyor, temiz*). Unit by unit, oldest first:
       **(2026-08-17): 7 / 20** — Pass 0, Dalga 0 (built-in), Dalga 1's
       `a5e-gpg`, `a5e-ddg`, `open5e`, `tdcs`, `toh` and **`a5e-ag`** (the ledger
@@ -5058,10 +5064,74 @@ procedure, and the ledger have different lifetimes:
       249 shared monster names, **246** differing in at least one of six
       numbers, **0** identical attribute blocks — two rulesets, not two copies.
 
-      **kaldı: 1 unit** — `tob-2023` (3,088 entities). Next session starts at
-      `pack_conformance_plan.md`'s "Sonraki adım" block.
-      *Exit: no unscanned unit left on the board, and Pass 0's gates re-measured
-      at the end are where they started or better.*
+      **(2026-08-19): 20 / 20 — `tob-2023`, the last unit and the corpus's
+      largest single pack** (3,088 entities: creature-action 1,658, trait 1,021,
+      monster 408, language 1). `verify_packs --doc tob-2023` →
+      **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable** at
+      408/408 coverage, every unverifiable row one of five written reasons
+      (408 each); the corpus-wide run reads **68,561 ok / 0 disagree /
+      0 absent**. `gate_packs` green, census "nothing installed" **0**,
+      `--list-builtin-same` **0**, catalog driftless. 31 items scored
+      **16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**.
+      **The child side is lossless**: all **2,877** source rows (1,778
+      `CreatureAction` + 1,099 `CreatureTrait`) are found verbatim in a card the
+      parent references, not one falling back to a soft ref — so **F-a5e-mm-01's
+      `tob-2023` share is 0**, and the pack's 1,658 + 1,021 cards differ from the
+      source count purely by content-hash dedup. **F-tob-01's share is 0 too**:
+      all **32** v1 `legendary_desc` declarations say 3, matching the card.
+      **Three new records.** **F-tob-2023-01** (C4, `S`+`M`) — Mirror Hag's
+      *Reconfiguring Curse* is 1,030 characters in v1 and **333** in v2; the card
+      ships the v2 text, ending at *"…following effects of the hag's choice:"*
+      with all **four** named curses (Disfigured, Sickly, Twisted, Withered, each
+      mechanical) missing. A corpus-wide v1 ⟷ v2 length comparison finds
+      **exactly one** such row. **F-pass0-27** (C4, `S`+`M`) — v2 half-decoded
+      some unicode escapes (`\u00e600e6`), and the residue ships to the card:
+      **8 cards in 3 packs** read `væ00e6ttir` (tob-2023, 3 descriptions **plus
+      one card name**), `collæ00e1is` (tob2, 2) and — the worst — `tob3`'s two
+      **numeric** rows, `80' long æ00d7 15 ft.` and `2æ00d7 damage dice`, where
+      the lost character is `×`. v1 is clean in all three. **F-pass0-28** (C8,
+      `D`+`M`) — `CreatureAction.legendary_action_cost` has no schema home and
+      the mapper never reads it (`grep -rn legendary_action_cost tool/ lib/` → 0):
+      of **267** rows costing 2 or 3 actions, **152** lose the cost, so a monster
+      with three legendary actions appears able to use a 2-cost attack three
+      times. Where the cost survives it is an accident of B8's v1 recovery
+      carrying it inside the name — which is why the distribution follows the
+      recovery, not the source (`bfrd` 59/59 and `tob2` 13/13 kept, `a5e-mm`
+      52/52 and `tob-2023` 52/52 lost).
+      **All four handover warnings held**: F-pass0-19 → **106** resistance +
+      **21** immunity (the corpus peak, exact), F-pass0-21 → **48** column rows +
+      **8** prose-only (exact), F-pass0-24 → all five named monsters confirmed
+      (v2 keeps only the legendary shortcut for four of them and drops Red Hag's
+      `Multiattack` entirely; the full text is in v1), F-pass0-26 → **21**
+      distinct alignments, share **0**.
+      **`unmapped_report.json` is entirely this unit's data** — three rows, all
+      `tob-2023`, all the source's own corruption (`Titan)`, `Shapechanger)` ×2:
+      the `type` line's parenthesis leaked into `alignment`, in v1 too). Those
+      three cards carry neither `alignment_ref` nor `alignment_note`, but that is
+      `_alignment`'s written three-way rule, and the other 13 unmatched values
+      (`Any Alignment` ×5, `Neutral Evil (50%) or Lawful Evil (50%)`, …) reach
+      `alignment_note` losslessly — **not a finding**, and question 7's answer
+      here is **no**: the right value is nowhere in the source.
+      **Six candidates died**, and one of them became the board's ninth question.
+      `trait_kind` = `Other` on 1,021/1,021 (`audit_packs` ⚠) is honest — the
+      source's `CreatureTrait.type` is `null` on **8,613 / 8,613** rows
+      corpus-wide, so `Other` is the enum's "unknown" slot *(the consequence
+      worth writing down: the `trait_kind` filter can never discriminate on any
+      of the 6,419 shipped traits)*. The v1 ⟷ pack apostrophe difference
+      (`Baba Yaga’s` vs `Baba Yaga's`) is v2's spelling and v2 is the published
+      document. The 0% `creature-action` fields all carry a written cause
+      (known gap #1, plus `recharge` deliberately superseded by `recharge_kind`
+      + `recharge_min_roll`). And the first crude full-text comparison claimed
+      **14** lost v1 rows where there are **6**: 6 of the 14 differ only by
+      F-pass0-21's `(… Form Only)` prefix and 3 only by F-pass0-27's mojibake —
+      published, not lost. Hence question **9**: separate *lost* from
+      *written differently*, or the count doubles.
+
+      *Exit: no unscanned unit left on the board (**20 / 20**), and Pass 0's
+      gates re-measured at the end are where they started or better — **0
+      disagree / 0 absent** corpus-wide, census "nothing installed" **0**,
+      `gate_packs` green, catalog driftless. Both met; **the next open phase is
+      F4**.*
 - [ ] **F4 — Decide, then file.** A finding is not a task until a decision turns
       it into one.
       *Exit: every finding has a verdict — fixed, given a written rationale, or

@@ -9,46 +9,41 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0–3 bitti, Dalga 4'ün son birimi kaldı** —
-> son okunan birim `a5e-mm` (+ `bfrd`'nin canavar satırları), 2026-08-19.
-> **20 tarama biriminin 19'u kapandı**, defterde **43 bulgu** var, kırk üçü de
-> ❓ danışılacak (`python3 tool/check_findings.py` → *44 kayıt, 43 sayaca
-> giriyor, temiz*). Birim iki yeni kayıt açtı — **F-a5e-mm-01** (kuralı
-> kaynağın `name` sütununda duran 57 statblock satırı hiç yayınlanmıyor;
-> 41 canavar, 19'u mekanik; `desc`'i boş 5 satır tek bir metinsiz `Luck`
-> kartında birleşiyor) ve **F-pass0-26** (`alignment_ref` iki pakette de
-> **946/946 `Chaotic Evil`**; kaynağın sütunu bu iki belgede tek değere
-> çökmüş, diğer sekiz belgede 10–21 farklı değer var) — ve **üç eski kaydı
-> düzeltti**: F-pass0-17'nin `a5e-mm` payı **126 → 96** (gevşek ⟷ sıkı farkının
-> sebebi `bonus_action_refs` değil **boş `desc`**miş; boş olmayan satırlarda iki
-> yöntem 76 ⟷ 76), korpüs **487 → 457**; F-tob-01 `tob`'a özgü değilmiş,
-> `a5e-mm` sayıyı v2 `CreatureAction.name`'de veriyor ve 66 beyanın **16'sı**
-> kartın sabiti 3 ile çelişiyor (korpüs **3 → 19**); ve `bfrd`'nin çocuk
-> tarafının **kayıpsız** olduğu ölçüldü (2.519/2.519, 6 softRef dahil).
-> Devralınan dört uyarının dördü de bağımsız ölçümle tuttu: F-pass0-23 → 90
-> `keensense` + **tam 41** duyusuz kart, F-pass0-20 → 189 + 77, F-pass0-25 →
-> 32 + 0, F-pass0-22 → 0 + 58, F-pass0-24 → 0. Kapılar: **16.760 ok /
-> 0 disagree / 0 absent / 0 unsourced**, eşleşme 946/946, gate yeşil, census 0,
-> katalog driftsiz.
+> **F3 BİTTİ (2026-08-19): Pass 0 (§6) + Dalga 0–4, 20 tarama biriminin 20'si
+> kapandı**, hiç ⬜ kalmadı. Defterde **46 bulgu** var, kırk altısı da
+> ❓ danışılacak (`python3 tool/check_findings.py` → *47 kayıt, 46 tanesi
+> sayaca giriyor, temiz*). Son birim `tob-2023` (2026-08-19) **üç yeni kayıt**
+> açtı — **F-tob-2023-01** (Mirror Hag / *Reconfiguring Curse*'ün v2 metni
+> 1.030 → 333 karakterde kesik, dört lanet etkisi kartta yok; korpüste tek
+> örnek), **F-pass0-27** (v2'nin çift kaçışlı unicode'u karta ham iniyor:
+> 8 kart, 3 paket, biri kart **adı**, `tob3`'te ikisi `×` yerine `æ00d7`) ve
+> **F-pass0-28** (`legendary_action_cost` sütununun şemada evi yok; bedeli ≥ 2
+> olan 267 satırın **152'si** bedelini kaybediyor) — ve devraldığı dört uyarının
+> **dördünü de** bağımsız ölçümle doğruladı (F-pass0-19 → 106 + 21,
+> F-pass0-21 → 48 + 8, F-pass0-24 → 5 canavarın beşi, F-pass0-26 → 21 farklı
+> hizalama, pay 0). Çocuk satır kapsaması **2.877/2.877 kayıpsız**;
+> F-a5e-mm-01 ve F-tob-01'in `tob-2023` payı **0**. Kapılar: `--doc tob-2023`
+> **8.052 ok / 0 disagree / 0 absent / 0 unsourced**, korpüs geneli
+> **68.561 ok / 0 disagree / 0 absent**, eşleşme 408/408, gate yeşil, census 0,
+> katalog driftsiz. Checklist puanı **16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**.
 >
-> **Sıradaki iş: Dalga 4'ün son birimi → `open5e-tob-2023`** (3.088 varlık:
-> creature-action 1.658, trait 1.021, monster 408, language 1). Bu birimden
-> çıkan üç uyarı:
-> (1) **F-pass0-19'un en büyük payı `tob-2023`'te** (106 direnç + 21 bağışıklık,
-> korpüsün zirvesi) ve **F-pass0-21'in ikinci büyüğü** (48) orada — ikisi de
-> ölçülmeli, kopyalanmamalı;
-> (2) **F-pass0-24'ün `tob-2023` payı 5 canavar** (defterdeki liste: Pact
-> Vampire, Queen of Witches, Red Hag, Tosculi Hive Queen, Ushabti Royal Guard)
-> — birim bunu kendi ölçümüyle doğrulamalı;
-> (3) **B2'nin son sınavı**: `tob` ⟷ `tob-2023` çifti `tob` biriminde ölçüldü
-> (326 ortak ad, 254'ü sayısal olarak farklı) — `tob-2023` tarafından
-> tekrarlanması gerekmez (K4), ama `tob-2023`'ün **kendi** `unmapped_report`
-> satırları (üç bozuk `alignment` değerinin **hepsi** bu belgenin verisi,
-> `tob` biriminde düzeltildi) bu birimde okunmalı; ayrıca F-pass0-26'nın
-> `tob-2023` payı **0** (21 farklı hizalama değeri) — doğrulanmalı.
+> **Sıradaki iş: F4 — "Karar ver, sonra görev aç"** (`open5e_content_audit.md`
+> §6). Tarama düzeltmez, iş kalemi üretir (§8): 46 kaydın her biri için karar
+> verilecek — **düzelt** (yol haritasına yeni faz) / **gerekçe yaz** (§5.8'e
+> satır, durum ✅) / **kapsam dışı** (durum ⚪). §9'un bitiş ölçütü: 20 birim ⬜
+> değil (**tamam**), her ⚠️ kaydın kararı var (**F4'ün işi**), Pass 0 kapıları
+> başladığı yerde veya daha iyi (**tamam** — 0 disagree / 0 absent / census 0
+> hiç bozulmadı), "Done when" beş çıktısından hiçbiri bu tarama yüzünden
+> yeniden açılmadı (**tamam**).
 >
-> **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
-> **F4 — "Karar ver, sonra görev aç"**a gelir.
+> **F4'e girerken elde olan gruplar** (karar kolaylaştırsın diye):
+> * **Şema evi yok** (yeni alan gerekir): F-pass0-19 direnç notu, F-pass0-21
+>   biçim niteliği, F-pass0-28 efsanevi bedel, F-pass0-23 duyu notu.
+> * **Doğrusu kaynağın başka bir yerinde** (mapper kararı): F-a5e-mm-01,
+>   F-tob-2023-01, F-pass0-27, F-pass0-16, F-pass0-24, F-bfrd-01.
+> * **Kaynak çökmüş, doğrusu hiçbir yerde** (yazılı gerekçe adayı):
+>   F-pass0-26, `unmapped_report`'un 3 satırı.
+> * **Kapı/test tarafı** (kullanıcı etkilenmiyor): F-pass0-01.
 >
 > **Test dosyalarının yeri**: F grubu
 > `test/application/services/pack_install_roundtrip_test.dart`,
@@ -60,35 +55,40 @@
 > **kırmızı gelir** — kesen tek grup built-in, yani F-pass0-01; paket tarafı
 > (224 çift / 446 pump) yeşil.
 >
-> **Taramanın sekiz sorusu** (birim birim biriktiler, hepsi geçerli):
+> **Taramanın dokuz sorusu** (birim birim biriktiler, hepsi geçerli):
 > 1. Kartın taşıdığı mekanik **şemada bir eve sahip mi**? (`open5e`)
 > 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
 > 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
 >    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3, `deepm`'de 1
 >    yanlış bulgu önledi. `vom`'da bir adım öteye gitti: sütun **listesi**
 >    çıkarılınca §5.8'in adını verdiği sütunun hiç var olmadığı görüldü.
+>    `tob-2023`'te `trait_kind`=`Other`'ı bulgu olmaktan çıkardı (kaynağın
+>    `type` sütunu korpüste 8.613/8.613 `null`).
 > 4. Alan dolu ve kaynakla aynı, ama **değer kuralla uyuşuyor mu**? (`toh`,
 >    `a5e-ag`)
 > 5. Devir notunun **"zaten biliniyor"** satırı ölçüldü mü? — `toh`'ta iki,
 >    `bfrd`'de bir, **`deepm`'de üç** tane yanlış çıktı (F-pass0-14'ün 3 yanlış
->    pozitifi); bu soru şimdiye kadar 6 hatalı satır temizledi.
+>    pozitifi); bu soru şimdiye kadar 6 hatalı satır temizledi. `tob-2023`'te
+>    dört uyarının **dördü de** tuttu.
 > 6. Boş alanın **okuyucusu** var mı, **yazanı** var mı? — `grep -rn <alan> lib/`
 >    dolu + `tool/` boş ⇒ cause `M` (`a5e-ag`). `bfrd`'de 5 alana uygulandı,
->    beşinin de cause code'u zaten doğruydu.
+>    beşinin de cause code'u zaten doğruydu. `tob-2023`'te ikisi de boş çıktı
+>    (`legendary_action_cost`) ⇒ cause `D`+`M`.
 > 7. Bulduğun kusurun **doğrusu kaynağın kendisinde** başka bir alanda duruyor mu?
 >    (`bfrd` — `name` yanlış, `pk` doğru; `deepm` — `material_cost` boş, fiyat
 >    `material_specified` metninde → F-pass0-16.) Cevabın **hayır** olması da
 >    ölçüm: `vom`'da fiyat `desc`'te de yoktu, o yüzden `cost_gp` bulgu değil.
->    `a5e-mm` bunu iki kez kullandı: kural metni `desc` yerine **`name`**'de
->    (F-a5e-mm-01) ve efsanevi aksiyon sayısı yine `name`'de (F-tob-01'in
->    yayılması) — ikisinde de cevap **evet**, ikisinde de kayıp mapper'ın
->    hangi sütunu okuduğu kararından geliyor.
-> 8. **Kayıp ölçerken soft ref'i saymayı unutma** (yeni, `a5e-mm`): L1
->    built-in'in taşıdığı satırı pakete koymaz, `{slug,name}` softRef'i yazar.
+>    `a5e-mm` bunu iki kez kullandı (kural metni `name`'de). `tob-2023` soruyu
+>    **belgeler arasına** taşıdı: kesik metin de, bozuk unicode de v2'de, ve
+>    ikisinin de temiz hâli pipeline'ın B8 için zaten okuduğu **v1**'de duruyor.
+> 8. **Kayıp ölçerken soft ref'i saymayı unutma** (`a5e-mm`): L1 built-in'in
+>    taşıdığı satırı pakete koymaz, `{slug,name}` softRef'i yazar.
 >    Yalnız hard ref'lerin metnine bakan bir ölçüm `bfrd`'de 6, `a5e-mm`'de 9
 >    satırı yanlışlıkla "kayıp" sayıyordu.
->
-> Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
+> 9. **"Kayıp" ile "farklı yazılmış"ı ayır** (yeni, `tob-2023`): kaba tam-metin
+>    karşılaştırması 14 kayıp verdi; 6'sı yalnızca `(… Form Only)` önekiyle,
+>    3'ü yalnızca mojibake ile farklıydı — ikisi de **yayınlanıyor**. Gerçek
+>    kayıp 6. Metin farkını kayıp saymak sayıyı iki katına çıkarıyor.
 
 *(Bu blok her oturum sonunda güncellenir. Yeni bir oturum önce bunu okur.)*
 
@@ -2171,6 +2171,139 @@ F-pass0-17'nin `a5e-mm` payı (126 → 96) ve gevşek/sıkı farkının **sebebi
 F-tob-01'in `tob`'a özgü sanılması (3 → 19), ve `bfrd`'nin çocuk tarafının
 **tam kapsandığının** ölçülmesi. **20 tarama biriminin 19'u bitti.**
 
+#### open5e-tob-2023 sonucu — 2026-08-19
+
+**Birim.** Dalga 4'ün altıncı ve **taramanın son** birimi: 3.088 varlık
+(creature-action 1.658, trait 1.021, monster 408, language 1). Korpüsün en büyük
+tek paketi.
+
+**Kapılar.** `verify_packs --doc tob-2023` → **8.052 ok / 0 disagree / 0 absent /
+0 unsourced / 2.040 unverifiable** (408/408 eşleşme; unverifiable'ın hepsi beş
+yazılı gerekçeden biri: `initiative_modifier`, `legendary_action_uses`,
+`proficiency_bonus`, `tags_line`, `xp` — her biri tam 408). Korpüs geneli koşu
+**68.561 ok / 0 disagree / 0 absent**. `gate_packs --packs ../.tmp/one` yeşil,
+`dupe_census` "nothing installed" **0**, `--list-builtin-same` **0 satır**,
+`--list-shared`'da 175 satır (112 `trait` + 62 `creature-action` + 1 `language`,
+hepsi `tob` ile paylaşılan statblock çocuğu = B2'nin yazılı istisnası),
+`build_catalog` sonrası ağaç temiz.
+
+**Çocuk satır kapsaması — sıfır kayıp.** v2'nin **1.778** `CreatureAction` +
+**1.099** `CreatureTrait` satırının **hepsi** (2.877/2.877) ebeveyninin
+ref listesindeki bir kartın `description`'ında birebir bulunuyor; softRef'e
+düşen satır bile yok. Paketin 1.658 + 1.021 kartı arasındaki fark saf
+içerik-hash kopyası (120 aksiyon + 78 trait aynı metni tekrar ediyor).
+Yani **F-a5e-mm-01'in `tob-2023` payı 0** — cümle-parçası koruması burada
+tek satır düşürmüyor.
+
+**Devralınan dört uyarının dördü de bağımsız ölçümle tuttu.**
+* **F-pass0-19** — `nonmagical_attack_resistance` **106**, `nonmagical_attack_immunity`
+  **21**; defterdeki 106/21 birebir, korpüsün zirvesi doğrulandı.
+* **F-pass0-21** — `limited_to_form` dolu **48** satır (`Humanoid Form Only` 8,
+  `Shapeless Form Only` 5, `Roc Form Only` 5 …) + sütunu boş ama `desc`'i
+  `(… Form Only)` ile başlayan **8** satır; defterdeki 48 + 8 birebir.
+* **F-pass0-24** — beş canavarın beşi de doğrulandı: Pact Vampire / *Call Blood*,
+  Queen of Witches / *Mystical Blast*, Tosculi Hive Queen / *Stinger*,
+  Ushabti Royal Guard / *Medjai's Scepter* — v2 bu dördünde yalnız efsanevi
+  **kısayolu** ("The hive queen makes one Stinger attack.") taşıyor, asıl
+  `ACTION` satırı (saldırı satırı, 469 karakter) hiç yok; Red Hag'in
+  *Multiattack*'ı ise v2'de tümüyle yok. Beşinin de tam metni v1'de duruyor.
+* **F-pass0-26** — `alignment` sütununda **21 farklı değer** (case-insensitive;
+  ham hâlde 22, fark `Neutral Evil` ⟷ `neutral evil`): pay **0**, yani
+  `a5e-mm`/`bfrd`'nin çöküşü buraya yayılmıyor. En sık değer `Neutral Evil` 88.
+
+**`unmapped_report.json` bu birimin verisi.** Dosyanın **tamamı** üç satır ve
+üçü de `tob-2023`: `Titan)  (Hraesvelgr)`, `Shapechanger)  (Nkosi)`,
+`Shapechanger)  (Nkosi Pridelord)` — kaynağın `alignment` sütununa `type`
+satırının parantez kuyruğu sızmış (v1'de de aynı bozuk). Bu üç kart hem
+`alignment_ref` hem `alignment_note` olmadan kalıyor, ama bu **mapper'ın yazılı
+kararı**: `_alignment` üç sonuçlu (kanonik → ref, hizalama ifadesi → not, çöp →
+`unmapped`). Kalan 13 eşleşmeyen değer (`Any Alignment` 5, `Any Evil Alignment`,
+`Lawful Neutral or Lawful Evil`, `Neutral Evil (50%) or Lawful Evil (50%)` …)
+**kayıpsız** `alignment_note`'a iniyor. **Bulgu değil** — kaçış kapağı tam da
+tasarlandığı gibi çalışıyor ve doğrusu kaynağın hiçbir sütununda yok (soru 7 →
+hayır).
+
+**Üç yeni kayıt.**
+* **F-tob-2023-01** (C4, `S`+`M`) — Mirror Hag / *Reconfiguring Curse*'ün v2
+  metni 1.030 → **333** karakterde kesilmiş; kart *"…following effects of the
+  hag's choice:"* diye bitiyor ve **dört lanet etkisinin dördü de** (Disfigured,
+  Sickly, Twisted, Withered — hepsi mekanik) yok. Tam metin v1'de duruyor.
+  Korpüs geneli tarandı: **tek** örnek.
+* **F-pass0-27** (C4, `S`+`M`) — v2'nin çift kaçışlı unicode'u (`æ00e6`)
+  karta ham hâliyle iniyor: 8 kart, 3 paket. `væ00e6ttir` (tob-2023, 3
+  `description` + 1 **kart adı**), `collæ00e1is` (tob2, 2), ve `tob3`'te
+  **sayısal** iki satır — `80' long æ00d7 15 ft.` ve `2æ00d7 damage dice`,
+  yani kaybolan karakter `×`. v1 üçünde de temiz.
+* **F-pass0-28** (C8, `D`+`M`) — `CreatureAction.legendary_action_cost` sütununun
+  şemada evi yok ve mapper onu hiç okumuyor (`grep -rn legendary_action_cost
+  tool/ lib/` → **0**). Bedeli ≥ 2 olan **267** satırın **152'si** bedelini
+  kaybediyor; korunanlar tesadüf, B8'in v1 kurtarması adı
+  `"Tail Attack (Costs 2 Actions)"` olarak getirdiği için. Dağılım kaynağa değil
+  hangi belgede v1 kurtarmasının çalıştığına bağlı: `bfrd` 59/59 ve `tob2` 13/13
+  korunmuş, `a5e-mm` 52/52 ve `tob-2023` 52/52 tümüyle kayıp.
+
+**Ölçümle ölen adaylar.**
+1. **v1 ⟷ paket ad farkı** — `Baba Yaga’s Horsemen`, `Ia’Affrat`,
+   `J’ba Fofi Spider` v1'de kıvrık kesme (`’`), pakette düz (`'`). Pakette v2
+   yazımı var, v2 **yayınlanan belge**. Bulgu değil.
+2. **`legendary_action_uses` 32/32 = 3** — v1 `legendary_desc`'in **32
+   beyanının 32'si de** "can take 3 legendary actions" diyor. F-tob-01'in
+   `tob-2023` payı **0**; kart sabiti kaynakla birebir.
+3. **`trait_kind` 1.021/1.021 `Other`** (audit ⚠) — kaynağın
+   `CreatureTrait.type` sütunu korpüsün **8.613 trait satırının hepsinde**
+   `null`. `Other` dürüst değer, enum'ın "bilinmiyor" yuvası. *(Kayıt değil, ama
+   sonucu şu: 6.419 yayınlanan trait'te `trait_kind` filtresi hiçbir zaman
+   ayırt etmiyor.)*
+4. **`source` iki kategoride tek sabit** (audit ⚠) — belge başına tek paket;
+   tanım gereği sabit.
+5. **`creature-action`'ın 0% alanları** — `save_dc`, `save_ability_ref`,
+   `applied_condition_refs`, `effects`, `damage_type_ref` **bilinen açık #1**
+   (§5.8 düzyazı işi, K7); `recharge` (narrative) ise bilinçli olarak
+   `recharge_kind` + `recharge_min_roll` ile değiştirilmiş (170 satırda dolu).
+6. **v1'de olup pakette bulunmayan 14 satır** — ilk kaba ölçüm 14 verdi; 6'sı
+   F-pass0-21'in `(… Form Only)` önekli satırları, 3'ü F-pass0-27'nin mojibake
+   satırları (ikisi de yayınlanıyor, metni farklı), geriye F-pass0-24'ün 5'i +
+   F-tob-2023-01'in 1'i kalıyor. Kaba metin karşılaştırması **iki kat**
+   şişiriyor — soru 8'in kardeşi.
+
+**Checklist puanı.**
+
+| # | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | 4 kategori (creature-action, trait, monster, language) şemada; `pack_install_roundtrip` yeşil |
+| A2 | ✅ | zorunlu alanlar tam: `monster` ac/hp/cr/`action_refs` 408/408, `creature-action` `action_type`+`description` 1.658/1.658, `trait` `description` 1.021/1.021 |
+| A3 | ✅ | `verify_packs --doc tob-2023` **0 unsourced**; 8.052 ok |
+| A4 | ⚠️ | tek bozuk ad: `Væ00e6ttir's Greataxe` (**F-pass0-27**). v1 ⟷ v2 kesme işareti farkı bulgu değil (pakette v2 = yayınlanan belge) |
+| A5 | ✅ | üç ⚠ satırı ölçüldü: `source` ×2 (belge başına tek paket, tanım gereği sabit) ve `trait_kind`=`Other` 1.021/1.021 (kaynağın `type` sütunu korpüste 8.613/8.613 `null`) |
+| B1 | ✅ | `--list-builtin-same` **0 satır** |
+| B2 | ➖ | `tob` ⟷ `tob-2023` çifti `tob` biriminde ölçüldü (326 ortak ad, 254'ü sayısal olarak farklı) — K4, tekrarlanmadı. Buradaki 175 paylaşılan satırın hepsi statblock çocuğu |
+| B3 | ✅ | ilişkiler ref: `size_ref`, `creature_type_ref`, `alignment_ref`, `language_refs`, `damage_*_refs`, beş çocuk listesi — düzyazıda ad bırakılmıyor |
+| B4 | ✅ | `gate_packs` yeşil, census C "nothing installed" **0**, öksüz çocuk 0 |
+| B5 | ➖ | `metadata.links` **null**, manifest `requires` **[]** — paketin dış bağı yok |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ⛔ | çocuk kapsaması **2.877/2.877 kayıpsız**, ama iki metin kusuru: **F-tob-2023-01** (bir aksiyonun kural metni kaynakta kesik, dört lanet etkisi yok) ve **F-pass0-27** (4 kartta mojibake). Ayrıca F-pass0-24'ün 5'i ve F-pass0-21'in 8'i burada |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ➖ | grant bloğu taşıyan kategori yok |
+| C7 | ✅ | `unmapped_report.json`'ın **tamamı** bu paketin 3 bozuk `alignment` satırı; eşleşmeyen diğer 13 değer `alignment_note`'a kayıpsız iniyor |
+| C8 | ⚠️ | **F-pass0-28** — `legendary_action_cost` sütununun şemada evi yok (267/152). Kalan 0% alanların gerekçesi yazılı (bilinen açık #1 + `recharge` yerine `recharge_kind`) |
+| D1 | ✅ | **0 disagree / 0 absent** |
+| D2 | ✅ | 2.040 unverifiable'ın hepsi beş yazılı gerekçeden biri, her biri tam 408 satır |
+| D3 | ✅ | `gate_packs` ilişkisel kapı yeşil |
+| E1 | ➖ | canavar paketi karakter sayfasına mekanik indirmiyor |
+| E2 | ➖ | M3 listesi bu pakete değmiyor |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `pack_install_roundtrip` — `open5e-tob-2023` kurulup birebir geri okunuyor |
+| F2 | ⚠️ | paket tarafı yeşil; kesen tek grup built-in = **F-pass0-01** (+58 −1) |
+| F3 | ➖ | canavar kategorileri sihirbaza girmiyor |
+| F4 | ✅ | `entity_link_navigation` yeşil |
+| G1 | ✅ | `build_catalog` sonrası ağaç temiz; manifest sayıları paketle birebir (1.021/1.658/408/1) |
+| G2 | ✅ | Kobold Press · `ogl-10a` · `5e-2014` · OGL 1.0a atıfı tam |
+| G3 | ✅ | `is_srd_overlap: false` ve census A **0** — SRD ile çakışan kart yok |
+
+**Sayım: 16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**
+
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
@@ -2181,7 +2314,7 @@ F-tob-01'in `tob`'a özgü sanılması (3 → 19), ve `bfrd`'nin çocuk tarafın
 | `open5e-tob` | 2.734 | creature-action 1.303, trait 1.039, monster 391, language 1 | ⚠️ | 2026-08-18 | F-tob-01; F-pass0-22; -23 (+17; -18; -19; -20; -21 doğrulandı) |
 | `open5e-tob3` | 2.787 | creature-action 1.577, trait 812, monster 397, language 1 | ⚠️ | 2026-08-18 | F-pass0-24; -25 (+17 düzeltildi; -19; -20; -21 doğrulandı; -18; -22; -23 → 0) |
 | `open5e-a5e-mm` | 3.071 | creature-action 1.655, trait 829, monster 586, size 1 | ⚠️ | 2026-08-19 | F-a5e-mm-01; F-pass0-26 (+17 düzeltildi 126→96; F-tob-01 yayıldı 3→19; -18; -19; -20; -21; -25 doğrulandı; -22; -24 → 0) |
-| `open5e-tob-2023` | 3.088 | creature-action 1.658, trait 1.021, monster 408, language 1 | ⬜ | — | — |
+| `open5e-tob-2023` | 3.088 | creature-action 1.658, trait 1.021, monster 408, language 1 | ⚠️ | 2026-08-19 | F-tob-2023-01; F-pass0-27; -28 (+19; -21; -24; -26 doğrulandı; F-a5e-mm-01; F-tob-01 → 0) |
 
 > Bu dalgada örneklem **kategori başına 5 canavar + o canavarların çocuk
 > satırları** demektir — çocuk satırları ayrıca örneklenmez, ebeveyniyle okunur.
