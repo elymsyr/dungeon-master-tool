@@ -830,6 +830,41 @@ mapper'ı tahmin etmeyi bırakır). Güncellenen:
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
 
+## 2026-08-19 — R5: dört chargen mekaniği eve kavuştu
+
+Stage R'nin beşinci fazı ve R4'ün şema yarısı. Dört bulgu (F-pass0-03,
+F-pass0-09, F-pass0-10, F-pass0-08) kapandı; her biri "alan boş" değil **alan
+yok** kusuruydu. Şema **2.6.1 → 2.7.0**, beş alan:
+`background.granted_languages` / `asi_fixed_ability_ref` /
+`asi_free_bonus_count`, `subclass.caster_kind` ve `classFeatures` satırında
+`always_prepared_spell_refs` (tip belgesi + satır editörü ile birlikte).
+
+Ölçüm (`diff_packs`): **27** background zorunlu +1'ini kartta taşıyor ve
+`ability_score_options` **27/27 tek değerden 6 farklı değere** düştü (beşerli,
+sabit olan hariç); **2** kart adı verilmiş dilini aldı — asıl engel şema değil,
+kaynaktaki kıvrık kesme işaretiydi (U+2019), düzeltme `_refListFromText`'te,
+yani her katalog eşleşmesinde geçerli; **4** subclass `caster_kind: 'Third'`
+diyor (101 subclass'ta 0 yanlış pozitif, koruma ana sınıfın kendi türü) ve
+`CasterKind.third` ilk kez ulaşılabilir — caster_kind'ı `None` olan bir Rogue +
+bu subclass'lar 3. seviyede **{1: 2} slot** üretiyor; **19** subclass'ın domain
+/ circle büyü tablosu **90 seviye-kapılı satır, 170 hücrenin 149'u ref** oldu
+(kalan 21 kurulu hiçbir pakette olmayan büyü — ref uydurulmadı, düzyazıda
+kaldı). Bulgunun "24 tablo" sayısı katı okumada **20**: üçü slot tablosu, biri
+vahşi büyü tablosu.
+
+Uygulama tarafında tek okuma noktası [[caster_progression]]'daki
+`effectiveCasterKind`: [[level_up_planner]], `spells_step`, sihirbazın büyü
+doğrulaması, commit'teki `spell_slots` tohumu ve inceleme adımı. Hiçbir şey
+yazmayan bir subclass bir büyücü sınıfı düşüremez.
+
+Kapılar: `gate_packs` yeşil, `verify_packs` 68.926 ok / 0 disagree / 0 absent,
+`dupe_census` "nothing installed" 0, `flutter analyze` 0/0. Düşen 13 test
+vakası stash'lenmiş ağaçtaki 14'ün öz altkümesi — R4'ün
+`grants_save_prof_from_asi` alanı M1 taramasında beyansız kalmıştı, R5 onu
+kapattı. `assets/open5e_packs/` yeniden promote edildi (6 paket, 107 değer).
+
+Güncellenen notlar: [[mapper_chargen]], [[builtin_schema]], [[caster_progression]], [[character_resolver]].
+
 ## 2026-08-19 — R4: chargen mapper'ı tahmin etmeyi bıraktı
 
 Stage R'nin dördüncü fazı. Yedi bulgu (F-pass0-02, F-pass0-04, F-pass0-05,

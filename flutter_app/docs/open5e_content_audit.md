@@ -140,7 +140,28 @@ written `N`: SRD 5.2.1 has no such card and R4 refused to mint one),
 second class-table column is `Augmented Items` instead of `(2)`. Ledger
 **10 🛠 · 36 ✅ · 1 ⚪**. `assets/open5e_packs/` was **promoted** here (R1–R4
 together: 43 categories, 10,004 values) because R4's exit assertion reads the
-shipped pack. **The next open phase is R5.**
+shipped pack.
+
+**R5 (done 2026-08-19)** gave the four remaining chargen mechanics a home —
+schema fields with real readers, not just mapper output (`2.6.1 → 2.7.0`). The
+A5E "+1 X **and** one other" now writes `asi_fixed_ability_ref` +
+`asi_free_bonus_count` on **27** backgrounds, so `ability_score_options` went
+from **27/27 identical six-ability lists to 6 distinct five-ability lists** —
+the mandatory bump is on the card and the options are the free pick's menu.
+Two backgrounds finally carry the language their source *names*
+(`granted_languages`: Thieves' Cant, Sylvan) — the match had been failing on a
+curly apostrophe nobody can see, fixed for every catalog lookup, not just
+languages. **4** subclasses declare `caster_kind: Third`, which makes
+`CasterKind.third` reachable for the first time: Arcane Warrior / Eldritch
+Trickster / Soulspy / Underfoot get **{1: 2} slots at level 3** on a Rogue that
+has none of its own. And **19** subclasses turned their domain / circle spell
+tables into **90 level-gated `always_prepared_spell_refs` rows** (149 refs of
+170 table cells; the 21 misses are 2014-only spells no installed package holds,
+left in the prose as A3 requires). Measured against the finding: the spell-list
+tables are **20, not 24** — the record's own regex counted three third-caster
+slot tables and one wild-magic table as spell lists. Ledger **6 🛠 · 40 ✅ ·
+1 ⚪**. Promoted again (6 packs, 107 values) for the same reason R4 was.
+**The next open phase is R6.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -5545,7 +5566,7 @@ half** for the same reason. R7 and R8 are independent of everything else.
       categories, 10,004 values**; `manifest.json` and
       `assets/first_party/manifest.json` regenerated.
 
-- [ ] **R5 — Four chargen mechanics with nowhere to live.** The schema half of
+- [x] **R5 — Four chargen mechanics with nowhere to live.** Done 2026-08-19. The schema half of
       the chargen work, each one the four-edit contract plus a resolver pass.
       F-pass0-03 (A5E's "+1 to X and one other": a fixed-ability field beside the
       free pick, so `ability_score_options` stops shipping the same six abilities
@@ -5561,6 +5582,43 @@ half** for the same reason. R7 and R8 are independent of everything else.
       with the new keys, a third-caster subclass produces a slot grid on a sheet
       (M4's assertion extended), and no ref written by the new mapper branches
       dangles.*
+      **Measured.** Schema `2.6.1 → 2.7.0`, five new fields:
+      `background.granted_languages` / `asi_fixed_ability_ref` /
+      `asi_free_bonus_count`, `subclass.caster_kind`, and
+      `always_prepared_spell_refs` on the `classFeatures` row (type doc + row
+      editor). *F-pass0-03* — **27** backgrounds (a5e-ag 21, a5e-ddg 4,
+      a5e-gpg 2) write the fixed ability; `ability_score_options` **27/27 one
+      value → 27 rows / 6 values**, five abilities each, the fixed one excluded
+      ("one **other** ability score"). *F-pass0-09* — **2** named languages
+      land; the blocker was `Thieves’ Cant`'s U+2019, normalised inside
+      `_refListFromText` so every catalog match benefits (Forest Dweller's
+      wrong `granted_language_count: 1` is gone — a named grant is not a slot).
+      *F-pass0-10* — **4** subclasses declare `Third`, **0** false positives
+      across 101 packaged subclasses (the parent class's own kind is the
+      guard); `effectiveCasterKind` is now the single reader used by
+      `level_up_planner`, `spells_step`, the wizard's spell validation, its
+      commit-time `spell_slots` seed and the review step, and a subclass that
+      names nothing can never downgrade a caster class. *F-pass0-08* — **19**
+      subclasses, **90** new level-gated rows, **149 refs / 170 table cells**;
+      the 21 dropped cells are spells no installed package holds (Branding
+      Smite, Crown of Madness, …) and stay in the prose. The finding's "24
+      tables" was **20** when the header is read strictly — three of the four
+      extras are the F-pass0-10 slot tables and the fourth is a wild-magic
+      table.
+      **Green.** `flutter analyze` 0/0; `flutter test test/tool/ test/domain/
+      test/application/character_creation/` fails **13**, a strict *subset* of
+      the 14 on a stashed tree — R4's undeclared `grants_save_prof_from_asi`
+      broke M1's sweep and R5 declares it (its reader is
+      `pending_choice_resolver_dialog`, not the resolver); the remaining 13 are
+      the stale `builtin_dnd5e_v2_schema_test` / `default_schema_test` /
+      `species_test` expectations that predate R3. `test/presentation/` fails
+      only the known `pack_field_render_test` case. `build_packs` +
+      `gate_packs` green, `dupe_census` "nothing installed" **0**,
+      `verify_packs` **68,926 ok / 0 disagree / 0 absent** (unsourced 3,303,
+      unchanged).
+      **Promoted.** Same reason as R4 — the exit assertion reads the shipped
+      pack. 6 packs changed, **107 values**; `assets/first_party/manifest.json`
+      regenerated.
 
 - [ ] **R6 — Names, near-duplicates and pack identity.** Three findings, all
       about what the linking contract can and cannot see. F-pass0-07 (19 pack

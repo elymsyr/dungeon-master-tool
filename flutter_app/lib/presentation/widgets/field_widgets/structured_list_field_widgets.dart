@@ -575,6 +575,7 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
         'granted_condition_immunities': <String>[],
         'granted_senses': <String>[],
         'granted_languages': <String>[],
+        'always_prepared_spell_refs': <String>[],
         'granted_feat_refs': <String>[],
         'granted_trait_refs': <String>[],
         'granted_action_refs': <String>[],
@@ -683,6 +684,19 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
                   readOnly: readOnly,
                   onChanged: (v) =>
                       onRowChanged({...row, 'granted_languages': v}),
+                ),
+                // R5 / F-pass0-08: a domain / circle spell list is level-gated
+                // by the row it sits on, so it is authored here and not on a
+                // separate feat card.
+                _MiniRelationListField(
+                  label: 'Always Prepared Spells',
+                  values: _readStrList(row, 'always_prepared_spell_refs'),
+                  allowedTypes: const ['spell'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'always_prepared_spell_refs': v}),
                 ),
                 _MiniRelationListField(
                   label: 'Feats',

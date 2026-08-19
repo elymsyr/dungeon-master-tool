@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 10 | 36 | 1 | 0 | **47** |
+| 0 | 0 | 6 | 40 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -221,6 +221,67 @@ olmayan bir özelliği olmak zorunda), `flutter analyze` 0 hata / 0 uyarı.
 > istiyor; yayınlanan paket ise R1'den beri dört faz geride kalmıştı. Promote
 > edilen fark (`diff_packs`, eski asset → yeni): **43 kategori, 10.004 değer**.
 > `manifest.json` ve `assets/first_party/manifest.json` yeniden üretildi.
+
+**R5 uygulandı (2026-08-19).** Dört kayıt kapandı (F-pass0-03, F-pass0-09,
+F-pass0-10, F-pass0-08); 🛠 sayacı 10 → 6, ✅ 36 → 40. R4 mapper'ın *tahminini*
+kesmişti; R5 okuduğu değere **ev** açıyor. Şema `2.6.1 → 2.7.0`, beş alan:
+`background.granted_languages` / `asi_fixed_ability_ref` /
+`asi_free_bonus_count`, `subclass.caster_kind`, ve `classFeatures` satırında
+`always_prepared_spell_refs` (tip belgesi + satır editörü birlikte). Ölçülen
+etki (`diff_packs`):
+
+- **F-pass0-03** — **27** background zorunlu +1'ini artık kartta taşıyor
+  (`a5e-ag` 21, `a5e-ddg` 4, `a5e-gpg` 2). `ability_score_options`
+  **27 satır / 1 değer → 27 satır / 6 değer**: her satırda beş yetenek, sabit
+  olan hariç ("one **other** ability score"). Resolver sabit +1'i oyuncu hiçbir
+  şey seçmese de uyguluyor, `background_asi` aynı yeteneği taşıyorsa **iki kez
+  değil bir kez**; `asi_free_bonus_count` de tavan olarak okunuyor (aşılırsa
+  uyarı). Bu son madde M1'in test kurgusunu düzeltti: kurgu her background'a
+  2 serbest puan yazıyordu, kart 1 diyor.
+- **F-pass0-09** — **2** kart adı verilmiş dili aldı (`tdcs` Crime Syndicate
+  Member → Thieves' Cant, `toh` Forest Dweller → Sylvan). Asıl engel şemanın
+  eksik alanı **değildi**: kaynak `Thieves’ Cant`'i kıvrık kesme işaretiyle
+  (U+2019) yazıyor, katalog düz kesmeyle; eşleşme görünmeyen bir karakterde
+  düşüyordu. Düzeltme `_refListFromText` içinde, yani her katalog eşleşmesi
+  için geçerli. Forest Dweller'ın yanlış `granted_language_count: 1`'i kalktı —
+  adı verilmiş grant, seçim hakkı değildir.
+- **F-pass0-10** — **4** subclass `caster_kind: 'Third'` yazıyor (Arcane
+  Warrior, Eldritch Trickster, Soulspy, Underfoot), 101 paketli subclass'ta
+  **0 yanlış pozitif**; koruma ana sınıfın kendi caster kind'ı, yani `toh`'un
+  beş "Potent Spellcasting" satırı sınıflandırılmıyor. Uygulama tarafında tek
+  okuyucu `effectiveCasterKind`: `level_up_planner`, `spells_step`, sihirbazın
+  büyü doğrulaması, commit'teki `spell_slots` tohumu ve inceleme adımı hepsi
+  onu çağırıyor. Sonuç ölçüldü: caster_kind'ı `None` olan bir Rogue + bu dört
+  subclass → **3. seviyede {1: 2} slot**, 2. seviyede hâlâ boş, 20'de dolu.
+  Hiçbir şey yazmayan bir subclass bir büyücü sınıfı **düşüremiyor** (kural
+  "subclass önce" değil, "subclass gerçek bir tür adlandırıyorsa önce").
+- **F-pass0-08** — **19** subclass, **90** yeni seviye-kapılı satır,
+  **149 ref / 170 tablo hücresi**. Düşen 21 hücre hiçbir kurulu pakette
+  bulunmayan büyüler (Branding Smite, Crown of Madness, …) — çözülmeyen ad ref
+  olarak yazılmıyor, düzyazıda kalıyor (A3). Satır adı `<Özellik> (1st)`
+  biçiminde ve `granted_at_level` **minimumu hesaplandıktan sonra** ekleniyor,
+  yani ayrıştırılan bir kademe F-toh-01'i geri getiremez.
+
+**Bulgunun sayısı düzeltildi.** Kaydın "24 düzyazı büyü tablosu" ölçümü, başlık
+katı okunduğunda **20**: kalan 4'ün üçü F-pass0-10'un slot tabloları, biri
+`Wyrd Magic`'in vahşi büyü tablosu. Kaydın kanıt komutu ilk satırda "spell"
+kelimesi arıyordu, bu yüzden hepsini büyü listesi saydı.
+
+Kapılar: `build_packs` + `gate_packs` yeşil (soft ref'ler ancak var olan bir
+yazımla yazıldığı için 0 ihlal), `verify_packs` **68.926 ok / 0 disagree /
+0 absent** (unsourced 3.303 sabit), `dupe_census` "nothing installed" **0**.
+`flutter analyze` 0 hata / 0 uyarı. `flutter test test/tool/ test/domain/
+test/application/character_creation/` **13** düşüyor — stash'lenmiş ağaçtaki
+**14**'ün öz altkümesi: R4'ün `grants_save_prof_from_asi` alanı M1 taramasında
+beyansız kalmıştı, R5 onu `notResolverRead`'e yazdı (okuyucusu
+`pending_choice_resolver_dialog`, resolver değil). Kalan 13, R3 öncesinden
+kalma şema sayıları/sürüm beklentileri. `test/presentation/` yalnız bilinen
+`pack_field_render_test` vakasında düşüyor.
+
+> **`assets/open5e_packs/` yeniden promote edildi.** R5'in çıkış ölçütü de
+> yayınlanan paketi okuyan bir iddia (M4'ün slot ızgarası testi, dört
+> üçte-bir subclass'ı asset'ten okuyor). Promote edilen fark: **6 paket,
+> 107 değer**; `assets/first_party/manifest.json` yeniden üretildi.
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -615,7 +676,7 @@ değil.**
 | **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok — ⚠ tuzağı) |
 | **Kategori / etki** | `background` — alanın dolu olduğu **27** satırın **27**'si birebir aynı altı-yetenek listesi; kaynak her birinde **bir** yeteneği zorunlu kılıyor (`a5e-ag` 21, `a5e-ddg` 4, `a5e-gpg` 2) |
 | **Cause code (öneri)** | `A` — "sabit +1 X + serbest +1"in şemada evi yok; resolver kapısı mapper'ın elini bağlıyor |
-| **Durum** | 🛠 faz dosyalandı — **R5** |
+| **Durum** | ✅ kapandı — **R5** (2026-08-19) |
 
 **Bulgu.** Kaynak: `"+1 Charisma and one other ability score."` Pakette
 `ability_score_options` = altı yeteneğin tamamı. Genişletme **bilinçli** ve
@@ -677,7 +738,7 @@ pakette otomatik yakalanmayacak.
 3. **Kapsam dışı** — genişletme kalır, ama A5 için yazılı bir istisna gerekir:
    "27 A5E background'ında sabit yetenek düzyazıda kalır" (bugün yazılı değil).
 
-**Karar.** **düzelt** — seçenek 1 (sabit yeteneği taşıyan alan + resolver geçişi); 27/27 aynı altılı, kaynağın zorunlu +1'i yok sayıldığı için **yanlış** bir seçim listesi. Seçenek 2 yalnız körlüğü kapatır, içeriği düzeltmez. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (sabit yeteneği taşıyan alan + resolver geçişi); 27/27 aynı altılı, kaynağın zorunlu +1'i yok sayıldığı için **yanlış** bir seçim listesi. Seçenek 2 yalnız körlüğü kapatır, içeriği düzeltmez. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (2026-08-19)
 
 ### F-pass0-04 — 6 background kartının gövdesi "[No description provided]" ile açılıyor
 
@@ -1133,7 +1194,7 @@ kalacak.
 | **Checklist** | checklist E3 (büyücülük ilerlemesi) |
 | **Kategori / etki** | `subclass` — **4 kart** (`Arcane Warrior` / Fighter, `Eldritch Trickster` / Rogue, `Soulspy` / Rogue, `Underfoot` / Rogue) kendi büyü ilerlemesini veriyor; karakter sayfasında **0 slot, 0 cantrip, büyü adımı yok**. Korpüste `caster_kind: 'Third'` taşıyan **0** kart var (built-in 12 sınıf + paketli 2 sınıf ölçüldü) |
 | **Cause code (öneri)** | `A` — `level_up_planner.dart:473` `caster_kind`'ı **yalnız `classEntity`'den** okuyor; `subclass` şemasında böyle bir alan hiç **yok** (8 beyan edilmiş alan) |
-| **Durum** | 🛠 faz dosyalandı — **R5** |
+| **Durum** | ✅ kapandı — **R5** (2026-08-19) |
 
 **Bulgu.** Checklist E3'ün kendi örneği bu maddeyi "paketli bir büyücü çıkarsa
 yeniden dosyalanır" diye bırakmıştı; ölçüm o koşulu karşılıyor — ama beklenen
@@ -1229,7 +1290,7 @@ o tablo bu dört subclass için sonsuza kadar boş kalır.
    karar "prose olarak
    kalır" diye yazılır, `CasterKind.third`'ün ölü kod olduğu da kayda geçer.
 
-**Karar.** **düzelt** — seçenek 1 (`caster_kind` subclass şemasına + `level_up_planner`'da subclass önce). Sezgisel başlık eşlemesi (seçenek 2) `toh`'un 5 "Potent Spellcasting" satırını yanlış sınıflandırma riski taşıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`caster_kind` subclass şemasına + `level_up_planner`'da subclass önce). Sezgisel başlık eşlemesi (seçenek 2) `toh`'un 5 "Potent Spellcasting" satırını yanlış sınıflandırma riski taşıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (2026-08-19)
 
 ### F-pass0-08 — 24 subclass büyü listesi yalnız düzyazı tablosu: `features` satırının büyü anahtarı yok, B5'in yazılı kuralı da bunlara yetişmiyor
 
@@ -1239,7 +1300,7 @@ o tablo bu dört subclass için sonsuza kadar boş kalır.
 | **Checklist** | checklist E1 (mekanik sayfaya iniyor) |
 | **Kategori / etki** | `subclass` — 101 subclass'ın **523** `features` satırından **0'ı** hiçbir grant anahtarı taşımıyor; bunların **24'ü** düzyazının içine gömülü **büyü listesi tablosu** (domain / circle / expanded spells): `toh` 15, `open5e` 8, `tdcs` 1 |
 | **Cause code (öneri)** | `M` — `classFeatures` satır şemasında büyü anahtarı **hiç yok** (`granted_feat_refs` var, `always_prepared_spell_refs` yok); mapper tabloyu `description` metnine bırakıyor |
-| **Durum** | 🛠 faz dosyalandı — **R5** |
+| **Durum** | ✅ kapandı — **R5** (2026-08-19) |
 
 **Bulgu.** Built-in SRD'de bir subclass'ın büyü listesi, `always_prepared_spell_refs`
 taşıyan bir **feat kartına** yazılıyor (`srd_core/feats_class.dart:945, 980, 1039…`)
@@ -1325,7 +1386,7 @@ taşımıyor; bu ayrı bir render sorusu (checklist F2), burada yalnız anılıy
    birlikte, paket subclass'larının **hiçbir** büyü mekaniği taşımadığı kayda
    geçer.
 
-**Karar.** **düzelt** — seçenek 1 (`classFeatures` satırına `always_prepared_spell_refs`, dört-düzenleme sözleşmesiyle). Seçenek 2 B5'in "asla kart basma" kuralını gevşetir; 24 tablonun hepsi aynı iki sütunlu şekilde olduğu için ayrıştırma ucuz. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`classFeatures` satırına `always_prepared_spell_refs`, dört-düzenleme sözleşmesiyle). Seçenek 2 B5'in "asla kart basma" kuralını gevşetir; 24 tablonun hepsi aynı iki sütunlu şekilde olduğu için ayrıştırma ucuz. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (2026-08-19)
 
 ### F-pass0-09 — background'un adı verilmiş dili düşüyor: Thieves' Cant ve Sylvan hiçbir alana yazılamıyor
 
@@ -1335,7 +1396,7 @@ taşımıyor; bu ayrı bir render sorusu (checklist F2), burada yalnız anılıy
 | **Checklist** | checklist C2 (species/background/feat alanları) |
 | **Kategori / etki** | `background` — kaynakta dil sütunu dolu **24** satırın **22'si** "seçim" (`granted_language_count` doğru yazılıyor), **2'si adı verilmiş dil**: `tdcs` Crime Syndicate Member → `Thieves' Cant`, `toh` Forest Dweller → `Sylvan`. İkisi de pakette **hiç** görünmüyor |
 | **Cause code (öneri)** | `N` — `background` şemasında yalnız `granted_language_count` var (`content.dart:759`); `granted_languages` alanı **yok**, yani mapper'ın yazacağı yer de yok |
-| **Durum** | 🛠 faz dosyalandı — **R5** |
+| **Durum** | ✅ kapandı — **R5** (2026-08-19) |
 
 **Bulgu.** `background` şeması dili **sayı** olarak modelliyor: "One of your
 choice" → 1. Kaynak bazen dilin **adını** veriyor, ve o ad hiçbir yere sığmıyor —
@@ -1397,7 +1458,7 @@ karakterin dil listesinde görünmesi beklenir.
 3. **Kapsam dışı** — 24 satırda 2; "şema 2024'e göre doğru, 2014 background dil
    adları düzyazıda kalır" kararı yazılır.
 
-**Karar.** **düzelt** — seçenek 1 (`background.granted_languages`); `CharacterResolver.grantFieldKeys` alanı zaten okuyor, iş yalnız şema + mapper dallanması. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`background.granted_languages`); `CharacterResolver.grantFieldKeys` alanı zaten okuyor, iş yalnız şema + mapper dallanması. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (2026-08-19)
 
 ### F-toh-01 — `Underfoot` 1. seviyede seçilebiliyor: rogue arketipi, slot tablosunun ilk satırından seviye alıyor
 

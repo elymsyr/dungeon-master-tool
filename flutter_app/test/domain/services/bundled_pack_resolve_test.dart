@@ -315,6 +315,12 @@ void main() {
       'rarity_ref': 'database filter + entity_card',
       'requires_attunement': 'entity_card',
       'weight_lb': 'inventory weight display',
+      // R4 shipped the writer (a5e-ag Tenacious); the reader is the choice
+      // dialog, which turns the player's picked ability into a save
+      // proficiency the moment the ASI is resolved — the card itself names no
+      // ability, so there is nothing for the resolver to apply.
+      'grants_save_prof_from_asi':
+          'pending_choice_resolver_dialog — applied with the chosen ability',
     };
 
     /// Fields the assets write that **nothing** reads. Asserted as a closed set
@@ -336,6 +342,15 @@ void main() {
       'ability_score_options': (p) =>
           p.eff.effectiveAbilities.values.any((v) => v != 10),
       'asi_amount': (p) => p.eff.effectiveAbilities.values.any((v) => v != 10),
+      // R5 / F-pass0-03. The fixed half of a background ASI is not a choice,
+      // so it moves a score with nothing recorded on the character.
+      'asi_fixed_ability_ref': (p) =>
+          p.eff.effectiveAbilities.values.any((v) => v != 10),
+      // Its companion is a ceiling, and a ceiling's only observable is that
+      // shipped content stays under it: no card may resolve into its own
+      // "too many free points" warning.
+      'asi_free_bonus_count': (p) =>
+          !p.eff.warnings.any((w) => w.contains('free points')),
       'asi_ability_options': (p) =>
           p.eff.effectiveAbilities.values.any((v) => v != 10),
       'asi_max_score': (p) =>
@@ -400,7 +415,13 @@ void main() {
           .map((id) => _abbrev(world[id]?.name ?? ''))
           .whereType<String>()
           .toList();
-      if (allowed.isNotEmpty) out['background_asi'] = {allowed.first: 2};
+      // R5 / F-pass0-03: a card that declares how many free +1s it hands out
+      // is recorded honestly — spending 2 on an A5E background (which allows
+      // one, the other point being its fixed ability) is not a legal sheet.
+      final free = bg.fields['asi_free_bonus_count'];
+      if (allowed.isNotEmpty) {
+        out['background_asi'] = {allowed.first: free is int && free > 0 ? free : 2};
+      }
       final choices = <String, String>{};
       for (final g in (bg.fields['equipment_choice_groups'] as List? ?? const [])) {
         if (g is! Map) continue;

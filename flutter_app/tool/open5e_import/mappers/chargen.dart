@@ -210,6 +210,13 @@ void mapClasses({
 }) {
   final featuresByParent = groupBy(features, 'parent');
   final itemsByFeature = groupBy(featureItems, 'parent');
+  // Spells already mapped into this package, indexed case-insensitively —
+  // a table cell says "false life", the card is named "False Life".
+  final packSpells = <String, String>{
+    for (final raw in pack.entities.values)
+      if (raw is Map && raw['type'] == 'spell')
+        (raw['name'] as String).toLowerCase(): raw['name'] as String,
+  };
   // Base-class pk → display name, so a subclass can link `parent_class_ref` to
   // its parent *when that parent ships in the same pack* (SRD docs carry both).
   // Subclasses whose base class lives in the built-in pack (toh/a5e/…) get no
@@ -219,6 +226,17 @@ void mapClasses({
       if ((c['subclass_of'] as String?)?.trim().isEmpty ?? true)
         if ((c['name'] as String?)?.trim().isNotEmpty ?? false)
           c['_pk'].toString(): (c['name'] as String).trim(),
+  };
+  // R5 / F-pass0-10: what the base class already is, so a subclass claiming its
+  // own spellcasting on a class that *already* casts (toh's five "Potent
+  // Spellcasting" rows) is never mistaken for a third caster.
+  final baseCasterBySlug = <String, String>{
+    for (final c in classes)
+      if ((c['subclass_of'] as String?)?.trim().isEmpty ?? true)
+        c['_pk'].toString():
+            _casterKind[(c['caster_type'] as String?)?.toUpperCase()] ??
+                _inferCasterKind(
+                    featuresByParent[c['_pk'].toString()] ?? const <Fixture>[]),
   };
   for (final c in classes) {
     final name = (c['name'] as String?)?.trim();
@@ -265,6 +283,22 @@ void mapClasses({
         attrs['granted_at_level'] = base
             .map((r) => r['level'] as int)
             .reduce((a, b) => a < b ? a : b);
+        // R5 / F-pass0-08: a domain / circle spell list ships as a two-column
+        // markdown table inside the feature's prose, so the character sheet
+        // showed nothing. Each table tier becomes its own level-gated row —
+        // that is what "1st: false life" means, and the resolver already gates
+        // `features` rows by level. Added *after* the minimum above so a
+        // parsed tier can never lower the level the subclass is taken at.
+        final spellRows = _spellListRows(pack, packSpells, rows);
+        if (spellRows.isNotEmpty) attrs['features'] = [...rows, ...spellRows];
+      }
+      // R5 / F-pass0-10: an Eldritch Knight-shaped archetype brings its own
+      // spellcasting to a non-caster class. Without this the app has no way to
+      // reach `CasterKind.third` and the character gets no slots at all.
+      final parentCaster = baseCasterBySlug[subclassOf];
+      if ((parentCaster == null || parentCaster == 'None') &&
+          _isThirdCaster(kids)) {
+        attrs['caster_kind'] = 'Third';
       }
       _addUnique(pack, slug: 'subclass', name: name, source: source,
           description: desc, tags: [parent], attributes: attrs);
@@ -693,6 +727,10 @@ String _beforeChoice(String text) {
 /// canonical names present), correctly leaving the choice to the folded text.
 List<Map<String, String>> _refListFromText(
     Normalizer norm, String slug, String text, {bool ci = false}) {
+  // R5 / F-pass0-09: upstream writes `Thieves’ Cant` with a curly apostrophe
+  // and every catalog name uses the ASCII one, so the match failed on a
+  // character nobody can see. Normalised for every caller, not just languages.
+  text = text.replaceAll('’', "'");
   final out = <Map<String, String>>[];
   for (final n in norm.namesFor(slug)) {
     if (RegExp('\\b${RegExp.escape(n)}\\b', caseSensitive: !ci).hasMatch(text)) {
@@ -725,6 +763,92 @@ String _inferCasterKind(List<Fixture> kids) {
   if (has('pact magic')) return 'Pact';
   if (!has('spellcasting') && !has('spells known')) return 'None';
   return has('cantrips known') ? 'Full' : 'Half';
+}
+
+/// A subclass that hands out its own spell slots on a non-caster class is the
+/// 2014 Eldritch Knight / Arcane Trickster shape — a third caster. Matched on
+/// the feature's own words, never on its title: `toh`'s "Potent Spellcasting"
+/// rows say nothing of the sort, and the finding's first evidence command
+/// missed two cards precisely because it read titles.
+final _thirdCasterExpr = RegExp(
+    r'cast spells from the [a-z]+ spell list'
+    r'|spell slots you have to cast'
+    r'|you know [a-z]+ cantrips? from the [a-z]+ spell list',
+    caseSensitive: false);
+
+bool _isThirdCaster(List<Fixture> kids) => kids.any((k) =>
+    _thirdCasterExpr.hasMatch((k['desc'] as String?) ?? ''));
+
+/// Header of a domain/circle spell list: `Cleric Level | Spells`. A slot table
+/// ("Level | Cantrips Known | 1st | 2nd") deliberately does not match — its
+/// numbers are not spell names.
+final _spellTableHeader =
+    RegExp(r'^\|?\s*[A-Za-z ]*level\s*\|\s*spells?\s*\|?$', caseSensitive: false);
+
+/// One tier of that table: `| 3rd | mirror image, pass without trace |`.
+final _spellTableRow = RegExp(r'^\|?\s*(\d+)(?:st|nd|rd|th)\s*\|\s*(.+?)\s*\|?$');
+
+/// A cell entry that can be a spell name. Anything with a digit or a second
+/// column separator is a slot count that wandered in — dropping it is the A3
+/// rule: a ref invented from "2 | 1" would be worse than no ref.
+final _spellCell = RegExp(r"^[A-Za-z][A-Za-z' /-]*$");
+
+String _ordinal(int n) {
+  if (n % 100 >= 11 && n % 100 <= 13) return '${n}th';
+  switch (n % 10) {
+    case 1: return '${n}st';
+    case 2: return '${n}nd';
+    case 3: return '${n}rd';
+    default: return '${n}th';
+  }
+}
+
+/// R5 / F-pass0-08 — turn each spell-list table tier into its own
+/// `classFeatures` row carrying `always_prepared_spell_refs`. The prose row is
+/// left untouched; these rows are the mechanical half of the same feature.
+List<Map<String, dynamic>> _spellListRows(PackBuilder pack,
+    Map<String, String> packSpells, List<Map<String, dynamic>> rows) {
+  final out = <Map<String, dynamic>>[];
+  for (final r in rows) {
+    final lines = ((r['description'] as String?) ?? '')
+        .replaceAll('\r', '')
+        .split('\n')
+        .map((l) => l.trim())
+        .toList();
+    if (!lines.any(_spellTableHeader.hasMatch)) continue;
+    final label = ((r['name'] as String?) ?? '')
+        .replaceAll(RegExp(r'\s*\(table\)\s*$', caseSensitive: false), '')
+        .trim();
+    for (final line in lines) {
+      final m = _spellTableRow.firstMatch(line);
+      if (m == null) continue;
+      final level = int.parse(m.group(1)!);
+      final refs = <Map<String, String>>[];
+      for (final raw in m.group(2)!.split(',')) {
+        final cell = raw.replaceAll(RegExp(r'[*_]'), '').trim();
+        if (!_spellCell.hasMatch(cell)) continue;
+        // A ref is written only against a spelling that exists. A 2014 spell
+        // SRD 5.2.1 never printed (Ray of Sickness) is dropped rather than
+        // shipped as a ref that resolves nowhere — the prose row still names
+        // it (A3).
+        final inPack = packSpells[cell.toLowerCase()];
+        if (inPack != null) {
+          refs.add(ref('spell', inPack));
+          continue;
+        }
+        final builtin = _builtinSpells[cell.toLowerCase()];
+        if (builtin != null) refs.add(softRef('spell', builtin));
+      }
+      if (refs.isEmpty) continue;
+      out.add(<String, dynamic>{
+        'level': level,
+        'name': '$label (${_ordinal(level)})',
+        'description': '',
+        'always_prepared_spell_refs': refs,
+      });
+    }
+  }
+  return out;
 }
 
 /// First number word (`one`/`two`/…/`ten`) appearing whole-word in [text], or
@@ -1162,6 +1286,21 @@ Map<String, dynamic>? _gearRef(PackBuilder pack, String name, int qty) {
   return {'ref': softRef(builtin.slug, builtin.name), 'quantity': qty};
 }
 
+/// `lowercased name → the built-in pack's exact spelling`. Soft refs are
+/// resolved case-**sensitively** at runtime (§2.3 keeps `findEntityIdByName`
+/// strict on purpose), so "Gust Of Wind" off a title-cased table cell would
+/// dangle where "Gust of Wind" resolves. This is the spelling authority.
+final _builtinSpells = () {
+  final out = <String, String>{};
+  final prefix = nameKey('spell', '');
+  for (final key in builtinNameIndex()) {
+    if (!key.startsWith(prefix)) continue;
+    final name = key.substring(prefix.length);
+    out.putIfAbsent(name.toLowerCase(), () => name);
+  }
+  return out;
+}();
+
 /// `name → (slug, name)` over every built-in item category a starting-equipment
 /// line can land on. Indexed under three spellings, all mechanical: the catalog
 /// name itself, the inverted form of its comma names ("Bullseye Lantern" for
@@ -1489,9 +1628,25 @@ void mapBackgrounds({
         r'one\s+other\s+abilit|another\s+abilit|other\s+ability\s+score',
         caseSensitive: false,
       ).hasMatch(abilText);
+      // R5 / F-pass0-03: the named +1 is mandatory, so it goes to
+      // `asi_fixed_ability_ref` and `ability_score_options` carries only what
+      // the *free* +1 may choose from — "one **other** ability score", i.e.
+      // the remaining five. Before R5 the mandatory half had no home and the
+      // options list was widened to all six, which said the source's opposite.
+      final fixedName = floating && named.length == 1
+          ? (named.single['name'] ?? '')
+          : null;
       final abilities = floating
-          ? [for (final n in _allAbilities) lookup('ability', n)]
+          ? [
+              for (final n in _allAbilities)
+                if (n.toLowerCase() != fixedName?.toLowerCase())
+                  lookup('ability', n)
+            ]
           : named;
+      if (fixedName != null && fixedName.isNotEmpty) {
+        attrs['asi_fixed_ability_ref'] = named.single;
+        attrs['asi_free_bonus_count'] = 1;
+      }
       if (abilities.isNotEmpty) {
         attrs['ability_score_options'] = abilities;
         // SRD-2024 p.83: three offered abilities → player picks +2/+1 or +1/+1/+1.
@@ -1513,6 +1668,17 @@ void mapBackgrounds({
     if (langText != null) {
       final count = _parseLanguageCount(norm, langText);
       if (count != null) attrs['granted_language_count'] = count;
+      // R5 / F-pass0-09: sometimes the source names the language instead of
+      // counting it ("Thieves' Cant"). A named language is a grant, not a
+      // slot, so it lands in `granted_languages` and the count is left to the
+      // choice half of the line — the two never describe the same pick.
+      if (!_choiceExpr.hasMatch(langText)) {
+        final named = _refListFromText(norm, 'language', langText);
+        if (named.isNotEmpty) {
+          attrs['granted_languages'] = named;
+          attrs.remove('granted_language_count');
+        }
+      }
     }
     // D9: origin feat (SRD-2024) — the `feat` benefit row's desc is the feat
     // name. The feat lives in the same package but is mapped after backgrounds,
