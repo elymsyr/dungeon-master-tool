@@ -7,6 +7,22 @@
 
 ## Sonraki adım
 
+> **Sıradaki iş: R2** (canavar aksiyon sadakati, 11 bulgu).
+>
+> **R1 bitti (2026-08-19) — "büyü mapper'ı yuvarlamayı bırakır".** Sekiz kayıt
+> (F-pass0-11, F-wz-01, F-wz-02, F-pass0-12, F-pass0-13, F-pass0-16,
+> F-spells-that-dont-suck-01/02) `mappers/spell.dart` içinde kapandı; durum
+> satırı **0 🔎 · 0 ❓ · 32 🛠 · 13 ✅ · 1 ⚪**. Ölçüm (`diff_packs`,
+> `../.tmp/packs-rebuild`): 9 pakette **140 büyü kartı, 164 değer** — 37
+> `duration_unit_ref`, 12 `duration_amount`, 58 sahte `material_cost_gp: 0`
+> silindi, 44 gerçek fiyat yazıldı, 12 alan `Self (N-foot radius)` metninden
+> kurtarıldı, 1 `requires_concentration`. `verify_packs --only spell`
+> **0 disagree / 0 absent / 0 unsourced**; `verify.dart`'ın üç kuralı da
+> mapper'la birlikte güncellendi, yoksa sadık kart `disagree` okuyacaktı.
+> `flutter test test/tool/` **134/134**, `flutter analyze` 0 hata.
+> `assets/open5e_packs/` **promote edilmedi** — Stage R son mapper fazından
+> sonra bir kez promote eder.
+>
 > **Şu an:** **Stage F kapandı.** F0 (checklist, 2026-08-15), F1 (plan,
 > 2026-08-17, §10), F2 (defter formatı, 2026-08-17), **F3** (20/20 tarama birimi,
 > 2026-08-19) ve **F4** (karar, 2026-08-19) bitti. §9'un dört bitiş şartının
@@ -17,7 +33,7 @@
 >
 > **F4 ne yaptı (2026-08-19).** Defterdeki 46 kaydın hepsi karara bağlandı —
 > **40 düzelt**, **5 gerekçe yaz**, **1 kapsam dışı**. Durum satırı artık
-> **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪**; `python3 tool/check_findings.py` →
+> **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪** *(R1 sonrası 32 🛠 · 13 ✅)*; `python3 tool/check_findings.py` →
 > *47 kayıt, 46 tanesi sayaca giriyor — temiz*. Hiçbir kod, mapper ya da
 > `.pkg.json` dosyasına dokunulmadı (§8'in kuralı): F4 yalnızca karar yazar.
 >

@@ -40,10 +40,16 @@ void mapSpells({
     final name = (s['name'] as String?)?.trim();
     if (name == null || name.isEmpty) continue;
 
+    // **R1 / F-wz-02.** The bool column and the duration prose disagree on
+    // rows like `concentration + 1 round` (column `false`). Concentration is a
+    // required field, so a silently wrong `false` is worse than a missing one:
+    // when either source says concentration, the card says concentration.
+    final durationRaw = (s['duration'] as String?) ?? '';
     final attrs = <String, dynamic>{
       'level': (s['level'] as num?)?.toInt() ?? 0,
       'is_ritual': s['ritual'] == true,
-      'requires_concentration': s['concentration'] == true,
+      'requires_concentration': s['concentration'] == true ||
+          durationRaw.toLowerCase().contains('concentration'),
       'description': _description(s),
     };
 
@@ -75,13 +81,13 @@ void mapSpells({
     final material = (s['material_specified'] as String?)?.trim();
     if (material != null && material.isNotEmpty) {
       attrs['material_description'] = material;
-      final cost = _numOf(s['material_cost']);
+      final cost = _materialCostGp(s['material_cost'], material);
       if (cost != null) attrs['material_cost_gp'] = cost;
       attrs['material_consumed'] = s['material_consumed'] == true;
     }
 
     // Duration → amount + unit.
-    final dur = _duration((s['duration'] as String?) ?? '');
+    final dur = _duration(durationRaw);
     if (dur.$1 != null) attrs['duration_amount'] = dur.$1;
     final durUnit = norm.lookupRef('duration-unit', dur.$2, context: name);
     if (durUnit != null) attrs['duration_unit_ref'] = durUnit;
@@ -118,6 +124,19 @@ void mapSpells({
       if (shape != null) attrs['area_shape_ref'] = shape;
       final size = _numOf(s['shape_size']);
       if (size != null && size > 0) attrs['area_size_ft'] = size.round();
+    } else {
+      // **R1 / F-spells-that-dont-suck-01.** Eight rows keep the only copy of
+      // the area in the range prose (`Self (60-foot radius)`) while `range` is
+      // 0 and the shape columns are empty. Read it there — but never over a
+      // shape upstream actually filled.
+      final self = _selfArea((s['range_text'] as String?) ?? '');
+      if (self != null) {
+        final shape = norm.lookupRef('area-shape', self.$1, context: name);
+        if (shape != null) {
+          attrs['area_shape_ref'] = shape;
+          attrs['area_size_ft'] = self.$2;
+        }
+      }
     }
 
     // Reaction trigger (audit **B4**). Every non-empty `reaction_condition` in
@@ -227,26 +246,98 @@ String? _reactionTrigger(String raw) {
 }
 
 /// Spell duration → (`amount?`, `unit`). Maps the long tail of free-text
-/// 3rd-party durations onto the six canonical duration-unit rows; anything we
-/// can't parse becomes "Special" (a canonical row, so never logged as unmapped).
+/// 3rd-party durations onto the canonical duration-unit rows.
+///
+/// **R1.** The old parser took the first number+unit pair it could see and
+/// dropped whatever followed, so `2-12 hours` shipped as `Hours 12`,
+/// `1d10 hours` as `Hours 10` and `1 hour/caster level` as `Hours 1`. Anything
+/// the six canonical rows cannot state *exactly* — a range, a die, a per-level
+/// scale, an alternative, a trailing condition — is now `Special`: the card
+/// says "read the body", which is true, instead of a number the source never
+/// wrote. `permanent` is `Special` for the same reason — upstream never said
+/// the spell can be dispelled (F-pass0-11), and `permanent until discharged`
+/// carries an end condition the field cannot hold.
 (int?, String) _duration(String raw) {
   final d = raw.trim().toLowerCase();
   if (d.isEmpty) return (null, 'Special');
   if (d.startsWith('instantaneous')) return (null, 'Instantaneous');
   if (d.contains('dispelled')) return (null, 'Until Dispelled');
-  if (d.startsWith('permanent')) return (null, 'Until Dispelled');
-  final m = RegExp(r'(\d+)\s*(round|minute|hour|day)s?').firstMatch(d);
-  if (m != null) {
-    final amount = int.parse(m.group(1)!);
-    const unit = {
-      'round': 'Rounds',
-      'minute': 'Minutes',
-      'hour': 'Hours',
-      'day': 'Days',
-    };
-    return (amount, unit[m.group(2)]!);
+  if (RegExp(r'\d\s*d\s*\d').hasMatch(d) || // 1d10 hours, 1d4+2 rounds
+      RegExp(r'\d\s*-\s*\d').hasMatch(d) || // 2-12 hours
+      RegExp(r'[/;,]').hasMatch(d) || // 1 hour/caster level
+      d.contains(' or ') || // 1 minute or 1 hour
+      d.contains(' per ') ||
+      d.contains('level') ||
+      d.contains('until')) {
+    return (null, 'Special');
   }
-  return (null, 'Special');
+  // `Days` is the largest canonical row, so the three longer units are
+  // converted rather than lost — the number survives, which `Special` would
+  // not have done (F-pass0-12).
+  final m = RegExp(r'(\d+)\s*(round|minute|hour|day|week|month|year)s?')
+      .firstMatch(d);
+  if (m == null) return (null, 'Special');
+  final amount = int.parse(m.group(1)!);
+  switch (m.group(2)!) {
+    case 'round':
+      return (amount, 'Rounds');
+    case 'minute':
+      return (amount, 'Minutes');
+    case 'hour':
+      return (amount, 'Hours');
+    case 'day':
+      return (amount, 'Days');
+    case 'week':
+      return (amount * 7, 'Days');
+    case 'month':
+      return (amount * 30, 'Days');
+    default:
+      return (amount * 365, 'Days');
+  }
+}
+
+/// Component price in gp: the `material_cost` column when upstream filled it,
+/// otherwise the price the component text spells out (`worth at least 665 gp`,
+/// `worth 1,000+ GP`, `1 sp`, `1 cp`).
+///
+/// **R1.** A `0` or missing column is *unknown*, not *free*: 45 rows leave it
+/// null and 5 write a literal `0` over a price named in the same row's own
+/// prose (F-pass0-16, F-spells-that-dont-suck-02). A filled column still wins —
+/// it is the structured value.
+double? _materialCostGp(dynamic column, String text) {
+  final c = _numOf(column);
+  if (c != null && c > 0) return c;
+  final m = RegExp(r'worth\s+(?:at least\s+)?([\d,]+)\s*\+?\s*(gp|sp|cp)',
+          caseSensitive: false)
+      .firstMatch(text);
+  if (m == null) return null;
+  final n = double.tryParse(m.group(1)!.replaceAll(',', ''));
+  if (n == null) return null;
+  switch (m.group(2)!.toLowerCase()) {
+    case 'sp':
+      return n / 10;
+    case 'cp':
+      return n / 100;
+    default:
+      return n;
+  }
+}
+
+/// `Self (60-foot radius)` → (`Sphere`, 60); `Self (1-mile radius)` → 5280 ft.
+/// Only the five canonical shape words are accepted — a `dome` or a bare
+/// `Self (60 feet)` names no shape this schema has, and inventing one would be
+/// the very failure this phase removes.
+(String, int)? _selfArea(String rangeText) {
+  final m = RegExp(
+          r'^self\s*\((\d+)[- ](foot|feet|mile)s?\s*'
+          r'(radius|sphere|cone|cube|cylinder|line)\)',
+          caseSensitive: false)
+      .firstMatch(rangeText.trim());
+  if (m == null) return null;
+  var ft = int.parse(m.group(1)!);
+  if (m.group(2)!.toLowerCase() == 'mile') ft *= 5280;
+  final word = m.group(3)!.toLowerCase();
+  return (word == 'radius' ? 'Sphere' : titleCase(word), ft);
 }
 
 /// `['srd_wizard', 'kp_cleric']` → `['Wizard', 'Cleric']` (deduped, ordered).
