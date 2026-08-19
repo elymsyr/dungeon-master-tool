@@ -32,6 +32,34 @@ tags: [file]
 
 ## Key Logic / Variables
 
+> [!success] R3 — şemada evi olmayan dört mekanik (2026-08-19)
+> Dört bulgu (+1 yeni) bu dosyada kapandı; şema `2.5.1 → 2.6.0`
+> ([[builtin_schema]]). Yeni kurallar:
+> - `_qualifierNote`: `nonmagical_attack_resistance` / `…_immunity` açıkken
+>   kaynağın kendi `damage_*_display` cümlesi `resistance_note` /
+>   `immunity_note` olur (F-pass0-19). Bayrak açık ama cümle boşsa (514'ün
+>   3'ü) **hiçbir şey yazılmaz** — nitelik uydurulmaz.
+> - `_languageNote`: `languages_desc`, çözülen `language_refs`'in söylemediği
+>   bir şey söylüyorsa aynen `language_note`'a yazılır (F-pass0-20, 1.111
+>   canavar). Yalnız `telepathy …` diyen düzyazı atlanır — `telepathy_ft`
+>   onu zaten taşıyor.
+> - `_actionRow`: `legendary_action_cost` ≥ 2 ise karta yazılır (F-pass0-28);
+>   1 kuralın varsayılanı, alan gerektirmez. Şema tavanı 5, aşan değer
+>   kırpılır.
+> - `_sense` artık `{sense_ref, range_ft}` yazıyor — `rangedSenseList`'in ve
+>   `RangedSenseListFieldWidget`'ın okuduğu tek biçim. Eski düz `{'sense': …}`
+>   metni 2.370 canavarda kartta **boş seçici** çiziyordu (F-pass0-29);
+>   built-in SRD içeriği (245 satır) ve [[verify_packs]]'in duyu okuyucusu da
+>   aynı biçime taşındı.
+> - `_v1Senses`: v2'nin dört menzil sütunu dışında adı olan duyu, v1
+>   `Monster.senses` düzyazısından (`<ad> <N> ft.`) okunur ve **paket-içi**
+>   `sense` varlığı olarak açılır (F-pass0-23, `Void Speech` kalıbı) — SRD
+>   kanonu üçüncü taraf duyusu için büyümez. `or …` bir öncekinin devamıdır,
+>   duyu değil; menzili yazmayan duyu yayınlanmaz. Duyusuz canavar 515 → 470.
+>
+> Regresyon: `test/tool/monster_r3_test.dart` (17 test) +
+> `test/presentation/pack_field_render_test.dart`'ın R3 grubu.
+
 > [!success] R2 — canavar aksiyon sadakati (2026-08-19)
 > On bir bulgu bu dosyada kapandı. Yeni kurallar:
 > - `_ensureChild`'ın içerik-hash'ine **ad** katıldı (F-pass0-17) — metni

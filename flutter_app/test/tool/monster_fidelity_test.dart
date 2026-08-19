@@ -27,7 +27,7 @@ void main() {
         'armor_class': 12,
         'hit_points': 10,
         'challenge_rating': 1.0,
-        ?'alignment': alignment,
+        'alignment': ?alignment,
       };
 
   Fixture action(String pk, String parent, String name,
@@ -40,7 +40,7 @@ void main() {
         'name': name,
         'desc': desc,
         'action_type': type,
-        ?'limited_to_form': form,
+        'limited_to_form': ?form,
       };
 
   Fixture attack(String parent,
@@ -54,9 +54,9 @@ void main() {
         'damage_die_count': 2,
         'damage_die_type': 'D6',
         'damage_bonus': 3,
-        ?'damage_type': damageType,
-        ?'extra_damage_type': extraType,
-        ?'extra_damage_die_type': extraDie,
+        'damage_type': ?damageType,
+        'extra_damage_type': ?extraType,
+        'extra_damage_die_type': ?extraDie,
       };
 
   void run({

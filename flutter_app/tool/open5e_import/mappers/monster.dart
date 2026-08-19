@@ -38,6 +38,7 @@ void mapCreatures({
   V1ActionIndex v1Actions = const {},
   Map<String, String> v1Subtypes = const {},
   Map<String, int> v1LegendaryUses = const {},
+  Map<String, String> v1Senses = const {},
 }) {
   final actionsByCreature = groupBy(actions, 'parent');
   final traitsByCreature = groupBy(traits, 'parent');
@@ -204,6 +205,7 @@ void mapCreatures({
       v1Subtype: v1Subtypes[rawName.toLowerCase()],
       alignmentIsCollapsed: alignmentIsCollapsed,
       v1LegendaryUses: v1LegendaryUses[rawName.toLowerCase()],
+      v1Senses: v1Senses[rawName.toLowerCase()],
     ));
   }
 }
@@ -523,6 +525,14 @@ Map<String, dynamic> _actionRow(
   } else if (usesType == 'PER_DAY' && usesParam != null) {
     attrs['uses_per_day'] = usesParam;
   }
+  // **R3 / F-pass0-28.** A legendary action can spend more than one of the
+  // creature's per-round legendary actions. 1 is the rule's default and needs
+  // no field; anything above it is a mechanic that was reaching the card only
+  // by accident, when the v1 recovery happened to carry it inside the name.
+  final legendaryCost = _int(a['legendary_action_cost']);
+  if (legendaryCost != null && legendaryCost > 1) {
+    attrs['legendary_action_cost'] = legendaryCost.clamp(1, 5);
+  }
 
   if (attack != null) {
     final toHit = attack['to_hit_mod'];
@@ -642,6 +652,7 @@ Map<String, dynamic> _monsterRow({
   String? v1Subtype,
   bool alignmentIsCollapsed = false,
   int? v1LegendaryUses,
+  String? v1Senses,
 }) {
   final name = _cleanMonsterName((c['name'] as String?)?.trim() ?? 'Unknown');
   final stats = {
@@ -694,10 +705,11 @@ Map<String, dynamic> _monsterRow({
 
   // Senses (sense + range).
   final senses = <Map<String, dynamic>>[];
-  _sense(c['darkvision_range'], 'Darkvision', senses);
-  _sense(c['blindsight_range'], 'Blindsight', senses);
-  _sense(c['tremorsense_range'], 'Tremorsense', senses);
-  _sense(c['truesight_range'], 'Truesight', senses);
+  _sense(norm, c['darkvision_range'], 'Darkvision', senses);
+  _sense(norm, c['blindsight_range'], 'Blindsight', senses);
+  _sense(norm, c['tremorsense_range'], 'Tremorsense', senses);
+  _sense(norm, c['truesight_range'], 'Truesight', senses);
+  _v1Senses(norm, v1Senses, senses);
   if (senses.isNotEmpty) attrs['senses'] = senses;
   final tele = _int(c['telepathy_range']);
   if (tele != null && tele > 0) attrs['telepathy_ft'] = tele;
@@ -707,11 +719,17 @@ Map<String, dynamic> _monsterRow({
   final langRefs = norm.lookupRefList(
       'language', langs.map((e) => e.toString()), context: name);
   if (langRefs.isNotEmpty) attrs['language_refs'] = langRefs;
+  final langNote = _languageNote(c['languages_desc'] as String?, langRefs);
+  if (langNote != null) attrs['language_note'] = langNote;
 
   // Defenses (damage / condition).
   _dmgList(c['damage_resistances'], 'resistance_refs', norm, name, attrs);
   _dmgList(c['damage_vulnerabilities'], 'vulnerability_refs', norm, name, attrs);
   _dmgList(c['damage_immunities'], 'damage_immunity_refs', norm, name, attrs);
+  _qualifierNote(c, 'nonmagical_attack_resistance',
+      'damage_resistances_display', 'resistance_note', attrs);
+  _qualifierNote(c, 'nonmagical_attack_immunity', 'damage_immunities_display',
+      'immunity_note', attrs);
   final condImm = (c['condition_immunities'] as List?)?.cast<dynamic>() ?? const [];
   final condRefs = norm.lookupRefList(
       'condition', condImm.map((e) => e.toString()), context: name);
@@ -809,9 +827,94 @@ void _speed(dynamic v, String key, Map<String, dynamic> attrs) {
   if (n != null && n > 0) attrs[key] = n;
 }
 
-void _sense(dynamic range, String sense, List<Map<String, dynamic>> out) {
+/// **R3.** `rangedSenseList` rows are `{sense_ref, range_ft}` — the shape
+/// `species.granted_senses` has used since B3 and the only one
+/// `RangedSenseListFieldWidget` reads. Monsters were writing a bare
+/// `{sense: 'Darkvision'}` string, so every sense row on every monster card
+/// rendered with an empty sense picker.
+void _sense(Normalizer norm, dynamic range, String sense,
+    List<Map<String, dynamic>> out) {
   final n = _int(range);
-  if (n != null && n > 0) out.add({'sense': sense, 'range_ft': n});
+  if (n == null || n <= 0) return;
+  final r = _senseRef(norm, sense);
+  if (r != null) out.add({'sense_ref': r, 'range_ft': n});
+}
+
+/// A `sense` ref from the built-in Tier-0 canon, or — for a sense only a
+/// third-party document has — a row minted **inside the pack** (F-pass0-23,
+/// the `Void Speech` pattern). The SRD vocabulary never grows a keensense.
+Map<String, String>? _senseRef(Normalizer norm, String name) {
+  final canonical = norm.canonical('sense', name);
+  if (canonical != null) return lookup('sense', canonical);
+  return norm.tier0Seeder?.call('sense', titleCaseName(name));
+}
+
+/// Clauses of the v1 `senses` prose that are not a sense name: the four v2
+/// already has a column for, and `or …` — a continuation of the clause before
+/// it ("blindsight 30 ft., or 10 ft. while deafened"), never a sense of its own.
+const _v1KnownSenses = [
+  'darkvision', 'blindsight', 'truesight', 'tremorsense', 'passive perception',
+  'or ',
+];
+
+/// `"keensense 60 ft. (can't sense beyond this radius)"` → a `senses` row.
+///
+/// **R3 / F-pass0-23.** Black Flag replaces darkvision with **keensense**, and
+/// v2 has no column for it: `darkvision_range` does not exist in that document
+/// at all, so 41 of its creatures ship senseless. The name and the range are
+/// both in v1's `senses` prose, which the pipeline already loads for
+/// `tags_line`. A range is required — a sense with no distance is not a
+/// statblock row, and guessing one would be inventing rules.
+void _v1Senses(Normalizer norm, String? prose,
+    List<Map<String, dynamic>> out) {
+  if (prose == null || prose.trim().isEmpty) return;
+  final have = {
+    for (final r in out)
+      ((r['sense_ref'] as Map?)?['name'] as String? ?? '').toLowerCase(),
+  };
+  for (final part in prose.split(',')) {
+    final low = part.trim().toLowerCase();
+    if (low.isEmpty || _v1KnownSenses.any(low.startsWith)) continue;
+    final m = RegExp(r"^([a-z][a-z' ]*[a-z])\s+(\d+)\s*(?:ft|feet)").firstMatch(low);
+    if (m == null) continue;
+    final sense = m.group(1)!.trim();
+    if (!have.add(sense)) continue;
+    final r = _senseRef(norm, sense);
+    if (r != null) {
+      out.add({'sense_ref': r, 'range_ft': int.parse(m.group(2)!)});
+    }
+  }
+}
+
+/// **R3 / F-pass0-19.** The qualifier lives in a boolean beside the list:
+/// `damage_resistances` says `[bludgeoning, piercing, slashing]` while
+/// `nonmagical_attack_resistance` says those three only apply to non-magical
+/// attacks. Published without it the card claims resistance to a +1 sword —
+/// a wrong value, not a missing one. The source's own display sentence is the
+/// note, so nothing is paraphrased.
+void _qualifierNote(Fixture c, String flagKey, String displayKey, String noteKey,
+    Map<String, dynamic> attrs) {
+  if (c[flagKey] != true) return;
+  final display = (c[displayKey] as String?)?.trim() ?? '';
+  if (display.isEmpty) return;
+  attrs[noteKey] = display;
+}
+
+/// **R3 / F-pass0-20.** `languages_desc` carries the sentence the M2M list
+/// cannot: *"understands Common but can't speak"*, *"all, telepathy 120 ft."*,
+/// *"the languages it knew in life"*. Written only when the prose says
+/// something the resolved refs (plus the separate `telepathy_ft` column) do
+/// not already state, so a creature whose list is complete gains no noise.
+String? _languageNote(String? prose, List<Map<String, String>> refs) {
+  final desc = (prose ?? '').trim();
+  if (desc.isEmpty || desc == '-') return null;
+  final known = {for (final r in refs) (r['name'] ?? '').toLowerCase()};
+  for (final part in desc.split(RegExp(r'[,;]'))) {
+    final low = part.replaceAll(RegExp(r'\([^)]*\)'), '').trim().toLowerCase();
+    if (low.isEmpty || low == '-' || low.startsWith('telepathy')) continue;
+    if (!known.contains(low)) return desc;
+  }
+  return null;
 }
 
 void _dmgList(dynamic raw, String key, Normalizer norm, String ctx,

@@ -365,15 +365,27 @@ class _Rule {
 Object? Function(Map<String, dynamic>) _sub(String key, String inner) =>
     (a) => (a[key] as Map?)?[inner];
 
-/// Read one `senses` entry's range (`[{sense: Darkvision, range_ft: 60}]`).
+/// Read one `senses` entry's range
+/// (`[{sense_ref: {_lookup: sense, name: Darkvision}, range_ft: 60}]`).
 Object? Function(Map<String, dynamic>) _sense(String sense) => (a) {
       final list = a['senses'];
       if (list is! List) return null;
       for (final s in list) {
-        if (s is Map && s['sense'] == sense) return s['range_ft'];
+        // `sense_ref` is a `{_lookup, name}` placeholder for a built-in Tier-0
+        // row and a resolved id string for a pack-local one (R3's keensense).
+        final r = s is Map ? s['sense_ref'] : null;
+        if (r is Map && r['name'] == sense) return s['range_ft'];
       }
       return null;
     };
+
+/// R3: the `*_note` fields copy the source's own display sentence, and only
+/// when the qualifier boolean beside it is set and that sentence is non-empty.
+_Expect _qualified(Map<String, dynamic> r, String flagKey, String displayKey) {
+  if (r[flagKey] != true) return _Expect.nothing;
+  final display = _str(r[displayKey]).trim();
+  return display.isEmpty ? _Expect.nothing : _text(display);
+}
 
 /// A positive-int column: the mappers write speeds/senses/ranges only when the
 /// source value is `> 0`, so a `0` upstream is an agreed absence, not a hole.
@@ -490,6 +502,24 @@ final Map<String, List<_Rule>> _rules = {
           read: _sense(e.key)),
     _Rule('language_refs', ['languages'],
         (r) => _Expect.refNames(r['languages'] as List?)),
+    // **R3 / F-pass0-20.** The note carries `languages_desc` whenever the prose
+    // says something the resolved refs do not. With an empty list that is
+    // decidable here; with a filled one it needs the pack's refs, not a column.
+    _Rule('language_note', ['languages', 'languages_desc'], (r) {
+      final desc = _str(r['languages_desc']).trim();
+      if (desc.isEmpty || desc == '-') return _Expect.nothing;
+      final parts = desc.replaceAll(';', ',').split(',').map((p) => p.trim());
+      if (parts.every((p) =>
+          p.isEmpty || p == '-' || p.toLowerCase().startsWith('telepathy'))) {
+        // `telepathy_ft` already carries this; the note would only repeat it.
+        return _Expect.nothing;
+      }
+      return ((r['languages'] as List?) ?? const []).isEmpty
+          ? _text(desc)
+          : _Expect.why('the note is written only when the prose names '
+              'something the structured `languages` list does not, which needs '
+              "the pack's resolved refs rather than a source column");
+    }),
     _Rule('resistance_refs', ['damage_resistances'],
         (r) => _Expect.refNames(r['damage_resistances'] as List?)),
     _Rule('vulnerability_refs', ['damage_vulnerabilities'],
@@ -498,6 +528,16 @@ final Map<String, List<_Rule>> _rules = {
         (r) => _Expect.refNames(r['damage_immunities'] as List?)),
     _Rule('condition_immunity_refs', ['condition_immunities'],
         (r) => _Expect.refNames(r['condition_immunities'] as List?)),
+    // **R3 / F-pass0-19.** The "from nonmagical attacks" qualifier lives in a
+    // boolean beside the list; the display sentence is what the card shows.
+    _Rule('resistance_note',
+        ['nonmagical_attack_resistance', 'damage_resistances_display'],
+        (r) => _qualified(r, 'nonmagical_attack_resistance',
+            'damage_resistances_display')),
+    _Rule('immunity_note',
+        ['nonmagical_attack_immunity', 'damage_immunities_display'],
+        (r) => _qualified(r, 'nonmagical_attack_immunity',
+            'damage_immunities_display')),
     _Rule('legendary_action_uses', const [],
         (r) => _Expect.why('v2 ships no count; it is read out of the v1 '
             '`Monster.legendary_desc` prose ("can take 1 legendary action"), '

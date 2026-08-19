@@ -116,8 +116,16 @@ census "nothing installed" **0**, `gate_packs` green, catalog driftless.
 eight findings and moving **164 values on 140 spell cards** in the scratch
 rebuild. **R2 landed 2026-08-19** — the monster mapper stopped speaking for the
 source, closing eleven findings and moving **5,397 values across 8 creature
-packs** (+346 entities net) in the same scratch rebuild (ledger now
-**21 🛠 · 24 ✅ · 1 ⚪**). **The next open phase is R3.**
+packs** (+346 entities net) in the same scratch rebuild. **R3 landed
+2026-08-19** — the three monster mechanics with no schema home got one
+(`resistance_note` 511, `immunity_note` 104, `language_note` 1,111) plus
+`creature-action.legendary_action_cost` (228 cards, **267/267** source rows
+covered per creature), schema **2.5.1 → 2.6.0**, and Black Flag's keensense
+reached the card as a pack-local `sense` (senseless monsters **515 → 470**).
+R3 also found, and fixed, the reason none of that would have shown: `senses`
+rows were written as `{sense: …}` while the widget reads `sense_ref`, on 2,370
+packaged monsters **and** 245 built-in SRD rows (**F-pass0-29**, ledger now
+**17 🛠 · 29 ✅ · 1 ⚪**, 47 findings). **The next open phase is R4.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -5381,25 +5389,80 @@ half** for the same reason. R7 and R8 are independent of everything else.
       **Not promoted:** `assets/open5e_packs/` is untouched — Stage R promotes
       once, after its last mapper phase.
 
-- [ ] **R3 — Four monster mechanics with nowhere to live.** The findings whose
-      value is in the source, read or readable, and has **no schema field** —
-      each one is the four-edit contract (`FieldType` shape, factory case,
-      `builtin/` declaration, and the reader). F-pass0-19
-      (`resistance_note` / `immunity_note`, modelled on `alignment_note`: 618
-      creatures currently claim bludgeoning/piercing/slashing resistance
-      unconditionally because the "nonmagical attacks" qualifier lives in a
-      separate boolean), F-pass0-20 (`language_note` from `languages_desc` — 769
-      creatures ship no language line at all while the source says
-      *"understands Common but can't speak"*), F-pass0-28
-      (`creature-action.legendary_action_cost`, integer 1–5, `grpRules` — 152 of
-      267 rows lose "costs 2 actions") and F-pass0-23 (97 creatures whose sense
-      is not one of v2's four range columns — Black Flag's **keensense** — as a
-      pack-local `sense` entity plus v1 prose parsing, **not** a new Tier-0 canon
-      row: the SRD vocabulary does not grow to hold a third-party sense).
-      *Exit: each field renders on a monster card, `audit_packs` shows a non-zero
-      fill for all four, the built-in schema version is bumped once for the three
-      declared fields, and `pack_field_render_test` covers each new (category,
-      field) pair.*
+- [x] **R3 — Four monster mechanics with nowhere to live. Done 2026-08-19.**
+      Four findings, three new `monster` fields plus one on `creature-action`,
+      and a fifth defect the phase's own reader check turned up. Built-in
+      schema **2.5.1 → 2.6.0** (additive, no migration).
+
+      **F-pass0-19 — the qualifier ships with the list.** `resistance_note` /
+      `immunity_note` carry the source's own display sentence whenever the
+      `nonmagical_attack_*` boolean beside the list is set: **511** resistance
+      notes and **104** immunity notes. The source flags 514 resistance rows,
+      not 511 — the other **3 have an empty display column**, and a flag with
+      no sentence behind it writes nothing rather than a paraphrase.
+
+      **F-pass0-20 — the language sentence ships beside the list.**
+      `language_note` copies `languages_desc` whenever the prose names
+      something the resolved `language_refs` do not: **1,111** monsters —
+      **759** whose typed list is empty and **352** whose list is filled but
+      whose prose adds a language to it (Devil Shark's `[deep-speech]` beside
+      *"Aquan, Deep Speech, telepathy 120 ft."*). The finding predicted 769 for
+      the empty-list half and measured 759: the missing **10 say only
+      "telepathy 120 ft."**, which `telepathy_ft` already carries, so the note
+      would have been pure repetition.
+
+      **F-pass0-28 — a legendary action states what it costs.**
+      `creature-action.legendary_action_cost` (integer 1–5, `grpRules`) is
+      written when the source column is ≥ 2; 1 is the rule's default and needs
+      no field. **228 cards** carry it, against **267** source rows — not a
+      loss: child actions are authored once and shared by content hash, and
+      checked per creature the coverage is **267/267**, so all 152 rows the
+      finding measured as lost are back.
+
+      **F-pass0-23 — a sense the SRD has no row for.** v1's `senses` prose is
+      now parsed (`<name> <N> ft.`) for anything outside v2's four range
+      columns, and the sense is minted **inside the pack** — the `Void Speech`
+      pattern, never a new Tier-0 canon row. Six pack-local `sense` entities:
+      `Keensense` (`bfrd`), `Blindsense` (`ccdx`, `tob`), `Blood Sense` /
+      `Devil Sight` / `Impaired Sight` / `Sight` (`tob`). Monsters with no
+      sense line at all: **515 → 470**. Two rules the parse keeps: an `or …`
+      clause is a continuation of the sense before it ("blindsight 30 ft., or
+      10 ft. while deafened"), not a sense; and a named sense with no stated
+      range is dropped rather than given an invented one.
+
+      **The defect the phase found on its way in — F-pass0-29.** Before writing
+      keensense into `senses`, the reader gate (§2.3.1) was checked and the
+      field turned out never to have rendered at all: `rangedSenseList` rows
+      are `{sense_ref, range_ft}` and `RangedSenseListFieldWidget` reads
+      `sense_ref`, while the monster mapper wrote a bare
+      `{'sense': 'Darkvision'}` string — on **2,370 packaged monsters** and on
+      **245 rows of the built-in SRD pack** (`animals.dart` 45,
+      `monsters.dart` 200), i.e. content every user sees. The chargen side of
+      the same field (`granted_senses`, B5) had the right shape all along.
+      Fixed once in `_sense`, mirrored into the built-in content, and
+      `verify.dart`'s sense reader taught the same key. Because that content
+      changed, `srdCorePackVersion` goes **1.0.8 → 1.0.9** so existing installs
+      re-seed.
+
+      Regression tests: `test/tool/monster_r3_test.dart` (**17 tests**, one
+      group per finding) and five explicit `(category, field)` cases appended
+      to `test/presentation/pack_field_render_test.dart` — those assert the
+      value is *on screen*, not merely that the widget did not throw, because
+      the assets the file scans do not carry the new fields yet.
+      `flutter test test/tool/` **175/175**, `flutter analyze` **0 errors /
+      0 warnings** (it also cleared five `invalid_null_aware_operator`
+      warnings R2 left in its own fixture helpers: `?'key': value` marks the
+      *key* nullable, so the entries were emitted with null values).
+      `verify_packs` **0 disagree / 0 absent**, `ok` **67,552 → 68,926**,
+      `unsourced` steady at **3,303**; `gate_packs` green; `dupe_census`
+      "nothing installed" **0**, actionable redundancy **1,141**;
+      `unmapped_report.json` unchanged at 3 (the `alignment` bucket).
+      *Pre-existing, not R3's:* `pack_field_render_test`'s "builtin SRD fields
+      render" case fails on a clean tree too (`pack.content_quantities`,
+      `levelTable`) — measured with `git stash`, identical either side.
+      **Not promoted:** `assets/open5e_packs/` is untouched — Stage R promotes
+      once, after its last mapper phase.
+
 
 - [ ] **R4 — The chargen mapper stops guessing.** Seven findings in
       `mappers/chargen.dart`, none needing a schema field. F-pass0-02 (30

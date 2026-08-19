@@ -788,3 +788,44 @@ canavar mekaniği). Güncellenen:
 `flutter_app/docs/open5e_content_audit.md` (§0, §6 R2 kutusu),
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
+
+## 2026-08-19 — R3: şemada evi olmayan dört canavar mekaniği
+
+Stage R'nin üçüncü fazı. Dört bulgu (F-pass0-19, F-pass0-20, F-pass0-23,
+F-pass0-28) kapandı ve okuyucu kapısı (§2.3.1) beşinci bir kusuru ortaya
+çıkardı (**F-pass0-29**), o da aynı fazda kapandı. Built-in şema
+**2.5.1 → 2.6.0**: `monster.resistance_note`, `monster.immunity_note`,
+`monster.language_note` ve `creature-action.legendary_action_cost`
+(integer 1–5) — dördü de katkı, veri göçü yok.
+
+Ölçüm (`diff_packs`, `../.tmp/packs-rebuild`): **1.111** `language_note`
+(759 boş liste + 352 listeden fazlasını söyleyen düzyazı; bulgunun 769
+tahmininden 10 eksik, o 10'u yalnız "telepathy 120 ft." diyor ve
+`telepathy_ft` onu zaten taşıyor), **511** `resistance_note` (kaynakta
+bayrağı açık 514 satırın display'i dolu olan 511'i), **104** `immunity_note`,
+**228** `legendary_action_cost` kartı — kaynağın bedeli ≥ 2 olan 267
+satırının canavar bazında **267/267**'si (kartlar içerik hash'iyle
+paylaşılıyor). Duyu tarafında 6 paket-içi `sense` varlığı doğdu (`Keensense`
+`bfrd`; `Blindsense` `ccdx` + `tob`; `Blood Sense`, `Devil Sight`,
+`Impaired Sight`, `Sight` `tob`), duyusuz canavar **515 → 470**.
+
+F-pass0-29: `senses` satırları `{'sense': 'Darkvision'}` diye yazılıyordu,
+oysa `rangedSenseList`/`RangedSenseListFieldWidget` `sense_ref` okuyor — 2.370
+paketli canavarda **ve** built-in SRD pack'in 245 satırında duyu satırı boş
+seçici çiziyordu. Kök neden tek yerde (`_sense`) düzeltildi, built-in içerik
+(`animals.dart` 45, `monsters.dart` 200) ve `verify.dart`'ın duyu okuyucusu
+aynı biçime taşındı. Built-in içerik değiştiği için `srdCorePackVersion`
+**1.0.8 → 1.0.9** (mevcut kurulumlar yeniden seed eder).
+
+`verify_packs` **0 disagree / 0 absent** (ok 67.552 → 68.926, `unsourced`
+3.303 sabit), `gate_packs` yeşil, `dupe_census` "nothing installed" **0**,
+`unmapped_report.json` 3'te sabit. `flutter test test/tool/` **175/175**
+(yeni `monster_r3_test.dart` 17 test), `flutter analyze` 0 hata / 0 uyarı.
+`assets/open5e_packs/` promote **edilmedi** — Stage R tek seferde promote eder.
+
+Defter: 🛠 21 → 17, ✅ 24 → 29, toplam 46 → 47. Sıradaki faz: **R4** (chargen
+mapper'ı tahmin etmeyi bırakır). Güncellenen:
+`vault/10-Files/content-pipeline/mapper_monster.md`, `builtin_schema.md`,
+`flutter_app/docs/open5e_content_audit.md` (§0, §6 R3 kutusu),
+`flutter_app/docs/pack_conformance_findings.md`,
+`flutter_app/docs/pack_conformance_plan.md`.

@@ -1278,11 +1278,20 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
   fb.relation('vulnerability_refs', 'Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
+  // R3 / F-pass0-19: the source splits the qualifier off the list — the three
+  // physical types sit in `damage_resistances` while "from nonmagical attacks"
+  // lives in a boolean beside them. A flat ref list cannot hold it, so the
+  // source's own display sentence ships alongside, `alignment_note`-style.
+  fb.text('resistance_note', 'Resistance Note', g: grpResistances);
+  fb.text('immunity_note', 'Immunity Note', g: grpResistances);
   // Senses & Languages
   fb.rangedSenseList('senses', 'Senses (sense + range)', g: grpSensesLanguages);
   fb.integer('passive_perception', 'Passive Perception', required_: true, min: 0, max: 30, g: grpSensesLanguages);
   fb.relation('language_refs', 'Languages', const ['language'], isList: true, g: grpSensesLanguages);
   fb.integer('telepathy_ft', 'Telepathy (ft)', min: 0, g: grpSensesLanguages);
+  // R3 / F-pass0-20: "understands Common but can't speak" is a language line
+  // no `language_refs` list can state. Same shape as `resistance_note`.
+  fb.text('language_note', 'Language Note', g: grpSensesLanguages);
   // Meta
   fb.enum_('cr', 'Challenge Rating',
       const ['0', '1/8', '1/4', '1/2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'],
@@ -1393,6 +1402,11 @@ EntityCategorySchema _creatureActionCategory(String schemaId, String now, int or
       help: 'Roll d6; success if ≥ this. e.g. 5 means "Recharge 5–6"');
   fb.text('recharge', 'Recharge (narrative)', help: 'Free-form fallback');
   fb.integer('uses_per_day', 'Uses / Day', min: 0);
+  // R3 / F-pass0-28: a legendary action can cost more than one of the
+  // creature's per-round legendary actions. Absent = the default 1.
+  fb.integer('legendary_action_cost', 'Legendary Action Cost',
+      min: 1, max: 5, g: grpRules,
+      help: 'Legendary actions this one spends (default 1)');
   fb.boolean('is_attack', 'Is Attack');
   fb.enum_('attack_kind', 'Attack Kind', const [
     'Melee Weapon',
