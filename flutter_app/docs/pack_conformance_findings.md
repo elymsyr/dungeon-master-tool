@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 40 | 5 | 1 | 0 | **46** |
+| 0 | 0 | 32 | 13 | 1 | 0 | **46** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -115,6 +115,16 @@ Faz dağılımı: **R1** 8 (büyü mapper'ı) · **R2** 11 (canavar aksiyon sada
 **R3** 4 (yeni canavar alanı) · **R4** 7 (chargen mapper'ı) · **R5** 4 (chargen
 şema evi) · **R6** 3 (ad/kopya/paket metadata'sı) · **R7** 2 (built-in içeriği) ·
 **R8** 1 (render kapısı).
+
+**R1 uygulandı (2026-08-19).** Sekiz kayıt koda döküldü ve kapandı (F-pass0-11,
+F-wz-01, F-wz-02, F-pass0-12, F-pass0-13, F-pass0-16,
+F-spells-that-dont-suck-01, F-spells-that-dont-suck-02); 🛠 sayacı 40 → 32,
+✅ 5 → 13. Ölçülen etki (`diff_packs`, `../.tmp/packs-rebuild`): 9 pakette
+**140 büyü kartında 164 değer** değişti — 37 `duration_unit_ref`, 9+3
+`duration_amount`, 58 sahte `material_cost_gp: 0` silindi, 39 gerçek fiyat
+eklendi, 5 düzeltildi, 6 `area_shape_ref` + 6 `area_size_ft` eklendi, 1
+`requires_concentration`. `verify_packs --only spell`: **0 disagree /
+0 absent / 0 unsourced**.
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -1640,7 +1650,7 @@ for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFe
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `duration_unit_ref`; kaynağın `duration` sütunu `permanent` (22), `permanent until discharged` (2), `permanent; one generation` (1) diyen **25** satırda karta `Until Dispelled` yazılıyor. `kp`'de 2 kart: `Curse of Formlessness`, `Incantation of Lies Made Truth` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:237` (`if (d.startsWith('permanent')) return (null, 'Until Dispelled');`); Tier-0 `duration-unit` sözlüğünde yedi satır var (`lookups.dart:1388-1396`) ve hiçbiri "kalıcı" değil |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** Mapper'ın yazılı kuralı "serbest metin süreleri altı kanonik satıra
 oturt, oturmayan `Special` olsun" (satır 229-231). `instantaneous`, `10 minutes`,
@@ -1711,7 +1721,7 @@ for e in p['entities'].values():
    açıktır; mapper bunu kural olarak yazmış sayılır. O hâlde gerekçe koddan
    §5.6'ya taşınmalı (bugün yalnız satır içi bir kod satırı, yazılı karar değil).
 
-**Karar.** **düzelt** — seçenek 1 (`permanent` → `Special`); tek satır silinir, 23 kart uydurma iddiadan kurtulur. Tier-0'a `Permanent` satırı eklemek (seçenek 2) SRD'de karşılığı olmayan bir sözlük satırı ve şema sürümü demek. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`permanent` → `Special`); tek satır silinir, 23 kart uydurma iddiadan kurtulur. Tier-0'a `Permanent` satırı eklemek (seçenek 2) SRD'de karşılığı olmayan bir sözlük satırı ve şema sürümü demek. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-wz-01 — kaynak "1 hour/caster level" diyor, kart düpedüz "1 Hour" yazıyor
 
@@ -1721,7 +1731,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `duration_amount` + `duration_unit_ref`; kaynağın `duration` sütunu `1 hour/caster level`, kartta `Hours` / `1` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238` — süre regexi ilk sayı+birim çiftini kapıp arkasındaki `/caster level`'ı görmezden geliyor |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** Regex serbest metnin ilk sayı+birim çiftini alıyor, kalanına bakmıyor.
 `1 hour/caster level` böylece `Hours 1` oluyor: 10. seviye bir büyücünün 10 saati
@@ -1764,7 +1774,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 1 kart; o hâlde "ilk sayı yeterlidir" kararı `§5.6`'ya
    yazılmalı, bugün yazılı değil.
 
-**Karar.** **düzelt** — seçenek 1 (kuyrukta `/`, `per`, `level` varsa `Special`). `duration_text` alanı (seçenek 2) R1'in dışında: üç kaydı da seçenek 1 dürüstçe kapatıyor, şema büyütmeye gerek yok. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (kuyrukta `/`, `per`, `level` varsa `Special`). `duration_text` alanı (seçenek 2) R1'in dışında: üç kaydı da seçenek 1 dürüstçe kapatıyor, şema büyütmeye gerek yok. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-wz-02 — kaynağın süresi "concentration + 1 round", kart `requires_concentration: false` diyor
 
@@ -1774,7 +1784,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `requires_concentration` (zorunlu alan); kaynağın `duration` sütunu `concentration + 1 round`, `concentration` sütunu `false` → kart `false` + `Rounds 1` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:46` (`'requires_concentration': s['concentration'] == true`) yalnız bool sütunu okuyor, `duration` metnine hiç bakmıyor |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** Kaynak aynı mekaniği iki yere yazmış: `concentration` bool'u ve
 `duration` metni. `Storm of Axes`'te bool `false`, metin `concentration + 1 round`.
@@ -1825,7 +1835,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 1 kart. Ama alan zorunlu olduğu için sessiz yanlış değer,
    boş alandan daha pahalı.
 
-**Karar.** **düzelt** — seçenek 1 (`duration` metni `concentration` diyorsa bool `true`); zorunlu alanın sessiz yanlış değeri boş alandan pahalı. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`duration` metni `concentration` diyorsa bool `true`); zorunlu alanın sessiz yanlış değeri boş alandan pahalı. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-12 — "1 year" süreler karta `Special` olarak iniyor, sayı büsbütün kayboluyor
 
@@ -1835,7 +1845,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok — burada *eksik* değer) |
 | **Kategori / etki** | `spell` — `duration_unit_ref` + `duration_amount`; kaynağın `1 year` dediği satırlar kartta `Special` / `null` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238` regexi yalnız tur/dakika/saat/gün tanıyor, `year` yok; `lookups.dart:1388-1396` sözlüğünün en büyük birimi `Days` |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** Kaynak ölçülebilir bir süre veriyor (`1 year`), kart hiçbir sayı
 taşımıyor. `Special` kanonik bir satır olduğu için ne `unmapped_report.json`'a
@@ -1888,7 +1898,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 3 kart; o hâlde "`Special` kabul edilebilir kayıptır"
    kararı §5.6'ya yazılmalı, bugün yazılı değil.
 
-**Karar.** **düzelt** — seçenek 1 (`year`/`week`/`month` güne çevrilir); sözlük değişmez, sayı kaybolmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`year`/`week`/`month` güne çevrilir); sözlük değişmez, sayı kaybolmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-13 — koşullu ve değişken süreler karta düz sayı olarak iniyor: "2-12 hours" → `Hours 12`
 
@@ -1898,7 +1908,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (kaynağın söylemediği kesinlik) |
 | **Kategori / etki** | `spell` — `duration_amount`; kaynak "2-12 saat" ya da "24 saat **ya da** şu olana kadar" derken kart tek bir sayı iddia ediyor |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238`; süre regexi metindeki ilk sayı+birim çiftini alıp kuyruğu atıyor, aralığın alt sınırı ve "…until" koşulu düşüyor. Şemada serbest metin süre alanı yok (`N` yanı) |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** İki ayrı metin şekli, aynı satırda birleşiyor:
 
@@ -1963,7 +1973,7 @@ EOF
 3. **Kapsam dışı** — 4 kart; o hâlde "süre alanı yalnız üst sınırı taşır" kararı
    §5.6'ya yazılmalı, bugün yazılı değil.
 
-**Karar.** **düzelt** — seçenek 1 (aralık/koşul deseni görülürse `Special`); kesin ama yanlış sayı yerine dürüst boşluk — A3'ün ilkesi. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (aralık/koşul deseni görülürse `Special`); kesin ama yanlış sayı yerine dürüst boşluk — A3'ün ilkesi. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-14 — kuralları "konsantrasyonu kaybedersen" diyen 4 büyünün kartı `requires_concentration: false`
 
@@ -2052,7 +2062,7 @@ EOF
 | **Checklist** | checklist A3 (kaynakta yazılı bir sayı kartta hiç görünmüyor) |
 | **Kategori / etki** | `spell` — `range_ft` / `area_size_ft`; **8 kartta** `range_text` parantezindeki yarıçap/çap düşüyor, kart yalnız `range_type: Self` diyor |
 | **Cause code (öneri)** | `M` — `_range` (`mappers/spell.dart:~120`) `range_text` içinde `self` görünce dalı orada bitiriyor; parantezin içindeki sayıyı okuyan kod yok. Kaynak sütunu (`range`) bu satırlarda `0`, yani sayı yalnızca metinde |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** Kaynağın 8 satırı menzili *"Self (60-foot radius)"*, *"Self (10-foot
 dome)"*, *"Self (1-mile radius)"* biçiminde yazıyor. Kart bunların hepsinde
@@ -2110,7 +2120,7 @@ EOF
 3. **Kapsam dışı** — 8 kart, tek belge; sayı `description` metninde zaten
    okunuyor. Gerekçe §5.6'ya yazılır.
 
-**Karar.** **düzelt** — seçenek 1 (`self (N-foot <şekil>)` → `area_shape_ref` + `area_size_ft`); şekil sözcüklerinin beşi de kanonda. Sayıyı `range_ft`'e yazmak (seçenek 2) alanı yanlış anlamda kullanır. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`self (N-foot <şekil>)` → `area_shape_ref` + `area_size_ft`); şekil sözcüklerinin beşi de kanonda. Sayıyı `range_ft`'e yazmak (seçenek 2) alanı yanlış anlamda kullanır. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-spells-that-dont-suck-02 — malzeme metni "worth at least 665 gp" diyor, kart "Material Cost (gp): 0" yazıyor
 
@@ -2120,7 +2130,7 @@ EOF
 | **Checklist** | checklist A3 (kartın kendi başka alanıyla çelişen değer) |
 | **Kategori / etki** | `spell` — `material_cost_gp`; **5 kartta** alan `0` yazıyor, aynı kartın `material_description`'ı fiyatı açıkça söylüyor |
 | **Cause code (öneri)** | `S` — kaynağın `material_cost` sütunu bu satırlarda `'0'`; doğru değer kaynağın **başka** sütununda (`material_specified` metni). Mapper sadık kopyalıyor (`spell.dart:78-79`) |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** `Devil Binding`'in malzemesi *"a vial of blood and an obsidian chalice
 worth at least 665 gp"*, `Arcanist's Sword`'ünki *"…worth 250 gp"*. İkisinde de
@@ -2176,7 +2186,7 @@ EOF
 3. **Yukarı bildir / kapsam dışı** — kusur kaynağın sütununda; 5 kart için
    gerekçe §5.6'ya yazılır.
 
-**Karar.** **düzelt** — seçenek 1 + 2 birlikte: sütun `0`/`null` iken alan yazılmaz, `material_specified` metninde fiyat varsa oradan okunur (`cp`/`sp` çevrimiyle). Tek başına seçenek 1 gerçekten bedava malzemeyi de susturuyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 + 2 birlikte: sütun `0`/`null` iken alan yazılmaz, `material_specified` metninde fiyat varsa oradan okunur (`cp`/`sp` çevrimiyle). Tek başına seçenek 1 gerçekten bedava malzemeyi de susturuyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### F-pass0-15 — `spell.effects`'in ⚪ gerekçesinin ikinci yarısı ölçümle uyuşmuyor: kaynakta zar sütunu var
 
@@ -2263,7 +2273,7 @@ EOF
 | **Checklist** | checklist C3 (doldurulabilir `spell` alanı boş kalıyor) |
 | **Kategori / etki** | `spell` — `material_cost_gp`; 45 kartın `material_description`'ı fiyatı yazıyor, tipli alan boş → fiyata göre süzme/sıralama yok, alan kartta hiç görünmüyor |
 | **Cause code (öneri)** | `S` — kaynağın `Spell.material_cost` sütunu bu 45 satırda `null`, mapper'ın `if (cost != null)` koruması (`mappers/spell.dart:76`) doğru davranıyor. Ama doğru değer **aynı satırın** `material_specified` metninde yazılı (taramanın 7. sorusu) |
-| **Durum** | 🛠 faz dosyalandı — **R1** |
+| **Durum** | ✅ kapandı — **R1** (2026-08-19) |
 
 **Bulgu.** `deepm`'in 288 malzemeli kartından yalnız **12'sinde** `material_cost`
 sütunu dolu; **41'inde** sütun `null` olduğu hâlde malzeme metni fiyatı açıkça
@@ -2317,7 +2327,7 @@ EOF
 3. **Yukarı taşı** — Open5e'ye `material_cost` düzeltmesi bildirilsin; pipeline
    değişmez, ama düzelme tarihi bize bağlı olmaz.
 
-**Karar.** **düzelt** — seçenek 1 (`material_specified` içindeki `worth (at least )?N gp`, sütun doluysa sütun kazanır); 45 kart fiyatına kavuşur, kaynak sütunu bozulmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`material_specified` içindeki `worth (at least )?N gp`, sütun doluysa sütun kazanır); 45 kart fiyatına kavuşur, kaynak sütunu bozulmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 · **Uygulandı:** 2026-08-19
 
 ### Dalga 3 — sihirli eşyalar
 

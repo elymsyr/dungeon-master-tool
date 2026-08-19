@@ -503,8 +503,12 @@ final Map<String, List<_Rule>> _rules = {
           [s, if (s == 'transformation') 'transmutation']);
     }),
     _Rule('is_ritual', ['ritual'], (r) => _Expect.scalar(r['ritual'] == true)),
-    _Rule('requires_concentration', ['concentration'],
-        (r) => _Expect.scalar(r['concentration'] == true)),
+    // **R1 / F-wz-02.** The bool column and the duration prose disagree on
+    // `concentration + 1 round` rows; the mapper takes either as a yes, so the
+    // rule reads both columns too.
+    _Rule('requires_concentration', ['concentration', 'duration'],
+        (r) => _Expect.scalar(r['concentration'] == true ||
+            _str(r['duration']).toLowerCase().contains('concentration'))),
     _Rule('save_ability_ref', ['saving_throw_ability'],
         (r) => _Expect.refName(r['saving_throw_ability'])),
     _Rule('damage_type_refs', ['damage_types'],
@@ -515,16 +519,25 @@ final Map<String, List<_Rule>> _rules = {
       if (_str(r['material_specified']).isEmpty) return _Expect.nothing;
       return _Expect.scalar(r['material_consumed'] == true);
     }),
-    _Rule('material_cost_gp', ['material_cost'], (r) {
+    // **R1 / F-pass0-16 + F-spells-that-dont-suck-02.** A null or `0` column
+    // is unknown, not free: the price is in the component prose on 44 rows and
+    // is read from there, so the column cannot verify those.
+    _Rule('material_cost_gp', ['material_cost', 'material_specified'], (r) {
       if (_str(r['material_specified']).isEmpty) return _Expect.nothing;
       final n = _num(r['material_cost']);
-      return n == null ? _Expect.nothing : _Expect.scalar(n);
+      if (n != null && n > 0) return _Expect.scalar(n);
+      return _Expect.why('empty or 0 `material_cost`; the price, if any, is '
+          'parsed out of the `material_specified` prose');
     }),
     // Audit **B4**.
-    _Rule('area_shape_ref', ['shape_type'],
-        (r) => _Expect.refName(r['shape_type'])),
-    _Rule('area_size_ft', ['shape_size', 'shape_type'], (r) {
-      if (_str(r['shape_type']).isEmpty) return _Expect.nothing;
+    _Rule('area_shape_ref', ['shape_type', 'range_text'], (r) {
+      if (_str(r['shape_type']).isEmpty && _selfArea(r)) return _selfAreaWhy;
+      return _Expect.refName(r['shape_type']);
+    }),
+    _Rule('area_size_ft', ['shape_size', 'shape_type', 'range_text'], (r) {
+      if (_str(r['shape_type']).isEmpty) {
+        return _selfArea(r) ? _selfAreaWhy : _Expect.nothing;
+      }
       return _positive(r['shape_size']);
     }),
     _Rule('reaction_trigger', ['reaction_condition'], (r) {
@@ -728,6 +741,19 @@ _Expect _cr(Object? raw) {
 }
 
 // ── Judging ────────────────────────────────────────────────────────────────
+
+/// **R1 / F-spells-that-dont-suck-01.** Six rows carry the only copy of the
+/// area inside the range prose (`Self (60-foot radius)`) with the shape columns
+/// empty, so the columns cannot verify what the mapper reads out of the text.
+bool _selfArea(Fixture r) => RegExp(
+        r'^self\s*\(\d+[- ](?:foot|feet|mile)s?\s*'
+        r'(?:radius|sphere|cone|cube|cylinder|line)\)',
+        caseSensitive: false)
+    .hasMatch(_str(r['range_text']).trim());
+
+final _selfAreaWhy = _Expect.why(
+    'the shape columns are empty; the area is written only in `range_text` '
+    '(`Self (60-foot radius)`)');
 
 enum Verdict { ok, disagree, absent, unsourced, unverifiable }
 

@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/verify.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-19
 tags: [file]
 ---
 
@@ -30,6 +30,15 @@ tags: [file]
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
+- **R1 (2026-08-19) — three spell rules follow the mapper.** A rule that reads
+  only the column the mapper stopped trusting would mark a *corrected* card
+  `disagree`, so: `requires_concentration` reads `concentration` **and** the
+  `duration` prose; `material_cost_gp` expects the column only when it is filled
+  and `> 0`, and declares itself `unverifiable` (with the reason) otherwise,
+  since the price is parsed from `material_specified`; `area_shape_ref` /
+  `area_size_ft` declare themselves `unverifiable` on the six rows whose only
+  copy of the area is `Self (N-foot radius)` in `range_text`. See
+  [[mapper_spell]].
 - **Five verdicts**: `ok` (shipped value *is* the source's), `disagree` (contradiction — the only failing one), `absent` (source has a value the pack lacks), **`unsourced`** (the pack has a value nothing behind it), `unverifiable` (declared per rule, with the reason the mapper derived it from more than one column).
 - **`unsourced` is the class no other tool can see.** [[audit_packs]]' ⚠ marker only fires on a value identical across an *entire category corpus-wide*; a mapper default that varies by document slips through it. This counts, per field, the rows carrying a value with no source — 3,663 on the first run, of which one was a live defect ([[mapper_monster]]'s `hp_dice`, audit **B11**) and the rest confirmed constants.
 - **Not the mapper checking itself.** The rules are a hand-written restatement of the field ⟷ column contract, read off the fixtures and the schema. Lookup refs are compared by case-folded **name**, which asks "did the source's value land here?" without re-running the canon that decided how to spell it.

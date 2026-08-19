@@ -657,6 +657,34 @@ tags: [meta, changelog]
   `flutter_app/docs/open5e_content_audit.md` §0/§6, [[mapper_monster]],
   [[check_findings]]
 
+## 2026-08-19 — R1 BİTTİ: büyü mapper'ı yuvarlamayı bıraktı, 8 bulgu kapandı
+
+Stage R'nin ilk fazı. `tool/open5e_import/mappers/spell.dart` sekiz F3 bulgusunu
+kapattı (F-pass0-11, F-wz-01, F-wz-02, F-pass0-12, F-pass0-13, F-pass0-16,
+F-spells-that-dont-suck-01/02). Hepsinin tek bir kusuru vardı: regex gördüğü ilk
+sayıyı alıp kaynağın söylemediği kesin bir değer yazıyordu.
+
+- `_duration` artık altı kanonik satırın **tam olarak** söyleyemediği her şeye
+  `Special` diyor (zar, aralık, seviye başına ölçek, koşul); `permanent` de dahil
+  — kaynak "dağıtılabilir" demedi. `week`/`month`/`year` → `Days` (×7/×30/×365),
+  böylece sayı kaybolmuyor.
+- `requires_concentration` artık `duration` metnini de okuyor.
+- `_materialCostGp`: `0` sütunu *bilinmiyor* demek, *bedava* değil — fiyat
+  `material_specified` düzyazısından okunuyor.
+- `_selfArea`: şekil sütunları boşken `Self (60-foot radius)` alan olarak
+  yazılıyor; yalnız beş kanonik şekil sözcüğü kabul ediliyor.
+- `verify.dart`'ın üç kuralı mapper'la birlikte güncellendi — yoksa sadık kart
+  `disagree` okur, kapı düzeltmeyi cezalandırırdı.
+
+**Ölçüm** (`diff_packs`, `../.tmp/packs-rebuild`): 9 pakette **140 büyü kartı,
+164 değer**. `verify_packs --only spell` 0 disagree / 0 absent / 0 unsourced;
+korpüs 68,498 ok. Census "nothing installed" 0, `gate_packs` yeşil.
+`test/tool/` 134/134, `flutter analyze` 0 hata. `assets/open5e_packs/` promote
+**edilmedi** — Stage R son mapper fazından sonra bir kez promote eder.
+
+Defter: 🛠 40 → 32, ✅ 5 → 13. Sıradaki faz: **R2** (canavar aksiyon sadakati).
+Güncellenen: `vault/10-Files/content-pipeline/mapper_spell.md`.
+
 ## 2026-08-19 — F4 BİTTİ: 46 bulgunun 46'sı karara bağlandı, Stage F kapandı, sıra Stage R'de
 
 - **Karar dağılımı:** **40 düzelt · 5 gerekçe yaz · 1 kapsam dışı.** Defterin

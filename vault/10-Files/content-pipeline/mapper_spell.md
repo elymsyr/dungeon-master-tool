@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/spell.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-18
+updated: 2026-08-19
 tags: [file]
 ---
 
@@ -32,10 +32,33 @@ tags: [file]
 - Spec / reference: [[Open5e-API]], [[SRD-5.2.1]]
 
 ## Key Logic / Variables
+- **Stage R phase R1 (2026-08-19) — the mapper stopped rounding.** Eight F3
+  findings closed here. The rule the file now follows: *write a number only when
+  the source stated exactly that number.*
+  - `_duration` returns `Special` for anything the six canonical rows cannot
+    state exactly — a die (`1d10 hours`), a range (`2-12 hours`), a per-level
+    scale (`1 hour/caster level`), an alternative or a trailing condition
+    (`1 hour or until triggered`) — and for `permanent`, which upstream never
+    said was dispellable. `week`/`month`/`year` convert to `Days` (×7 / ×30 /
+    ×365) so the number survives instead of falling into `Special`.
+  - `requires_concentration` is true when **either** the `concentration` column
+    or the `duration` prose says so (`concentration + 1 round` shipped `false`).
+  - `_materialCostGp`: a filled column wins; a `null` **or `0`** column is
+    *unknown*, not free, so the price is parsed from `material_specified`
+    (`worth at least 665 gp`, `worth 1,000+ GP`, `1 sp`, `1 cp` → gp).
+  - `_selfArea`: when the shape columns are empty, `Self (60-foot radius)` in
+    `range_text` becomes `area_shape_ref` + `area_size_ft` (miles ×5280). Only
+    the five canonical shape words are accepted — a `dome` claims nothing.
+  - Measured with `diff_packs`: **164 values on 140 spell cards in 9 packs**;
+    `verify_packs --only spell` 0 disagree / 0 absent / 0 unsourced. Three
+    [[verify_packs]] rules moved with the mapper (the two area rules now declare
+    themselves `unverifiable` on the self-area rows). Pinned by
+    `test/tool/spell_fidelity_test.dart`. `assets/open5e_packs/` not promoted —
+    Stage R promotes once after its last mapper phase.
 - `_schoolAlias = {'transformation': 'Transmutation'}` (only the a5e variant needs folding; rest title-case 1:1 via Tier-0 lookup).
 - `_castingTime`: parses `'10minutes'`/`'bonus-action'` → `(amount, unit)`; unknown words → `'Special'`.
 - `_range`: prefers structured `range`/`range_unit` (feet/miles→ft, `any`→Unlimited); falls back to `range_text` keywords (self/touch/sight/unlimited) and a numeric grab. Miles × 5280.
-  - **F-spells-that-dont-suck-01 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `M`):**
+  - **F-spells-that-dont-suck-01 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**, cause `M`):**
     the `self` keyword ends the branch, so a parenthesised area — `Self (60-foot
     radius)`, `Self (10-foot dome)`, `Self (1-mile radius)` — ships as
     `range_type: Self` with `range_ft`, `area_shape_ref` and `area_size_ft` all
@@ -44,18 +67,18 @@ tags: [file]
     number exists only in the text. B4's `area-shape` canon already has the rows
     it would need.
 - `_duration`: maps the long tail of free-text durations onto the 6 canonical units; instantaneous/dispelled/permanent special-cased; unparseable → `'Special'` (a canonical row, never logged unmapped).
-  - **F-pass0-11 (F3 / Dalga 2, 2026-08-18, ❓ open):** the `permanent` special case sends 25 cards to `Until Dispelled` — a claim the source never makes, since the Tier-0 `duration-unit` canon has no "permanent" row (`a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1, `spells-that-dont-suck` 1). `Special`, the function's own fallback, is the honest value; see `flutter_app/docs/pack_conformance_findings.md`.
-  - **F-wz-01 (F3 / Dalga 2, 2026-08-18, ❓ open):** the numeric grab takes the first `number + unit` pair and ignores the tail, so `1 hour/caster level` ships as a flat `Hours 1` (1 card corpus-wide, `wz`'s `Order of Revenge`).
-  - **F-pass0-12 (F3 / Dalga 2, 2026-08-18, ❓ open):** the regex knows only round/minute/hour/day and the canon tops out at `Days`, so `1 year` durations fall through to `Special` with a null amount — a stated number lost on 3 cards (`deepm` 2, `wz` 1). `Days 365` is writable today.
-  - **F-pass0-13 (F3 / Dalga 2, 2026-08-18, ❓ open):** the same numeric grab turns
+  - **F-pass0-11 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** the `permanent` special case sends 25 cards to `Until Dispelled` — a claim the source never makes, since the Tier-0 `duration-unit` canon has no "permanent" row (`a5e-ag` 12, `deepm` 9, `kp` 2, `deepmx` 1, `spells-that-dont-suck` 1). `Special`, the function's own fallback, is the honest value; see `flutter_app/docs/pack_conformance_findings.md`.
+  - **F-wz-01 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** the numeric grab takes the first `number + unit` pair and ignores the tail, so `1 hour/caster level` ships as a flat `Hours 1` (1 card corpus-wide, `wz`'s `Order of Revenge`).
+  - **F-pass0-12 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** the regex knows only round/minute/hour/day and the canon tops out at `Days`, so `1 year` durations fall through to `Special` with a null amount — a stated number lost on 3 cards (`deepm` 2, `wz` 1). `Days 365` is writable today.
+  - **F-pass0-13 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** the same numeric grab turns
     ranges, conditions and alternatives into certainties — `2-12 hours` →
     `Hours 12` (the upper bound, silently), `24 hours or until …` → `Hours 24`,
     and `1 minute or 1 hour` → `Minutes 1` (the second option dropped); 5 cards
     (`deepm` 3, `deepmx` 2). Text that matches *no* branch is honest (`until destroyed` →
     `Special`), so the loss only happens when the string starts with a number.
 - `requires_concentration`: the source's `concentration` boolean only.
-  - **F-wz-02 (F3 / Dalga 2, 2026-08-18, ❓ open):** upstream also states concentration inside the free-text `duration`; `Storm of Axes` has `duration = 'concentration + 1 round'` with the boolean `false`, so the required field ships `false`. Reading the duration text alongside the boolean is a two-line fix; corpus-wide the v2 snapshot has 1 such row.
-  - **F-pass0-14 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):** the upstream
+  - **F-wz-02 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** upstream also states concentration inside the free-text `duration`; `Storm of Axes` has `duration = 'concentration + 1 round'` with the boolean `false`, so the required field ships `false`. Reading the duration text alongside the boolean is a two-line fix; corpus-wide the v2 snapshot has 1 such row.
+  - **F-pass0-14 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**, cause `S`):** the upstream
     column itself is wrong on **4** cards across 3 packs whose rules text says
     "until you lose concentration" (`deepmx` 2, `wz` 1, `a5e-ag` 1).
     `deepmx` ships the boolean `false` on all 64 rows and v1 `dmag-e` has it
@@ -65,13 +88,13 @@ tags: [file]
     In `deepm` the column is sound: v1 `dmag`'s `requires_concentration` agrees
     with v2 on 514/514 rows, 212 of them `true`.)*
 - Components: V/S/M booleans → Tier-0 `casting-component` rows; material spec adds `material_description` / `material_cost_gp` / `material_consumed`.
-  - **F-pass0-16 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):** `material_cost`
+  - **F-pass0-16 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**, cause `S`):** `material_cost`
     is `null` on 45 rows whose `material_specified` text names a price in the
     `worth <N> gp` pattern (`deepm` 41 of its 288 material rows, `spells-that-dont-suck`
     4), so the `if (cost != null)` guard leaves `material_cost_gp` empty and the
     price survives only as prose. The mirror image of F-spells-that-dont-suck-02,
     and disjoint from it.
-  - **F-spells-that-dont-suck-02 (F3 / Dalga 2, 2026-08-18, ❓ open, cause `S`):**
+  - **F-spells-that-dont-suck-02 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**, cause `S`):**
     `material_cost` is written straight through, and in `spells-that-dont-suck`
     the column is `'0'` on 63 of its 81 material rows — 5 of them while the
     `material_specified` text names a price (`…worth at least 665 gp`), so the
@@ -87,7 +110,7 @@ tags: [file]
 
 ## Notes
 - **B4's premise held** — the first audit phase where it did, after B9/B8/B3/B2 each reversed theirs. Both columns were measured against the pinned snapshot (`d4276c58`) *before* code was written. See `flutter_app/docs/open5e_content_audit.md` §5.6 / §6 B4.
-- **F-pass0-15 (F3 / Dalga 2, 2026-08-18, ❓ open):** the mapper writes no
+- **F-pass0-15 (F3 / Dalga 2, 2026-08-18 — **fixed by R1, 2026-08-19**):** the mapper writes no
   `spell.effects`, and §5.8 justifies the ⚪ with two reasons — no reader in
   `domain/`/`application/` (true) and no structured damage rows upstream
   (**false**: v2 `Spell.json`'s `damage_roll` is filled on 303 of the 1,297

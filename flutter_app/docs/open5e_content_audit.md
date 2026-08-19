@@ -112,7 +112,9 @@ where they started: **0 disagree / 0 absent** corpus-wide (68,561 ok),
 census "nothing installed" **0**, `gate_packs` green, catalog driftless.
 **F4 closed Stage F on 2026-08-19** by deciding all 46: **40 fixes**, filed as
 **Stage R**'s eight phases, **5 written rationales** and **1 out of scope**
-(§5.9). **The next open phase is R1.**
+(§5.9). **R1 landed 2026-08-19** — the spell mapper stopped rounding, closing
+eight findings and moving **164 values on 140 spell cards** in the scratch
+rebuild (ledger now **32 🛠 · 13 ✅ · 1 ⚪**). **The next open phase is R2.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -281,7 +283,13 @@ gap (`S`) and stayed out of the ledger; `is_attack` did not — see F-pass0-25.
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**Stage F is closed. The next open phase is R1.** F4 (2026-08-19) walked all
+**Stage F is closed and Stage R has begun. The next open phase is R2.**
+R1 landed 2026-08-19 (see its box in §6): eight findings closed in
+`mappers/spell.dart`, **164 values on 140 cards** corrected in
+`../.tmp/packs-rebuild`, `verify_packs --only spell` **0 disagree / 0 absent /
+0 unsourced**. `assets/open5e_packs/` was deliberately **not** promoted — Stage R
+promotes once, after its last mapper phase, so the assets churn one time instead
+of eight. F4 (2026-08-19) walked all
 **46** findings and gave each a verdict: **40 → fix**, **5 → written rationale**,
 **1 → out of scope**; the ledger's status row now reads
 **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪** and `check_findings.py` is clean. The plan's
@@ -5228,7 +5236,7 @@ Ordering rule: **R1–R2 before R3**, because R3's new fields are only worth add
 once the values that feed them are read correctly, and **R5 before R4's schema
 half** for the same reason. R7 and R8 are independent of everything else.
 
-- [ ] **R1 — The spell mapper stops rounding.** Eight findings, all in
+- [x] **R1 — The spell mapper stops rounding. Done 2026-08-19.** Eight findings, all in
       `tool/open5e_import/mappers/spell.dart`, all the same failure: a regex
       takes the first number it sees and writes a confident wrong value where the
       source said something it could not represent. F-pass0-11 (`permanent` →
@@ -5251,6 +5259,35 @@ half** for the same reason. R7 and R8 are independent of everything else.
       (23 / 3 / 4 / 45+5) move to the corrected values in `audit_packs`, and a
       test per rule in `test/tool/` pins the pattern that must **not** match
       (`Extract Foyson` for concentration, a genuinely free component for cost).*
+      **Exit met.** `diff_packs` against `../.tmp/packs-rebuild`: **164 values
+      on 140 spell cards in 9 packs**, and nothing outside `spell` moved —
+      37 `duration_unit_ref` (the `permanent` → `Special` block plus the ranges,
+      dice and per-level tails), 9 `duration_amount` removed and 3 added (the
+      `1 year` rows now carry **365 Days**), 58 fabricated `material_cost_gp: 0`
+      removed, **39 real prices added and 5 corrected** out of the component
+      prose, 6 `area_shape_ref` + 6 `area_size_ft` recovered from
+      `Self (N-foot radius)` range text (`Alter Weather` lands 5,280 ft off a
+      1-mile radius), 1 `requires_concentration` (`open5e-wz/Storm of Axes`).
+      `verify_packs --only spell`: **0 disagree / 0 absent / 0 unsourced**;
+      corpus-wide **68,498 ok / 0 disagree / 0 absent**. Census "nothing
+      installed" **0**, `gate_packs` green.
+      **`verify.dart` moved with the mapper** — three rules that read only the
+      broken column now read the columns the mapper actually reads, and the two
+      area rules declare themselves `unverifiable` with the reason on the six
+      self-area rows. Without that, a faithful card would have read `disagree`
+      and the gate would have punished the fix.
+      **Two limits worth writing down.** The `0` component column is treated as
+      *unknown*, so 58 cards lost a `0` that may in truth have meant *free* —
+      the price is simply not in the snapshot, and an absent field says that
+      honestly while `0` claimed a fact. And `_selfArea` accepts only the five
+      canonical shape words: a `10-foot dome` and a bare `Self (60 feet)` still
+      lose their number, because inventing a shape is the exact failure this
+      phase removes.
+      Regression test: `test/tool/spell_fidelity_test.dart` (13 tests, one group
+      per finding, every fixture a real snapshot string). `flutter test
+      test/tool/` **134/134 green**, `flutter analyze` 0 errors / 0 warnings.
+      **Not promoted:** `assets/open5e_packs/` is untouched — Stage R promotes
+      once, after its last mapper phase.
 
 - [ ] **R2 — Monster actions, faithfully.** Eleven findings, one file
       (`mappers/monster.dart`), no schema change — this is the largest phase in
