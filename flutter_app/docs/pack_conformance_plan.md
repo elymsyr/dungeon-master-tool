@@ -9,41 +9,43 @@
 
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
-> Dalga 4 sürüyor** — son okunan birim `tob3` (2026-08-18).
-> **20 tarama biriminin 18'i kapandı**, defterde **41 bulgu** var, kırk biri
-> de ❓ danışılacak (`python3 tool/check_findings.py` → *42 kayıt, 41 sayaca
-> giriyor, temiz*). `tob3` birimi devraldığı yedi `pass0` kaydının payını
-> bağımsız ölçtü: F-pass0-19 → 12, -20 → 123, -21 → 1 tuttu; -18, -22 ve -23
-> **0** çıktı (üçü de doğrulama); **F-pass0-17 ise düzeltildi** — defterdeki
-> tarif yalnız v2 satırlarını okuduğu için `tob3`'ün payı 23 görünüyordu,
-> v1'den kurtarılan 1.370 aksiyona da uygulanınca **128**, korpüs toplamı
-> **487**. İki yeni kayıt açıldı, ikisi de `pass0`: **F-pass0-24** (kısmen
-> çevrilmiş v2 kovası B8'in v1 kurtarmasını kapatıyor — 10 canavar, 11 aksiyon;
-> §6 B8'in "bedeli tek bir canavar" cümlesi eksik ölçülmüş) ve **F-pass0-25**
-> (`is_attack`, attack fixture'ı yokken `false` yazılıyor — metni "Melee Weapon
-> Attack: +N to hit" olan 681 satır kartta saldırı sayılmıyor, 634'ü `tob3`'te).
-> `tob3`'ün kendi verisi temiz: **7.757 ok · 0 disagree · 0 absent ·
-> 0 unsourced · 1.985 unverifiable**, eşleşme 397/397, paket sayacı **0**.
+> **F3 sürüyor: Pass 0 (§6) + Dalga 0–3 bitti, Dalga 4'ün son birimi kaldı** —
+> son okunan birim `a5e-mm` (+ `bfrd`'nin canavar satırları), 2026-08-19.
+> **20 tarama biriminin 19'u kapandı**, defterde **43 bulgu** var, kırk üçü de
+> ❓ danışılacak (`python3 tool/check_findings.py` → *44 kayıt, 43 sayaca
+> giriyor, temiz*). Birim iki yeni kayıt açtı — **F-a5e-mm-01** (kuralı
+> kaynağın `name` sütununda duran 57 statblock satırı hiç yayınlanmıyor;
+> 41 canavar, 19'u mekanik; `desc`'i boş 5 satır tek bir metinsiz `Luck`
+> kartında birleşiyor) ve **F-pass0-26** (`alignment_ref` iki pakette de
+> **946/946 `Chaotic Evil`**; kaynağın sütunu bu iki belgede tek değere
+> çökmüş, diğer sekiz belgede 10–21 farklı değer var) — ve **üç eski kaydı
+> düzeltti**: F-pass0-17'nin `a5e-mm` payı **126 → 96** (gevşek ⟷ sıkı farkının
+> sebebi `bonus_action_refs` değil **boş `desc`**miş; boş olmayan satırlarda iki
+> yöntem 76 ⟷ 76), korpüs **487 → 457**; F-tob-01 `tob`'a özgü değilmiş,
+> `a5e-mm` sayıyı v2 `CreatureAction.name`'de veriyor ve 66 beyanın **16'sı**
+> kartın sabiti 3 ile çelişiyor (korpüs **3 → 19**); ve `bfrd`'nin çocuk
+> tarafının **kayıpsız** olduğu ölçüldü (2.519/2.519, 6 softRef dahil).
+> Devralınan dört uyarının dördü de bağımsız ölçümle tuttu: F-pass0-23 → 90
+> `keensense` + **tam 41** duyusuz kart, F-pass0-20 → 189 + 77, F-pass0-25 →
+> 32 + 0, F-pass0-22 → 0 + 58, F-pass0-24 → 0. Kapılar: **16.760 ok /
+> 0 disagree / 0 absent / 0 unsourced**, eşleşme 946/946, gate yeşil, census 0,
+> katalog driftsiz.
 >
-> **Sıradaki iş: Dalga 4'ün beşinci birimi → `open5e-a5e-mm` (+ `open5e-bfrd`'nin
-> canavar satırları; B2'nin asıl sınav çifti, plan §Dalga 4 kararı).**
-> `tob3` biriminden çıkan dört uyarı:
-> (1) **F-pass0-23'ün asıl paketi `bfrd`** — kayıttaki **90** satır ("keensense",
-> `darkvision_range` sütunu v2'de hiç yok) ve "**41 canavarda `senses` tamamen
-> boş**" sayısı bu birimde doğrulanmalı; `tob3` payının 0 çıktığı ölçüldü, yani
-> sayı `bfrd`+`tob`+`ccdx`'e ait;
-> (2) **F-pass0-17'nin `a5e-mm` payı iki yöntemde ayrışan tek pakettir**
-> (gevşek 106 ⟷ sıkı 85). `tob2`, `tob` ve `tob3` üçünde de iki yöntem aynı
-> sonucu verdi, dolayısıyla fark a5e'ye özgü — bu birim farkın **nereden**
-> geldiğini adlandırmalı;
-> (3) **F-pass0-24'ün `a5e-mm` payı 0 ölçüldü** (kısmen çevrilmiş kova yalnız
-> `tob`/`tob-2023`/`tob3`'te var) ama **F-pass0-25'in payı 32**, F-pass0-22'nin
-> payı 0, F-pass0-20'nin payı **189** (korpüsün en büyüğü) — üçü de
-> doğrulanmalı, kopyalanmamalı;
-> (4) **`bfrd` paketi `class` 1 + `subclass` 1 satır da taşıyor** — canavar
-> paketi kalıbının dışına çıkan tek Dalga 4 dosyası; C1 (seviye tablosu) o iki
-> satır için gerçekten sorulmalı.
+> **Sıradaki iş: Dalga 4'ün son birimi → `open5e-tob-2023`** (3.088 varlık:
+> creature-action 1.658, trait 1.021, monster 408, language 1). Bu birimden
+> çıkan üç uyarı:
+> (1) **F-pass0-19'un en büyük payı `tob-2023`'te** (106 direnç + 21 bağışıklık,
+> korpüsün zirvesi) ve **F-pass0-21'in ikinci büyüğü** (48) orada — ikisi de
+> ölçülmeli, kopyalanmamalı;
+> (2) **F-pass0-24'ün `tob-2023` payı 5 canavar** (defterdeki liste: Pact
+> Vampire, Queen of Witches, Red Hag, Tosculi Hive Queen, Ushabti Royal Guard)
+> — birim bunu kendi ölçümüyle doğrulamalı;
+> (3) **B2'nin son sınavı**: `tob` ⟷ `tob-2023` çifti `tob` biriminde ölçüldü
+> (326 ortak ad, 254'ü sayısal olarak farklı) — `tob-2023` tarafından
+> tekrarlanması gerekmez (K4), ama `tob-2023`'ün **kendi** `unmapped_report`
+> satırları (üç bozuk `alignment` değerinin **hepsi** bu belgenin verisi,
+> `tob` biriminde düzeltildi) bu birimde okunmalı; ayrıca F-pass0-26'nın
+> `tob-2023` payı **0** (21 farklı hizalama değeri) — doğrulanmalı.
 >
 > **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
 > **F4 — "Karar ver, sonra görev aç"**a gelir.
@@ -58,7 +60,7 @@
 > **kırmızı gelir** — kesen tek grup built-in, yani F-pass0-01; paket tarafı
 > (224 çift / 446 pump) yeşil.
 >
-> **Taramanın yedi sorusu** (birim birim biriktiler, hepsi geçerli):
+> **Taramanın sekiz sorusu** (birim birim biriktiler, hepsi geçerli):
 > 1. Kartın taşıdığı mekanik **şemada bir eve sahip mi**? (`open5e`)
 > 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
 > 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
@@ -77,6 +79,14 @@
 >    (`bfrd` — `name` yanlış, `pk` doğru; `deepm` — `material_cost` boş, fiyat
 >    `material_specified` metninde → F-pass0-16.) Cevabın **hayır** olması da
 >    ölçüm: `vom`'da fiyat `desc`'te de yoktu, o yüzden `cost_gp` bulgu değil.
+>    `a5e-mm` bunu iki kez kullandı: kural metni `desc` yerine **`name`**'de
+>    (F-a5e-mm-01) ve efsanevi aksiyon sayısı yine `name`'de (F-tob-01'in
+>    yayılması) — ikisinde de cevap **evet**, ikisinde de kayıp mapper'ın
+>    hangi sütunu okuduğu kararından geliyor.
+> 8. **Kayıp ölçerken soft ref'i saymayı unutma** (yeni, `a5e-mm`): L1
+>    built-in'in taşıdığı satırı pakete koymaz, `{slug,name}` softRef'i yazar.
+>    Yalnız hard ref'lerin metnine bakan bir ölçüm `bfrd`'de 6, `a5e-mm`'de 9
+>    satırı yanlışlıkla "kayıp" sayıyordu.
 >
 > Her oturum sonunda, bulgu yazıldıktan sonra: `python3 tool/check_findings.py`.
 
@@ -2026,16 +2036,151 @@ korpüs geneline yayılan kusur; paketin kendi sayacı **0**'da kalıyor. Birimi
 asıl katkısı iki ölçüm düzeltmesi: B8'in "bedeli tek bir canavar" gerekçesi ile
 F-pass0-17'nin `tob3` payı. **20 tarama biriminin 18'i bitti.**
 
+#### open5e-a5e-mm (+ open5e-bfrd canavarları) sonucu — 2026-08-19
+
+**Birim.** Dalga 4'ün beşinci ve en büyük birimi: `a5e-mm` 3.071 varlık
+(creature-action 1.655, trait 829, monster 586, size 1) + `bfrd`'nin canavar
+tarafı 2.470 varlık (creature-action 1.338, trait 772, monster 360, language 1).
+İkisi birlikte okundu, çünkü checklist **B2'nin asıl sınav çifti** bu ikisi
+(L4'ün 188 kopyasının kaynağı) ve `bfrd`'nin `class`/`subclass` satırları
+2026-08-18'de zaten kapandı (F-bfrd-01).
+
+**Kapılar.** `verify_packs --doc a5e-mm --only monster` → **10.567 ok /
+0 disagree / 0 absent / 0 unsourced / 2.930 unverifiable** (586/586 eşleşme);
+`--doc bfrd --only monster` → **6.193 ok / 0 disagree / 0 absent / 0 unsourced /
+1.800 unverifiable** (360/360). Toplam **16.760 ok / 0 disagree**.
+`gate_packs --packs /tmp/one` yeşil, `dupe_census` "nothing installed" **0**,
+`--list-builtin-same` iki paket için de **0 satır**, `--list-shared`'da 15 satır
+(1 `language` + 1 `creature-action` + 13 `trait`, hepsi statblock çocuğu = B2'nin
+yazılı istisnası), `build_catalog` sonrası ağaç temiz, `unmapped_report.json`'da
+iki paketten de satır yok.
+
+**Çocuk satır kapsaması — bir pakette sıfır kayıp, ötekinde 57.** Ölçüm bu kez
+**soft ref'leri de sayıyor** (L1 built-in'e gönderdiği satırı pakete koymaz):
+`bfrd`'nin 1.596 + 923 kaynak satırının **hepsi** kartta (6'sı softRef, örn.
+`Nimble Escape` — built-in metniyle **birebir aynı**, L1 tam da bunun için
+yazıldı). `a5e-mm`'de ise 57 satır hiçbir yere inmiyor → **F-a5e-mm-01**.
+İki paketin de öksüz çocuğu **0**, dangling **0**.
+
+**Yeni iki kayıt.**
+* **F-a5e-mm-01** (C4, `M`) — yukarı akışın statblock ayrıştırıcısı bazı
+  satırlarda kuralı `name`'e, devamını `desc`'e yazmış: 30 satırın `desc`'i
+  bomboş (korpüsteki **tek** boş `desc` kovası), 27'sinin adı cümle. Mapper'ın
+  cümle-parçası koruması 52'sini düşürüyor, 5'i de metinsiz tek bir `Luck`
+  kartında birleşiyor (3 canavar onu ref'liyor; `creature-action.description`
+  2.992/2.993 tam olarak bu). 41 canavar, **19'u mekanik** (Gelatinous Cube'ün
+  kaçış DC'si, Medusa'nın DC 14 taşlaştırması, Dread Knight'ın duvarı).
+* **F-pass0-26** (A5, `S`) — `alignment_ref` iki pakette de **946/946
+  `Chaotic Evil`**. Kaynağın `alignment` sütunu bu iki belgede tek değere
+  çökmüş; korpüsteki diğer sekiz belgede 10–21 farklı değer var. Kart Pixie'ye,
+  Unicorn'a, Elk'e kaotik kötü diyor.
+
+**Devralınan dört uyarının cevabı.**
+* **(1) F-pass0-23'ün asıl paketi gerçekten `bfrd`.** v1 `blackflag`'te
+  **90** `keensense` satırı (tek tür, başka yok) ve paketin `senses`'i boş 140
+  canavarının **tam 41'inde** v1 bir duyu beyan ediyor — devir notunun iki
+  sayısı da birebir çıktı.
+* **(2) F-pass0-17'nin gevşek ⟷ sıkı farkı adlandırıldı, ve kayıt düzeltildi.**
+  Fark `bonus_action_refs`'ten değil, **boş `desc`'ten** geliyor: tarif metni
+  eşleştirdiği için `desc`'i boş 30 satır, pakette boş `description` taşıyan tek
+  varlığa (`Luck`) aday oluyor. Boş olmayan satırlarda iki yöntem **76 ⟷ 76**,
+  yani diğer üç canavar paketiyle aynı. `a5e-mm`'in payı **126 → 96**, korpüs
+  **487 → 457**. `bfrd` payı (53 + 4 = 57) iki yöntemde de doğrulandı.
+* **(3) Dört pay bağımsız ölçüldü, dördü de tuttu.** F-pass0-24 → **0**
+  (`a5e-mm`'in v1 belgesi yok, `bfrd`'de yarım dolu kova 0), F-pass0-25 →
+  **32** (`a5e-mm`), `bfrd` **0**; F-pass0-22 → `a5e-mm` **0**, `bfrd` **58**
+  (114'ün yarısından fazlası, 58/58'i eşleşen efsanevi satır); F-pass0-20 →
+  `a5e-mm` **189** (korpüsün en büyüğü) + `bfrd` **77**. Ayrıca F-pass0-18
+  (828 + 512), F-pass0-19 (87 + 27 direnç, 24 + 6 bağışıklık) ve F-pass0-21
+  (60 + 37) de yeniden ölçüldü, hepsi defterdeki sayı.
+* **(4) `bfrd`'nin `class`/`subclass` satırları** 2026-08-18'de kendi biriminde
+  C1 sorusuyla okundu (F-bfrd-01); bu birimde tekrar edilmedi (K4).
+
+**Beşinci ölçüm: F-tob-01 `tob`'a özgü değilmiş.** Kayıt sabitin dürüstlüğünü
+v1 `legendary_desc` üzerinden tarıyordu; `a5e-mm`'in v1 belgesi **yok**, sayıyı
+v2'de bir `LEGENDARY_ACTION` satırının **adında** taşıyor (*"The aboleth can
+take 2 legendary actions"*). 66 beyanın **16'sı** kartın sabiti 3 ile
+çelişiyor — kayıt yayılan bulguya çevrildi, korpüs **3 → 19**.
+
+**Ölçümde ölen adaylar (soru 3, 6 ve 7).**
+a. **`hp_dice` 586/946** — eksik olan 360'ın hepsi `bfrd` ve v2
+   `Creature.hit_dice` orada **360/360 boş**; B11'in kuralı ("uydurma yok")
+   tam da bunu yapıyor. Boşluk pakette değil kaynakta.
+b. **`tags_line` 74/946** — `a5e-mm`'de 0, çünkü v1 belgesi yok; `bfrd`'nin 74'ü
+   v1 `blackflag`'in `subtype` sütununun **tam sayısı**.
+c. **`Nimble Escape` kartta yok** sanıldı: built-in'de var, metni **birebir
+   aynı**, paket softRef'liyor (L1). Aynı şekilde `bfrd`'nin 4 `trait`'i ve
+   `a5e-mm`'in 9 satırı da softRef.
+d. **`bfrd`'nin `game_system: 5e-2014`'ü** kaynağın `Document.gamesystem`
+   sütununun aynısı (F-open5e-01'in tersi durum) — G2 ✅.
+e. **`alignment_note` 0/946** kayıp değil: `alignment_ref` 946/946 dolu, not
+   yalnız ayrıştırılamayan değer için yazılıyor (`unmapped_report` 0 satır).
+f. **`a5e-mm`'in 3 aksiyonsuz canavarı** (Frog, Seahorse, Shrieker) —
+   ilk ikisinin kaynakta da aksiyon satırı yok; Shrieker'ın tek satırı
+   F-a5e-mm-01'in kovasında.
+g. **%0 kalan alanların hepsinin yazılı gerekçesi var** (§5.8: `save_dc` /
+   `save_ability_ref` / `applied_condition_refs` `M` "in the action desc",
+   `recharge` ⚪, `effects` ⚪, `cr_helper` ⚪, `trait` grant bloğu ⛔) → C8 ✅.
+
+**B2 — çiftin sınavı.** `a5e-mm` ⟷ `bfrd` **249 canavar adını** paylaşıyor
+(586 ⟷ 360), ama **246'sı** altı sayının (ac / hp / cr / xp / speed /
+passive perception) en az birinde ayrışıyor ve `attributes` bloğu **hiçbirinde**
+birebir aynı değil. Üçü (Bandit, Earth Elemental, Elk) altı sayıda da aynı —
+ikisi de SRD'den türediği için. Yani `tob` ⟷ `tob-2023` çiftinde ölçülenin
+aynısı: **iki kural seti, iki kopya değil**; B2'nin istisnası burada da geçerli.
+
+| Madde | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | beş kategori slug'ı da built-in şemada tanımlı (`size` dahil) |
+| A2 | ⚠️ | `hp_dice` **zorunlu** ve `bfrd`'de 0/360 — kaynakta da boş (b), ama zorunlu alan kartta boş; `action_refs` 943/946 (f) |
+| A3 | ⚠️ | `is_attack` 32 satırda metnine aykırı (**F-pass0-25**), "nonmagical" niteliği 114 canavarda (**F-pass0-19**), biçim niteliği 97 aksiyonda (**F-pass0-21**), 58 efsanevi satır ikinci kez aksiyon (**F-pass0-22**) |
+| A4 | ✅ | 946 adın 946'sı kaynakla eşleşiyor; `Npc:` temizliği bu iki belgede gereksiz |
+| A5 | ⚠️ | `alignment_ref` 946/946 `Chaotic Evil` (**F-pass0-26**) ve `legendary_action_uses` sabiti 16 canavarda yanlış (**F-tob-01**, bu birimde yayıldı); `trait_kind` sabiti dürüst (kaynak sütunu 1.601/1.601 null) |
+| B1 | ✅ | `--list-builtin-same` iki paket için de 0 satır; softRef yolu (c) tasarlandığı gibi çalışıyor |
+| B2 | ✅ | 249 ortak ad, **246'sı sayısal olarak farklı**, 0 birebir kart — iki kural seti |
+| B3 | ⚠️ | dil bilgisi 266 canavarda düzyazıda kalıyor (**F-pass0-20**: 189 + 77); duyu tarafında 41 canavar (**F-pass0-23**, `bfrd`) |
+| B4 | ✅ | gate yeşil; `dupe_census` C bölümü "nothing installed" 0 |
+| B5 | ➖ | paket→paket bağı yok (`requires: []`) |
+| C1 | ➖ | `bfrd`'nin `class`/`subclass` satırları kendi biriminde okundu (F-bfrd-01) |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ⚠️ | `bfrd` kayıpsız (2.519/2.519 satır kartta), `a5e-mm`'de **57 satır** hiç yayınlanmıyor → **F-a5e-mm-01**; öksüz 0, dangling 0 |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ⛔ | `trait` grant bloğu §5.8'de ⛔ (statblock çocuğu `CharacterResolver`'a inmez) |
+| C7 | ✅ | Tier-0 sözlükleri çözülüyor; `unmapped_report`'ta iki paketten de satır yok |
+| C8 | ✅ | %0 kalan yedi alanın yedisinin de yazılı gerekçesi var (g) |
+| D1 | ⚠️ | `monster` tarafı 16.760 ok / 0 disagree; çocuk tarafında **96 + 57** satır yanlış adla → **F-pass0-17** (payı bu birimde 126'dan 96'ya düzeltildi) |
+| D2 | ✅ | 4.730 `unverifiable` = 5 × 946, beşinin de beyan edilmiş kuralı var; `unsourced` 0 |
+| D3 | ✅ | `gate_packs` yeşil |
+| E1 | ✅ | `bundled_pack_resolve_test` yeşil |
+| E2 | ✅ | `monster.description` 0/946 — kural çocuk satırlarda; **ama** düşen 38 lore satırı da hiçbir yere inmiyor (F-a5e-mm-01'in ikinci yarısı) |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `open5e-a5e-mm` / `open5e-bfrd` installs and reads back unchanged |
+| F2 | ✅ | `pack_field_render` paket tarafı yeşil (224 çift / 446 pump); tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ➖ | sihirbaz `monster` satırı göstermiyor (chargen ailesi değil) |
+| F4 | ✅ | `entity_link_navigation` yeşil |
+| G1 | ✅ | iki manifest satırı da güncel (`counts` birebir), `build_catalog` sonrası drift yok |
+| G2 | ✅ | *Monstrous Menagerie* / EN Publishing / `ogl-10a` / `a5e` · *Black Flag SRD* / Kobold Press / `cc-by-40` / `5e-2014` (d) |
+| G3 | ✅ | ikisinde de `is_srd_overlap: false` |
+
+**Sayım: 19 ✅ · 7 ➖ · 1 ⛔ · 6 ⚠️** — taramanın en çok ⚠️ alan birimi, ama
+altı ⚠️'nin dördü korpüs geneline yayılan eski kusur; paketin **kendi** sayacı
+`a5e-mm` için **1**'e (F-a5e-mm-01), `bfrd` için **0**'a (F-bfrd-01 kendi
+biriminde sayıldı) oturuyor. Birimin asıl katkısı üç ölçüm düzeltmesi:
+F-pass0-17'nin `a5e-mm` payı (126 → 96) ve gevşek/sıkı farkının **sebebi**,
+F-tob-01'in `tob`'a özgü sanılması (3 → 19), ve `bfrd`'nin çocuk tarafının
+**tam kapsandığının** ölçülmesi. **20 tarama biriminin 19'u bitti.**
+
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
 |---|--:|---|:--:|---|---|
 | `open5e-ccdx` | 2.426 | creature-action 1.148, trait 921, monster 356, language 1 | ⚠️ | 2026-08-18 | F-pass0-17; -18; -19; -20 |
-| `open5e-bfrd` | 2.473 | creature-action 1.338, trait 772, monster 360, language 1, class 1, subclass 1 | ⬜ | — | — |
+| `open5e-bfrd` | 2.473 | creature-action 1.338, trait 772, monster 360, language 1, class 1, subclass 1 | ⚠️ | 2026-08-19 | (canavar tarafı `a5e-mm` birimiyle birlikte) F-pass0-22; -23 (+17; -18; -19; -20; -21 doğrulandı; -24; -25 → 0) |
 | `open5e-tob2` | 2.607 | creature-action 1.209, trait 1.014, monster 383, language 1 | ⚠️ | 2026-08-18 | F-pass0-21 (+17; -18; -19; -20 doğrulandı) |
 | `open5e-tob` | 2.734 | creature-action 1.303, trait 1.039, monster 391, language 1 | ⚠️ | 2026-08-18 | F-tob-01; F-pass0-22; -23 (+17; -18; -19; -20; -21 doğrulandı) |
 | `open5e-tob3` | 2.787 | creature-action 1.577, trait 812, monster 397, language 1 | ⚠️ | 2026-08-18 | F-pass0-24; -25 (+17 düzeltildi; -19; -20; -21 doğrulandı; -18; -22; -23 → 0) |
-| `open5e-a5e-mm` | 3.071 | creature-action 1.655, trait 829, monster 586, size 1 | ⬜ | — | — |
+| `open5e-a5e-mm` | 3.071 | creature-action 1.655, trait 829, monster 586, size 1 | ⚠️ | 2026-08-19 | F-a5e-mm-01; F-pass0-26 (+17 düzeltildi 126→96; F-tob-01 yayıldı 3→19; -18; -19; -20; -21; -25 doğrulandı; -22; -24 → 0) |
 | `open5e-tob-2023` | 3.088 | creature-action 1.658, trait 1.021, monster 408, language 1 | ⬜ | — | — |
 
 > Bu dalgada örneklem **kategori başına 5 canavar + o canavarların çocuk

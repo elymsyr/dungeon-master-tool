@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/mappers/monster.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-18
+updated: 2026-08-19
 tags: [file]
 ---
 
@@ -31,7 +31,7 @@ tags: [file]
 - Spec / reference: [[Open5e-API]], [[SRD-5.2.1]]
 
 ## Key Logic / Variables
-- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` — **filed 2026-08-18 as F-tob-01**, cause `M`: `Jotun Giant` and `Zmey` say "can take 1", and `Vampire Warlock - Variant` states no count at all, yet all three ship `3`; the preamble sentence itself never reaches the pack, so the card cannot be checked against it), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
+- **Action split by `action_type`**: BONUS_ACTION → `bonus_action_refs`, REACTION → `reaction_refs`, LEGENDARY_ACTION → `legendary_action_refs` (+ `legendary_action_uses: 3` SRD default since Open5e omits the count — **measured against v1 on 2026-08-18**: `cc`'s `legendary_desc` says "can take 3 legendary actions" on 20/20 and `tob2`'s on 9/9, and corpus-wide only **2** rows disagree, both in `tob` — **filed 2026-08-18 as F-tob-01**, cause `M`: `Jotun Giant` and `Zmey` say "can take 1", and `Vampire Warlock - Variant` states no count at all, yet all three ship `3`; the preamble sentence itself never reaches the pack, so the card cannot be checked against it. **Widened 2026-08-19 by the `a5e-mm` unit:** the v1 sweep could not see `a5e-mm`, which has no v1 document and puts the count in a v2 `CreatureAction.name` (*"The aboleth can take 2 legendary actions"*) — **16 of 66** declarations there contradict the constant, so the record is corpus-wide at **19**), LAIR_ACTION → `lair_action_refs`, else `action_refs` (always present, schema-required).
   - ✅ **`open5e-tob3`'s empty Actions block was never this switch's fault** (audit **B8**, fixed 2026-07-31). The pack shipped **2** `action_refs` against 136 bonus / 96 reaction / 75 legendary, and the natural reading was a mis-set enum. The pinned snapshot says otherwise: `tob3/CreatureAction.json` genuinely holds 309 rows for 397 creatures with 2 `ACTION` among them, and the three non-`ACTION` buckets match `v1/tob3/Monster.json` **row for row** (136 / 96 / 75). Upstream's v2 conversion dropped one column; the mapper was faithful. Nothing caught it — the refs that existed all resolved, so the build gate passed, and the per-field census still read `action_refs` as "filled". **[[gate_packs]] is that gate, and it shipped 2026-08-10**: `monster-actionless` plus `bucket-skew` ("the base action bucket cannot be outnumbered by the situational ones"), run by [[build_packs]] over its own output.
 - **v1 action backfill** (audit **B8**): after the v2 loop, any of the four buckets **left entirely empty for this creature** is filled from `v1Actions[rawName.toLowerCase()]` through the *same* `_cleanChildName` + `_ensureChild` path, so recovered rows inherit the sanitizer, the content dedup and the `Name (Creature)` disambiguation.
   - **F-pass0-24 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** "entirely
@@ -100,9 +100,35 @@ tags: [file]
     ships as `(3/Day)`, three uses instead of one. Neither gate sees it:
     [[verify_packs]] judges only `monster` rows and [[gate_packs]] is green
     because the ref resolves — to the wrong card. Adding `name` to
-    `_contentHash` costs ~382 extra entities corpus-wide.
+    `_contentHash` costs ~457 extra entities corpus-wide. *(Count corrected
+    twice: **382 → 487** by the `tob3` unit — the recipe read v2 only and
+    `tob3`'s 1,370 actions come from v1 — then **487 → 457** by the `a5e-mm`
+    unit, where 30 of the 106 hits turned out to be an artefact of matching an
+    **empty** `desc` against the pack's one empty-description entity; on
+    non-empty rows the loose and parent-scoped methods agree, 76 ⟷ 76.)*
 - **Name sanitization** (Open5e scraper mis-segments stat blocks): `_cleanMonsterName` strips `Npc:` prefix + re-cases small-words. `_cleanChildName` drops trailing periods, lifts roll-table range rows (`1-4: Arm`→`Arm`), recovers a label from desc for purely-numeric names, strips leading list-counts and leaked attack clauses, reduces `Label: effect sentence`→`Label` (gated), and DROPS clearly-spurious full-sentence fragments (`_looksLikeSentenceFragment`: ≥4 lowercase-initial words, multiple sentences, or legendary-action preamble) — returning null skips the ref so no orphan ships.
+  - **F-a5e-mm-01 (F3 / Dalga 4, 2026-08-19, ❓ open, cause `M`):** in
+    `open5e-a5e-mm` the mis-segmentation runs the *other* way — the rule text is
+    in `name` and its continuation in `desc` — so the fragment guard drops the
+    row and its rule ships nowhere: **57 rows on 41 monsters**, 19 of them
+    mechanical (Gelatinous Cube's escape DC, Medusa's DC 14 petrification).
+    30 of the 57 have an **empty** `desc` (the corpus's only such rows); 5 of
+    those survive the `Label: sentence` reduction as `Luck` but carry no text,
+    and `_ensureChild` folds all five into one card that 3 monsters reference —
+    the corpus's only child entity with an empty `description`. Measuring this
+    requires counting **soft refs** as present: L1 hands 9 `a5e-mm` and 6
+    `bfrd` rows to the built-in, and `bfrd`'s child side is otherwise
+    **lossless** (2,519/2,519).
 - **`hp_dice` is copied or absent, never invented** (audit **B11**, fixed 2026-08-10). `_monsterRow` used to write `hit_dice ?? '1d4'`, and `open5e-bfrd` has `hit_dice: null` on **all 360** of its creatures — so that pack shipped a `1d4` die pool next to a 165-HP Aboleth's own `hp_average`. Neither census could see it (`hp_dice` was a filled string on every row of every pack, so [[audit_packs]] read 100% and the corpus-wide-constant ⚠ could not fire); [[verify_packs]]' `unsourced` column is what caught it. Of the two honest shapes, **omit** was chosen over deriving from `hp_average` + CON + size — a derivation is inference, not source, and would owe an `unverifiable` rule declaring the field unmeasurable. Rebuild effect: 360 removals, **all in `open5e-bfrd`**, no other pack moved; corpus `unsourced` 3,663 → 3,303. Tests: `flutter_app/test/tool/monster_hp_dice_test.dart` (4 cases).
+- **`alignment_ref` is copied, and in two documents the copy is a constant.**
+  - **F-pass0-26 (F3 / Dalga 4, 2026-08-19, ❓ open, cause `S`):** v2
+    `Creature.alignment` is `"chaotic evil"` on **946/946** rows of `a5e-mm` +
+    `bfrd` — the other eight documents carry 10–21 distinct values — so every
+    monster in those two packs, Pixie and Unicorn included, ships as
+    `Chaotic Evil`. The mapper is faithful and [[verify_packs]] passes it; the
+    right answer is not elsewhere in the source either (`bfrd`'s v1 `alignment`
+    is empty on 360/360, `a5e-mm` has no v1). The field is optional, so
+    silence — or `alignment_note` — was available.
 - **Stat derivation**: `_crString` maps decimals to fractions (0.125→`1/8`); `_profForCr` and `_xpByCr` (full CR→XP table 0..30) backfill proficiency bonus + XP when Open5e omits them. `_saveTable`/`_skillTable` reconstruct proficiency tables by back-solving `misc = bonus - abilityMod - PB`.
 - Attack mapping (`_actionRow`): derives `attack_kind` (Melee/Ranged × Weapon/Spell from reach/range/attack_type), `damage_dice` (`XdY±Z`), recharge (`RECHARGE_ON_ROLL`→`recharge_min_roll`, `PER_DAY`→`uses_per_day`).
   - **F-pass0-25 (F3 / Dalga 4, 2026-08-18, ❓ open, cause `M`):** `is_attack`

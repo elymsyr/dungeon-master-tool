@@ -573,3 +573,46 @@ tags: [meta, changelog]
   bloğu), `flutter_app/docs/pack_conformance_findings.md`,
   `flutter_app/docs/open5e_content_audit.md` §0/§5.8/§6, [[mapper_monster]],
   [[check_findings]]
+
+## 2026-08-19 — F3 / Dalga 4 sürüyor: open5e-a5e-mm + open5e-bfrd'nin canavarları tarandı (19/20), iki yeni bulgu, üç kayıt düzeltildi
+
+- **Birim:** Dalga 4'ün beşinci ve tek **iki paketli** birimi — `a5e-mm` 3.071 +
+  `bfrd`'nin canavar tarafı 2.470 varlık, 946 canavar. İkisi birlikte okundu
+  çünkü checklist B2'nin asıl sınav çifti bu ikisi.
+- **Kapılar:** `verify_packs --doc a5e-mm/bfrd --only monster` → **16.760 ok /
+  0 disagree / 0 absent / 0 unsourced / 4.730 unverifiable**, eşleşme 946/946;
+  `gate_packs` yeşil, `dupe_census` "nothing installed" **0**, `build_catalog`
+  driftsiz, `unmapped_report` iki pakette de 0 satır. 31 madde
+  **19 ✅ · 7 ➖ · 1 ⛔ · 6 ⚠️** (taramanın en çok ⚠️ alan birimi, altının dördü
+  devralınan korpüs kaydı).
+- **Yeni bulgular:** **F-a5e-mm-01** (C4, `M`) — kuralı kaynağın `name`
+  sütununda duran **57 statblock satırı** hiç yayınlanmıyor (41 canavar, 19'u
+  mekanik); `desc`'i boş 5 satır tek bir **metinsiz** `Luck` kartında birleşiyor
+  ve o kart korpüsün tek boş `description`'lı çocuk varlığı.
+  **F-pass0-26** (A5, `S`) — `alignment_ref` iki pakette de **946/946
+  `Chaotic Evil`**; kaynağın `alignment` sütunu yalnız bu iki belgede tek değere
+  çökmüş (diğer sekizde 10–21 farklı değer), `bfrd`'nin v1'i de boş.
+- **Düzeltmeler:** F-pass0-17'nin `a5e-mm` payı **126 → 96**, korpüs
+  **487 → 457** (gevşek ⟷ sıkı farkının sebebi boş `desc`miş; boş olmayan
+  satırlarda iki yöntem 76 ⟷ 76); **F-tob-01 `tob`'a özgü değil** — `a5e-mm`
+  sayıyı v2 `CreatureAction.name`'de veriyor, 66 beyanın **16'sı** sabit 3 ile
+  çelişiyor (korpüs 3 → 19); `bfrd`'nin çocuk tarafı **kayıpsız** ölçüldü
+  (2.519/2.519, 6'sı L1 softRef).
+- **Doğrulananlar:** F-pass0-23 → 90 `keensense` + tam **41** duyusuz kart,
+  F-pass0-20 → 189 + 77, F-pass0-25 → 32 + 0, F-pass0-22 → 0 + 58,
+  F-pass0-24 → 0, F-pass0-18 → 828 + 512, F-pass0-19 → 87+27 / 24+6,
+  F-pass0-21 → 60 + 37. Yedi bulgu adayı ölçümde öldü (`hp_dice`, `tags_line`,
+  `alignment_note`, aksiyonsuz 3 canavar, `game_system`, yedi %0 alan,
+  `Nimble Escape`).
+- **Yeni kural (taramanın 8. sorusu):** kayıp ölçerken **soft ref sayılmalı** —
+  L1 built-in'in taşıdığı satırı pakete koymaz, yalnız hard ref'lere bakan bir
+  ölçüm `bfrd`'de 6, `a5e-mm`'de 9 satırı yanlışlıkla kayıp sayıyordu.
+- **Defter:** 44 kayıt / 43 sayaca giriyor, `python3 tool/check_findings.py`
+  temiz. Kod değişmedi (K1); `flutter analyze` 0 hata (17 eski info), F grubu
+  testleri **36/36** yeşil, `pack_field_render` `+19 -1` (bilinen F-pass0-01).
+- **Sıradaki:** Dalga 4'ün son birimi `open5e-tob-2023` (3.088 varlık) — F3'ün
+  20/20'si. →
+  `flutter_app/docs/pack_conformance_plan.md` (`a5e-mm` sonucu + yeni devir
+  bloğu), `flutter_app/docs/pack_conformance_findings.md`,
+  `flutter_app/docs/open5e_content_audit.md` §0/§6, [[mapper_monster]],
+  [[check_findings]]

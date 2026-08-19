@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 41 | 0 | 0 | 0 | 0 | **41** |
+| 0 | 43 | 0 | 0 | 0 | 0 | **43** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -113,8 +113,8 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
 | A3 | 14 | B3 | 2 | C3 | 1 |
-| A4 | 1 | B4 | 0 | C4 | 2 |
-| A5 | 3 | B5 | 0 | C5 | 0 |
+| A4 | 1 | B4 | 0 | C4 | 3 |
+| A5 | 4 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
 | D3 | 0 | E3 | 1 | C8 | 6 |
@@ -126,13 +126,13 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 25 | `open5e-vom` | 3 |
+| `pass0` | 26 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
 | `open5e-open5e` | 1 | `open5e-tob` | 1 |
 | `open5e-tdcs` | 0 | `open5e-tob3` | 0 |
-| `open5e-toh` | 2 | `open5e-a5e-mm` | 0 |
+| `open5e-toh` | 2 | `open5e-a5e-mm` | 1 |
 | `open5e-a5e-ag` | 2 | `open5e-tob-2023` | 0 |
 | `open5e-kp` | 0 | | |
 | `open5e-wz` | 2 | | |
@@ -2488,7 +2488,7 @@ EOF
 
 | | |
 |---|---|
-| **Kapsam** | `pass0` — korpüs geneli **487** satır (7 canavar paketi; `open5e-tob3` 128, `open5e-a5e-mm` 126) |
+| **Kapsam** | `pass0` — korpüs geneli **457** satır (7 canavar paketi; `open5e-tob3` 128, `open5e-a5e-mm` 96) |
 | **Checklist** | checklist D1 (değer kaynakla aynı değil) |
 | **Kategori / etki** | `creature-action` 328 + `trait` 54 satır: ebeveyn canavar, kendi satırının adı yerine metni aynı olan **başka** bir canavarın satırının adına ref veriyor; 6 `trait`'te ad kullanım sayısı taşıdığı için mekanik de değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`) |
 | **Cause code (öneri)** | `D` — `mappers/monster.dart` `_ensureChild` içerik-hash'iyle (`_contentHash`, tip + `description` + öznitelikler) birleştiriyor; **ad hash'e girmiyor**, bu yüzden metni birebir aynı olan iki farklı silah tek varlıkta toplanıyor ve ilk gelenin adı kazanıyor |
@@ -2525,7 +2525,7 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 
 | Paket | `creature-action` | `trait` | Etkilenen |
 |---|--:|--:|--:|
-| `open5e-a5e-mm` | 106 | 20 | 126 |
+| `open5e-a5e-mm` | 106 **(→ 76)** | 20 | 126 **(→ 96)** |
 | `open5e-bfrd` | 53 | 4 | 57 |
 | `open5e-ccdx` | 51 | 6 | 57 |
 | `open5e-tob` | 52 | 1 | 53 |
@@ -2533,7 +2533,7 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 | `open5e-tob2` | 30 | 0 | 30 |
 | `open5e-tob3` | 2 **(+105)** | 21 | 23 **(→ 128)** |
 | `open5e-tdcs` | 0 | 0 | 0 |
-| **Toplam** | **328 (+105)** | **54** | **382 (→ 487)** |
+| **Toplam** | **328 (+105, −30)** | **54** | **382 (→ 457)** |
 
 > **`tob3` düzeltmesi — 2026-08-18, `tob3` birimi.** Yukarıdaki tarif kaynağı
 > yalnız **v2**'den okuyor. `tob3` korpüsteki tek pakettir ki `creature-action`
@@ -2548,6 +2548,18 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 > kurtarması hiç çalışmadığı için (B8: "her diğer belge no-op") bu ek yalnız
 > `tob3`'ü ilgilendiriyor. `_cleanChildName` bu ekleri **kırpmıyor** — kayıp
 > `_ensureChild`'ın hash birleştirmesinden geliyor, yani aynı kusur.
+
+> **`a5e-mm` düzeltmesi — 2026-08-19, `a5e-mm` birimi.** Yukarıdaki tarif
+> satırın metnini paketteki metinlerle eşleştiriyor; kaynağın `desc`'i **boş**
+> olduğunda bu "boş metin"le eşleşmeye dönüşüyor ve pakette boş `description`
+> taşıyan tek varlığı (`Luck`, F-a5e-mm-01) her boş satıra aday gösteriyor.
+> `a5e-mm`'in 106 `creature-action` satırının **30'u** bu artefakt: kalan
+> **76**'sı gerçek ad yutulması. Gevşek ⟷ sıkı (ebeveyn kapsamlı) farkının
+> tamamı da buradan geliyor — boş olmayan satırlarda iki yöntem **76 ⟷ 76**,
+> yani `tob2`/`tob`/`tob3`'te olduğu gibi aynı; ayrışan 21 satırın hepsi boş
+> `desc`. `trait` tarafında boş `desc` yok, 20 doğru. `a5e-mm`'in payı
+> **126 değil 96**, korpüs toplamı **487 değil 457**. `bfrd` payı (53 + 4 = 57)
+> bağımsız ölçümle ve her iki yöntemle de doğrulandı, değişmedi.
 
 **Kanıt.**
 ```sh
@@ -2952,9 +2964,9 @@ EOF
 
 | | |
 |---|---|
-| **Kapsam** | `open5e-tob` — 3 canavar (27 efsanevi canavarın 3'ü) |
+| **Kapsam** | `open5e-tob` — 3 canavar (27 efsanevi canavarın 3'ü); **2026-08-19'da yayıldı: `open5e-a5e-mm` 16 canavar daha, korpüs 19** |
 | **Checklist** | checklist A5 (tek-sabit sütun: sabitin dürüst olmadığı yer) |
-| **Kategori / etki** | `monster` — `legendary_action_uses` 27/391 satırın **3'ünde** kaynağa aykırı: `Jotun Giant` ve `Zmey` v1 `legendary_desc`'te *"can take 1 legendary action"* diyor, `Vampire Warlock - Variant` hiç sayı vermiyor; üçünde de kartta **3** yazıyor → oyuncu tur başına üç kat aksiyon hakkı görüyor |
+| **Kategori / etki** | `monster` — `legendary_action_uses` 27/391 satırın **3'ünde** kaynağa aykırı: `Jotun Giant` ve `Zmey` v1 `legendary_desc`'te *"can take 1 legendary action"* diyor, `Vampire Warlock - Variant` hiç sayı vermiyor; üçünde de kartta **3** yazıyor → oyuncu tur başına üç kat aksiyon hakkı görüyor; **`a5e-mm`'de 66 beyanın 16'sı aykırı** (aşağıdaki dağılım) |
 | **Cause code (öneri)** | `M` — sayı kaynakta **var** (v1 `Monster.legendary_desc` düzyazısı) ama okunmuyor; `mappers/monster.dart` efsanevi aksiyonu olan her canavara SRD varsayılanı 3'ü yazıyor, `verify_packs` da bunu *"no column — the mapper writes the SRD default of 3"* diye `unverifiable` sayıyor |
 | **Durum** | ❓ danışılacak |
 
@@ -2998,6 +3010,25 @@ Korpüsün geri kalanı sabitle uyumlu: v1'i olan altı belgede (`blackflag` 31,
 `tob-2023` 32, `wotc-srd` 30, `cc` 20, `tob` 27, `tob2` 9) *"can take 1/2"*
 diyen **yalnız bu iki satır** var; v2 şemasında ise hiçbir belgede efsanevi
 sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
+
+
+**Dağılım — 2026-08-19, `a5e-mm` birimi genişletti** *(yayılan bulgu kuralı)*
+
+| Paket | Sayıyı beyan eden satır | Kartla uyuşmayan | Kaynak sütunu |
+|---|--:|--:|---|
+| `open5e-tob` | 27 | **3** | v1 `Monster.legendary_desc` |
+| `open5e-a5e-mm` | 66 | **16** | v2 `CreatureAction.name` |
+| **Toplam** | **93** | **19** | |
+
+> Kaydın *"v2 şemasında hiçbir belgede efsanevi sayı sütunu yok"* cümlesi
+> **sütun** için doğru, **kaynak** için değil: `a5e-mm` sayıyı bir
+> `LEGENDARY_ACTION` satırının **adında** taşıyor (*"The aboleth can take 2
+> legendary actions"*, `desc` ise ortak son cümle). O satır pakete hiç inmiyor
+> (bkz. F-a5e-mm-01'in "efsanevi önsöz" kovası, 68 satır), sayı da okunmuyor;
+> 66 efsanevi canavarın **16'sı** karta yanlış sayıyla iniyor — 1 veya 2
+> aksiyon hakkı olan canavar sayfada 3 gösteriyor. `a5e-mm`'in v1 belgesi yok,
+> yani kaydın v1 taraması bu 16 satırı hiç göremezdi. Sabitin **dürüst** olduğu
+> ölçülen paketler değişmedi (`ccdx`, `tob2` 9/9, `tob3` 20/20, `bfrd` 31).
 
 **Seçenekler.**
 1. **Düzyazıdan oku** — v1 `legendary_desc` zaten `tags_line` için okunan
@@ -3347,6 +3378,173 @@ dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creatur
    satırının varlığından türetiliyor; attack fixture'ı olmayan belgede
    (`tob3`) hepsi `false`" satırı yazılır (C8) ve yanlış olumsuzlama bilinçli
    kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-a5e-mm-01 — kuralı `name` sütununda duran statblock satırı hiç yayınlanmıyor: 57 satır, 41 canavar, 19'u mekanik
+
+| | |
+|---|---|
+| **Kapsam** | `open5e-a5e-mm` — **57** kaynak satırı, **41** canavar (korpüsün geri kalanında **0**) |
+| **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu) |
+| **Kategori / etki** | `creature-action` 53 + `trait` 4: satırın kural metni kaynakta `name` sütununda duruyor (`desc` ya boş ya devam cümlesi); `_cleanChildName`'in cümle-parçası koruması satırı düşürüyor, ebeveyn de ref vermiyor. **19'u mekanik** (Gelatinous Cube'ün yutma kaçış DC'si, Dread Knight'ın duvar hasarı, Medusa'nın taşlaştırma DC 14'ü, Fallen Solar'ın üç emri), 38'i lore. Ayrıca `desc`'i **tamamen boş** 30 satırın 5'i tek bir **metinsiz** `Luck` kartında birleşiyor ve 3 canavar (Pixie, Unicorn, Corrupted Unicorn) onu ref'liyor — korpüsteki tek boş `description`'lı çocuk varlık budur (`creature-action.description` 2.992/2.993) |
+| **Cause code (öneri)** | `M` — doğru cevap kaynağın kendisinde, komşu sütunda (soru 7): metin `name`'de duruyor, mapper yalnız `desc`'i okuyor. Kaynağın segmentasyonu bozuk (`S`), ama kayıp mapper'ın seçiminden geliyor: cümle gibi görünen ad **atılıyor**, metni hiçbir alana taşınmıyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `a5e-mm`'in yukarı akış statblock ayrıştırıcısı bazı satırları ters
+kurmuş: başlık yerine kuralın kendisi `name`'e, kuralın **devamı** `desc`'e
+yazılmış. İki biçimi var:
+
+* **`desc` boş, kural tamamen `name`'de — 30 satır.** *"If a swallowed creature
+  deals 30 or more damage to the behir in a single turn … the behir vomits up
+  the creature"*, *"Abase yourself! The creature falls prone"*,
+  *"A demilich begins combat with one or two empty soul gems"*.
+  25'i `_looksLikeSentenceFragment` ile düşüyor; 5'i (*"Luck: During the next
+  24 hours…"*) 4. adımın *"Label: cümle"* kısaltmasıyla **`Luck`** adına iniyor,
+  ama taşıdığı metin `desc` olduğu için kart **boş** kalıyor ve içerik-hash'i
+  (tip + boş `description` + öznitelikler) beşini **tek varlıkta** birleştiriyor.
+* **`desc` devam cümlesi — 27 satır.** *"A creature engulfed by the cube takes
+  10 (3d6) acid damage, can't breathe…"* + `desc`: *"It can be seen but has
+  total cover…"*. Ad cümle olduğu için satır tümüyle düşüyor; ne adı ne devamı
+  kartta.
+
+**Neden önemli.** Bu 57 satırın hiçbiri hiçbir kapıda görünmüyor:
+`verify_packs --doc a5e-mm` **10.567 ok / 0 disagree** veriyor (yalnız `monster`
+satırlarını doğruluyor), `gate_packs` yeşil (var olmayan ref yok, çünkü ref hiç
+yazılmamış), `dupe_census` "nothing installed" 0. Kaybı görmenin tek yolu
+kaynak satırını ebeveynin ref listesindeki metinlerle karşılaştırmak. Ölçüm
+**soft ref'leri de sayıyor**: `bfrd`'nin 6, `a5e-mm`'in 9 satırı built-in'e
+softRef'le gidiyor (L1'in tasarlanmış davranışı), onlar kayıp değil —
+`bfrd`'nin gerçek kaybı **0**.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — kaynağın her çocuk satırı ebeveyninin kartında var mı
+python3 - <<'EOF'
+import json,glob,re,collections
+def norm(s): return re.sub(r'\s+',' ',re.sub(r'[^a-z0-9 ]','',(s or '').lower())).strip()
+K=['trait_refs','action_refs','bonus_action_refs','reaction_refs','legendary_action_refs','lair_action_refs']
+leg=re.compile(r'legendary action',re.I)
+mech=re.compile(r'\bDC \d+|\d+d\d+|saving throw|takes \d+|restrained|petrified|prone\b',re.I)
+for slug in ('a5e-mm','bfrd'):
+    ents=json.load(open('assets/open5e_packs/open5e-%s.pkg.json'%slug,encoding='utf-8'))['entities']
+    d2=glob.glob('../open5e-api-staging/data/v2/*/%s'%slug)[0]
+    src={r['pk']:r['fields']['name'] for r in json.load(open(d2+'/Creature.json',encoding='utf-8'))}
+    mons={e['name']:e for e in ents.values() if e['type']=='monster'}
+    c=collections.Counter(); ms=set()
+    for model in ('CreatureAction','CreatureTrait'):
+        for r in [x['fields'] for x in json.load(open('%s/%s.json'%(d2,model),encoding='utf-8'))]:
+            pn=src.get(r['parent'],''); m=mons.get(pn)
+            if not m: continue
+            desc=(r.get('desc') or '').strip(); nm=(r.get('name') or '').strip()
+            hard=[];soft=[]
+            for k in K:
+                for x in (m['attributes'].get(k) or []): (hard if isinstance(x,str) else soft).append(x)
+            blob=' || '.join(norm(ents[x].get('description')) for x in hard)
+            if desc and norm(desc)[:60] in blob: continue
+            if not desc and norm(nm)[:60] in blob: continue
+            if any(norm(nm)==norm(s['name']) or norm(s['name']).startswith(norm(nm)+' ') for s in soft):
+                c['soft ref (L1)']+=1; continue
+            if leg.search(nm) or leg.search(desc): c['efsanevi onsoz']+=1; continue
+            c['KAYIP '+('mekanik' if mech.search(nm+' '+desc) else 'lore')]+=1; ms.add(pn)
+    print(slug, dict(c), '| etkilenen canavar', len(ms))
+EOF
+# a5e-mm {'efsanevi onsoz': 68, 'KAYIP lore': 38, 'KAYIP mekanik': 19, 'soft ref (L1)': 9} | etkilenen canavar 41
+# bfrd   {'soft ref (L1)': 6} | etkilenen canavar 0
+```
+```sh
+# boş desc korpüs geneli yalnız bu belgede, ve beşi tek kartta birleşiyor
+python3 - <<'EOF'
+import json,glob,os
+for d in sorted(glob.glob('../open5e-api-staging/data/v2/*/*')):
+    slug=os.path.basename(d); pf='assets/open5e_packs/open5e-%s.pkg.json'%slug
+    if not os.path.exists(pf) or not os.path.exists(d+'/CreatureAction.json'): continue
+    n=sum(1 for m in ('CreatureAction','CreatureTrait') if os.path.exists('%s/%s.json'%(d,m))
+          for r in json.load(open('%s/%s.json'%(d,m),encoding='utf-8')) if not (r['fields'].get('desc') or '').strip())
+    e=[x['name'] for x in json.load(open(pf,encoding='utf-8'))['entities'].values()
+       if x['type'] in ('creature-action','trait') and not (x.get('description') or '').strip()]
+    if n or e: print(slug,'kaynak boş desc',n,'→ pakette boş description varlık',len(e),e)
+EOF
+# a5e-mm kaynak boş desc 30 → pakette boş description varlık 1 ['Luck']
+```
+
+**Seçenekler.**
+1. **`desc` boşsa `name`'i metin yap** — cümle-parçası koruması adı düşürmeden
+   önce, `desc` boş ve ad bir cümleyse satır `description: name` + kısaltılmış
+   ad ile yayınlanır. 30 satır kurtulur, `Luck` kartı metnine kavuşur, uydurma
+   yok (metin zaten kaynağın). 27 devam satırı için de aynı kural: ad metne
+   eklenip `desc` arkasına yazılır.
+2. **Ebeveynin `description`'ına ekle** — düşürülen satırın metni canavarın
+   `description` alanına (bugün 0/586 boş) eklenir. Kural sayfada okunur ama
+   yapılandırılmış aksiyon olmaz; lore satırları da doğru yere gider.
+3. **Aynen bırak** — §5.8'e "`a5e-mm`'in 57 statblock satırı yukarı akış
+   segmentasyonu bozuk olduğu için yayınlanmıyor" satırı yazılır (C8) ve kayıp
+   bilinçli kabul edilir; `Luck` kartının boş metni de kabul edilmiş olur.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+---
+
+### F-pass0-26 — 946 canavarın **hepsi** "Chaotic Evil": kaynağın hizalama sütunu iki belgede tek sabit, kart bunu olgu gibi yazıyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — **946** canavar, 2 paket (`open5e-a5e-mm` 586, `open5e-bfrd` 360) |
+| **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok) |
+| **Kategori / etki** | `monster.alignment_ref` — 946/946 satırda `Chaotic Evil`: Pixie, Unicorn, Elk, Blink Dog, Bandit ve 941 kart daha karakter sayfasında kaotik kötü görünüyor; `alignment_note` 0/946 olduğu için kartta "kaynak beyan etmiyor" diye okunabilecek bir işaret de yok |
+| **Cause code (öneri)** | `S` — v2 `Creature.alignment` sütunu bu iki belgede 946/946 satırda `"chaotic evil"`; mapper sadakatle yazıyor, `verify_packs` da haklı olarak `ok` sayıyor. Doğru cevap kaynağın başka bir sütununda da **yok** (soru 7: `bfrd`'nin v1 `alignment`'ı 360/360 boş, `a5e-mm`'in v1'i hiç yok) |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** A5 tam olarak bunun için var: alan **dolu**, kaynakla **birebir**, ve
+yine de yanlış. Korpüsteki diğer sekiz belgenin hepsinde `alignment` 10–21
+farklı değer taşıyor (`ccdx` 16, `tob-2023` 21, `srd-2014` 16 …); yalnız
+`a5e-mm` ve `bfrd` tek değere çökmüş, ve o değer `unaligned` gibi zararsız bir
+varsayılan değil, **`chaotic evil`**. Yukarı akışın dönüştürücüsü bu iki
+belgede hizalamayı hiç doldurmamış, sabit bir yer tutucu bırakmış olmalı.
+
+**Neden önemli.** `alignment_ref` zorunlu alan değil; boş bırakılabilir ve
+korpüste boş bırakılan satır zaten var (`tob3` 19 `alignment_note`, `ccdx` 15).
+Yani sessiz kalmak mümkünken kart, kaynağın söylemediği bir şeyi söylüyor —
+F-vom-02'nin (`is_cursed` 1.063/1.063 `false`) tam kardeşi, ama tersi yönde:
+orada sabit zararsız varsayılandı ve dört kart onu yalanlıyordu, burada sabitin
+kendisi 946 kartın 940'ında yanlış.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — belge belge kaç farklı hizalama değeri var
+python3 - <<'EOF'
+import json,glob,collections
+for p in sorted(glob.glob('../open5e-api-staging/data/v2/*/*/Creature.json')):
+    rows=[x['fields'] for x in json.load(open(p,encoding='utf-8'))]
+    c=collections.Counter((r.get('alignment') or '').strip().lower() for r in rows)
+    print('%-12s %4d satır | %2d farklı | %s'%(p.split('/')[-2],len(rows),len(c),c.most_common(2)))
+v1=[x['fields'] for x in json.load(open('../open5e-api-staging/data/v1/blackflag/Monster.json',encoding='utf-8'))]
+print('bfrd v1 alignment:',collections.Counter((r.get('alignment') or '').strip() for r in v1))
+for slug in ('a5e-mm','bfrd'):
+    ents=json.load(open('assets/open5e_packs/open5e-%s.pkg.json'%slug,encoding='utf-8'))['entities']
+    print(slug,collections.Counter(json.dumps(e['attributes'].get('alignment_ref')) for e in ents.values() if e['type']=='monster'))
+EOF
+# a5e-mm  586 satır |  1 farklı | [('chaotic evil', 586)]
+# bfrd    360 satır |  1 farklı | [('chaotic evil', 360)]
+# ccdx    356 satır | 16 farklı | [('unaligned', 90), ('neutral evil', 62)]
+# tob-2023 408 satır | 21 farklı | ...  tob 20 · tob2 16 · tob3 18 · srd-2014 16 · srd-2024 10 · tdcs 3
+# bfrd v1 alignment: Counter({'': 360})
+# a5e-mm Counter({'{"_lookup": "alignment", "name": "Chaotic Evil"}': 586})
+# bfrd   Counter({'{"_lookup": "alignment", "name": "Chaotic Evil"}': 360})
+```
+
+**Seçenekler.**
+1. **Belge sabitse yazma** — mapper bir belgenin `alignment` sütunu tek değere
+   çökmüşse (`n_distinct == 1 && n_rows > 20`) alanı hiç yazmaz; 946 kart
+   hizalamasız kalır, yanlış iddia biter. Ölçüt belge başına bir kez hesaplanır.
+2. **`alignment_note`'a taşı** — değer `alignment_ref` yerine
+   `alignment_note: "kaynak: chaotic evil (belge geneli sabit)"` olarak yazılır;
+   bilgi kaybolmaz, mekanik iddia olmaktan çıkar.
+3. **Aynen bırak** — §5.8'e "`a5e-mm` ve `bfrd`'de kaynağın `alignment` sütunu
+   946/946 `chaotic evil`; paket sadıktır" satırı yazılır (C8) ve kartın
+   yanlış hizalaması bilinçli kabul edilir.
 
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
