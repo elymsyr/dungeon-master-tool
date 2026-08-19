@@ -1,7 +1,7 @@
 ---
 type: meta
 domain: meta
-updated: 2026-08-18
+updated: 2026-08-19
 tags: [meta, changelog]
 ---
 
@@ -656,3 +656,52 @@ tags: [meta, changelog]
   bloğu), `flutter_app/docs/pack_conformance_findings.md`,
   `flutter_app/docs/open5e_content_audit.md` §0/§6, [[mapper_monster]],
   [[check_findings]]
+
+## 2026-08-19 — F4 BİTTİ: 46 bulgunun 46'sı karara bağlandı, Stage F kapandı, sıra Stage R'de
+
+- **Karar dağılımı:** **40 düzelt · 5 gerekçe yaz · 1 kapsam dışı.** Defterin
+  durum satırı artık **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪** ve
+  `python3 tool/check_findings.py` → *47 kayıt, 46 tanesi sayaca giriyor —
+  temiz*. Her kayıt kararını, tarihini ve kapatanını taşıyor (`**Kapatan:** R2
+  (faz açık)` / `F4`). K1'in devamı olarak F4 hiçbir koda, mapper'a ya da
+  `.pkg.json`'a dokunmadı — yalnız karar yazdı.
+- **40 düzeltme → `open5e_content_audit.md` §6 **Stage R**, sekiz faz.**
+  Gruplama bulgunun çıktığı pakete göre değil, **düzeltmenin ineceği dosyaya**
+  göre: **R1** büyü mapper'ı (8) · **R2** canavar aksiyon sadakati (11) ·
+  **R3** şemada evi olmayan dört canavar mekaniği (4) · **R4** chargen mapper'ı
+  (7) · **R5** şemada evi olmayan dört chargen mekaniği (4) · **R6** ad /
+  yakın-kopya / paket kimliği (3) · **R7** built-in paketin kendi içeriği (2) ·
+  **R8** render kapısı (1). Gruplama kozmetik değil: R2'nin on bir bulgusunun
+  hepsi `mappers/monster.dart`'a iniyor ve üçü (F-pass0-17 ad-hash, F-pass0-21
+  biçim öneki, F-pass0-22 efsanevi kopya) birbiriyle etkileşiyor. Sıra kuralı:
+  **R1–R2 → R3**, **R5 → R4'ün şema yarısı**; R7/R8 bağımsız.
+- **Kod yazmadan kapanan altı kayıt → yeni bölüm `open5e_content_audit.md`
+  §5.9.** Dördü aynı şekilde: **verdict doğru, gerekçe ölçümle çürük** —
+  `spell.effects`'in "kaynakta yapılandırılmış zar yok"u **303/1.297** dolu
+  `damage_roll`'a (F-pass0-15), `attunement_detail` **0/2.319**'a (F-vom-01),
+  `is_cursed`'ın "doğru 5e varsayılanı" kendi metninde lanet taşıyan **4**
+  eşyaya (F-vom-02) çarptı; F-vom-03 tek satırı ikiye ayırdı (`M` kalan dörtlü
+  vs `N` alan `sentient_*` yedilisi). F-pass0-14 kaynağın `concentration`
+  bool'unu otorite bıraktı (düzeltecek desen `Extract Foyson`'ı da yanlış
+  etiketliyor). §3.6'nın "correct 5e defaults" cümlesi ve §5.8'in
+  `spell.effects` satırı yerinde düzeltildi.
+- **Tek ⚪ dosyanın eksik politikasını yazdı** (F-a5e-ag-02): **kaynak hatası
+  aynalanır, mapper hatası düzeltilir.** `Marshal`'ın 14. seviyede gerileyen
+  tablosu kaynağın kendi satırı; yerinde düzeltmek D1'i kırar ve tek hücre için
+  kalıcı bir `verify_packs` allowlist'i gerektirir. Karşı örnek F-bfrd-01 —
+  doğru ad kaynağın kendi `pk`'sinde, o yüzden mapper kusuru ve düzeltiliyor.
+- **İki karar kaydın eğilimini bozdu.** F-pass0-26 (946 canavar "Chaotic Evil")
+  "gerekçe yaz" adayı olarak girmişti; sadakat çökmüş bir sütunu olgu gibi
+  yayımlamayı haklı çıkarmadığı için R2'ye alındı (`n_distinct == 1 &&
+  n_rows > 20` ise alan yazılmaz). F-pass0-21 ad soneki yerine düzyazı önekini
+  aldı, çünkü F-pass0-17 adı zaten içerik-hash'ine katıyor.
+- **Plan §9'un dört bitiş şartı da sağlandı** → Stage F kapandı:
+  ⬜ birim yok (20/20), her ⚠️ kaydın kararı var, Pass 0 kapıları başladığı
+  yerde (**0 disagree / 0 absent**, census 0, gate yeşil, katalog driftsiz),
+  "Done when" çıktılarından hiçbiri yeniden açılmadı.
+- **Sıradaki: R1 — büyü mapper'ı ilk sayıyı kapıp yuvarlamayı bırakır** (8
+  bulgu, tek dosya, şema değişikliği yok). →
+  `flutter_app/docs/pack_conformance_findings.md` (46 karar + sayaçlar),
+  `flutter_app/docs/open5e_content_audit.md` (§0, §3.6, §5.8, yeni §5.9, §6
+  F4 kutusu + Stage R), `flutter_app/docs/pack_conformance_plan.md` (Sonraki
+  adım), [[check_findings]]

@@ -107,10 +107,12 @@ collide with this §6's phases (spelling rule), and known-open #5 repeated the C
 `a5e-ddg`, `open5e`, `tdcs`, `toh`, `a5e-ag`, `bfrd`'s class/subclass rows,
 `kp`, `wz`, `deepmx`, `spells-that-dont-suck`, `deepm`, `vom`, `ccdx`, `tob2`,
 `tob`, `tob3`, `a5e-mm` + `bfrd`'s monsters, `tob-2023`) and the ledger holds
-**46** findings, all still ❓ — `check_findings.py` clean. Pass 0's gates end
+**46** findings — `check_findings.py` clean. Pass 0's gates end
 where they started: **0 disagree / 0 absent** corpus-wide (68,561 ok),
 census "nothing installed" **0**, `gate_packs` green, catalog driftless.
-**The next open phase is F4.**
+**F4 closed Stage F on 2026-08-19** by deciding all 46: **40 fixes**, filed as
+**Stage R**'s eight phases, **5 written rationales** and **1 out of scope**
+(§5.9). **The next open phase is R1.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -279,19 +281,29 @@ gap (`S`) and stayed out of the ledger; `is_attack` did not — see F-pass0-25.
 B2's test case and splitting it would measure the same duplication twice. Wave 4
 is therefore **6 units** and the total stays 20.
 
-**The next open phase is F4 — "Decide, then file."** The sweep is over and it
-fixed nothing by design (K1); what it produced is **46 findings, every one of
-them ❓ awaiting a decision**. F4 walks the ledger and gives each record one of
-three outcomes: **fix** (file a new phase in this §6), **write the reason**
-(a §5.8 line, status ✅) or **out of scope** (status ⚪). The plan's §8 is the
-procedure and §9 the finish line — three of its four conditions are already met
-(no ⬜ unit, Pass 0's gates unmoved, no "Done when" output re-opened); the fourth
-is F4's whole job. Four groups make the walk shorter: **no schema home**
-(F-pass0-19, -21, -23, -28 — each needs a new field), **the right value is
-elsewhere in the source** (F-a5e-mm-01, F-tob-2023-01, F-pass0-16, -24, -27,
-F-bfrd-01 — each is a mapper decision), **the source itself collapsed** so no
-value is recoverable (F-pass0-26, and `unmapped_report`'s 3 rows), and
-**gate/test-side only, no user impact** (F-pass0-01).
+**Stage F is closed. The next open phase is R1.** F4 (2026-08-19) walked all
+**46** findings and gave each a verdict: **40 → fix**, **5 → written rationale**,
+**1 → out of scope**; the ledger's status row now reads
+**0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪** and `check_findings.py` is clean. The plan's
+§9 finish line is met on all four conditions — no ⬜ unit, every ⚠️ decided,
+Pass 0's gates unmoved, no "Done when" output re-opened by the sweep.
+
+The 40 fixes are **Stage R**, eight phases grouped by the file they land in
+rather than by the pack that surfaced them: **R1** the spell mapper (8 findings),
+**R2** monster action fidelity (11), **R3** four new monster fields (4), **R4**
+the chargen mapper (7), **R5** four chargen schema homes (4), **R6**
+names/near-duplicates/pack identity (3), **R7** the built-in pack's own content
+(2), **R8** the render gate (1). Order matters in one place: R1–R2 read the
+values correctly before R3 builds fields to hold them.
+
+The six closed without code are in **§5.9**, and four of them are the same shape
+— §5.8's *reason* measured false while its *verdict* held (`spell.effects`'s
+"no structured damage rows" against 303 filled `damage_roll` rows;
+`attunement_detail` against 0 of 2,319; `is_cursed`'s "correct default" against
+four cursing items; the `magic-item` policy row doing two jobs). The one ⚪ sets
+the policy this file was missing: **a source error is mirrored, a mapper error is
+fixed** — and F-bfrd-01, where the right name is in the source's own `pk`, is the
+counter-example that keeps it from becoming an excuse.
 ---
 
 ## 0. Start here
@@ -1820,7 +1832,7 @@ behind it:
 
 | Count | Field | Verdict on it |
 |--:|---|---|
-| 1,063 ×3 | `magic-item` `is_cursed` / `is_sentient` / `activation` | **Confirmed constants.** `MagicItem.json` has no such column and Open5e never will; `false`/`false`/`None` are the correct 5e defaults. V1 answered. |
+| 1,063 ×3 | `magic-item` `is_cursed` / `is_sentient` / `activation` | **Confirmed constants.** `MagicItem.json` has no such column and Open5e never will; `false`/`false`/`None` were filed as the correct 5e defaults. **Narrowed by F4 (F-vom-02, 2026-08-19): there is no column, so the value is not *correct*, it is *unknown*** — 4 `vom` items curse the bearer in their own `desc`. V1 answered the existence question, not the truth of the default. See §5.9. |
 | ~~360~~ **0** | `monster.hp_dice` | **A real defect, fixed by B11 2026-08-10.** `open5e-bfrd` has `hit_dice: null` on all 360 creatures and shipped the mapper's `'1d4'` fallback for every one — including a 165-HP Aboleth — while `audit_packs` read 100% filled. The mapper now omits the field when the column is null. |
 | 73 | `feat.repeatable` | **Confirmed constant** — no column, and `false` is the safe default. |
 | 41 | `species` / `subspecies` `creature_type_ref` | **Confirmed constant, and §5 already said so:** `Species.json` has no type column, and the mapper writes the literal `'Humanoid'`. Defensible; now measured rather than assumed. |
@@ -2776,7 +2788,7 @@ against the pinned snapshot rather than against the rationale it was filed with.
 | `feat.chooseable` | ⚪ | no counterpart; the default `true` is what the feat picker tests, and only hand-authored cards ever set `false` |
 | `feat.prereq_class_refs`, `prereq_species_refs` | ⚪ | closed by L3 — 0 of 78 `prerequisite` strings names a class or species (§5.5) |
 | `spell.at_higher_levels_text` | `P` | the prose already ships inside `description`; splitting it is formatting, and `SpellCastingOption.json` adds zero spells (A1) |
-| `spell.effects`, `creature-action.effects` | ⚪ | M3's scope boundary: a live field with an editor but **no reader in `domain/` or `application/`**, and no structured damage rows upstream to fill it from |
+| `spell.effects`, `creature-action.effects` | ⚪ | M3's scope boundary: a live field with an editor but **no reader in `domain/` or `application/`**. ~~and no structured damage rows upstream to fill it from~~ — **that half is measured false (F-pass0-15): `Spell.damage_roll` is filled on 303 of 1,297 shipping rows.** The verdict stands on the reader alone, which is the leg that holds; F4 closed the finding by correcting the reason, not the verdict (§5.9) |
 | `creature-action.damage_type_ref` | ⚠️ | **Reason reads the wrong column — re-opened by F3/`ccdx`, 2026-08-18.** B5's count is right for `CreatureActionAttack.damage_type` (536 `srd-2014` + 40 `srd-2024`), but when a row has no real extra damage (`extra_damage_die_type` empty) the neighbouring `extra_damage_type` holds the **primary** damage type — **3,479 rows in shipping documents** (`a5e-mm` 828, `tob` 652, `bfrd` 512, `tob2` 506, `tob-2023` 505, `ccdx` 473, `tdcs` 3). The column is overloaded, not ambiguous: the other 828 filled rows all carry a genuine second damage, which has no schema counterpart at all. See **F-pass0-18** |
 | `creature-action.recharge` | ⚪ | narrative twin of the typed `recharge_kind`, which is filled |
 | `monster.lair_action_refs` | ⚪ | **Reason was wrong** — filed `M`/`S` "mapper emits it; no shipped creature has one". `CreatureAction.action_type` has exactly four values corpus-wide (`ACTION` 9,832 · `LEGENDARY_ACTION` 944 · `BONUS_ACTION` 873 · `REACTION` 579). There is no lair bucket in *any* document, shipped or skipped. **Re-measured by F3/`ccdx` 2026-08-18 and confirmed** — 0 `LAIR_ACTION` in 12,228 v2 rows, and the v1 fallback has none either (`cc`'s `legendary_desc` and `desc` never say "lair") |
@@ -2800,6 +2812,30 @@ field type*) to expose one importer-computed list, and the human-readable
 `prerequisite` string next to it is the field a DM edits. The known cost is that
 editing that prose does not update the clauses — the gate falls back to the flat
 fields only when `prereq_clauses` is absent, never when it is stale.
+
+---
+
+### 5.9 F4's written rationales — the findings closed without code
+
+Stage F's sweep produced 46 findings and F4 (2026-08-19) gave each one a verdict.
+**Forty became work** — the eight phases of §6 Stage R — and six closed here,
+because the right answer was a sentence, not a diff. Four of the six are the same
+shape: **§5.8's own reason was wrong, and measuring it is what the scan
+contributed.** The verdict never moved; the reason did.
+
+| Finding | Verdict | The rationale, as it now reads |
+|---|:--:|---|
+| **F-pass0-14** | ✅ | *Concentration is the source's bool, and the bool is authoritative.* `Spell.concentration` is `false` on the 7 cards whose prose says "if you lose concentration" — in `deepmx` the column is `false` on 64/64 rows while v1's `dmag-e` is `null` on 64/64, so the document simply never filled it. Deriving `true` from prose was rejected: the pattern that catches these 7 also catches `Extract Foyson`'s *"concentrating it into a powder"*, which is not a spell rule at all. The defect is upstream's and is reportable there; the pack stays a faithful mirror |
+| **F-pass0-15** | ✅ | *`spell.effects` is ⚪ because nothing reads it — not because the source is empty.* The filed reason had two legs and the scan broke one: `Spell.damage_roll` is filled on **303 of 1,297** shipping rows. The surviving leg is M3's scope boundary (no reader in `domain/` or `application/`), and it is sufficient on its own. §5.8's row now carries the measurement instead of the refuted clause |
+| **F-vom-01** | ✅ | *`attunement_*` is ⛔ for `S`, not `M`.* The row was filed "`attunement_detail` is in the source"; the column exists on **0 of 2,319** v2 rows. `mappers/item.dart:100` reads a column that has never existed — dead code left in place deliberately: deleting it is a mapper edit with no measurable effect, and it costs nothing while the shape of a future `MagicItem` fixture is unknown. Prose derivation was rejected as invention (A3): of 71 "attun" sentences, none is a gate clause |
+| **F-vom-02** | ✅ | *`is_cursed: false` is a placeholder, not a fact.* There is no curse column anywhere in the corpus, so the honest reading is **unknown**; §3.6's "correct 5e default" is narrowed accordingly. Four `vom` items curse the bearer in their own `desc`. Marking them from prose was rejected: the pattern is measured against one snapshot and would have to be re-measured on every import — exactly the fragility §5.3 warns about — and 1,059 of 1,063 are right today |
+| **F-vom-03** | ✅ | *The `magic-item` policy row was one row doing two jobs.* `charges_max` / `charge_regain` / `command_word` / `body_slot_ref` keep cause `M` — the prose is there and measured (161 / 152 / 137 rows) — while the `sentient_*` seven take `N`: `vom` publishes no sentient item, and the 10 "Intelligence of N" rows describe a creature, not the item. §5.6 already carries the split |
+| **F-a5e-ag-02** | ⚪ | *A pack is the mirror of its document, including where the document is wrong.* `Marshal`'s level table regresses at 14 (30 → 10 → 45 feet) and the source's `ClassFeatureItem` row says exactly that. Editing the value in place breaks D1 and makes `verify_packs` report `disagree`, which then needs an allowlist — a permanent mechanism for one cell. The cell is reportable upstream; the pipeline does not change. This is the written policy §5 was missing, and it is now the general rule: **source errors are mirrored, mapper errors are fixed.** F-bfrd-01 is the counter-example that keeps the rule honest — there the correct name is in the source's own `pk`, so it is a mapper defect |
+
+**What separates the two verdicts.** ✅ means the finding asked a question and the
+answer is written down; ⚪ means the answer is "we will not do this" and the cost
+is stated. Neither one is "we did not get to it" — that state does not exist any
+more, which is what F4 was for.
 
 ---
 
@@ -5132,12 +5168,214 @@ procedure, and the ledger have different lifetimes:
       disagree / 0 absent** corpus-wide, census "nothing installed" **0**,
       `gate_packs` green, catalog driftless. Both met; **the next open phase is
       F4**.*
-- [ ] **F4 — Decide, then file.** A finding is not a task until a decision turns
-      it into one.
+- [x] **F4 — Decide, then file. Done 2026-08-19 — and Stage F is closed with it.**
+      A finding is not a task until a decision turns it into one. All **46**
+      findings were walked and every one carries a verdict, a date and a closer:
+      **40 → düzelt**, **5 → gerekçe yaz** (✅), **1 → kapsam dışı** (⚪).
+      `python3 tool/check_findings.py` → *47 kayıt, 46 tanesi sayaca giriyor —
+      temiz*, with the status row now reading **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪**.
+      The 40 fixes are filed as **Stage R**, eight phases grouped by the file they
+      land in rather than by the pack that surfaced them — R1 the spell mapper (8),
+      R2 monster action fidelity (11), R3 four new monster fields (4), R4 the
+      chargen mapper (7), R5 four chargen schema homes (4), R6 names/duplicates/
+      pack metadata (3), R7 the built-in pack's own content (2), R8 the render
+      gate (1). Grouping is not cosmetic: R2's eleven findings all edit
+      `mappers/monster.dart` and three of them (F-pass0-17's name-in-hash,
+      F-pass0-21's form prefix, F-pass0-22's duplicate legendary) interact, so
+      splitting them per finding would have written the same regression test
+      three times.
+
+      **The six closed here are the scan's own correction record** (§5.9): four —
+      F-pass0-15, F-vom-01, F-vom-02, F-vom-03 — are §5.8/§5.6/§3.6 rows whose
+      *reason* the sweep measured false while the *verdict* held, which is the
+      most useful thing a re-read of a finished audit can produce. F-pass0-14
+      keeps upstream's `concentration` bool as authoritative because the prose
+      pattern that would fix 7 cards also mislabels `Extract Foyson`.
+      F-a5e-ag-02 is the only ⚪ and it sets the general policy the file was
+      missing: **a source error is mirrored, a mapper error is fixed** — editing
+      `Marshal`'s regressing level table in place would break D1 and make
+      `verify_packs` report `disagree`, needing a permanent allowlist for one
+      cell. F-bfrd-01 is the deliberate counter-example: the correct heading is
+      in the source's own `pk`, so it is a mapper defect and it is being fixed.
+
+      **Two decisions overrode the option the finding leaned toward.**
+      F-pass0-26 (946 monsters all "Chaotic Evil") was grouped going in as a
+      write-the-reason candidate — the source collapsed and the right value is
+      nowhere — but fidelity does not justify publishing a collapsed column as a
+      fact, so R2 stops writing the field when a document's `alignment` has one
+      distinct value over 20+ rows. F-pass0-21 takes the prose prefix rather
+      than the name suffix, because F-pass0-17 already puts the name into the
+      content hash and the suffix's second benefit disappeared once that was
+      decided.
+
       *Exit: every finding has a verdict — fixed, given a written rationale, or
       declared out of scope. A "fix" verdict becomes a **new phase in this §6**,
       carrying the same three gates as every other phase; the sweep itself
-      changes no content.*
+      changes no content. Met: 0 ❓ left, Stage R filed with all 40, §5.9 carries
+      the 6, and no `.pkg.json`, mapper or `lib/` file was touched by F4 itself —
+      `flutter analyze` is unmoved (0 errors / 0 warnings).*
+
+### Stage R — repair what the sweep found (filed 2026-08-19 by F4)
+
+Forty findings, eight phases. **Grouped by the file the fix lands in, not by the
+pack that surfaced it** — the scan was per-pack because reading is per-pack, but
+almost every defect it found is one mapper branch serving nineteen documents.
+Each phase carries the same three gates as every other phase in this §6 (ref
+gate, reader gate, repo gate) and each closes by writing `**Durum** ✅` plus the
+closing phase into every finding it covers.
+
+Ordering rule: **R1–R2 before R3**, because R3's new fields are only worth adding
+once the values that feed them are read correctly, and **R5 before R4's schema
+half** for the same reason. R7 and R8 are independent of everything else.
+
+- [ ] **R1 — The spell mapper stops rounding.** Eight findings, all in
+      `tool/open5e_import/mappers/spell.dart`, all the same failure: a regex
+      takes the first number it sees and writes a confident wrong value where the
+      source said something it could not represent. F-pass0-11 (`permanent` →
+      `Until Dispelled` on 23 cards, becomes `Special`), F-wz-01
+      (`1 hour/caster level` → `1 Hour`), F-pass0-12 (`1 year` → `Special`,
+      number lost — convert year/week/month to days), F-pass0-13
+      (`2-12 hours` → `Hours 12` — ranges and conditions become `Special`),
+      F-wz-02 (`concentration + 1 round` with `requires_concentration: false` —
+      read the duration text alongside the bool), F-pass0-16 (45 cards whose
+      price is in `material_specified`, not `material_cost`),
+      F-spells-that-dont-suck-02 (5 cards printing `Material Cost (gp): 0` over a
+      665 gp component — stop writing 0, read the text) and
+      F-spells-that-dont-suck-01 (8 cards losing the radius out of
+      `Self (60-foot radius)` → `area_shape_ref` + `area_size_ft`).
+      **No schema change**: the `duration_text` field two findings suggested is
+      deliberately not added — `Special` plus the prose in `description` is the
+      honest representation, and a new free-text field would be a fifth place
+      duration lives.
+      *Exit: `verify_packs` disagree stays 0, the four measured counts
+      (23 / 3 / 4 / 45+5) move to the corrected values in `audit_packs`, and a
+      test per rule in `test/tool/` pins the pattern that must **not** match
+      (`Extract Foyson` for concentration, a genuinely free component for cost).*
+
+- [ ] **R2 — Monster actions, faithfully.** Eleven findings, one file
+      (`mappers/monster.dart`), no schema change — this is the largest phase in
+      Stage R and the one with the most interaction between its parts.
+      **Two are upstream damage the pipeline can repair from data it already
+      loads**: F-tob-2023-01 (v2 truncates *Reconfiguring Curse* at 333 of 1,030
+      characters — when the same (parent, name) row exists in v1 and one is a
+      prefix of the other, take the longer) and F-pass0-27 (v2's half-decoded
+      escapes ship as `væ00e6ttir` / `2æ00d7`: strip the `00[0-9a-f]{2}` residue
+      when it matches the preceding code point, and add the `gate_packs` rule so
+      it cannot return silently). **Three are rows that never reach a card**:
+      F-pass0-24 (the v1 recovery's bucket test drops to row level — 11 actions on
+      10 creatures), F-a5e-mm-01 (57 rows whose rule text sits in `name`, 30
+      recoverable) and F-pass0-22 (114 legendary actions published a second time
+      as at-will actions — drop the duplicate). **Three are values written as
+      claims the source never made**: F-pass0-25 (`is_attack: false` on 681 rows
+      whose text says *"Melee Weapon Attack"*), F-tob-01 (the SRD default of 3
+      legendary actions where v1 prose says 1) and F-pass0-26 (946 monsters
+      published as "Chaotic Evil" from a column collapsed to one value — stop
+      writing the field when `n_distinct == 1 && n_rows > 20`). **Three are
+      structural**: F-pass0-17 (`name` joins the content hash so 382 rows stop
+      inheriting another creature's name), F-pass0-21 (the `limited_to_form`
+      qualifier as a `desc` prefix, upstream's own convention) and F-pass0-18
+      (`extra_damage_type` read as primary when `damage_type` and
+      `extra_damage_die_type` are both empty — 3,479 rows gain a type).
+      *Exit: `verify_packs` disagree stays 0 (every change writes source text,
+      never invented text), the corpus grows by fewer than 400 entities from
+      F-pass0-17's dedup change and `dupe_census` "nothing installed" stays 0, and
+      `test/tool/creature_action_fallback_test.dart` gains the 10-creature case
+      plus a truncation and a mojibake case.*
+
+- [ ] **R3 — Four monster mechanics with nowhere to live.** The findings whose
+      value is in the source, read or readable, and has **no schema field** —
+      each one is the four-edit contract (`FieldType` shape, factory case,
+      `builtin/` declaration, and the reader). F-pass0-19
+      (`resistance_note` / `immunity_note`, modelled on `alignment_note`: 618
+      creatures currently claim bludgeoning/piercing/slashing resistance
+      unconditionally because the "nonmagical attacks" qualifier lives in a
+      separate boolean), F-pass0-20 (`language_note` from `languages_desc` — 769
+      creatures ship no language line at all while the source says
+      *"understands Common but can't speak"*), F-pass0-28
+      (`creature-action.legendary_action_cost`, integer 1–5, `grpRules` — 152 of
+      267 rows lose "costs 2 actions") and F-pass0-23 (97 creatures whose sense
+      is not one of v2's four range columns — Black Flag's **keensense** — as a
+      pack-local `sense` entity plus v1 prose parsing, **not** a new Tier-0 canon
+      row: the SRD vocabulary does not grow to hold a third-party sense).
+      *Exit: each field renders on a monster card, `audit_packs` shows a non-zero
+      fill for all four, the built-in schema version is bumped once for the three
+      declared fields, and `pack_field_render_test` covers each new (category,
+      field) pair.*
+
+- [ ] **R4 — The chargen mapper stops guessing.** Seven findings in
+      `mappers/chargen.dart`, none needing a schema field. F-pass0-02 (30
+      backgrounds granting **every** skill the source offered as a choice — read
+      up to the choice expression and stop; the choice field itself is R5's job),
+      F-pass0-04 (6 cards opening with `[No description provided]`),
+      F-pass0-05 (`granted_language_count` writing 0 for "Any six" and 1 for
+      "Two … one of which" — number words to ten, context-bound `no`, first match
+      in text order), F-pass0-06 (named starting equipment that never reaches the
+      inventory: 17 of 23 "pouch", 20 of 20 "common clothes" — tokenize
+      parentheses separately and match backwards from the last word, accepting
+      only a real catalog card), F-toh-01 (`Underfoot` selectable at level 1
+      because a spell-slot table row carries `level: 1` — exclude
+      `Spell Slots` / `Spells Known` rows from the minimum), F-a5e-ag-01
+      (`grants_save_prof_from_asi` never written by any mapper although the field
+      and its reader both exist) and F-bfrd-01 (a colliding class-table heading
+      numbered `(2)` when the correct name is in the source's own `pk`).
+      *Exit: the 30 over-granted backgrounds grant only what the source states,
+      `common clothes` gets a written `N` rather than an invented card, and
+      `wizard_pack_families_test` gains the `Underfoot` level assertion.*
+
+- [ ] **R5 — Four chargen mechanics with nowhere to live.** The schema half of
+      the chargen work, each one the four-edit contract plus a resolver pass.
+      F-pass0-03 (A5E's "+1 to X and one other": a fixed-ability field beside the
+      free pick, so `ability_score_options` stops shipping the same six abilities
+      on 27 of 27 rows), F-pass0-09 (`background.granted_languages` — Thieves'
+      Cant and Sylvan have nowhere to go, though `CharacterResolver.grantFieldKeys`
+      already reads the key), F-pass0-10 (`caster_kind` on `subclass`, with
+      `level_up_planner` reading subclass before class — `CasterKind.third` is
+      unreachable today and 4 third-caster subclasses get no slots) and
+      F-pass0-08 (`always_prepared_spell_refs` on the `classFeatures` row, so 24
+      subclass spell tables become refs instead of prose; all 24 share the same
+      two-column shape).
+      *Exit: `grant_contract_test` and `grant_field_isolation_test` stay green
+      with the new keys, a third-caster subclass produces a slot grid on a sheet
+      (M4's assertion extended), and no ref written by the new mapper branches
+      dangles.*
+
+- [ ] **R6 — Names, near-duplicates and pack identity.** Three findings, all
+      about what the linking contract can and cannot see. F-pass0-07 (19 pack
+      cards whose names differ from a built-in card's by spacing or punctuation
+      only — a measured alias table in `normalize.dart`, **not** a looser
+      `findEntityIdByName`, which §2.3 keeps strict on purpose), F-toh-02
+      (`Scoundrel` shipped by two packages with the same two skills and 83%
+      identical text — `dupe_census --near <ratio>` first, decision from the
+      number) and F-open5e-01 (a 5e-2024 subclass dissolving inside a pack
+      labelled `game_system: 5e-2014` — stamp the second document's identity onto
+      its entities during the merge).
+      *Exit: `dupe_census` "nothing installed" stays 0 while the near-duplicate
+      count is reported for the first time, and the 2024 subclass is
+      distinguishable on its card.*
+
+- [ ] **R7 — The built-in pack owes what it demands of everyone else.** Two
+      findings, and the only Stage R phase that touches
+      `lib/domain/entities/schema/builtin/srd_core/`. F-builtin-01 (345 SRD
+      statblocks with no saving-throw or skill line at all — the source is
+      `docs/SRD_CC_v5.2.1.pdf` and it is CC-BY, so this is transcription, not
+      invention) and F-builtin-02 (the built-in pack has no §5: 419 empty slots
+      with no written cause, while every imported pack's empties are accounted
+      for row by row). Doing them together is deliberate — writing the §5
+      equivalent is what tells you which of the 419 are content work and which
+      are policy.
+      *Exit: `srdCorePackVersion` bumped, T2's built-in audit re-run with the new
+      fill numbers, and a built-in §5 table in this file with a cause code on
+      every remaining empty slot.*
+
+- [ ] **R8 — The render gate measures what it claims to.** One finding,
+      F-pass0-01: `pack_field_render_test` stops at the first built-in field
+      because `_wrap` builds without the app theme, so 223 of 306 built-in pairs
+      are never pumped. One line (`theme: buildThemeData('dark')`), and the
+      option of making the six widgets theme-independent is rejected — the
+      widgets are right, the harness is wrong.
+      *Exit: the built-in half of `pack_field_render_test` runs 447 pairs green
+      instead of stopping at 224, and the number in checklist F2 is the measured
+      one.*
 
 ### Done when
 

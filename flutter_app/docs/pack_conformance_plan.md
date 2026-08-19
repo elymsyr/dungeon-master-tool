@@ -7,88 +7,60 @@
 
 ## Sonraki adım
 
-> **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
-> (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
-> **F3 BİTTİ (2026-08-19): Pass 0 (§6) + Dalga 0–4, 20 tarama biriminin 20'si
-> kapandı**, hiç ⬜ kalmadı. Defterde **46 bulgu** var, kırk altısı da
-> ❓ danışılacak (`python3 tool/check_findings.py` → *47 kayıt, 46 tanesi
-> sayaca giriyor, temiz*). Son birim `tob-2023` (2026-08-19) **üç yeni kayıt**
-> açtı — **F-tob-2023-01** (Mirror Hag / *Reconfiguring Curse*'ün v2 metni
-> 1.030 → 333 karakterde kesik, dört lanet etkisi kartta yok; korpüste tek
-> örnek), **F-pass0-27** (v2'nin çift kaçışlı unicode'u karta ham iniyor:
-> 8 kart, 3 paket, biri kart **adı**, `tob3`'te ikisi `×` yerine `æ00d7`) ve
-> **F-pass0-28** (`legendary_action_cost` sütununun şemada evi yok; bedeli ≥ 2
-> olan 267 satırın **152'si** bedelini kaybediyor) — ve devraldığı dört uyarının
-> **dördünü de** bağımsız ölçümle doğruladı (F-pass0-19 → 106 + 21,
-> F-pass0-21 → 48 + 8, F-pass0-24 → 5 canavarın beşi, F-pass0-26 → 21 farklı
-> hizalama, pay 0). Çocuk satır kapsaması **2.877/2.877 kayıpsız**;
-> F-a5e-mm-01 ve F-tob-01'in `tob-2023` payı **0**. Kapılar: `--doc tob-2023`
-> **8.052 ok / 0 disagree / 0 absent / 0 unsourced**, korpüs geneli
-> **68.561 ok / 0 disagree / 0 absent**, eşleşme 408/408, gate yeşil, census 0,
-> katalog driftsiz. Checklist puanı **16 ✅ · 11 ➖ · 1 ⛔ · 3 ⚠️**.
+> **Şu an:** **Stage F kapandı.** F0 (checklist, 2026-08-15), F1 (plan,
+> 2026-08-17, §10), F2 (defter formatı, 2026-08-17), **F3** (20/20 tarama birimi,
+> 2026-08-19) ve **F4** (karar, 2026-08-19) bitti. §9'un dört bitiş şartının
+> **dördü de** sağlandı: ⬜ birim yok, her ⚠️ kaydın kararı var, Pass 0 kapıları
+> başladığı yerde (**0 disagree / 0 absent / census 0 / gate yeşil / katalog
+> driftsiz**), "Done when" çıktılarından hiçbiri bu tarama yüzünden yeniden
+> açılmadı.
 >
-> **Sıradaki iş: F4 — "Karar ver, sonra görev aç"** (`open5e_content_audit.md`
-> §6). Tarama düzeltmez, iş kalemi üretir (§8): 46 kaydın her biri için karar
-> verilecek — **düzelt** (yol haritasına yeni faz) / **gerekçe yaz** (§5.8'e
-> satır, durum ✅) / **kapsam dışı** (durum ⚪). §9'un bitiş ölçütü: 20 birim ⬜
-> değil (**tamam**), her ⚠️ kaydın kararı var (**F4'ün işi**), Pass 0 kapıları
-> başladığı yerde veya daha iyi (**tamam** — 0 disagree / 0 absent / census 0
-> hiç bozulmadı), "Done when" beş çıktısından hiçbiri bu tarama yüzünden
-> yeniden açılmadı (**tamam**).
+> **F4 ne yaptı (2026-08-19).** Defterdeki 46 kaydın hepsi karara bağlandı —
+> **40 düzelt**, **5 gerekçe yaz**, **1 kapsam dışı**. Durum satırı artık
+> **0 🔎 · 0 ❓ · 40 🛠 · 5 ✅ · 1 ⚪**; `python3 tool/check_findings.py` →
+> *47 kayıt, 46 tanesi sayaca giriyor — temiz*. Hiçbir kod, mapper ya da
+> `.pkg.json` dosyasına dokunulmadı (§8'in kuralı): F4 yalnızca karar yazar.
 >
-> **F4'e girerken elde olan gruplar** (karar kolaylaştırsın diye):
-> * **Şema evi yok** (yeni alan gerekir): F-pass0-19 direnç notu, F-pass0-21
->   biçim niteliği, F-pass0-28 efsanevi bedel, F-pass0-23 duyu notu.
-> * **Doğrusu kaynağın başka bir yerinde** (mapper kararı): F-a5e-mm-01,
->   F-tob-2023-01, F-pass0-27, F-pass0-16, F-pass0-24, F-bfrd-01.
-> * **Kaynak çökmüş, doğrusu hiçbir yerde** (yazılı gerekçe adayı):
->   F-pass0-26, `unmapped_report`'un 3 satırı.
-> * **Kapı/test tarafı** (kullanıcı etkilenmiyor): F-pass0-01.
+> **40 düzeltme, 8 faz — `open5e_content_audit.md` §6 Stage R.** Gruplama
+> **bulgunun çıktığı pakete göre değil, düzeltmenin ineceği dosyaya göre**
+> yapıldı; tarama paket paket okumak zorundaydı, ama bulduğu kusurların hemen
+> hepsi on dokuz belgeye birden hizmet eden tek bir mapper dalı:
 >
-> **Test dosyalarının yeri**: F grubu
-> `test/application/services/pack_install_roundtrip_test.dart`,
-> `test/presentation/character_creation/wizard_pack_families_test.dart`,
-> `test/presentation/pack_field_render_test.dart`,
-> `test/presentation/entity_link_navigation_test.dart` ve
-> `test/domain/services/bundled_pack_resolve_test.dart` (**`domain/`** altında,
-> `application/` değil). `pack_field_render_test`
-> **kırmızı gelir** — kesen tek grup built-in, yani F-pass0-01; paket tarafı
-> (224 çift / 446 pump) yeşil.
+> | Faz | Ne | Bulgu |
+> |---|---|--:|
+> | **R1** | büyü mapper'ı ilk sayıyı kapıp yuvarlamayı bırakır | 8 |
+> | **R2** | canavar aksiyonlarının sadakati (tek dosya, `mappers/monster.dart`) | 11 |
+> | **R3** | şemada evi olmayan dört canavar mekaniği (dört-düzenleme sözleşmesi) | 4 |
+> | **R4** | chargen mapper'ı tahmin etmeyi bırakır | 7 |
+> | **R5** | şemada evi olmayan dört chargen mekaniği | 4 |
+> | **R6** | ad / yakın-kopya / paket kimliği | 3 |
+> | **R7** | built-in paketin kendi içeriği (SRD statblokları + built-in §5) | 2 |
+> | **R8** | render kapısı ölçtüğünü ölçer | 1 |
 >
-> **Taramanın dokuz sorusu** (birim birim biriktiler, hepsi geçerli):
-> 1. Kartın taşıdığı mekanik **şemada bir eve sahip mi**? (`open5e`)
-> 2. O ev **doğru belgeden** mi dolduruluyor? (`open5e`)
-> 3. Alan boşsa, boşluk **pakette mi kaynakta mı**? — kategori başına tek kaynak
->    sütunu saymak yetiyor; `tdcs`'te 3, `toh`'ta 5, `bfrd`'de 3, `deepm`'de 1
->    yanlış bulgu önledi. `vom`'da bir adım öteye gitti: sütun **listesi**
->    çıkarılınca §5.8'in adını verdiği sütunun hiç var olmadığı görüldü.
->    `tob-2023`'te `trait_kind`=`Other`'ı bulgu olmaktan çıkardı (kaynağın
->    `type` sütunu korpüste 8.613/8.613 `null`).
-> 4. Alan dolu ve kaynakla aynı, ama **değer kuralla uyuşuyor mu**? (`toh`,
->    `a5e-ag`)
-> 5. Devir notunun **"zaten biliniyor"** satırı ölçüldü mü? — `toh`'ta iki,
->    `bfrd`'de bir, **`deepm`'de üç** tane yanlış çıktı (F-pass0-14'ün 3 yanlış
->    pozitifi); bu soru şimdiye kadar 6 hatalı satır temizledi. `tob-2023`'te
->    dört uyarının **dördü de** tuttu.
-> 6. Boş alanın **okuyucusu** var mı, **yazanı** var mı? — `grep -rn <alan> lib/`
->    dolu + `tool/` boş ⇒ cause `M` (`a5e-ag`). `bfrd`'de 5 alana uygulandı,
->    beşinin de cause code'u zaten doğruydu. `tob-2023`'te ikisi de boş çıktı
->    (`legendary_action_cost`) ⇒ cause `D`+`M`.
-> 7. Bulduğun kusurun **doğrusu kaynağın kendisinde** başka bir alanda duruyor mu?
->    (`bfrd` — `name` yanlış, `pk` doğru; `deepm` — `material_cost` boş, fiyat
->    `material_specified` metninde → F-pass0-16.) Cevabın **hayır** olması da
->    ölçüm: `vom`'da fiyat `desc`'te de yoktu, o yüzden `cost_gp` bulgu değil.
->    `a5e-mm` bunu iki kez kullandı (kural metni `name`'de). `tob-2023` soruyu
->    **belgeler arasına** taşıdı: kesik metin de, bozuk unicode de v2'de, ve
->    ikisinin de temiz hâli pipeline'ın B8 için zaten okuduğu **v1**'de duruyor.
-> 8. **Kayıp ölçerken soft ref'i saymayı unutma** (`a5e-mm`): L1 built-in'in
->    taşıdığı satırı pakete koymaz, `{slug,name}` softRef'i yazar.
->    Yalnız hard ref'lerin metnine bakan bir ölçüm `bfrd`'de 6, `a5e-mm`'de 9
->    satırı yanlışlıkla "kayıp" sayıyordu.
-> 9. **"Kayıp" ile "farklı yazılmış"ı ayır** (yeni, `tob-2023`): kaba tam-metin
->    karşılaştırması 14 kayıp verdi; 6'sı yalnızca `(… Form Only)` önekiyle,
->    3'ü yalnızca mojibake ile farklıydı — ikisi de **yayınlanıyor**. Gerçek
->    kayıp 6. Metin farkını kayıp saymak sayıyı iki katına çıkarıyor.
+> Sıra kuralı: **R1–R2, R3'ten önce** (değerler doğru okunmadan onları tutacak
+> alanı açmanın anlamı yok), **R5 R4'ün şema yarısından önce**. R7 ve R8
+> bağımsız. **Sıradaki iş: R1.**
+>
+> **Kod yazmadan kapanan altı kayıt** (`open5e_content_audit.md` §5.9):
+> F-pass0-14, F-pass0-15, F-vom-01, F-vom-02, F-vom-03 ✅ ve F-a5e-ag-02 ⚪.
+> Dördü aynı şekilde: **§5.8'in verdict'i doğruydu, gerekçesi ölçümle çürüdü** —
+> `spell.effects`'in "kaynakta yapılandırılmış zar yok"u 303 dolu `damage_roll`
+> satırına, `attunement_detail` 0/2.319'a, `is_cursed`'ın "doğru varsayılan"ı
+> kendi metninde lanet taşıyan 4 eşyaya çarptı. Tek ⚪ dosyanın eksik olan
+> politikasını yazdı: **kaynak hatası aynalanır, mapper hatası düzeltilir** —
+> F-bfrd-01 (doğru ad kaynağın kendi `pk`'sinde) bunun bahaneye dönüşmesini
+> engelleyen karşı örnek.
+>
+> **İki karar, kaydın eğilimini bozdu.** F-pass0-26 (946 canavarın hepsi
+> "Chaotic Evil") F4'e "gerekçe yaz" adayı olarak girmişti — kaynak çökmüş,
+> doğrusu hiçbir yerde — ama sadakat, çökmüş bir sütunu olgu gibi yayımlamayı
+> haklı çıkarmıyor: R2 belge geneli tek değere düşen `alignment` sütununda alanı
+> hiç yazmayacak. F-pass0-21 ad soneki yerine düzyazı önekini aldı, çünkü
+> F-pass0-17 adı zaten içerik-hash'ine kattığında sonekin ikinci faydası kalmadı.
+>
+> **Taramanın dokuz sorusu** F3'ün kapanış bloğunda ve
+> `open5e_content_audit.md` §0'da duruyor; Stage R fazları onları ölçüt olarak
+> kullanmaya devam eder (özellikle 3, 6, 7 ve 9).
 
 *(Bu blok her oturum sonunda güncellenir. Yeni bir oturum önce bunu okur.)*
 
