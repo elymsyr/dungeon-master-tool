@@ -258,9 +258,9 @@ const _extraAttackFallbackLevels = {5};
 /// preset keyed off the class's `caster_kind` when none is present.
 /// Returns the empty map for level 0 so the planner can distinguish
 /// "below progression" from "no slots this tier".
-Map<int, int>? _slotsAt(Entity? classEntity, int level) {
+Map<int, int>? _slotsAt(Entity? classEntity, Entity? subclassEntity, int level) {
   if (level < 1) return const {};
-  return spellSlotsForClass(classEntity, level);
+  return spellSlotsForClass(classEntity, level, subclass: subclassEntity);
 }
 
 List<LevelGain> _featuresInRange({
@@ -470,7 +470,9 @@ LevelUpPlan planLevelUp({
     }
   }
 
-  final kind = parseCasterKind(classEntity?.fields['caster_kind']);
+  // R5 / F-pass0-10: the archetype may be the one that casts (Arcane Warrior
+  // on a Fighter), so the subclass is asked first.
+  final kind = effectiveCasterKind(classEntity, subclassEntity);
   int? cantripCap;
   int? cantripPrev;
   int? preparedCap;
@@ -499,8 +501,8 @@ LevelUpPlan planLevelUp({
     maxSpell = maxPreparableSpellLevel(kind, clampedTo);
     // Authored class data takes precedence over the SRD default tables
     // so a homebrew class can ship its own slot progression.
-    prevSlots = _slotsAt(classEntity, clampedFrom);
-    newSlots = _slotsAt(classEntity, clampedTo);
+    prevSlots = _slotsAt(classEntity, subclassEntity, clampedFrom);
+    newSlots = _slotsAt(classEntity, subclassEntity, clampedTo);
   }
 
   return LevelUpPlan(

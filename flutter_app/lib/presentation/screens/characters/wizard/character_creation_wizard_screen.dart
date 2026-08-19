@@ -451,7 +451,8 @@ class _CharacterCreationWizardScreenState
     final classEntity =
         draft.classId == null ? null : entities[draft.classId];
     if (classEntity == null) return null;
-    final kind = parseCasterKind(classEntity.fields['caster_kind']);
+    final kind = effectiveCasterKind(classEntity,
+        draft.subclassId == null ? null : entities[draft.subclassId]);
     if (kind == CasterKind.none) return null;
 
     final cantripCap = levelTableValue(
@@ -1332,7 +1333,7 @@ Map<String, dynamic> buildSeedFields({
     );
     // Caps the wizard validated against — used to compute remaining picks
     // for cantrip/spell pending choices.
-    final kind = parseCasterKind(characterClass.fields['caster_kind']);
+    final kind = effectiveCasterKind(characterClass, subclassEntity);
     final cantripCap = kind == CasterKind.none
         ? 0
         : (levelTableValue(
@@ -1598,7 +1599,8 @@ Map<String, dynamic> buildSeedFields({
   // `_SpellSlotGridFieldWidget` renders one row per spell level with
   // tappable pips for remaining slots.
   if (characterClass != null) {
-    final slots = spellSlotsForClass(characterClass, draft.level);
+    final slots = spellSlotsForClass(characterClass, draft.level,
+        subclass: subclassEntity);
     if (slots.isNotEmpty) {
       final maxOut = <String, dynamic>{};
       final remainingOut = <String, dynamic>{};
@@ -2659,8 +2661,8 @@ class _ReviewStep extends ConsumerWidget {
         : 30;
 
     // Spellcasting summary — null when caster_kind = None.
-    final casterKind =
-        parseCasterKind(classEntity?.fields['caster_kind']);
+    final casterKind = effectiveCasterKind(classEntity,
+        draft.subclassId == null ? null : entities[draft.subclassId]);
     int? castingMod;
     if (classEntity != null && casterKind != CasterKind.none) {
       final ref = classEntity.fields['casting_ability_ref'];

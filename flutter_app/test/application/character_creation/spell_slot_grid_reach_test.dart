@@ -189,5 +189,65 @@ void main() {
       expect(spellSlotsForClass(overridden, 6),
           defaultSpellSlotsByLevel(CasterKind.full, 6));
     });
+
+    test('R5 / F-pass0-10 — a shipped third-caster subclass gets a grid', () {
+      // The corpus has no caster *class*, but it does ship four archetypes
+      // that cast on a class that does not (Eldritch Knight shape). Before R5
+      // `CasterKind.third` was unreachable: the only reader was the class
+      // card, so these four characters had no slots at any level.
+      final thirds = <String, Entity>{};
+      for (final file in Directory('assets/open5e_packs')
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.pkg.json'))) {
+        final root = jsonDecode(file.readAsStringSync()) as Map;
+        (root['entities'] as Map).forEach((_, raw) {
+          final row = raw as Map;
+          if (row['type'] != 'subclass') return;
+          final attrs = Map<String, dynamic>.from(
+              (row['attributes'] as Map?) ?? const {});
+          if (attrs['caster_kind'] != 'Third') return;
+          thirds['${row['name']}'] = Entity(
+            id: '${row['name']}',
+            name: '${row['name']}',
+            categorySlug: 'subclass',
+            fields: attrs,
+          );
+        });
+      }
+      // ignore: avoid_print
+      print('M4/R5: ${thirds.length} packaged third-caster subclasses '
+          '(${thirds.keys.join(', ')})');
+      expect(thirds, hasLength(4),
+          reason: 'Arcane Warrior, Eldritch Trickster, Soulspy, Underfoot — '
+              'the four measured in F-pass0-10');
+
+      // The parent class is a non-caster: on its own it produces nothing.
+      final rogue = Entity(
+          id: 'rogue',
+          name: 'Rogue',
+          categorySlug: 'class',
+          fields: const {'caster_kind': 'None'});
+      expect(spellSlotsForClass(rogue, 5), isEmpty);
+
+      for (final sub in thirds.values) {
+        expect(effectiveCasterKind(rogue, sub), CasterKind.third,
+            reason: sub.name);
+        // Third casters start at 3 and keep a grid to 20.
+        expect(spellSlotsForClass(rogue, 2, subclass: sub), isEmpty,
+            reason: sub.name);
+        expect(spellSlotsForClass(rogue, 3, subclass: sub), {1: 2},
+            reason: sub.name);
+        expect(spellSlotsForClass(rogue, 20, subclass: sub), isNotEmpty,
+            reason: sub.name);
+      }
+
+      // A subclass that says nothing must never downgrade a caster class.
+      final wizard = builtinClasses().firstWhere((c) => c.name == 'Wizard');
+      final plain = Entity(
+          id: 'p', name: 'Plain', categorySlug: 'subclass', fields: const {});
+      expect(spellSlotsForClass(wizard, 5, subclass: plain),
+          defaultSpellSlotsByLevel(CasterKind.full, 5));
+    });
   });
 }

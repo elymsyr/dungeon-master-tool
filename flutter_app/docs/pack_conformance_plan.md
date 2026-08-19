@@ -7,8 +7,30 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R5** (chargen'in şema yarısı, 4 bulgu — her biri dört-düzenleme
-> sözleşmesi + resolver geçişi: F-pass0-03, F-pass0-09, F-pass0-10, F-pass0-08).
+> **Sıradaki iş: R6** (adlar, yakın kopyalar ve paket kimliği — 3 bulgu:
+> F-pass0-07 ölçülmüş takma-ad tablosu, F-toh-02 `dupe_census --near`,
+> F-open5e-01 ikinci belgenin kimliği).
+>
+> **R5 bitti (2026-08-19) — "dört chargen mekaniği eve kavuştu".**
+> Dört kayıt (F-pass0-03, F-pass0-09, F-pass0-10, F-pass0-08) kapandı; durum
+> satırı **0 🔎 · 0 ❓ · 6 🛠 · 40 ✅ · 1 ⚪** (toplam 47). Şema
+> **2.6.1 → 2.7.0**, beş alan: `background.granted_languages` /
+> `asi_fixed_ability_ref` / `asi_free_bonus_count`, `subclass.caster_kind`,
+> `classFeatures` satırında `always_prepared_spell_refs`. Ölçüm
+> (`diff_packs`): **27** background zorunlu +1'ini yazıyor ve
+> `ability_score_options` **27/27 tek değer → 6 farklı değer** (beşerli,
+> sabit olan hariç); **2** kart adı verilmiş dilini aldı (engel şema değil,
+> `Thieves’ Cant`'in U+2019'uydu — düzeltme her katalog eşleşmesinde geçerli);
+> **4** subclass `Third` diyor (101'de 0 yanlış pozitif) ve caster_kind'ı
+> `None` olan bir Rogue + bu subclass'lar 3. seviyede **{1: 2} slot**
+> üretiyor; **19** subclass'ın büyü tablosu **90 seviye-kapılı satır /
+> 149 ref (170 hücrenin)** oldu, düşen 21 hücre hiçbir pakette olmayan
+> büyüler. Bulgunun "24 tablo" sayısı katı okumada **20**. `gate_packs`
+> yeşil, `verify_packs` **68.926 ok / 0 disagree / 0 absent**, `dupe_census`
+> "nothing installed" **0**, `flutter analyze` 0/0; test tarafında düşen 13
+> vaka stash'lenmiş ağaçtaki 14'ün öz altkümesi (R4'ün M1 beyanı R5'te
+> kapandı). **`assets/open5e_packs/` yeniden promote edildi** (6 paket,
+> 107 değer) — çıkış ölçütü yayınlanan paketi okuyor.
 >
 > **R4 bitti (2026-08-19) — "chargen mapper'ı tahmin etmeyi bıraktı".**
 > Yedi kayıt (F-pass0-02, F-pass0-04, F-pass0-05, F-pass0-06, F-toh-01,

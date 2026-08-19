@@ -632,6 +632,13 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
       const ['weapon-category'], isList: true, g: grpProgression);
   fb.relation('armor_training_refs', 'Extra Armor Training',
       const ['armor-category'], isList: true, g: grpProgression);
+  // R5 / F-pass0-10: a 2014-shaped archetype brings its own spellcasting to a
+  // non-caster class (Eldritch Knight / Arcane Trickster). The parent class
+  // says `None`, so without this field `CasterKind.third` is unreachable and
+  // the character gets no slots. Absent = the parent class decides.
+  fb.enum_('caster_kind', 'Caster Kind',
+      const ['None', 'Full', 'Half', 'Third', 'Pact', 'Ritual'],
+      g: grpProgression);
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
   // No grant block — same rationale as Class: subclass mechanics ship as
@@ -760,7 +767,21 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   // Robber). Widened, not clamped — a ceiling that silently truncates a real
   // count is the same lie as inventing one. Permissive; no data migration.
   fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 10);
+  // R5 / F-pass0-09: the source sometimes names the language instead of
+  // counting it (Crime Syndicate Member → Thieves' Cant). Same key the class
+  // and the grant block use, read by the background pass — the count stays for
+  // "one of your choice", this holds the named half.
+  fb.relation('granted_languages', 'Granted Languages', const ['language'],
+      isList: true);
   fb.relation('ability_score_options', 'Ability Score Options', const ['ability'], isList: true, required_: true);
+  // R5 / F-pass0-03: A5E writes "+1 Charisma and one other ability score" — a
+  // mandatory bump plus a free one. Without a home for the mandatory half the
+  // mapper had to widen `ability_score_options` to all six, which said the
+  // opposite of the source. The fixed ability lands here and the options list
+  // goes back to being the set the *free* bump may choose from.
+  fb.relation('asi_fixed_ability_ref', 'Fixed Ability Bonus', const ['ability']);
+  fb.integer('asi_free_bonus_count', 'Free Ability Bonuses', min: 0, max: 3,
+      help: 'How many +1 bumps the player picks from Ability Score Options.');
   // SRD 2024 p.83: each background allows either +2/+1 to two abilities
   // or +1/+1/+1 to three (player picks at creation). Listing both options
   // makes the rule explicit; resolver/UI presents the choice.

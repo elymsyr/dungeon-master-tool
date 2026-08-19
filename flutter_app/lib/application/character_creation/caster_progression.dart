@@ -224,14 +224,29 @@ Map<int, int>? slotsByLevelOverride(Object? raw, int level) {
   return null;
 }
 
+/// The caster kind actually in play for a class + subclass pair.
+///
+/// R5 / F-pass0-10: an Eldritch Knight / Arcane Trickster archetype brings its
+/// own third-caster progression to a class that declares `None`. The subclass
+/// wins **only when it names a real caster kind** — an absent or `None`
+/// subclass field must never downgrade a Cleric to a non-caster.
+CasterKind effectiveCasterKind(Entity? cls, Entity? subclass) {
+  final sub = parseCasterKind(subclass?.fields['caster_kind']);
+  if (sub != CasterKind.none) return sub;
+  return parseCasterKind(cls?.fields['caster_kind']);
+}
+
 /// Class-aware slot lookup. Returns the author's `spell_slots_by_level`
 /// override when present; otherwise falls back to the SRD preset keyed off
-/// the class's `caster_kind`. Returns empty map for non-casters.
-Map<int, int> spellSlotsForClass(Entity? cls, int level) {
-  if (cls == null) return const {};
-  final override = slotsByLevelOverride(cls.fields['spell_slots_by_level'], level);
+/// the class's `caster_kind` — or the [subclass]'s, when the archetype is the
+/// one that casts (see [effectiveCasterKind]).
+/// Returns empty map for non-casters.
+Map<int, int> spellSlotsForClass(Entity? cls, int level, {Entity? subclass}) {
+  if (cls == null && subclass == null) return const {};
+  final override =
+      slotsByLevelOverride(cls?.fields['spell_slots_by_level'], level);
   if (override != null) return override;
-  return defaultSpellSlotsByLevel(parseCasterKind(cls.fields['caster_kind']), level);
+  return defaultSpellSlotsByLevel(effectiveCasterKind(cls, subclass), level);
 }
 
 /// SRD §1.5 default spell-slot map at character level [level]. The result

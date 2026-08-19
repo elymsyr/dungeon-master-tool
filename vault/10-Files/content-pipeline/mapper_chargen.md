@@ -67,6 +67,36 @@ tags: [file]
 > `background_equipment_test` (eski beklentiler yeniden yazıldı),
 > `wizard_pack_families_test` (1. seviyede açılan alt sınıfın tablo olmayan
 > bir 1. seviye özelliği olmalı).
+
+> [!success] R5 — dört mekanik eve kavuştu (2026-08-19)
+> R4 tahmini kesmişti; R5 okunan değere alan açtı (şema `2.6.1 → 2.7.0`,
+> [[builtin_schema]]). Bu dosyadaki yeni kurallar:
+> - `asi_fixed_ability_ref` + `asi_free_bonus_count`: "+1 Charisma and one
+>   other ability score" satırında adı geçen yetenek **sabit** alana yazılır,
+>   `ability_score_options` da **kalan beşe** iner ("one *other*"). 27 kart;
+>   `ability_score_options` 27/27 tek değerden **6 farklı değere** düştü
+>   (F-pass0-03). R4'ün "seçimin evi yok" notu bu kayıtla kapandı.
+> - `_refListFromText` artık metindeki kıvrık kesme işaretini (U+2019) düz
+>   kesmeye çeviriyor — `Thieves’ Cant` katalogda `Thieves' Cant`. Adı verilmiş
+>   dil `granted_languages`'e gider ve `granted_language_count` **silinir**;
+>   seçim ifadesi taşıyan satır sayaç olarak kalır. 2 kart (F-pass0-09).
+> - `_isThirdCaster` + `baseCasterBySlug`: kendi büyücülüğünü getiren arketip
+>   `caster_kind: 'Third'` yazar, **ama** ana sınıfın kendi türü `None`
+>   değilse yazmaz (`toh`'un beş "Potent Spellcasting" satırı bu yüzden temiz).
+>   4 kart, 101 subclass'ta 0 yanlış pozitif (F-pass0-10).
+> - `_spellListRows` + `_builtinSpells`: `Cleric Level | Spells` tablosunun her
+>   kademesi kendi `classFeatures` satırı olur
+>   (`<Özellik> (1st)`, `always_prepared_spell_refs`). Ref yalnız **var olan
+>   bir yazımla** yazılır (soft ref eşleşmesi büyük-küçük harfe duyarlı, §2.3):
+>   19 subclass, 90 satır, 170 hücrenin **149**'u; kalan 21 kurulu hiçbir
+>   pakette olmayan büyü, düzyazıda kalır (F-pass0-08). Satırlar
+>   `granted_at_level` **hesaplandıktan sonra** eklenir, yani F-toh-01 geri
+>   gelemez. Ölçüm not düşürdü: düzyazı büyü tablosu **24 değil 20**.
+>
+> Testler: `test/tool/chargen_r5_test.dart` (13),
+> `test/domain/services/character_resolver_r5_test.dart` (8),
+> `spell_slot_grid_reach_test` (M4'e dört üçte-bir subclass eklendi),
+> `bundled_pack_resolve_test` (M1 beyanları + kurgunun ASI dağıtımı).
 - **Three ref kinds**: `lookup()` (Tier-0, resolved at import), `ref()` (hard in-pack, resolved at build — build FAILS if unresolved), and `softRef(slug, name)` = `{slug, name}` with NO `_ref` key (cross-pack; PackBuilder leaves it intact, `CharacterResolver._resolveRef` name-resolves it at resolve time, clean no-op if the target pack isn't installed). softRef is used for subclass→built-in base class, species→spell, subspecies→parent species, background→origin feat.
 - **Classes** (`mapClasses`): base classes (`subclass_of == null`) → `class`; rest → `subclass` with `parent_class_ref` (hard `ref` when parent ships in-pack, else `softRef`). Caster kind = Open5e `caster_type` if set, else `_inferCasterKind` from feature rows (Pact Magic→Pact, no spell feature→None, has "Cantrips Known"→Full, spellcasting w/o cantrips→Half — Open5e leaves `caster_type` null for the whole SRD-2014 set). C7: armor/weapon/skill proficiencies parsed from the structured `**Armor:**`/`**Weapons:**`/`**Skills:**` Proficiencies feature ("all armor"→Light+Medium+Heavy).
 - **Species/Subspecies** (`mapSpecies`, 3-pass): pass 1 parses Size/Speed from trait rows; pass 2 lets subspecies inherit absent parent values; pass 3 emits with typed grants — D1 damage resist/immune/vuln (regex on "X damage"), D2 condition immunity (explicit immunity phrasing only), D3 fixed skill prof, D4 innate alt speeds (skips conditional/temporary), D9 innate spell/cantrip grants (names go through [[normalize]]'s `titleCaseName`, **not** `titleCase` — the resolver matches case-sensitively and `"Spare The Dying"` dangled, audit L3, 2026-08-13), ASI (`_parseAsi`: fixed bonuses, "each" grants all six → the `ability_bonuses` statBlock map `{'CON': 2}`). Subspecies → first-class `subspecies` entity with `parent_species_ref` softRef.

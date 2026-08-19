@@ -54,6 +54,10 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
   final schema = WorldSchema(
     schemaId: schemaId,
     name: 'D&D 5e (SRD 5.2.1)',
+    // 2.7.0 — R5 gave four chargen mechanics a home: `background.
+    // granted_languages` / `asi_fixed_ability_ref` / `asi_free_bonus_count`,
+    // `subclass.caster_kind`, and `always_prepared_spell_refs` on the
+    // classFeatures row. Additive; no data migration.
     // 2.6.1 — R4 widened `background.granted_language_count` to max 10 so the
     // source's "Any six" stops truncating. Permissive; no data migration.
     // 2.6.0 — R3 added the three fields the monster statblock had nowhere to
@@ -61,7 +65,7 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
     // `creature-action.legendary_action_cost`. Additive; no data migration.
     // 2.5.1 — `pack.content_quantities` relabelled to say what its key really
     // is (audit T2-3). Shape unchanged; no data migration.
-    version: '2.6.1',
+    version: '2.7.0',
     baseSystem: 'dnd5e',
     description:
         'Built-in D&D 5e template aligned with SRD 5.2.1 (CC-BY-4.0). '

@@ -42,7 +42,10 @@ class SpellsStep extends ConsumerWidget {
       );
     }
 
-    final kind = parseCasterKind(classEntity.fields['caster_kind']);
+    // R5 / F-pass0-10: a third-caster archetype casts although its class does
+    // not, so the step opens on the subclass's kind when it names one.
+    final kind = effectiveCasterKind(classEntity,
+        draft.subclassId == null ? null : entities[draft.subclassId]);
     if (kind == CasterKind.none) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),

@@ -530,6 +530,15 @@ class CharacterResolver {
         for (final id in _readRefList(row['granted_trait_refs'], entitiesById)) {
           grantTrait(id);
         }
+        // R5 / F-pass0-08: a domain / circle spell list arrives in tiers
+        // ("1st: false life, ray of sickness · 3rd: …"), so it is gated by the
+        // row's own level exactly like the feats above. Built-in 2024 content
+        // hands the same mechanic out through a feat card; a 2014-shaped pack
+        // writes it on the row, and both end up in `alwaysPreparedSpells`.
+        for (final id in _readRefList(
+            row['always_prepared_spell_refs'], entitiesById)) {
+          if (!alwaysPreparedSpells.contains(id)) alwaysPreparedSpells.add(id);
+        }
       }
     }
 
@@ -664,6 +673,12 @@ class CharacterResolver {
         for (final t in _readRefList(bg.fields['granted_tool_refs'], entitiesById)) {
           if (!tools.contains(t)) tools.add(t);
         }
+        // R5 / F-pass0-09: `granted_language_count` counts the free picks;
+        // this holds the ones the background names outright (Thieves' Cant).
+        // Same key the class pass reads, for the same reason.
+        for (final l in _readRefList(bg.fields['granted_languages'], entitiesById)) {
+          if (!languages.contains(l)) languages.add(l);
+        }
         // SRD 2024 p.83: each background allows either +2/+1 to two abilities
         // or +1/+1/+1 to three. PC stores the chosen distribution as
         // `background_asi: {STR: 2, CON: 1}` — resolver bumps the abilities
@@ -671,7 +686,19 @@ class CharacterResolver {
         // re-validating, so the wizard/editor enforces the distribution rule.
         // Bumps gated by ability_score_options when present; out-of-list
         // entries are dropped with a warning. Cap at 20.
+        // R5 / F-pass0-03: "+1 Charisma and one other ability score" — the
+        // Charisma half is not a choice, so it applies whether or not the
+        // player recorded it. It is added once: a `background_asi` entry for
+        // the same ability is the player's record of this very bump.
         final asi = _readIntMap(fields['background_asi']);
+        final fixedId = _resolveRef(bg.fields['asi_fixed_ability_ref'], entitiesById);
+        final fixed = fixedId == null
+            ? null
+            : _abilityAbbrev(entitiesById[fixedId]?.name ?? '');
+        if (fixed != null && !asi.containsKey(fixed)) {
+          final cur = abilities[fixed] ?? 10;
+          abilities[fixed] = cur + 1 > 20 ? 20 : cur + 1;
+        }
         if (asi.isNotEmpty) {
           final allowed = <String>{};
           for (final r in _readRefList(
@@ -679,6 +706,23 @@ class CharacterResolver {
             final name = entitiesById[r]?.name ?? '';
             final abbrev = _abilityAbbrev(name);
             if (abbrev != null) allowed.add(abbrev);
+          }
+          // The fixed ability is granted by this very card, so a stored bump on
+          // it is never "outside the options".
+          if (fixed != null) allowed.add(fixed);
+          // Declared free picks are a ceiling: the card says how many +1s the
+          // player chooses, and anything past that is a wizard bug, surfaced
+          // rather than silently applied twice.
+          final freeCap = _intOf(bg.fields['asi_free_bonus_count']);
+          if (freeCap > 0) {
+            final free = asi.entries
+                .where((e) =>
+                    (_abilityAbbrev(e.key) ?? e.key.toUpperCase()) != fixed)
+                .fold<int>(0, (a, e) => a + e.value);
+            if (free > freeCap) {
+              warnings.add('background_asi grants $free free points, '
+                  '${bg.name} allows $freeCap');
+            }
           }
           for (final entry in asi.entries) {
             final abbrev = _abilityAbbrev(entry.key) ?? entry.key.toUpperCase();

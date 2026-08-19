@@ -5,7 +5,7 @@ path: flutter_app/lib/application/character_creation/caster_progression.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-08-19
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 - Supabase / CDC / events / triggers: none.
 
 **Outputs**
-- Public API: `CasterKind` enum (`none/full/half/third/pact`), `parseCasterKind`, `levelTableValue`, `defaultCantripsKnown`, `defaultPreparedSpells`, `maxPreparableSpellLevel`, `slotsByLevelOverride`, `spellSlotsForClass`, `defaultSpellSlotsByLevel`.
+- Public API: `CasterKind` enum (`none/full/half/third/pact`), `parseCasterKind`, `levelTableValue`, `defaultCantripsKnown`, `defaultPreparedSpells`, `maxPreparableSpellLevel`, `slotsByLevelOverride`, `spellSlotsForClass` (optional `subclass:`), `defaultSpellSlotsByLevel`, `effectiveCasterKind` (**R5**).
 
 ## Dependencies & Links
 - Depends on: `entity.dart` only.
@@ -31,6 +31,7 @@ tags: [file]
 - Spec / reference: [[SRD-5.2.1]] §1.5
 
 ## Key Logic / Variables
+- `effectiveCasterKind(cls, subclass)` (**R5 / F-pass0-08's sibling F-pass0-10**): the subclass wins **only when it names a caster kind other than None** — a 2014-shaped archetype (Arcane Warrior, Eldritch Trickster, Soulspy, Underfoot) casts although its class declares `None`, while an absent or `None` subclass value must never downgrade a Cleric. Every caster-kind reader outside the entity editor goes through it: [[level_up_planner]], the wizard's Spells step, its spell validation, the commit-time `spell_slots` seed and the review step. Before R5 `CasterKind.third` was unreachable: the only reader was the class card.
 - `parseCasterKind`: maps the schema enum strings `'Full'/'Half'/'Third'/'Pact'` to `CasterKind`; anything else (incl. 'None'/'Ritual') → `none`.
 - `levelTableValue(raw, level)`: reads an `int` out of a `Map<int,int>`-shaped (JSON-stringified keys tolerated) per-level table; null on miss so callers fall back to defaults.
 - `defaultCantripsKnown`: full → 3/4/5 (by <4/<10/else); pact → 2/3/4; half/third/none → 0.
