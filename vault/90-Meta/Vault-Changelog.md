@@ -829,3 +829,51 @@ mapper'ı tahmin etmeyi bırakır). Güncellenen:
 `flutter_app/docs/open5e_content_audit.md` (§0, §6 R3 kutusu),
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
+
+## 2026-08-19 — R4: chargen mapper'ı tahmin etmeyi bıraktı
+
+Stage R'nin dördüncü fazı. Yedi bulgu (F-pass0-02, F-pass0-04, F-pass0-05,
+F-pass0-06, F-toh-01, F-a5e-ag-01, F-bfrd-01) `mappers/chargen.dart` içinde
+kapandı. Şema yalnız bir tavan genişletti: **2.6.0 → 2.6.1**,
+`background.granted_language_count` `max: 5 → 10` — kaynak "Any six" diyor ve
+gerçek bir sayıyı sessizce kırpmak, uydurmakla aynı yalan.
+
+Ölçüm (`diff_packs`, `../.tmp/packs-rebuild`): **30 background kartında 62
+beceri ref'i** grant'tan düştü; bulgunun kendi sayacı aşırı-grant'ı **30 kart /
+32 fazla yetkinlik → 0 / 0** gösteriyor. Aradaki 30 fark kararın yazılı bedeli:
+her kartın gerçek **bir** seçimi de artık yazılmıyor (alanı R5 açacak), ve
+satırın tamamı seçim olan bir kart (`tdcs` Lyceum Student) sıfıra düştü.
+`[No description provided]` korpüste **6 → 0**. Dil sayacının iki yanlış
+hücresi düzeldi (`a5e-ddg` Dungeon Robber **0 → 6**, `a5e-gpg` Haunted
+**1 → 2**), doğru 29 satır değişmedi. Başlangıç ekipmanı **+35 eşya satırı,
+0 kayıp** (104 → 139): `pouch` 6/23 → **21/23**, `ball bearings` 0 → **2/2**,
+`prayer book` 0 → **2/2**, `(amulet or reliquary)` 0 → **2 + 2**, ayrıca Ink,
+Rope, Hunting Trap, Arrows, Parchment, Rations, Crystal, Signet Ring, Staff
+(Arcane Focus) ve iki zanaatkâr takımı. `common clothes` **`N` olarak
+kapandı** — 21 anımsatmanın SRD 5.2.1'de karşılığı yok, SRD dışı kart
+uydurulmadı. `toh` `Underfoot` `granted_at_level` **1 → 3** (slot tablosu
+satırı minimuma girmiyor artık). `grants_save_prof_from_asi` korpüste
+**0 → 1** (`a5e-ag` `Tenacious` — alanı, iki okuyucusu vardı, yazanı yoktu).
+`bfrd` Mechanist'in ikinci sınıf-tablosu sütunu `Augment Effects Known (2)`
+yerine kaynağın kendi `pk`'sinden **`Augmented Items`**.
+
+Kapılar: `verify_packs` **0 disagree / 0 absent** (ok 68.926, `unsourced`
+3.303 sabit) — `background` kural tablosu hâlâ boş olduğu için D1 bu yedi
+kaydın hiçbirini zaten göremezdi; `gate_packs` yeşil, `dupe_census` "nothing
+installed" **0** / eyleme değer fazlalık 1.141, `unmapped_report.json`
+değişmedi. `flutter test test/tool/` **197/197** (yeni `chargen_r4_test.dart`,
+21 test), `wizard_pack_families_test` **44/44**, `flutter analyze` 0 hata /
+0 uyarı.
+
+**`assets/open5e_packs/` bu fazda promote edildi.** R4'ün çıkış ölçütü
+`wizard_pack_families_test`'in *yayınlanan* paketi okuduğu bir iddia istiyor;
+yayınlanan paket R1'den beri dört faz geride kalmıştı. Promote edilen fark
+R1–R4 birikimi: **43 kategori, 10.004 değer**; `manifest.json` ve
+`assets/first_party/manifest.json` yeniden üretildi.
+
+Defter: 🛠 17 → 10, ✅ 29 → 36, toplam 47 sabit. Sıradaki faz: **R5**
+(chargen'in şema yarısı — dört mekaniğe alan + resolver geçişi). Güncellenen:
+`vault/10-Files/content-pipeline/mapper_chargen.md`, `builtin_schema.md`,
+`flutter_app/docs/open5e_content_audit.md` (§0, §6 R4 kutusu),
+`flutter_app/docs/pack_conformance_findings.md`,
+`flutter_app/docs/pack_conformance_plan.md`.

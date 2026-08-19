@@ -756,7 +756,10 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   // Gaming Set tool). Distinct from `granted_tool_refs`, which grants outright.
   fb.text('granted_tool_variant_group', 'Granted Tool Variant Group',
       help: "Tool subcategory to pick one from, e.g. 'gaming_set'.");
-  fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 5);
+  // R4 / F-pass0-05: max was 5 and the source says "Any six" (a5e-ddg Dungeon
+  // Robber). Widened, not clamped — a ceiling that silently truncates a real
+  // count is the same lie as inventing one. Permissive; no data migration.
+  fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 10);
   fb.relation('ability_score_options', 'Ability Score Options', const ['ability'], isList: true, required_: true);
   // SRD 2024 p.83: each background allows either +2/+1 to two abilities
   // or +1/+1/+1 to three (player picks at creation). Listing both options

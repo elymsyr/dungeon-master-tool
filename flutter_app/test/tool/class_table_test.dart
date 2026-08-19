@@ -145,25 +145,46 @@ void main() {
     expect(d, contains('| 1 | +3 |'));
   });
 
-  test('two columns sharing a name are numbered, never merged', () {
-    // `bfrd`'s Mechanist ships two distinct `Augment Effects Known` columns.
+  test('a clashing column takes its name from the source pk (R4 / F-bfrd-01)',
+      () {
+    // `bfrd`'s Mechanist ships two distinct columns whose upstream `name` is the
+    // same; only the second one's pk says what it really counts.
     run(
-      [klass('c1', 'Mechanist')],
+      [klass('bfrd_mechanist', 'Mechanist')],
       [
-        feature('f1', 'c1', 'Augment Effects Known',
+        feature('bfrd_mechanist_augment-effects-known', 'bfrd_mechanist',
+            'Augment Effects Known',
             type: 'CLASS_TABLE_DATA', desc: '[Column data]'),
-        feature('f2', 'c1', 'Augment Effects Known',
+        feature('bfrd_mechanist_augmented-items', 'bfrd_mechanist',
+            'Augment Effects Known',
             type: 'CLASS_TABLE_DATA', desc: '[Column data]'),
       ],
       [
-        ...column('f1', {2: '2'}),
-        ...column('f2', {2: '3'}),
+        ...column('bfrd_mechanist_augment-effects-known', {2: '2'}),
+        ...column('bfrd_mechanist_augmented-items', {2: '3'}),
       ],
     );
     final d = describe('Mechanist');
-    expect(d,
-        contains('| Level | Augment Effects Known | Augment Effects Known (2) |'));
+    expect(d, contains('| Level | Augment Effects Known | Augmented Items |'));
     expect(d, contains('| 2 | 2 | 3 |'));
+  });
+
+  test('a clash whose pk adds nothing still falls back to numbering', () {
+    run(
+      [klass('c1', 'Mechanist')],
+      [
+        feature('augment-effects-known', 'c1', 'Augment Effects Known',
+            type: 'CLASS_TABLE_DATA', desc: '[Column data]'),
+        feature('augment effects known', 'c1', 'Augment Effects Known',
+            type: 'CLASS_TABLE_DATA', desc: '[Column data]'),
+      ],
+      [
+        ...column('augment-effects-known', {2: '2'}),
+        ...column('augment effects known', {2: '3'}),
+      ],
+    );
+    expect(describe('Mechanist'),
+        contains('| Level | Augment Effects Known | Augment Effects Known (2) |'));
   });
 
   test('a table column never folds its placeholder prose into the description',

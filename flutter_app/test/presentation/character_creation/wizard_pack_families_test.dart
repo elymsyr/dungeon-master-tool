@@ -137,6 +137,31 @@ void main() {
           expect(missing.length, lessThanOrEqualTo(1),
               reason: 'granted_at_level boş: $missing');
         });
+
+        // R4 / F-toh-01: `toh`'un `Underfoot`'u 1. seviyede açılıyordu, çünkü
+        // düzyazı olarak gelen büyü ilerleme tablosunun ilk satırı `level: 1`
+        // diyor. Slot/bilinen-büyü satırı, alt sınıfın alındığı seviye değildir:
+        // 1'de açılan bir alt sınıfın 1. seviyede tablo olmayan bir özelliği
+        // olmak zorunda.
+        test('1. seviyede açılan alt sınıfın 1. seviyede gerçek özelliği var',
+            () {
+          bool tableRow(String name) {
+            final n = name.toLowerCase();
+            return n.startsWith('spell slots') || n.startsWith('spells known');
+          }
+
+          final bad = <String>[];
+          for (final sub in byCat['subclass']!) {
+            if (subclassGrantedAtLevel(sub) != 1) continue;
+            final feats = (sub.fields['features'] as List?) ?? const [];
+            if (feats.isEmpty) continue;
+            final real = feats.whereType<Map>().where((f) =>
+                f['level'] == 1 && !tableRow((f['name'] as String?) ?? ''));
+            if (real.isEmpty) bad.add(sub.name);
+          }
+          expect(bad, isEmpty,
+              reason: '1. seviyede yalnız slot tablosu taşıyan alt sınıf: $bad');
+        });
       }
 
       if (byCat.containsKey('subspecies')) {

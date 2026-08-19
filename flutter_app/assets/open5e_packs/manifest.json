@@ -50,7 +50,7 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 829,
-        "creature-action": 1655,
+        "creature-action": 1745,
         "monster": 586,
         "size": 1
       }
@@ -64,9 +64,10 @@
       "game_system": "5e-2014",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 772,
-        "creature-action": 1338,
+        "trait": 776,
+        "creature-action": 1363,
         "monster": 360,
+        "sense": 1,
         "language": 1,
         "class": 1,
         "subclass": 1
@@ -81,10 +82,11 @@
       "game_system": "5e-2014",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 921,
-        "creature-action": 1148,
+        "trait": 925,
+        "creature-action": 1182,
         "monster": 356,
-        "language": 1
+        "language": 1,
+        "sense": 1
       }
     },
     {
@@ -160,7 +162,7 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 11,
-        "creature-action": 10,
+        "creature-action": 11,
         "monster": 4,
         "subclass": 4,
         "background": 5,
@@ -177,9 +179,10 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 1039,
-        "creature-action": 1303,
+        "creature-action": 1330,
         "language": 1,
-        "monster": 391
+        "monster": 391,
+        "sense": 5
       }
     },
     {
@@ -191,8 +194,8 @@
       "game_system": "5e-2014",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 1021,
-        "creature-action": 1658,
+        "trait": 1022,
+        "creature-action": 1755,
         "monster": 408,
         "language": 1
       }
@@ -207,7 +210,7 @@
       "is_srd_overlap": false,
       "counts": {
         "trait": 1014,
-        "creature-action": 1209,
+        "creature-action": 1235,
         "monster": 383,
         "language": 1
       }
@@ -221,8 +224,8 @@
       "game_system": "5e-2014",
       "is_srd_overlap": false,
       "counts": {
-        "trait": 812,
-        "creature-action": 1577,
+        "trait": 818,
+        "creature-action": 1608,
         "monster": 397,
         "language": 1
       }
