@@ -3,7 +3,7 @@
 *.keystore
 *.jks.b64
 key.properties
-
+web-mockup
 .tmp/
 .env
 open5e-api-staging
