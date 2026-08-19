@@ -7,7 +7,23 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R3** (şemada evi olmayan dört canavar mekaniği, 4 bulgu).
+> **Sıradaki iş: R4** (chargen mapper'ı tahmin etmeyi bırakır, 7 bulgu —
+> `mappers/chargen.dart`; şema alanı gerektirmiyor, R5 onun şema yarısı).
+>
+> **R3 bitti (2026-08-19) — "şemada evi olmayan dört canavar mekaniği".**
+> Dört kayıt (F-pass0-19, F-pass0-20, F-pass0-23, F-pass0-28) kapandı ve
+> tarama sırasında bir yeni bulgu (**F-pass0-29**) açılıp aynı fazda kapandı;
+> durum satırı **0 🔎 · 0 ❓ · 17 🛠 · 29 ✅ · 1 ⚪** (toplam 47). Şema
+> **2.5.1 → 2.6.0** (üç `monster` alanı + `creature-action.legendary_action_cost`,
+> katkı, göç yok). Ölçüm (`diff_packs`, `../.tmp/packs-rebuild`): 1.111
+> `language_note` (759 boş liste + 352 listeden fazlasını söyleyen düzyazı),
+> 511 `resistance_note` (514 bayraklı satırın display'i dolu olan 511'i),
+> 104 `immunity_note`, 228 `legendary_action_cost` kartı = kaynağın 267
+> satırının **267/267**'si, 6 paket-içi `sense` varlığı, duyusuz canavar
+> **515 → 470**. `verify_packs` **0 disagree / 0 absent** (ok 67.552 → 68.926,
+> unsourced 3.303 sabit), `dupe_census` "nothing installed" **0**,
+> `gate_packs` yeşil. `flutter test test/tool/` **175/175**, `flutter analyze`
+> 0 hata / 0 uyarı. `assets/open5e_packs/` **promote edilmedi**.
 >
 > **R2 bitti (2026-08-19) — "canavar aksiyonları, sadakatle".** On bir kayıt
 > (F-pass0-17/18/21/22/24/25/26/27, F-a5e-mm-01, F-tob-01, F-tob-2023-01)

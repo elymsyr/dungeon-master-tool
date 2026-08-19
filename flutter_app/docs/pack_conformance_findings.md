@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 21 | 24 | 1 | 0 | **46** |
+| 0 | 0 | 17 | 29 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -150,13 +150,34 @@ yayınlanan pakette **8 ihlali** yakalıyor (yani kapı çalışıyor), `dupe_ce
 > saldırısı kartta hiç yoktu. Metin kaynağın; ölçüm bulguya değil koda göre
 > yazıldı.
 
+**R3 uygulandı (2026-08-19).** Dört kayıt koda döküldü ve kapandı (F-pass0-19,
+F-pass0-20, F-pass0-23, F-pass0-28) ve tarama sırasında **bir yeni bulgu**
+(F-pass0-29) açılıp aynı fazda kapandı; 🛠 sayacı 21 → 17, ✅ 24 → 29, toplam
+46 → 47. Şema `2.5.1 → 2.6.0`: `monster.resistance_note`, `immunity_note`,
+`language_note` ve `creature-action.legendary_action_cost` — dördü de katkı,
+veri göçü yok. Ölçülen etki (`diff_packs`, `../.tmp/packs-rebuild`):
+**1.111 `language_note`** (759'u dil listesi boş olan canavar, 352'si listesi
+dolu ama düzyazısı fazlasını söyleyen), **511 `resistance_note`** (kaynakta
+bayrağı açık 514 satırın 511'i — kalan 3'ünün display sütunu boş, uydurulmadı),
+**104 `immunity_note`** (104/104), **228 `legendary_action_cost`** kartı
+(kaynağın bedeli ≥ 2 olan 267 satırının tamamını taşıyor; kartlar içerik
+hash'iyle paylaşıldığı için 267 satır 228 karta düşüyor — canavar bazında
+ölçüm **267/267**). Duyu tarafında 6 paket-içi `sense` varlığı doğdu
+(`Keensense` `bfrd`, `Blindsense` `ccdx`+`tob`, `Blood Sense` / `Devil Sight` /
+`Impaired Sight` / `Sight` `tob`), duyusuz canavar **515 → 470**.
+`verify_packs`: **0 disagree / 0 absent**, `ok` 67.552 → 68.926, `unsourced`
+3.303'te sabit. `dupe_census` "nothing installed" **0** (değişmedi),
+eyleme değer fazlalık 1.141. `flutter test test/tool/` **175/175**,
+`flutter analyze` 0 hata / 0 uyarı. `assets/open5e_packs/` **promote
+edilmedi**.
+
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
 | Madde | Bulgu | Madde | Bulgu | Madde | Bulgu |
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 14 | B3 | 2 | C3 | 1 |
+| A3 | 15 | B3 | 2 | C3 | 1 |
 | A4 | 1 | B4 | 0 | C4 | 5 |
 | A5 | 4 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
@@ -170,7 +191,7 @@ yayınlanan pakette **8 ihlali** yakalıyor (yani kapı çalışıyor), `dupe_ce
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 28 | `open5e-vom` | 3 |
+| `pass0` | 29 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -2746,7 +2767,7 @@ EOF
 | **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
 | **Kategori / etki** | `monster` — `resistance_refs` / `damage_immunity_refs`; 514 canavarda direnç, 104'ünde bağışıklık **koşulsuz** yazılıyor, oysa kaynak "yalnız büyülü olmayan saldırılardan" diyor → büyülü silah taşıyan oyuncuya kart yanlış bilgi veriyor |
 | **Cause code (öneri)** | `M` — kaynakta iki ayrı boolean sütun var (`Creature.nonmagical_attack_resistance`, `…_immunity`) ve `mappers/monster.dart`'ın `_dmgList` çağrıları ikisini de hiç okumuyor; liste sütunu (`damage_resistances`) niteliksiz üç tipi düz olarak veriyor |
-| **Durum** | 🛠 faz dosyalandı — **R3** |
+| **Durum** | ✅ kapandı — **R3** (2026-08-19) |
 
 **Bulgu.** Upstream niteliği **iki yere** bölüyor: `damage_resistances` listesi
 `['bludgeoning','piercing','slashing']` derken, `damage_resistances_display`
@@ -2816,7 +2837,7 @@ EOF
    `nonmagical_attack_*` booleanlarında duruyor ve okunmuyor" satırı eklenir
    (C8); kartın fazla direnç göstermesi bilinçli kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (`alignment_note` kalıbında `resistance_note`/`immunity_note`). Nitelikli üçlüyü listeden düşürmek (seçenek 2) yanlış bilgiyi bitirir ama canavarın `description`'ı boş olduğu için kuralı hiçbir yerde bırakmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`alignment_note` kalıbında `resistance_note`/`immunity_note`). Nitelikli üçlüyü listeden düşürmek (seçenek 2) yanlış bilgiyi bitirir ama canavarın `description`'ı boş olduğu için kuralı hiçbir yerde bırakmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (2026-08-19)
 
 ### F-pass0-20 — dil düzyazısı hiç okunmuyor: 118 canavar kartı dilsiz görünüyor, oysa kaynak "understands Common but can't speak" diyor
 
@@ -2826,7 +2847,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
 | **Kategori / etki** | `monster` — `language_refs` `ccdx`'te 173/356; kalan 183'ün **118'inde** kaynak dil bilgisi var ama yapılandırılmamış, 65'i gerçekten dilsiz → kart bu 118 canavarda dil satırını hiç göstermiyor |
 | **Cause code (öneri)** | `M` — `Creature.languages_desc` 354/356 dolu ve tam cümleyi taşıyor; mapper yalnız yapılandırılmış `languages` M2M listesini okuyor (`mappers/monster.dart`, `norm.lookupRefList('language', …)`), düzyazı sütununa hiç bakmıyor |
-| **Durum** | 🛠 faz dosyalandı — **R3** |
+| **Durum** | ✅ kapandı — **R3** (2026-08-19) |
 
 **Bulgu.** `ccdx`'in 356 canavarının 173'ünde `languages` listesi dolu ve
 **17 dilin 17'si** çözülüyor (`Void Speech` dahil — paketin kendi `language`
@@ -2902,7 +2923,7 @@ EOF
    düşüyor" satırı yazılır (C8), alan kaynağın yapılandırılmış kısmının sadık
    yansıması sayılır.
 
-**Karar.** **düzelt** — seçenek 1 (`language_note`, `languages_desc`'ten); 769 canavar dil satırına kavuşur, tipli liste bozulmaz. Düzyazıdan ad çıkarmak (seçenek 2) "understands but can't speak" niteliğini yine kaybediyor. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`language_note`, `languages_desc`'ten); 769 canavar dil satırına kavuşur, tipli liste bozulmaz. Düzyazıdan ad çıkarmak (seçenek 2) "understands but can't speak" niteliğini yine kaybediyor. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (2026-08-19)
 
 ---
 
@@ -3175,7 +3196,7 @@ EOF
 | **Checklist** | checklist B3 (düzyazıda duran şey tipli alana da yazılmalı) |
 | **Kategori / etki** | `monster` — `senses`; v1 `Monster.senses` düzyazısı 97 canavarda dört SRD duyusu dışında adı olan bir duyu sayıyor (`keensense` 90, `blindsense` 2, `blood sense` 2, `devil sight`/`impaired sight`/`sight` 1'er), hiçbiri pakete inmiyor; **41 canavarda** `senses` listesi bu yüzden tamamen boş kalıyor |
 | **Cause code (öneri)** | `M` — değer kaynakta var ama iki katmanda birden evsiz: `mappers/monster.dart` yalnız v2'nin dört sütununu okuyor (`darkvision_range`, `blindsight_range`, `tremorsense_range`, `truesight_range`) ve Tier-0 `sense` kanonu da yalnız o dört satırı taşıyor (`lookups.dart` `_senseCategory`); v1 düzyazısı (aynı dosya `tags_line` için zaten okunuyor) hiç okunmuyor |
-| **Durum** | 🛠 faz dosyalandı — **R3** |
+| **Durum** | ✅ kapandı — **R3** (2026-08-19) |
 
 **Bulgu.** Black Flag (`bfrd`) darkvision'ı **keensense** ile değiştiriyor:
 v2 `Creature.json`'ında `darkvision_range` sütunu **hiç yok**, dolu olan tek
@@ -3235,7 +3256,7 @@ EOF
    v1 düzyazısındaki adı farklı duyular düşüyor (97 canavar, 41'i tamamen
    duyusuz)" satırı yazılır (C8) ve kayıp bilinçli kabul edilir.
 
-**Karar.** **düzelt** — seçenek 2 (kanonda olmayan duyu paketin kendi `sense` varlığı olur, `Void Speech` kalıbı) + v1 `senses` düzyazısının ayrıştırılması. Built-in kanonu büyütmek (seçenek 1) üçüncü taraf duyusunu SRD sözlüğüne sokardı. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
+**Karar.** **düzelt** — seçenek 2 (kanonda olmayan duyu paketin kendi `sense` varlığı olur, `Void Speech` kalıbı) + v1 `senses` düzyazısının ayrıştırılması. Built-in kanonu büyütmek (seçenek 1) üçüncü taraf duyusunu SRD sözlüğüne sokardı. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (2026-08-19)
 
 ---
 
@@ -3745,7 +3766,7 @@ EOF
 | **Checklist** | checklist C8 (her boşluğun cause code'u var — burada boşluğun **şemada evi yok**) |
 | **Kategori / etki** | `creature-action` — kaynağın `CreatureAction.legendary_action_cost` sütunu korpüste **267** satırda ≥ 2 (ayrıca 1 olan yüzlerce satır, onlar varsayılan). Şemanın `creature-action` kategorisinde bu bedeli tutacak alan **yok** ve mapper sütunu hiç okumuyor. Kart bedeli göstermeyince tur başına 3 efsanevi aksiyonu olan bir canavarın 2 bedelli saldırısı **üç kez** kullanılabilir görünüyor |
 | **Cause code (öneri)** | `D` + `M` — şemada ev yok (`D`), sütun kaynakta dolu ve mapper onu hiç okumuyor (`M`, soru 6: `grep -rn legendary_action_cost tool/` **boş**) |
-| **Durum** | 🛠 faz dosyalandı — **R3** |
+| **Durum** | ✅ kapandı — **R3** (2026-08-19) |
 
 **Bulgu.** `monster.legendary_action_uses` (tur başına kaç aksiyon) var —
 F-tob-01'in konusu o. Eksik olan **aksiyon başına bedel**: kaynağın
@@ -3810,7 +3831,54 @@ grep -rn "legendary_action_cost" tool/ lib/ | wc -l    # 0 — ne yazan var ne o
 3. **Aynen bırak** — §5.8'e "efsanevi aksiyon bedeli yayınlanmıyor" satırı
    yazılır (C8) ve 152 kartın 1 bedelli görünmesi bilinçli kabul edilir.
 
-**Karar.** **düzelt** — seçenek 1 (`creature-action.legendary_action_cost`, integer 1–5, `grpRules`); 152 satır bedeline kavuşur. Ada yazmak (seçenek 2) mekaniği düzyazıda bırakır — checklist B3'ün tam olarak karşı olduğu şey. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`creature-action.legendary_action_cost`, integer 1–5, `grpRules`); 152 satır bedeline kavuşur. Ada yazmak (seçenek 2) mekaniği düzyazıda bırakır — checklist B3'ün tam olarak karşı olduğu şey. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (2026-08-19)
+
+### F-pass0-29 — `monster.senses` şemanın okumadığı biçimde yazılıyor: 2.370 canavarın duyu satırı kartta boş çiziliyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — 8 canavar paketinde 2.370 canavar, ayrıca built-in SRD pack'in 245 satırı |
+| **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor — burada: kartta hiçbir şey durmuyor) |
+| **Kategori / etki** | `monster` — `senses`; `FieldType.rangedSenseList` satırı `{sense_ref, range_ft}` diye tanımlı ve `RangedSenseListFieldWidget` yalnız `sense_ref`'i okuyor, mapper ise düz `{'sense': 'Darkvision'}` metni yazıyor → 2.370 canavarın duyu satırı boş seçici olarak çiziliyor |
+| **Cause code (öneri)** | `M` — `mappers/monster.dart` `_sense`; aynı alanın chargen tarafı (`granted_senses`, audit B3) 2026'dan beri doğru biçimde yazıyor, canavar tarafı hiç düzeltilmemiş |
+| **Durum** | ✅ kapandı — **R3** (2026-08-19) |
+
+**Bulgu.** R3, F-pass0-23'ün keensense'ini `senses`'e yazacakken önce
+okuyucunun biçimini kontrol etti (§2.3.1 reader gate) ve alanın **hiçbir**
+canavarda render olmadığını buldu. Kusur yalnız paketlerde değil, built-in SRD
+içeriğinde de var (`animals.dart` 45, `monsters.dart` 200 satır) — yani her
+kullanıcının gördüğü içerik. `verify_packs`'in duyu okuyucusu da aynı eski
+anahtara bakıyordu, yani doğrulayıcı kusuru göremezdi.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — paketin yazdığı anahtar ile widget'ın okuduğu anahtar
+python3 - <<'EOF'
+import json,glob
+n=0
+for f in glob.glob('assets/open5e_packs/*.pkg.json'):
+    for e in json.load(open(f,encoding='utf-8'))['entities'].values():
+        for r in (e.get('attributes',{}).get('senses') or []):
+            if 'sense' in r and 'sense_ref' not in r: n+=1; break
+print('sense_ref taşımayan canavar:', n)   # 2370
+EOF
+grep -n "row\['sense_ref'\]" lib/presentation/widgets/field_widgets/structured_list_field_widgets.dart
+grep -rc "{'sense': '" lib/domain/entities/schema/builtin/srd_core/*.dart  # animals 45, monsters 200
+```
+
+**Seçenekler.**
+1. **Mapper'ı biçime uydur** — `_sense` `{sense_ref, range_ft}` yazar, built-in
+   SRD satırları da aynı biçime taşınır, `verify.dart` yeni anahtarı öğrenir.
+   Tek biçim, tek okuyucu; F-pass0-23'ün yeni duyusu da aynı yoldan iner.
+2. **Widget'ı veriye uydur** — `RangedSenseListFieldWidget` `sense` metnini de
+   kabul eder. Kod değişmez ama alan tipli ref olmaktan çıkar: paket-içi
+   `sense` varlığına (keensense) bağlanacak yer kalmaz.
+3. **Aynen bırak** — §5.8'e "canavar duyuları kartta görünmüyor" satırı yazılır
+   (C8). Şemanın ilan ettiği tip ile verinin biçimi kalıcı olarak ayrışır.
+
+**Karar.** **düzelt** — seçenek 1 (tek biçim `sense_ref`, her iki içerik kaynağında). Widget'ı veriye uydurmak (seçenek 2) alanı düz metne çevirir ve F-pass0-23'ün paket-içi `sense` varlığını bağlanamaz hâle getirirdi. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (2026-08-19)
+
+---
 
 ## Tarama öncesi bilinen açıklar
 

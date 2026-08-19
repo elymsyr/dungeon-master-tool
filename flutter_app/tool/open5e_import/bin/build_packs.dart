@@ -61,7 +61,13 @@ void main(List<String> args) {
   // v1 `Monster.subtype` index (audit B5) — same gap as the actions: v2's
   // `Creature.type` is a bare enum with the subtype conversion-dropped, so
   // `tags_line` has no v2 source at all. Keyed by the same doc map.
-  final v1Subtypes = _v1SubtypeIndex(dataRoot);
+  final v1Subtypes = _v1StringIndex(dataRoot, 'subtype');
+
+  // v1 `Monster.senses` index (R3 / F-pass0-23) — v2 has four range columns and
+  // nothing else, so a document that renamed its sense (Black Flag's
+  // keensense, 90 creatures) has no v2 source at all and 41 of its creatures
+  // ship with no sense line whatsoever.
+  final v1Senses = _v1StringIndex(dataRoot, 'senses');
 
   // v1 `Monster.legendary_desc` index (R2 / F-tob-01) — the count of legendary
   // actions per round is stated only in that prose ("can take 1 legendary
@@ -135,6 +141,7 @@ void main(List<String> args) {
         v1Subtypes: (v1Doc == null ? null : v1Subtypes[v1Doc]) ?? const {},
         v1LegendaryUses:
             (v1Doc == null ? null : v1LegendaryUses[v1Doc]) ?? const {},
+        v1Senses: (v1Doc == null ? null : v1Senses[v1Doc]) ?? const {},
       );
     }
     if (doc.hasSpells) {
@@ -466,10 +473,11 @@ Map<String, Map<String, int>> _v1LegendaryUsesIndex(String dataRoot) {
   return out;
 }
 
-/// Build `v1doc → {lowercased monster name: subtype}` from every
-/// `v1/<doc>/Monster.json`. Only rows with a non-empty `subtype` are indexed;
-/// see `_creatureType` for why v2 cannot supply this.
-Map<String, Map<String, String>> _v1SubtypeIndex(String dataRoot) {
+/// Build `v1doc → {lowercased monster name: <column>}` from every
+/// `v1/<doc>/Monster.json`, for one free-text column v2 dropped. Used for
+/// `subtype` (audit B5 — see `_creatureType` for why v2 cannot supply it) and
+/// `senses` (R3 / F-pass0-23 — the only place a keensense is written down).
+Map<String, Map<String, String>> _v1StringIndex(String dataRoot, String column) {
   final out = <String, Map<String, String>>{};
   final v1 = Directory('$dataRoot${Platform.pathSeparator}v1');
   if (!v1.existsSync()) return out;
@@ -479,9 +487,11 @@ Map<String, Map<String, String>> _v1SubtypeIndex(String dataRoot) {
     for (final m
         in loadFixtures('${ent.path}${Platform.pathSeparator}Monster.json')) {
       final name = (m['name'] as String?)?.trim();
-      final sub = (m['subtype'] as String?)?.trim();
-      if (name == null || name.isEmpty || sub == null || sub.isEmpty) continue;
-      byName[name.toLowerCase()] = sub;
+      final value = (m[column] as String?)?.trim();
+      if (name == null || name.isEmpty || value == null || value.isEmpty) {
+        continue;
+      }
+      byName[name.toLowerCase()] = value;
     }
     if (byName.isNotEmpty) out[slug] = byName;
   }

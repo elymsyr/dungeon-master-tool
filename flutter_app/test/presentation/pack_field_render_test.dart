@@ -128,6 +128,71 @@ void main() {
     }
   });
 
+  // R3 açtığı dört alan henüz `assets/open5e_packs/` içinde değil (Stage R tek
+  // seferde promote ediyor), yani yukarıdaki tarama onlara dokunamaz. Değerler
+  // mapper'ın gerçekten yazdığı biçim: kaynağın kendi cümlesi, kaynağın kendi
+  // bedeli, `{sense_ref, range_ft}` satırı.
+  group('R3 — yeni (kategori, alan) çiftleri', () {
+    final cases = <(String, String, dynamic, String?)>[
+      (
+        'monster',
+        'resistance_note',
+        'fire; bludgeoning, piercing, and slashing from nonmagical attacks',
+        'fire; bludgeoning, piercing, and slashing from nonmagical attacks',
+      ),
+      (
+        'monster',
+        'immunity_note',
+        'bludgeoning, piercing, and slashing from nonmagical attacks',
+        'bludgeoning, piercing, and slashing from nonmagical attacks',
+      ),
+      (
+        'monster',
+        'language_note',
+        "understands Common but can't speak",
+        "understands Common but can't speak",
+      ),
+      ('creature-action', 'legendary_action_cost', 2, '2'),
+      (
+        'monster',
+        'senses',
+        [
+          {
+            'sense_ref': {'_lookup': 'sense', 'name': 'Keensense'},
+            'range_ft': 60,
+          },
+        ],
+        '60',
+      ),
+    ];
+
+    for (final c in cases) {
+      final (category, key, value, expectText) = c;
+      testWidgets('$category.$key', (tester) async {
+        final fs = fieldsByCategory[category]![key];
+        expect(fs, isNotNull, reason: '$category.$key şemada yok');
+
+        for (final readOnly in const [true, false]) {
+          await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
+            schema: fs!,
+            value: value,
+            readOnly: readOnly,
+            onChanged: (_) {},
+          )));
+          await tester.pump();
+          expect(tester.takeException(), isNull,
+              reason: '$category.$key (readOnly=$readOnly) render hatası');
+          if (expectText != null) {
+            expect(find.textContaining(expectText, findRichText: true),
+                findsWidgets,
+                reason: '$category.$key (readOnly=$readOnly) değeri '
+                    'ekranda görünmüyor');
+          }
+        }
+      });
+    }
+  });
+
   tearDownAll(() {
     // ignore: avoid_print
     print('pack_field_render: ${seen.length} (kategori, alan) çifti, '
