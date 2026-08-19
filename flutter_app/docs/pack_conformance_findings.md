@@ -104,7 +104,17 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 46 | 0 | 0 | 0 | 0 | **46** |
+| 0 | 0 | 40 | 5 | 1 | 0 | **46** |
+
+**F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
+(§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
+F-vom-01, F-vom-02, F-vom-03 — dördü §5.8'in ölçümle çürüyen gerekçesini
+düzeltiyor, gerekçeler `open5e_content_audit.md` §5.9'da), **1'i kapsam dışı**
+(F-a5e-ag-02 — kaynağın seviye tablosu hatası; paket belgenin aynası kalır).
+Faz dağılımı: **R1** 8 (büyü mapper'ı) · **R2** 11 (canavar aksiyon sadakati) ·
+**R3** 4 (yeni canavar alanı) · **R4** 7 (chargen mapper'ı) · **R5** 4 (chargen
+şema evi) · **R6** 3 (ad/kopya/paket metadata'sı) · **R7** 2 (built-in içeriği) ·
+**R8** 1 (render kapısı).
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -228,7 +238,7 @@ eksik değilse ve üç sayaç kayıtlarla uyuşuyorsa temiz döner.
 | **Checklist** | checklist F2 (her (kategori, alan) çifti çökmeden render oluyor) |
 | **Kategori / etki** | built-in SRD — 306 (kategori, alan) çiftinin **223**'ü hiç render edilmiyor; tetikleyen alan `pack.content_quantities` (8 SRD paket varlığı). 19 resmi paketin 141 çifti yeşil |
 | **Cause code (öneri)** | `A` — veri ve widget doğru; kusur testin sarmalayıcısında |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R8** |
 
 **Bulgu.** `pack_field_render_test`'in `_wrap`'i temasız bir `MaterialApp`
 kuruyor. `_LevelTableFieldWidget.build` ise
@@ -274,7 +284,7 @@ sessizce bırakmış durumda. Dalga 0 (built-in SRD) bu kapıya güvenerek taran
 3. **Kapsam dışı** — kullanıcı etkilenmiyor. O zaman checklist F2'nin sayısı
    224/446 olarak düzeltilmeli ve "223 çift ölçülmüyor" yazılı kabul olmalı.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`_wrap`'e tema); kapı 224 → 447 çifte döner. Seçenek 3 reddedildi: ölçülmeyen 223 çifti "kabul" saymak F2'nin kapı sayısını yalancı yapar. · **Tarih:** 2026-08-19 · **Kapatan:** R8 (faz açık)
 
 ### Dalga 0 — built-in SRD
 
@@ -286,7 +296,7 @@ sessizce bırakmış durumda. Dalga 0 (built-in SRD) bu kapıya güvenerek taran
 | **Checklist** | checklist C4 (monster + çocuk satırlar) |
 | **Kategori / etki** | `monster` 248 + `animal` 97 = **345** statblok; `save_bonuses` ve `skill_bonuses` ikisi de **0%** (4 audit yuvası). SRD kaynağı bu satırları taşıyor |
 | **Cause code (öneri)** | `M` — el yazımı alanı hiç yazmıyor (`srd_core/monsters.dart`, `animals.dart`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R7** |
 
 **Bulgu.** Şema iki alanı `proficiencyTable` olarak beyan ediyor
 (`builtin/content.dart:1272-1275`) ve her ikisinin de **varsayılan tablosu var**
@@ -330,7 +340,7 @@ Ayrıca yol haritası bu boşluğu hiç yazmamış: `save_bonuses` / `skill_bonu
 3. **Kapsam dışı** — o zaman iki alanın built-in tarafındaki 0%'ı yazılı bir
    ⛔ gerekçesi almalı (checklist C8), çünkü şu an hesapsız boş.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1; kurtarma/beceri satırı statbloğun mekaniği, 345 kartta boş kalamaz. Kaynak CC-BY (`docs/SRD_CC_v5.2.1.pdf`), yani kopyalanabilir; kısmi düzeltme (seçenek 2) aynı işi iki kez açar. · **Tarih:** 2026-08-19 · **Kapatan:** R7 (faz açık)
 
 ### F-builtin-02 — built-in'in §5'i yok: 419 boş yuvanın hiçbirinin yazılı sebebi yok
 
@@ -340,7 +350,7 @@ Ayrıca yol haritası bu boşluğu hiç yazmamış: `save_bonuses` / `skill_bonu
 | **Checklist** | checklist C8 (boş kalan her alanın yazılı bir sebebi var) |
 | **Kategori / etki** | 59 kategori / 725 yuvanın **419**'u 🔴 ve tek satırlık gerekçesi bile yok. En görünür bloğu: 39 Tier-0 kategorisinin 37'sinde `summary` + `effects` 0% → **345** sözlük satırı yalnızca addan oluşuyor |
 | **Cause code (öneri)** | `M` — el yazımı yazmıyor (`srd_core/` + `builtin/lookups.dart` seed'leri) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R7** |
 
 **Bulgu.** Yol haritası §5, **19 resmi paketin** alan alan politika tablosu:
 her 🔴 satırın bir cause code'u var (§5.8). Built-in paketin böyle bir tablosu
@@ -397,7 +407,7 @@ kayıt bu bulgunun kendisi. Sonraki kişi ya 205 grant satırını gereksiz yere
 3. **Kapsam dışı** — built-in'i taramanın dışında bırakmak; o zaman Dalga 0'ın
    tamamı geçersiz olur (plan §5'in "neden ilk" gerekçesi bunu reddediyor).
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (built-in için §5 karşılığı yazılır); 419 boş yuvanın gerekçesiz durması C8'i açık bırakıyor. Seçenek 2 (Tier-0 gövdeleri) R7'nin içinde değil, ayrı bir içerik işi olarak kalır. · **Tarih:** 2026-08-19 · **Kapatan:** R7 (faz açık)
 
 ### Dalga 1 — karakter yaratma paketleri
 
@@ -412,7 +422,7 @@ kayıt bu bulgunun kendisi. Sonraki kişi ya 205 grant satırını gereksiz yere
 | **Checklist** | checklist C2 (species/subspecies/background/feat alanları) |
 | **Kategori / etki** | `background` — kaynak satırı seçim ifadesi taşıyan **30** kart (kaynakla eşleşen 52'nin %58'i); karakter sayfasına **32 fazladan yetkinlik** iniyor. Dağılım aşağıda |
 | **Cause code (öneri)** | `M` — `mapBackgrounds` seçim ifadesini okumuyor, metindeki her beceri adını grant yazıyor (`mappers/chargen.dart:1406-1410`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** `descOfType('skill_proficiency')` benefit satırının **tamamını**
 `_refListFromText`'e veriyor; fonksiyon metinde adı geçen her beceriyi bulup
@@ -489,7 +499,7 @@ değil.**
 3. **Kapsam dışı** — o zaman §5.4'e yazılı bir ⛔ girmeli: "seçimli beceri satırı
    hepsini verir", çünkü şu an hiçbir yerde yazılı değil.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 2 (seçim ifadesinden sonrasını okuma); A3'ün "bilmiyorsan boş bırak" ilkesi hediye edilen beceriye tercih edilir. Seçim alanını açmak R5'in işi, R4 önce yanlış grant'ı durdurur. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-pass0-03 — `ability_score_options` 27 satırın 27'sinde aynı altı yetenek: kaynağın zorunlu +1'i kayıp
 
@@ -499,7 +509,7 @@ değil.**
 | **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok — ⚠ tuzağı) |
 | **Kategori / etki** | `background` — alanın dolu olduğu **27** satırın **27**'si birebir aynı altı-yetenek listesi; kaynak her birinde **bir** yeteneği zorunlu kılıyor (`a5e-ag` 21, `a5e-ddg` 4, `a5e-gpg` 2) |
 | **Cause code (öneri)** | `A` — "sabit +1 X + serbest +1"in şemada evi yok; resolver kapısı mapper'ın elini bağlıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R5** |
 
 **Bulgu.** Kaynak: `"+1 Charisma and one other ability score."` Pakette
 `ability_score_options` = altı yeteneğin tamamı. Genişletme **bilinçli** ve
@@ -561,7 +571,7 @@ pakette otomatik yakalanmayacak.
 3. **Kapsam dışı** — genişletme kalır, ama A5 için yazılı bir istisna gerekir:
    "27 A5E background'ında sabit yetenek düzyazıda kalır" (bugün yazılı değil).
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (sabit yeteneği taşıyan alan + resolver geçişi); 27/27 aynı altılı, kaynağın zorunlu +1'i yok sayıldığı için **yanlış** bir seçim listesi. Seçenek 2 yalnız körlüğü kapatır, içeriği düzeltmez. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
 
 ### F-pass0-04 — 6 background kartının gövdesi "[No description provided]" ile açılıyor
 
@@ -571,7 +581,7 @@ pakette otomatik yakalanmayacak.
 | **Checklist** | checklist A3 (uydurma değer yok — "bilmiyorsan boş bırak") |
 | **Kategori / etki** | `background` — **6** kart (`a5e-gpg` 2 + `a5e-ddg` 4); dize gövdenin **ilk satırı**, kart açılınca ilk görünen şey |
 | **Cause code (öneri)** | `S` — kaynakta açıklama yok; kaynak bunu düzyazı olarak yazıyor, mapper da olduğu gibi taşıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** Open5e'nin `Background.json`'ı bu altı satırda `desc` alanına gerçek
 metin değil `"[No description provided]"` yazmış. `_fold` onu benefit
@@ -628,7 +638,7 @@ genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çı
    devam eder.
 3. **Kapsam dışı** — 53 background'ta 6; karar yazılı bırakılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (bilinen placeholder düşürülür); tek koşul, kayıp yok, 6 kart gövdesiyle açılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-pass0-05 — `granted_language_count`: "Any six" 0 olarak, "Two … one of which" 1 olarak yazılmış
 
@@ -638,7 +648,7 @@ genel bir doldurma alışkanlığı — Dalga 2–4'te başka kategorilerde çı
 | **Checklist** | checklist D1 (değer kaynakla aynı) |
 | **Kategori / etki** | `background` — 31 dolu satırın **2'si yanlış**: `a5e-ddg` Dungeon Robber 6 → **0**, `a5e-gpg` Haunted 2 → **1** |
 | **Cause code (öneri)** | `M` — sayı sözcüğü tablosu `five`'da bitiyor ve **ilk eşleşen kazanıyor**; `\bno\b` "no longer spoken" içinde eşleşiyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** `_parseLanguageCount` (`mappers/chargen.dart:1329-1334`) önce
 `_numberWord`'e soruyor, o da `_numberWords` sözlüğünü **sırayla** geziyor:
@@ -723,7 +733,7 @@ EOF
    bir çözüm.
 3. **Kapsam dışı** — 31 satırda 2, alan inert; karar yazılı bırakılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (sayı sözcükleri 10'a, `\bno\b` yerine bağlamlı kalıp, ilk eşleşme metin sırasına göre). Şema `max: 5` sınırı fazın içinde ölçülüp karara bağlanır. Alanı silmek (seçenek 2) okuyucusu olan bir alanı öldürür. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-pass0-06 — background başlangıç ekipmanında adı yazılı olan eşya envantere girmiyor: 23 "pouch"un 17'si, 20 "common clothes"un 20'si
 
@@ -733,7 +743,7 @@ EOF
 | **Checklist** | checklist B3 (düzyazıda duran şey ref olmalı) |
 | **Kategori / etki** | `background` — **42** kartta **120** eşya sözcüğü yalnız `label` düzyazısında kalıyor, `items` satırı olmuyor; ölçülen en büyük üç kalıp: `pouch` 23 anımsatmanın **6'sında** ref var, `ball bearings` 2/**0**, `prayer book` 2/**0**, `common clothes` 20/**0** |
 | **Cause code (öneri)** | `M` — `builtinItem` yalnız üç bağışlayıcı kural tanıyor (çoğul, son ` of ` kuyruğu, ölçü sözcüğü); **öndeki niteleyici** ("belt pouch", "prayer book") ve **parantez içi liste** hiç denenmiyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** `_gearRef`'in yazılı sözleşmesi (`mappers/chargen.dart:1099-1113`)
 şöyle: pakette olan → hard `ref`, built-in katalogda olan → `softRef`, ikisi de
@@ -829,7 +839,7 @@ eksik içerik.**
    çünkü eşleme mekanik" diye yazılır; `label` düzyazısı kullanıcıya görünmeye
    devam ettiği için bilgi kaybı değil, **otomasyon** kaybı sayılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (parantez ayrı segment + son sözcükten geriye katalog araması, yalnız gerçek karta oturursa). `common clothes` için seçenek 2'nin üçüncü yolu: SRD dışı kart uydurulmaz, `N` olarak R4'ün çıktısında yazılır. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-pass0-07 — 19 paket kartının adı built-in bir kartın adından yalnız boşluk/noktalama kadar farklı: dedup anahtarı da ref çözümü de göremiyor
 
@@ -839,7 +849,7 @@ eksik içerik.**
 | **Checklist** | checklist A4 (ad ve yazım kuralı) |
 | **Kategori / etki** | 19 kart — `trait` 11, `monster` 3, `creature-action` 3, `spell` 2. Ad, harf dışı her karakter atılınca bir built-in kartla **birebir** aynı, literal olarak **farklı**: `Eye bite`→`Eyebite`, `Meld Into Stone`→`Meld into Stone`, `Counter Spell`→`Counterspell`, `Battle Axe`→`Battleaxe`, `War Horse Skeleton`→`Warhorse Skeleton`, `Devil’s Sight`→`Devil's Sight` (kıvrık kesme işareti, 3 pakette) |
 | **Cause code (öneri)** | `S` — 19'unun 19'u upstream'de de böyle yazılı; `titleCaseName` (L3) yalnız **büyük/küçük harfi** düzeltir, sözcük bölmesini ve kesme işaretini değil |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R6** |
 
 **Bulgu.** `dupe_census`'un A bölümü `(slug, lowercased name)` anahtarıyla
 çalışıyor ve "case-only" kovasında **3** satır bildiriyor. Anahtarı bir adım
@@ -924,7 +934,7 @@ bulamayacak. Bugün ölçülen zarar 0 dangling'dir; bu bulgu, o 0'ın
 3. **Kapsam dışı** — upstream yazımı korunur (`S`), 8 tekil kartın kopya
    görünmesi kabul edilir; kayıt burada durur.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (ölçülmüş 19 satırlık alias tablosu). Seçenek 2 reddedildi: `findEntityIdByName` bilerek katı (§2.3), gevşetmek yanlış eşleşme üretir. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
 
 ### F-open5e-01 — 5e-2024 belgesinden gelen 1 subclass, `game_system: 5e-2014` etiketli paketin içinde eriyor
 
@@ -934,7 +944,7 @@ bulamayacak. Bugün ölçülen zarar 0 dangling'dir; bu bulgu, o 0'ın
 | **Checklist** | checklist G3 (`game_system` etiketi kartın hangi kurala göre yazıldığını taşır) |
 | **Kategori / etki** | `subclass` — 17'nin **1'i** (`Abjurationist`) `open5e-2024` belgesinden geliyor (`gamesystem: 5e-2024`), paket ve katalog girdisi ise **`5e-2014`** diyor. Kartın üzerinde 2024 olduğunu söyleyen hiçbir alan yok: `source` = `"Open5e Originals"`, diğer 16'sıyla aynı |
 | **Cause code (öneri)** | `M` — `mergeOpen5eOriginals` (`tool/open5e_import/emit.dart:71-102`) ikinci belgenin **varlıklarını** alıyor, **metadata'sını** almıyor; birincil `doc` ile yeniden `assemblePack` çağrılıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R6** |
 
 **Bulgu.** Open5e kendi homebrew'unu iki belge olarak yayınlıyor: `open5e`
 (`gamesystem: 5e-2014`, 16 subclass) ve `open5e-2024` (`gamesystem: 5e-2024`,
@@ -1002,7 +1012,7 @@ kalacak.
 3. **Kapsam dışı** — birleşme kararı yazılı, etiket bugün yalnız gösterimlik;
    `metadata`'ya `"contains: [5e-2014, 5e-2024]"` gibi bir not düşülüp bırakılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (ikinci belgenin kartlarına belge kimliği yazılır); en küçük değişiklik, kayıp yok. Paketi ikiye bölmek (seçenek 2) katalogda tek satır beklentisini bozar. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
 
 ### F-pass0-10 — üçte-bir büyücü 4 subclass hiç büyü slotu almıyor: `CasterKind.third` korpüste hiçbir kartla ulaşılamıyor
 
@@ -1017,7 +1027,7 @@ kalacak.
 | **Checklist** | checklist E3 (büyücülük ilerlemesi) |
 | **Kategori / etki** | `subclass` — **4 kart** (`Arcane Warrior` / Fighter, `Eldritch Trickster` / Rogue, `Soulspy` / Rogue, `Underfoot` / Rogue) kendi büyü ilerlemesini veriyor; karakter sayfasında **0 slot, 0 cantrip, büyü adımı yok**. Korpüste `caster_kind: 'Third'` taşıyan **0** kart var (built-in 12 sınıf + paketli 2 sınıf ölçüldü) |
 | **Cause code (öneri)** | `A` — `level_up_planner.dart:473` `caster_kind`'ı **yalnız `classEntity`'den** okuyor; `subclass` şemasında böyle bir alan hiç **yok** (8 beyan edilmiş alan) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R5** |
 
 **Bulgu.** Checklist E3'ün kendi örneği bu maddeyi "paketli bir büyücü çıkarsa
 yeniden dosyalanır" diye bırakmıştı; ölçüm o koşulu karşılıyor — ama beklenen
@@ -1113,7 +1123,7 @@ o tablo bu dört subclass için sonsuza kadar boş kalır.
    karar "prose olarak
    kalır" diye yazılır, `CasterKind.third`'ün ölü kod olduğu da kayda geçer.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`caster_kind` subclass şemasına + `level_up_planner`'da subclass önce). Sezgisel başlık eşlemesi (seçenek 2) `toh`'un 5 "Potent Spellcasting" satırını yanlış sınıflandırma riski taşıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
 
 ### F-pass0-08 — 24 subclass büyü listesi yalnız düzyazı tablosu: `features` satırının büyü anahtarı yok, B5'in yazılı kuralı da bunlara yetişmiyor
 
@@ -1123,7 +1133,7 @@ o tablo bu dört subclass için sonsuza kadar boş kalır.
 | **Checklist** | checklist E1 (mekanik sayfaya iniyor) |
 | **Kategori / etki** | `subclass` — 101 subclass'ın **523** `features` satırından **0'ı** hiçbir grant anahtarı taşımıyor; bunların **24'ü** düzyazının içine gömülü **büyü listesi tablosu** (domain / circle / expanded spells): `toh` 15, `open5e` 8, `tdcs` 1 |
 | **Cause code (öneri)** | `M` — `classFeatures` satır şemasında büyü anahtarı **hiç yok** (`granted_feat_refs` var, `always_prepared_spell_refs` yok); mapper tabloyu `description` metnine bırakıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R5** |
 
 **Bulgu.** Built-in SRD'de bir subclass'ın büyü listesi, `always_prepared_spell_refs`
 taşıyan bir **feat kartına** yazılıyor (`srd_core/feats_class.dart:945, 980, 1039…`)
@@ -1209,7 +1219,7 @@ taşımıyor; bu ayrı bir render sorusu (checklist F2), burada yalnız anılıy
    birlikte, paket subclass'larının **hiçbir** büyü mekaniği taşımadığı kayda
    geçer.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`classFeatures` satırına `always_prepared_spell_refs`, dört-düzenleme sözleşmesiyle). Seçenek 2 B5'in "asla kart basma" kuralını gevşetir; 24 tablonun hepsi aynı iki sütunlu şekilde olduğu için ayrıştırma ucuz. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
 
 ### F-pass0-09 — background'un adı verilmiş dili düşüyor: Thieves' Cant ve Sylvan hiçbir alana yazılamıyor
 
@@ -1219,7 +1229,7 @@ taşımıyor; bu ayrı bir render sorusu (checklist F2), burada yalnız anılıy
 | **Checklist** | checklist C2 (species/background/feat alanları) |
 | **Kategori / etki** | `background` — kaynakta dil sütunu dolu **24** satırın **22'si** "seçim" (`granted_language_count` doğru yazılıyor), **2'si adı verilmiş dil**: `tdcs` Crime Syndicate Member → `Thieves' Cant`, `toh` Forest Dweller → `Sylvan`. İkisi de pakette **hiç** görünmüyor |
 | **Cause code (öneri)** | `N` — `background` şemasında yalnız `granted_language_count` var (`content.dart:759`); `granted_languages` alanı **yok**, yani mapper'ın yazacağı yer de yok |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R5** |
 
 **Bulgu.** `background` şeması dili **sayı** olarak modelliyor: "One of your
 choice" → 1. Kaynak bazen dilin **adını** veriyor, ve o ad hiçbir yere sığmıyor —
@@ -1281,7 +1291,7 @@ karakterin dil listesinde görünmesi beklenir.
 3. **Kapsam dışı** — 24 satırda 2; "şema 2024'e göre doğru, 2014 background dil
    adları düzyazıda kalır" kararı yazılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`background.granted_languages`); `CharacterResolver.grantFieldKeys` alanı zaten okuyor, iş yalnız şema + mapper dallanması. · **Tarih:** 2026-08-19 · **Kapatan:** R5 (faz açık)
 
 ### F-toh-01 — `Underfoot` 1. seviyede seçilebiliyor: rogue arketipi, slot tablosunun ilk satırından seviye alıyor
 
@@ -1291,7 +1301,7 @@ karakterin dil listesinde görünmesi beklenir.
 | **Checklist** | checklist C1 (class/subclass seviye tablosu) |
 | **Kategori / etki** | `subclass` — 101 paketli subclass'ın **1'i**: `Underfoot` (Rogue) `granted_at_level: 1`. 3'ten küçük 46 değerin diğer **45'i doğru** (2014'te Cleric/Sorcerer/Warlock 1, Wizard/Druid 2); yanlış olan tek kart bu |
 | **Cause code (öneri)** | `S` — kaynağın `ClassFeatureItem` satırı gerçekten `level: 1` diyor (`toh_underfoot_spell-slots`); paket sadık, ama B1'in "tablo satırlarını dışarıda bırak" kuralı burada tutmuyor çünkü upstream o satırlara `column_value` yazmamış (`M` sonucu) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** `granted_at_level` §5.2'nin kuralıyla hesaplanıyor:
 `min(ClassFeatureItem.level)` — subclass'ın **tablo olmayan** özellikleri
@@ -1354,7 +1364,7 @@ mümkün olmayan bir arketipi alıyor.
 3. **Kapsam dışı** — "kaynak öyle diyor" yazılır; o zaman tek kartın 1. seviyede
    göründüğü ve testin bunu yakalamadığı kayda geçer.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 2 (adı `Spell Slots`/`Spells Known` olan satırlar minimumdan dışlanır). Seçenek 1 mapper'a 2014 arketip seviyesi tablosunu, yani kural bilgisini koyar; bu importer'ın işi değil. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-toh-02 — `Scoundrel` background'u iki pakette birden: aynı iki beceri, %83 aynı metin, iki ayrı satır
 
@@ -1364,7 +1374,7 @@ mümkün olmayan bir arketipi alıyor.
 | **Checklist** | checklist B2 (paketler arası kopya kart yok) |
 | **Kategori / etki** | `background` — **1 kart** çifti. Statblok çocuk satırları dışarıda tutulduğunda korpüste **metni birebir aynı** olan paketler-arası kart sayısı **1** (bir `language`); bu çift ise birebir değil, **%83** benzer, ama mekaniği aynı |
 | **Cause code (öneri)** | `D` — iki paket aynı içeriği ayrı kart olarak taşıyor; dedup ya da link kaydı yok |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R6** |
 
 **Bulgu.** `open5e-toh`'un `Scoundrel`'ı ile `open5e-open5e`'nin `Scoundrel`'ı
 aynı cümleyle açılıyor, aynı iki beceriyi veriyor (`Athletics`,
@@ -1420,7 +1430,7 @@ satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
 3. **Kapsam dışı** — "iki ayrı yayıncı belgesi, iki ayrı kart" yazılır; o zaman
    kullanıcının iki `Scoundrel` görmesi bilinçli kabul edilmiş olur.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`dupe_census --near`); karar sayıdan sonra verilir, çünkü B2 bugün yalnız birebir eşitliği ölçüyor ve bu çift ölçünün dışında. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
 
 ### F-a5e-ag-01 — `Tenacious` feat'inin kurtarma yeterliliği düşüyor: alanı var, okuyanı var, yazanı yok
 
@@ -1430,7 +1440,7 @@ satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
 | **Checklist** | checklist C2 (species/background/feat alanları) |
 | **Kategori / etki** | `feat` — `grants_save_prof_from_asi` korpüsteki **73 feat kartının 0'ında** dolu; kaynağı bu mekaniği yazan **1** kart var (`a5e-ag` `Tenacious`) ve o da alamıyor. Kartın ASI'si tam doğru yazılmış (`asi_amount: 1`, `asi_max_score: 20`, altı yetenek), yalnız cümlenin ikinci yarısı kayıp |
 | **Cause code (öneri)** | `M` — alan **beyan edilmiş** (`builtin/content.dart:836`), **okuyanı da var** (`pending_choice_resolver_dialog.dart:793, 1203`, built-in `Resilient` bununla çalışıyor); yazan yalnız mapper tarafında yok |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** `Tenacious`'ın gövdesi: *"Choose one ability score. The chosen ability
 score increases by 1, to a maximum of 20, **and you gain proficiency in saving
@@ -1484,7 +1494,7 @@ grep -rn "grants_save_prof_from_asi" tool/ | wc -l  # 0 — yazan yok
 3. **Kapsam dışı** — o zaman C8'e yazılı bir satır girmeli: "`grants_save_prof_from_asi`
    paket tarafında hiç yazılmaz, yalnız built-in kartların alanıdır."
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (ASI cümlesiyle aynı yerde kurtarma yeterliliği geçiyorsa `grants_save_prof_from_asi`); okuyucu hazır, diff tek satır. Elle kür (seçenek 2) yeni belgede tekrar kaçar. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### F-a5e-ag-02 — `Marshal`'ın seviye tablosu 14. seviyede geriliyor: 30 feet → 10 feet → 45 feet
 
@@ -1494,7 +1504,7 @@ grep -rn "grants_save_prof_from_asi" tool/ | wc -l  # 0 — yazan yok
 | **Checklist** | checklist D1 (değer kaynakla aynı) |
 | **Kategori / etki** | `class` — `Marshal`'ın `description`'ındaki 20 satırlık ilerleme tablosunda `Commanding Presence` sütunu 13'te 30 feet, **14'te 10 feet**, 15'te 45 feet. Korpüsteki 103 `class`/`subclass` kartının tablolarında azalan geçiş **2** tane; öteki (`toh` `Sapper`) ilerleme tablosu değil, tuzak listesi |
 | **Cause code (öneri)** | `S` — kaynak `ClassFeatureItem` satırı da `14 → "10 feet"` diyor; paket kaynağı **birebir** yeniden üretiyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ⚪ kapsam dışı |
 
 **Bulgu.** `verify_packs` bu paketi **0 disagree / 0 absent** ile geçiriyor ve
 haklı: yazılan değer kaynaktaki değer. Ama kural düzeyinde yanlış — bir sınıf
@@ -1554,7 +1564,7 @@ EOF
    (paket = belgenin aynası), ama o zaman §5'e yazılı girmeli, çünkü şu an
    hiçbir yerde yazılı değil.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **kapsam dışı** — seçenek 3. Paket belgenin aynasıdır (D1); yerinde düzeltmek `verify_packs`'e disagree yazdırır ve allowlist gerektirir. Gerekçe §5.9'a yazıldı; kaynak hatası olarak yukarı bildirilebilir, pipeline değişmez. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### F-bfrd-01 — `Mechanist` ilerleme tablosunun ikinci sütunu `Augment Effects Known (2)` diye başlıklanıyor; kaynağın kendi kimliği ona `Augmented Items` diyor
 
@@ -1564,7 +1574,7 @@ EOF
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `class` — `Mechanist`'in `description`'ına render edilen `### Class Table`'ın iki sütunu var ve ikisinin başlığı da `Augment Effects Known`; mapper ikinciyi `Augment Effects Known (2)` diye numaralıyor. Kaynakta iki ayrı `ClassFeature` var — `bfrd_mechanist_augment-effects-known` ve **`bfrd_mechanist_augmented-items`** — ama ikisinin de `name` alanı `Augment Effects Known`. `(2)` korpüste **1** tane: paketli 103 `class`/`subclass` kartının tablolarında başka çakışma yok |
 | **Cause code (öneri)** | `M` — kaynak `name` upstream'de yanlış, ama doğru ad `pk`'de duruyor ve mapper onu hiç okumuyor (`mappers/chargen.dart:1679-1683`, çakışmayı numaralayan blok) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R4** |
 
 **Bulgu.** B2 bu tabloyu 2026-08-14'te "bozuk" durumdan kurtardı: `column_value`
 satırları artık düşmüyor, markdown tablo olarak basılıyor. Kalan kusur başlıkta:
@@ -1618,7 +1628,7 @@ for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFe
 3. **Kapsam dışı** — "kaynak ne diyorsa o", F-a5e-ag-02'nin 3. seçeneğiyle aynı
    politika. Fark: orada doğru değer hiçbir yerde yoktu, burada `pk`'de var.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (çakışma hâlinde başlık `pk` slug'ından türetilir, `(n)` yedek kalır). F-a5e-ag-02'den farkı ölçülmüştü: burada doğru ad kaynağın kendisinde duruyor. · **Tarih:** 2026-08-19 · **Kapatan:** R4 (faz açık)
 
 ### Dalga 2 — büyü paketleri
 
@@ -1630,7 +1640,7 @@ for r in json.load(open('../open5e-api-staging/data/v2/kobold-press/bfrd/ClassFe
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `duration_unit_ref`; kaynağın `duration` sütunu `permanent` (22), `permanent until discharged` (2), `permanent; one generation` (1) diyen **25** satırda karta `Until Dispelled` yazılıyor. `kp`'de 2 kart: `Curse of Formlessness`, `Incantation of Lies Made Truth` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:237` (`if (d.startsWith('permanent')) return (null, 'Until Dispelled');`); Tier-0 `duration-unit` sözlüğünde yedi satır var (`lookups.dart:1388-1396`) ve hiçbiri "kalıcı" değil |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** Mapper'ın yazılı kuralı "serbest metin süreleri altı kanonik satıra
 oturt, oturmayan `Special` olsun" (satır 229-231). `instantaneous`, `10 minutes`,
@@ -1701,7 +1711,7 @@ for e in p['entities'].values():
    açıktır; mapper bunu kural olarak yazmış sayılır. O hâlde gerekçe koddan
    §5.6'ya taşınmalı (bugün yalnız satır içi bir kod satırı, yazılı karar değil).
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`permanent` → `Special`); tek satır silinir, 23 kart uydurma iddiadan kurtulur. Tier-0'a `Permanent` satırı eklemek (seçenek 2) SRD'de karşılığı olmayan bir sözlük satırı ve şema sürümü demek. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-wz-01 — kaynak "1 hour/caster level" diyor, kart düpedüz "1 Hour" yazıyor
 
@@ -1711,7 +1721,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `duration_amount` + `duration_unit_ref`; kaynağın `duration` sütunu `1 hour/caster level`, kartta `Hours` / `1` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238` — süre regexi ilk sayı+birim çiftini kapıp arkasındaki `/caster level`'ı görmezden geliyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** Regex serbest metnin ilk sayı+birim çiftini alıyor, kalanına bakmıyor.
 `1 hour/caster level` böylece `Hours 1` oluyor: 10. seviye bir büyücünün 10 saati
@@ -1754,7 +1764,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 1 kart; o hâlde "ilk sayı yeterlidir" kararı `§5.6`'ya
    yazılmalı, bugün yazılı değil.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (kuyrukta `/`, `per`, `level` varsa `Special`). `duration_text` alanı (seçenek 2) R1'in dışında: üç kaydı da seçenek 1 dürüstçe kapatıyor, şema büyütmeye gerek yok. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-wz-02 — kaynağın süresi "concentration + 1 round", kart `requires_concentration: false` diyor
 
@@ -1764,7 +1774,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `spell` — `requires_concentration` (zorunlu alan); kaynağın `duration` sütunu `concentration + 1 round`, `concentration` sütunu `false` → kart `false` + `Rounds 1` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:46` (`'requires_concentration': s['concentration'] == true`) yalnız bool sütunu okuyor, `duration` metnine hiç bakmıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** Kaynak aynı mekaniği iki yere yazmış: `concentration` bool'u ve
 `duration` metni. `Storm of Axes`'te bool `false`, metin `concentration + 1 round`.
@@ -1815,7 +1825,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 1 kart. Ama alan zorunlu olduğu için sessiz yanlış değer,
    boş alandan daha pahalı.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`duration` metni `concentration` diyorsa bool `true`); zorunlu alanın sessiz yanlış değeri boş alandan pahalı. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-pass0-12 — "1 year" süreler karta `Special` olarak iniyor, sayı büsbütün kayboluyor
 
@@ -1825,7 +1835,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (uydurma değer yok — burada *eksik* değer) |
 | **Kategori / etki** | `spell` — `duration_unit_ref` + `duration_amount`; kaynağın `1 year` dediği satırlar kartta `Special` / `null` |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238` regexi yalnız tur/dakika/saat/gün tanıyor, `year` yok; `lookups.dart:1388-1396` sözlüğünün en büyük birimi `Days` |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** Kaynak ölçülebilir bir süre veriyor (`1 year`), kart hiçbir sayı
 taşımıyor. `Special` kanonik bir satır olduğu için ne `unmapped_report.json`'a
@@ -1878,7 +1888,7 @@ for e in p['entities'].values():
 3. **Kapsam dışı** — 3 kart; o hâlde "`Special` kabul edilebilir kayıptır"
    kararı §5.6'ya yazılmalı, bugün yazılı değil.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`year`/`week`/`month` güne çevrilir); sözlük değişmez, sayı kaybolmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-pass0-13 — koşullu ve değişken süreler karta düz sayı olarak iniyor: "2-12 hours" → `Hours 12`
 
@@ -1888,7 +1898,7 @@ for e in p['entities'].values():
 | **Checklist** | checklist A3 (kaynağın söylemediği kesinlik) |
 | **Kategori / etki** | `spell` — `duration_amount`; kaynak "2-12 saat" ya da "24 saat **ya da** şu olana kadar" derken kart tek bir sayı iddia ediyor |
 | **Cause code (öneri)** | `M` — `mappers/spell.dart:238`; süre regexi metindeki ilk sayı+birim çiftini alıp kuyruğu atıyor, aralığın alt sınırı ve "…until" koşulu düşüyor. Şemada serbest metin süre alanı yok (`N` yanı) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** İki ayrı metin şekli, aynı satırda birleşiyor:
 
@@ -1953,7 +1963,7 @@ EOF
 3. **Kapsam dışı** — 4 kart; o hâlde "süre alanı yalnız üst sınırı taşır" kararı
    §5.6'ya yazılmalı, bugün yazılı değil.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (aralık/koşul deseni görülürse `Special`); kesin ama yanlış sayı yerine dürüst boşluk — A3'ün ilkesi. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-pass0-14 — kuralları "konsantrasyonu kaybedersen" diyen 4 büyünün kartı `requires_concentration: false`
 
@@ -1963,7 +1973,7 @@ EOF
 | **Checklist** | checklist A3 (kartın kendi gövdesiyle çelişen zorunlu alan) |
 | **Kategori / etki** | `spell` — `requires_concentration`; 4 kartın düzyazısı "konsantrasyonu bırakırsan büyü biter" derken **zorunlu** alan `false` |
 | **Cause code (öneri)** | `S` — kaynağın `Spell.concentration` bool sütunu bu satırlarda `false`; `deepmx`'te 64 satırın 64'ü `false`, v1 `dmag-e` sütunu ise 64/64 `null`. Mapper sadık kopyalıyor (`spell.dart:46`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ✅ kapandı — F4 |
 
 **Bulgu.** `Shadow Realm Gateway` gövdesi *"the portal remains open for one minute
 or until you lose concentration on it"* diyor; `Summon Old One's Avatar`
@@ -2032,7 +2042,7 @@ EOF
    pakette dokunma. Kayıt açık kalır, `S` gerekçesi §5.6'ya yazılır.
 3. **Kapsam dışı** — 7 kart; "kaynak ne derse o" kararı yazılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **gerekçe yaz** — seçenek 2. Kusur kaynağın `Spell.concentration` sütununda (`deepmx`'te 64/64 `false`, v1 `dmag-e` 64/64 `null`); mapper sadık. Düzyazıdan çıkarım (seçenek 1) `Extract Foyson` gibi yanlış pozitif riski taşıyor. §5.9'a satır yazıldı: bool otoritedir. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### F-spells-that-dont-suck-01 — "Self (60-foot radius)" yazan menzilin yarıçapı hiçbir alana yazılmıyor
 
@@ -2042,7 +2052,7 @@ EOF
 | **Checklist** | checklist A3 (kaynakta yazılı bir sayı kartta hiç görünmüyor) |
 | **Kategori / etki** | `spell` — `range_ft` / `area_size_ft`; **8 kartta** `range_text` parantezindeki yarıçap/çap düşüyor, kart yalnız `range_type: Self` diyor |
 | **Cause code (öneri)** | `M` — `_range` (`mappers/spell.dart:~120`) `range_text` içinde `self` görünce dalı orada bitiriyor; parantezin içindeki sayıyı okuyan kod yok. Kaynak sütunu (`range`) bu satırlarda `0`, yani sayı yalnızca metinde |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** Kaynağın 8 satırı menzili *"Self (60-foot radius)"*, *"Self (10-foot
 dome)"*, *"Self (1-mile radius)"* biçiminde yazıyor. Kart bunların hepsinde
@@ -2100,7 +2110,7 @@ EOF
 3. **Kapsam dışı** — 8 kart, tek belge; sayı `description` metninde zaten
    okunuyor. Gerekçe §5.6'ya yazılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`self (N-foot <şekil>)` → `area_shape_ref` + `area_size_ft`); şekil sözcüklerinin beşi de kanonda. Sayıyı `range_ft`'e yazmak (seçenek 2) alanı yanlış anlamda kullanır. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-spells-that-dont-suck-02 — malzeme metni "worth at least 665 gp" diyor, kart "Material Cost (gp): 0" yazıyor
 
@@ -2110,7 +2120,7 @@ EOF
 | **Checklist** | checklist A3 (kartın kendi başka alanıyla çelişen değer) |
 | **Kategori / etki** | `spell` — `material_cost_gp`; **5 kartta** alan `0` yazıyor, aynı kartın `material_description`'ı fiyatı açıkça söylüyor |
 | **Cause code (öneri)** | `S` — kaynağın `material_cost` sütunu bu satırlarda `'0'`; doğru değer kaynağın **başka** sütununda (`material_specified` metni). Mapper sadık kopyalıyor (`spell.dart:78-79`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** `Devil Binding`'in malzemesi *"a vial of blood and an obsidian chalice
 worth at least 665 gp"*, `Arcanist's Sword`'ünki *"…worth 250 gp"*. İkisinde de
@@ -2166,7 +2176,7 @@ EOF
 3. **Yukarı bildir / kapsam dışı** — kusur kaynağın sütununda; 5 kart için
    gerekçe §5.6'ya yazılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 + 2 birlikte: sütun `0`/`null` iken alan yazılmaz, `material_specified` metninde fiyat varsa oradan okunur (`cp`/`sp` çevrimiyle). Tek başına seçenek 1 gerçekten bedava malzemeyi de susturuyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### F-pass0-15 — `spell.effects`'in ⚪ gerekçesinin ikinci yarısı ölçümle uyuşmuyor: kaynakta zar sütunu var
 
@@ -2176,7 +2186,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
 | **Kategori / etki** | `spell` — `effects` 0/1.297; gerekçenin "yukarıda doldurulacak yapılandırılmış hasar satırı yok" yarısı **303 kartta** yanlış |
 | **Cause code (öneri)** | `A` — alanın gerçek sebebi uygulama tarafı ("`domain/`/`application/` içinde okuyucusu yok", M3'ün kapsam sınırı) ve o yarı **ayakta**; düzeltilmesi gereken şey verdict değil, yazılı gerekçe |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ✅ kapandı — F4 |
 
 **Bulgu.** `open5e_content_audit.md` §5.8, `spell.effects`'i ⚪ ile kapatırken iki
 sebep yazıyor: *"editörü olan ama `domain/` ya da `application/` içinde okuyucusu
@@ -2243,7 +2253,7 @@ EOF
 3. **Aynen bırak** — ⚪ verdict'i değişmediği için gerekçenin yarısı yanlış
    kalsın; kayıt "kabul edildi" diye kapanır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **gerekçe yaz** — seçenek 1. Verdict ⚪ doğru, gerekçenin ikinci yarısı yanlıştı: kaynakta zar sütunu **var** (303/1.297 `damage_roll`). §5.9 gerekçeyi tek ayağa indirdi: `domain/`/`application/` içinde okuyucu yok. Kod değişmiyor. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### F-pass0-16 — malzeme metni "worth 1,250 gp" derken `material_cost_gp` boş: fiyat kaynağın komşu sütununda duruyor
 
@@ -2253,7 +2263,7 @@ EOF
 | **Checklist** | checklist C3 (doldurulabilir `spell` alanı boş kalıyor) |
 | **Kategori / etki** | `spell` — `material_cost_gp`; 45 kartın `material_description`'ı fiyatı yazıyor, tipli alan boş → fiyata göre süzme/sıralama yok, alan kartta hiç görünmüyor |
 | **Cause code (öneri)** | `S` — kaynağın `Spell.material_cost` sütunu bu 45 satırda `null`, mapper'ın `if (cost != null)` koruması (`mappers/spell.dart:76`) doğru davranıyor. Ama doğru değer **aynı satırın** `material_specified` metninde yazılı (taramanın 7. sorusu) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R1** |
 
 **Bulgu.** `deepm`'in 288 malzemeli kartından yalnız **12'sinde** `material_cost`
 sütunu dolu; **41'inde** sütun `null` olduğu hâlde malzeme metni fiyatı açıkça
@@ -2307,7 +2317,7 @@ EOF
 3. **Yukarı taşı** — Open5e'ye `material_cost` düzeltmesi bildirilsin; pipeline
    değişmez, ama düzelme tarihi bize bağlı olmaz.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`material_specified` içindeki `worth (at least )?N gp`, sütun doluysa sütun kazanır); 45 kart fiyatına kavuşur, kaynak sütunu bozulmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R1 (faz açık)
 
 ### Dalga 3 — sihirli eşyalar
 
@@ -2319,7 +2329,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
 | **Kategori / etki** | `magic-item` — `attunement_prereq` + 6 `attunement_*` alanı **0/1.063**; gerekçenin dayandığı sütun **0/2.319** satırda var |
 | **Cause code (öneri)** | `S` — §5.8 `M`🔗 yazıyor ("mapper okumadı"), oysa mapper **okuyor**; okunacak sütun yok |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ✅ kapandı — F4 |
 
 **Bulgu.** `open5e_content_audit.md` §5.8'in `magic-item` bloğu
 `attunement_prereq` + `attunement_*` satırını `M`🔗 ile kapatıyor ve gerekçe
@@ -2367,7 +2377,7 @@ grep -n "attunement_detail" tool/open5e_import/mappers/item.dart
 3. **Aynen bırak** — verdict (🔴, boş alan) zaten doğru; yanlış olan tek şey
    sebep. Ama sebep yanlış kaldıkça kod tarafındaki ölü dal da kalır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **gerekçe yaz** — seçenek 1. §5.8'in "`attunement_detail` kaynakta var" cümlesi ölçümle çürüdü (0/2.319); satırın cause code'u `M`🔗 değil `S`. §5.9'a yazıldı; mapper'ın ölü dalı hiçbir R fazında iş kalemi değil, dokunulmadan bırakılıyor. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### F-vom-02 — `is_cursed` 1.063/1.063 `false` ve gerekçe "doğru varsayılan" diyor; dört eşyanın kendi kuralı taşıyıcıyı lanetliyor
 
@@ -2377,7 +2387,7 @@ grep -n "attunement_detail" tool/open5e_import/mappers/item.dart
 | **Checklist** | checklist A5 (dolu ama tek sabit olan sütun — ⚠ tuzağı) |
 | **Kategori / etki** | `magic-item` — `is_cursed` 1.063/1.063 sabit `false`; **4 kart** kendi kural metnine göre yanlış |
 | **Cause code (öneri)** | `S` — kaynakta lanet sütunu yok, bilgi yalnız `desc` düzyazısında duruyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ✅ kapandı — F4 |
 
 **Bulgu.** §5.6/§3.6 `is_cursed`'ü "confirmed constant" diye kapatıyor:
 *"`MagicItem.json` has no such column and Open5e never will; `false` is the
@@ -2424,7 +2434,7 @@ EOF
    tekrarlanmalı.
 3. **Aynen bırak** — 1.059/1.063 doğru; hatanın maliyeti 4 kart.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **gerekçe yaz** — seçenek 1. "Doğru 5e varsayılanı" cümlesi yerine ölçüm yazıldı: kaynakta lanet sütunu yok, dolayısıyla **bilinmiyor**; 4 kartın laneti yalnız `desc` düzyazısında. Düzyazıdan işaretlemek (seçenek 2) A3 sınırında gezdiği için reddedildi. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### F-vom-03 — `sentient_*` yedilisinin gerekçesi "`desc` düzyazısında" diyor; vom'da düzyazıda da yok
 
@@ -2434,7 +2444,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi doğru mu) |
 | **Kategori / etki** | `magic-item` — 7 `sentient_*` alanı **0/1.063**; 1.063 `desc`'in **0'ı** duyarlılıktan söz ediyor |
 | **Cause code (öneri)** | `N` — karşılığı yok; §5.8 aynı satırda `M` ("in `desc` prose") yazıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | ✅ kapandı — F4 |
 
 **Bulgu.** §5.8 tek satırda beş şeyi birleştiriyor: *"`charges_max`,
 `charge_regain`, `command_word`, `body_slot_ref`, `sentient_*` — 0%, `M`,
@@ -2480,7 +2490,7 @@ EOF
    `M` olur. O zamana kadar satır ölçülmemiş kalır.
 3. **Aynen bırak** — verdict 🔴 doğru; yalnız cause code yanlış.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **gerekçe yaz** — seçenek 1. §5.8 satırı ikiye ayrıldı: `charges_max` / `charge_regain` / `command_word` / `body_slot_ref` `M` kalır (düzyazı ölçüldü), `sentient_*` yedilisi `N` alır — `vom` duyarlı eşya yayımlamıyor. · **Tarih:** 2026-08-19 · **Kapatan:** F4
 
 ### Dalga 4 — canavar paketleri
 
@@ -2492,7 +2502,7 @@ EOF
 | **Checklist** | checklist D1 (değer kaynakla aynı değil) |
 | **Kategori / etki** | `creature-action` 328 + `trait` 54 satır: ebeveyn canavar, kendi satırının adı yerine metni aynı olan **başka** bir canavarın satırının adına ref veriyor; 6 `trait`'te ad kullanım sayısı taşıdığı için mekanik de değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`) |
 | **Cause code (öneri)** | `D` — `mappers/monster.dart` `_ensureChild` içerik-hash'iyle (`_contentHash`, tip + `description` + öznitelikler) birleştiriyor; **ad hash'e girmiyor**, bu yüzden metni birebir aynı olan iki farklı silah tek varlıkta toplanıyor ve ilk gelenin adı kazanıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** Statblock saldırı metni kalıplı: *"Melee Weapon Attack: +5 to hit,
 reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage."* Aynı vuruş
@@ -2607,7 +2617,7 @@ EOF
    §3.2'ye "ad birleşmede kaybolabilir" satırı yazılır (C8). Kartın yanlış ad
    göstermesi bilinçli kabul edilmiş olur.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`name` içerik-hash'ine katılır); 382 satır kendi adına kavuşur, korpüs %1,8'den az büyür. Yalnız `trait`te düzeltmek (seçenek 2) "Mining Pick"i `Bite` göstermeye devam ederdi. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ### F-pass0-18 — §5.8 `damage_type_ref`'i "tipli satırların hepsi atlanan WotC belgelerinde" diye kapatıyor; tip komşu sütunda, 3.479 yayınlanan satırda
 
@@ -2617,7 +2627,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
 | **Kategori / etki** | `creature-action` — `damage_type_ref` 0/1.148 (`ccdx`); hasar tipi yalnız `description` düzyazısında, tipli alan boş → hasar tipine göre süzme, direnç/bağışıklık eşleştirmesi ve `damage_dice` ile birlikte anlamlı bir saldırı satırı yok |
 | **Cause code (öneri)** | `M` — kaynakta değer var, mapper okumuyor: `mappers/monster.dart` yalnız `attack['damage_type']`'a bakıyor, oysa `CreatureActionAttack.damage_type` korpüsün 5.244 satırının **576'sında** dolu ve hepsi atlanan iki WotC belgesinde; üçüncü taraf belgelerde aynı bilgi `extra_damage_type` sütununda duruyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** §5.8 satırı (B5, 2026-08-14) şunu diyor: *"closed by B5: all 576 typed
 attack rows are in the two skipped WotC documents"*. Ölçüm bunu doğruluyor —
@@ -2692,7 +2702,7 @@ EOF
 3. **Yukarı taşı** — Open5e'ye sütun ayrımı bildirilsin (`damage_type` birincil,
    `extra_damage_*` yalnız ek hasar); pipeline değişmez.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`damage_type` ve `extra_damage_die_type` boşken `extra_damage_type` birincil tip sayılır); 3.479 satır tiplenir, aşırı yükleme riski ölçülmüş ayrımla kapanıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ### F-pass0-19 — "nonmagical saldırılara karşı" kaydı düşüyor: kart 88 canavarda koşulsuz bludgeoning/piercing/slashing direnci gösteriyor
 
@@ -2702,7 +2712,7 @@ EOF
 | **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
 | **Kategori / etki** | `monster` — `resistance_refs` / `damage_immunity_refs`; 514 canavarda direnç, 104'ünde bağışıklık **koşulsuz** yazılıyor, oysa kaynak "yalnız büyülü olmayan saldırılardan" diyor → büyülü silah taşıyan oyuncuya kart yanlış bilgi veriyor |
 | **Cause code (öneri)** | `M` — kaynakta iki ayrı boolean sütun var (`Creature.nonmagical_attack_resistance`, `…_immunity`) ve `mappers/monster.dart`'ın `_dmgList` çağrıları ikisini de hiç okumuyor; liste sütunu (`damage_resistances`) niteliksiz üç tipi düz olarak veriyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R3** |
 
 **Bulgu.** Upstream niteliği **iki yere** bölüyor: `damage_resistances` listesi
 `['bludgeoning','piercing','slashing']` derken, `damage_resistances_display`
@@ -2772,7 +2782,7 @@ EOF
    `nonmagical_attack_*` booleanlarında duruyor ve okunmuyor" satırı eklenir
    (C8); kartın fazla direnç göstermesi bilinçli kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`alignment_note` kalıbında `resistance_note`/`immunity_note`). Nitelikli üçlüyü listeden düşürmek (seçenek 2) yanlış bilgiyi bitirir ama canavarın `description`'ı boş olduğu için kuralı hiçbir yerde bırakmaz. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
 
 ### F-pass0-20 — dil düzyazısı hiç okunmuyor: 118 canavar kartı dilsiz görünüyor, oysa kaynak "understands Common but can't speak" diyor
 
@@ -2782,7 +2792,7 @@ EOF
 | **Checklist** | checklist C8 (boş kalan alanın yazılı sebebi yanlış) |
 | **Kategori / etki** | `monster` — `language_refs` `ccdx`'te 173/356; kalan 183'ün **118'inde** kaynak dil bilgisi var ama yapılandırılmamış, 65'i gerçekten dilsiz → kart bu 118 canavarda dil satırını hiç göstermiyor |
 | **Cause code (öneri)** | `M` — `Creature.languages_desc` 354/356 dolu ve tam cümleyi taşıyor; mapper yalnız yapılandırılmış `languages` M2M listesini okuyor (`mappers/monster.dart`, `norm.lookupRefList('language', …)`), düzyazı sütununa hiç bakmıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R3** |
 
 **Bulgu.** `ccdx`'in 356 canavarının 173'ünde `languages` listesi dolu ve
 **17 dilin 17'si** çözülüyor (`Void Speech` dahil — paketin kendi `language`
@@ -2858,7 +2868,7 @@ EOF
    düşüyor" satırı yazılır (C8), alan kaynağın yapılandırılmış kısmının sadık
    yansıması sayılır.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`language_note`, `languages_desc`'ten); 769 canavar dil satırına kavuşur, tipli liste bozulmaz. Düzyazıdan ad çıkarmak (seçenek 2) "understands but can't speak" niteliğini yine kaybediyor. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
 
 ---
 
@@ -2870,7 +2880,7 @@ EOF
 | **Checklist** | checklist A3 (kaynağın söylemediği bir değer kartta duruyor) |
 | **Kategori / etki** | `creature-action` — `CreatureAction.limited_to_form` hiç okunmuyor; şekil değiştiren 218 satırda kart *"Giant Form Only"* / *"Skunk Form Only"* niteliğini düşürüyor, saldırı her biçimde kullanılabilir görünüyor |
 | **Cause code (öneri)** | `M` — kaynakta ayrı bir sütun var (`limited_to_form`, korpüste 262 satırda dolu), `mappers/monster.dart` `_actionRow` bu sütuna hiç bakmıyor; şemada karşılığı olan alan yok ama **upstream'in kendi ikinci geleneği** (niteliği `desc`'in başına parantezle yazmak) 13 satırda zaten kullanılıyor ve o satırlarda bilgi karta iniyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** `tob2`'nin Aniwye'si (ogre / dev / kokarca üç biçimli) dört saldırı
 satırı taşıyor ve her birinin kaynakta bir biçim niteliği var: `Bite` ve `Claw`
@@ -2956,7 +2966,7 @@ EOF
    canavarların biçim niteliği düşüyor" satırı yazılır (C8), kayıp bilinçli
    kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 2 (`(Skunk Form Only) ` öneki `description`'ın başına); upstream'in 13 satırda zaten kullandığı gelenek, şema büyümüyor, ad bozulmuyor. F-pass0-17 adı zaten hash'e kattığı için seçenek 1'in ek faydası kalmadı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -2968,7 +2978,7 @@ EOF
 | **Checklist** | checklist A5 (tek-sabit sütun: sabitin dürüst olmadığı yer) |
 | **Kategori / etki** | `monster` — `legendary_action_uses` 27/391 satırın **3'ünde** kaynağa aykırı: `Jotun Giant` ve `Zmey` v1 `legendary_desc`'te *"can take 1 legendary action"* diyor, `Vampire Warlock - Variant` hiç sayı vermiyor; üçünde de kartta **3** yazıyor → oyuncu tur başına üç kat aksiyon hakkı görüyor; **`a5e-mm`'de 66 beyanın 16'sı aykırı** (aşağıdaki dağılım) |
 | **Cause code (öneri)** | `M` — sayı kaynakta **var** (v1 `Monster.legendary_desc` düzyazısı) ama okunmuyor; `mappers/monster.dart` efsanevi aksiyonu olan her canavara SRD varsayılanı 3'ü yazıyor, `verify_packs` da bunu *"no column — the mapper writes the SRD default of 3"* diye `unverifiable` sayıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** Sabit `ccdx` ve `tob2` birimlerinde iki kez sınandı ve orada **dürüst**
 çıktı (`tob2`: 9/9 *"can take 3"*). `tob` korpüsteki tek istisna: v1
@@ -3042,7 +3052,7 @@ sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
    korpüste 3 satırda kaynağa aykırıdır" satırı yazılır (C8) ve sapma bilinçli
    kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (v1 `legendary_desc` içindeki `can take (N)`, yoksa SRD varsayılanı 3); dosya `tags_line` için zaten okunuyor, `verify_packs` kuralı da buna göre güncellenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3054,7 +3064,7 @@ sayı sütunu yok (`Creature.json`'da `legend` geçen alan 0).
 | **Checklist** | checklist A3 (kaynağın vermediği bir izin kartta duruyor) |
 | **Kategori / etki** | `creature-action` — 114 satır hem `LEGENDARY_ACTION` hem de `ACTION` olarak iki kez yayınlanıyor; ikincisi `action_refs`'e giriyor, yani efsanevi bir aksiyon canavarın **normal aksiyon listesinde** de duruyor (`Aboleth, Nihilith`: `Psychic Drain` hem efsanevi hem aksiyon) |
 | **Cause code (öneri)** | `S` — satır kaynakta **öyle** duruyor: upstream aynı metni bir kez `LEGENDARY_ACTION` + `legendary_action_cost`, bir kez de `ACTION` + adın sonunda `(Costs N Actions)` olarak yazmış; mapper ikisini de sadakatle taşıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** `Aboleth, Nihilith`'in kaynak çocuk satırları arasında `Psychic Drain`
 **iki kez** geçiyor: biri `LEGENDARY_ACTION` (`legendary_action_cost: 2`), öteki
@@ -3119,7 +3129,7 @@ EOF
    kaynağa sadık kalır, §5.8'e "upstream efsanevi aksiyonu iki kez yayınlıyor"
    satırı yazılır (C8).
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (adı `(Costs N Actions)` ile biten `ACTION` satırı, aynı metinli `LEGENDARY_ACTION` varsa atlanır); 114 satır düşer, efsanevi liste eksiksiz, kayıp yok. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3131,7 +3141,7 @@ EOF
 | **Checklist** | checklist B3 (düzyazıda duran şey tipli alana da yazılmalı) |
 | **Kategori / etki** | `monster` — `senses`; v1 `Monster.senses` düzyazısı 97 canavarda dört SRD duyusu dışında adı olan bir duyu sayıyor (`keensense` 90, `blindsense` 2, `blood sense` 2, `devil sight`/`impaired sight`/`sight` 1'er), hiçbiri pakete inmiyor; **41 canavarda** `senses` listesi bu yüzden tamamen boş kalıyor |
 | **Cause code (öneri)** | `M` — değer kaynakta var ama iki katmanda birden evsiz: `mappers/monster.dart` yalnız v2'nin dört sütununu okuyor (`darkvision_range`, `blindsight_range`, `tremorsense_range`, `truesight_range`) ve Tier-0 `sense` kanonu da yalnız o dört satırı taşıyor (`lookups.dart` `_senseCategory`); v1 düzyazısı (aynı dosya `tags_line` için zaten okunuyor) hiç okunmuyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R3** |
 
 **Bulgu.** Black Flag (`bfrd`) darkvision'ı **keensense** ile değiştiriyor:
 v2 `Creature.json`'ında `darkvision_range` sütunu **hiç yok**, dolu olan tek
@@ -3191,7 +3201,7 @@ EOF
    v1 düzyazısındaki adı farklı duyular düşüyor (97 canavar, 41'i tamamen
    duyusuz)" satırı yazılır (C8) ve kayıp bilinçli kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 2 (kanonda olmayan duyu paketin kendi `sense` varlığı olur, `Void Speech` kalıbı) + v1 `senses` düzyazısının ayrıştırılması. Built-in kanonu büyütmek (seçenek 1) üçüncü taraf duyusunu SRD sözlüğüne sokardı. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
 
 ---
 
@@ -3203,7 +3213,7 @@ EOF
 | **Checklist** | checklist C4 (her canavarın aksiyonları eksiksiz inmeli) |
 | **Kategori / etki** | `monster` — `action_refs`; **11 aksiyon** 10 canavarda hiç yayınlanmıyor, çünkü B8'in v1 kurtarması yalnız **tamamen boş** kovaya bakıyor; yarım çevrilmiş kovada v1'in fazladan satırları sessizce düşüyor |
 | **Cause code (öneri)** | `M` — veri yüklü ve elde: `_v1ActionIndex` bu üç belgenin v1 satırlarını zaten kuruyor, `mapCreatures` yalnız `if (b.value.isNotEmpty) continue;` dediği için okumuyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** §6 B8 kurtarmayı anlatırken şunu yazıyor: *"Muhafazakâr kuralın
 bütün bedeli **tek bir canavar**: Abaasy, v2'nin kısmen çevirdiği tek tob3
@@ -3300,7 +3310,7 @@ EOF
    cümlesi "bedeli 10 canavar / 11 aksiyon" olarak düzeltilir ve §5.8'e satır
    yazılır (C8). Kayıp bilinçli kabul edilir, ama artık ölçülmüş sayıyla.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (kova kontrolü satır bazına iner: metni hiçbir çocukta geçmeyen v1 satırı eklenir); 11 aksiyon geri gelir, ölçüt metin olduğu için gevşek ad kuralının kopyaları gelmez. `creature_action_fallback_test`'e 10 yaratıklık vaka eklenir. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ### F-pass0-25 — kaynak sessizken `is_attack: false` yazılıyor: metni "Melee Weapon Attack: +7 to hit" olan 681 satır kartta saldırı sayılmıyor
 
@@ -3310,7 +3320,7 @@ EOF
 | **Checklist** | checklist A3 (uydurma değer yok) |
 | **Kategori / etki** | `creature-action` — `is_attack`; **681 satırda** `false` yazılı, oysa satırın kendi metni *"Melee/Ranged Weapon Attack: +N to hit"* diye başlıyor; `tob3`'te alan 1.577/1.577 `false` olduğu için `audit_packs` da `⚠ const` basıyor |
 | **Cause code (öneri)** | `M` — `mappers/monster.dart:373` `'is_attack': attack != null` yazıyor, yani "`CreatureActionAttack` satırı yok" ⇒ "saldırı değil"; v1'den kurtarılan satırlarda (satır 431) sabit `false`. Kaynak "saldırı değil" demiyor, **hiçbir şey** demiyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** `is_attack` bir üç değerli gerçeğin iki değerli yazımı: alan
 `CreatureActionAttack` satırının **varlığından** türetiliyor. `tob3`'ün
@@ -3379,7 +3389,7 @@ dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creatur
    (`tob3`) hepsi `false`" satırı yazılır (C8) ve yanlış olumsuzlama bilinçli
    kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (attack satırı yokken `desc` *"Melee/Ranged … Attack:"* ile başlıyorsa `is_attack: true`); 681 satır doğru işaretlenir, uydurulan tek şey yok. Alanı hiç yazmamak (seçenek 2) `tob3`'ü %0'a düşürüp bilgiyi de siliyordu. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3391,7 +3401,7 @@ dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creatur
 | **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu) |
 | **Kategori / etki** | `creature-action` 53 + `trait` 4: satırın kural metni kaynakta `name` sütununda duruyor (`desc` ya boş ya devam cümlesi); `_cleanChildName`'in cümle-parçası koruması satırı düşürüyor, ebeveyn de ref vermiyor. **19'u mekanik** (Gelatinous Cube'ün yutma kaçış DC'si, Dread Knight'ın duvar hasarı, Medusa'nın taşlaştırma DC 14'ü, Fallen Solar'ın üç emri), 38'i lore. Ayrıca `desc`'i **tamamen boş** 30 satırın 5'i tek bir **metinsiz** `Luck` kartında birleşiyor ve 3 canavar (Pixie, Unicorn, Corrupted Unicorn) onu ref'liyor — korpüsteki tek boş `description`'lı çocuk varlık budur (`creature-action.description` 2.992/2.993) |
 | **Cause code (öneri)** | `M` — doğru cevap kaynağın kendisinde, komşu sütunda (soru 7): metin `name`'de duruyor, mapper yalnız `desc`'i okuyor. Kaynağın segmentasyonu bozuk (`S`), ama kayıp mapper'ın seçiminden geliyor: cümle gibi görünen ad **atılıyor**, metni hiçbir alana taşınmıyor |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** `a5e-mm`'in yukarı akış statblock ayrıştırıcısı bazı satırları ters
 kurmuş: başlık yerine kuralın kendisi `name`'e, kuralın **devamı** `desc`'e
@@ -3483,7 +3493,7 @@ EOF
    segmentasyonu bozuk olduğu için yayınlanmıyor" satırı yazılır (C8) ve kayıp
    bilinçli kabul edilir; `Luck` kartının boş metni de kabul edilmiş olur.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`desc` boş ve ad bir cümleyse ad metne dönüşür); 30 satır kurtulur, `Luck` kartı metnine kavuşur, metin zaten kaynağın. Ebeveynin `description`'ına eklemek (seçenek 2) mekaniği yapılandırılmamış bırakır. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3495,7 +3505,7 @@ EOF
 | **Checklist** | checklist A5 (dolu ama tek sabit olan sütun yok) |
 | **Kategori / etki** | `monster.alignment_ref` — 946/946 satırda `Chaotic Evil`: Pixie, Unicorn, Elk, Blink Dog, Bandit ve 941 kart daha karakter sayfasında kaotik kötü görünüyor; `alignment_note` 0/946 olduğu için kartta "kaynak beyan etmiyor" diye okunabilecek bir işaret de yok |
 | **Cause code (öneri)** | `S` — v2 `Creature.alignment` sütunu bu iki belgede 946/946 satırda `"chaotic evil"`; mapper sadakatle yazıyor, `verify_packs` da haklı olarak `ok` sayıyor. Doğru cevap kaynağın başka bir sütununda da **yok** (soru 7: `bfrd`'nin v1 `alignment`'ı 360/360 boş, `a5e-mm`'in v1'i hiç yok) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** A5 tam olarak bunun için var: alan **dolu**, kaynakla **birebir**, ve
 yine de yanlış. Korpüsteki diğer sekiz belgenin hepsinde `alignment` 10–21
@@ -3546,7 +3556,7 @@ EOF
    946/946 `chaotic evil`; paket sadıktır" satırı yazılır (C8) ve kartın
    yanlış hizalaması bilinçli kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (belgenin `alignment` sütunu tek değere çökmüşse — `n_distinct == 1 && n_rows > 20` — alan hiç yazılmaz); 946 kartın yanlış iddiası biter. Seçenek 3 reddedildi: sadakat, kaynağın çökmüş sütununu olgu gibi yayımlamayı haklı çıkarmıyor. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3558,7 +3568,7 @@ EOF
 | **Checklist** | checklist C4 (`monster` + `trait` + `creature-action`: kaynağın her satırı ref'leniyor mu — burada satır var, **metni** eksik) |
 | **Kategori / etki** | `creature-action.description` — v2 satırı 333 karakterde *"…one of the following effects of the hag's choice:"* diye bitiyor; devamındaki **dört adlandırılmış lanet** (Disfigured / Sickly / Twisted / Withered) hiç yayınlanmıyor. Dördü de mekanik: Charisma kontrollerinde dezavantaj, Constitution kurtarmalarında dezavantaj + uzun dinlenmede yarım hp, Dexterity dezavantajı + 10 ft hız kaybı, Strength dezavantajı. Kartı okuyan DM "hangi etki?" sorusunun cevabını göremiyor |
 | **Cause code (öneri)** | `S` + `M` — kesik olan kaynağın v2 satırı (`S`), ama doğrusu **aynı veri kümesinde**, pipeline'ın B8 için zaten okuduğu v1 `actions_json` sütununda tam olarak duruyor (soru 7 → evet). Mapper v2 satırını görünce v1'e hiç bakmıyor (`M`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** `tob-2023`'ün v1 `Monster.actions_json` satırı 1.030 karakter, v2
 `CreatureAction.desc` satırı **333**. İlk 333 karakter birebir aynı; v2 tam
@@ -3615,7 +3625,7 @@ EOF
 3. **Aynen bırak** — §5.8'e "`tob-2023`'ün bir aksiyonu yukarı akışta kesik"
    satırı yazılır (C8); tek satır olduğu için maliyet kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (aynı (ebeveyn, ad) satırında biri diğerinin öneki ve belirgin uzunsa uzun olan yazılır); seçenek 2'nin kapısı R2'nin regresyon testi olur. Tek satır etkileniyor, metin kaynağın. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3627,7 +3637,7 @@ EOF
 | **Checklist** | checklist C4 (`monster` + çocuk satırlar — kartın metni kaynağınkiyle aynı mı) |
 | **Kategori / etki** | `creature-action` — 7 `description` + 1 `name`. Kullanıcı kartta ham bozuk metin görüyor: *"the væ00e6ttir spews forth…"*, *"within 100 feet of the collæ00e1is"*, kart adı olarak **`Væ00e6ttir's Greataxe`**. `tob3`'te ikisi **sayısal**: *"a line up to 80' long æ00d7 15 ft. wide"* ve *"Large 2æ00d7 damage dice"* — burada kaybolan karakter `×`, yani ölçü ve hasar çarpanı okunmaz hâlde |
 | **Cause code (öneri)** | `S` + `M` — bozukluk kaynağın v2 tarafında (`æ00e6` = bir kez kaçışı çözülmüş `æ`'nın artığı, `S`), ama doğrusu **v1'de temiz** duruyor (`æ`, `×`) ve pipeline v1'i B8 için zaten okuyor (soru 7 → evet); mapper v2'yi olduğu gibi yazıyor (`M`) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R2** |
 
 **Bulgu.** Yukarı akışın v2 dönüşümü bazı satırlarda unicode kaçışını yarım
 çözmüş: `æ` → `æ` yazılmış **ve** `00e6` metinde bırakılmış, sonuç
@@ -3689,7 +3699,7 @@ EOF
    yok" kuralı; düzeltmez, ama bir daha sessizce geçmez.
 4. **Aynen bırak** — 8 kart, §5.8'e satır yazılır (C8).
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (kaçış çözüldükten sonra kalan `00[0-9a-f]{2}` artığı, bir önceki karakterin kod noktasıyla eşleşiyorsa silinir) + seçenek 3'ün `gate_packs` kuralı. Üç belge birden düzelir; v1'i tercih etmek (seçenek 2) yalnız v1 karşılığı olan satırları kurtarırdı. · **Tarih:** 2026-08-19 · **Kapatan:** R2 (faz açık)
 
 ---
 
@@ -3701,7 +3711,7 @@ EOF
 | **Checklist** | checklist C8 (her boşluğun cause code'u var — burada boşluğun **şemada evi yok**) |
 | **Kategori / etki** | `creature-action` — kaynağın `CreatureAction.legendary_action_cost` sütunu korpüste **267** satırda ≥ 2 (ayrıca 1 olan yüzlerce satır, onlar varsayılan). Şemanın `creature-action` kategorisinde bu bedeli tutacak alan **yok** ve mapper sütunu hiç okumuyor. Kart bedeli göstermeyince tur başına 3 efsanevi aksiyonu olan bir canavarın 2 bedelli saldırısı **üç kez** kullanılabilir görünüyor |
 | **Cause code (öneri)** | `D` + `M` — şemada ev yok (`D`), sütun kaynakta dolu ve mapper onu hiç okumuyor (`M`, soru 6: `grep -rn legendary_action_cost tool/` **boş**) |
-| **Durum** | ❓ danışılacak |
+| **Durum** | 🛠 faz dosyalandı — **R3** |
 
 **Bulgu.** `monster.legendary_action_uses` (tur başına kaç aksiyon) var —
 F-tob-01'in konusu o. Eksik olan **aksiyon başına bedel**: kaynağın
@@ -3766,7 +3776,7 @@ grep -rn "legendary_action_cost" tool/ lib/ | wc -l    # 0 — ne yazan var ne o
 3. **Aynen bırak** — §5.8'e "efsanevi aksiyon bedeli yayınlanmıyor" satırı
    yazılır (C8) ve 152 kartın 1 bedelli görünmesi bilinçli kabul edilir.
 
-**Karar.** — · **Tarih:** — · **Kapatan:** —
+**Karar.** **düzelt** — seçenek 1 (`creature-action.legendary_action_cost`, integer 1–5, `grpRules`); 152 satır bedeline kavuşur. Ada yazmak (seçenek 2) mekaniği düzyazıda bırakır — checklist B3'ün tam olarak karşı olduğu şey. · **Tarih:** 2026-08-19 · **Kapatan:** R3 (faz açık)
 
 ## Tarama öncesi bilinen açıklar
 
