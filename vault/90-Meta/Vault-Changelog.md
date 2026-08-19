@@ -512,3 +512,64 @@ tags: [meta, changelog]
   (`tob` sonucu + yeni devir bloğu), `flutter_app/docs/pack_conformance_findings.md`,
   `flutter_app/docs/open5e_content_audit.md` §0/§5.8/§6, [[mapper_monster]],
   [[check_findings]]
+
+## 2026-08-18 — F3 / Dalga 4 sürüyor: open5e-tob3 tarandı (18/20), dört kayıt doğrulandı, biri düzeltildi, iki yeni bulgu
+
+- **`open5e-tob3` tarama birimi (18/20) kapandı.** 2.787 varlık
+  (`creature-action` 1.577, `trait` 812, `monster` 397, `language` 1);
+  `verify_packs --doc tob3` → **7.757 ok · 0 disagree · 0 absent · 0 unsourced ·
+  1.985 unverifiable** (= 5 × 397, beşi de beyan edilmiş kural), eşleşme
+  **397/397**; `gate_packs --packs /tmp/one` yeşil; `dupe_census`
+  "nothing installed" **0**, `--list-builtin-same` **0 satır**; `build_catalog`
+  sonrası drift yok. 31 madde: **19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️**, paketin kendi
+  sayacı **0**'da kaldı — dört ⚠️'nin dördü de korpüs geneli kayıt.
+- **Çocuk tarafı kayıpsız, ama kaynak iki katmanlı.** `tob3` korpüsteki tek
+  pakettir ki aksiyonları **v1**'den geliyor: v2 `CreatureAction.json` 397
+  yaratık için 309 satır taşıyor ve yalnız **2**'si `ACTION`; farkı §6 B8'in
+  kurtarması kapatıyor. Beklenen ref sayısı kural yeniden uygulanarak
+  hesaplandı ve pakete birebir oturdu: 1.370 / 136 / 96 / 75 aksiyon +
+  **1.230/1.230** trait, öksüz 0, dangling 0.
+- **Devralınan yedi kaydın payı ölçüldü.** F-pass0-19 → **12**, -20 → **123**,
+  -21 → **1** tuttu; -18, -22, -23 → **0** (üçü de doğrulama, varsayım değil).
+  **F-pass0-17 düzeltildi:** defterdeki tarif yalnız v2 satırlarını okuyor,
+  `tob3`'ün 1.370 aksiyonu ise v1'den geliyor — aynı ölçüt ebeveyn kapsamlı
+  olarak oraya uygulanınca **105 satır daha** adını kaybediyor
+  (`Cast a Spell (2)` → `Cast a Spell`), yani pay 23 değil **128**, korpüs
+  toplamı 382 değil **487**.
+- **F-pass0-24** (checklist C4, cause `M`) — B8'in v1 kurtarması yalnız
+  **tamamen boş** kovaya bakıyor; kısmen çevrilmiş kova "boş değil" sayıldığı
+  için arkasındaki v1 satırları hiç okunmuyor. B8'in yazılı gerekçesi bunun
+  bedelini *"tek bir canavar: Abaasy"* diyor; metin bazlı ölçüm **10 canavarda
+  11 aksiyon** buluyor (`tob-2023` 5, `tob` 3, `tob3` 3) — Red Hag'in
+  `Multiattack`'i hiç yok, Tosculi Hive-Queen'in *Glitter Dust*'ı yalnız
+  efsanevi kısayol olarak duruyor. B8'in gevşek ad kuralına itirazı ayakta.
+- **F-pass0-25** (checklist A3, cause `M`) — `is_attack`,
+  `CreatureActionAttack` satırının **varlığından** türetiliyor; satır yoksa
+  `false` yazılıyor. `tob3`'ün hiç attack fixture'ı olmadığı için alan
+  1.577/1.577 `false` (`audit_packs`: `⚠ const`) ve bunların **634**'ünün metni
+  *"Melee Weapon Attack: +N to hit"* diye başlıyor. Korpüste **681** satır,
+  5 pakette. Yanındaki dört boş attack sütunu **ayrı** bir konu: onlar yazılı
+  gerekçeli dürüst boşluk (cause `S`, K7).
+- **K7 ile bulgu sayılmayanlar:** dört attack sütunu (§6 B8'de yazılı),
+  `tags_line` 1 = v1 `subtype` 1, beş 0% alanın kaynağı da boş (v1 `spells_json`
+  hepsinde **`"null"` dizesi**), `alignment_ref` 378 + `alignment_note` 19 =
+  397/397 ve `unmapped_report`'ta `tob3` satırı 0, `trait_kind` sabiti
+  (`CreatureTrait.type` 1.230/1.230 null), 13 `Npc: …` adının temizlenmesi
+  (kurtarma indeksi ham adla eşleştiği için aksiyonları yerinde), Berberoka
+  (tek aksiyonsuz yaratık, v1 ve v2'de de aksiyonsuz), ve `legendary_action_uses`
+  sabitinin burada **sınanamaması** (v1 `legendary_desc` 397/397 boş).
+- **B2 temiz:** `tob3`'ün `monster` ad kesişimi **hiçbir paketle 0**;
+  75 paylaşılan adın tamamı statblock çocuğu.
+- Defter 39 → **41**, [[check_findings]] → *42 kayıt okundu, 41 tanesi sayaca
+  giriyor — temiz*. Kod değişmedi (tarama kuralı K1); `flutter analyze` 0 hata
+  (17 eski info), F grubu testleri **75/75**, `pack_field_render` `+19 -1`
+  (kesen tek grup bilinen F-pass0-01).
+- **Sıradaki:** Dalga 4'ün beşinci birimi `open5e-a5e-mm` (+ `open5e-bfrd`'nin
+  canavar satırları — B2'nin asıl sınav çifti). İki iş ölçülüp devredildi:
+  F-pass0-23'ün asıl paketi `bfrd` (90 satır, 41'i tamamen duyusuz) doğrulanmalı,
+  ve `a5e-mm` F-pass0-17'nin iki yöntemi ayrışan **tek** paket (gevşek 106 ⟷
+  sıkı 85) — farkın nereden geldiği adlandırılmalı. →
+  `flutter_app/docs/pack_conformance_plan.md` (`tob3` sonucu + yeni devir
+  bloğu), `flutter_app/docs/pack_conformance_findings.md`,
+  `flutter_app/docs/open5e_content_audit.md` §0/§5.8/§6, [[mapper_monster]],
+  [[check_findings]]

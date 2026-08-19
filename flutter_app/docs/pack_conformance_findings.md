@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 39 | 0 | 0 | 0 | 0 | **39** |
+| 0 | 41 | 0 | 0 | 0 | 0 | **41** |
 
 **Checklist maddesine göre** *(bulgu geldikçe doldurulur)*
 
@@ -112,8 +112,8 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 |---|--:|---|--:|---|--:|
 | A1 | 0 | B1 | 0 | C1 | 1 |
 | A2 | 0 | B2 | 1 | C2 | 3 |
-| A3 | 13 | B3 | 2 | C3 | 1 |
-| A4 | 1 | B4 | 0 | C4 | 1 |
+| A3 | 14 | B3 | 2 | C3 | 1 |
+| A4 | 1 | B4 | 0 | C4 | 2 |
 | A5 | 3 | B5 | 0 | C5 | 0 |
 | D1 | 3 | E1 | 1 | C6 | 0 |
 | D2 | 0 | E2 | 0 | C7 | 0 |
@@ -126,7 +126,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | Kapsam | Bulgu | Kapsam | Bulgu |
 |---|--:|---|--:|
-| `pass0` | 23 | `open5e-vom` | 3 |
+| `pass0` | 25 | `open5e-vom` | 3 |
 | `builtin` | 2 | `open5e-ccdx` | 0 |
 | `open5e-a5e-gpg` | 0 | `open5e-bfrd` | 1 |
 | `open5e-a5e-ddg` | 0 | `open5e-tob2` | 0 |
@@ -2488,7 +2488,7 @@ EOF
 
 | | |
 |---|---|
-| **Kapsam** | `pass0` — korpüs geneli 382 satır (7 canavar paketi; `open5e-ccdx` 57) |
+| **Kapsam** | `pass0` — korpüs geneli **487** satır (7 canavar paketi; `open5e-tob3` 128, `open5e-a5e-mm` 126) |
 | **Checklist** | checklist D1 (değer kaynakla aynı değil) |
 | **Kategori / etki** | `creature-action` 328 + `trait` 54 satır: ebeveyn canavar, kendi satırının adı yerine metni aynı olan **başka** bir canavarın satırının adına ref veriyor; 6 `trait`'te ad kullanım sayısı taşıdığı için mekanik de değişiyor (`Shadow Traveler (1/Day)` → `(3/Day)`) |
 | **Cause code (öneri)** | `D` — `mappers/monster.dart` `_ensureChild` içerik-hash'iyle (`_contentHash`, tip + `description` + öznitelikler) birleştiriyor; **ad hash'e girmiyor**, bu yüzden metni birebir aynı olan iki farklı silah tek varlıkta toplanıyor ve ilk gelenin adı kazanıyor |
@@ -2531,9 +2531,23 @@ karşılaştırmak gerekiyor. Birleştirmenin kendisi doğru bir tasarım karar�
 | `open5e-tob` | 52 | 1 | 53 |
 | `open5e-tob-2023` | 34 | 2 | 36 |
 | `open5e-tob2` | 30 | 0 | 30 |
-| `open5e-tob3` | 2 | 21 | 23 |
+| `open5e-tob3` | 2 **(+105)** | 21 | 23 **(→ 128)** |
 | `open5e-tdcs` | 0 | 0 | 0 |
-| **Toplam** | **328** | **54** | **382** |
+| **Toplam** | **328 (+105)** | **54** | **382 (→ 487)** |
+
+> **`tob3` düzeltmesi — 2026-08-18, `tob3` birimi.** Yukarıdaki tarif kaynağı
+> yalnız **v2**'den okuyor. `tob3` korpüsteki tek pakettir ki `creature-action`
+> satırlarının neredeyse tamamı (1.370/1.577) **v1 `Monster.actions_json`**
+> kolonundan geliyor (§6 B8 kurtarması), ve tarif bu satırlara hiç bakmıyor.
+> Aynı ölçüt v1 tarafına, üstelik **ebeveyn kapsamlı** (yalnız aynı canavarın
+> ref'lediği çocuklarla karşılaştırarak) uygulandığında `tob3`'te **105** satır
+> daha adını kaybediyor — çoğu kullanım sayısı: `Cast a Spell (2)` → `Cast a
+> Spell` (6 kez), `Wing Attack (2)`, `Shimmering Wings (2)`, `Anoxic Aura
+> (1/Day)`, `Musk (Recharge: Short/Long Rest)`. Yani `tob3`'ün gerçek payı
+> **23 değil 128**, korpüs toplamı **382 değil 487**. Diğer paketlerde v1
+> kurtarması hiç çalışmadığı için (B8: "her diğer belge no-op") bu ek yalnız
+> `tob3`'ü ilgilendiriyor. `_cleanChildName` bu ekleri **kırpmıyor** — kayıp
+> `_ensureChild`'ın hash birleştirmesinden geliyor, yani aynı kusur.
 
 **Kanıt.**
 ```sh
@@ -3149,6 +3163,192 @@ EOF
 **Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ---
+
+### F-pass0-24 — B8'in "bedeli tek bir canavar" gerekçesi eksik ölçülmüş: v2'nin yarım çevirdiği kova v1 kurtarmasını da kapatıyor, 10 canavar 11 aksiyonunu kaybediyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — 3 yayınlanan belge (`open5e-tob-2023` 5, `open5e-tob` 3, `open5e-tob3` 3) |
+| **Checklist** | checklist C4 (her canavarın aksiyonları eksiksiz inmeli) |
+| **Kategori / etki** | `monster` — `action_refs`; **11 aksiyon** 10 canavarda hiç yayınlanmıyor, çünkü B8'in v1 kurtarması yalnız **tamamen boş** kovaya bakıyor; yarım çevrilmiş kovada v1'in fazladan satırları sessizce düşüyor |
+| **Cause code (öneri)** | `M` — veri yüklü ve elde: `_v1ActionIndex` bu üç belgenin v1 satırlarını zaten kuruyor, `mapCreatures` yalnız `if (b.value.isNotEmpty) continue;` dediği için okumuyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** §6 B8 kurtarmayı anlatırken şunu yazıyor: *"Muhafazakâr kuralın
+bütün bedeli **tek bir canavar**: Abaasy, v2'nin kısmen çevirdiği tek tob3
+yaratığı, 2 v2 satırını tutuyor ve v1'in 5'inden vazgeçiyor."* Ölçüm bu cümleyi
+tob3 için doğruluyor ama **korpüs için yanlışlıyor**: aynı desen `tob`'da 4,
+`tob-2023`'te 5 yaratıkta daha var. Metin karşılaştırmasıyla (ada değil,
+`desc`e bakarak — ad karşılaştırması F-pass0-17 yüzünden yanıltıcı) gerçekten
+düşen satır sayısı **11**:
+
+| Paket | Canavar | Düşen aksiyon |
+|---|---|---|
+| `open5e-tob` | Tosculi Hive-Queen | Glitter Dust |
+| `open5e-tob` | Vampire Warlock - Variant | Call the Blood |
+| `open5e-tob` | Zmey | Bite |
+| `open5e-tob-2023` | Pact Vampire | Call Blood |
+| `open5e-tob-2023` | Queen of Witches | Mystical Blast |
+| `open5e-tob-2023` | Red Hag | Multiattack |
+| `open5e-tob-2023` | Tosculi Hive Queen | Stinger |
+| `open5e-tob-2023` | Ushabti Royal Guard | Medjai's Scepter |
+| `open5e-tob3` | Abaasy | Shield Shove · Spear · Eyebeam (Recharge 5-6) |
+| **Toplam** | **10 canavar** | **11 aksiyon** |
+
+Kayıp gerçek: adı aynı olan bir satır başka kovada duruyor olabilir ama metni
+değil — Tosculi Hive-Queen'in kartında "Glitter Dust" **yalnız efsanevi aksiyon
+kısayolu** olarak duruyor (*"The hive-queen uses Glitter Dust."*), asıl
+aksiyonun kendisi (kaydın DC'si, etkisi) hiçbir yerde yok. Red Hag'in
+**Multiattack**'i hiç yok. Tek istisna `tob`'un `Young Void Dragon`'ı: v1'in
+fazladan satırı upstream ayrıştırma çöpü (*"Falling damage in the area
+increases to 1d10 per 10 feet fallen"*), v2'nin onu atması **doğru** — bu
+yüzden 12 değil 11 sayıldı.
+
+B8'in gevşek kural için yazdığı gerekçe ("adı v2'de olmayan her v1 satırını
+ekle → korpüs geneli ~2.000 satır, çoğu kurtarma kılığında kopya") **ayakta**;
+bu kayıt onu değil, "bedeli tek bir canavar" ölçüsünü düzeltiyor. Kural
+metin-eşitliğine çevrilirse (v1 satırının `desc`i o yaratığın hiçbir çocuğunda
+geçmiyorsa ekle) bedel 11 satırın geri gelmesi olur, kopya değil.
+
+**Kanıt.**
+```sh
+# flutter_app'ten — v2 kovası yarım dolu olan yaratıklar, sonra metin bazlı kayıp
+python3 - <<'EOF'
+import json,re,collections
+D='../open5e-api-staging/data/'
+def norm(s): return re.sub(r'\s+',' ',re.sub(r'[^a-z0-9 ]','',(s or '').lower())).strip()
+def rows(raw):
+    if isinstance(raw,str):
+        try: raw=json.loads(raw)
+        except Exception: return []
+    return [r for r in raw if isinstance(r,dict) and (r.get('desc') or '').strip()] if isinstance(raw,list) else []
+lost=collections.Counter()
+for slug in ('tob','tob-2023','tob3'):
+    v1={r['fields']['name']:r['fields'] for r in json.load(open(D+f'v1/{slug}/Monster.json',encoding='utf-8'))}
+    cre={r['pk']:r['fields']['name'] for r in json.load(open(D+f'v2/kobold-press/{slug}/Creature.json',encoding='utf-8'))}
+    v2=collections.defaultdict(int)
+    for a in json.load(open(D+f'v2/kobold-press/{slug}/CreatureAction.json',encoding='utf-8')):
+        f=a['fields']
+        if (f.get('action_type') or 'ACTION').upper()=='ACTION': v2[cre.get(f['parent'])]+=1
+    p=json.load(open(f'assets/open5e_packs/open5e-{slug}.pkg.json',encoding='utf-8')); ents=p['entities']
+    mon={e['name']:e for e in ents.values() if e['type']=='monster'}
+    for n,f in v1.items():
+        r=rows(f.get('actions_json'))
+        if not (0 < v2.get(n,0) < len(r)): continue          # yarım dolu kova
+        e=mon.get(n) or mon.get(re.sub(r'^Npc:\s*','',n))
+        blob=' || '.join(norm(ents[x]['description'])
+                         for k in ('action_refs','bonus_action_refs','reaction_refs',
+                                   'legendary_action_refs','trait_refs')
+                         for x in (e['attributes'].get(k) or []))
+        for x in r:
+            if norm(x['desc'])[:60] not in blob:
+                lost[slug]+=1; print(' ',slug,'|',n,'| LOST:',x['name'])
+print(dict(lost),'toplam',sum(lost.values()))
+EOF
+#   tob | Tosculi Hive-Queen | LOST: Glitter Dust
+#   tob | Vampire Warlock - Variant | LOST: Call the Blood
+#   tob | Young Void Dragon | LOST: Falling damage in the area increases…   ← upstream çöpü, sayılmadı
+#   tob | Zmey | LOST: Bite
+#   tob-2023 | Pact Vampire | LOST: Call Blood
+#   tob-2023 | Queen of Witches | LOST: Mystical Blast
+#   tob-2023 | Red Hag | LOST: Multiattack
+#   tob-2023 | Tosculi Hive Queen | LOST: Stinger
+#   tob-2023 | Ushabti Royal Guard | LOST: Medjai's Scepter
+#   tob3 | Abaasy | LOST: Shield Shove / Spear / Eyebeam (Recharge 5-6)
+#   {'tob': 4, 'tob-2023': 5, 'tob3': 3} toplam 12 → çöp satır düşülünce 11
+```
+
+**Seçenekler.**
+1. **Kovayı satır bazına indir** — `if (b.value.isNotEmpty) continue;` yerine
+   "bu yaratığın hiçbir çocuğunda metni geçmeyen v1 satırını ekle". 11 aksiyon
+   geri gelir; gevşek ad kuralının ~2.000 kopyası gelmez, çünkü ölçüt metin.
+   `test/tool/creature_action_fallback_test.dart`'a 10 yaratıklık vaka eklenir.
+2. **Yalnız `ACTION` kovası için** — desen yalnız temel aksiyon kovasında
+   görüldü; değişiklik oraya sınırlanır, diğer üç kova bugünkü hâlinde kalır.
+3. **Aynen bırak, gerekçeyi düzelt** — §6 B8'deki "bedeli tek bir canavar"
+   cümlesi "bedeli 10 canavar / 11 aksiyon" olarak düzeltilir ve §5.8'e satır
+   yazılır (C8). Kayıp bilinçli kabul edilir, ama artık ölçülmüş sayıyla.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
+
+### F-pass0-25 — kaynak sessizken `is_attack: false` yazılıyor: metni "Melee Weapon Attack: +7 to hit" olan 681 satır kartta saldırı sayılmıyor
+
+| | |
+|---|---|
+| **Kapsam** | `pass0` — 5 yayınlanan paket (`open5e-tob3` 634, `open5e-a5e-mm` 32, `open5e-tob` 10, `open5e-tob-2023` 3, `open5e-tob2` 2) |
+| **Checklist** | checklist A3 (uydurma değer yok) |
+| **Kategori / etki** | `creature-action` — `is_attack`; **681 satırda** `false` yazılı, oysa satırın kendi metni *"Melee/Ranged Weapon Attack: +N to hit"* diye başlıyor; `tob3`'te alan 1.577/1.577 `false` olduğu için `audit_packs` da `⚠ const` basıyor |
+| **Cause code (öneri)** | `M` — `mappers/monster.dart:373` `'is_attack': attack != null` yazıyor, yani "`CreatureActionAttack` satırı yok" ⇒ "saldırı değil"; v1'den kurtarılan satırlarda (satır 431) sabit `false`. Kaynak "saldırı değil" demiyor, **hiçbir şey** demiyor |
+| **Durum** | ❓ danışılacak |
+
+**Bulgu.** `is_attack` bir üç değerli gerçeğin iki değerli yazımı: alan
+`CreatureActionAttack` satırının **varlığından** türetiliyor. `tob3`'ün
+kaynağında `CreatureActionAttack.json` **hiç yok** (belgenin dört fixture'ı
+`Creature`, `CreatureAction`, `CreatureTrait`, `Document`), dolayısıyla 1.577
+satırın hepsi `false` — aralarında metni açıkça saldırı olan **634** satır var.
+Aynı şey attack fixture'ı olan belgelerde de küçük ölçekte oluyor: `a5e-mm`'de
+32, `tob`'da 10, `tob-2023`'te 3, `tob2`'de 2 satırın metni saldırı ama
+eşleşen attack satırı yok.
+
+Bu, `attack_kind`/`attack_bonus`/`damage_dice`/`reach_ft`'in `tob3`'te %0
+olmasından **ayrı** bir sorun: o dördü **boş** ve boşluğun yazılı gerekçesi
+var (§6 B8: *"kurtarılan satırlar yalnız düzyazı"*, `tob3` hiç attack fixture'ı
+yayınlamıyor — cause `S`, C8'e göre dürüst). `is_attack` ise boş değil,
+**dolu ve yanlış**: kart "bu bir saldırı değildir" diye olumlu bir iddia
+taşıyor. Şemada alan `boolean` (`content.dart:1396`), yani "bilinmiyor"u
+yazacak bir değer yok.
+
+**Dağılım** *(2026-08-18'de `tob3` birimi ölçtü)*
+
+| Paket | metni saldırı, `is_attack` `false` | pakette `creature-action` |
+|---|--:|--:|
+| `open5e-tob3` | 634 | 1.577 |
+| `open5e-a5e-mm` | 32 | 1.655 |
+| `open5e-tob` | 10 | 1.303 |
+| `open5e-tob-2023` | 3 | 1.658 |
+| `open5e-tob2` | 2 | 1.209 |
+| **Toplam** | **681** | |
+
+**Kanıt.**
+```sh
+# flutter_app'ten — satırın kendi metni saldırı diyor mu, alan ne diyor
+python3 - <<'EOF'
+import json,glob,os,re,collections
+pat=re.compile(r'\b(melee|ranged)\s+(weapon|spell)\s+attack:',re.I)
+bad=collections.Counter(); tot=collections.Counter()
+for pf in sorted(glob.glob('assets/open5e_packs/open5e-*.pkg.json')):
+    slug=os.path.basename(pf)[7:-9]
+    for e in json.load(open(pf,encoding='utf-8'))['entities'].values():
+        if e['type']!='creature-action': continue
+        tot[slug]+=1
+        if pat.search(e.get('description') or '') and not e['attributes'].get('is_attack'):
+            bad[slug]+=1
+print('is_attack=false ama metin saldırı:',dict(bad.most_common()),'toplam',sum(bad.values()))
+EOF
+# is_attack=false ama metin saldırı: {'tob3': 634, 'a5e-mm': 32, 'tob': 10,
+#                                     'tob-2023': 3, 'tob2': 2} toplam 681
+```
+```sh
+# tob3'ün kaynağında attack fixture'ı yok — dosya listesi ve alanın sabitliği
+ls ../open5e-api-staging/data/v2/kobold-press/tob3/
+# CreatureAction.json  Creature.json  CreatureTrait.json  Document.json
+dart run tool/open5e_import/bin/audit_packs.dart --packs /tmp/one --only creature-action | grep is_attack
+#    ✅   is_attack                            100%  (1577/1577)  ⚠ const
+```
+
+**Seçenekler.**
+1. **Metinden türet** — attack satırı yokken `desc` *"Melee/Ranged (Weapon|Spell)
+   Attack:"* ile başlıyorsa `is_attack: true`. 681 satır doğru işaretlenir,
+   uydurulan tek şey yok (metin zaten kaynağın). En küçük değişiklik.
+2. **Sessizken yazma** — attack satırı yoksa alan hiç yazılmaz (null kalır).
+   "Bilinmiyor" dürüstçe temsil edilir; kart saldırı rozetini göstermez ama
+   yanlış olumsuzlama da yapmaz. `audit_packs`'te alan `tob3` için %0'a düşer.
+3. **Aynen bırak** — §5.8'e "`creature-action.is_attack`, `CreatureActionAttack`
+   satırının varlığından türetiliyor; attack fixture'ı olmayan belgede
+   (`tob3`) hepsi `false`" satırı yazılır (C8) ve yanlış olumsuzlama bilinçli
+   kabul edilir.
+
+**Karar.** — · **Tarih:** — · **Kapatan:** —
 
 ## Tarama öncesi bilinen açıklar
 

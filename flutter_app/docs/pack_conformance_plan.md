@@ -10,41 +10,40 @@
 > **Şu an:** Checklist **onaylandı** (F0, 2026-08-15), bu plan **onaylandı**
 > (F1, 2026-08-17 — §10), bulgu defterinin formatı **onaylandı** (F2, 2026-08-17).
 > **F3 sürüyor: Pass 0 (§6) + Dalga 0 + Dalga 1 + Dalga 2 + Dalga 3 bitti,
-> Dalga 4 sürüyor** — son okunan birim `tob` (2026-08-18).
-> **20 tarama biriminin 17'si kapandı**, defterde **39 bulgu** var, otuz
-> dokuzu da ❓ danışılacak (`python3 tool/check_findings.py` → *40 kayıt, 39
-> sayaca giriyor, temiz*). `tob` birimi devraldığı **beş** `pass0` kaydının
-> payını bağımsız ölçtü ve beşi de tuttu (F-pass0-17 → 53, -18 → 652,
-> -19 → 124, -20 → 72, -21 → 18) ve **üç** yeni kayıt açtı: **F-tob-01**
-> (efsanevi aksiyon sabiti bu pakette yanlış — 3 canavar), **F-pass0-22**
-> (upstream efsanevi aksiyonu ikinci kez normal `ACTION` olarak da yayınlıyor —
-> 114 satır) ve **F-pass0-23** (v1 düzyazısındaki adı farklı duyular düşüyor —
-> 97 canavar, 41'i tamamen duyusuz). `tob`'un kendi verisi temiz:
-> **7.836 ok · 0 disagree · 0 absent · 0 unsourced · 1.955 unverifiable**,
-> eşleşme 391/391 ve çocuk tarafında **0 kayıp satır** (2.550/2.550).
+> Dalga 4 sürüyor** — son okunan birim `tob3` (2026-08-18).
+> **20 tarama biriminin 18'i kapandı**, defterde **41 bulgu** var, kırk biri
+> de ❓ danışılacak (`python3 tool/check_findings.py` → *42 kayıt, 41 sayaca
+> giriyor, temiz*). `tob3` birimi devraldığı yedi `pass0` kaydının payını
+> bağımsız ölçtü: F-pass0-19 → 12, -20 → 123, -21 → 1 tuttu; -18, -22 ve -23
+> **0** çıktı (üçü de doğrulama); **F-pass0-17 ise düzeltildi** — defterdeki
+> tarif yalnız v2 satırlarını okuduğu için `tob3`'ün payı 23 görünüyordu,
+> v1'den kurtarılan 1.370 aksiyona da uygulanınca **128**, korpüs toplamı
+> **487**. İki yeni kayıt açıldı, ikisi de `pass0`: **F-pass0-24** (kısmen
+> çevrilmiş v2 kovası B8'in v1 kurtarmasını kapatıyor — 10 canavar, 11 aksiyon;
+> §6 B8'in "bedeli tek bir canavar" cümlesi eksik ölçülmüş) ve **F-pass0-25**
+> (`is_attack`, attack fixture'ı yokken `false` yazılıyor — metni "Melee Weapon
+> Attack: +N to hit" olan 681 satır kartta saldırı sayılmıyor, 634'ü `tob3`'te).
+> `tob3`'ün kendi verisi temiz: **7.757 ok · 0 disagree · 0 absent ·
+> 0 unsourced · 1.985 unverifiable**, eşleşme 397/397, paket sayacı **0**.
 >
-> **Sıradaki iş: Dalga 4'ün dördüncü birimi → `open5e-tob3` (2.787 varlık;
-> creature-action 1.577, trait 812, monster 397, language 1).**
-> `tob` biriminden çıkan dört uyarı:
-> (1) **`tob3`'ün kaynağında `CreatureActionAttack.json` yok** — dört dosyası
-> var (`Creature`, `CreatureAction`, `CreatureTrait`, `Document`). Sonuç
-> ölçüldü: paketteki **1.577 `creature-action` satırının 0'ında**
-> `attack_kind`/`attack_bonus`/`damage_dice`/`reach_ft` var. Birimin ilk işi bu:
-> boşluk kaynakta mı (cause `S`, o zaman §5.8'de yazılı gerekçesi var mı) yoksa
-> yükleyicide mi (`L`) — **soru 3 aynen bu satır için var**;
-> (2) **Beş `pass0` kaydının `tob3` payı ölçülmeli, kopyalanmamalı:**
-> F-pass0-17 → 23 (2 `creature-action` + 21 `trait`; **`trait` ağırlıklı tek
-> paket**, sıkı yöntemle de bakılmalı), F-pass0-19 → 12, F-pass0-20 → 123,
-> F-pass0-21 → 1. F-pass0-18 ve F-pass0-22 `tob3`'ü **hiç** ilgilendirmiyor
-> (ikisi de `CreatureActionAttack`/`(Costs N Actions)` satırlarına dayanıyor) —
-> bu bir doğrulama, sıfırın da ölçülmesi gerekiyor;
-> (3) **F-pass0-23'ün asıl paketi `bfrd` (90 satır), `tob3` payı 0.** `a5e-mm`
-> (+`bfrd` canavarları) birimi kayıttaki 90'ı ve "41 canavarda `senses`
-> tamamen boş" sayısını doğrulamalı;
-> (4) **`tob-2023` birimi iki devralınan iş taşıyor:** `unmapped_report`'un üç
-> `alignment` satırı **onun kaynağında** bozuk (`'Shapechanger)'`, `'Titan)'` —
-> upstream verisi, cause `S`), ve `tob` ⟷ `tob-2023` çiftinin 326 ortak
-> `monster` adı orada da sayılmalı (254'ü farklı basım — B2 ayakta).
+> **Sıradaki iş: Dalga 4'ün beşinci birimi → `open5e-a5e-mm` (+ `open5e-bfrd`'nin
+> canavar satırları; B2'nin asıl sınav çifti, plan §Dalga 4 kararı).**
+> `tob3` biriminden çıkan dört uyarı:
+> (1) **F-pass0-23'ün asıl paketi `bfrd`** — kayıttaki **90** satır ("keensense",
+> `darkvision_range` sütunu v2'de hiç yok) ve "**41 canavarda `senses` tamamen
+> boş**" sayısı bu birimde doğrulanmalı; `tob3` payının 0 çıktığı ölçüldü, yani
+> sayı `bfrd`+`tob`+`ccdx`'e ait;
+> (2) **F-pass0-17'nin `a5e-mm` payı iki yöntemde ayrışan tek pakettir**
+> (gevşek 106 ⟷ sıkı 85). `tob2`, `tob` ve `tob3` üçünde de iki yöntem aynı
+> sonucu verdi, dolayısıyla fark a5e'ye özgü — bu birim farkın **nereden**
+> geldiğini adlandırmalı;
+> (3) **F-pass0-24'ün `a5e-mm` payı 0 ölçüldü** (kısmen çevrilmiş kova yalnız
+> `tob`/`tob-2023`/`tob3`'te var) ama **F-pass0-25'in payı 32**, F-pass0-22'nin
+> payı 0, F-pass0-20'nin payı **189** (korpüsün en büyüğü) — üçü de
+> doğrulanmalı, kopyalanmamalı;
+> (4) **`bfrd` paketi `class` 1 + `subclass` 1 satır da taşıyor** — canavar
+> paketi kalıbının dışına çıkan tek Dalga 4 dosyası; C1 (seviye tablosu) o iki
+> satır için gerçekten sorulmalı.
 >
 > **Dalga 4 bittiğinde** 20/20 birim kapanır ve F3 biter; sıra
 > **F4 — "Karar ver, sonra görev aç"**a gelir.
@@ -1891,6 +1890,142 @@ g. **`Void Speech`** paketin tek `language` varlığı ve altı pakette birden
 kusuru, biri (**A5**) gerçekten bu paketin kendi verisi. **20 tarama biriminin
 17'si bitti.**
 
+#### open5e-tob3 sonucu — 2026-08-18
+
+**Ölçüm.** 2.787 varlık, dört kategori: `creature-action` 1.577, `trait` 812,
+`monster` 397, `language` 1 (devir notuyla birebir). `verify_packs --doc tob3` →
+eşleşme **397/397**, **7.757 ok · 0 disagree · 0 absent · 0 unsourced ·
+1.985 unverifiable** — unverifiable tam olarak 5 × 397 ve beşi `tob`/`tob2` ile
+aynı beyan edilmiş kural. `gate_packs --packs /tmp/one` yeşil; `dupe_census`
+"nothing installed" **0**, `--list-builtin-same` **0 satır** (`tob3`'ün A
+satırı: 75 ad = 60 `trait` + 15 `creature-action`). `build_catalog` sonrası
+ağaç temiz; manifest satırı *Tome of Beasts 3* / Kobold Press / `ogl-10a` /
+`5e-2014` / `1.1.0` / `counts {trait: 812, creature-action: 1577, monster: 397,
+language: 1}`.
+
+**Çocuk satır kapsaması — kayıp 0, ama kaynak iki katmanlı.** `tob3` korpüsteki
+tek pakettir ki aksiyonlarının neredeyse tamamı **v1**'den geliyor: v2
+`CreatureAction.json` yalnız 309 satır taşıyor (136 `BONUS_ACTION` + 96
+`REACTION` + 75 `LEGENDARY_ACTION` + **2** `ACTION`), v1 `Monster.actions_json`
+ise 1.373. §6 B8'in kurtarması devreye girip farkı kapatıyor. Beklenen ref
+sayısı kural yeniden uygulanarak hesaplandı ve pakete **birebir** oturuyor:
+`action_refs` 1.370/1.370, `bonus_action_refs` 136/136, `reaction_refs` 96/96,
+`legendary_action_refs` 75/75, `trait_refs` **1.230/1.230** (= v2 `CreatureTrait`
+satır sayısı). Varlık sayısı (1.577 + 812) satır sayısından küçük: fark
+tamamen içerik-hash'li birleştirme.
+
+**Devralınan dört uyarının cevabı.**
+* **(1) Attack alanlarının boşluğu `S`, ama `is_attack` `M` — bulgu açıldı.**
+  `tob3`'ün kaynağında `CreatureActionAttack.json` **yok** (dört dosya:
+  `Creature`, `CreatureAction`, `CreatureTrait`, `Document`), v1'den kurtarılan
+  satırlar da yalnız düzyazı. `attack_kind`/`attack_bonus`/`damage_dice`/
+  `reach_ft`'in 1.577/1.577'de boş olması bu yüzden **dürüst boşluk** ve §6
+  B8'de yazılı (cause `S`, K7 → bulgu değil). Fakat aynı yokluk `is_attack`
+  alanına **`false`** olarak yazılıyor: metni *"Melee Weapon Attack: +N to
+  hit"* olan **634** `tob3` satırı kartta saldırı sayılmıyor →
+  **F-pass0-25** (checklist A3, cause `M`, korpüste 681 satır).
+* **(2) Beş `pass0` kaydının payı — dördü doğrulandı, biri düzeltildi.**
+  F-pass0-19 → **12** (10 direnç + 2 bağışıklık), F-pass0-20 → **123**,
+  F-pass0-21 → **1**, ve doğrulama olarak F-pass0-18 → **0** (attack fixture'ı
+  yok), F-pass0-22 → **0** (ne v2'de ne v1'de tek bir `(Costs N Actions)` adı
+  var). F-pass0-17 defterde `tob3` için **23** yazıyordu (2 `creature-action` +
+  21 `trait`) — doğru, **ama eksik**: defterdeki tarif yalnız v2 satırlarını
+  okuyor, `tob3`'ün 1.370 aksiyonu ise v1'den geliyor. Aynı ölçüt ebeveyn
+  kapsamlı olarak v1 tarafına uygulandığında **105 satır daha** adını
+  kaybediyor (`Cast a Spell (2)` → `Cast a Spell`, `Wing Attack (2)`,
+  `Anoxic Aura (1/Day)` …), yani gerçek pay **128** ve korpüs toplamı 382 değil
+  **487**. Kayıt bu sayıyla düzeltildi.
+* **(3) F-pass0-23'ün `tob3` payı gerçekten 0.** `senses` 326/397 dolu, boş
+  kalan **71** canavarın v1 `senses` düzyazısında yalnız *"passive Perception
+  N"* var — yani adı olan hiçbir duyu düşmüyor. Kaydın 90 satırlık `bfrd` payı
+  hâlâ `a5e-mm` (+`bfrd`) biriminin işi.
+* **(4) B8 gerekçesinin kendisi eksik ölçülmüş — bulgu açıldı.** §6 B8
+  *"muhafazakâr kuralın bütün bedeli tek bir canavar: Abaasy"* diyor. `tob3`
+  için doğru (v2'nin kısmen çevirdiği tek yaratık o), korpüs için değil: aynı
+  desen `tob`'da 4, `tob-2023`'te 5 yaratıkta daha var ve metin bazlı
+  karşılaştırma **11 aksiyonun** hiç yayınlanmadığını gösteriyor (Red Hag'in
+  `Multiattack`'i dahil) → **F-pass0-24** (checklist C4, cause `M`).
+
+**Yeni bulgular — iki tane, ikisi de `pass0`.**
+* **F-pass0-24** (checklist C4, cause `M`) — kısmen çevrilmiş v2 kovası B8'in
+  v1 kurtarmasını kapatıyor; 10 canavar 11 aksiyonunu kaybediyor
+  (`tob-2023` 5, `tob` 3, `tob3` 3). Ölçüm ada değil **metne** bakıyor: adı
+  aynı olan bir satır başka kovada durabiliyor (Tosculi Hive-Queen'in "Glitter
+  Dust"ı yalnız efsanevi kısayol olarak var), asıl aksiyon metni hiçbir yerde
+  yok.
+* **F-pass0-25** (checklist A3, cause `M`) — `is_attack`, `CreatureActionAttack`
+  satırının **varlığından** türetiliyor; satır yoksa `false` yazılıyor. Kaynak
+  "saldırı değil" demiyor, hiçbir şey demiyor. **681 satır** (5 pakette),
+  bunların 634'ü `tob3`; `audit_packs` alanı zaten `⚠ const` diye işaretliyor.
+
+Defter 39 → **41**; `check_findings.py` → *42 kayıt okundu, 41 tanesi sayaca
+giriyor — temiz*.
+
+**Ölçülüp bulgu sayılmayanlar.**
+a. **`tags_line` 1/397 dürüst.** v1 `subtype` sütunu **1/397** dolu
+   (`Imperator, Penguin Swarm` → `(Swarm)`) — birebir.
+b. **Sıfır kalan alanların kaynağı da sıfır.** v2 `hover` 0/397,
+   `telepathy_range` 0/397, `LAIR_ACTION` satırı 0; v1 `spells_json` 397 satırda
+   da **`"null"` dizesi**, `group` 0. Yani `can_hover`/`telepathy_ft`/
+   `lair_action_refs`/`spell_refs`/`gear_refs` %0 dürüst (cause `S`).
+c. **`alignment` hizalaması tam.** `alignment_ref` 378 + `alignment_note` 19 =
+   **397/397**; 19'un hepsi *"any alignment"* / *"chaotic neutral or chaotic
+   good"* gibi ayrıştırılamayan değer. `unmapped_report`'ta `tob3` satırı **0**.
+d. **`trait_kind` sabiti dürüst (K7).** `CreatureTrait.type` **1.230/1.230**
+   null; vault notu ve §5.6 bunu yazılı olarak kapatıyor.
+e. **Berberoka aksiyonsuz ve kaynak da öyle.** `action_refs` 396/397; tek
+   istisnanın v1 `actions_json`'ı `null`, v2'de de `ACTION` satırı yok —
+   `gate_packs`'in `monster-actionless` kuralı bir bonus aksiyonu olduğu için
+   yeşil. §6 B8 bu satırı adıyla anıyor (cause `S`).
+f. **`legendary_action_uses` sabiti burada sınanamıyor.** `tob`'un F-tob-01'i
+   v1 `legendary_desc`'i okuyarak açılmıştı; `tob3`'te o sütun **397/397 boş**,
+   yani sabit **3** (21 satır) ne doğrulanabiliyor ne çürütülebiliyor —
+   D2'nin beyan ettiği "kural" tam olarak bu.
+g. **`Void Speech`** paketin tek `language` varlığı: B9'un bilinçli kararı,
+   B2'nin istisna kovası.
+h. **13 `Npc: …` adı temizleniyor** (`Npc: Apostle` → `Apostle`); kurtarma
+   indeksi **ham** adla eşleştiği için 13'ünün de aksiyonu yerine oturuyor.
+
+| Madde | Sonuç | Not |
+|---|:--:|---|
+| A1 | ✅ | dört kategori slug'ı da built-in şemada tanımlı |
+| A2 | ✅ | `ac`/`hp_average`/`cr`/`xp`/`stat_block`/`size_ref`/`creature_type_ref` 397/397; `action_refs` 396/397 (Berberoka, kaynakta da yok) |
+| A3 | ⚠️ | `is_attack` 634 satırda metnine aykırı (**F-pass0-25**), "nonmagical" niteliği 12 canavarda (**F-pass0-19**), biçim niteliği 1 aksiyonda (**F-pass0-21**) |
+| A4 | ✅ | 397 adın 397'si kaynakla eşleşiyor (13'ü `Npc: ` temizliğiyle); çocuk ad temizliği satır düşürmüyor |
+| A5 | ✅ | iki sabit alan da dürüst: `trait_kind` (`type` 1.230/1.230 null), `is_attack`'in sabitliği ise A3'te sayıldı — aynı kusur iki maddede iki kez sayılmaz |
+| B1 | ✅ | `--list-builtin-same` 0 satır |
+| B2 | ✅ | `monster` ad kesişimi **hiçbir paketle 0**; 75 paylaşılan ad tamamen statblock çocuğu |
+| B3 | ⚠️ | dil bilgisi 123 canavarda düzyazıda kalıyor (**F-pass0-20**); `senses` tarafında kayıp yok (F-pass0-23 payı 0) |
+| B4 | ✅ | gate yeşil; `dupe_census` C bölümü "nothing installed" 0 |
+| B5 | ➖ | paket→paket bağı yok (`requires: []`) |
+| C1 | ➖ | `class`/`subclass` yok |
+| C2 | ➖ | `species`/`background`/`feat` yok |
+| C3 | ➖ | `spell` yok |
+| C4 | ⚠️ | v2+v1 kaynak satırlarının tamamı ref'leniyor (1.370/136/96/75/1.230), öksüz 0, dangling 0 — ama Abaasy'nin 3 aksiyonu kurtarma kuralının kovası yüzünden hiç yayınlanmıyor → **F-pass0-24** |
+| C5 | ➖ | `magic-item` yok |
+| C6 | ⛔ | `trait` grant bloğu §5.8'de ⛔ (statblock çocuğu `CharacterResolver`'a inmez) |
+| C7 | ✅ | Tier-0 sözlükleri çözülüyor; `unmapped_report`'ta `tob3` satırı 0 |
+| C8 | ✅ | %0 kalan altı alanın altısının da kaynağı boş ve gerekçesi yazılı (§6 B8 + b maddesi) |
+| D1 | ⚠️ | `monster` tarafı 7.757 ok / 0 disagree; çocuk tarafında **128** satır yanlış adla → **F-pass0-17** (defterdeki 23 bu birimde düzeltildi) |
+| D2 | ✅ | 1.985 `unverifiable` = 5 × 397, beşinin de beyan edilmiş kuralı var; `unsourced` 0 |
+| D3 | ✅ | `gate_packs` yeşil |
+| E1 | ✅ | `bundled_pack_resolve_test` yeşil |
+| E2 | ✅ | `monster.description` 0/397 — kural çocuk satırlarda, mekanik olmayan alan yok |
+| E3 | ➖ | büyücülük ilerlemesi yok |
+| F1 | ✅ | `open5e-tob3 installs and reads back unchanged` |
+| F2 | ✅ | `pack_field_render` paket tarafı yeşil; tek kırmızı grup built-in = F-pass0-01 |
+| F3 | ➖ | sihirbaz `monster` satırı göstermiyor (chargen ailesi değil) |
+| F4 | ✅ | `entity_link_navigation` yeşil |
+| G1 | ✅ | manifest satırı güncel, `build_catalog` sonrası drift yok |
+| G2 | ✅ | *Tome of Beasts 3* / Kobold Press / `ogl-10a` / `5e-2014` |
+| G3 | ✅ | `is_srd_overlap: false` |
+
+**Sayım: 19 ✅ · 7 ➖ · 1 ⛔ · 4 ⚠️** — `tob3`'ün kendi verisi temiz (0 disagree,
+0 absent, 0 unsourced, 0 dangling, 397/397 eşleşme) ve dört ⚠️'nin **dördü de**
+korpüs geneline yayılan kusur; paketin kendi sayacı **0**'da kalıyor. Birimin
+asıl katkısı iki ölçüm düzeltmesi: B8'in "bedeli tek bir canavar" gerekçesi ile
+F-pass0-17'nin `tob3` payı. **20 tarama biriminin 18'i bitti.**
+
 ### Dalga 4 — Canavar paketleri (yapıları birbirinin tekrarı)
 
 | Paket | Varlık | Kategoriler | Durum | Tarih | Bulgular |
@@ -1899,7 +2034,7 @@ kusuru, biri (**A5**) gerçekten bu paketin kendi verisi. **20 tarama biriminin
 | `open5e-bfrd` | 2.473 | creature-action 1.338, trait 772, monster 360, language 1, class 1, subclass 1 | ⬜ | — | — |
 | `open5e-tob2` | 2.607 | creature-action 1.209, trait 1.014, monster 383, language 1 | ⚠️ | 2026-08-18 | F-pass0-21 (+17; -18; -19; -20 doğrulandı) |
 | `open5e-tob` | 2.734 | creature-action 1.303, trait 1.039, monster 391, language 1 | ⚠️ | 2026-08-18 | F-tob-01; F-pass0-22; -23 (+17; -18; -19; -20; -21 doğrulandı) |
-| `open5e-tob3` | 2.787 | creature-action 1.577, trait 812, monster 397, language 1 | ⬜ | — | — |
+| `open5e-tob3` | 2.787 | creature-action 1.577, trait 812, monster 397, language 1 | ⚠️ | 2026-08-18 | F-pass0-24; -25 (+17 düzeltildi; -19; -20; -21 doğrulandı; -18; -22; -23 → 0) |
 | `open5e-a5e-mm` | 3.071 | creature-action 1.655, trait 829, monster 586, size 1 | ⬜ | — | — |
 | `open5e-tob-2023` | 3.088 | creature-action 1.658, trait 1.021, monster 408, language 1 | ⬜ | — | — |
 
