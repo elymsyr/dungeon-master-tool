@@ -334,7 +334,11 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     }
 
     return ProviderScope(
-      overrides: [uiStateProvider.overrideWith((_) => _uiStateNotifier!)],
+      overrides: [
+        uiStateProvider.overrideWith(
+          (ref) => _uiStateNotifier!..bindRef(ref),
+        ),
+      ],
       child: const DungeonMasterApp(),
     );
   }

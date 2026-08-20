@@ -26,7 +26,7 @@ tags: [file]
 - Invalidations: `campaignListProvider`, `campaignInfoListProvider`, `packageListProvider`, `characterListProvider.refresh()`.
 
 ## Dependencies & Links
-- Depends on: [[lan_sync_protocol]], [[worlds_dao]], [[packages_dao]]
+- Depends on: [[lan_sync_protocol]], [[worlds_dao]], [[packages_dao]], `ui_state_provider.dart` (`exportWorldUiView` / `importWorldUiView`)
 - Used by: [[lan_sync_server]], `lan_sync_provider.dart`
 - Domain map: [[Sync-and-Realtime]]
 - System flow: [[LAN-Sync-Flow]]
@@ -37,6 +37,8 @@ tags: [file]
 - **id-anahtarlı apply** — repository'ler ada göre arıyor (`_findByName`), LAN kimliği id. `getById` ile yerel ad bulunur; id yoksa ama aynı adda başka kayıt varsa `Ad (2)` ile ayrıştırılır.
 - **Restamp:** `repository.save` her yazımda `DateTime.now()` basar; `setUpdatedAt(id, ref.updatedAt)` olmasa çekilen içerik anında "biz daha yeniyiz" görünüp geri push edilirdi. Karakterlerde gerekmez — `updatedAt` payload'ın içinde taşınır.
 - `rewriteRoots(node, fromBase, toBase)` recursive, **alan adı bilmez**: gönderenin kökü altındaki her string yeniden yazılır, `dmt-asset://` / `dmt-public://` ref'lerine dokunulmaz. `\` ve `/` normalize edilir (Windows ↔ POSIX).
+- `_worldExtras / _applyWorldExtras` — blob'da olmayan dünya parçaları: `installed_packages` bağlantıları ve `ui_view` (açık kartlar, filtreler, açık PDF sekmeleri, sağ sidebar, session sekmesi). `extras` da `rewriteRoots`'tan geçer. Apply tarafında da yalnız ekleme/güncelleme — peer'da olmayan paket bağlantısı yerelde kalır.
+- `buildManifest()` world satırına `viewUpdatedAt` ekler (`UiState.viewTouchedByWorld[worldName]`) — içerik değişmeden sadece görünüm değiştiğinde de eşleme tetiklensin diye. Alıcı bunu world satırının içerik `updatedAt`'ine yazmaz, UI state'e stamp'ler.
 - `resolveMedia` `p.isWithin` ile veri kökü dışına çıkan yolu **null** döndürür — yol geçişi savunması.
 - `fileSha256` akış üzerinden (`sha256.bind(file.openRead())`), dosya belleğe alınmaz.
 

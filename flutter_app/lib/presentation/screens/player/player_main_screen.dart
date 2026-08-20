@@ -29,14 +29,14 @@ import '../../widgets/entity_sidebar.dart';
 import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/pdf_sidebar.dart';
 import '../../widgets/save_sync_indicator.dart';
-import '../../widgets/soundmap_player_sidebar.dart';
+import '../../widgets/soundpad_player_sidebar.dart';
 import '../database/database_screen.dart';
 import '../mind_map/mind_map_screen.dart';
 import 'player_character_tab.dart';
 import 'player_second_screen_tab.dart';
 
 /// Player için MainScreen. DM görünümünü birebir takip eder (sol entity
-/// sidebar, tab bar, sağ PDF/Soundmap overlay, AppBar action butonları),
+/// sidebar, tab bar, sağ PDF/Soundpad overlay, AppBar action butonları),
 /// fakat yetki kısıtlı: media gallery yok, package import yok (view-only),
 /// projection icon yok, share/import butonları role-gated.
 class PlayerMainScreen extends ConsumerStatefulWidget {
@@ -57,7 +57,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   static const double _maxSidebarWidth = 450;
   late final ValueNotifier<double> _sidebarWidthNotifier;
 
-  // Right sidebar state (PDF / Soundmap — mutually exclusive)
+  // Right sidebar state (PDF / Soundpad — mutually exclusive)
   _RightSidebar _rightSidebar = _RightSidebar.none;
   double _rightSidebarWidth = 450;
   static const double _minRightSidebarWidth = 360;
@@ -589,27 +589,27 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8),
                                 ),
-                                // Soundmap toggle
+                                // Soundpad toggle
                                 IconButton(
                                   icon: Icon(
-                                    _rightSidebar == _RightSidebar.soundmap
+                                    _rightSidebar == _RightSidebar.soundpad
                                         ? Icons.music_note
                                         : Icons.music_note_outlined,
                                     size: 18,
                                   ),
                                   tooltip:
-                                      _rightSidebar == _RightSidebar.soundmap
-                                          ? l10n.mainCloseSoundmap
-                                          : l10n.mainOpenSoundmap,
+                                      _rightSidebar == _RightSidebar.soundpad
+                                          ? l10n.mainCloseSoundpad
+                                          : l10n.mainOpenSoundpad,
                                   color:
-                                      _rightSidebar == _RightSidebar.soundmap
+                                      _rightSidebar == _RightSidebar.soundpad
                                           ? palette.tabIndicator
                                           : palette.tabText,
                                   onPressed: () => setState(() =>
                                       _rightSidebar = _rightSidebar ==
-                                              _RightSidebar.soundmap
+                                              _RightSidebar.soundpad
                                           ? _RightSidebar.none
-                                          : _RightSidebar.soundmap),
+                                          : _RightSidebar.soundpad),
                                   iconSize: 18,
                                   constraints: const BoxConstraints(
                                       minWidth: 36, minHeight: 36),
@@ -627,7 +627,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                   ),
                 ],
               ),
-              // Right sidebar — overlay (PDF / Soundmap)
+              // Right sidebar — overlay (PDF / Soundpad)
               if (_rightSidebar != _RightSidebar.none)
                 ValueListenableBuilder<double>(
                   valueListenable: _rightSidebarWidthNotifier,
@@ -681,8 +681,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                 onTabClose: _closePdfTab,
                                 onOpenFile: _openPdfTab,
                               ),
-                            _RightSidebar.soundmap =>
-                              SoundmapPlayerSidebar(palette: palette),
+                            _RightSidebar.soundpad =>
+                              SoundpadPlayerSidebar(palette: palette),
                             _RightSidebar.none => const SizedBox.shrink(),
                           },
                         ),
@@ -844,9 +844,9 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
       return true;
     }
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
-      setState(() => _rightSidebar = _rightSidebar == _RightSidebar.soundmap
+      setState(() => _rightSidebar = _rightSidebar == _RightSidebar.soundpad
           ? _RightSidebar.none
-          : _RightSidebar.soundmap);
+          : _RightSidebar.soundpad);
       return true;
     }
 
@@ -870,7 +870,7 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
   }
 }
 
-enum _RightSidebar { none, pdf, soundmap }
+enum _RightSidebar { none, pdf, soundpad }
 
 class _UndoRedoButtons extends ConsumerWidget {
   /// Maps to UndoRedoDispatcher's internal tab indices.
