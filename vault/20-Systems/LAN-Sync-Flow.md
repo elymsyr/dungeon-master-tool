@@ -76,6 +76,21 @@ ile taşınır — blob cloud-backup kontratı olduğu için genişletilmedi:
 `extras` da `rewriteRoots`'tan geçer — açık PDF yolları alıcının veri köküne
 çevrilir.
 
+> [!warning] Blob round-trip'i simetrik olmalı
+> `_loadFromDb` `map_data`'yı `world_map_data`, `sessions`'ı `world_sessions`
+> satırlarından okur ve bunları `settings_json`'a **tercih eder**; ama
+> `_saveToDb` uzun süre yalnız `settings_json`'a yazıyordu. Sonuç: hedef
+> cihazda o satırlar zaten varsa (yani haritası/oturumu bir kez kullanılmış
+> her gerçek dünyada) gelen harita ve oturumlar sessizce görünmez kalıyordu —
+> hem LAN eşlemesinde hem **cloud restore**'da. [[world_repository_impl]]
+> `save()` artık anahtar geldiğinde granular satırları da yazıyor (sessions
+> full-replace, `entities` semantiği). Bir alan granular tabloya taşınırsa
+> `_saveToDb`'ye yazma yolu eklemek zorunlu.
+
+Eşleme sırasında dünya **açıksa** `activeCampaignProvider.reload()` çağrılır —
+aksi hâlde bellekteki bayat kopya bir sonraki otomatik kayıtta senkronize
+edilen içeriğin üzerine yazıyordu.
+
 ### Görünümün zaman damgası
 İçerik hiç değişmeden yalnız "ne açık" değiştiğinde de eşleme tetiklensin diye
 manifest satırında ikinci bir alan var: `LanItemRef.viewUpdatedAt`
@@ -133,6 +148,9 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 - Presence portu 45455 · duyuru 5 sn · online penceresi 15 sn · HTTP portu 45456.
 - `pairToken` TTL 3 dk · PIN 6 hane · saat sapması 60 sn · blok 30 sn · 3 deneme.
 - Manifest kimliği `(type, id)` — **id**, ad değil. Ad çakışması `Ad (2)` ile ayrışır.
+- `worlds.updatedAt` Drift'te **unix saniye** — LWW çözünürlüğü 1 sn. İki cihaz
+  aynı saniye içinde düzenlenmişse eşitlik sayılır ve hiçbir şey taşınmaz.
+  Görünüm damgası (`viewUpdatedAt`) ms hassasiyetinde.
 - Built-in SRD paketi manifest dışında (her cihazda koddan üretiliyor).
 - Medya yolları kullanıcı köküne (`dirname(worldsDir)`) relatif, POSIX ayırıcılı.
 
