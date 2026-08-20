@@ -239,6 +239,86 @@ void main() {
   });
 
   group('eşleşme sonrası', () {
+    /// Regresyon: world payload'ının **tamamı** taşınıyor mu?
+    ///
+    /// `map_data` ve `sessions` granular tablolardan okunuyor ama uzun süre
+    /// yalnız `settings_json`'a yazılıyordu; hedefte o satırlar zaten varsa
+    /// (yani gerçek, kullanılmış bir dünyada) gelen harita ve oturumlar
+    /// görünmez kalıyordu — "eşledim ama gelmedi".
+    test('alıcıda dünya zaten varken içeriğin tamamı üzerine yazılır',
+        () async {
+      const worldId = 'w-shared-1';
+      final repoPeer = peer.read(campaignRepositoryProvider);
+      await repoPeer.save('Barovia', {
+        'world_id': worldId,
+        'entities': <String, dynamic>{},
+      });
+      // Gerçek kullanımdaki yazım yolları: harita ve oturumlar granular
+      // tablolara, notlar settings patch'ine gider.
+      await repoPeer.saveMapData('Barovia', {'image_path': 'ESKI/peer.png'});
+      await repoPeer.saveSessions('Barovia', [
+        {'id': 'peer-s', 'name': 'PEER OTURUMU', 'is_active': true,
+          'sort_order': 0},
+      ]);
+      await repoPeer.saveSettingsPatch('Barovia', {
+        'combat_state': {'session_notes': 'ESKİ NOT'},
+      });
+
+      // `worlds.updatedAt` saniye çözünürlüklü — LWW'nin host'u yeni
+      // görmesi için aynı saniyeye düşmemeleri gerekiyor.
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+
+      await host.read(campaignRepositoryProvider).save('Barovia', {
+        'world_id': worldId,
+        'entities': <String, dynamic>{},
+        'combat_state': {
+          'session_notes': 'YENİ NOT',
+          'encounters': [
+            {'id': 'enc1', 'name': 'Kapı Önü'},
+          ],
+        },
+        'mind_maps': {
+          'm1': {
+            'nodes': [
+              {'id': 'n1', 'label': 'Strahd'},
+            ],
+          },
+        },
+        'map_data': {'image_path': 'YENİ/host.png'},
+        'sessions': [
+          {'id': 'host-s', 'name': 'HOST OTURUMU', 'is_active': true,
+            'sort_order': 0},
+        ],
+        'pdf_library': [
+          {'name': 'kitap.pdf'},
+        ],
+      });
+
+      final client = await pairedClient();
+      final peerSession = peer.read(lanSyncSessionProvider);
+      final plan = diffManifests(
+        local: await peerSession.buildManifest(),
+        peer: await client.fetchManifest(),
+      );
+      expect(plan.pull.map((r) => r.id), contains(worldId));
+      for (final ref in plan.pull) {
+        await peerSession.applyItem(await client.fetchItem(ref));
+      }
+
+      final got = await repoPeer.load('Barovia');
+      // Granular tablolardan okunanlar — asıl regresyon.
+      expect((got['map_data'] as Map)['image_path'], 'YENİ/host.png');
+      expect(
+        (got['sessions'] as List).map((s) => (s as Map)['name']),
+        ['HOST OTURUMU'],
+      );
+      // settings_json'dan okunanlar.
+      expect((got['combat_state'] as Map)['session_notes'], 'YENİ NOT');
+      expect((got['combat_state'] as Map)['encounters'], hasLength(1));
+      expect(got['mind_maps'], isNotNull);
+      expect(got['pdf_library'], hasLength(1));
+    });
+
     test('host\'taki world peer\'a pull edilir', () async {
       await host.read(campaignRepositoryProvider).save('Barovia', _worldBlob());
       final client = await pairedClient();

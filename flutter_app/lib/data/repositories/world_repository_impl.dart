@@ -256,26 +256,7 @@ class WorldRepositoryImpl implements CampaignRepository {
       throw StateError('World not found: $campaignName');
     }
     final worldId = existing.id;
-    final companions = <WorldSessionsCompanion>[];
-    for (final s in sessions) {
-      final id = s['id'];
-      if (id is! String) continue;
-      // Strip typed columns from inner blob; they ride in their own fields.
-      final inner = Map<String, dynamic>.from(s)
-        ..remove('id')
-        ..remove('name')
-        ..remove('is_active')
-        ..remove('sort_order');
-      companions.add(WorldSessionsCompanion(
-        id: Value(id),
-        worldId: Value(worldId),
-        name: Value((s['name'] as String?) ?? ''),
-        dataJson: Value(jsonEncode(inner)),
-        isActive: Value((s['is_active'] as bool?) ?? false),
-        sortOrder: Value((s['sort_order'] as num?)?.toInt() ?? 0),
-        updatedAt: Value(DateTime.now()),
-      ));
-    }
+    final companions = _sessionCompanions(worldId, sessions);
     if (companions.isEmpty) return;
     await _db.transaction(() async {
       await _db.worldSessionsDao.upsertAll(companions);
@@ -299,6 +280,34 @@ class WorldRepositoryImpl implements CampaignRepository {
       await _db.worldSessionsDao.deleteById(sessionId);
       await _touchWorld(existing.id);
     });
+  }
+
+  /// `sessions` blob satırlarını `world_sessions` companion'larına çevirir.
+  /// Typed kolonlar iç blob'dan çıkarılır — kendi alanlarında taşınıyorlar.
+  List<WorldSessionsCompanion> _sessionCompanions(
+    String worldId,
+    List<Map<String, dynamic>> sessions,
+  ) {
+    final companions = <WorldSessionsCompanion>[];
+    for (final s in sessions) {
+      final id = s['id'];
+      if (id is! String) continue;
+      final inner = Map<String, dynamic>.from(s)
+        ..remove('id')
+        ..remove('name')
+        ..remove('is_active')
+        ..remove('sort_order');
+      companions.add(WorldSessionsCompanion(
+        id: Value(id),
+        worldId: Value(worldId),
+        name: Value((s['name'] as String?) ?? ''),
+        dataJson: Value(jsonEncode(inner)),
+        isActive: Value((s['is_active'] as bool?) ?? false),
+        sortOrder: Value((s['sort_order'] as num?)?.toInt() ?? 0),
+        updatedAt: Value(DateTime.now()),
+      ));
+    }
+    return companions;
   }
 
   Future<void> _touchWorld(String worldId) async {
@@ -607,6 +616,48 @@ class WorldRepositoryImpl implements CampaignRepository {
         settingsJson: Value(jsonEncode(stateBlob)),
         updatedAt: Value(DateTime.now()),
       ));
+
+      // Granular tabloları da yaz — `_loadFromDb` bunları settings_json'a
+      // **tercih ediyor**. Yalnız blob'a yazmak, hedefte zaten satır varsa
+      // gelen map/session'ı görünmez kılıyordu: cloud restore ve LAN
+      // eşlemesi "harita ve oturumlar gelmedi" diye görünüyordu. Anahtar
+      // yoksa dokunulmaz — `entities`'teki metadata-only save korumasının
+      // aynısı (bkz. aşağıdaki PR-B5 notu).
+      if (data.containsKey('map_data')) {
+        final mapData = data['map_data'];
+        if (mapData is Map) {
+          await _db.worldMapDataDao.upsert(WorldMapDataCompanion(
+            worldId: Value(worldId),
+            dataJson: Value(jsonEncode(mapData)),
+            updatedAt: Value(DateTime.now()),
+          ));
+        }
+      }
+
+      if (data.containsKey('sessions')) {
+        final raw = data['sessions'];
+        final incoming = <Map<String, dynamic>>[
+          if (raw is List)
+            for (final e in raw)
+              if (e is Map) Map<String, dynamic>.from(e),
+        ];
+        // Full replace: bu dünyanın gelen listede olmayan satırları düşer.
+        // `saveSessions` (tekil/kısmi yazım yolu) aksine burada silme var —
+        // import/restore semantiği `entities` ile aynı.
+        final keep = {
+          for (final s in incoming)
+            if (s['id'] is String) s['id'] as String,
+        };
+        for (final row in await _db.worldSessionsDao.getByWorld(worldId)) {
+          if (!keep.contains(row.id)) {
+            await _db.worldSessionsDao.deleteById(row.id);
+          }
+        }
+        final companions = _sessionCompanions(worldId, incoming);
+        if (companions.isNotEmpty) {
+          await _db.worldSessionsDao.upsertAll(companions);
+        }
+      }
 
       // Entities — full replace, mirrors v11 semantics. F2 (row-level
       // migration) drives per-row updates via [saveEntity] / [deleteEntity];

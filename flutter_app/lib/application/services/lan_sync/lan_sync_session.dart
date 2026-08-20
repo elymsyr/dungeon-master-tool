@@ -207,6 +207,13 @@ class LanSyncSession {
     await _ref.read(campaignRepositoryProvider).save(name, payload);
     await _db.worldsDao.setUpdatedAt(ref.id, ref.updatedAt);
     await _applyWorldExtras(ref, name, extras);
+    // Dunya su an acik ise bellekteki kopya bayat: bir sonraki otomatik
+    // kayit senkronize edilen icerigi geri ezerdi ve kullanici hicbir sey
+    // gelmemis gibi gorurdu. Cloud restore'un "acik dunyanin icine geri
+    // yukle" yolunun aynisi.
+    if (_ref.read(activeCampaignProvider) == name) {
+      await _ref.read(activeCampaignProvider.notifier).reload();
+    }
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
   }
