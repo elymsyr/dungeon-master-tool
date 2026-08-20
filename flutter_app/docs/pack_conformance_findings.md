@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 1 | 45 | 1 | 0 | **47** |
+| 0 | 0 | 0 | 46 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -221,6 +221,12 @@ olmayan bir özelliği olmak zorunda), `flutter analyze` 0 hata / 0 uyarı.
 > istiyor; yayınlanan paket ise R1'den beri dört faz geride kalmıştı. Promote
 > edilen fark (`diff_packs`, eski asset → yeni): **43 kategori, 10.004 değer**.
 > `manifest.json` ve `assets/first_party/manifest.json` yeniden üretildi.
+
+**R8 uygulandı (2026-08-20).** Son 🛠 kayıt kapandı (F-pass0-01); 🛠 sayacı
+1 → 0, ✅ 45 → 46 — **Stage R'nin sekiz fazı da bitti**. Değişen tek şey test
+sarmalayıcısı: kapı 224 çift / 446 pump yerine **461 çift / 922 pump** ölçüyor
+ve hepsi yeşil. Checklist F2'nin yazılı "438 çift / 876 pump" sayısı da ölçülen
+461/922 ile değiştirildi. Ürün kodu ve paket asset'leri değişmedi.
 
 **R7 uygulandı (2026-08-20).** İki kayıt kapandı (F-builtin-01, F-builtin-02);
 🛠 sayacı 3 → 1, ✅ 43 → 45. Bu, Stage R'nin `srd_core/` içeriğine dokunan tek
@@ -457,7 +463,7 @@ eksik değilse ve üç sayaç kayıtlarla uyuşuyorsa temiz döner.
 | **Checklist** | checklist F2 (her (kategori, alan) çifti çökmeden render oluyor) |
 | **Kategori / etki** | built-in SRD — 306 (kategori, alan) çiftinin **223**'ü hiç render edilmiyor; tetikleyen alan `pack.content_quantities` (8 SRD paket varlığı). 19 resmi paketin 141 çifti yeşil |
 | **Cause code (öneri)** | `A` — veri ve widget doğru; kusur testin sarmalayıcısında |
-| **Durum** | 🛠 faz dosyalandı — **R8** |
+| **Durum** | ✅ kapandı — **R8** (2026-08-20) |
 
 **Bulgu.** `pack_field_render_test`'in `_wrap`'i temasız bir `MaterialApp`
 kuruyor. `_LevelTableFieldWidget.build` ise
@@ -503,7 +509,18 @@ sessizce bırakmış durumda. Dalga 0 (built-in SRD) bu kapıya güvenerek taran
 3. **Kapsam dışı** — kullanıcı etkilenmiyor. O zaman checklist F2'nin sayısı
    224/446 olarak düzeltilmeli ve "223 çift ölçülmüyor" yazılı kabul olmalı.
 
-**Karar.** **düzelt** — seçenek 1 (`_wrap`'e tema); kapı 224 → 447 çifte döner. Seçenek 3 reddedildi: ölçülmeyen 223 çifti "kabul" saymak F2'nin kapı sayısını yalancı yapar. · **Tarih:** 2026-08-19 · **Kapatan:** R8 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`_wrap`'e tema); kapı 224 → 447 çifte döner. Seçenek 3 reddedildi: ölçülmeyen 223 çifti "kabul" saymak F2'nin kapı sayısını yalancı yapar. · **Tarih:** 2026-08-19 · **Kapatan:** R8 (2026-08-20)
+
+**Kapanış (R8, 2026-08-20).** `_wrap`'in `MaterialApp`'ine
+`theme: buildThemeData('dark')` eklendi (tek satır + import;
+`test/presentation/pack_field_render_test.dart:29`). Widget'lara dokunulmadı —
+seçenek 2 reddedilmiş hâlde kaldı, çünkü uygulamada tema uzantıyı her zaman
+kaydediyor. Kapı artık **461 (kategori, alan) çifti / 922 pump, hepsi yeşil**;
+eskiden 83. built-in çiftinde durup 224/446 ölçüyordu. Tahmin edilen 447 sayısı
+da bayatmış: ölçülen built-in yarısı **310** çift (`audit_packs --builtin`
+yuvasına kadar aynı: 310 dolu yuva = 306 + R7'nin 4'ü), paket yarısı **151**
+çift — yani 306 + 141 değil. `flutter analyze` 0 hata / 0 uyarı (21 info =
+taban).
 
 ### Dalga 0 — built-in SRD
 

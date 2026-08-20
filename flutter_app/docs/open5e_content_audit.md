@@ -188,7 +188,16 @@ stay empty on purpose. And §5.10 is now the built-in pack's §5: every one of t
 **426** remaining 🔴 slots carries a cause code (`M` 123 / `P` 293 / `N` 10), so
 "empty" and "unaccounted for" are no longer the same thing here.
 `srdCorePackVersion` 1.1.0. Ledger **1 🛠 · 45 ✅ · 1 ⚪**.
-**The next open phase is R8.**
+
+**R8 closed the last record and with it Stage R (2026-08-20).** The render gate
+built its `MaterialApp` without a theme, so the six widgets that read
+`Theme.of(context).extension<DmToolColors>()!` blew up on the 83rd built-in
+pair and the gate silently measured half its own scope. One line
+(`theme: buildThemeData('dark')`) puts it at **461 (category, field) pairs /
+922 pumps, all green** — 151 package + 310 built-in — against the 224/446 it
+was really doing behind a checklist that claimed 438/876. Widgets untouched.
+Ledger **0 🛠 · 46 ✅ · 1 ⚪**.
+**No open phase remains in §6.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -5811,7 +5820,7 @@ half** for the same reason. R7 and R8 are independent of everything else.
       `audit_packs.dart --builtin` re-run, 🔴 430 → 426, required-and-empty 0.
       No pack assets promoted — this phase touches built-in content only.
 
-- [ ] **R8 — The render gate measures what it claims to.** One finding,
+- [x] **R8 — The render gate measures what it claims to. Done 2026-08-20.** One finding,
       F-pass0-01: `pack_field_render_test` stops at the first built-in field
       because `_wrap` builds without the app theme, so 223 of 306 built-in pairs
       are never pumped. One line (`theme: buildThemeData('dark')`), and the
@@ -5820,6 +5829,15 @@ half** for the same reason. R7 and R8 are independent of everything else.
       *Exit: the built-in half of `pack_field_render_test` runs 447 pairs green
       instead of stopping at 224, and the number in checklist F2 is the measured
       one.*
+      **Done:** one line — `theme: buildThemeData('dark')` in `_wrap`
+      (`test/presentation/pack_field_render_test.dart:29`), widgets untouched
+      (option 2 stayed rejected). The gate now runs **461 (category, field)
+      pairs / 922 pumps, all green**, where it used to stop at 224/446 on the
+      83rd built-in pair. The exit number 447 was itself stale: measured now,
+      the built-in half is **310** pairs (`audit_packs --builtin` agrees to the
+      slot: 310 filled slots, 306 + R7's 4) and the package half **151**, not
+      306 + 141. `flutter analyze` 0 errors / 0 warnings (21 infos = baseline).
+      Checklist F2's "438 pairs / 876 pumps" is now the measured 461/922.
 
 ### Done when
 

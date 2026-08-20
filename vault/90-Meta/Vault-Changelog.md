@@ -830,6 +830,25 @@ mapper'ı tahmin etmeyi bırakır). Güncellenen:
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
 
+## 2026-08-20 — R8: render kapısı kendi kapsamını ölçüyor
+
+- **R8 (F-pass0-01) kapandı — Stage R'nin sekizinci ve son fazı.**
+  `pack_field_render_test`'in `_wrap`'i temasız `MaterialApp` kurduğu için
+  `Theme.of(context).extension<DmToolColors>()!` okuyan altı alan widget'ı
+  83. built-in çiftinde patlıyor, `expect` ilk hatada bittiği için kapı kendi
+  kapsamının yarısını sessizce ölçmüyordu. Düzeltme tek satır:
+  `theme: buildThemeData('dark')`. Widget'lara dokunulmadı (uygulamada tema
+  uzantıyı her zaman kaydediyor; kusur harness'taydı). **Ölçülen: 461
+  (kategori, alan) çifti / 922 pump, hepsi yeşil** — 151 paket + 310 built-in;
+  eskiden 224 çift / 446 pump. Çıkış ölçütündeki tahmin 447 de bayattı:
+  built-in yarısı `audit_packs --builtin`'in dolu yuva sayısıyla birebir
+  **310**. Checklist F2'nin yazılı "438 çift / 876 pump" sayısı ölçülenle
+  değiştirildi. Bulgu defteri **0 🔎 · 0 ❓ · 0 🛠 · 46 ✅ · 1 ⚪**; §6'da açık
+  faz kalmadı. `flutter analyze` 0 hata / 0 uyarı (21 info = taban).
+  → `flutter_app/docs/open5e_content_audit.md` (§0 + §6 R8),
+  `pack_conformance_findings.md`, `pack_conformance_plan.md`,
+  `pack_conformance_checklist.md` (F2)
+
 ## 2026-08-20 — R7: built-in paket kendi kuralına uydu
 
 Stage R'nin yedinci fazı ve `srd_core/` içeriğine dokunan **tek** fazı; iki bulgu

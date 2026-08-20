@@ -14,13 +14,19 @@ import 'dart:io';
 import 'package:dungeon_master_tool/application/services/builtin_srd_entities.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
+import 'package:dungeon_master_tool/presentation/theme/palettes.dart';
 import 'package:dungeon_master_tool/presentation/widgets/field_widgets/field_widget_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+// Tema şart: altı alan widget'ı `Theme.of(context).extension<DmToolColors>()!`
+// okuyor, temasız `MaterialApp` uzantıyı kaydetmiyor ve ilk SRD alanında
+// null-check patlıyordu (F-pass0-01) — kapı taramanın yarısını sessizce
+// bırakıyordu.
 Widget _wrap(Widget child) => ProviderScope(
       child: MaterialApp(
+        theme: buildThemeData('dark'),
         home: Scaffold(
           body: SizedBox(
             width: 2400,
