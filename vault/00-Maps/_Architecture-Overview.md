@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-07-29
+updated: 2026-08-20
 tags: [moc, architecture]
 ---
 
@@ -57,6 +57,7 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
 
 ## Key cross-cutting flows
 - [[CDC-Sync-Flow]] — 12-step local-edit → Postgres → peer apply.
+- [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme.
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).
 - [[Package-Links]] — one package borrows another's content; links follow it into worlds and downloads.

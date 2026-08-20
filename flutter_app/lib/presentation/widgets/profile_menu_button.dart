@@ -8,6 +8,7 @@ import '../../application/providers/auth_provider.dart';
 import '../../application/providers/hub_tab_provider.dart';
 import '../../application/providers/profile_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
+import '../dialogs/lan_sync_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
 import '../dialogs/support_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -73,6 +74,8 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/profile/me');
           case 'edit':
             context.push('/profile/me?edit=1');
+          case 'local_sync':
+            LanSyncDialog.show(context);
           case 'settings':
             ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex;
           case 'support':
@@ -100,6 +103,15 @@ class ProfileMenuButton extends ConsumerWidget {
             const Icon(Icons.edit_outlined, size: 18),
             const SizedBox(width: 12),
             Text(l10n.profileMenuEditProfile, style: TextStyle(color: palette.tabActiveText)),
+          ]),
+        ),
+        PopupMenuItem<String>(
+          value: 'local_sync',
+          child: Row(children: [
+            const Icon(Icons.wifi_tethering, size: 18),
+            const SizedBox(width: 12),
+            Text(l10n.lanSyncOpen,
+                style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         PopupMenuItem<String>(

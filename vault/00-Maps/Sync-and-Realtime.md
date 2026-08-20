@@ -1,14 +1,14 @@
 ---
 type: moc
 domain: sync
-updated: 2026-06-09
+updated: 2026-08-20
 tags: [moc]
 ---
 
 # Sync & Realtime — Map of Content
 
 > [!summary] Scope
-> Offline-first sync between local Drift and the Supabase Postgres mirror. Owns the coalescing outbox, tier-aware batching, push with echo-suppression, inbound CDC apply, and post-reconnect reconciliation. Does **not** own the Supabase schema itself ([[Backend-Infra]]) or the table definitions ([[Data-Layer]]).
+> Offline-first sync between local Drift and the Supabase Postgres mirror. Owns the coalescing outbox, tier-aware batching, push with echo-suppression, inbound CDC apply, and post-reconnect reconciliation. Ayrıca **buluta hiç uğramayan** ikinci bir kol: aynı ağdaki iki cihaz arasında manuel LAN eşlemesi. Does **not** own the Supabase schema itself ([[Backend-Infra]]) or the table definitions ([[Data-Layer]]).
 
 ## Key Files
 - [[sync_engine]] — persistent outbox drain orchestrator (start / tick / drain).
@@ -21,8 +21,17 @@ tags: [moc]
 - [[world_reconciler]] — conflict resolution after reconnect.
 - [[cloud_catchup_service]] — replay missed changes on reconnect.
 
+**LAN kolu** (bulutu atlar, manuel, kalıcı cihaz eşleşmesi — [[LAN-Sync-Flow]]):
+- [[lan_sync_protocol]] — tel formatı, LWW diff, HMAC, QR daveti, presence paketi.
+- [[lan_device_store]] — cihaz kimliği + `lan_paired_devices` kayıtları.
+- [[lan_sync_server]] — host: HttpServer + presence beacon + eşleşme uçları.
+- [[lan_sync_client]] — `/pair` el sıkışması, imzalı çağrılar, presence dinleyici.
+- [[lan_sync_session]] — manifest, item okuma/uygulama, medya + yol yeniden yazımı.
+
 ## Data Flow
 Edit → [[pending_write_buffer]] debounce → [[sync_engine]] enqueue → [[sync_outbox_dao]] coalesce → tier-gated drain → [[world_mirror_service]] push → Supabase CDC → peers' [[world_mirror_applier]]. Full 12 steps: [[CDC-Sync-Flow]].
+
+LAN: QR okut (ya da IP+PIN) → `/pair` el sıkışması → iki tarafta kalıcı kayıt. Sonra tek tuş: her eşleşmiş cihazla manifest → `diffManifests` (LWW) → item item `repository.load`/`save` + medya. Outbox'a hiçbir şey yazılmaz, aynı hesap zorunlu. Adımlar: [[LAN-Sync-Flow]].
 
 ## Related Domains
 - [[Data-Layer]] (outbox table, DAOs) · [[Backend-Infra]] (Supabase CDC) · [[Multiplayer-and-Online]] (who receives).

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LAN sync (yerel eşleme) aynı ağdaki iki cihaz arasında düz HTTP konuşur;
+  Android 9+ varsayılan olarak cleartext'i kapatıyor. Supabase ve R2 trafiği
+  kodda açıkça `https://` URL'leriyle gittiği için bu ayardan etkilenmez —
+  buradaki izin yalnız LAN'daki IP:port hedeflerini mümkün kılar.
+
+  İstekler ayrıca HMAC ile imzalanır ve sunucu private olmayan kaynak IP'leri
+  reddeder (bkz. lan_sync_server.dart).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
