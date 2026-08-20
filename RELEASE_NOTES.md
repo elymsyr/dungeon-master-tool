@@ -1,5 +1,181 @@
 # Release Notes
 
+## Dungeon Master Tool v13.0.0 — Local Sync, No-Account Mode, PDF Library, Package Links, Pack Content Repair (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v13.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Major release, and the theme is **getting your content where you need it without going through the cloud**. Local Sync moves worlds, packages and characters straight between your own devices over Wi-Fi. The app now has a real no-account mode instead of a compile-time one. Each world gets its own PDF library that the DM can share with the table. Packages can link other packages instead of duplicating them, and the 19 official Open5e packs went through a full content repair pass — thousands of corrected values. Nothing to install by hand: the two in-app content migrations run transparently on first load.
+
+> **Heads-up for self-hosted deployments:** redeploy the Cloudflare Worker before using the PDF library in an online world — sharing a PDF needs the `world_pdf` upload kind (50 MB) and the `application/pdf` MIME allowance. Without the redeploy, local PDF libraries still work; only sharing them with players fails on upload.
+
+> **Heads-up for Local Sync users:** both devices must be signed into the **same account**, and both must have Local Sync open the first time they pair. Local Sync only adds and updates — deleting something on one device does not delete it on the other.
+
+---
+
+### Highlights
+
+- **Local Sync** — Move worlds, packages and characters between your own devices over Wi-Fi, with nothing going online.
+- **Continue without an account** — Offline use is now a mode you pick on the landing screen, not a side effect of how the binary was built.
+- **PDF Library per world** — PDFs are copied into the world, listed in a Library tab, and shareable with online players on demand.
+- **Package Links** — A package can borrow another package's cards instead of shipping a second copy of them.
+- **Every ref on a card is a link** — Spells, items and traits inside cards open the card they point at.
+- **Spell slot grid on the sheet** — Caster classes get real slots at creation and level-up, with template-authored tables beating the built-in preset.
+- **Official pack content repair** — Thousands of corrected and newly filled values across spells, monsters, magic items, backgrounds, feats and subclasses.
+- **Images stay put** — Every picked image is copied into the world, so it survives offline, travels with sync, and no longer depends on the cloud copy existing.
+
+---
+
+### Local Sync
+
+#### Pair once, sync with one tap
+
+Open **Local Sync** from the profile menu or the save/sync panel. The panel shows a QR code, a 6-digit PIN and this device's address. On the other device, tap **Add device** and either scan the code or type the address and PIN. Pairing is a one-time handshake that stores a shared secret on both sides; from then on the devices recognise each other and you never see the PIN again. Press **Sync** and every paired device is walked in turn — newer content is pulled, newer local content is pushed, and you get a "N items · M devices" summary at the end. A device that cannot be reached does not stop the run; it is listed when the sync finishes.
+
+Desktop shows the QR code but cannot scan one (camera scanning is Android/iOS/macOS). The address + PIN path works everywhere.
+
+#### What travels, and what deliberately doesn't
+
+A synced world carries everything the cloud backup carries — entities, world schema, encounters, battle map, session notes, mind maps, map data and the PDF library — plus the world's package links and the view you had open (open cards, panel filters, PDF tabs, active sidebar). Window widths, theme, language and volume stay per-device. Media travels two ways: files under the world folder are copied outright, and for images that only exist as cloud references the actual bytes are taken out of the local content cache, so a synced image opens on the other device while offline and signed out.
+
+- **Section-level merge.** If the same world exists on both devices, entities, sessions, map data and each settings block race on their own timestamps — editing combat notes on one device and the mind map on the other no longer means one of them loses everything. On a tie, local wins.
+- **Deletions and renames do not propagate.** Only additions and updates cross. A card you deleted on one device comes back if the other device still has it; a locally renamed world keeps its local name and just receives content.
+- **The transfer is authenticated, not encrypted.** Every request is signed with the 256-bit pairing secret, only private network addresses are accepted, and a failed pairing attempt is rate-limited without touching pairings that already exist. Body encryption is a later item.
+- **Pairings are per account.** A device signed into a different account is refused with a clear message rather than a signature error.
+
+---
+
+### Playing without an account
+
+#### Continue without an account
+
+The landing screen has a second door. Everything that only touches the local database — hub, worlds, characters, packages, templates, bundled content — works with no sign-in at all, and the choice is remembered across launches. Previously the router asked one question ("is there a session?") and bounced every route but the landing screen, so offline use existed only in builds compiled without the backend.
+
+#### Gated surfaces explain themselves
+
+Screens that genuinely need a server no longer disappear or fail silently. The marketplace, cloud backup, online sync and world sharing each show what they are for and offer a **Sign In** button — for example, "Cloud backup copies this item to your account. Local saves keep working without it." Only `/profile` and `/admin` are still hard-redirected, because they render server rows.
+
+#### Signing in brings your offline work with you
+
+Signing in from guest mode promotes the whole offline workspace into the account: the local database (closed cleanly, WAL included), worlds, characters, packages and their media trees. Unowned characters created as a guest are claimed by the account. Once an account has claimed a guest workspace, entering guest mode again starts from an **empty** workspace — the old content lives in the account, not in a shared drawer both can see.
+
+---
+
+### Content & Packages
+
+#### PDF library per world
+
+Every PDF you open from inside a world is copied into that world's folder, so it stays with the world, rides along in cloud backups and moves over Local Sync. The PDF sidebar gains a **Library** tab listing what the world holds, with size and a remove action. Up to 10 PDFs can be open in tabs at the same time; the per-file limit is 50 MB. In an online world the DM shares the library in one action and each player's copy shows the file as "Shared by the DM" with a **Download** button — nothing is force-pushed, so joining a world does not pull 50 MB per book down your connection.
+
+#### Package links
+
+A package can now declare that it borrows another package's content. The two stores stay separate — nothing is copied — but the linked package's cards show up inside the linking package and follow it into every world it is imported into. Open a package, use the **Linked Packages** panel, and pick from what you have installed; cycles are refused with the reason. Deleting a package that others link warns you which ones will stop resolving, and installing a package installs its whole link closure.
+
+- Installing a package into a world now goes through one code path that handles the link closure and remaps references pointing into a linked package.
+- First-party packs do **not** use links yet. It was measured: across the whole bundled corpus exactly one card could be linked instead of copied, and declaring it would make five packs pull 2.9 MB of Tome of Beasts at install time. The mechanism ships; the packs stay as they are.
+
+#### Packages tell you when they are out of date
+
+An installed package that came from the official catalog now notices a newer catalog version and offers **Update to v…** on its card.
+
+#### Official pack content repair
+
+The 19 bundled Open5e packs were read end to end against a pinned source snapshot, and every defect found was fixed at the mapper that caused it. Highlights of what actually changed on the cards:
+
+- **Spells** — 164 corrected values on 140 cards. "Permanent" durations stop becoming "Until Dispelled", ranges like "2–12 hours" stop being read as "12 Hours", "1 year" now carries 365 days, 58 fabricated `Material Cost: 0` lines are gone and 39 real component prices were recovered from the text, and self-area spells recover their radius.
+- **Monsters** — Truncated stat-block text is recovered from the older source revision, mangled character escapes are cleaned, 114 legendary actions that were also published as at-will actions are de-duplicated, rows whose rule text had been stuffed into the name are recovered, and claims the source never made (`is_attack` on 681 rows) are no longer written. Resistance, immunity and language qualifier sentences now ship beside the lists they qualify.
+- **Backgrounds & feats** — Over-granting stops: 30 backgrounds no longer hand out 62 skill proficiencies the source offered as a *choice*. "+1 to X and one other ability" now writes a fixed ability beside a free pick instead of offering all six. Backgrounds can grant languages, subclasses can declare their caster kind (third-casters finally get slots), and 24 subclass spell tables became real references instead of prose.
+- **Magic items** — `base_item_ref` went from 0% to 36% (379 items) by reading the structured base-item columns nobody was reading.
+- **Names & identity** — 19 cards whose names differed from a built-in card only by spacing or punctuation now resolve to the same card, and a 2024-rules subclass hiding inside a 2014-labelled pack is now distinguishable on its card.
+- **Built-in SRD pack (v1.1.0)** — Saving-throw and skill rows for 252 of the 345 built-in creature cards, transcribed from the CC-BY SRD 5.2.1 PDF, plus the class spellcasting tables that feed the new slot grid.
+
+---
+
+### Characters & cards
+
+#### Spell slots reach the sheet
+
+All eight built-in caster classes (full, pact and half) now produce a spell-slot grid, written at character creation and at each level-up. The grid stays a stored, hand-editable field on the sheet, and a template that authors its own `spell_slots_by_level` table wins over the built-in preset — which matters immediately, since the authored half-caster table gives Paladin and Ranger a slot at level 1 where the preset gave them none.
+
+#### Every reference on a card is a link
+
+Relation chips, spell lists, structured list rows and markdown references all open the card they point at, from both the world screen and the package screen. A reference into a pack you do not have installed stays plain text on purpose — the underline appears only where the tap will land, so no link opens an empty dialog.
+
+---
+
+### Media
+
+#### Images are always kept locally
+
+Every image you pick — battle maps, world maps, mind map images, entity images, world/package/character covers, character portraits, entity file and PDF fields — is copied into your data folder, whether or not the cloud upload succeeds, and the upload is made from that copy. Raw picker paths (`.../Downloads/map.png`) are never stored. The practical effect: an image keeps rendering when you are offline, when the cloud object has been swept, and after it moves to another device over Local Sync. Old worlds are repaired once, on load.
+
+The cost of keeping a local copy is duplicated bytes, so removal paths now clean up after themselves: an unused-media sweep runs when a world opens and closes, deleting files under the world's `media/` and `files/` folders that nothing references any more. Snapshots in the trash count as references, and files written in the last 10 minutes are left alone.
+
+---
+
+### Smaller improvements
+
+- **Soundpad** — The sidebar, tab and toggles are consistently called "Soundpad" everywhere; some surfaces still said "Soundmap".
+- **Profile menu** — Rebuilt around one authentication check, so the menu shows exactly the items that apply to your state (signed in, guest, or no backend at all) instead of dead entries.
+- **PDF tabs** — Up to 10 PDFs open at once, with a message instead of a silent no-op when you hit the limit.
+- **l10n** — 80 new keys for Local Sync, the PDF library, package links, account gating and the offline landing option, translated in all four languages (EN · TR · DE · FR).
+
+---
+
+### Bug fixes
+
+- **Maps and sessions came back empty after a restore** — Restoring a world (from cloud backup or Local Sync) onto a device that already had that world silently dropped the incoming map data and session list, because the save path only wrote the settings blob while the load path preferred the dedicated rows. Both halves now agree. This affected every world whose map or sessions had ever been used.
+- **Combat log entries disappeared** — Manually added combat log lines were kept in memory only and were lost on the next reload.
+- **Species cards with senses crashed the renderer** — Opening a card carrying a granted sense (every Dragonborn / Elf / Dwarf, and any pack species with darkvision) threw while rendering. The same fix restores resource-pool and spell references that had been silently rendering as "—".
+- **Packaged feats never applied their ability score increase** — 23 feats with an ASI raised nothing, because the resolver read only one of the three shapes an ability reference can take.
+- **The wizard and the sheet disagreed about which card won** — When a package and the built-in pack shipped the same name, the character wizard resolved the built-in card while the sheet resolved the package card. All three code paths now follow one rule: the package you chose wins.
+- **Links did nothing on the package screen** — Tapping a reference inside a package's cards was inert, and packaged spells with cross-pack references never appeared in spell lists at all.
+- **Subclass grants were missing wholesale** — 101 subclasses granted nothing because a source file was never opened during the pack build.
+- **Drow and Derro got no darkvision** — Superior Darkvision was matched by exact name, so species that spell it differently were skipped; ranges are now read from the trait's own text.
+- **Startup crash on the built-in pack** — A pack whose level-keyed maps had integer keys crashed the SRD bootstrap at launch.
+- **Character card chips showed "—"** — Characters built with a non-built-in package showed empty stat chips on four surfaces, because those surfaces built their own entity map and left the character's own packages out of it.
+- **159 invented gear entries are gone** — The importer was fabricating empty `adventuring-gear` cards for every token in a background's equipment prose just so a reference would resolve.
+
+---
+
+### Deprecations & removals
+
+- **The rule-effect DSLs (`rule_effects`, feat `effects`, `granted_modifiers`) are retired** — The engine no longer interprets them. Existing content is converted on load and on package install; anything with no mechanical home becomes a readable `mechanical_notes` line rather than being dropped.
+- **`auto_granted_by` is retired** — The edge is inverted so the card that grants a feat or trait owns it, at the level it grants it. Converted automatically.
+- **Standalone Open5e SRD packs** — Already dropped in v12; the built-in pack remains the owner of SRD content, and this release extends it rather than reintroducing them.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `12.1.1` → `13.0.0`.
+- **Local DB:** schema v12, unchanged. Local Sync's paired-device table is created on open without a schema bump, so there is no client migration.
+- **In-app migrations (both idempotent, both automatic):** retired rule-effect DSLs are converted to named grant fields whenever a world entity is loaded or a package is installed; retired `auto_granted_by` edges are inverted onto their granting card at the same two points. Converted content persists on the next save.
+- **Self-hosted deployments:** redeploy the Cloudflare Worker before sharing PDFs online — it needs the `world_pdf` kind (50 MB) and `application/pdf` in the allowed MIME list. Per-kind limits are now authoritative rather than capped by the global ceiling.
+- **No cloud migrations** in this release.
+- **Re-install a package to pick up the repaired content.** Existing installs keep working with the values they were installed with; nothing is rewritten under you.
+- **Local Sync needs an account on both devices**, even though nothing leaves the local network — the account is used to prove the two devices are yours.
+- **Existing characters are unaffected** until re-resolved. New spell-slot grids are written at creation and level-up, not retroactively.
+
+---
+
+### Known issues
+
+- **Local Sync does not propagate deletions or renames** — Deliberate for now. A card deleted on one device returns if the other still has it, and a locally renamed world keeps its name. Tombstones are the fix and are not in this release.
+- **Local Sync is not encrypted** — Requests are signed with the pairing secret and restricted to private addresses, but bodies are plaintext on the LAN. Encryption is a later item.
+- **Soundpad content does not sync over LAN** — Sound libraries live outside the synced data root and can run to gigabytes; soundpacks are downloadable from the catalog on each device instead.
+- **Raising a character's class level by hand skips the slot grid** — Slots are written by the wizard and the level-up dialog. Editing `class_levels` directly leaves the previous grid in place with no warning; this is the price of keeping the field hand-editable.
+- **Same-second edits do not transfer** — Local Sync's world timestamps have one-second resolution, so two devices that edited the same world within the same second are treated as equal and nothing moves.
+- **First-party packs still ship duplicate content** — Package links exist but the official packs do not use them; roughly 21% of bundled entities overlap by name. Deduplicating them is separate work.
+- **Package art is not bundled yet** — The generation pipeline exists and the scope is measured (~5,500 art-worthy cards), but default content still renders as text.
+- Carry-over from v12.1.1: feat effect parsing stays conservative; subspecies reclassification on legacy packs is heuristic; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items; official catalog R2 publish awaits worker deploy + licensing sign-off; full WYSIWYG editors for schemas/templates/packages still in progress; Tier-4 combat-tracker-dependent effects pending.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v12.1.1 — Soundmap Music Stops on Hub Exit (Beta)
 
 **Release date:** June 2026
