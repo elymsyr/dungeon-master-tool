@@ -227,6 +227,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
       'Saving...',
       () async {
         await ref.read(pendingWriteBufferProvider).flush();
+        // Flush'tan SONRA: henüz diske inmemiş bir seçim referanssız
+        // görünüp silinmesin.
+        await ref.read(activeCampaignProvider.notifier).sweepUnusedMedia();
         final online =
             ref.read(connectivityStreamProvider).valueOrNull ?? false;
         if (online) {
