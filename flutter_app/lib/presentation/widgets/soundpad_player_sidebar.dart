@@ -5,12 +5,12 @@ import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Player için sade soundmap sidebar — DM'in tetiklediği tema/parçayı
+/// Player için sade soundpad sidebar — DM'in tetiklediği tema/parçayı
 /// görüntüler ve sadece **master volume** ayarına izin verir. Track
 /// seçimi, play/pause, upload yok.
-class SoundmapPlayerSidebar extends ConsumerWidget {
+class SoundpadPlayerSidebar extends ConsumerWidget {
   final DmToolColors palette;
-  const SoundmapPlayerSidebar({super.key, required this.palette});
+  const SoundpadPlayerSidebar({super.key, required this.palette});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -41,7 +41,7 @@ class SoundmapPlayerSidebar extends ConsumerWidget {
                 Icon(Icons.headphones,
                     size: 18, color: palette.tabActiveText),
                 const SizedBox(width: 8),
-                Text('Soundmap',
+                Text('Soundpad',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -13,6 +14,7 @@ import '../../../domain/entities/character.dart';
 import '../../providers/campaign_provider.dart';
 import '../../providers/character_provider.dart';
 import '../../providers/package_provider.dart';
+import '../../providers/ui_state_provider.dart';
 import '../srd_core_package_bootstrap.dart';
 import 'lan_sync_protocol.dart';
 
@@ -47,12 +49,17 @@ class LanSyncSession {
   Future<List<LanItemRef>> buildManifest() async {
     final out = <LanItemRef>[];
 
+    final ui = _ref.read(uiStateProvider);
     for (final w in await _db.worldsDao.getAll()) {
+      final touched = ui.viewTouchedByWorld[w.worldName];
       out.add(LanItemRef(
         type: LanItemType.world,
         id: w.id,
         name: w.worldName,
         updatedAt: w.updatedAt,
+        viewUpdatedAt: touched == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(touched, isUtc: true),
       ));
     }
 
@@ -84,6 +91,7 @@ class LanSyncSession {
   /// Item bulunamazsa null.
   Future<LanItemPayload?> loadItem(LanItemRef ref) async {
     final Map<String, dynamic> payload;
+    var extras = const <String, dynamic>{};
     switch (ref.type) {
       case LanItemType.world:
         final row = await _db.worldsDao.getById(ref.id);
@@ -91,6 +99,7 @@ class LanSyncSession {
         payload = await _ref
             .read(campaignRepositoryProvider)
             .load(row.worldName);
+        extras = await _worldExtras(row.id, row.worldName);
       case LanItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return null;
@@ -106,7 +115,36 @@ class LanSyncSession {
       payload: payload,
       dataRoot: userBase,
       media: await _mediaFor(ref),
+      extras: extras,
     );
+  }
+
+  /// Dünyaya ait olup `campaignRepository.load` blob'unda **bulunmayan**
+  /// parçalar. Blob cloud-backup kontratı olduğu için genişletilmiyor.
+  ///
+  /// - `installed_packages`: dünya ↔ paket bağlantıları. Bunlar taşınmazsa
+  ///   karşı cihaz dünyayı paketlerinden kopuk görüyor (built-in SRD
+  ///   sentezi ve paket kartları boş kalıyor); paketlerin kendisi zaten
+  ///   ayrı item olarak eşleniyor.
+  /// - `ui_view`: "o an ne açıktı" — açık kartlar, panel filtreleri, açık
+  ///   PDF sekmeleri, sağ sidebar (PDF / Soundpad / karakterler), session
+  ///   sekmesi. Bkz. [exportWorldUiView].
+  Future<Map<String, dynamic>> _worldExtras(
+    String worldId,
+    String worldName,
+  ) async {
+    final links = await _db.installedPackagesDao.getByWorld(worldId);
+    return {
+      'installed_packages': [
+        for (final l in links)
+          {
+            'id': l.packageId,
+            'name': l.packageName,
+            'version': l.packageVersion,
+          },
+      ],
+      'ui_view': exportWorldUiView(_ref.read(uiStateProvider), worldName),
+    };
   }
 
   /// Bir medya dosyasını relatif yolundan okur. Yol `userBase` dışına
@@ -137,10 +175,12 @@ class LanSyncSession {
   Future<void> applyItem(LanItemPayload item) async {
     final payload = rewriteRoots(item.payload, item.dataRoot, userBase)
         as Map<String, dynamic>;
+    final extras = rewriteRoots(item.extras, item.dataRoot, userBase)
+        as Map<String, dynamic>;
 
     switch (item.ref.type) {
       case LanItemType.world:
-        await _applyWorld(item.ref, payload);
+        await _applyWorld(item.ref, payload, extras);
       case LanItemType.package:
         await _applyPackage(item.ref, payload);
       case LanItemType.character:
@@ -148,7 +188,11 @@ class LanSyncSession {
     }
   }
 
-  Future<void> _applyWorld(LanItemRef ref, Map<String, dynamic> payload) async {
+  Future<void> _applyWorld(
+    LanItemRef ref,
+    Map<String, dynamic> payload,
+    Map<String, dynamic> extras,
+  ) async {
     final existing = await _db.worldsDao.getById(ref.id);
     // ponytail: yeniden adlandırma taşınmıyor — yerel ad kazanır, içerik
     // eşitlenir. Ad senkronu istenirse manifest'e `renamed_at` eklenir.
@@ -162,8 +206,57 @@ class LanSyncSession {
     payload['world_id'] = ref.id;
     await _ref.read(campaignRepositoryProvider).save(name, payload);
     await _db.worldsDao.setUpdatedAt(ref.id, ref.updatedAt);
+    await _applyWorldExtras(ref, name, extras);
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
+  }
+
+  /// [_worldExtras]'ın karşılığı. Silme yayılmadığı için burada da yalnız
+  /// ekleme/güncelleme var: peer'da olmayan bir paket bağlantısı yerelde
+  /// kalır.
+  Future<void> _applyWorldExtras(
+    LanItemRef ref,
+    String worldName,
+    Map<String, dynamic> extras,
+  ) async {
+    final links = extras['installed_packages'];
+    if (links is List) {
+      for (final raw in links) {
+        if (raw is! Map) continue;
+        final packageId = raw['id'];
+        if (packageId is! String || packageId.isEmpty) continue;
+        await _db.installedPackagesDao.upsert(
+          InstalledPackagesCompanion.insert(
+            worldId: ref.id,
+            packageId: packageId,
+            packageName: Value('${raw['name'] ?? ''}'),
+            packageVersion: Value('${raw['version'] ?? ''}'),
+          ),
+        );
+      }
+    }
+
+    final view = extras['ui_view'];
+    if (view is! Map) return;
+    final viewMap = view.cast<String, dynamic>();
+    final isActive = _ref.read(activeCampaignProvider) == worldName;
+    _ref.read(uiStateProvider.notifier).update((s) {
+      var next = importWorldUiView(s, worldName, viewMap);
+      // Açık dünyada global alanlar (sağ sidebar, açık PDF'ler, session
+      // sekmesi) o dünyanın görünümü demek — LWW'yi orada da uygula, yoksa
+      // bir sonraki kayıt yerel ekranı peer'ın üzerine geri yazardı.
+      if (isActive) {
+        next = WorldViewState.stored(next, worldName)?.applyTo(next) ?? next;
+      }
+      final viewTs = ref.viewUpdatedAt;
+      if (viewTs != null) {
+        next = next.copyWith(viewTouchedByWorld: {
+          ...next.viewTouchedByWorld,
+          worldName: viewTs.millisecondsSinceEpoch,
+        });
+      }
+      return next;
+    });
   }
 
   Future<void> _applyPackage(

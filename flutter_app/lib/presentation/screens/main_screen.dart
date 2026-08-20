@@ -46,7 +46,7 @@ import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
 import '../widgets/projection/projection_status_icon.dart';
 import '../widgets/save_sync_indicator.dart';
-import '../widgets/soundmap_sidebar.dart';
+import '../widgets/soundpad_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
 import 'mind_map/mind_map_screen.dart';
@@ -77,7 +77,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   // ValueNotifier for drag-time rendering without full rebuild
   late final ValueNotifier<double> _sidebarWidthNotifier;
 
-  // Right sidebar state (PDF / Soundmap — mutually exclusive, ortak genislik)
+  // Right sidebar state (PDF / Soundpad — mutually exclusive, ortak genislik)
   // Hosted in a ValueNotifier so toggles + sub-tab switches don't trigger a
   // top-level MainScreen rebuild. Only the small VLBs wrapping the toggle
   // buttons + the sidebar overlay rebuild.
@@ -109,21 +109,33 @@ class _MainScreenState extends ConsumerState<MainScreen>
     });
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
-    _tabIndex = uiState.mainTabIndex;
+    // "Ne açıktı" bilgisi dünya başına saklanıyor (LAN eşlemesi de bunu
+    // taşıyor). Bu dünyanın kaydı varsa global alanlar da ona çevrilir —
+    // session/karakter panelleri global alanları okuyor.
+    final worldKey = ref.read(activeCampaignProvider) ?? '';
+    final storedView = WorldViewState.stored(uiState, worldKey);
+    if (storedView != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(uiStateProvider.notifier).update(storedView.applyTo);
+      });
+    }
+    final view = storedView ?? WorldViewState.of(uiState);
+    _tabIndex = view.mainTabIndex;
     _sidebarOpen = uiState.sidebarOpen;
     _sidebarWidth = uiState.sidebarWidth.clamp(_minSidebarWidth, _maxSidebarWidth);
     _sidebarWidthNotifier = ValueNotifier(_sidebarWidth);
     // Right sidebar restore — silinen dosyaları temizle
-    _rightSidebarCtrl = ValueNotifier(uiState.rightSidebar);
+    _rightSidebarCtrl = ValueNotifier(view.rightSidebar);
     _rightSidebarWidth = uiState.pdfSidebarWidth.clamp(_minRightSidebarWidth, _maxRightSidebarWidth);
     _rightSidebarWidthNotifier = ValueNotifier(_rightSidebarWidth);
     // Optimistic: assume saved paths still exist; verify async so initState
     // doesn't block first paint on a slow mobile filesystem.
-    _pdfOpenPaths = List<String>.from(uiState.pdfOpenPaths);
+    _pdfOpenPaths = List<String>.from(view.pdfOpenPaths);
     _pdfActiveIndexNotifier = ValueNotifier(
       _pdfOpenPaths.isEmpty
           ? -1
-          : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1),
+          : view.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1),
     );
     unawaited(_pruneMissingPdfPaths());
   }
@@ -445,7 +457,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     Icons.account_tree,     // Mind Map
     Icons.map,              // Map
     Icons.picture_as_pdf,   // PDF (mobile/tablet only)
-    Icons.music_note,       // Soundmap (mobile/tablet only)
+    Icons.music_note,       // Soundpad (mobile/tablet only)
     Icons.people,           // Characters (mobile/tablet only)
   ];
 
@@ -539,7 +551,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       l10n.tabMindMap,
       l10n.tabMap,
       l10n.tabPdf,
-      l10n.tabSoundmap,
+      l10n.tabSoundpad,
       'Characters',
     ];
 
@@ -566,12 +578,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
       }
     });
 
-    // Listen for soundmap navigation requests
-    ref.listen<bool?>(soundmapNavigationProvider, (_, value) {
+    // Listen for soundpad navigation requests
+    ref.listen<bool?>(soundpadNavigationProvider, (_, value) {
       if (value != null) {
-        _rightSidebarCtrl.value = RightSidebar.soundmap;
+        _rightSidebarCtrl.value = RightSidebar.soundpad;
         _persistUiState();
-        ref.read(soundmapNavigationProvider.notifier).state = null;
+        ref.read(soundpadNavigationProvider.notifier).state = null;
       }
     });
 
@@ -655,8 +667,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
             onOpenFile: _openPdfTab,
           ),
         ),
-        // Soundmap tab (mobile/tablet only — desktop uses overlay sidebar)
-        SoundmapSidebar(palette: palette),
+        // Soundpad tab (mobile/tablet only — desktop uses overlay sidebar)
+        SoundpadSidebar(palette: palette),
         // Characters tab (mobile/tablet only — desktop uses overlay sidebar)
         CharactersSidebar(palette: palette),
       ],
@@ -993,15 +1005,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                                         padding: const EdgeInsets.symmetric(horizontal: 8),
                                       ),
-                                      // Soundmap sidebar toggle
+                                      // Soundpad sidebar toggle
                                       IconButton(
                                         icon: Icon(
-                                          current == RightSidebar.soundmap ? Icons.music_note : Icons.music_note_outlined,
+                                          current == RightSidebar.soundpad ? Icons.music_note : Icons.music_note_outlined,
                                           size: 18,
                                         ),
-                                        tooltip: current == RightSidebar.soundmap ? l10n.mainCloseSoundmap : l10n.mainOpenSoundmap,
-                                        color: current == RightSidebar.soundmap ? palette.tabIndicator : palette.tabText,
-                                        onPressed: () => toggle(RightSidebar.soundmap),
+                                        tooltip: current == RightSidebar.soundpad ? l10n.mainCloseSoundpad : l10n.mainOpenSoundpad,
+                                        color: current == RightSidebar.soundpad ? palette.tabIndicator : palette.tabText,
+                                        onPressed: () => toggle(RightSidebar.soundpad),
                                         iconSize: 18,
                                         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1035,7 +1047,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 ),
               ],
             ),
-            // Right sidebar — overlay olarak sağdan açılır (PDF / Soundmap /
+            // Right sidebar — overlay olarak sağdan açılır (PDF / Soundpad /
             // Characters). Always rendered so sub-sidebars (visited via
             // LazyIndexedStack) preserve their state across toggles. When
             // current == none, the Positioned collapses to width 0 + Offstage
@@ -1048,7 +1060,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 final sidebarIdx = switch (current) {
                   RightSidebar.none => 0,
                   RightSidebar.pdf => 1,
-                  RightSidebar.soundmap => 2,
+                  RightSidebar.soundpad => 2,
                   RightSidebar.characters => 3,
                 };
                 final content = Offstage(
@@ -1072,7 +1084,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                         ),
                         // Sidebar content — LazyIndexedStack mounts each
                         // sub-sidebar at most once (on first visit) and keeps
-                        // it alive afterwards, so re-opening PDF/Soundmap/
+                        // it alive afterwards, so re-opening PDF/Soundpad/
                         // Characters skips the cold-mount + provider re-init.
                         Expanded(
                           child: Container(
@@ -1108,8 +1120,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                     onOpenFile: _openPdfTab,
                                   ),
                                 ),
-                                // 2: Soundmap.
-                                SoundmapSidebar(palette: palette),
+                                // 2: Soundpad.
+                                SoundpadSidebar(palette: palette),
                                 // 3: Characters.
                                 CharactersSidebar(palette: palette),
                               ],
@@ -1180,7 +1192,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           : null,
 
       // Mobile bottom nav (portrait only — landscape uses burger menu overlay).
-      // Display order: database, session, mindmap, map, characters, soundmap,
+      // Display order: database, session, mindmap, map, characters, soundpad,
       // pdf. Horizontal scroll so labels don't compress at narrow widths.
       bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
           ? _MobileBottomTabBar(
@@ -1248,11 +1260,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
       return true;
     }
 
-    // Ctrl+M: toggle Soundmap sidebar
+    // Ctrl+M: toggle Soundpad sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
-      _rightSidebarCtrl.value = _rightSidebar == RightSidebar.soundmap
+      _rightSidebarCtrl.value = _rightSidebar == RightSidebar.soundpad
           ? RightSidebar.none
-          : RightSidebar.soundmap;
+          : RightSidebar.soundpad;
       _persistUiState();
       return true;
     }

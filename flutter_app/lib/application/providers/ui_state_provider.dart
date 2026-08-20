@@ -4,13 +4,15 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'campaign_provider.dart';
+
 const _key = 'ui_state';
 
 /// copyWith sentinel — distinguish "not supplied" from explicit null.
 const Object _sentinel = Object();
 
 /// Which right sidebar is currently open (mutually exclusive).
-enum RightSidebar { none, pdf, soundmap, characters }
+enum RightSidebar { none, pdf, soundpad, characters }
 
 /// Kalıcı UI state — PyQt'deki closeEvent/restoreState karşılığı.
 /// SharedPreferences ile kaydedilir, uygulama açılışında restore edilir.
@@ -45,9 +47,9 @@ class UiState {
   final int sessionBottomTab;
   final int sessionMobileTab;
 
-  // Right Sidebar (PDF / Soundmap)
+  // Right Sidebar (PDF / Soundpad)
   final RightSidebar rightSidebar;
-  final double pdfSidebarWidth; // shared width for both PDF and Soundmap
+  final double pdfSidebarWidth; // shared width for both PDF and Soundpad
   final List<String> pdfOpenPaths;
   final int pdfActiveIndex;
   /// Last-opened character inside the right Characters sidebar. Restored
@@ -67,6 +69,17 @@ class UiState {
 
   // First-launch onboarding: welcome/beta dialog shown once.
   final bool welcomeSeen;
+
+  /// Dünyaya özgü görünüm anlık görüntüsü — worldKey (dünya adı) →
+  /// [WorldViewState] JSON'u. Yukarıdaki global alanlar (açık PDF'ler, sağ
+  /// sidebar, session sekmesi) tek bir dünyaya aittir; dünya değiştirince
+  /// buradan restore edilir ve LAN eşlemesinde dünyayla birlikte taşınır.
+  final Map<String, String> worldViewByWorld;
+
+  /// worldKey → görünümün son değişme anı (ms since epoch, UTC). LAN
+  /// eşlemesinin LWW karşılaştırması bunu dünyanın içerik zaman damgasıyla
+  /// birlikte kullanır; yoksa "sadece açık kart değişti" durumu eşlenmezdi.
+  final Map<String, int> viewTouchedByWorld;
 
   // Admin-only: install the bundled `assets/` content packs locally (tagged
   // "(assets)") so a maintainer can inspect/compare them against published
@@ -101,6 +114,8 @@ class UiState {
     this.autoLocalSave = true,
     this.welcomeSeen = false,
     this.showAssetsPacks = false,
+    this.worldViewByWorld = const {},
+    this.viewTouchedByWorld = const {},
   });
 
   UiState copyWith({
@@ -131,6 +146,8 @@ class UiState {
     bool? autoLocalSave,
     bool? welcomeSeen,
     bool? showAssetsPacks,
+    Map<String, String>? worldViewByWorld,
+    Map<String, int>? viewTouchedByWorld,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -164,6 +181,8 @@ class UiState {
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
       showAssetsPacks: showAssetsPacks ?? this.showAssetsPacks,
+      worldViewByWorld: worldViewByWorld ?? this.worldViewByWorld,
+      viewTouchedByWorld: viewTouchedByWorld ?? this.viewTouchedByWorld,
     );
   }
 
@@ -195,6 +214,8 @@ class UiState {
     'autoLocalSave': autoLocalSave,
     'welcomeSeen': welcomeSeen,
     'showAssetsPacks': showAssetsPacks,
+    'worldViewByWorld': worldViewByWorld,
+    'viewTouchedByWorld': viewTouchedByWorld,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -238,6 +259,8 @@ class UiState {
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,
       showAssetsPacks: json['showAssetsPacks'] as bool? ?? false,
+      worldViewByWorld: _decodeStringMap(json['worldViewByWorld']),
+      viewTouchedByWorld: _decodeIntMap(json['viewTouchedByWorld']),
     );
   }
 }
@@ -271,8 +294,172 @@ Map<String, int> _decodeIntMap(dynamic raw) {
   return out;
 }
 
+/// Bir dünyaya ait "o an ne açık" görünümü: hangi sağ sidebar (PDF /
+/// Soundpad / karakterler), hangi PDF sekmeleri, hangi ana/session sekmesi.
+///
+/// [UiState] içinde bunlar tek bir global alan kümesi olarak duruyor (ekran
+/// bir seferde tek dünya gösteriyor); [WorldViewState] o kümenin dünya
+/// başına saklanabilen/taşınabilen halidir.
+class WorldViewState {
+  const WorldViewState({
+    this.mainTabIndex = 0,
+    this.rightSidebar = RightSidebar.none,
+    this.pdfOpenPaths = const [],
+    this.pdfActiveIndex = -1,
+    this.sessionBottomTab = 0,
+    this.sessionMobileTab = 0,
+    this.charactersSidebarInlineId,
+  });
+
+  final int mainTabIndex;
+  final RightSidebar rightSidebar;
+  final List<String> pdfOpenPaths;
+  final int pdfActiveIndex;
+  final int sessionBottomTab;
+  final int sessionMobileTab;
+  final String? charactersSidebarInlineId;
+
+  factory WorldViewState.of(UiState s) => WorldViewState(
+        mainTabIndex: s.mainTabIndex,
+        rightSidebar: s.rightSidebar,
+        pdfOpenPaths: s.pdfOpenPaths,
+        pdfActiveIndex: s.pdfActiveIndex,
+        sessionBottomTab: s.sessionBottomTab,
+        sessionMobileTab: s.sessionMobileTab,
+        charactersSidebarInlineId: s.charactersSidebarInlineId,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'mainTabIndex': mainTabIndex,
+        'rightSidebar': rightSidebar.name,
+        'pdfOpenPaths': pdfOpenPaths,
+        'pdfActiveIndex': pdfActiveIndex,
+        'sessionBottomTab': sessionBottomTab,
+        'sessionMobileTab': sessionMobileTab,
+        'charactersSidebarInlineId': charactersSidebarInlineId,
+      };
+
+  factory WorldViewState.fromJson(Map<String, dynamic> j) => WorldViewState(
+        mainTabIndex: j['mainTabIndex'] as int? ?? 0,
+        rightSidebar: RightSidebar.values
+                .where((e) => e.name == j['rightSidebar'])
+                .firstOrNull ??
+            RightSidebar.none,
+        pdfOpenPaths:
+            (j['pdfOpenPaths'] as List?)?.whereType<String>().toList() ??
+                const [],
+        pdfActiveIndex: j['pdfActiveIndex'] as int? ?? -1,
+        sessionBottomTab: j['sessionBottomTab'] as int? ?? 0,
+        sessionMobileTab: j['sessionMobileTab'] as int? ?? 0,
+        charactersSidebarInlineId: j['charactersSidebarInlineId'] as String?,
+      );
+
+  /// Kayıtlı görünümü [s]'in global alanlarına yazar.
+  UiState applyTo(UiState s) => s.copyWith(
+        mainTabIndex: mainTabIndex,
+        rightSidebar: rightSidebar,
+        pdfOpenPaths: pdfOpenPaths,
+        pdfActiveIndex: pdfActiveIndex,
+        sessionBottomTab: sessionBottomTab,
+        sessionMobileTab: sessionMobileTab,
+        charactersSidebarInlineId: charactersSidebarInlineId,
+      );
+
+  /// [worldKey] için kayıtlı görünüm; yoksa null.
+  static WorldViewState? stored(UiState s, String worldKey) {
+    final raw = s.worldViewByWorld[worldKey];
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return WorldViewState.fromJson(decoded.cast<String, dynamic>());
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// LAN eşlemesinde dünyayla birlikte taşınan bütün görünüm dilimi: açık
+/// kartlar, panel filtreleri/sıralaması ve [WorldViewState].
+///
+/// Cihaza özgü olanlar (pencere genişlikleri, splitter oranları, tema, dil,
+/// ses seviyesi) **taşınmaz** — ekran boyutu farklı olan telefonda masaüstü
+/// oranlarını geri yüklemek istenmez.
+Map<String, dynamic> exportWorldUiView(UiState s, String worldKey) => {
+      'view':
+          (WorldViewState.stored(s, worldKey) ?? WorldViewState.of(s)).toJson(),
+      'db_open_left': s.dbOpenLeftByWorld[worldKey] ?? const <String>[],
+      'db_open_right': s.dbOpenRightByWorld[worldKey] ?? const <String>[],
+      'db_active_left': s.dbActiveLeftByWorld[worldKey] ?? -1,
+      'db_active_right': s.dbActiveRightByWorld[worldKey] ?? -1,
+      'db_filter_slugs': s.dbFilterSlugsByWorld[worldKey] ?? const <String>[],
+      'db_filter_sources':
+          s.dbFilterSourcesByWorld[worldKey] ?? const <String>[],
+      'db_filter_share_modes':
+          s.dbFilterShareModesByWorld[worldKey] ?? const <String>[],
+      'db_sort_mode': s.dbSortModeByWorld[worldKey],
+    };
+
+/// [exportWorldUiView] çıktısını [worldKey] altına yazar. Global alanlara
+/// dokunmaz — dünya bir sonraki açılışında [WorldViewState.stored]'dan
+/// restore edilir, böylece başka bir dünyada oturan kullanıcının ekranı
+/// eşleme sırasında yerinden oynamaz.
+UiState importWorldUiView(
+  UiState s,
+  String worldKey,
+  Map<String, dynamic> j,
+) {
+  List<String> list(String key) =>
+      (j[key] as List?)?.whereType<String>().toList() ?? const [];
+  final view = j['view'];
+  final sortMode = j['db_sort_mode'];
+  return s.copyWith(
+    worldViewByWorld: {
+      ...s.worldViewByWorld,
+      if (view is Map) worldKey: jsonEncode(view),
+    },
+    dbOpenLeftByWorld: {...s.dbOpenLeftByWorld, worldKey: list('db_open_left')},
+    dbOpenRightByWorld: {
+      ...s.dbOpenRightByWorld,
+      worldKey: list('db_open_right'),
+    },
+    dbActiveLeftByWorld: {
+      ...s.dbActiveLeftByWorld,
+      worldKey: j['db_active_left'] as int? ?? -1,
+    },
+    dbActiveRightByWorld: {
+      ...s.dbActiveRightByWorld,
+      worldKey: j['db_active_right'] as int? ?? -1,
+    },
+    dbFilterSlugsByWorld: {
+      ...s.dbFilterSlugsByWorld,
+      worldKey: list('db_filter_slugs'),
+    },
+    dbFilterSourcesByWorld: {
+      ...s.dbFilterSourcesByWorld,
+      worldKey: list('db_filter_sources'),
+    },
+    dbFilterShareModesByWorld: {
+      ...s.dbFilterShareModesByWorld,
+      worldKey: list('db_filter_share_modes'),
+    },
+    dbSortModeByWorld: {
+      ...s.dbSortModeByWorld,
+      if (sortMode is String) worldKey: sortMode,
+    },
+  );
+}
+
 class UiStateNotifier extends StateNotifier<UiState> {
   UiStateNotifier() : super(const UiState());
+
+  /// `main.dart` bu notifier'i ProviderScope'tan **once** kurup provider'i
+  /// onunla override ediyor (SharedPreferences okumasi bootstrap'la paralel
+  /// kossun diye). Ref bu yuzden constructor'da degil, override aninda
+  /// baglaniyor; aktif dunyayi okumak icin gerekiyor.
+  Ref? _ref;
+
+  void bindRef(Ref ref) => _ref = ref;
 
   /// SharedPreferences'dan yükle. App başlangıcında bir kere çağrılır.
   Future<void> load() async {
@@ -290,19 +477,57 @@ class UiStateNotifier extends StateNotifier<UiState> {
   Timer? _saveTimer;
 
   Future<void> _save() async {
+    // Debounce timer, notifier'dan uzun yasayabilir (scope teardown, hot
+    // restart, LAN eslemesi sirasinda kapanan container). `state`'e dispose
+    // sonrasi dokunmak StateNotifier'da hata firlatiyor.
+    if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     await prefs.setString(_key, jsonEncode(state.toJson()));
   }
 
+  @override
+  void dispose() {
+    _saveTimer?.cancel();
+    super.dispose();
+  }
+
   void update(UiState Function(UiState) updater) {
-    state = updater(state);
+    final prev = state;
+    state = _stampActiveWorld(prev, updater(prev));
     _saveTimer?.cancel();
     _saveTimer = Timer(const Duration(seconds: 1), _save);
   }
+
+  /// Her guncellemede aktif dunyanin gorunum anlik goruntusunu ve — gercekten
+  /// degistiyse — zaman damgasini tazeler. Tek cagri noktasi: her `update`
+  /// buradan geciyor, dolayisiyla cagiran taraflarda bakim gerekmiyor.
+  UiState _stampActiveWorld(UiState prev, UiState next) {
+    final key = _ref?.read(activeCampaignProvider) ?? '';
+    if (key.isEmpty) return next;
+    final stamped = next.copyWith(
+      worldViewByWorld: {
+        ...next.worldViewByWorld,
+        key: jsonEncode(WorldViewState.of(next).toJson()),
+      },
+    );
+    if (_viewFingerprint(stamped, key) == _viewFingerprint(prev, key)) {
+      return stamped;
+    }
+    return stamped.copyWith(
+      viewTouchedByWorld: {
+        ...stamped.viewTouchedByWorld,
+        key: DateTime.now().toUtc().millisecondsSinceEpoch,
+      },
+    );
+  }
+
+  static String _viewFingerprint(UiState s, String key) =>
+      jsonEncode(exportWorldUiView(s, key));
 }
 
 final uiStateProvider = StateNotifierProvider<UiStateNotifier, UiState>((ref) {
-  return UiStateNotifier();
+  return UiStateNotifier()..bindRef(ref);
 });
 
 /// Set this to an entity ID to navigate to the Database tab and open that entity.
@@ -333,9 +558,9 @@ final entityForkRedirectProvider =
 /// Consumers should reset to null after handling.
 final pdfNavigationProvider = StateProvider<String?>((ref) => null);
 
-/// Set this to open the soundmap sidebar from anywhere.
+/// Set this to open the soundpad sidebar from anywhere.
 /// Consumers should reset to null after handling.
-final soundmapNavigationProvider = StateProvider<bool?>((ref) => null);
+final soundpadNavigationProvider = StateProvider<bool?>((ref) => null);
 
 /// Set this to true to switch to the Session tab and focus the projection
 /// (Player Screen) bottom tab. Consumers should reset to null after handling.

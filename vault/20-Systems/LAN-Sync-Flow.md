@@ -55,6 +55,40 @@ Bundan sonra bütün istekler `shared` ile imzalanır; arayanın kimliği
 Presence'e güvenip "offline" görünenler atlanmaz — UDP engelli ağlarda yanlış
 offline yüzünden sync hiç çalışmasın istenmiyor.
 
+## Ne taşınır — world item'ının kapsamı
+`campaignRepository.load(name)` blob'u (cloud-backup ile birebir aynı kontrat):
+entity'ler, world schema, `combat_state` (encounter'lar + battlemap + session
+notları), `mind_maps`, `map_data`, `sessions`, `pdf_library` manifest'i.
+Medya olarak `{worldsDir}/{worldName}/` altındaki her dosya (haritalar,
+görseller, `pdfs/`).
+
+Blob'un **dışında** kalan ama dünyaya ait olan iki şey `LanItemPayload.extras`
+ile taşınır — blob cloud-backup kontratı olduğu için genişletilmedi:
+- `installed_packages` — dünya ↔ paket bağlantıları. Taşınmazsa karşı cihaz
+  dünyayı paketlerinden kopuk görür (built-in SRD sentezi boş kalır);
+  paketlerin kendisi zaten ayrı item.
+- `ui_view` — "o an ne açıktı": açık kartlar (sol/sağ panel + aktif sekme),
+  panel filtreleri/sıralaması, açık PDF sekmeleri, sağ sidebar (PDF / Soundpad
+  / karakterler), ana ve session sekmesi. Bkz. `exportWorldUiView`
+  (`ui_state_provider.dart`). Cihaza özgü olanlar (genişlikler, splitter
+  oranları, tema, dil, ses) **taşınmaz**.
+
+`extras` da `rewriteRoots`'tan geçer — açık PDF yolları alıcının veri köküne
+çevrilir.
+
+### Görünümün zaman damgası
+İçerik hiç değişmeden yalnız "ne açık" değiştiğinde de eşleme tetiklensin diye
+manifest satırında ikinci bir alan var: `LanItemRef.viewUpdatedAt`
+(`UiState.viewTouchedByWorld[worldName]`). LWW karşılaştırması
+`effectiveUpdatedAt = max(updatedAt, viewUpdatedAt)` üzerinden yapılır; alıcı
+world satırının **içerik** zaman damgasını kirletmez (aksi hâlde sırf sekme
+açmak buluta yeniden yükleme tetiklerdi).
+
+Görünüm dünya başına saklandığı için (`UiState.worldViewByWorld`) eşleme
+sırasında başka bir dünyada oturan kullanıcının ekranı yerinden oynamaz —
+kayıt, dünya bir sonraki açılışında `MainScreen.initState`'te restore edilir.
+Açık dünya eşlenirse global alanlara da uygulanır.
+
 ## Presence (arka planda, "arama" değil)
 - Eşleşmesi olan her cihaz 5 sn'de bir UDP broadcast: `{dmt:2, id, p, uh}`.
   `uh` = `sha256("dmt-lan-uid:"+uid)[0:8]` — ham `uid` tele çıkmaz.
@@ -109,6 +143,11 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 - Veri kökü dışındaki mutlak yollu medya taşınmaz (`raw_path_migrator.dart` da
   ham yolları legacy sayıyor).
 - Medya yüklemesi base64 (%33 şişme) — tek kod yolu bırakıyor.
+- **Soundpad içeriği taşınmaz** — `AppPaths.soundpadRoot` kullanıcı veri
+  kökünün dışında (bundle'lanmış `assets/soundpad/` olabilir) ve GB'larca ses
+  dosyası demek; paketler zaten soundpack kataloğundan indiriliyor. Çalan
+  tema/ambience hiç kalıcı değil (`SoundpadNotifier` yalnız bellekte), o yüzden
+  eşlenecek bir "soundpad durumu" da yok.
 - Masaüstünde QR **okuma** yok (`mobile_scanner` Android/iOS/macOS); masaüstü
   QR'ı gösterir, telefon okur. IP+PIN her yerde çalışır.
 

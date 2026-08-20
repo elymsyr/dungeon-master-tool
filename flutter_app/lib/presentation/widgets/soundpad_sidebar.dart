@@ -10,10 +10,10 @@ import '../theme/dm_tool_colors.dart';
 
 /// Sağ sidebar veya mobil tab olarak gösterilen Soundpad paneli.
 /// Tek scroll: Music → SFX → Ambience + alt global controls.
-class SoundmapSidebar extends ConsumerWidget {
+class SoundpadSidebar extends ConsumerWidget {
   final DmToolColors palette;
 
-  const SoundmapSidebar({super.key, required this.palette});
+  const SoundpadSidebar({super.key, required this.palette});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

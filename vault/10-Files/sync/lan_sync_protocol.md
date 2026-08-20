@@ -29,7 +29,9 @@ tags: [file]
 
 ## Key Logic / Variables
 - `LanItemRef.updatedAt` **milisaniyeye yuvarlanır** — JSON round-trip'te mikrosaniye farkı iki tarafın "aynı" içeriği farklı sanmasına yol açardı. Kimlik `key = "<type>:<id>"`.
-- `diffManifests(local:, peer:)` → `LanSyncPlan(pull, push, skipped)`. Peer-only → pull; local-only → push; ikisinde de varsa `updatedAt` yeni olan kazanır; eşitse `skipped++`. **Silme yayılmaz.**
+- `diffManifests(local:, peer:)` → `LanSyncPlan(pull, push, skipped)`. Peer-only → pull; local-only → push; ikisinde de varsa `effectiveUpdatedAt` yeni olan kazanır; eşitse `skipped++`. **Silme yayılmaz.**
+- `LanItemRef.viewUpdatedAt` (yalnız world, opsiyonel) — "o an ne açıktı" görünümünün son değişme anı. `effectiveUpdatedAt = max(updatedAt, viewUpdatedAt)`; ayrı taşınır ki alıcı içerik zaman damgasını kirletmesin. Alan yoksa (eski sürüm) davranış eskisiyle aynı.
+- `LanItemPayload.extras` — blob'un dışında kalan dünya parçaları (`installed_packages`, `ui_view`). Opsiyonel: yoksa boş map, eski sürümle uyumlu. Alıcıda payload ile aynı `rewriteRoots`'tan geçirilir.
 - **İki anahtar kaynağı:** eşleşme anında `LanAuth.deriveSessionKey(secret, nonce) = sha256("dmt-lan:$secret:$nonce")` (QR token'ı ya da PIN); eşleşme sonrası `LanAuth.fromSharedSecret(base64)` — kalıcı sır.
 - `deriveSharedSecret(clientHalf:, hostHalf:) = base64(sha256("$clientHalf|$hostHalf"))`. Sıra **sabit** (önce istemci) — iki taraf aynı sonucu bulur.
 - `LanPairInvite.toQrText()` = `dmt2:` + base64url(json). Anahtarlar tek harfli (`i n a p t u`) — QR yoğunluğu düşük kalsın. `fromQrText` ön eki tutmayan ya da eksik alanlı her şeyi eler.

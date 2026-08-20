@@ -47,15 +47,32 @@ class LanItemRef {
     required this.id,
     required this.name,
     required DateTime updatedAt,
-  }) : updatedAt = DateTime.fromMillisecondsSinceEpoch(
-          updatedAt.toUtc().millisecondsSinceEpoch,
-          isUtc: true,
-        );
+    DateTime? viewUpdatedAt,
+  })  : updatedAt = _toMs(updatedAt),
+        viewUpdatedAt =
+            viewUpdatedAt == null ? null : _toMs(viewUpdatedAt);
+
+  static DateTime _toMs(DateTime t) => DateTime.fromMillisecondsSinceEpoch(
+        t.toUtc().millisecondsSinceEpoch,
+        isUtc: true,
+      );
 
   final LanItemType type;
   final String id;
   final String name;
   final DateTime updatedAt;
+
+  /// Yalnızca world için: "o an ne açıktı" görünümünün (açık kartlar, PDF
+  /// sekmeleri, sağ sidebar) son değişme anı. İçerik hiç değişmeden sadece
+  /// görünüm değiştiğinde de eşleme tetiklensin diye ayrı taşınır; alıcı
+  /// tarafta world satırının içerik zaman damgasını kirletmez.
+  final DateTime? viewUpdatedAt;
+
+  /// LWW karşılaştırmasında kullanılan zaman: içerik ve görünümün yenisi.
+  DateTime get effectiveUpdatedAt =>
+      (viewUpdatedAt != null && viewUpdatedAt!.isAfter(updatedAt))
+          ? viewUpdatedAt!
+          : updatedAt;
 
   String get key => '${lanItemTypeToWire(type)}:$id';
 
@@ -64,6 +81,8 @@ class LanItemRef {
         'id': id,
         'name': name,
         'updated_at': updatedAt.toIso8601String(),
+        if (viewUpdatedAt != null)
+          'view_updated_at': viewUpdatedAt!.toIso8601String(),
       };
 
   static LanItemRef? fromJson(Map<String, dynamic> j) {
@@ -77,11 +96,14 @@ class LanItemRef {
       id: id,
       name: '${j['name'] ?? ''}',
       updatedAt: ts,
+      viewUpdatedAt: j['view_updated_at'] == null
+          ? null
+          : DateTime.tryParse('${j['view_updated_at']}'),
     );
   }
 
   @override
-  String toString() => '$key(${name.isEmpty ? '-' : name}@$updatedAt)';
+  String toString() => '$key(${name.isEmpty ? '-' : name}@$effectiveUpdatedAt)';
 }
 
 /// Bir item'ın medya dosyası: veri köküne göre relatif yol + içerik hash'i.
@@ -126,6 +148,7 @@ class LanItemPayload {
     required this.payload,
     required this.dataRoot,
     this.media = const [],
+    this.extras = const {},
   });
 
   final LanItemRef ref;
@@ -133,11 +156,19 @@ class LanItemPayload {
   final String dataRoot;
   final List<LanMediaEntry> media;
 
+  /// `repository.load` blob'unun **dışında** kalan, ama dünyaya ait olan
+  /// parçalar: paket kurulum bağlantıları ve UI görünümü (açık kartlar, açık
+  /// PDF sekmeleri, sağ sidebar durumu). Blob cloud-backup kontratı olduğu
+  /// için genişletilmedi; bunlar yanına ayrı bir bölüm olarak takılıyor.
+  /// [dataRoot] yeniden yazımı payload ile aynı şekilde buna da uygulanır.
+  final Map<String, dynamic> extras;
+
   Map<String, dynamic> toJson() => {
         'ref': ref.toJson(),
         'payload': payload,
         'data_root': dataRoot,
         'media': [for (final m in media) m.toJson()],
+        if (extras.isNotEmpty) 'extras': extras,
       };
 
   static LanItemPayload? fromJson(Map<String, dynamic> j) {
@@ -146,10 +177,14 @@ class LanItemPayload {
     if (rawRef is! Map || rawPayload is! Map) return null;
     final ref = LanItemRef.fromJson(rawRef.cast<String, dynamic>());
     if (ref == null) return null;
+    final rawExtras = j['extras'];
     return LanItemPayload(
       ref: ref,
       payload: rawPayload.cast<String, dynamic>(),
       dataRoot: '${j['data_root'] ?? ''}',
+      extras: rawExtras is Map
+          ? rawExtras.cast<String, dynamic>()
+          : const <String, dynamic>{},
       media: [
         for (final m in (j['media'] as List? ?? const []))
           if (m is Map)
@@ -205,9 +240,9 @@ LanSyncPlan diffManifests({
     final mine = localByKey[r.key];
     if (mine == null) {
       pull.add(r);
-    } else if (r.updatedAt.isAfter(mine.updatedAt)) {
+    } else if (r.effectiveUpdatedAt.isAfter(mine.effectiveUpdatedAt)) {
       pull.add(r);
-    } else if (mine.updatedAt.isAfter(r.updatedAt)) {
+    } else if (mine.effectiveUpdatedAt.isAfter(r.effectiveUpdatedAt)) {
       push.add(mine);
     } else {
       skipped++;

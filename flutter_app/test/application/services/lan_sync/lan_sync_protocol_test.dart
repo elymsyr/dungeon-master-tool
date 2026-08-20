@@ -58,6 +58,88 @@ void main() {
       expect(back.updatedAt, ref.updatedAt);
       expect(diffManifests(local: [ref], peer: [back]).skipped, 1);
     });
+
+    test('içerik aynıyken yalnız görünüm değiştiyse de taşınır', () {
+      final mine = _ref('a', t0);
+      final theirs = LanItemRef(
+        type: LanItemType.world,
+        id: 'a',
+        name: 'a',
+        updatedAt: t0,
+        viewUpdatedAt: t1,
+      );
+      final plan = diffManifests(local: [mine], peer: [theirs]);
+      expect(plan.pull.single.id, 'a');
+      expect(plan.skipped, 0);
+    });
+
+    test('görünüm zaman damgası içerikten eskiyse LWW\'yi değiştirmez', () {
+      final mine = LanItemRef(
+        type: LanItemType.world,
+        id: 'a',
+        name: 'a',
+        updatedAt: t1,
+        viewUpdatedAt: t0,
+      );
+      final plan = diffManifests(local: [mine], peer: [_ref('a', t0)]);
+      expect(plan.push.single.id, 'a');
+      expect(plan.pull, isEmpty);
+    });
+
+    test('view_updated_at JSON round-trip\'te korunur', () {
+      final ref = LanItemRef(
+        type: LanItemType.world,
+        id: 'a',
+        name: 'a',
+        updatedAt: t0,
+        viewUpdatedAt: t1,
+      );
+      final back = LanItemRef.fromJson(
+        jsonDecode(jsonEncode(ref.toJson())) as Map<String, dynamic>,
+      )!;
+      expect(back.viewUpdatedAt, t1);
+      expect(back.effectiveUpdatedAt, t1);
+      expect(diffManifests(local: [ref], peer: [back]).skipped, 1);
+    });
+  });
+
+  group('LanItemPayload extras', () {
+    test('extras JSON round-trip\'te korunur', () {
+      final item = LanItemPayload(
+        ref: _ref('w1', t0),
+        payload: const {'world_name': 'Test'},
+        dataRoot: '/home/dm/DMT',
+        extras: const {
+          'installed_packages': [
+            {'id': 'p1', 'name': 'Pack', 'version': '1'},
+          ],
+          'ui_view': {
+            'view': {'rightSidebar': 'pdf'},
+            'db_open_left': ['e1', 'e2'],
+          },
+        },
+      );
+      final back = LanItemPayload.fromJson(
+        jsonDecode(jsonEncode(item.toJson())) as Map<String, dynamic>,
+      )!;
+      expect(
+        (back.extras['installed_packages'] as List).single,
+        {'id': 'p1', 'name': 'Pack', 'version': '1'},
+      );
+      expect(
+        ((back.extras['ui_view'] as Map)['db_open_left'] as List),
+        ['e1', 'e2'],
+      );
+    });
+
+    test('extras yoksa boş map olur (eski sürümle uyum)', () {
+      final back = LanItemPayload.fromJson({
+        'ref': _ref('w1', t0).toJson(),
+        'payload': const <String, dynamic>{},
+        'data_root': '/x',
+      })!;
+      expect(back.extras, isEmpty);
+    });
   });
 
   group('LanAuth', () {
