@@ -7,13 +7,27 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R7** (built-in paket kendi istediğini borçlanıyor — 2 bulgu:
-> F-builtin-01 345 SRD statblok'unun kurtarma/beceri satırı yok, F-builtin-02
-> built-in paketin §5'i yok — 419 boş yuva, yazılı sebep yok). Stage R'de
-> R7 ve R8 birbirinden ve geri kalandan bağımsız; R8 tek satırlık bir düzeltme
-> (`pack_field_render_test`'e tema verilmesi), R7 ise Stage R'nin
-> `srd_core/` dosyalarına dokunan tek fazı ve transkripsiyon işi
-> (`docs/SRD_CC_v5.2.1.pdf`, CC-BY).
+> **Sıradaki iş: R8** (render kapısı ölçtüğünü ölçsün — 1 bulgu:
+> F-pass0-01, `pack_field_render_test`'in `_wrap`'i tema kurmadan build
+> ettiği için built-in yarısı ilk alanda duruyor). Tek satırlık düzeltme
+> (`theme: buildThemeData('dark')`); çıkış ölçütü built-in yarısının 224'te
+> durmak yerine **447 çift** koşması.
+>
+> **R7 bitti (2026-08-20) — "built-in paket kendi kuralına uydu".**
+> İki kayıt (F-builtin-01, F-builtin-02) kapandı; durum satırı
+> **0 🔎 · 0 ❓ · 1 🛠 · 45 ✅ · 1 ⚪** (toplam 47). Stage R'nin `srd_core/`
+> içeriğine dokunan tek fazı; importer'a ve paket asset'lerine **hiç
+> girilmedi**. Ölçüm: `docs/SRD_CC_v5.2.1.pdf` (CC-BY) iki sütunlu
+> yerleşiminden **336 statblok** çözüldü, **345 kartın 334'ü** eşleşti,
+> **252** kart satır aldı — **123** `save_bonuses`, **220** `skill_bonuses`;
+> doluluk 0% → **41%/64%** (monster) ve **20%/62%** (animal). Eşleşen 82 kart
+> bilerek boş (kaynak satır basmıyor), artık `misc` yalnız **4** kartta.
+> §5.10 built-in'in §5'i: kalan **426** 🔴 yuva kodlu (**M 123 · P 293 ·
+> N 10**), zorunlu-ve-boş **0**. Ölçüm bulguyu üç yerde düzeltti: 🔴 toplamı
+> 419 değil **430 → 426**; **11 kartın SRD'de adı yok** (çoğu Product
+> Identity); **22 kartın skorları + 1 kartın PB'si** SRD 5.2.1'den sapıyor
+> (ölçüldü, dokunulmadı). `srdCorePackVersion` **1.0.9 → 1.1.0**;
+> `flutter analyze` 0/0, `srd_core_*` + `test/tool/` **231/231**.
 >
 > **R6 bitti (2026-08-20) — "adlar built-in yazımına kavuştu".**
 > Üç kayıt (F-pass0-07, F-toh-02, F-open5e-01) kapandı; durum satırı

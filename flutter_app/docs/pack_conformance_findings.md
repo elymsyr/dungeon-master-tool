@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 3 | 43 | 1 | 0 | **47** |
+| 0 | 0 | 1 | 45 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -221,6 +221,39 @@ olmayan bir özelliği olmak zorunda), `flutter analyze` 0 hata / 0 uyarı.
 > istiyor; yayınlanan paket ise R1'den beri dört faz geride kalmıştı. Promote
 > edilen fark (`diff_packs`, eski asset → yeni): **43 kategori, 10.004 değer**.
 > `manifest.json` ve `assets/first_party/manifest.json` yeniden üretildi.
+
+**R7 uygulandı (2026-08-20).** İki kayıt kapandı (F-builtin-01, F-builtin-02);
+🛠 sayacı 3 → 1, ✅ 43 → 45. Bu, Stage R'nin `srd_core/` içeriğine dokunan tek
+fazı — importer tarafına hiç girilmedi, paket asset'i promote edilmedi.
+Ölçülen etki:
+
+- **F-builtin-01** — `docs/SRD_CC_v5.2.1.pdf` iki sütunlu yerleşiminden
+  **336 statblok** çözüldü (MOD/SAVE sütunu + "Skills" satırı), **345 built-in
+  yaratık kartının 334'ü** adla eşleşti. **252 kart** en az bir satır aldı:
+  **123** `save_bonuses`, **220** `skill_bonuses`. Doluluk 0%'tan
+  `save_bonuses` **41% (103/248)** monster / **20% (20/97)** animal,
+  `skill_bonuses` **64% (159/248)** / **62% (61/97)**. Eşleşen 82 kart bilerek
+  boş: kaynak o kartlara kurtarma/beceri satırı **basmıyor**, yani varsayılan
+  "hiçbiri yetkin değil" tablosu orada doğru cevap. Kaynağın PB'siyle
+  açıklanmayan artık yalnız **4 kartta** (`misc`). İki builder
+  (`saves([...])` / `skills({...})`, `srd_core/_helpers.dart`) preset satır
+  kümesinin tamamını yazıyor; bilinmeyen satır adı `assert`'e takılıyor.
+  `srdCorePackVersion` **1.0.9 → 1.1.0**, 5 yeni test
+  (`test/domain/srd_core_save_skill_test.dart`).
+- **F-builtin-02** — `open5e_content_audit.md` **§5.10** built-in paketin §5'i:
+  kalan **426** 🔴 yuvanın hepsi kodlu — **`M` 123 · `P` 293 · `N` 10** — üç
+  blokta (194 ortak lookup alanı, sözleşme gereği boş 161 grant yuvası, satır
+  satır yazılmış 71 gerçek içerik alanı). Zorunlu-ve-boş **0**.
+- **Ölçüm bulguyu üç yerde düzeltti.** (1) 🔴 toplamı **419** diye
+  dosyalanmıştı; ağaç R7 öncesi **430**, sonrası **426** ölçüyor — paket iki
+  tarih arasında büyümüş, yeniden türetilebilen tek şey dağılım. (2) **11
+  built-in yaratık kartının SRD 5.2.1'de adı yok** (Beholder, Mind Flayer, Orc,
+  Gnoll, Drow, Nothic, Sphinx, Banshee, Pixie, Quipper, Swarm of Quippers) —
+  çoğu SRD'nin dışarıda bıraktığı Product Identity; çevrilecek satır olmadığı
+  için varsayılan tabloda kaldılar. (3) **22 kartın `stat_block`'u ve 1 kartın
+  `proficiency_bonus`'u (Pirate Captain, 2 ≠ 3) SRD 5.2.1 ile uyuşmuyor** —
+  2014 dönemi sayılar. R7 yetkinlik bayraklarını kaynağın kendi matematiğinden
+  türetti, skorlara dokunmadı; uyuşmazlık ölçülüp açık bırakıldı.
 
 **R6 uygulandı (2026-08-20).** Üç kayıt kapandı (F-pass0-07, F-toh-02,
 F-open5e-01); 🛠 sayacı 6 → 3, ✅ 40 → 43. Şemaya dokunulmadı — bu faz
@@ -482,7 +515,7 @@ sessizce bırakmış durumda. Dalga 0 (built-in SRD) bu kapıya güvenerek taran
 | **Checklist** | checklist C4 (monster + çocuk satırlar) |
 | **Kategori / etki** | `monster` 248 + `animal` 97 = **345** statblok; `save_bonuses` ve `skill_bonuses` ikisi de **0%** (4 audit yuvası). SRD kaynağı bu satırları taşıyor |
 | **Cause code (öneri)** | `M` — el yazımı alanı hiç yazmıyor (`srd_core/monsters.dart`, `animals.dart`) |
-| **Durum** | 🛠 faz dosyalandı — **R7** |
+| **Durum** | ✅ kapandı — **R7** (2026-08-20) |
 
 **Bulgu.** Şema iki alanı `proficiencyTable` olarak beyan ediyor
 (`builtin/content.dart:1272-1275`) ve her ikisinin de **varsayılan tablosu var**
@@ -528,6 +561,20 @@ Ayrıca yol haritası bu boşluğu hiç yazmamış: `save_bonuses` / `skill_bonu
 
 **Karar.** **düzelt** — seçenek 1; kurtarma/beceri satırı statbloğun mekaniği, 345 kartta boş kalamaz. Kaynak CC-BY (`docs/SRD_CC_v5.2.1.pdf`), yani kopyalanabilir; kısmi düzeltme (seçenek 2) aynı işi iki kez açar. · **Tarih:** 2026-08-19 · **Kapatan:** R7 (faz açık)
 
+**Kapanış (R7, 2026-08-20).** SRD PDF'inin iki sütunlu yerleşiminden **336
+statblok** çözüldü; **345 kartın 334'ü** adla eşleşti, **252'si** en az bir
+satır aldı — **123** `save_bonuses`, **220** `skill_bonuses`. Doluluk
+`save_bonuses` 0% → **41% (103/248)** monster · **20% (20/97)** animal,
+`skill_bonuses` 0% → **64% (159/248)** · **62% (61/97)**. Kalan 82 eşleşen kart
+bilerek boş: kaynak o statbloklara kurtarma/beceri satırı basmıyor, orada
+varsayılan tablo **doğru**. Yetkinlik bayrakları kaynağın kendi MOD/SAVE
+farkından türetildi (PB ile açıklanmayan artık yalnız 4 kartta `misc`), yani
+kartın skorları SRD'den sapsa bile satır kaynağa sadık. Satırları
+`srd_core/_helpers.dart`'taki `saves`/`skills` builder'ları yazıyor — preset
+satır kümesinin tamamı, bilinmeyen ad `assert`'e takılıyor.
+`srdCorePackVersion` **1.0.9 → 1.1.0**; 5 yeni test
+(`test/domain/srd_core_save_skill_test.dart`), `flutter analyze` temiz.
+
 ### F-builtin-02 — built-in'in §5'i yok: 419 boş yuvanın hiçbirinin yazılı sebebi yok
 
 | | |
@@ -536,7 +583,7 @@ Ayrıca yol haritası bu boşluğu hiç yazmamış: `save_bonuses` / `skill_bonu
 | **Checklist** | checklist C8 (boş kalan her alanın yazılı bir sebebi var) |
 | **Kategori / etki** | 59 kategori / 725 yuvanın **419**'u 🔴 ve tek satırlık gerekçesi bile yok. En görünür bloğu: 39 Tier-0 kategorisinin 37'sinde `summary` + `effects` 0% → **345** sözlük satırı yalnızca addan oluşuyor |
 | **Cause code (öneri)** | `M` — el yazımı yazmıyor (`srd_core/` + `builtin/lookups.dart` seed'leri) |
-| **Durum** | 🛠 faz dosyalandı — **R7** |
+| **Durum** | ✅ kapandı — **R7** (2026-08-20) |
 
 **Bulgu.** Yol haritası §5, **19 resmi paketin** alan alan politika tablosu:
 her 🔴 satırın bir cause code'u var (§5.8). Built-in paketin böyle bir tablosu
@@ -594,6 +641,16 @@ kayıt bu bulgunun kendisi. Sonraki kişi ya 205 grant satırını gereksiz yere
    tamamı geçersiz olur (plan §5'in "neden ilk" gerekçesi bunu reddediyor).
 
 **Karar.** **düzelt** — seçenek 1 (built-in için §5 karşılığı yazılır); 419 boş yuvanın gerekçesiz durması C8'i açık bırakıyor. Seçenek 2 (Tier-0 gövdeleri) R7'nin içinde değil, ayrı bir içerik işi olarak kalır. · **Tarih:** 2026-08-19 · **Kapatan:** R7 (faz açık)
+
+**Kapanış (R7, 2026-08-20) — ve sayı bulguyu düzeltti.** `open5e_content_audit.md`
+**§5.10** built-in paketin §5'i oldu: kalan **426** 🔴 yuvanın hepsi kodlu
+(**`M` 123 · `P` 293 · `N` 10**), üç blokta — 194 ortak lookup alanı, 161 grant
+yuvası (sözleşme gereği boş; dolması ihlal olurdu), 71 gerçek içerik alanı satır
+satır. Zorunlu-ve-boş **0**. Bulgunun **419**'u yeniden türetilemedi: aynı
+script ağaçta R7 öncesi **430**, sonrası **426** ölçüyor — paket 2026-08-19 ile
+08-20 arasında büyümüş. Kalıcı olan dağılım: içerik borcu **123 yuva**, en
+büyüğü blok A'nın **345 gövdesiz Tier-0 satırı** (`summary`/`effects`), ki bu
+F-builtin-02 kararının 2. seçeneği olarak ayrı bir içerik işi kalıyor.
 
 ### Dalga 1 — karakter yaratma paketleri
 
