@@ -453,7 +453,9 @@ kurulum ve gerçek widget yolunu sorar.
 ### F2 — Her (kategori, alan) çifti çökmeden render oluyor
 
 - **Kural (teknik).** Her çift, gerçek değeriyle, **hem salt-okunur hem
-  düzenlenebilir** modda bir kez render edilmeli. Bugün 438 çift / 876 pump.
+  düzenlenebilir** modda bir kez render edilmeli. Ölçülen (R8, 2026-08-20):
+  **461 çift / 922 pump** — 151 paket + 310 built-in. Önceki "438 / 876"
+  tahmindi; kapı F-pass0-01 yüzünden gerçekte 224/446 ölçüyordu.
 - **Nasıl bakılır.** `flutter test test/presentation/pack_field_render_test.dart`
 - **Ne demek.** Kart açılırken uygulama çökmemeli. Bu test yazılana kadar hiçbir
   widget'a paket verisi hiç verilmemişti.

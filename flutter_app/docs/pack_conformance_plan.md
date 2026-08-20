@@ -7,11 +7,19 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R8** (render kapısı ölçtüğünü ölçsün — 1 bulgu:
-> F-pass0-01, `pack_field_render_test`'in `_wrap`'i tema kurmadan build
-> ettiği için built-in yarısı ilk alanda duruyor). Tek satırlık düzeltme
-> (`theme: buildThemeData('dark')`); çıkış ölçütü built-in yarısının 224'te
-> durmak yerine **447 çift** koşması.
+> **Sıradaki iş yok — §6 yol haritasında açık faz kalmadı.** Durum satırı
+> **0 🔎 · 0 ❓ · 0 🛠 · 46 ✅ · 1 ⚪** (toplam 47).
+>
+> **R8 bitti (2026-08-20) — "render kapısı ölçtüğünü ölçüyor".**
+> Son kayıt (F-pass0-01) kapandı. `pack_field_render_test`'in `_wrap`'ine tek
+> satır (`theme: buildThemeData('dark')`, `:29`); widget'lara dokunulmadı
+> (seçenek 2 reddedilmiş kaldı). Kapı artık **461 (kategori, alan) çifti /
+> 922 pump, hepsi yeşil** — **151 paket + 310 built-in** — eskiden 83. built-in
+> çiftinde durup 224/446 ölçüyordu. Çıkış ölçütündeki 447 sayısı da bayatmış:
+> built-in yarısı ölçülünce **310** (`audit_packs --builtin` ile yuvasına kadar
+> aynı), paket yarısı **151**. Checklist F2'nin yazılı "438 çift / 876 pump"
+> sayısı ölçülen 461/922 ile değiştirildi. `flutter analyze` 0 hata / 0 uyarı
+> (21 info = taban). Ürün kodu ve paket asset'i değişmedi.
 >
 > **R7 bitti (2026-08-20) — "built-in paket kendi kuralına uydu".**
 > İki kayıt (F-builtin-01, F-builtin-02) kapandı; durum satırı
