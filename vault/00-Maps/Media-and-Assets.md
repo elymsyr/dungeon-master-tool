@@ -16,6 +16,7 @@ tags: [moc]
 - [[media_bundler]] · [[media_manifest_restorer]] — bundle/restore media on export/import.
 - [[free_media_service]] — fetch free-tier media (quota-exempt).
 - [[entity_image_upload]] — upload entity portrait to media storage.
+- [[local_media_localizer]] — seçilen her dosyayı içeriğin kendi klasörüne kopyalar; ham seçici yolu hiçbir zaman saklanmaz.
 - [[entity_media_cleanup_service]] — GC media on entity/world/package delete.
 - [[cover_image_bundler]] · [[marketplace_cover_sync_service]] — marketplace listing covers.
 - [[pdf_library_service]] — dünyanın PDF kütüphanesi: klasöre kopyalama + online dünyada R2 paylaşımı.

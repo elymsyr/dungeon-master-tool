@@ -62,6 +62,26 @@ notları), `mind_maps`, `map_data`, `sessions`, `pdf_library` manifest'i.
 Medya olarak iki kaynak taranır:
 1. `{worldsDir}/{worldName}/` altındaki her dosya (haritalar, görseller,
    `pdfs/`) — yerel yollu (offline dünya) medya buradadır.
+   Buraya **girmesi** de garanti altında: seçicinin verdiği ham yol
+   (`.../Downloads/map.png`) veri kökünün dışında kaldığı için taşınamıyordu.
+   Kural artık koşulsuz — **seçilen her dosya kopyalanır**, bulut yüklemesi
+   başarılı olsa da olmasa da; yükleme de kopyadan yapılır. Ham yol hiçbir
+   yerde saklanmıyor. Kopya bulut yüklemesi başarılıyken de duruyor: R2 nesnesi
+   temizlenir ya da içerik önbelleği boşalırsa resim yine açılabilsin.
+   Kapsanan seçim noktaları: `uploadMapImage` (battle map / world map /
+   mindmap), `eagerUploadEntityImages` (entity resimleri),
+   `MetadataEditorSection._pickCover` (dünya/paket/karakter kapağı),
+   `CharacterRepository.save` (portre — tek çıkış kapısı olduğu için editör,
+   sihirbaz ve içe aktarma birlikte kapsanıyor), entity `file`/`pdf` alanları
+   (`localizeEntityFiles` → `files/`). Ayrıca `loadItem` içinde tek bir onarım
+   geçişi (`LocalMediaLocalizer.localizeWorldPayload`) eski dünyalarda kalmış
+   ham yolları da içeri alıyor. Bu olmadan battle map arka planları ve mindmap
+   not resimleri karşı cihaza hiç gitmiyordu.
+   Karakter medyası düz `{charactersDir}` altında durup `{id}_` önekiyle
+   süzüldüğü için kopya o adla açılıyor (`localizeCharacterImage`).
+   Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem
+   içerik önbelleğinde duruyor, yani disk ve LAN transferi bir miktar
+   yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.
 2. Payload'daki bulut ref'lerinin (`dmt-asset://`, `dmt-public://`,
    `dmt-transient://`) **baytları**: `cache/content/{sha}.bin`. Online bir
    dünyada resim yüklendiği anda R2/Storage'a gidiyor ve yerelde yalnız bu
@@ -115,6 +135,45 @@ Görünüm dünya başına saklandığı için (`UiState.worldViewByWorld`) eşl
 sırasında başka bir dünyada oturan kullanıcının ekranı yerinden oynamaz —
 kayıt, dünya bir sonraki açılışında `MainScreen.initState`'te restore edilir.
 Açık dünya eşlenirse global alanlara da uygulanır.
+
+## Birleştirme — bölüm bazlı LWW
+Alıcı gelen payload'ı **tam değiştirme** ile yazıyordu; A'da savaş notu,
+B'de mindmap düzenlendiyse yalnız LWW kazananı hayatta kalıyor, diğerinin işi
+tamamen siliniyordu. Artık dünya iki tarafta da varsa
+`mergeWorldPayloads` (`lan_sync/world_merge.dart`, saf fonksiyon) her bölümü
+kendi damgasıyla ayrı yarıştırıyor:
+
+| bölüm | damga kaynağı |
+|---|---|
+| `entities` | `world_entities.updated_at` (id bazında birleşim) |
+| `sessions` | `world_sessions.updated_at` (id bazında birleşim) |
+| `map_data` | `world_map_data.updated_at` |
+| settings üst anahtarları (`combat_state`, `mind_maps`, `map_view`, …) | blob içindeki `_section_updated_at` haritası |
+| `world_schema`, `template_*` | item seviyesi `updatedAt` (bölüm damgası yok) |
+
+Damgalar `LanItemPayload.extras.section_stamps` ile taşınıyor; alanı olmayan
+(eski sürüm) eşten gelen item'da harita boş kalır ve karşılaştırma item
+seviyesindeki `updatedAt`'e — yani eski davranışa — düşer. Eşitlikte **yerel**
+kazanır, böylece iki cihaz arasında ping-pong olmuyor.
+
+`_section_updated_at` `world_settings.settings_json`'ın içinde duruyor:
+şema migration'ı gerektirmiyor ve payload ile kendiliğinden taşınıyor.
+Damgayı `saveSettingsPatch` basıyor — `touchWorld: false` olan motion-class
+yazımlar (viewport) damgalamıyor.
+
+Birleştirme deterministik ve idempotent. Bu yüzden `_syncWith` iki tarafta da
+bulunan dünyalar için **önce çekip sonra gönderiyor**: `diffManifests` item'ı
+tek bir yöne koyuyor, tek yön kalırsa kaybeden tarafın bölümleri karşıya hiç
+ulaşmazdı. Gönderim öncesi manifest tazeleniyor, yoksa birleşim sonrası
+değişen damga yerine eskisi gitiyordu.
+
+### Bekleyen yazımlar önce boşaltılır
+`buildManifest` / `loadItem` / `applyItem` girişinde
+`PendingWriteBuffer.flush()` var. `combat_state` 500 ms, `mind_maps` 1000 ms,
+viewport 2000 ms gecikmeyle yazılıyor; eşleme o pencerede başlarsa hem payload
+hem `worlds.updatedAt` bayat okunuyor ve karşı cihaz "ben daha yeniyim" deyip
+**taze veriyi eziyordu**. Uygulama tarafında da gerekli — yoksa bekleyen yerel
+yazım apply'dan sonra fire edip geleni geri yazar.
 
 ## Presence (arka planda, "arama" değil)
 - Eşleşmesi olan her cihaz 5 sn'de bir UDP broadcast: `{dmt:2, id, p, uh}`.
@@ -170,8 +229,14 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 - **Silme yayılmaz** — yalnız ekleme/güncelleme. Tombstone gerekirse manifest'e
   ölü satır + `trash_items`'a `deleted_at`.
 - **Yeniden adlandırma taşınmaz** — yerel ad kazanır, içerik eşitlenir.
-- Veri kökü dışındaki mutlak yollu medya taşınmaz (`raw_path_migrator.dart` da
-  ham yolları legacy sayıyor).
+- **Silme birleştirmede de yayılmaz** — bölüm bazlı birleşim tombstone'suz
+  olduğu için A'da silinmiş bir entity'yi B hâlâ tutuyorsa geri gelir. Eski
+  tam-değiştirme davranışında kazanan tarafın silmesi yayılıyordu; veri
+  kaybetmemeyi hayalet satıra tercih ediyoruz.
+- Bölüm damgaları granüler tablolardan geldiği için birleştirme sonrası
+  `_restoreSectionStamps` ile geri yazılır — bulk `save()` satırları silip
+  yeniden eklediğinden hepsi `now()` olur ve "hangi cihaz düzenledi" bilgisi
+  kaybolurdu.
 - Medya yüklemesi base64 (%33 şişme) — tek kod yolu bırakıyor.
 - **Soundpad içeriği taşınmaz** — `AppPaths.soundpadRoot` kullanıcı veri
   kökünün dışında (bundle'lanmış `assets/soundpad/` olabilir) ve GB'larca ses

@@ -491,15 +491,21 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         );
   }
 
-  /// Same as [saveSettingsPatch] minus the cloud enqueue. Motion-class
-  /// field'lar (viewport pan/zoom, scroll position, ephemeral UI state)
-  /// için — local Drift yazılır, outbox'a girmez. Cihaz dünyayı yeniden
-  /// açtığında default viewport ile başlar; bilinçli karar — DM'in pan'ı
-  /// oyuncuya yansımasın, başka cihazda ekran sıçramasın.
+  /// Same as [saveSettingsPatch] minus the cloud enqueue **and** minus the
+  /// `worlds.updated_at` bump. Motion-class field'lar (viewport pan/zoom,
+  /// scroll position, ephemeral UI state) için — local Drift yazılır,
+  /// outbox'a girmez. Cihaz dünyayı yeniden açtığında default viewport ile
+  /// başlar; bilinçli karar — DM'in pan'ı oyuncuya yansımasın, başka cihazda
+  /// ekran sıçramasın.
+  ///
+  /// `touchWorld: false` kritik: bu yol `_repo.saveSettingsPatch`'i çağırdığı
+  /// için mindmap'te sadece pan/zoom yapmak bile dünyayı "değişti" gösteriyor
+  /// ve LAN eşlemesinde o cihazı LWW kazananı yapıyordu — hiç içerik
+  /// düzenlemeyen taraf, karşıdaki gerçek düzenlemeleri eziyordu.
   Future<void> saveSettingsPatchLocalOnly(Map<String, dynamic> patch) async {
     final name = state;
     if (name == null) return;
-    await _repo.saveSettingsPatch(name, patch);
+    await _repo.saveSettingsPatch(name, patch, touchWorld: false);
     // bilerek enqueueWorldSettings çağrılmıyor — local-only motion class
   }
 

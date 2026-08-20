@@ -13,6 +13,7 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../domain/value_objects/world_section_stamps.dart';
 import '../database/app_database.dart';
 
 const _uuid = Uuid();
@@ -195,8 +196,9 @@ class WorldRepositoryImpl implements CampaignRepository {
   @override
   Future<void> saveSettingsPatch(
     String campaignName,
-    Map<String, dynamic> patch,
-  ) async {
+    Map<String, dynamic> patch, {
+    bool touchWorld = true,
+  }) async {
     if (patch.isEmpty) return;
     final existing = await _findByName(campaignName);
     if (existing == null) {
@@ -216,12 +218,13 @@ class WorldRepositoryImpl implements CampaignRepository {
         } catch (_) {}
       }
       merged.addAll(patch);
+      if (touchWorld) stampSections(merged, patch.keys);
       await _db.worldSettingsDao.upsert(WorldSettingsCompanion(
         worldId: Value(worldId),
         settingsJson: Value(jsonEncode(merged)),
-        updatedAt: Value(DateTime.now()),
+        updatedAt: touchWorld ? Value(DateTime.now()) : const Value.absent(),
       ));
-      await _touchWorld(worldId);
+      if (touchWorld) await _touchWorld(worldId);
     });
   }
 

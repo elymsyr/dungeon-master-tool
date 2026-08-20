@@ -12,6 +12,7 @@ import '../providers/package_provider.dart';
 import '../providers/sync_engine_provider.dart';
 import 'entity_media_cleanup_service.dart';
 import 'image_upload_helper.dart';
+import 'local_media_localizer.dart';
 import 'pending_write_buffer.dart';
 
 /// Max number of images allowed per entity image collection — the portrait
@@ -30,8 +31,12 @@ const int kMaxEntityImages = 5;
 /// user's storage quota is full, and `tooLarge` — true when any upload was
 /// rejected for exceeding the per-kind size limit (callers surface a snackbar).
 ///
-/// Offline worlds bundle their media at Make Online, so they skip the upload
-/// here and return the paths untouched.
+/// Seçilen dosyalar **her koşulda önce** dünyanın (ya da paketin) `media/`
+/// klasörüne kopyalanır ([LocalMediaLocalizer]) ve yükleme o kopyalardan
+/// yapılır — ham `Downloads/` yolu hiçbir zaman saklanmaz. Ham yol veri
+/// kökünün dışında kalıyor: LAN eşlemesi taşıyamıyor
+/// (`LanSyncSession._mediaFor`) ve kullanıcı orijinali taşırsa resim
+/// kayboluyor. Bulut yüklemesi başarılı olsa bile kopya duruyor.
 Future<
         ({
           List<String> refs,
@@ -46,41 +51,38 @@ Future<
   bool transientFallback = false,
   MediaKind? overrideKind,
 }) async {
-  if (ref.read(authProvider) == null) {
-    return (
-      refs: paths,
-      pushWorldId: null,
-      quotaExceeded: false,
-      tooLarge: false,
-      tooLargeActualBytes: null,
-    );
-  }
-  final assetSvc = ref.read(assetServiceProvider);
-  if (assetSvc == null) {
-    return (
-      refs: paths,
-      pushWorldId: null,
-      quotaExceeded: false,
-      tooLarge: false,
-      tooLargeActualBytes: null,
-    );
-  }
-
-  final String scopeId;
-  final MediaKind kind;
-  String? pushWorldId;
   final packageName = ref.read(activePackageProvider);
-  if (packageName != null) {
-    // Package entity image — counted R2; no per-row outbox to drain.
-    if (!ref.read(betaProvider).isActive) {
-      return (
-        refs: paths,
+  // Kopya hedefi: paket entity'si ise paketin klasörü, dünya entity'si ise
+  // dünyanınki — `_mediaFor` her item tipi için kendi klasörünü tarıyor.
+  final ownerDir = _ownerDir(ref, packageName);
+  // Yükleme kararından ÖNCE kopyala: yükleme yapılsa da yapılmasa da elimizde
+  // veri kökü içinde bir dosya olsun.
+  final local = await _localizeAll(paths, ownerDir);
+
+  ({
+    List<String> refs,
+    String? pushWorldId,
+    bool quotaExceeded,
+    bool tooLarge,
+    int? tooLargeActualBytes,
+  }) skipped() => (
+        refs: local,
         pushWorldId: null,
         quotaExceeded: false,
         tooLarge: false,
         tooLargeActualBytes: null,
       );
-    }
+
+  if (ref.read(authProvider) == null) return skipped();
+  final assetSvc = ref.read(assetServiceProvider);
+  if (assetSvc == null) return skipped();
+
+  final String scopeId;
+  final MediaKind kind;
+  String? pushWorldId;
+  if (packageName != null) {
+    // Package entity image — counted R2; no per-row outbox to drain.
+    if (!ref.read(betaProvider).isActive) return skipped();
     scopeId = packageName;
     kind = overrideKind ?? MediaKind.packageEntityImage;
   } else {
@@ -89,13 +91,7 @@ Future<
         ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
     if (worldId == null ||
         !ref.read(onlineWorldIdsProvider).contains(worldId)) {
-      return (
-        refs: paths,
-        pushWorldId: null,
-        quotaExceeded: false,
-        tooLarge: false,
-        tooLargeActualBytes: null,
-      );
+      return skipped();
     }
     scopeId = worldId;
     kind = overrideKind ?? MediaKind.worldEntityImage;
@@ -103,9 +99,9 @@ Future<
   }
 
   final results = await Future.wait([
-    for (final p in paths)
+    for (final path in local)
       uploadEntityImageRef(assetSvc,
-          localPath: p,
+          localPath: path,
           scopeId: scopeId,
           kind: kind,
           transientFallback: transientFallback),
@@ -118,12 +114,46 @@ Future<
     }
   }
   return (
+    // Kota / boyut / ağ hatasında girdi yolu aynen geri geliyor; o da zaten
+    // kopyalanmış hâli, ek bir şey yapmaya gerek yok.
     refs: [for (final r in results) r.ref],
     pushWorldId: pushWorldId,
     quotaExceeded: results.any((r) => r.quotaExceeded),
     tooLarge: results.any((r) => r.tooLarge),
     tooLargeActualBytes: firstTooLargeBytes,
   );
+}
+
+/// Entity'nin resim olmayan eklerini (schema `file` / `pdf` alanları) içeriğin
+/// `files/` klasörüne alır. Resimlerle aynı gerekçe: ham seçici yolu ne LAN
+/// eşlemesinde taşınır ne de kullanıcı dosyayı taşıdığında açılır.
+Future<List<String>> localizeEntityFiles(
+  WidgetRef ref,
+  List<String> paths,
+) async {
+  final ownerDir = _ownerDir(ref, ref.read(activePackageProvider));
+  if (ownerDir == null) return paths;
+  return LocalMediaLocalizer.localizeAll(
+    paths,
+    ownerDir: ownerDir,
+    subDir: LocalMediaLocalizer.filesSubDir,
+    imagesOnly: false,
+  );
+}
+
+/// Kopya hedefi; aktif dünya/paket bilinmiyorsa null (kopyalama atlanır).
+String? _ownerDir(WidgetRef ref, String? packageName) {
+  if (packageName != null && packageName.isNotEmpty) {
+    return LocalMediaLocalizer.packageDir(packageName);
+  }
+  final worldName = ref.read(activeCampaignProvider);
+  if (worldName == null || worldName.isEmpty) return null;
+  return LocalMediaLocalizer.worldDir(worldName);
+}
+
+Future<List<String>> _localizeAll(List<String> paths, String? ownerDir) async {
+  if (ownerDir == null) return paths;
+  return LocalMediaLocalizer.localizeAll(paths, ownerDir: ownerDir);
 }
 
 /// Best-effort cloud cleanup for an entity image ref that was just removed.

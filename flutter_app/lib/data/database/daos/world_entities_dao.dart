@@ -50,4 +50,14 @@ class WorldEntitiesDao extends DatabaseAccessor<AppDatabase>
 
   Future<int> deleteByWorld(String worldId) =>
       (delete(worldEntities)..where((t) => t.worldId.equals(worldId))).go();
+
+  /// LAN sync: birleştirme sonrası satır damgasını kazanan tarafınkine
+  /// sabitler. Bulk `save()` yolu satırları silip yeniden eklediği için
+  /// hepsi `now()` olurdu; o zaman "hangi cihaz bu entity'yi düzenledi"
+  /// bilgisi kaybolur ve bir sonraki eşlemede bölüm karşılaştırması
+  /// anlamsızlaşırdı.
+  Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
+    await (update(worldEntities)..where((t) => t.id.equals(id)))
+        .write(WorldEntitiesCompanion(updatedAt: Value(updatedAt)));
+  }
 }
