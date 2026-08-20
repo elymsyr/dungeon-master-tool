@@ -16,56 +16,59 @@ import '../theme/dm_tool_colors.dart';
 import 'profile_avatar.dart';
 
 /// Top-right'taki sign in/out icon'unun yerini alan menü.
-/// Auth varsa: avatar + username + admin badge + popup menu (View Profile,
-/// Edit Profile, Admin Panel?, Sign Out).
-/// Auth yoksa: küçük "Sign In" ghost butonu.
+///
+/// Menü **her** [AccountAccess] durumunda açılır; değişen yalnızca içeriği:
+/// hesap gerektirmeyen öğeler (Settings, LAN Sync, Support, Report Bug) herkese
+/// açıktır — bir misafirin bunlara ulaşmak için giriş sayfasına atılması, O1/O2
+/// ile ayrılan "yerel olan gate'lenmez" kuralının ihlaliydi. Profil / Admin /
+/// Sign Out yalnızca [AccountAccess.signedIn] durumunda; misafir bunların
+/// yerine landing'e götüren tek bir "Sign In" öğesi görür; offline build'de
+/// hesap diye bir şey olmadığı için ikisi de yoktur.
 class ProfileMenuButton extends ConsumerWidget {
   const ProfileMenuButton({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    if (ref.watch(accountGateProvider) == AccountAccess.offlineBuild) {
-      // Even without auth the user still needs a way to reach Settings on
-      // mobile (where the Settings tab is hidden). Show a compact gear.
-      return IconButton(
-        tooltip: l10n.hubSettingsTooltip,
-        icon: const Icon(Icons.settings_outlined, size: 20),
-        onPressed: () =>
-            ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex,
-      );
-    }
-
-    final auth = ref.watch(authProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final access = ref.watch(accountGateProvider);
+    final auth = access == AccountAccess.signedIn ? ref.watch(authProvider) : null;
 
-    if (auth == null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: TextButton.icon(
-          icon: const Icon(Icons.login, size: 18),
-          label: Text(l10n.profileMenuSignIn),
-          onPressed: () => context.go('/'),
-          style: TextButton.styleFrom(foregroundColor: palette.featureCardAccent),
-        ),
-      );
-    }
+    final profileAsync =
+        auth == null ? null : ref.watch(currentProfileProvider);
+    final isAdmin = auth == null
+        ? false
+        : ref.watch(isAdminProvider).maybeWhen(data: (v) => v, orElse: () => false);
+    final username = auth == null
+        ? null
+        : profileAsync!.maybeWhen(
+            data: (p) => p?.username ?? auth.email.split('@').first,
+            orElse: () => auth.email.split('@').first,
+          );
+    final avatarUrl = auth == null
+        ? null
+        : profileAsync!.maybeWhen(data: (p) => p?.avatarUrl, orElse: () => null);
 
-    final profileAsync = ref.watch(currentProfileProvider);
-    final isAdminAsync = ref.watch(isAdminProvider);
-
-    final username = profileAsync.maybeWhen(
-      data: (p) => p?.username ?? auth.email.split('@').first,
-      orElse: () => auth.email.split('@').first,
-    );
-    final avatarUrl = profileAsync.maybeWhen(
-      data: (p) => p?.avatarUrl,
-      orElse: () => null,
-    );
-    final isAdmin = isAdminAsync.maybeWhen(data: (v) => v, orElse: () => false);
+    PopupMenuItem<String> item(
+      String value,
+      IconData icon,
+      String label, {
+      Color? color,
+      FontWeight? weight,
+    }) =>
+        PopupMenuItem<String>(
+          value: value,
+          child: Row(children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 12),
+            Text(label,
+                style: TextStyle(
+                    color: color ?? palette.tabActiveText, fontWeight: weight)),
+          ]),
+        );
 
     return PopupMenuButton<String>(
-      tooltip: l10n.profileMenuTooltip,
+      tooltip: auth == null ? l10n.hubSettingsTooltip : l10n.profileMenuTooltip,
       offset: const Offset(0, 44),
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onSelected: (value) {
@@ -84,99 +87,56 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/admin');
           case 'bug_report':
             BugReportDialog.show(context);
+          case 'signin':
+            context.go('/');
           case 'signout':
             confirmAndSignOut(context, ref);
         }
       },
       itemBuilder: (ctx) => [
-        PopupMenuItem<String>(
-          value: 'view',
-          child: Row(children: [
-            const Icon(Icons.person_outline, size: 18),
-            const SizedBox(width: 12),
-            Text(l10n.profileMenuViewProfile, style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'edit',
-          child: Row(children: [
-            const Icon(Icons.edit_outlined, size: 18),
-            const SizedBox(width: 12),
-            Text(l10n.profileMenuEditProfile, style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'local_sync',
-          child: Row(children: [
-            const Icon(Icons.wifi_tethering, size: 18),
-            const SizedBox(width: 12),
-            Text(l10n.lanSyncOpen,
-                style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'settings',
-          child: Row(children: [
-            const Icon(Icons.settings_outlined, size: 18),
-            const SizedBox(width: 12),
-            Text(l10n.profileMenuSettings, style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'support',
-          child: Row(children: [
-            const Icon(Icons.favorite_outline, size: 18),
-            const SizedBox(width: 12),
-            Text(l10n.profileMenuSupport, style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
+        if (auth != null) ...[
+          item('view', Icons.person_outline, l10n.profileMenuViewProfile),
+          item('edit', Icons.edit_outlined, l10n.profileMenuEditProfile),
+        ],
+        item('local_sync', Icons.wifi_tethering, l10n.lanSyncOpen),
+        item('settings', Icons.settings_outlined, l10n.profileMenuSettings),
+        item('support', Icons.favorite_outline, l10n.profileMenuSupport),
         if (isAdmin)
-          PopupMenuItem<String>(
-            value: 'admin',
-            child: Row(children: [
-              Icon(Icons.shield_outlined, size: 18, color: palette.featureCardAccent),
-              const SizedBox(width: 12),
-              Text(l10n.profileMenuAdminPanel,
-                  style: TextStyle(color: palette.featureCardAccent, fontWeight: FontWeight.w600)),
-            ]),
-          ),
+          item('admin', Icons.shield_outlined, l10n.profileMenuAdminPanel,
+              color: palette.featureCardAccent, weight: FontWeight.w600),
         const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'bug_report',
-          child: Row(children: [
-            Icon(Icons.bug_report_outlined, size: 18, color: palette.sidebarLabelSecondary),
-            const SizedBox(width: 12),
-            Text(l10n.profileMenuReportBug, style: TextStyle(color: palette.tabActiveText)),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'signout',
-          child: Row(children: [
-            Icon(Icons.logout, size: 18, color: palette.dangerBtnBg),
-            const SizedBox(width: 12),
-            Text(l10n.signOut, style: TextStyle(color: palette.dangerBtnBg)),
-          ]),
-        ),
+        item('bug_report', Icons.bug_report_outlined, l10n.profileMenuReportBug),
+        if (auth != null)
+          item('signout', Icons.logout, l10n.signOut, color: palette.dangerBtnBg)
+        else if (access == AccountAccess.guest)
+          item('signin', Icons.login, l10n.profileMenuSignIn,
+              color: palette.featureCardAccent, weight: FontWeight.w600),
       ],
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ProfileAvatar(avatarUrl: avatarUrl, fallbackText: username, size: 28),
-            const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 120),
-              child: Text(
-                username,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: palette.tabActiveText,
+            if (auth == null)
+              Icon(Icons.account_circle_outlined,
+                  size: 24, color: palette.sidebarLabelSecondary)
+            else ...[
+              ProfileAvatar(
+                  avatarUrl: avatarUrl, fallbackText: username!, size: 28),
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 120),
+                child: Text(
+                  username,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: palette.tabActiveText,
+                  ),
                 ),
               ),
-            ),
+            ],
             if (isAdmin) ...[
               const SizedBox(width: 4),
               Icon(Icons.shield, size: 14, color: palette.featureCardAccent),
