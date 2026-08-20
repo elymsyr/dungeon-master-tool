@@ -37,6 +37,7 @@ tags: [file]
 - **Karakterler ayrı:** medya `{charactersDir}` altında **düz** duruyor ve `_mediaFor` dosyaları `{id}_` önekiyle süzüyor. `localizeCharacterImage` bu yüzden hem klasörü hem adı kontrol eder — doğru klasörde ama öneksiz duran bir dosya da kopyalanır (`AssetImporter.importAll`'un `namePrefix` parametresi).
 - **Idempotent:** `AssetImporter` aynı ad + aynı boyut için yeniden kopyalamaz, kaynak zaten hedef klasördeyse aynen döner. Her seçimde ve her eşlemede güvenle çağrılabilir; payload geçişi ikinci çalıştırmada `false` döner.
 - **Orijinal silinmez** — kullanıcının kendi dosyasına dokunulmuyor.
+- **Kopyanın ömrü:** kaldırma yolları yerel kopyayı silmez; sahipsiz kalanları dünya açılış/kapanışında [[unused_media_sweeper]] temizler.
 
 ## Notes
 - Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem `cache/content/{sha}.bin` içinde duruyor; disk ve LAN transferi bir miktar yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.

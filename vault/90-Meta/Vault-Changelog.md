@@ -1103,7 +1103,8 @@ yok (kimlik doğrulama var — artık 256-bit kalıcı sır), masaüstünde QR o
 
 ## 2026-08-21 — LAN eşleme: medya kopyası koşulsuz + bölüm bazlı birleştirme
 
-**Yeni:** `vault/10-Files/media/local_media_localizer.md`.
+**Yeni:** `vault/10-Files/media/local_media_localizer.md`,
+`vault/10-Files/media/unused_media_sweeper.md`.
 
 **Güncellenen:** `vault/20-Systems/LAN-Sync-Flow.md` (medya kaynağı #1 ve
 birleştirme bölümü), `vault/10-Files/sync/lan_sync_session.md`,
@@ -1116,10 +1117,15 @@ ve `entity_image_upload.dart` (kopyalama artık yükleme kapısından ÖNCE, ko�
 `metadata_editor_section.dart` (kapak); `field_widget_factory.dart` (`file`/`pdf`
 alanları → `files/`); `lan_sync_session.dart` (pending flush, bölüm birleştirme,
 onarım geçişi); `lan_sync_provider.dart` (ortak dünyalarda çift yönlü yakınsama);
-`world_repository_impl.dart` (`touchWorld`, `_section_updated_at`).
+`world_repository_impl.dart` (`touchWorld`, `_section_updated_at`);
+`unused_media_sweeper.dart` (yeni — referanssız yerel medya süpürgesi),
+`campaign_provider.dart` + `main_screen.dart` (dünya açılış/kapanış kancaları).
 
 **Bilinçli sınırlar:** ham yol artık hiçbir yerde saklanmıyor — bedeli, bulut
 yüklemesi başarılıyken baytların hem `media/` altında hem içerik önbelleğinde
-durması. Birleştirme tombstone'suz olduğu için silmeler yayılmıyor: bir cihazda
+durması. Sahipsiz kopyalar silme anında değil süpürgeyle toplanıyor (dedupe
+edilmiş kopya paylaşılabildiği için); süpürge yalnız `media/` + `files/` altına
+dokunuyor, çöp kutusu referanslarını koruyor ve son 10 dakikadaki dosyaları
+atlıyor. Birleştirme tombstone'suz olduğu için silmeler yayılmıyor: bir cihazda
 silinen entity diğerinde duruyorsa geri gelir.
 

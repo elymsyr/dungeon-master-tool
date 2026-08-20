@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/campaign_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-21
 tags: [file]
 ---
 
@@ -37,6 +37,8 @@ tags: [file]
 ## Key Logic / Variables
 - **`ActiveCampaignNotifier`** holds `_data: Map<String,dynamic>?` (the full world blob) but `state` is only the campaign NAME. Mutating `_data` in-place does NOT fire Riverpod listeners, so it bumps `campaignRevisionProvider` (monotonic int) to make `worldSchemaProvider`/`entityProvider` re-read without a full notifier-recreation cascade.
 - **Open is two-phase**: `beginLoad(name)` synchronously flips `state` + clears `_data` + sets `activeCampaignLoadingProvider=true` (optimistic, same frame as tap; downstream falls back to default schema/empty entities). `completeLoad()` flushes the prior world's `pendingWriteBufferProvider`, loads new `_data`, bumps revision, then for ONLINE worlds AWAITs `_awaitCloudHydrate` with an **8s timeout** (prevents Device-B opening on stale local snapshot) then bumps revision again. Pre-warms critical media fire-and-forget.
+- **`sweepUnusedMedia()`** — dünyanın `media/` + `files/` klasöründeki referanssız dosyaları siler ([[unused_media_sweeper]]). `completeLoad` sonunda fire-and-forget, kapanışta `main_screen._exitToHub` içinde pending flush'tan **sonra** await'li. Seçilen her dosya artık dünya klasörüne kopyalandığı ([[local_media_localizer]]) ama kaldırma yolları yalnız bulut nesnesini sildiği için gerekli.
+- **`saveSettingsPatchLocalOnly` → `touchWorld: false`** — viewport pan/zoom `worlds.updated_at`'i bump etmez; etseydi LAN eşlemesinde hiç içerik düzenlemeyen cihaz LWW'yi kazanıp karşı tarafın işini ezerdi.
 - **`_settingsTopKeyBlocklist`** (also `WorldRepositoryImpl._typedTopKeys`): `world_id, world_name, created_at, entities, sessions, world_schema, template_id, template_hash, template_original_hash` — everything else rides in `world_settings.settings_json`.
 - **DM gate**: cloud `enqueueWorldSettings` only fires for `WorldRole.dm` (prefers cached sync role `valueOrNull` to avoid suspending combat/settings on a network round-trip; falls back to async). Non-DM degrades to local-only write (pre-empts RLS 42501 spam).
 - **Row-level API**: `saveEntity`/`deleteEntity` (single `world_entities` row + touch), `saveSettingsPatch` (read-merge-write JSON + cloud enqueue), `saveSettingsPatchLocalOnly` (motion-class: viewport/pan/zoom — local Drift only, no outbox).

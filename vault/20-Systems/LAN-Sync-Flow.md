@@ -82,6 +82,12 @@ Medya olarak iki kaynak taranır:
    Bedeli: bulut yüklemesi başarılıyken aynı baytlar hem `media/` altında hem
    içerik önbelleğinde duruyor, yani disk ve LAN transferi bir miktar
    yineleniyor. Bilinçli takas — resmin kaybolmaması önceliği.
+   **Çöp toplama:** resmi kaldırma yolları yalnız bulut nesnesini siliyor, yerel
+   kopya sahipsiz kalıyordu — ve dünya klasörünün tamamı taşındığı için o çöp
+   her cihaza yayılıyordu. `UnusedMediaSweeper` dünya açılışında ve kapanışında
+   `media/` + `files/` altında referanssız dosyaları siliyor; çöp kutusundaki
+   snapshot'lar da referans sayılıyor ve son 10 dakikada yazılmış dosyalara
+   dokunulmuyor (payload'dan önce inen eşleme dosyaları için).
 2. Payload'daki bulut ref'lerinin (`dmt-asset://`, `dmt-public://`,
    `dmt-transient://`) **baytları**: `cache/content/{sha}.bin`. Online bir
    dünyada resim yüklendiği anda R2/Storage'a gidiyor ve yerelde yalnız bu

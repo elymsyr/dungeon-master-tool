@@ -17,6 +17,7 @@ import '../services/entity_media_cleanup_service.dart';
 import '../services/marketplace_cleanup_service.dart';
 import '../services/marketplace_cover_sync_service.dart';
 import '../services/pending_write_buffer.dart';
+import '../services/unused_media_sweeper.dart';
 import '../services/prewarm_orchestrator.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
@@ -369,12 +370,30 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         }
       }
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
+      // Sahipsiz kalmış yerel medyayı temizle (dünya kapanışında da çalışır).
+      // Fire-and-forget — açılışı bloklamaz, hatası yutulur.
+      unawaited(sweepUnusedMedia());
       return true;
     } catch (e, st) {
       _ref.read(activeCampaignLoadingProvider.notifier).state = false;
       debugPrint('Campaign load error: $e\n$st');
       return false;
     }
+  }
+
+  /// Dünyanın `media/` + `files/` klasörlerindeki referanssız dosyaları siler.
+  /// Dünya açılışında ve kapanışında (`main_screen._exitToHub`) çalışır.
+  ///
+  /// Kaldırma yolları yalnız bulut nesnesini temizliyor; yerel kopya
+  /// [UnusedMediaSweeper] olmadan sonsuza kadar kalır ve LAN eşlemesiyle her
+  /// cihaza yayılır.
+  Future<int> sweepUnusedMedia() async {
+    final name = state;
+    final data = _data;
+    if (name == null || data == null) return 0;
+    return _ref
+        .read(unusedMediaSweeperProvider)
+        .sweepWorld(worldName: name, payload: data);
   }
 
   /// World mirror applier provider'ını warm up edip `applyInitialState`'i
