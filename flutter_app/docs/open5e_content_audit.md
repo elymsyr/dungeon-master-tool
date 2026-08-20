@@ -177,7 +177,18 @@ near-duplicate count for the first time: **6 candidates, 1 over 0.80** — where
 **word-for-word identical** (Dice 1.00), and the 0.83 was difflib scoring
 markdown table padding. Kept in both packs under L4's written bundled↔bundled
 policy. Ledger **3 🛠 · 43 ✅ · 1 ⚪**. Promoted again (9 packs, 19 renames +
-30 values). **The next open phase is R7.**
+30 values).
+
+**R7 closed the built-in pack's own two findings (2026-08-20).** The SRD 5.2.1
+PDF's MOD/SAVE columns and "Skills" lines were transcribed onto the
+hand-authored creature cards — **336** statblocks parsed, **334 of 345** cards
+matched, **123** now carry `save_bonuses` and **220** `skill_bonuses` (both were
+0% on every one of the 345), while the 82 cards the source prints no line for
+stay empty on purpose. And §5.10 is now the built-in pack's §5: every one of the
+**426** remaining 🔴 slots carries a cause code (`M` 123 / `P` 293 / `N` 10), so
+"empty" and "unaccounted for" are no longer the same thing here.
+`srdCorePackVersion` 1.1.0. Ledger **1 🛠 · 45 ✅ · 1 ⚪**.
+**The next open phase is R8.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -2909,6 +2920,78 @@ contributed.** The verdict never moved; the reason did.
 answer is written down; ⚪ means the answer is "we will not do this" and the cost
 is stated. Neither one is "we did not get to it" — that state does not exist any
 more, which is what F4 was for.
+
+### 5.10 The built-in pack's own field state — R7, 2026-08-20
+
+§5 is the field-by-field policy table of the **19 imported packs**. The
+hand-authored built-in pack never had one, while carrying more empty slots than
+all 19 together — the gap F-builtin-02 filed. This is that table, and the first
+thing it does is correct its own filing: the finding measured **419** 🔴 slots on
+2026-08-19; on 2026-08-20 the tree measures **430** before R7 and **426** after.
+The pack grew between the two dates, so 419 was never re-derivable — the number
+that matters is the split, not the total.
+
+`audit_packs.dart --builtin --markdown` over 59 categories / 731 declared slots.
+**Required-and-empty is 0** — no card is half-written; every 🔴 below is a whole
+field nobody filled.
+
+| Blok | 🔴 yuva | `M` | `P` | `N` | Ne olduğu |
+|---|--:|--:|--:|--:|---|
+| **A — beş ortak lookup alanı** (`summary` · `effects` · `abbreviation` · `icon_name` · `color`) | 194 | 78 | 116 | 0 | `_commonLookupFields` bunları her Tier-0 kategoriye ekliyor (`lookups.dart:117`) |
+| **B — grant bloğu** (`granted_*`, `speed_*`, `*_by_level` …) | 161 | 0 | 161 | 0 | "one mechanic, one field": kart yalnız **verdiği** mekaniği yazar, geri kalan alan tanım gereği boş |
+| **C — gerçek içerik alanları** | 71 | 45 | 16 | 10 | aşağıda satır satır |
+| **Toplam** | **426** | **123** | **293** | **10** | |
+
+Kodlar §5'in kendi sözlüğü (`M` yazılmamış el işi · `P` karar kayıtlı, boş
+kalacak · `N` kaynakta karşılığı yok). Built-in'de `S`/`L`/`D` tanımsız: yukarı
+akış dump'ı yok, yükleyici yok, ve içerik zaten tekil.
+
+**Blok A.** `abbreviation` (38) / `icon_name` (39) / `color` (39) → `P`: yalnız
+`ability` ve `skill` kanonik kısaltma taşıyor, ikon ve renk ise sunum alanı —
+built-in tohumları sanat taşımıyor. `summary` (37) + `effects` (41) → **`M`, ve
+bu paketin en görünür içerik borcu**: 39 Tier-0 kategorisinin 37'sinde ikisi de
+boş, yani **345 sözlük satırı yalnızca addan oluşuyor**. Pass 0 bu kartlara
+**4.045** yumuşak ref'in indiğini ölçtü — hepsi çözülüyor, gövdesiz bir karta.
+Bu satırlar R7'nin dışında: SRD metinlerinin çevrilmesi ayrı bir içerik işi,
+F-builtin-02 kararının 2. seçeneği olarak açık duruyor.
+
+**Blok B.** 161 yuvanın tamamı `P`. Bu blok doldurulacak iş **değil** — dolması
+sözleşmenin ihlali olurdu. Grant sözleşmesinin kendisi
+[vault/20-Systems/Grant-Resolution.md](../../vault/20-Systems/Grant-Resolution.md).
+
+**Blok C — satır satır.**
+
+| Kategori | Alan | Kod | Sebep |
+|---|---|:--:|---|
+| `monster` · `animal` | `ac_note` · `alignment_note` · `immunity_note` · `language_note` · `resistance_note` · `tags_line` · `can_hover` · `telepathy_ft` · `gear_refs` · `spell_refs` · (animal) `damage_immunity_refs` · `vulnerability_refs` · `reaction_refs` | `M` | SRD 5.2.1 statbloğu satırı basıyor — "Gear" 28, "Telepathy" 30 kez geçiyor — kart yazmamış |
+| `monster` · `animal` | `lair_action_refs` | `N` | SRD 5.2.1 **hiç** lair aksiyonu yayımlamıyor ("Lair Actions" 0 kez); XP satırındaki "in lair" not, blok değil |
+| `animal` | `legendary_action_refs` · `legendary_action_uses` | `N` | SRD'nin hiçbir Beast'i efsanevi aksiyon taşımıyor (aynı alan `monster`'da dolu) |
+| `monster` · `animal` | `cr_helper` | `P` | yazar girdisi: CR tahminini widget `ac`/`hp_average`'dan hesaplıyor, kart verisi değil |
+| `creature-action` | `recharge` | `M` | SRD "(Recharge 5–6)" 100 kez; ayrı alan yerine ad içinde kalmış |
+| `creature-action` | `legendary_action_cost` | `P` | 2024 formatında her efsanevi aksiyon 1 kullanım harcar; kart yalnız sapmayı yazacaktı, sapma yok |
+| `magic-item` | `sentient_*` (7) · `attunement_*` (6) · `command_word` · `body_slot_ref` | `M` | SRD'de "Sentient" 24, "command word" 25 kez geçiyor; alanlar var, satırlar yazılmamış |
+| `magic-item-category` | `crafting_tool_ref` | `M` | SRD zanaat kuralları aleti adıyla veriyor |
+| `condition` | `ends_on` | `M` | SRD her durumun nasıl bittiğini yazıyor |
+| `language` | `script` | `M` | SRD dil tablosunda 101 kez "Script" |
+| `language` | `typical_speakers` | `N` | 2024 dil tablosunda konuşan halk sütunu yok (0 kez) |
+| `tool` | `craftable_items` | `M` | SRD alet tanımları "Craft" listesi taşıyor |
+| `skill` | `examples` | `M` | SRD beceri tanımı örnek kullanım sayıyor |
+| `creature-type` | `default_skills_note` | `N` | SRD yaratık türü tanımında beceri notu yok |
+| `feat` | `prereq_class_refs` · `prereq_species_refs` · `repeatable_limit` | `N` | SRD 5.2.1 feat'leri sınıfa/türe kilitlenmiyor ve tekrar sınırını sayıyla vermiyor |
+| `background` | `default_inventory_refs` · `asi_fixed_ability_ref` · `asi_free_bonus_count` | `P` | aynı mekaniğin başka evi dolu: 16/16 kart `equipment_choice_groups` + `asi_distribution_options` yazıyor |
+| `class` | `default_inventory_refs` | `P` | 12/12 sınıf `equipment_choice_groups` yazıyor |
+| `class` | `multiclass_requirements` · `multiclass_granted_proficiencies` · `spellcasting_focus_ref` · `weapon_proficiency_specifics` | `M` | SRD çoklu sınıf tablosu ve odak satırı var (8 + 28 geçiş), kart yazmamış |
+| `subclass` | `armor_training_refs` · `caster_kind` · `saving_throw_refs` · `weapon_proficiency_categories` | `P` | sınıf kartında yazılı (12/12); alt sınıf tekrar etmez |
+| `subspecies` | `size_ref` · `creature_type_ref` | `P` | tür kartında yazılı (9/9); alt tür devralır |
+| `species` | `subspecies_options` | `P` | alt türler ayrı kategori kartı (30 `subspecies` entity), satır içi seçenek değil |
+| `species` | `age` | `N` | 2024 tür bloğunda yaş satırı yok |
+| `trait` | `benefits` · `chooseable` | `P` | mekanik grant alanlarında; `benefits` ikinci ev olurdu, `chooseable` varsayılanı false |
+
+**Ne değişti, ne kalmadı.** R7 bu tablonun dört yuvasını kapattı
+(`monster`/`animal` × `save_bonuses`/`skill_bonuses`, 🔴 → 🟡). Kalan `M`
+satırları içerik borcu olarak **yazılı**: 123 yuva, en büyüğü blok A'nın 345
+gövdesiz Tier-0 satırı. Checklist C8'in istediği buydu — boş alan değil,
+sebepsiz boş alan sorun.
 
 ---
 
@@ -5690,19 +5773,43 @@ half** for the same reason. R7 and R8 are independent of everything else.
       cards, 1 the `source` stamp. Entity counts identical in every pack;
       `assets/first_party/manifest.json` regenerated.
 
-- [ ] **R7 — The built-in pack owes what it demands of everyone else.** Two
-      findings, and the only Stage R phase that touches
-      `lib/domain/entities/schema/builtin/srd_core/`. F-builtin-01 (345 SRD
-      statblocks with no saving-throw or skill line at all — the source is
-      `docs/SRD_CC_v5.2.1.pdf` and it is CC-BY, so this is transcription, not
-      invention) and F-builtin-02 (the built-in pack has no §5: 419 empty slots
-      with no written cause, while every imported pack's empties are accounted
-      for row by row). Doing them together is deliberate — writing the §5
-      equivalent is what tells you which of the 419 are content work and which
-      are policy.
-      *Exit: `srdCorePackVersion` bumped, T2's built-in audit re-run with the new
-      fill numbers, and a built-in §5 table in this file with a cause code on
-      every remaining empty slot.*
+- [x] **R7 — The built-in pack owes what it demands of everyone else.**
+      Done 2026-08-20. Two findings, both closed.
+      *F-builtin-01.* `docs/SRD_CC_v5.2.1.pdf` (CC-BY) transcribed, not invented:
+      the MOD/SAVE columns and the "Skills" line of **336** statblocks were read
+      out of the PDF's two-column layout and folded onto the 345 built-in
+      creature cards. **334 of 345 matched by name**; 252 cards took at least one
+      row — **123** carry `save_bonuses`, **220** carry `skill_bonuses`, and the
+      remaining 82 matched cards were left empty **on purpose**: the source
+      prints no save and no skill for them, so the default all-unproficient table
+      is the correct answer there. Fill went `save_bonuses` 0% → **41% (103/248)**
+      monster / **20% (20/97)** animal, `skill_bonuses` 0% → **64% (159/248)** /
+      **62% (61/97)**. Only **4** cards needed a `misc` remainder the source's PB
+      does not explain (Young White Dragon, Shambling Mound, Giant Frog,
+      Pirate Captain). Two `srd_core/_helpers.dart` builders — `saves([...])`,
+      `skills({...})` — write the full preset row set, so a widget never sees a
+      short table, and an `assert` on unknown row names makes a typo a test
+      failure. `srdCorePackVersion` **1.0.9 → 1.1.0**.
+      *F-builtin-02.* §5.10 is the built-in pack's §5: all **426** remaining 🔴
+      slots carry a cause code — `M` 123 / `P` 293 / `N` 10 — in three blocks
+      (194 common lookup fields, 161 grant-block slots that are empty *by
+      contract*, 71 real content fields itemized row by row).
+      *Three measurements corrected their filing.* (1) The 🔴 total was filed as
+      **419**; the tree measures **430** before R7 and **426** after — the pack
+      grew between filing and fixing, so only the split is re-derivable.
+      (2) **11 built-in creature cards have no SRD 5.2.1 counterpart by name**
+      (Beholder, Mind Flayer, Orc, Gnoll, Drow, Nothic, Sphinx, Banshee, Pixie,
+      Quipper, Swarm of Quippers) — mostly Product Identity the SRD excludes;
+      they keep the default table because there is no source line to transcribe.
+      (3) **22 cards' `stat_block` and 1 card's `proficiency_bonus`
+      (Pirate Captain, 2 vs 3) disagree with SRD 5.2.1** — 2014-era numbers left
+      in place. R7 derived every proficiency flag from the *source's* own math
+      and did not touch the scores; the disagreement is measured and left open.
+      *Green:* `flutter analyze` 0 errors / 0 warnings ·
+      `flutter test test/domain/srd_core_*.dart test/tool/` **231/231**
+      (5 new in `test/domain/srd_core_save_skill_test.dart`) ·
+      `audit_packs.dart --builtin` re-run, 🔴 430 → 426, required-and-empty 0.
+      No pack assets promoted — this phase touches built-in content only.
 
 - [ ] **R8 — The render gate measures what it claims to.** One finding,
       F-pass0-01: `pack_field_render_test` stops at the first built-in field

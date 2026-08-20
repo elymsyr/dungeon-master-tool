@@ -830,6 +830,49 @@ mapper'ı tahmin etmeyi bırakır). Güncellenen:
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
 
+## 2026-08-20 — R7: built-in paket kendi kuralına uydu
+
+Stage R'nin yedinci fazı ve `srd_core/` içeriğine dokunan **tek** fazı; iki bulgu
+(F-builtin-01, F-builtin-02) kapandı, importer'a ve paket asset'lerine hiç
+girilmedi.
+
+**Kurtarma + beceri satırları (F-builtin-01).** `docs/SRD_CC_v5.2.1.pdf` (CC-BY)
+iki sütunlu yerleşiminden **336 statblok** çözüldü — MOD/SAVE sütunu ve "Skills"
+satırı — ve **345 built-in yaratık kartının 334'ü** adla eşleşti. **252 kart**
+en az bir satır aldı: **123** `save_bonuses`, **220** `skill_bonuses`; doluluk
+her ikisinde de 0%'tan `save_bonuses` **41% (103/248)** monster · **20% (20/97)**
+animal, `skill_bonuses` **64% (159/248)** · **62% (61/97)** oldu. Eşleşen 82
+kart bilerek boş kaldı: kaynak o statbloklara satır basmıyor, orada şemanın
+"hiçbiri yetkin değil" varsayılanı **doğru cevap**. Satırları [[srd_helpers]]'in
+iki yeni builder'ı yazıyor (`saves([...])` / `skills({...})`) — preset satır
+kümesinin tamamını üretiyorlar, `'p'`/`'e'` yetkinlik/uzmanlık, `misc` yalnız
+kaynağın PB'siyle açıklanmayan dört kartta; bilinmeyen satır adı `assert`'e
+takılıyor. Bayraklar kaynağın kendi MOD↔SAVE farkından türetildi, yani skorları
+SRD'den sapan 22 kartta bile satır kaynağa sadık. `srdCorePackVersion`
+**1.0.9 → 1.1.0**, 5 yeni test (`test/domain/srd_core_save_skill_test.dart`).
+
+**Built-in'in §5'i (F-builtin-02).** `open5e_content_audit.md` **§5.10** yazıldı:
+kalan **426** 🔴 yuvanın hepsi cause code taşıyor — **`M` 123 · `P` 293 ·
+`N` 10** — üç blokta: 194 ortak lookup alanı, **161 grant yuvası** (sözleşme
+gereği boş; dolması "one mechanic, one field" ihlali olurdu, bkz.
+[[Grant-Resolution]]), ve satır satır yazılmış 71 gerçek içerik alanı.
+Zorunlu-ve-boş **0**.
+
+**Ölçüm bulguyu üç yerde düzeltti.** 🔴 toplamı **419** diye dosyalanmıştı; aynı
+script ağaçta R7 öncesi **430**, sonrası **426** ölçüyor (paket iki tarih arasında
+büyümüş) — kalıcı olan dağılım. **11 built-in yaratık kartının SRD 5.2.1'de adı
+yok** (Beholder, Mind Flayer, Orc, Gnoll, Drow, Nothic, Sphinx, Banshee, Pixie,
+Quipper, Swarm of Quippers), çoğu SRD'nin dışarıda bıraktığı Product Identity.
+**22 kartın `stat_block`'u ve Pirate Captain'ın `proficiency_bonus`'u (2 ≠ 3)
+SRD 5.2.1 ile uyuşmuyor** — 2014 dönemi sayılar, ölçülüp açık bırakıldı.
+
+`flutter analyze` 0/0, `srd_core_*` + `test/tool/` **231/231**. Sıradaki faz
+**R8** (render kapısı: `pack_field_render_test`'e tema verilmesi).
+→ [[srd_helpers]], [[srd_core_pack]], [[srd-pack-content]],
+`flutter_app/docs/open5e_content_audit.md` §0/§5.10/§6,
+`flutter_app/docs/pack_conformance_findings.md`,
+`flutter_app/docs/pack_conformance_plan.md`
+
 ## 2026-08-20 — R6: adlar built-in yazımına kavuştu, yakın kopya ilk kez ölçüldü
 
 Stage R'nin altıncı fazı; üç bulgu (F-pass0-07, F-toh-02, F-open5e-01) kapandı

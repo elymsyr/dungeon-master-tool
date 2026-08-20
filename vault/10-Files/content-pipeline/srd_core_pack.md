@@ -5,7 +5,7 @@ path: flutter_app/lib/domain/entities/schema/builtin/srd_core/srd_core_pack.dart
 layer: domain
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -21,7 +21,7 @@ tags: [file]
 **Outputs**
 - `SrdCorePack buildSrdCorePack()` — `{entities: <uuid → wire-format entity>, metadata}`.
 - `srdStableEntityId(slug, name)` — `uuid.v5(_srdNamespaceUuid, 'slug:name')`, shared with `SrdCorePackageBootstrap`.
-- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.0.8'`.
+- Constants: `srdAttribution`, `srdLicense = 'CC-BY-4.0'`, `srdSourceTag = 'SRD 5.2.1'`, `srdCorePackVersion = '1.1.0'`.
 
 ## Dependencies & Links
 - Depends on: [[srd-pack-content]] (all 20+ content files), [[srd_helpers]] (`packEntity`, `lookup`, `ref`), `package:uuid`.
@@ -41,5 +41,5 @@ tags: [file]
 
 ## Notes
 - Every value authored into a row must be **JSON-encodable with String keys** — `jsonEncode` rejects a Map with int keys, and [[srd_core_package_bootstrap]] encodes each row's `attributes` verbatim. Level tables (`count_by_level`, `extra_attack_count_by_level`) therefore use `{'1': 2}`, not `{1: 2}`; `test/domain/srd_core_json_encodable_test.dart` guards this.
-- v1.0.6 authored the SRD spellcasting tables onto the built-in casters (audit **T2-2**), v1.0.7 put `skill.ability_ref` on the standard `_lookup` placeholder (**T2-1**), v1.0.8 lifted the spell area / Reaction trigger / upcast fields and `pack.content_quantities` out of the rows' own prose (**T2-3**) — see [[srd-pack-content]].
+- v1.0.6 authored the SRD spellcasting tables onto the built-in casters (audit **T2-2**), v1.0.7 put `skill.ability_ref` on the standard `_lookup` placeholder (**T2-1**), v1.0.8 lifted the spell area / Reaction trigger / upcast fields and `pack.content_quantities` out of the rows' own prose (**T2-3**), v1.1.0 transcribed the SRD MOD/SAVE columns and "Skills" lines onto the creature cards (**R7**, `save_bonuses` on 123 cards, `skill_bonuses` on 220) — see [[srd-pack-content]].
 - v1.0.3 added 14 magic-items + 7 spells ported from the dropped Open5e SRD packs (see Open5e Pack Consolidation memory). Subspecies became a first-class category in Jun 2026 (pack v1.0.2).

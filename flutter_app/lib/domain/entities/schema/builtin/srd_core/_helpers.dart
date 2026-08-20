@@ -6,6 +6,8 @@
 // Inter-Tier-1 references → `ref(slug, name)` placeholder, resolved during
 // pack-build against the freshly minted Tier-1 UUIDs.
 
+import '../../dnd5e_constants.dart';
+
 /// Tier-0 lookup placeholder (resolved at import time).
 Map<String, String> lookup(String slug, String name) =>
     {'_lookup': slug, 'name': name};
@@ -92,5 +94,53 @@ Map<String, dynamic> packEntity({
     'pdfs': const <String>[],
     'location_id': null,
     'attributes': attributes,
+  };
+}
+
+/// SRD statblok "SAVE" sütunu → `save_bonuses` tablosu.
+///
+/// [proficient] yetkin kurtarmaların ability kısaltmaları ('DEX'); [misc]
+/// kaynağın bastığı, PB ile açıklanmayan artığı taşır (SRD'de dört kart).
+/// Satır sırası ve isimleri `kDnd5eSavingThrows` presetinden gelir, yani
+/// widget'ın beklediği tam altı satır her zaman yazılır.
+Map<String, dynamic> saves(
+  List<String> proficient, {
+  Map<String, int> misc = const {},
+}) =>
+    _profTable(kDnd5eSavingThrows, keyOf: (p) => p.ability,
+        flag: {for (final a in proficient) a: 'p'}, misc: misc);
+
+/// SRD statblok "Skills" satırı → `skill_bonuses` tablosu.
+///
+/// [rows] beceri adı → `'p'` (yetkin) veya `'e'` (uzmanlık); [misc] kalan
+/// artık. Bilinmeyen bir ad assert'e takılır — yazım hatası testte patlar.
+Map<String, dynamic> skills(
+  Map<String, String> rows, {
+  Map<String, int> misc = const {},
+}) =>
+    _profTable(kDnd5eSkills, keyOf: (p) => p.name, flag: rows, misc: misc);
+
+Map<String, dynamic> _profTable(
+  List<ProficiencyRowPreset> preset, {
+  required String Function(ProficiencyRowPreset) keyOf,
+  required Map<String, String> flag,
+  required Map<String, int> misc,
+}) {
+  final keys = preset.map(keyOf).toSet();
+  assert(flag.keys.every(keys.contains),
+      'unknown row: ${flag.keys.toSet().difference(keys)}');
+  assert(misc.keys.every(keys.contains),
+      'unknown row: ${misc.keys.toSet().difference(keys)}');
+  return {
+    'rows': [
+      for (final p in preset)
+        {
+          'name': p.name,
+          'ability': p.ability,
+          'proficient': flag[keyOf(p)] != null,
+          'expertise': flag[keyOf(p)] == 'e',
+          'misc': misc[keyOf(p)] ?? 0,
+        },
+    ],
   };
 }
