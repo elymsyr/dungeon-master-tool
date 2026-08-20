@@ -1027,3 +1027,72 @@ Defter: 🛠 17 → 10, ✅ 29 → 36, toplam 47 sabit. Sıradaki faz: **R5**
 `flutter_app/docs/open5e_content_audit.md` (§0, §6 R4 kutusu),
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
+
+---
+
+## 2026-08-20 — LAN Sync (yerel eşleme)
+
+Aynı ağdaki iki cihaz arasında **manuel, çift yönlü** içerik eşlemesi eklendi.
+Supabase ve R2'ye hiç dokunmaz — kullanıcı world/paket/karakterini "online
+yapmadan" telefonu ile bilgisayarı arasında taşır.
+
+**Mimari karar:** outbox/CDC yolu yeniden kullanılmadı. `SyncEngine` satırları
+Postgres'e yazmak için var ve `WorldMirrorApplier` yalnız *aktif kampanya*
+blob'una uyguluyor; LAN peer'ını sahte Postgres'e çevirmek gerekirdi. Onun
+yerine cloud-backup round-trip'i (`repository.load` → blob → `repository.save`)
+ikinci bir "bulut" üzerinden konuşuluyor — yeni merge mantığı yazılmadı.
+
+**Yeni:** `vault/20-Systems/LAN-Sync-Flow.md`,
+`vault/10-Files/sync/lan_sync_{protocol,server,client,session}.md`.
+
+**Güncellenen:** `vault/00-Maps/Sync-and-Realtime.md` (LAN kolu + veri akışı),
+`vault/00-Maps/_Architecture-Overview.md` (cross-cutting flow),
+`vault/10-Files/world-content/worlds_dao.md` ve `packages_dao.md`
+(`setUpdatedAt` + geri link).
+
+**Kod:** `flutter_app/lib/application/services/lan_sync/` (4 dosya, yeni
+bağımlılık yok — `dart:io` `HttpServer` + `RawDatagramSocket` + mevcut
+`crypto`), `application/providers/lan_sync_provider.dart`,
+`presentation/dialogs/lan_sync_dialog.dart`, Save & Sync paneli + profil
+menüsü girişleri, 30 l10n anahtarı × 4 dil, Android/iOS/macOS ağ izinleri.
+
+**Bilinçli sınırlar:** silme yayılmaz (yalnız ekleme/güncelleme), yeniden
+adlandırma taşınmaz, şifreleme yok (kimlik doğrulama var), veri kökü dışındaki
+mutlak yollu medya kapsam dışı.
+
+---
+
+## 2026-08-20 — LAN Sync v2: QR eşleşme + kalıcı cihaz listesi
+
+v1 çalışıyordu ama her sync'te yeniden bağlantı kurmak gerekiyordu (bir taraf
+"paylaş", diğeri ağı tara, PIN yaz). v2 bunu **kalıcı cihaz eşleşmesi**ne
+çevirdi:
+
+- **QR ile eşleşme** — masaüstü QR'ı gösterir, telefon okutur. IP+PIN yedek.
+- **Ağ arama kaldırıldı** — UDP artık yalnız arka planda "kim online" ve IP
+  tazeleme için (`LanPresenceListener`).
+- **Bir kez eşleş, iki taraf da hatırlasın** — `/pair` el sıkışmasında iki taraf
+  birer 32 baytlık yarım üretir, ortak sır `sha256(clientHalf|hostHalf)`.
+  Simetrik kayıt `lan_paired_devices` yan tablosunda.
+- **Tek tuş sync** — online tüm eşleşmiş cihazlarla sırayla, önizleme adımı yok.
+- **Aynı hesap zorunlu** — `uid` uyuşmazlığı `403 account_mismatch`. Yan tablo
+  zaten per-user DB'de olduğu için kapsam izolasyonu bedava geldi.
+- **Sunucu oturuma bağlı** — giriş varsa ve eşleşme varsa (ya da panel açıksa)
+  sabit port 45456'da dinler; eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
+
+**Çekirdek değişmedi:** `LanItemRef` / `diffManifests` (LWW) / `LanSyncSession`
+/ `LanAuth` v1'deki gibi. Değişen yalnız kimlerin nasıl bağlandığı.
+
+**Yeni:** `vault/10-Files/sync/lan_device_store.md`.
+**Güncellenen:** `vault/20-Systems/LAN-Sync-Flow.md` (baştan yazıldı),
+`lan_sync_{protocol,server,client}.md`, `vault/00-Maps/Sync-and-Realtime.md`,
+`vault/00-Maps/Data-Layer.md`.
+
+**Kod:** `lan_device_store.dart` (yeni), `lan_sync_{protocol,server,client}.dart`
+(yeniden yazım), `lan_sync_provider.dart` + `lan_sync_dialog.dart` (yeniden
+yazım), `app_database.dart` (`lan_paired_devices` DDL), `startup_sync_gate.dart`
+(host yaşam döngüsü), yeni bağımlılıklar `qr_flutter` + `mobile_scanner`,
+Android/iOS/macOS kamera izinleri, 28 l10n anahtarı × 4 dil.
+
+**Bilinçli sınırlar:** silme yayılmaz, yeniden adlandırma taşınmaz, şifreleme
+yok (kimlik doğrulama var — artık 256-bit kalıcı sır), masaüstünde QR okuma yok.

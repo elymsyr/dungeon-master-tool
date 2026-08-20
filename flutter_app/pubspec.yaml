@@ -68,6 +68,12 @@ dependencies:
   # Runtime app version (pubspec → admin heartbeat)
   package_info_plus: ^8.0.2
 
+  # LAN sync eşleşmesi: QR üretimi (saf Dart) + kamera ile okuma.
+  # mobile_scanner yalnız Android/iOS/macOS'ta çalışır; masaüstünde QR
+  # gösterilir, okuma yolu gizlenir (IP+PIN yedeği her yerde var).
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -8,6 +8,9 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<!-- LAN sync: eşleşme QR'ını okutmak için. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 </dict>

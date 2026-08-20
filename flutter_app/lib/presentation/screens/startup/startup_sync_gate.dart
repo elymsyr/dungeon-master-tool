@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/lan_sync_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
@@ -80,6 +81,10 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       } catch (e) {
         debugPrint('deferred world reconcile error: $e');
       }
+      // Geç gelen sign-in sonrası da host'u değerlendir.
+      unawaited(
+        ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle(),
+      );
     } finally {
       if (mounted) {
         ref.invalidate(campaignInfoListProvider);
@@ -106,6 +111,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     } catch (e, st) {
       debugPrint('StartupSyncGate error: $e\n$st');
     }
+    // LAN sync host'u: giriş varsa ve eşleşmiş cihaz varsa dinlemeye başlar,
+    // yoksa hiç soket açmaz. Fire-and-forget — startup ceiling'ini bekletmez.
+    unawaited(ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle());
     if (mounted) setState(() => _ready = true);
   }
 

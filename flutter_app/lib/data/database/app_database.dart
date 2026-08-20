@@ -301,6 +301,8 @@ const List<String> _v12Indexes = <String>[
 /// - `sync_telemetry` (F12): latency histogram bucket'ları.
 /// - `migration_progress` (F11): raw-path migrator resume state.
 /// - `bm_mark_ops_local` (F8): server `world_battlemap_mark_ops` mirror'u.
+/// - `lan_paired_devices` (LAN sync v2): kalıcı cihaz eşleşmeleri. DB zaten
+///   `users/{uid}/` altında olduğu için kayıtlar doğal olarak hesaba bağlı.
 const List<String> _sideTablesDDL = <String>[
   // asset_refs
   'CREATE TABLE IF NOT EXISTS asset_refs ('
@@ -350,6 +352,18 @@ const List<String> _sideTablesDDL = <String>[
       ')',
   'CREATE INDEX IF NOT EXISTS idx_bm_ops_enc_seq '
       'ON bm_mark_ops_local (world_id, encounter_id, seq)',
+
+  // lan_paired_devices — LAN sync v2 (bkz. [[LAN-Sync-Flow]])
+  // `shared_secret` iki cihazda aynıdır; `/pair` el sıkışmasında iki tarafın
+  // ürettiği yarımların sha256'sı. `last_address` presence beacon'ı ile tazelenir.
+  'CREATE TABLE IF NOT EXISTS lan_paired_devices ('
+      'device_id TEXT NOT NULL PRIMARY KEY, '
+      'name TEXT NOT NULL DEFAULT \'\', '
+      'last_address TEXT NOT NULL DEFAULT \'\', '
+      'shared_secret TEXT NOT NULL, '
+      'paired_at INTEGER NOT NULL, '
+      'last_seen_at INTEGER NOT NULL DEFAULT 0'
+      ')',
 ];
 
 LazyDatabase _openConnection() => _openConnectionForUser(null);

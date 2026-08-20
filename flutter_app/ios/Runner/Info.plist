@@ -77,5 +77,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to scan the Local Sync pairing code shown on your other device.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Local Sync uses the local network to sync your worlds, packages and characters directly with your other device on the same Wi-Fi.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

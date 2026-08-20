@@ -5,7 +5,7 @@ path: flutter_app/lib/data/database/daos/worlds_dao.dart
 layer: data
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -24,12 +24,13 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[tables-worlds]], [[drift_database]]
-- Used by: [[world_repository_impl]], [[campaign_provider]], [[world_mirror_service]], [[world_reconciler]]
+- Used by: [[world_repository_impl]], [[campaign_provider]], [[world_mirror_service]], [[world_reconciler]], [[lan_sync_session]]
 - Domain map: [[World-and-Content]]
 - System flow:
 - Spec / reference: [[Data-Layer]]
 
 ## Key Logic / Variables
+- `setUpdatedAt(id, ts)` — [[LAN-Sync-Flow]] için: uygulanan item'ın `worlds.updated_at`'ini peer'ınkine sabitler. Repository `save()` her yazımda `now()` bastığı için restamp olmadan çekilen içerik anında geri push edilirdi.
 - `getByName` runs `select(worlds)..where(worldName == name)` and returns the first match (no uniqueness constraint on name; first-wins). This is the SS-1/DB-3 indexed path replacing the old linear scan.
 - `upsert` = `insertOnConflictUpdate` (requires NOT-NULL `worldName`, so the repo uses a raw `update` for timestamp-only touches).
 - `updateCloudPush` records `lastCloudPushAt`/`lastPushedHash` — the per-world cloud-sync watermark used by the reconciler/mirror to detect whether the local row diverged since the last push.

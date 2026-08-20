@@ -21,6 +21,7 @@ import '../../data/database/database_provider.dart';
 import '../../data/network/network_providers.dart';
 import '../../application/services/media_bundler.dart';
 import '../../application/services/pdf_library_service.dart';
+import '../dialogs/lan_sync_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import 'account_gated_surface.dart';
@@ -258,6 +259,33 @@ class _SaveSyncDialog extends ConsumerWidget {
                   // ── Online world panel: invite code + members ──
                   _OnlineWorldPanel(palette: palette),
                 ],
+
+                // ── Local Sync ──
+                // v2'de eşleşme cihazları hesaba bağlıyor (aynı hesap zorunlu),
+                // o yüzden bu yüzey artık hesap istiyor. İçerik hâlâ buluta
+                // çıkmıyor — hesap yalnız kimlik için.
+                AccountGatedSurface(
+                  surface: AppSurface.cloudBackup,
+                  message: L10n.of(context)!.accountRequiredOnlineSync,
+                  builder: (context) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      _SectionLabel(L10n.of(context)!.lanSyncTitle, palette),
+                      const SizedBox(height: 8),
+                      ActionButton(
+                        icon: Icons.wifi_tethering,
+                        label: L10n.of(context)!.lanSyncOpen,
+                        palette: palette,
+                        onPressed: () {
+                          Navigator.pop(context);
+                          LanSyncDialog.show(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
 
                 // ── Storage ──
                 // O2: the storage block *is* the cloud-backup surface, so a

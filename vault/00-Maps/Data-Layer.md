@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: data-layer
-updated: 2026-06-09
+updated: 2026-08-20
 tags: [moc]
 ---
 
@@ -15,7 +15,8 @@ tags: [moc]
 - [[tables-worlds]] — grouped: worlds, members, invites, entities, characters, mind-map, sessions, settings.
 - [[tables-combat]] — grouped: encounters, combatants, combat_conditions, map_pins, world_map_data.
 - [[tables-packages]] — grouped: packages, package_entities, package_schemas, personal/installed.
-- [[tables-sync]] — `sync_outbox` (coalescing) + side tables (asset_refs, sync_telemetry, bm_mark_ops).
+- [[tables-sync]] — `sync_outbox` (coalescing) + side tables (asset_refs, sync_telemetry, bm_mark_ops, `lan_paired_devices`).
+  Side table'lar `AppDatabase.beforeOpen`'da raw `CREATE TABLE IF NOT EXISTS` ile kurulur — codegen yok, schemaVersion bump yok. `lan_paired_devices` [[lan_device_store]] tarafından yönetilir ([[LAN-Sync-Flow]]).
 - [[daos-index]] — DAO catalog (those not covered in their own domain notes).
 - [[repositories-index]] — `*_repository_impl` bridging domain ↔ data.
 - [[remote-datasources-index]] — `data/datasources/remote/*` Supabase DS catalog.
