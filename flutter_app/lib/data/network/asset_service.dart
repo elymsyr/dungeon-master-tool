@@ -58,8 +58,9 @@ class AssetService {
     }
 
     final bytes = await file.readAsBytes();
-    // Per-kind limit (2MB resim / 5MB battle map). [maxItemBytes] (10MB) hard
-    // ceiling olarak kalır; Worker da `X-Asset-Kind` ile per-kind uygular.
+    // Tek yetkili sınır per-kind limit ([MediaKind.maxBytes]); Worker da
+    // `X-Asset-Kind` ile aynısını uygular. [maxItemBytes] cloud backup
+    // item'ları içindir, buradaki asset upload'ını kapsamaz.
     if (bytes.length > kind.maxBytes) {
       throw AssetServiceException(
         'too_large',
@@ -457,6 +458,8 @@ class AssetService {
         return 'audio/wav';
       case '.gz':
         return 'application/gzip';
+      case '.pdf':
+        return 'application/pdf';
       default:
         return 'application/octet-stream';
     }

@@ -15,6 +15,7 @@ import '../../../application/providers/soundpad_provider.dart';
 import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
+import '../../../application/services/pdf_library_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
@@ -673,6 +674,8 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                                 openPaths: _pdfOpenPaths,
                                 activeIndex: _pdfActiveIndex,
                                 palette: palette,
+                                worldName:
+                                    ref.read(activeCampaignProvider) ?? '',
                                 onTabSelect: (i) =>
                                     setState(() => _pdfActiveIndex = i),
                                 onTabClose: _closePdfTab,
@@ -773,7 +776,19 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     );
   }
 
-  void _openPdfTab(String path) {
+  /// Tab açar. Kaynak dünyanın PDF kütüphanesi dışındaysa önce oraya
+  /// kopyalanır (bkz. MainScreen._openPdfTab). Oyuncu paylaşım yapmaz —
+  /// kopya yalnızca kendi kütüphanesinde durur.
+  Future<void> _openPdfTab(String sourcePath) async {
+    final worldName = ref.read(activeCampaignProvider);
+    final path = worldName == null
+        ? sourcePath
+        : (await ref
+                .read(pdfLibraryServiceProvider)
+                .import(worldName, sourcePath) ??
+            sourcePath);
+    if (!mounted) return;
+
     final existing = _pdfOpenPaths.indexOf(path);
     if (existing != -1) {
       setState(() {
@@ -784,9 +799,9 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
     }
     if (_pdfOpenPaths.length >= _maxPdfTabs) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Maximum 10 PDFs can be open at the same time.')),
+        SnackBar(
+          content: Text(L10n.of(context)!.pdfLibraryMaxTabs(_maxPdfTabs)),
+        ),
       );
       return;
     }

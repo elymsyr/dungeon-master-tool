@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: media
-updated: 2026-06-09
+updated: 2026-08-20
 tags: [moc]
 ---
 
@@ -18,6 +18,7 @@ tags: [moc]
 - [[entity_image_upload]] — upload entity portrait to media storage.
 - [[entity_media_cleanup_service]] — GC media on entity/world/package delete.
 - [[cover_image_bundler]] · [[marketplace_cover_sync_service]] — marketplace listing covers.
+- [[pdf_library_service]] — dünyanın PDF kütüphanesi: klasöre kopyalama + online dünyada R2 paylaşımı.
 
 ## Data Flow
 Upload → tier decision ([[Media-Storage-Tiers]]): free (Supabase `free-media`, uncounted) vs counted (R2 permanent, 100 MB quota) vs transient (R2 LRU pool). Cleanup on delete via [[entity_media_cleanup_service]].

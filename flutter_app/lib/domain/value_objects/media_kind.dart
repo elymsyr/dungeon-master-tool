@@ -8,6 +8,7 @@ library;
 
 const int _kLimit4mb = 4 * 1024 * 1024;
 const int _kLimit10mb = 10 * 1024 * 1024;
+const int _kLimit50mb = 50 * 1024 * 1024;
 
 enum MediaKind {
   /// Karakterin ana portresi (`entity.imagePath`). Ücretsiz — quota'ya sayılmaz.
@@ -64,6 +65,16 @@ enum MediaKind {
     counted: true,
     maxBytes: _kLimit4mb,
     wireName: 'mind_map_image',
+  ),
+
+  /// Dünyanın PDF kütüphanesindeki bir doküman; world online yapıldığında
+  /// oyuncularla paylaşılır. Quota'ya sayılır. 50MB — tüm kind'lar içindeki
+  /// en yüksek tavan ve Worker `MAX_UPLOAD_BYTES` ceiling'inin (20MB)
+  /// üstünde; Worker per-kind limiti yetkili sayar.
+  worldPdf(
+    counted: true,
+    maxBytes: _kLimit50mb,
+    wireName: 'world_pdf',
   );
 
   const MediaKind({
@@ -77,8 +88,8 @@ enum MediaKind {
   /// (`FreeMediaService`); quota'ya sayılmaz.
   final bool counted;
 
-  /// Per-öğe upload boyut limiti (byte). `AssetService.maxItemBytes` (20MB
-  /// hard ceiling) bunun üstünde kalmalıdır.
+  /// Per-öğe upload boyut limiti (byte) — upload'ın tek yetkili sınırı.
+  /// Worker `KIND_MAX_BYTES` map'i bu değerlerle senkron tutulmalıdır.
   final int maxBytes;
 
   /// `X-Asset-Kind` HTTP header'ında, `free_media_assets.kind` kolonunda ve

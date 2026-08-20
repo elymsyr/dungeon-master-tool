@@ -26,6 +26,7 @@ import 'fetch_queue.dart';
 import 'reference_indexer.dart';
 import 'beta_loss_gate.dart';
 import 'package_sync_service.dart';
+import 'pdf_library_service.dart';
 import 'pending_write_buffer.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
@@ -1327,8 +1328,13 @@ class WorldMirrorApplier {
           json: decoded,
           worldId: worldId,
         );
-    // F5: settings içindeki tüm AssetRef'leri arka planda indir.
-    final settingsRefs = ReferenceIndexer.extractRefs(decoded);
+    // F5: settings içindeki AssetRef'leri arka planda indir. PDF kütüphanesi
+    // hariç — girdileri 50MB'a kadar çıkabiliyor ve oyuncu genelde birkaçını
+    // açıyor; `_PdfLibraryPanel` talep üzerine indirir. Reindex yukarıda tam
+    // blob'la yapıldı, yani `asset_refs` grafiği eksiksiz kalır.
+    final fetchable = Map<String, dynamic>.from(decoded)
+      ..remove(PdfLibraryService.manifestKey);
+    final settingsRefs = ReferenceIndexer.extractRefs(fetchable);
     if (settingsRefs.isNotEmpty) {
       ref.read(fetchQueueProvider).scheduleAll(settingsRefs);
     }
