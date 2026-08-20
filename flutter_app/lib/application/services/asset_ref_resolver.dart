@@ -8,6 +8,7 @@ import '../../data/network/asset_service.dart';
 import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
 import '../../domain/value_objects/asset_ref.dart';
+import 'content_store.dart';
 
 /// Resolves an [AssetRef] (cloud / public / transient URI veya local path) to
 /// an on-disk [File].
@@ -23,11 +24,17 @@ import '../../domain/value_objects/asset_ref.dart';
 ///
 /// Çözülemeyen her durumda (dosya yok, servis offline, download hatası) null.
 class AssetRefResolver {
-  AssetRefResolver(this._assetService, this._freeMediaService, this._supabase);
+  AssetRefResolver(
+    this._assetService,
+    this._freeMediaService,
+    this._supabase,
+    this._store,
+  );
 
   final AssetService? _assetService;
   final FreeMediaService? _freeMediaService;
   final SupabaseClient? _supabase;
+  final ContentStore _store;
 
   Future<File?> resolve(AssetRef ref) async {
     if (ref.raw.isEmpty) return null;
@@ -36,6 +43,16 @@ class AssetRefResolver {
       final file = File(ref.localPath!);
       if (await file.exists()) return file;
       return null;
+    }
+
+    // Baytlar zaten içerik-adresli store'da olabilir — LAN eşlemesi bunları
+    // taşıyor, ya da daha önce indirilmiştir. Servis katmanına hiç uğramadan
+    // dön: giriş yapılmamış / offline / servis null olan durumlarda da resim
+    // açılsın.
+    final sha = ref.contentSha;
+    if (sha != null) {
+      final cached = await _store.read(sha);
+      if (cached != null) return cached;
     }
 
     if (ref.isPublic) {
@@ -91,5 +108,6 @@ final assetRefResolverProvider = Provider<AssetRefResolver>((ref) {
     ref.watch(assetServiceProvider),
     ref.watch(freeMediaServiceProvider),
     client,
+    ref.watch(contentStoreProvider),
   );
 });
