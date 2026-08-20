@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/refgraph.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -39,6 +39,7 @@ tags: [file]
 - `namespace = uuid.v5(Namespace.url.value, 'open5e-pack:$packageName')` — each package gets its OWN namespace so ids never collide across packages and a package rebuilds byte-stable.
 - `_refIndex`: `slug → (name → id)`, populated by `add`. Pass 2 (`_resolve`) recursively walks each entity's `attributes`: a map with both `_ref` (slug) and `name` becomes the looked-up id, or `''` + an entry in `unresolved` if missing.
 - **Hard `ref` vs soft `ref`**: a `{_ref, name}` map is resolved at build (must exist in-pack or the build fails). A `{slug, name}` map WITHOUT `_ref` (a `softRef`, see [[mapper_chargen]]) is left untouched — it resolves at character-resolve time against installed content.
+- **Card-name canonicalisation (audit R6, 2026-08-20)**: `add`, `has`, `stableId` and `_resolve`'s index lookup all run the name through [[normalize]]'s `canonicalCardName`. `add` also *rewrites* `row['name']`, so this is the single place where an upstream spelling variant becomes the built-in spelling — before the id is minted and before [[dupe]]'s L4 drop compares names. Both sides have to canonicalise: a `{_ref, name}` placeholder is written with the upstream spelling by mappers long before the card is added.
 - Invariant: `resolveRefs()` returning non-empty makes [[build_packs]] skip writing that pack and exit 1.
 
 ## Notes

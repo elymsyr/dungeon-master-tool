@@ -154,3 +154,43 @@ String titleCase(String s) {
       .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
       .join(' ');
 }
+
+/// Card names that differ from a built-in card's by spacing, punctuation or
+/// word-splitting only — the variant spelling is what upstream ships, and no
+/// gate can see it (audit **R6**, finding F-pass0-07).
+///
+/// Measured, not guessed: 17 spellings across 19 cards in 9 packs, found by
+/// folding every non-alphanumeric character out of both sides and keeping the
+/// pairs that then matched exactly. Deliberately a table and not a looser
+/// [Normalizer.canonical] or `findEntityIdByName`: §2.3 keeps name resolution
+/// strict on purpose, and a fold that turns `Cultist, Fanatic` into
+/// `Cultist Fanatic` for *every* name would also merge cards that only look
+/// alike. Keys are lowercased; values are the built-in spelling.
+const _cardNameAliases = <String, String>{
+  'meld into stone': 'Meld into Stone',
+  'potion of climbing': 'Potion of Climbing',
+  'potion of superior healing': 'Potion of Superior Healing',
+  'devils sight': "Devil's Sight",
+  'devil’s sight': "Devil's Sight",
+  'legend lore': 'Legend Lore',
+  'will-o-wisp': "Will-o'-Wisp",
+  'counter spell': 'Counterspell',
+  'cultist, fanatic': 'Cultist Fanatic',
+  'war horse skeleton': 'Warhorse Skeleton',
+  'legendary resistance (3/ day)': 'Legendary Resistance (3/Day)',
+  'legendary resistance (3/day)': 'Legendary Resistance (3/Day)',
+  'battle axe': 'Battleaxe',
+  'one with shadows': 'One with Shadows',
+  'fey touched': 'Fey-Touched',
+  'eye bite': 'Eyebite',
+  'light crossbow': 'Light Crossbow',
+};
+
+/// The built-in spelling of [name] when [_cardNameAliases] knows one, else
+/// [name] unchanged. Applied at the one choke point every card passes through
+/// (`PackBuilder.add`), so the pack card, its in-pack `_ref` index and the
+/// built-in duplicate drop all see the same spelling.
+String canonicalCardName(String name) {
+  final trimmed = name.trim();
+  return _cardNameAliases[trimmed.toLowerCase()] ?? trimmed;
+}

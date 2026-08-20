@@ -161,7 +161,23 @@ left in the prose as A3 requires). Measured against the finding: the spell-list
 tables are **20, not 24** — the record's own regex counted three third-caster
 slot tables and one wild-magic table as spell lists. Ledger **6 🛠 · 40 ✅ ·
 1 ⚪**. Promoted again (6 packs, 107 values) for the same reason R4 was.
-**The next open phase is R6.**
+
+**R6 (done 2026-08-20)** closed the three findings about what the linking
+contract cannot see. A measured **17-spelling alias table** (`canonicalCardName`
+in `normalize.dart`) makes 19 pack cards in 9 packs adopt the built-in spelling
+— `Eye bite → Eyebite`, `Battle Axe → Battleaxe`, `Devil’s Sight` (curly
+apostrophe, 3 packs) — applied at the single choke point every card passes,
+`PackBuilder.add`, so the card, its id, the in-pack `_ref` index and L4's
+duplicate drop cannot disagree; variants **19 → 0**, no card lost, `verify_packs`
+unmoved at **68,926 ok / 0 disagree**. The 5e-2024 subclass hiding in a 5e-2014
+pack now says so on the card (`source: Open5e Originals (5e-2024)`); the pack
+label stays honest to the primary document. And `dupe_census --near` reports the
+near-duplicate count for the first time: **6 candidates, 1 over 0.80** — where
+**the measurement refuted the finding**: `Scoundrel` is not 83% similar, it is
+**word-for-word identical** (Dice 1.00), and the 0.83 was difflib scoring
+markdown table padding. Kept in both packs under L4's written bundled↔bundled
+policy. Ledger **3 🛠 · 43 ✅ · 1 ⚪**. Promoted again (9 packs, 19 renames +
+30 values). **The next open phase is R7.**
 
 The last unit (`tob-2023`, 3,088 entities, the corpus's largest single pack)
 measured **8,052 ok / 0 disagree / 0 absent / 0 unsourced / 2,040 unverifiable**
@@ -5620,7 +5636,7 @@ half** for the same reason. R7 and R8 are independent of everything else.
       pack. 6 packs changed, **107 values**; `assets/first_party/manifest.json`
       regenerated.
 
-- [ ] **R6 — Names, near-duplicates and pack identity.** Three findings, all
+- [x] **R6 — Names, near-duplicates and pack identity. Done 2026-08-20.** Three findings, all
       about what the linking contract can and cannot see. F-pass0-07 (19 pack
       cards whose names differ from a built-in card's by spacing or punctuation
       only — a measured alias table in `normalize.dart`, **not** a looser
@@ -5632,7 +5648,47 @@ half** for the same reason. R7 and R8 are independent of everything else.
       its entities during the merge).
       *Exit: `dupe_census` "nothing installed" stays 0 while the near-duplicate
       count is reported for the first time, and the 2024 subclass is
-      distinguishable on its card.*
+      distinguishable on its card.* — **met.**
+      *F-pass0-07* — `canonicalCardName` (`normalize.dart`) holds **17
+      spellings covering 19 cards in 9 packs**, applied at the one choke point
+      every card passes (`PackBuilder.add`), so the rename reaches the id, the
+      in-pack `_ref` index and L4's duplicate drop together. Residual variants
+      found by the non-alphanumeric fold: **19 → 0**; `resolveRefs` 0
+      unresolved; **no card lost** — entity counts identical in all 19 packs,
+      because `a5e-mm` already shipped both spellings and `_ensureChild`'s
+      qualifier took the collision (`Potion of Climbing (Cosmopolitan
+      Alchemist)`). `verify_packs`'s `_matchKey` applies the same table and is
+      unchanged at **68,926 ok / 0 disagree / 0 absent**.
+      *F-open5e-01* — the fold stamps the second document's game system into
+      its cards' `source` when the two documents disagree: `Abjurationist` now
+      reads **`Open5e Originals (5e-2024)`**. `metadata.game_system` stays
+      `5e-2014` on purpose (the pack carries the primary document's identity,
+      the card its own), and `verify_packs --doc open5e` still says `16/17` —
+      the known price of not splitting the pack.
+      *F-toh-02* — `dupe_census --near <ratio>` measures section B's
+      "shares the name only" groups with a word-multiset Dice ratio, statblock
+      children excluded: **6 candidates, 1 over 0.80**. **The number refuted the
+      finding's own 0.83**: the pair is **1.00** — word-for-word identical, and
+      what difflib scored was markdown table padding and `|----|` dash runs
+      (`_normText` collapses whitespace, not dashes, which is why exact-text
+      section B missed it). Kept in both packs under `kBundledSharedPolicy`;
+      option 2 (`metadata.links`) left open rather than rejected, since only a
+      larger count would change the answer.
+      **Green.** `flutter analyze` 0 errors / 0 warnings;
+      `flutter test test/tool/` **213 pass / 0 fail** (210 + R6's new
+      `card_name_alias_test.dart`); the five asset-reading suites
+      (`pack_field_render`, `spell_slot_grid_reach`, `wizard_pack_families`,
+      `pack_install_roundtrip`, `grant_contract`) **99 pass / 1 fail**, the one
+      failure being R8's known `builtin SRD fields render` case.
+      `build_packs` + `gate_packs` green (relational gate: no violations),
+      `dupe_census` "nothing installed" **0**.
+      **Promoted.** Same reason as R4/R5 — the exit assertion reads the shipped
+      pack. `diff_packs`: 9 pack files, **+19 / −19 entities** (the renames) and
+      **30 changed values in 6 classes** — 25 of them the child-ref lists
+      re-aimed at the renamed row (`trait_refs` 22, `action_refs` 2,
+      `reaction_refs` 1), 4 the `Potion of Climbing` pair's description swapping
+      cards, 1 the `source` stamp. Entity counts identical in every pack;
+      `assets/first_party/manifest.json` regenerated.
 
 - [ ] **R7 — The built-in pack owes what it demands of everyone else.** Two
       findings, and the only Stage R phase that touches

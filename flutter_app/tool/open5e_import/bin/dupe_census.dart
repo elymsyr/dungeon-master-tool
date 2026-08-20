@@ -6,6 +6,7 @@
 //                                                    [--list <slug>]
 //                                                    [--list-shared]
 //                                                    [--list-builtin-same]
+//                                                    [--near <0..1>]
 //
 // Sibling of `audit_packs.dart`. That tool asks "are the fields filled?"; this
 // one asks "should this entity exist at all?".
@@ -158,6 +159,16 @@ void main(List<String> args) {
   }
   if (args.contains('--list-builtin-same')) {
     census.printBuiltinSameList();
+    return;
+  }
+  final near = opts['near'];
+  if (near != null) {
+    final ratio = double.tryParse(near);
+    if (ratio == null || ratio <= 0 || ratio > 1) {
+      stderr.writeln('ERROR: --near takes a ratio in (0, 1], got: $near');
+      exit(2);
+    }
+    census.printNear(ratio);
     return;
   }
   if (markdown) {
@@ -332,6 +343,12 @@ class _Census {
   var _bNamesSameAttrs = 0;
   final _bSameAttrs = <String, List<_Row>>{};
 
+  /// Section B's "shares the name, not the text" groups, kept so `--near` can
+  /// ask the follow-up question: *how* different is the text? (audit **R6**,
+  /// finding F-toh-02 — `Scoundrel` ships in two packs with the same two
+  /// skills and prose that differs only in length.)
+  final _bDiffText = <String, List<_Row>>{};
+
   /// Every entity id in the corpus → its `slug␀name`. A statblock's child refs
   /// are per-pack uuids, so two byte-identical copies never *encode* the same;
   /// dereferencing the ids to names is what makes [_canonAttrs] compare content
@@ -447,6 +464,7 @@ class _Census {
         _bSameText[key] = rows;
       } else {
         _bNamesDiffText++;
+        _bDiffText[key] = rows;
       }
     });
     if (_redundantOwned < 0) _redundantOwned = 0;
@@ -823,6 +841,73 @@ class _Census {
           '${owned ? "  [owned]" : ""}');
     }
   }
+
+  /// Section B, one question deeper: cross-pack cards that share a name and
+  /// whose prose is *nearly* the same (audit **R6** / F-toh-02). Section B's
+  /// identical-text test is exact, so a pair like `Scoundrel` — same two
+  /// granted skills, 0.83 similar text — falls into "shares the name only" and
+  /// is never counted as duplication work.
+  ///
+  /// Statblock-owned child rows are excluded: they are a monster's property and
+  /// not a dedup candidate (§2.5, the same rule section B's headline uses).
+  void printNear(double ratio) {
+    final hits = <({String key, double score, List<String> packs})>[];
+    var compared = 0;
+    _bDiffText.forEach((key, rows) {
+      final free =
+          rows.where((r) => !_ownedIds.contains(r.entity.id)).toList();
+      if (free.map((r) => r.pack).toSet().length < 2) return;
+      compared++;
+      var worst = 1.0;
+      for (var i = 0; i < free.length; i++) {
+        for (var j = i + 1; j < free.length; j++) {
+          final s = _wordDice(free[i].entity.text, free[j].entity.text);
+          if (s < worst) worst = s;
+        }
+      }
+      if (worst >= ratio) {
+        hits.add((
+          key: key,
+          score: worst,
+          packs: free.map((r) => r.pack).toSet().toList()..sort(),
+        ));
+      }
+    });
+    hits.sort((a, b) => b.score.compareTo(a.score));
+    print('# section B, near-duplicate text — word-multiset Dice >= '
+        '${ratio.toStringAsFixed(2)}');
+    print('# candidates compared (shared name, different text, no statblock '
+        'owns a copy): $compared');
+    print('# over the threshold: ${hits.length}');
+    for (final h in hits) {
+      print('  ${h.score.toStringAsFixed(2)}  ${_slugOf(h.key).padRight(18)}'
+          '${_displayName[h.key]}  [${h.packs.join(", ")}]');
+    }
+  }
+}
+
+/// Word-multiset Dice ratio of [a] and [b] — `2·|A∩B| / (|A|+|B|)` over
+/// lowercased word tokens.
+///
+/// **Not** Python `difflib`'s ratio, which is order-sensitive and O(n²); this
+/// is order-blind and linear, and on the pair that prompted the mode
+/// (`Scoundrel`) it agrees to within a few points. What section B needs is a
+/// count of "same content, different wording" candidates, not a diff.
+double _wordDice(String a, String b) {
+  Map<String, int> bag(String s) {
+    final m = <String, int>{};
+    for (final w in s.toLowerCase().split(RegExp(r'[^a-z0-9]+'))) {
+      if (w.isNotEmpty) m.update(w, (n) => n + 1, ifAbsent: () => 1);
+    }
+    return m;
+  }
+
+  final x = bag(a), y = bag(b);
+  final nx = _sum(x), ny = _sum(y);
+  if (nx == 0 || ny == 0) return 0;
+  var shared = 0;
+  x.forEach((w, n) => shared += min(n, y[w] ?? 0));
+  return 2 * shared / (nx + ny);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────

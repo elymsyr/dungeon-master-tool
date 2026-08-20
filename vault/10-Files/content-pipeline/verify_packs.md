@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/verify.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-19
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -30,6 +30,12 @@ tags: [file]
 - Domain map: [[Content-Pipeline]]
 
 ## Key Logic / Variables
+- **R6 (2026-08-20) — `_matchKey` importer'ın üçüncü ad yeniden yazımını da
+  izliyor.** `"Npc: "` ön eki ve küçük-sözcük yeniden büyütmesinin yanına
+  [[normalize]]'ın `canonicalCardName`'i eklendi: kart `Eyebite` adıyla
+  gönderiliyorsa fixture satırı hâlâ `Eye bite`. Uygulanmasaydı R6'nın 19
+  yeniden adlandırması 4 kartı `unmatched` yapardı; uygulanınca sayaç
+  **68.926 ok / 0 disagree / 0 absent** ile aynı kaldı.
 - **R2 (2026-08-19) — çökmüş sütun kuralı.** `monster.alignment_ref` /
   `alignment_note`: bir belgenin `alignment` sütunu tek değere çökmüşse
   (`a5e-mm`, `bfrd` — 946/946 "chaotic evil") kural artık değer beklemiyor,

@@ -1,7 +1,7 @@
 ---
 type: meta
 domain: meta
-updated: 2026-08-19
+updated: 2026-08-20
 tags: [meta, changelog]
 ---
 
@@ -829,6 +829,58 @@ mapper'ı tahmin etmeyi bırakır). Güncellenen:
 `flutter_app/docs/open5e_content_audit.md` (§0, §6 R3 kutusu),
 `flutter_app/docs/pack_conformance_findings.md`,
 `flutter_app/docs/pack_conformance_plan.md`.
+
+## 2026-08-20 — R6: adlar built-in yazımına kavuştu, yakın kopya ilk kez ölçüldü
+
+Stage R'nin altıncı fazı; üç bulgu (F-pass0-07, F-toh-02, F-open5e-01) kapandı
+ve şemaya hiç dokunulmadı — hepsi importer ve ölçüm tarafında.
+
+**Ad varyantları (F-pass0-07).** [[normalize]]'a `canonicalCardName` eklendi:
+**17 yazım / 19 kart / 9 paket**, hepsi built-in bir kartın adından yalnız
+boşluk, noktalama ya da sözcük bölmesi kadar farklı (`Eye bite` → `Eyebite`,
+`Battle Axe` → `Battleaxe`, üç pakette kıvrık kesmeli `Devil’s Sight`).
+Ölçülmüş bir **tablo**, gevşetilmiş bir eşleşme değil — §2.3
+`findEntityIdByName`'i bilerek katı tutuyor. Uygulandığı yer tek: [[refgraph]]
+`PackBuilder.add`, yani ad kanonikleşiyor → id ondan sonra basılıyor → L4 kopya
+düşürmesi ve `_ref` indeksi aynı yazımı görüyor. Mapper'lar `_ref` yer
+tutucusunu upstream yazımıyla yazdığı için `has`/`stableId`/pass-2 çözümü de
+aynı fonksiyondan geçiyor: `resolveRefs` **0 unresolved**. Sonuç: harf-dışı
+folding ile ölçülen varyant **19 → 0**, `dupe_census` A **1.656 → 1.663**,
+"case-only" **3 → 1**, "nothing installed" **0**. **Hiçbir kart kaybolmadı** —
+`a5e-mm` zaten iki yazımı birden taşıyordu, kanonikleşince [[mapper_monster]]
+`_ensureChild`'ın nitelendiricisi devreye girdi. [[verify_packs]]'in
+`_matchKey`'i aynı tabloyu uyguluyor (importer'ın üçüncü ad yeniden yazımı);
+uygulanmasaydı 4 kart `unmatched` düşerdi, uygulanınca sayaç **68.926 ok /
+0 disagree / 0 absent** ile aynı kaldı.
+
+**Paket kimliği (F-open5e-01).** [[emit]] `mergeOpen5eOriginals` iki belgenin
+`gameSystem`'ı ayrıştığında ikinci belgenin kartlarının `source`'una sistemi
+damgalıyor: `Abjurationist` → **`Open5e Originals (5e-2024)`**. Paketin
+`metadata.game_system`'ı bilerek `5e-2014` kalıyor — paket birincil belgenin
+kimliğini taşır, kart kendi belgesininkini. `verify_packs --doc open5e`'nin
+`16/17`'si de bilerek duruyor: kart gerçekten öbür belgenin altında.
+
+**Yakın kopya (F-toh-02) — ve sayı bulguyu düzeltti.** [[dupe_census]]'a
+`--near <oran>` eklendi: B bölümünün "yalnız adı paylaşıyor" gruplarını alıyor,
+statblok çocuk satırlarını dışarıda bırakıyor, kalanı **sözcük-çoklukümesi
+Dice** oranıyla karşılaştırıyor. Ölçüm: **6 aday, 0,80 üstünde 1**. O bir çift
+(`Scoundrel`, `toh` + `open5e`) ise %83 değil **1,00** — sözcük sözcük aynı;
+bulgunun 0,83'ü difflib'in markdown tablo dolgusunu ve `|----|` tire
+satırlarını ölçmesiydi, ve `_normText` boşluğu sıkıştırdığı hâlde tireyi
+sıkıştırmadığı için birebir-metin testi çifti tam da bu yüzden kaçırıyordu.
+Kart iki pakette de kaldı: `kBundledSharedPolicy` (L4) paketler-arası kopyayı
+düşürmeme kararını yazılı veriyor ve tek çift onu değiştirmiyor.
+
+Kapılar: `flutter analyze` 0 hata / 0 uyarı, `flutter test test/tool/`
+**213/213** (yeni `card_name_alias_test.dart`, 3 vaka), varlık okuyan beş süit
+**99/100** — düşen tek vaka R8'in bilinen `builtin SRD fields render`'ı,
+`gate_packs` yeşil, `build_packs` ilişkisel kapısı temiz.
+`assets/open5e_packs/` yeniden promote edildi: 9 paket, **19 yeniden adlandırma
++ 30 değer**, varlık sayıları değişmedi; `assets/first_party/manifest.json`
+yeniden üretildi. Defter **6 🛠 → 3 🛠 · 40 ✅ → 43 ✅**. Sıradaki faz **R7**
+(built-in paketin kendi içeriği).
+
+Güncellenen notlar: [[normalize]], [[refgraph]], [[emit]], [[dupe_census]], [[verify_packs]].
 
 ## 2026-08-19 — R5: dört chargen mekaniği eve kavuştu
 

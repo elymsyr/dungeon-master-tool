@@ -77,9 +77,25 @@ List<PackResult> mergeOpen5eOriginals(
   }
   if (primary == null || secondary == null) return results;
 
+  // Audit **R6** (F-open5e-01): the fold takes the secondary document's
+  // entities but the pack metadata is the primary's, so a 5e-2024 card used to
+  // ship under a `game_system: 5e-2014` label with nothing on the card saying
+  // otherwise. Stamp the second document's game system into the entity's
+  // `source` when the two documents disagree — the card is what the user reads.
+  final secondaryEntities =
+      (secondary.payload['entities'] as Map).cast<String, dynamic>();
+  if (secondary.doc.gameSystem != primary.doc.gameSystem) {
+    for (final row in secondaryEntities.values) {
+      if (row is! Map) continue;
+      final source = row['source'];
+      if (source is String && !source.contains(secondary.doc.gameSystem)) {
+        row['source'] = '$source (${secondary.doc.gameSystem})';
+      }
+    }
+  }
   final merged = <String, dynamic>{
     ...(primary.payload['entities'] as Map).cast<String, dynamic>(),
-    ...(secondary.payload['entities'] as Map).cast<String, dynamic>(),
+    ...secondaryEntities,
   };
   final remerged = assemblePack(
     doc: primary.doc,
