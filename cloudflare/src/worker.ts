@@ -56,12 +56,14 @@ const KIND_MAX_BYTES: Record<string, number> = {
   character_extra_image: 4 * 1024 * 1024,
   battle_map: 10 * 1024 * 1024,
   mind_map_image: 4 * 1024 * 1024,
+  world_pdf: 50 * 1024 * 1024,
 };
 
 const ALLOWED_MIME_PREFIXES = ['image/', 'audio/'];
 const ALLOWED_MIME_EXACT = new Set<string>([
   'application/gzip',
   'application/octet-stream',
+  'application/pdf',
 ]);
 
 const ASSET_PATH_REGEX = /^\/assets\/(.+)$/;
@@ -225,15 +227,13 @@ async function handleUpload(
     return rateLimitedResponse(rl.limit, rl.resetInSeconds);
   }
 
-  // Effective limit = min(global ceiling, per-kind limit). X-Asset-Kind
-  // header'ı client tarafından gönderilir; tampered/eski client bilinmeyen
-  // kind gönderirse ceiling uygulanır (asla ceiling'in üstüne çıkamaz).
+  // Effective limit = per-kind limit; bilinmeyen/eksik kind MAX_UPLOAD_BYTES
+  // ceiling'ine düşer (eski client + cloud backup item'ları). KIND_MAX_BYTES
+  // yetkilidir: world_pdf ceiling'in üstünde (50MB) — ceiling'i yükseltmek
+  // her kind'ı birden gevşetirdi.
   const ceilingBytes = parseInt(env.MAX_UPLOAD_BYTES, 10);
   const assetKind = request.headers.get('X-Asset-Kind') ?? '';
-  const maxBytes = Math.min(
-    ceilingBytes,
-    KIND_MAX_BYTES[assetKind] ?? ceilingBytes,
-  );
+  const maxBytes = KIND_MAX_BYTES[assetKind] ?? ceilingBytes;
   const contentLength = parseInt(
     request.headers.get('Content-Length') ?? '0',
     10,
