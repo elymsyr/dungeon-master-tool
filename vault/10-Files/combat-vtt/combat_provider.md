@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/combat_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-21
 tags: [file]
 ---
 
@@ -40,6 +40,7 @@ tags: [file]
 - `_loaded` gate (critical anti-data-loss invariant): write paths (`_saveAndNotify`, `createEncounter`) are no-ops until `_loadFromCampaign` consumes real campaign data OR `_isLoadWithoutDataSafe()` confirms safety (world offline → safe; online + `worldInitialSyncSettledProvider` contains worldId → safe; online + sync pending → defer, stays false). Prevents the session-screen auto-create-encounter post-frame from clobbering cloud `combat_state` with an empty payload during the cross-device pre-sync window.
 - `_saveAndNotify` → `_saveSettingsPatch({'combat_state': session})`. The factory routes this through `pendingWriteBufferProvider.schedule(key: 'settings:$worldId:combat_state', kind: WriteKind.combatTick)` — coalesced (timer-reset) read-merge-write; `combatTick` debounce ≈ 500ms. No global `markDirty`, so the old `world_entities` delete+insertAll cycle never fires for combat ticks (F3 row-level).
 - `_eventLogCap = 500`: `_log` trims oldest entries beyond cap.
+- `_log` only mutates state — persistence is the caller's job, and every internal caller (`createEncounter`, `nextTurn`, `rollInitiatives`, `modifyHp`, …) follows it with `_saveAndNotify`. The public `addLog` (manual quick-log entries + dice-roll results) did NOT, so those entries lived only in memory: any `activeCampaignProvider.reload()` — LAN sync apply, cloud restore — re-read `combat_state` from Drift and the log snapped back to the last persisted state. `addLog` now calls `_saveAndNotify` itself.
 - Combatant snapshot is a deep COPY of source stats — it never reads back from the live entity. Handles both v1 schema (`combat_stats` sub-map) and v2 flat schema (`hp_average`/`ac`/`initiative_modifier`/`initiative_score`). Characters preserve live current HP; non-char entities start at full HP.
 - HP/AC write-back: `_syncCharacterFields` mirrors edits onto the source character entity — writes BOTH flat top-level keys (`hp`/`max_hp`/`ac`) AND the nested `combat_stats` sub-map (skipping the nested write caused the card HP to drift behind the header bar).
 - Initiative: `_rollInitFromSpec` = `1d20 + _evalDiceSpec(spec)`. `_diceSpecRegex` = `([+-])?(\d*)d(\d+)|([+-])?(\d+)` — parses arbitrary mixes like `1d20+3`, `+2+1d6-1`. Monsters with flat `initiative_score >= 0` skip the dice (fixed init); players always roll. Sort is descending by init.

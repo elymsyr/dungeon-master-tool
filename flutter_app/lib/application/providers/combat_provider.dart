@@ -782,7 +782,15 @@ class CombatNotifier extends StateNotifier<CombatState>
     _updateEncounter(enc.copyWith(combatants: sorted));
   }
 
-  void addLog(String message) => _log(message);
+  /// Manuel günlük girdisi ve zar sonuçları. `_log` yalnız state'i
+  /// değiştiriyor; kaydetmeyi çağıranlara bırakmış — ama bu yol bir
+  /// aksiyonun içinden gelmediği için kaydeden kimse yoktu. Girdi sadece
+  /// bellekte kalıyor, LAN eşlemesi `reload()` yapınca combat_state DB'den
+  /// yeniden okunup girdiler siliniyordu ("günlük eski veriye döndü").
+  void addLog(String message) {
+    _log(message);
+    _saveAndNotify();
+  }
 
   static const _eventLogCap = 500;
 

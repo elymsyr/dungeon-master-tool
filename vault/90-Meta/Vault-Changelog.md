@@ -1129,3 +1129,4 @@ dokunuyor, çöp kutusu referanslarını koruyor ve son 10 dakikadaki dosyaları
 atlıyor. Birleştirme tombstone'suz olduğu için silmeler yayılmıyor: bir cihazda
 silinen entity diğerinde duruyorsa geri gelir.
 
+- 2026-08-21 — combat_provider: addLog artık _saveAndNotify çağırıyor; manuel olay günlüğü girdileri kalıcı değildi ve LAN sync sonrası reload'da kayboluyordu (vault/10-Files/combat-vtt/combat_provider.md güncellendi).
