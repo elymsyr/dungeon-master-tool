@@ -267,11 +267,13 @@ class AssetService {
   /// Cache-first download. SHA-256 doğrulaması yapar; mismatch → cache at + hata.
   /// Cache hit'te (yeni store veya legacy migrate) zero transfer.
   Future<File> downloadAsset(String r2Key) async {
-    final token = _requireToken();
     final expectedSha = extractShaFromKey(r2Key);
 
+    // Cache önce, token sonra: baytlar bizdeyse oturum/ağ olmadan da dönsün.
     final cached = await _store.read(expectedSha);
     if (cached != null) return cached;
+
+    final token = _requireToken();
 
     for (int attempt = 0; attempt <= _maxDownloadRetries; attempt++) {
       try {

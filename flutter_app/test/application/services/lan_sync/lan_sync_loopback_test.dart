@@ -11,7 +11,11 @@
 //
 //   cd flutter_app && flutter test test/application/services/lan_sync/
 
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:dungeon_master_tool/application/providers/campaign_provider.dart';
 import 'package:dungeon_master_tool/application/providers/package_provider.dart';
@@ -380,6 +384,41 @@ void main() {
       expect(second.skipped, greaterThan(0));
     });
 
+    /// Regresyon: online dünyada resimler `dmt-asset://` ref'ine dönüşüyor ve
+    /// baytlar dünya klasöründe değil, içerik-adresli önbellekte duruyor.
+    /// Manifest yalnız `worlds/{ad}/` altını tararken bu baytlar hiç
+    /// taşınmıyordu — karşı cihazda resim ancak internete çıkınca geliyordu.
+    test('bulut ref baytları da medya listesine girer', () async {
+      final bytes = utf8.encode('sahte-png-baytlari');
+      final sha = sha256.convert(bytes).toString();
+      final blob = File(p.join(AppPaths.cacheDir, 'content', '$sha.bin'));
+      await blob.parent.create(recursive: true);
+      await blob.writeAsBytes(bytes, flush: true);
+
+      await host.read(campaignRepositoryProvider).save('Barovia', {
+        'entities': {
+          'e1': {
+            'id': 'e1',
+            'name': 'Strahd',
+            'type': 'npc',
+            'images': ['dmt-asset://u1/c1/$sha.png'],
+          },
+        },
+      });
+
+      final client = await pairedClient();
+      final ref = (await client.fetchManifest())
+          .firstWhere((r) => r.type == LanItemType.world);
+      final item = await client.fetchItem(ref);
+
+      final entry = item.media.where((m) => m.sha256 == sha);
+      expect(entry, hasLength(1),
+          reason: 'cache/content blob medya listesinde yok: ${item.media}');
+      expect(entry.single.size, bytes.length);
+      // Baytlar gerçekten tel üzerinden gelebiliyor mu?
+      expect(await client.fetchMedia(entry.single.path), bytes);
+    });
+
     test('ping çalışır ve /unpair kaydı siler', () async {
       final client = await pairedClient();
       expect(await client.ping(), isTrue);
@@ -411,11 +450,15 @@ void main() {
         '/mobile/data',
       ) as Map<String, dynamic>;
 
-      expect(out['image_path'], '/mobile/data/worlds/W/media/x.png');
+      // Yeniden yazım **alıcıda** çalışıyor, dolayısıyla sonuç alıcının
+      // ayırıcısıyla birleşir — beklenti de öyle kurulmalı, yoksa test
+      // yalnız POSIX makinede geçer.
+      expect(out['image_path'],
+          p.joinAll(['/mobile/data', 'worlds', 'W', 'media', 'x.png']));
       expect(out['cloud'], 'dmt-asset://abc');
       expect(out['unrelated'], '/tmp/other.png');
       expect((out['nested'] as List).first,
-          {'p': '/mobile/data/packages/P/cover.png'});
+          {'p': p.joinAll(['/mobile/data', 'packages', 'P', 'cover.png'])});
     });
 
     test('Windows kökünden POSIX köküne yol çevrilir', () {
@@ -424,7 +467,8 @@ void main() {
         r'C:\Users\eren\DMT',
         '/home/eren/DMT',
       ) as Map<String, dynamic>;
-      expect(out['image_path'], '/home/eren/DMT/worlds/W/media/x.png');
+      expect(out['image_path'],
+          p.joinAll(['/home/eren/DMT', 'worlds', 'W', 'media', 'x.png']));
     });
   });
 }

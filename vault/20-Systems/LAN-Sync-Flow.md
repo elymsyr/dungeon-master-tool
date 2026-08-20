@@ -59,8 +59,20 @@ offline yüzünden sync hiç çalışmasın istenmiyor.
 `campaignRepository.load(name)` blob'u (cloud-backup ile birebir aynı kontrat):
 entity'ler, world schema, `combat_state` (encounter'lar + battlemap + session
 notları), `mind_maps`, `map_data`, `sessions`, `pdf_library` manifest'i.
-Medya olarak `{worldsDir}/{worldName}/` altındaki her dosya (haritalar,
-görseller, `pdfs/`).
+Medya olarak iki kaynak taranır:
+1. `{worldsDir}/{worldName}/` altındaki her dosya (haritalar, görseller,
+   `pdfs/`) — yerel yollu (offline dünya) medya buradadır.
+2. Payload'daki bulut ref'lerinin (`dmt-asset://`, `dmt-public://`,
+   `dmt-transient://`) **baytları**: `cache/content/{sha}.bin`. Online bir
+   dünyada resim yüklendiği anda R2/Storage'a gidiyor ve yerelde yalnız bu
+   içerik-adresli önbellekte kalıyor; ref'in kendisi cihazdan bağımsız olduğu
+   için yol yeniden yazımı ona dokunmuyor. Baytlar taşınmadığı sürece karşı
+   cihaz resmi ancak internete çıkıp indirebiliyordu — LAN eşlemesinin vaadi
+   ise tam tersi. Blob içerik-adresli olduğu için yeniden hash'lenmez; dosya
+   adındaki sha zaten `LanMediaEntry.sha256`'dır.
+
+Alıcıda `AssetRefResolver` önce `ContentStore`'a bakar (servis katmanına hiç
+uğramadan), böylece eşlenen resim giriş yapılmamış / offline durumda da açılır.
 
 Blob'un **dışında** kalan ama dünyaya ait olan iki şey `LanItemPayload.extras`
 ile taşınır — blob cloud-backup kontratı olduğu için genişletilmedi:

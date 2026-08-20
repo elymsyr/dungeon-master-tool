@@ -58,6 +58,26 @@ class AssetRef {
     return dot >= 0 ? body.substring(dot) : '';
   }
 
+  /// Şema'lı ref'lerin içerik hash'i (`dmt-asset://`, `dmt-public://`,
+  /// `dmt-transient://` — hepsinde son segmentin adı sha256'dır). Local
+  /// path'lerde ve hash gibi görünmeyen ref'lerde null.
+  ///
+  /// `ContentStore` bu sha ile adreslendiği için, ref'i çözmeden "bu asset'in
+  /// baytları bende var mı" sorusunu cevaplamaya yarar (LAN sync bunu
+  /// kullanıyor).
+  String? get contentSha {
+    final schemeEnd = raw.indexOf('://');
+    if (!isCloud && !isPublic && !isTransient) return null;
+    final body = raw.substring(schemeEnd + 3);
+    final lastSlash = body.lastIndexOf('/');
+    final fileName = lastSlash >= 0 ? body.substring(lastSlash + 1) : body;
+    final dot = fileName.indexOf('.');
+    final base = dot >= 0 ? fileName.substring(0, dot) : fileName;
+    return RegExp(r'^[0-9a-fA-F]{64}$').hasMatch(base)
+        ? base.toLowerCase()
+        : null;
+  }
+
   /// Filesystem path for local refs; null for the scheme'd forms.
   String? get localPath => isLocal ? raw : null;
 

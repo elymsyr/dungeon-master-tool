@@ -11,10 +11,12 @@ import '../../../core/config/app_paths.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../providers/campaign_provider.dart';
 import '../../providers/character_provider.dart';
 import '../../providers/package_provider.dart';
 import '../../providers/ui_state_provider.dart';
+import '../content_store.dart';
 import '../srd_core_package_bootstrap.dart';
 import 'lan_sync_protocol.dart';
 
@@ -114,7 +116,7 @@ class LanSyncSession {
       ref: ref,
       payload: payload,
       dataRoot: userBase,
-      media: await _mediaFor(ref),
+      media: await _mediaFor(ref, [payload, extras]),
       extras: extras,
     );
   }
@@ -314,7 +316,10 @@ class LanSyncSession {
   /// ponytail: yalnız veri kökü altındaki dosyalar taşınır. Kullanıcının
   /// Downloads'ından seçtiği mutlak yollu bir resim kapsam dışı —
   /// `RawPathMigrator` da ham yolları zaten legacy sayıyor.
-  Future<List<LanMediaEntry>> _mediaFor(LanItemRef ref) async {
+  Future<List<LanMediaEntry>> _mediaFor(
+    LanItemRef ref,
+    List<Object?> payloadTrees,
+  ) async {
     final entries = <LanMediaEntry>[];
     switch (ref.type) {
       case LanItemType.world:
@@ -339,7 +344,60 @@ class LanSyncSession {
           nameFilter: (f) => p.basename(f).startsWith('${ref.id}_'),
         );
     }
+    await _collectContentBlobs(payloadTrees, entries);
     return entries;
+  }
+
+  /// Payload'daki bulut ref'lerinin (`dmt-asset://`, `dmt-public://`,
+  /// `dmt-transient://`) **baytlarını** da eşlemeye katar.
+  ///
+  /// Bunlar dünya klasöründe durmuyor: bir resim yüklendiği anda R2/Storage'a
+  /// gidiyor ve yerelde yalnız içerik-adresli önbellekte
+  /// (`cache/content/{sha}.bin`) kalıyor. Ref'in kendisi cihazdan bağımsız
+  /// olduğu için [rewriteRoots] ona dokunmuyordu — ama baytlar taşınmayınca
+  /// karşı cihaz resmi ancak internete çıkıp indirebiliyordu, LAN eşlemesinin
+  /// vaadi ise tam tersi. Blob'ları da taşıyınca resim karşı tarafta
+  /// çevrimdışı açılıyor.
+  ///
+  /// Blob içerik-adresli olduğu için dosyayı yeniden hash'lemeye gerek yok:
+  /// dosya adındaki sha zaten içeriğin hash'i.
+  Future<void> _collectContentBlobs(
+    List<Object?> trees,
+    List<LanMediaEntry> out,
+  ) async {
+    final shas = <String>{};
+    for (final tree in trees) {
+      _collectAssetShas(tree, shas);
+    }
+    if (shas.isEmpty) return;
+    final store = _ref.read(contentStoreProvider);
+    for (final sha in shas) {
+      final file = store.binFor(sha);
+      if (!await file.exists()) continue;
+      out.add(LanMediaEntry(
+        path: _relToBase(file.path),
+        sha256: sha,
+        size: (await file.stat()).size,
+      ));
+    }
+  }
+
+  /// JSON ağacındaki şema'lı asset ref'lerinin sha'larını toplar.
+  static void _collectAssetShas(Object? node, Set<String> out) {
+    if (node is String) {
+      final ref = AssetRef(node);
+      if (ref.isLocal) return;
+      final sha = ref.contentSha;
+      if (sha != null) out.add(sha);
+    } else if (node is List) {
+      for (final v in node) {
+        _collectAssetShas(v, out);
+      }
+    } else if (node is Map) {
+      for (final v in node.values) {
+        _collectAssetShas(v, out);
+      }
+    }
   }
 
   Future<void> _collectDir(

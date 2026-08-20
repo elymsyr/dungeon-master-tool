@@ -41,6 +41,7 @@ tags: [file]
 - `buildManifest()` world satırına `viewUpdatedAt` ekler (`UiState.viewTouchedByWorld[worldName]`) — içerik değişmeden sadece görünüm değiştiğinde de eşleme tetiklensin diye. Alıcı bunu world satırının içerik `updatedAt`'ine yazmaz, UI state'e stamp'ler.
 - Uygulanan dünya **açık dünyaysa** `activeCampaignProvider.reload()` çağrılır — `_data` bayat kalırsa bir sonraki otomatik kayıt senkronize edilen içeriği geri eziyordu (cloud restore'un "açık dünyanın içine geri yükle" yolunun aynısı).
 - `resolveMedia` `p.isWithin` ile veri kökü dışına çıkan yolu **null** döndürür — yol geçişi savunması.
+- `_collectContentBlobs` payload'daki `dmt-asset://` / `dmt-public://` / `dmt-transient://` ref'lerinin sha'sını çıkarıp (`AssetRef.contentSha`) `cache/content/{sha}.bin` blob'unu da medya listesine ekler. Online dünyada resim baytları dünya klasöründe değil bu önbellekte durduğu için, bunlar olmadan karşı cihazda görsel boş kalıyordu.
 - `fileSha256` akış üzerinden (`sha256.bind(file.openRead())`), dosya belleğe alınmaz.
 
 ## Notes
