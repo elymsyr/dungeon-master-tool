@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/normalize.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-13
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -27,6 +27,7 @@ tags: [file]
   - `namesFor(slug)` → all canonical names seeded for a slug (used by mappers that scan free text for any canonical value).
 - `UnmappedSink unmapped` — accumulates `<slug> → {value(+context) → count}`; `toJson()` is written to `unmapped_report.json` by [[emit]].
 - `String titleCase(String)` — "neutral good" → "Neutral Good", "deep_speech" → "Deep Speech". Capitalises **every** word.
+- `String canonicalCardName(String)` — the built-in spelling of a *card name* when a measured alias exists, else the trimmed name. Added 2026-08-20 for audit **R6** (F-pass0-07): 17 upstream spellings across 19 cards differ from a built-in card's name by spacing, punctuation or word-splitting only (`Eye bite` → `Eyebite`, `Battle Axe` → `Battleaxe`, `Devil’s Sight` → `Devil's Sight`). A **table, not a fold**: §2.3 keeps `findEntityIdByName` strict on purpose. Applied by [[refgraph]]'s `PackBuilder.add` (the one choke point every card passes) and by [[verify_packs]]'s `_matchKey`, so the fixture row is still found under the renamed card.
 - `String titleCaseName(String)` — title case for a *proper name*: interior minor words ("the", "of", "from", "with", …) stay lowercase, first and last always capitalised. "spare the dying" → "Spare the Dying". Added 2026-08-13 for audit **L3**: soft refs are resolved case-sensitively, and `titleCase` on a prose-derived spell name emitted `"Spare The Dying"`, the corpus's one dangling ref. Used by [[mapper_chargen]]'s `_parseSpellGrants`; the other 15 `titleCase` call sites are vocabulary values, not names, and are unchanged.
 
 ## Dependencies & Links

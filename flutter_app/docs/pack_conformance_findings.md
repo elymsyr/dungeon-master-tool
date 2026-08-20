@@ -104,7 +104,7 @@ ayrı bulgudur, kapsamları kendi paketleridir.
 
 | 🔎 açık | ❓ danışılacak | 🛠 faz | ✅ kapandı | ⚪ kapsam dışı | ❌ geçersiz | **Toplam** |
 |--:|--:|--:|--:|--:|--:|--:|
-| 0 | 0 | 6 | 40 | 1 | 0 | **47** |
+| 0 | 0 | 3 | 43 | 1 | 0 | **47** |
 
 **F4 kararları (2026-08-19).** 46 kaydın hepsi karara bağlandı: **40'ı düzelt**
 (§6 Stage R'nin sekiz fazı), **5'i gerekçe yaz** (F-pass0-14, F-pass0-15,
@@ -221,6 +221,25 @@ olmayan bir özelliği olmak zorunda), `flutter analyze` 0 hata / 0 uyarı.
 > istiyor; yayınlanan paket ise R1'den beri dört faz geride kalmıştı. Promote
 > edilen fark (`diff_packs`, eski asset → yeni): **43 kategori, 10.004 değer**.
 > `manifest.json` ve `assets/first_party/manifest.json` yeniden üretildi.
+
+**R6 uygulandı (2026-08-20).** Üç kayıt kapandı (F-pass0-07, F-toh-02,
+F-open5e-01); 🛠 sayacı 6 → 3, ✅ 40 → 43. Şemaya dokunulmadı — bu faz
+tamamen importer ve ölçüm tarafında. Ölçülen etki:
+
+- **F-pass0-07** — `canonicalCardName` (`normalize.dart`) **17 yazım /
+  19 kart / 9 paket**; tek boğaz noktası `PackBuilder.add`, yani ad
+  kanonikleşiyor → id ondan sonra basılıyor → L4 düşürmesi ve `_ref` indeksi
+  aynı yazımı görüyor. Harf-dışı folding ile ölçülen varyant **19 → 0**,
+  `resolveRefs` 0 unresolved, entity sayıları 19 pakette de **aynı**.
+  `verify_packs._matchKey` aynı tabloyu uyguluyor: uygulanmasaydı 4 kart
+  unmatched düşecekti, uygulanınca **68.926 ok / 0 disagree / 0 absent**.
+- **F-toh-02** — `dupe_census --near <oran>`: **6 aday / 1 eşik üstü**. Sayı
+  bulguyu düzeltti — `Scoundrel` %83 değil **Dice 1,00**, sözcük sözcük aynı;
+  0,83 difflib'in markdown tablo dolgusunu ölçmesiydi. Kart iki pakette de
+  kaldı (`kBundledSharedPolicy`).
+- **F-open5e-01** — `mergeOpen5eOriginals` ikinci belgenin oyun sistemini
+  karta damgalıyor: `Abjurationist` → **`Open5e Originals (5e-2024)`**
+  (`diff_packs`: 1 değer). Paketin `game_system`'ı bilerek `5e-2014`.
 
 **R5 uygulandı (2026-08-19).** Dört kayıt kapandı (F-pass0-03, F-pass0-09,
 F-pass0-10, F-pass0-08); 🛠 sayacı 10 → 6, ✅ 36 → 40. R4 mapper'ın *tahminini*
@@ -1016,7 +1035,7 @@ eksik içerik.**
 | **Checklist** | checklist A4 (ad ve yazım kuralı) |
 | **Kategori / etki** | 19 kart — `trait` 11, `monster` 3, `creature-action` 3, `spell` 2. Ad, harf dışı her karakter atılınca bir built-in kartla **birebir** aynı, literal olarak **farklı**: `Eye bite`→`Eyebite`, `Meld Into Stone`→`Meld into Stone`, `Counter Spell`→`Counterspell`, `Battle Axe`→`Battleaxe`, `War Horse Skeleton`→`Warhorse Skeleton`, `Devil’s Sight`→`Devil's Sight` (kıvrık kesme işareti, 3 pakette) |
 | **Cause code (öneri)** | `S` — 19'unun 19'u upstream'de de böyle yazılı; `titleCaseName` (L3) yalnız **büyük/küçük harfi** düzeltir, sözcük bölmesini ve kesme işaretini değil |
-| **Durum** | 🛠 faz dosyalandı — **R6** |
+| **Durum** | ✅ kapandı — **R6** (2026-08-20) |
 
 **Bulgu.** `dupe_census`'un A bölümü `(slug, lowercased name)` anahtarıyla
 çalışıyor ve "case-only" kovasında **3** satır bildiriyor. Anahtarı bir adım
@@ -1101,7 +1120,24 @@ bulamayacak. Bugün ölçülen zarar 0 dangling'dir; bu bulgu, o 0'ın
 3. **Kapsam dışı** — upstream yazımı korunur (`S`), 8 tekil kartın kopya
    görünmesi kabul edilir; kayıt burada durur.
 
-**Karar.** **düzelt** — seçenek 1 (ölçülmüş 19 satırlık alias tablosu). Seçenek 2 reddedildi: `findEntityIdByName` bilerek katı (§2.3), gevşetmek yanlış eşleşme üretir. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (ölçülmüş 19 satırlık alias tablosu). Seçenek 2 reddedildi: `findEntityIdByName` bilerek katı (§2.3), gevşetmek yanlış eşleşme üretir. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (2026-08-20)
+
+**Kapanış (R6, 2026-08-20).** `canonicalCardName` (`normalize.dart`) 17 yazım
+varyantını built-in yazımına çeviriyor — 19 kart, 9 paket. Tek boğaz noktası
+`PackBuilder.add`: ad orada kanonikleşiyor, id ondan sonra basılıyor, L4 kopya
+düşürmesi ve `_ref` indeksi aynı yazımı görüyor. `_ref` yer tutucuları upstream
+yazımıyla yazıldığı için `has` ve pass-2 çözümü de aynı fonksiyondan geçiyor;
+`resolveRefs` **0 unresolved**. Ölçülen sonuç: harf-dışı folding ile bulunan
+varyant sayısı **19 → 0**, `dupe_census` A bölümü 1.656 → **1.663** (varyantlar
+artık built-in çakışması olarak *görünüyor*), "case-only" kovası 3 → **1**,
+"nothing installed" **0** (değişmedi). Hiçbir kart silinmedi: entity sayıları
+19 pakette de aynı — `a5e-mm` zaten hem `Potion of climbing` hem
+`Potion of Climbing` taşıyordu, kanonikleşince `_ensureChild`'ın nitelendiricisi
+devreye girdi (`Potion of Climbing (Cosmopolitan Alchemist)`), yani iki
+statblok'un satırı birbirini yutmadı. `verify_packs`'in `_matchKey`'i de aynı
+tabloyu uyguluyor (importer'ın *üçüncü* ad yeniden yazımı); uygulamadan önce 4
+kart "unmatched" düşmüştü, sonra **68.926 ok / 0 disagree / 0 absent** — T1
+tabanıyla birebir aynı.
 
 ### F-open5e-01 — 5e-2024 belgesinden gelen 1 subclass, `game_system: 5e-2014` etiketli paketin içinde eriyor
 
@@ -1111,7 +1147,7 @@ bulamayacak. Bugün ölçülen zarar 0 dangling'dir; bu bulgu, o 0'ın
 | **Checklist** | checklist G3 (`game_system` etiketi kartın hangi kurala göre yazıldığını taşır) |
 | **Kategori / etki** | `subclass` — 17'nin **1'i** (`Abjurationist`) `open5e-2024` belgesinden geliyor (`gamesystem: 5e-2024`), paket ve katalog girdisi ise **`5e-2014`** diyor. Kartın üzerinde 2024 olduğunu söyleyen hiçbir alan yok: `source` = `"Open5e Originals"`, diğer 16'sıyla aynı |
 | **Cause code (öneri)** | `M` — `mergeOpen5eOriginals` (`tool/open5e_import/emit.dart:71-102`) ikinci belgenin **varlıklarını** alıyor, **metadata'sını** almıyor; birincil `doc` ile yeniden `assemblePack` çağrılıyor |
-| **Durum** | 🛠 faz dosyalandı — **R6** |
+| **Durum** | ✅ kapandı — **R6** (2026-08-20) |
 
 **Bulgu.** Open5e kendi homebrew'unu iki belge olarak yayınlıyor: `open5e`
 (`gamesystem: 5e-2014`, 16 subclass) ve `open5e-2024` (`gamesystem: 5e-2024`,
@@ -1179,7 +1215,19 @@ kalacak.
 3. **Kapsam dışı** — birleşme kararı yazılı, etiket bugün yalnız gösterimlik;
    `metadata`'ya `"contains: [5e-2014, 5e-2024]"` gibi bir not düşülüp bırakılır.
 
-**Karar.** **düzelt** — seçenek 1 (ikinci belgenin kartlarına belge kimliği yazılır); en küçük değişiklik, kayıp yok. Paketi ikiye bölmek (seçenek 2) katalogda tek satır beklentisini bozar. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (ikinci belgenin kartlarına belge kimliği yazılır); en küçük değişiklik, kayıp yok. Paketi ikiye bölmek (seçenek 2) katalogda tek satır beklentisini bozar. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (2026-08-20)
+
+**Kapanış (R6, 2026-08-20).** `mergeOpen5eOriginals` artık iki belgenin
+`gameSystem`'ı ayrıştığında ikinci belgenin kartlarının `source` alanına oyun
+sistemini damgalıyor: `Abjurationist`'in kaynağı **`Open5e Originals` →
+`Open5e Originals (5e-2024)`**. Damga koşullu — sistemler aynıysa hiçbir şey
+değişmiyor — ve `diff_packs` bunu tek satır olarak gösteriyor
+(`subclass · source · changed`, 1 değer). Paket `metadata.game_system` bilerek
+`5e-2014` kalıyor: paket birincil belgenin kimliğini taşır, kart kendi
+belgesininkini. **Kapanmayan yarı, kasıtlı:** `verify_packs --doc open5e` hâlâ
+`16/17` diyor, çünkü kart gerçekten `open5e-2024` belgesinin altında ve o belge
+`--doc open5e` taramasına girmiyor; bu, seçenek 2'yi (paketi ikiye bölmek)
+reddetmenin bilinen bedeli.
 
 ### F-pass0-10 — üçte-bir büyücü 4 subclass hiç büyü slotu almıyor: `CasterKind.third` korpüste hiçbir kartla ulaşılamıyor
 
@@ -1541,7 +1589,7 @@ mümkün olmayan bir arketipi alıyor.
 | **Checklist** | checklist B2 (paketler arası kopya kart yok) |
 | **Kategori / etki** | `background` — **1 kart** çifti. Statblok çocuk satırları dışarıda tutulduğunda korpüste **metni birebir aynı** olan paketler-arası kart sayısı **1** (bir `language`); bu çift ise birebir değil, **%83** benzer, ama mekaniği aynı |
 | **Cause code (öneri)** | `D` — iki paket aynı içeriği ayrı kart olarak taşıyor; dedup ya da link kaydı yok |
-| **Durum** | 🛠 faz dosyalandı — **R6** |
+| **Durum** | ✅ kapandı — **R6** (2026-08-20) |
 
 **Bulgu.** `open5e-toh`'un `Scoundrel`'ı ile `open5e-open5e`'nin `Scoundrel`'ı
 aynı cümleyle açılıyor, aynı iki beceriyi veriyor (`Athletics`,
@@ -1597,7 +1645,29 @@ satırı; gerçek oranla sayım yapılmadı. Bu, Pass 0'a geri dönen bir soru.
 3. **Kapsam dışı** — "iki ayrı yayıncı belgesi, iki ayrı kart" yazılır; o zaman
    kullanıcının iki `Scoundrel` görmesi bilinçli kabul edilmiş olur.
 
-**Karar.** **düzelt** — seçenek 1 (`dupe_census --near`); karar sayıdan sonra verilir, çünkü B2 bugün yalnız birebir eşitliği ölçüyor ve bu çift ölçünün dışında. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (faz açık)
+**Karar.** **düzelt** — seçenek 1 (`dupe_census --near`); karar sayıdan sonra verilir, çünkü B2 bugün yalnız birebir eşitliği ölçüyor ve bu çift ölçünün dışında. · **Tarih:** 2026-08-19 · **Kapatan:** R6 (2026-08-20)
+
+**Kapanış (R6, 2026-08-20) — ve sayı bulguyu düzeltti.** `dupe_census --near
+<oran>` eklendi: B bölümünün "yalnız adı paylaşıyor" gruplarını alıyor,
+statblok çocuk satırlarını dışarıda bırakıyor ve kalan çiftlerin metnini
+**sözcük-çoklukümesi Dice oranıyla** karşılaştırıyor (difflib'in sıraya duyarlı
+oranı değil; sebep aşağıda). Ölçüm: aday grup **6**, 0,80 eşiğinin üstünde
+**1** — `Scoundrel`.
+
+Ve oran **0,83 değil, 1,00**: iki kartın sözcük çoklukümeleri **birebir aynı**.
+Bulgunun 0,83'ü difflib'in ölçtüğü şeydi ve difflib burada yanılıyor — tek fark
+markdown tablolarının hizalama dolgusu ve `|----|` ayraç satırlarının tire
+sayısı. `_normText` boşluk dizilerini zaten sıkıştırıyor, ama tireleri
+sıkıştırmıyor; B bölümünün "birebir aynı metin" testi bu çifti tam da bu yüzden
+kaçırıyordu. Yani `toh`'un `Scoundrel`'ı ile `open5e`'nin `Scoundrel`'ı aynı
+kartın iki dizgisi.
+
+**Ne yapıldı, ne yapılmadı.** Ölçüm eklendi; kart **iki pakette de kaldı** —
+`kBundledSharedPolicy` (L4, 2026-08-15) paketler-arası kopyaları düşürmeme
+kararını yazılı olarak veriyor ve bu çift o kuralın istisnası olmak için bir
+gerekçe üretmiyor: sahibi seçmek, kaybeden paket tek başına kuruluyken
+background'ı yok eder. Seçenek 2 (`metadata.links`) bu yüzden açık bırakıldı,
+reddedilmedi — kararı değiştirecek şey sayının büyümesi olurdu, sayı **1**.
 
 ### F-a5e-ag-01 — `Tenacious` feat'inin kurtarma yeterliliği düşüyor: alanı var, okuyanı var, yazanı yok
 

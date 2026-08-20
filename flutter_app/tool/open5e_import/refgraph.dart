@@ -11,6 +11,8 @@
 // packages and a package can be rebuilt byte-stable.
 import 'package:uuid/uuid.dart';
 
+import 'normalize.dart' show canonicalCardName;
+
 const _uuid = Uuid();
 
 class PackBuilder {
@@ -27,13 +29,17 @@ class PackBuilder {
       : namespace = _uuid.v5(Namespace.url.value, 'open5e-pack:$packageName');
 
   String stableId(String slug, String name) =>
-      _uuid.v5(namespace, '$slug:$name');
+      _uuid.v5(namespace, '$slug:${canonicalCardName(name)}');
 
   /// Add an entity (its `name`/`type` already set by `packEntity`). Returns the
   /// minted id. Re-adding the same (slug, name) is idempotent.
   String add(Map<String, dynamic> row) {
     final slug = row['type'] as String;
-    final name = row['name'] as String;
+    // R6 / F-pass0-07 — an upstream spelling variant of a built-in card's name
+    // adopts the built-in spelling here, before the id is minted and before the
+    // L4 duplicate drop runs.
+    final name = canonicalCardName(row['name'] as String);
+    row['name'] = name;
     final id = stableId(slug, name);
     entities[id] = row;
     (_refIndex[slug] ??= <String, String>{})[name] = id;
@@ -41,7 +47,8 @@ class PackBuilder {
   }
 
   /// True if a (slug, name) is already registered.
-  bool has(String slug, String name) => _refIndex[slug]?.containsKey(name) ?? false;
+  bool has(String slug, String name) =>
+      _refIndex[slug]?.containsKey(canonicalCardName(name)) ?? false;
 
   /// Drop an entity and its `_ref` index entry (audit **L4** — a card the
   /// built-in pack already ships verbatim must not be re-emitted).
@@ -81,7 +88,7 @@ class PackBuilder {
       final ref = value['_ref'];
       final name = value['name'];
       if (ref is String && name is String) {
-        final id = _refIndex[ref]?[name];
+        final id = _refIndex[ref]?[canonicalCardName(name)];
         if (id == null) {
           unresolved.add('$ref:$name');
           return '';

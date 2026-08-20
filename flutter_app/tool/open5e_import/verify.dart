@@ -69,6 +69,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'gate.dart' show builtinNameIndex, nameKey;
+import 'normalize.dart' show canonicalCardName;
 import 'loaders.dart';
 import 'mappers/item.dart' show baseItemName;
 import 'mappers/spell.dart' show classTagsFromV2;
@@ -270,12 +271,13 @@ Map<String, Fixture> _indexByName(List<Fixture> rows) {
   return out;
 }
 
-/// Entity name ⟷ fixture name, folded far enough to survive the two rewrites
-/// the importer performs on a *name*: the `"Npc: "` prefix strip and the
-/// small-word re-casing that follows it. Deliberately lenient — this decides
-/// *which* fixture row to check against, not whether the check passes.
+/// Entity name ⟷ fixture name, folded far enough to survive the three rewrites
+/// the importer performs on a *name*: the `"Npc: "` prefix strip, the small-word
+/// re-casing that follows it, and R6's card-name alias table (`Eye bite` ships
+/// as `Eyebite`). Deliberately lenient — this decides *which* fixture row to
+/// check against, not whether the check passes.
 String _matchKey(String raw) {
-  var s = raw.trim().toLowerCase();
+  var s = canonicalCardName(raw).trim().toLowerCase();
   s = s.replaceFirst(RegExp(r'^npc\s*:\s*'), '');
   return s.replaceAll(RegExp(r'\s+'), ' ');
 }

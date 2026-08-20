@@ -7,9 +7,36 @@
 
 ## Sonraki adım
 
-> **Sıradaki iş: R6** (adlar, yakın kopyalar ve paket kimliği — 3 bulgu:
-> F-pass0-07 ölçülmüş takma-ad tablosu, F-toh-02 `dupe_census --near`,
-> F-open5e-01 ikinci belgenin kimliği).
+> **Sıradaki iş: R7** (built-in paket kendi istediğini borçlanıyor — 2 bulgu:
+> F-builtin-01 345 SRD statblok'unun kurtarma/beceri satırı yok, F-builtin-02
+> built-in paketin §5'i yok — 419 boş yuva, yazılı sebep yok). Stage R'de
+> R7 ve R8 birbirinden ve geri kalandan bağımsız; R8 tek satırlık bir düzeltme
+> (`pack_field_render_test`'e tema verilmesi), R7 ise Stage R'nin
+> `srd_core/` dosyalarına dokunan tek fazı ve transkripsiyon işi
+> (`docs/SRD_CC_v5.2.1.pdf`, CC-BY).
+>
+> **R6 bitti (2026-08-20) — "adlar built-in yazımına kavuştu".**
+> Üç kayıt (F-pass0-07, F-toh-02, F-open5e-01) kapandı; durum satırı
+> **0 🔎 · 0 ❓ · 3 🛠 · 43 ✅ · 1 ⚪** (toplam 47). Şema **dokunulmadı**.
+> Ölçüm: `canonicalCardName` (`normalize.dart`) **17 yazım / 19 kart /
+> 9 paket**; harf-dışı folding ile ölçülen varyant sayısı **19 → 0**;
+> `PackBuilder.add` tek boğaz noktası olduğu için kart, id, `_ref` indeksi ve
+> L4 düşürmesi aynı yazımı görüyor (`resolveRefs` 0 unresolved) ve **hiçbir
+> kart kaybolmadı** (entity sayıları 19 pakette de aynı; `a5e-mm`'in iki
+> `Potion of Climbing`'i `_ensureChild` nitelendiricisiyle ayrıştı).
+> `dupe_census` A **1.656 → 1.663**, "case-only" **3 → 1**, "nothing
+> installed" **0**; `verify_packs` **68.926 ok / 0 disagree / 0 absent**
+> (`_matchKey` aynı tabloyu uyguluyor — uygulanmasaydı 4 kart unmatched
+> düşüyordu). `Abjurationist`'in kaynağı **`Open5e Originals (5e-2024)`**;
+> paketin `game_system`'ı bilerek `5e-2014` kaldı. `dupe_census --near 0.80`
+> ilk kez çalıştı: **6 aday / 1 eşik üstü**, ve sayı bulguyu düzeltti —
+> `Scoundrel` %83 değil **birebir aynı** (Dice 1,00; 0,83 difflib'in markdown
+> tablo dolgusunu ölçmesiydi). Kart iki pakette de kaldı
+> (`kBundledSharedPolicy`). `flutter analyze` 0/0, `flutter test test/tool/`
+> **213/213** (R6'nın `card_name_alias_test.dart`'ı dahil), varlık okuyan beş
+> süit 99/100 — düşen tek vaka R8'in bilinen `builtin SRD fields render`'ı.
+> **`assets/open5e_packs/` yeniden promote edildi** (9 paket, 19 yeniden
+> adlandırma + 30 değer).
 >
 > **R5 bitti (2026-08-19) — "dört chargen mekaniği eve kavuştu".**
 > Dört kayıt (F-pass0-03, F-pass0-09, F-pass0-10, F-pass0-08) kapandı; durum

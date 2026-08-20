@@ -5,7 +5,7 @@ path: flutter_app/tool/open5e_import/bin/dupe_census.dart
 layer: tool
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-08-20
 tags: [file]
 ---
 
@@ -36,6 +36,7 @@ tags: [file]
 
 ## Key Logic / Variables
 - **Two keys, because identity and resolution are different questions** (phase L0, 2026-07-30). Sections **A/B key on identity**: `(category slug, lowercased name)`, exact — case folded because the importer title-cases, and a trailing parenthetical **never** stripped. Section **C keys on the resolver**: [[entity_ref]] `findEntityIdByName` exactly — case sensitive, one trailing-parenthetical retry. Both deltas are printed.
+- **`--near <ratio>` (audit R6, 2026-08-20)** asks section B's follow-up question: of the groups that share a name but not the text, how *different* is the text? Statblock-owned children excluded (§2.5). Similarity is a **word-multiset Dice ratio**, not difflib's order-sensitive one — measured 6 candidates, 1 over 0.80, and that one (`Scoundrel`, in `toh` + `open5e`) scores **1.00**: the cards are word-for-word identical and only their markdown table padding differs, which is exactly what the exact-text test misses (`_normText` collapses whitespace, not `|----|` dash runs).
 - ⚠️ **L0 was planned as "match like the runtime everywhere" and that would have been wrong.** The resolver's qualifier retry means `"Legendary Resistance (3/Day)"`, `"Wing Attack (Costs 2 Actions)"` and [[mapper_monster]]'s `_ensureChild`-disambiguated `"Scimitar (Firetamer)"` all strip onto a built-in card — **3,501 rows**, which took the headline from 20.9% to 34.9% while describing no duplication at all (the qualifier *is* the mechanic). Those 3,501 are instead a **latent resolution hazard**, filed on audit phase **T3**: nothing points at those names today, and a future softRef naming a qualified child would silently land on the generic built-in row.
 - **Section C's "0 dangling" was false — and is true now.** With the resolver's matcher, **1** ref dangled: `open5e-toh`'s `subspecies` "Favored" emitted `spell "Spare The Dying"` while every pack in scope spells it `"Spare the Dying"`. Capital T, dropped silently at read, invisible to the build gate (soft refs never gate). **Fixed 2026-08-13 (audit L3):** the cause was [[mapper_chargen]]'s `_parseSpellGrants` running prose names through `titleCase`, which capitalises every word — [[normalize]]'s new `titleCaseName` keeps interior minor words lowercase. "nothing installed" **1 → 0**, so the gate's baseline is a real 0.
 - **A name collision is not proof of identical content — the census now measures it per row.** Three buckets, not two: same text / **name only** / **no text on either side**. The third exists because `monster` ships an empty top-level `description` in every pack (the statblock lives in `attributes`) and the synthesised gear stubs have no prose at all — a two-bucket column would have reported 588 monster names and 15 gear names as "identical content". Result: **7 of 1,660** section-A collisions genuinely say the same thing; in section B, 188 of 2,540 names are identical, 1,749 only share a name, 603 have no prose to compare. Text is normalized by collapsing whitespace (so a reflow is not a divergence).
