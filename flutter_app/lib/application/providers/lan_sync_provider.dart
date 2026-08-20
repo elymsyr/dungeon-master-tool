@@ -390,21 +390,52 @@ class LanSyncController extends StateNotifier<LanSyncState> {
 
   /// Tek cihazla eşleme — v1'in plan/yürüt mantığı, önizleme adımı olmadan.
   Future<int> _syncWith(LanSyncClient client, PairedDevice device) async {
-    final plan = diffManifests(
-      local: await _session.buildManifest(),
-      peer: await client.fetchManifest(),
-    );
+    final local = await _session.buildManifest();
+    final peer = await client.fetchManifest();
+    final plan = diffManifests(local: local, peer: peer);
+    // İki tarafta da bulunan dünyalar: yön farkı gözetmeden önce çek, sonra
+    // gönder. `diffManifests` item'ı tek bir yöne koyuyor; birleştirme
+    // eklendikten sonra tek yön yetmiyor, çünkü LWW'yi kaybeden tarafın
+    // bölümleri karşıya hiç ulaşmıyordu. Birleştirme deterministik ve
+    // idempotent olduğu için iki taraf da aynı sonuca yakınsıyor.
+    final shared = <String>{
+      for (final ref in local)
+        if (ref.type == LanItemType.world) ref.id,
+    }.intersection({
+      for (final ref in peer)
+        if (ref.type == LanItemType.world) ref.id,
+    });
     var done = 0;
 
+    // Çekmeler önce: yerel birleştirme tamamlansın ki karşıya **birleşmiş**
+    // hâli gönderelim.
+    final toPush = <LanItemRef>[];
     for (final ref in plan.pull) {
       state = state.copyWith(progressLabel: '${ref.name} ← ${device.name}');
       await _pullOne(client, ref);
       done++;
+      if (shared.contains(ref.id)) toPush.add(ref);
     }
     for (final ref in plan.push) {
-      state = state.copyWith(progressLabel: '${ref.name} → ${device.name}');
-      await _pushOne(client, ref);
+      if (shared.contains(ref.id)) {
+        state = state.copyWith(progressLabel: '${ref.name} ← ${device.name}');
+        await _pullOne(client, ref);
+      }
+      toPush.add(ref);
       done++;
+    }
+
+    if (toPush.isEmpty) return done;
+    // Birleştirme sonrası damgalar değişti — manifesti tazele, yoksa karşıya
+    // eski `updatedAt` ile giderdik ve o taraf item'ı bayat sayabilirdi.
+    final refreshed = {
+      for (final ref in await _session.buildManifest())
+        (ref.type, ref.id): ref,
+    };
+    for (final ref in toPush) {
+      final fresh = refreshed[(ref.type, ref.id)] ?? ref;
+      state = state.copyWith(progressLabel: '${fresh.name} → ${device.name}');
+      await _pushOne(client, fresh);
     }
     return done;
   }

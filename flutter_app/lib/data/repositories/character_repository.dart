@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'package:uuid/uuid.dart';
 
+import '../../application/services/local_media_localizer.dart';
 import '../../domain/entities/character.dart';
 import '../database/app_database.dart';
 
@@ -45,7 +46,27 @@ class CharacterRepository {
     return CharacterLoadResult(chars: out, legacyWorldNames: const {});
   }
 
+  /// Karakteri kaydeder. Portre yolu ham bir seçici yoluysa (ör.
+  /// `.../Downloads/portre.png`) önce `{charactersDir}/{id}_portre.png`
+  /// olarak kopyalanır — tek çıkış kapısı burası olduğu için editör, sihirbaz
+  /// ve içe aktarma yollarının hepsi kapsanıyor.
+  ///
+  /// Neden: `LanSyncSession._mediaFor` karakter medyasını `{id}_` önekiyle
+  /// tarıyor; veri kökü dışındaki bir yol ne eşlenebiliyor ne de kullanıcı
+  /// orijinali taşıdığında açılabiliyor.
   Future<void> save(Character character) async {
+    final portrait = character.entity.imagePath;
+    if (portrait.isNotEmpty) {
+      final localized = await LocalMediaLocalizer.localizeCharacterImage(
+        portrait,
+        characterId: character.id,
+      );
+      if (localized != portrait) {
+        character = character.copyWith(
+          entity: character.entity.copyWith(imagePath: localized),
+        );
+      }
+    }
     await _db.worldCharactersDao.upsert(_characterToCompanion(character));
   }
 

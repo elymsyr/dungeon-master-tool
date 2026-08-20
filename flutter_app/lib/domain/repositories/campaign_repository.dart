@@ -31,10 +31,16 @@ abstract class CampaignRepository {
 
   /// world_settings.settings_json içinde verilen key'leri merge eder.
   /// Read-merge-write Drift transaction içinde; diğer key'ler korunur.
+  ///
+  /// [touchWorld] false ise `worlds.updated_at` / `world_settings.updated_at`
+  /// ileri atılmaz — motion-class (viewport pan/zoom) yazımları için. Bunlar
+  /// dünyayı "değişti" göstermemeli, yoksa hiçbir içerik düzenlemesi yapmamış
+  /// bir cihaz LWW'yi kazanıp karşı taraftaki gerçek düzenlemeleri eziyor.
   Future<void> saveSettingsPatch(
     String campaignName,
-    Map<String, dynamic> patch,
-  );
+    Map<String, dynamic> patch, {
+    bool touchWorld,
+  });
 
   /// Granular `world_map_data` row write — yerel kalıcılık için.
   /// `settings_json` blob'una bağımlı kalmadan map_data (image_path, pins,

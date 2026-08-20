@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
+import '../../application/services/local_media_localizer.dart';
 import '../../application/services/tag_moderation.dart';
 import '../../data/network/free_media_service.dart';
 import '../../data/network/network_providers.dart';
@@ -348,8 +349,13 @@ class _MetadataEditorSectionState
       type: FileType.image,
       allowMultiple: false,
     );
-    final path = result?.files.firstOrNull?.path;
-    if (path == null) return;
+    final raw = result?.files.firstOrNull?.path;
+    if (raw == null) return;
+    // Ham seçici yolu asla saklanmaz: dosya önce içeriğin kendi klasörüne
+    // kopyalanır, yükleme de o kopyadan yapılır. Bulut yüklemesi başarılı olsa
+    // bile kopya duruyor — LAN eşlemesi ve çevrimdışı açılış için.
+    final path = await _localizeCover(raw);
+    if (!mounted) return;
 
     // Ücretsiz medya kind'i verildiyse + servis hazırsa Supabase Storage'a
     // eager upload → dmt-public:// ref (cihazlar arası taşınabilir). Upload
@@ -390,5 +396,32 @@ class _MetadataEditorSectionState
       }
     }
     widget.onCoverChanged(path);
+  }
+
+  /// Kapağı içeriğin kendi klasörüne alır. Hedefi [MetadataEditorSection
+  /// .coverKind] belirliyor; kind verilmemişse (sahibi bilinmiyor) yol
+  /// dokunulmadan döner.
+  Future<String> _localizeCover(String path) async {
+    final scopeId = widget.coverScopeId;
+    if (scopeId == null || scopeId.isEmpty) return path;
+    switch (widget.coverKind) {
+      case MediaKind.worldCover:
+        return LocalMediaLocalizer.localize(
+          path,
+          ownerDir: LocalMediaLocalizer.worldDir(scopeId),
+        );
+      case MediaKind.packageCover:
+        return LocalMediaLocalizer.localize(
+          path,
+          ownerDir: LocalMediaLocalizer.packageDir(scopeId),
+        );
+      case MediaKind.characterPortrait:
+        return LocalMediaLocalizer.localizeCharacterImage(
+          path,
+          characterId: scopeId,
+        );
+      default:
+        return path;
+    }
   }
 }

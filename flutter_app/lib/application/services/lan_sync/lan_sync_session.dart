@@ -12,13 +12,17 @@ import '../../../data/database/app_database.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/value_objects/asset_ref.dart';
+import '../../../domain/value_objects/world_section_stamps.dart';
 import '../../providers/campaign_provider.dart';
 import '../../providers/character_provider.dart';
 import '../../providers/package_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../content_store.dart';
+import '../local_media_localizer.dart';
+import '../pending_write_buffer.dart';
 import '../srd_core_package_bootstrap.dart';
 import 'lan_sync_protocol.dart';
+import 'world_merge.dart';
 
 /// LAN sync'in yerel yarısı: manifest üretimi, item okuma, item uygulama.
 ///
@@ -42,6 +46,18 @@ class LanSyncSession {
   /// klasörleri farklı olsa da yollar eşleşir.
   static String get userBase => p.dirname(AppPaths.worldsDir);
 
+  /// Debounce kuyruğunu boşalt — manifest / payload okumadan ve gelen item'ı
+  /// uygulamadan önce.
+  ///
+  /// `combat_state` 500 ms, `mind_maps` 1000 ms, viewport 2000 ms gecikmeyle
+  /// yazılıyor ([PendingWriteBuffer]). Bunlar beklerken eşleme başlarsa hem
+  /// payload hem `worlds.updatedAt` bayat okunuyordu: karşı cihaz "ben daha
+  /// yeniyim" deyip **taze veriyi eziyordu**. Uygulama tarafında da gerekli —
+  /// yoksa bekleyen yerel yazım apply'dan sonra fire edip geleni geri yazar.
+  /// Bekleyen yazım yoksa bedava.
+  Future<void> _flushPending() =>
+      _ref.read(pendingWriteBufferProvider).flush();
+
   // ── Manifest ──────────────────────────────────────────────────────────
 
   /// Bu cihazdaki bütün senkronize edilebilir içeriğin kimlik listesi.
@@ -49,6 +65,7 @@ class LanSyncSession {
   /// Built-in SRD paketi dışarıda: her açılışta koddan yeniden üretiliyor,
   /// taşınması anlamsız (`PackageRepositoryImpl.save` de onu no-op'luyor).
   Future<List<LanItemRef>> buildManifest() async {
+    await _flushPending();
     final out = <LanItemRef>[];
 
     final ui = _ref.read(uiStateProvider);
@@ -92,6 +109,7 @@ class LanSyncSession {
   /// Bir item'ı tel formatına çevirir: blob + medya listesi + veri kökü.
   /// Item bulunamazsa null.
   Future<LanItemPayload?> loadItem(LanItemRef ref) async {
+    await _flushPending();
     final Map<String, dynamic> payload;
     var extras = const <String, dynamic>{};
     switch (ref.type) {
@@ -101,11 +119,29 @@ class LanSyncSession {
         payload = await _ref
             .read(campaignRepositoryProvider)
             .load(row.worldName);
+        // Veri kökünün dışında kalmış ham yollar (eski sürümde seçilmiş
+        // battle map / mindmap resimleri) burada dünya klasörüne alınır —
+        // aksi hâlde `_mediaFor` onları göremiyor ve karşı cihazda resim hiç
+        // açılmıyor. Kalıcı olsun diye dünyayı da geri yazıyoruz.
+        if (await LocalMediaLocalizer.localizeWorldPayload(
+          payload,
+          row.worldName,
+        )) {
+          await _ref
+              .read(campaignRepositoryProvider)
+              .save(row.worldName, payload);
+        }
         extras = await _worldExtras(row.id, row.worldName);
       case LanItemType.package:
         final row = await _db.packagesDao.getById(ref.id);
         if (row == null) return null;
         payload = await _ref.read(packageRepositoryProvider).load(row.name);
+        if (await LocalMediaLocalizer.localizePackagePayload(
+          payload,
+          row.name,
+        )) {
+          await _ref.read(packageRepositoryProvider).save(row.name, payload);
+        }
       case LanItemType.character:
         final row = await _db.worldCharactersDao.getById(ref.id);
         if (row == null) return null;
@@ -146,7 +182,36 @@ class LanSyncSession {
           },
       ],
       'ui_view': exportWorldUiView(_ref.read(uiStateProvider), worldName),
+      'section_stamps': (await _sectionStamps(worldId)).toJson(),
     };
+  }
+
+  /// Dünyanın bölüm bazlı son-değişim damgaları — [mergeWorldPayloads] bunlarla
+  /// karar veriyor. entity/session/map_data damgaları granüler tabloların kendi
+  /// `updated_at` sütunlarından, settings damgaları blob içindeki
+  /// [kSectionStampsKey] haritasından geliyor.
+  Future<WorldSectionStamps> _sectionStamps(String worldId) async {
+    final entities = await _db.worldEntitiesDao.getByWorld(worldId);
+    final sessions = await _db.worldSessionsDao.getByWorld(worldId);
+    final mapRow = await _db.worldMapDataDao.get(worldId);
+    final settingsRow = await _db.worldSettingsDao.get(worldId);
+
+    var settings = const <String, DateTime>{};
+    if (settingsRow != null && settingsRow.settingsJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(settingsRow.settingsJson);
+        if (decoded is Map) {
+          settings = readSectionStamps(Map<String, dynamic>.from(decoded));
+        }
+      } catch (_) {}
+    }
+
+    return WorldSectionStamps(
+      entities: {for (final e in entities) e.id: e.updatedAt.toUtc()},
+      sessions: {for (final s in sessions) s.id: s.updatedAt.toUtc()},
+      mapData: mapRow?.updatedAt.toUtc(),
+      settings: settings,
+    );
   }
 
   /// Bir medya dosyasını relatif yolundan okur. Yol `userBase` dışına
@@ -175,6 +240,7 @@ class LanSyncSession {
   /// yerleştirilmiş olmalıdır; burada yalnız payload içindeki yollar
   /// gönderenin kökünden bizimkine çevrilir.
   Future<void> applyItem(LanItemPayload item) async {
+    await _flushPending();
     final payload = rewriteRoots(item.payload, item.dataRoot, userBase)
         as Map<String, dynamic>;
     final extras = rewriteRoots(item.extras, item.dataRoot, userBase)
@@ -206,8 +272,41 @@ class LanSyncSession {
       );
     }
     payload['world_id'] = ref.id;
-    await _ref.read(campaignRepositoryProvider).save(name, payload);
-    await _db.worldsDao.setUpdatedAt(ref.id, ref.updatedAt);
+
+    // Dünya burada da varsa: tam değiştirme değil, **bölüm bazlı birleştirme**.
+    // Eskiden gelen payload yereli olduğu gibi eziyordu; A'da savaş notu,
+    // B'de mindmap düzenlendiyse birinin işi tamamen kayboluyordu.
+    var effectiveUpdatedAt = ref.updatedAt;
+    if (existing != null) {
+      final localPayload =
+          await _ref.read(campaignRepositoryProvider).load(name);
+      final localStamps = await _sectionStamps(ref.id);
+      final remoteStamps =
+          WorldSectionStamps.fromJson(extras['section_stamps']);
+      final merged = mergeWorldPayloads(
+        local: localPayload,
+        remote: payload,
+        localStamps: localStamps,
+        remoteStamps: remoteStamps,
+        localFallback: existing.updatedAt.toUtc(),
+        remoteFallback: ref.updatedAt.toUtc(),
+      );
+      merged['world_id'] = ref.id;
+      await _ref.read(campaignRepositoryProvider).save(name, merged);
+      // Bulk save satırları silip yeniden yazdığı için hepsi `now()` damgalı
+      // döndü — kazananların gerçek damgalarını geri koy, yoksa bir sonraki
+      // eşlemede bölüm karşılaştırması anlamsızlaşır.
+      await _restoreSectionStamps(
+        ref.id,
+        mergeSectionStamps(local: localStamps, remote: remoteStamps),
+      );
+      if (existing.updatedAt.isAfter(effectiveUpdatedAt)) {
+        effectiveUpdatedAt = existing.updatedAt;
+      }
+    } else {
+      await _ref.read(campaignRepositoryProvider).save(name, payload);
+    }
+    await _db.worldsDao.setUpdatedAt(ref.id, effectiveUpdatedAt);
     await _applyWorldExtras(ref, name, extras);
     // Dunya su an acik ise bellekteki kopya bayat: bir sonraki otomatik
     // kayit senkronize edilen icerigi geri ezerdi ve kullanici hicbir sey
@@ -218,6 +317,26 @@ class LanSyncSession {
     }
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
+  }
+
+  /// Birleştirme sonrası granüler satır damgalarını geri yazar.
+  /// Yalnız hâlâ var olan satırlara dokunur.
+  Future<void> _restoreSectionStamps(
+    String worldId,
+    WorldSectionStamps stamps,
+  ) async {
+    for (final row in await _db.worldEntitiesDao.getByWorld(worldId)) {
+      final ts = stamps.entities[row.id];
+      if (ts != null) await _db.worldEntitiesDao.setUpdatedAt(row.id, ts);
+    }
+    for (final row in await _db.worldSessionsDao.getByWorld(worldId)) {
+      final ts = stamps.sessions[row.id];
+      if (ts != null) await _db.worldSessionsDao.setUpdatedAt(row.id, ts);
+    }
+    final mapTs = stamps.mapData;
+    if (mapTs != null && await _db.worldMapDataDao.get(worldId) != null) {
+      await _db.worldMapDataDao.setUpdatedAt(worldId, mapTs);
+    }
   }
 
   /// [_worldExtras]'ın karşılığı. Silme yayılmadığı için burada da yalnız
@@ -313,9 +432,12 @@ class LanSyncSession {
 
   /// Item'a ait medya dizinindeki dosyaları relatif yol + sha256 ile listeler.
   ///
-  /// ponytail: yalnız veri kökü altındaki dosyalar taşınır. Kullanıcının
-  /// Downloads'ından seçtiği mutlak yollu bir resim kapsam dışı —
-  /// `RawPathMigrator` da ham yolları zaten legacy sayıyor.
+  /// Yalnız veri kökü altındaki dosyalar taşınabilir (yol güvenliği +
+  /// alıcıda kök yeniden yazımı buna dayanıyor). Kullanıcının Downloads'ından
+  /// seçtiği mutlak yollu resimler bu yüzden [loadItem] içinde
+  /// [LocalMediaLocalizer] ile önce dünya klasörüne alınıyor — eskiden
+  /// alınmadığı için battle map ve mindmap resimleri karşı cihaza hiç
+  /// gitmiyordu.
   Future<List<LanMediaEntry>> _mediaFor(
     LanItemRef ref,
     List<Object?> payloadTrees,

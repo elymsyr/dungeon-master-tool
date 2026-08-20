@@ -1100,3 +1100,26 @@ Android/iOS/macOS kamera izinleri, 28 l10n anahtarı × 4 dil.
 
 **Bilinçli sınırlar:** silme yayılmaz, yeniden adlandırma taşınmaz, şifreleme
 yok (kimlik doğrulama var — artık 256-bit kalıcı sır), masaüstünde QR okuma yok.
+
+## 2026-08-21 — LAN eşleme: medya kopyası koşulsuz + bölüm bazlı birleştirme
+
+**Yeni:** `vault/10-Files/media/local_media_localizer.md`.
+
+**Güncellenen:** `vault/20-Systems/LAN-Sync-Flow.md` (medya kaynağı #1 ve
+birleştirme bölümü), `vault/10-Files/sync/lan_sync_session.md`,
+`vault/00-Maps/Media-and-Assets.md`.
+
+**Kod:** `local_media_localizer.dart` + `world_merge.dart` + `world_section_stamps.dart`
+(yeni); `asset_importer.dart` (`namePrefix`, boş `subDir`); `map_image_upload.dart`
+ve `entity_image_upload.dart` (kopyalama artık yükleme kapısından ÖNCE, koşulsuz);
+`character_repository.dart` (portre `{id}_` önekiyle içeri alınıyor);
+`metadata_editor_section.dart` (kapak); `field_widget_factory.dart` (`file`/`pdf`
+alanları → `files/`); `lan_sync_session.dart` (pending flush, bölüm birleştirme,
+onarım geçişi); `lan_sync_provider.dart` (ortak dünyalarda çift yönlü yakınsama);
+`world_repository_impl.dart` (`touchWorld`, `_section_updated_at`).
+
+**Bilinçli sınırlar:** ham yol artık hiçbir yerde saklanmıyor — bedeli, bulut
+yüklemesi başarılıyken baytların hem `media/` altında hem içerik önbelleğinde
+durması. Birleştirme tombstone'suz olduğu için silmeler yayılmıyor: bir cihazda
+silinen entity diğerinde duruyorsa geri gelir.
+

@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/entity_image_upload.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-21
 tags: [file]
 ---
 
@@ -29,7 +29,7 @@ tags: [file]
 - Events emitted: forces a sync tick (`syncEngineProvider.forceTick`) and flushes outbox prefix `entity:`.
 
 ## Dependencies & Links
-- Depends on: [[entity_media_cleanup_service]], [[auth_provider]], [[campaign_provider]], [[sync_engine]], [[pending_write_buffer]], `domain/value_objects/asset_ref.dart`, `domain/value_objects/media_kind.dart`, `image_upload_helper.dart` (`uploadEntityImageRef`), plus `betaProvider`/`activePackageProvider`/`onlineWorldsProvider` (not in allow-list → plain text)
+- Depends on: [[local_media_localizer]], [[entity_media_cleanup_service]], [[auth_provider]], [[campaign_provider]], [[sync_engine]], [[pending_write_buffer]], `domain/value_objects/asset_ref.dart`, `domain/value_objects/media_kind.dart`, `image_upload_helper.dart` (`uploadEntityImageRef`), plus `betaProvider`/`activePackageProvider`/`onlineWorldsProvider` (not in allow-list → plain text)
 - Used by: entity editor / entity card image pickers
 - Domain map: [[Media-and-Assets]]
 - System flow: [[Media-Storage-Tiers]]
@@ -37,7 +37,9 @@ tags: [file]
 
 ## Key Logic / Variables
 - **`kMaxEntityImages = 5`** — cap per entity image collection (portrait gallery `entity.images` and each schema image field).
-- **`eagerUploadEntityImages` gating (returns paths untouched when skipped):**
+- **Seçilen dosyalar her koşulda önce kopyalanır** — yükleme kararından ÖNCE `LocalMediaLocalizer` ile dünyanın (`{worldsDir}/{ad}/media/`) ya da paketin (`{packagesDir}/{ad}/media/`) klasörüne alınır ve yükleme o kopyalardan yapılır. Ham `Downloads/` yolu asla saklanmaz: LAN eşlemesi taşıyamıyor (`LanSyncSession._mediaFor`) ve kullanıcı orijinali taşırsa resim kayboluyor. Aktif dünya/paket bilinmiyorsa (`_ownerDir` null) kopyalama atlanır.
+- **`localizeEntityFiles(ref, paths)`** — schema `file`/`pdf` alanlarının resim olmayan ekleri için aynı iş, hedef `{ownerDir}/files/` (PDF kütüphanesinin `pdfs/` klasörüne karışmasın diye ayrı).
+- **`eagerUploadEntityImages` gating (returns the localized paths when skipped):**
   - not signed in OR no `assetServiceProvider` → skip.
   - **Package entity:** requires `betaProvider.isActive` (else skip); `scopeId = packageName`, `kind = packageEntityImage`, `pushWorldId = null` (no per-row outbox).
   - **World entity:** `worldId` from active campaign must be in `onlineWorldIdsProvider` (online world) — offline worlds bundle media at Make-Online instead and skip here. `scopeId = worldId`, `kind = worldEntityImage`, `pushWorldId = worldId`.

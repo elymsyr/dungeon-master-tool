@@ -192,8 +192,10 @@ class _PackageAsCampaignRepo implements CampaignRepository {
   @override
   Future<void> saveSettingsPatch(
     String name,
-    Map<String, dynamic> patch,
-  ) =>
+    Map<String, dynamic> patch, {
+    bool touchWorld = true,
+  }) =>
+      // Paketin `worlds` satırı yok — `touchWorld` burada anlamsız.
       _packageNotifier.saveStatePatch(patch);
 
   @override

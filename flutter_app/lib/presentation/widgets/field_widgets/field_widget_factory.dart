@@ -352,6 +352,7 @@ class FieldWidgetFactory {
         value: value,
         readOnly: readOnly,
         onChanged: onChanged,
+        ref: ref,
       ),
       FieldType.pdf => _PdfFieldWidget(
         schema: schema,
@@ -3777,12 +3778,14 @@ class _FileFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final WidgetRef? ref;
 
   const _FileFieldWidget({
     required this.schema,
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.ref,
   });
 
   @override
@@ -3848,10 +3851,16 @@ class _FileFieldWidget extends StatelessWidget {
                       allowMultiple: true,
                     );
                     if (result == null || result.files.isEmpty) return;
-                    final newPaths = result.files
+                    final picked = result.files
                         .where((f) => f.path != null)
                         .map((f) => f.path!)
                         .toList();
+                    // Ham seçici yolu saklanmaz — dosya içeriğin `files/`
+                    // klasörüne kopyalanır (LAN eşlemesi + taşınma güvenliği).
+                    final r = ref;
+                    final newPaths = r == null
+                        ? picked
+                        : await localizeEntityFiles(r, picked);
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.attach_file, size: 16),
@@ -3947,10 +3956,15 @@ class _PdfFieldWidget extends StatelessWidget {
                       allowMultiple: true,
                     );
                     if (result == null || result.files.isEmpty) return;
-                    final newPaths = result.files
+                    final picked = result.files
                         .where((f) => f.path != null)
                         .map((f) => f.path!)
                         .toList();
+                    // Aynı gerekçe: PDF de içeriğin `files/` klasörüne alınır.
+                    final r = ref;
+                    final newPaths = r == null
+                        ? picked
+                        : await localizeEntityFiles(r, picked);
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 16),

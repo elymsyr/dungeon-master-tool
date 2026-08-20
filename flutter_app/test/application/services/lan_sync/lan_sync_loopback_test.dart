@@ -19,6 +19,7 @@ import 'package:path/path.dart' as p;
 
 import 'package:dungeon_master_tool/application/providers/campaign_provider.dart';
 import 'package:dungeon_master_tool/application/providers/package_provider.dart';
+import 'package:dungeon_master_tool/application/services/pending_write_buffer.dart';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_device_store.dart';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_client.dart';
 import 'package:dungeon_master_tool/application/services/lan_sync/lan_sync_protocol.dart';
@@ -249,7 +250,7 @@ void main() {
     /// yalnız `settings_json`'a yazılıyordu; hedefte o satırlar zaten varsa
     /// (yani gerçek, kullanılmış bir dünyada) gelen harita ve oturumlar
     /// görünmez kalıyordu — "eşledim ama gelmedi".
-    test('alıcıda dünya zaten varken içeriğin tamamı üzerine yazılır',
+    test('alıcıda dünya zaten varken her bölüm ayrı ayrı güncellenir',
         () async {
       const worldId = 'w-shared-1';
       final repoPeer = peer.read(campaignRepositoryProvider);
@@ -312,9 +313,12 @@ void main() {
       final got = await repoPeer.load('Barovia');
       // Granular tablolardan okunanlar — asıl regresyon.
       expect((got['map_data'] as Map)['image_path'], 'YENİ/host.png');
+      // Bölüm bazlı birleştirme: çakışan bölümlerde host (yeni olan) kazanır,
+      // ama **yalnız peer'da bulunan** oturum silinmez. Eski davranışta
+      // (tam değiştirme) peer'ın işi tamamen kayboluyordu.
       expect(
         (got['sessions'] as List).map((s) => (s as Map)['name']),
-        ['HOST OTURUMU'],
+        containsAll(['HOST OTURUMU', 'PEER OTURUMU']),
       );
       // settings_json'dan okunanlar.
       expect((got['combat_state'] as Map)['session_notes'], 'YENİ NOT');
@@ -417,6 +421,129 @@ void main() {
       expect(entry.single.size, bytes.length);
       // Baytlar gerçekten tel üzerinden gelebiliyor mu?
       expect(await client.fetchMedia(entry.single.path), bytes);
+    });
+
+
+    /// Regresyon: **çevrimdışı** dünyada seçilen resim buluta gitmiyor ve
+    /// payload'da seçicinin verdiği ham yol kalıyordu
+    /// (`.../Downloads/map.png`). O yol veri kökünün dışında olduğu için
+    /// `_mediaFor` dosyayı hiç görmüyordu — battle map arka planı ve mindmap
+    /// not resimleri karşı cihaza gitmiyor, "media hâlâ eşleşmiyor" oluyordu.
+    test('veri kökü dışındaki ham yollu resimler de taşınır', () async {
+      final outside = Directory(p.join(tmp.path, 'disarida'));
+      await outside.create(recursive: true);
+      final battle = File(p.join(outside.path, 'battle.png'));
+      final node = File(p.join(outside.path, 'node.png'));
+      await battle.writeAsBytes(utf8.encode('battle-map-baytlari'));
+      await node.writeAsBytes(utf8.encode('mindmap-node-baytlari'));
+
+      await host.read(campaignRepositoryProvider).save('Barovia', {
+        'entities': <String, dynamic>{},
+        'combat_state': {
+          'encounters': [
+            {'id': 'enc1', 'map_path': battle.path},
+          ],
+        },
+        'mind_maps': {
+          'm1': {
+            'nodes': [
+              {'id': 'n1', 'imageUrl': node.path},
+            ],
+          },
+        },
+      });
+
+      final client = await pairedClient();
+      final ref = (await client.fetchManifest())
+          .firstWhere((r) => r.type == LanItemType.world);
+      final item = await client.fetchItem(ref);
+
+      // Payload artık dünya klasöründeki kopyayı gösteriyor.
+      final encounter =
+          ((item.payload['combat_state'] as Map)['encounters'] as List).single;
+      final mapPath = (encounter as Map)['map_path'] as String;
+      final nodePath = (((item.payload['mind_maps'] as Map)['m1']
+              as Map)['nodes'] as List)
+          .single as Map;
+      expect(p.isWithin(AppPaths.worldsDir, mapPath), isTrue,
+          reason: 'ham yol dünya klasörüne alınmadı: $mapPath');
+
+      // ...ve baytlar gerçekten tel üzerinden geliyor.
+      for (final expected in [
+        (path: mapPath, bytes: await battle.readAsBytes()),
+        (path: nodePath['imageUrl'] as String, bytes: await node.readAsBytes()),
+      ]) {
+        final rel = p
+            .relative(expected.path, from: LanSyncSession.userBase)
+            .replaceAll(r'\', '/');
+        final entry = item.media.where((m) => m.path == rel);
+        expect(entry, hasLength(1),
+            reason: '$rel medya listesinde yok: ${item.media}');
+        expect(await client.fetchMedia(rel), expected.bytes);
+      }
+    });
+
+    /// Regresyon: `combat_state` 500 ms, `mind_maps` 1000 ms gecikmeyle
+    /// yazılıyor. Eşleme o pencerede başlarsa hem payload hem
+    /// `worlds.updatedAt` bayat okunuyor, karşı cihaz "ben daha yeniyim"
+    /// deyip taze veriyi eziyordu.
+    test('bekleyen debounce yazımı eşlemeden önce boşaltılır', () async {
+      final repo = host.read(campaignRepositoryProvider);
+      await repo.save('Barovia', _worldBlob());
+
+      // Henüz diske inmemiş bir düzenleme bırak.
+      host.read(pendingWriteBufferProvider).schedule(
+            key: 'settings:w:mind_maps',
+            kind: WriteKind.spatial,
+            action: () => repo.saveSettingsPatch('Barovia', {
+              'mind_maps': {'m1': 'EN GÜNCEL'},
+            }),
+          );
+      expect(host.read(pendingWriteBufferProvider).hasPending, isTrue);
+
+      final client = await pairedClient();
+      final ref = (await client.fetchManifest())
+          .firstWhere((r) => r.type == LanItemType.world);
+      final item = await client.fetchItem(ref);
+
+      expect((item.payload['mind_maps'] as Map)['m1'], 'EN GÜNCEL',
+          reason: 'bekleyen yazım flush edilmeden okunmuş');
+    });
+
+    /// Asıl vaat: aynı dünya iki cihazda **farklı bölümlerde** düzenlendiğinde
+    /// iki tarafın işi de yaşamalı. Eskiden LWW kazananı diğerini eziyordu.
+    test('iki cihazda farklı bölümler düzenlenince ikisi de korunur',
+        () async {
+      const worldId = 'w-merge-1';
+      final repoPeer = peer.read(campaignRepositoryProvider);
+      final repoHost = host.read(campaignRepositoryProvider);
+
+      for (final repo in [repoHost, repoPeer]) {
+        await repo.save('Barovia', {
+          'world_id': worldId,
+          'entities': <String, dynamic>{},
+        });
+      }
+      // Peer mindmap'i düzenler, host savaş notunu — sonra host daha yeni
+      // olsun diye saniye sınırını geçiyoruz (worlds.updatedAt çözünürlüğü).
+      await repoPeer.saveSettingsPatch('Barovia', {
+        'mind_maps': {'m1': 'PEER MINDMAP'},
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+      await repoHost.saveSettingsPatch('Barovia', {
+        'combat_state': {'session_notes': 'HOST NOT'},
+      });
+
+      final client = await pairedClient();
+      final peerSession = peer.read(lanSyncSessionProvider);
+      final ref = (await client.fetchManifest())
+          .firstWhere((r) => r.type == LanItemType.world);
+      await peerSession.applyItem(await client.fetchItem(ref));
+
+      final got = await repoPeer.load('Barovia');
+      expect((got['combat_state'] as Map)['session_notes'], 'HOST NOT');
+      expect((got['mind_maps'] as Map)['m1'], 'PEER MINDMAP',
+          reason: 'peer mindmap düzenlemesi ezilmiş');
     });
 
     test('ping çalışır ve /unpair kaydı siler', () async {

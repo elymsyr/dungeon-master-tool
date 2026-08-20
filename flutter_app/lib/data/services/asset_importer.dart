@@ -27,23 +27,36 @@ class AssetImporter {
   static Future<String?> importOne(
     String campaignPath,
     String subDir,
-    String sourcePath,
-  ) async {
-    final result = await importAll(campaignPath, subDir, [sourcePath]);
+    String sourcePath, {
+    String namePrefix = '',
+  }) async {
+    final result = await importAll(
+      campaignPath,
+      subDir,
+      [sourcePath],
+      namePrefix: namePrefix,
+    );
     return result.isEmpty ? null : result.first;
   }
 
   /// Her kaynağı `{campaignPath}/{subDir}/` altına kopyalar ve kopyaların
   /// mutlak yollarını döndürür. Okunamayan kaynaklar atlanır.
   ///
+  /// [subDir] boşsa dosyalar doğrudan [campaignPath] altına gider — karakter
+  /// medyası düz dizinde durduğu için gerekli. [namePrefix] hedef dosya adının
+  /// başına eklenir (karakterlerde `{id}_`, çünkü `LanSyncSession._mediaFor`
+  /// karakter dosyalarını bu önekle ayırt ediyor).
+  ///
   /// Idempotent: kaynak zaten hedef klasördeyse ya da hedefte aynı ad **ve**
   /// aynı boyutta bir dosya varsa yeni kopya üretmez, mevcut yolu döndürür.
   static Future<List<String>> importAll(
     String campaignPath,
     String subDir,
-    List<String> sourcePaths,
-  ) async {
-    final targetDir = Directory(p.join(campaignPath, subDir));
+    List<String> sourcePaths, {
+    String namePrefix = '',
+  }) async {
+    final targetDir =
+        Directory(subDir.isEmpty ? campaignPath : p.join(campaignPath, subDir));
     if (!await targetDir.exists()) {
       await targetDir.create(recursive: true);
     }
@@ -52,13 +65,17 @@ class AssetImporter {
     for (final src in sourcePaths) {
       final sourceFile = File(src);
       if (!await sourceFile.exists()) continue;
-      if (p.equals(p.dirname(src), targetDir.path)) {
+      final name = p.basename(src);
+      // Zaten hedefte mi? Önek isteniyorsa ad da uymalı — `foo.png` hedef
+      // klasörde dursa bile `{id}_` filtresine takılmayacağı için kopyalanır.
+      if (p.equals(p.dirname(src), targetDir.path) &&
+          name.startsWith(namePrefix)) {
         imported.add(src);
         continue;
       }
       final target = await _resolveTarget(
         targetDir.path,
-        p.basename(src),
+        '$namePrefix$name',
         await sourceFile.length(),
       );
       if (target.alreadyThere) {

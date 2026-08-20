@@ -41,4 +41,11 @@ class WorldSessionsDao extends DatabaseAccessor<AppDatabase>
 
   Future<int> deleteByWorld(String worldId) =>
       (delete(worldSessions)..where((t) => t.worldId.equals(worldId))).go();
+
+  /// LAN sync birleştirmesi sonrası satır damgası — bkz.
+  /// `WorldEntitiesDao.setUpdatedAt`.
+  Future<void> setUpdatedAt(String id, DateTime updatedAt) async {
+    await (update(worldSessions)..where((t) => t.id.equals(id)))
+        .write(WorldSessionsCompanion(updatedAt: Value(updatedAt)));
+  }
 }
