@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/package_source_entities.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-14
+updated: 2026-08-21
 tags: [file]
 ---
 
@@ -31,6 +31,7 @@ tags: [file]
 - System flow: [[Ref-Resolution-Hard-vs-Soft]], [[Package-Links]]
 
 ## Key Logic / Variables
+- **Seçilen paket anahtarı NUL ile join'lenir** (`packageSetKey`, 2026-08-21 fix): `wizardEntitiesProvider` anahtarı boşlukla join/split ediyordu, bu yüzden adında boşluk olan bir paket ("Adventurer's Guide" — marketplace başlıklarının çoğu) iki var olmayan ada bölünüyor ve içeriği (background, species, …) sihirbazda hiç görünmüyordu.
 - `packageEntitiesProvider` resolves `{_lookup, name}` envelopes against a `(slug → name → id)` index built from the **built-in** map, so a package row ends up pointing at the same Tier-0 rows everything else uses.
 - `expandedPackageNames` widens a picked set to its transitive link closure, **dependency-ordered — links first, the package the user picked last**. On an unresolved closure it returns the caller's list unchanged rather than dropping every source.
 - **`layerPackagesOverBuiltin` is the single ordering rule** (audit **L1**, 2026-08-14): packages first, built-in filled in behind with `putIfAbsent`; within the closure, **last wins** (iterate `packages.reversed`, insert with `putIfAbsent`). `mergeBuiltinWithPackages` delegates to it, and `layerCharacterPackages` mirrors it with `CombinedMapView([...maps.reversed, base])`.
