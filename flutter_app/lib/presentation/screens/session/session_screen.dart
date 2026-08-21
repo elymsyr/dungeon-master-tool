@@ -1180,7 +1180,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           combatant: c,
           isActive: index == enc.turnIndex,
           palette: palette,
-          config: cfg,
           statsMap: statsMap,
           onTap: () {
             setState(() {
@@ -1627,7 +1626,6 @@ class _MobileCombatCard extends StatelessWidget {
   final Combatant combatant;
   final bool isActive;
   final DmToolColors palette;
-  final EncounterConfig config;
   final Map<String, dynamic> statsMap;
   final VoidCallback onTap;
   final void Function(String subKey, int delta) onModifyStat;
@@ -1643,7 +1641,6 @@ class _MobileCombatCard extends StatelessWidget {
     required this.combatant,
     required this.isActive,
     required this.palette,
-    required this.config,
     required this.statsMap,
     required this.onTap,
     required this.onModifyStat,
@@ -1660,7 +1657,9 @@ class _MobileCombatCard extends StatelessWidget {
     final hp = int.tryParse(statsMap['hp']?.toString() ?? '') ?? 0;
     final maxHp = int.tryParse(statsMap['max_hp']?.toString() ?? '') ?? (hp > 0 ? hp : 1);
     final ac = statsMap['ac']?.toString() ?? '-';
-    final init = statsMap[config.initiativeSubField]?.toString() ?? '-';
+    // Show the rolled/current initiative (`combatant.init`), not the entity's
+    // dice spec stored in stats — matches the desktop encounter table.
+    final init = combatant.init.toString();
 
     return GestureDetector(
       onTap: onTap,
@@ -1916,7 +1915,9 @@ class _CombatantRow extends ConsumerWidget {
                   onTap: () => _showInlineEdit(
                     context,
                     label: col.label,
-                    initial: val,
+                    // Initiative opens empty — the dice spec it would prefill
+                    // is never what a DM wants to keep; they type the score.
+                    initial: isInitCol ? '' : val,
                     onSubmit: (v) => onSetStat(c, col.subFieldKey, v, cfg),
                   ),
                   child: Container(
