@@ -1132,3 +1132,7 @@ silinen entity diğerinde duruyorsa geri gelir.
 - 2026-08-21 — combat_provider: addLog artık _saveAndNotify çağırıyor; manuel olay günlüğü girdileri kalıcı değildi ve LAN sync sonrası reload'da kayboluyordu (vault/10-Files/combat-vtt/combat_provider.md güncellendi).
 
 - 2026-08-21 — wizardEntitiesProvider (builtin_srd_entities.dart): seçilen paket anahtarı artık `packageSetKey` (NUL) ile join/split ediliyor; boşluk içeren paket adları bölünüp marketplace paketlerinin içeriği karakter sihirbazında görünmüyordu (vault/10-Files/world-content/package_source_entities.md güncellendi).
+
+- 2026-08-21 — entity_link: ref link'lerine long-press önizlemesi eklendi; yeni [[entity_preview_dialog]] entity'yi `EntityCard` gibi `entityProvider`'dan değil doğrudan alıyor, böylece karakter sihirbazındaki bundled SRD / paket kartları da açılabiliyor (vault/10-Files/world-content/entity_link.md güncellendi, entity_preview_dialog.md eklendi).
+
+- 2026-08-21 — equipment_step: starting equipment item'ları virgüllü düz metin yerine tıklanabilir/uzun basılabilir chip olarak render ediliyor. Ayrıca srd_core/backgrounds Guard kartındaki `eqItem('weapon', 'Crossbow, Light')` ref'i katalogda karşılığı olmadığı için sessizce düşüyordu → `'Light Crossbow'`; srdCorePackVersion 1.1.0 → 1.1.1. Yeni `test/domain/services/equipment_ref_link_test.dart` her builtin starting-equipment ref'inin çözüldüğünü sabitliyor.

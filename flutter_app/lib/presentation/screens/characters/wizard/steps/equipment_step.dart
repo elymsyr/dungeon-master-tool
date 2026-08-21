@@ -7,6 +7,7 @@ import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
 import '../../../../widgets/expandable_markdown.dart';
+import '../../../../widgets/field_widgets/entity_link.dart';
 
 /// Aggregates `equipment_choice_groups` from the chosen class, subclass and
 /// background, then renders one card per group with selectable options.
@@ -69,6 +70,7 @@ class EquipmentStep extends ConsumerWidget {
           _GroupCard(
             group: g,
             entities: entities,
+            ref: ref,
             selectedOptionId: draft.equipmentChoices[g.storageKey],
             onPicked: (optionId) =>
                 notifier.setEquipmentChoice(g.storageKey, optionId),
@@ -190,12 +192,14 @@ class _GroupRow {
 class _GroupCard extends StatelessWidget {
   final _GroupRow group;
   final Map<String, Entity> entities;
+  final WidgetRef ref;
   final String? selectedOptionId;
   final ValueChanged<String> onPicked;
 
   const _GroupCard({
     required this.group,
     required this.entities,
+    required this.ref,
     required this.selectedOptionId,
     required this.onPicked,
   });
@@ -232,7 +236,9 @@ class _GroupCard extends StatelessWidget {
             for (final o in group.options)
               _OptionTile(
                 option: o,
-                itemLines: _resolveItemLines(o, entities),
+                entities: entities,
+                ref: ref,
+                items: _resolveItems(o, entities),
                 selected: o['option_id']?.toString() == selectedOptionId,
                 onTap: () => onPicked(o['option_id']?.toString() ?? ''),
               ),
@@ -243,42 +249,51 @@ class _GroupCard extends StatelessWidget {
   }
 }
 
-/// W9: resolves an option's `items` list into the pre-formatted strings
-/// the option tile renders. Called from `_GroupCard.build()` so we pay
-/// the map lookups once per option, not once per tile rebuild.
-List<String> _resolveItemLines(
+/// W9: resolves an option's `items` list into the rows the option tile
+/// renders. Called from `_GroupCard.build()` so we pay the map lookups once
+/// per option, not once per tile rebuild.
+///
+/// `id` is the entity the row links to, or null when the ref doesn't resolve
+/// in the wizard's entity map (uninstalled pack) — those stay plain text,
+/// same rule as [entityLinkTarget].
+List<({String label, String? id})> _resolveItems(
   Map<String, dynamic> option,
   Map<String, Entity> entities,
 ) {
   final items = option['items'];
   if (items is! List) return const [];
-  final out = <String>[];
+  final out = <({String label, String? id})>[];
   for (final i in items) {
     if (i is! Map) continue;
     final ref = i['ref'];
     final qty = i['quantity'] is int ? i['quantity'] as int : 1;
+    final id = entityLinkTarget(ref, entities);
     String? name;
     if (ref is Map && ref['name'] is String) {
       name = ref['name'] as String;
     } else if (ref is String) {
       name = entities[ref]?.name;
     }
-    if (name != null) {
-      out.add(qty > 1 ? '$qty× $name' : name);
-    }
+    name ??= id == null ? null : entities[id]?.name;
+    if (name == null) continue;
+    out.add((label: qty > 1 ? '$qty\u00d7 $name' : name, id: id));
   }
   return out;
 }
 
 class _OptionTile extends StatelessWidget {
   final Map<String, dynamic> option;
-  final List<String> itemLines;
+  final Map<String, Entity> entities;
+  final WidgetRef ref;
+  final List<({String label, String? id})> items;
   final bool selected;
   final VoidCallback onTap;
 
   const _OptionTile({
     required this.option,
-    required this.itemLines,
+    required this.entities,
+    required this.ref,
+    required this.items,
     required this.selected,
     required this.onTap,
   });
@@ -327,12 +342,38 @@ class _OptionTile extends StatelessWidget {
                 children: [
                   Text(label,
                       style: Theme.of(context).textTheme.bodyMedium),
-                  if (itemLines.isNotEmpty)
+                  // The option label is upstream's prose; the chips below are
+                  // the actual cards the resolver will grant. Each one opens
+                  // (tap) or previews (long-press) its item card, so starting
+                  // equipment stops reading as flat text.
+                  if (items.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        itemLines.join(', '),
-                        style: Theme.of(context).textTheme.bodySmall,
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          for (final item in items)
+                            EntityLink(
+                              targetId: item.id,
+                              ref: item.id == null ? null : ref,
+                              entities: entities,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: palette.featureCardBorder),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  item.label,
+                                  style:
+                                      Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   if (goldGp is int && goldGp > 0)

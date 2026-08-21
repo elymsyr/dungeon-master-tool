@@ -400,7 +400,7 @@ List<Map<String, dynamic>> srdBackgrounds() => [
                   label: 'Spear, Light Crossbow, 20 Bolts, Gaming Set, Hooded Lantern, Manacles, Quiver, Traveler\'s Clothes, 12 GP',
                   items: [
                     eqItem('weapon', 'Spear'),
-                    eqItem('weapon', 'Crossbow, Light'),
+                    eqItem('weapon', 'Light Crossbow'),
                     eqItem('ammunition', 'Bolts', qty: 20),
                     eqItem('tool', 'Gaming Set'),
                     eqItem('adventuring-gear', 'Lantern, Hooded'),
