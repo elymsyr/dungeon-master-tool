@@ -267,6 +267,7 @@
   "sessionAddPlayersMenu": "Oyuncu Ekle...",
   "sessionAddPlayersTitle": "Oyuncu Ekle",
   "sessionRollInitiative": "İnisiyatif At",
+  "sessionResetInitiative": "İnisiyatifi Sıfırla",
   "sessionClearAll": "Tümünü Temizle",
   "sessionActions": "Eylemler",
   "sessionAddAll": "Hepsini ekle",

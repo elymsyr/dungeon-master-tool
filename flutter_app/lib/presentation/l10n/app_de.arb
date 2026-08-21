@@ -267,6 +267,7 @@
   "sessionAddPlayersMenu": "Spieler hinzufügen...",
   "sessionAddPlayersTitle": "Spieler hinzufügen",
   "sessionRollInitiative": "Initiative würfeln",
+  "sessionResetInitiative": "Initiative zurücksetzen",
   "sessionClearAll": "Alle entfernen",
   "sessionActions": "Aktionen",
   "sessionAddAll": "Alle hinzufügen",

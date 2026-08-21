@@ -323,7 +323,11 @@ class CombatNotifier extends StateNotifier<CombatState>
       initSpec = combatStats[cfg.initiativeSubField]?.toString();
     }
     initSpec ??= _flatInitSpec(entity.fields);
-    final initRoll = _rollInitFromSpec(initSpec);
+    // Fresh combatants start at their flat modifier only (no roll, no
+    // rolled value) — the DM rolls (or edits) initiative explicitly.
+    // Characters expose a flat spec (e.g. "+3"); monsters expose
+    // `initiative_modifier`.
+    final initMod = _flatModValue(initSpec);
 
     // HP, AC — combatStats map > flat fields. Char (player) entity flat
     // schema stores `hp`/`max_hp` (current+max); monster/animal v2 uses
@@ -371,7 +375,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     final combatant = Combatant(
       id: _uuid.v4(),
       name: entity.name,
-      init: initRoll,
+      init: initMod,
       ac: ac,
       hp: currentHp,
       maxHp: maxHp,
@@ -380,7 +384,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     );
 
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
-    _log('Added ${entity.name} (Init: $initRoll, AC: $ac, HP: $currentHp/$maxHp)');
+    _log('Added ${entity.name} (Init: $initMod, AC: $ac, HP: $currentHp/$maxHp)');
     _sortByInitiative();
     _saveAndNotify();
     _eventBus.emit(EventEnvelope.now(
@@ -522,18 +526,9 @@ class CombatNotifier extends StateNotifier<CombatState>
     final cfg = _encounterConfig;
 
     final rolled = enc.combatants.map((c) {
-      String? spec;
-      Entity? entity;
-      if (c.entityId != null) {
-        entity = entities[c.entityId] ??
-            _characterByEntityId(c.entityId)?.entity;
-        if (entity != null) {
-          final cs = entity.fields[cfg.combatStatsFieldKey];
-          if (cs is Map) spec = cs[cfg.initiativeSubField]?.toString();
-          spec ??= _flatInitSpec(entity.fields);
-        }
-      }
-      return c.copyWith(init: _rollInitFromSpec(spec, dSides: dSides));
+      return c.copyWith(
+          init: _rollInitFromSpec(_initSpecFor(c, entities, cfg),
+              dSides: dSides));
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: rolled));
@@ -542,6 +537,40 @@ class CombatNotifier extends StateNotifier<CombatState>
     final summary = rolled.map((c) => '${c.name}(${c.init})').join(', ');
     _log('Initiative: $summary');
     _saveAndNotify();
+  }
+
+  /// Reset every combatant's initiative to its flat modifier only — the same
+  /// value a fresh combatant starts with (no dice roll, no rolled value).
+  /// Undoes a "Roll Initiative" in one tap.
+  void resetInitModifiers() {
+    final enc = state.activeEncounter;
+    if (enc == null) return;
+    pushUndo(state);
+
+    final entities = _getEntities();
+    final cfg = _encounterConfig;
+
+    final reset = enc.combatants.map((c) {
+      return c.copyWith(init: _flatModValue(_initSpecFor(c, entities, cfg)));
+    }).toList();
+
+    _updateEncounter(enc.copyWith(combatants: reset));
+    _sortByInitiative();
+    _log('Initiative reset to modifiers');
+    _saveAndNotify();
+  }
+
+  /// Resolve the initiative dice spec for a combatant: the dice spec from the
+  /// entity's `combat_stats[initiative]` first, then the flat
+  /// `initiative_modifier`. Null when nothing is exposed (→ flat value 0).
+  String? _initSpecFor(Combatant c, Map<String, Entity> entities, EncounterConfig cfg) {
+    if (c.entityId == null) return null;
+    final entity = entities[c.entityId] ??
+        _characterByEntityId(c.entityId)?.entity;
+    if (entity == null) return null;
+    final cs = entity.fields[cfg.combatStatsFieldKey];
+    if (cs is Map) return cs[cfg.initiativeSubField]?.toString();
+    return _flatInitSpec(entity.fields);
   }
 
   /// Roll 1d[dSides] + the parsed dice spec for an initiative roll.
@@ -578,6 +607,23 @@ class CombatNotifier extends StateNotifier<CombatState>
         total += sign * sum;
       } else if (m.group(5) != null) {
         // Flat integer term
+        final sign = m.group(4) == '-' ? -1 : 1;
+        total += sign * int.parse(m.group(5)!);
+      }
+    }
+    return total;
+  }
+
+  /// Sum of only the flat (non-dice) terms in a dice spec — the "modifier"
+  /// value a combatant starts with and that Reset Initiative restores.
+  /// `NdM` terms are ignored (they only contribute when actually rolling).
+  static int _flatModValue(String? spec) {
+    if (spec == null) return 0;
+    final s = spec.replaceAll(' ', '');
+    if (s.isEmpty) return 0;
+    var total = 0;
+    for (final m in _diceSpecRegex.allMatches(s)) {
+      if (m.group(5) != null) {
         final sign = m.group(4) == '-' ? -1 : 1;
         total += sign * int.parse(m.group(5)!);
       }

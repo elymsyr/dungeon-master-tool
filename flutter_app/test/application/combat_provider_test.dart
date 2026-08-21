@@ -383,6 +383,106 @@ void main() {
       final rolled = _state(n).activeEncounter!.combatants.first;
       expect(rolled.init, inInclusiveRange(11, 30));
     });
+
+    test('addCombatantFromEntity starts at the flat modifier, not a roll',
+        () {
+      const monster = Entity(
+        id: 'm1',
+        name: 'Wolf',
+        categorySlug: 'monster',
+        fields: {'initiative_modifier': 2, 'initiative_score': 12},
+      );
+      const entities = <String, Entity>{'m1': monster};
+      final n = _createNotifier(getEntities: () => entities);
+      final snapshot = _toJsonPrimitives({
+        'encounters': [const Encounter(id: 'e1', name: 'Fight').toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      n.addCombatantFromEntity('m1');
+
+      final added = _state(n).activeEncounter!.combatants.first;
+      // Flat modifier only — a 1d20+2 roll would land in 3..22.
+      expect(added.init, 2);
+    });
+
+    test('addCombatantForCharacter starts at the flat modifier, not a roll',
+        () {
+      const entity = Entity(
+        id: 'pc1',
+        name: 'Thorin',
+        categorySlug: 'player-character',
+        fields: {
+          'combat_stats': {'initiative': '+3', 'hp': '24', 'max_hp': '24', 'ac': '15'},
+        },
+      );
+      const character = Character(
+        id: 'char-1',
+        templateId: 't1',
+        templateName: 'Dwarf',
+        entity: entity,
+        createdAt: 'now',
+        updatedAt: 'now',
+      );
+      final n = _createNotifier(getCharacters: () => const [character]);
+      final snapshot = _toJsonPrimitives({
+        'encounters': [const Encounter(id: 'e1', name: 'Fight').toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      n.addCombatantForCharacter(character);
+
+      final added = _state(n).activeEncounter!.combatants.first;
+      // The dice spec "+3" contributes only its flat value on add.
+      expect(added.init, 3);
+    });
+
+    test('resetInitModifiers restores every combatant to its flat modifier',
+        () {
+      const monster = Entity(
+        id: 'm1',
+        name: 'Wolf',
+        categorySlug: 'monster',
+        fields: {'initiative_modifier': 2, 'initiative_score': 12},
+      );
+      const entities = <String, Entity>{'m1': monster};
+      final n = _createNotifier(getEntities: () => entities);
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(
+            id: 'c1',
+            name: 'Wolf',
+            entityId: 'm1',
+            init: 17,
+            stats: {'initiative_modifier': '2'},
+          ),
+          Combatant(id: 'c2', name: 'Goblin', init: 9),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      n.resetInitModifiers();
+
+      final combatants = _state(n).activeEncounter!.combatants;
+      final wolf = combatants.firstWhere((c) => c.id == 'c1');
+      expect(wolf.init, 2); // flat initiative_modifier
+      final goblin = combatants.firstWhere((c) => c.id == 'c2');
+      expect(goblin.init, 0); // no entity → no spec → flat value 0
+    });
   });
 
   // -----------------------------------------------------------------------
