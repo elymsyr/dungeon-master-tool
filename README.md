@@ -196,7 +196,7 @@ Everything core works fully offline. Online features (sync, sharing, marketplace
       <td align="center"><img src="media/session.png" alt="Session" width="400"/></td>
     </tr>
     <tr>
-      <td align="center"><img src="media/world.png" alt="World" width="400"/></td>
+      <td align="center"><img src="media/marketplace.png" alt="World" width="400"/></td>
       <td align="center"><img src="media/pack.png" alt="Settings" width="400"/></td>
     </tr>
   </table>
