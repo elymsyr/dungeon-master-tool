@@ -331,10 +331,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   ) {
     final canvasPos = notifier.screenToCanvas(localPosition);
     final scale = notifier.viewTransform.value.scale;
-    final edgeId = notifier.hitTestEdge(canvasPos, threshold: 10.0 / scale);
+    final edgeId = notifier.hitTestEdge(
+        canvasPos, threshold: MindMapNotifier.edgeContextHitRadius / scale);
     if (edgeId != null) {
       notifier.setSelectedEdge(edgeId);
-      _showEdgeContextMenu(context, globalPosition, edgeId, notifier, palette);
+      showMindMapEdgeMenu(
+          context, globalPosition, edgeId, notifier, palette);
     } else {
       _showCanvasContextMenu(
           context, globalPosition, canvasPos, notifier, palette);
@@ -387,42 +389,6 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
           notifier.addWorkspace(canvasPos);
         case 'entity':
           _showEntityPicker(canvasPos, notifier);
-      }
-    });
-  }
-
-  void _showEdgeContextMenu(
-    BuildContext context,
-    Offset globalPos,
-    String edgeId,
-    MindMapNotifier notifier,
-    DmToolColors palette,
-  ) {
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        globalPos.dx,
-        globalPos.dy,
-        globalPos.dx + 1,
-        globalPos.dy + 1,
-      ),
-      color: palette.uiFloatingBg,
-      items: [
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
-              const SizedBox(width: 8),
-              Text('Delete Connection',
-                  style: TextStyle(color: Colors.red[300], fontSize: 13)),
-            ],
-          ),
-        ),
-      ],
-    ).then((value) {
-      if (value == 'delete') {
-        notifier.deleteEdge(edgeId);
       }
     });
   }

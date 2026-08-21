@@ -309,10 +309,13 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       children: [
         // Interior zone — intercepts right-click for combined menu.
         // No onPan/onTap so left-click drag passes through to canvas pan.
+        // Right-click checks for an edge first — an edge running inside a
+        // workspace must open the connection menu, not this one.
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onSecondaryTapUp: (d) {
+              if (_showEdgeMenuIfHit(context, d.globalPosition, n)) return;
               final canvasPos = Offset(
                 n.x - n.width / 2 + d.localPosition.dx,
                 n.y - n.height / 2 + d.localPosition.dy,
@@ -373,12 +376,16 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   }
 
   /// Workspace border / label hit zone — tap selects, drag moves,
-  /// right-click shows context menu.
+  /// right-click shows context menu (or the connection menu if an edge
+  /// runs through the border).
   Widget _workspaceHitZone(MindMapNode n) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => widget.notifier.setSelectedNode(n.id),
-      onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
+      onSecondaryTapUp: (d) {
+        if (_showEdgeMenuIfHit(context, d.globalPosition, n)) return;
+        _showContextMenu(context, d.globalPosition);
+      },
       onPanStart: (d) {
         _dragStart = d.globalPosition;
         _nodeStartPos = Offset(n.x, n.y);
@@ -403,6 +410,40 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         child: SizedBox.expand(),
       ),
     );
+  }
+
+  /// Hit-tests an edge under [globalPosition] (relative to this node's box).
+  /// If one is found, selects it and shows the shared connection menu;
+  /// returns true. Otherwise returns false so the caller can show its own
+  /// context menu — this keeps right-clicks over edges working even when
+  /// the pointer sits inside a workspace that would otherwise swallow them.
+  bool _showEdgeMenuIfHit(
+    BuildContext context,
+    Offset globalPosition,
+    MindMapNode n,
+  ) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return false;
+    final nodeLocal = box.globalToLocal(globalPosition);
+    final canvasPos = Offset(
+      n.x - n.width / 2 + nodeLocal.dx,
+      n.y - n.height / 2 + nodeLocal.dy,
+    );
+    final scale = widget.notifier.viewTransform.value.scale;
+    final edgeId = widget.notifier.hitTestEdge(
+      canvasPos,
+      threshold: MindMapNotifier.edgeContextHitRadius / scale,
+    );
+    if (edgeId == null) return false;
+    widget.notifier.setSelectedEdge(edgeId);
+    showMindMapEdgeMenu(
+      context,
+      globalPosition,
+      edgeId,
+      widget.notifier,
+      widget.palette,
+    );
+    return true;
   }
 
   /// Combined context menu for workspace interior — canvas items + workspace items.
@@ -1451,4 +1492,42 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       Size(newW, newH),
     );
   }
+}
+
+/// Shared "Delete Connection" context menu. Used by the canvas and by the
+/// workspace overlay — the overlay otherwise swallows right-clicks over edges.
+void showMindMapEdgeMenu(
+  BuildContext context,
+  Offset globalPos,
+  String edgeId,
+  MindMapNotifier notifier,
+  DmToolColors palette,
+) {
+  showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      globalPos.dx,
+      globalPos.dy,
+      globalPos.dx + 1,
+      globalPos.dy + 1,
+    ),
+    color: palette.uiFloatingBg,
+    items: [
+      PopupMenuItem(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
+            const SizedBox(width: 8),
+            Text('Delete Connection',
+                style: TextStyle(color: Colors.red[300], fontSize: 13)),
+          ],
+        ),
+      ),
+    ],
+  ).then((value) {
+    if (value == 'delete') {
+      notifier.deleteEdge(edgeId);
+    }
+  });
 }
