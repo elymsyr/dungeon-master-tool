@@ -213,7 +213,7 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
 
     final slots = List<AmbienceSlotState>.from(state.ambienceSlots);
     slots[index] = ambienceId == null
-        ? slots[index].copyWith(clearId: true)
+        ? const AmbienceSlotState()
         : slots[index].copyWith(ambienceId: ambienceId);
     state = state.copyWith(ambienceSlots: slots);
   }

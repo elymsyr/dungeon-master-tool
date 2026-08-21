@@ -1064,32 +1064,53 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
   void _showEditContentDialog(BuildContext context) {
     final palette = widget.palette;
-    final ctrl = TextEditingController(text: widget.node.content);
+    final titleCtrl = TextEditingController(text: widget.node.label);
+    final contentCtrl = TextEditingController(text: widget.node.content);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
         title: Text(
-          'Edit Content',
+          'Edit Note',
           style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
         ),
         content: SizedBox(
           width: 400,
-          child: TextField(
-            controller: ctrl,
-            autofocus: true,
-            maxLines: 8,
-            style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: palette.uiFloatingBorder),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                autofocus: true,
+                style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: palette.uiFloatingBorder),
+                  ),
+                  hintText: 'Title...',
+                  hintStyle: TextStyle(
+                    color: palette.uiFloatingText.withValues(alpha: 0.4),
+                    fontSize: 12,
+                  ),
+                ),
               ),
-              hintText: 'Enter markdown content...',
-              hintStyle: TextStyle(
-                color: palette.uiFloatingText.withValues(alpha: 0.4),
-                fontSize: 12,
+              const SizedBox(height: 8),
+              TextField(
+                controller: contentCtrl,
+                maxLines: 8,
+                style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: palette.uiFloatingBorder),
+                  ),
+                  hintText: 'Enter markdown content...',
+                  hintStyle: TextStyle(
+                    color: palette.uiFloatingText.withValues(alpha: 0.4),
+                    fontSize: 12,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
         actions: [
@@ -1102,14 +1123,24 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           ),
           ElevatedButton(
             onPressed: () {
-              widget.notifier.updateNodeContent(widget.node.id, ctrl.text);
+              widget.notifier.updateNodeLabel(
+                widget.node.id,
+                titleCtrl.text,
+              );
+              widget.notifier.updateNodeContent(
+                widget.node.id,
+                contentCtrl.text,
+              );
               Navigator.pop(ctx);
             },
             child: const Text('Save'),
           ),
         ],
       ),
-    ).whenComplete(ctrl.dispose);
+    ).whenComplete(() {
+      titleCtrl.dispose();
+      contentCtrl.dispose();
+    });
   }
 
   void _showRenameDialog(BuildContext context, MindMapNode n) {
