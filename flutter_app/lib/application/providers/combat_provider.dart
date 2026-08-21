@@ -509,9 +509,10 @@ class CombatNotifier extends StateNotifier<CombatState>
   /// selects the base die (default d20 — the user no longer picks). Each
   /// combatant's roll = 1d[dSides] + eval(entity.combat_stats[initiative]).
   ///
-  /// Monsters (entities exposing flat `initiative_score`) skip the dice
-  /// entirely: their score is treated as a fixed initiative. Player chars
-  /// always roll.
+  /// Every combatant rolls on every call — including monsters/creatures with
+  /// a flat `initiative_score`. Their roll modifier comes from the flat
+  /// `initiative_modifier` (or the dice spec), so repeated "Roll Initiative"
+  /// taps keep producing fresh values instead of a frozen score.
   void rollInitiatives({int dSides = 20}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
@@ -526,15 +527,10 @@ class CombatNotifier extends StateNotifier<CombatState>
       if (c.entityId != null) {
         entity = entities[c.entityId] ??
             _characterByEntityId(c.entityId)?.entity;
-        final cs = entity?.fields[cfg.combatStatsFieldKey];
-        if (cs is Map) spec = cs[cfg.initiativeSubField]?.toString();
-      }
-      // Monster path: flat `initiative_score` → fixed init, no roll.
-      final isCharacter = _characterByEntityId(c.entityId) != null;
-      if (!isCharacter && entity != null) {
-        final score = _parseFlatInt(entity.fields, 'initiative_score', -1);
-        if (score >= 0) {
-          return c.copyWith(init: score);
+        if (entity != null) {
+          final cs = entity.fields[cfg.combatStatsFieldKey];
+          if (cs is Map) spec = cs[cfg.initiativeSubField]?.toString();
+          spec ??= _flatInitSpec(entity.fields);
         }
       }
       return c.copyWith(init: _rollInitFromSpec(spec, dSides: dSides));
@@ -629,6 +625,8 @@ class CombatNotifier extends StateNotifier<CombatState>
     if (enc == null) return;
     pushUndo(state);
 
+    final isInit = subKey == _encounterConfig.initiativeSubField;
+
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
       final newStats = Map<String, dynamic>.from(c.stats);
@@ -639,6 +637,7 @@ class CombatNotifier extends StateNotifier<CombatState>
       int hp = c.hp;
       int maxHp = c.maxHp;
       int ac = c.ac;
+      int init = c.init;
       final asInt = int.tryParse(value);
       if (asInt != null) {
         if (subKey == 'hp') hp = asInt.clamp(0, maxHp);
@@ -647,11 +646,16 @@ class CombatNotifier extends StateNotifier<CombatState>
           if (hp > maxHp) hp = maxHp;
         }
         if (subKey == 'ac') ac = asInt;
+        // A manual initiative edit overrides the last rolled value so the
+        // table shows it and it feeds the sort below.
+        if (isInit) init = asInt;
       }
-      return c.copyWith(stats: newStats, hp: hp, maxHp: maxHp, ac: ac);
+      return c.copyWith(stats: newStats, hp: hp, maxHp: maxHp, ac: ac, init: init);
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: updated));
+    // Manual initiative edits re-sort the encounter by the new value.
+    if (isInit) _sortByInitiative();
     final c = updated.firstWhere((c) => c.id == combatantId);
     _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp, ac: c.ac);
     _saveAndNotify();

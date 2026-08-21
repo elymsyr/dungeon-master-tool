@@ -290,6 +290,102 @@ void main() {
   });
 
   // -----------------------------------------------------------------------
+  // 3b. Initiative rolling & editing
+  // -----------------------------------------------------------------------
+  group('Initiative', () {
+    test('setStat on initiative subfield updates c.init and re-sorts', () {
+      final n = _createNotifier();
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(id: 'slow', name: 'Slow', init: 5, stats: {'initiative': '5'}),
+          Combatant(id: 'fast', name: 'Fast', init: 20, stats: {'initiative': '20'}),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      // Manually set Slow's initiative above Fast's.
+      n.setStat('slow', 'initiative', '30');
+
+      // Slow's canonical init now reflects the edit and the table re-sorts.
+      final combatants = _state(n).activeEncounter!.combatants;
+      final slowAfter = combatants.firstWhere((c) => c.id == 'slow');
+      expect(slowAfter.init, 30);
+      expect(slowAfter.stats['initiative'], '30');
+      expect(combatants.first.name, 'Slow');
+    });
+
+    test('setStat on non-initiative subfield does not change init', () {
+      final n = _createNotifier();
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(id: 'g', name: 'Goblin', init: 10, ac: 13, stats: {'initiative': '10', 'ac': '13'}),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      n.setStat('g', 'ac', '15');
+
+      final after = _state(n).activeEncounter!.combatants.first;
+      expect(after.init, 10);
+      expect(after.ac, 15);
+    });
+
+    test('rollInitiatives re-rolls every combatant (no frozen score)', () {
+      // A monster exposing a flat initiative_score plus a modifier. With the
+      // modifier +10 the rolled value is always 11..30 — never the frozen
+      // initiative_score of 5 that the old fixed-score path returned.
+      const monster = Entity(
+        id: 'm1',
+        name: 'Wolf',
+        categorySlug: 'animal',
+        fields: {'initiative_score': 5, 'initiative_modifier': 10},
+      );
+      final entities = <String, Entity>{'m1': monster};
+      final n = _createNotifier(getEntities: () => entities);
+
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(
+            id: 'c1',
+            name: 'Wolf',
+            entityId: 'm1',
+            stats: {'initiative_score': '5', 'initiative_modifier': '10'},
+          ),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      n.rollInitiatives();
+      final rolled = _state(n).activeEncounter!.combatants.first;
+      expect(rolled.init, inInclusiveRange(11, 30));
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // 4. Turn management
   // -----------------------------------------------------------------------
   group('Turn management', () {

@@ -8,7 +8,6 @@ status: stable
 updated: 2026-08-21
 tags: [file]
 ---
-
 # `combat_provider.dart`
 
 > [!abstract] Primary Purpose
@@ -43,7 +42,7 @@ tags: [file]
 - `_log` only mutates state — persistence is the caller's job, and every internal caller (`createEncounter`, `nextTurn`, `rollInitiatives`, `modifyHp`, …) follows it with `_saveAndNotify`. The public `addLog` (manual quick-log entries + dice-roll results) did NOT, so those entries lived only in memory: any `activeCampaignProvider.reload()` — LAN sync apply, cloud restore — re-read `combat_state` from Drift and the log snapped back to the last persisted state. `addLog` now calls `_saveAndNotify` itself.
 - Combatant snapshot is a deep COPY of source stats — it never reads back from the live entity. Handles both v1 schema (`combat_stats` sub-map) and v2 flat schema (`hp_average`/`ac`/`initiative_modifier`/`initiative_score`). Characters preserve live current HP; non-char entities start at full HP.
 - HP/AC write-back: `_syncCharacterFields` mirrors edits onto the source character entity — writes BOTH flat top-level keys (`hp`/`max_hp`/`ac`) AND the nested `combat_stats` sub-map (skipping the nested write caused the card HP to drift behind the header bar).
-- Initiative: `_rollInitFromSpec` = `1d20 + _evalDiceSpec(spec)`. `_diceSpecRegex` = `([+-])?(\d*)d(\d+)|([+-])?(\d+)` — parses arbitrary mixes like `1d20+3`, `+2+1d6-1`. Monsters with flat `initiative_score >= 0` skip the dice (fixed init); players always roll. Sort is descending by init.
+- Initiative: `_rollInitFromSpec` = `1d20 + _evalDiceSpec(spec)`. `_diceSpecRegex` = `([+-])?(\d*)d(\d+)|([+-])?(\d+)` — parses arbitrary mixes like `1d20+3`, `+2+1d6-1`. `rollInitiatives` re-rolls **every** combatant on every call — spec comes from `combat_stats[initiative]` first, then the flat `initiative_modifier` (`_flatInitSpec`); the old "monsters with `initiative_score` are frozen" short-circuit was removed so repeated rolls always produce fresh values. `setStat` on the initiative subfield updates the canonical `c.init` and re-sorts (descending) so a manual table edit shows and reorders immediately. The desktop row and mobile card both display the rolled `c.init` (not the dice spec); the init inline-edit opens empty.
 - `combatCapableSlugs`: category slugs where `allowedInSections.contains('encounter')`. Characters are always addable regardless of slug.
 - `nextTurn`: increments turnIndex, wraps to round+1; on a new round, decrements all condition durations and drops expired ones.
 - `getSessionState`: forced JSON round-trip (`jsonDecode(jsonEncode(...))`) because freezed `Encounter.toJson` lacks `explicitToJson` — without it nested `Combatant`/`CombatCondition` stay as object refs and `loadSessionState` crashes.
