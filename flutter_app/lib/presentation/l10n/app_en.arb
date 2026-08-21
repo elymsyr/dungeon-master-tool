@@ -273,6 +273,7 @@
   "sessionAddPlayersMenu": "Add Players...",
   "sessionAddPlayersTitle": "Add Players",
   "sessionRollInitiative": "Roll Initiative",
+  "sessionResetInitiative": "Reset Initiative",
   "sessionClearAll": "Clear All",
   "sessionActions": "Actions",
   "sessionAddAll": "Add all",

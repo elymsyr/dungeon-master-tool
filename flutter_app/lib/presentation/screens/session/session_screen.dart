@@ -292,6 +292,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       case 'add': _showAddDialog();
                       case 'add_players': _showAddPlayersDialog();
                       case 'roll_init': _promptRollInitiative();
+                      case 'reset_init': _promptResetInitiative();
                       case 'clear_all': ref.read(combatProvider.notifier).clearAll();
                     }
                   },
@@ -300,6 +301,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, l10n.sessionAddFromDatabase, palette.primaryBtnBg)),
                     PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, l10n.sessionAddPlayersMenu, palette.primaryBtnBg)),
                     PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, l10n.sessionRollInitiative, palette.primaryBtnBg)),
+                    PopupMenuItem(value: 'reset_init', child: _popupItem(Icons.replay, l10n.sessionResetInitiative, palette.primaryBtnBg)),
                     const PopupMenuDivider(),
                     PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, l10n.sessionClearAll, palette.dangerBtnBg)),
                   ],
@@ -837,6 +839,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     ref.read(combatProvider.notifier).rollInitiatives();
   }
 
+  /// Reset every combatant's initiative back to its flat modifier (no roll).
+  void _promptResetInitiative() {
+    ref.read(combatProvider.notifier).resetInitModifiers();
+  }
+
   // ============================================================
   // MOBILE LAYOUT
   // ============================================================
@@ -980,6 +987,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     case 'add': _showAddDialog();
                     case 'add_players': _showAddPlayersDialog();
                     case 'roll_init': _promptRollInitiative();
+                    case 'reset_init': _promptResetInitiative();
                   }
                 },
                 itemBuilder: (_) => [
@@ -987,6 +995,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   PopupMenuItem(value: 'add', child: Text(l10n.sessionAddFromDatabase, style: const TextStyle(fontSize: 12))),
                   PopupMenuItem(value: 'add_players', child: Text(l10n.sessionAddPlayersMenu, style: const TextStyle(fontSize: 12))),
                   PopupMenuItem(value: 'roll_init', child: Text(l10n.sessionRollInitiative, style: const TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'reset_init', child: Text(l10n.sessionResetInitiative, style: const TextStyle(fontSize: 12))),
                 ],
               ),
             ],

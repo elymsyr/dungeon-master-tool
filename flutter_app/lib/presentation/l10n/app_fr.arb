@@ -267,6 +267,7 @@
   "sessionAddPlayersMenu": "Ajouter des joueurs...",
   "sessionAddPlayersTitle": "Ajouter des joueurs",
   "sessionRollInitiative": "Lancer l'initiative",
+  "sessionResetInitiative": "Réinitialiser l'initiative",
   "sessionClearAll": "Tout effacer",
   "sessionActions": "Actions",
   "sessionAddAll": "Tout ajouter",
