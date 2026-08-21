@@ -1130,3 +1130,5 @@ atlıyor. Birleştirme tombstone'suz olduğu için silmeler yayılmıyor: bir ci
 silinen entity diğerinde duruyorsa geri gelir.
 
 - 2026-08-21 — combat_provider: addLog artık _saveAndNotify çağırıyor; manuel olay günlüğü girdileri kalıcı değildi ve LAN sync sonrası reload'da kayboluyordu (vault/10-Files/combat-vtt/combat_provider.md güncellendi).
+
+- 2026-08-21 — wizardEntitiesProvider (builtin_srd_entities.dart): seçilen paket anahtarı artık `packageSetKey` (NUL) ile join/split ediliyor; boşluk içeren paket adları bölünüp marketplace paketlerinin içeriği karakter sihirbazında görünmüyordu (vault/10-Files/world-content/package_source_entities.md güncellendi).
