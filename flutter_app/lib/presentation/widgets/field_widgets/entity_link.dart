@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/services/entity_ref.dart';
+import '../../dialogs/entity_preview_dialog.dart';
 
 /// **The one "open this entity" entry point** (audit **U3**).
 ///
@@ -39,6 +41,31 @@ String? entityLinkTarget(Object? raw, Map<String, Entity>? byId) {
   return resolveEntityRef(raw, byId);
 }
 
+/// Long-press handler for any ref renderer: opens [id] in a read-only preview
+/// dialog instead of navigating. Null — i.e. no long-press affordance — when
+/// there is no target or no `WidgetRef`, mirroring the tap's own condition.
+///
+/// [entities] is the map the host already threads into its field widgets; it is
+/// the load-bearing argument in the creation wizard, where the bundled SRD rows
+/// are not in `entityProvider`. The entity is looked up **inside** the callback,
+/// never during build: `entityProvider` pulls in the character/world DB, and
+/// touching it eagerly from a field widget boots that whole graph just to decide
+/// whether a gesture is enabled. A press that finds nothing quietly does
+/// nothing — same rule as [entityLinkTarget], one layer later.
+VoidCallback? entityPreviewHandler(
+  BuildContext context,
+  WidgetRef? ref,
+  String? id,
+  Map<String, Entity>? entities,
+) {
+  if (id == null || ref == null) return null;
+  return () {
+    final entity = entities?[id] ?? ref.read(entityProvider)[id];
+    if (entity == null) return;
+    showEntityPreview(context, entity, entities: entities);
+  };
+}
+
 /// Wraps [child] in a tap that opens [targetId]; renders it untouched when
 /// [targetId] or [ref] is null. The underline is the affordance — it appears
 /// only when the tap will actually land somewhere.
@@ -49,12 +76,17 @@ class EntityLink extends StatelessWidget {
     required this.ref,
     required this.child,
     this.sourcePanel,
+    this.entities,
   });
 
   final String? targetId;
   final WidgetRef? ref;
   final String? sourcePanel;
   final Widget child;
+
+  /// Entity map used to resolve the long-press preview. See
+  /// [entityPreviewHandler].
+  final Map<String, Entity>? entities;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +95,7 @@ class EntityLink extends StatelessWidget {
     if (id == null || r == null) return child;
     return InkWell(
       onTap: () => navigateToEntity(r, id, sourcePanel: sourcePanel),
+      onLongPress: entityPreviewHandler(context, r, id, entities),
       child: child,
     );
   }

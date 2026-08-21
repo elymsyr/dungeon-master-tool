@@ -26,6 +26,7 @@ tags: [moc]
 - [[builtin_package_provider]] — SRD pack id + read-only SRD reference overlay (`srdReferenceEntitiesProvider`).
 - [[package_source_entities]] — installed packages as an entity map, and the **one ordering rule** for layering them over the built-in SRD: the package the user picked wins a name collision (audit L1).
 - [[entity_link]] — the single "open this entity" entry point every ref renderer taps through, and the test for whether a ref is openable at all (audit U3).
+- [[entity_preview_dialog]] — read-only quick-look card opened by long-pressing a ref link; renders off a plain `Entity` so the creation wizard's bundled/package rows work too.
 
 ## Data Flow
 Packages built by [[Content-Pipeline]] → installed via [[package_import_service]] → entities land in `world_entities` ([[Data-Layer]]) → resolved by [[Character-System]] / rendered in DB screen. Schema embedded at install.

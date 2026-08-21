@@ -5,7 +5,7 @@ path: flutter_app/lib/presentation/widgets/field_widgets/entity_link.dart
 layer: presentation
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-08-21
 tags: [file]
 ---
 
@@ -22,7 +22,8 @@ tags: [file]
 **Outputs**
 - `void navigateToEntity(WidgetRef, String id, {String? sourcePanel})` — writes [[ui_state_provider|entityNavigationProvider]] (+ the panel hint, inverted from `sourcePanel`).
 - `String? entityLinkTarget(Object? raw, Map<String, Entity>? byId)` — the id to open, or **null**.
-- `class EntityLink` — wraps a child in the tap when `targetId != null`, renders it untouched otherwise.
+- `class EntityLink` — wraps a child in the tap when `targetId != null`, renders it untouched otherwise. Also carries the long-press.
+- `VoidCallback? entityPreviewHandler(BuildContext, WidgetRef?, String? id, Map<String, Entity>?)` — the long-press half (2026-08-21): opens [[entity_preview_dialog|showEntityPreview]] instead of navigating.
 
 ## Key Logic
 
@@ -34,8 +35,10 @@ tags: [file]
 
 **The bug this closed was not "untappable", it was "invisible".** The reported symptom was that tapping a spell in a spell list did nothing. The cause was one layer lower: the presentation layer carried its own envelope readers (`resolveRelationId`'s O(n) scan, `_parseIds`, `_parseItems`) that knew `_lookup` and `_ref` but **not** the soft `{slug, name}` shape a package writes for a cross-pack target. Those fell through to `e['id']` → null → dropped, so a packaged spell never rendered in the first place. U3 pointed all three at `entityLinkTarget`, and folded `_lookup` into `resolveEntityRef` so there is one reader rather than two that disagree.
 
+**Long-press previews, and why the lookup is inside the callback** (2026-08-21). Tap navigates, long-press opens a read-only [[entity_preview_dialog]] — same links, same resolution rule, so a player can inspect a background's skill or an inventory item without losing their place in the wizard. The entity is resolved *when the gesture fires*, never during build: an eager `ref.read(entityProvider)` to decide whether to enable the gesture boots the character/world DB graph from inside a field widget, which broke `entity_link_navigation_test` outright (`LateInitializationError: dataRoot`). A press that resolves to nothing quietly does nothing — `entityLinkTarget`'s rule, one layer later.
+
 ## Dependencies & Links
-- Depends on: [[entity_ref]] (`resolveEntityRef`), `ui_state_provider` (`entityNavigationProvider`, `entityNavigationTargetPanelProvider`), `entity.dart`.
+- Depends on: [[entity_ref]] (`resolveEntityRef`), [[entity_preview_dialog]], `ui_state_provider` (`entityNavigationProvider`, `entityNavigationTargetPanelProvider`), `entity.dart`.
 - Used by: [[field_widget_factory]] (`_navigateToEntity` is now a one-line delegate; `resolveRelationId` / `_parseIds` / `_parseItems` resolve through it) and `structured_list_field_widgets.dart` (`_MiniRelationField`, `_MiniRelationListField` — the widgets U3 named as having no gesture at all).
 - Listened to by: `main_screen.dart` (selection + Database tab + panel hint) and `package_screen.dart` (selection only, since U3).
 - Pinned by `test/presentation/entity_link_navigation_test.dart` — 5 cases: a soft-ref spell in a spell list opens its card, a mini relation field in a structured row opens its card, an unresolvable ref neither underlines nor navigates, and two that assert `entityLinkTarget` **is** `resolveEntityRef` for all four shapes (U3 adds no second envelope reader). Both link halves are mutation-checked: disabling either makes two of them fail.

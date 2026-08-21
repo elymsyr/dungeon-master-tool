@@ -1382,6 +1382,8 @@ class _RelationFieldWidget extends StatelessWidget {
                     onTap: ref == null || linkedEntity == null
                         ? null
                         : () => _navigateToEntity(ref!, linkedId, panelId),
+                    onLongPress:
+                        entityPreviewHandler(context, ref, linkedId, entities),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -2300,6 +2302,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                 ? null
                                 : () =>
                                       _navigateToEntity(ref!, itemId, panelId),
+                            onLongPress: entityPreviewHandler(
+                                context, ref, itemId, entities),
                             child: Row(
                               children: [
                                 Flexible(
@@ -2534,6 +2538,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
                 onTap: ref == null || entities?[id] == null
                     ? null
                     : () => _navigateToEntity(ref!, id, panelId),
+                onLongPress: entityPreviewHandler(context, ref, id, entities),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
