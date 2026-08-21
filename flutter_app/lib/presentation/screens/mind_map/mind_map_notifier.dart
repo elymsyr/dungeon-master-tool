@@ -877,6 +877,11 @@ class MindMapNotifier extends StateNotifier<MindMapState>
     );
   }
 
+  /// Right-click edge hit radius in canvas px. Deliberately larger than the
+  /// painted stroke (~1.5 px) so connections are easy to grab — the visible
+  /// thickness stays unchanged.
+  static const double edgeContextHitRadius = 24.0;
+
   /// Hit-test [point] (in canvas coords) against all edges.
   /// Returns the edge id if within [threshold] px, or null.
   String? hitTestEdge(Offset point, {double threshold = 10.0}) {
