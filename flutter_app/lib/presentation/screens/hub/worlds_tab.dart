@@ -34,7 +34,6 @@ import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
 import '../../widgets/world_packages_section.dart';
 
-
 class WorldsTab extends ConsumerStatefulWidget {
   const WorldsTab({super.key});
 
@@ -80,7 +79,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (filter.isEmpty) return all;
     return all.where((info) {
       if (filter.templates.isNotEmpty &&
-          !filter.templates.contains(normalizeTemplateName(info.templateName))) {
+          !filter.templates.contains(
+            normalizeTemplateName(info.templateName),
+          )) {
         return false;
       }
       if (filter.packages.isNotEmpty) {
@@ -109,13 +110,13 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final filter = ref.watch(worldsFilterProvider);
     final worldPkgs =
         ref.watch(worldPackageNamesProvider).valueOrNull ??
-            const <String, Set<String>>{};
+        const <String, Set<String>>{};
     final allCampaigns = campaignInfoList.valueOrNull ?? const <CampaignInfo>[];
     final templateOptions = <String>{
-      for (final c in allCampaigns) normalizeTemplateName(c.templateName)
+      for (final c in allCampaigns) normalizeTemplateName(c.templateName),
     }.toList();
     final packageOptions = <String>{
-      for (final s in worldPkgs.values) ...s
+      for (final s in worldPkgs.values) ...s,
     }.toList();
 
     return SingleChildScrollView(
@@ -128,96 +129,140 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(l10n.worldsHeading, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                      ref.read(hubTabIndexProvider.notifier).state = 0;
-                    },
-                    icon: const Icon(Icons.storefront, size: 16),
-                    label: Text(l10n.hubBtnMarketplace),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      minimumSize: const Size(0, 32),
-                      visualDensity: VisualDensity.compact,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              LayoutBuilder(
+                builder: (ctx, c) {
+                  final title = Text(
+                    l10n.worldsHeading,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: palette.tabActiveText,
                     ),
-                  ),
-                  if (ref.watch(surfaceAccessProvider(
-                          AppSurface.worldSharing)) ==
-                      SurfaceAccess.open) ...[
-                    const SizedBox(width: 4),
+                  );
+                  final actions = <Widget>[
                     OutlinedButton.icon(
-                      onPressed: () => JoinWorldDialog.show(context),
-                      icon: const Icon(Icons.login, size: 16),
-                      label: Text(l10n.worldsBtnJoin),
+                      onPressed: () {
+                        ref.read(socialSubTabProvider.notifier).state =
+                            'marketplace';
+                        ref.read(hubTabIndexProvider.notifier).state = 0;
+                      },
+                      icon: const Icon(Icons.storefront, size: 16),
+                      label: Text(l10n.hubBtnMarketplace),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         minimumSize: const Size(0, 32),
                         visualDensity: VisualDensity.compact,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
-                  ],
-                  const SizedBox(width: 4),
-                  HubFilterButton(
-                    totalSelected: filter.totalSelected,
-                    sections: [
-                      FilterSection(
-                        label: l10n.filterTemplates,
-                        options: templateOptions,
-                        selected: filter.templates,
-                      ),
-                      FilterSection(
-                        label: l10n.filterPackages,
-                        options: packageOptions,
-                        selected: filter.packages,
+                    if (ref.watch(
+                          surfaceAccessProvider(AppSurface.worldSharing),
+                        ) ==
+                        SurfaceAccess.open) ...[
+                      OutlinedButton.icon(
+                        onPressed: () => JoinWorldDialog.show(context),
+                        icon: const Icon(Icons.login, size: 16),
+                        label: Text(l10n.worldsBtnJoin),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          minimumSize: const Size(0, 32),
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
                     ],
-                    onChanged: (sel) {
-                      ref.read(worldsFilterProvider.notifier).state = HubFilter(
-                        templates: sel[0],
-                        packages: sel[1],
-                      );
-                      setState(() => _selectedIndex = -1);
-                    },
-                  ),
-                  const SizedBox(width: 4),
-                  Tooltip(
-                    message: l10n.hubTooltipRefresh,
-                    child: OutlinedButton(
-                      onPressed: _refreshing ? null : _doRefresh,
+                    HubFilterButton(
+                      totalSelected: filter.totalSelected,
+                      sections: [
+                        FilterSection(
+                          label: l10n.filterTemplates,
+                          options: templateOptions,
+                          selected: filter.templates,
+                        ),
+                        FilterSection(
+                          label: l10n.filterPackages,
+                          options: packageOptions,
+                          selected: filter.packages,
+                        ),
+                      ],
+                      onChanged: (sel) {
+                        ref.read(worldsFilterProvider.notifier).state =
+                            HubFilter(templates: sel[0], packages: sel[1]);
+                        setState(() => _selectedIndex = -1);
+                      },
+                    ),
+                    Tooltip(
+                      message: l10n.hubTooltipRefresh,
+                      child: OutlinedButton(
+                        onPressed: _refreshing ? null : _doRefresh,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          minimumSize: const Size(32, 32),
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: _refreshing
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.refresh, size: 16),
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: _openCreateWorldDialog,
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 4,
+                        ),
                         minimumSize: const Size(32, 32),
                         visualDensity: VisualDensity.compact,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: _refreshing
-                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.refresh, size: 16),
+                      child: const Icon(Icons.add, size: 16),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  OutlinedButton(
-                    onPressed: _openCreateWorldDialog,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      minimumSize: const Size(32, 32),
-                      visualDensity: VisualDensity.compact,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Icon(Icons.add, size: 16),
-                  ),
-                ],
+                  ];
+                  // Dar ekranda basliktan sonra butonlari alt satira sar.
+                  if (c.maxWidth < 480) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        title,
+                        const SizedBox(height: 8),
+                        Wrap(spacing: 4, runSpacing: 4, children: actions),
+                      ],
+                    );
+                  }
+                  return Row(
+                    spacing: 4,
+                    children: [
+                      Expanded(child: title),
+                      ...actions,
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 4),
-              Text(l10n.worldsSubtitle, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+              Text(
+                l10n.worldsSubtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
               const SizedBox(height: 16),
 
               // Kampanya listesi
@@ -225,91 +270,104 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 data: (campaigns) {
                   final filtered = _applyFilter(campaigns, filter, worldPkgs);
                   return filtered.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: palette.featureCardBg,
-                          borderRadius: palette.br,
-                          border: Border.all(color: palette.featureCardBorder),
-                        ),
-                        child: Center(
-                          child: Text(
-                            campaigns.isEmpty
-                                ? l10n.worldsEmpty(AppPaths.worldsDir)
-                                : l10n.hubFilterNoResults,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 4),
-                        itemBuilder: (context, index) {
-                          final info = filtered[index];
-                          final isSelected = index == _selectedIndex;
-                          final metaAsync =
-                              ref.watch(campaignMetadataProvider(info.name));
-                          final meta =
-                              metaAsync.valueOrNull ?? const <String, dynamic>{};
-                          // Online + role indicator: user joined this world
-                          // either as DM (publisher) or player. Both cases
-                          // land in `onlineWorldIds`; role decides which
-                          // icon we render.
-                          final onlineIds =
-                              ref.watch(onlineWorldIdsProvider);
-                          final isOnlineMember =
-                              onlineIds.contains(info.id);
-                          final role = isOnlineMember
-                              ? (ref
-                                      .watch(worldRoleProvider(info.id))
-                                      .valueOrNull ??
-                                  WorldRole.none)
-                              : WorldRole.none;
-                          return InkWell(
+                      ? Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: palette.featureCardBg,
                             borderRadius: palette.br,
-                            onTap: () => setState(() => _selectedIndex = index),
-                            onDoubleTap: () => _loadCampaign(info.name),
-                            child: Container(
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(
-                                color: isSelected ? palette.featureCardAccent.withValues(alpha: 0.1) : palette.featureCardBg,
-                                borderRadius: palette.br,
-                                border: Border.all(
-                                  color: isSelected ? palette.featureCardAccent : palette.featureCardBorder,
-                                ),
-                              ),
-                              child: MetadataListTile(
-                                icon: Icons.public,
-                                name: info.name,
-                                subtitle: info.templateName,
-                                description:
-                                    (meta['description'] as String?) ?? '',
-                                tags: ((meta['tags'] as List?) ?? const [])
-                                    .whereType<String>()
-                                    .toList(),
-                                coverImagePath:
-                                    (meta['cover_image_path'] as String?) ?? '',
-                                isSelected: isSelected,
-                                palette: palette,
-                                layout: MetadataTileLayout.topBanner,
-                                onSettings: () =>
-                                    _showCampaignSettings(info.name, palette),
-                                topRightOverlay: isOnlineMember
-                                    ? [
-                                        _OnlineRoleBadge(
-                                          role: role,
-                                          palette: palette,
-                                        ),
-                                      ]
-                                    : const [],
+                            border: Border.all(
+                              color: palette.featureCardBorder,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              campaigns.isEmpty
+                                  ? l10n.worldsEmpty(AppPaths.worldsDir)
+                                  : l10n.hubFilterNoResults,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: palette.sidebarLabelSecondary,
+                                fontSize: 12,
                               ),
                             ),
-                          );
-                        },
-                      );
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            final info = filtered[index];
+                            final isSelected = index == _selectedIndex;
+                            final metaAsync = ref.watch(
+                              campaignMetadataProvider(info.name),
+                            );
+                            final meta =
+                                metaAsync.valueOrNull ??
+                                const <String, dynamic>{};
+                            // Online + role indicator: user joined this world
+                            // either as DM (publisher) or player. Both cases
+                            // land in `onlineWorldIds`; role decides which
+                            // icon we render.
+                            final onlineIds = ref.watch(onlineWorldIdsProvider);
+                            final isOnlineMember = onlineIds.contains(info.id);
+                            final role = isOnlineMember
+                                ? (ref
+                                          .watch(worldRoleProvider(info.id))
+                                          .valueOrNull ??
+                                      WorldRole.none)
+                                : WorldRole.none;
+                            return InkWell(
+                              borderRadius: palette.br,
+                              onTap: () =>
+                                  setState(() => _selectedIndex = index),
+                              onDoubleTap: () => _loadCampaign(info.name),
+                              child: Container(
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? palette.featureCardAccent.withValues(
+                                          alpha: 0.1,
+                                        )
+                                      : palette.featureCardBg,
+                                  borderRadius: palette.br,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? palette.featureCardAccent
+                                        : palette.featureCardBorder,
+                                  ),
+                                ),
+                                child: MetadataListTile(
+                                  icon: Icons.public,
+                                  name: info.name,
+                                  subtitle: info.templateName,
+                                  description:
+                                      (meta['description'] as String?) ?? '',
+                                  tags: ((meta['tags'] as List?) ?? const [])
+                                      .whereType<String>()
+                                      .toList(),
+                                  coverImagePath:
+                                      (meta['cover_image_path'] as String?) ??
+                                      '',
+                                  isSelected: isSelected,
+                                  palette: palette,
+                                  layout: MetadataTileLayout.topBanner,
+                                  onSettings: () =>
+                                      _showCampaignSettings(info.name, palette),
+                                  topRightOverlay: isOnlineMember
+                                      ? [
+                                          _OnlineRoleBadge(
+                                            role: role,
+                                            palette: palette,
+                                          ),
+                                        ]
+                                      : const [],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Text(l10n.hubErrorGeneric(e.toString())),
@@ -325,7 +383,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       onPressed: _selectedIndex >= 0
                           ? () {
                               final campaigns = _currentFiltered();
-                              if (_selectedIndex < campaigns.length) _loadCampaign(campaigns[_selectedIndex].name);
+                              if (_selectedIndex < campaigns.length)
+                                _loadCampaign(campaigns[_selectedIndex].name);
                             }
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
@@ -334,7 +393,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _selectedIndex >= 0 ? () => _deleteWorld() : null,
+                    onPressed: _selectedIndex >= 0
+                        ? () => _deleteWorld()
+                        : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: Text(l10n.btnDelete),
                     style: FilledButton.styleFrom(
@@ -344,7 +405,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   ),
                 ],
               ),
-
             ],
           ),
         ),
@@ -364,7 +424,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           title: Text(l10n.worldsNoTemplatesTitle),
           content: Text(l10n.worldsNoTemplatesBody),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.btnCancel),
+            ),
             FilledButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -380,8 +443,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       return;
     }
     final seen = <String>{};
-    final uniqueTemplates =
-        templatesAsync.where((t) => seen.add(t.schemaId)).toList();
+    final uniqueTemplates = templatesAsync
+        .where((t) => seen.add(t.schemaId))
+        .toList();
     final matched = uniqueTemplates
         .where((t) => t.schemaId == _selectedTemplate?.schemaId)
         .firstOrNull;
@@ -407,14 +471,19 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _selectedTemplate!.schemaId,
-                  decoration: InputDecoration(labelText: l10n.worldsTemplateLabel),
+                  decoration: InputDecoration(
+                    labelText: l10n.worldsTemplateLabel,
+                  ),
                   items: uniqueTemplates
-                      .map((t) => DropdownMenuItem(
-                            value: t.schemaId,
-                            child: Text(
-                                '${t.name}  (${t.categories.length} cat)',
-                                style: const TextStyle(fontSize: 12)),
-                          ))
+                      .map(
+                        (t) => DropdownMenuItem(
+                          value: t.schemaId,
+                          child: Text(
+                            '${t.name}  (${t.categories.length} cat)',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (id) {
                     if (id == null) return;
@@ -441,8 +510,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(l10n.btnCancel)),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.btnCancel),
+            ),
             FilledButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
@@ -451,8 +521,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               icon: const Icon(Icons.add, size: 16),
               label: Text(l10n.btnCreate),
               style: FilledButton.styleFrom(
-                  backgroundColor: palette.successBtnBg,
-                  foregroundColor: palette.successBtnText),
+                backgroundColor: palette.successBtnBg,
+                foregroundColor: palette.successBtnText,
+              ),
             ),
           ],
         ),
@@ -470,8 +541,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     // leaving it — server-side trigger releases their owned characters
     // back into the claim pool, and the local mirror is purged directly
     // (no `.trash/` indirection). DM keeps the existing soft-delete flow.
-    final role = ref.read(worldRoleProvider(worldId)).valueOrNull
-        ?? WorldRole.none;
+    final role =
+        ref.read(worldRoleProvider(worldId)).valueOrNull ?? WorldRole.none;
     final isPlayer = role == WorldRole.player;
 
     // Marketplace listing kontrolü — offline-safe local index okuması.
@@ -484,7 +555,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             .read(marketplaceLinksLocalDsProvider)
             .getOwnedListingIds('world', name);
         hasListings = ids.isNotEmpty;
-      } catch (_) {/* ignore */}
+      } catch (_) {
+        /* ignore */
+      }
     }
     if (!mounted) return;
 
@@ -496,24 +569,26 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           isPlayer
               ? l10n.worldsLeaveBody(name)
               : hasListings
-                  ? '${l10n.worldsDeleteBody(name)}\n\n'
-                      '${l10n.worldsDeleteMarketplaceWarning}'
-                  : l10n.worldsDeleteBody(name),
+              ? '${l10n.worldsDeleteBody(name)}\n\n'
+                    '${l10n.worldsDeleteMarketplaceWarning}'
+              : l10n.worldsDeleteBody(name),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final wasOnline =
-                  ref.read(onlineWorldIdsProvider).contains(worldId);
+              final wasOnline = ref
+                  .read(onlineWorldIdsProvider)
+                  .contains(worldId);
               try {
                 if (isPlayer) {
                   await _leaveOnlineAndPurge(worldId, name);
                 } else {
-                  await ref
-                      .read(activeCampaignProvider.notifier)
-                      .delete(name);
+                  await ref.read(activeCampaignProvider.notifier).delete(name);
                   ref.invalidate(trashListProvider);
                 }
               } catch (e) {
@@ -535,8 +610,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       isPlayer
                           ? l10n.worldsLeftSnack(name)
                           : wasOnline
-                              ? l10n.worldsDeletedCloudSnack
-                              : l10n.worldsDeletedSnack,
+                          ? l10n.worldsDeletedCloudSnack
+                          : l10n.worldsDeletedSnack,
                     ),
                     duration: const Duration(seconds: 5),
                   ),
@@ -545,8 +620,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               setState(() => _selectedIndex = -1);
             },
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnBg,
-              foregroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnText,
+              backgroundColor: Theme.of(
+                context,
+              ).extension<DmToolColors>()!.dangerBtnBg,
+              foregroundColor: Theme.of(
+                context,
+              ).extension<DmToolColors>()!.dangerBtnText,
             ),
             child: Text(isPlayer ? l10n.worldsBtnLeave : l10n.btnDelete),
           ),
@@ -560,9 +639,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   /// the local mirror without going through `.trash/`.
   Future<void> _leaveOnlineAndPurge(String worldId, String name) async {
     try {
-      await ref
-          .read(worldMembershipServiceProvider)
-          .leaveWorld(worldId);
+      await ref.read(worldMembershipServiceProvider).leaveWorld(worldId);
     } catch (e) {
       // Best effort — proceed with local purge even if leave call fails
       // (e.g. already-removed by DM). Surface for diagnostics.
@@ -607,9 +684,9 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final success = await notifier.completeLoad();
     if (!success && mounted) {
       final l10n = L10n.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.worldsOpenFailed(name))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.worldsOpenFailed(name))));
     }
   }
 
@@ -631,22 +708,28 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 Text(l10n.templateDriftBody(prompt.templateName)),
                 if (prompt.diffSummary.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    l10n.templateDriftChanges,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 4),
-                  ...prompt.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ',
-                            style: TextStyle(fontSize: 13)),
-                        Expanded(
-                            child: Text(line,
-                                style: const TextStyle(fontSize: 13))),
-                      ],
+                  ...prompt.diffSummary.map(
+                    (line) => Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('\u2022 ', style: TextStyle(fontSize: 13)),
+                          Expanded(
+                            child: Text(
+                              line,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  )),
+                  ),
                 ],
                 const SizedBox(height: 12),
                 Row(
@@ -662,8 +745,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     ),
                     const SizedBox(width: 8),
                     Flexible(
-                      child: Text(l10n.templateDriftDoNotShowAgain,
-                          style: const TextStyle(fontSize: 13)),
+                      child: Text(
+                        l10n.templateDriftDoNotShowAgain,
+                        style: const TextStyle(fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
@@ -686,7 +771,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
   }
 
-  Future<void> _showCampaignSettings(String campaignName, DmToolColors palette) async {
+  Future<void> _showCampaignSettings(
+    String campaignName,
+    DmToolColors palette,
+  ) async {
     final l10n = L10n.of(context)!;
 
     // Load campaign data and check drift against its source template.
@@ -713,7 +801,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
-    final templateName = schemaMap?['name'] as String? ?? l10n.worldsUnknownTemplate;
+    final templateName =
+        schemaMap?['name'] as String? ?? l10n.worldsUnknownTemplate;
 
     // Mutable metadata working copy — committed on Save.
     final existingMeta = data['metadata'];
@@ -728,86 +817,95 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: Text(l10n.worldsSettingsTitle(campaignName)),
-        content: SizedBox(
-          width: 440,
-          child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MetadataEditorSection(
-                showNameField: false,
-                name: campaignName,
-                description: workingMeta['description'] as String? ?? '',
-                tags: ((workingMeta['tags'] as List?) ?? const [])
-                    .whereType<String>()
-                    .toList(),
-                coverImagePath:
-                    workingMeta['cover_image_path'] as String? ?? '',
-                onNameChanged: (_) {},
-                onDescriptionChanged: (v) =>
-                    workingMeta['description'] = v,
-                onTagsChanged: (v) =>
-                    setDialogState(() => workingMeta['tags'] = v),
-                onCoverChanged: (v) => setDialogState(
-                    () => workingMeta['cover_image_path'] = v),
-                coverKind: MediaKind.worldCover,
-                coverScopeId: campaignName,
-              ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              Row(
+          title: Text(l10n.worldsSettingsTitle(campaignName)),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
-                  const SizedBox(width: 6),
-                  Text(l10n.worldsTemplateLine(templateName),
-                      style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+                  MetadataEditorSection(
+                    showNameField: false,
+                    name: campaignName,
+                    description: workingMeta['description'] as String? ?? '',
+                    tags: ((workingMeta['tags'] as List?) ?? const [])
+                        .whereType<String>()
+                        .toList(),
+                    coverImagePath:
+                        workingMeta['cover_image_path'] as String? ?? '',
+                    onNameChanged: (_) {},
+                    onDescriptionChanged: (v) => workingMeta['description'] = v,
+                    onTagsChanged: (v) =>
+                        setDialogState(() => workingMeta['tags'] = v),
+                    onCoverChanged: (v) => setDialogState(
+                      () => workingMeta['cover_image_path'] = v,
+                    ),
+                    coverKind: MediaKind.worldCover,
+                    coverScopeId: campaignName,
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: palette.featureCardBorder),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.description,
+                        size: 16,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.worldsTemplateLine(templateName),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: palette.tabActiveText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SaveInfoSection(
+                    itemName: campaignName,
+                    itemId: worldId,
+                    type: 'world',
+                    localUpdatedAt: localUpdatedAt,
+                  ),
+                  const SizedBox(height: 12),
+                  MarketplacePanel(
+                    itemType: 'world',
+                    localId: campaignName,
+                    title: campaignName,
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: palette.featureCardBorder),
+                  const SizedBox(height: 12),
+                  OnlineWorldSection(
+                    campaignId: worldId,
+                    campaignName: campaignName,
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: palette.featureCardBorder),
+                  const SizedBox(height: 12),
+                  WorldPackagesSection(campaignId: worldId),
                 ],
               ),
-              const SizedBox(height: 12),
-              SaveInfoSection(
-                itemName: campaignName,
-                itemId: worldId,
-                type: 'world',
-                localUpdatedAt: localUpdatedAt,
-              ),
-              const SizedBox(height: 12),
-              MarketplacePanel(
-                itemType: 'world',
-                localId: campaignName,
-                title: campaignName,
-              ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              OnlineWorldSection(
-                campaignId: worldId,
-                campaignName: campaignName,
-              ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              WorldPackagesSection(campaignId: worldId),
-            ],
+            ),
           ),
-          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.btnCancel),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await updateCampaignMetadata(ref, campaignName, workingMeta);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: Text(l10n.btnSave),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.btnCancel),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await updateCampaignMetadata(ref, campaignName, workingMeta);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: Text(l10n.btnSave),
-          ),
-        ],
-      ),
       ),
     );
   }
@@ -818,16 +916,19 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (name.isEmpty) return;
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (campaigns.any((c) => c.name == name)) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.worldsAlreadyExists)));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.worldsAlreadyExists)));
       return;
     }
 
     final templateFinal = _selectedTemplate;
     if (templateFinal == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.worldsInstallTemplate)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.worldsInstallTemplate)));
       }
       return;
     }
