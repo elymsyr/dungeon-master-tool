@@ -1,5 +1,81 @@
 # Release Notes
 
+## Dungeon Master Tool v13.0.1 — Combat Tracker Initiative Fixes, Mind Map Right-Click Fixes, Note Titles (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v13.0.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release, and the theme is **the table running without fighting the tool**. Initiative in the combat tracker now behaves the way you expect: combatants join at their flat modifier, "Roll Initiative" rolls fresh every time, and a score you type in the encounter table sticks and re-sorts on the spot. The mind map lets you right-click a connection even inside a workspace, notes can be renamed while you edit them, and clearing a soundpad ambience slot no longer inherits the previous track's volume. Nothing to install by hand — no migrations.
+
+---
+
+### Highlights
+
+- **Initiative joins at the modifier** — A new combatant starts at its flat initiative modifier instead of auto-rolling a d20, and a new **Reset Initiative** action restores the whole table to those modifiers in one tap.
+- **Roll Initiative rolls fresh every time** — Re-rolling no longer leaves combatants frozen on a fixed score.
+- **Editing initiative sticks** — A score typed in the encounter table now updates and re-sorts immediately, and the inline editor opens blank instead of prefilled with a dice spec.
+- **Mind map right-click fixed** — Right-clicking a connection inside a workspace now opens its Delete Connection menu instead of being swallowed by the workspace menu, and connections are easier to grab.
+- **Notes can be renamed while editing** — The note edit dialog gains a Title field.
+- **Soundpad slots clear cleanly** — Clearing an ambience slot resets it to default instead of keeping the previous track's volume.
+
+---
+
+### Combat tracker
+
+#### Initiative
+
+**Before (v13.0.0):** adding a combatant rolled `1d20 + modifier` automatically; monsters with a flat `initiative_score` sat frozen on that one score no matter how often you re-rolled; typing a new initiative in the encounter table changed neither the value nor the sort order; the inline editor prefilled a dice spec like `+3`; and the mobile card showed that dice spec instead of the rolled value.
+
+**After (v13.0.1):** a fresh combatant joins at its **flat initiative modifier** (no roll), so the DM decides how combat opens — roll with **Roll Initiative** (now re-rolls every combatant each time, no frozen scores) or type a score straight into the table and it updates and re-sorts on the spot. A new **Reset Initiative** menu item (desktop and mobile, under Roll Initiative) restores every combatant to its modifier, undoing a roll in one tap.
+
+### Mind map
+
+#### Right-clicking connections
+
+**Before (v13.0.0):** right-clicking a connection that ran through a workspace's interior opened the workspace menu instead of the connection's menu, so Delete Connection was unreachable there.
+
+**After (v13.0.1):** right-clicking over a connection always opens its menu, even inside a workspace, and the right-click hit radius is widened (24 px) so connections are easy to grab — the visible stroke is unchanged.
+
+---
+
+### Smaller improvements
+
+- **Notes** — The mind map's note edit dialog gains a **Title** field, so you can rename a note while editing its content.
+- **Soundpad** — Clearing an ambience slot now resets it to a clean default instead of inheriting the previous track's volume.
+- **l10n** — New "Reset Initiative" key added in all four languages (EN · TR · DE · FR).
+
+---
+
+### Bug fixes
+
+- **Editing initiative did nothing** — Typing a new initiative in the encounter table updated neither the value nor the sort order.
+- **Monsters never re-rolled initiative** — Combatants with a flat `initiative_score` stayed frozen on one value no matter how often you hit Roll Initiative.
+- **Right-clicking a connection inside a workspace did nothing** — The workspace menu swallowed the right-click; the connection's Delete Connection menu is reachable again.
+- **Notes couldn't be renamed while editing** — The edit dialog only covered content; it now has a title field too.
+- **Ambience slot kept the previous volume** — Clearing a slot inherited the last track's volume; it now resets to default.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `13.0.0` → `13.0.1`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v13.0.0: Local Sync does not propagate deletions or renames (tombstones are the planned fix); Local Sync is signed but not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet; feat effect parsing stays conservative; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items.
+
+---
+
+*Thanks for playing. Roll well.*
+
+*Special thanks to [numerfolt](https://github.com/numerfolt) for the help that went into this release.*
+
+---
+
 ## Dungeon Master Tool v13.0.0 — Local Sync, No-Account Mode, PDF Library, Package Links, Pack Content Repair (Beta)
 
 **Release date:** August 2026
