@@ -67,23 +67,23 @@ Planned for upcoming releases — order not final, scope may shift between patch
 - **Better battle map system** — The VTT upgrade has landed: snap-to-grid tokens, creature-size auto-scaling, 5e diagonal measurement rules, AoE templates (cone/line/sphere/cube/sector), and vector shape annotations. Still planned: smoother large-grid performance, stat-block token previews, and line-of-sight + dynamic vision.
 - **Built-in D&D 5e package visuals** — Cover art, monster/species/class portraits, equipment icons, and spell glyphs bundled with the SRD core pack so default content stops looking like raw text. The generation pipeline (`tool/art_gen`) is in place and scoped at ~5,500 art-worthy cards; the images themselves are not bundled yet.
 - **More online storage for users** — Larger per-account quota for counted cloud media and selectable retention tiers; current beta cap is intentionally conservative (portraits, covers and live session media already sync free of quota).
+- **Synced music from YouTube** — Paste a YouTube link and play it as a session track, kept in sync across every connected player's app so the whole table hears the same thing at the same time.
 - **Local Sync, round two** — Deletions and renames do not propagate over Local Sync yet (it only adds and updates), and the transfer is authenticated but not encrypted. Both are on the list.
 
 ---
 
 ## For Worldbuilders 🗺️
 
-Build a setting, then bring it to the table.
+Build a setting, then bring it to the table — fully offline.
 
-- **Mind Map** — Infinite canvas, Bezier connections, workspaces, undo/redo.
-- **World Map** — Pin system with location data, fog of war, timeline metadata per pin.
-- **Era Timeline** — Track historical eras and waypoints; pin events to specific points in time. Drill into any location for nested pins and a per-era map image.
-- **Entity System** — Schema-driven cards with 16 field widget types (text, markdown, image, stat block, dice roller, and more). Every reference on a card — spells, items, traits, relation chips — is tappable and opens the card it points at.
-- **Templates & Packages** — Built-in D&D 5e schema, user-defined templates, full import/export.
-- **Package Links** — Let one package borrow another's content instead of copying it: open the package → **Linked Packages** → pick one. Nothing is duplicated, and the borrowed cards follow the package into every world and download. Installed packages also tell you when a newer version is available (**Update to v…**).
-- **Rule & Effect Editor** — Catalog-driven editor for authoring feat/feature mechanics (effect kind + target + per-rule params + predicates/scaling/activation), with non-blocking validation warnings. DM-editable core rule constants (ASI levels, HP-per-hit-die, AC base/shield, proficiency-bonus breakpoints) per template.
+- **Mind Map** — Infinite canvas with Bezier links, multiple workspaces and undo/redo, for plotting factions, characters and plot threads.
+- **World Map** — Drop an image and pin it: every pin carries a label, colour, style, a note and an optional link to an entity card, so a city pin opens the city. Grid overlay with snapping and a feet-per-cell scale, freehand drawings, and fog of war you reveal as the party explores.
+- **Nested location maps** — A pin can be walked into. Open a city and you get *its own* map — a district plan, a dungeon level, a tavern floor — with its own pins and timeline, as deep as you care to nest.
+- **Era Timeline** — The world map is time-aware. Define eras and waypoints on a scroll bar, and each era keeps its own pins, timeline pins and background image (including for nested location maps) — slide back and the map shows the same place centuries earlier. Timeline pins mark dated events, link to the entities involved, to the session they happened in, and to the events that caused them.
+- **Entity System** — Schema-driven cards with 16 field widget types (text, markdown, image, stat block, dice roller…). Every reference on a card — spells, items, traits, relation chips — is tappable and opens what it points at.
+- **Templates & Packages** — Built-in D&D 5e schema, your own templates, full import/export. **Package Links** let one package borrow another's content instead of copying it, and installed packages tell you when a newer version exists.
 
-Works fully offline. Join the beta to sync your worlds across devices and share them with collaborators.
+Sign in to sync worlds across devices and share them with collaborators.
 
 ---
 
@@ -92,16 +92,13 @@ Works fully offline. Join the beta to sync your worlds across devices and share 
 Run a session without breaking flow.
 
 - **Combat Tracker** — Initiative, HP, conditions, turn management, automatic event log.
-- **Battle Map (VTT)** — 6-layer canvas (grid, token, annotation, fog, terrain, decal). Draw tool, persistent rulers and circles, fog of war. **Creature-size auto-scaling** sizes tokens to their D&D footprint (Large 2×2, Huge 3×3…). **5e diagonal measurement** with Euclidean / 5-10-5 (DMG) / 5-5-5 (PHB) rules, mirrored to player distance labels. **AoE templates** — cone, line, sphere, cube, and sector wedges with fill colors, persistent across reload. **Vector annotations** — rectangles, lines, and text labels on background / object / GM-only layers, each individually deletable. **Per-player projection controls** — Show All HP, Hide Token HUD, hidden tokens (DM-only), and DM viewport sync so players mirror your zoom/pan without letterboxing. Reuse already-uploaded location battlemaps without re-uploading.
-- **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, save state across sessions.
-- **Soundpad** — Layered audio, gapless loops, volume fade, custom themes. Download ready-made **soundpacks** (music themes, ambience, SFX) from the in-app catalog — browse them under Marketplace → Soundpacks or in Settings.
-- **PDF Library** — Open a PDF and it is copied into the world, so it stays with the world and travels with backups and Local Sync. The **Library** tab of the PDF sidebar lists everything the world holds; up to 10 PDFs can be open in tabs at once (50 MB each). In an online world the DM shares the library with one action and players download a file when they need it.
+- **Battle Map (VTT)** — 6-layer canvas (grid, token, annotation, fog, terrain, decal) with draw tool, persistent rulers and fog of war. Tokens auto-scale to creature size, distances follow your chosen 5e diagonal rule, and AoE templates (cone, line, sphere, cube, sector) plus vector annotations persist across reloads. Reuse location battlemaps without re-uploading.
+- **Session & Campaign Management** — Rich notes, timeline tracking, encounter setup, state saved between sessions.
+- **Soundpad** — Layered audio with gapless loops, fades and custom themes; download ready-made soundpacks (music, ambience, SFX) from Marketplace → Soundpacks.
+- **PDF Library** — PDFs are copied into the world, so they travel with backups and Local Sync. Up to 10 open in tabs (50 MB each); in an online world one action shares the library and players download on demand.
 - **Dice Roller** — d4 through d100.
 
-**Second screen, three ways:**
-- **Same device** — Pop out a second window for your TV or projector.
-- **Different device** — Cast battle maps, entity cards, and images to a tablet or laptop on the side.
-- **Online players** — Project directly into every connected player's app. Per-world manifest replays the active view so late joiners catch up instantly.
+**Second screen, three ways:** pop out a window on the same device for a TV or projector, cast to a tablet or laptop nearby, or project into every connected player's app — with per-player controls (show/hide HP, hidden tokens, DM viewport sync) and a manifest that catches late joiners up instantly.
 
 ---
 
@@ -109,13 +106,11 @@ Run a session without breaking flow.
 
 Roll up a character, then take it anywhere.
 
-- **Character Creation Wizard** — SRD-driven: species, subspecies/lineage, class, subclass, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, traits. Works with imported (Open5e) packs too — packaged subclasses, origin feats, spell lists, and feat prerequisites resolve into the wizard, and every option shows its source.
-- **Level-Up Planner** — Auto-applies HP, proficiency bonus, hit dice. Queues ASI/feat, fighting styles, subclass, spell choices as **Pending Choices** you resolve inline.
-- **Multiclass** — Full SRD prereq checks (AND/OR ability gates) with human-readable rejection reasons. Multiclass caster slot math built in.
-- **Spell Slots** — Caster classes get a real slot grid on the sheet, written at character creation and at level-up. The grid stays hand-editable, and a template that authors its own slot table overrides the built-in preset.
-- **Weapon Mastery** — Auto-grants mastery slots per class/subclass; takes the max across overlapping feats.
-- **Online Worlds** — Join any world the DM publishes, claim a character, see live updates from every device at the table.
-- **Battle Map Marks** — Place your own markers on the projected map during play.
+- **Character Creation Wizard** — SRD-driven: species, class, subclass, background, ability scores (point-buy, array, roll, manual), skills, equipment, traits. Imported Open5e packs feed straight into the wizard, and every option shows its source.
+- **Level-Up Planner** — Auto-applies HP, proficiency bonus and hit dice; ASI/feat, fighting style, subclass and spell picks queue up as **Pending Choices** you resolve inline.
+- **Multiclass & Spell Slots** — Full SRD prereq checks with readable rejection reasons and multiclass slot math. Caster classes get a real, hand-editable slot grid; a template's own slot table wins over the preset.
+- **Weapon Mastery** — Mastery slots granted per class/subclass, taking the max across overlapping feats.
+- **Online Play** — Join any world the DM publishes, claim a character, see live updates from every device, and drop your own marks on the projected map.
 
 ---
 
@@ -137,12 +132,38 @@ Everything core works fully offline. Online features (sync, sharing, marketplace
 
 ### Marketplace
 
+**Marketplace needs a signed-in account** — browsing, downloading and publishing all run through the server, so *Continue without an account* mode offers a sign-in prompt instead.
+
 - **Publish & Share** — Worlds, templates, packages, characters as immutable snapshots with title, description, tags, changelog, cover image.
 - **Versioning** — Every publish is a new version. Lineage tracking links every release of the same item.
 - **Browse & Download** — Filter by type, language, tags. Atomic download counters; built-in vs. community sections.
 - **Contents Preview** — See what a world or package holds *before* downloading. A publish-time content summary (template name + per-category entity counts and names) drives a preview dialog and richer cards — no need to pull the full payload to know what's inside.
 - **Integrity** — Database-enforced immutability on core metadata prevents silent edits post-publish.
 - **Official Content** — A curated, app-owned catalog of first-party packages served from a public CDN. Surfaces under Marketplace → All / Packages with a details dialog and an Install action; works offline via a bundled fallback manifest. Banner art downloads from the CDN and is materialised as the local package cover on install. Includes Open5e-sourced content — 19 packages spanning thousands of monsters, spells, magic items, and full chargen data (classes, subclasses, species, backgrounds, feats). v13 puts the whole corpus through a repair pass: spell durations and component costs stop being rounded or invented, monster action blocks stop being truncated or duplicated, magic items link their base item, backgrounds and feats stop over-granting, and the built-in SRD creatures gain their saving-throw and skill rows. Re-install a package to pick up the corrected data.
+
+**Ready-made packages in the Marketplace** (19, installable with one tap):
+
+| Package | Publisher | System | Contents |
+|---|---|---|---|
+| Adventurer's Guide | EN Publishing | Level Up A5e | 371 spells, 59 feats, 21 backgrounds, 3 subclasses |
+| Dungeon Delver’s Guide | EN Publishing | Level Up A5e | 4 backgrounds |
+| Gate Pass Gazette | EN Publishing | Level Up A5e | 2 backgrounds |
+| Monstrous Menagerie | EN Publishing | Level Up A5e | 1745 creature actions, 829 traits, 586 monsters |
+| Black Flag SRD | Kobold Press | 5e (2014) | 1363 creature actions, 776 traits, 360 monsters, 1 class |
+| Creature Codex | Kobold Press | 5e (2014) | 1182 creature actions, 925 traits, 356 monsters |
+| Deep Magic for 5th Edition | Kobold Press | 5e (2014) | 515 spells |
+| Deep Magic Extended | Kobold Press | 5e (2014) | 64 spells |
+| Kobold Press Compilation | Kobold Press | 5e (2014) | 31 spells |
+| Open5e Originals | Open5e | 5e (2014) | 17 subclasses, 2 spells, 2 backgrounds, 1 subspecies |
+| Spells That Don't Suck | SoMany Robots | 5e (2014) | 180 spells |
+| Tal'dorei Campaign Setting | Green Ronin | 5e (2014) | 11 traits, 11 creature actions, 5 backgrounds, 4 monsters |
+| Tome of Beasts | Kobold Press | 5e (2014) | 1330 creature actions, 1039 traits, 391 monsters |
+| Tome of Beasts 1 (2023 Edition) | Kobold Press | 5e (2014) | 1755 creature actions, 1022 traits, 408 monsters |
+| Tome of Beasts 2 | Kobold Press | 5e (2014) | 1235 creature actions, 1014 traits, 383 monsters |
+| Tome of Beasts 3 | Kobold Press | 5e (2014) | 1608 creature actions, 818 traits, 397 monsters |
+| Tome of Heroes | Kobold Press | 5e (2014) | 91 spells, 76 subclasses, 29 subspecies, 19 backgrounds |
+| Vault of Magic | Kobold Press | 5e (2014) | 1063 magic items |
+| Warlock Zine | Kobold Press | 5e (2014) | 43 spells |
 
 ---
 
