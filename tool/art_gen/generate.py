@@ -7,12 +7,14 @@ Aynı script hem uzaktan (test) hem server üstünde (toplu koşu) çalışır.
 import argparse, json, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
-# Flux schnell: cfg 1.0 zorunlu (distilled, negative prompt yok), 4 adım yeter.
-# Bu değerler stil tutarlılığının parçası — job başına DEĞİŞMEZ.
-STEPS, CFG, SAMPLER, SCHEDULER = 4, 1.0, "euler", "simple"
+# Ortak sampler ayarları. cfg 1.0: hem Flux schnell hem Z-Image-Turbo distilled,
+# negatif prompt yok. Adım sayısı loader'a göre değişir (aşağıda).
+CFG, SAMPLER, SCHEDULER = 1.0, "euler", "simple"
+FLUX_STEPS, ZIMAGE_STEPS = 4, 8
 
 
-def workflow(ckpt: str, prompt: str, seed: int, size: int) -> dict:
+def flux_workflow(ckpt: str, prompt: str, seed: int, size: int) -> dict:
+    """Flux.1 (schnell/dev) — tek checkpoint dosyası, clip+vae checkpoint'ten."""
     return {
         "1": {"class_type": "CheckpointLoaderSimple",
               "inputs": {"ckpt_name": ckpt}},
@@ -23,7 +25,7 @@ def workflow(ckpt: str, prompt: str, seed: int, size: int) -> dict:
         "4": {"class_type": "EmptySD3LatentImage",
               "inputs": {"width": size, "height": size, "batch_size": 1}},
         "5": {"class_type": "KSampler",
-              "inputs": {"seed": seed, "steps": STEPS, "cfg": CFG,
+              "inputs": {"seed": seed, "steps": FLUX_STEPS, "cfg": CFG,
                          "sampler_name": SAMPLER, "scheduler": SCHEDULER, "denoise": 1.0,
                          "model": ["1", 0], "positive": ["2", 0],
                          "negative": ["3", 0], "latent_image": ["4", 0]}},
@@ -31,6 +33,37 @@ def workflow(ckpt: str, prompt: str, seed: int, size: int) -> dict:
               "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
         "7": {"class_type": "SaveImage",
               "inputs": {"images": ["6", 0], "filename_prefix": "dmt"}},
+    }
+
+
+def zimage_workflow(model: str, text_encoder: str, vae: str,
+                    prompt: str, seed: int, size: int) -> dict:
+    """Z-Image-Turbo — ayrı diffusion/text_encoder/vae dosyaları (resmî örnek)."""
+    return {
+        "1": {"class_type": "UNETLoader",
+              "inputs": {"unet_name": model, "weight_dtype": "default"}},
+        # device="cpu": 20GB kartta bf16 diffusion (12.3GB) + bf16 text encoder
+        # (8GB) VRAM'e birlikte sığmaz; text encoder CPU'da encode edilir.
+        "2": {"class_type": "CLIPLoader",
+              "inputs": {"clip_name": text_encoder, "type": "lumina2",
+                         "device": "cpu"}},
+        "3": {"class_type": "VAELoader",
+              "inputs": {"vae_name": vae}},
+        "4": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": prompt, "clip": ["2", 0]}},
+        "5": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": "", "clip": ["2", 0]}},
+        "6": {"class_type": "EmptySD3LatentImage",
+              "inputs": {"width": size, "height": size, "batch_size": 1}},
+        "7": {"class_type": "KSampler",
+              "inputs": {"seed": seed, "steps": ZIMAGE_STEPS, "cfg": CFG,
+                         "sampler_name": SAMPLER, "scheduler": SCHEDULER, "denoise": 1.0,
+                         "model": ["1", 0], "positive": ["4", 0],
+                         "negative": ["5", 0], "latent_image": ["6", 0]}},
+        "8": {"class_type": "VAEDecode",
+              "inputs": {"samples": ["7", 0], "vae": ["3", 0]}},
+        "9": {"class_type": "SaveImage",
+              "inputs": {"images": ["8", 0], "filename_prefix": "dmt"}},
     }
 
 
@@ -47,14 +80,20 @@ def get(host: str, path: str) -> bytes:
         return r.read()
 
 
-def run_job(host: str, job: dict, ckpt: str, size: int, timeout: int) -> bytes:
-    pid = post(host, "/prompt",
-               {"prompt": workflow(ckpt, job["prompt"], job["seed"], size)})["prompt_id"]
+def run_job(host: str, job: dict, model: str, text_encoder: str, vae: str,
+            size: int, timeout: int, loader: str = "diffusion") -> bytes:
+    if loader == "checkpoint":
+        wf = flux_workflow(model, job["prompt"], job["seed"], size)
+        out_node = "7"
+    else:
+        wf = zimage_workflow(model, text_encoder, vae, job["prompt"], job["seed"], size)
+        out_node = "9"
+    pid = post(host, "/prompt", {"prompt": wf})["prompt_id"]
     deadline = time.time() + timeout
     while time.time() < deadline:
         hist = json.loads(get(host, f"/history/{pid}"))
         if pid in hist:
-            imgs = hist[pid]["outputs"]["7"]["images"][0]
+            imgs = hist[pid]["outputs"][out_node]["images"][0]
             q = urllib.parse.urlencode(
                 {"filename": imgs["filename"], "subfolder": imgs["subfolder"],
                  "type": imgs["type"]})
@@ -87,7 +126,16 @@ def main() -> None:
     p.add_argument("--host", default="http://192.168.1.12:8188")
     p.add_argument("--jobs", type=Path, default=Path("art_jobs.jsonl"))
     p.add_argument("--out", type=Path, default=Path("out"))
-    p.add_argument("--ckpt", default="flux1-schnell-fp8.safetensors")
+    p.add_argument("--loader", choices=["diffusion", "checkpoint"], default="diffusion",
+                   help="diffusion: Z-Image-Turbo (varsayılan), checkpoint: Flux")
+    p.add_argument("--model", default="z_image_turbo_bf16.safetensors",
+                   help="diffusion_models/ adı (loader=diffusion)")
+    p.add_argument("--text-encoder", default="qwen_3_4b.safetensors",
+                   help="text_encoders/ adı (loader=diffusion)")
+    p.add_argument("--vae", default="ae.safetensors",
+                   help="vae/ adı (loader=diffusion)")
+    p.add_argument("--ckpt", default="flux1-schnell-fp8.safetensors",
+                   help="checkpoints/ adı (loader=checkpoint)")
     p.add_argument("--size", type=int, default=1024)
     p.add_argument("--quality", type=int, default=82)
     p.add_argument("--crop", type=float, default=0.05,
@@ -113,7 +161,9 @@ def main() -> None:
     t0, done = time.time(), 0
     for i, job in enumerate(todo, 1):
         try:
-            png = run_job(args.host, job, args.ckpt, args.size, args.timeout)
+            model = args.model if args.loader == "diffusion" else args.ckpt
+            png = run_job(args.host, job, model, args.text_encoder, args.vae,
+                          args.size, args.timeout, args.loader)
             (args.out / f"{job['uuid']}.webp").write_bytes(to_webp(png, args.quality, args.crop))
             done += 1
         except Exception as e:

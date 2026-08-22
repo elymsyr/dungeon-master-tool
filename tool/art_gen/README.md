@@ -23,7 +23,23 @@ python3 tool/art_gen/generate.py \
 ```
 
 `generate.py` resume edilebilir: `out/` içinde dosyası olan job atlanır.
-Aynı script hem uzaktan hem ComfyUI'nin koştuğu makinede çalışır.
+Aynı script hem uzaktan hem ComfyUI'nin koştuğu makinede çalışır. Tüm çıktılar
+(`art_jobs.jsonl`, `out/`, `grids/`) `tool/art_gen/` içinde tutulur.
+
+## Prompt varyantlarını karşılaştırma (grid testi)
+
+Toplu üretimden önce her kategoriden rastgele 2 içerik seçilip tek grid
+resminde birleştirilir. Aynı `--seed` ile farklı `--style` denenirse grid'ler
+birebir aynı entity'leri gösterir — stil farkını yan yana okumak mümkün.
+
+```bash
+python3 tool/art_gen/prompt_grid.py --variant deneme1              # prod stil
+python3 tool/art_gen/prompt_grid.py --variant deneme2 --style "<yeni stil>"
+python3 tool/art_gen/prompt_grid.py --seed 7 --size 1024           # farklı örnek set
+```
+
+Çıktı: `out/<variant>/<uuid>.webp` (hücreler) + `grids/<variant>_s<seed>.png`
+(tek resim) + `grids/<variant>_s<seed>.json` (örnek manifesti).
 
 ## Üretim ortamı
 
@@ -39,11 +55,35 @@ Kurulumda iki tuzak:
 ## Stil tutarlılığının kaldıraçları
 
 1. Tek model, sabit `STEPS/CFG/SAMPLER/SCHEDULER` — job başına asla değişmez.
-2. `STYLE` son-eki her prompt'un sonuna kelimesi kelimesine aynı eklenir.
+2. `STYLE` bloğu (medya + doku + D&D çapası) her prompt'ta aynıdır.
    **En büyük etkiyi bu yapar.**
-3. `seed = int(uuid[:8], 16)` — aynı entity her koşuda aynı görsel; beğenilmeyeni
+3. `PALETTE` ve `MOOD` **tipe özeldir** — büyü parlak, canavar zengin doğal, eşya
+   altın/cevher, karakter sıcak. Tek muted banda sıkışmaz, D&D paletinin her yeri
+   kullanılır.
+4. `STYLE_FLAVOR` — entity'nin uuid'inin `[8:12]` hanesiyle deterministik seçilen
+   küçük stil farkları (impasto/dry-brush/glazing/palette-knife). Hepsi aynı
+   aileden ama karbon kopya değil.
+5. `seed = int(uuid[:8], 16)` — aynı entity her koşuda aynı görsel; beğenilmeyeni
    tek tek yeniden üretmek mümkün.
-4. Tipe özel `FRAMING` — stili değil, yalnızca kompozisyonu değiştirir.
+6. Tipe özel `FRAMING` — stili değil, yalnızca kompozisyonu değiştirir.
+
+## Stil neden böyle (2026-08 araştırması)
+
+Eski stil ("painted fantasy illustration, matte canvas texture, dramatic rim
+lighting, clean unmarked surface, centered composition") Flux'un **AI-default**
+görünümünü tetikleyen jenerik terimlerdi: pürüzsüz doku, kusursuz ışık, simetrik
+kompozisyon. Araştırmadan çıkan kurallar:
+
+- `digital art / concept art / render / masterpiece / clean / smooth` → AI
+  görünümünü TETİKLER; kullanma.
+- AI'nın en büyük tell'i **uniform micro-noise**: her yüzey aynı doku, aynı ton.
+  Gerçek resimde düz alanda bile ton oynaması vardır → "subtle tonal variation
+  across surfaces".
+- Waxy/sheen yüzeyler AI hissi verir → "matte finish".
+- Medyayı somut adlandır ("oil painting on canvas") + görünür fırça izi.
+- Kusur ipuçları ("slightly uneven hand-painted edges") insan eli hissi verir.
+- "classic fantasy tabletop roleplaying game art" D&D evreni çapasıdır.
+- Paleti tek banda sıkıştırma: `PALETTE` kategoriye göre değişir.
 
 ## Öğrenilenler (tekrar keşfetmeye değmez)
 

@@ -16,11 +16,60 @@ ART_TYPES = {
 # Stil tutarlılığının ana kaldıracı: her prompt'a kelimesi kelimesine aynı blok.
 # Flux'ta negatif prompt yok (cfg 1.0, distilled). "no text/no watermark" yazmak
 # modelde tersine çalışıp filigran üretimini TETİKLİYOR — negasyon kullanma.
+#
+# Araştırma bulgularına göre (2026-08):
+# - "digital art / concept art / render / masterpiece / clean / smooth" kelimeleri
+#   AI-default görünümünü TETİKLİYOR — bunlardan kaçın.
+# - AI'nın en büyük tell'i "uniform micro-noise": her yüzey aynı doku, aynı ton.
+#   Çözüm: "subtle tonal variation across surfaces" — gerçek resimde düz alanda
+#   bile ton oynaması var.
+# - Waxy/sheen yüzeyler AI hissi verir → "matte finish".
+# - Medyayı somut adlandır ("oil painting on canvas") + görünür fırça izi.
+# - Kusur ipuçları ("slightly uneven hand-painted edges") insan eli hissi verir.
+# - "classic fantasy tabletop roleplaying game art" D&D evreni çapasıdır.
+# - PALET ve MOOD burada değil, tipe özeldir (aşağıda) — renk paletinin her yeri
+#   kullanılır, her kategori tek bir muted banda sıkışmaz.
 STYLE = (
-    "painted fantasy illustration, muted earthy palette, dramatic rim lighting, "
-    "matte canvas texture, dark neutral background, centered composition, "
-    "clean unmarked surface"
+    "hand-painted oil painting on canvas, expressive painterly brushstrokes, "
+    "subtle tonal variation across surfaces, matte finish, "
+    "slightly uneven hand-painted edges, "
+    "classic fantasy tabletop roleplaying game art"
 )
+
+# Tipe özel renk paleti — D&D sanatı kategoriye göre değişir: büyü parlak,
+# canavar zengin doğal, eşya altın/cevher. Kullanıcı isteği: paletin her yeri.
+PALETTE = {
+    "monster":    "rich natural palette, deep greens, slate blues, ochres, blood red accents",
+    "spell":      "vivid arcane palette, violet, emerald, gold, crimson light",
+    "magic-item": "rich antique palette, aged gold, burnished copper, deep ruby",
+    "subclass":   "heraldic palette, deep crimson, royal blue, antique gold",
+    "feat":       "heraldic palette, deep crimson, slate blue, antique gold",
+    "background": "warm candlelit palette, amber, russet, deep brown",
+    "subspecies": "warm portrait palette, ivory, amber, deep bronze",
+    "species":    "warm portrait palette, ivory, amber, deep bronze",
+}
+
+# Tipe özel ışık ve zemin — kompozisyon gibi, stili bozmadan kategori kimliği.
+MOOD = {
+    "monster":    "dramatic chiaroscuro lighting, dark atmospheric background",
+    "spell":      "radiant magical glow, luminous energy against deep twilight",
+    "magic-item": "museum spotlight, velvet-dark backdrop",
+    "subclass":   "ceremonial lighting, dark banner background",
+    "feat":       "dramatic side-light, dark banner background",
+    "background": "warm candlelight, moody tavern atmosphere",
+    "subspecies": "soft window light, deep shadow backdrop",
+    "species":    "soft window light, deep shadow backdrop",
+}
+
+# Her entity'ye deterministik atanan küçük stil farkları. Amaç: hepsi aynı aileden
+# ama birebir karbon kopya olmasın. uuid'in sonraki 4 hex hanesiyle seçilir.
+STYLE_FLAVOR = [
+    "thick impasto highlights",
+    "loose dry-brush texture",
+    "soft glazing, sfumato edges",
+    "layered palette-knife strokes",
+    "gritty weathered surface detail",
+]
 
 # Tipe göre çerçeveleme (stil değil, kompozisyon).
 FRAMING = {
@@ -129,11 +178,12 @@ def build_prompt(uuid: str, row: dict) -> dict | None:
             if rarity:
                 subject += f", {rarity.lower()} artifact"
 
+    flavor = STYLE_FLAVOR[int(uuid[8:12], 16) % len(STYLE_FLAVOR)]
     return {
         "uuid": uuid,
         "type": t,
         "name": name,
-        "prompt": f"{subject}. {FRAMING[t]}, {STYLE}",
+        "prompt": f"{subject}. {FRAMING[t]}, {PALETTE[t]}, {MOOD[t]}, {STYLE}, {flavor}",
         "seed": int(uuid[:8], 16),
     }
 
@@ -156,6 +206,7 @@ def self_check(jobs: list[dict]) -> None:
     assert jobs, "hiç job üretilmedi"
     for j in jobs:
         assert STYLE in j["prompt"], f"stil son-eki yok: {j['name']}"
+        assert any(f in j["prompt"] for f in STYLE_FLAVOR), f"flavor yok: {j['name']}"
         assert not re.search(r"[*_`#|]", j["prompt"]), f"markdown artığı: {j['name']}"
         assert "\n" not in j["prompt"], f"newline kaldı: {j['name']}"
         assert j["seed"] == int(j["uuid"][:8], 16), "seed deterministik değil"
