@@ -48,8 +48,7 @@ python3 tool/art_gen/package_grid.py --variant v1 --packages dnd5e-srd,open5e-to
 ```
 
 Çıktı: `grids/<variant>_s<seed>/<package>.png` (paket başına grid) +
-`grids/<variant>_s<seed>/manifest.json` (seçilen örnekler) +
-`_overview.png` (tüm paketlerin dikey birleşimi). Hücreler
+`grids/<variant>_s<seed>/manifest.json` (seçilen örnekler). Hücreler
 `out/<variant>/<uuid>.webp` altında cache'lenir; yarıda kalırsa aynı komut
 resume eder.
 

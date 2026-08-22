@@ -31,8 +31,16 @@ ART_TYPES = {
 STYLE_TAIL = (
     "subtle tonal variation across surfaces, "
     "slightly uneven hand-drawn edges, "
+    "irregular handmade pigment density, "
     "classic fantasy tabletop roleplaying game art"
 )
+
+# Tam kare kaplama — en kritik kompozisyon talimatı. Beyaz kenar, boş zemin ve
+# "kenarları kesilmiş" görünümünü önler. cfg 1.0'da negasyon ("no border")
+# işe yaramadığından pozitif ifade kullanılır; her prompt'a eklenir.
+FULL_BLEED = ("borderless edge-to-edge composition, the artwork fills the entire "
+              "square frame, every corner fully painted, the background "
+              "covering the whole canvas")
 
 # Paket başına çizim tarzı. Medya somut adlandırılır; hepsi geleneksel araçlar
 # olduğundan AI-default parlaklığına düşmez. Paket kimliği = tarz.
@@ -249,11 +257,11 @@ STYLE_FLAVOR = [
 # Tipe göre çerçeveleme (stil değil, kompozisyon).
 FRAMING = {
     "monster":    "full body creature portrait, three-quarter view",
-    "spell":      "abstract magical effect, swirling arcane energy, no human figures",
-    "magic-item": "single object still life, floating against void",
+    "spell":      "abstract magical effect, swirling arcane energy",
+    "magic-item": "single object still life, dominant centerpiece",
     "subclass":   "heraldic emblem, symbolic icon",
     "feat":       "heraldic emblem, symbolic icon",
-    "background": "atmospheric character scene, full bleed edge to edge",
+    "background": "atmospheric character scene",
     "subspecies": "character portrait, bust framing",
     "species":    "character portrait, bust framing",
 }
@@ -419,7 +427,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         "package": pkg,
         "type": t,
         "name": name,
-        "prompt": (f"{subject}. {framing}, {palette_for(pkg, t)}, "
+        "prompt": (f"{subject}. {framing}, {FULL_BLEED}, {palette_for(pkg, t)}, "
                    f"{mood_for(pkg, t, uuid)}, {style}, {flavor}"),
         "seed": int(uuid[:8], 16),
     }
@@ -448,11 +456,12 @@ def self_check(jobs: list[dict]) -> None:
     assert jobs, "hiç job üretilmedi"
     for j in jobs:
         assert STYLE_TAIL in j["prompt"], f"stil kuyruğu yok: {j['name']}"
+        assert FULL_BLEED in j["prompt"], f"full-bleed talimatı yok: {j['name']}"
         assert any(f in j["prompt"] for f in STYLE_FLAVOR), f"flavor yok: {j['name']}"
         assert not re.search(r"[*_`#|]", j["prompt"]), f"markdown artığı: {j['name']}"
         assert "\n" not in j["prompt"], f"newline kaldı: {j['name']}"
         assert j["seed"] == int(j["uuid"][:8], 16), "seed deterministik değil"
-        assert 20 < len(j["prompt"]) < 1200, f"prompt boyu bozuk: {j['name']}"
+        assert 20 < len(j["prompt"]) < 1600, f"prompt boyu bozuk: {j['name']}"
         assert j["package"], f"paket yok: {j['name']}"
     by_type: dict[str, int] = {}
     for j in jobs:

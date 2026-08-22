@@ -21,7 +21,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from generate import run_job, to_webp
-from prompts import ART_TYPES, STYLE, STYLE_FLAVOR, MOOD, PALETTE, load_jobs
+from prompts import (ART_TYPES, STYLE_FLAVOR, STYLE_TAIL, load_jobs,
+                     load_subject_cache, mood_for, palette_for, style_for)
 
 BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
@@ -46,31 +47,38 @@ def sample_jobs(jobs: list[dict], per_type: int, seed: int) -> dict[str, list[di
     return out
 
 
-def apply_variant(prompt: str, t: str, style: str, palette: str | None,
+def apply_variant(job: dict, style: str | None, palette: str | None,
                   mood: str | None) -> str:
-    """Prompt'taki PALETTE/MOOD/STYLE+flavor bloklarını variant değerlerle değiştir."""
-    for f in STYLE_FLAVOR:
-        suffix = f", {STYLE}, {f}"
-        if prompt.endswith(suffix):
-            prompt = prompt[: -len(suffix)]
-            break
-    else:
-        suffix = ", " + STYLE
-        if prompt.endswith(suffix):
-            prompt = prompt[: -len(suffix)]
+    """Prompt'taki paket-bazlı stil/palet/mood bloklarını variant değerlerle değiştir."""
+    prompt = job["prompt"]
+    if style is None and palette is None and mood is None:
+        return prompt
+    pkg, t, uuid = job["package"], job["type"], job["uuid"]
+    if style is not None:
+        style_block = f"{style_for(pkg)}, {STYLE_TAIL}"
+        for f in STYLE_FLAVOR:
+            suffix = f", {style_block}, {f}"
+            if prompt.endswith(suffix):
+                prompt = prompt[: -len(suffix)]
+                break
+        else:
+            suffix = ", " + style_block
+            if prompt.endswith(suffix):
+                prompt = prompt[: -len(suffix)]
+        prompt = f"{prompt}, {style}"
     if palette is not None:
-        prompt = prompt.replace(f", {PALETTE[t]},", f", {palette},")
+        prompt = prompt.replace(f", {palette_for(pkg, t)},", f", {palette},")
     if mood is not None:
-        prompt = prompt.replace(f", {MOOD[t]},", f", {mood},")
-    return f"{prompt}, {style}"
+        prompt = prompt.replace(f", {mood_for(pkg, t, uuid)},", f", {mood},")
+    return prompt
 
 
-def generate_cell(host: str, job: dict, style: str, palette: str | None,
+def generate_cell(host: str, job: dict, style: str | None, palette: str | None,
                   mood: str | None, model: str, text_encoder: str, vae: str,
                   size: int, timeout: int, loader: str) -> bytes:
     """Webp üret (prompt'a variant stilini uygulayarak)."""
     job = dict(job)
-    job["prompt"] = apply_variant(job["prompt"], job["type"], style, palette, mood)
+    job["prompt"] = apply_variant(job, style, palette, mood)
     png = run_job(host, job, model, text_encoder, vae, size, timeout, loader)
     return to_webp(png, 90, 0.02)
 
@@ -115,8 +123,9 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--host", default="http://192.168.1.12:8188")
     p.add_argument("--jobs", type=Path, default=base / "art_jobs.jsonl")
-    p.add_argument("--packs", type=Path,
-                   default=Path(__file__).resolve().parents[2] / "flutter_app/assets/open5e_packs")
+    p.add_argument("--packs", type=Path, action="append",
+                   default=[Path(__file__).resolve().parents[2] / "flutter_app/assets/open5e_packs",
+                            Path(__file__).resolve().parent / "packs"])
     p.add_argument("--out", type=Path, default=base / "out")
     p.add_argument("--grids", type=Path, default=base / "grids")
     p.add_argument("--ckpt", default="flux1-schnell-fp8.safetensors")
@@ -125,7 +134,7 @@ def main() -> None:
     p.add_argument("--model", default="z_image_turbo_bf16.safetensors")
     p.add_argument("--text-encoder", default="qwen_3_4b.safetensors")
     p.add_argument("--vae", default="ae.safetensors")
-    p.add_argument("--style", default=STYLE, help="STYLE bloğu (variant)")
+    p.add_argument("--style", help="stil bloğu geçersiz kılma (boş=paketin kendi stili)")
     p.add_argument("--palette", help="PALETTE bloğunu geçersiz kıl (tüm tipler için)")
     p.add_argument("--mood", help="MOOD bloğunu geçersiz kıl (tüm tipler için)")
     p.add_argument("--variant", default="prod", help="çıktı klasörü/etiketi")
