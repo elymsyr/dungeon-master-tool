@@ -9,6 +9,7 @@ __pycache__
 .env
 grids
 out
+tool/art_gen/packs/
 open5e-api-staging
 supabase/.temp
 supabase/.branches
