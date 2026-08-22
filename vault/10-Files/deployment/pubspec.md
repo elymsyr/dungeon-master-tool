@@ -53,3 +53,4 @@ tags: [file]
 
 ## Notes
 - Version `12.0.0` aligns with the v12 fresh Drift schema (full Drift migration). `intl: any` is unpinned (resolved by Flutter SDK constraint).
+- `desktop_multi_window` is vendored via `dependency_overrides` → `packages/desktop_multi_window` (upstream 0.2.1 + a Linux sub-window hide-instead-of-destroy patch). See [[Multi-Window-IPC]].

@@ -14,6 +14,10 @@ class PlayerProjectionStateNotifier extends StateNotifier<ProjectionState> {
 
   void applyFull(ProjectionState next) => state = next;
 
+  /// Clears the surface — used when the window is hidden so the next show()
+  /// doesn't flash stale content before the DM pushes a fresh full state.
+  void clear() => state = const ProjectionState();
+
   void applyPatch(Map<String, dynamic> patch) {
     state = state.copyWith(
       activeItemId: patch.containsKey('activeItemId')
