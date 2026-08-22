@@ -27,12 +27,11 @@ class MindMapPainter extends CustomPainter {
   static final _colorCache = <String, Color>{};
   static final _wsLabelCache = <String, TextPainter>{};
   static final _dashedRectCache = <int, Path>{};
-  static final _arrowCache = <int, double>{};
   static final _nodeLabelCache = <String, TextPainter>{};
   static List<MindMapNode>? _lastNodes;
 
-  /// M3: node-list identity aynı kalsa bile zoom (fontSize/maxW key'leri) ve
-  /// node drag (_arrowCache endpoint key'leri) cache'leri sınırsız şişirir.
+  /// M3: node-list identity aynı kalsa bile zoom (fontSize/maxW key'leri)
+  /// cache'leri sınırsız şişirebilir.
   /// Tavan aşılınca düz clear — re-layout ucuz, LRU defteri tutmaya değmez.
   static const int _cacheCap = 600;
 
@@ -61,7 +60,6 @@ class MindMapPainter extends CustomPainter {
       _wsLabelCache.clear();
       _dashedRectCache.clear();
       _nodeLabelCache.clear();
-      _arrowCache.clear();
       // F6: nodeMap cache shares the same invalidation point.
       _nmNodesRef = null;
       _nmCache = null;
@@ -71,12 +69,10 @@ class MindMapPainter extends CustomPainter {
     // tavan aşılınca temizle (uzun oturumda bellek sızıntısı önlemi).
     if (_nodeLabelCache.length > _cacheCap ||
         _wsLabelCache.length > _cacheCap ||
-        _arrowCache.length > _cacheCap ||
         _dashedRectCache.length > _cacheCap) {
       _wsLabelCache.clear();
       _dashedRectCache.clear();
       _nodeLabelCache.clear();
-      _arrowCache.clear();
     }
   }
 
@@ -277,7 +273,6 @@ class MindMapPainter extends CustomPainter {
 
       final path = _bezierPath(srcCenter, tgtCenter);
       canvas.drawPath(path, paint);
-      _drawArrow(canvas, path, tgtCenter, paint.color, srcCenter);
     }
   }
 
@@ -301,50 +296,6 @@ class MindMapPainter extends CustomPainter {
         tgt.dx,
         tgt.dy,
       );
-  }
-
-  void _drawArrow(Canvas canvas, Path path, Offset tip, Color color,
-      Offset srcCenter) {
-    final key = Object.hash(
-      srcCenter.dx.toInt(), srcCenter.dy.toInt(),
-      tip.dx.toInt(), tip.dy.toInt(),
-    );
-
-    final angle = _arrowCache.putIfAbsent(key, () {
-      final metrics = path.computeMetrics().firstOrNull;
-      if (metrics == null || metrics.length < 12) return double.nan;
-      final tangent = metrics.getTangentForOffset(metrics.length - 10);
-      if (tangent == null) return double.nan;
-      return math.atan2(tangent.vector.dy, tangent.vector.dx);
-    });
-
-    if (angle.isNaN) return;
-
-    const arrowLen = 9.0;
-    const spread = math.pi / 6;
-
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(
-      tip,
-      Offset(
-        tip.dx - arrowLen * math.cos(angle - spread),
-        tip.dy - arrowLen * math.sin(angle - spread),
-      ),
-      paint,
-    );
-    canvas.drawLine(
-      tip,
-      Offset(
-        tip.dx - arrowLen * math.cos(angle + spread),
-        tip.dy - arrowLen * math.sin(angle + spread),
-      ),
-      paint,
-    );
   }
 
   // -------------------------------------------------------------------------
