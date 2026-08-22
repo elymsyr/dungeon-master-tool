@@ -639,44 +639,6 @@ final Map<String, DmToolColors> themePalettes = {
           )
           as DmToolColors,
 
-  'neon':
-      _dark.copyWith(
-            borderRadius: 1,
-            cardBorderRadius: 2,
-            chipBorderRadius: 4,
-            primaryBtnBg: const Color(0xFFC2003E),
-            primaryBtnText: const Color(0xFFFFFFFF),
-            actionBtnBg: const Color(0xFF00E5FF),
-            actionBtnText: const Color(0xFF0A0014),
-            buttonDefaultBg: const Color(0xFF1A0F26),
-            buttonDefaultText: const Color(0xFFE0CCFF),
-            buttonHoverBg: const Color(0xFF2A1A3A),
-            buttonPressBg: const Color(0xFF0F0518),
-            featureCardBg: const Color(0xFF14081E),
-            featureCardBorder: const Color(0xFF00E5FF),
-            featureCardAccent: const Color(0xFFFF0080),
-            tabIndicator: const Color(0xFFFF0080),
-            canvasBg: const Color(0xFF0A0014),
-            gridColor: const Color(0xFF1F0F30),
-            nodeBgNote: const Color(0xFFFFE6F5),
-            nodeBgEntity: const Color(0xFF14081E),
-            nodeText: const Color(0xFF4A0066),
-            lineColor: const Color(0xFF5F2D80),
-            lineSelected: const Color(0xFFFF0080),
-            htmlText: const Color(0xFFE0CCFF),
-            htmlLink: const Color(0xFF00E5FF),
-            htmlHeader: const Color(0xFFFF0080),
-            uiFloatingBg: const Color(0xE614081E),
-            uiFloatingHoverBg: const Color(0xFFFF0080),
-            // Neon: cyberpunk — magenta+cyan on near-black, slight-bevel.
-            srdParchment: const Color(0xFF0A0014),
-            srdInk: const Color(0xFFE0CCFF),
-            srdHeadingRed: const Color(0xFFFF0080),
-            srdRule: const Color(0xFF00E5FF),
-            srdSubtitle: const Color(0xFF9D7BB8),
-          )
-          as DmToolColors,
-
   // ─── terminal ─── Matrix/CRT: hacker green on pitch black. Uniform R5. Mono.
   'terminal':
       _dark.copyWith(
@@ -713,46 +675,6 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFF7FFF7F),
             srdRule: const Color(0xFF00FF41),
             srdSubtitle: const Color(0xFF4D8C4D),
-          )
-          as DmToolColors,
-
-  // ─── scroll ─── burnt sepia grimoire + crimson seal. EB Garamond serif.
-  'scroll':
-      _dark.copyWith(
-            fontFamily: 'EB Garamond',
-            useSerif: true,
-            borderRadius: 2,
-            cardBorderRadius: 3,
-            chipBorderRadius: 5,
-            primaryBtnBg: const Color(0xFF8B0000),
-            primaryBtnText: const Color(0xFFF5E6CA),
-            actionBtnBg: const Color(0xFFB5651D),
-            actionBtnText: const Color(0xFFF5E6CA),
-            buttonDefaultBg: const Color(0xFF3A2818),
-            buttonDefaultText: const Color(0xFFE8D9B5),
-            buttonHoverBg: const Color(0xFF52382A),
-            buttonPressBg: const Color(0xFF22150C),
-            featureCardBg: const Color(0xFF3A2818),
-            featureCardBorder: const Color(0xFF8B6B3A),
-            featureCardAccent: const Color(0xFF8B0000),
-            tabIndicator: const Color(0xFF8B0000),
-            canvasBg: const Color(0xFF22150C),
-            gridColor: const Color(0xFF52382A),
-            nodeBgNote: const Color(0xFFE8D9B5),
-            nodeBgEntity: const Color(0xFF3A2818),
-            nodeText: const Color(0xFF2C1810),
-            lineColor: const Color(0xFF8B6B3A),
-            lineSelected: const Color(0xFF8B0000),
-            htmlText: const Color(0xFFE8D9B5),
-            htmlLink: const Color(0xFFB5651D),
-            htmlHeader: const Color(0xFFD4A85A),
-            uiFloatingBg: const Color(0xE63A2818),
-            uiFloatingHoverBg: const Color(0xFF8B0000),
-            srdParchment: const Color(0xFF22150C),
-            srdInk: const Color(0xFFE8D9B5),
-            srdHeadingRed: const Color(0xFFD4A85A),
-            srdRule: const Color(0xFF8B0000),
-            srdSubtitle: const Color(0xFFB5985A),
           )
           as DmToolColors,
 
@@ -811,46 +733,6 @@ final Map<String, DmToolColors> themePalettes = {
           )
           as DmToolColors,
 
-  // ─── goldenrod ─── gold on charcoal, Roman capitals. Cinzel display.
-  'goldenrod':
-      _dark.copyWith(
-            fontFamily: 'Cinzel',
-            useSerif: true,
-            borderRadius: 4,
-            cardBorderRadius: 6,
-            chipBorderRadius: 9,
-            primaryBtnBg: const Color(0xFFB8860B),
-            primaryBtnText: const Color(0xFF1A1410),
-            actionBtnBg: const Color(0xFFFFD700),
-            actionBtnText: const Color(0xFF1A1410),
-            buttonDefaultBg: const Color(0xFF2A2218),
-            buttonDefaultText: const Color(0xFFFFD700),
-            buttonHoverBg: const Color(0xFF3D3324),
-            buttonPressBg: const Color(0xFF14100A),
-            featureCardBg: const Color(0xFF2A2218),
-            featureCardBorder: const Color(0xFFB8860B),
-            featureCardAccent: const Color(0xFFFFD700),
-            tabIndicator: const Color(0xFFFFD700),
-            canvasBg: const Color(0xFF1A1410),
-            gridColor: const Color(0xFF3D3324),
-            nodeBgNote: const Color(0xFFFFF0C2),
-            nodeBgEntity: const Color(0xFF2A2218),
-            nodeText: const Color(0xFF3D2410),
-            lineColor: const Color(0xFF8B6B1A),
-            lineSelected: const Color(0xFFFFD700),
-            htmlText: const Color(0xFFFFE6A8),
-            htmlLink: const Color(0xFFFFD700),
-            htmlHeader: const Color(0xFFFFEA88),
-            uiFloatingBg: const Color(0xE62A2218),
-            uiFloatingHoverBg: const Color(0xFFFFD700),
-            srdParchment: const Color(0xFF1A1410),
-            srdInk: const Color(0xFFFFE6A8),
-            srdHeadingRed: const Color(0xFFFFD700),
-            srdRule: const Color(0xFFB8860B),
-            srdSubtitle: const Color(0xFFB89A5A),
-          )
-          as DmToolColors,
-
   // ─── jade ─── deep jade green + ivory, oriental tome. Noto Serif.
   'jade':
       _dark.copyWith(
@@ -888,45 +770,6 @@ final Map<String, DmToolColors> themePalettes = {
             srdHeadingRed: const Color(0xFFD4AF37),
             srdRule: const Color(0xFF00A86B),
             srdSubtitle: const Color(0xFF9AB89C),
-          )
-          as DmToolColors,
-
-  // ─── vapor ─── vaporwave: pink+cyan on dark purple. Soft pill. Orbitron.
-  'vapor':
-      _dark.copyWith(
-            fontFamily: 'Orbitron',
-            borderRadius: 12,
-            cardBorderRadius: 16,
-            chipBorderRadius: 999,
-            primaryBtnBg: const Color(0xFFFF6EC7),
-            primaryBtnText: const Color(0xFF1A0033),
-            actionBtnBg: const Color(0xFF00FFFF),
-            actionBtnText: const Color(0xFF1A0033),
-            buttonDefaultBg: const Color(0xFF3D1A5C),
-            buttonDefaultText: const Color(0xFFFFD6F5),
-            buttonHoverBg: const Color(0xFF52297A),
-            buttonPressBg: const Color(0xFF1F0A33),
-            featureCardBg: const Color(0xFF3D1A5C),
-            featureCardBorder: const Color(0xFF00FFFF),
-            featureCardAccent: const Color(0xFFFF6EC7),
-            tabIndicator: const Color(0xFFFF6EC7),
-            canvasBg: const Color(0xFF2A0F3D),
-            gridColor: const Color(0xFF52297A),
-            nodeBgNote: const Color(0xFFFFE0F5),
-            nodeBgEntity: const Color(0xFF3D1A5C),
-            nodeText: const Color(0xFF4A0066),
-            lineColor: const Color(0xFF7A4DA8),
-            lineSelected: const Color(0xFFFF6EC7),
-            htmlText: const Color(0xFFFFD6F5),
-            htmlLink: const Color(0xFF00FFFF),
-            htmlHeader: const Color(0xFFFF6EC7),
-            uiFloatingBg: const Color(0xE63D1A5C),
-            uiFloatingHoverBg: const Color(0xFFFF6EC7),
-            srdParchment: const Color(0xFF2A0F3D),
-            srdInk: const Color(0xFFFFD6F5),
-            srdHeadingRed: const Color(0xFFFF6EC7),
-            srdRule: const Color(0xFF00FFFF),
-            srdSubtitle: const Color(0xFFB89AC8),
           )
           as DmToolColors,
 
@@ -1347,13 +1190,9 @@ const themeNames = [
   'sunset',
   'nord',
   'rose',
-  'neon',
   'terminal',
-  'scroll',
   'terra',
-  'goldenrod',
   'jade',
-  'vapor',
   'mono',
   'carmine',
 ];
