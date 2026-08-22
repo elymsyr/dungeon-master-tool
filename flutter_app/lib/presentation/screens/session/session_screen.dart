@@ -16,6 +16,7 @@ import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/providers/world_characters_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/session.dart';
@@ -1829,6 +1830,14 @@ class _CombatantRow extends ConsumerWidget {
     // original DB card on tap.
     final statsMap = Map<String, dynamic>.from(c.stats);
 
+    // HP dice spec for the roll button: snapshot copy first, then the
+    // source entity's flat `hp_dice`. Watched per-row so the button appears
+    // for freshly-added monsters without a snapshot copy too.
+    final hpEntity = ref.watch(
+      entityProvider.select((m) => c.entityId != null ? m[c.entityId] : null),
+    );
+    final hpDiceSpec = _hpDiceSpec(statsMap, hpEntity);
+
     return GestureDetector(
       onTap: () => onSelect(c.entityId),
       child: Container(
@@ -1888,13 +1897,15 @@ class _CombatantRow extends ConsumerWidget {
                       const SizedBox(width: 2),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => _showInlineEdit(
-                            context,
-                            label: col.label,
-                            initial: val,
-                            onSubmit: (v) =>
-                                onSetStat(c, col.subFieldKey, v, cfg),
-                          ),
+                          onTap: () => col.subFieldKey == 'hp'
+                              ? _showHpEditDialog(context, ref, c, cfg, statsMap, hpDiceSpec, col.label)
+                              : _showInlineEdit(
+                                  context,
+                                  label: col.label,
+                                  initial: val,
+                                  onSubmit: (v) =>
+                                      onSetStat(c, col.subFieldKey, v, cfg),
+                                ),
                           child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette),
                         ),
                       ),
@@ -1921,14 +1932,20 @@ class _CombatantRow extends ConsumerWidget {
               return SizedBox(
                 width: col.width > 0 ? col.width.toDouble() : 60,
                 child: InkWell(
-                  onTap: () => _showInlineEdit(
-                    context,
-                    label: col.label,
-                    // Initiative opens empty — the dice spec it would prefill
-                    // is never what a DM wants to keep; they type the score.
-                    initial: isInitCol ? '' : val,
-                    onSubmit: (v) => onSetStat(c, col.subFieldKey, v, cfg),
-                  ),
+                  onTap: () {
+                    if (col.subFieldKey == 'hp') {
+                      _showHpEditDialog(context, ref, c, cfg, statsMap, hpDiceSpec, col.label);
+                      return;
+                    }
+                    _showInlineEdit(
+                      context,
+                      label: col.label,
+                      // Initiative opens empty — the dice spec it would prefill
+                      // is never what a DM wants to keep; they type the score.
+                      initial: isInitCol ? '' : val,
+                      onSubmit: (v) => onSetStat(c, col.subFieldKey, v, cfg),
+                    );
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     alignment: Alignment.center,
@@ -2027,6 +2044,89 @@ class _CombatantRow extends ConsumerWidget {
     );
   }
 
+  /// HP editor: current + max HP fields, plus a roll button that renews max
+  /// HP from the creature's `hp_dice` spec and fills the bar by setting HP
+  /// equal to it. Both values are committed on Save via [onSetStat].
+  void _showHpEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Combatant c,
+    EncounterConfig cfg,
+    Map<String, dynamic> statsMap,
+    String? hpDiceSpec,
+    String label,
+  ) {
+    final hpController =
+        TextEditingController(text: statsMap['hp']?.toString() ?? '');
+    final maxHpController =
+        TextEditingController(text: statsMap['max_hp']?.toString() ?? '');
+    final l10n = L10n.of(context)!;
+
+    void applyRoll() {
+      final rolled = ref.read(combatProvider.notifier).rollHpDice(c.id);
+      if (rolled == null) return;
+      hpController.text = '$rolled';
+      maxHpController.text = '$rolled';
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit $label', style: const TextStyle(fontSize: 14)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: hpController,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(labelText: label),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: maxHpController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                labelText: l10n.sessionMaxHp,
+                suffixIcon: hpDiceSpec != null
+                    ? Tooltip(
+                        message: l10n.sessionRollHpDice,
+                        child: IconButton(
+                          icon: const Icon(Icons.casino),
+                          onPressed: applyRoll,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final hp = hpController.text.trim();
+              final maxHp = maxHpController.text.trim();
+              // Max first so the hp clamp below never fights the new max.
+              if (maxHp.isNotEmpty) onSetStat(c, 'max_hp', maxHp, cfg);
+              if (hp.isNotEmpty) onSetStat(c, 'hp', hp, cfg);
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.btnSave),
+          ),
+        ],
+      ),
+    ).whenComplete(() {
+      hpController.dispose();
+      maxHpController.dispose();
+    });
+  }
+
   /// Pops a tiny inline-edit dialog with a single text field. Used for
   /// every editable cell in the encounter table — the user types a value
   /// and the new string is written back to the entity's combat_stats via
@@ -2066,6 +2166,16 @@ class _CombatantRow extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Resolve the HP dice spec shown on the row's roll button: the snapshot's
+  /// `hp_dice` copy first, then the source entity's flat `hp_dice` field.
+  /// Null → no roll button (nothing to roll).
+  String? _hpDiceSpec(Map<String, dynamic> statsMap, Entity? entity) {
+    final snapshot = statsMap['hp_dice']?.toString() ?? '';
+    if (snapshot.trim().isNotEmpty) return snapshot;
+    final v = entity?.fields['hp_dice'];
+    return v?.toString();
   }
 }
 

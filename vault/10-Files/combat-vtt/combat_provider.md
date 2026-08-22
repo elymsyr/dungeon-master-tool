@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/combat_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-21
+updated: 2026-08-22
 tags: [file]
 ---
 # `combat_provider.dart`
@@ -23,7 +23,7 @@ tags: [file]
 - Triggers: constructor calls `_loadFromCampaign()`; provider rebuild on the 3 watched revisions.
 
 **Outputs**
-- Public API: `combatProvider` (`StateNotifierProvider<CombatNotifier, CombatState>`). Methods: `createEncounter/switchEncounter/deleteEncounter/renameEncounter`, `addCombatantFromEntity/addCombatantForCharacter/addDirectRow/addAllPlayers/deleteCombatant/clearAll`, `nextTurn/rollInitiatives`, `modifyHp/setStat/addCondition/removeCondition/updateConditionDuration`, `updateSessionNotes/addLog`, `undo/redo`, `saveMapData/toggleTokenHidden/saveFogAndAnnotation/updateGridSettings`, `getSessionState/loadSessionState`.
+- Public API: `combatProvider` (`StateNotifierProvider<CombatNotifier, CombatState>`). Methods: `createEncounter/switchEncounter/deleteEncounter/renameEncounter`, `addCombatantFromEntity/addCombatantForCharacter/addDirectRow/addAllPlayers/deleteCombatant/clearAll`, `nextTurn/rollInitiatives`, `modifyHp/setStat/addCondition/removeCondition/updateConditionDuration`, `rollHpDice`, `updateSessionNotes/addLog`, `undo/redo`, `saveMapData/toggleTokenHidden/saveFogAndAnnotation/updateGridSettings`, `getSessionState/loadSessionState`.
 - Writes (Drift tables): indirectly — patches `world_settings.settings_json['combat_state']`.
 - Supabase pushed / RPC: indirectly via `activeCampaignProvider.notifier.saveSettingsPatch` (debounced).
 - Events emitted (`EventBus`): `sessionCombatantAdded`, `sessionTurnAdvanced`, `sessionCombatantUpdated` (HP change), each tagged with `campaignId`.
@@ -44,6 +44,7 @@ tags: [file]
 - HP/AC write-back: `_syncCharacterFields` mirrors edits onto the source character entity — writes BOTH flat top-level keys (`hp`/`max_hp`/`ac`) AND the nested `combat_stats` sub-map (skipping the nested write caused the card HP to drift behind the header bar).
 - Initiative: `_rollInitFromSpec` = `1d20 + _evalDiceSpec(spec)`. `_diceSpecRegex` = `([+-])?(\d*)d(\d+)|([+-])?(\d+)` — parses arbitrary mixes like `1d20+3`, `+2+1d6-1`. `rollInitiatives` re-rolls **every** combatant on every call — spec comes from `combat_stats[initiative]` first, then the flat `initiative_modifier` (`_flatInitSpec`); the old "monsters with `initiative_score` are frozen" short-circuit was removed so repeated rolls always produce fresh values. `setStat` on the initiative subfield updates the canonical `c.init` and re-sorts (descending) so a manual table edit shows and reorders immediately. The desktop row and mobile card both display the rolled `c.init` (not the dice spec); the init inline-edit opens empty.
 - Initiative "modifier value": new combatants start at the **flat modifier only** — `_flatModValue(spec)` sums only non-dice terms in the spec (ignores `NdM`), so a fresh add shows `+3`/`2`/`0` instead of a `1d20+…` roll (characters from `combat_stats[initiative]`, monsters from `initiative_modifier`). `resetInitModifiers` (new "Reset Initiative" menu item under Roll Initiative, desktop + mobile) restores every combatant to that same flat modifier in one tap. Shared `_initSpecFor(c, entities, cfg)` resolves the spec for both `rollInitiatives` and `resetInitModifiers`.
+- HP dice roll: `rollHpDice(combatantId)` is a **pure read** — it resolves the creature's `hp_dice` spec via `_hpDiceSpecFor` (snapshot `hp_dice` copy first, then the source entity's flat `hp_dice`, e.g. `2d8+2`) and returns `_evalDiceSpec(spec)` (null when no spec). The encounter HP editor's roll button calls it to renew max HP (and fill the bar) — the rolled value lands in both the max-HP and HP fields; the editor commits both via `setStat` (max first so the hp clamp never fights the new max). No state is mutated by the roll itself.
 - `combatCapableSlugs`: category slugs where `allowedInSections.contains('encounter')`. Characters are always addable regardless of slug.
 - `nextTurn`: increments turnIndex, wraps to round+1; on a new round, decrements all condition durations and drops expired ones.
 - `getSessionState`: forced JSON round-trip (`jsonDecode(jsonEncode(...))`) because freezed `Encounter.toJson` lacks `explicitToJson` — without it nested `Combatant`/`CombatCondition` stay as object refs and `loadSessionState` crashes.

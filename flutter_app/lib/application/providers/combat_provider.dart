@@ -573,6 +573,23 @@ class CombatNotifier extends StateNotifier<CombatState>
     return _flatInitSpec(entity.fields);
   }
 
+  /// Resolve the HP dice spec for a combatant: the snapshot's `hp_dice` copy
+  /// first (defensive), then the source entity's flat `hp_dice` field (the
+  /// builtin v2 monster/NPC schema stores it top-level). Null when nothing
+  /// exposes one → the row has nothing to roll.
+  String? _hpDiceSpecFor(Combatant c, Map<String, Entity> entities) {
+    final snapshot = c.stats['hp_dice']?.toString() ?? '';
+    if (snapshot.trim().isNotEmpty) return snapshot;
+    if (c.entityId == null) return null;
+    final entity = entities[c.entityId] ??
+        _characterByEntityId(c.entityId)?.entity;
+    if (entity == null) return null;
+    final v = entity.fields['hp_dice'];
+    if (v == null) return null;
+    final spec = v.toString().trim();
+    return spec.isEmpty ? null : spec;
+  }
+
   /// Roll 1d[dSides] + the parsed dice spec for an initiative roll.
   /// Spec accepts an arbitrary mix of flat modifiers and dice rolls,
   /// e.g. `-2`, `+1d4`, `1d20+3`, `+2+1d6-1`. Empty / null → just 1d[dSides].
@@ -705,6 +722,26 @@ class CombatNotifier extends StateNotifier<CombatState>
     final c = updated.firstWhere((c) => c.id == combatantId);
     _syncCharacterFields(c.entityId, hp: c.hp, maxHp: c.maxHp, ac: c.ac);
     _saveAndNotify();
+  }
+
+  /// Roll a combatant's HP dice (from its source entity's `hp_dice` spec,
+  /// e.g. `2d8+2`) and return the result. The encounter HP editor's roll
+  /// button uses this to renew max HP (and fill the bar). Pure read — no
+  /// state mutation. Null when no dice spec is available.
+  int? rollHpDice(String combatantId) {
+    final enc = state.activeEncounter;
+    if (enc == null) return null;
+    Combatant? match;
+    for (final c in enc.combatants) {
+      if (c.id == combatantId) {
+        match = c;
+        break;
+      }
+    }
+    if (match == null) return null;
+    final spec = _hpDiceSpecFor(match, _getEntities());
+    if (spec == null) return null;
+    return _evalDiceSpec(spec);
   }
 
   void addCondition(String combatantId, String condName, int? duration, {String? entityId}) {

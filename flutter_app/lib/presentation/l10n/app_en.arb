@@ -273,6 +273,7 @@
   "sessionAddPlayersMenu": "Add Players...",
   "sessionAddPlayersTitle": "Add Players",
   "sessionRollInitiative": "Roll Initiative",
+  "sessionRollHpDice": "Roll HP dice",
   "sessionResetInitiative": "Reset Initiative",
   "sessionClearAll": "Clear All",
   "sessionActions": "Actions",
