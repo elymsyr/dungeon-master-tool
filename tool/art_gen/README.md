@@ -1,18 +1,25 @@
 # art_gen — içerik görselleri üretimi
 
-open5e pack'lerindeki entity'lere AI ile görsel üretir. Stil tutarlılığı hedefi:
-tüm görseller tek bir çizim tarzında ve D&D estetiğinde olmalı.
+open5e pack'lerindeki ve built-in SRD 5.2.1 pack'indeki entity'lere AI ile görsel
+üretir. Hedef: her paketin kendi çizim tarzı, her kategorinin kendi renk paleti
+ve arka planı — ama hepsi D&D estetiğinde ve AI görünümünden uzak.
 
 ## Kapsam
 
-22.192 pack entity'sinin **5.513'ü** görsele değer. Dışarıda kalanlar
-`creature-action` (10.229) ve `trait` (6.434) — bunlar bir nesne değil, kural
-cümlesi ("Bite. Melee Weapon Attack: +7", "Amphibious."). Kapsam
-`ART_TYPES` ile belirlenir.
+Open5e pack'leri + built-in SRD pack'inde **6.760** entity görsele değer.
+Dışarıda kalanlar `creature-action` ve `trait` — bunlar bir nesne değil, kural
+cümlesi ("Bite. Melee Weapon Attack: +7", "Amphibious."). Kapsam `ART_TYPES`
+ile belirlenir.
 
 ## Kullanım
 
+Built-in SRD pack'i (Dart'ta el yazımı `srd_core`) önce `.pkg.json`'a dökülür,
+sonra prompt'lar tüm pack'lerden üretilir:
+
 ```bash
+# built-in SRD 5.2.1 pack'ini dök (gitignored, yeniden üretilebilir)
+(cd flutter_app && dart run tool/srd_art_dump/bin/dump_srd.dart ../tool/art_gen/packs/dnd5e-srd.pkg.json)
+
 python3 tool/art_gen/prompts.py --self-check          # doğrulama
 python3 tool/art_gen/prompts.py --sample 3            # tip başına örnek prompt
 python3 tool/art_gen/prompts.py --out art_jobs.jsonl
@@ -26,20 +33,36 @@ python3 tool/art_gen/generate.py \
 Aynı script hem uzaktan hem ComfyUI'nin koştuğu makinede çalışır. Tüm çıktılar
 (`art_jobs.jsonl`, `out/`, `grids/`) `tool/art_gen/` içinde tutulur.
 
-## Prompt varyantlarını karşılaştırma (grid testi)
+## Paket grid testi (paket × kategori)
 
-Toplu üretimden önce her kategoriden rastgele 2 içerik seçilip tek grid
-resminde birleştirilir. Aynı `--seed` ile farklı `--style` denenirse grid'ler
-birebir aynı entity'leri gösterir — stil farkını yan yana okumak mümkün.
+Her paket ve içindeki her görsel üretilen kategoriden `--per-type` (varsayılan 2)
+entity seçilir, üretilir ve **paket başına tek grid** resminde birleştirilir.
+Sütun = kategori, satır = o kategoriden seçilen örnekler. Paket başlığı ve
+stili grid başlığında yazar; paketler arası tarz farkı bu yüzden bir bakışta
+okunur.
 
 ```bash
-python3 tool/art_gen/prompt_grid.py --variant deneme1              # prod stil
-python3 tool/art_gen/prompt_grid.py --variant deneme2 --style "<yeni stil>"
-python3 tool/art_gen/prompt_grid.py --seed 7 --size 1024           # farklı örnek set
+python3 tool/art_gen/package_grid.py --dry-run                        # seçimi gör
+python3 tool/art_gen/package_grid.py --variant pkg                    # tüm paketler
+python3 tool/art_gen/package_grid.py --variant v1 --packages dnd5e-srd,open5e-tob3
 ```
 
-Çıktı: `out/<variant>/<uuid>.webp` (hücreler) + `grids/<variant>_s<seed>.png`
-(tek resim) + `grids/<variant>_s<seed>.json` (örnek manifesti).
+Çıktı: `grids/<variant>_s<seed>/<package>.png` (paket başına grid) +
+`grids/<variant>_s<seed>/manifest.json` (seçilen örnekler) +
+`_overview.png` (tüm paketlerin dikey birleşimi). Hücreler
+`out/<variant>/<uuid>.webp` altında cache'lenir; yarıda kalırsa aynı komut
+resume eder.
+
+## Prompt varyantlarını karşılaştırma (tek stil grid testi)
+
+Eski tek-stil karşılaştırması `prompt_grid.py` duruyor: her kategoriden rastgele
+2 içerik seçip tek grid resminde birleştirir; `--style`/`--palette`/`--mood` ile
+varyant dener.
+
+```bash
+python3 tool/art_gen/prompt_grid.py --variant deneme1
+python3 tool/art_gen/prompt_grid.py --variant deneme2 --style "<yeni stil>"
+```
 
 ## Üretim ortamı
 
@@ -55,17 +78,21 @@ Kurulumda iki tuzak:
 ## Stil tutarlılığının kaldıraçları
 
 1. Tek model, sabit `STEPS/CFG/SAMPLER/SCHEDULER` — job başına asla değişmez.
-2. `STYLE` bloğu (medya + doku + D&D çapası) her prompt'ta aynıdır.
-   **En büyük etkiyi bu yapar.**
-3. `PALETTE` ve `MOOD` **tipe özeldir** — büyü parlak, canavar zengin doğal, eşya
-   altın/cevher, karakter sıcak. Tek muted banda sıkışmaz, D&D paletinin her yeri
-   kullanılır.
-4. `STYLE_FLAVOR` — entity'nin uuid'inin `[8:12]` hanesiyle deterministik seçilen
-   küçük stil farkları (impasto/dry-brush/glazing/palette-knife). Hepsi aynı
-   aileden ama karbon kopya değil.
-5. `seed = int(uuid[:8], 16)` — aynı entity her koşuda aynı görsel; beğenilmeyeni
+2. **Çizim tarzı pakete özeldir** (`PACKAGE_STYLE[pkg]`). Her paketin kendi
+   medyası vardır (yağlı boya, suluboya+ink, gravür, linocut, tempera+altın
+   varak, risograph…). Hepsi somut geleneksel araçlar olduğundan AI-default
+   parlaklığına düşmez; ortak anti-AI kuyruk (`STYLE_TAIL`) tüm paketlerde aynı.
+3. **Renk paleti (paket, kategori) ikilisine özeldir** — paket baz paleti
+   (`PACKAGE_PALETTE`, paket adı + kapak/banner görselinin baskın tonlarından
+   türetilir) + kategori aksanı (`CATEGORY_PALETTE`). Karanlık zorunlu değil:
+   tob3 aydınlık teal/aqua, "Spells That Don't Suck" parlak, a5e-ag gün ışığı.
+4. **Arka plan/ışık (paket, kategori) ikilisine özeldir** — paket ışık yönü
+   (`PACKAGE_LIGHT`) + kategori zemini (`CATEGORY_BG`).
+5. `STYLE_FLAVOR` — entity'nin uuid'inin `[8:12]` hanesiyle deterministik seçilen
+   küçük, medya-agnostik stil farkları. Aynı paket içinde karbon kopya olmasın.
+6. `seed = int(uuid[:8], 16)` — aynı entity her koşuda aynı görsel; beğenilmeyeni
    tek tek yeniden üretmek mümkün.
-6. Tipe özel `FRAMING` — stili değil, yalnızca kompozisyonu değiştirir.
+7. Tipe özel `FRAMING` — stili değil, yalnızca kompozisyonu değiştirir.
 
 ## Stil neden böyle (2026-08 araştırması)
 
@@ -74,16 +101,19 @@ lighting, clean unmarked surface, centered composition") Flux'un **AI-default**
 görünümünü tetikleyen jenerik terimlerdi: pürüzsüz doku, kusursuz ışık, simetrik
 kompozisyon. Araştırmadan çıkan kurallar:
 
-- `digital art / concept art / render / masterpiece / clean / smooth` → AI
-  görünümünü TETİKLER; kullanma.
+- `digital art / concept art / render / masterpiece / clean / smooth / perfect /
+  8k` → AI görünümünü TETİKLER; kullanma.
 - AI'nın en büyük tell'i **uniform micro-noise**: her yüzey aynı doku, aynı ton.
   Gerçek resimde düz alanda bile ton oynaması vardır → "subtle tonal variation
   across surfaces".
-- Waxy/sheen yüzeyler AI hissi verir → "matte finish".
+- AI varsayılanı yumuşak/yönsüz ışıktır → **yönlü ışık** (nereden geldiği belli)
+  ve sert gölge iste.
+- Simetri/AI-kusursuzluğu kır → hafif kompozisyon kusuru, elle çizilmiş kenar.
+- Waxy/sheen yüzeyler AI hissi verir → boyalı medyada "matte finish".
 - Medyayı somut adlandır ("oil painting on canvas") + görünür fırça izi.
-- Kusur ipuçları ("slightly uneven hand-painted edges") insan eli hissi verir.
 - "classic fantasy tabletop roleplaying game art" D&D evreni çapasıdır.
-- Paleti tek banda sıkıştırma: `PALETTE` kategoriye göre değişir.
+- Paleti tek banda sıkıştırma: palet artık pakete göre değişir ve aydınlık
+  olabilir.
 
 ## Öğrenilenler (tekrar keşfetmeye değmez)
 

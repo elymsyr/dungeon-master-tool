@@ -50,10 +50,13 @@ docker-compose down && docker-compose up -d
 
 ## Görsel Üretim Pipeline'ı
 
-### 1. Prompt Üretimi (prompt_jobs.jsonl)
+### 1. Prompt Üretimi (art_jobs.jsonl)
 
 ```bash
-# Pack dosyalarından job listesi üret
+# built-in SRD 5.2.1 pack'ini Dart'tan dök (gitignored, yeniden üretilebilir)
+(cd flutter_app && dart run tool/srd_art_dump/bin/dump_srd.dart ../tool/art_gen/packs/dnd5e-srd.pkg.json)
+
+# Pack dosyalarından job listesi üret (open5e pack'leri + built-in SRD)
 python3 tool/art_gen/prompts.py --out art_jobs.jsonl
 
 # Doğrulama (self-check)
@@ -63,7 +66,7 @@ python3 tool/art_gen/prompts.py --self-check
 python3 tool/art_gen/prompts.py --sample 3
 ```
 
-Çıktı: `art_jobs.jsonl` — her satır `{uuid, type, name, prompt, seed}`.
+Çıktı: `art_jobs.jsonl` — her satır `{uuid, package, type, name, prompt, seed}`.
 Tüm çıktılar `tool/art_gen/` içine düşer.
 
 ### 2. Görsel Üretimi (generate.py)
@@ -110,27 +113,43 @@ Yarıda kalırsanız same komutu tekrar çalıştırmanız yeterli.
 
 ## Stil Tutarlılığı
 
-Ortak `STYLE` bloğu (medya + doku + D&D çapası) tüm görsellerde aynıdır:
+Stil üç katmanda değişir (2026-08 yeniden düzenleme — "paketler arasında tarz
+değişsin"):
 
+1. **Çizim tarzı pakete özeldir** — `PACKAGE_STYLE[pkg]` her pakete farklı bir
+   geleneksel medya atar (yağlı boya, suluboya+ink, gravür, linocut, tempera +
+   altın varak, risograph…). Ortak anti-AI kuyruk `STYLE_TAIL` (ton oynaması +
+   elle çizilmiş kenar + D&D çapası) tüm paketlerde aynıdır.
+2. **Renk paleti (paket, kategori) ikilisine özeldir** — `PACKAGE_PALETTE[pkg]`
+   (paket adı + kapak/banner tonlarından) + `CATEGORY_PALETTE[cat]` aksanı.
+   Karanlık zorunlu değil; pakete göre aydınlık/loş karışık.
+3. **Arka plan/ışık (paket, kategori) ikilisine özeldir** — `PACKAGE_LIGHT[pkg]`
+   + `CATEGORY_BG[cat]`.
+
+`STYLE_FLAVOR` entity'nin uuid `[8:12]` hanesiyle deterministik seçilir; seed
+`uuid[:8]`'den türetilir → aynı entity her zaman aynı görseli üretir.
+
+### Paket grid testi (package_grid.py)
+
+Her paket ve içindeki her kategoriden `--per-type` (varsayılan 2) entity seçilir,
+üretilir ve paket başına tek grid resminde birleştirilir. Sütun = kategori.
+
+```bash
+python3 tool/art_gen/package_grid.py --dry-run                 # seçimi gör
+python3 tool/art_gen/package_grid.py --variant pkg             # tüm paketler
+python3 tool/art_gen/package_grid.py --variant v1 --packages dnd5e-srd,open5e-tob3
 ```
-hand-painted oil painting on canvas, expressive painterly brushstrokes,
-subtle tonal variation across surfaces, matte finish,
-slightly uneven hand-painted edges,
-classic fantasy tabletop roleplaying game art
-```
 
-Her kategori kendi `PALETTE` + `MOOD` bloğunu taşır (büyü parlak, canavar zengin
-doğal, eşya altın/cevher, karakter sıcak) — D&D paletinin her yeri kullanılır.
-Entity'ye uuid'den deterministik atanan `STYLE_FLAVOR` (impasto / dry-brush /
-glazing / palette-knife / weathered) eklenir. Seed `uuid[:8]`'den türetilir →
-aynı entity her zaman aynı görseli üretir.
+Çıktı `tool/art_gen/grids/<variant>_s<seed>/` altına: `<package>.png` (paket
+başına grid), `manifest.json`, `_overview.png` (tüm paketlerin dikey birleşimi).
+Hücreler `out/<variant>/<uuid>.webp` altında cache'lenir — yarıda kalırsa aynı
+komut resume eder.
 
-### Prompt varyantlarını karşılaştırma (prompt_grid.py)
+### Tek stil grid testi (prompt_grid.py)
 
-Toplu üretimden önce her kategoriden rastgele N içerik seçilir, üretilir ve tek
-grid resminde birleştirilir. Aynı `--seed` ile farklı `--style`/`--palette`/
-`--mood` denenerek stiller yan yana karşılaştırılır. Çıktı
-`tool/art_gen/grids/` altına düşer.
+Her kategoriden rastgele N içerik seçilir, üretilir ve tek grid resminde
+birleştirilir. Aynı `--seed` ile farklı `--style`/`--palette`/`--mood` denenerek
+stiller yan yana karşılaştırılır. Çıktı `tool/art_gen/grids/` altına düşer.
 
 ```bash
 python3 tool/art_gen/prompt_grid.py --variant deneme1

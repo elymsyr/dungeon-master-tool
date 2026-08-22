@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-"""open5e pack'lerinden Flux prompt'u üretir.
+"""open5e pack'lerinden + built-in SRD pack'inden Flux prompt'u üretir.
 
-Çıktı: art_jobs.jsonl — her satır {uuid, type, name, prompt, seed}.
+Çıktı: art_jobs.jsonl — her satır {uuid, package, type, name, prompt, seed}.
 Seed uuid'den türetilir → aynı entity her koşuda aynı görseli verir.
+
+Stil katmanları (2026-08 yeniden düzenleme — "paketler arasında tarz değişsin"):
+- ÇİZİM TARZI → pakete özel (PACKAGE_STYLE[pkg]). Her paketin kendi medyası.
+- RENK PALETİ → (paket, kategori) ikilisine özel: paket baz paleti + kategori aksanı.
+- ARKA PLAN → (paket, kategori) ikilisine özel: paket ışık yönü + kategori zemin.
+Böylece aynı kategorinin görselleri bile paketten pakete farklı renk/zemin taşır.
+Karanlık olmak zorunlu değil — paket adına ve kapak (banner) paletine göre bazı
+paketler aydınlık, bazıları loş tutulur.
 """
 import argparse, json, re, sys
 from pathlib import Path
@@ -13,69 +21,181 @@ ART_TYPES = {
     "feat", "background", "subspecies", "species",
 }
 
-# Stil tutarlılığının ana kaldıracı: her prompt'a kelimesi kelimesine aynı blok.
-# Flux'ta negatif prompt yok (cfg 1.0, distilled). "no text/no watermark" yazmak
-# modelde tersine çalışıp filigran üretimini TETİKLİYOR — negasyon kullanma.
-#
-# Araştırma bulgularına göre (2026-08):
-# - "digital art / concept art / render / masterpiece / clean / smooth" kelimeleri
-#   AI-default görünümünü TETİKLİYOR — bunlardan kaçın.
-# - AI'nın en büyük tell'i "uniform micro-noise": her yüzey aynı doku, aynı ton.
-#   Çözüm: "subtle tonal variation across surfaces" — gerçek resimde düz alanda
-#   bile ton oynaması var.
-# - Waxy/sheen yüzeyler AI hissi verir → "matte finish".
-# - Medyayı somut adlandır ("oil painting on canvas") + görünür fırça izi.
-# - Kusur ipuçları ("slightly uneven hand-painted edges") insan eli hissi verir.
-# - "classic fantasy tabletop roleplaying game art" D&D evreni çapasıdır.
-# - PALET ve MOOD burada değil, tipe özeldir (aşağıda) — renk paletinin her yeri
-#   kullanılır, her kategori tek bir muted banda sıkışmaz.
-STYLE = (
-    "hand-painted oil painting on canvas, expressive painterly brushstrokes, "
-    "subtle tonal variation across surfaces, matte finish, "
-    "slightly uneven hand-painted edges, "
+# ---------------------------------------------------------------------------
+# Anti-AI skeleton — her paketin stilinin kuyruğu. Araştırma bulguları (2026-08):
+# "digital art / concept art / render / masterpiece / clean / smooth / perfect /
+# 8k" kelimeleri AI-default görünümünü TETİKLİYOR → hiçbir yerde kullanma.
+# AI'nın en büyük tell'i "uniform micro-noise" (her yüzey aynı doku/ton) → ton
+# oynaması + elle çizilmiş iz + hafif kusur bunu kırar. Negasyon yok (cfg 1.0).
+# ---------------------------------------------------------------------------
+STYLE_TAIL = (
+    "subtle tonal variation across surfaces, "
+    "slightly uneven hand-drawn edges, "
     "classic fantasy tabletop roleplaying game art"
 )
 
-# Tipe özel renk paleti — D&D sanatı kategoriye göre değişir: büyü parlak,
-# canavar zengin doğal, eşya altın/cevher. Kullanıcı isteği: paletin her yeri.
-PALETTE = {
-    "monster":    "rich natural palette, deep greens, slate blues, ochres, blood red accents",
-    "spell":      "vivid arcane palette, violet, emerald, gold, crimson light",
-    "magic-item": "rich antique palette, aged gold, burnished copper, deep ruby",
-    "subclass":   "heraldic palette, deep crimson, royal blue, antique gold",
-    "feat":       "heraldic palette, deep crimson, slate blue, antique gold",
-    "background": "warm candlelit palette, amber, russet, deep brown",
-    "subspecies": "warm portrait palette, ivory, amber, deep bronze",
-    "species":    "warm portrait palette, ivory, amber, deep bronze",
+# Paket başına çizim tarzı. Medya somut adlandırılır; hepsi geleneksel araçlar
+# olduğundan AI-default parlaklığına düşmez. Paket kimliği = tarz.
+PACKAGE_STYLE = {
+    "dnd5e-srd": "hand-painted oil painting on canvas, expressive painterly "
+                 "brushstrokes, matte finish",
+    "open5e-a5e-ag": "loose watercolor with fine ink linework on cold-press "
+                     "paper, soft pigment granulation",
+    "open5e-a5e-ddg": "charcoal and white chalk on toned grey paper, smudged "
+                      "gestural edges",
+    "open5e-a5e-gpg": "wood engraving print, crisp cross-hatched lines on aged "
+                      "paper",
+    "open5e-a5e-mm": "opaque gouache natural-history illustration, flat layered "
+                     "color, fine stipple detail",
+    "open5e-bfrd": "pen and ink with sepia wash on weathered parchment, nautical "
+                   "chart hatching",
+    "open5e-ccdx": "medieval bestiary woodcut, bold black outlines, dense "
+                   "parallel hatching",
+    "open5e-deepm": "luminous tempera with iridescent glazes, glowing "
+                    "translucent layers",
+    "open5e-deepmx": "silkscreen poster print, flat blocks of saturated color, "
+                     "slight misregistration",
+    "open5e-kp": "scratchboard, fine white lines scratched from solid black ink",
+    "open5e-open5e": "soft colored pencil on textured paper, layered hatching",
+    "open5e-spells-that-dont-suck": "risograph zine print, bold flat color, "
+                                    "grain, slight halftone",
+    "open5e-tdcs": "tonal oil pastel, thick waxy strokes, loose atmospheric "
+                   "blend",
+    "open5e-tob": "mezzotint etching, deep velvety blacks, soft light bloom",
+    "open5e-tob-2023": "steel engraving, fine parallel lines, stippled shading",
+    "open5e-tob2": "sanguine chalk drawing, red earth tones, renaissance study "
+                   "feel",
+    "open5e-tob3": "linocut print, chunky carved shapes, bold negative space",
+    "open5e-toh": "illuminated manuscript miniature, gold leaf accents, "
+                  "flattened perspective",
+    "open5e-vom": "egg tempera icon painting, burnished gold leaf, jewel-tone "
+                  "glazes",
+    "open5e-wz": "two-color screen print on newsprint, halftone grain, bold "
+                 "graphic shapes",
 }
 
-# Tipe özel ışık ve zemin — kompozisyon gibi, stili bozmadan kategori kimliği.
-MOOD = {
-    "monster":    "dramatic chiaroscuro lighting, dark atmospheric background",
-    "spell":      "radiant magical glow, luminous energy against deep twilight",
-    "magic-item": "museum spotlight, velvet-dark backdrop",
-    "subclass":   "ceremonial lighting, dark banner background",
-    "feat":       "dramatic side-light, dark banner background",
-    "background": "warm candlelight, moody tavern atmosphere",
-    "subspecies": "soft window light, deep shadow backdrop",
-    "species":    "soft window light, deep shadow backdrop",
+# Paket başına baz renk paleti — paket adı + kapak (banner) görselinin baskın
+# tonlarından türetildi. Kasıtlı olarak karanlık değil: bazı paketler aydınlık.
+PACKAGE_PALETTE = {
+    "dnd5e-srd": "warm earth palette, parchment, leather browns, brass",
+    "open5e-a5e-ag": "mossy forest palette, olive, fern green, warm sunlight, "
+                     "weathered stone",
+    "open5e-a5e-ddg": "underglow cavern palette, amber torchlight, slate, cold "
+                      "blue shadow",
+    "open5e-a5e-gpg": "newsprint palette, sage green, iron grey, paper cream",
+    "open5e-a5e-mm": "field-guide palette, slate blue, bone, moss, rust",
+    "open5e-bfrd": "nautical palette, steel grey, sea foam, weathered rope tan, "
+                   "storm green",
+    "open5e-ccdx": "parchment and ink palette, sepia, iron-gall black, aged "
+                   "paper",
+    "open5e-deepm": "abyssal arcane palette, deep indigo, phosphor blue, violet, "
+                    "cyan glow",
+    "open5e-deepmx": "orchid arcane palette, magenta, plum, silver, pale lilac",
+    "open5e-kp": "dragon-hoard palette, rust, amber, charcoal, ember red",
+    "open5e-open5e": "adventurer palette, warm ochre, umber, sky blue, ivory",
+    "open5e-spells-that-dont-suck": "playful bright palette, tomato red, teal, "
+                                    "mustard, chalk white",
+    "open5e-tdcs": "coastal city palette, sky blue, slate, sandstone, sea green",
+    "open5e-tob": "beast palette, burnt orange, gold, blood red, dark umber",
+    "open5e-tob-2023": "displacer palette, indigo shadow, bone, deep teal, dim "
+                       "gold",
+    "open5e-tob2": "deep-sea palette, steel blue, abyssal teal, driftwood grey",
+    "open5e-tob3": "acidic bright palette, teal, aqua, chartreuse, coral",
+    "open5e-toh": "heraldic palette, royal blue, crimson, antique gold, ivory",
+    "open5e-vom": "treasure-vault palette, deep emerald, sapphire, antique gold, "
+                  "burgundy",
+    "open5e-wz": "occult palette, blood red, black, bone white, sickly green",
 }
 
-# Her entity'ye deterministik atanan küçük stil farkları. Amaç: hepsi aynı aileden
-# ama birebir karbon kopya olmasın. uuid'in sonraki 4 hex hanesiyle seçilir.
+# Paket başına ışık yönü — parlaklık burada değişir, kategori değil.
+PACKAGE_LIGHT = {
+    "dnd5e-srd": "soft directional studio light",
+    "open5e-a5e-ag": "bright daylight, sunlit clearing",
+    "open5e-a5e-ddg": "flickering torchlight, deep cavern shadows",
+    "open5e-a5e-gpg": "even overcast daylight",
+    "open5e-a5e-mm": "natural museum light, pale parchment backdrop",
+    "open5e-bfrd": "harsh sea-light, overcast spray",
+    "open5e-ccdx": "even manuscript light, pale parchment backdrop",
+    "open5e-deepm": "luminous glow rising from within, deep water dark",
+    "open5e-deepmx": "soft luminous haze",
+    "open5e-kp": "ember glow, smoky dark",
+    "open5e-open5e": "warm afternoon light",
+    "open5e-spells-that-dont-suck": "bright clean light, flat backdrop",
+    "open5e-tdcs": "open sky, soft daylight",
+    "open5e-tob": "dramatic low light, dark bestiary backdrop",
+    "open5e-tob-2023": "gloomy twilight, dark backdrop",
+    "open5e-tob2": "cold submerged light",
+    "open5e-tob3": "bright clean light, light backdrop",
+    "open5e-toh": "stained-glass glow, ceremonial light",
+    "open5e-vom": "velvet-dark vault, single museum spotlight",
+    "open5e-wz": "harsh flash, stark contrast",
+}
+
+# Paket başlıkları (grid etiketi + metadata için).
+PACKAGE_TITLE = {
+    "dnd5e-srd": "D&D 5e SRD (Built-in)",
+    "open5e-a5e-ag": "Adventurer's Guide",
+    "open5e-a5e-ddg": "Dungeon Delver's Guide",
+    "open5e-a5e-gpg": "Gate Pass Gazette",
+    "open5e-a5e-mm": "Monstrous Menagerie",
+    "open5e-bfrd": "Black Flag SRD",
+    "open5e-ccdx": "Creature Codex",
+    "open5e-deepm": "Deep Magic",
+    "open5e-deepmx": "Deep Magic Extended",
+    "open5e-kp": "Kobold Press Compilation",
+    "open5e-open5e": "Open5e Originals",
+    "open5e-spells-that-dont-suck": "Spells That Don't Suck",
+    "open5e-tdcs": "Tal'dorei Campaign Setting",
+    "open5e-tob": "Tome of Beasts",
+    "open5e-tob-2023": "Tome of Beasts 1 (2023)",
+    "open5e-tob2": "Tome of Beasts 2",
+    "open5e-tob3": "Tome of Beasts 3",
+    "open5e-toh": "Tome of Heroes",
+    "open5e-vom": "Vault of Magic",
+    "open5e-wz": "Warlock Zine",
+}
+
+DEFAULT_PACKAGE = "open5e-open5e"
+
+# Kategori aksanları (paket baz paletine eklenen, kategoriye özgü renkler).
+CATEGORY_PALETTE = {
+    "monster":    "natural creature accents, blood red, bone, moss",
+    "spell":      "arcane accents, violet, emerald, gold, crimson light",
+    "magic-item": "antique accents, aged gold, burnished copper, deep ruby",
+    "subclass":   "heraldic accents, crimson, royal blue, antique gold",
+    "feat":       "heraldic accents, crimson, slate blue, antique gold",
+    "background": "warm scene accents, amber, russet, deep brown",
+    "subspecies": "portrait accents, ivory, amber, bronze",
+    "species":    "portrait accents, ivory, amber, bronze",
+}
+
+# Kategori zemini (sahne tipi — parlaklık paketten gelir, burası sadece neyin
+# arkada olduğu). "vignette" kelimesi kullanılmaz (modele çerçeve çizdiriyor).
+CATEGORY_BG = {
+    "monster":    "atmospheric backdrop",
+    "spell":      "swirling energy field",
+    "magic-item": "bare surface, empty backdrop",
+    "subclass":   "heraldic banner",
+    "feat":       "heraldic banner",
+    "background": "lived-in scene, full bleed edge to edge",
+    "subspecies": "plain backdrop",
+    "species":    "plain backdrop",
+}
+
+# Her entity'ye deterministik atanan küçük stil farkları — medya-agnostik.
 STYLE_FLAVOR = [
-    "thick impasto highlights",
-    "loose dry-brush texture",
-    "soft glazing, sfumato edges",
-    "layered palette-knife strokes",
-    "gritty weathered surface detail",
+    "bold confident strokes",
+    "loose sketchy marks",
+    "soft blended edges",
+    "crisp detailed lines",
+    "gritty worn texture",
 ]
 
 # Tipe göre çerçeveleme (stil değil, kompozisyon).
 FRAMING = {
     "monster":    "full body creature portrait, three-quarter view",
     "spell":      "abstract magical effect, swirling arcane energy, no human figures",
-    "magic-item": "single object still life, museum lighting, floating against void",
+    "magic-item": "single object still life, floating against void",
     "subclass":   "heraldic emblem, symbolic icon",
     "feat":       "heraldic emblem, symbolic icon",
     "background": "atmospheric character scene, full bleed edge to edge",
@@ -151,7 +271,23 @@ def monster_prompt(name: str, a: dict) -> str:
     return ", ".join(b for b in bits if b)
 
 
-def build_prompt(uuid: str, row: dict) -> dict | None:
+def style_for(pkg: str) -> str:
+    return PACKAGE_STYLE.get(pkg, PACKAGE_STYLE[DEFAULT_PACKAGE])
+
+
+def palette_for(pkg: str, t: str) -> str:
+    base = PACKAGE_PALETTE.get(pkg, PACKAGE_PALETTE[DEFAULT_PACKAGE])
+    accent = CATEGORY_PALETTE[t]
+    return f"{base}, {accent}"
+
+
+def mood_for(pkg: str, t: str) -> str:
+    light = PACKAGE_LIGHT.get(pkg, PACKAGE_LIGHT[DEFAULT_PACKAGE])
+    bg = CATEGORY_BG[t]
+    return f"{light}, {bg}"
+
+
+def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     t = row.get("type")
     if t not in ART_TYPES:
         return None
@@ -164,7 +300,6 @@ def build_prompt(uuid: str, row: dict) -> dict | None:
         subject = monster_prompt(name, attrs)
     elif t in NAME_ONLY_TYPES:
         # Bu tiplerin description'ı saf kural metni ("+1 to Wisdom") — resmedilemez.
-        # İsim tek başına çok daha iyi bir görsel ipucu.
         subject = f"{tidy_name(name)}, {NAME_ONLY_TYPES[t]}"
     else:
         desc = clean_prose(row.get("description") or "")
@@ -178,39 +313,48 @@ def build_prompt(uuid: str, row: dict) -> dict | None:
             if rarity:
                 subject += f", {rarity.lower()} artifact"
 
+    style = f"{style_for(pkg)}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[int(uuid[8:12], 16) % len(STYLE_FLAVOR)]
     return {
         "uuid": uuid,
+        "package": pkg,
         "type": t,
         "name": name,
-        "prompt": f"{subject}. {FRAMING[t]}, {PALETTE[t]}, {MOOD[t]}, {STYLE}, {flavor}",
+        "prompt": (f"{subject}. {FRAMING[t]}, {palette_for(pkg, t)}, "
+                   f"{mood_for(pkg, t)}, {style}, {flavor}"),
         "seed": int(uuid[:8], 16),
     }
 
 
-def load_jobs(packs_dir: Path) -> list[dict]:
+def load_jobs(packs_dirs: list[Path]) -> list[dict]:
     jobs, seen = [], set()
-    for pack in sorted(packs_dir.glob("*.pkg.json")):
-        entities = json.loads(pack.read_text()).get("entities", {})
-        for uuid, row in entities.items():
-            if uuid in seen:
-                continue
-            job = build_prompt(uuid, row)
-            if job:
-                seen.add(uuid)
-                jobs.append(job)
+    for packs_dir in packs_dirs:
+        if not packs_dir.is_dir():
+            continue
+        for pack in sorted(packs_dir.glob("*.pkg.json")):
+            data = json.loads(pack.read_text())
+            pkg = data.get("package_name") or pack.stem
+            entities = data.get("entities", {})
+            for uuid, row in entities.items():
+                if uuid in seen:
+                    continue
+                job = build_prompt(uuid, pkg, row)
+                if job:
+                    seen.add(uuid)
+                    jobs.append(job)
     return jobs
 
 
 def self_check(jobs: list[dict]) -> None:
     assert jobs, "hiç job üretilmedi"
     for j in jobs:
-        assert STYLE in j["prompt"], f"stil son-eki yok: {j['name']}"
+        assert STYLE_TAIL in j["prompt"], f"stil kuyruğu yok: {j['name']}"
         assert any(f in j["prompt"] for f in STYLE_FLAVOR), f"flavor yok: {j['name']}"
         assert not re.search(r"[*_`#|]", j["prompt"]), f"markdown artığı: {j['name']}"
         assert "\n" not in j["prompt"], f"newline kaldı: {j['name']}"
         assert j["seed"] == int(j["uuid"][:8], 16), "seed deterministik değil"
         assert 20 < len(j["prompt"]) < 1200, f"prompt boyu bozuk: {j['name']}"
+        assert j["package"], f"paket yok: {j['name']}"
     by_type: dict[str, int] = {}
     for j in jobs:
         by_type[j["type"]] = by_type.get(j["type"], 0) + 1
@@ -219,10 +363,12 @@ def self_check(jobs: list[dict]) -> None:
 
 
 def main() -> None:
+    base = Path(__file__).resolve().parent
     p = argparse.ArgumentParser()
-    p.add_argument("--packs", type=Path,
-                   default=Path(__file__).resolve().parents[2] / "flutter_app/assets/open5e_packs")
-    p.add_argument("--out", type=Path, default=Path("art_jobs.jsonl"))
+    p.add_argument("--packs", type=Path, action="append",
+                   default=[Path(__file__).resolve().parents[2] / "flutter_app/assets/open5e_packs",
+                            base / "packs"])
+    p.add_argument("--out", type=Path, default=base / "art_jobs.jsonl")
     p.add_argument("--sample", type=int, help="her tipten N örnek bas, dosya yazma")
     p.add_argument("--self-check", action="store_true")
     args = p.parse_args()
@@ -238,7 +384,7 @@ def main() -> None:
         for j in jobs:
             if per.get(j["type"], 0) < args.sample:
                 per[j["type"]] = per.get(j["type"], 0) + 1
-                print(f"[{j['type']}] {j['name']}\n  {j['prompt']}\n")
+                print(f"[{j['package']}/{j['type']}] {j['name']}\n  {j['prompt']}\n")
         return
 
     with args.out.open("w") as f:
