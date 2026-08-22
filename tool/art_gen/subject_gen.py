@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Entity görsel özniteliği üretir — sunucudaki opencode (mimo-v2.5-free, low).
+"""Entity görsel özniteliği üretir — sunucudaki opencode (mimo-v2.5-free, high).
 
 Sorun: difüzyon modeli entity'yi (örn. halfling, Aboleth) "bilmiyor"; prompt'a
-verilen kural/lore metni de görselleştirilemez. Bu betik her entity için KISA, salt
-GÖRSEL bir "subject" cümleciği üretir ve subject_cache.json'a (uuid -> subject)
-yazar. prompts.py build_prompt'ta bu önbelleği kural metni yerine kullanır.
+verilen kural/lore metni de görselleştirilemez. Bu betik her entity için KISA,
+salt GÖRSEL bir "subject" cümleciği üretir ve subject_cache.json'a
+(uuid -> subject) yazar. prompts.py build_prompt'ta bu önbelleği kural metni
+yerine kullanır.
 
 Üretim yalnızca önbellekte OLMAYAN uuid'ler için yapılır (incremental). Grid testi
 için package_grid'ın yazdığı manifest.json'a (seçilen entity'ler) sınırlamak istersen
@@ -14,19 +15,20 @@ için package_grid'ın yazdığı manifest.json'a (seçilen entity'ler) sınırl
     python3 subject_gen.py --manifest grids/pkg_s1234/manifest.json
     python3 subject_gen.py --limit 5 --force     # önbelleği görmezden gel, 5 üret
 """
-import argparse, base64, json, re, subprocess, sys, time
+import argparse, base64, json, re, subprocess, sys, threading, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from prompts import (NAME_ONLY_TYPES, clean_prose, lookup, monster_prompt,
                      tidy_name)
 
-# Sunucudaki opencode erişimi. Model / variant "low" (ucuz, hızlı).
+# Sunucudaki opencode erişimi. Variant "high": canon araştırması için
+# reasoning gerekiyor (örn. Blemmyes = yüzü göğsünde olan başsız dev).
 SSH_HOST = "sadektech@192.168.1.12"
 SSH_PORT = "8772"
 OPCODE = "/home/sadektech/.opencode/bin/opencode"
 MODEL = "opencode/mimo-v2.5-free"
-VARIANT = "low"
+VARIANT = "high"
 
 # Kategoriye göre görsel odak — LLM'e hangi yönleri betimleyeceğini söyler.
 CATEGORY_GUIDE = {
@@ -44,21 +46,42 @@ CATEGORY_GUIDE = {
 }
 
 SYS = (
-    "You are a field naturalist writing an OBJECTIVE EXTERNAL APPEARANCE analysis "
-    "for a fantasy bestiary. Output ONLY the physical appearance of the subject, "
-    "as neutral factual notes.\n"
+    "You are a fantasy art director writing the VISUAL SUBJECT description for a "
+    "painter. The painter draws ONLY what you describe — anything you omit is "
+    "invented wrongly. Output ONLY the physical appearance of the subject.\n"
+    "Research rule (MOST IMPORTANT): first recall the canonical appearance of "
+    "this entity from D&D, Pathfinder, mythology, or its source book. If the "
+    "entity is well-known (e.g. Blemmyes, Aboleth, Gnoll, Displacer Beast), "
+    "you MUST use its established canonical look — never invent a generic "
+    "substitute. Examples of canon: Blemmyes = headless giant with its face on "
+    "its chest; Aboleth = huge three-eyed fish with four tentacles, vertical "
+    "mouth; Displacer Beast = six-legged panther with two shoulder tentacles. "
+    "If you truly have no canonical knowledge, derive the most distinctive "
+    "look consistent with the name and description.\n"
+    "Detail rule: give CONCRETE visual facts, not abstractions. Name exact "
+    "body parts, their number, size relative to the body, and their colors. "
+    "Prefer 'six spindly legs, glossy black carapace, glowing amber eyes' over "
+    "'insectoid creature'.\n"
+    "Distinctive-feature rule (MANDATORY): the description MUST name the "
+    "entity's signature, identity-defining features — the things that make "
+    "someone say 'that is unmistakably a <name>'. Horns, mane, tail shape, "
+    "wing span, weapon, crown, scars, extra heads, glowing eyes, rune "
+    "markings, weapon or gear — whatever sets THIS entity apart from a generic "
+    "member of its kind. A subject with no distinguishing feature is a failed "
+    "answer; never produce a bland generic description.\n"
     "Rules:\n"
-    "- State observable attributes only: body shape, size, proportions, skin, scales, "
-    "fur or feathers, hair and eye color, number and kind of limbs, notable "
-    "anatomical features, typical posture.\n"
+    "- State observable attributes only: body shape, size, proportions, skin, "
+    "scales, fur or feathers, hair and eye color, number and kind of limbs, "
+    "notable anatomical features, typical posture.\n"
     "- NEVER mention artistic style, medium, quality, or rendering. Banned words: "
     "photorealistic, realistic, cinematic, hyperreal, detailed, sharp, crisp, vivid, "
-    "glossy, shiny, polished, glossy, reflective, render, HDR, studio, lighting, "
-    "shadow, dramatic.\n"
+    "glossy, shiny, polished, reflective, render, HDR, studio, lighting, "
+    "shadow, dramatic, ethereal, spectral, luminescent, luminescence, radiant, "
+    "iridescent, shimmering, celestial, misty, swirling.\n"
     "- NEVER make aesthetic judgments, and NEVER mention background, scene, or "
     "lighting (the painterly style is applied separately).\n"
     "- NEVER mention rules, stats, combat, spells, lore, or story.\n"
-    "- Output a single comma-separated visual phrase, at most 40 words, no markdown, "
+    "- Output a single comma-separated visual phrase, 40 to 90 words, no markdown, "
     "no quotes, no trailing period.\n"
     "For this subject focus on: {guide}\n"
     "Entity: {name}\n"
@@ -66,6 +89,20 @@ SYS = (
 )
 
 _WS = re.compile(r"\s+")
+
+# LLM reddi / plan-mode gevezeliği — bunlar subject değil, cache'e girmemeli.
+_REFUSAL = re.compile(
+    r"(\*\*|Question:|\bI (can|could|would|am|will|'m|'ll)\b|"
+    r"\bI can'?t\b|as an AI|plan mode|please provide|let me know|"
+    r"\bHowever, I\b|clarify|I need to)", re.I)
+
+
+def valid_subject(text: str) -> bool:
+    """subject gerçekten görsel betim mi? (red/sohbet/markdown ele)"""
+    if not text or _REFUSAL.search(text):
+        return False
+    words = len(text.split())
+    return 8 <= words <= 120
 
 
 def entity_input(row: dict) -> tuple[str, str, str]:
@@ -138,7 +175,8 @@ def extract_text(stdout: str) -> str:
         if ev.get("type") == "text":
             parts.append((ev.get("part") or {}).get("text", ""))
     text = " ".join(parts).strip()
-    text = re.sub(r"\s+", " ", text).strip(" ,")
+    text = re.sub(r"[*_`#>|]|\[\[|\]\]", " ", text)  # markdown artığı at
+    text = re.sub(r"\s+", " ", text).strip(" ,.")
     return text
 
 
@@ -155,6 +193,8 @@ def main() -> None:
     p.add_argument("--limit", type=int, help="en fazla N entity üret")
     p.add_argument("--force", action="store_true", help="önbelleği görmezden gel")
     p.add_argument("--retries", type=int, default=2)
+    p.add_argument("--workers", type=int, default=4,
+                   help="paralel SSH+LLM isteği sayısı")
     args = p.parse_args()
 
     cache: dict[str, str] = {}
@@ -183,37 +223,56 @@ def main() -> None:
         print(f"önbellekte hepsi var ({len(cache)}). Üretilecek yok.", file=sys.stderr)
         return
 
-    print(f"{len(todo)} entity üretilecek (önbellek={len(cache)}). "
-          f"~8s/entity → tahmini {len(todo) * 8 // 60}dk.", file=sys.stderr)
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    print(f"{len(todo)} entity üretilecek (önbellek={len(cache)}, "
+          f"workers={args.workers}).", file=sys.stderr)
 
     t0 = time.time()
-    for i, uuid in enumerate(todo, 1):
+
+    def generate(uuid: str) -> tuple[str, str, str, str]:
+        """Tek uuid için subject üretir; başarısızda subject boş döner."""
         row = rows.get(uuid)
         if not row:
-            continue
+            return uuid, "", "", ""
         t, name, desc = entity_input(row)
         msg = build_message(t, name, desc)
         subject = ""
-        for attempt in range(args.retries + 1):
+        last_err: Exception | None = None
+        for _ in range(args.retries + 1):
             try:
                 subject = remote_subject(msg)
-                if subject:
+                if valid_subject(subject):
                     break
-            except Exception as e:
+                subject = ""
+            except Exception as e:  # noqa: BLE001
                 last_err = e
-        if subject:
-            cache[uuid] = subject
-            print(f"[{i}/{len(todo)}] {t} {name} -> {subject[:80]}", file=sys.stderr)
-        else:
-            print(f"!!! HATA {name}: {getattr(last_err, 'strerror', last_err)}",
+        err = "" if subject else getattr(last_err, "strerror", str(last_err))
+        return uuid, t, name, subject or err
+
+    lock = threading.Lock()
+    done = 0
+    errors = 0
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futures = [pool.submit(generate, u) for u in todo]
+        for fut in as_completed(futures):
+            uuid, t, name, subject = fut.result()
+            with lock:
+                if subject:
+                    cache[uuid] = subject
+                else:
+                    errors += 1
+                    print(f"!!! HATA {name}: {subject}", file=sys.stderr)
+                done += 1
+                if done % 10 == 0 or done == len(todo):
+                    args.cache.write_text(
+                        json.dumps(cache, ensure_ascii=False, indent=1))
+            print(f"[{done}/{len(todo)}] {t} {name} -> {subject[:80]}",
                   file=sys.stderr)
-        if i % 10 == 0 or i == len(todo):
-            args.cache.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
-        time.sleep(0.3)
 
     args.cache.write_text(json.dumps(cache, ensure_ascii=False, indent=1))
     print(f"bitti: {len(cache)} subject -> {args.cache} "
-          f"({time.time() - t0:.0f}s)", file=sys.stderr)
+          f"({time.time() - t0:.0f}s, hata={errors})", file=sys.stderr)
 
 
 if __name__ == "__main__":
