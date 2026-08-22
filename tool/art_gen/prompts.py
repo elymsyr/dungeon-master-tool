@@ -36,36 +36,37 @@ STYLE_TAIL = (
 
 # Paket başına çizim tarzı. Medya somut adlandırılır; hepsi geleneksel araçlar
 # olduğundan AI-default parlaklığına düşmez. Paket kimliği = tarz.
+# "dnd uygun olmalı" istenen paketler DND_STYLE'a bağlanır.
+DND_STYLE = ("hand-painted oil painting on canvas, expressive painterly "
+             "brushstrokes, matte finish")
 PACKAGE_STYLE = {
-    "dnd5e-srd": "hand-painted oil painting on canvas, expressive painterly "
-                 "brushstrokes, matte finish",
+    "dnd5e-srd": DND_STYLE,
     "open5e-a5e-ag": "loose watercolor with fine ink linework on cold-press "
                      "paper, soft pigment granulation",
     "open5e-a5e-ddg": "charcoal and white chalk on toned grey paper, smudged "
                       "gestural edges",
     "open5e-a5e-gpg": "wood engraving print, crisp cross-hatched lines on aged "
                       "paper",
-    "open5e-a5e-mm": "opaque gouache natural-history illustration, flat layered "
-                     "color, fine stipple detail",
+    "open5e-a5e-mm": DND_STYLE,
     "open5e-bfrd": "pen and ink with sepia wash on weathered parchment, nautical "
                    "chart hatching",
     "open5e-ccdx": "medieval bestiary woodcut, bold black outlines, dense "
                    "parallel hatching",
-    "open5e-deepm": "luminous tempera with iridescent glazes, glowing "
-                    "translucent layers",
-    "open5e-deepmx": "silkscreen poster print, flat blocks of saturated color, "
-                     "slight misregistration",
+    "open5e-deepm": "luminous tempera with soft iridescent glazes, gently "
+                    "glowing translucent layers",
+    "open5e-deepmx": "silkscreen poster print, rich blocks of color, subtle "
+                     "iridescent ink sheen, slight misregistration",
     "open5e-kp": "scratchboard, fine white lines scratched from solid black ink",
     "open5e-open5e": "soft colored pencil on textured paper, layered hatching",
-    "open5e-spells-that-dont-suck": "risograph zine print, bold flat color, "
-                                    "grain, slight halftone",
+    "open5e-spells-that-dont-suck": "hand-painted gouache illustration, warm "
+                                    "cheerful colors, gentle lively brushwork",
     "open5e-tdcs": "tonal oil pastel, thick waxy strokes, loose atmospheric "
                    "blend",
-    "open5e-tob": "mezzotint etching, deep velvety blacks, soft light bloom",
-    "open5e-tob-2023": "steel engraving, fine parallel lines, stippled shading",
-    "open5e-tob2": "sanguine chalk drawing, red earth tones, renaissance study "
-                   "feel",
-    "open5e-tob3": "linocut print, chunky carved shapes, bold negative space",
+    "open5e-tob": "mezzotint etching, rich tonal depth, roughened blacks",
+    "open5e-tob-2023": "aquatint etching, granular tonal shading, textured plate",
+    "open5e-tob2": "chalk and graphite study on blue-grey paper, soft blended "
+                   "shading, renaissance study feel",
+    "open5e-tob3": DND_STYLE,
     "open5e-toh": "illuminated manuscript miniature, gold leaf accents, "
                   "flattened perspective",
     "open5e-vom": "egg tempera icon painting, burnished gold leaf, jewel-tone "
@@ -77,30 +78,37 @@ PACKAGE_STYLE = {
 # Paket başına baz renk paleti — paket adı + kapak (banner) görselinin baskın
 # tonlarından türetildi. Kasıtlı olarak karanlık değil: bazı paketler aydınlık.
 PACKAGE_PALETTE = {
-    "dnd5e-srd": "warm earth palette, parchment, leather browns, brass",
+    "dnd5e-srd": "naturalistic color, each figure in its own natural hues, "
+                 "deep earthy shadows",
     "open5e-a5e-ag": "mossy forest palette, olive, fern green, warm sunlight, "
-                     "weathered stone",
+                     "weathered stone, sun-warmed earth",
     "open5e-a5e-ddg": "underglow cavern palette, amber torchlight, slate, cold "
                       "blue shadow",
     "open5e-a5e-gpg": "newsprint palette, sage green, iron grey, paper cream",
-    "open5e-a5e-mm": "field-guide palette, slate blue, bone, moss, rust",
-    "open5e-bfrd": "nautical palette, steel grey, sea foam, weathered rope tan, "
-                   "storm green",
+    "open5e-a5e-mm": "naturalistic color, each figure in its own natural hues, "
+                     "deep earthy shadows",
+    "open5e-bfrd": "nautical palette, deep navy, sea foam, weathered rope tan, "
+                   "storm green, sun-faded teal",
     "open5e-ccdx": "parchment and ink palette, sepia, iron-gall black, aged "
                    "paper",
-    "open5e-deepm": "abyssal arcane palette, deep indigo, phosphor blue, violet, "
-                    "cyan glow",
-    "open5e-deepmx": "orchid arcane palette, magenta, plum, silver, pale lilac",
+    "open5e-deepm": "abyssal arcane palette, deep indigo, phosphor blue, "
+                    "violet, soft cyan glow",
+    "open5e-deepmx": "arcane palette, deep plum, muted violet, soft silver, "
+                     "pale lilac, antique gold",
     "open5e-kp": "dragon-hoard palette, rust, amber, charcoal, ember red",
     "open5e-open5e": "adventurer palette, warm ochre, umber, sky blue, ivory",
-    "open5e-spells-that-dont-suck": "playful bright palette, tomato red, teal, "
-                                    "mustard, chalk white",
+    "open5e-spells-that-dont-suck": "vivid natural palette, spring green, "
+                                     "sunshine yellow, warm coral, sky blue, "
+                                     "fresh leaf green",
     "open5e-tdcs": "coastal city palette, sky blue, slate, sandstone, sea green",
-    "open5e-tob": "beast palette, burnt orange, gold, blood red, dark umber",
-    "open5e-tob-2023": "displacer palette, indigo shadow, bone, deep teal, dim "
-                       "gold",
-    "open5e-tob2": "deep-sea palette, steel blue, abyssal teal, driftwood grey",
-    "open5e-tob3": "acidic bright palette, teal, aqua, chartreuse, coral",
+    "open5e-tob": "wild creature palette, tawny browns, moss green, slate grey, "
+                  "cream, varied natural hide colors",
+    "open5e-tob-2023": "nocturnal creature palette, indigo shadow, bone, deep "
+                       "teal, moss, muted amber, varied cool tones",
+    "open5e-tob2": "deep-sea palette, steel blue, abyssal teal, driftwood grey, "
+                   "sea green, pale aqua",
+    "open5e-tob3": "naturalistic color, each figure in its own natural hues, "
+                   "deep earthy shadows",
     "open5e-toh": "heraldic palette, royal blue, crimson, antique gold, ivory",
     "open5e-vom": "treasure-vault palette, deep emerald, sapphire, antique gold, "
                   "burgundy",
@@ -109,23 +117,25 @@ PACKAGE_PALETTE = {
 
 # Paket başına ışık yönü — parlaklık burada değişir, kategori değil.
 PACKAGE_LIGHT = {
-    "dnd5e-srd": "soft directional studio light",
-    "open5e-a5e-ag": "bright daylight, sunlit clearing",
+    "dnd5e-srd": "dappled natural woodland light, forest clearing",
+    "open5e-a5e-ag": "warm filtered daylight through trees, soft ambient "
+                     "forest glow",
     "open5e-a5e-ddg": "flickering torchlight, deep cavern shadows",
     "open5e-a5e-gpg": "even overcast daylight",
-    "open5e-a5e-mm": "natural museum light, pale parchment backdrop",
+    "open5e-a5e-mm": "soft natural daylight, wilderness environment",
     "open5e-bfrd": "harsh sea-light, overcast spray",
     "open5e-ccdx": "even manuscript light, pale parchment backdrop",
-    "open5e-deepm": "luminous glow rising from within, deep water dark",
-    "open5e-deepmx": "soft luminous haze",
+    "open5e-deepm": "dim underwater twilight, faint ambient arcane glow",
+    "open5e-deepmx": "soft luminous haze, warm candlelit undertones",
     "open5e-kp": "ember glow, smoky dark",
-    "open5e-open5e": "warm afternoon light",
-    "open5e-spells-that-dont-suck": "bright clean light, flat backdrop",
+    "open5e-open5e": "warm afternoon light, natural surroundings",
+    "open5e-spells-that-dont-suck": "cheerful natural daylight, sunlit open "
+                                    "field",
     "open5e-tdcs": "open sky, soft daylight",
-    "open5e-tob": "dramatic low light, dark bestiary backdrop",
-    "open5e-tob-2023": "gloomy twilight, dark backdrop",
-    "open5e-tob2": "cold submerged light",
-    "open5e-tob3": "bright clean light, light backdrop",
+    "open5e-tob": "dramatic side light, natural wilderness backdrop",
+    "open5e-tob-2023": "gloomy twilight, rugged natural terrain",
+    "open5e-tob2": "cold natural light, deep wilderness",
+    "open5e-tob3": "dappled forest light, natural terrain",
     "open5e-toh": "stained-glass glow, ceremonial light",
     "open5e-vom": "velvet-dark vault, single museum spotlight",
     "open5e-wz": "harsh flash, stark contrast",
@@ -159,7 +169,7 @@ DEFAULT_PACKAGE = "open5e-open5e"
 
 # Kategori aksanları (paket baz paletine eklenen, kategoriye özgü renkler).
 CATEGORY_PALETTE = {
-    "monster":    "natural creature accents, blood red, bone, moss",
+    "monster":    "natural creature accents, varied natural coloring",
     "spell":      "arcane accents, violet, emerald, gold, crimson light",
     "magic-item": "antique accents, aged gold, burnished copper, deep ruby",
     "subclass":   "heraldic accents, crimson, royal blue, antique gold",
@@ -170,16 +180,61 @@ CATEGORY_PALETTE = {
 }
 
 # Kategori zemini (sahne tipi — parlaklık paketten gelir, burası sadece neyin
-# arkada olduğu). "vignette" kelimesi kullanılmaz (modele çerçeve çizdiriyor).
+# arkada olduğu). "plain / empty / flat backdrop" ve "vignette" kelimeleri
+# kullanılmaz: tekdüze boş zemin en büyük AI tell'idir; yerine doğal mekan verilir.
 CATEGORY_BG = {
-    "monster":    "atmospheric backdrop",
+    "monster":    "in its natural habitat, untamed wilderness terrain",
     "spell":      "swirling energy field",
-    "magic-item": "bare surface, empty backdrop",
+    "magic-item": "on a rough-hewn stone surface, softly lit alcove",
     "subclass":   "heraldic banner",
     "feat":       "heraldic banner",
-    "background": "lived-in scene, full bleed edge to edge",
-    "subspecies": "plain backdrop",
-    "species":    "plain backdrop",
+    "background": "lived-in scene, natural setting",
+    "subspecies": "in a natural landscape, soft horizon",
+    "species":    "in a natural landscape, soft horizon",
+}
+
+# Pakete özel zemin sözcükleri — CATEGORY_BG yerine geçer. Arka planda "o işi
+# yapan şeyleri" (mesleğin/ortamın nesneleri) gösteren ipuçları ekler.
+PACKAGE_BG = {
+    "open5e-a5e-ddg": {
+        "monster": "deep in a crumbling dungeon hall, scattered adventuring "
+                   "gear, torches and rubble",
+        "magic-item": "on a dusty stone altar in a looted crypt, among coils "
+                      "of rope and pry bars",
+        "background": "inside a dungeon-delver's camp, bedrolls, lanterns and "
+                      "excavation tools",
+    },
+    "open5e-bfrd": {
+        "monster": "on a storm-lashed ship deck, rigging and sea spray",
+        "background": "aboard a sailing ship, coiled rope, charts and barrels",
+    },
+    "open5e-spells-that-dont-suck": {
+        "spell": "a sunlit wildflower meadow, drifting petals",
+        "magic-item": "on a mossy stone in a cheerful forest glade",
+    },
+    "open5e-a5e-ag": {
+        "background": "in a deep forest clearing, ferns and old-growth trees",
+    },
+    "open5e-open5e": {
+        "background": "at a roadside camp, bedroll, firewood and a stew pot",
+        "subspecies": "in a village street, warm afternoon light",
+        "species": "in a village street, warm afternoon light",
+    },
+}
+
+# Sahne çeşitliliği — aynı kategorideki görsellerin birbirine benzemesini kırar.
+# uuid ile deterministik seçilir. "resimler birbirine çok benziyor" şikayetleri
+# bu listeyle çözülür (özellikle tekil betimlerde).
+BG_FLAVOR = {
+    "monster": ["close-up among dense foliage", "in an open clearing",
+                "silhouetted at the edge of a forest", "framed by rocky "
+                "outcrops", "among tall grass and low scrub"],
+    "subclass": ["on a weathered war banner", "on a painted heraldic shield",
+                 "on a tattered guild standard", "on a stone relief plaque"],
+    "feat": ["on a weathered war banner", "on a painted heraldic shield",
+             "on a tattered guild standard", "on a stone relief plaque"],
+    "background": ["during a quiet morning", "during a rain-drenched day",
+                   "at dusk, embers glowing", "in early spring light"],
 }
 
 # Her entity'ye deterministik atanan küçük stil farkları — medya-agnostik.
@@ -203,6 +258,16 @@ FRAMING = {
     "species":    "character portrait, bust framing",
 }
 
+# species/subspecies çerçevelemesi — kullanıcı: "tek bir birey (portre ya da
+# boydan) GÖSTER; birden fazla farklı birey değil; ama bir KALABALIK olabilir."
+# → deterministik karışım: ya tek birey ya da kalabalık, ikisinin ortası yok.
+SPECIES_FRAMING = [
+    "a single individual, character portrait, bust framing",
+    "a single individual, full-body figure",
+    "a single individual in profile, half-body framing",
+    "a small crowd of the people, gathered together",
+]
+
 # description'ı saf mekanik olan tipler — sadece isimden prompt kurulur.
 NAME_ONLY_TYPES = {
     "feat": "a martial or arcane talent",
@@ -210,9 +275,28 @@ NAME_ONLY_TYPES = {
     "background": "a life before adventuring",
 }
 
+# Entity -> salt-görsel subject önbelleği (subject_gen.py doldurur). Kural/lore
+# metni yerine modele "ne çizileceğini" net söyleyen görsel betim. Boşsa fallback'e
+# düşülür. Prompt'u değil subject'i değiştirir; stil/renk/zemin katmanları aynı kalır.
+_SUBJECT_CACHE: dict[str, str] = {}
+
+
+def load_subject_cache(path: Path) -> None:
+    global _SUBJECT_CACHE
+    if path.is_file():
+        try:
+            _SUBJECT_CACHE = json.loads(path.read_text())
+        except Exception:
+            _SUBJECT_CACHE = {}
+
 _MD = re.compile(r"[*_`#>|]|\[\[|\]\]")
 _DICE = re.compile(r"\b\d+d\d+(\s*[+-]\s*\d+)?\b|\bDC\s*\d+\b|\b[+-]\d+\s+to hit\b", re.I)
 _WS = re.compile(r"\s+")
+
+
+def _hash(uuid: str, salt: int = 0) -> int:
+    """UUID'den deterministik sayı — tire'lerden bağımsız, salt destekli."""
+    return int("".join(uuid.replace("-", "")[salt % 24:][:6] or "0"), 16)
 
 
 def clean_prose(text: str, max_words: int = 45) -> str:
@@ -281,9 +365,15 @@ def palette_for(pkg: str, t: str) -> str:
     return f"{base}, {accent}"
 
 
-def mood_for(pkg: str, t: str) -> str:
+def mood_for(pkg: str, t: str, uuid: str) -> str:
     light = PACKAGE_LIGHT.get(pkg, PACKAGE_LIGHT[DEFAULT_PACKAGE])
-    bg = CATEGORY_BG[t]
+    if pkg in PACKAGE_BG and t in PACKAGE_BG[pkg]:
+        bg = PACKAGE_BG[pkg][t]
+    else:
+        bg = CATEGORY_BG[t]
+        flavor = BG_FLAVOR.get(t)
+        if flavor:
+            bg = f"{bg}, {flavor[_hash(uuid) % len(flavor)]}"
     return f"{light}, {bg}"
 
 
@@ -313,15 +403,24 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
             if rarity:
                 subject += f", {rarity.lower()} artifact"
 
+    cached = _SUBJECT_CACHE.get(uuid)
+    if cached:
+        subject = f"{tidy_name(name)}, {cached}"
+
+    if t in ("species", "subspecies"):
+        framing = SPECIES_FRAMING[_hash(uuid, 3) % len(SPECIES_FRAMING)]
+    else:
+        framing = FRAMING[t]
+
     style = f"{style_for(pkg)}, {STYLE_TAIL}"
-    flavor = STYLE_FLAVOR[int(uuid[8:12], 16) % len(STYLE_FLAVOR)]
+    flavor = STYLE_FLAVOR[_hash(uuid, 5) % len(STYLE_FLAVOR)]
     return {
         "uuid": uuid,
         "package": pkg,
         "type": t,
         "name": name,
-        "prompt": (f"{subject}. {FRAMING[t]}, {palette_for(pkg, t)}, "
-                   f"{mood_for(pkg, t)}, {style}, {flavor}"),
+        "prompt": (f"{subject}. {framing}, {palette_for(pkg, t)}, "
+                   f"{mood_for(pkg, t, uuid)}, {style}, {flavor}"),
         "seed": int(uuid[:8], 16),
     }
 
@@ -373,6 +472,7 @@ def main() -> None:
     p.add_argument("--self-check", action="store_true")
     args = p.parse_args()
 
+    load_subject_cache(base / "subject_cache.json")
     jobs = load_jobs(args.packs)
 
     if args.self_check:
