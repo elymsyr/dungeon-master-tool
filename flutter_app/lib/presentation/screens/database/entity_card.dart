@@ -148,11 +148,17 @@ class EntityCard extends ConsumerStatefulWidget {
   /// card. Null = no hint, navigation goes to the default panel.
   final String? panelId;
 
+  /// Called after this entity is successfully deleted. Lets a tabbed host
+  /// (DatabaseScreen) close the tab instead of leaving a dangling
+  /// "Entity not found" page behind the delete dialog.
+  final VoidCallback? onDeleted;
+
   const EntityCard({
     required this.entityId,
     this.categorySchema,
     this.readOnly = true,
     this.panelId,
+    this.onDeleted,
     super.key,
   });
 
@@ -583,7 +589,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               .read(entityProvider.notifier)
                               .delete(entity.id);
                           Navigator.pop(ctx);
-                          if (!ok) {
+                          if (ok) {
+                            widget.onDeleted?.call();
+                          } else {
                             ScaffoldMessenger.of(context)
                               ..hideCurrentSnackBar()
                               ..showSnackBar(const SnackBar(
