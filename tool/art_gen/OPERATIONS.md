@@ -64,6 +64,7 @@ python3 tool/art_gen/prompts.py --sample 3
 ```
 
 Çıktı: `art_jobs.jsonl` — her satır `{uuid, type, name, prompt, seed}`.
+Tüm çıktılar `tool/art_gen/` içine düşer.
 
 ### 2. Görsel Üretimi (generate.py)
 
@@ -71,8 +72,8 @@ python3 tool/art_gen/prompts.py --sample 3
 # Tüm job'ları üret
 python3 tool/art_gen/generate.py \
   --host http://192.168.1.12:8188 \
-  --jobs art_jobs.jsonl \
-  --out out
+  --jobs tool/art_gen/art_jobs.jsonl \
+  --out tool/art_gen/out
 
 # Sadece belirli tipler
 python3 tool/art_gen/generate.py \
@@ -109,15 +110,34 @@ Yarıda kalırsanız same komutu tekrar çalıştırmanız yeterli.
 
 ## Stil Tutarlılığı
 
-Tüm görsellerde aynı stil kullanılır:
+Ortak `STYLE` bloğu (medya + doku + D&D çapası) tüm görsellerde aynıdır:
 
 ```
-painted fantasy illustration, muted earthy palette, dramatic rim lighting,
-matte canvas texture, dark neutral background, centered composition,
-clean unmarked surface
+hand-painted oil painting on canvas, expressive painterly brushstrokes,
+subtle tonal variation across surfaces, matte finish,
+slightly uneven hand-painted edges,
+classic fantasy tabletop roleplaying game art
 ```
 
-Seed `uuid[:8]`'den türetilir → aynı entity her zaman aynı görseli üretir.
+Her kategori kendi `PALETTE` + `MOOD` bloğunu taşır (büyü parlak, canavar zengin
+doğal, eşya altın/cevher, karakter sıcak) — D&D paletinin her yeri kullanılır.
+Entity'ye uuid'den deterministik atanan `STYLE_FLAVOR` (impasto / dry-brush /
+glazing / palette-knife / weathered) eklenir. Seed `uuid[:8]`'den türetilir →
+aynı entity her zaman aynı görseli üretir.
+
+### Prompt varyantlarını karşılaştırma (prompt_grid.py)
+
+Toplu üretimden önce her kategoriden rastgele N içerik seçilir, üretilir ve tek
+grid resminde birleştirilir. Aynı `--seed` ile farklı `--style`/`--palette`/
+`--mood` denenerek stiller yan yana karşılaştırılır. Çıktı
+`tool/art_gen/grids/` altına düşer.
+
+```bash
+python3 tool/art_gen/prompt_grid.py --variant deneme1
+python3 tool/art_gen/prompt_grid.py --variant deneme2 --style "<yeni stil>"
+python3 tool/art_gen/prompt_grid.py --variant deneme3 --palette "vivid fiery palette, ruby, orange, gold"
+python3 tool/art_gen/prompt_grid.py --dry-run   # üretmeden örnek seti gör
+```
 
 ## Sorun Giderme
 

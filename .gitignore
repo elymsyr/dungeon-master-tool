@@ -4,8 +4,11 @@
 *.jks.b64
 key.properties
 web-mockup
+__pycache__
 .tmp/
 .env
+grids
+out
 open5e-api-staging
 supabase/.temp
 supabase/.branches
