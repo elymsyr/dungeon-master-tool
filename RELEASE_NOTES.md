@@ -1,5 +1,66 @@
 # Release Notes
 
+## Dungeon Master Tool v13.1.0 — HP Dice Roller, Entity Deletion Fix, Linux Projection Fix (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v13.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release, and the theme is **combat tracker polish and platform stability**. The encounter HP editor now has a dice button that rolls a creature's HP dice spec (e.g. 2d8+2) and fills both HP and Max HP in one tap. Deleting an entity from the database now closes its tab instead of leaving an empty "Entity not found" page. The mind map's invisible arrowheads are gone — edges now end as clean bezier curves. Stopping a Second Screen projection on Linux no longer crashes the app: the sub-window is hidden and re-shown on the next activate instead of being destroyed. No migrations needed.
+
+---
+
+### Highlights
+
+- **HP dice roller in the encounter editor** — The HP cell now opens a two-field editor (HP + Max HP). A dice button next to Max HP rolls the creature's `hp_dice` spec and fills both fields, so saving sets max HP to the roll and equalizes HP with it (bar fills).
+- **Entity deletion closes its tab** — Deleting an entity from the database screen now closes its open tab instead of leaving a blank "Entity not found" page.
+- **Mind map arrowheads removed** — Invisible arrowheads drawn behind node fills are gone; edges now end as clean bezier curves at the target center.
+- **Linux projection crash fixed** — Stopping a Second Screen projection no longer crashes the app on Linux. The sub-window is hidden on close and re-shown on the next activate.
+
+---
+
+### Combat tracker
+
+#### HP dice roller
+
+**Before (v13.0.1):** the HP cell in the encounter editor showed the current value; rolling a creature's HP dice required a separate manual step.
+
+**After (v13.1.1):** tapping the HP cell opens a two-field editor (HP + Max HP). A dice button next to Max HP rolls the creature's `hp_dice` spec (resolves from the snapshot or the source entity) and fills both fields with the result. Saving sets max HP to the roll and equalizes HP with it.
+
+---
+
+### Bug fixes
+
+- **Entity deletion left an empty tab** — Deleting an entity from the database screen left a blank "Entity not found" page; the tab is now closed automatically. Resolves #79.
+- **Mind map edges had invisible arrowheads** — Arrows were drawn at target node centers, hidden behind the node fill; removed entirely so edges end as plain bezier curves. Fixes #81.
+- **Linux projection crashed the app** — Stopping a Second Screen projection on Linux crashed because the desktop_multi_window plugin destroyed the sub-window through FlutterEngineRemoveView, which the embedder rejects and segfaults during GL teardown. The plugin is now vendored under `packages/desktop_multi_window` with a patch that hides the window on delete-event and disconnects the engine's own delete-event handler. Fixes #82.
+
+---
+
+### Smaller improvements
+
+- **Theme cleanup** — Unused neon, scroll, goldenrod and vapor palettes removed.
+- **Art generation** — New art jobs JSONL file for spell artwork; enhanced prompt generation with deterministic style variations and a grid comparison tool.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `13.0.1` → `13.1.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v13.0.1: Local Sync does not propagate deletions or renames (tombstones are the planned fix); Local Sync is signed but not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet; feat effect parsing stays conservative; smoother large-grid performance, stat-block token previews, and line-of-sight / dynamic vision are still roadmap items.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v13.0.1 — Combat Tracker Initiative Fixes, Mind Map Right-Click Fixes, Note Titles (Beta)
 
 **Release date:** August 2026
