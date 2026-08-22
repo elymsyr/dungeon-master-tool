@@ -644,6 +644,103 @@ void main() {
   });
 
   // -----------------------------------------------------------------------
+  // 5b. HP dice roll
+  // -----------------------------------------------------------------------
+  group('HP dice roll', () {
+    test('rollHpDice returns a value within the entity hp_dice range', () {
+      const monster = Entity(
+        id: 'm1',
+        name: 'Bear',
+        categorySlug: 'monster',
+        fields: {'hp_dice': '2d8+2'},
+      );
+      final entities = <String, Entity>{'m1': monster};
+      final n = _createNotifier(getEntities: () => entities);
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(
+            id: 'c1',
+            name: 'Bear',
+            entityId: 'm1',
+            hp: 11,
+            maxHp: 11,
+            stats: {'hp': '11', 'max_hp': '11'},
+          ),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      final rolled = n.rollHpDice('c1');
+
+      expect(rolled, inInclusiveRange(4, 18));
+      // Pure read — the combatant snapshot is never mutated.
+      final after = _state(n).activeEncounter!.combatants.first;
+      expect(after.hp, 11);
+      expect(after.maxHp, 11);
+    });
+
+    test('rollHpDice returns null without an hp_dice spec', () {
+      final n = _createNotifier();
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(
+            id: 'c1',
+            name: 'Goblin',
+            hp: 7,
+            maxHp: 7,
+            stats: {'hp': '7', 'max_hp': '7'},
+          ),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      expect(n.rollHpDice('c1'), isNull);
+    });
+
+    test('rollHpDice uses the snapshot hp_dice when the entity is unavailable', () {
+      final n = _createNotifier();
+      const enc = Encounter(
+        id: 'e1',
+        name: 'Fight',
+        combatants: [
+          Combatant(
+            id: 'c1',
+            name: 'Goblin',
+            hp: 9,
+            maxHp: 9,
+            stats: {'hp': '9', 'max_hp': '9', 'hp_dice': '1d1'},
+          ),
+        ],
+      );
+      final snapshot = _toJsonPrimitives({
+        'encounters': [enc.toJson()],
+        'active_encounter_id': 'e1',
+        'event_log': <String>[],
+        'session_notes': '',
+      });
+      n.loadSessionState(snapshot);
+
+      expect(n.rollHpDice('c1'), 1);
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // 6. Conditions
   // -----------------------------------------------------------------------
   group('Conditions', () {
