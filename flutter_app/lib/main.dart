@@ -71,18 +71,16 @@ void main(List<String> args) async {
   //
   //   1. Bump `playerWindowClosedSignal` so the DM's `ProjectionController`
   //      flips the cast icon back to "closed" immediately.
-  //   2. Actually destroy the sub-window via
-  //      `WindowController.fromWindowId(fromWindowId).close()`. This is the
-  //      desktop_multi_window-native close path and the only one that doesn't
-  //      crash on Linux — calling `windowManager.destroy()` from inside the
-  //      sub-window itself trips a fatal `FlutterEngineRemoveView ...
-  //      kInvalidArguments` + EGL/GLX context assertion. The sub-window now
-  //      sends us this signal and waits for us to take it down from outside.
+  //   2. Hide the sub-window via `WindowController.fromWindowId(id).hide()`.
+  //      We deliberately do NOT close/destroy it: destroying routes through
+  //      `FlutterEngineRemoveView` on the implicit view, which the current
+  //      engine rejects (`kInvalidArguments`) and then segfaults on during GL
+  //      teardown. Hiding keeps the window + engine alive for reuse.
   DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
     if (call.method == ProjectionIpcMethods.playerClosed) {
       playerWindowClosedSignal.value++;
       try {
-        await WindowController.fromWindowId(fromWindowId).close();
+        await WindowController.fromWindowId(fromWindowId).hide();
       } catch (_) {
         // Already gone or in a bad state — fine. The DM-side cast icon
         // already flipped via the signal above, so the UI stays consistent.
@@ -91,17 +89,16 @@ void main(List<String> args) async {
     return null;
   });
 
-  // Kill any sub-windows that survived a previous run (or hot restart).
-  // The player window is a separate OS process and is NOT torn down by
-  // hot restart, so without this we end up with stale player windows
-  // running OLD code from the previous build. Closing them here means
-  // every fresh DM start guarantees a fresh player isolate next time
-  // the user clicks the cast button.
+  // Hide any sub-windows that survived a previous run (or hot restart).
+  // The player window's engine is not torn down by hot restart, so without
+  // this we end up with stale player windows running OLD code from the
+  // previous build. Hiding (not closing) them avoids the implicit-view
+  // teardown crash and leaves them safe to be re-shown later.
   try {
     final stale = await DesktopMultiWindow.getAllSubWindowIds();
     for (final id in stale) {
       try {
-        await WindowController.fromWindowId(id).close();
+        await WindowController.fromWindowId(id).hide();
       } catch (_) {
         // Best-effort: window may already be gone or in a bad state.
       }

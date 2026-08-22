@@ -17,6 +17,13 @@ import 'projection_output.dart';
 /// / IPC-push methods. Owns the window lifecycle and delegates serialized
 /// state transport to [ProjectionIpc].
 class ProjectionOutputWindow extends ProjectionOutput {
+  /// The native window id, kept across deactivate/activate so the same OS
+  /// window (and its Flutter engine) is reused instead of destroyed. Destroying
+  /// a sub-window routes through `FlutterEngineRemoveView` on the implicit
+  /// view, which the current engine rejects and then segfaults on during GL
+  /// teardown — so we never destroy, only hide + show.
+  static int? _persistedWindowId;
+
   int? _windowId;
   final _externalCloseController = StreamController<void>.broadcast();
   VoidCallback? _signalListener;
@@ -28,15 +35,24 @@ class ProjectionOutputWindow extends ProjectionOutput {
   Future<bool> activate() async {
     if (_windowId != null) return true;
     try {
-      final targetFrame = await _resolveTargetFrame();
-      final controller = await DesktopMultiWindow.createWindow(jsonEncode({
-        'type': 'player_window',
-      }));
-      controller
-        ..setFrame(targetFrame)
-        ..setTitle('Player View — Second Screen')
-        ..show();
-      _windowId = controller.windowId;
+      int id;
+      if (_persistedWindowId != null) {
+        // Reuse the previously-hidden window.
+        id = _persistedWindowId!;
+        await WindowController.fromWindowId(id).show();
+      } else {
+        final targetFrame = await _resolveTargetFrame();
+        final controller = await DesktopMultiWindow.createWindow(jsonEncode({
+          'type': 'player_window',
+        }));
+        controller
+          ..setFrame(targetFrame)
+          ..setTitle('Player View — Second Screen')
+          ..show();
+        id = controller.windowId;
+        _persistedWindowId = id;
+      }
+      _windowId = id;
 
       // Listen to the reverse-IPC bridge from main.dart so the player
       // window's native close-button fires onExternalClose immediately.
@@ -57,17 +73,14 @@ class ProjectionOutputWindow extends ProjectionOutput {
     _windowId = null;
     _removeSignalListener();
 
-    // Cooperative close — lets the player run dispose handlers.
+    // Ask the player to clear its surface, then HIDE the native window.
+    // Never close/destroy it — see _persistedWindowId.
     ProjectionIpc.requestClose(id);
-    // Forced close — bypasses a wedged player isolate. Runs after a tiny
-    // delay so a healthy player can win the race and shut down cleanly.
-    Timer(const Duration(milliseconds: 200), () async {
-      try {
-        await WindowController.fromWindowId(id).close();
-      } catch (_) {
-        // Already gone — fine.
-      }
-    });
+    try {
+      await WindowController.fromWindowId(id).hide();
+    } catch (_) {
+      // Window may already be hidden/gone — fine.
+    }
   }
 
   @override
@@ -136,10 +149,23 @@ class ProjectionOutputWindow extends ProjectionOutput {
   }
 
   void _markDead() {
-    if (_windowId == null) return;
+    final id = _windowId;
+    if (id == null) return;
     _windowId = null;
     _removeSignalListener();
+    // Hide (never close) — the native window stays alive for reuse on the next
+    // activate(). Covers the push-failure path too, where the window may still
+    // be visible; the X-button path already hid it via main.dart's handler.
+    unawaited(_hideQuietly(id));
     _externalCloseController.add(null);
+  }
+
+  static Future<void> _hideQuietly(int id) async {
+    try {
+      await WindowController.fromWindowId(id).hide();
+    } catch (_) {
+      // Window already gone/hidden — fine.
+    }
   }
 
   void _removeSignalListener() {

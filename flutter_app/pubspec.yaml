@@ -94,6 +94,13 @@ dev_dependencies:
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.3
 
+# Vendored + patched copy of desktop_multi_window 0.2.1. The upstream Linux
+# native code quits (and segfaults) the whole app when a sub-window is closed;
+# see flutter_app/packages/desktop_multi_window/linux/flutter_window.cc.
+dependency_overrides:
+  desktop_multi_window:
+    path: packages/desktop_multi_window
+
 flutter:
   uses-material-design: true
   generate: true
