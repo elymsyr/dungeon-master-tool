@@ -134,6 +134,18 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     _persistOpenTabs();
   }
 
+  /// Closes every tab showing [entityId] — fired when the entity is deleted
+  /// from within a card so the tab doesn't linger as a blank page.
+  void _closeTabForEntity(String entityId) {
+    setState(() {
+      _leftTabs.removeWhere((t) => t.entityId == entityId);
+      _rightTabs.removeWhere((t) => t.entityId == entityId);
+      if (_leftActiveIndex >= _leftTabs.length) _leftActiveIndex = _leftTabs.length - 1;
+      if (_rightActiveIndex >= _rightTabs.length) _rightActiveIndex = _rightTabs.length - 1;
+    });
+    _persistOpenTabs();
+  }
+
   /// Built-in bir entity edit'lenip homebrew kopya forklandığında, eski
   /// id'yi gösteren sekme(ler)i kopyaya geçirir. Orijinal built-in DB
   /// listesinde kalır (reload'da yeniden synth edilir) — yalnızca sekme
@@ -284,6 +296,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                         schema.categories, (c) => c.slug == t.categorySlug),
                     readOnly: !editMode,
                     panelId: 'left',
+                    onDeleted: () => _closeTabForEntity(t.entityId),
                   ),
               ],
             ),
@@ -316,6 +329,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           panelId: 'left',
           onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.left),
+          onEntityDeleted: _closeTabForEntity,
         ),
       ),
       second: _DragDropZone(
@@ -330,6 +344,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           panelId: 'right',
           onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.right),
+          onEntityDeleted: _closeTabForEntity,
         ),
       ),
     );
@@ -364,6 +379,7 @@ class _TabPanel extends ConsumerWidget {
   final String? panelId;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onClose;
+  final ValueChanged<String>? onEntityDeleted;
 
   const _TabPanel({
     required this.tabs,
@@ -374,6 +390,7 @@ class _TabPanel extends ConsumerWidget {
     this.panelId,
     required this.onSelect,
     required this.onClose,
+    this.onEntityDeleted,
   });
 
   @override
@@ -411,6 +428,7 @@ class _TabPanel extends ConsumerWidget {
                           schema.categories, (c) => c.slug == t.categorySlug),
                   readOnly: !editMode,
                   panelId: panelId,
+                  onDeleted: () => onEntityDeleted?.call(t.entityId),
                 ),
             ],
           ),
