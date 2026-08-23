@@ -427,6 +427,187 @@
           "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Intelligence"}
         }
       }
+    ],
+    "scene": [
+      {
+        "source_name": "Arrival at the Island",
+        "mapping": {
+          "name": "Arrival at the Island",
+          "status": "Planned",
+          "location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright Light"},
+          "beats": "1. The party's ship approaches the island at dawn.\n2. They see the ruined palace rising from the jungle.\n3. A warning: fresh footprints in the sand — someone else is here.\n4. The gate stands ajar, inviting them in.",
+          "npc_refs": []
+        }
+      },
+      {
+        "source_name": "The Gate Hall Discovery",
+        "mapping": {
+          "name": "The Gate Hall Discovery",
+          "status": "Planned",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "beats": "1. The party enters the grand hall, awestruck by its scale.\n2. Faded murals tell the story of a vizier's rise and fall.\n3. A ghostly voice whispers: 'Turn back... or join the feast eternal.'\n4. Ibrahim the Drifted Lord approaches cautiously.",
+          "npc_refs": [
+            {"lookup": "npc", "match": "name", "value": "Ibrahim the Drifted Lord"}
+          ]
+        }
+      },
+      {
+        "source_name": "The Efreet's Revelation",
+        "mapping": {
+          "name": "The Efreet's Revelation",
+          "status": "Planned",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright Light"},
+          "beats": "1. The temperature rises as the party enters the Treasure Hall.\n2. Flames dance in the shadows — the efreet reveals itself.\n3. It demands tribute: 'Kneel, and I shall grant you riches beyond measure.'\n4. If refused, it attacks with terrifying fury.",
+          "npc_refs": [
+            {"lookup": "npc", "match": "name", "value": "The White Shark of Basra"}
+          ]
+        }
+      },
+      {
+        "source_name": "The Final Battle",
+        "mapping": {
+          "name": "The Final Battle",
+          "status": "Planned",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright Light"},
+          "beats": "1. The White Shark and his elite guards surround the party.\n2. The efreet watches, amused, from its throne of gold.\n3. The battle rages — friend and foe fall alike.\n4. Victory: the treasure is claimed, but at what cost?",
+          "npc_refs": [
+            {"lookup": "npc", "match": "name", "value": "The White Shark of Basra"},
+            {"lookup": "npc", "match": "name", "value": "Nefru-Sekhem"},
+            {"lookup": "npc", "match": "name", "value": "Timzahi"}
+          ]
+        }
+      }
+    ],
+    "quest": [
+      {
+        "source_name": "Reach the Palace",
+        "mapping": {
+          "name": "Reach the Palace",
+          "status": "Not Started",
+          "objective": "Travel to the island and find the entrance to Uzrah's Palace.",
+          "reward_xp": 500,
+          "reward_gp": 100,
+          "secrets": "The palace is not abandoned — the White Shark's crew has already claimed it."
+        }
+      },
+      {
+        "source_name": "Stop the White Shark",
+        "mapping": {
+          "name": "Stop the White Shark",
+          "status": "Not Started",
+          "objective": "Defeat or drive off the White Shark of Basra and his crew before they can claim the treasure.",
+          "reward_xp": 2000,
+          "reward_gp": 500,
+          "secrets": "The White Shark knows more about the palace than he lets on — he seeks a specific artifact."
+        }
+      },
+      {
+        "source_name": "Survive the Efreet",
+        "mapping": {
+          "name": "Survive the Efreet",
+          "status": "Not Started",
+          "objective": "Deal with the capricious efreet that haunts the palace. Befriend, banish, or destroy it.",
+          "reward_xp": 3000,
+          "reward_gp": 1000,
+          "secrets": "The efreet was bound to the palace centuries ago. It can be freed — or bound tighter."
+        }
+      },
+      {
+        "source_name": "Claim the Treasure",
+        "mapping": {
+          "name": "Claim the Treasure",
+          "status": "Not Started",
+          "objective": "Find and claim the legendary treasure of Uzrah's Palace.",
+          "reward_xp": 1500,
+          "reward_gp": 2000,
+          "secrets": "The treasure is not what it seems — it is both a blessing and a curse."
+        }
+      }
+    ],
+    "lore": [
+      {
+        "source_name": "The History of Uzrah's Palace",
+        "mapping": {
+          "name": "The History of Uzrah's Palace",
+          "pages": [
+            "Uzrah's Palace was built centuries ago by a legendary vizier who served the sultan of a great desert kingdom. The palace was a marvel of architecture, with soaring towers and lush gardens.",
+            "The vizier was known for his wisdom and wealth, but also for his pride. He made a bargain with an efreet, trading his soul for eternal power. But the efreet betrayed him, trapping his spirit in the palace forever.",
+            "The palace fell into ruin after the vizier's death. The gardens withered, the towers crumbled, and the efreet remained, guarding the treasure that the vizier had hoarded."
+          ],
+          "pdfs": ["media/Handouts/Handout-01.webp"]
+        }
+      },
+      {
+        "source_name": "The Legend of the Efreet",
+        "mapping": {
+          "name": "The Legend of the Efreet",
+          "pages": [
+            "The efreet that haunts Uzrah's Palace is not a ordinary fire spirit. It is ancient, powerful, and capricious — capable of granting wishes and destroying those who displease it.",
+            "Legend says that the efreet was once a djinni who fell in love with a mortal. When the mortal died, the djinni's grief turned to rage, and it became an efreet, burning everything it touched.",
+            "The efreet can be summoned with fire and gold, but it always demands a price. Those who try to trick it often find themselves burned."
+          ]
+        }
+      },
+      {
+        "source_name": "The White Shark's Plan",
+        "mapping": {
+          "name": "The White Shark's Plan",
+          "pages": [
+            "The White Shark of Basra is not a typical pirate. He is old, cunning, and has spent decades searching for Uzrah's Palace.",
+            "His plan is to distribute his treasure on the island, using the palace as a base of operations. But he secretly seeks the vizier's artifact — an item of immense power hidden somewhere in the palace.",
+            "The White Shark knows about the efreet and has prepared offerings to appease it. Whether he can control it is another matter."
+          ],
+          "secrets": "The White Shark's true goal is to bind the efreet to his will, using the vizier's artifact."
+        }
+      }
+    ],
+    "campaign": [
+      {
+        "source_name": "99 Devils of Uzrah's Palace",
+        "mapping": {
+          "name": "99 Devils of Uzrah's Palace",
+          "pages": [
+            "An Arabian Nights-inspired dungeon adventure for 4-6 players, set on a remote island where a pirate lord plans to distribute his treasure among the ruins of a legendary palace.",
+            "The palace was once home to a vizier who made a bargain with an efreet. Now the ruins are haunted by the efreet, filled with traps and monsters, and guarded by the White Shark's crew.",
+            "The party must navigate the ruins, deal with the efreet, and either claim the treasure or stop the White Shark's plans. The adventure features exploration, combat, and roleplaying opportunities."
+          ],
+          "pdfs": ["99-Devils-of-Uzrahs-Palace-Shadowdark.pdf"]
+        }
+      }
+    ],
+    "environmental-effect": [
+      {
+        "source_name": "Efreet's Fire Aura",
+        "mapping": {
+          "name": "Efreet's Fire Aura",
+          "effect": "The efreet radiates intense heat. Within 30 feet, the air shimmers and flames dance at the edges of vision.",
+          "damage_dice": "1d6",
+          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Fire"},
+          "save_dc": 12,
+          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Constitution"},
+          "mechanical_notes": "Creatures within 30 feet of the efreet take 1d6 fire damage at the start of their turn. Fire-resistant creatures are immune."
+        }
+      },
+      {
+        "source_name": "Crumbling Ruins",
+        "mapping": {
+          "name": "Crumbling Ruins",
+          "effect": "The palace is ancient and unstable. Dust falls from the ceiling, and stones shift underfoot.",
+          "mechanical_notes": "Running or charging in the ruins requires a DC 10 Dexterity check or fall prone. Loud noises may trigger cave-ins (DM's discretion)."
+        }
+      },
+      {
+        "source_name": "Haunted Halls",
+        "mapping": {
+          "name": "Haunted Halls",
+          "effect": "The spirits of the palace's former inhabitants linger. Whispers echo, and shadows move on their own.",
+          "mechanical_notes": "Creatures with the Haunted One background have advantage on saves against fear effects in the palace. Others must make a DC 12 Wisdom save when entering a new area or be frightened for 1 minute."
+        }
+      }
     ]
   },
   "cross_references": []
