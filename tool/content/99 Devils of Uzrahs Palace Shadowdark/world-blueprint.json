@@ -1,0 +1,433 @@
+{
+  "version": "1.0.0",
+  "source_system": "shadowdark",
+  "app_schema": "builtin-dnd5e-default-v2",
+  "categories": {
+    "npc": [
+      {
+        "source_name": "The White Shark of Basra",
+        "mapping": {
+          "name": "The White Shark of Basra",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 5,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Neutral"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 14, "DEX": 14, "CON": 12, "INT": 16, "WIS": 13, "CHA": 14},
+          "combat_stats": {"hp": 12, "max_hp": 12, "ac": 15, "speed": "30 ft"},
+          "proficiency_bonus": 3,
+          "description": "An old pirate lord, 73 years old, with white hair and cunning eyes. Plans to distribute his vast treasure on the island ruins.",
+          "secrets": "The ruins were once the palace of a legendary vizier, now haunted by a capricious efreet. The Shark knows more than he lets on."
+        }
+      },
+      {
+        "source_name": "Faruq Night-Eater",
+        "mapping": {
+          "name": "Faruq Night-Eater",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 4,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Lower Level"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 16, "DEX": 14, "CON": 14, "INT": 16, "WIS": 13, "CHA": 12},
+          "combat_stats": {"hp": 13, "max_hp": 13, "ac": 16, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A fearsome pirate lieutenant. 'Night-Eater' is not a metaphorical title.",
+          "secrets": "Secretly plans to betray the White Shark and claim the treasure for himself."
+        }
+      },
+      {
+        "source_name": "Nefru-Sekhem",
+        "mapping": {
+          "name": "Nefru-Sekhem",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 4,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 18, "DEX": 14, "CON": 14, "INT": 12, "WIS": 11, "CHA": 10},
+          "combat_stats": {"hp": 15, "max_hp": 15, "ac": 16, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A towering warrior serving as the White Shark's enforcer."
+        }
+      },
+      {
+        "source_name": "Timzahi",
+        "mapping": {
+          "name": "Timzahi",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 4,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 18, "DEX": 14, "CON": 14, "INT": 12, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 15, "max_hp": 15, "ac": 16, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "Another of the White Shark's elite guards. Identical in build to Nefru-Sekhem."
+        }
+      },
+      {
+        "source_name": "Varazdat",
+        "mapping": {
+          "name": "Varazdat",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 5,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Neutral"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "stat_block": {"STR": 20, "DEX": 16, "CON": 16, "INT": 16, "WIS": 13, "CHA": 12},
+          "combat_stats": {"hp": 17, "max_hp": 17, "ac": 17, "speed": "30 ft"},
+          "proficiency_bonus": 3,
+          "description": "A massive warrior of ambiguous allegiance. Serves as gatekeeper to the palace ruins.",
+          "secrets": "Bound by an ancient oath to guard the palace. Will respect anyone who speaks the old words."
+        }
+      },
+      {
+        "source_name": "Ibrahim the Drifted Lord",
+        "mapping": {
+          "name": "Ibrahim the Drifted Lord",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 3,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "stat_block": {"STR": 14, "DEX": 14, "CON": 14, "INT": 12, "WIS": 11, "CHA": 12},
+          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 14, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A displaced noble who has wandered into the ruins seeking redemption.",
+          "secrets": "Knows the location of a hidden vault, but fears what guards it."
+        }
+      },
+      {
+        "source_name": "Keeper of Cups and Cushions",
+        "mapping": {
+          "name": "Keeper of Cups and Cushions",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 3,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Banquet Hall"},
+          "stat_block": {"STR": 10, "DEX": 14, "CON": 12, "INT": 14, "WIS": 14, "CHA": 16},
+          "combat_stats": {"hp": 9, "max_hp": 9, "ac": 12, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A ghostly servant who still tends to a feast that ended centuries ago.",
+          "secrets": "Will help anyone who honors the traditions of hospitality."
+        }
+      },
+      {
+        "source_name": "Debbi",
+        "mapping": {
+          "name": "Debbi",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 2,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Neutral"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Builder Tunnels"},
+          "stat_block": {"STR": 10, "DEX": 14, "CON": 12, "INT": 12, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 9, "max_hp": 9, "ac": 12, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A tunnel dweller who knows the secret passages of the palace."
+        }
+      },
+      {
+        "source_name": "Sangtarash the Mercenary",
+        "mapping": {
+          "name": "Sangtarash the Mercenary",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 3,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Neutral"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 14, "DEX": 12, "CON": 14, "INT": 12, "WIS": 11, "CHA": 10},
+          "combat_stats": {"hp": 12, "max_hp": 12, "ac": 16, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A sellsword hired by the White Shark. Fights for coin, not loyalty."
+        }
+      },
+      {
+        "source_name": "Rafiq the Pirate",
+        "mapping": {
+          "name": "Rafiq the Pirate",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 2,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 12, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 14, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "One of the White Shark's rank-and-file pirates."
+        }
+      },
+      {
+        "source_name": "Pirate Archer",
+        "mapping": {
+          "name": "Pirate Archer",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 2,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 12, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 14, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "An archer serving in the White Shark's crew."
+        }
+      },
+      {
+        "source_name": "Ropeburn the Pirate",
+        "mapping": {
+          "name": "Ropeburn the Pirate",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 2,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Builder Tunnels"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 12, "DEX": 12, "CON": 12, "INT": 12, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 14, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A grizzled pirate with burn scars covering his hands."
+        }
+      },
+      {
+        "source_name": "Pirate Treasure Hauler",
+        "mapping": {
+          "name": "Pirate Treasure Hauler",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 1,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Hostile"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "faction": "White Shark's Crew",
+          "stat_block": {"STR": 14, "DEX": 12, "CON": 12, "INT": 10, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 11, "max_hp": 11, "ac": 14, "speed": "30 ft"},
+          "proficiency_bonus": 2,
+          "description": "A strong but simple pirate tasked with moving treasure chests."
+        }
+      },
+      {
+        "source_name": "Tariq the Monkey",
+        "mapping": {
+          "name": "Tariq the Monkey",
+          "species_ref": {"lookup": "species", "match": "name", "value": "Human"},
+          "level": 1,
+          "attitude_ref": {"lookup": "attitude", "match": "name", "value": "Friendly"},
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Builder Tunnels"},
+          "stat_block": {"STR": 8, "DEX": 16, "CON": 12, "INT": 10, "WIS": 10, "CHA": 10},
+          "combat_stats": {"hp": 5, "max_hp": 5, "ac": 13, "speed": "35 ft"},
+          "proficiency_bonus": 2,
+          "description": "An agile little thief who skitters through the tunnels. Named for his climbing ability."
+        }
+      }
+    ],
+    "location": [
+      {
+        "source_name": "Uzrah's Palace",
+        "mapping": {
+          "name": "Uzrah's Palace",
+          "danger_level": "Deadly",
+          "environment": "Ancient palace ruins, partially collapsed, haunted by an efreet",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "description_long": "The crumbling palace of a legendary vizier, now haunted by a capricious efreet. The White Shark of Basra has claimed it as the site for his treasure distribution. The ruins are filled with traps, monsters, and the remnants of ancient magic.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Gate Hall",
+        "mapping": {
+          "name": "The Gate Hall",
+          "danger_level": "High",
+          "environment": "Grand entrance hall, 60-foot ceilings, crumbling pillars",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "The main entrance to the palace. Massive stone doors stand partially open, revealing a hall lined with crumbling pillars. Faded murals depicting ancient victories cover the walls.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Upper Level",
+        "mapping": {
+          "name": "The Upper Level",
+          "danger_level": "High",
+          "environment": "Palace upper floors, guest quarters, audience chambers",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "The upper floors of the palace, once reserved for honored guests. Now occupied by the White Shark's crew. Dusty tapestries and broken furniture litter the corridors.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Lower Level",
+        "mapping": {
+          "name": "The Lower Level",
+          "danger_level": "Deadly",
+          "environment": "Underground chambers, treasury vaults, ancient laboratories",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Darkness"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "The basement levels of the palace, where the vizier kept his most precious treasures and conducted his arcane experiments. Dark, cramped, and filled with ancient traps.",
+          "map": "media/Maps/Lower-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Builder Tunnels",
+        "mapping": {
+          "name": "The Builder Tunnels",
+          "danger_level": "Medium",
+          "environment": "Narrow service tunnels, connecting various parts of the palace",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Darkness"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "A network of narrow tunnels used by the palace builders and servants. Now home to various creatures and tunnel dwellers.",
+          "map": "media/Maps/Builder-Tunnels.webp"
+        }
+      },
+      {
+        "source_name": "The Treasure Hall",
+        "mapping": {
+          "name": "The Treasure Hall",
+          "danger_level": "Deadly",
+          "environment": "Massive vaulted chamber, filled with ancient treasure chests",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Bright Light"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "The grand hall where the White Shark plans to distribute his treasure. Piles of gold, gems, and artifacts fill the room. The efreet watches from the shadows, waiting for the right moment to strike."
+        }
+      },
+      {
+        "source_name": "The Banquet Hall",
+        "mapping": {
+          "name": "The Banquet Hall",
+          "danger_level": "Medium",
+          "environment": "Long dining hall, tables set for a feast that never ended",
+          "illumination_ref": {"lookup": "illumination", "match": "name", "value": "Dim Light"},
+          "parent_location_ref": {"lookup": "location", "match": "name", "value": "Uzrah's Palace"},
+          "description_long": "A grand dining hall where ghostly servants still tend to a feast that was interrupted centuries ago. The food is dust, the wine is vapor, but the servants remain."
+        }
+      }
+    ],
+    "encounter": [
+      {
+        "source_name": "Gate Hall Ambush",
+        "mapping": {
+          "name": "Gate Hall Ambush",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Gate Hall"},
+          "difficulty": "Moderate",
+          "monsters_refs": [
+            {"lookup": "monster", "match": "name", "value": "Cobra", "count": 4}
+          ],
+          "setup": "As the party enters the Gate Hall, giant cobras descend from the crumbling ceiling.",
+          "tactics": "The cobras attack from above, using surprise to gain advantage. They target the weakest-looking party member first.",
+          "xp_budget": 800
+        }
+      },
+      {
+        "source_name": "Upper Level Patrol",
+        "mapping": {
+          "name": "Upper Level Patrol",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "difficulty": "Moderate",
+          "npcs_refs": [
+            {"lookup": "npc", "match": "name", "value": "Rafiq the Pirate"},
+            {"lookup": "npc", "match": "name", "value": "Pirate Archer"},
+            {"lookup": "npc", "match": "name", "value": "Ropeburn the Pirate"}
+          ],
+          "setup": "A patrol of three pirates rounds the corner, weapons drawn.",
+          "tactics": "The archer fires from behind while the others engage in melee. They retreat if two fall."
+        }
+      },
+      {
+        "source_name": "Nefru-Sekhem's Guard",
+        "mapping": {
+          "name": "Nefru-Sekhem's Guard",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Upper Level"},
+          "difficulty": "Hard",
+          "npcs_refs": [
+            {"lookup": "npc", "match": "name", "value": "Nefru-Sekhem"},
+            {"lookup": "npc", "match": "name", "value": "Timzahi"}
+          ],
+          "setup": "Two massive warriors block the path, weapons ready. They fight to the death.",
+          "tactics": "Nefru-Sekhem and Timzahi fight in tandem, covering each other's flanks. They target healers first."
+        }
+      },
+      {
+        "source_name": "The Efreet's Lair",
+        "mapping": {
+          "name": "The Efreet's Lair",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Treasure Hall"},
+          "difficulty": "Deadly",
+          "setup": "The efreet reveals itself, demanding tribute or combat. The temperature rises as flames dance in its eyes.",
+          "tactics": "The efreet uses fireballs to control the battlefield, targeting groups. It picks off stragglers with flame touch. If reduced to half HP, it retreats to bargain.",
+          "xp_budget": 3000
+        }
+      },
+      {
+        "source_name": "Tunnel Ambush",
+        "mapping": {
+          "name": "Tunnel Ambush",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Builder Tunnels"},
+          "difficulty": "Easy",
+          "monsters_refs": [
+            {"lookup": "monster", "match": "name", "value": "Ghul-Bird", "count": 6}
+          ],
+          "setup": "Screeching fills the narrow tunnels as ghul-birds swoop down from above.",
+          "tactics": "The ghul-birds attack in waves, using the narrow tunnels to prevent the party from fighting effectively."
+        }
+      },
+      {
+        "source_name": "The Dodecaphage Encounter",
+        "mapping": {
+          "name": "The Dodecaphage Encounter",
+          "location_ref": {"lookup": "location", "match": "name", "value": "The Lower Level"},
+          "difficulty": "Deadly",
+          "monsters_refs": [
+            {"lookup": "monster", "match": "name", "value": "Dodecaphage", "count": 1}
+          ],
+          "setup": "A massive, impossible creature blocks the passage. It has too many mouths, too many eyes, and it is very, very hungry.",
+          "tactics": "The Dodecaphage uses its immense size to fill the corridor, forcing the party to fight in cramped conditions. It swallows targets whole."
+        }
+      }
+    ],
+    "trap": [
+      {
+        "source_name": "Collapsing Ceiling",
+        "mapping": {
+          "name": "Collapsing Ceiling",
+          "trigger_kind": "Pressure",
+          "trigger": "A pressure plate in the center of the hallway.",
+          "save_dc": 14,
+          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Dexterity"},
+          "damage_dice": "4d6",
+          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Bludgeoning"},
+          "detection_dc": 15,
+          "disable_dc": 13,
+          "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Intelligence"},
+          "countermeasures": "The pressure plate can be spotted with a DC 15 Perception check. It can be disabled with a DC 13 Investigation check."
+        }
+      },
+      {
+        "source_name": "Flame Jet",
+        "mapping": {
+          "name": "Flame Jet",
+          "trigger_kind": "Touch",
+          "trigger": "Opening a treasure chest triggers a burst of flame from the walls.",
+          "save_dc": 13,
+          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Dexterity"},
+          "damage_dice": "3d6",
+          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Fire"},
+          "detection_dc": 14,
+          "disable_dc": 12,
+          "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Intelligence"}
+        }
+      },
+      {
+        "source_name": "Pit Trap",
+        "mapping": {
+          "name": "Pit Trap",
+          "trigger_kind": "Pressure",
+          "trigger": "A section of floor gives way under weight.",
+          "save_dc": 13,
+          "save_ability_ref": {"lookup": "ability", "match": "name", "value": "Dexterity"},
+          "damage_dice": "2d6",
+          "damage_type_ref": {"lookup": "damage-type", "match": "name", "value": "Bludgeoning"},
+          "detection_dc": 12,
+          "disable_dc": 10,
+          "disable_ability_ref": {"lookup": "ability", "match": "name", "value": "Intelligence"}
+        }
+      }
+    ]
+  },
+  "cross_references": []
+}
