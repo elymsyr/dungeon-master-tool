@@ -36,6 +36,15 @@ Tüm dosya referansları modül dizinine göreceli olmalı.
 ### Kural 4 — Orijinal Dizin Yapısı Korunur
 Mevcut klasör isimleri (`media/`, `Maps/`, `Handouts/` vb.) değişmez.
 
+### Kural 5 — Built-in / Official Paketteki İçerik Tekrar Eklenmez
+Eğer eklenmek istenen içerik (silah, zırh, sihir, ırk, sınıf, vb.) zaten built-in SRD paketinde mevcutsa, pakete tekrar eklenmez.
+Bunun yerine built-in paketteki varlık referansla kullanılır.
+Benzerlik kontrolü agent tarafından yapılır — isim, slug ve alan benzerliği dikkate alınır.
+Eşleşen varlık bulunamazsa yeni eklenir.
+
+Eğer içerik resmi (official) paketlerden geliyor ve birden fazla öğe içeren bir grup ise, bu öğeler tekrar yazılmaz — official paket import olarak referans verilir.
+Örneğin: bir maceradaki tüm canavarlar SRD'de zaten varsa, pakete tek tek eklenmek yerine `builtin-dnd5e` referansı kullanılır.
+
 ## Modül Formatı
 
 ```
@@ -232,124 +241,10 @@ Her entity türü için `world-blueprint.json` oluşturulur.
 
 ### World Blueprint Formatı
 
-```json
-{
-  "version": "1.0.0",
-  "source_system": "shadowdark",
-  "app_schema": "builtin-dnd5e-default-v2",
-  "categories": {
-    "npc": [
-      {
-        "source_name": "NPC Adı",
-        "source_type": "person",
-        "mapping": {
-          "name": "NPC Adı",
-          "species_ref": {
-            "lookup": "species",
-            "match": "name",
-            "value": "Human"
-          },
-          "class_refs": [
-            {
-              "lookup": "class",
-              "match": "name",
-              "value": "Wizard"
-            }
-          ],
-          "stat_block": {
-            "STR": 10,
-            "DEX": 14,
-            "CON": 12,
-            "INT": 18,
-            "WIS": 13,
-            "CHA": 15
-          },
-          "combat_stats": {
-            "hp": 30,
-            "max_hp": 30,
-            "ac": 15,
-            "speed": 30
-          },
-          "attitude_ref": {
-            "lookup": "attitude",
-            "match": "name",
-            "value": "Friendly"
-          },
-          "description": "Yaşlı bir bilge, partinin rehberi."
-        }
-      }
-    ],
-    "location": [
-      {
-        "source_name": "Location Adı",
-        "source_type": "place",
-        "mapping": {
-          "name": "Location Adı",
-          "description": "Karanlık bir mağara, girişinde taş bir kapı var.",
-          "danger_level_ref": {
-            "lookup": "danger-level",
-            "match": "name",
-            "value": "Medium"
-          },
-          "illumination_ref": {
-            "lookup": "illumination",
-            "match": "name",
-            "value": "Darkness"
-          },
-          "maps": ["media/Maps/Cave-Map.webp"]
-        }
-      }
-    ],
-    "quest": [
-      {
-        "source_name": "Quest Adı",
-        "source_type": "quest",
-        "mapping": {
-          "name": "Quest Adı",
-          "description": "Köylüleri kurtarmak için mağaraya girilmeli.",
-          "status": "active",
-          "objective": "Köylüleri kurtar ve eve dön.",
-          "xp_reward": 500,
-          "gold_reward": 200
-        }
-      }
-    ],
-    "encounter": [
-      {
-        "source_name": "Encounter Adı",
-        "source_type": "combat",
-        "mapping": {
-          "name": "Encounter Adı",
-          "location_ref": {
-            "lookup": "location",
-            "match": "name",
-            "value": "Location Adı"
-          },
-          "difficulty": "medium",
-          "monster_refs": [
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Goblin",
-              "count": 4
-            }
-          ],
-          "xp_budget": 800
-        }
-      }
-    ]
-  },
-  "cross_references": [
-    {
-      "from_category": "npc",
-      "from_name": "NPC Adı",
-      "from_field": "location_ref",
-      "to_category": "location",
-      "to_name": "Location Adı"
-    }
-  ]
-}
-```
+> [!important] Alan sözleşmesinin tamamı: [world-blueprint.md](world-blueprint.md)
+> Orada her Tier-2 kategorisinin alan adı, tipi, zorunluluğu, enum değerleri,
+> JSON şekli ve örnek blueprint var. Aşağıdaki tablo yalnızca kategori
+> eşlemesinin kısa özetidir.
 
 ### Eşleme Kuralları (Campaign → World)
 
@@ -392,6 +287,7 @@ Her blueprint dosyası için:
 2. `world-blueprint.json` → Entity kategorileri doğru mu?
 3. Cross-referanslar tutarlı mı?
 4. Eşleşmeyen alanlar için varsayılanlar uygun mu?
+5. Built-in pakette zaten bulunan içerik tekrar eklenmemiş mi? (Kural 5)
 
 Aktarım tamamlandıktan sonra blueprint dosyaları `tool/content/<modul-adı>/` dizininde kalır.
 Uygulamaya entegrasyon gerektiğinde bu dosyalar okunarak entity'ler oluşturulur.
