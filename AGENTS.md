@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Code search (codebase-memory MCP)
 
-This workspace is indexed as **one** project — pass this `project` name to every tool:
+This workspace is indexed as **one** project, indexed `full`: the Flutter app (`flutter_app/lib/`, `tool/`, `test/`), the Supabase surface (`supabase/migrations/` + edge functions), the Cloudflare worker (`cloudflare/src/`), and the `vault/` markdown. Gitignored generated files (`*.g.dart`/`*.freezed.dart`) and large binary assets are not in the index.
 
-- `home-eren-GitHub-dungeon-master-tool` — indexed `full`: the Flutter app (`flutter_app/lib/`, `tool/`, `test/`), the Supabase surface (`supabase/migrations/` + edge functions), the Cloudflare worker (`cloudflare/src/`), and the `vault/` markdown. Gitignored generated files (`*.g.dart`/`*.freezed.dart`) and large binary assets are not in the index.
+The `project` name is derived from the repo path, so it **differs per machine** — get this machine's name with `list_projects` (the one ending in `-dungeon-master-tool`) and pass that to every tool.
 
 **Use the graph before grep/find.** codebase-memory is the primary way to understand and navigate code — its results are deduplicated and structure-aware, and far cheaper in tokens than raw grep + Read. If the tools are listed but deferred, load them by name via tool search (`select:mcp__codebase-memory__search_code,...`).
 

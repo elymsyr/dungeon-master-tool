@@ -25,6 +25,8 @@ const tier2Slugs = <String>[
   'environmental-effect',
   'hireling',
   'service',
+  'lore',
+  'campaign',
 ];
 
 /// Build every Tier-2 DM/campaign category.
@@ -48,6 +50,8 @@ List<EntityCategorySchema> buildTier2Dm({
     _environmentalEffectCategory(schemaId, now, i++),
     _hirelingCategory(schemaId, now, i++),
     _serviceCategory(schemaId, now, i++),
+    _loreCategory(schemaId, now, i++),
+    _campaignCategory(schemaId, now, i++),
   ];
 }
 
@@ -118,6 +122,10 @@ class _FB {
       _base(key: k, label: l, type: FieldType.textarea, groupId: g, gridSpan: 2);
   void markdown(String k, String l, {String g = grpRules, FieldVisibility vis = FieldVisibility.shared}) =>
       _base(key: k, label: l, type: FieldType.markdown, groupId: g, gridSpan: 2, visibility: vis);
+  void markdownList(String k, String l, {String g = grpRules}) =>
+      _base(key: k, label: l, type: FieldType.markdown, isList: true, groupId: g, gridSpan: 2);
+  void pdfList(String k, String l, {String g = grpRules}) =>
+      _base(key: k, label: l, type: FieldType.pdf, isList: true, groupId: g, gridSpan: 2);
   void integer(String k, String l, {bool required_ = false, int? min, int? max, String g = grpIdentity, dynamic defaultValue, String? help}) =>
       _base(
         key: k,
@@ -802,3 +810,62 @@ EntityCategorySchema _serviceCategory(String schemaId, String now, int orderInde
     filterFieldKeys: const ['kind'],
   );
 }
+
+/// Reference-material categories (`lore`, `campaign`) — campaign guides,
+/// world lore, DM/player handouts. Markdown pages + PDF attachments only;
+/// they are documents, not map/encounter participants, so
+/// `allowedInSections` stays empty.
+const _kRefGroups = [
+  FieldGroup(groupId: grpRules, name: 'Content', gridColumns: 1, orderIndex: 0),
+];
+
+EntityCategorySchema _referenceCategory({
+  required String schemaId,
+  required String now,
+  required int orderIndex,
+  required String name,
+  required String slug,
+  required String color,
+  required String icon,
+}) {
+  final catId = _uuid.v4();
+  final fb = _FB(catId, now);
+  fb.markdownList('pages', 'Pages');
+  fb.pdfList('pdfs', 'PDFs');
+
+  return _mk(
+    schemaId: schemaId,
+    categoryId: catId,
+    name: name,
+    slug: slug,
+    color: color,
+    icon: icon,
+    fields: fb.out,
+    groups: _kRefGroups,
+    orderIndex: orderIndex,
+    now: now,
+    allowedInSections: const [],
+  );
+}
+
+EntityCategorySchema _loreCategory(String schemaId, String now, int orderIndex) =>
+    _referenceCategory(
+      schemaId: schemaId,
+      now: now,
+      orderIndex: orderIndex,
+      name: 'Lore',
+      slug: 'lore',
+      color: '#5e35b1',
+      icon: 'menu_book',
+    );
+
+EntityCategorySchema _campaignCategory(String schemaId, String now, int orderIndex) =>
+    _referenceCategory(
+      schemaId: schemaId,
+      now: now,
+      orderIndex: orderIndex,
+      name: 'Campaign',
+      slug: 'campaign',
+      color: '#01579b',
+      icon: 'campaign',
+    );

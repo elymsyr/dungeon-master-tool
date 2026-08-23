@@ -10,24 +10,24 @@ void main() {
   final schema = build.schema;
 
   group('Builtin D&D 5e v2 Schema', () {
-    test('ships 39 Tier-0 + 21 Tier-1 + 13 Tier-2 = 73 categories', () {
-      expect(schema.categories.length, 73);
+    test('ships 39 Tier-0 + 22 Tier-1 + 15 Tier-2 = 76 categories', () {
+      expect(schema.categories.length, 76);
       expect(tier0Slugs.length, 39);
-      expect(tier1Slugs.length, 21);
-      expect(tier2Slugs.length, 13);
+      expect(tier1Slugs.length, 22);
+      expect(tier2Slugs.length, 15);
     });
 
     test('Tier order in catalog: Tier-0, Tier-1, Tier-2', () {
       final slugs = schema.categories.map((c) => c.slug).toList();
       expect(slugs.sublist(0, 39), tier0Slugs);
-      expect(slugs.sublist(39, 60), tier1Slugs);
-      expect(slugs.sublist(60, 73), tier2Slugs);
+      expect(slugs.sublist(39, 61), tier1Slugs);
+      expect(slugs.sublist(61, 76), tier2Slugs);
     });
 
     test('schema metadata', () {
       expect(schema.schemaId, 'builtin-dnd5e-default-v2');
       expect(schema.baseSystem, 'dnd5e');
-      expect(schema.version, '2.3.0');
+      expect(schema.version, '2.8.0');
       expect(schema.originalHash, 'builtin-dnd5e-default-v2');
     });
 
@@ -49,14 +49,14 @@ void main() {
 
     test('Tier-1 slugs match tier1Slugs list', () {
       expect(
-        schema.categories.skip(39).take(21).map((c) => c.slug).toList(),
+        schema.categories.skip(39).take(22).map((c) => c.slug).toList(),
         tier1Slugs,
       );
     });
 
     test('Tier-2 slugs match tier2Slugs list', () {
       expect(
-        schema.categories.skip(60).map((c) => c.slug).toList(),
+        schema.categories.skip(61).map((c) => c.slug).toList(),
         tier2Slugs,
       );
     });
@@ -413,6 +413,22 @@ void main() {
       final s = schema.categories.firstWhere((c) => c.slug == 'service');
       final k = s.fields.firstWhere((f) => f.fieldKey == 'kind');
       expect(k.validation.allowedValues, ['Spellcasting', 'Transport', 'Shelter', 'Other']);
+    });
+
+    test('lore and campaign are reference-material categories', () {
+      for (final slug in ['lore', 'campaign']) {
+        final cat = schema.categories.firstWhere((c) => c.slug == slug);
+        final keys = cat.fields.map((f) => f.fieldKey).toList();
+        expect(keys, ['pages', 'pdfs'], reason: '$slug shape');
+        final pages = cat.fields.firstWhere((f) => f.fieldKey == 'pages');
+        expect(pages.fieldType, FieldType.markdown);
+        expect(pages.isList, true);
+        final pdfs = cat.fields.firstWhere((f) => f.fieldKey == 'pdfs');
+        expect(pdfs.fieldType, FieldType.pdf);
+        expect(pdfs.isList, true);
+        // Documents only — never pulled into encounter/map/mindmap sections.
+        expect(cat.allowedInSections, isEmpty);
+      }
     });
   });
 }

@@ -16,8 +16,8 @@ const builtinDnd5eV2SchemaId = 'builtin-dnd5e-default-v2';
 const builtinDnd5eV2OriginalHash = 'builtin-dnd5e-default-v2';
 
 /// Generate the v2 D&D 5e [WorldSchema].
-/// Ships Tier 0 lookups (36) + Tier 1 content shapes (18) + Tier 2 DM
-/// categories (13) = 67 total.
+/// Ships Tier 0 lookups (39) + Tier 1 content shapes (22) + Tier 2 DM
+/// categories (15) = 76 total.
 /// Tier 1 row content (classes, spells, monsters, …) ships via the
 /// separate `srd_core.dnd5e-pkg.json` content pack per design §6.
 /// Tier 2 DM categories are user-authored at runtime — never seeded.
@@ -54,6 +54,9 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
   final schema = WorldSchema(
     schemaId: schemaId,
     name: 'D&D 5e (SRD 5.2.1)',
+    // 2.8.0 — added two Tier-2 reference categories (`lore`, `campaign`) for
+    // campaign guides / world lore: markdown page lists + PDF lists. Additive;
+    // no data migration.
     // 2.7.0 — R5 gave four chargen mechanics a home: `background.
     // granted_languages` / `asi_fixed_ability_ref` / `asi_free_bonus_count`,
     // `subclass.caster_kind`, and `always_prepared_spell_refs` on the
@@ -65,7 +68,7 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
     // `creature-action.legendary_action_cost`. Additive; no data migration.
     // 2.5.1 — `pack.content_quantities` relabelled to say what its key really
     // is (audit T2-3). Shape unchanged; no data migration.
-    version: '2.7.0',
+    version: '2.8.0',
     baseSystem: 'dnd5e',
     description:
         'Built-in D&D 5e template aligned with SRD 5.2.1 (CC-BY-4.0). '
