@@ -4,13 +4,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
+import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
+import '../../../application/services/local_media_localizer.dart';
+import '../../../core/config/app_paths.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../../data/network/asset_service.dart';
+import '../../../data/network/network_providers.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
@@ -195,6 +204,23 @@ class FieldWidgetFactory {
       }
       if (schema.fieldType == FieldType.enum_) {
         return _EnumListFieldWidget(
+          schema: schema,
+          value: value,
+          readOnly: readOnly,
+          onChanged: onChanged,
+        );
+      }
+      if (schema.fieldType == FieldType.pdf) {
+        return _PdfFieldWidget(
+          schema: schema,
+          value: value,
+          readOnly: readOnly,
+          onChanged: onChanged,
+          ref: ref,
+        );
+      }
+      if (schema.fieldType == FieldType.markdown) {
+        return _MarkdownListFieldWidget(
           schema: schema,
           value: value,
           readOnly: readOnly,
@@ -2039,6 +2065,151 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
                         },
                         visualDensity: VisualDensity.compact,
                       ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- MARKDOWN LIST — serbest metin (md) belge listesi ---
+class _MarkdownListFieldWidget extends StatefulWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _MarkdownListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  State<_MarkdownListFieldWidget> createState() =>
+      _MarkdownListFieldWidgetState();
+}
+
+class _MarkdownListFieldWidgetState extends State<_MarkdownListFieldWidget> {
+  final List<TextEditingController> _controllers = [];
+
+  List<String> get _items => (widget.value is List)
+      ? List<String>.from((widget.value as List).map((e) => e.toString()))
+      : <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncControllers(_items);
+  }
+
+  @override
+  void didUpdateWidget(covariant _MarkdownListFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _syncControllers(_items);
+    }
+  }
+
+  void _syncControllers(List<String> items) {
+    while (_controllers.length < items.length) {
+      _controllers.add(TextEditingController());
+    }
+    while (_controllers.length > items.length) {
+      _controllers.removeLast().dispose();
+    }
+    for (var i = 0; i < items.length; i++) {
+      if (_controllers[i].text != items[i]) {
+        _controllers[i].text = items[i];
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _items;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${widget.schema.label} (${items.length})',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                if (!widget.readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 18),
+                    onPressed: () {
+                      final updated = List<String>.from(items)..add('');
+                      widget.onChanged(updated);
+                    },
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+            if (items.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'No items',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.outline,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ...items.asMap().entries.map((entry) {
+              final i = entry.key;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!widget.readOnly)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          icon: const Icon(Icons.close, size: 14),
+                          onPressed: () {
+                            final updated = List<String>.from(items)
+                              ..removeAt(i);
+                            widget.onChanged(updated);
+                          },
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    MarkdownTextArea(
+                      controller: _controllers.length > i ? _controllers[i] : TextEditingController(),
+                      readOnly: widget.readOnly,
+                      minLines: 3,
+                      maxLines: widget.readOnly ? null : 20,
+                      onChanged: (v) {
+                        final updated = List<String>.from(items);
+                        updated[i] = v;
+                        widget.onChanged(updated);
+                      },
+                    ),
                   ],
                 ),
               );
@@ -3895,6 +4066,89 @@ class _PdfFieldWidget extends StatelessWidget {
     this.ref,
   });
 
+  /// Online dünyada seçilen PDF'leri R2'ye yükler (`world_pdf` kind).
+  /// Başarılı olanlar `dmt-asset://` ref olarak saklanır — oyuncular talep
+  /// üzerine indirir. Quota / boyut / ağ hatasında local `files/` yolu kalır;
+  /// dünya offline ise upload hiç denenmez.
+  Future<List<String>> _uploadForShare(
+    BuildContext context,
+    WidgetRef? r,
+    List<String> paths,
+  ) async {
+    if (r == null) return paths;
+    if (r.read(authProvider) == null) return paths;
+    final svc = r.read(assetServiceProvider);
+    if (svc == null) return paths;
+    if (r.read(activePackageProvider) != null) return paths;
+    final worldId =
+        r.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
+    if (worldId == null || !r.read(onlineWorldIdsProvider).contains(worldId)) {
+      return paths;
+    }
+    final out = <String>[];
+    for (final path in paths) {
+      try {
+        final uri = await svc.uploadAsset(
+          File(path),
+          campaignId: worldId,
+          kind: MediaKind.worldPdf,
+        );
+        out.add(uri.toString());
+      } on AssetQuotaExceededException {
+        if (context.mounted) showQuotaFullSnackbar(context);
+        out.add(path);
+      } on AssetServiceException catch (e) {
+        if (e.code == 'too_large' && context.mounted) {
+          showImageTooLargeSnackbar(context,
+              maxBytes: MediaKind.worldPdf.maxBytes);
+        }
+        out.add(path);
+      } catch (_) {
+        out.add(path);
+      }
+    }
+    return out;
+  }
+
+  /// Açma çözümü: cloud ref'i önce `files/{sha}.pdf`'e indirir (cache-first),
+  /// local yol zaten varsa direkt açılır. Ref çözülemiyorsa sessizce döner.
+  Future<void> _open(BuildContext context, String value) async {
+    var path = value;
+    final asset = AssetRef(value);
+    if (asset.isCloud) {
+      final r = ref;
+      final svc = r?.read(assetServiceProvider);
+      if (svc == null) return;
+      final sha = asset.contentSha;
+      if (sha == null) return;
+      final worldName = r?.read(activeCampaignProvider);
+      File? local;
+      if (worldName != null) {
+        local = File(p.join(LocalMediaLocalizer.worldDir(worldName),
+            LocalMediaLocalizer.filesSubDir, '$sha.pdf'));
+      }
+      try {
+        if (local == null || !await local.exists()) {
+          final fetched = await svc.downloadAsset(asset.r2Key!);
+          final target = local ??
+              File(p.join(AppPaths.cacheDir, 'assets', '$sha.pdf'));
+          await target.parent.create(recursive: true);
+          await fetched.copy(target.path);
+          local = target;
+        }
+        path = local.path;
+      } catch (_) {
+        return;
+      }
+    }
+    final r = ref;
+    if (r != null) {
+      r.read(pdfNavigationProvider.notifier).state = path;
+    } else {
+      Process.run('xdg-open', [path]);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final files = (value is List)
@@ -3930,14 +4184,8 @@ class _PdfFieldWidget extends StatelessWidget {
                     style: const TextStyle(fontSize: 12),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  onTap: () {
-                    if (ref != null) {
-                      ref!.read(pdfNavigationProvider.notifier).state = path;
-                    } else {
-                      Process.run('xdg-open', [path]);
-                    }
-                  },
-                  onLongPress: () => Process.run('xdg-open', [path]),
+                  onTap: () => _open(context, path),
+                  onLongPress: () => _open(context, path),
                   trailing: readOnly
                       ? null
                       : IconButton(
@@ -3970,7 +4218,10 @@ class _PdfFieldWidget extends StatelessWidget {
                     final newPaths = r == null
                         ? picked
                         : await localizeEntityFiles(r, picked);
-                    onChanged([...files, ...newPaths]);
+                    if (!context.mounted) return;
+                    final shared =
+                        await _uploadForShare(context, r, newPaths);
+                    onChanged([...files, ...shared]);
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 16),
                   label: const Text('Add PDF', style: TextStyle(fontSize: 12)),
