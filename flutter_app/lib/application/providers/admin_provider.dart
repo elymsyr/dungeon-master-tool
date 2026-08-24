@@ -26,7 +26,7 @@ final isAdminProvider = FutureProvider<bool>((ref) async {
     return result == true;
   } catch (e, st) {
     if (isOfflineError(e)) {
-      debugPrint('isAdmin skipped: offline');
+      debugPrint('isAdmin skipped: offline ($e)');
     } else {
       debugPrint('isAdmin RPC error: $e\n$st');
     }

@@ -711,8 +711,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     } catch (err) {
       debugPrint('handleExpectedUnpublish local cleanup error: $err');
     }
-    // Cleanup çalıştı → guard'ı bırak (expire olsa da idempotent).
-    _ref.read(worldMirrorServiceProvider)?.clearExpectedUnpublish(worldId);
+    // Guard'ı BURADA temizleme: unpublish tek bir event değil, cascade.
+    // `world_members` DELETE'i `worlds` DELETE'inden önce gelirse guard
+    // düşer ve ikinci event lokal dünyayı purge eder. Kendiliğinden
+    // expire etmesini bekle (_unpublishGuardMs) — cleanup idempotent.
   }
 
   /// CDC entry point: hard-purge the local mirror of [worldId] (deleted on
