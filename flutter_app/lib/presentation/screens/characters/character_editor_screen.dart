@@ -62,7 +62,7 @@ import '../../widgets/perf/image_cache_size.dart';
 import '../../widgets/quota_snackbar.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
-import '../../widgets/save_sync_shared.dart';
+
 import '../database/entity_card.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
@@ -3597,12 +3597,7 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                   localUpdatedAt: updatedAt,
                 ),
 
-                if (hasCloud) ...[
-                  const SizedBox(height: 16),
-                  SectionLabel('Storage', palette),
-                  const SizedBox(height: 8),
-                  StorageUsageBar(palette: palette),
-                ],
+
               ],
             ),
           ),
