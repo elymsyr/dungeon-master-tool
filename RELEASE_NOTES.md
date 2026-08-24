@@ -1,17 +1,28 @@
 # Release Notes
 
-## Dungeon Master Tool v14.0.0 — No More Beta, No More Cloud Sync
+## Dungeon Master Tool v14.0.0 — Stable, Local-First, No More Cloud Sync
 
 **Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-Three changes, one release, and they all point the same direction: **your content is yours, on your device, and you decide what leaves it.**
+The beta program is over and cloud sync is gone. This release makes three things permanent: **your content lives on your device**, **LAN sync is how it moves**, and **every feature is available to everyone from day one** — no waiting list, no slot counter, no account required for offline use. Online play still works, but players now receive only what the DM actively shares, not the entire world.
 
-> [!warning] Breaking — read before upgrading
-> Cloud backups are gone. Worlds, characters and packages are no longer copied to the cloud, and the copies that were there are deleted. **Anything that existed only in the cloud and not on a device will be lost.** If you were relying on cloud backup to move content between devices, open the app on the device that has the content first, then use LAN sync to bring it across.
->
-> Requires database migrations 076–079.
+> **Heads-up for everyone:** Cloud backups are deleted. Worlds, characters and packages are no longer copied to the cloud. **Anything that existed only in the cloud and not on a device will be lost.** If you relied on cloud backup to move content between devices, open the app on the device that has the content first, then use LAN sync to bring it across. Self-hosted deployments must apply migrations 076–082 before upgrading.
 
-### The beta program is over — everyone gets everything
+---
+
+### Highlights
+
+- **Beta program removed** — everyone gets everything, no account needed for offline use.
+- **Cloud sync removed** — worlds, characters and packages stay on your device; LAN sync is the only way to move them.
+- **Online play shares only what you share** — players receive shared cards, battle maps, and their own character sheet; everything else stays on the DM's machine.
+- **Marketplace is open to everyone** — browse listings and install official content without signing in.
+- **No-account LAN sync** — pair devices over Wi-Fi and sync without an account.
+- **New adventure: "99 Devils of Uzrah's Palace Shadowdark"** — full Shadowdark module with characters, maps, handouts, and tokens.
+
+---
+
+### The beta program is over
 
 The 90-slot, admin-approved beta is closed. There is no waiting list, no request form, no slot counter. Download the app and every feature is available, with or without an account.
 
@@ -22,11 +33,15 @@ An account is now required for exactly three things:
 
 Browsing the marketplace and installing official content need no account at all.
 
-### Cloud sync removed — LAN sync is the way content moves
+---
+
+### Cloud sync removed
 
 Your worlds, characters and packages live on your device. Moving them to another device is LAN sync: pair once over your local network (QR code or IP + PIN), then sync with one tap. Nothing passes through a server.
 
-Removed with it: cloud backups, "Make Online" for packages, the sync queue and its status indicators, and the pull-to-refresh cloud fetch on the hub tabs.
+Removed with it: cloud backups, "Make Online" for packages, the sync queue and its status indicators, the pull-to-refresh cloud fetch on the hub tabs, and the cloud storage usage bar in the save/sync dialog.
+
+---
 
 ### Online play now broadcasts what you share, not your whole world
 
@@ -34,15 +49,82 @@ Previously, a player who joined your world downloaded **the entire world** — e
 
 Now nothing is sent until you share it. Players receive:
 - **What you put on the shared screen** — battle maps, images, entity cards, PDFs — live as you place it
-- **The cards you hand them** — a shared card now carries its own content, so it arrives complete
+- **The cards you hand them** — a shared card now carries its own content (`payload_json`), so it arrives complete
 - **Their own character sheet**, synced with you both ways
 - Packages you share into the world
 
 Everything else — your prep, your notes, your unshared NPCs, your maps — stays on your machine. Joining a world now starts empty and fills in as you share.
 
+---
+
 ### Marketplace is open to everyone
 
 Browse listings and install official content without signing in. Sign in when you want to download something another user made, or publish something of your own.
+
+---
+
+### Smaller improvements
+
+- **Schema** — builtin D&D 5e schema updated to v2.8.0 with new Tier-2 categories and a documented player-character field contract.
+- **Content** — new character and world blueprints, scenes and quests for "99 Devils of Uzrah's Palace Shadowdark".
+- **Offline debug logs** — improved diagnostic output when running without a backend.
+- **l10n** — 80+ new keys for no-account mode, guest marketplace access, LAN sync without account, and cloud sync removal, in all four languages (EN · TR · DE · FR).
+
+---
+
+### Bug fixes
+
+- **Unpublish guard cleanup** — fixed edge case where unpublishing a listing left stale state.
+- **Save/sync dialog** — removed orphaned cloud storage usage bar that displayed after cloud sync was removed.
+- **Manifest cover images** — dungeon adventure manifest now correctly includes cover image path.
+
+---
+
+### Deprecations & removals
+
+- **Cloud sync engine** — `SyncEngine`, `WorldReconciler`, `CloudCatchupService`, `SyncTelemetry`, `PendingWriteBuffer` cloud push path, and `sync_outbox` / `personal_packages` / `cloud_backups` tables are all removed. Local Drift is the sole source of truth.
+- **Cloud backups** — `CloudBackupRepository`, `CloudBackupProvider`, `CloudRemoteCheckProvider` removed. No cloud copy of your data exists anymore.
+- **Beta program** — `BetaProvider`, `BetaEnterGate`, `BetaEnterMergeService`, `BetaExitCleanupService`, `BetaExitPreserveService`, `BetaLossGate`, `admin_beta_requests` table, and all related RPCs (`request_beta`, `join_beta`, `leave_beta`, `is_beta_active`, etc.) removed.
+- **"Make Online" for packages** — `PackageRepository` cloud push removed; personal online sync for packages no longer exists.
+- **Manual backup** — `ManualBackupProvider` removed.
+- **Outbox status** — `OutboxStatusProvider` removed.
+- **Personal sync** — `PersonalSyncService`, `PersonalSyncProvider`, `PersonalMirrorApplier`, `personal_packages` / `personal_package_entities` tables removed.
+- **Battlemap marks protocol** — `BattlemapMarksProtocol` (collab attempt that never shipped) removed.
+- **Cloudflare Worker** — `beta_purge_with_cleanup` edge function removed.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `13.1.0` → `14.0.0`.
+- **Status change:** beta → stable.
+- **Local DB:** schema v12, unchanged. `sync_outbox`, `personal_packages`, and `cloud_backups` tables are dropped by `beforeOpen` DDL on first launch (idempotent).
+- **Cloud migrations (deploy together):**
+  - `076` — removes beta program (RPCs, tables, policies, triggers, cron jobs).
+  - `077` — drops cloud sync (mirror tables, `publish_world` overloads, `campaign-backups` bucket, `worlds.state_json` column).
+  - `078` — adds `payload_json` to `entity_shares` so shared cards carry their own body.
+  - `079` — grants `anon` SELECT on `marketplace_listings` and four `profiles` columns for guest browsing.
+  - `080` — fixes `user_heartbeat(TEXT, TEXT)` overload (was crashing on deleted `beta_participants`); drops unused `get_user_storage_used`.
+  - `081` — revokes blanket `anon` grants on all tables, re-grants only marketplace browsing surface.
+  - `082` — reseals `anon` EXECUTE on all `SECURITY DEFINER` functions; prevents future functions from leaking to anon by default.
+- **Self-hosted deployments:** apply migrations 076–082 via Supabase Dashboard → SQL Editor before upgrading the client. They must run in order.
+- **Existing worlds and characters are unaffected** — all data stays in local Drift; nothing is rewritten.
+
+---
+
+### Known issues
+
+- **Local Sync does not propagate deletions or renames** — Deliberate for now. A card deleted on one device returns if the other still has it. Tombstones are the planned fix.
+- **Local Sync is not encrypted** — Requests are signed with the pairing secret and restricted to private addresses, but bodies are plaintext on the LAN.
+- **Soundpad content does not sync over LAN** — Sound libraries live outside the synced data root and can run to gigabytes; soundpacks are downloadable from the catalog on each device instead.
+- **Raising a character's class level by hand skips the slot grid** — Slots are written by the wizard and the level-up dialog; editing `class_levels` directly leaves the previous grid in place.
+- **Same-second edits do not transfer** — Local Sync's world timestamps have one-second resolution; two devices editing the same world within the same second are treated as equal.
+- **First-party packs still ship duplicate content** — Package links exist but the official packs do not use them yet.
+- **Package art is not bundled yet** — The generation pipeline exists but default content still renders as text.
+
+---
+
+*Thanks for playing. Roll well.*
 
 ---
 
