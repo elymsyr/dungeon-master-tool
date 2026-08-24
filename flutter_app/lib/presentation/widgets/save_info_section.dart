@@ -4,16 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/providers/account_gate.dart';
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/character_provider.dart';
-import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
-import '../../application/providers/outbox_status_provider.dart';
-import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
-import '../../domain/entities/cloud_backup_meta.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
-import 'save_sync_shared.dart';
 
 /// Reusable section showing local save timestamp and cloud backup
 /// timestamp. Read-only — no download/restore action. Restoration is
@@ -74,9 +68,9 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
         return null;
       }
     }
-    final meta = await CloudBackupRemoteDataSource()
-        .fetchByItem(widget.itemId, widget.type);
-    return meta?.createdAt;
+    // Dünya dışında buluta kopyalanan bir şey yok: karakter ve paketler
+    // yerelde ve LAN üzerinden yaşıyor.
+    return null;
   }
 
   @override
@@ -88,32 +82,6 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     // so it collapses rather than changes meaning.
     final hasCloud = ref.watch(hasAccountProvider);
 
-    // Re-fetch whenever cloud backup list is invalidated (e.g. after a
-    // successful syncNow). Without this, the section is stuck on the
-    // snapshot from first open and keeps saying "No cloud backup yet"
-    // even after the user just pushed a backup.
-    ref.listen<AsyncValue<List<CloudBackupMeta>>>(
-      cloudBackupListProvider,
-      (_, _) => _refreshCloud(),
-    );
-    // F6 follow-up: row-level cloud pushes (world_entities, world_settings,
-    // world_map_data) drain via outbox. After drain → `worlds.updated_at`
-    // ticked → re-fetch so the cloud timestamp shows the fresh value.
-    ref.listen<AsyncValue<OutboxStatus>>(activeItemOutboxStatusProvider,
-        (prev, next) {
-      final prevPending = prev?.valueOrNull?.pending ?? 0;
-      final nextPending = next.valueOrNull?.pending ?? 0;
-      if (prevPending > 0 && nextPending == 0) {
-        _refreshCloud();
-      }
-    });
-    // Manual Sync with no pending outbox rows fires neither listener above.
-    // The tick bumps after `runFullManualSync` completes → re-fetch so the
-    // cloud timestamp reflects the just-pushed `updated_at`.
-    ref.listen<int>(
-      manualSyncCompletedTickProvider,
-      (_, _) => _refreshCloud(),
-    );
 
     final mirrorRow = _offlineMirrorRow(palette, l10n);
 
@@ -228,17 +196,10 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
 
   /// Items that may carry a cloud timestamp row.
   ///   - World: only when published (`worlds` row exists, i.e. online).
-  ///   - Character: signed-in + beta covers either world-mirror or
-  ///     `cloud_backups` snapshot, so always reachable.
-  ///   - Package: always.
+  ///   - Everything else: never — bulut kopyası kalmadı.
   bool _itemOnCloud() {
-    if (widget.type == 'world') {
-      return ref.watch(onlineWorldIdsProvider).contains(widget.itemId);
-    }
-    if (widget.type == 'character') {
-      return ref.watch(isBetaActiveProvider);
-    }
-    return true;
+    if (widget.type != 'world') return false;
+    return ref.watch(onlineWorldIdsProvider).contains(widget.itemId);
   }
 
   String _formatDate(DateTime? dt, L10n l10n) {

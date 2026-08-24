@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
-import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/social_providers.dart';
@@ -143,8 +142,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
   ];
 
   void _showLandscapeNavSheet(
-    DmToolColors palette,
-    bool cloudBadge, {
+    DmToolColors palette, {
     bool hasUnread = false,
     required int currentTabIndex,
     required List<int> visibleTabs,
@@ -165,7 +163,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                   ctx: ctx,
                   index: i,
                   palette: palette,
-                  cloudBadge: cloudBadge,
                   hasUnread: hasUnread,
                   currentTabIndex: currentTabIndex,
                 ),
@@ -180,7 +177,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     required BuildContext ctx,
     required int index,
     required DmToolColors palette,
-    required bool cloudBadge,
     required bool hasUnread,
     required int currentTabIndex,
   }) {
@@ -202,9 +198,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 icon: t.icon,
                 size: 24,
                 color: isActive ? palette.tabIndicator : palette.tabText,
-                showBadge:
-                    (index == _settingsTabIndex && cloudBadge) ||
-                    (index == 0 && hasUnread),
+                showBadge: index == 0 && hasUnread,
                 badgeColor: palette.featureCardAccent,
               ),
               const SizedBox(height: 4),
@@ -277,9 +271,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       for (var i = 0; i < tabs.length; i++)
         if (i != _settingsTabIndex) i,
     ];
-    // Multi-device hint — another device uploaded changes we haven't pulled.
-    // Already a bool — no `.select` needed.
-    final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
     // Unread messages — badge on Social tab. H1: select the boolean
     // outcome so loading/error transitions of the FutureProvider don't
     // re-render the entire hub frame; only flipping unread→read does.
@@ -326,7 +317,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 icon: const Icon(Icons.menu, size: 22),
                 onPressed: () => _showLandscapeNavSheet(
                   palette,
-                  cloudBadge,
                   hasUnread: hasUnread,
                   currentTabIndex: tabIndex,
                   visibleTabs: visibleTabs,
@@ -377,7 +367,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                   onSelected: (i) =>
                       ref.read(hubTabIndexProvider.notifier).state = i,
                   palette: palette,
-                  settingsBadge: cloudBadge,
                   settingsTabIndex: _settingsTabIndex,
                   socialBadge: hasUnread,
                 ),
@@ -406,7 +395,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                   ref.read(hubTabIndexProvider.notifier).state = i,
               palette: palette,
               settingsTabIndex: _settingsTabIndex,
-              cloudBadge: cloudBadge,
               socialBadge: hasUnread,
             )
           : null,
@@ -421,7 +409,6 @@ class _HubSideRail extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final DmToolColors palette;
-  final bool settingsBadge;
   final int settingsTabIndex;
   final bool socialBadge;
 
@@ -431,7 +418,6 @@ class _HubSideRail extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelected,
     required this.palette,
-    required this.settingsBadge,
     required this.settingsTabIndex,
     this.socialBadge = false,
   });
@@ -451,7 +437,7 @@ class _HubSideRail extends StatelessWidget {
                 tooltip: tabs[i].label,
                 selected: i == selectedIndex,
                 palette: palette,
-                showBadge: (i == settingsTabIndex && settingsBadge) || (i == 0 && socialBadge),
+                showBadge: i == 0 && socialBadge,
                 onTap: () => onSelected(i),
               ),
             ),
@@ -538,7 +524,6 @@ class _MobileHubNavBar extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final DmToolColors palette;
   final int settingsTabIndex;
-  final bool cloudBadge;
   final bool socialBadge;
 
   const _MobileHubNavBar({
@@ -548,7 +533,6 @@ class _MobileHubNavBar extends StatelessWidget {
     required this.onSelected,
     required this.palette,
     required this.settingsTabIndex,
-    required this.cloudBadge,
     required this.socialBadge,
   });
 
@@ -574,8 +558,7 @@ class _MobileHubNavBar extends StatelessWidget {
                     label: tabs[i].label,
                     selected: i == selectedTabIndex,
                     palette: palette,
-                    showBadge: (i == settingsTabIndex && cloudBadge) ||
-                        (i == 0 && socialBadge),
+                    showBadge: i == 0 && socialBadge,
                     onTap: () => onSelected(i),
                   ),
                 ),

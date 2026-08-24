@@ -24,7 +24,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[tables-worlds]], [[drift_database]]
-- Used by: [[world_repository_impl]], [[campaign_provider]], [[world_mirror_service]], [[world_reconciler]], [[lan_sync_session]]
+- Used by: [[world_repository_impl]], [[campaign_provider]], [[world_mirror_service]], `world_reconciler.dart` (kaldırıldı), [[lan_sync_session]]
 - Domain map: [[World-and-Content]]
 - System flow:
 - Spec / reference: [[Data-Layer]]

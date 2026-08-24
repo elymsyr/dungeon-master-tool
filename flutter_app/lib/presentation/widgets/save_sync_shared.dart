@@ -1,34 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/beta_provider.dart';
-import '../../application/providers/cloud_backup_provider.dart';
-import '../../application/providers/outbox_status_provider.dart';
-import '../../application/providers/personal_sync_provider.dart';
-import '../../application/providers/sync_engine_provider.dart';
-import '../../application/providers/world_mirror_provider.dart';
-import '../../application/services/cloud_catchup_service.dart';
-import '../../application/services/world_reconciler.dart';
+import '../../application/providers/storage_usage_provider.dart';
 import '../../core/utils/error_format.dart';
-import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../theme/dm_tool_colors.dart';
-
-/// Bumped once at the end of every [runFullManualSync]. Widgets that show a
-/// cloud timestamp (e.g. [SaveInfoSection]) listen to this so they re-fetch
-/// after a manual Sync even when no outbox rows were pending.
-final manualSyncCompletedTickProvider = StateProvider<int>((ref) => 0);
-
-/// Full manual sync chain — push personal + world outboxes, reconcile world
-/// mirror, drain outbox, then run catch-up pulls. Shared by world and
-/// character Save & Sync dialogs.
-Future<void> runFullManualSync(WidgetRef ref) async {
-  await runManualPersonalSync(ref);
-  await runManualWorldSync(ref);
-  await ref.read(worldReconcilerProvider).reconcile();
-  await ref.read(syncEngineProvider).forceTick();
-  await ref.read(cloudCatchupServiceProvider).runAll();
-  ref.read(manualSyncCompletedTickProvider.notifier).state++;
-}
 
 class SectionLabel extends StatelessWidget {
   final String text;
@@ -78,68 +53,10 @@ class ActionButton extends StatelessWidget {
   }
 }
 
-/// Shared "Sync" button — runs [runFullManualSync] when [enabled] is true.
-/// Caller computes enabled-ness from its own context (world online state,
-/// char beta/online routing, etc.) and supplies tooltips.
-class SyncButton extends ConsumerStatefulWidget {
-  final DmToolColors palette;
-  final bool enabled;
-  final String enabledTooltip;
-  final String disabledTooltip;
-
-  const SyncButton({
-    super.key,
-    required this.palette,
-    required this.enabled,
-    this.enabledTooltip = 'Force sync now (auto-sync on)',
-    this.disabledTooltip = 'Sign in + join beta to sync',
-  });
-
-  @override
-  ConsumerState<SyncButton> createState() => _SyncButtonState();
-}
-
-class _SyncButtonState extends ConsumerState<SyncButton> {
-  bool _busy = false;
-
-  Future<void> _sync() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    final sw = Stopwatch()..start();
-    debugPrint('[SyncButton] ▶ manual sync started');
-    try {
-      await runFullManualSync(ref);
-      debugPrint('[SyncButton] ✓ sync complete ${sw.elapsedMilliseconds}ms');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sync complete')),
-      );
-    } catch (e, st) {
-      debugPrint('[SyncButton] ✗ sync failed ${sw.elapsedMilliseconds}ms: $e\n$st');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sync failed: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.enabled ? widget.enabledTooltip : widget.disabledTooltip,
-      child: ActionButton(
-        icon: Icons.cloud_sync,
-        label: _busy ? 'Syncing...' : 'Sync',
-        onPressed: (widget.enabled && !_busy) ? _sync : null,
-        palette: widget.palette,
-      ),
-    );
-  }
-}
-
-/// Cloud storage usage bar — used MB / quota MB + per-item limit hint.
+/// Media storage usage bar — used MB / quota MB + per-item limit hint.
+///
+/// Sayılan tek şey medya: dünyalar, karakterler ve paketler artık buluta
+/// kopyalanmıyor, yerelde ve LAN üzerinden yaşıyorlar.
 class StorageUsageBar extends ConsumerWidget {
   final DmToolColors palette;
   const StorageUsageBar({super.key, required this.palette});
@@ -147,13 +64,13 @@ class StorageUsageBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageAsync = ref.watch(cloudStorageUsedProvider);
-    final quotaBytes = ref.watch(betaProvider).quotaBytes;
+    const quotaBytes = mediaUserQuota;
 
     return storageAsync.when(
       data: (bytes) {
         final usedMb = bytes / (1024 * 1024);
         final totalMb = quotaBytes / (1024 * 1024);
-        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
+        const itemLimitMb = mediaItemSizeLimit / (1024 * 1024);
         final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
         final remainingMb = totalMb - usedMb;
 
@@ -229,61 +146,3 @@ class StorageUsageBar extends ConsumerWidget {
   }
 }
 
-/// Persistent outbox depth row + "Retry now" button. When rows are stuck
-/// (>3 attempts) the most-recent error is surfaced beneath the label.
-class OutboxStatusRow extends ConsumerWidget {
-  final OutboxStatus outbox;
-  final DmToolColors palette;
-  const OutboxStatusRow({
-    super.key,
-    required this.outbox,
-    required this.palette,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final stuck = outbox.hasIssue;
-    final color = stuck ? palette.dangerBtnBg : palette.featureCardAccent;
-    final icon = stuck ? Icons.cloud_off : Icons.cloud_sync;
-    final label = stuck
-        ? 'Stuck (${outbox.maxAttempts} attempts)'
-        : '${outbox.pending} pending';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.cbr,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label, style: TextStyle(fontSize: 12, color: color)),
-                if (stuck && outbox.lastError != null)
-                  Text(
-                    outbox.lastError!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: palette.sidebarLabelSecondary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => ref.read(syncEngineProvider).forceTick(),
-            child: const Text('Retry now', style: TextStyle(fontSize: 11)),
-          ),
-        ],
-      ),
-    );
-  }
-}

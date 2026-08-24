@@ -32,7 +32,7 @@ tags: [file]
 - Depends on: [[world_membership_service]], [[supabase_world_membership_service]], [[world_member]], [[world_invite]], [[world_role]], [[auth_provider]]
 - Used by: [[world_join_service]] (service provider); DM hub + player roster UI
 - Domain map: [[Multiplayer-and-Online]]
-- System flow: [[CDC-Sync-Flow]], [[Sync-and-Realtime]]
+- System flow: [[Share-Broadcast-Flow]], [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
 - **WorldMembersNotifier**: bootstrap-once cache. `bootstrap({force})` fetches `listMembers` once (guarded by `_bootstrapped`; `force` bypasses for re-subscribe / world reopen); on offline error logs and stays. After bootstrap, CDC events mutate the in-memory list in O(1) rather than re-fetching the whole roster:

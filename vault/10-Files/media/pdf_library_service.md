@@ -26,10 +26,10 @@ tags: [file]
 - Writes: `world_settings.settings_json['pdf_library']`; online dünyada `sync_outbox` (`enqueueWorldSettings`)
 
 ## Dependencies & Links
-- Depends on: [[asset_importer]], [[asset_service]], [[sync_engine]], [[world_repository_impl]]
+- Depends on: [[asset_importer]], [[asset_service]], `sync_engine.dart` (kaldırıldı), [[world_repository_impl]]
 - Used by: `pdf_sidebar.dart` (`PdfLibraryPanel`), `main_screen.dart`, `player_main_screen.dart`, `save_sync_indicator.dart`, `online_world_section.dart`
 - Domain map: [[Media-and-Assets]]
-- System flow: [[Media-Storage-Tiers]], [[CDC-Sync-Flow]]
+- System flow: [[Media-Storage-Tiers]], [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - `manifestKey = 'pdf_library'`. **`world_mirror_applier` bu anahtarı fetch-queue'dan hariç tutar** — aksi hâlde inbound settings'teki her PDF (50MB'a kadar) her oyuncuda eager indirilirdi. `scheduleReindex` tam blob'la çalışır, yani `asset_refs` grafiği eksiksiz kalır.

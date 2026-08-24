@@ -1,14 +1,19 @@
 ---
 type: moc
 domain: multiplayer
-updated: 2026-08-15
+updated: 2026-08-24
 tags: [moc]
 ---
 
 # Multiplayer & Online — Map of Content
 
 > [!summary] Scope
-> Shared worlds: membership, invites, roles (owner/DM/player), auth, presence/heartbeat, character claiming, and the beta-program gates. Rides on [[Sync-and-Realtime]] for state replication.
+> Shared worlds: membership, invites, roles (owner/DM/player), auth, presence/heartbeat, character claiming. Rides on [[Sync-and-Realtime]] — specifically [[Share-Broadcast-Flow]] — for what actually reaches a player.
+
+> [!warning] Beta programı kaldırıldı, online oyun herkese açıldı (2026-08-24)
+> 90 slotlu, admin onaylı kapı yok. Uygulamayı indiren herkes tam erişimli. Hesap yalnızca üç şey için gerekli: **online oynamak**, **marketplace'e paylaşmak**, **başka kullanıcıların içeriğini indirmek**. Resmi katalog ve gezinme hesapsız açık.
+>
+> Aynı geçişte oyuncunun aldığı veri de daraldı: dünyanın tamamı değil, yalnızca DM'in paylaştıkları. Migration **076** (beta) + **077** (mirror).
 
 ## Key Files
 - [[world_member]] · [[world_invite]] · [[world_role]] — online membership models.
@@ -25,13 +30,14 @@ tags: [moc]
 - [[guest_promotion_service]] — misafir ağacının hesaba devri (O3): DB kapalıyken kopya, yollar yeniden yazılır, sentinel en sonda.
   O4 devamı: ağaç **bir kez** talep edilir (`.guest_claimed`), talep onu `guest_archive/<ts>/`'e taşır, çıkış temiz bir misafir alanına iner, ikinci hesap hiçbir şey soğuramaz.
 - [[heartbeat_service]] — keep `profiles.last_active_at` fresh (15 min).
-- [[beta_enter_gate]] — beta entry merge gates (data-loss protection).
 
 ## Data Flow
 Invite (Supabase RPC) → [[world_join_service]] → `world_members` row → CDC → [[world_members_dao]] local mirror → [[world_membership_provider]] UI. Character ownership via [[character_claim_service]].
+
+Katılan oyuncu **boş** bir dünya kabuğu alır (`worlds.state_json` 077'de düştü); içerik DM paylaştıkça gelir. Neyin aktığı: [[Share-Broadcast-Flow]].
 
 ## Related Domains
 - [[Sync-and-Realtime]] (replication) · [[Backend-Infra]] (RLS, RPC) · [[World-and-Content]] (what's shared).
 
 ## Source Docs
-- `online_multiplayer_initiative`, `multiplayer_visibility_realtime_may14`, `char_tab_ownership_may14`, `beta_*` memories.
+- `online_multiplayer_initiative`, `multiplayer_visibility_realtime_may14`, `char_tab_ownership_may14`. (`beta_*` notları tarihsel — program kapandı.)

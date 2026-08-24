@@ -29,9 +29,9 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[drift_database]], [[tables-worlds]]
-- Used by: world sync appliers / reconciler ([[world_mirror_applier]], [[world_reconciler]]); DM invite UI (local path)
+- Used by: world sync appliers / reconciler ([[world_mirror_applier]], `world_reconciler.dart` (kaldırıldı)); DM invite UI (local path)
 - Domain map: [[Multiplayer-and-Online]]
-- System flow: [[CDC-Sync-Flow]], [[Sync-and-Realtime]]
+- System flow: [[Share-Broadcast-Flow]], [[Sync-and-Realtime]]
 
 ## Key Logic / Variables
 - `@DriftAccessor(tables: [WorldInvites])`; mixes in `_$WorldInvitesDaoMixin`.

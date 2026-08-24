@@ -54,22 +54,20 @@ final adminUserListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>
   return ds.searchUsers(query);
 });
 
-/// Özet istatistikler — total user + beta user sayıları. Arama sorgusundan
+/// Özet istatistikler — toplam kullanıcı sayısı. Arama sorgusundan
 /// bağımsız, her zaman tüm kullanıcılar üzerinden hesaplanır.
 class AdminUserStats {
   final int total;
-  final int beta;
-  const AdminUserStats({required this.total, required this.beta});
+  const AdminUserStats({required this.total});
 }
 
 final adminUserStatsProvider = FutureProvider.autoDispose<AdminUserStats>((ref) async {
   final isAdmin = await ref.watch(isAdminProvider.future);
-  if (!isAdmin) return const AdminUserStats(total: 0, beta: 0);
+  if (!isAdmin) return const AdminUserStats(total: 0);
   final ds = ref.watch(adminUsersDataSourceProvider);
   final all = await ds.fetchAllUsers();
   return AdminUserStats(
     total: all.length,
-    beta: all.where((u) => u.isBeta).length,
   );
 });
 

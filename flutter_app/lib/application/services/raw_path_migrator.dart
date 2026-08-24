@@ -22,7 +22,7 @@ import '../../domain/value_objects/media_kind.dart';
 /// `AssetService`/`FreeMediaService`'e yükler, `dmt-asset://` ya da
 /// `dmt-public://` ref'lerine çevirir + row'u günceller.
 ///
-/// UX kararı: **otomatik arka plan, sessiz**. Beta DM bootstrap'tan sonra
+/// UX kararı: **otomatik arka plan, sessiz**. DM bootstrap'tan sonra
 /// (campaign_provider.completeLoad → trigger noktası — wiring sonraki PR)
 /// tetiklenir. Hata sessizce log'a; `migration_progress` tablosunda
 /// resume state tutulur (idempotent).

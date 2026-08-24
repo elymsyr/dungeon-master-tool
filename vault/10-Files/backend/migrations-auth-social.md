@@ -39,4 +39,4 @@ tags: [file]
 
 ## Notes
 - The newer marketplace model (snapshot + lineage, `marketplace_listings`) supersedes `shared_items`/`game_listings` starting at migration 006.
-- `is_admin()` (defined here) is the admin gate reused by every `admin_*` RPC and the [[edge-beta-purge]] edge function.
+- `is_admin()` (defined here) is the admin gate reused by every `admin_*` RPC and the `beta_purge_with_cleanup` edge fn (kaldırıldı) edge function.

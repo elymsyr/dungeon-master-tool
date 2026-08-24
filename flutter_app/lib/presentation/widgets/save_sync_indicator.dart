@@ -1,15 +1,11 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/account_gate.dart';
-import '../../application/providers/auth_provider.dart';
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
-import '../../application/providers/outbox_status_provider.dart';
 import '../../application/providers/package_provider.dart' show activePackageProvider;
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/role_provider.dart';
@@ -18,8 +14,6 @@ import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
-import '../../data/network/network_providers.dart';
-import '../../application/services/media_bundler.dart';
 import '../../application/services/pdf_library_service.dart';
 import '../dialogs/lan_sync_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -74,23 +68,18 @@ class SaveSyncIndicator extends ConsumerWidget {
     } else {
       itemOnCloud = hasCloud;
     }
-    final outbox = itemOnCloud
-        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
-            OutboxStatus.empty)
-        : null;
     final localSaving = saveStatus == SaveStatus.saving;
-    final cloudSyncing = outbox != null && outbox.isSyncing;
 
     final (IconData icon, Color color) = _resolveIcon(
-      saveStatus, outbox, palette, itemOnCloud,
-      localSaving: localSaving, cloudSyncing: cloudSyncing,
+      saveStatus, palette, itemOnCloud,
+      localSaving: localSaving,
       context: context,
     );
 
     return Stack(
       children: [
         IconButton(
-          icon: (localSaving || cloudSyncing)
+          icon: localSaving
               ? SizedBox(
                   width: 20,
                   height: 20,
@@ -100,49 +89,25 @@ class SaveSyncIndicator extends ConsumerWidget {
                   ),
                 )
               : Icon(icon, size: 20, color: color),
-          tooltip: _tooltip(saveStatus, outbox),
+          tooltip: _tooltip(saveStatus),
           onPressed: () => _showSaveSyncDialog(context, ref, compact: false),
         ),
-        if (outbox != null && outbox.hasIssue)
-          Positioned(
-            right: 4,
-            top: 4,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: palette.dangerBtnBg,
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-              child: const Icon(
-                Icons.priority_high,
-                size: 10,
-                color: Colors.white,
-              ),
-            ),
-          ),
       ],
     );
   }
 
+  /// Gösterge artık yalnızca YEREL kayıt durumunu anlatıyor: kuyruk yok,
+  /// bulut aynası yok. Online dünyada [hasCloud] true olduğunda kartların
+  /// paylaşıldığı yeri hatırlatan bulut ikonu kullanılır, ama "senkron" iddiası
+  /// yok — paylaşımlar doğrudan yazılır.
   (IconData, Color) _resolveIcon(
     SaveStatus save,
-    OutboxStatus? sync,
     DmToolColors palette,
     bool hasCloud, {
     required bool localSaving,
-    required bool cloudSyncing,
     required BuildContext context,
   }) {
-    // Color rules (single indicator):
-    //   - Cloud sync in progress (with or without local) → success/green.
-    //   - Local-only save in progress → theme primary.
-    //   - Idle: cloud-status driven (synced / dirty / queue) or local-only
-    //     dirty/save icon when there's no cloud.
     final themePrimary = Theme.of(context).colorScheme.primary;
-    if (cloudSyncing) {
-      return (Icons.cloud_sync, palette.successBtnBg);
-    }
     if (localSaving) {
       return (Icons.save, themePrimary);
     }
@@ -153,31 +118,16 @@ class SaveSyncIndicator extends ConsumerWidget {
         SaveStatus.saved => (Icons.save, palette.sidebarLabelSecondary),
       };
     }
-    if (sync == null) {
-      return (Icons.cloud_queue, palette.sidebarLabelSecondary);
-    }
-    if (sync.hasIssue) return (Icons.cloud_off, palette.dangerBtnBg);
     return save == SaveStatus.dirty
         ? (Icons.cloud_upload_outlined, palette.featureCardAccent)
         : (Icons.cloud_done, palette.successBtnBg);
   }
 
-  String _tooltip(SaveStatus save, OutboxStatus? sync) {
-    if (sync != null) {
-      if (sync.hasIssue) {
-        return 'Sync error — tap to retry';
-      }
-      if (sync.pending > 0) {
-        return 'Cloud sync in progress…';
-      }
-      return save == SaveStatus.dirty ? 'Auto-saving…' : 'Cloud synced';
-    }
-    return switch (save) {
-      SaveStatus.saving => 'Auto-saving…',
-      SaveStatus.dirty => 'Auto-saving…',
-      SaveStatus.saved => 'Cloud synced',
-    };
-  }
+  String _tooltip(SaveStatus save) => switch (save) {
+        SaveStatus.saving => 'Auto-saving…',
+        SaveStatus.dirty => 'Auto-saving…',
+        SaveStatus.saved => 'Saved',
+      };
 
   void _showSaveSyncDialog(BuildContext context, WidgetRef ref, {bool compact = false}) {
     showDialog(
@@ -197,10 +147,6 @@ class _SaveSyncDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = ref.watch(hasAccountProvider);
-    final outbox = hasCloud
-        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
-            OutboxStatus.empty)
-        : null;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
@@ -265,7 +211,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                 // o yüzden bu yüzey artık hesap istiyor. İçerik hâlâ buluta
                 // çıkmıyor — hesap yalnız kimlik için.
                 AccountGatedSurface(
-                  surface: AppSurface.cloudBackup,
+                  surface: AppSurface.localSync,
                   message: L10n.of(context)!.accountRequiredOnlineSync,
                   builder: (context) => Column(
                     mainAxisSize: MainAxisSize.min,
@@ -288,12 +234,10 @@ class _SaveSyncDialog extends ConsumerWidget {
                 ),
 
                 // ── Storage ──
-                // O2: the storage block *is* the cloud-backup surface, so a
-                // guest is asked to sign in here instead of being shown
-                // nothing. `cloudBackupSignInPrompt` had been sitting in all
-                // four .arb files since before this phase with no renderer.
+                // Sayılan medya kotası hesaba bağlı, o yüzden guest burada
+                // giriş çağrısı görür.
                 AccountGatedSurface(
-                  surface: AppSurface.cloudBackup,
+                  surface: AppSurface.mediaStorage,
                   message: L10n.of(context)!.accountRequiredCloudBackup,
                   builder: (context) => Column(
                     mainAxisSize: MainAxisSize.min,
@@ -306,14 +250,6 @@ class _SaveSyncDialog extends ConsumerWidget {
                     ],
                   ),
                 ),
-
-                // ── Outbox status (full mode only) ──
-                if (!compact && outbox != null && outbox.pending > 0) ...[
-                  const SizedBox(height: 16),
-                  _SectionLabel('Sync Queue', palette),
-                  const SizedBox(height: 8),
-                  _OutboxStatusRow(outbox: outbox, palette: palette),
-                ],
 
                 // ── Compact mode hint ──
                 if (compact && !hasCloud)
@@ -397,29 +333,10 @@ class _ActionsRow extends ConsumerWidget {
     final packageName = ref.watch(activePackageProvider);
     final hasActive = campaignName != null || packageName != null;
     if (!hasActive) return const SizedBox.shrink();
-    bool online = false;
-    if (campaignName != null) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final worldId = (data?['world_id'] as String?) ?? campaignName;
-      online = ref.watch(onlineWorldIdsProvider).contains(worldId);
-    } else if (packageName != null) {
-      final signedIn = ref.watch(authProvider) != null;
-      final betaActive = ref.watch(betaProvider).isActive;
-      online = signedIn && betaActive;
-    }
-    final disabledTooltip = campaignName != null
-        ? 'Make this world online first'
-        : 'Sign in + join beta to sync';
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (hasCloud)
-          SyncButton(
-            palette: palette,
-            enabled: online,
-            disabledTooltip: disabledTooltip,
-          ),
         if (campaignName != null && hasCloud)
           _MakeOnlineButton(palette: palette),
       ],
@@ -515,14 +432,10 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
   }
 
   Future<void> _makeOnline(String campaignName, String worldId) async {
-    // Beta-only: online multiplayer only for beta members.
-    if (!ref.read(betaProvider).isActive) {
+    // Online oynamak hesap ister; beta kapısı kalktı.
+    if (!ref.read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Online worlds are beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
+        SnackBar(content: Text(L10n.of(context)!.accountRequiredBody)),
       );
       return;
     }
@@ -538,34 +451,20 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     }
     setState(() => _busy = true);
     try {
+      // Dünyayı online yapmak artık içerik YÜKLEMEZ — sadece `worlds` satırı
+      // ve DM üyeliği. Görseller de burada değil, paylaşım anında (kart
+      // paylaşımı / projeksiyon) R2'ya çıkar; DM'in paylaşmadığı medyayı
+      // önden yüklemek gereksiz kota harcamasıydı.
       final repo = ref.read(campaignRepositoryProvider);
       final data = await repo.load(campaignName);
-      // Bundle media → R2 upload + rewrite local paths to `dmt-asset://` so
-      // players (and re-opens on other devices) can fetch images.
-      Map<String, dynamic> bundled = data;
-      final assetSvc = ref.read(assetServiceProvider);
-      if (assetSvc != null) {
-        try {
-          final res = await MediaBundler(assetSvc).bundleWorldMedia(
-            worldName: campaignName,
-            worldId: worldId,
-            data: data,
-          );
-          bundled = res.data;
-        } catch (e) {
-          debugPrint('makeOnline media bundle error: $e');
-        }
-      }
-      final stateJson = jsonEncode(bundled);
       final templateId =
-          (bundled['world_schema'] as Map?)?['schemaId'] as String?;
-      final templateHash = bundled['template_hash'] as String?;
+          (data['world_schema'] as Map?)?['schemaId'] as String?;
+      final templateHash = data['template_hash'] as String?;
       await ref.read(worldMembershipServiceProvider).publishWorld(
             worldId: worldId,
             worldName: campaignName,
             templateId: templateId,
             templateHash: templateHash,
-            stateJson: stateJson,
           );
       ref.read(onlineWorldIdsProvider.notifier).add(worldId);
       ref.invalidate(worldOnlineStatusProvider(worldId));
@@ -755,19 +654,6 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
         });
       }
     });
-    // Also refresh when the outbox drains (cloud push completes — the
-    // cloud_backup `updated_at` for this item ticks forward).
-    ref.listen<AsyncValue<OutboxStatus>>(activeItemOutboxStatusProvider,
-        (prev, next) {
-      final prevPending = prev?.valueOrNull?.pending ?? 0;
-      final nextPending = next.valueOrNull?.pending ?? 0;
-      if (prevPending > 0 && nextPending == 0) {
-        setState(() {
-          _infoFuture = _resolveActive();
-        });
-      }
-    });
-
     return FutureBuilder(
       future: _infoFuture,
       builder: (context, snapshot) {
@@ -795,5 +681,4 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
   }
 }
 
-typedef _OutboxStatusRow = OutboxStatusRow;
 

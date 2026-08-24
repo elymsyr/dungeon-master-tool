@@ -24,7 +24,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[migrations-auth-social]], [[migrations-online-worlds]], [[migrations-media-storage]]
-- Used by: [[edge-beta-purge]], [[beta_enter_gate]], [[heartbeat_service]], [[rpc-reference]]
+- Used by: `beta_purge_with_cleanup` edge fn (kaldırıldı), `beta_enter_gate.dart` (kaldırıldı), [[heartbeat_service]], [[rpc-reference]]
 - Domain map: [[Backend-Infra]]
 - System flow: [[Media-Storage-Tiers]]
 - Spec / reference: [[Multiplayer-and-Online]]
@@ -41,4 +41,4 @@ tags: [file]
 
 ## Notes
 - Related but not in this group: 067 (`_purge_beta_user` shared body + `admin_revoke_beta`), 068 (beta quota 100 MB), 070 (14-day inactivity sweep). See [[rpc-reference]].
-- Beta exit/purge of R2 + Storage is done by the [[edge-beta-purge]] edge function, which calls these RPCs and then sweeps Storage + the Worker `/admin/purge-user`.
+- Beta exit/purge of R2 + Storage is done by the `beta_purge_with_cleanup` edge fn (kaldırıldı) edge function, which calls these RPCs and then sweeps Storage + the Worker `/admin/purge-user`.

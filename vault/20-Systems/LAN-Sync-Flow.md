@@ -10,7 +10,7 @@ tags: [system]
 > [!summary] What this is
 > Kullanıcının **kendi cihazları** arasında, aynı yerel ağda, manuel ve çift
 > yönlü içerik eşlemesi. Supabase ve R2'ye hiç dokunmaz — içerik "online
-> yapılmadan" telefon ile bilgisayar arasında taşınır. [[CDC-Sync-Flow]]'un LAN
+> yapılmadan" telefon ile bilgisayar arasında taşınır. [[Share-Broadcast-Flow]]'un LAN
 > kardeşi ama outbox'ı kullanmaz; cloud-backup round-trip'ini
 > (`repository.load` → blob → `repository.save`) ikinci bir "bulut" üzerinden
 > konuşur. Owned by [[Sync-and-Realtime]].
@@ -254,6 +254,6 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 
 ## Related
 - MoCs: [[Sync-and-Realtime]], [[Data-Layer]], [[Media-and-Assets]]
-- Sistem: [[CDC-Sync-Flow]] (bulut kardeşi)
+- Sistem: [[Share-Broadcast-Flow]] (bulut kardeşi)
 - Test: `flutter_app/test/application/services/lan_sync/` — protokol birim
   testleri + gerçek soket üzerinden eşleşme/sync loopback testi.

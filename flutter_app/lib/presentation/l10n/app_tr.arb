@@ -50,7 +50,13 @@
   "templateSaveUpdate": "Güncelle",
   "templateDriftTitle": "Template Güncellemesi Mevcut",
   "templateDriftBody": "\"{templateName}\" template'i bu kampanya son senkronize edildiğinden beri güncellenmiş.",
-  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "@templateDriftBody": {
+    "placeholders": {
+      "templateName": {
+        "type": "String"
+      }
+    }
+  },
   "templateDriftIgnore": "Yoksay",
   "templateDriftUpdate": "Güncelle",
   "templateDriftUpToDate": "Template güncel",
@@ -62,9 +68,21 @@
   "packageName": "Paket adı",
   "packageDelete": "Paketi Sil",
   "packageDeleteConfirm": "\"{name}\" silinsin mi?\n\nPaket çöp kutusuna taşınacak ve 30 gün sonra otomatik silinecek.",
-  "@packageDeleteConfirm": { "placeholders": { "name": { "type": "String" } } },
+  "@packageDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageEntityCount": "{count} varlık",
-  "@packageEntityCount": { "placeholders": { "count": { "type": "int" } } },
+  "@packageEntityCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "packageLinksTitle": "Bağlı Paketler",
   "packageLinksTooltip": "Bağlı paketler",
   "packageLinksHint": "Bağlı paketler ayrı kalır; ancak içerikleri burada görünür ve bu paketle birlikte dünyalara ve indirmelere gelir.",
@@ -72,16 +90,49 @@
   "packageLinksSection": "Bağlı",
   "packageLinksAvailableSection": "Bağlanabilir",
   "packageLinksIndirect": "{name} üzerinden",
-  "@packageLinksIndirect": { "placeholders": { "name": { "type": "String" } } },
+  "@packageLinksIndirect": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageLinksMissing": "Kurulu değil",
   "packageLinksCycle": "\"{name}\" bağlanamaz — o zaten bu paketi bağlıyor.",
-  "@packageLinksCycle": { "placeholders": { "name": { "type": "String" } } },
+  "@packageLinksCycle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageLinkedAlsoInstalled": "{count} bağlı paket de kuruldu.",
-  "@packageLinkedAlsoInstalled": { "placeholders": { "count": { "type": "int" } } },
+  "@packageLinkedAlsoInstalled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "packageDeleteLinkedWarning": "{count} paket bunu bağlıyor: {names}. Bağlantıları artık çözülmeyecek.",
-  "@packageDeleteLinkedWarning": { "placeholders": { "count": { "type": "int" }, "names": { "type": "String" } } },
+  "@packageDeleteLinkedWarning": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "packageUpdateTo": "v{version} sürümüne güncelle",
-  "@packageUpdateTo": { "placeholders": { "version": { "type": "String" } } },
+  "@packageUpdateTo": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "packageAlreadyExists": "Bu isimde paket zaten var",
   "noPackages": "Paket bulunamadı.",
   "importPackage": "Paket İçe Aktar",
@@ -92,19 +143,48 @@
   "importCompatWarning": "Farklılıklarla uyumlu",
   "importCompatIncompatible": "Uyumsuz",
   "importSuccess": "{count} varlık içe aktarıldı",
-  "@importSuccess": { "placeholders": { "count": { "type": "int" } } },
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importFieldsMissing": "Eksik alanlar (varsayılan kullanılacak)",
   "importFieldsExtra": "Fazla alanlar (atlanacak)",
   "importNoCompatible": "Bu dünyanın template'i ile uyumlu paket bulunamadı.",
   "importConfirmTitle": "\"{name}\" içe aktarılsın mı?",
-  "@importConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@importConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "importConfirmBody": "Dünyanıza {count} varlık eklenecek.",
-  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@importConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "oauthSignInFailed": "Giriş tamamlanamadı. Lütfen tekrar deneyin veya Supabase projesinde redirect URL'in tanımlı olduğundan emin olun.\n(Redirect URL: {redirectUrl})",
-  "@oauthSignInFailed": { "placeholders": { "redirectUrl": { "type": "String" } } },
+  "@oauthSignInFailed": {
+    "placeholders": {
+      "redirectUrl": {
+        "type": "String"
+      }
+    }
+  },
   "authStreamError": "Kimlik doğrulama hatası: {error}",
-  "@authStreamError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@authStreamError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "landingSubtitle": "Çevrimiçi özellikler için hesap oluşturun.",
   "landingAccountBanned": "Hesap Yasaklandı",
   "landingOk": "Tamam",
@@ -133,7 +213,6 @@
   "mediaQuotaFull": "Depolama kotanız dolu — resim bu cihazda saklandı.",
   "mediaImageLimitReached": "Her varlığa en fazla {count} resim eklenebilir.",
   "mediaImageTooLarge": "Resim çok büyük ({actual} MB, limit {max} MB) — bu cihazda saklandı, buluta yedeklenmedi.",
-
   "hubBtnMarketplace": "Pazar",
   "hubTooltipRefresh": "Buluttan yenile",
   "hubTooltipFilter": "Filtrele",
@@ -143,13 +222,24 @@
   "hubFilterEmpty": "Filtrelenecek bir şey yok",
   "hubFilterNoResults": "Filtreyle eşleşen öğe yok",
   "hubErrorGeneric": "Hata: {error}",
-  "@hubErrorGeneric": { "placeholders": { "error": { "type": "String" } } },
-
+  "@hubErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsHeading": "Dünyalar",
   "worldsBtnJoin": "Katıl",
   "worldsSubtitle": "Bir kampanya dünyası seç veya oluştur.",
   "worldsEmpty": "Kampanya bulunamadı.\n{path}",
-  "@worldsEmpty": { "placeholders": { "path": { "type": "String" } } },
+  "@worldsEmpty": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "worldsBtnLoad": "Dünyayı Yükle",
   "worldsNoTemplatesTitle": "Yüklü template yok",
   "worldsNoTemplatesBody": "Dünya oluşturmak için en az bir template gerekiyor. Pazar'a giderek bir tane yükleyin.",
@@ -160,36 +250,89 @@
   "worldsLeaveTitle": "Dünyadan Ayrıl",
   "worldsDeleteTitle": "Dünyayı Sil",
   "worldsLeaveBody": "\"{name}\" dünyasından ayrılacaksın ve sahip olduğun karakterler tekrar talep edilebilir hale gelecek. Bu dünyanın yerel kopyası bu cihazdan silinecek. Karakter kopyaların kütüphanende kalır.",
-  "@worldsLeaveBody": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsLeaveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeleteBody": "\"{name}\" silinsin mi?\n\nDünya çöp kutusuna taşınacak ve 30 gün sonra otomatik silinecek.",
-  "@worldsDeleteBody": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeleteMarketplaceWarning": "Bu dünyanın marketplace ilanları var. Kalıcı olarak silinecekler ve geri alınamazlar.",
   "packageDeleteMarketplaceWarning": "Bu paketin marketplace ilanları var. Kalıcı olarak silinecekler ve geri alınamazlar.",
   "charDeleteMarketplaceWarning": "Bu karakterin marketplace ilanları var. Kalıcı olarak silinecekler ve geri alınamazlar.",
   "worldsBtnLeave": "Ayrıl",
   "worldsDeleteFailed": "Silme başarısız: {error}",
-  "@worldsDeleteFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@worldsDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsLeftSnack": "\"{name}\" dünyasından ayrıldın. Yerel kopya silindi.",
-  "@worldsLeftSnack": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsLeftSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeletedCloudSnack": "Dünya çöp kutusuna taşındı. Bulut kopyası silindi.",
   "worldsDeletedSnack": "Dünya çöp kutusuna taşındı.",
   "worldsOpenFailed": "\"{name}\" dünyası açılamadı",
-  "@worldsOpenFailed": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsOpenFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsLoadFailed": "Kampanya yüklenemedi: {error}",
-  "@worldsLoadFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@worldsLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsUnknownTemplate": "Bilinmiyor",
   "worldsSettingsTitle": "{name} — Ayarlar",
-  "@worldsSettingsTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsSettingsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsTemplateLine": "Template: {name}",
-  "@worldsTemplateLine": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsTemplateLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsAlreadyExists": "Bu isimde dünya zaten var",
   "worldsInstallTemplate": "Dünya oluşturmadan önce Pazar'dan bir template yükle",
   "worldsCreatingLoad": "\"{name}\" dünyası oluşturuluyor...",
-  "@worldsCreatingLoad": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsCreatingLoad": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsRoleBadgeDm": "Çevrimiçi · DM",
   "worldsRoleBadgePlayer": "Çevrimiçi · Oyuncu",
   "worldsRoleBadgeNone": "Çevrimiçi",
-
   "charactersHeading": "Karakterler",
   "charactersSubtitle": "Karakterlerini aç veya yönet.",
   "charactersEmpty": "Henüz karakter yok.",
@@ -198,29 +341,90 @@
   "charPullingWorld": "Dünya indiriliyor...",
   "charWorldNotFound": "Karakterin dünyası yerelde bulunamadı.",
   "charWorldMissingOnDisk": "\"{name}\" dünyası diskte bulunamadı — karakter açılamaz.",
-  "@charWorldMissingOnDisk": { "placeholders": { "name": { "type": "String" } } },
+  "@charWorldMissingOnDisk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charDeleteTitle": "Karakteri Sil",
   "charReleaseTitle": "Karakteri Bırak",
   "charDeleteBody": "\"{name}\" silinsin mi? Bu geri alınamaz.",
-  "@charDeleteBody": { "placeholders": { "name": { "type": "String" } } },
+  "@charDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyInWorldNamed": "\"{world}\" dünyasındaki \"{name}\" bırakılsın mı? Karakter dünyada kalır ve tekrar talep edilebilir. Karakterler sekmenden kaybolur.",
-  "@charReleaseBodyInWorldNamed": { "placeholders": { "name": { "type": "String" }, "world": { "type": "String" } } },
+  "@charReleaseBodyInWorldNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "world": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyInWorldUnnamed": "\"{name}\" bırakılsın mı? Karakter dünyada kalır ve tekrar talep edilebilir. Karakterler sekmenden kaybolur.",
-  "@charReleaseBodyInWorldUnnamed": { "placeholders": { "name": { "type": "String" } } },
+  "@charReleaseBodyInWorldUnnamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyNoWorld": "\"{name}\" bırakılsın mı? Sahipliği bırakırsın; dünyası olmadığı için karakter silinir.",
-  "@charReleaseBodyNoWorld": { "placeholders": { "name": { "type": "String" } } },
+  "@charReleaseBodyNoWorld": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charSettingsTitle": "{name} — Ayarlar",
-  "@charSettingsTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@charSettingsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charTemplateLine": "Template: {name}",
-  "@charTemplateLine": { "placeholders": { "name": { "type": "String" } } },
+  "@charTemplateLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charWorldLine": "Dünya: {label}",
-  "@charWorldLine": { "placeholders": { "label": { "type": "String" } } },
+  "@charWorldLine": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "charLastEdited": "Son düzenleme: {when}",
-  "@charLastEdited": { "placeholders": { "when": { "type": "String" } } },
-
+  "@charLastEdited": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "selectorEmpty": "Kampanya bulunamadı:\n{path}",
-  "@selectorEmpty": { "placeholders": { "path": { "type": "String" } } },
-
+  "@selectorEmpty": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "mainBackToHub": "Ana ekrana dön",
   "worldExitConfirmTitle": "Bu dünyadan çıkılsın mı?",
   "worldExitConfirmBody": "Bekleyen değişiklikler kaydedilip ana ekrana dönülecek.",
@@ -253,11 +457,22 @@
   "mainOpenSoundpad": "Soundpad'i Aç",
   "mainCloseCharacters": "Karakterleri Kapat",
   "mainOpenCharacters": "Karakterleri Aç",
-
   "sessionRound": "Tur {n}",
-  "@sessionRound": { "placeholders": { "n": { "type": "int" } } },
+  "@sessionRound": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "sessionRoundShort": "T{n}",
-  "@sessionRoundShort": { "placeholders": { "n": { "type": "int" } } },
+  "@sessionRoundShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "sessionNextTurn": "Sıradaki Tur",
   "sessionNext": "Sıradaki",
   "sessionNewEncounter": "Yeni Karşılaşma",
@@ -279,7 +494,13 @@
   "sessionAddLog": "Günlük Ekle",
   "sessionAdd": "Ekle",
   "sessionAddWithQuantity": "Ekle ({count})",
-  "@sessionAddWithQuantity": { "placeholders": { "count": { "type": "int" } } },
+  "@sessionAddWithQuantity": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sessionQuickLogHint": "Hızlı günlük girdisi... (bahsetmek için @)",
   "sessionNotes": "Notlar",
   "sessionBattleMap": "Savaş Haritası",
@@ -307,7 +528,6 @@
   "sessionCustomCondition": "Özel Durum",
   "sessionDurationHint": "Süre (tur, isteğe bağlı)",
   "sessionAddCustom": "Özel Ekle",
-
   "cloudBackupTitle": "Bulut Yedekler",
   "cloudBackupEmpty": "Henüz bulut yedeği yok.",
   "cloudBackupUpload": "Buluta Yedekle",
@@ -320,25 +540,69 @@
   "cloudBackupRestoreSuccess": "Kampanya başarıyla geri yüklendi.",
   "cloudBackupDeleteSuccess": "Yedek silindi.",
   "cloudBackupError": "Bulut yedek hatası: {error}",
-  "@cloudBackupError": { "placeholders": { "error": { "type": "String" } } },
+  "@cloudBackupError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupConfirmTitle": "\"{name}\" yedeklensin mi?",
-  "@cloudBackupConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupConfirmBody": "Kampanyanız buluta yüklenecek.",
   "cloudBackupNotes": "Notlar (isteğe bağlı)",
   "cloudBackupRestoreConfirmTitle": "\"{name}\" geri yüklensin mi?",
-  "@cloudBackupRestoreConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupRestoreConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupRestoreConfirmBody": "Yedek indirilecek ve yerel olarak kaydedilecek.",
   "cloudBackupConflict": "\"{name}\" adında bir kampanya zaten mevcut. \"{newName}\" olarak kaydedilecek.",
-  "@cloudBackupConflict": { "placeholders": { "name": { "type": "String" }, "newName": { "type": "String" } } },
+  "@cloudBackupConflict": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "newName": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupDeleteConfirmTitle": "Yedek silinsin mi?",
   "cloudBackupDeleteConfirmBody": "\"{name}\" bulut yedeği kalıcı olarak silinecek. Bu işlem geri alınamaz.",
-  "@cloudBackupDeleteConfirmBody": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupSignInPrompt": "Bulut Yedekleme için giriş yapın.",
   "cloudBackupEntities": "{count} varlık",
-  "@cloudBackupEntities": { "placeholders": { "count": { "type": "int" } } },
+  "@cloudBackupEntities": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cloudBackupSize": "{size} KB",
-  "@cloudBackupSize": { "placeholders": { "size": { "type": "String" } } },
-
+  "@cloudBackupSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "saveInfoLocalLabel": "Yerel kayıt",
   "saveInfoCloudLabel": "Bulut yedeği",
   "saveInfoNever": "Hiç",
@@ -347,39 +611,94 @@
   "saveInfoLoadingCloud": "Bulut kontrol ediliyor...",
   "saveInfoDownloadConfirmTitle": "Bulut'tan indirilsin mi?",
   "saveInfoDownloadConfirmBody": "\"{name}\" için yerel kopya bulut sürümüyle değiştirilecek. Kaydedilmemiş yerel değişiklikler kaybolacaktır.",
-  "@saveInfoDownloadConfirmBody": { "placeholders": { "name": { "type": "String" } } },
+  "@saveInfoDownloadConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "saveInfoDownloadSuccess": "Bulut'tan indirildi.",
   "saveInfoDownloadError": "İndirme başarısız: {error}",
-  "@saveInfoDownloadError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@saveInfoDownloadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "signOutConfirmTitle": "Çıkış yapılsın mı?",
   "signOutConfirmBody": "Çıkış yapılacak ve giriş ekranına dönülecek. Bekleyen değişikliklerin kaydedildiğinden veya yedeklendiğinden emin olun.",
   "signOut": "Çıkış Yap",
   "signOutLocalDataNote": "Dünyalarınız, karakterleriniz ve paketleriniz hesabınızda kalır; bir sonraki girişinizde geri gelir. Bu cihazdaki çevrimdışı çalışma alanı boş başlar.",
-
   "settingsVolume": "Ses Düzeyi",
   "settingsData": "Veri",
   "settingsTrash": "Çöp Kutusu",
   "settingsSoundLibrary": "Ses Kütüphanesi",
   "trashEmpty": "Çöp kutusu boş.",
   "trashRestoreTitle": "{type} Geri Yükle",
-  "@trashRestoreTitle": { "placeholders": { "type": { "type": "String" } } },
+  "@trashRestoreTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "trashRestoreBody": "\"{name}\" çöp kutusundan geri yüklensin mi?",
-  "@trashRestoreBody": { "placeholders": { "name": { "type": "String" } } },
+  "@trashRestoreBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashRestoreSuccess": "\"{name}\" geri yüklendi",
-  "@trashRestoreSuccess": { "placeholders": { "name": { "type": "String" } } },
+  "@trashRestoreSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashDeleteTitle": "Kalıcı Olarak Sil",
   "trashDeleteBody": "{type} \"{name}\" kalıcı olarak silinsin mi?\n\nBu işlem geri alınamaz.",
-  "@trashDeleteBody": { "placeholders": { "type": { "type": "String" }, "name": { "type": "String" } } },
+  "@trashDeleteBody": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashAutoDeleteIn": "Otomatik silmeye {days} gün",
-  "@trashAutoDeleteIn": { "placeholders": { "days": { "type": "int" } } },
+  "@trashAutoDeleteIn": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "trashPendingCleanup": "Temizlik bekleniyor",
   "trashEmptyAll": "Çöpü Boşalt",
   "trashEmptyAllTitle": "Çöp Boşaltılsın mı?",
   "trashEmptyAllBody": "Çöpteki {count} öğeyi kalıcı olarak silmek istiyor musun?\n\nBu işlem geri alınamaz.",
-  "@trashEmptyAllBody": { "placeholders": { "count": { "type": "int" } } },
+  "@trashEmptyAllBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trashEmptyAllSuccess": "{count} öğe çöpten kaldırıldı.",
-  "@trashEmptyAllSuccess": { "placeholders": { "count": { "type": "int" } } },
+  "@trashEmptyAllSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "btnRestore": "Geri Yükle",
   "btnAdd": "Ekle",
   "btnRemove": "Kaldır",
@@ -387,9 +706,21 @@
   "dataPathWorlds": "Dünyalar",
   "dataPathCache": "Önbellek",
   "soundpadRootLabel": "Soundpad Dizini: {path}",
-  "@soundpadRootLabel": { "placeholders": { "path": { "type": "String" } } },
+  "@soundpadRootLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadTotalSize": "Toplam boyut: {mb} MB",
-  "@soundpadTotalSize": { "placeholders": { "mb": { "type": "String" } } },
+  "@soundpadTotalSize": {
+    "placeholders": {
+      "mb": {
+        "type": "String"
+      }
+    }
+  },
   "builtinWarningTitle": "Built-in şablon kullanıyorsun",
   "builtinWarningBody": "Geliştirme aşamasında olduğu için built-in şablon ve paketler zaman zaman değişebilir. Doğrudan devam edip güncel kalabilir, ya da daha güvenli bir seçenek için built-in'i kopyalayıp o kopya üzerinden çalışabilirsin.",
   "builtinWarningContinue": "Built-in ile devam et",
@@ -405,30 +736,67 @@
   "soundpadCreateTheme": "Tema Oluştur",
   "soundpadDeleteThemeTitle": "Temayı Sil",
   "soundpadDeleteThemeBody": "\"{name}\" teması ve tüm ses dosyaları silinsin mi?\n\nBu işlem geri alınamaz.",
-  "@soundpadDeleteThemeBody": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadDeleteThemeBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadNoAmbience": "Ortam sesi yok",
   "soundpadNoSfx": "Efekt sesi yok",
   "soundpadAddSoundDialogTitle": "Ses Adı",
   "soundpadSoundsAdded": "{count} ses eklendi",
-  "@soundpadSoundsAdded": { "placeholders": { "count": { "type": "int" } } },
+  "@soundpadSoundsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "soundpadRemoveSoundTitle": "Sesi Kaldır",
   "soundpadRemoveSoundBody": "\"{name}\" kütüphaneden kaldırılsın mı?",
-  "@soundpadRemoveSoundBody": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadRemoveSoundBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadFilesCount": "{count} dosya",
-  "@soundpadFilesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@soundpadFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "soundpadStatesCount": "{count} durum: {states}",
-  "@soundpadStatesCount": { "placeholders": { "count": { "type": "int" }, "states": { "type": "String" } } },
+  "@soundpadStatesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "states": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadThemeCreated": "\"{name}\" teması oluşturuldu",
-  "@soundpadThemeCreated": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadThemeCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadThemeDeleted": "Tema silindi",
   "soundpadSoundDeleted": "Ses kaldırıldı",
-
   "socialTabFeed": "Akış",
   "socialTabPlayers": "Oyuncular",
   "socialTabMessages": "Mesajlar",
   "socialTabMarketplace": "Pazaryeri",
   "socialTabGameListings": "Oyun İlanları",
-
   "feedComposerHint": "Oyuncularınızla bir şey paylaşın…",
   "feedComposerImageTooltip": "Görsel ekle (depolama kotasını kullanır)",
   "feedImageUploadComingSoon": "Görsel yükleme yakında geliyor",
@@ -441,34 +809,65 @@
   "feedScopeGameLists": "Oyun İlanları",
   "feedGameListsEmpty": "Bu filtrelere uyan açık ilan yok.",
   "feedGameListsOpen": "Oyun İlanları sekmesinde aç",
-
   "publishDialogTitle": "{type} \"{title}\" yayınla",
-  "@publishDialogTitle": { "placeholders": { "type": { "type": "String" }, "title": { "type": "String" } } },
+  "@publishDialogTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "publishDialogHelp": "Diğer oyuncuların marketplace'te bulabilmesi için aşağıdaki alanları doldurun.",
   "publishDialogDescriptionLabel": "Açıklama",
   "publishDialogLanguageLabel": "Dil",
   "publishDialogTagsLabel": "Etiketler",
   "publishDialogTagsHint": "Yaz, Enter veya virgülle ekle",
   "publishDialogPublish": "Yayınla",
-
   "marketplaceLanguageFilter": "Dil",
   "marketplaceTagFilter": "Etiket",
   "marketplaceFilterAny": "Hepsi",
   "marketplaceFilterClear": "Filtreleri temizle",
   "marketplaceDownloadCount": "{count} indirme",
-  "@marketplaceDownloadCount": { "placeholders": { "count": { "type": "int" } } },
+  "@marketplaceDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "marketplaceDownload": "İndir",
   "marketplaceGet": "Al",
   "marketplaceTemplateLabel": "Şablon",
   "marketplaceContentsLabel": "İçerik",
   "marketplaceMoreEntities": "+{count} daha",
-  "@marketplaceMoreEntities": { "placeholders": { "count": { "type": "int" } } },
+  "@marketplaceMoreEntities": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "marketplacePreview": "Önizle",
   "marketplaceDownloading": "İndiriliyor…",
   "marketplaceDownloadSuccess": "\"{name}\" indirildi",
-  "@marketplaceDownloadSuccess": { "placeholders": { "name": { "type": "String" } } },
+  "@marketplaceDownloadSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceDownloadError": "İndirme başarısız: {error}",
-  "@marketplaceDownloadError": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceDownloadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplacePlayersHeader": "Oyuncular",
   "marketplacePlayersFollowing": "Takip Edilenler",
   "marketplacePlayersSuggested": "Önerilenler",
@@ -494,7 +893,6 @@
   "soundpackInstalled": "Yüklü",
   "soundpackDownloading": "İniyor…",
   "soundpackRetry": "Tekrar",
-
   "btnEdit": "Düzenle",
   "feedScopeDiscover": "Keşfet",
   "profileTabListings": "İlanlar",
@@ -502,23 +900,39 @@
   "editListingTitle": "İlanı Düzenle",
   "editMarketplaceItemTitle": "Marketplace Ögesini Düzenle",
   "btnSaveChanges": "Değişiklikleri kaydet",
-
   "btnFollow": "Takip Et",
   "btnUnfollow": "Takip Ediliyor",
-
   "listingApply": "Başvur",
   "listingApplied": "Başvuruldu",
   "listingApplyTitle": "\"{title}\" ilanına başvur",
-  "@listingApplyTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@listingApplyTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "listingApplyMessage": "Mesajın",
   "listingApplyHint": "Kendini tanıt: tecrübe, saat dilimi, beklentiler…",
   "listingWithdraw": "Başvuruyu geri çek",
   "listingMineTitle": "İlanlarım",
   "listingMineEmpty": "Henüz oyun ilanı oluşturmadın.",
   "listingApplicationCount": "{count} başvuru",
-  "@listingApplicationCount": { "placeholders": { "count": { "type": "int" } } },
+  "@listingApplicationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "listingApplicantsTitle": "\"{title}\" başvuranları",
-  "@listingApplicantsTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@listingApplicantsTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "listingApplicantsEmpty": "Henüz başvuru yok.",
   "listingMessageApplicant": "Mesaj",
   "listingLanguageLabel": "Oyun dili",
@@ -532,15 +946,18 @@
   "listingCloseAction": "İlanı kapat",
   "listingDeleteAction": "İlanı sil",
   "listingClosedBadge": "Kapalı",
-
   "profileFollowersDialog": "Takipçiler",
   "profileFollowingDialog": "Takip Edilenler",
   "profileNoFollowers": "Henüz takipçi yok.",
   "profileNoFollowing": "Henüz kimse takip edilmiyor.",
   "profileDmError": "Sohbet açılamadı: {error}",
-  "@profileDmError": { "placeholders": { "error": { "type": "String" } } },
-
-  "socialTabGameListings": "Oyun İlanları",
+  "@profileDmError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "btnNewListing": "Yeni ilan",
   "createListingTitle": "Oyun ilanı oluştur",
   "listingTitleLabel": "Başlık",
@@ -548,9 +965,7 @@
   "listingSeatsLabel": "Toplam koltuk",
   "listingScheduleLabel": "Plan",
   "listingPostAction": "İlanı yayınla",
-
   "btnClose": "Kapat",
-
   "helpButtonTooltip": "Yardım — bu bölüm nedir?",
   "notificationsButtonTooltip": "Bildirimler",
   "notificationsDialogTitle": "Bildirimler",
@@ -567,9 +982,21 @@
   "notifNoResponses": "Henüz yanıt yok.",
   "notifResponsesTitle": "Yanıtlar",
   "notifResponseCount": "{count} yanıt",
-  "@notifResponseCount": { "placeholders": { "count": { "type": "int" } } },
+  "@notifResponseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVotes": "{count} oy",
-  "@notifVotes": { "placeholders": { "count": { "type": "int" } } },
+  "@notifVotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifComposerTitle": "Yeni bildirim",
   "notifTitleLabel": "Başlık",
   "notifAddMarkdown": "Metin",
@@ -608,7 +1035,6 @@
   "helpPackagesBody": "Paketler, bir setting/şablon üzerine doğrudan eklenmek için hazırlanmış içerik kartlarıdır. Hazır bir büyü paketi, şifalı bitki paketi, canavar listesi, eşya seti ya da zihin haritası düğümleri topluluğu düşün — bunu aktif dünyaya tek seferde ekleyip kullanmaya başlayabilirsin. Paketler, dünyalar arasında içerik taşımanın ve paylaşmanın en hızlı yoludur: kendi oluşturduğun bir paketi dışa aktarıp başka bir dünyana getirebilir ya da Marketplace üzerinden toplulukla paylaşabilirsin. İçe aktarım Paketler sekmesinden yapılır; dünyaya eklenen paketin içeriği, o dünyanın kendi içeriğinden ayırt edilemez biçimde çalışır.",
   "helpMarketplaceTitle": "Marketplace",
   "helpMarketplaceBody": "Marketplace, oyuncuların oluşturduğu içerikleri birbiriyle paylaşabildiği ücretsiz bir platformdur. Dünyalar, şablonlar ve paketler burada yayınlanır; herkes indirebilir, kendi oyununa ekleyebilir ve üstüne kurabilir. Yayınlanan her içerik değiştirilemez bir snapshot olarak saklanır — yayınlandıktan sonra düzenlenemez, yalnızca silinebilir; böylece indiren oyuncuların elindeki sürüm zamanla bozulmaz. Kendi içeriğini yayınlamak için ilgili dünyanın, şablonun ya da paketin ayarlarındaki Marketplace panelini kullan. İndirmek içinse Sosyal sekmesindeki Marketplace alt sekmesine göz at.",
-
   "publishSnapshotDialogHeading": "Snapshot Yayınla",
   "publishDialogTitleLabel": "Başlık",
   "publishDialogChangelogLabel": "Değişiklik notu (opsiyonel)",
@@ -616,119 +1042,130 @@
   "publishDialogImmutabilityNoticeNew": "Yeni bir değiştirilemez snapshot oluşturulacak. Snapshot'lar daha sonra düzenlenemez — yalnızca silinebilir.",
   "publishDialogImmutabilityNoticeExisting": "Yeni bir değiştirilemez snapshot oluşturulacak. Bu soydaki önceki snapshot'lar eski olarak işaretlenecek. Snapshot'lar daha sonra düzenlenemez — yalnızca silinebilir.",
   "publishDialogMissingFields": "Lütfen doldur: {fields}",
-  "@publishDialogMissingFields": { "placeholders": { "fields": { "type": "String" } } },
+  "@publishDialogMissingFields": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
   "publishDialogNoChanges": "Son snapshot'tan beri değişiklik yok.",
   "publishDialogFailed": "Yayınlama başarısız: {error}",
-  "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
-
+  "@publishDialogFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceErrorPrefix": "Marketplace hatası: {error}",
-  "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceErrorPrefix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceOwnerNotShared": "Henüz paylaşılmadı. Marketplace'e değiştirilemez bir snapshot yayınla.",
   "marketplaceOwnerPublished": "Marketplace'te yayında.",
   "marketplaceShareButton": "Marketplace'te paylaş",
   "marketplacePublishSnapshotButton": "Snapshot yayınla",
   "marketplaceImportedFromBy": "@{username} kullanıcısından alındı",
-  "@marketplaceImportedFromBy": { "placeholders": { "username": { "type": "String" } } },
+  "@marketplaceImportedFromBy": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceImportedFromGeneric": "Marketplace'ten alındı",
   "marketplaceUpdatesMutedTooltip": "Güncellemeler sessizde",
   "marketplaceItemRemoved": "Bu öğe artık marketplace'te bulunmuyor.",
   "marketplaceUpdateAvailableTap": "Yeni bir snapshot mevcut. Görmek için dokun.",
   "marketplaceSnapshotPublished": "Snapshot yayınlandı.",
-
   "marketplaceActionFailed": "İşlem başarısız: {error}",
-  "@marketplaceActionFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceActionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceDownloadedAs": "\"{name}\" olarak indirildi",
-  "@marketplaceDownloadedAs": { "placeholders": { "name": { "type": "String" } } },
+  "@marketplaceDownloadedAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceReplaceConfirmTitle": "Yerel kopyayı değiştir?",
   "marketplaceReplaceConfirmBody": "Bu öğedeki yerel değişikliklerin kaybolacak ve yayıncının en son snapshot'ı ile üzerine yazılacak. Bu işlem geri alınamaz.",
   "marketplaceReplaceConfirmAction": "Değiştir",
   "marketplaceLocalCopyReplaced": "Yerel kopya değiştirildi.",
   "marketplaceUpdatePromptTitle": "\"{title}\" için yeni snapshot",
-  "@marketplaceUpdatePromptTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@marketplaceUpdatePromptTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceUpdatePromptByOwner": "@{owner} indirdiğin bir öğenin yeni sürümünü yayınladı.",
-  "@marketplaceUpdatePromptByOwner": { "placeholders": { "owner": { "type": "String" } } },
+  "@marketplaceUpdatePromptByOwner": {
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceUpdatePromptGeneric": "İndirdiğin bir öğenin yeni sürümü mevcut.",
   "marketplaceWhatsNew": "Yenilikler",
   "marketplaceMuteUpdates": "Bu öğenin güncellemelerini sustur",
   "marketplaceDismissVersion": "Bu sürümü atla",
   "marketplaceReplaceLocalCopy": "Yerel kopyayı değiştir",
   "marketplaceDownloadAsNewCopy": "Yeni kopya olarak indir",
-
   "mySnapshotsLoadError": "Snapshot'lar yüklenemedi: {error}",
-  "@mySnapshotsLoadError": { "placeholders": { "error": { "type": "String" } } },
+  "@mySnapshotsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "mySnapshotsEmpty": "Bu soyda snapshot yok.",
   "mySnapshotsHeading": "Snapshot'lar ({count})",
-  "@mySnapshotsHeading": { "placeholders": { "count": { "type": "int" } } },
+  "@mySnapshotsHeading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mySnapshotsDeleteTitle": "Bu snapshot silinsin mi?",
   "mySnapshotsDeleteCurrentBody": "Bu güncel snapshot. Bu soydaki bir önceki snapshot güncel hale gelecek. Eğer başka snapshot kalmazsa bu sürümü indirenler \"artık mevcut değil\" görür.",
   "mySnapshotsDeleteHistoricalBody": "Bu eski snapshot kalıcı olarak silinecek.",
   "mySnapshotsDeleted": "Snapshot silindi.",
   "mySnapshotsDeleteFailed": "Silme başarısız: {error}",
-  "@mySnapshotsDeleteFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@mySnapshotsDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "mySnapshotsDownloadCount": "{count} indirme",
-  "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
+  "@mySnapshotsDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mySnapshotsCurrentBadge": "güncel",
   "mySnapshotsDeleteTooltip": "Snapshot'ı sil",
-
   "settingsSubscriptions": "Abonelikler",
-  "subsBetaTitle": "Beta Programı",
-  "subsBetaDescription": "Cloud save ve online oyun için kapalı beta'ya katıl. Tüm karakterlerin online olur, dünya ve paketlerin yayınlanabilir. Yalnızca DM beta'ya katılarak tüm ekip birlikte oynar. 90 slot mevcut.",
-  "subsBetaJoinBtn": "Beta'ya Ücretsiz Katıl",
-  "subsBetaSlotsRemaining": "{n} / 90 slot kaldı",
-  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
-  "subsBetaFull": "Beta dolu. v1 çıktığında haberdar edeceğiz.",
-  "subsBetaActiveBadge": "Beta'dasın — slot #{n}",
-  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
-  "subsBetaQuotaLabel": "{used} MB / {total} MB kullanıldı",
-  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
-  "subsBetaQuotaScopeNote": "Beta depolaması cloud save ve community asset'leri kapsar. Postlar ücretsizdir.",
-  "subsBetaInactivityDisclaimer": "Uygulamayı iki haftada en az bir kez aç. 14 gün inaktif olursan cloud verin silinir ve beta slot'un serbest bırakılır.",
-  "subsBetaLastSeen": "Son görülme: {when}",
-  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
-  "subsBetaRoadmap": "Online oyun deneme aşamasında. Kişisel bulut alanında limitler var, ancak canlı oyun sırasında paylaşılan resim ve battlemap'ler bu limite sayılmaz.",
-  "subsBetaSignInHint": "Ücretsiz beta'ya katılmak için oturum aç.",
-  "subsBetaRequiredForCloud": "Cloud save yalnızca beta'ya özel. Ayarlar → Abonelikler'den ücretsiz beta'ya katıl.",
-  "subsBetaJoinFailedFull": "Beta az önce doldu. Daha sonra tekrar dene.",
-  "subsBetaJoinFailedGeneric": "Beta'ya katılım başarısız: {error}",
-  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
-  "subsBetaLeaveBtn": "Beta'dan Ayrıl",
-  "subsBetaLeaveConfirmTitle": "Beta'dan ayrılmak istiyor musun?",
-  "subsBetaLeaveConfirmBody": "Cloud kayıtların ve topluluk varlıkların silinecek, beta slot'un serbest bırakılacak. Post'lar ve marketplace listelemeleri etkilenmez.",
-  "subsBetaLeaveWarnIntro": "Beta'dan ayrılmak tüm online verini kalıcı olarak siler. Bu işlem geri alınamaz.",
-  "subsBetaLeaveWarnDeleted": "Kalıcı silinir: online dünyaların, paketlerin ve karakterlerin; marketplace itemlerin ve onlara bağlı görseller; cloud'a yüklediğin tüm resimler.",
-  "subsBetaLeaveWarnKept": "Korunur: bu cihazdaki ve diğer cihazlarındaki tüm local verin güvende kalır. Post'ların, oyun ilanların ve mesajların etkilenmez — topluluğu kullanmaya devam edebilirsin.",
-  "subsBetaLeaveSuccess": "Beta'dan ayrıldın.",
-  "subsBetaLeaveFailed": "Beta'dan ayrılma başarısız. Daha sonra tekrar dene.",
-  "subsBetaLeavePreserveLine": "Bu cihazda offline saklanacak: {worlds} dünya · {chars} karakter · {packages} paket.",
-  "@subsBetaLeavePreserveLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
-  "subsBetaLeaveDownloadLine": "Bunlardan {worlds} dünya / {chars} karakter / {packages} paket önce cloud'dan indirilecek.",
-  "@subsBetaLeaveDownloadLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
-  "subsBetaLeaveOfflineNeeded": "İnternet gerekli — sahip olduğun online içeriği lokale indirmek için bağlanmalısın.",
-
-  "subsBetaRequestBtn": "Betaya katılmak için istek gönder",
-  "subsBetaRequestDialogTitle": "Beta katılım isteği",
-  "subsBetaRequestDialogIntro": "Beta ücretsizdir ve aktif 90 üye ile sınırlıdır. Dünyaların, karakterlerin ve paketlerin için 100 MB bulut alanı verilir; online oyun açılır: tüm karakterlerin online olur, dünya ve paketlerin yayınlanabilir. Yalnızca DM beta'ya katılarak tüm ekip birlikte online oynar. Canlı oyunda paylaşılan resim ve battlemap'ler kotaya sayılmaz. 14 gün boyunca giriş yapmayan hesapların yeri başkalarına açılır. Her istek bir admin tarafından incelenir — istersen kısa bir not bırakabilirsin.",
-  "subsBetaRequestMessageHint": "Neden katılmak istiyorsun? (opsiyonel)",
-  "subsBetaRequestSubmit": "İstek gönder",
-  "subsBetaRequestSubmitted": "İstek gönderildi. Admin inceleyecek.",
-  "subsBetaRequestUpdated": "İstek güncellendi.",
-  "subsBetaRequestFailed": "İstek gönderilemedi: {error}",
-  "@subsBetaRequestFailed": { "placeholders": { "error": { "type": "String" } } },
-  "subsBetaRequestPendingTitle": "İstek inceleme bekliyor",
-  "subsBetaRequestPendingBody": "Admin isteğini inceleyecek ve onaylayacak ya da reddedecek. İstersen mesajını güncelleyebilir ya da isteğini geri çekebilirsin.",
-  "subsBetaRequestPendingSince": "Gönderildi: {when}",
-  "@subsBetaRequestPendingSince": { "placeholders": { "when": { "type": "String" } } },
-  "subsBetaRequestYourMessage": "Mesajın:",
-  "subsBetaRequestNoMessage": "(mesaj yok)",
-  "subsBetaRequestEditBtn": "Mesajı düzenle",
-  "subsBetaRequestCancelBtn": "İsteği iptal et",
-  "subsBetaRequestCancelled": "İstek iptal edildi.",
-  "subsBetaRequestFullNote": "Şu an aktif slot yok — isteğin sıraya alınır.",
-  "subsBetaApprovedSnack": "Betaya hoş geldin — slot #{n}",
-  "@subsBetaApprovedSnack": { "placeholders": { "n": { "type": "int" } } },
-
   "feedPostRateLimited": "Çok hızlı post atıyorsun. Biraz sonra tekrar dene.",
-
   "messagesComposeTooltip": "Yeni sohbet",
   "messagesComposeNewDirect": "Yeni birebir mesaj",
   "messagesComposeNewGroup": "Yeni grup sohbeti",
@@ -744,20 +1181,30 @@
   "newChatPickerStart": "Sohbeti başlat",
   "newChatPickerCreate": "Grup oluştur",
   "newChatPickerError": "Sohbet başlatılamadı: {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@newChatPickerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "messageDateToday": "Bugün",
   "messageDateYesterday": "Dün",
   "messageDeleteTitle": "Mesaj silinsin mi?",
   "messageDeleteBody": "Bu mesaj kalıcı olarak silinecektir.",
   "messageDeleteAction": "Sil",
   "cancelAction": "İptal",
-
   "groupSettingsTitle": "Grup Ayarları",
   "groupSettingsName": "Grup Adı",
   "groupSettingsNameSave": "Kaydet",
   "groupSettingsMembers": "Üyeler ({count})",
-  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "@groupSettingsMembers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "groupSettingsAdmin": "YÖNETİCİ",
   "groupSettingsLeave": "Gruptan Ayrıl",
   "groupSettingsLeaveTitle": "Gruptan ayrılsın mı?",
@@ -767,9 +1214,7 @@
   "groupSettingsDeleteTitle": "Grup silinsin mi?",
   "groupSettingsDeleteBody": "Bu işlem tüm mesajları herkes için silecektir. Bu işlem geri alınamaz.",
   "groupNameUpdated": "Grup adı güncellendi.",
-
   "cannotMessageSelf": "Kendinize mesaj gönderemezsiniz.",
-
   "chatMenuDelete": "Sil",
   "chatMenuRenameGroup": "Grubu Yeniden Adlandır",
   "chatMenuLeaveGroup": "Gruptan Ayrıl",
@@ -782,7 +1227,6 @@
   "chatMenuAddMember": "Üye ekle",
   "chatMemberAdded": "Üye eklendi.",
   "chatAddMemberTitle": "Üye ekle",
-
   "feedComposerAttachListing": "Öğe ekle",
   "feedAttachedListing": "Ekli öğe",
   "feedRemoveAttachment": "Kaldır",
@@ -791,40 +1235,32 @@
   "feedPickerMarketplaceSection": "Pazar Yeri Öğeleri",
   "feedPickerGameListingSection": "Oyun İlanları",
   "feedPickerEmpty": "Aramanıza uygun öğe bulunamadı.",
-
   "socialTabDiscover": "Keşfet",
   "discoverSearchHint": "Kullanıcı adıyla ara…",
   "discoverSuggestedHeader": "Sizin için öneriler",
   "discoverSearchResults": "Arama sonuçları",
   "discoverEmptySearch": "Kullanıcı bulunamadı",
   "discoverEmptyState": "Öneri bulunmuyor",
-
   "dmDeleteChat": "Sohbeti Sil",
   "dmDeleteTitle": "Sohbet silinsin mi?",
   "dmDeleteBody": "Tüm mesajlar her iki taraf için de silinecek. Bu işlem geri alınamaz.",
   "dmDeleteConfirm": "Sil",
-
   "profileHideFromDiscover": "Keşfet'te beni gösterme",
   "profileHideFromDiscoverHint": "Profiliniz önerilerde ve arama sonuçlarında görünmez",
-
   "welcomeTitle": "Hoş geldin, Zindan Ustası!",
   "welcomeSystemIntro": "Dungeon Master Tool, taşınabilir ve offline-öncelikli bir masaüstü RPG yardımcısıdır. Hub altı sekmeden oluşur: Sosyal (akış, mesajlar, marketplace), Ayarlar (hesap, tema, dil, bulut sync), Dünyalar (savaş haritası, zihin haritası, varlıklar ve oturumlarla kampanyalar), Karakterler (tüm dünyalarındaki kendi karakterlerin), Şablonlar (üzerinden dünya başlattığın iskeletler) ve Paketler (tak-çalıştır içerik paketleri).",
-  "welcomeBetaNotice": "Uygulama hâlâ beta aşamasında — özellikler, built-in template ve paketler sürümler arasında değişebilir. Önemli verilerinizi zaman zaman yedeklemeyi unutmayın.",
-  "welcomeOnlinePlay": "Kapalı beta'ya katıldığında tüm karakterlerin online olur, dünya ve paketlerin online yayınlanabilir. Online oyun şu an deneme aşamasında — yalnızca DM beta'ya katılarak tüm ekibin birlikte online oynaması yeterlidir.",
-  "welcomeOnlineStorage": "Kişisel bulut depolamada şu an bazı limitler var, ancak online oyun sırasında oyuncularınla resim ve battlemap paylaşımı bu limite takılmadan yapılır.",
+  "welcomeOnlinePlay": "Online oyun, hesabı olan herkese açık. Oyuncuların yalnızca onlarla paylaştığını görür — verdiğin kartlar ve ortak ekrana koyduğun her şey, sen paylaştıkça canlı olarak. Dünyanın geri kalanı sende kalır.",
+  "welcomeOnlineStorage": "Dünyaların, karakterlerin ve paketlerin bu cihazda durur; kendi cihazların arasında yerel ağ üzerinden eşlenir. Yalnızca oturum sırasında paylaştığın görseller bulut depolama kullanır.",
   "welcomeRoadmap": "D&D 5e SRD içerikleri yerleşik geliyor. Görsel içerik paketleri ve hazır soundpad bundle'ları yakında ekleniyor.",
   "welcomeClosing": "Denediğin için teşekkürler — zarların yaver gitsin!",
   "welcomeContinue": "Hadi başlayalım",
-
   "tabSocial": "Sosyal",
   "tabSettings": "Ayarlar",
   "tabWorlds": "Dünyalar",
   "tabCharacters": "Karakterler",
   "tabTemplates": "Şablonlar",
-
   "hubReportBugTooltip": "Hata bildir",
   "hubSettingsTooltip": "Ayarlar",
-
   "profileMenuTooltip": "Profil",
   "profileMenuSignIn": "Giriş Yap",
   "profileMenuViewProfile": "Profili Görüntüle",
@@ -834,7 +1270,6 @@
   "profileMenuReportBug": "Hata bildir",
   "profileMenuSupport": "Destek",
   "profileMenuSupportBody": "Aracı beğendiysen aşağıdaki kanallardan birinden destek olabilirsin. Teşekkürler!",
-
   "accountRequiredTitle": "Hesap gerekli",
   "accountRequiredBody": "Bunu kullanmak için giriş yap. Dünyaların, karakterlerin ve kurulu paketlerin her durumda bu cihazda kalır.",
   "accountRequiredSignIn": "Giriş Yap",
@@ -842,7 +1277,6 @@
   "accountRequiredCloudBackup": "Bulut yedeği bu öğeyi hesabına kopyalar. Yerel kayıt onsuz da çalışır.",
   "accountRequiredOnlineSync": "Çevrimiçi eşitleme bunu diğer cihazlarınla aynı hizada tutar.",
   "accountRequiredWorldSharing": "Paylaşılan dünyalar, davetler ve oyuncu koltukları sunucuda durur.",
-
   "lanSyncTitle": "Yerel Eşleme",
   "lanSyncSubtitle": "Dünyaları, paketleri ve karakterleri aynı Wi-Fi'daki diğer cihazlarınla doğrudan eşle. Hiçbir şey internete çıkmaz.",
   "lanSyncOpen": "Yerel Eşleme",
@@ -857,7 +1291,6 @@
   "lanSyncFailures": "{count} içerik aktarılamadı: {names}",
   "lanSyncNoDeleteNotice": "Yerel eşleme yalnız ekler ve günceller. İki cihazda da hiçbir şey silinmez.",
   "lanSyncError": "Yerel eşleme başarısız: {message}",
-
   "lanSyncQrCaption": "Bunu diğer cihazında okut",
   "lanSyncPairedDevices": "Eşleşmiş cihazlar",
   "lanSyncNoDevices": "Henüz eşleşmiş cihaz yok. Diğer cihazda “Cihaz ekle”ye bas ve yukarıdaki kodu okut.",

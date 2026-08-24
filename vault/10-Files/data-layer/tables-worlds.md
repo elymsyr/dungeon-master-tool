@@ -26,7 +26,7 @@ tags: [file]
 - Depends on: `package:drift` only (FKs to `Worlds` are `.references(Worlds, #id)`).
 - Used by: [[drift_database]], [[world_repository_impl]], [[entity]], [[character_resolver]].
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: `docs/full_drift_migration_plan.md`
 
 ## Key Logic / Variables

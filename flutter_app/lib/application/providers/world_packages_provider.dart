@@ -7,7 +7,7 @@ import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
 import 'package_link_provider.dart';
 import 'package_provider.dart';
-import 'sync_engine_provider.dart';
+import 'world_mirror_provider.dart';
 
 /// PR-SYNC-5: stream of DM-shared world_packages rows for the given world.
 /// Rows arrive via Supabase `world_packages` CDC + WorldMirrorApplier.
@@ -17,9 +17,10 @@ final worldPackagesProvider =
   return db.worldPackagesDao.watchByWorld(worldId);
 });
 
-/// DM-only: share a local personal package into the active world. Reads
-/// the package snapshot from [packageStateProvider] and enqueues a
-/// world-package outbox row; SyncEngine drains via `share_package_to_world`.
+/// DM-only: share a local personal package into the active world. Reads the
+/// package snapshot and calls `share_package_to_world` directly — paket
+/// paylaşımı DM'in bilinçli bir eylemi, arka planda drenajı beklenen bir
+/// kuyruk satırı değil. Hata çağırana yükselir ki UI gösterebilsin.
 /// Reader contract shared by Ref + WidgetRef so the helpers below work
 /// from both notifiers and widgets without duplication.
 typedef _RefRead = T Function<T>(ProviderListenable<T> p);
@@ -31,27 +32,25 @@ Future<void> _shareImpl(
 ) async {
   final repo = read(packageRepositoryProvider);
   final data = await repo.load(packageName);
-  final engine = read(syncEngineProvider);
-  await engine.enqueueWorldPackageShare(
+  final mirror = read(worldMirrorServiceProvider);
+  if (mirror == null) return;
+  final serverId = await mirror.shareWorldPackage(
     worldId: worldId,
     packageName: packageName,
     state: data,
   );
   final db = read(appDatabaseProvider);
-  // Echo the serialized form into the local mirror so the DM sees the row
-  // immediately without waiting for the CDC round-trip. The temporary
-  // package_id gets replaced by the server's canonical id on next CDC.
+  // Local mirror row so the DM sees the share immediately. The RPC returns the
+  // canonical id; fall back to a local placeholder only if it came back null.
   await db.worldPackagesDao.upsert(
     WorldPackagesCompanion.insert(
       worldId: worldId,
-      packageId: 'pending:$packageName',
+      packageId: serverId ?? 'pending:$packageName',
       packageName: Value(packageName),
       stateJson: Value(jsonEncode(data)),
     ),
   );
-  // Cascade: install pkg into DM's local world so entities populate
-  // `world_entities`. Each row pushes through the outbox so other devices
-  // see it via world_entities CDC.
+  // Cascade: install pkg into the DM's local world so entities populate.
   await _installPackageInWorld(read, worldId, packageName);
 }
 
@@ -74,12 +73,10 @@ Future<void> _unshareImpl(
   String packageName,
   String packageId,
 ) async {
-  final engine = read(syncEngineProvider);
-  await engine.enqueueWorldPackageUnshare(
-    worldId: worldId,
-    packageName: packageName,
-    packageId: packageId,
-  );
+  final mirror = read(worldMirrorServiceProvider);
+  if (mirror != null) {
+    await mirror.unshareWorldPackage(packageId: packageId);
+  }
   await read(appDatabaseProvider).worldPackagesDao.deleteByPackage(packageId);
 }
 

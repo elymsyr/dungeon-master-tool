@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/account_gate.dart';
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
 import '../../core/utils/error_format.dart';
 import '../dialogs/publish_snapshot_dialog.dart';
@@ -38,13 +37,11 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
       (itemType: widget.itemType, localId: widget.localId);
 
   Future<void> _publishSnapshot() async {
-    if (!ref.read(betaProvider).isActive) {
+    // Marketplace'e paylaşım hesap ister: listing satırı auth.uid()'e bağlı ve
+    // payload bucket'ı `authenticated` politikası altında. Gezinme açık.
+    if (!ref.read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Marketplace publishing is beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
+        SnackBar(content: Text(L10n.of(context)!.accountRequiredMarketplace)),
       );
       return;
     }

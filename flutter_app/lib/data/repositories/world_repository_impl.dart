@@ -671,7 +671,7 @@ class WorldRepositoryImpl implements CampaignRepository {
       // (its `_entityToMap` produces a fresh map), so an edited built-in
       // entry naturally writes through and forks at the same synth id.
       //
-      // Beta-enter wipe defense (PR-B5): a payload that does NOT contain the
+      // Wipe defense (PR-B5): a payload that does NOT contain the
       // `entities` key is treated as "metadata-only save" — DO NOT delete the
       // existing rows. The cloud reconciler / preserve hydrators strip the
       // entities key from world_state because they're carried per-row through

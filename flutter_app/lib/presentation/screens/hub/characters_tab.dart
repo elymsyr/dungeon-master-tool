@@ -6,17 +6,13 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
-import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_filter_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/role_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../application/services/package_source_entities.dart';
-import '../../../application/services/cloud_catchup_service.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/character_ext.dart';
 import '../../../domain/entities/entity.dart';
@@ -57,15 +53,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   Future<void> _doRefresh() async {
     if (_refreshing) return;
     setState(() => _refreshing = true);
-    try {
-      // Drain outbox first so pending deletes hit the server before we pull.
-      // Otherwise the catchup pulls a still-present cloud_backups row and
-      // resurrects a character the user just deleted.
-      await ref.read(syncEngineProvider).forceTick();
-      await ref.read(cloudCatchupServiceProvider).runAll();
-    } catch (e) {
-      debugPrint('Characters refresh error: $e');
-    }
+    // Bulut çekme yok — yenileme yerel listeyi tazeler.
     if (!mounted) return;
     // `invalidate` yerine `refresh()`: invalidate notifier'ı yok edip yenisini
     // `AsyncValue.loading()` ile kurar → liste bir frame boş kalır → karakter
@@ -412,21 +400,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       final infos =
           ref.read(campaignInfoListProvider).valueOrNull ?? const [];
       var worldName = c.resolvedWorldName(infos);
-      // Cross-device: char synced via cloud_backup but world wasn't pulled
-      // yet. One-shot restore from cloud_backup keyed by worldId before
-      // giving up.
-      if (worldName.isEmpty) {
-        final restored = await withLoading(
-          ref.read(globalLoadingProvider.notifier),
-          'pull-world-$worldId',
-          l10n.charPullingWorld,
-          () => ensureWorldLocalById(ref, worldId),
-        );
-        if (!mounted) return;
-        if (restored != null && restored.isNotEmpty) {
-          worldName = restored;
-        }
-      }
       if (worldName.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -560,16 +533,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       // 039 model: provider.delete(id) server-side router.
       //   - world-bound → remove_from_world RPC (owner varsa orphan'a düşür)
       //   - orphan → delete_character RPC (hard delete)
-      // Cloud backup cleanup parallel: yine de tetikle, orphan→delete path'inde
-      // server row gitti, eski backup'lar silinmeli.
       await ref.read(characterListProvider.notifier).delete(c.id);
-      try {
-        await ref
-            .read(cloudBackupOperationProvider.notifier)
-            .deleteBackupByItem(c.id, 'character');
-      } catch (e) {
-        debugPrint('cloud backup cleanup error: $e');
-      }
       if (mounted) _selectedIndex.value = -1;
     } catch (e) {
       if (!mounted) return;

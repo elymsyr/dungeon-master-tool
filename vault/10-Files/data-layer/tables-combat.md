@@ -26,7 +26,7 @@ tags: [file]
 - Depends on: `package:drift`; FKs to `Worlds`, `WorldSessions`, `WorldEntities` ([[tables-worlds]]).
 - Used by: [[combat_provider]], [[combat_dao]], [[grid_canvas]], [[map_data]].
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[Combat-and-VTT]]
 
 ## Key Logic / Variables

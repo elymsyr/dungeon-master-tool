@@ -6,9 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
@@ -23,10 +21,8 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/role_provider.dart';
-import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/world_mirror_provider.dart';
 import '../../application/providers/world_sync_provider.dart';
-import '../../application/providers/personal_sync_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/services/pdf_library_service.dart';
 import '../../application/services/pending_write_buffer.dart';
@@ -101,12 +97,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     HardwareKeyboard.instance.addHandler(_handleGlobalKey);
-    // Beta heartbeat: ilk launch'ta tek bir best-effort ping. Beta'da değilse
-    // sunucu no-op yapar.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(betaProvider.notifier).heartbeat();
-    });
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
     // "Ne açıktı" bilgisi dünya başına saklanıyor (LAN eşlemesi de bunu
@@ -170,34 +160,25 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Auto sync: pause'da pending writes flush + outbox forceTick (OS suspend
-    // etmeden önce slow tier'i da drain), realtime kanallarını kapat.
-    // Resume'da `worldMirrorApplierProvider` invalidate edilir → PR-2'nin
-    // FutureProvider yeniden resolve olur, subscribe + applyInitialState
-    // tetiklenir.
+    // Pause'da pending writes flush + realtime kanallarını kapat. Resume'da
+    // `worldMirrorApplierProvider` invalidate edilir → subscribe +
+    // applyInitialState yeniden tetiklenir.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       // Combat/entity/etc. row-level writes ride PendingWriteBuffer with up
       // to 2s debounce. App close mid-debounce dropped them silently —
       // e.g. monster HP edits reverting on next launch. Flush before kanal
       // teardown so the disk write completes.
-      unawaited(() async {
-        await ref.read(pendingWriteBufferProvider).flush();
-        // Force drain — slow tier rows would otherwise wait `cloudDelay`
-        // (10s) past the OS suspend boundary.
-        await ref.read(syncEngineProvider).forceTick();
-      }());
+      unawaited(ref.read(pendingWriteBufferProvider).flush());
       final worldSync = ref.read(worldSyncServiceProvider);
       if (worldSync != null) unawaited(worldSync.unsubscribeAll());
-      final personalSync = ref.read(personalSyncServiceProvider);
-      if (personalSync != null) unawaited(personalSync.stop());
     } else if (state == AppLifecycleState.resumed) {
       ref.invalidate(worldMirrorApplierProvider);
     }
   }
 
   /// Hub'a dönüşte tetiklenen ortak exit akışı:
-  /// Pending row-level edit'leri flush + (online ise) outbox forceTick
+  /// Pending row-level edit'leri flush
   /// "Saving..." overlay ile bekletilir. Sonra liste provider'ları invalidate
   /// + /hub. Kullanıcı arka tarafta data kaybetmesin diye sync zorlanır.
   Future<void> _exitToHub() async {
@@ -230,11 +211,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
         // Flush'tan SONRA: henüz diske inmemiş bir seçim referanssız
         // görünüp silinmesin.
         await ref.read(activeCampaignProvider.notifier).sweepUnusedMedia();
-        final online =
-            ref.read(connectivityStreamProvider).valueOrNull ?? false;
-        if (online) {
-          await ref.read(syncEngineProvider).forceTick();
-        }
       },
     );
     ref.invalidate(campaignListProvider);

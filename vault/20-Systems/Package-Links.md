@@ -174,6 +174,6 @@ backgrounds, feats); never link, and never dedup, content a statblock owns. See
 ## Related
 
 - MoCs: [[World-and-Content]], [[Content-Pipeline]], [[Character-System]]
-- Systems: [[Ref-Resolution-Hard-vs-Soft]], [[CDC-Sync-Flow]]
+- Systems: [[Ref-Resolution-Hard-vs-Soft]], [[Share-Broadcast-Flow]]
 - Tests: `test/application/services/package_link_service_test.dart`,
   `test/application/services/world_package_installer_test.dart`

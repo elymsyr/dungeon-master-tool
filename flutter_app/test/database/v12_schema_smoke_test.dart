@@ -52,12 +52,10 @@ void main() {
         'world_packages',
         'entity_shares',
         'character_claim_pool',
-        'personal_packages',
         'packages',
         'package_schemas',
         'package_entities',
         'installed_packages',
-        'sync_outbox',
         'trash_items',
         'encounters',
         'combatants',
@@ -95,14 +93,11 @@ void main() {
         'idx_entity_shares_world',
         'idx_entity_shares_target',
         'idx_claim_pool_world_avail',
-        'idx_personal_packages_owner',
         'idx_package_entities_package',
         'idx_map_pins_world',
         'idx_timeline_pins_world',
         'idx_encounters_session',
         'idx_combatants_encounter',
-        'idx_outbox_next_attempt',
-        'idx_outbox_table_pk',
         'idx_trash_kind_deleted',
       };
 
@@ -120,15 +115,18 @@ void main() {
           reason: 'Expected category index hit, got:\n$plan');
     });
 
-    test('EXPLAIN QUERY PLAN — sync_outbox coalesce index hit', () async {
+    test('retired cloud-sync tables are dropped on open', () async {
+      // Bulut sync kaldırıldı. Eski v12 dosyalarında bu tablolar duruyor;
+      // `beforeOpen` içindeki `_retiredTablesDDL` onları düşürüyor. Şema
+      // sürümü 12'de kalıyor — v13'e çıkmak her kullanıcının DB'sini
+      // `.legacy` yapıp sıfırlardı.
       final rows = await db.customSelect(
-        "EXPLAIN QUERY PLAN SELECT * FROM sync_outbox "
-        "WHERE target_table='world_entities' AND target_pk='e1' "
-        "AND op_type='upsert'",
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+        "('sync_outbox','sync_telemetry','bm_mark_ops_local','personal_packages')",
       ).get();
-      final plan = rows.map((r) => r.data.toString()).join('\n');
-      expect(plan, contains('idx_outbox_table_pk'),
-          reason: 'Expected outbox coalesce index hit, got:\n$plan');
+      expect(rows, isEmpty,
+          reason: 'Retired tables still present: '
+              '${rows.map((r) => r.data['name']).toList()}');
     });
 
     test('PRAGMA tuning applied', () async {

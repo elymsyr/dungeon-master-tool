@@ -1,14 +1,16 @@
 ---
 type: moc
 domain: architecture
-updated: 2026-08-20
+updated: 2026-08-24
 tags: [moc, architecture]
 ---
 
 # Architecture Overview — Master Map
 
 > [!summary] The whole system in one note
-> Flutter client (clean architecture, offline-first) ⇄ Supabase Postgres mirror (realtime CDC) + Cloudflare R2 worker (media/catalog). Content is built offline from Open5e by a Dart pipeline and shipped as packages. Multi-platform: desktop / mobile / web + a second-screen projection target.
+> Flutter client (clean architecture, **local-first**) + Supabase (auth, membership, marketplace, DM'in paylaşım kanalı) + Cloudflare R2 worker (media/catalog). Content is built offline from Open5e by a Dart pipeline and shipped as packages. Multi-platform: desktop / mobile / web + a second-screen projection target.
+>
+> Yerel Drift kaynak-doğru. Buluta dünya kopyalanmaz; cihazdan cihaza taşıma LAN sync'in işi, oyuncuya giden ise yalnızca DM'in bilinçli paylaşımları.
 
 ## Clean-architecture layers
 The Flutter app (`flutter_app/lib/`) is layered; dependencies point inward.
@@ -42,7 +44,7 @@ See [[Home]] for the full table. The 11 domains and their lead notes:
 Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
        │                       ▲                        │
        │                       │                        ▼
-   Combat-and-VTT          Sync-and-Realtime ──CDC──> Multiplayer-and-Online
+   Combat-and-VTT          Sync-and-Realtime ─shares─> Multiplayer-and-Online
        │                       │                        │
        ▼                       ▼                        ▼
  Projection-Second-Screen   World-and-Content       Media-and-Assets
@@ -51,12 +53,12 @@ Character-System ──uses──> Data-Layer ──mirrors──> Backend-Infra
                           Content-Pipeline ──builds──> packages ──install──> World-and-Content
 ```
 
-- **Sync-and-Realtime** is the spine: it drains the [[sync_outbox_dao|outbox]] in [[Data-Layer]] and mirrors to [[Backend-Infra]] (Supabase CDC), feeding [[Multiplayer-and-Online]].
+- **Sync-and-Realtime** has two independent arms: LAN (cihazdan cihaza, bulutsuz) ve DM'in paylaşım yayını (Supabase Realtime üzerinden [[Backend-Infra]]'ya, oradan [[Multiplayer-and-Online]]'a).
 - **Content-Pipeline** builds packages offline ([[Pack-Build-Two-Pass-Refgraph]]) that [[World-and-Content]] installs; [[Character-System]] resolves them at read-time via [[Grant-Resolution]]. Packages may [[Package-Links|link]] each other instead of duplicating content.
 - **Projection** snapshots state from [[Combat-and-VTT]] and [[World-and-Content]], applying [[Fog-of-War-and-Visibility]] before output.
 
 ## Key cross-cutting flows
-- [[CDC-Sync-Flow]] — 12-step local-edit → Postgres → peer apply.
+- [[Share-Broadcast-Flow]] — DM'in paylaştığı → oyuncuda canlı. Beş tablo, doğrudan yazma.
 - [[LAN-Sync-Flow]] — aynı ağdaki iki cihaz arasında manuel, buluta uğramayan eşleme.
 - [[Grant-Resolution]] — descriptive content → typed EffectiveCharacter.
 - [[Media-Storage-Tiers]] — free (Supabase) vs counted (R2) vs transient (R2 LRU).

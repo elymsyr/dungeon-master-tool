@@ -14,8 +14,6 @@ import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/world_membership_provider.dart';
-import '../../../application/services/cloud_catchup_service.dart';
-import '../../../application/services/world_reconciler.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
@@ -56,12 +54,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   Future<void> _doRefresh() async {
     if (_refreshing) return;
     setState(() => _refreshing = true);
-    try {
-      await ref.read(worldReconcilerProvider).reconcile();
-      await ref.read(cloudCatchupServiceProvider).runAll();
-    } catch (e) {
-      debugPrint('Worlds refresh error: $e');
-    }
+    // Bulut çekme yok — yenileme yerel listeyi tazeler.
     if (!mounted) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);

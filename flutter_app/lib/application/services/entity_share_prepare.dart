@@ -7,7 +7,6 @@ import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/relation_value.dart';
 import '../providers/entity_provider.dart';
 import '../providers/entity_share_provider.dart';
-import '../providers/sync_engine_provider.dart';
 import 'entity_image_upload.dart';
 import 'pending_write_buffer.dart';
 
@@ -80,20 +79,33 @@ Future<void> shareEntityWithPlayers(
     anyPushed = anyPushed || pushed;
   }
   if (anyPushed) {
+    // Yerel debounce'u boşalt: paylaşım payload'ı Drift'teki güncel satırdan
+    // kurulacak, bekleyen yazma varsa bayat kopya paylaşılırdı.
     await ref
         .read(pendingWriteBufferProvider)
         .flushPrefix('entity:$worldId:');
-    await ref.read(syncEngineProvider).forceTick();
   }
 
   // Insert the share rows. Cascade is limited to non-linked entities; the
   // entry entity is shared regardless.
+  //
+  // Her satır kartın kendi JSON'unu taşır: `world_entities` aynası artık yok,
+  // oyuncunun tek içerik kaynağı bu payload. Entity'ler yeniden okunur çünkü
+  // yukarıdaki görsel yükleme adımı onları cloud ref'lerine göre yeniden
+  // yazmış olabilir — bayat kopya paylaşmak, oyuncuda çözülemeyen resim demek.
+  final fresh = ref.read(entityProvider);
   for (final id in closure) {
-    final e = entities[id];
+    final e = fresh[id] ?? entities[id];
     if (e == null) continue;
     if (e.linked && id != entityId) continue;
     try {
-      await svc.shareWithAll(entityId: id, worldId: worldId);
+      await svc.shareWithAll(
+        entityId: id,
+        worldId: worldId,
+        // Linked (paket/built-in) kartın gövdesi zaten oyuncunun kurulu
+        // paketinden geliyor; payload göndermek kopya olurdu.
+        payload: e.linked ? null : entityToRaw(e),
+      );
     } catch (err) {
       debugPrint('shareEntityWithPlayers: share $id failed: $err');
     }

@@ -14,15 +14,9 @@ import '../services/marketplace_cover_sync_service.dart';
 import '../services/bundled_packs_bootstrap.dart';
 import '../services/pending_write_buffer.dart';
 import '../services/srd_core_package_bootstrap.dart';
-import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
-import 'beta_provider.dart';
 import 'campaign_provider.dart' show campaignRevisionProvider;
-import 'cloud_backup_provider.dart';
-import 'personal_online_provider.dart';
-import 'sync_engine_provider.dart';
 import 'ui_state_provider.dart';
-import 'world_mirror_provider.dart';
 
 final packageRepositoryProvider = Provider<PackageRepository>(
   (ref) => PackageRepositoryImpl(ref.watch(appDatabaseProvider)),
@@ -150,57 +144,11 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
-      // ignore: discarded_futures
-      _pullIfCloudNewer();
       return true;
     } catch (e, st) {
       debugPrint('Package load error: $e\n$st');
       return false;
     }
-  }
-
-  /// On open: if cloud_backup of this package is newer than the row we just
-  /// loaded from disk, download + replace in place. Best-effort.
-  Future<void> _pullIfCloudNewer() async {
-    if (!SupabaseConfig.isConfigured) return;
-    if (_ref.read(authProvider) == null) return;
-    if (!_ref.read(isBetaActiveProvider)) return;
-    final data = _data;
-    final name = state;
-    if (data == null || name == null) return;
-    final packageId = (data['package_id'] as String?) ??
-        (data['world_id'] as String?) ??
-        name;
-    final localUpdatedRaw = data['last_modified'] ?? data['updated_at'];
-    final localUpdated = localUpdatedRaw is String
-        ? DateTime.tryParse(localUpdatedRaw)
-        : null;
-    try {
-      final repo = _ref.read(cloudBackupRepositoryProvider);
-      final meta = await repo.fetchByItem(packageId, 'package');
-      if (meta == null) return;
-      if (localUpdated != null && !meta.createdAt.isAfter(localUpdated)) return;
-      final fresh = await repo.downloadBackup(meta.id);
-      await _replaceWithData(fresh);
-    } catch (e) {
-      debugPrint('Package cloud-pull error: $e');
-    }
-  }
-
-  Future<void> _replaceWithData(Map<String, dynamic> newData) async {
-    final name = state;
-    if (name == null) return;
-    if (_data == null) {
-      _data = Map<String, dynamic>.from(newData);
-    } else {
-      _data!
-        ..clear()
-        ..addAll(newData);
-    }
-    await _repo.save(name, _data!);
-    // Bump revision so widgets re-read campaign-bound providers.
-    final notifier = _ref.read(campaignRevisionProvider.notifier);
-    notifier.state = notifier.state + 1;
   }
 
   Future<bool> create(String packageName, {WorldSchema? template}) async {
@@ -230,23 +178,11 @@ class ActivePackageNotifier extends StateNotifier<String?> {
       {WriteKind kind = WriteKind.shortText}) async {
     final name = state;
     if (name == null) return;
-    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    final shouldEnqueue =
-        _ref.read(authProvider) != null && onlineNames.contains(name);
     _ref.read(pendingWriteBufferProvider).schedule(
           key: 'pkg_entity:$name:$entityId',
           kind: kind,
           action: () async {
             await _repo.saveEntity(name, entityId, row);
-            if (shouldEnqueue) {
-              await _ref
-                  .read(syncEngineProvider)
-                  .enqueuePersonalPackageEntityUpsert(
-                    packageName: name,
-                    entityId: entityId,
-                    entityMap: row,
-                  );
-            }
           },
         );
   }
@@ -254,22 +190,11 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   Future<void> deleteEntity(String entityId) async {
     final name = state;
     if (name == null) return;
-    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    final shouldEnqueue =
-        _ref.read(authProvider) != null && onlineNames.contains(name);
     _ref.read(pendingWriteBufferProvider).schedule(
           key: 'pkg_entity:$name:$entityId',
           kind: WriteKind.immediate,
           action: () async {
             await _repo.deleteEntity(name, entityId);
-            if (shouldEnqueue) {
-              await _ref
-                  .read(syncEngineProvider)
-                  .enqueuePersonalPackageEntityDelete(
-                    packageName: name,
-                    entityId: entityId,
-                  );
-            }
           },
         );
   }
@@ -286,65 +211,8 @@ class ActivePackageNotifier extends StateNotifier<String?> {
           kind: kind,
           action: () async {
             await _repo.saveStatePatch(name, patch);
-            _mirrorPushPersonal();
           },
         );
-  }
-
-  /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.
-  /// Offline'sa no-op (RLS gürültüsü olmaz).
-  void _mirrorPushPersonal() {
-    final name = state;
-    final data = _data;
-    if (name == null || data == null) return;
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) return;
-    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    if (!onlineNames.contains(name)) return;
-    // Fire-and-forget — push errors are logged inside the service. The
-    // outbox path is the source of retries; this direct push is just an
-    // auto-mirror hook on save.
-    // ignore: discarded_futures
-    mirror.pushPersonalPackage(packageName: name, state: data).catchError(
-          (Object e) => debugPrint('_mirrorPushPersonal swallow: $e'),
-        );
-  }
-
-  /// "Make Online" — aktif paketi `personal_packages`'a publish eder ve
-  /// online listesine ekler. Bundan sonra her `save()` otomatik sync olur.
-  Future<void> makeOnline() async {
-    // Beta-only backstop — covers UI paths that don't pre-check (e.g. phone
-    // overflow toggle). Desktop button still pre-checks for a nicer message.
-    if (!_ref.read(isBetaActiveProvider)) {
-      throw StateError(
-        'Online sync is beta-only. Open Settings → Subscriptions to join the free beta.',
-      );
-    }
-    final name = state;
-    final data = _data;
-    if (name == null || data == null) {
-      throw StateError('No package open.');
-    }
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) {
-      throw StateError('Sign in and configure Supabase to enable sync.');
-    }
-    await mirror.pushPersonalPackage(packageName: name, state: data);
-    _ref
-        .read(personalOnlinePackageNamesProvider.notifier)
-        .add(name);
-  }
-
-  /// "Make Offline" — bulut kopyayı kaldırır. Local paket dosyası kalır.
-  Future<void> makeOffline() async {
-    final name = state;
-    if (name == null) return;
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) return;
-    await mirror.unpublishPersonalPackage(name);
-    _ref
-        .read(personalOnlinePackageNamesProvider.notifier)
-        .remove(name);
   }
 
   /// Replaces the in-memory package data with [newData] and persists
@@ -362,7 +230,6 @@ class ActivePackageNotifier extends StateNotifier<String?> {
         ..addAll(newData);
     }
     await _repo.save(name, _data!);
-    _mirrorPushPersonal();
     _bumpRevision();
   }
 
@@ -372,55 +239,11 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String packageName) async {
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
-    final wasOnline = onlineNames.contains(packageName);
-    // Resolve the cloud_backup item_id before the row is wiped — convention
-    // matches manual_backup_provider: prefer `package_id`, then `world_id`,
-    // fallback to package name.
-    String backupItemId = packageName;
-    try {
-      final preDeleteData = state == packageName && _data != null
-          ? _data
-          : await _repo.load(packageName);
-      if (preDeleteData != null) {
-        backupItemId = (preDeleteData['package_id'] as String?) ??
-            (preDeleteData['world_id'] as String?) ??
-            packageName;
-      }
-    } catch (e) {
-      debugPrint('package delete pre-load error: $e');
-    }
     await _repo.delete(packageName);
     if (state == packageName) {
       _data = null;
       state = null;
     }
-    if (wasOnline && mirror != null) {
-      // Fire-and-forget — caller already removed the local row.
-      // ignore: discarded_futures
-      mirror.unpublishPersonalPackage(packageName).catchError(
-            (Object e) =>
-                debugPrint('package delete unpublish swallow: $e'),
-          );
-      _ref
-          .read(personalOnlinePackageNamesProvider.notifier)
-          .remove(packageName);
-    }
-    // Cloud-backup snapshot delete — best-effort via outbox so an offline
-    // delete still drains on reconnect. Engine itself enforces the beta
-    // gate before contacting Supabase.
-    if (_ref.read(authProvider) != null) {
-      try {
-        await _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
-              itemId: backupItemId,
-              type: 'package',
-            );
-      } catch (e) {
-        debugPrint('package delete cloud_backup enqueue error: $e');
-      }
-    }
-
     // Best-effort: pakete bağlı cloud medyayı (kapak + entity resimleri)
     // temizler. Local cache korunur — trash'ten restore'da resim local kalır.
     if (_ref.read(authProvider) != null) {
@@ -458,7 +281,6 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     _data!.remove('template_dismissed_hash');
     _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
-    _mirrorPushPersonal();
     _bumpRevision();
   }
 

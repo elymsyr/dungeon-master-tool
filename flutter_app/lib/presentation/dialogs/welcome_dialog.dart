@@ -3,9 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
 
-/// Uygulama ilk kez açıldığında gösterilen karşılama + beta bildirim
+/// Uygulama ilk kez açıldığında gösterilen karşılama
 /// dialog'u. Kullanıcıya sistemin kısa tanıtımı, manuel kayıt/sync uyarısı,
-/// beta durumu, gelecek paketler ve GitHub linki iletir. Gösterildikten
+/// online oyun, gelecek paketler ve GitHub linki iletir. Gösterildikten
 /// sonra `uiStateProvider.welcomeSeen = true` set edilir, bir daha açılmaz.
 class WelcomeDialog {
   static const githubUrl = 'https://github.com/elymsyr/dungeon-master-tool';
@@ -33,11 +33,6 @@ class WelcomeDialog {
                 Text(
                   l10n.welcomeSystemIntro,
                   style: const TextStyle(height: 1.45, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.welcomeBetaNotice,
-                  style: const TextStyle(height: 1.4, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Text(

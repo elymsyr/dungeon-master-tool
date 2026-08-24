@@ -468,10 +468,10 @@ async function handleTransientEvictSweep(
   return jsonResponse(200, { ok: true, popped: popped.length, deleted });
 }
 
-// /admin/purge-all — TÜM R2 objelerini siler (beta fresh reset için).
+// /admin/purge-all — TÜM R2 objelerini siler (fresh reset için).
 // Cursor-paginated R2 list + batch delete. DB ile uyumu çağıran kişinin
-// sorumluluğunda: migration 064 community_assets/free_media_assets'ı zaten
-// boşaltmış olmalı, aksi halde DB'de yetim ref kalır.
+// sorumluluğunda: community_assets/free_media_assets tarafı da ayrıca
+// boşaltılmalı, aksi halde DB'de yetim ref kalır.
 async function handleAdminPurgeAll(
   request: Request,
   env: Env,
@@ -529,7 +529,7 @@ async function handleAdminPurgeAll(
 }
 
 // /admin/purge-user — belirli bir kullanıcının TÜM R2 objelerini siler.
-// Beta exit / admin revoke akışında çağrılır. `{userId}/...` (permanent) +
+// Hesap silme / admin moderasyon akışında çağrılır. `{userId}/...` (permanent) +
 // `transient/{userId}/...` (transient) iki prefix ayrı ayrı sweep edilir.
 // Pattern: handleAdminPurgeAll cursor + batch delete, prefix-scoped.
 // Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN.

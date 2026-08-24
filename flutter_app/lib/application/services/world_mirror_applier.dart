@@ -21,12 +21,7 @@ import '../providers/package_provider.dart';
 import '../providers/world_membership_provider.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/database/app_database.dart' hide WorldCharacterRow;
-import 'eviction_sweeper.dart';
-import 'fetch_queue.dart';
-import 'reference_indexer.dart';
-import 'beta_loss_gate.dart';
 import 'package_sync_service.dart';
-import 'pdf_library_service.dart';
 import 'pending_write_buffer.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
@@ -157,41 +152,28 @@ class WorldMirrorApplier {
     if (_revisionDirty && !_disposed) _doBumpRevision();
   }
 
-  /// Subscribe sonrası remote state'i local'a seed eder. Update event'i
-  /// gibi davranır — fakat liste olarak gelir, tek transaction'da uygular.
+  /// Subscribe sonrası DM'in paylaşım kanalındaki birikmiş durumu local'a
+  /// seed eder: paylaşılan kartlar, karakterler, canlı yayın manifesti.
+  ///
+  /// CDC yalnızca abonelikten SONRAKİ değişimleri taşır — dünya kapalıyken
+  /// yapılan paylaşımlar bu seed olmadan hiç görünmezdi.
   Future<void> applyInitialState(String worldId) async {
     if (_disposed) return;
-    // entity_shares CDC kesinti sırasında replay edilmez; offline/world-closed
-    // sırasında yapılan paylaşımlar shares cache'ine düşmez. Catch-up'ta
-    // (reconnect / world re-entry / manuel sync) shares'i taze çek — aksi halde
-    // visibleEntityProvider stale liste ile filtreler, kart açılmaz.
     ref.invalidate(worldEntitySharesProvider(worldId));
     final snapshot = await mirror.fetchInitialState(worldId);
     if (_disposed) return;
-    // Cross-device açılışta entities/characters cloud'da olmayabilir ama
-    // mapData/sessions/settings dolu olabilir. Beşi de boşsa bail et,
-    // herhangi biri varsa devam — yoksa session/map/mind-map sekmeleri
-    // boş kalır. Erken çıkışta da settled marker set edilir ki cloud
-    // gerçekten boş olan world'lerde combat/mind-map write path'leri
-    // bloklanmasın.
-    if (snapshot.entities.isEmpty &&
-        snapshot.characters.isEmpty &&
-        snapshot.mapData == null &&
-        snapshot.sessions.isEmpty &&
-        snapshot.settings == null &&
-        snapshot.worldRow == null &&
-        snapshot.mindMapNodes.isEmpty &&
-        snapshot.mindMapEdges.isEmpty) {
+    if (snapshot.characters.isEmpty &&
+        snapshot.shares.isEmpty &&
+        snapshot.projection == null) {
       _markInitialSyncSettled(worldId);
       _bumpRevision();
       return;
     }
 
-    final activeCampaign = ref.read(activeCampaignProvider.notifier);
-    final data = activeCampaign.data;
-    if (data == null) return;
-
-    if (snapshot.entities.isNotEmpty) {
+    // Paylaşılan kartların gövdeleri — payload'ı olmayan satırlar linked
+    // kartlar; onların içeriği oyuncunun kurulu paketinden gelir.
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    if (data != null && snapshot.shares.isNotEmpty) {
       final raw = data['entities'];
       final Map<String, dynamic> entities;
       if (raw is Map<String, dynamic>) {
@@ -200,241 +182,29 @@ class WorldMirrorApplier {
         entities = <String, dynamic>{};
         data['entities'] = entities;
       }
-      for (final row in snapshot.entities) {
-        final id = row['id'] as String?;
+      for (final row in snapshot.shares) {
+        final id = row['entity_id'] as String?;
         if (id == null) continue;
-        entities[id] = _entityRowToBlob(row);
+        if (_buffer.isPending('entity:$worldId:$id')) continue;
+        final payload = _decodeSharePayload(row['payload_json']);
+        if (payload != null) entities[id] = payload;
       }
     }
 
     if (snapshot.characters.isNotEmpty) {
-      final notifier =
-          ref.read(worldCharactersProvider(worldId).notifier);
+      final notifier = ref.read(worldCharactersProvider(worldId).notifier);
       for (final row in snapshot.characters) {
         final mapped = _charRowFromCdc(row, fallbackWorldId: worldId);
         if (mapped != null) notifier.applyMirror(mapped);
       }
     }
-    // PR-SYNC-3: seed granular world state into the active campaign blob.
-    if (snapshot.mapData != null) {
-      await _applyMapDataRow(snapshot.mapData!);
+
+    if (snapshot.projection != null) {
+      _applyProjectionRow(snapshot.projection!);
     }
-    if (snapshot.sessions.isNotEmpty) {
-      await _applySessionsList(snapshot.sessions);
-    }
-    if (snapshot.settings != null) {
-      await _applySettingsRow(snapshot.settings!, worldId: worldId);
-    }
-    // Cross-device hydrate: granular tablolarda olmayan blob alanlarını
-    // (legacy `battle_maps`/`mind_maps` taşıyıcılar varsa, `metadata`
-    // varyantları, vb.) `worlds.state_json` üzerinden seed et. Granular
-    // anahtarlar (entities/map_data/sessions + settings spread'i) zaten
-    // yukarıda yazıldı; `_seedWorldStateJson` onları korur.
-    if (snapshot.worldRow != null) {
-      await _seedWorldStateJson(snapshot.worldRow!);
-    }
-    // Mindmap dedicated tables → Drift. Blob-side `mind_maps` zaten
-    // `_applySettingsRow` ile geldi; bu adım dedicated tablo abonelerini
-    // (graph viewer, vb.) doldurur.
-    if (snapshot.mindMapNodes.isNotEmpty ||
-        snapshot.mindMapEdges.isNotEmpty) {
-      await _seedMindMap(
-        worldId: worldId,
-        nodes: snapshot.mindMapNodes,
-        edges: snapshot.mindMapEdges,
-      );
-    }
-    // Bütün granular row'lar uygulandı — write path'leri serbest bırak.
-    // Settled bayrağı zaten set ise no-op.
+
     _markInitialSyncSettled(worldId);
     _bumpRevision();
-  }
-
-  /// Cross-device cold-open için `worlds.state_json` snapshot'ını mevcut
-  /// in-memory blob ile birleştirir. Granular tablolardan (`entities`,
-  /// `map_data`, `sessions`, `world_settings` spread'i) gelen taze değerler
-  /// korunur; cloud blob'da olup local'de henüz olmayan üst-düzey alanlar
-  /// hydrate edilir. Bu adım `applyInitialState` sonunda çağrılır.
-  Future<void> _seedWorldStateJson(Map<String, dynamic> worldRow) async {
-    final raw = worldRow['state_json'];
-    if (raw is! String || raw.isEmpty) return;
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    if (data == null) return;
-    try {
-      final decoded = await _decodeJsonMaybeOffload(raw);
-      if (decoded is! Map<String, dynamic>) return;
-      // Granular tablolardan / settings spread'inden gelen alanları koru.
-      // settings_json subkey'leri tüm top-level'ı kaplayabildiği için, sadece
-      // settings_blocklist'teki "alias granular owner" anahtarları + halen
-      // local-only kalan motion-class alanları KORUNUR; geri kalanı blob
-      // overwrite eder (worlds.state_json son DM publish'inin snapshot'ı,
-      // taze değer odur). `_applySettingsRow` zaten settings subkey'lerini
-      // bizim için yazdı → tekrar üzerine yazılması no-op değil, ama spread
-      // sırası önemli: settings_row ÖNCE çalıştı → state_json sonra çalışırsa
-      // settings_row tarafından yazılan taze değerler ezilebilir. Bu yüzden
-      // `state_json` sadece local'de OLMAYAN keyleri ekler.
-      var added = 0;
-      decoded.forEach((key, value) {
-        if (_settingsApplyBlocklist.contains(key)) return;
-        if (data.containsKey(key)) return;
-        data[key] = value;
-        added++;
-      });
-      if (added > 0) _bumpRevision();
-    } catch (err) {
-      debugPrint('_seedWorldStateJson decode error: $err');
-    }
-  }
-
-  /// Mindmap dedicated tablolarını Drift'e seed eder. World açık halde
-  /// CDC dökmesini önlemek için her map_id için `replaceMap` çağırır —
-  /// idempotent.
-  Future<void> _seedMindMap({
-    required String worldId,
-    required List<Map<String, dynamic>> nodes,
-    required List<Map<String, dynamic>> edges,
-  }) async {
-    try {
-      final dao = ref.read(appDatabaseProvider).worldMindMapDao;
-      // Group by map_id.
-      final byMap = <String, ({
-        List<WorldMindMapNodesCompanion> n,
-        List<WorldMindMapEdgesCompanion> e,
-      })>{};
-      for (final row in nodes) {
-        final mapId = row['map_id'] as String?;
-        if (mapId == null) continue;
-        final group = byMap.putIfAbsent(
-          mapId,
-          () => (n: <WorldMindMapNodesCompanion>[], e: <WorldMindMapEdgesCompanion>[]),
-        );
-        final companion = _mindMapNodeCompanion(row, fallbackWorldId: worldId);
-        if (companion != null) group.n.add(companion);
-      }
-      for (final row in edges) {
-        final mapId = row['map_id'] as String?;
-        if (mapId == null) continue;
-        final group = byMap.putIfAbsent(
-          mapId,
-          () => (n: <WorldMindMapNodesCompanion>[], e: <WorldMindMapEdgesCompanion>[]),
-        );
-        final companion = _mindMapEdgeCompanion(row, fallbackWorldId: worldId);
-        if (companion != null) group.e.add(companion);
-      }
-      for (final entry in byMap.entries) {
-        await dao.replaceMap(
-          worldId,
-          entry.key,
-          nodes: entry.value.n,
-          edges: entry.value.e,
-        );
-      }
-    } catch (err, st) {
-      debugPrint('_seedMindMap error: $err\n$st');
-    }
-  }
-
-  Future<void> _applyMindMapNodeEvent(WorldSyncEvent e) async {
-    final dao = ref.read(appDatabaseProvider).worldMindMapDao;
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        final id = e.oldRecord['id'] as String?;
-        if (id == null) return;
-        await dao.deleteNode(id);
-        _bumpRevision();
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final companion =
-            _mindMapNodeCompanion(e.newRecord, fallbackWorldId: e.worldId);
-        if (companion == null) return;
-        await dao.upsertNode(companion);
-        _bumpRevision();
-      default:
-        return;
-    }
-  }
-
-  Future<void> _applyMindMapEdgeEvent(WorldSyncEvent e) async {
-    final dao = ref.read(appDatabaseProvider).worldMindMapDao;
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        final id = e.oldRecord['id'] as String?;
-        if (id == null) return;
-        await dao.deleteEdge(id);
-        _bumpRevision();
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final companion =
-            _mindMapEdgeCompanion(e.newRecord, fallbackWorldId: e.worldId);
-        if (companion == null) return;
-        await dao.upsertEdge(companion);
-        _bumpRevision();
-      default:
-        return;
-    }
-  }
-
-  WorldMindMapNodesCompanion? _mindMapNodeCompanion(
-    Map<String, dynamic> row, {
-    required String fallbackWorldId,
-  }) {
-    final id = row['id'] as String?;
-    if (id == null) return null;
-    final mapId = row['map_id'] as String?;
-    if (mapId == null) return null;
-    final worldId = (row['world_id'] as String?) ?? fallbackWorldId;
-    return WorldMindMapNodesCompanion(
-      id: Value(id),
-      worldId: Value(worldId),
-      mapId: Value(mapId),
-      label: Value((row['label'] as String?) ?? ''),
-      nodeType: Value((row['node_type'] as String?) ?? 'note'),
-      x: Value(_toDouble(row['x']) ?? 0.0),
-      y: Value(_toDouble(row['y']) ?? 0.0),
-      width: Value(_toDouble(row['width']) ?? 150.0),
-      height: Value(_toDouble(row['height']) ?? 80.0),
-      entityId: Value(row['entity_id'] as String?),
-      imageUrl: Value(row['image_url'] as String?),
-      content: Value((row['content'] as String?) ?? ''),
-      styleJson: Value((row['style_json'] as String?) ?? '{}'),
-      color: Value((row['color'] as String?) ?? ''),
-      updatedAt: Value(_toDateTime(row['updated_at']) ?? DateTime.now()),
-    );
-  }
-
-  WorldMindMapEdgesCompanion? _mindMapEdgeCompanion(
-    Map<String, dynamic> row, {
-    required String fallbackWorldId,
-  }) {
-    final id = row['id'] as String?;
-    if (id == null) return null;
-    final mapId = row['map_id'] as String?;
-    final sourceId = row['source_id'] as String?;
-    final targetId = row['target_id'] as String?;
-    if (mapId == null || sourceId == null || targetId == null) return null;
-    final worldId = (row['world_id'] as String?) ?? fallbackWorldId;
-    return WorldMindMapEdgesCompanion(
-      id: Value(id),
-      worldId: Value(worldId),
-      mapId: Value(mapId),
-      sourceId: Value(sourceId),
-      targetId: Value(targetId),
-      label: Value((row['label'] as String?) ?? ''),
-      styleJson: Value((row['style_json'] as String?) ?? '{}'),
-      updatedAt: Value(_toDateTime(row['updated_at']) ?? DateTime.now()),
-    );
-  }
-
-  static double? _toDouble(Object? v) {
-    if (v is num) return v.toDouble();
-    if (v is String) return double.tryParse(v);
-    return null;
-  }
-
-  static DateTime? _toDateTime(Object? v) {
-    if (v is DateTime) return v;
-    if (v is String) return DateTime.tryParse(v);
-    return null;
   }
 
   /// `worldInitialSyncSettledProvider`'a worldId ekler. Sticky — aynı session
@@ -456,89 +226,21 @@ class WorldMirrorApplier {
     if (mirror.isEchoOf(e)) return;
     try {
       switch (e.table) {
-        case 'world_entities':
-          _applyEntityEvent(e);
-        case 'world_characters':
-          await _applyCharacterEvent(e);
-        case 'worlds':
-          await _applyWorldsEvent(e);
-        case 'entity_shares':
-          await _applyEntityShareEvent(e);
-        case 'world_members':
-          await _applyMembersEvent(e);
-        case 'world_map_data':
-          await _applyMapDataEvent(e);
-        case 'world_sessions':
-          await _applySessionEvent(e);
-        case 'world_settings':
-          await _applySettingsEvent(e);
-        case 'world_packages':
-          await _applyWorldPackageEvent(e);
         case 'world_projection':
           _applyProjectionEvent(e);
-        case 'world_mind_map_nodes':
-          await _applyMindMapNodeEvent(e);
-        case 'world_mind_map_edges':
-          await _applyMindMapEdgeEvent(e);
+        case 'entity_shares':
+          await _applyEntityShareEvent(e);
+        case 'world_characters':
+          await _applyCharacterEvent(e);
+        case 'world_packages':
+          await _applyWorldPackageEvent(e);
+        case 'world_members':
+          await _applyMembersEvent(e);
+        case 'worlds':
+          await _applyWorldsEvent(e);
       }
     } catch (err, st) {
       debugPrint('WorldMirrorApplier error: $err\n$st');
-    }
-  }
-
-  void _applyEntityEvent(WorldSyncEvent e) {
-    final activeCampaign = ref.read(activeCampaignProvider.notifier);
-    final data = activeCampaign.data;
-    if (data == null) return;
-
-    final raw = data['entities'];
-    final Map<String, dynamic> entities;
-    if (raw is Map<String, dynamic>) {
-      entities = raw;
-    } else {
-      entities = <String, dynamic>{};
-      data['entities'] = entities;
-    }
-
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        final id = e.oldRecord['id'] as String?;
-        if (id == null) return;
-        // CDC race guard: local pending edit varken remote DELETE'i de
-        // uygulama — kullanıcı yazıyor, trailing fire upsert atacak.
-        if (_buffer.isPending('entity:${e.worldId}:$id')) return;
-        if (entities.remove(id) != null) {
-          _bumpRevision();
-        }
-        // F3: ref graf temizliği (player tarafı dahil)
-        ref
-            .read(referenceIndexerProvider)
-            .scheduleRemove('world_entities', id);
-        // F10: orphan local cache temizliği — debounced 30s. DM cloud silmesini
-        // burada DENEMEZ; cloud objesi zaten DM tarafında EntityMediaCleanup
-        // ile temizlenmiş (RLS player'da delete'i zaten reddeder).
-        ref.read(evictionSweeperProvider).requestSweep();
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final id = e.newRecord['id'] as String?;
-        if (id == null) return;
-        if (_buffer.isPending('entity:${e.worldId}:$id')) return;
-        final blob = _entityRowToBlob(e.newRecord);
-        entities[id] = blob;
-        _bumpRevision();
-        ref.read(referenceIndexerProvider).scheduleReindex(
-              table: 'world_entities',
-              id: id,
-              json: blob,
-              worldId: e.worldId,
-            );
-        // F5: CDC pre-fetcher — UI açılana kadar AssetRef'leri arka planda indir.
-        final refs = ReferenceIndexer.extractRefs(blob);
-        if (refs.isNotEmpty) {
-          ref.read(fetchQueueProvider).scheduleAll(refs);
-        }
-      default:
-        return;
     }
   }
 
@@ -546,15 +248,22 @@ class WorldMirrorApplier {
   /// için yeni paylaşılan entity'nin verisi player'da olmayabilir (RLS önceden
   /// gizliyordu, world_entities satırı değişmediği için CDC çıkmaz) — açıkça
   /// fetch edip local blob'a enjekte eder.
+  /// `entity_shares` CDC — DM'in paylaştığı kartın hem görünürlüğü hem
+  /// **içeriği** buradan gelir. `world_entities` aynası kaldırıldığı için
+  /// satırın `payload_json`'ı oyuncunun tek içerik kaynağı.
   Future<void> _applyEntityShareEvent(WorldSyncEvent e) async {
     ref.invalidate(worldEntitySharesProvider(e.worldId));
-    if (e.eventType != PostgresChangeEvent.insert &&
-        e.eventType != PostgresChangeEvent.update) {
-      // DELETE: visibleEntityProvider filtresi kartı zaten gizler.
+    if (e.eventType == PostgresChangeEvent.delete) {
+      // Paylaşım geri alındı: kartın gövdesini de düşür, yoksa oyuncunun
+      // cihazında erişilemez ama duran bir kopya kalırdı.
+      final removedId = e.oldRecord['entity_id'] as String?;
+      if (removedId != null) _removeSharedEntity(removedId);
       return;
     }
     final entityId = e.newRecord['entity_id'] as String?;
     if (entityId == null) return;
+    final payload = _decodeSharePayload(e.newRecord['payload_json']);
+    if (payload == null) return; // linked kart — gövdesi kurulu paketten gelir
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final raw = data['entities'];
@@ -565,12 +274,29 @@ class WorldMirrorApplier {
       entities = <String, dynamic>{};
       data['entities'] = entities;
     }
-    if (entities.containsKey(entityId)) return; // veri zaten var (DM dahil)
-    final row =
-        await mirror.fetchEntity(worldId: e.worldId, entityId: entityId);
-    if (_disposed || row == null) return;
-    entities[entityId] = _entityRowToBlob(row);
+    // DM kendi kartını zaten yerelde tutuyor; yeniden yazmak, henüz
+    // gönderilmemiş yerel düzenlemesini eski payload'la ezerdi.
+    if (_buffer.isPending('entity:${e.worldId}:$entityId')) return;
+    entities[entityId] = payload;
     _bumpRevision();
+  }
+
+  void _removeSharedEntity(String entityId) {
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    final raw = data?['entities'];
+    if (raw is! Map<String, dynamic>) return;
+    if (raw.remove(entityId) != null) _bumpRevision();
+  }
+
+  static Map<String, dynamic>? _decodeSharePayload(Object? raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is! String || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _applyCharacterEvent(WorldSyncEvent e) => applyCharacterCdc(
@@ -599,11 +325,10 @@ class WorldMirrorApplier {
         // CDC race guard: local pending edit varken remote uygulanmaz.
         if (_buffer.isPending('character:$id')) return;
         final wid = (oldRecord['world_id'] as String?) ?? channelWorldId;
-        // leave_beta / Make Offline: parent world unpublish guard'ında veya
-        // orphan char delete guard'ında ise lokal kopyayı koru.
+        // Make Offline: parent world unpublish guard'ında veya orphan char
+        // delete guard'ında ise lokal kopyayı koru.
         if ((wid != null && mirror.isExpectedUnpublish(wid)) ||
-            mirror.isExpectedCharDelete(id) ||
-            _ownsAndLostBeta(oldRecord['owner_id'] as String?)) {
+            mirror.isExpectedCharDelete(id)) {
           return;
         }
         if (wid != null) {
@@ -794,12 +519,6 @@ class WorldMirrorApplier {
       await _campaign.handleExpectedUnpublish(e.worldId);
       return;
     }
-    // Involuntary beta loss: I own this world but lost beta (inactivity sweep
-    // / admin revoke). Keep the local copy as offline instead of purging.
-    if (await _ownsWorldAndLostBeta(e.worldId)) {
-      await _campaign.handleExpectedUnpublish(e.worldId);
-      return;
-    }
     // DM cross-device: DM on device A deleted the world → server cascade
     // dropped my membership row here on device B. Soft-delete (trash) so
     // the user can still restore. Player path stays as hard purge.
@@ -830,32 +549,6 @@ class WorldMirrorApplier {
   Future<void> purgeLocalWorld(String worldId) =>
       _campaign.purgeWorldById(worldId);
 
-  /// Involuntary beta loss preserve: while the per-uid sentinel is set, a CDC
-  /// DELETE of content the user OWNS must NOT purge the local copy — the server
-  /// purged the cloud rows (inactivity sweep / admin revoke) but the offline
-  /// Drift copy is now authoritative. Scoped strictly to `ownerId == uid` so a
-  /// normal non-owner player being removed from a world is still purged.
-  bool _ownsAndLostBeta(String? ownerId) {
-    final uid = ref.read(authProvider)?.uid;
-    if (uid == null || ownerId == null || ownerId != uid) return false;
-    return ref.read(betaLossGateProvider).isMarkedSync(uid);
-  }
-
-  /// Worlds/members DELETE events may not carry `owner_id` (default REPLICA
-  /// IDENTITY), so resolve ownership from the still-present local mirror.
-  Future<bool> _ownsWorldAndLostBeta(String worldId) async {
-    final uid = ref.read(authProvider)?.uid;
-    if (uid == null || !ref.read(betaLossGateProvider).isMarkedSync(uid)) {
-      return false;
-    }
-    try {
-      final w = await ref.read(appDatabaseProvider).worldsDao.getById(worldId);
-      return w != null && w.ownerId == uid;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<void> _applyWorldsEvent(WorldSyncEvent e) async {
     if (e.eventType == PostgresChangeEvent.delete) {
       final worldId = (e.oldRecord['id'] ?? e.newRecord['id']) as String?;
@@ -864,12 +557,6 @@ class WorldMirrorApplier {
       // verisini tutmak istiyor. Purge'ü atla; yalnızca online-state
       // cleanup yap → dünya normal bir offline dünyaya dönsün.
       if (mirror.isExpectedUnpublish(worldId)) {
-        await _campaign.handleExpectedUnpublish(worldId);
-        return;
-      }
-      // Involuntary beta loss: owner lost beta (inactivity sweep / admin
-      // revoke). Preserve the local mirror as offline instead of purging.
-      if (await _ownsWorldAndLostBeta(worldId)) {
         await _campaign.handleExpectedUnpublish(worldId);
         return;
       }
@@ -954,201 +641,6 @@ class WorldMirrorApplier {
 
   // ── PR-SYNC-3 granular world state appliers ─────────────────────────
 
-  Future<void> _applyMapDataEvent(WorldSyncEvent e) async {
-    if (mirror.isEchoOfMapData(e.worldId)) return;
-    // CDC race guard: local pending pin/edit varken remote uygulanmaz.
-    if (_buffer.isPending('settings:${e.worldId}:map_data')) return;
-    switch (e.eventType) {
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        await _applyMapDataRow(e.newRecord);
-      case PostgresChangeEvent.delete:
-        final data = ref.read(activeCampaignProvider.notifier).data;
-        if (data != null && data.remove('map_data') != null) _bumpRevision();
-      default:
-        return;
-    }
-  }
-
-  Future<void> _applyMapDataRow(Map<String, dynamic> row) async {
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    if (data == null) return;
-    final raw = row['data_json'];
-    if (raw is! String) return;
-    try {
-      final decoded = await _decodeJsonMaybeOffload(raw);
-      if (decoded is! Map<String, dynamic>) return;
-      data['map_data'] = decoded;
-      _bumpRevision();
-      // F3: map_data içindeki AssetRef'ler (map images, pin icons)
-      final worldId = row['world_id'] as String?;
-      if (worldId != null) {
-        ref.read(referenceIndexerProvider).scheduleReindex(
-              table: 'world_map_data',
-              id: worldId,
-              json: decoded,
-              worldId: worldId,
-            );
-        // Granular Drift persistence — _loadFromDb buradan okur, app
-        // reopen sonrası map resmi/pinleri korur. Aksi halde cloud sync
-        // sadece runtime data'sını günceller, app restart sıfırlar.
-        await _persistMapDataToDrift(worldId, decoded);
-      }
-      // F5: pre-fetch map images / pin icons.
-      final refs = ReferenceIndexer.extractRefs(decoded);
-      if (refs.isNotEmpty) {
-        ref.read(fetchQueueProvider).scheduleAll(refs);
-      }
-    } catch (err) {
-      debugPrint('_applyMapDataRow decode error: $err');
-    }
-  }
-
-  /// Cloud'dan gelen map_data'yı yerel `world_map_data` Drift satırına yazar
-  /// — `_loadFromDb` reopen'da buradan okur. `_persistSettingsToDrift` ile
-  /// aynı pattern (ref'i bir kerede yakala, await sonrası ref'e dokunma).
-  Future<void> _persistMapDataToDrift(
-    String worldId,
-    Map<String, dynamic> mapData,
-  ) async {
-    try {
-      final repo = ref.read(campaignRepositoryProvider);
-      final name = await _campaign.resolveWorldName(worldId);
-      if (name == null) return;
-      await repo.saveMapData(name, mapData);
-    } catch (err) {
-      debugPrint('_persistMapDataToDrift error: $err');
-    }
-  }
-
-  Future<void> _applySessionEvent(WorldSyncEvent e) async {
-    final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
-    if (id == null) return;
-    if (mirror.isEchoOfSession(id)) return;
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    if (data == null) return;
-    final raw = data['sessions'];
-    final List sessions = raw is List ? List.from(raw) : <dynamic>[];
-    final worldId = e.worldId;
-    switch (e.eventType) {
-      case PostgresChangeEvent.delete:
-        sessions.removeWhere((s) => s is Map && s['id'] == id);
-        data['sessions'] = sessions;
-        _bumpRevision();
-        // Granular Drift persistence — _loadFromDb buradan okur.
-        await _persistSessionDelete(worldId, id);
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        final mapped = await _sessionRowToBlob(e.newRecord);
-        if (mapped == null) return;
-        final idx = sessions.indexWhere((s) => s is Map && s['id'] == id);
-        if (idx >= 0) {
-          sessions[idx] = mapped;
-        } else {
-          sessions.add(mapped);
-        }
-        data['sessions'] = sessions;
-        _bumpRevision();
-        await _persistSessionUpsert(worldId, mapped);
-      default:
-        return;
-    }
-  }
-
-  Future<void> _applySessionsList(List<Map<String, dynamic>> rows) async {
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    if (data == null) return;
-    final mapped = <Map<String, dynamic>>[];
-    for (final row in rows) {
-      final m = await _sessionRowToBlob(row);
-      if (m != null) mapped.add(m);
-    }
-    data['sessions'] = mapped;
-    // Granular Drift persistence — initial sync için tüm sessions tek
-    // batch'te yerel Drift'e yazılır; reopen `_loadFromDb` buradan okur.
-    final worldId = data['world_id'] as String?;
-    if (worldId != null && mapped.isNotEmpty) {
-      await _persistSessionsBatch(worldId, mapped);
-    }
-  }
-
-  Future<void> _persistSessionsBatch(
-    String worldId,
-    List<Map<String, dynamic>> sessions,
-  ) async {
-    try {
-      final repo = ref.read(campaignRepositoryProvider);
-      final name = await _campaign.resolveWorldName(worldId);
-      if (name == null) return;
-      await repo.saveSessions(name, sessions);
-    } catch (err) {
-      debugPrint('_persistSessionsBatch error: $err');
-    }
-  }
-
-  Future<void> _persistSessionUpsert(
-    String worldId,
-    Map<String, dynamic> session,
-  ) async {
-    try {
-      final repo = ref.read(campaignRepositoryProvider);
-      final name = await _campaign.resolveWorldName(worldId);
-      if (name == null) return;
-      await repo.saveSession(name, session);
-    } catch (err) {
-      debugPrint('_persistSessionUpsert error: $err');
-    }
-  }
-
-  Future<void> _persistSessionDelete(String worldId, String sessionId) async {
-    try {
-      final repo = ref.read(campaignRepositoryProvider);
-      final name = await _campaign.resolveWorldName(worldId);
-      if (name == null) return;
-      await repo.deleteSession(name, sessionId);
-    } catch (err) {
-      debugPrint('_persistSessionDelete error: $err');
-    }
-  }
-
-  Future<Map<String, dynamic>?> _sessionRowToBlob(
-      Map<String, dynamic> row) async {
-    final id = row['id'];
-    if (id is! String) return null;
-    final raw = row['data_json'];
-    Map<String, dynamic>? inner;
-    if (raw is String) {
-      try {
-        final decoded = await _decodeJsonMaybeOffload(raw);
-        if (decoded is Map<String, dynamic>) inner = decoded;
-      } catch (_) {
-        // fall through — produce skeleton with id+name only
-      }
-    }
-    final blob = <String, dynamic>{
-      ...?inner,
-      'id': id,
-      if (row['name'] is String) 'name': row['name'],
-      if (row['is_active'] is bool) 'is_active': row['is_active'],
-      if (row['sort_order'] is num) 'sort_order': row['sort_order'],
-    };
-    return blob;
-  }
-
-  Future<void> _applySettingsEvent(WorldSyncEvent e) async {
-    if (mirror.isEchoOfSettings(e.worldId)) return;
-    switch (e.eventType) {
-      case PostgresChangeEvent.insert:
-      case PostgresChangeEvent.update:
-        await _applySettingsRow(e.newRecord, worldId: e.worldId);
-      case PostgresChangeEvent.delete:
-        final data = ref.read(activeCampaignProvider.notifier).data;
-        if (data != null && data.remove('settings') != null) _bumpRevision();
-      default:
-        return;
-    }
-  }
-
   // ── PR-SYNC-5: DM-shared world_packages mirror ──────────────────────
 
   Future<void> _applyWorldPackageEvent(WorldSyncEvent e) async {
@@ -1164,7 +656,7 @@ class WorldMirrorApplier {
             (e.oldRecord['package_name'] as String?) ?? '';
         final priorWorld =
             (e.oldRecord['world_id'] as String?) ?? e.worldId;
-        // leave_beta / Make Offline: parent world korunuyorsa world_packages
+        // Make Offline: parent world korunuyorsa world_packages
         // satırını + materialize edilmiş local package'ı koru.
         if (mirror.isExpectedUnpublish(priorWorld)) break;
         await dao.deleteByPackage(id);
@@ -1264,82 +756,6 @@ class WorldMirrorApplier {
     }
   }
 
-  Future<void> _applySettingsRow(
-    Map<String, dynamic> row, {
-    required String worldId,
-  }) async {
-    if (_disposed) return;
-    final data = ref.read(activeCampaignProvider.notifier).data;
-    if (data == null) return;
-    final raw = row['settings_json'];
-    if (raw is! String) return;
-
-    // ref-türevli değerler await'ten ÖNCE alınır — decode sırasında world/role
-    // değişirse ref stale olur (`_didChangeDependency`); sonrasında ref'e
-    // dokunmuyoruz, yalnızca _bumpRevision (self-guarded) kalıyor.
-    final prefix = 'settings:$worldId:';
-    final pendingKeys = _buffer.pendingKeysWithPrefix(prefix).toList();
-
-    Map<String, dynamic> decoded;
-    try {
-      final d = await _decodeJsonMaybeOffload(raw);
-      if (d is! Map<String, dynamic>) return;
-      decoded = d;
-    } catch (err) {
-      debugPrint('_applySettingsRow decode error: $err');
-      return;
-    }
-
-    // `_loadFromDb` settings_json subkey'lerini top-level `data`'ya yayıyor
-    // (combat_state, mind_maps, map_view, mind_map_views, metadata, …) ve
-    // okurlar (combat_provider, mind_map_screen, …) da top-level'dan okuyor.
-    // Cross-device açılışta cloud sync de aynı yere yazmalı — önceden tüm
-    // blob `data['settings']` altına gömülüyordu, bu yüzden başka cihazdan
-    // açılınca session/mind-map sekmeleri boş kalıyordu.
-    //
-    // CDC race guard: subkey için lokal pending write varsa, kullanıcının
-    // henüz flush edilmemiş edit'i `data[subkey]` içinde duruyor — cloud
-    // değerini uygulama ki kullanıcı edit'i ezilmesin.
-    final pendingSubkeys = pendingKeys
-        .map((k) => k.substring(prefix.length).split(':').first)
-        .toSet();
-
-    for (final entry in decoded.entries) {
-      final key = entry.key;
-      if (_settingsApplyBlocklist.contains(key)) continue;
-      if (pendingSubkeys.contains(key)) continue;
-      data[key] = entry.value;
-    }
-
-    // Önceki versiyonlarda blob'un tamamı `data['settings']` altına
-    // yazılıyordu. Top-level spread'e geçişte legacy nested kopyayı temizle —
-    // stale değerler taze top-level anahtarları gölgelemesin.
-    data.remove('settings');
-    // Synced settings blob'unu device-local Drift'e de yaz — `_applySettingsRow`
-    // önceden yalnızca in-memory state'e dokunuyordu, bu yüzden hub liste
-    // (campaignInfoListProvider) refresh sonrası eski cover'ı okuyordu.
-    await _persistSettingsToDrift(worldId, decoded);
-    _bumpRevision();
-    // F3: settings JSON içindeki AssetRef'ler (cover, mind_map images,
-    // battle_map fog/annotation, vb.) için graf güncellemesi.
-    ref.read(referenceIndexerProvider).scheduleReindex(
-          table: 'world_settings',
-          id: worldId,
-          json: decoded,
-          worldId: worldId,
-        );
-    // F5: settings içindeki AssetRef'leri arka planda indir. PDF kütüphanesi
-    // hariç — girdileri 50MB'a kadar çıkabiliyor ve oyuncu genelde birkaçını
-    // açıyor; `_PdfLibraryPanel` talep üzerine indirir. Reindex yukarıda tam
-    // blob'la yapıldı, yani `asset_refs` grafiği eksiksiz kalır.
-    final fetchable = Map<String, dynamic>.from(decoded)
-      ..remove(PdfLibraryService.manifestKey);
-    final settingsRefs = ReferenceIndexer.extractRefs(fetchable);
-    if (settingsRefs.isNotEmpty) {
-      ref.read(fetchQueueProvider).scheduleAll(settingsRefs);
-    }
-  }
-
   /// Synced bir `world_settings` blob'unu device-local Drift'e yazar — hub
   /// liste (campaignInfoListProvider / campaignMetadataProvider) refresh
   /// sonrası güncel cover/metadata'yı görsün. MERGE semantiği:
@@ -1367,57 +783,30 @@ class WorldMirrorApplier {
   /// temizler. DM kendi yazımının echo'sunu da alır — zararsız, DM bu
   /// provider'ı render etmez.
   void _applyProjectionEvent(WorldSyncEvent e) {
-    final notifier = ref.read(onlineProjectionProvider.notifier);
     switch (e.eventType) {
       case PostgresChangeEvent.delete:
-        notifier.state = null;
+        ref.read(onlineProjectionProvider.notifier).state = null;
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
-        final raw = e.newRecord['state_json'];
-        if (raw is! String) return;
-        try {
-          final decoded = jsonDecode(raw);
-          if (decoded is! Map<String, dynamic>) return;
-          notifier.state = ProjectionState.fromJson(decoded);
-        } catch (err) {
-          debugPrint('_applyProjectionEvent decode error: $err');
-        }
+        _applyProjectionRow(e.newRecord);
       default:
         return;
     }
   }
 
-  Map<String, dynamic> _entityRowToBlob(Map<String, dynamic> row) {
-    Object? decode(dynamic raw, Object? fallback) {
-      if (raw is String && raw.isNotEmpty) {
-        try {
-          return jsonDecode(raw);
-        } catch (_) {
-          return fallback;
-        }
-      }
-      return fallback ?? raw;
+  /// `world_projection` satırını oyuncunun ikinci ekranına bağlar. Hem CDC
+  /// event'i hem dünya açılışındaki seed buradan geçer.
+  void _applyProjectionRow(Map<String, dynamic> row) {
+    final raw = row['state_json'];
+    if (raw is! String) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      ref.read(onlineProjectionProvider.notifier).state =
+          ProjectionState.fromJson(decoded);
+    } catch (err) {
+      debugPrint('_applyProjectionRow decode error: $err');
     }
-
-    final blob = <String, dynamic>{
-      'name': row['name'],
-      'type': row['category_slug'],
-      'source': row['source'] ?? '',
-      'description': row['description'] ?? '',
-      'images': decode(row['images_json'], const []),
-      'image_path': row['image_path'] ?? '',
-      'tags': decode(row['tags_json'], const []),
-      'dm_notes': row['dm_notes'] ?? '',
-      'pdfs': decode(row['pdfs_json'], const []),
-      'location_id': row['location_id'],
-      'attributes': decode(row['fields_json'], const <String, dynamic>{}),
-    };
-    if (row['package_id'] != null) blob['package_id'] = row['package_id'];
-    if (row['package_entity_id'] != null) {
-      blob['package_entity_id'] = row['package_entity_id'];
-    }
-    if (row['linked'] == true) blob['linked'] = true;
-    return blob;
   }
 
   void _bumpRevision() {
@@ -1478,17 +867,13 @@ class _EventBatcher {
   }
 
   /// İdempotent, son-yazan-kazanır tablolar için coalesce anahtarı.
-  /// `world_members` / `worlds` / `entity_shares` → null (coalesce yok).
+  /// `world_members` / `worlds` / `entity_shares` → null (coalesce yok —
+  /// paylaş/paylaşımı-kaldır sırası anlamlı).
   String? _coalesceKey(WorldSyncEvent e) {
     switch (e.table) {
-      case 'world_entities':
-      case 'world_sessions':
       case 'world_characters':
         final id = (e.newRecord['id'] ?? e.oldRecord['id']) as String?;
         return id == null ? null : '${e.table}:$id';
-      case 'world_map_data':
-      case 'world_settings':
-        return '${e.table}:${e.worldId}';
       case 'world_packages':
         final id =
             (e.newRecord['package_id'] ?? e.oldRecord['package_id'])

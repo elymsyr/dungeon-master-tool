@@ -12,7 +12,6 @@ import '../../data/services/asset_importer.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../providers/campaign_provider.dart';
-import '../providers/sync_engine_provider.dart';
 
 /// World'ün PDF kütüphanesi: `{worldsDir}/{worldName}/pdfs/` klasörü + online
 /// dünyalar için `world_settings.settings_json['pdf_library']` manifest'i.
@@ -214,15 +213,6 @@ class PdfLibraryService {
       return;
     }
     await _ref.read(campaignRepositoryProvider).saveSettingsPatch(worldName, patch);
-    final db = _ref.read(appDatabaseProvider);
-    final row = await db.worldSettingsDao.get(worldId);
-    if (row == null || row.settingsJson.isEmpty) return;
-    final merged = jsonDecode(row.settingsJson);
-    if (merged is! Map) return;
-    await _ref.read(syncEngineProvider).enqueueWorldSettings(
-          worldId: worldId,
-          settings: merged.cast<String, dynamic>(),
-        );
   }
 }
 
