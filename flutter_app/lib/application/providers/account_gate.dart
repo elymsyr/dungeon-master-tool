@@ -55,10 +55,9 @@ AccountAccess resolveAccountAccess({
 /// is a local file or a local Drift row.
 enum AppSurface {
   // ── account-gated ────────────────────────────────────────────────────────
-  /// LAN sync pairing. The content never leaves the local network, but v2 ties
-  /// paired devices to an account, so the surface needs one — for identity,
-  /// not for storage.
-  localSync(requiresAccount: true),
+  /// LAN sync pairing. Content never leaves the local network and pairing is
+  /// secured by the QR token / PIN, so no account is needed.
+  localSync(requiresAccount: false),
 
   /// The counted media the user has in R2 / the free-media bucket, reached by
   /// `AssetService` with `_requireToken()` and tallied per `auth.uid()`.
