@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-v13.1.0--beta-blueviolet?style=flat-square" />
+  <img src="https://img.shields.io/badge/status-stable-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-v14.0.0-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
 </p>
@@ -85,15 +85,12 @@ Build a setting offline, then bring it to the table.
 
 ## Online & Offline
 
-Everything core works **fully offline** — no account needed to start. Online features (sync, sharing, marketplace, social) use a free account.
+Everything core works **fully offline** — no account needed to start. An account is required only for playing online, publishing to the marketplace, or downloading other users' content.
 
 - **Local Sync (LAN)** — Move worlds, packages and characters between your own devices over Wi-Fi; QR or IP+PIN pairing, nothing goes online.
-- **Personal Cloud Sync** — Back up characters, worlds, templates and packages across devices.
-- **Realtime Sync** — Changes stream to every connected client via CDC; offline edits reconcile on reconnect.
 - **Share a World** — Publish a world, players join with a revocable invite code.
 - **Roles & Ownership** — Player/DM roles with row-level security; claim or release world characters.
 - **Media Safety** — Images are copied into the world folder, so they keep working offline; portraits/covers sync free of quota.
-- **Graceful Offline** — Clean "you're offline" placeholders; writes flush on reconnect.
 
 ### Marketplace
 
