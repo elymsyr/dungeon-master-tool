@@ -5,21 +5,24 @@ path: flutter_app/lib/application/services/world_mirror_applier.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-24
 tags: [file]
 ---
 
 # `world_mirror_applier.dart`
 
 > [!abstract] Primary Purpose
-> The inbound CDC consumer — the counterpart to `[[world_mirror_service]]`'s push side. Subscribes to `WorldSyncService.events`, batches them in a 16ms window, and applies each event to local state: patches the active campaign blob (`entities`, `map_data`, `sessions`, settings spread), invalidates/applies character providers, materializes DM-shared packages, seeds mind-map Drift tables, updates the online projection state, and handles world/member delete → trash/purge. Heavy file (~1540 lines) but the core is one dispatch switch plus per-table appliers.
+> The inbound consumer of the **DM's share channel** — the counterpart to `[[world_mirror_service]]`'s push side. Subscribes to `WorldSyncService.events`, batches them in a 16 ms window, and applies each event to local state. Five tables only: the projection manifest, shared cards (writing their `payload_json` bodies straight into the campaign blob), player characters, DM-shared packages, and membership — plus `worlds` meta for delete → trash/purge.
+
+> [!warning] Tam dünya aynası kaldırıldı (2026-08-24)
+> Dosya ~1540 satırdan ~900'e indi. `world_entities`, `world_map_data`, `world_sessions`, `world_settings`, `world_mind_map_*` handler'ları ve `applyInitialState`'in tam-dünya çekimi silindi. Paylaşılan kartın gövdesi artık `entity_shares.payload_json`'dan geliyor — `fetchEntity` round-trip'i yok. Bkz. [[Share-Broadcast-Flow]].
 
 ## Inputs / Outputs
 **Inputs**
 - Constructor: `Ref ref`, `WorldMirrorService mirror`, `WorldSyncService sync`.
 - Subscribed: `sync.events` (`WorldSyncEvent` stream) → `_EventBatcher.add`.
-- Reads: `mirror.isEchoOf*` / `isExpectedUnpublish` / `isExpectedCharDelete`, `pendingWriteBufferProvider.isPending`, `authProvider`, `betaLossGateProvider`.
-- `applyInitialState(worldId)` pulls `mirror.fetchInitialState`.
+- Reads: `mirror.isEchoOf*` / `isExpectedUnpublish` / `isExpectedCharDelete`, `pendingWriteBufferProvider.isPending`, `authProvider`.
+- `applyInitialState(worldId)` pulls `mirror.fetchInitialState` → `(characters, shares, projection)`; CDC only carries changes made after the subscription, so this seed is load-bearing.
 
 **Outputs**
 - Mutates active campaign blob via `activeCampaignProvider.notifier` (captured at construction as `_campaign`, a stable `ActiveCampaignNotifier`).
@@ -33,7 +36,7 @@ tags: [file]
 - Depends on: [[world_mirror_service]], [[pending_write_buffer]], [[world_sync_service]], [[package_sync_service]], [[package_import_service]], [[campaign_provider]], `world_characters_provider`, [[projection_state]]
 - Used by: world-open wiring (the host provider that watches `currentWorldRoleProvider`), per-user (personal) sync applier (calls `applyCharacterCdc` / `purgeLocalWorld`)
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[migrations-online-worlds]]
 
 ## Key Logic / Variables

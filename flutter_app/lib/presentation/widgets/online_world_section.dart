@@ -1,10 +1,8 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/account_gate.dart';
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
@@ -140,7 +138,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.cloud_upload, size: 16),
-            label: const Text('Make Online'),
+            label: const Text('Multiplayer On'),
           ),
         ],
       ),
@@ -161,7 +159,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             TextButton.icon(
               onPressed: _busy ? null : _unpublish,
               icon: const Icon(Icons.cloud_off, size: 14),
-              label: const Text('Make Offline'),
+              label: const Text('Multiplayer Off'),
               style: TextButton.styleFrom(
                 foregroundColor: palette.dangerBtnBg,
                 visualDensity: VisualDensity.compact,
@@ -218,14 +216,11 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
   // ── Actions ─────────────────────────────────────────────────────────
 
   Future<void> _publish() async {
-    // Beta-only: online multiplayer only for beta members.
-    if (!ref.read(betaProvider).isActive) {
+    // Online oynamak hesap ister — dünya paylaşımı auth.uid()'e bağlı satırlar
+    // üzerinden yürüyor. Beta kapısı kalktı; kalan tek koşul bu.
+    if (!ref.read(hasAccountProvider)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Online worlds are beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
+        SnackBar(content: Text(L10n.of(context)!.accountRequiredBody)),
       );
       return;
     }
@@ -233,7 +228,6 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     try {
       final repo = ref.read(campaignRepositoryProvider);
       final data = await repo.load(widget.campaignName);
-      final stateJson = jsonEncode(data);
       final templateId =
           (data['world_schema'] as Map?)?['schemaId'] as String?;
       final templateHash = data['template_hash'] as String?;
@@ -242,7 +236,6 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             worldName: widget.campaignName,
             templateId: templateId,
             templateHash: templateHash,
-            stateJson: stateJson,
           );
       ref.read(onlineWorldIdsProvider.notifier).add(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
@@ -277,7 +270,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Make Offline'),
+        title: const Text('Multiplayer Off'),
         content: const Text(
             'This removes the world and all member data from the cloud. '
             'Local data is preserved. Continue?'),
@@ -287,7 +280,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
               child: const Text('Cancel')),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Make Offline')),
+              child: const Text('Multiplayer Off')),
         ],
       ),
     );

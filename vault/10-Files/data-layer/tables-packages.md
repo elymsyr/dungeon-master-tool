@@ -26,7 +26,7 @@ tags: [file]
 - Depends on: `package:drift`; FKs to `Worlds`, `WorldCharacters` ([[tables-worlds]]), `Packages`.
 - Used by: `package_repository_impl`, [[package_import_service]], [[package_sync_service]], [[character_claim_service]], [[world_schema]].
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[World-and-Content]], [[Content-Pipeline]]
 
 ## Key Logic / Variables

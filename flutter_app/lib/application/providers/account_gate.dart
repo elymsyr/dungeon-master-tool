@@ -55,13 +55,13 @@ AccountAccess resolveAccountAccess({
 /// is a local file or a local Drift row.
 enum AppSurface {
   // ── account-gated ────────────────────────────────────────────────────────
-  /// Community listings, published snapshots, purchases — Supabase tables
-  /// under RLS keyed by `auth.uid()`.
-  marketplace(requiresAccount: true),
+  /// LAN sync pairing. Content never leaves the local network and pairing is
+  /// secured by the QR token / PIN, so no account is needed.
+  localSync(requiresAccount: false),
 
-  /// `cloud_backups` rows plus the user's R2 objects, which `AssetService`
-  /// reaches with `_requireToken()`.
-  cloudBackup(requiresAccount: true),
+  /// The counted media the user has in R2 / the free-media bucket, reached by
+  /// `AssetService` with `_requireToken()` and tallied per `auth.uid()`.
+  mediaStorage(requiresAccount: true),
 
   /// Shared worlds: membership, invites, presence, character claiming.
   worldSharing(requiresAccount: true),
@@ -90,6 +90,15 @@ enum AppSurface {
 
   /// Installing a bundled `assets/open5e_packs` pack — a local file read.
   bundledPackInstall(requiresAccount: false),
+
+  /// **Browsing** the marketplace. `marketplace_listings` RLS SELECT is
+  /// `USING (true)`, so the catalogue is world-readable and a guest can look
+  /// around. The account requirement sits one step later, on the actions that
+  /// actually need an identity: DOWNLOADING someone's payload (the
+  /// `shared-payloads` bucket policy is `authenticated`) and PUBLISHING (the
+  /// listing row is keyed by `auth.uid()`). Those two check
+  /// [hasAccountProvider] at the call site rather than hiding the surface.
+  marketplace(requiresAccount: false),
 
   /// Worlds, characters, templates, packages: local Drift rows.
   worlds(requiresAccount: false),

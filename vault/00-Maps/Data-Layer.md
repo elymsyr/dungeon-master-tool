@@ -21,10 +21,10 @@ tags: [moc]
 - [[repositories-index]] — `*_repository_impl` bridging domain ↔ data.
 - [[remote-datasources-index]] — `data/datasources/remote/*` Supabase DS catalog.
 
-> Domain-specific DAOs are documented in their domain folders: [[sync_outbox_dao]] ([[Sync-and-Realtime]]), [[world_entities_dao]] / [[worlds_dao]] / [[packages_dao]] ([[World-and-Content]]), [[combat_dao]] / [[world_map_data_dao]] / [[map_pins_dao]] ([[Combat-and-VTT]]), [[world_members_dao]] / [[world_invites_dao]] ([[Multiplayer-and-Online]]).
+> Domain-specific DAOs are documented in their domain folders: `sync_outbox_dao.dart` (kaldırıldı) ([[Sync-and-Realtime]]), [[world_entities_dao]] / [[worlds_dao]] / [[packages_dao]] ([[World-and-Content]]), [[combat_dao]] / [[world_map_data_dao]] / [[map_pins_dao]] ([[Combat-and-VTT]]), [[world_members_dao]] / [[world_invites_dao]] ([[Multiplayer-and-Online]]).
 
 ## Data Flow
-Domain calls repository interface → `*_repository_impl` → DAO → Drift table. Writes that need sync also enqueue to [[sync_outbox_dao]] (see [[CDC-Sync-Flow]]).
+Domain calls repository interface → `*_repository_impl` → DAO → Drift table. Writes that need sync also enqueue to `sync_outbox_dao.dart` (kaldırıldı) (see [[Share-Broadcast-Flow]]).
 
 ## Related Domains
 - Every domain reads/writes here. Closest: [[Sync-and-Realtime]] (outbox), [[World-and-Content]], [[Backend-Infra]] (mirror shape).

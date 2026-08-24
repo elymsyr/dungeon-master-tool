@@ -48,7 +48,7 @@ class OnlineWorldIdsNotifier extends StateNotifier<Set<String>> {
       state = ids;
     } catch (e) {
       if (isOfflineError(e)) {
-        debugPrint('onlineWorldIds skipped: offline');
+        debugPrint('onlineWorldIds skipped: offline ($e)');
       } else {
         debugPrint('onlineWorldIds refresh error: $e');
       }

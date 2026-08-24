@@ -28,10 +28,10 @@ tags: [file]
 - Events: bumps `campaignRevisionProvider` (in-place data mutation signal).
 
 ## Dependencies & Links
-- Depends on: [[world_repository_impl]], [[worlds_dao]], [[world_schema]], [[sync_engine]], [[world_mirror_applier]], [[world_mirror_service]], [[world_membership_service]], [[pending_write_buffer]], [[auth_provider]], [[entity_media_cleanup_service]], [[marketplace_cover_sync_service]], [[world_role]]
+- Depends on: [[world_repository_impl]], [[worlds_dao]], [[world_schema]], `sync_engine.dart` (kaldırıldı), [[world_mirror_applier]], [[world_mirror_service]], [[world_membership_service]], [[pending_write_buffer]], [[auth_provider]], [[entity_media_cleanup_service]], [[marketplace_cover_sync_service]], [[world_role]]
 - Used by: hub UI, world screen, [[entity]] notifier, [[character_resolver]] (orphan-on-delete via `characterListProvider`)
 - Domain map: [[World-and-Content]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[Sync-and-Realtime]]
 
 ## Key Logic / Variables

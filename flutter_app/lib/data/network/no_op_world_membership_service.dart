@@ -18,7 +18,6 @@ class NoOpWorldMembershipService implements WorldMembershipService {
     required String worldName,
     String? templateId,
     String? templateHash,
-    required String stateJson,
   }) async =>
       _offline();
 

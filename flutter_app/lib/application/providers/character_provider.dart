@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/repositories/character_repository.dart';
 import '../../domain/entities/character.dart';
@@ -17,6 +16,8 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import 'rule_config_provider.dart';
+import '../../data/network/network_providers.dart';
+import '../services/media_bundler.dart';
 import '../services/builtin_srd_entities.dart';
 import '../services/package_source_entities.dart';
 import '../services/entity_media_cleanup_service.dart';
@@ -25,14 +26,12 @@ import '../services/marketplace_cover_sync_service.dart';
 import '../services/fetch_queue.dart';
 import '../services/reference_indexer.dart';
 import 'auth_provider.dart';
-import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'character_claim_provider.dart';
-import 'cloud_backup_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
 import 'role_provider.dart';
-import 'sync_engine_provider.dart';
+import 'world_mirror_provider.dart';
 import 'world_characters_provider.dart';
 
 const _uuid = Uuid();
@@ -60,7 +59,7 @@ final characterRepositoryProvider = Provider<CharacterRepository>(
     (ref) => CharacterRepository(ref.watch(appDatabaseProvider)));
 
 /// v12 fresh-cut: legacy JSON→Drift migration service retired
-/// (`character_migration_service.dart` deleted in PR-D3). Beta data wipe
+/// (`character_migration_service.dart` deleted in PR-D3). Data wipe
 /// makes a one-shot backfill unnecessary.
 
 /// Offline char tab "Release" queue — sidecar file impl deleted in PR-D2.
@@ -99,7 +98,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         // ignore: discarded_futures
         drainPendingReleases();
         // ignore: discarded_futures
-        pullNewerFromCloud();
       }
     });
     // Legacy `worldName` → `worldId` migration: campaign listesi yüklendiğinde
@@ -135,7 +133,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   ///   - Non-beta + (worldless or world offline) → local only, no push.
   void _syncPush(Character c) {
     _mirrorPush(c);
-    _cloudBackupPush(c);
     // F3: AssetRef grafını güncelle (DM+worldless ortak yol).
     _ref.read(referenceIndexerProvider).scheduleReindex(
           table: 'world_characters',
@@ -147,7 +144,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   void _syncDelete(String characterId, {String? worldId}) {
     _mirrorDelete(characterId, worldId: worldId);
-    _cloudBackupDelete(characterId);
     // F3: graf temizliği.
     _ref.read(referenceIndexerProvider).scheduleRemove(
           'world_characters',
@@ -155,9 +151,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         );
   }
 
-  /// world_characters mirror push — runs whenever the char's world is in
-  /// `onlineWorldIdsProvider`, regardless of beta. RLS enforces ownership.
-  /// Routed through the [SyncEngine] outbox so retries survive app restarts.
+  /// `world_characters` push — runs whenever the char's world is in
+  /// `onlineWorldIdsProvider`. RLS enforces ownership.
+  ///
+  /// Karakter sayfası, oyuncunun DM'e gönderdiği tek canlı veri; doğrudan
+  /// yazılır (last-write-wins). Kalıcı kuyruk yok — kaçan bir yazma dünya
+  /// açılışındaki [pushOwnedCharacters] geçişinde kapanır.
   void _mirrorPush(Character c) {
     final worldId = c.worldId;
     if (worldId == null) return;
@@ -182,10 +181,60 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
           ),
         );
     // ignore: discarded_futures
-    _ref.read(syncEngineProvider).enqueueWorldCharacterUpsert(
-          worldId: worldId,
-          character: c,
+    _pushCharacterToMirror(worldId: worldId, character: c);
+  }
+
+  /// Medyayı bundle'layıp `world_characters` satırını yazar. Hata yutulur —
+  /// yerel Drift kaynak-doğru, bulut kopyası yalnızca DM'in görebilmesi için.
+  Future<void> _pushCharacterToMirror({
+    required String worldId,
+    required Character character,
+  }) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    var characterMap = character.toJson();
+    // Portre ücretsiz Supabase'e (dmt-public://), ek resimler R2'ya. Bundle
+    // hatası push'u bozmaz — ref'siz satır yine de karakteri taşır.
+    final assetSvc = _ref.read(assetServiceProvider);
+    if (assetSvc != null) {
+      try {
+        characterMap = await MediaBundler(
+          assetSvc,
+          freeMediaService: _ref.read(freeMediaServiceProvider),
+        ).bundleCharacterMedia(
+          scopeId: worldId,
+          characterMap: characterMap,
         );
+      } catch (e, st) {
+        debugPrint('character media bundle error: $e\n$st');
+      }
+    }
+    try {
+      await mirror.pushCharacter(
+        worldId: worldId,
+        character: Character.fromJson(characterMap),
+        referencedEntityIds: const {},
+      );
+    } catch (e) {
+      debugPrint('character mirror push error: $e');
+    }
+  }
+
+  /// Dünya açılışında bir kez: sahibi bu kullanıcı olan karakterleri buluta
+  /// yeniden yazar. Doğrudan-yazma yolunun çevrimdışı telafisi — LWW olduğu
+  /// için kaçan bir yazmayı yakalamaya yeter.
+  ///
+  /// ponytail: kalıcı kuyruk yok. Gerçekten dayanıklı bir kuyruk gerekirse
+  /// outbox deseni geri gelir.
+  Future<void> pushOwnedCharacters(String worldId) async {
+    if (_ref.read(authProvider) == null) return;
+    if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
+    final uid = _ref.read(authProvider)?.uid;
+    for (final c in state.valueOrNull ?? const <Character>[]) {
+      if (c.worldId != worldId) continue;
+      if (uid != null && c.ownerId != null && c.ownerId != uid) continue;
+      await _pushCharacterToMirror(worldId: worldId, character: c);
+    }
   }
 
   void _mirrorDelete(String characterId, {String? worldId}) {
@@ -195,87 +244,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (!onlineIds.contains(wid)) return;
     if (_ref.read(authProvider) == null) return;
     _ref.read(worldCharactersProvider(wid).notifier).removeMirror(characterId);
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
     // ignore: discarded_futures
-    _ref.read(syncEngineProvider).enqueueWorldCharacterDelete(
-          characterId: characterId,
-          worldId: wid,
+    mirror.deleteCharacter(characterId: characterId).catchError(
+          (Object e) => debugPrint('character mirror delete error: $e'),
         );
-  }
-
-  /// Beta-gated cloud_backup auto-sync — every char of a beta user gets a
-  /// `cloud_backups` snapshot unless the world mirror is already covering it
-  /// live. World-bound + offline world ALSO falls back here so leaving a world
-  /// offline doesn't leave the char without a remote copy. Routed through the
-  /// [SyncEngine] outbox so retries survive app restarts.
-  void _cloudBackupPush(Character c) {
-    if (!_ref.read(isBetaActiveProvider)) return;
-    if (_ref.read(authProvider) == null) return;
-    final wid = c.worldId;
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    // Mirror handles online-world chars; cloud_backup is for everything else
-    // (worldless OR world-bound + world offline).
-    if (wid != null && onlineIds.contains(wid)) return;
-    // ignore: discarded_futures
-    _ref.read(syncEngineProvider).enqueueCloudBackupUpsert(
-          itemId: c.id,
-          itemName: c.entity.name.isEmpty ? c.id : c.entity.name,
-          type: 'character',
-          data: {'character': c.toJson()},
-        );
-  }
-
-  /// Cloud-newer pull for the character list. Compares each cloud_backup
-  /// 'character' meta's `createdAt` to the local char's `updatedAt`; if cloud
-  /// is newer or the char is cloud-only, downloads + `applyMirror`'s the row.
-  /// Best-effort; auth/network errors are swallowed.
-  Future<void> pullNewerFromCloud() async {
-    if (!_ref.read(isBetaActiveProvider)) return;
-    if (_ref.read(authProvider) == null) return;
-    final repo = _ref.read(cloudBackupRepositoryProvider);
-    // Don't resurrect chars the user just deleted: outbox delete may not have
-    // drained yet, so the cloud_backups row is still there. The trash table is
-    // the authoritative "user-intent: deleted" signal locally; re-enqueue the
-    // cloud delete and skip the apply.
-    final db = _ref.read(appDatabaseProvider);
-    final trashedIds = <String>{
-      for (final t in await db.trashDao.getByKind('character')) t.sourceId,
-    };
-    try {
-      final metas = await repo.listBackupsByType('character');
-      final localById = <String, Character>{
-        for (final c in state.valueOrNull ?? const <Character>[]) c.id: c,
-      };
-      for (final meta in metas) {
-        if (trashedIds.contains(meta.itemId)) {
-          _cloudBackupDelete(meta.itemId);
-          continue;
-        }
-        final local = localById[meta.itemId];
-        if (local != null) {
-          final localAt = DateTime.tryParse(local.updatedAt);
-          if (localAt != null && !meta.createdAt.isAfter(localAt)) continue;
-        }
-        try {
-          final data = await repo.downloadBackup(meta.id);
-          final raw = data['character'];
-          if (raw is! Map<String, dynamic>) continue;
-          final c = Character.fromJson(raw);
-          await applyMirror(c);
-        } catch (e) {
-          if (isStorageNotFound(e)) {
-            // Orphan meta — storage file is gone; drop the table row so the
-            // next catch-up doesn't retry it forever.
-            try {
-              await repo.deleteOrphanedMeta(meta.id);
-            } catch (_) {/* ignore */}
-            continue;
-          }
-          debugPrint('pull char from cloud error: $e');
-        }
-      }
-    } catch (e) {
-      debugPrint('listBackupsByType char error: $e');
-    }
   }
 
   /// Targeted freshness pull for a single character on editor open. Routes
@@ -289,31 +263,8 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     final list = state.valueOrNull ?? const <Character>[];
     final local = list.where((c) => c.id == characterId).firstOrNull;
     final wid = local?.worldId;
-    if (wid != null) {
-      await _pullCharFromMirror(characterId, local: local);
-      return;
-    }
-    if (!_ref.read(isBetaActiveProvider)) return;
-    final repo = _ref.read(cloudBackupRepositoryProvider);
-    try {
-      final meta = await repo.fetchByItem(characterId, 'character');
-      if (meta == null) return;
-      if (local != null) {
-        final localAt = DateTime.tryParse(local.updatedAt);
-        if (localAt != null && !meta.createdAt.isAfter(localAt)) return;
-      }
-      final data = await repo.downloadBackup(meta.id);
-      final raw = data['character'];
-      if (raw is! Map<String, dynamic>) return;
-      final c = Character.fromJson(raw);
-      await applyMirror(c);
-    } catch (e) {
-      if (isStorageNotFound(e)) {
-        debugPrint('pullCharFromCloudIfNewer: storage missing for $characterId');
-        return;
-      }
-      debugPrint('pullCharFromCloudIfNewer error: $e');
-    }
+    if (wid == null) return; // worldless char is purely local now
+    await _pullCharFromMirror(characterId, local: local);
   }
 
   Future<void> _pullCharFromMirror(
@@ -343,41 +294,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     } catch (e) {
       debugPrint('_pullCharFromMirror error: $e');
     }
-  }
-
-  /// Awaitable enqueue for editor-close. Mirror-route chars (online world)
-  /// get their push via `_mirrorPush` already; for the cloud_backup branch
-  /// we just make sure the outbox row exists before the screen unmounts.
-  /// The actual upload is async on the [SyncEngine]; awaiting `forceTick()`
-  /// would block the editor close on the network so we don't.
-  Future<void> flushCloudBackup(String characterId) async {
-    if (!_ref.read(isBetaActiveProvider)) return;
-    if (_ref.read(authProvider) == null) return;
-    final list = state.valueOrNull;
-    if (list == null) return;
-    final c = list.where((x) => x.id == characterId).firstOrNull;
-    if (c == null) return;
-    final wid = c.worldId;
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    // World-bound + online world: mirror push already happened; cloud_backup
-    // would just be a duplicate snapshot.
-    if (wid != null && onlineIds.contains(wid)) return;
-    await _ref.read(syncEngineProvider).enqueueCloudBackupUpsert(
-          itemId: c.id,
-          itemName: c.entity.name.isEmpty ? c.id : c.entity.name,
-          type: 'character',
-          data: {'character': c.toJson()},
-        );
-  }
-
-  void _cloudBackupDelete(String characterId) {
-    if (!_ref.read(isBetaActiveProvider)) return;
-    if (_ref.read(authProvider) == null) return;
-    // ignore: discarded_futures
-    _ref.read(syncEngineProvider).enqueueCloudBackupDelete(
-          itemId: characterId,
-          type: 'character',
-        );
   }
 
   /// Best-effort: karakter kalıcı silindiğinde portre + ek resimlerinin cloud
@@ -480,12 +396,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       if (auth != null) {
         await _backfillWorldlessOwnership(auth.uid);
       }
-      // Cold-start push sweep kaldırıldı (manuel save+sync modeli).
-      // Cloud catch-up pull yine çalışır — `cloudCatchupServiceProvider`
-      // app startup'ta runAll() ile tetikler; bu satır da redundant ama
-      // ucuz no-op olduğu için bırakıldı.
-      // ignore: discarded_futures
-      pullNewerFromCloud();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -916,10 +826,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
             }
             out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
             state = AsyncValue.data(out);
-            // Beta-pushed cloud_backup snapshot is now stale (still claims
-            // self-ownership). Drop it so the next catch-up doesn't
-            // resurrect the char with the old owner.
-            _cloudBackupDelete(id);
             return;
           }
           // result.deleted = true → server (me, NULL) idi, row silindi.
@@ -952,7 +858,6 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       } catch (e) {
         debugPrint('pending release queue add error: $e');
       }
-      _cloudBackupDelete(id);
       return;
     }
 

@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_paths.dart';
 import '../../data/database/database_provider.dart';
-import '../services/beta_enter_gate.dart';
 import '../services/guest_promotion_service.dart';
 import 'campaign_provider.dart';
-import 'cloud_backup_provider.dart';
 import 'template_provider.dart';
 
 /// Auth değişikliklerini dinleyerek AppPaths ve DB'yi kullanıcıya göre
@@ -55,16 +53,6 @@ class UserSessionNotifier extends StateNotifier<bool> {
           _ref.read(appDatabaseProvider),
         );
         debugPrint('Guest promotion (finalize): $finalized');
-
-        // **O5 — the promoted rows still have to reach the cloud.**
-        // `BetaEnterMergeService`'s local-wins push runs once per account and
-        // then sets its sentinel, so an account that had already entered on
-        // this device would never push what it just absorbed. Clearing the
-        // sentinel makes the next `startup_sync_gate` pass treat the merged
-        // rows the same way it treats a fresh offline user's.
-        if (finalized.absorbedAnything) {
-          await _ref.read(betaEnterGateProvider).clear(userId);
-        }
       } catch (e, st) {
         debugPrint('Guest promotion finalize failed: $e\n$st');
       }
@@ -107,7 +95,6 @@ class UserSessionNotifier extends StateNotifier<bool> {
   void _invalidateAll() {
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
-    _ref.invalidate(cloudBackupListProvider);
     _ref.invalidate(allTemplatesProvider);
   }
 }

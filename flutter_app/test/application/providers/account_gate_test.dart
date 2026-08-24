@@ -21,11 +21,15 @@ import 'package:go_router/go_router.dart';
 /// `flutter test` runs with the defines unset, so the real gate can only ever
 /// report `offlineBuild`. `accountGateProvider` is the seam.)
 
-/// The surfaces §6 O2 names, spelled out here so the test fails if the enum
-/// drifts away from the roadmap rather than silently agreeing with itself.
+/// The account-gated surfaces, spelled out here so the test fails if the enum
+/// drifts rather than silently agreeing with itself.
+///
+/// `marketplace` is deliberately NOT in this set: browsing the catalogue is
+/// open to guests (`marketplace_listings` RLS SELECT is `USING (true)`), and
+/// the account requirement sits on the download/publish actions instead.
 const _roadmapOnlineSurfaces = <AppSurface>{
-  AppSurface.marketplace,
-  AppSurface.cloudBackup,
+  AppSurface.localSync,
+  AppSurface.mediaStorage,
   AppSurface.worldSharing,
   AppSurface.profile,
   AppSurface.follows,
@@ -241,21 +245,21 @@ void main() {
         (tester) async {
       await tester.pumpWidget(_harness(
         AccountGatedSurface(
-          surface: AppSurface.marketplace,
-          message: 'because the marketplace says so',
+          surface: AppSurface.worldSharing,
+          message: 'because world sharing says so',
           builder: (_) => const Text('SURFACE'),
         ),
         AccountAccess.guest,
       ));
       await tester.pumpAndSettle();
-      expect(find.text('because the marketplace says so'), findsOneWidget);
+      expect(find.text('because world sharing says so'), findsOneWidget);
     });
 
     testWidgets('hiddenBuilder replaces the empty box on an offline build',
         (tester) async {
       await tester.pumpWidget(_harness(
         AccountGatedSurface(
-          surface: AppSurface.cloudBackup,
+          surface: AppSurface.mediaStorage,
           builder: (_) => const Text('SURFACE'),
           hiddenBuilder: (_) => const Text('LOCAL ONLY'),
         ),

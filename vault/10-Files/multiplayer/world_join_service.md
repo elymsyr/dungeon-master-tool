@@ -29,7 +29,7 @@ tags: [file]
 - Depends on: [[world_membership_service]], [[drift_database]], [[worlds_dao]], [[world_repository_impl]], [[srd_core_pack]], [[bundled_packs_bootstrap]]
 - Used by: hub "Join with code" UI (caller invalidates hub list after)
 - Domain map: [[Multiplayer-and-Online]]
-- System flow: [[Sync-and-Realtime]], [[CDC-Sync-Flow]]
+- System flow: [[Sync-and-Realtime]], [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - Step order: `redeemInvite(code)` → fetch `worlds.state_json`+`template_id` (best-effort; parse only if non-empty and not `{}`) → resolve local name → upsert local `worlds` row → `repository.save` the snapshot → link SRD pack.

@@ -171,22 +171,23 @@ class WorldSyncService {
     );
   }
 
-  /// world_id sütunu olan mirror tabloları.
+  /// Oyuncuya canlı akan tablolar — hepsi DM'in bilinçli bir paylaşımı.
+  ///
+  /// Tam dünya aynası kaldırıldı: entity / harita / oturum / ayar / mind-map
+  /// artık replike EDİLMEZ. Bu listeye tablo eklemek, oyuncunun cihazına
+  /// DM'in paylaşmadığı veri göndermek demektir — önce paylaşım eylemi neyse
+  /// onu tanımla, sonra tabloyu ekle.
   static const _mirrorTables = <String>[
-    'world_members',
-    'world_entities',
-    'world_mind_map_nodes',
-    'world_mind_map_edges',
-    'world_characters',
-    'entity_shares',
-    // PR-SYNC-3: granular replacements for the worlds.state_json blob.
-    'world_map_data',
-    'world_sessions',
-    'world_settings',
-    // PR-SYNC-5: DM-shared package mirror.
-    'world_packages',
-    // Online ikinci ekran — projeksiyon manifesti (Faz A).
+    // DM'in canlı yayını (projeksiyon manifesti).
     'world_projection',
+    // DM'in paylaştığı kartlar — gövdeleri payload_json'da.
+    'entity_shares',
+    // Oyuncunun karakter sayfası (claim/assign dahil).
+    'world_characters',
+    // DM'in dünyaya paylaştığı paketler.
+    'world_packages',
+    // Üyelik / rol.
+    'world_members',
   ];
 
   Future<void> dispose() async {

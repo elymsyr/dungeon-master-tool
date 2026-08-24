@@ -122,7 +122,10 @@ class LanSyncController extends StateNotifier<LanSyncState> {
   LanSyncSession get _session => _ref.read(lanSyncSessionProvider);
   LanDeviceStore get _store => _ref.read(lanDeviceStoreProvider);
 
-  String? get _uid => _ref.read(authProvider)?.uid;
+  /// Eşleşme kimliği. Hesap varsa Supabase uid'si, yoksa sabit 'guest' —
+  /// iki hesapsız cihaz birbiriyle eşleşebilsin diye. Güvenlik zaten QR
+  /// token / PIN el sıkışmasında, uid yalnızca yanlış hesabı erken eler.
+  String get _uid => _ref.read(authProvider)?.uid ?? 'guest';
 
   // ── Host yaşam döngüsü ────────────────────────────────────────────────
 
@@ -130,9 +133,7 @@ class LanSyncController extends StateNotifier<LanSyncState> {
   /// Giriş yoksa ya da hiç eşleşme yoksa (ve panel kapalıysa) sunucu kapanır —
   /// eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
   Future<void> syncHostLifecycle() async {
-    final signedIn = _uid != null;
-    final shouldRun =
-        signedIn && (_panelOpen || await _store.count() > 0);
+    final shouldRun = _panelOpen || await _store.count() > 0;
     if (shouldRun) {
       await _startHost();
     } else {
@@ -242,7 +243,6 @@ class LanSyncController extends StateNotifier<LanSyncState> {
     final invite = LanPairInvite.fromQrText(rawQrText);
     if (invite == null) return (LanPairResult.badQr, '');
     final uid = _uid;
-    if (uid == null) return (LanPairResult.notSignedIn, '');
     // Karşı taraf başka hesapsa ağa hiç çıkma — QR zaten uid taşıyor.
     if (invite.uid != uid) return (LanPairResult.accountMismatch, '');
     return _pair(() async => LanPairing.viaInvite(
@@ -262,7 +262,6 @@ class LanSyncController extends StateNotifier<LanSyncState> {
     final parsed = parseLanAddress(address);
     if (parsed == null) return (LanPairResult.badAddress, '');
     final uid = _uid;
-    if (uid == null) return (LanPairResult.notSignedIn, '');
     return _pair(() async => LanPairing.viaPin(
           host: parsed.host,
           port: parsed.port,

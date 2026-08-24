@@ -116,12 +116,11 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     List<String> tags = const [],
     String? changelog,
   }) async {
-    // Publishing is beta-gated, but the gate is enforced authoritatively by the
-    // `publish_listing_snapshot` RPC (migration 057). The client-side
-    // `isBetaActiveProvider` can be stale-false (it refreshes async / offline),
-    // which previously made publish *silently* no-op. So no client pre-check:
-    // let the RPC decide and surface any '42501 beta membership required' error
-    // through the dialog's catch.
+    // Publishing needs an account. That is enforced authoritatively by the
+    // `publish_listing_snapshot` RPC and the `auth.uid() = owner_id` RLS
+    // check, not here — the pre-check in `marketplace_panel.dart` exists only
+    // to show a nicer message. No gate is duplicated in this method: let the
+    // RPC decide and surface its error through the dialog's catch.
     state = const AsyncValue.loading();
     try {
       final payload = await _loadPayload(itemType, localId);
@@ -208,7 +207,15 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
 
   /// Reader: download a listing as a brand new local item. Returns the new
   /// local id (campaign name / template schemaId / package name).
+  ///
+  /// Gezinme herkese açık ama İNDİRME hesap ister: `shared-payloads` bucket'ı
+  /// `authenticated` politikası altında. Burada erkenden durmak, guest'e
+  /// anlamsız bir storage hatası göstermek yerine net bir mesaj verir.
+  /// (Resmi katalog bu yoldan geçmez — o R2'den herkese açık iner.)
   Future<String> downloadAsNewCopy(MarketplaceListing listing) async {
+    if (_ref.read(authProvider) == null) {
+      throw StateError('account required to download community content');
+    }
     state = const AsyncValue.loading();
     try {
       final remote = _ref.read(marketplaceListingsRemoteDsProvider);

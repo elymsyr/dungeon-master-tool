@@ -8,12 +8,15 @@ import '../../domain/entities/online/world_member.dart';
 abstract class WorldMembershipService {
   /// Worldü "online" yapar — Supabase'e [worlds] satırı upsert eder; trigger
   /// DM'yi otomatik member olarak ekler.
+  /// Dünyayı online yapar: `worlds` satırı + DM üyeliği. İÇERİK YÜKLENMEZ —
+  /// oyuncuya giden her şey sonradan, DM paylaştıkça akar (entity_shares +
+  /// projeksiyon manifesti). Eskiden burada tüm dünya `state_json` olarak
+  /// gidiyordu.
   Future<void> publishWorld({
     required String worldId,
     required String worldName,
     String? templateId,
     String? templateHash,
-    required String stateJson,
   });
 
   /// Worldü "offline" yapar — Supabase'den siler (cascade tüm mirror data).

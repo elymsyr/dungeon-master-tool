@@ -5,14 +5,14 @@ path: flutter_app/lib/application/services/pending_write_buffer.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-24
 tags: [file]
 ---
 
 # `pending_write_buffer.dart`
 
 > [!abstract] Primary Purpose
-> Debounced, row-level write coalescer. Callers schedule a write under a stable `key` with a `WriteKind`; a later schedule for the same key resets the timer and replaces the action closure (only the last fire runs). When a timer fires (or on `immediate`), the action writes to local Drift, then bumps a `tick` ValueNotifier that `[[sync_engine]]` listens to in order to drain the cloud outbox. Also serves as the CDC race guard: appliers check `isPending(key)` so a remote event never overwrites an un-flushed local edit (trailing local fire = last-writer-wins).
+> Debounced, row-level write coalescer. Callers schedule a write under a stable `key` with a `WriteKind`; a later schedule for the same key resets the timer and replaces the action closure (only the last fire runs). When a timer fires (or on `immediate`), the action writes to local Drift, then bumps a `tick` ValueNotifier that ``SyncEngine` (kaldırıldı)` listens to in order to drain the cloud outbox. Also serves as the CDC race guard: appliers check `isPending(key)` so a remote event never overwrites an un-flushed local edit (trailing local fire = last-writer-wins).
 
 ## Inputs / Outputs
 **Inputs**
@@ -28,9 +28,9 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `PerfProbe` (perf instrumentation, no-op in release)
-- Used by: [[sync_engine]] (`tick` listener), [[world_mirror_applier]] (`isPending` / `pendingKeysWithPrefix` CDC race guard), character/world/combat/package notifiers (`schedule`)
+- Used by: `SyncEngine` (kaldırıldı) (`tick` listener), [[world_mirror_applier]] (`isPending` / `pendingKeysWithPrefix` CDC race guard), character/world/combat/package notifiers (`schedule`)
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - **`WriteKind` windows** (effective debounce = `kind.window`): `shortNumber` 750ms (HP/AC/level/CR), `shortText` 800ms (name/source), `longText` 1200ms (description/dm_notes), `listEdit` 1000ms (tags/pdfs/images/refs), `spatial` 1000ms (pin drag, node move), `combatTick` 500ms (combat_state), `viewport` 2000ms (pan/zoom — pair with `saveSettingsPatchLocalOnly`, local-only, never enters outbox), `immediate` 0ms (import/paste/delete → fires synchronously now).

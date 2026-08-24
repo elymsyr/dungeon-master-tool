@@ -12,17 +12,12 @@ import '../../../application/character_creation/multiclass_helper.dart';
 import '../../../application/character_creation/pending_choices.dart';
 import '../../../application/providers/account_gate.dart';
 import '../../../application/providers/auth_provider.dart';
-import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
-import '../../../application/providers/connectivity_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/locale_provider.dart';
-import '../../../application/providers/online_worlds_provider.dart';
-import '../../../application/providers/outbox_status_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
@@ -903,13 +898,10 @@ class _CharacterEditorScreenState
     final oldRef = c.entity.imagePath;
 
     // Eager upload the portrait to the free-media bucket (quota-exempt) so the
-    // `dmt-public://` ref is portable across devices immediately — mirrors
-    // `_pickCover`. Offline / failure → keep the local path; the portrait
-    // bundles later via the character outbox / cloud-backup push.
-    // Cloud upload is a beta feature — non-beta users keep a local path.
-    final svc = ref.read(isBetaActiveProvider)
-        ? ref.read(freeMediaServiceProvider)
-        : null;
+    // `dmt-public://` ref is portable immediately — mirrors `_pickCover`.
+    // Offline / failure → keep the local path; the portrait bundles later on
+    // the next `world_characters` push.
+    final svc = ref.read(freeMediaServiceProvider);
     final (ref: newRef, :tooLarge, :actualBytes) =
         await uploadCharacterPortraitRef(
       svc,
@@ -967,21 +959,6 @@ class _CharacterEditorScreenState
           .flushPrefix('character:${widget.characterId}');
     } catch (_) {/* best-effort */}
     await _save(silent: true);
-    // Flush cloud snapshot (beta + non-online-world chars). Mirror-route
-    // chars are already pushed from `update()`.
-    try {
-      await ref
-          .read(characterListProvider.notifier)
-          .flushCloudBackup(widget.characterId);
-    } catch (_) {/* best-effort */}
-    // Online ise outbox push'unu zorla — slow tier cloudDelay (10s)
-    // beklemeden network'e gitsin.
-    final online = ref.read(connectivityStreamProvider).valueOrNull ?? false;
-    if (online) {
-      try {
-        await ref.read(syncEngineProvider).forceTick();
-      } catch (_) {/* best-effort */}
-    }
   }
 
 
@@ -3565,25 +3542,6 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = ref.watch(hasAccountProvider);
-    final outbox = hasCloud
-        ? (ref.watch(activeItemOutboxStatusProvider).valueOrNull ??
-            OutboxStatus.empty)
-        : null;
-
-    // Sync button eligibility: world-bound + online world OR worldless + beta.
-    // Aksi halde push edilecek bir cloud row yok.
-    final signedIn = ref.watch(authProvider) != null;
-    final betaActive = ref.watch(betaProvider).isActive;
-    final worldId = character.worldId;
-    final worldOnline = worldId != null &&
-        ref.watch(onlineWorldIdsProvider).contains(worldId);
-    final syncEnabled =
-        hasCloud && signedIn && (worldOnline || betaActive);
-    final disabledTooltip = !signedIn
-        ? 'Sign in to sync'
-        : (worldId != null && !worldOnline)
-            ? 'Make this world online first'
-            : 'Join beta to sync personal characters';
 
     DateTime? updatedAt;
     try {
@@ -3636,45 +3594,14 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                     : character.entity.name),
                 const SizedBox(height: 6),
                 SaveInfoSection(
-                  itemName: character.entity.name,
-                  itemId: character.id,
-                  type: 'character',
                   localUpdatedAt: updatedAt,
                 ),
 
                 if (hasCloud) ...[
                   const SizedBox(height: 16),
-                  SectionLabel('Actions', palette),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      SyncButton(
-                        palette: palette,
-                        enabled: syncEnabled,
-                        disabledTooltip: disabledTooltip,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SectionLabel('Online', palette),
-                  const SizedBox(height: 8),
-                  _CharacterOnlineToggle(
-                    character: character,
-                    flushLocal: flushLocal,
-                  ),
-                  const SizedBox(height: 16),
                   SectionLabel('Storage', palette),
                   const SizedBox(height: 8),
                   StorageUsageBar(palette: palette),
-                ],
-
-                if (hasCloud && outbox != null && outbox.pending > 0) ...[
-                  const SizedBox(height: 16),
-                  SectionLabel('Sync Queue', palette),
-                  const SizedBox(height: 8),
-                  OutboxStatusRow(outbox: outbox, palette: palette),
                 ],
               ],
             ),
@@ -3694,65 +3621,6 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
         ),
       );
 
-}
-
-/// Online sync status card. Routing rules:
-///   - Online world → world_characters mirror (real-time), regardless of beta.
-///   - Beta + (worldless or world offline) → cloud_backup snapshot auto-sync.
-///   - Non-beta + (worldless or world offline) → local only.
-class _CharacterOnlineToggle extends ConsumerWidget {
-  final Character character;
-  final Future<void> Function() flushLocal;
-
-  const _CharacterOnlineToggle({
-    required this.character,
-    required this.flushLocal,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final isBeta = ref.watch(isBetaActiveProvider);
-    final worldId = character.worldId;
-    final onlineIds = ref.watch(onlineWorldIdsProvider);
-    final worldOnline = worldId != null && onlineIds.contains(worldId);
-
-    final IconData icon;
-    final Color color;
-    final String label;
-    if (worldOnline) {
-      icon = Icons.cloud_done;
-      color = palette.successBtnBg;
-      label = 'Online · auto-synced';
-    } else if (isBeta) {
-      icon = Icons.cloud_done;
-      color = palette.successBtnBg;
-      label = 'Cloud · auto-synced';
-    } else {
-      icon = Icons.cloud_off;
-      color = palette.sidebarLabelSecondary;
-      label = 'Offline · local only';
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.br,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// E5/E6: header stat-chip strip with scoped name watches. Watches the

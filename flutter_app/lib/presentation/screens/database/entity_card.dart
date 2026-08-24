@@ -11,7 +11,6 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/entity_share_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/services/entity_image_upload.dart';
 import '../../../application/services/entity_share_prepare.dart';
 import '../../../application/services/pending_write_buffer.dart';
@@ -1125,7 +1124,6 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       await ref
           .read(pendingWriteBufferProvider)
           .flushPrefix('entity:$pushWorldId:');
-      await ref.read(syncEngineProvider).forceTick();
     }
   }
 

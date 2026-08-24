@@ -26,7 +26,7 @@ tags: [file]
 - Depends on: [[tables-packages]], [[drift_database]]
 - Used by: personal-package sync service, [[auth_provider]]-scoped flows
 - Domain map: [[World-and-Content]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[Data-Layer]]
 
 ## Key Logic / Variables
