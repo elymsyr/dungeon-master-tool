@@ -1,23 +1,5 @@
 # Release Notes
 
-## Dungeon Master Tool v14.0.1 — Cloud UI Cleanup
-
-**Release date:** August 2026
-
-Patch release. After v14.0.0 removed cloud sync, the storage usage bar (showing MB used / quota) was still visible in the save & sync dialog. That leftover UI is now gone — the dialog shows only local save info and LAN sync status, matching the reality that nothing lives in the cloud anymore.
-
-> [!warning] Upgrading from v14.0.0
-> v14.0.0 removed cloud sync entirely — cloud backups are gone, and anything that existed only in the cloud will be lost. LAN sync is now the only way to move content between devices. The beta program ended; all features are available without an account (except online play, publishing, and downloading others' content). Database migrations 076–079 were required by v14.0.0; v14.0.1 has no new migrations.
-
-### Changes
-
-- **Removed `StorageUsageBar`** from the save & sync dialog. The bar displayed cloud storage quota and remaining MB, which no longer applies after v14.0.0's cloud sync removal.
-- **Tool content docs restructured** — character and world blueprint docs rewritten for clarity; `tool/content/README.md` simplified.
-
-No database migrations. No breaking changes. Upgrade from v14.0.0 is seamless.
-
----
-
 ## Dungeon Master Tool v14.0.0 — No More Beta, No More Cloud Sync
 
 **Release date:** August 2026
