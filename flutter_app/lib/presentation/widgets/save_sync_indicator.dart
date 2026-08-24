@@ -192,15 +192,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                 // İçerik buluta çıkmıyor, LAN'da kalıyor: hesapsız da açık.
                 _LocalSyncSection(palette: palette),
 
-                // ── Storage ──
-                // Sayılan medya kotası hesaba bağlı — hesapsızda hiç yok,
-                // giriş çağrısı da gösterilmiyor.
-                if (hasCloud) ...[
-                  if (!compact) const SizedBox(height: 16),
-                  _SectionLabel('Storage', palette),
-                  const SizedBox(height: 8),
-                  _StorageUsageBar(palette: palette),
-                ],
+
 
                 // ── Compact mode hint ──
                 if (compact)
@@ -597,7 +589,6 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
 }
 
 typedef _ActionButton = ActionButton;
-typedef _StorageUsageBar = StorageUsageBar;
 
 /// Shows the active item's local + cloud save info inside the full-mode
 /// dialog. Detects the item type by watching [activeCampaignProvider] and
