@@ -8,7 +8,6 @@ class AdminUserSummary {
   final String? username;
   final String provider;
   final DateTime createdAt;
-  final bool isBeta;
   final bool isBanned;
   final int storageBytes;
   final DateTime? lastActiveAt;
@@ -23,7 +22,6 @@ class AdminUserSummary {
     required this.username,
     required this.provider,
     required this.createdAt,
-    required this.isBeta,
     required this.isBanned,
     required this.storageBytes,
     required this.lastActiveAt,
@@ -39,7 +37,6 @@ class AdminUserSummary {
         username: row['username'] as String?,
         provider: (row['provider'] as String?) ?? 'email',
         createdAt: parseIsoOrNow(row['created_at']),
-        isBeta: row['is_beta'] as bool? ?? false,
         isBanned: row['is_banned'] as bool? ?? false,
         storageBytes: (row['storage_bytes'] as num?)?.toInt() ?? 0,
         lastActiveAt: parseIsoOrNull(row['last_active_at']),

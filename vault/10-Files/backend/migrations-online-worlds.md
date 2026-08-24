@@ -41,4 +41,4 @@ tags: [file]
 
 ## Notes
 - `transient_shares` (054) follows the same REPLICA IDENTITY FULL pattern so un-share/projection-drop DELETEs propagate.
-- Member CDC and granular per-row mirroring are detailed in [[Sync-and-Realtime]] / [[CDC-Sync-Flow]].
+- Member CDC and granular per-row mirroring are detailed in [[Sync-and-Realtime]] / [[Share-Broadcast-Flow]].

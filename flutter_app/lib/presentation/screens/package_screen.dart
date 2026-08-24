@@ -4,17 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers/account_gate.dart';
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/connectivity_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
-import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/save_state_provider.dart';
-import '../../application/providers/sync_engine_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/providers/world_packages_provider.dart';
@@ -278,45 +274,10 @@ class _PackageScreenContentState
       'Saving...',
       () async {
         await ref.read(pendingWriteBufferProvider).flush();
-        final online =
-            ref.read(connectivityStreamProvider).valueOrNull ?? false;
-        if (online) {
-          try {
-            await ref.read(syncEngineProvider).forceTick();
-          } catch (_) {/* best-effort */}
-        }
       },
     );
     ref.invalidate(packageListProvider);
     if (mounted) context.go('/hub');
-  }
-
-  /// Phone overflow-menu sync toggle. Mirrors [_PackageOnlineButton]:
-  /// flushes local then flips the personal-online flag, surfacing snackbar
-  /// feedback for both directions.
-  Future<void> _togglePackageOnline(bool currentlyOnline) async {
-    try {
-      final notifier = ref.read(activePackageProvider.notifier);
-      if (currentlyOnline) {
-        await notifier.makeOffline();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package is now offline')),
-        );
-      } else {
-        await notifier.save();
-        await notifier.makeOnline();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package is now online')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    }
   }
 
   bool _handleGlobalKey(KeyEvent event) {
@@ -461,13 +422,6 @@ class _PackageScreenContentState
             ),
           ),
           const SizedBox(width: 4),
-          // Online toggle — personal multi-device sync. Built-in pack
-          // can't be made online (read-only on every device). Phone
-          // collapses this into the overflow menu below.
-          if (ref.watch(hasAccountProvider) &&
-              widget.packageName != srdCorePackageName &&
-              getScreenType(context) != ScreenType.phone)
-            _PackageOnlineButton(packageName: widget.packageName),
           // PR-SYNC-5: DM-only — share this package into the active world.
           if (ref.watch(hasAccountProvider) &&
               widget.packageName != srdCorePackageName)
@@ -516,41 +470,6 @@ class _PackageScreenContentState
                   : () => setState(() => _editMode = !_editMode),
             );
           }),
-          // Phone: collapse package sync into an overflow menu (desktop
-          // shows the inline _PackageOnlineButton above). Built-in /
-          // unconfigured packages have nothing to collapse here.
-          if (getScreenType(context) == ScreenType.phone &&
-              ref.watch(hasAccountProvider) &&
-              widget.packageName != srdCorePackageName)
-            Builder(builder: (_) {
-              final isOnline = ref
-                  .watch(personalOnlinePackageNamesProvider)
-                  .contains(widget.packageName);
-              return PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
-                onSelected: (action) async {
-                  if (action == 'sync') {
-                    await _togglePackageOnline(isOnline);
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'sync',
-                    child: Row(children: [
-                      Icon(
-                        isOnline ? Icons.cloud_done : Icons.cloud_outlined,
-                        size: 18,
-                        color: isOnline ? palette.successBtnBg : null,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(isOnline
-                          ? 'Online — tap to make offline'
-                          : 'Save & Sync (Make Online)'),
-                    ]),
-                  ),
-                ],
-              );
-            }),
           const SizedBox(width: 4),
         ],
       ),
@@ -661,94 +580,6 @@ class _PackageScreenContentState
         ),
       ),
     );
-  }
-}
-
-/// Paket "Make Online" toggle butonu — `OnlineWorldSection`'un paket
-/// karşılığı. Tek tıklama, davet/üyelik yok; sahip kendi cihazları
-/// arasında sync. Built-in SRD packı kullanıcıya read-only olduğu için
-/// bu buton parent'ta gizlenir.
-class _PackageOnlineButton extends ConsumerStatefulWidget {
-  final String packageName;
-
-  const _PackageOnlineButton({required this.packageName});
-
-  @override
-  ConsumerState<_PackageOnlineButton> createState() =>
-      _PackageOnlineButtonState();
-}
-
-class _PackageOnlineButtonState
-    extends ConsumerState<_PackageOnlineButton> {
-  bool _busy = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final isOnline = ref
-        .watch(personalOnlinePackageNamesProvider)
-        .contains(widget.packageName);
-
-    return IconButton(
-      icon: _busy
-          ? SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: palette.tabActiveText,
-              ),
-            )
-          : Icon(
-              isOnline ? Icons.cloud_done : Icons.cloud_outlined,
-              size: 18,
-              color: isOnline
-                  ? palette.successBtnBg
-                  : palette.tabActiveText,
-            ),
-      tooltip: isOnline
-          ? 'Online — tap to make offline'
-          : 'Make Online (sync to your other devices)',
-      onPressed: _busy ? null : () => _toggle(isOnline),
-    );
-  }
-
-  Future<void> _toggle(bool currentlyOnline) async {
-    if (!currentlyOnline && !ref.read(betaProvider).isActive) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Online sync is beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
-      );
-      return;
-    }
-    setState(() => _busy = true);
-    try {
-      final notifier = ref.read(activePackageProvider.notifier);
-      if (currentlyOnline) {
-        await notifier.makeOffline();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package is now offline')),
-        );
-      } else {
-        await notifier.save();
-        await notifier.makeOnline();
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package is now online')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 }
 

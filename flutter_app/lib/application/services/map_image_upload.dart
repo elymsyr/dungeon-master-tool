@@ -7,7 +7,6 @@ import '../../domain/value_objects/media_kind.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
-import '../providers/sync_engine_provider.dart';
 import 'entity_media_cleanup_service.dart';
 import 'image_upload_helper.dart';
 import 'local_media_localizer.dart';
@@ -108,7 +107,6 @@ Future<void> cleanupMapImageRef(
   if (cleanup == null) return; // Supabase/Worker not configured → no-op
   try {
     await read(pendingWriteBufferProvider).flushPrefix(flushPrefix);
-    await read(syncEngineProvider).forceTick();
     await cleanup.cleanupRemovedRef(raw);
   } catch (e) {
     debugPrint('map image cloud cleanup error: $e');

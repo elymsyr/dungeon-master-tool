@@ -429,7 +429,7 @@ class PackageRepositoryImpl implements PackageRepository {
       // per-mutation through [saveEntity]; this bulk path stays as the
       // import/restore safety net.
       //
-      // Beta-enter wipe defense (PR-B5): payloads that don't carry the
+      // Wipe defense (PR-B5): payloads that don't carry the
       // `entities` key are treated as metadata-only saves and the existing
       // entity rows survive. Cloud catchup / personal mirror bootstrap can
       // both call here with an entities-less state_json after granular row

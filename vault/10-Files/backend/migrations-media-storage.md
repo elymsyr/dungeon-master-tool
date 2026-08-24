@@ -24,7 +24,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[migrations-auth-social]], [[migrations-online-worlds]]
-- Used by: [[worker]], [[worker_rls]], [[free_media_service]], [[entity_image_upload]], [[entity_media_cleanup_service]], [[rpc-reference]], [[edge-beta-purge]]
+- Used by: [[worker]], [[worker_rls]], [[free_media_service]], [[entity_image_upload]], [[entity_media_cleanup_service]], [[rpc-reference]], `beta_purge_with_cleanup` edge fn (kaldırıldı)
 - Domain map: [[Backend-Infra]]
 - System flow: [[Media-Storage-Tiers]]
 - Spec / reference: [[Media-and-Assets]]

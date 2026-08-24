@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../application/providers/account_gate.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
 import '../../application/providers/social_providers.dart';
 import '../../core/utils/world_languages.dart';
@@ -160,6 +161,16 @@ class MarketplacePreviewDialog extends ConsumerWidget {
           onPressed: downloading
               ? null
               : () async {
+                  // Kullanıcı içeriği indirmek hesap ister; resmi katalog
+                  // (OfficialPackagesCatalogView) bu yoldan geçmez, o açık.
+                  if (!ref.read(hasAccountProvider)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.accountRequiredMarketplace),
+                      ),
+                    );
+                    return;
+                  }
                   try {
                     final newId = await ref
                         .read(marketplaceListingNotifierProvider.notifier)

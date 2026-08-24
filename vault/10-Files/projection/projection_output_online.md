@@ -33,7 +33,7 @@ tags: [file]
 - Used by: `online_projection_provider.dart` / `ProjectionController` when the online fan-out mode is active; consumed remotely by `player_second_screen_tab.dart`
 - Domain map: [[Projection-Second-Screen]]
 - System flow: [[Fog-of-War-and-Visibility]]
-- Spec / reference: [[CDC-Sync-Flow]], [[Media-Storage-Tiers]]
+- Spec / reference: [[Share-Broadcast-Flow]], [[Media-Storage-Tiers]]
 
 ## Key Logic / Variables
 - `pushFull` stores `_last` then `_upsert`s. `pushPatch` merges the patch onto `_last.toJson()` (`addAll(patch)`), re-parses, re-upserts (whole blob re-uploaded — patches are not partial DB writes).

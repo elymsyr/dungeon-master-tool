@@ -5,25 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/lan_sync_provider.dart';
-import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/package_provider.dart';
-import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
-import '../../../application/services/beta_enter_merge_service.dart';
-import '../../../application/services/cloud_catchup_service.dart';
 import '../../../application/services/pending_write_buffer.dart';
-import '../../../application/services/world_reconciler.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../widgets/app_icon_image.dart';
 
-/// Cold-start sync gate. Splash card with progress message stays on top until:
+/// Cold-start gate. Splash card with progress message stays on top until:
 ///   1. Pending local writes flushed (drain any debounce timers carried over
 ///      from previous run).
-///   2. (Beta + auth ready) row-level cloud catchup — personal packages,
-///      worldless characters, all per-row.
-///   3. Active world (if any) realtime subscribe + applyInitialState resolved.
+///   2. Active world (if any) subscribed to the DM's share channel.
+///
+/// Bulut sync kaldırıldı: artık buluttan çekilen bir dünya/karakter/paket
+/// yok, yerel Drift kaynak-doğru. Geriye kalan tek ağ adımı, online bir
+/// dünyadaysa paylaşım kanalına bağlanmak.
 ///
 /// Whole sequence is best-effort with an 8s ceiling — offline / slow networks
 /// don't block the user. Once done, `child` (the actual app shell) renders.
@@ -42,10 +39,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
   static const Duration _ceiling = Duration(seconds: 8);
 
   /// Initial `_runSequence` auth-null guard'ında çıktıysa veya kullanıcı
-  /// uygulama içinde sign-in yaptıysa, bu listener bir kez catchup+reconcile
-  /// tetikler. `null → non-null` geçişinde fire eder; aynı session'da tekrar
-  /// fire etmez. Splash kapalıyken UI'a görünür değişiklik yok — sadece
-  /// provider invalidate (`worlds` / `packages` / `characters`).
+  /// uygulama içinde sign-in yaptıysa, bu listener bir kez LAN host'unu
+  /// değerlendirir ve hub listelerini tazeler. `null → non-null` geçişinde
+  /// fire eder; aynı session'da tekrar fire etmez.
   bool _retryFired = false;
 
   @override
@@ -59,43 +55,18 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     _retryFired = true;
     if (!SupabaseConfig.isConfigured) return;
     if (ref.read(authProvider) == null) return;
+    // Geç gelen sign-in sonrası da LAN host'u değerlendir.
+    unawaited(
+      ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle(),
+    );
+    if (!mounted) return;
+    ref.invalidate(campaignInfoListProvider);
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(packageListProvider);
     try {
-      if (ref.read(isBetaActiveProvider)) {
-        // Same ordering as `_runSequence`: merge local→cloud first so cloud
-        // catchup can't wipe local rows via stale-row pulls (PR-B1 gate).
-        try {
-          await ref.read(betaEnterMergeServiceProvider)?.merge();
-        } catch (e) {
-          debugPrint('deferred beta-enter merge error: $e');
-        }
-        await ref.read(cloudCatchupServiceProvider).runAll();
-        ref.read(personalMirrorApplierProvider);
-        try {
-          await ref.read(characterListProvider.notifier).pullNewerFromCloud();
-        } catch (e) {
-          debugPrint('deferred char pull error: $e');
-        }
-      }
-      try {
-        await ref.read(worldReconcilerProvider).reconcile();
-      } catch (e) {
-        debugPrint('deferred world reconcile error: $e');
-      }
-      // Geç gelen sign-in sonrası da host'u değerlendir.
-      unawaited(
-        ref.read(lanSyncControllerProvider.notifier).syncHostLifecycle(),
-      );
-    } finally {
-      if (mounted) {
-        ref.invalidate(campaignInfoListProvider);
-        ref.invalidate(campaignListProvider);
-        ref.invalidate(packageListProvider);
-        try {
-          await ref.read(characterListProvider.notifier).refresh();
-        } catch (e) {
-          debugPrint('deferred char list refresh error: $e');
-        }
-      }
+      await ref.read(characterListProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('deferred char list refresh error: $e');
     }
   }
 
@@ -132,8 +103,8 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
     if (!SupabaseConfig.isConfigured) return;
     // Cold-start race: Supabase session restore senkron olsa da provider build
     // sırası bazen authProvider'ı henüz set etmemiş oluyor. `_ceiling` içinde
-    // sinyali bekle; gelirse devam, gelmezse offline gibi davran. Reconcile
-    // sonraki sign-in event'inde retry edilecek (`_StartupRetryHooks`).
+    // sinyali bekle; gelirse devam, gelmezse offline gibi davran. Bağlanma
+    // sonraki sign-in event'inde retry edilecek.
     if (ref.read(authProvider) == null) {
       try {
         await ref
@@ -146,50 +117,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       }
       if (ref.read(authProvider) == null) {
         debugPrint(
-            'StartupSyncGate: auth still null after wait — skipping catchup, '
+            'StartupSyncGate: auth still null after wait — skipping connect, '
             'will retry on next sign-in event');
         return;
-      }
-    }
-
-    if (ref.read(isBetaActiveProvider)) {
-      // First-time beta enter: push local-owned content to cloud BEFORE any
-      // cloud→local applier runs. The PR-B1 wipe guard skips destructive pulls
-      // until the sentinel is set, so this must complete before the catchup +
-      // reconcile + bootstrap pipeline below to actually transfer the data
-      // forward.
-      _setMessage('Securing your local data...');
-      try {
-        await ref.read(betaEnterMergeServiceProvider)?.merge();
-      } catch (e) {
-        debugPrint('startup beta-enter merge error: $e');
-      }
-      _setMessage('Syncing packages and characters...');
-      try {
-        await ref.read(cloudCatchupServiceProvider).runAll();
-      } catch (e) {
-        debugPrint('startup cloud catchup error: $e');
-      }
-      // Personal applier provider'ı warm up — service.start(uid) +
-      // bootstrap() yan etkisi (paket + worldless char row pull) tetiklenir.
-      ref.read(personalMirrorApplierProvider);
-      try {
-        await ref
-            .read(characterListProvider.notifier)
-            .pullNewerFromCloud();
-      } catch (e) {
-        debugPrint('startup char pull error: $e');
-      }
-      // Worlds list pull — `cloudCatchupService` paket + char çekiyor,
-      // worlds için ayrı reconciler var. App startup'ta çağırılmadığı
-      // sürece hub Worlds tab'ı yeni cihaz / sign-out+in sonrası boş
-      // geliyor ve manuel refresh gerekiyor. Reconcile cloud row'ları
-      // yerel Drift'e yazıp `onlineWorldIdsProvider`'ı refresh ediyor.
-      _setMessage('Syncing worlds...');
-      try {
-        await ref.read(worldReconcilerProvider).reconcile();
-      } catch (e) {
-        debugPrint('startup world reconcile error: $e');
       }
     }
 
@@ -200,11 +130,9 @@ class _StartupSyncGateState extends ConsumerState<StartupSyncGate> {
       debugPrint('startup world subscribe error: $e');
     }
 
-    // Hub liste provider'ları (worlds / packages / characters) tamamen yerel
-    // Drift'i okuyor. Yukarıdaki pull'lar Drift'i populate ettiyse de eğer
-    // bu provider'lar startup splash sırasında çözüldüyse stale snapshot
-    // tutarlar. Splash kapanmadan invalidate edelim ki hub açılışında
-    // taze veri okunsun.
+    // Hub liste provider'ları tamamen yerel Drift'i okuyor; splash sırasında
+    // çözüldülerse stale snapshot tutarlar. Splash kapanmadan invalidate
+    // edelim ki hub açılışında taze veri okunsun.
     if (mounted) {
       ref.invalidate(campaignInfoListProvider);
       ref.invalidate(campaignListProvider);

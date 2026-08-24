@@ -12,12 +12,12 @@ tags: [home, moc]
 ## Start here
 - [[_Architecture-Overview]] — master map: clean-arch layers, domain index, the connection map.
 - [[SOP]] — how we keep this vault current (consult / auto-update / maintain-context).
-- [[Glossary]] — CDC, MoC, Tier-0/Tier-1, EffectiveCharacter, coalescing, echo-suppression.
+- [[Glossary]] — CDC, MoC, Tier-0/Tier-1, EffectiveCharacter, echo-suppression, share payload.
 
 ## Domains (Maps of Content)
 | Domain | Owns |
 |---|---|
-| [[Sync-and-Realtime]] | Offline-first CDC sync — outbox, tiers, mirror, reconcile |
+| [[Sync-and-Realtime]] | LAN eşlemesi + DM'in paylaşım yayını (bulut dünya aynası yok) |
 | [[Character-System]] | Chargen wizard, level-up, effect resolution |
 | [[Combat-and-VTT]] | Initiative, battle map grid, tokens, fog |
 | [[Projection-Second-Screen]] | DM→player output: window / screencast / online |
@@ -30,7 +30,7 @@ tags: [home, moc]
 | [[Deployment-and-Ops]] | CI, build, wrangler, dart-define, Docker |
 
 ## System deep-dives
-- [[CDC-Sync-Flow]] · [[Grant-Resolution]] · [[Ref-Resolution-Hard-vs-Soft]]
+- [[Share-Broadcast-Flow]] · [[Grant-Resolution]] · [[Ref-Resolution-Hard-vs-Soft]]
 - [[Media-Storage-Tiers]] · [[Fog-of-War-and-Visibility]] · [[Pack-Build-Two-Pass-Refgraph]]
 
 ## Platform integration

@@ -27,7 +27,7 @@ tags: [file]
 - Depends on: `supabase_flutter`; domain entities (`UserProfile`, `GameListing`, `MarketplaceListing`, `Conversation`, `AppNotification`, `BugReport`, …).
 - Used by: [[repositories-index]] (`CloudBackupRepositoryImpl`), social/admin providers, [[marketplace_cover_sync_service]].
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[Multiplayer-and-Online]], [[Backend-Infra]], [[rpc-reference]]
 
 ## Key Logic / Variables

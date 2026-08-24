@@ -5,11 +5,9 @@ import '../../data/network/network_providers.dart';
 import '../../domain/value_objects/asset_ref.dart';
 import '../../domain/value_objects/media_kind.dart';
 import '../providers/auth_provider.dart';
-import '../providers/beta_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/package_provider.dart';
-import '../providers/sync_engine_provider.dart';
 import 'entity_media_cleanup_service.dart';
 import 'image_upload_helper.dart';
 import 'local_media_localizer.dart';
@@ -81,8 +79,7 @@ Future<
   final MediaKind kind;
   String? pushWorldId;
   if (packageName != null) {
-    // Package entity image — counted R2; no per-row outbox to drain.
-    if (!ref.read(betaProvider).isActive) return skipped();
+    // Package entity image — counted R2.
     scopeId = packageName;
     kind = overrideKind ?? MediaKind.packageEntityImage;
   } else {
@@ -173,15 +170,10 @@ Future<void> cleanupRemovedEntityImageRef(
   if (!AssetRef(removedRef).isCloud) return; // only dmt-asset:// counted
   if (remaining.contains(removedRef)) return; // duplicate in same entity
   if (ref.read(authProvider) == null) return;
-  final packageName = ref.read(activePackageProvider);
-  if (packageName != null && !ref.read(betaProvider).isActive) {
-    return; // non-beta package image was never uploaded
-  }
   final cleanup = ref.read(entityMediaCleanupServiceProvider);
   if (cleanup == null) return; // Supabase/Worker not configured → no-op
   try {
     await ref.read(pendingWriteBufferProvider).flushPrefix('entity:');
-    await ref.read(syncEngineProvider).forceTick();
     await cleanup.cleanupRemovedRef(removedRef);
   } catch (e) {
     debugPrint('entity image cloud cleanup error: $e');

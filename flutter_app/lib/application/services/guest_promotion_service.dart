@@ -36,7 +36,7 @@ import '../../data/database/app_database.dart';
 ///
 /// What this service does *not* do is push anything to the cloud. Once the rows
 /// sit under `users/{id}/`, they are ordinary local rows and
-/// `BetaEnterMergeService`'s first-enter, local-wins merge is what queues them
+/// The rows stay local; nothing queues them
 /// into the sync outbox — it runs from `startup_sync_gate`, i.e. after
 /// `landing_screen` has awaited `UserSessionNotifier.activate`. O3 extends that
 /// merge by giving it the rows; it does not write a second one.

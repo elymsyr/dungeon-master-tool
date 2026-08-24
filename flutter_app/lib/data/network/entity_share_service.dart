@@ -1,8 +1,15 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/online/entity_share.dart';
 
 /// public.entity_shares CRUD. RLS DM yetkisi enforces.
+///
+/// Bulut sync kaldırıldıktan sonra bu tablo yalnızca bir görünürlük işareti
+/// değil, **kartın kendisini taşıyan kanal**. `world_entities` aynası artık
+/// yok; oyuncu paylaşılan kartın içeriğini `payload_json`'dan alır. Payload
+/// yazmadan paylaşmak, oyuncuda boş kart demektir.
 class EntityShareService {
   final SupabaseClient client;
   EntityShareService(this.client);
@@ -18,9 +25,14 @@ class EntityShareService {
   }
 
   /// World-wide share (shared_with NULL). Aynı entity için tekrar idempotent.
+  ///
+  /// [payload] paylaşılan entity'nin tam JSON'u — oyuncu tarafındaki tek
+  /// içerik kaynağı. Görselleri `AssetRef`'e çevrilmiş olmalı (bkz.
+  /// `entity_share_prepare.dart`), aksi halde oyuncu çözemez.
   Future<void> shareWithAll({
     required String entityId,
     required String worldId,
+    Map<String, dynamic>? payload,
   }) async {
     final uid = client.auth.currentUser?.id;
     if (uid == null) throw StateError('auth required');
@@ -36,6 +48,7 @@ class EntityShareService {
       'world_id': worldId,
       'shared_with': null,
       'shared_by': uid,
+      'payload_json': payload == null ? null : jsonEncode(payload),
     });
   }
 
@@ -43,6 +56,7 @@ class EntityShareService {
     required String entityId,
     required String worldId,
     required String userId,
+    Map<String, dynamic>? payload,
   }) async {
     final uid = client.auth.currentUser?.id;
     if (uid == null) throw StateError('auth required');
@@ -58,6 +72,7 @@ class EntityShareService {
       'world_id': worldId,
       'shared_with': userId,
       'shared_by': uid,
+      'payload_json': payload == null ? null : jsonEncode(payload),
     });
   }
 

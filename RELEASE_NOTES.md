@@ -1,5 +1,51 @@
 # Release Notes
 
+## Dungeon Master Tool v14.0.0 — No More Beta, No More Cloud Sync
+
+**Release date:** August 2026
+
+Three changes, one release, and they all point the same direction: **your content is yours, on your device, and you decide what leaves it.**
+
+> [!warning] Breaking — read before upgrading
+> Cloud backups are gone. Worlds, characters and packages are no longer copied to the cloud, and the copies that were there are deleted. **Anything that existed only in the cloud and not on a device will be lost.** If you were relying on cloud backup to move content between devices, open the app on the device that has the content first, then use LAN sync to bring it across.
+>
+> Requires database migrations 076–079.
+
+### The beta program is over — everyone gets everything
+
+The 90-slot, admin-approved beta is closed. There is no waiting list, no request form, no slot counter. Download the app and every feature is available, with or without an account.
+
+An account is now required for exactly three things:
+- **Playing online** with other people
+- **Publishing** to the marketplace
+- **Downloading other users' content**
+
+Browsing the marketplace and installing official content need no account at all.
+
+### Cloud sync removed — LAN sync is the way content moves
+
+Your worlds, characters and packages live on your device. Moving them to another device is LAN sync: pair once over your local network (QR code or IP + PIN), then sync with one tap. Nothing passes through a server.
+
+Removed with it: cloud backups, "Make Online" for packages, the sync queue and its status indicators, and the pull-to-refresh cloud fetch on the hub tabs.
+
+### Online play now broadcasts what you share, not your whole world
+
+Previously, a player who joined your world downloaded **the entire world** — every NPC, every map, every session note — and the app simply hid the parts they weren't supposed to see. The data was on their device the whole time.
+
+Now nothing is sent until you share it. Players receive:
+- **What you put on the shared screen** — battle maps, images, entity cards, PDFs — live as you place it
+- **The cards you hand them** — a shared card now carries its own content, so it arrives complete
+- **Their own character sheet**, synced with you both ways
+- Packages you share into the world
+
+Everything else — your prep, your notes, your unshared NPCs, your maps — stays on your machine. Joining a world now starts empty and fills in as you share.
+
+### Marketplace is open to everyone
+
+Browse listings and install official content without signing in. Sign in when you want to download something another user made, or publish something of your own.
+
+---
+
 ## Dungeon Master Tool v13.1.0 — HP Dice Roller, Entity Deletion Fix, Linux Projection Fix (Beta)
 
 **Release date:** August 2026

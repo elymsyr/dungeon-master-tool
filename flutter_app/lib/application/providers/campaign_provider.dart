@@ -21,11 +21,9 @@ import '../services/unused_media_sweeper.dart';
 import '../services/prewarm_orchestrator.dart';
 import 'auth_provider.dart';
 import 'character_provider.dart';
-import 'cloud_backup_provider.dart';
 import 'online_worlds_provider.dart';
 import 'package_provider.dart';
 import 'role_provider.dart';
-import 'sync_engine_provider.dart';
 import 'world_membership_provider.dart';
 import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -136,41 +134,6 @@ final worldPackageNamesProvider =
   return map;
 });
 
-/// Resolves a worldId to its local campaign name, pulling the world from
-/// cloud_backup on demand when the local copy is missing.
-///
-/// Used by the character-open paths (Char Tab + sidebar) so a character that
-/// arrived via cross-device char sync but whose world has not yet been
-/// downloaded triggers a one-shot world restore instead of failing with
-/// "Character world not found locally."
-///
-/// Returns the resolved campaign name on success, or `null` when the world
-/// is neither local nor available in cloud_backup (or pull failed). The
-/// caller is responsible for surfacing the failure message; this helper
-/// stays silent so it can be used as a best-effort step.
-Future<String?> ensureWorldLocalById(WidgetRef ref, String worldId) async {
-  final infos = await ref.read(campaignInfoListProvider.future);
-  final match = infos.where((i) => i.id == worldId).firstOrNull;
-  if (match != null) return match.name;
-  if (!SupabaseConfig.isConfigured) return null;
-  if (ref.read(authProvider) == null) return null;
-  try {
-    final repo = ref.read(cloudBackupRepositoryProvider);
-    final meta = await repo.fetchByItem(worldId, 'world');
-    if (meta == null) return null;
-    final ok = await ref
-        .read(cloudBackupOperationProvider.notifier)
-        .restoreBackup(meta);
-    if (!ok) return null;
-    ref.invalidate(campaignInfoListProvider);
-    final fresh = await ref.read(campaignInfoListProvider.future);
-    final found = fresh.where((i) => i.id == worldId).firstOrNull;
-    return found?.name;
-  } catch (e, st) {
-    debugPrint('ensureWorldLocalById error: $e\n$st');
-    return null;
-  }
-}
 
 /// Per-campaign metadata lookup — cover / description / tags için.
 /// Campaign blob'undan `metadata` alanını okur. List UI bu provider'ı
@@ -253,29 +216,9 @@ Future<void> updateCampaignMetadata(
     }
   }
 
-  // Online dünya (DM): metadata şimdiye dek yalnızca lokale yazıldı — cloud
-  // `world_settings` satırı eski kalır, başka cihaz güncel kapağı görmez.
-  // Row-level `world_settings` outbox push enqueue et + hemen drain et ki
-  // diğer cihazlar CDC / seed-pull ile değişimi alsın.
-  final data = await repo.load(campaignName);
-  final worldId = data['world_id'] as String?;
-  if (worldId == null) return;
-  if (!ref.read(onlineWorldIdsProvider).contains(worldId)) return;
-  if (ref.read(authProvider) == null) return;
-  final role = await ref.read(worldRoleProvider(worldId).future);
-  if (role != WorldRole.dm) return;
-  // Tam settings blob'u kur — cloud satırı post-merge state içermeli
-  // (`ActiveCampaignNotifier.saveSettingsPatch` ile aynı şekil).
-  final settings = <String, dynamic>{};
-  for (final entry in data.entries) {
-    if (ActiveCampaignNotifier._settingsTopKeyBlocklist.contains(entry.key)) {
-      continue;
-    }
-    settings[entry.key] = entry.value;
-  }
-  final engine = ref.read(syncEngineProvider);
-  await engine.enqueueWorldSettings(worldId: worldId, settings: settings);
-  await engine.forceTick();
+  // Dünya ayarları artık buluta aynalanmıyor: oyuncuya giden tek şey DM'in
+  // bilinçli paylaşımları (projeksiyon manifesti + entity_shares). Cihazdan
+  // cihaza taşıma LAN sync'in işi.
 }
 
 /// Aktif kampanya adı. null = henüz seçilmedi.
@@ -465,49 +408,13 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// re-encodes — touching only the one `world_settings` row. Caller
   /// (combat / mind_map / map) keeps the in-memory mirror in sync.
   ///
-  /// F6 follow-up: when the world is online, also enqueue a
-  /// `world_settings` outbox upsert with the full merged blob so the
-  /// other-device CDC applier sees the change. Old bulk `_bundleAndPush`
-  /// used to handle this; row-level world_settings push replaces it.
+  /// Bulut aynası yok: `world_settings` artık replike edilmiyor. `touchWorld`
+  /// varsayılanı korunur — `_section_updated_at` damgası LAN merge'ün LWW
+  /// karşılaştırmasının girdisi.
   Future<void> saveSettingsPatch(Map<String, dynamic> patch) async {
     final name = state;
     if (name == null) return;
     await _repo.saveSettingsPatch(name, patch);
-    final data = _data;
-    if (data == null) return;
-    final worldId = data['world_id'] as String?;
-    if (worldId == null) return;
-    if (!_ref.read(onlineWorldIdsProvider).contains(worldId)) return;
-    if (_ref.read(authProvider) == null) return;
-    // Client-side DM gate. `_repo.saveSettingsPatch` above already wrote
-    // Drift, so for a non-DM this degrades to local-only persistence — the
-    // cloud outbox enqueue is skipped. Pre-empts the RLS 42501 rejection
-    // spam on `world_settings` for PLAYER-role members.
-    //
-    // `worldRoleProvider` is worldId-keyed, depends only on authProvider (no
-    // campaign dependency → no circular provider graph), and swallows errors
-    // internally → WorldRole.none on failure.
-    //
-    // SS-7: prefer the cached synchronous role so the common path (role already
-    // resolved on world-open) doesn't suspend the combat/settings fire on a
-    // network/RLS query before the cloud enqueue. Fall back to the async read
-    // only when the role hasn't loaded yet (rare: settings edited immediately
-    // on world-open) so a DM's first push is never silently dropped.
-    final role = _ref.read(worldRoleProvider(worldId)).valueOrNull ??
-        await _ref.read(worldRoleProvider(worldId).future);
-    if (role != WorldRole.dm) return;
-    // Build the full settings_json mirror (everything except typed top
-    // keys and `entities`) so the cloud row contains the post-merge state.
-    final settings = <String, dynamic>{};
-    for (final entry in data.entries) {
-      if (_settingsTopKeyBlocklist.contains(entry.key)) continue;
-      settings[entry.key] = entry.value;
-    }
-    // ignore: discarded_futures
-    _ref.read(syncEngineProvider).enqueueWorldSettings(
-          worldId: worldId,
-          settings: settings,
-        );
   }
 
   /// Same as [saveSettingsPatch] minus the cloud enqueue **and** minus the
@@ -530,17 +437,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   /// Keys that live in their own typed table or aren't part of the
   /// `world_settings.settings_json` mirror.
-  static const _settingsTopKeyBlocklist = {
-    'world_id',
-    'world_name',
-    'created_at',
-    'entities',
-    'sessions',
-    'world_schema',
-    'template_id',
-    'template_hash',
-    'template_original_hash',
-  };
 
   /// Re-reads the active campaign from disk, replaces [_data] in place
   /// (so any cached references — e.g. the wrapped notifier inside
