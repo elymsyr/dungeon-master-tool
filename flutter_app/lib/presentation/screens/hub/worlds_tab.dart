@@ -859,9 +859,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   ),
                   const SizedBox(height: 12),
                   SaveInfoSection(
-                    itemName: campaignName,
-                    itemId: worldId,
-                    type: 'world',
                     localUpdatedAt: localUpdatedAt,
                   ),
                   const SizedBox(height: 12),

@@ -15,10 +15,10 @@ import '../../application/providers/world_online_status_provider.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../data/database/database_provider.dart';
 import '../../application/services/pdf_library_service.dart';
+import '../../application/providers/lan_sync_provider.dart';
 import '../dialogs/lan_sync_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
-import 'account_gated_surface.dart';
 import 'online_world_widgets.dart';
 import 'save_info_section.dart';
 import 'save_sync_shared.dart';
@@ -30,48 +30,37 @@ import 'save_sync_shared.dart';
 /// false ise (main screen / inside world) tam panel açılır.
 class SaveSyncIndicator extends ConsumerWidget {
   final bool compact;
-  const SaveSyncIndicator({super.key, this.compact = false});
+
+  /// Package screen overrides `activeCampaignProvider` with the package name,
+  /// so without this flag the dialog would treat a package as a world:
+  /// multiplayer button + `worlds` row lookup for the save time.
+  final bool isPackage;
+  const SaveSyncIndicator({
+    super.key,
+    this.compact = false,
+    this.isPackage = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    // O2: a guest on a configured build has no cloud. `isConfigured` alone
-    // used to promise one.
-    final hasCloud = ref.watch(hasAccountProvider);
 
     // Compact (hub) mode: independent of any item's sync state — just a
-    // static cloud / save icon that opens the storage panel.
+    // static save icon that opens the panel.
     if (compact) {
-      final icon = hasCloud ? Icons.cloud_queue : Icons.save;
       return IconButton(
-        icon: Icon(icon, size: 20, color: palette.sidebarLabelSecondary),
-        tooltip: hasCloud ? 'Cloud Storage' : 'Save',
+        icon: Icon(Icons.save, size: 20, color: palette.sidebarLabelSecondary),
+        tooltip: 'Save',
         onPressed: () => _showSaveSyncDialog(context, ref, compact: true),
       );
     }
 
-    // Full (inside item) mode: reflects the active item's save + outbox.
+    // Full (inside item) mode: reflects the active item's local save state.
     final saveStatus = ref.watch(saveStateProvider);
-    // Active-item cloud eligibility: world only counts when "Made Online",
-    // package always counts (packages cloud-back automatically). When no
-    // item active → fall back to global hasCloud.
-    final activeCampaign = ref.watch(activeCampaignProvider);
-    final activePackage = ref.watch(activePackageProvider);
-    bool itemOnCloud;
-    if (activeCampaign != null) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final worldId = (data?['world_id'] as String?) ?? activeCampaign;
-      itemOnCloud =
-          hasCloud && ref.watch(onlineWorldIdsProvider).contains(worldId);
-    } else if (activePackage != null) {
-      itemOnCloud = hasCloud;
-    } else {
-      itemOnCloud = hasCloud;
-    }
     final localSaving = saveStatus == SaveStatus.saving;
 
     final (IconData icon, Color color) = _resolveIcon(
-      saveStatus, palette, itemOnCloud,
+      saveStatus, palette,
       localSaving: localSaving,
       context: context,
     );
@@ -96,14 +85,11 @@ class SaveSyncIndicator extends ConsumerWidget {
     );
   }
 
-  /// Gösterge artık yalnızca YEREL kayıt durumunu anlatıyor: kuyruk yok,
-  /// bulut aynası yok. Online dünyada [hasCloud] true olduğunda kartların
-  /// paylaşıldığı yeri hatırlatan bulut ikonu kullanılır, ama "senkron" iddiası
-  /// yok — paylaşımlar doğrudan yazılır.
+  /// Gösterge yalnızca YEREL kayıt durumunu anlatıyor: kuyruk yok, bulut
+  /// kopyası yok. Hesap durumundan bağımsız aynı ikonlar.
   (IconData, Color) _resolveIcon(
     SaveStatus save,
-    DmToolColors palette,
-    bool hasCloud, {
+    DmToolColors palette, {
     required bool localSaving,
     required BuildContext context,
   }) {
@@ -111,16 +97,11 @@ class SaveSyncIndicator extends ConsumerWidget {
     if (localSaving) {
       return (Icons.save, themePrimary);
     }
-    if (!hasCloud) {
-      return switch (save) {
-        SaveStatus.saving => (Icons.save, themePrimary),
-        SaveStatus.dirty => (Icons.save_outlined, themePrimary),
-        SaveStatus.saved => (Icons.save, palette.sidebarLabelSecondary),
-      };
-    }
-    return save == SaveStatus.dirty
-        ? (Icons.cloud_upload_outlined, palette.featureCardAccent)
-        : (Icons.cloud_done, palette.successBtnBg);
+    return switch (save) {
+      SaveStatus.saving => (Icons.save, themePrimary),
+      SaveStatus.dirty => (Icons.save_outlined, themePrimary),
+      SaveStatus.saved => (Icons.save, palette.sidebarLabelSecondary),
+    };
   }
 
   String _tooltip(SaveStatus save) => switch (save) {
@@ -132,7 +113,7 @@ class SaveSyncIndicator extends ConsumerWidget {
   void _showSaveSyncDialog(BuildContext context, WidgetRef ref, {bool compact = false}) {
     showDialog(
       context: context,
-      builder: (ctx) => _SaveSyncDialog(compact: compact),
+      builder: (ctx) => _SaveSyncDialog(compact: compact, isPackage: isPackage),
     );
   }
 }
@@ -141,7 +122,8 @@ class SaveSyncIndicator extends ConsumerWidget {
 
 class _SaveSyncDialog extends ConsumerWidget {
   final bool compact;
-  const _SaveSyncDialog({this.compact = false});
+  final bool isPackage;
+  const _SaveSyncDialog({this.compact = false, this.isPackage = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -163,13 +145,13 @@ class _SaveSyncDialog extends ConsumerWidget {
                 Row(
                   children: [
                     Icon(
-                      hasCloud ? Icons.cloud_sync : Icons.save,
+                      Icons.save,
                       size: 20,
                       color: palette.tabActiveText,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      compact && hasCloud ? 'Cloud Storage' : 'Save & Sync',
+                      'Save & Sync',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -190,11 +172,11 @@ class _SaveSyncDialog extends ConsumerWidget {
 
                 // ── Active item info (full mode only) ──
                 if (!compact) ...[
-                  _ActiveItemSaveInfo(palette: palette),
+                  _ActiveItemSaveInfo(palette: palette, isPackage: isPackage),
                 ],
 
-                // ── Actions (full mode only) ──
-                if (!compact) ...[
+                // ── Actions (full mode only) — packages never go multiplayer ──
+                if (!compact && !isPackage) ...[
                   _SectionLabel('Actions', palette),
                   const SizedBox(height: 8),
                   _ActionsRow(
@@ -207,52 +189,21 @@ class _SaveSyncDialog extends ConsumerWidget {
                 ],
 
                 // ── Local Sync ──
-                // v2'de eşleşme cihazları hesaba bağlıyor (aynı hesap zorunlu),
-                // o yüzden bu yüzey artık hesap istiyor. İçerik hâlâ buluta
-                // çıkmıyor — hesap yalnız kimlik için.
-                AccountGatedSurface(
-                  surface: AppSurface.localSync,
-                  message: L10n.of(context)!.accountRequiredOnlineSync,
-                  builder: (context) => Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      _SectionLabel(L10n.of(context)!.lanSyncTitle, palette),
-                      const SizedBox(height: 8),
-                      ActionButton(
-                        icon: Icons.wifi_tethering,
-                        label: L10n.of(context)!.lanSyncOpen,
-                        palette: palette,
-                        onPressed: () {
-                          Navigator.pop(context);
-                          LanSyncDialog.show(context);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                // İçerik buluta çıkmıyor, LAN'da kalıyor: hesapsız da açık.
+                _LocalSyncSection(palette: palette),
 
                 // ── Storage ──
-                // Sayılan medya kotası hesaba bağlı, o yüzden guest burada
-                // giriş çağrısı görür.
-                AccountGatedSurface(
-                  surface: AppSurface.mediaStorage,
-                  message: L10n.of(context)!.accountRequiredCloudBackup,
-                  builder: (context) => Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!compact) const SizedBox(height: 16),
-                      _SectionLabel('Storage', palette),
-                      const SizedBox(height: 8),
-                      _StorageUsageBar(palette: palette),
-                    ],
-                  ),
-                ),
+                // Sayılan medya kotası hesaba bağlı — hesapsızda hiç yok,
+                // giriş çağrısı da gösterilmiyor.
+                if (hasCloud) ...[
+                  if (!compact) const SizedBox(height: 16),
+                  _SectionLabel('Storage', palette),
+                  const SizedBox(height: 8),
+                  _StorageUsageBar(palette: palette),
+                ],
 
                 // ── Compact mode hint ──
-                if (compact && !hasCloud)
+                if (compact)
                   Text(
                     'Open a world to access full save & sync controls.',
                     style: TextStyle(
@@ -273,6 +224,71 @@ class _SaveSyncDialog extends ConsumerWidget {
 // ── Helper widgets ──────────────────────────────────────────────────
 
 typedef _SectionLabel = SectionLabel;
+
+/// LAN sync girişi — panel açma + eşleşmiş cihazlarla tek tuş sync.
+/// Hesap gerektirmez: içerik cihazdan çıkmıyor, yerel ağda kalıyor.
+class _LocalSyncSection extends ConsumerWidget {
+  final DmToolColors palette;
+  const _LocalSyncSection({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
+    final syncing =
+        ref.watch(lanSyncControllerProvider).phase == LanSyncPhase.syncing;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        _SectionLabel(l10n.lanSyncTitle, palette),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ActionButton(
+              icon: Icons.sync,
+              label: l10n.lanSyncSyncNow,
+              palette: palette,
+              onPressed: syncing ? null : () => _syncNow(context, ref, l10n),
+            ),
+            ActionButton(
+              icon: Icons.wifi_tethering,
+              label: l10n.lanSyncOpen,
+              palette: palette,
+              onPressed: () {
+                Navigator.pop(context);
+                LanSyncDialog.show(context);
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _syncNow(
+      BuildContext context, WidgetRef ref, L10n l10n) async {
+    final controller = ref.read(lanSyncControllerProvider.notifier);
+    await controller.refreshDevices();
+    if (!context.mounted) return;
+    if (ref.read(lanSyncControllerProvider).devices.isEmpty) {
+      // Eşleşme yoksa sync anlamsız — kullanıcıyı eşleşme paneline gönder.
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.lanSyncNoDevices)));
+      return;
+    }
+    await controller.syncAll();
+    if (!context.mounted) return;
+    final state = ref.read(lanSyncControllerProvider);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(state.phase == LanSyncPhase.error
+          ? l10n.lanSyncError(state.error ?? '')
+          : l10n.lanSyncSummary(state.itemsSynced, state.devicesSynced)),
+    ));
+  }
+}
 
 /// Online world panel — invite code (copy + regenerate) ve member listesini
 /// gösterir. World offline iken hiçbir şey render etmez.
@@ -371,7 +387,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final isDm = role == WorldRole.dm;
 
     if (isOnline) {
-      final label = isDm ? 'Online · DM' : 'Online · Player';
+      final label = isDm ? 'Multiplayer · DM' : 'Multiplayer · Player';
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -405,7 +421,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
           if (isDm) ...[
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Make Offline',
+              tooltip: 'Multiplayer Off',
               icon: const Icon(Icons.cloud_off, size: 16),
               onPressed: _busy ? null : () => _confirmOffline(worldId),
               visualDensity: VisualDensity.compact,
@@ -425,7 +441,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
 
     return _ActionButton(
       icon: Icons.cloud_upload,
-      label: _busy ? 'Publishing...' : 'Make Online',
+      label: _busy ? 'Publishing...' : 'Multiplayer On',
       onPressed: _busy ? null : () => _makeOnline(campaignName, worldId),
       palette: palette,
     );
@@ -536,7 +552,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Make Offline'),
+        title: const Text('Multiplayer Off'),
         content: const Text(
             'This removes the world and all member data from the cloud. '
             'Local data is preserved. Continue?'),
@@ -546,7 +562,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
               child: const Text('Cancel')),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Make Offline')),
+              child: const Text('Multiplayer Off')),
         ],
       ),
     );
@@ -588,7 +604,8 @@ typedef _StorageUsageBar = StorageUsageBar;
 /// [activePackageProvider] — if neither is set, renders nothing.
 class _ActiveItemSaveInfo extends ConsumerStatefulWidget {
   final DmToolColors palette;
-  const _ActiveItemSaveInfo({required this.palette});
+  final bool isPackage;
+  const _ActiveItemSaveInfo({required this.palette, this.isPackage = false});
 
   @override
   ConsumerState<_ActiveItemSaveInfo> createState() =>
@@ -610,7 +627,7 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
     final campaignName = ref.read(activeCampaignProvider);
     final packageName = ref.read(activePackageProvider);
 
-    if (campaignName != null) {
+    if (campaignName != null && !widget.isPackage) {
       final row = await ref
           .read(appDatabaseProvider)
           .worldsDao
@@ -668,9 +685,6 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
               _SectionLabel(info.name, widget.palette),
               const SizedBox(height: 6),
               SaveInfoSection(
-                itemName: info.name,
-                itemId: info.id,
-                type: info.type,
                 localUpdatedAt: info.updatedAt,
               ),
             ],
