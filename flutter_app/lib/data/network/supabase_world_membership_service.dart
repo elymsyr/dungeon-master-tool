@@ -27,7 +27,6 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
     required String worldName,
     String? templateId,
     String? templateHash,
-    required String stateJson,
   }) async {
     // RLS gürültüsünden kaçınmak için tüm publish akışı `publish_world`
     // RPC'sine taşındı (migration 029). RPC SECURITY DEFINER + row_security
@@ -39,7 +38,6 @@ class SupabaseWorldMembershipService implements WorldMembershipService {
         'p_world_name': worldName,
         'p_template_id': templateId,
         'p_template_hash': templateHash,
-        'p_state_json': stateJson,
       });
     } on PostgrestException catch (e) {
       debugPrint(

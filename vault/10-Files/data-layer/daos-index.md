@@ -26,7 +26,7 @@ tags: [file]
 - Depends on: [[drift_database]], the `tables/` family.
 - Used by: [[repositories-index]], [[world_mirror_applier]], [[world_membership_service]], [[character_claim_service]], `package_repository_impl`.
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[World-and-Content]], [[Multiplayer-and-Online]]
 
 ## Key Logic / Variables
@@ -53,7 +53,7 @@ tags: [file]
 - [[world_map_data_dao]] — 1:1 `WorldMapData` blob.
 - [[combat_dao]] — `Encounters`+`Combatants`+`CombatConditions`, manual cascade deletes.
 - [[map_pins_dao]] — `MapPins` CRUD.
-- [[sync_outbox_dao]] — coalescing outbox queue (`enqueueCoalesced`, `readyBatch`, `markFailed`, `watchPendingCount`).
+- `sync_outbox_dao.dart` (kaldırıldı) — coalescing outbox queue (`enqueueCoalesced`, `readyBatch`, `markFailed`, `watchPendingCount`).
 
 ## Notes
 - Standard pattern: all `watch*` use `.distinct()`; all `upsert*` use `insertOnConflictUpdate`; `upsertAll` wraps `batch(b.insertAllOnConflictUpdate)`.

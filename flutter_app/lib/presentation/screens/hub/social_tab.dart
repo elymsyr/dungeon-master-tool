@@ -15,7 +15,9 @@ import '../social/social_shell.dart';
 
 /// Aktif Social sub-tab'ı — hub_screen help button'u hangi yardım metnini
 /// göstereceğini buradan okur (Marketplace için ayrı metin göstermek için).
-final socialSubTabProvider = StateProvider<String>((ref) => 'feed');
+/// Misafir Marketplace'ten başlar — diğer üç sekme hesap ister.
+final socialSubTabProvider = StateProvider<String>(
+    (ref) => ref.watch(hasAccountProvider) ? 'feed' : 'marketplace');
 
 /// Social hub shell — 4 alt sekme: Feed, Players, Messages, Marketplace.
 /// Cloud backup ARTIK burada değil — top-right cloud icon'da.
@@ -35,16 +37,20 @@ class _SocialTabState extends ConsumerState<SocialTab> {
     // the whole shell.
     final access = ref.watch(surfaceAccessProvider(AppSurface.follows));
     if (access == SurfaceAccess.hidden) return const _NotConfigured();
-    if (access == SurfaceAccess.signInRequired) return const _NotSignedIn();
+    // Shell'in tamamı `follows` ile kapatılıyordu; Marketplace ise
+    // `requiresAccount: false` — katalog anon SELECT'e açık. Kapı artık
+    // sekme başına: Marketplace misafire açık, diğer üçü sign-in ister.
+    final guest = access == SurfaceAccess.signInRequired;
 
     final currentTab = ref.watch(socialSubTabProvider);
     final messageUnread =
         ref.watch(totalUnreadCountProvider).valueOrNull ?? 0;
     final tabChild = switch (currentTab) {
+      'marketplace' => const MarketplaceTab(),
+      _ when guest => const _NotSignedIn(),
       'feed' => const FeedTab(),
       'messages' => const MessagesTab(),
       'gameListings' => const GameListingsTab(),
-      'marketplace' => const MarketplaceTab(),
       _ => const FeedTab(),
     };
     return SocialShell(

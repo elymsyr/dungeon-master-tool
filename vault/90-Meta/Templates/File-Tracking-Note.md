@@ -32,7 +32,7 @@ tags: [file]
 - Depends on: [[sync_outbox_dao]], [[pending_write_buffer]]
 - Used by: [[world_mirror_service]]
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference:
 
 ## Key Logic / Variables

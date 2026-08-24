@@ -27,7 +27,7 @@ tags: [file]
 - Depends on: [[drift_database]], [[daos-index]], [[remote-datasources-index]], [[campaign_provider]].
 - Used by: application providers, `character_provider`, `package_provider`.
 - Domain map: [[Data-Layer]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: `docs/full_drift_migration_plan.md`
 
 ## Key Logic / Variables

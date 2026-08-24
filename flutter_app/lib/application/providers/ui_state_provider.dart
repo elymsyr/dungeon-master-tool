@@ -67,7 +67,7 @@ class UiState {
   // Save & Sync
   final bool autoLocalSave;
 
-  // First-launch onboarding: welcome/beta dialog shown once.
+  // First-launch onboarding: welcome dialog shown once.
   final bool welcomeSeen;
 
   /// Dünyaya özgü görünüm anlık görüntüsü — worldKey (dünya adı) →

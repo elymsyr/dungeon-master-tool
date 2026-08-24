@@ -4,7 +4,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/beta_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
 import '../../application/services/local_media_localizer.dart';
 import '../../application/services/tag_moderation.dart';
@@ -359,12 +358,9 @@ class _MetadataEditorSectionState
 
     // Ücretsiz medya kind'i verildiyse + servis hazırsa Supabase Storage'a
     // eager upload → dmt-public:// ref (cihazlar arası taşınabilir). Upload
-    // başarısız olur veya kind verilmezse local path saklanır. Cloud upload
-    // beta özelliği — beta dışı kullanıcı için local path saklanır.
+    // başarısız olur veya kind verilmezse local path saklanır.
     final kind = widget.coverKind;
-    final svc = ref.read(isBetaActiveProvider)
-        ? ref.read(freeMediaServiceProvider)
-        : null;
+    final svc = ref.read(freeMediaServiceProvider);
     if (kind != null && svc != null) {
       final file = File(path);
       try {

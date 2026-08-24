@@ -32,7 +32,7 @@ tags: [file]
 - Depends on: `dart:io`, `path`, `drift` (yalnız `customUpdate`/`customSelect` için), [[drift_database]].
 - Used by: `user_session_provider` (`UserSessionNotifier.activate` — tek çağıran).
 - Kardeş kararlar: [[route_access]] (rota, O1), [[account_gate]] (yüzey, O2), [[guest_mode_provider]] (seçim, O1).
-- Devamı: [[beta_enter_gate]] / `BetaEnterMergeService` — buluta itiş **bu servis değil**, mevcut local-wins ilk-giriş merge'i.
+- Devamı: `beta_enter_gate.dart` (kaldırıldı) / `BetaEnterMergeService` — buluta itiş **bu servis değil**, mevcut local-wins ilk-giriş merge'i.
 - Domain map: [[Multiplayer-and-Online]]
 - Spec / reference: `flutter_app/docs/open5e_content_audit.md` §6 Stage O · O3
 

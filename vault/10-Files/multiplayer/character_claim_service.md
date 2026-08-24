@@ -28,7 +28,7 @@ tags: [file]
 - Depends on: `world_characters_provider` (`WorldCharacterRow` type — not a tracked note)
 - Used by: character ownership UI; world character sync bootstrap; editor-open freshness hook
 - Domain map: [[Multiplayer-and-Online]]
-- System flow: [[CDC-Sync-Flow]], [[Sync-and-Realtime]]
+- System flow: [[Share-Broadcast-Flow]], [[Sync-and-Realtime]]
 - Spec / reference: [[migrations-online-worlds]], [[rpc-reference]]
 
 ## Key Logic / Variables

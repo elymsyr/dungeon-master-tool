@@ -30,10 +30,10 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[drift_database]], [[rpc-reference]]
-- Used by: [[combat_provider]], [[grid_canvas]], [[CDC-Sync-Flow]]
+- Used by: [[combat_provider]], [[grid_canvas]], [[Share-Broadcast-Flow]]
 - Domain map: [[Combat-and-VTT]]
 - System flow: [[Fog-of-War-and-Visibility]]
-- Spec / reference: [[CDC-Sync-Flow]]
+- Spec / reference: [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - `compactionInterval = Duration(minutes: 5)`, `compactionOpThreshold = 500` — DM triggers compaction when either is exceeded.

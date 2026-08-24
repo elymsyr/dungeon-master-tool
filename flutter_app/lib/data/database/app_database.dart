@@ -12,8 +12,6 @@ import 'daos/entity_shares_dao.dart';
 import 'daos/installed_packages_dao.dart';
 import 'daos/map_pins_dao.dart';
 import 'daos/packages_dao.dart';
-import 'daos/personal_packages_dao.dart';
-import 'daos/sync_outbox_dao.dart';
 import 'daos/timeline_pins_dao.dart';
 import 'daos/trash_dao.dart';
 import 'daos/world_characters_dao.dart';
@@ -36,8 +34,6 @@ import 'tables/map_pins_table.dart';
 import 'tables/package_entities_table.dart';
 import 'tables/package_schemas_table.dart';
 import 'tables/packages_table.dart';
-import 'tables/personal_packages_table.dart';
-import 'tables/sync_outbox_table.dart';
 import 'tables/timeline_pins_table.dart';
 import 'tables/trash_items_table.dart';
 import 'tables/world_characters_table.dart';
@@ -77,12 +73,10 @@ part 'app_database.g.dart';
     WorldPackages,
     EntityShares,
     CharacterClaimPool,
-    PersonalPackages,
     Packages,
     PackageSchemas,
     PackageEntities,
     InstalledPackages,
-    SyncOutbox,
     TrashItems,
     Encounters,
     Combatants,
@@ -103,10 +97,8 @@ part 'app_database.g.dart';
     WorldPackagesDao,
     EntitySharesDao,
     CharacterClaimPoolDao,
-    PersonalPackagesDao,
     PackagesDao,
     InstalledPackagesDao,
-    SyncOutboxDao,
     TrashDao,
     CombatDao,
     MapPinsDao,
@@ -155,9 +147,16 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA mmap_size = 67108864'); // 64 MB
           await customStatement('PRAGMA foreign_keys = OFF');
           // F2+: drift-codegen kaçınmak için side-tables raw SQL ile
-          // idempotent kurulur (asset_refs, sync_telemetry, migration_progress,
-          // bm_mark_ops). Schema bump yok — IF NOT EXISTS.
+          // idempotent kurulur (asset_refs, migration_progress,
+          // lan_paired_devices). Schema bump yok — IF NOT EXISTS.
           for (final stmt in _sideTablesDDL) {
+            await customStatement(stmt);
+          }
+          // Bulut sync kaldırıldı: outbox/telemetry/personal-package tabloları
+          // artık yok. Mevcut v12 DB'lerde artık satırlar duruyor; burada
+          // düşürülür. schemaVersion 12'de KALIR — v13'e çıkmak her kullanıcının
+          // DB'sini `.legacy` yapıp sıfırlardı, oysa kaybolan tek şey ölü tablo.
+          for (final stmt in _retiredTablesDDL) {
             await customStatement(stmt);
           }
           // One-time repair: promote legacy `species` rows that are actually
@@ -262,10 +261,6 @@ const List<String> _v12Indexes = <String>[
   'CREATE INDEX IF NOT EXISTS idx_claim_pool_world_avail '
       'ON character_claim_pool (world_id, available)',
 
-  // personal_packages
-  'CREATE INDEX IF NOT EXISTS idx_personal_packages_owner '
-      'ON personal_packages (owner_id)',
-
   // packages catalog
   'CREATE INDEX IF NOT EXISTS idx_package_entities_package '
       'ON package_entities (package_id)',
@@ -282,12 +277,6 @@ const List<String> _v12Indexes = <String>[
   'CREATE INDEX IF NOT EXISTS idx_combatants_encounter '
       'ON combatants (encounter_id)',
 
-  // outbox — per-row coalescing
-  'CREATE INDEX IF NOT EXISTS idx_outbox_next_attempt '
-      'ON sync_outbox (next_attempt_at, created_at)',
-  'CREATE INDEX IF NOT EXISTS idx_outbox_table_pk '
-      'ON sync_outbox (target_table, target_pk, op_type)',
-
   // trash
   'CREATE INDEX IF NOT EXISTS idx_trash_kind_deleted '
       'ON trash_items (kind, deleted_at)',
@@ -298,9 +287,7 @@ const List<String> _v12Indexes = <String>[
 ///
 /// - `asset_refs` (F2): AssetRef → owner satır grafı; eviction sweeper
 ///   orphan tespiti için.
-/// - `sync_telemetry` (F12): latency histogram bucket'ları.
 /// - `migration_progress` (F11): raw-path migrator resume state.
-/// - `bm_mark_ops_local` (F8): server `world_battlemap_mark_ops` mirror'u.
 /// - `lan_paired_devices` (LAN sync v2): kalıcı cihaz eşleşmeleri. DB zaten
 ///   `users/{uid}/` altında olduğu için kayıtlar doğal olarak hesaba bağlı.
 const List<String> _sideTablesDDL = <String>[
@@ -319,16 +306,6 @@ const List<String> _sideTablesDDL = <String>[
       'ON asset_refs (owner_table, owner_id)',
   'CREATE INDEX IF NOT EXISTS idx_asset_refs_world ON asset_refs (world_id)',
 
-  // sync_telemetry — F12
-  'CREATE TABLE IF NOT EXISTS sync_telemetry ('
-      'metric TEXT NOT NULL, '
-      'bucket TEXT NOT NULL, '
-      'count INTEGER NOT NULL DEFAULT 0, '
-      'sum_ms INTEGER NOT NULL DEFAULT 0, '
-      'last_at INTEGER NOT NULL, '
-      'PRIMARY KEY (metric, bucket)'
-      ')',
-
   // migration_progress — F11
   'CREATE TABLE IF NOT EXISTS migration_progress ('
       'migration_name TEXT NOT NULL, '
@@ -338,20 +315,6 @@ const List<String> _sideTablesDDL = <String>[
       'updated_at INTEGER NOT NULL, '
       'PRIMARY KEY (migration_name, world_id)'
       ')',
-
-  // bm_mark_ops_local — F8 (server world_battlemap_mark_ops mirror)
-  'CREATE TABLE IF NOT EXISTS bm_mark_ops_local ('
-      'op_id TEXT NOT NULL PRIMARY KEY, '
-      'world_id TEXT NOT NULL, '
-      'encounter_id TEXT NOT NULL, '
-      'author_id TEXT NOT NULL, '
-      'kind TEXT NOT NULL, '
-      'payload_json TEXT NOT NULL, '
-      'seq INTEGER NOT NULL, '
-      'created_at INTEGER NOT NULL'
-      ')',
-  'CREATE INDEX IF NOT EXISTS idx_bm_ops_enc_seq '
-      'ON bm_mark_ops_local (world_id, encounter_id, seq)',
 
   // lan_paired_devices — LAN sync v2 (bkz. [[LAN-Sync-Flow]])
   // `shared_secret` iki cihazda aynıdır; `/pair` el sıkışmasında iki tarafın
@@ -364,6 +327,17 @@ const List<String> _sideTablesDDL = <String>[
       'paired_at INTEGER NOT NULL, '
       'last_seen_at INTEGER NOT NULL DEFAULT 0'
       ')',
+];
+
+/// Bulut sync ile birlikte emekliye ayrılan tablolar. `beforeOpen`'da
+/// düşürülür ki eski v12 dosyaları ölü veri taşımasın. Silme listesine bir
+/// şey eklemek serbest; buradan bir satır ÇIKARMAK ise eski kurulumlarda
+/// tabloyu geri getirmez — sadece artık temizliği durdurur.
+const List<String> _retiredTablesDDL = <String>[
+  'DROP TABLE IF EXISTS sync_outbox',
+  'DROP TABLE IF EXISTS sync_telemetry',
+  'DROP TABLE IF EXISTS bm_mark_ops_local',
+  'DROP TABLE IF EXISTS personal_packages',
 ];
 
 LazyDatabase _openConnection() => _openConnectionForUser(null);

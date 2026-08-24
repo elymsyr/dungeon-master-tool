@@ -6,13 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/connectivity_provider.dart';
 import '../../../application/providers/edit_mode_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
 import '../../../application/services/pdf_library_service.dart';
@@ -131,11 +129,6 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
       'Saving...',
       () async {
         await ref.read(pendingWriteBufferProvider).flush();
-        final online =
-            ref.read(connectivityStreamProvider).valueOrNull ?? false;
-        if (online) {
-          await ref.read(syncEngineProvider).forceTick();
-        }
       },
     );
     ref.invalidate(campaignListProvider);

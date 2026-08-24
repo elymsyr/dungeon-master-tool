@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_mirror_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-24
 tags: [file]
 ---
 
@@ -13,6 +13,9 @@ tags: [file]
 
 > [!abstract] Primary Purpose
 > The outbound Supabase push layer plus the self-echo / unpublish-guard bookkeeping. Wraps the `SupabaseClient`: `push*` methods write to the cloud mirror tables (some via direct `.upsert`, some via SECURITY-DEFINER RPCs), `fetchInitialState` / `fetchEntity` pull on subscribe, and a family of `_stamp` / `_isEcho` / `registerExpected*` helpers let `[[world_mirror_applier]]` decide whether an inbound CDC event is our own echo or a destructive event that should be suppressed.
+
+> [!warning] Push yüzeyi daraldı (2026-08-24)
+> 618 → ~300 satır. `pushEntity`, `deleteEntity`, `pushWorldState`, `pushMapData`, `pushSession`, `pushSettings`, `fetchEntity` ve tüm `*PersonalPackage*` / `*PersonalCharacter*` metotları silindi. Kalan doğrudan yazmalar: `pushCharacter`, `deleteCharacter`, `shareWorldPackage`, `unshareWorldPackage`, `fetchInitialState` + echo damgaları. Outbox aracılığı yok — çağıran doğrudan çağırır. Bkz. [[Share-Broadcast-Flow]].
 
 ## Inputs / Outputs
 **Inputs**
@@ -27,9 +30,9 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: `SupabaseClient`, [[world_sync_service]] (`WorldSyncEvent` type)
-- Used by: [[sync_engine]] (all push handlers), [[world_mirror_applier]] (echo/guard checks + `fetchEntity`/`fetchInitialState`), [[world_reconciler]] (`pushWorldState`)
+- Used by: `sync_engine.dart` (kaldırıldı) (all push handlers), [[world_mirror_applier]] (echo/guard checks + `fetchEntity`/`fetchInitialState`), `world_reconciler.dart` (kaldırıldı) (`pushWorldState`)
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 - Spec / reference: [[rpc-reference]], [[migrations-online-worlds]]
 
 ## Key Logic / Variables

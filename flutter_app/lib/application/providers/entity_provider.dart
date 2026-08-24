@@ -10,7 +10,6 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
-import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_group.dart';
@@ -25,12 +24,10 @@ import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
-import 'online_worlds_provider.dart';
 import 'package_link_provider.dart' show packageReferenceOverlayProvider;
 import 'role_provider.dart';
 import 'auth_provider.dart';
 import 'save_state_provider.dart';
-import 'sync_engine_provider.dart';
 import 'ui_state_provider.dart';
 
 const _uuid = Uuid();
@@ -653,21 +650,6 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       },
       campaignId: _campaignId,
     ));
-    // Remote mirror — routed through outbox. DM-only (RLS rejects player
-    // writes). Engine drops 42501 + PGRST116 if a stale enqueue slips.
-    final worldId = _campaignId;
-    final isDm =
-        _ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
-    if (worldId != null &&
-        isDm &&
-        _ref.read(authProvider) != null &&
-        _ref.read(onlineWorldIdsProvider).contains(worldId)) {
-      // ignore: discarded_futures
-      _ref.read(syncEngineProvider).enqueueWorldEntityDelete(
-            worldId: worldId,
-            entityId: entityId,
-          );
-    }
     return true;
   }
 
@@ -733,29 +715,15 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
     final row = _entityToMap(entity);
     // In-memory map hemen güncellenir (UI watcher'lar latest'i görür);
-    // Drift write + outbox enqueue buffer'a delegate edilir.
+    // Drift write buffer'a delegate edilir.
     entities[entity.id] = row;
 
     final worldId = _campaignId;
-    final isDm =
-        _ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
-    final shouldEnqueue = worldId != null &&
-        isDm &&
-        _ref.read(authProvider) != null &&
-        _ref.read(onlineWorldIdsProvider).contains(worldId);
-
     _buffer.schedule(
       key: 'entity:${worldId ?? "local"}:${entity.id}',
       kind: kind,
       action: () async {
         await _campaign.saveEntity(entity.id, row);
-        if (shouldEnqueue) {
-          await _ref.read(syncEngineProvider).enqueueWorldEntityUpsert(
-                worldId: worldId,
-                entityId: entity.id,
-                entityMap: row,
-              );
-        }
         // F3: AssetRef grafını DAO write commit sonrası güncelle.
         _ref.read(referenceIndexerProvider).scheduleReindex(
               table: 'world_entities',
@@ -793,25 +761,34 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     );
   }
 
-  Map<String, dynamic> _entityToMap(Entity e) {
-    return {
-      'name': e.name,
-      'type': e.categorySlug,
-      'source': e.source,
-      'description': e.description,
-      'images': e.images,
-      'image_path': e.imagePath,
-      'tags': e.tags,
-      'dm_notes': e.dmNotes,
-      'pdfs': e.pdfs,
-      'location_id': e.locationId,
-      'attributes': e.fields,
-      if (e.packageId != null) 'package_id': e.packageId,
-      if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
-      if (e.linked) 'linked': true,
-    };
-  }
+  Map<String, dynamic> _entityToMap(Entity e) => entityToRaw(e);
+}
 
+/// Serializes an [Entity] back to the raw `{type, attributes, ...}` wire shape
+/// held in the campaign blob's `entities` map — the exact inverse of
+/// [entityFromRaw].
+///
+/// Bu şekil aynı zamanda `entity_shares.payload_json`'ın da şekli: DM bir kartı
+/// paylaştığında oyuncuya giden şey budur, oyuncu da doğrudan kendi blob'una
+/// yazar. İkisinin aynı fonksiyondan geçmesi, paylaşımın DM'in gördüğü kartla
+/// birebir aynı olmasını garanti eder.
+Map<String, dynamic> entityToRaw(Entity e) {
+  return {
+    'name': e.name,
+    'type': e.categorySlug,
+    'source': e.source,
+    'description': e.description,
+    'images': e.images,
+    'image_path': e.imagePath,
+    'tags': e.tags,
+    'dm_notes': e.dmNotes,
+    'pdfs': e.pdfs,
+    'location_id': e.locationId,
+    'attributes': e.fields,
+    if (e.packageId != null) 'package_id': e.packageId,
+    if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
+    if (e.linked) 'linked': true,
+  };
 }
 
 /// Parses a raw campaign/package entity map (the `{type, attributes, ...}` wire

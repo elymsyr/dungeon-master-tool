@@ -591,10 +591,15 @@ final marketplaceFilterProvider = StateProvider<String>((ref) {
   return ref.watch(marketplaceFiltersProvider).type;
 });
 
+/// Marketplace listeleri herkese açık — hesapsız kullanıcı da gezinir.
+/// `marketplace_listings` RLS SELECT'i zaten `USING (true)`; kapı indirmede:
+/// payload bucket'ı `authenticated` politikası altında (bkz.
+/// `MarketplaceListingNotifier.downloadAsNewCopy`).
 final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  final auth = ref.watch(authProvider);
-  if (auth == null) return const [];
+  // authProvider watch'ı KALIR: giriş/çıkışta liste tazelensin (sahiplik
+  // rozeti, kendi listing'i). Ama null artık boş liste demek değil.
+  ref.watch(authProvider);
   final filters = ref.watch(marketplaceFiltersProvider);
   return cachedFetch(
     ref: ref,

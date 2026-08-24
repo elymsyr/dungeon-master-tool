@@ -28,7 +28,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[worker_jwt]], [[worker_rls]], [[worker_rate_limit]], [[rpc-reference]], [[migrations-media-storage]]
-- Used by: [[entity_image_upload]], [[free_media_service]], [[edge-beta-purge]], [[wrangler_config]]
+- Used by: [[entity_image_upload]], [[free_media_service]], `beta_purge_with_cleanup` edge fn (kaldırıldı), [[wrangler_config]]
 - Domain map: [[Backend-Infra]]
 - System flow: [[Media-Storage-Tiers]]
 - Spec / reference: [[migrations-security]]

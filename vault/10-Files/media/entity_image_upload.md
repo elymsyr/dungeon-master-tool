@@ -29,11 +29,11 @@ tags: [file]
 - Events emitted: forces a sync tick (`syncEngineProvider.forceTick`) and flushes outbox prefix `entity:`.
 
 ## Dependencies & Links
-- Depends on: [[local_media_localizer]], [[entity_media_cleanup_service]], [[auth_provider]], [[campaign_provider]], [[sync_engine]], [[pending_write_buffer]], `domain/value_objects/asset_ref.dart`, `domain/value_objects/media_kind.dart`, `image_upload_helper.dart` (`uploadEntityImageRef`), plus `betaProvider`/`activePackageProvider`/`onlineWorldsProvider` (not in allow-list → plain text)
+- Depends on: [[local_media_localizer]], [[entity_media_cleanup_service]], [[auth_provider]], [[campaign_provider]], `sync_engine.dart` (kaldırıldı), [[pending_write_buffer]], `domain/value_objects/asset_ref.dart`, `domain/value_objects/media_kind.dart`, `image_upload_helper.dart` (`uploadEntityImageRef`), plus `betaProvider`/`activePackageProvider`/`onlineWorldsProvider` (not in allow-list → plain text)
 - Used by: entity editor / entity card image pickers
 - Domain map: [[Media-and-Assets]]
 - System flow: [[Media-Storage-Tiers]]
-- Spec / reference: [[CDC-Sync-Flow]]
+- Spec / reference: [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - **`kMaxEntityImages = 5`** — cap per entity image collection (portrait gallery `entity.images` and each schema image field).

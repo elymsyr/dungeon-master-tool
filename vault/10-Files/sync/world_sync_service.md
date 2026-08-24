@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/world_sync_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-24
 tags: [file]
 ---
 
@@ -13,6 +13,9 @@ tags: [file]
 
 > [!abstract] Primary Purpose
 > World-scoped Supabase Realtime orchestrator. Subscribes a live online world to its Supabase mirror tables, emits inbound CDC events on a merged broadcast stream, and manages channel lifecycle (resubscribe with backoff, channel cap). The inbound half of the sync spine — outbound mirroring lives in [[world_mirror_service]].
+
+> [!warning] `_mirrorTables` beşe indi (2026-08-24)
+> `world_projection`, `entity_shares`, `world_characters`, `world_packages`, `world_members` (+ `worlds`, id filtresiyle). `world_entities` / `world_map_data` / `world_sessions` / `world_settings` / `world_mind_map_*` abonelikleri kaldırıldı. **Bu listeye tablo eklemek, oyuncunun cihazına DM'in paylaşmadığı veri göndermek demektir.** Bkz. [[Share-Broadcast-Flow]].
 
 ## Inputs / Outputs
 **Inputs**
@@ -28,7 +31,7 @@ tags: [file]
 - Depends on: `SupabaseClient`.
 - Used by: [[world_mirror_applier]] (applies events), [[world_mirror_service]] (`WorldSyncEvent` type).
 - Domain map: [[Sync-and-Realtime]]
-- System flow: [[CDC-Sync-Flow]]
+- System flow: [[Share-Broadcast-Flow]]
 
 ## Key Logic / Variables
 - `postgres_changes` does **not** replay events missed during a disconnect → `onSubscribed` fires on first connect **and every reconnect** to trigger a catch-up (initial state + roster). Idempotent: a 2nd `subscribe` for the same world fires the callback immediately via `scheduleMicrotask`.

@@ -37,7 +37,7 @@ class WorldMirrorService {
   /// outbox retry'ı için hata yukarı çıkmalı).
   void _logMirrorError(String label, Object e) {
     if (isOfflineError(e)) {
-      debugPrint('$label skipped: offline');
+      debugPrint('$label skipped: offline ($e)');
     } else {
       debugPrint('$label error: $e');
     }
@@ -86,7 +86,7 @@ class WorldMirrorService {
   void clearExpectedUnpublish(String worldId) =>
       _expectedUnpublish.remove(worldId);
 
-  /// charId → expiry timestamp (ms). `leave_beta` orphan online karakterleri
+  /// charId → expiry timestamp (ms). Make Offline orphan online karakterleri
   /// sunucudan silerken DM lokal kopyayı tutmak ister; bu set'teyken
   /// `applyCharacterCdc` DELETE event'inde lokal removeMirror/dropMirror
   /// çağrısı ATLANIR. [_unpublishGuardMs] sonra kendiliğinden expire.
@@ -111,68 +111,6 @@ class WorldMirrorService {
       _expectedCharDelete.remove(characterId);
 
   // ── Entities (DM-only writes) ──────────────────────────────────────
-
-  /// Single-entity upsert. F4 retired the bulk `pushEntities` path —
-  /// every entity edit flows through the outbox per-row.
-  Future<void> pushEntity({
-    required String worldId,
-    required String entityId,
-    required Map<String, dynamic> entityMap,
-  }) async {
-    _stamp(entityId);
-    try {
-      await client
-          .from('world_entities')
-          .upsert(_entityRow(worldId, entityId, entityMap));
-    } catch (e) {
-      _logMirrorError('pushEntity', e);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteEntity({
-    required String worldId,
-    required String entityId,
-  }) async {
-    _stamp(entityId);
-    try {
-      await client.from('world_entities').delete().eq('id', entityId);
-    } catch (e) {
-      _logMirrorError('deleteEntity', e);
-      rethrow;
-    }
-  }
-
-  Map<String, dynamic> _entityRow(
-    String worldId,
-    String entityId,
-    Map<String, dynamic> m,
-  ) {
-    return {
-      'id': entityId,
-      'world_id': worldId,
-      'category_slug': _categoryFor(m),
-      'name': (m['name'] as String?) ?? 'Unknown',
-      'source': (m['source'] as String?) ?? '',
-      'description': (m['description'] as String?) ?? '',
-      'image_path': (m['image_path'] as String?) ?? '',
-      'images_json': jsonEncode(m['images'] ?? const []),
-      'tags_json': jsonEncode(m['tags'] ?? const []),
-      'dm_notes': (m['dm_notes'] as String?) ?? '',
-      'pdfs_json': jsonEncode(m['pdfs'] ?? const []),
-      'location_id': m['location_id'],
-      'fields_json': jsonEncode(m['attributes'] ?? m['fields'] ?? const {}),
-      'package_id': m['package_id'] as String?,
-      'package_entity_id': m['package_entity_id'],
-      'linked': (m['linked'] as bool?) ?? false,
-    };
-  }
-
-  String _categoryFor(Map<String, dynamic> m) {
-    final t = (m['type'] as String?) ?? (m['categorySlug'] as String?);
-    if (t == null) return 'npc';
-    return t.toLowerCase().replaceAll(' ', '-');
-  }
 
   // ── Characters (DM full + player own) ──────────────────────────────
 
@@ -210,34 +148,6 @@ class WorldMirrorService {
 
   // ── World state (campaign blob) ────────────────────────────────────
 
-  /// state_json yalnızca DM yazar. Player için RLS engeller.
-  Future<void> pushWorldState({
-    required String worldId,
-    required String worldName,
-    String? templateId,
-    String? templateHash,
-    required String stateJson,
-  }) async {
-    _stamp(worldId);
-    // publish_world RPC (SECURITY DEFINER, row_security off) upsert eder ve
-    // owner_id'yi auth.uid()'den çeker — UPSERT/RLS gürültüsünü engeller.
-    try {
-      await client.rpc(
-        'publish_world',
-        params: {
-          'p_world_id': worldId,
-          'p_world_name': worldName,
-          'p_template_id': templateId,
-          'p_template_hash': templateHash,
-          'p_state_json': stateJson,
-        },
-      );
-    } catch (e) {
-      _logMirrorError('pushWorldState', e);
-      rethrow;
-    }
-  }
-
   // ── Granular world state (PR-SYNC-3) ───────────────────────────────
   //
   // worlds.state_json was a monolithic blob; map drag / session note edits
@@ -247,75 +157,6 @@ class WorldMirrorService {
   // through these methods. DM dual-writes worlds.state_json for now —
   // PR-SYNC-6 retires the legacy path once players are on granular reads.
 
-  Future<void> pushMapData({
-    required String worldId,
-    required Map<String, dynamic> data,
-  }) async {
-    _stamp('mapdata:$worldId');
-    try {
-      await client.from('world_map_data').upsert({
-        'world_id': worldId,
-        'data_json': jsonEncode(data),
-      });
-    } catch (e) {
-      _logMirrorError('pushMapData', e);
-      rethrow;
-    }
-  }
-
-  Future<void> pushSession({
-    required String worldId,
-    required String sessionId,
-    required String name,
-    required Map<String, dynamic> data,
-    bool isActive = false,
-    int sortOrder = 0,
-  }) async {
-    _stamp('session:$sessionId');
-    try {
-      await client.from('world_sessions').upsert({
-        'id': sessionId,
-        'world_id': worldId,
-        'name': name,
-        'data_json': jsonEncode(data),
-        'is_active': isActive,
-        'sort_order': sortOrder,
-      });
-    } catch (e) {
-      _logMirrorError('pushSession', e);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteSession({required String sessionId}) async {
-    _stamp('session:$sessionId');
-    try {
-      await client.from('world_sessions').delete().eq('id', sessionId);
-    } catch (e) {
-      _logMirrorError('deleteSession', e);
-      rethrow;
-    }
-  }
-
-  Future<void> pushSettings({
-    required String worldId,
-    required Map<String, dynamic> settings,
-  }) async {
-    _stamp('settings:$worldId');
-    try {
-      await client.from('world_settings').upsert({
-        'world_id': worldId,
-        'settings_json': jsonEncode(settings),
-      });
-    } catch (e) {
-      _logMirrorError('pushSettings', e);
-      rethrow;
-    }
-  }
-
-  bool isEchoOfMapData(String worldId) => _isEcho('mapdata:$worldId');
-  bool isEchoOfSession(String sessionId) => _isEcho('session:$sessionId');
-  bool isEchoOfSettings(String worldId) => _isEcho('settings:$worldId');
 
   // ── Initial fetch on subscribe ─────────────────────────────────────
 
@@ -326,108 +167,46 @@ class WorldMirrorService {
   /// alanları (battle_maps, mind_maps, metadata, …) ve dedicated mind_map
   /// tablolarındaki node/edge'leri Device B world open'ında tek seferde
   /// hydrate eder.
+  /// Dünya açılışında tek seferlik seed — DM'in paylaşım kanalındaki her şey.
+  ///
+  /// Tam dünya aynası yok: entity/harita/oturum/ayar/mind-map tabloları
+  /// kaldırıldı. Geriye kalan üçü, oyuncunun bağlandığında görmesi gereken
+  /// birikmiş durum: paylaşılan kartlar, karakterler ve canlı yayın manifesti.
+  /// CDC yalnızca bundan SONRAKİ değişimleri taşır, o yüzden bu seed şart.
   Future<
     ({
-      List<Map<String, dynamic>> entities,
       List<Map<String, dynamic>> characters,
-      Map<String, dynamic>? mapData,
-      List<Map<String, dynamic>> sessions,
-      Map<String, dynamic>? settings,
-      Map<String, dynamic>? worldRow,
-      List<Map<String, dynamic>> mindMapNodes,
-      List<Map<String, dynamic>> mindMapEdges,
+      List<Map<String, dynamic>> shares,
+      Map<String, dynamic>? projection,
     })
   >
   fetchInitialState(String worldId) async {
     try {
-      final entitiesRaw = await client
-          .from('world_entities')
-          .select()
-          .eq('world_id', worldId);
       final charactersRaw = await client
           .from('world_characters')
           .select()
           .eq('world_id', worldId);
-      final mapDataRaw = await client
-          .from('world_map_data')
+      final sharesRaw = await client
+          .from('entity_shares')
+          .select()
+          .eq('world_id', worldId);
+      final projectionRaw = await client
+          .from('world_projection')
           .select()
           .eq('world_id', worldId)
           .maybeSingle();
-      final sessionsRaw = await client
-          .from('world_sessions')
-          .select()
-          .eq('world_id', worldId);
-      final settingsRaw = await client
-          .from('world_settings')
-          .select()
-          .eq('world_id', worldId)
-          .maybeSingle();
-      final worldRowRaw = await client
-          .from('worlds')
-          .select('id, world_name, updated_at, state_json')
-          .eq('id', worldId)
-          .maybeSingle();
-      final mindNodesRaw = await client
-          .from('world_mind_map_nodes')
-          .select()
-          .eq('world_id', worldId);
-      final mindEdgesRaw = await client
-          .from('world_mind_map_edges')
-          .select()
-          .eq('world_id', worldId);
-      final List<Map<String, dynamic>> entities = (entitiesRaw as List)
-          .cast<Map<String, dynamic>>();
-      final List<Map<String, dynamic>> characters = (charactersRaw as List)
-          .cast<Map<String, dynamic>>();
-      final List<Map<String, dynamic>> sessions = (sessionsRaw as List)
-          .cast<Map<String, dynamic>>();
-      final List<Map<String, dynamic>> mindNodes = (mindNodesRaw as List)
-          .cast<Map<String, dynamic>>();
-      final List<Map<String, dynamic>> mindEdges = (mindEdgesRaw as List)
-          .cast<Map<String, dynamic>>();
       return (
-        entities: entities,
-        characters: characters,
-        mapData: mapDataRaw,
-        sessions: sessions,
-        settings: settingsRaw,
-        worldRow: worldRowRaw,
-        mindMapNodes: mindNodes,
-        mindMapEdges: mindEdges,
+        characters: (charactersRaw as List).cast<Map<String, dynamic>>(),
+        shares: (sharesRaw as List).cast<Map<String, dynamic>>(),
+        projection: projectionRaw,
       );
     } catch (e) {
       _logMirrorError('fetchInitialState', e);
       return (
-        entities: const <Map<String, dynamic>>[],
         characters: const <Map<String, dynamic>>[],
-        mapData: null,
-        sessions: const <Map<String, dynamic>>[],
-        settings: null,
-        worldRow: null,
-        mindMapNodes: const <Map<String, dynamic>>[],
-        mindMapEdges: const <Map<String, dynamic>>[],
+        shares: const <Map<String, dynamic>>[],
+        projection: null,
       );
-    }
-  }
-
-  /// Tek bir world_entities satırını çeker. entity_shares INSERT CDC'sinden
-  /// sonra applier yeni paylaşılan entity'nin verisini buradan alır — paylaşım
-  /// world_entities satırını değiştirmediği için o satır için CDC event'i
-  /// çıkmaz. RLS: player bu satırı ancak paylaşım sonrası görebilir.
-  Future<Map<String, dynamic>?> fetchEntity({
-    required String worldId,
-    required String entityId,
-  }) async {
-    try {
-      return await client
-          .from('world_entities')
-          .select()
-          .eq('id', entityId)
-          .eq('world_id', worldId)
-          .maybeSingle();
-    } catch (e) {
-      _logMirrorError('fetchEntity', e);
-      return null;
     }
   }
 
@@ -449,71 +228,12 @@ class WorldMirrorService {
 
   // ── Personal (per-user) sync — characters ──────────────────────────
 
-  Future<void> pushPersonalCharacter(Character character) async {
-    _stamp(character.id);
-    try {
-      await client.rpc(
-        'publish_personal_character',
-        params: {
-          'p_id': character.id,
-          'p_payload_json': jsonEncode(character.toJson()),
-        },
-      );
-    } catch (e) {
-      _logMirrorError('pushPersonalCharacter', e);
-    }
-  }
-
-  Future<void> unpublishPersonalCharacter(String characterId) async {
-    _stamp(characterId);
-    try {
-      await client.rpc(
-        'unpublish_personal_character',
-        params: {'p_id': characterId},
-      );
-    } catch (e) {
-      _logMirrorError('unpublishPersonalCharacter', e);
-    }
-  }
-
   // ── Personal (per-user) sync — packages ────────────────────────────
   //
   // Package key UUID değil string (paket adı). Entity UUID'leriyle
   // collision olmaması için echo stamp'i `pkg:<name>` prefix'i ile alırız.
 
   static String _packageEchoKey(String packageName) => 'pkg:$packageName';
-
-  Future<void> pushPersonalPackage({
-    required String packageName,
-    required Map<String, dynamic> state,
-  }) async {
-    _stamp(_packageEchoKey(packageName));
-    try {
-      await client.rpc(
-        'publish_personal_package',
-        params: {
-          'p_package_name': packageName,
-          'p_state_json': jsonEncode(state),
-        },
-      );
-    } catch (e) {
-      _logMirrorError('pushPersonalPackage', e);
-      rethrow;
-    }
-  }
-
-  Future<void> unpublishPersonalPackage(String packageName) async {
-    _stamp(_packageEchoKey(packageName));
-    try {
-      await client.rpc(
-        'unpublish_personal_package',
-        params: {'p_package_name': packageName},
-      );
-    } catch (e) {
-      _logMirrorError('unpublishPersonalPackage', e);
-      rethrow;
-    }
-  }
 
   bool isEchoOfPackage(String packageName) =>
       _isEcho(_packageEchoKey(packageName));
@@ -525,46 +245,6 @@ class WorldMirrorService {
 
   static String _personalPkgEntityEchoKey(String packageName, String id) =>
       'ppe:$packageName:$id';
-
-  Future<void> pushPersonalPackageEntity({
-    required String packageName,
-    required String entityId,
-    required Map<String, dynamic> entityMap,
-  }) async {
-    _stamp(_personalPkgEntityEchoKey(packageName, entityId));
-    try {
-      await client.rpc(
-        'publish_personal_package_entity',
-        params: {
-          'p_package_name': packageName,
-          'p_entity_id': entityId,
-          'p_payload_json': jsonEncode(entityMap),
-        },
-      );
-    } catch (e) {
-      _logMirrorError('pushPersonalPackageEntity', e);
-      rethrow;
-    }
-  }
-
-  Future<void> deletePersonalPackageEntity({
-    required String packageName,
-    required String entityId,
-  }) async {
-    _stamp(_personalPkgEntityEchoKey(packageName, entityId));
-    try {
-      await client.rpc(
-        'delete_personal_package_entity',
-        params: {
-          'p_package_name': packageName,
-          'p_entity_id': entityId,
-        },
-      );
-    } catch (e) {
-      _logMirrorError('deletePersonalPackageEntity', e);
-      rethrow;
-    }
-  }
 
   bool isEchoOfPersonalPackageEntity(String packageName, String entityId) =>
       _isEcho(_personalPkgEntityEchoKey(packageName, entityId));

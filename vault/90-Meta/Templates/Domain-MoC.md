@@ -15,7 +15,7 @@ tags: [moc]
 - [[sync_outbox_dao]] — one-line role
 
 ## Data Flow
-Short narrative of how data moves through this domain. Link the deep-dive: [[CDC-Sync-Flow]].
+Short narrative of how data moves through this domain. Link the deep-dive: [[Share-Broadcast-Flow]].
 
 ## Related Domains
 - [[Data-Layer]], [[Backend-Infra]]

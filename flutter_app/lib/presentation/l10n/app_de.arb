@@ -50,7 +50,13 @@
   "templateSaveUpdate": "Aktualisieren",
   "templateDriftTitle": "Vorlage-Update verfügbar",
   "templateDriftBody": "Die Vorlage \"{templateName}\" wurde seit der letzten Synchronisation aktualisiert.",
-  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "@templateDriftBody": {
+    "placeholders": {
+      "templateName": {
+        "type": "String"
+      }
+    }
+  },
   "templateDriftIgnore": "Ignorieren",
   "templateDriftUpdate": "Aktualisieren",
   "templateDriftUpToDate": "Vorlage ist aktuell",
@@ -62,9 +68,21 @@
   "packageName": "Paketname",
   "packageDelete": "Paket löschen",
   "packageDeleteConfirm": "Möchten Sie \"{name}\" wirklich löschen?\n\nDas Paket wird in den Papierkorb verschoben und nach 30 Tagen automatisch gelöscht.",
-  "@packageDeleteConfirm": { "placeholders": { "name": { "type": "String" } } },
+  "@packageDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageEntityCount": "{count} Einträge",
-  "@packageEntityCount": { "placeholders": { "count": { "type": "int" } } },
+  "@packageEntityCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "packageLinksTitle": "Verknüpfte Pakete",
   "packageLinksTooltip": "Verknüpfte Pakete",
   "packageLinksHint": "Verknüpfte Pakete bleiben eigenständig, ihr Inhalt erscheint aber hier und folgt diesem Paket in Welten und Downloads.",
@@ -72,16 +90,49 @@
   "packageLinksSection": "Verknüpft",
   "packageLinksAvailableSection": "Verknüpfbar",
   "packageLinksIndirect": "über {name}",
-  "@packageLinksIndirect": { "placeholders": { "name": { "type": "String" } } },
+  "@packageLinksIndirect": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageLinksMissing": "Nicht installiert",
   "packageLinksCycle": "\"{name}\" kann nicht verknüpft werden — es verknüpft dieses Paket bereits.",
-  "@packageLinksCycle": { "placeholders": { "name": { "type": "String" } } },
+  "@packageLinksCycle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "packageLinkedAlsoInstalled": "{count} verknüpfte(s) Paket(e) ebenfalls installiert.",
-  "@packageLinkedAlsoInstalled": { "placeholders": { "count": { "type": "int" } } },
+  "@packageLinkedAlsoInstalled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "packageDeleteLinkedWarning": "{count} Paket(e) verknüpfen dieses: {names}. Ihre Verknüpfungen laufen ins Leere.",
-  "@packageDeleteLinkedWarning": { "placeholders": { "count": { "type": "int" }, "names": { "type": "String" } } },
+  "@packageDeleteLinkedWarning": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
   "packageUpdateTo": "Auf v{version} aktualisieren",
-  "@packageUpdateTo": { "placeholders": { "version": { "type": "String" } } },
+  "@packageUpdateTo": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "packageAlreadyExists": "Paket existiert bereits",
   "noPackages": "Keine Pakete gefunden.",
   "importPackage": "Paket importieren",
@@ -92,19 +143,48 @@
   "importCompatWarning": "Kompatibel mit Unterschieden",
   "importCompatIncompatible": "Inkompatibel",
   "importSuccess": "{count} Einträge importiert",
-  "@importSuccess": { "placeholders": { "count": { "type": "int" } } },
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "importFieldsMissing": "Fehlende Felder (Standardwerte werden verwendet)",
   "importFieldsExtra": "Zusätzliche Felder (werden übersprungen)",
   "importNoCompatible": "Keine kompatiblen Pakete für die Vorlage dieser Welt gefunden.",
   "importConfirmTitle": "\"{name}\" importieren?",
-  "@importConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@importConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "importConfirmBody": "Dies fügt {count} Einträge zu Ihrer Welt hinzu.",
-  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "@importConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "oauthSignInFailed": "Anmeldung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder stellen Sie sicher, dass die Redirect-URL in Ihrem Supabase-Projekt konfiguriert ist.\n(Redirect-URL: {redirectUrl})",
-  "@oauthSignInFailed": { "placeholders": { "redirectUrl": { "type": "String" } } },
+  "@oauthSignInFailed": {
+    "placeholders": {
+      "redirectUrl": {
+        "type": "String"
+      }
+    }
+  },
   "authStreamError": "Authentifizierungsfehler: {error}",
-  "@authStreamError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@authStreamError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "landingSubtitle": "Erstelle ein Konto, um Online-Funktionen freizuschalten.",
   "landingAccountBanned": "Konto gesperrt",
   "landingOk": "OK",
@@ -133,7 +213,6 @@
   "mediaQuotaFull": "Speicherkontingent voll — Bild auf diesem Gerät gespeichert.",
   "mediaImageLimitReached": "Bis zu {count} Bilder pro Eintrag.",
   "mediaImageTooLarge": "Bild zu groß ({actual} MB, Limit {max} MB) — auf diesem Gerät gespeichert, nicht in der Cloud gesichert.",
-
   "hubBtnMarketplace": "Marktplatz",
   "hubTooltipRefresh": "Aus Cloud aktualisieren",
   "hubTooltipFilter": "Filter",
@@ -143,13 +222,24 @@
   "hubFilterEmpty": "Nichts zu filtern",
   "hubFilterNoResults": "Keine Einträge entsprechen dem Filter",
   "hubErrorGeneric": "Fehler: {error}",
-  "@hubErrorGeneric": { "placeholders": { "error": { "type": "String" } } },
-
+  "@hubErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsHeading": "Welten",
   "worldsBtnJoin": "Beitreten",
   "worldsSubtitle": "Wähle oder erstelle eine Kampagnenwelt.",
   "worldsEmpty": "Keine Kampagnen gefunden.\n{path}",
-  "@worldsEmpty": { "placeholders": { "path": { "type": "String" } } },
+  "@worldsEmpty": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "worldsBtnLoad": "Welt laden",
   "worldsNoTemplatesTitle": "Keine Vorlagen installiert",
   "worldsNoTemplatesBody": "Du brauchst mindestens eine Vorlage, um eine Welt zu erstellen. Besuche den Marktplatz, um eine zu installieren.",
@@ -160,36 +250,89 @@
   "worldsLeaveTitle": "Welt verlassen",
   "worldsDeleteTitle": "Welt löschen",
   "worldsLeaveBody": "Du verlässt \"{name}\" und alle Charaktere, die du besessen hast, werden wieder beanspruchbar. Die lokale Kopie dieser Welt wird von diesem Gerät gelöscht. Deine Charakter-Kopien bleiben in deiner Bibliothek.",
-  "@worldsLeaveBody": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsLeaveBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeleteBody": "Möchtest du \"{name}\" wirklich löschen?\n\nDie Welt wird in den Papierkorb verschoben und nach 30 Tagen automatisch gelöscht.",
-  "@worldsDeleteBody": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeleteMarketplaceWarning": "Diese Welt hat Marktplatz-Einträge. Sie werden dauerhaft entfernt und können nicht wiederhergestellt werden.",
   "packageDeleteMarketplaceWarning": "Dieses Paket hat Marktplatz-Einträge. Sie werden dauerhaft entfernt und können nicht wiederhergestellt werden.",
   "charDeleteMarketplaceWarning": "Dieser Charakter hat Marktplatz-Einträge. Sie werden dauerhaft entfernt und können nicht wiederhergestellt werden.",
   "worldsBtnLeave": "Verlassen",
   "worldsDeleteFailed": "Löschen fehlgeschlagen: {error}",
-  "@worldsDeleteFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@worldsDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsLeftSnack": "\"{name}\" verlassen. Lokale Kopie entfernt.",
-  "@worldsLeftSnack": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsLeftSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsDeletedCloudSnack": "Welt in den Papierkorb verschoben. Cloud-Kopie entfernt.",
   "worldsDeletedSnack": "Welt in den Papierkorb verschoben.",
   "worldsOpenFailed": "Welt \"{name}\" konnte nicht geöffnet werden",
-  "@worldsOpenFailed": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsOpenFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsLoadFailed": "Kampagne konnte nicht geladen werden: {error}",
-  "@worldsLoadFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@worldsLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "worldsUnknownTemplate": "Unbekannt",
   "worldsSettingsTitle": "{name} — Einstellungen",
-  "@worldsSettingsTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsSettingsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsTemplateLine": "Vorlage: {name}",
-  "@worldsTemplateLine": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsTemplateLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsAlreadyExists": "Welt existiert bereits",
   "worldsInstallTemplate": "Installiere eine Vorlage vom Marktplatz, bevor du eine Welt erstellst",
   "worldsCreatingLoad": "Welt \"{name}\" wird erstellt...",
-  "@worldsCreatingLoad": { "placeholders": { "name": { "type": "String" } } },
+  "@worldsCreatingLoad": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "worldsRoleBadgeDm": "Online · DM",
   "worldsRoleBadgePlayer": "Online · Spieler",
   "worldsRoleBadgeNone": "Online",
-
   "charactersHeading": "Charaktere",
   "charactersSubtitle": "Öffne oder verwalte deine Charaktere.",
   "charactersEmpty": "Noch keine Charaktere.",
@@ -198,29 +341,90 @@
   "charPullingWorld": "Welt wird heruntergeladen...",
   "charWorldNotFound": "Welt des Charakters lokal nicht gefunden.",
   "charWorldMissingOnDisk": "Welt \"{name}\" nicht auf der Festplatte gefunden — Charakter kann nicht geöffnet werden.",
-  "@charWorldMissingOnDisk": { "placeholders": { "name": { "type": "String" } } },
+  "@charWorldMissingOnDisk": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charDeleteTitle": "Charakter löschen",
   "charReleaseTitle": "Charakter freigeben",
   "charDeleteBody": "\"{name}\" löschen? Dies kann nicht rückgängig gemacht werden.",
-  "@charDeleteBody": { "placeholders": { "name": { "type": "String" } } },
+  "@charDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyInWorldNamed": "\"{name}\" in \"{world}\" freigeben? Der Charakter bleibt in der Welt und kann erneut beansprucht werden. Er verschwindet aus deinem Charaktere-Tab.",
-  "@charReleaseBodyInWorldNamed": { "placeholders": { "name": { "type": "String" }, "world": { "type": "String" } } },
+  "@charReleaseBodyInWorldNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "world": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyInWorldUnnamed": "\"{name}\" freigeben? Der Charakter bleibt in der Welt und kann erneut beansprucht werden. Er verschwindet aus deinem Charaktere-Tab.",
-  "@charReleaseBodyInWorldUnnamed": { "placeholders": { "name": { "type": "String" } } },
+  "@charReleaseBodyInWorldUnnamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charReleaseBodyNoWorld": "\"{name}\" freigeben? Du gibst den Besitz auf; der Charakter wird gelöscht, da er keine Welt hat.",
-  "@charReleaseBodyNoWorld": { "placeholders": { "name": { "type": "String" } } },
+  "@charReleaseBodyNoWorld": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charSettingsTitle": "{name} — Einstellungen",
-  "@charSettingsTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@charSettingsTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charTemplateLine": "Vorlage: {name}",
-  "@charTemplateLine": { "placeholders": { "name": { "type": "String" } } },
+  "@charTemplateLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "charWorldLine": "Welt: {label}",
-  "@charWorldLine": { "placeholders": { "label": { "type": "String" } } },
+  "@charWorldLine": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "charLastEdited": "Zuletzt bearbeitet: {when}",
-  "@charLastEdited": { "placeholders": { "when": { "type": "String" } } },
-
+  "@charLastEdited": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "selectorEmpty": "Keine Kampagnen gefunden in:\n{path}",
-  "@selectorEmpty": { "placeholders": { "path": { "type": "String" } } },
-
+  "@selectorEmpty": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "mainBackToHub": "Zurück zum Hub",
   "worldExitConfirmTitle": "Diese Welt verlassen?",
   "worldExitConfirmBody": "Ausstehende Änderungen werden gespeichert, bevor zur Übersicht zurückgekehrt wird.",
@@ -253,11 +457,22 @@
   "mainOpenSoundpad": "Soundpad öffnen",
   "mainCloseCharacters": "Charaktere schließen",
   "mainOpenCharacters": "Charaktere öffnen",
-
   "sessionRound": "Runde {n}",
-  "@sessionRound": { "placeholders": { "n": { "type": "int" } } },
+  "@sessionRound": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "sessionRoundShort": "R{n}",
-  "@sessionRoundShort": { "placeholders": { "n": { "type": "int" } } },
+  "@sessionRoundShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "sessionNextTurn": "Nächster Zug",
   "sessionNext": "Weiter",
   "sessionNewEncounter": "Neue Begegnung",
@@ -279,7 +494,13 @@
   "sessionAddLog": "Protokoll hinzufügen",
   "sessionAdd": "Hinzufügen",
   "sessionAddWithQuantity": "Hinzufügen ({count})",
-  "@sessionAddWithQuantity": { "placeholders": { "count": { "type": "int" } } },
+  "@sessionAddWithQuantity": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sessionQuickLogHint": "Schneller Protokolleintrag... (@ zum Erwähnen)",
   "sessionNotes": "Notizen",
   "sessionBattleMap": "Kampfkarte",
@@ -307,7 +528,6 @@
   "sessionCustomCondition": "Eigener Zustand",
   "sessionDurationHint": "Dauer (Runden, optional)",
   "sessionAddCustom": "Eigenen hinzufügen",
-
   "cloudBackupTitle": "Cloud-Sicherungen",
   "cloudBackupEmpty": "Noch keine Cloud-Sicherungen.",
   "cloudBackupUpload": "In die Cloud sichern",
@@ -320,25 +540,69 @@
   "cloudBackupRestoreSuccess": "Kampagne erfolgreich wiederhergestellt.",
   "cloudBackupDeleteSuccess": "Sicherung gelöscht.",
   "cloudBackupError": "Cloud-Sicherungsfehler: {error}",
-  "@cloudBackupError": { "placeholders": { "error": { "type": "String" } } },
+  "@cloudBackupError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupConfirmTitle": "\"{name}\" sichern?",
-  "@cloudBackupConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupConfirmBody": "Ihre Kampagne wird in die Cloud hochgeladen.",
   "cloudBackupNotes": "Notizen (optional)",
   "cloudBackupRestoreConfirmTitle": "\"{name}\" wiederherstellen?",
-  "@cloudBackupRestoreConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupRestoreConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupRestoreConfirmBody": "Die Sicherung wird heruntergeladen und lokal gespeichert.",
   "cloudBackupConflict": "Eine Kampagne namens \"{name}\" existiert bereits. Sie wird als \"{newName}\" gespeichert.",
-  "@cloudBackupConflict": { "placeholders": { "name": { "type": "String" }, "newName": { "type": "String" } } },
+  "@cloudBackupConflict": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "newName": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupDeleteConfirmTitle": "Sicherung löschen?",
   "cloudBackupDeleteConfirmBody": "Die Cloud-Sicherung von \"{name}\" wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
-  "@cloudBackupDeleteConfirmBody": { "placeholders": { "name": { "type": "String" } } },
+  "@cloudBackupDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "cloudBackupSignInPrompt": "Melden Sie sich an, um Cloud-Sicherung zu verwenden.",
   "cloudBackupEntities": "{count} Einträge",
-  "@cloudBackupEntities": { "placeholders": { "count": { "type": "int" } } },
+  "@cloudBackupEntities": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cloudBackupSize": "{size} KB",
-  "@cloudBackupSize": { "placeholders": { "size": { "type": "String" } } },
-
+  "@cloudBackupSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "saveInfoLocalLabel": "Lokale Speicherung",
   "saveInfoCloudLabel": "Cloud-Sicherung",
   "saveInfoNever": "Nie",
@@ -347,39 +611,94 @@
   "saveInfoLoadingCloud": "Cloud wird geprüft...",
   "saveInfoDownloadConfirmTitle": "Aus der Cloud herunterladen?",
   "saveInfoDownloadConfirmBody": "Die lokale Kopie von \"{name}\" wird durch die Cloud-Version überschrieben. Nicht gespeicherte lokale Änderungen gehen verloren.",
-  "@saveInfoDownloadConfirmBody": { "placeholders": { "name": { "type": "String" } } },
+  "@saveInfoDownloadConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "saveInfoDownloadSuccess": "Aus der Cloud heruntergeladen.",
   "saveInfoDownloadError": "Download fehlgeschlagen: {error}",
-  "@saveInfoDownloadError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@saveInfoDownloadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "signOutConfirmTitle": "Abmelden?",
   "signOutConfirmBody": "Sie werden abgemeldet und zum Anmeldebildschirm zurückgebracht. Stellen Sie sicher, dass ausstehende Änderungen gespeichert oder gesichert wurden.",
   "signOut": "Abmelden",
   "signOutLocalDataNote": "Ihre Welten, Charaktere und Pakete bleiben in Ihrem Konto und sind bei der nächsten Anmeldung wieder da. Der Offline-Arbeitsbereich auf diesem Gerät beginnt leer.",
-
   "settingsVolume": "Lautstärke",
   "settingsData": "Daten",
   "settingsTrash": "Papierkorb",
   "settingsSoundLibrary": "Sound-Bibliothek",
   "trashEmpty": "Papierkorb ist leer.",
   "trashRestoreTitle": "{type} wiederherstellen",
-  "@trashRestoreTitle": { "placeholders": { "type": { "type": "String" } } },
+  "@trashRestoreTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "trashRestoreBody": "\"{name}\" aus dem Papierkorb wiederherstellen?",
-  "@trashRestoreBody": { "placeholders": { "name": { "type": "String" } } },
+  "@trashRestoreBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashRestoreSuccess": "\"{name}\" wiederhergestellt",
-  "@trashRestoreSuccess": { "placeholders": { "name": { "type": "String" } } },
+  "@trashRestoreSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashDeleteTitle": "Endgültig löschen",
   "trashDeleteBody": "{type} \"{name}\" endgültig löschen?\n\nDies kann nicht rückgängig gemacht werden.",
-  "@trashDeleteBody": { "placeholders": { "type": { "type": "String" }, "name": { "type": "String" } } },
+  "@trashDeleteBody": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashAutoDeleteIn": "Auto-Löschung in {days}T",
-  "@trashAutoDeleteIn": { "placeholders": { "days": { "type": "int" } } },
+  "@trashAutoDeleteIn": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "trashPendingCleanup": "Bereinigung ausstehend",
   "trashEmptyAll": "Papierkorb leeren",
   "trashEmptyAllTitle": "Papierkorb leeren?",
   "trashEmptyAllBody": "Alle {count} Element(e) endgültig aus dem Papierkorb löschen?\n\nDies kann nicht rückgängig gemacht werden.",
-  "@trashEmptyAllBody": { "placeholders": { "count": { "type": "int" } } },
+  "@trashEmptyAllBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trashEmptyAllSuccess": "{count} Element(e) aus dem Papierkorb entfernt.",
-  "@trashEmptyAllSuccess": { "placeholders": { "count": { "type": "int" } } },
+  "@trashEmptyAllSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "btnRestore": "Wiederherstellen",
   "btnAdd": "Hinzufügen",
   "btnRemove": "Entfernen",
@@ -387,9 +706,21 @@
   "dataPathWorlds": "Welten",
   "dataPathCache": "Cache",
   "soundpadRootLabel": "Soundpad-Verzeichnis: {path}",
-  "@soundpadRootLabel": { "placeholders": { "path": { "type": "String" } } },
+  "@soundpadRootLabel": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadTotalSize": "Gesamtgröße: {mb} MB",
-  "@soundpadTotalSize": { "placeholders": { "mb": { "type": "String" } } },
+  "@soundpadTotalSize": {
+    "placeholders": {
+      "mb": {
+        "type": "String"
+      }
+    }
+  },
   "builtinWarningTitle": "Eingebaute Vorlage wird verwendet",
   "builtinWarningBody": "Eingebaute Vorlagen und Pakete befinden sich noch in Entwicklung und können sich ändern. Du kannst direkt fortfahren, um automatisch aktuell zu bleiben, oder eine sicherere Kopie erstellen und damit arbeiten.",
   "builtinWarningContinue": "Mit eingebauter Vorlage fortfahren",
@@ -405,30 +736,67 @@
   "soundpadCreateTheme": "Thema erstellen",
   "soundpadDeleteThemeTitle": "Thema löschen",
   "soundpadDeleteThemeBody": "Thema \"{name}\" und alle zugehörigen Audiodateien löschen?\n\nDies kann nicht rückgängig gemacht werden.",
-  "@soundpadDeleteThemeBody": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadDeleteThemeBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadNoAmbience": "Keine Ambiente-Sounds",
   "soundpadNoSfx": "Keine SFX-Sounds",
   "soundpadAddSoundDialogTitle": "Soundname",
   "soundpadSoundsAdded": "{count} Sound(s) hinzugefügt",
-  "@soundpadSoundsAdded": { "placeholders": { "count": { "type": "int" } } },
+  "@soundpadSoundsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "soundpadRemoveSoundTitle": "Sound entfernen",
   "soundpadRemoveSoundBody": "\"{name}\" aus der Bibliothek entfernen?",
-  "@soundpadRemoveSoundBody": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadRemoveSoundBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadFilesCount": "{count} Datei(en)",
-  "@soundpadFilesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@soundpadFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "soundpadStatesCount": "{count} Zustände: {states}",
-  "@soundpadStatesCount": { "placeholders": { "count": { "type": "int" }, "states": { "type": "String" } } },
+  "@soundpadStatesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "states": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadThemeCreated": "Thema \"{name}\" erstellt",
-  "@soundpadThemeCreated": { "placeholders": { "name": { "type": "String" } } },
+  "@soundpadThemeCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "soundpadThemeDeleted": "Thema gelöscht",
   "soundpadSoundDeleted": "Sound entfernt",
-
   "socialTabFeed": "Feed",
   "socialTabPlayers": "Spieler",
   "socialTabMessages": "Nachrichten",
   "socialTabMarketplace": "Marktplatz",
   "socialTabGameListings": "Spiel-Anzeigen",
-
   "feedComposerHint": "Teilen Sie etwas mit Ihren Spielern…",
   "feedComposerImageTooltip": "Bild hinzufügen (verbraucht Speicherkontingent)",
   "feedImageUploadComingSoon": "Bild-Upload kommt bald",
@@ -441,34 +809,65 @@
   "feedScopeGameLists": "Spiel-Anzeigen",
   "feedGameListsEmpty": "Keine offenen Anzeigen mit diesen Filtern.",
   "feedGameListsOpen": "In Spiel-Anzeigen öffnen",
-
   "publishDialogTitle": "{type} \"{title}\" veröffentlichen",
-  "@publishDialogTitle": { "placeholders": { "type": { "type": "String" }, "title": { "type": "String" } } },
+  "@publishDialogTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "publishDialogHelp": "Füllen Sie die Details aus, damit andere Spieler Ihr Objekt im Marktplatz finden.",
   "publishDialogDescriptionLabel": "Beschreibung",
   "publishDialogLanguageLabel": "Sprache",
   "publishDialogTagsLabel": "Tags",
   "publishDialogTagsHint": "Tippen, Enter oder Komma zum Hinzufügen",
   "publishDialogPublish": "Veröffentlichen",
-
   "marketplaceLanguageFilter": "Sprache",
   "marketplaceTagFilter": "Tag",
   "marketplaceFilterAny": "Alle",
   "marketplaceFilterClear": "Filter löschen",
   "marketplaceDownloadCount": "{count} Downloads",
-  "@marketplaceDownloadCount": { "placeholders": { "count": { "type": "int" } } },
+  "@marketplaceDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "marketplaceDownload": "Herunterladen",
   "marketplaceGet": "Holen",
   "marketplaceTemplateLabel": "Vorlage",
   "marketplaceContentsLabel": "Inhalt",
   "marketplaceMoreEntities": "+{count} mehr",
-  "@marketplaceMoreEntities": { "placeholders": { "count": { "type": "int" } } },
+  "@marketplaceMoreEntities": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "marketplacePreview": "Vorschau",
   "marketplaceDownloading": "Wird heruntergeladen…",
   "marketplaceDownloadSuccess": "\"{name}\" heruntergeladen",
-  "@marketplaceDownloadSuccess": { "placeholders": { "name": { "type": "String" } } },
+  "@marketplaceDownloadSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceDownloadError": "Download fehlgeschlagen: {error}",
-  "@marketplaceDownloadError": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceDownloadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplacePlayersHeader": "Spieler",
   "marketplacePlayersFollowing": "Folgt",
   "marketplacePlayersSuggested": "Vorgeschlagen",
@@ -494,7 +893,6 @@
   "soundpackInstalled": "Installiert",
   "soundpackDownloading": "Lädt…",
   "soundpackRetry": "Erneut",
-
   "btnEdit": "Bearbeiten",
   "feedScopeDiscover": "Entdecken",
   "profileTabListings": "Einträge",
@@ -502,23 +900,39 @@
   "editListingTitle": "Eintrag bearbeiten",
   "editMarketplaceItemTitle": "Marketplace-Eintrag bearbeiten",
   "btnSaveChanges": "Änderungen speichern",
-
   "btnFollow": "Folgen",
   "btnUnfollow": "Folgt",
-
   "listingApply": "Bewerben",
   "listingApplied": "Beworben",
   "listingApplyTitle": "Bewerben auf \"{title}\"",
-  "@listingApplyTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@listingApplyTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "listingApplyMessage": "Ihre Nachricht",
   "listingApplyHint": "Stellen Sie sich vor: Erfahrung, Zeitzone, Erwartungen…",
   "listingWithdraw": "Bewerbung zurückziehen",
   "listingMineTitle": "Meine Anzeigen",
   "listingMineEmpty": "Sie haben noch keine Spiel-Anzeigen erstellt.",
   "listingApplicationCount": "{count} Bewerbung(en)",
-  "@listingApplicationCount": { "placeholders": { "count": { "type": "int" } } },
+  "@listingApplicationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "listingApplicantsTitle": "Bewerber für \"{title}\"",
-  "@listingApplicantsTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@listingApplicantsTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "listingApplicantsEmpty": "Noch keine Bewerbungen.",
   "listingMessageApplicant": "Nachricht",
   "listingLanguageLabel": "Spielsprache",
@@ -532,15 +946,18 @@
   "listingCloseAction": "Anzeige schließen",
   "listingDeleteAction": "Anzeige löschen",
   "listingClosedBadge": "Geschlossen",
-
   "profileFollowersDialog": "Follower",
   "profileFollowingDialog": "Folgt",
   "profileNoFollowers": "Noch keine Follower.",
   "profileNoFollowing": "Folgt noch niemandem.",
   "profileDmError": "Chat konnte nicht geöffnet werden: {error}",
-  "@profileDmError": { "placeholders": { "error": { "type": "String" } } },
-
-  "socialTabGameListings": "Spiel-Anzeigen",
+  "@profileDmError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "btnNewListing": "Neue Anzeige",
   "createListingTitle": "Spiel-Anzeige erstellen",
   "listingTitleLabel": "Titel",
@@ -548,9 +965,7 @@
   "listingSeatsLabel": "Plätze gesamt",
   "listingScheduleLabel": "Termin",
   "listingPostAction": "Anzeige veröffentlichen",
-
   "btnClose": "Schließen",
-
   "helpButtonTooltip": "Hilfe — was ist dieser Bereich?",
   "notificationsButtonTooltip": "Benachrichtigungen",
   "notificationsDialogTitle": "Benachrichtigungen",
@@ -567,9 +982,21 @@
   "notifNoResponses": "Noch keine Antworten.",
   "notifResponsesTitle": "Antworten",
   "notifResponseCount": "{count} Antworten",
-  "@notifResponseCount": { "placeholders": { "count": { "type": "int" } } },
+  "@notifResponseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVotes": "{count} Stimmen",
-  "@notifVotes": { "placeholders": { "count": { "type": "int" } } },
+  "@notifVotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifComposerTitle": "Neue Benachrichtigung",
   "notifTitleLabel": "Titel",
   "notifAddMarkdown": "Text",
@@ -608,7 +1035,6 @@
   "helpPackagesBody": "Pakete sind fertige Inhaltskarten, die du direkt auf ein Setting oder eine Vorlage aufsetzen kannst. Stell dir ein fertiges Zauberpaket, ein Heilkräuter-Paket, eine Monsterliste, ein Beute-Set oder eine Sammlung von Mindmap-Knoten vor — du importierst es in einem Zug in die aktive Welt und nutzt es sofort. Pakete sind der schnellste Weg, Inhalte zwischen Welten zu bewegen und zu teilen: Du kannst ein eigenes Paket exportieren und in eine andere Welt bringen oder es im Marketplace mit der Community teilen. Der Import läuft über den Pakete-Tab; importierte Inhalte verhalten sich nicht anders als die eigenen Inhalte der Welt.",
   "helpMarketplaceTitle": "Marketplace",
   "helpMarketplaceBody": "Der Marketplace ist eine kostenlose Plattform, auf der Spieler die Inhalte teilen, die sie selbst erstellen. Welten, Vorlagen und Pakete werden hier veröffentlicht — jeder kann sie herunterladen, ins eigene Spiel übernehmen und darauf aufbauen. Jede Veröffentlichung wird als unveränderlicher Snapshot gespeichert: einmal live, lässt sie sich nicht mehr bearbeiten, sondern nur löschen, damit die heruntergeladene Version niemandem unter den Händen weg verändert wird. Um eigene Inhalte zu veröffentlichen, öffne das Marketplace-Panel in den Einstellungen der Welt, Vorlage oder des Pakets. Zum Stöbern nutze den Marketplace-Untertab unter Sozial.",
-
   "publishSnapshotDialogHeading": "Snapshot veröffentlichen",
   "publishDialogTitleLabel": "Titel",
   "publishDialogChangelogLabel": "Änderungsprotokoll (optional)",
@@ -616,119 +1042,130 @@
   "publishDialogImmutabilityNoticeNew": "Es wird ein neuer unveränderlicher Snapshot erstellt. Snapshots können später nicht bearbeitet, sondern nur gelöscht werden.",
   "publishDialogImmutabilityNoticeExisting": "Es wird ein neuer unveränderlicher Snapshot erstellt. Vorherige Snapshots dieser Linie werden als veraltet markiert. Snapshots können später nicht bearbeitet, sondern nur gelöscht werden.",
   "publishDialogMissingFields": "Bitte ausfüllen: {fields}",
-  "@publishDialogMissingFields": { "placeholders": { "fields": { "type": "String" } } },
+  "@publishDialogMissingFields": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
   "publishDialogNoChanges": "Keine Änderungen seit dem letzten Snapshot.",
   "publishDialogFailed": "Veröffentlichung fehlgeschlagen: {error}",
-  "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
-
+  "@publishDialogFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceErrorPrefix": "Marketplace-Fehler: {error}",
-  "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceErrorPrefix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceOwnerNotShared": "Noch nicht geteilt. Veröffentliche einen unveränderlichen Snapshot im Marketplace.",
   "marketplaceOwnerPublished": "Im Marketplace veröffentlicht.",
   "marketplaceShareButton": "Im Marketplace teilen",
   "marketplacePublishSnapshotButton": "Snapshot veröffentlichen",
   "marketplaceImportedFromBy": "Importiert von @{username}",
-  "@marketplaceImportedFromBy": { "placeholders": { "username": { "type": "String" } } },
+  "@marketplaceImportedFromBy": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceImportedFromGeneric": "Aus dem Marketplace importiert",
   "marketplaceUpdatesMutedTooltip": "Updates stummgeschaltet",
   "marketplaceItemRemoved": "Dieses Element ist im Marketplace nicht mehr verfügbar.",
   "marketplaceUpdateAvailableTap": "Ein neuer Snapshot ist verfügbar. Tippe, um ihn zu prüfen.",
   "marketplaceSnapshotPublished": "Snapshot veröffentlicht.",
-
   "marketplaceActionFailed": "Aktion fehlgeschlagen: {error}",
-  "@marketplaceActionFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@marketplaceActionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceDownloadedAs": "Heruntergeladen als „{name}\"",
-  "@marketplaceDownloadedAs": { "placeholders": { "name": { "type": "String" } } },
+  "@marketplaceDownloadedAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceReplaceConfirmTitle": "Lokale Kopie ersetzen?",
   "marketplaceReplaceConfirmBody": "Deine lokalen Änderungen an diesem Element gehen verloren und werden mit dem neuesten Snapshot des Veröffentlichers überschrieben. Dies kann nicht rückgängig gemacht werden.",
   "marketplaceReplaceConfirmAction": "Ersetzen",
   "marketplaceLocalCopyReplaced": "Lokale Kopie ersetzt.",
   "marketplaceUpdatePromptTitle": "Neuer Snapshot von „{title}\"",
-  "@marketplaceUpdatePromptTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@marketplaceUpdatePromptTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceUpdatePromptByOwner": "@{owner} hat eine neue Version eines von dir heruntergeladenen Elements veröffentlicht.",
-  "@marketplaceUpdatePromptByOwner": { "placeholders": { "owner": { "type": "String" } } },
+  "@marketplaceUpdatePromptByOwner": {
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
   "marketplaceUpdatePromptGeneric": "Eine neue Version eines von dir heruntergeladenen Elements ist verfügbar.",
   "marketplaceWhatsNew": "Neuerungen",
   "marketplaceMuteUpdates": "Updates für dieses Element stummschalten",
   "marketplaceDismissVersion": "Diese Version ausblenden",
   "marketplaceReplaceLocalCopy": "Lokale Kopie ersetzen",
   "marketplaceDownloadAsNewCopy": "Als neue Kopie herunterladen",
-
   "mySnapshotsLoadError": "Snapshots konnten nicht geladen werden: {error}",
-  "@mySnapshotsLoadError": { "placeholders": { "error": { "type": "String" } } },
+  "@mySnapshotsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "mySnapshotsEmpty": "Keine Snapshots in dieser Linie.",
   "mySnapshotsHeading": "Snapshots ({count})",
-  "@mySnapshotsHeading": { "placeholders": { "count": { "type": "int" } } },
+  "@mySnapshotsHeading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mySnapshotsDeleteTitle": "Diesen Snapshot löschen?",
   "mySnapshotsDeleteCurrentBody": "Dies ist der aktuelle Snapshot. Der nächstneuere Snapshot dieser Linie wird zum aktuellen. Wenn keine weiteren Snapshots übrig sind, sehen Downloader dieser Version „nicht mehr verfügbar\".",
   "mySnapshotsDeleteHistoricalBody": "Dieser historische Snapshot wird endgültig entfernt.",
   "mySnapshotsDeleted": "Snapshot gelöscht.",
   "mySnapshotsDeleteFailed": "Löschen fehlgeschlagen: {error}",
-  "@mySnapshotsDeleteFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@mySnapshotsDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "mySnapshotsDownloadCount": "{count} Downloads",
-  "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
+  "@mySnapshotsDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mySnapshotsCurrentBadge": "aktuell",
   "mySnapshotsDeleteTooltip": "Snapshot löschen",
-
   "settingsSubscriptions": "Abonnements",
-  "subsBetaTitle": "Beta-Programm",
-  "subsBetaDescription": "Tritt der geschlossenen Beta bei, um Cloud-Speicher und Online-Spiel freizuschalten. Alle deine Charaktere werden online und deine Welten und Pakete können veröffentlicht werden. Nur der DM braucht einen Beta-Platz, damit der ganze Tisch zusammen spielen kann. 90 Plätze verfügbar.",
-  "subsBetaJoinBtn": "Kostenlos Beta beitreten",
-  "subsBetaSlotsRemaining": "{n} / 90 Plätze frei",
-  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
-  "subsBetaFull": "Die Beta ist voll. Wir benachrichtigen dich beim v1-Release.",
-  "subsBetaActiveBadge": "Du bist in der Beta — Platz #{n}",
-  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
-  "subsBetaQuotaLabel": "{used} MB / {total} MB verwendet",
-  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
-  "subsBetaQuotaScopeNote": "Der Beta-Speicher umfasst Cloud-Saves und Community-Assets. Posts sind kostenlos.",
-  "subsBetaInactivityDisclaimer": "Öffne die App mindestens alle zwei Wochen. Nach 14 Tagen Inaktivität werden deine Cloud-Daten gelöscht und dein Beta-Platz freigegeben.",
-  "subsBetaLastSeen": "Zuletzt gesehen: {when}",
-  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
-  "subsBetaRoadmap": "Online-Spiel ist experimentell. Der persönliche Cloud-Speicher hat Limits, aber Bilder und Battle Maps, die während einer Live-Sitzung geteilt werden, zählen nicht auf dein Kontingent.",
-  "subsBetaSignInHint": "Melde dich an, um der kostenlosen Beta beizutreten.",
-  "subsBetaRequiredForCloud": "Cloud-Speicher ist nur in der Beta verfügbar. Öffne Einstellungen → Abonnements, um kostenlos beizutreten.",
-  "subsBetaJoinFailedFull": "Die Beta ist gerade voll geworden. Bitte später erneut versuchen.",
-  "subsBetaJoinFailedGeneric": "Beta-Beitritt fehlgeschlagen: {error}",
-  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
-  "subsBetaLeaveBtn": "Beta verlassen",
-  "subsBetaLeaveConfirmTitle": "Beta verlassen?",
-  "subsBetaLeaveConfirmBody": "Deine Cloud-Speicherungen und Community-Assets werden gelöscht und dein Beta-Slot wird freigegeben. Posts und Marketplace-Angebote bleiben erhalten.",
-  "subsBetaLeaveWarnIntro": "Wenn du die Beta verlässt, werden alle deine Online-Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
-  "subsBetaLeaveWarnDeleted": "Dauerhaft gelöscht: deine Online-Welten, -Pakete und -Charaktere; deine Marketplace-Angebote und ihre Bilder; alle in die Cloud hochgeladenen Bilder.",
-  "subsBetaLeaveWarnKept": "Behalten: Alle lokal auf diesem und deinen anderen Geräten gespeicherten Daten bleiben erhalten. Deine Posts, Spielangebote und Nachrichten sind nicht betroffen — du kannst die Community weiter nutzen.",
-  "subsBetaLeaveSuccess": "Du hast die Beta verlassen.",
-  "subsBetaLeaveFailed": "Beta konnte nicht verlassen werden. Bitte später erneut versuchen.",
-  "subsBetaLeavePreserveLine": "Offline auf diesem Gerät behalten: {worlds} Welten · {chars} Charaktere · {packages} Pakete.",
-  "@subsBetaLeavePreserveLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
-  "subsBetaLeaveDownloadLine": "Davon werden {worlds} Welten / {chars} Charaktere / {packages} Pakete zuerst aus der Cloud heruntergeladen.",
-  "@subsBetaLeaveDownloadLine": { "placeholders": { "worlds": { "type": "int" }, "chars": { "type": "int" }, "packages": { "type": "int" } } },
-  "subsBetaLeaveOfflineNeeded": "Internet erforderlich — verbinde dich, um deine eigenen Online-Inhalte auf dieses Gerät zu laden.",
-
-  "subsBetaRequestBtn": "Beta-Zugang anfragen",
-  "subsBetaRequestDialogTitle": "Beta-Zugang anfragen",
-  "subsBetaRequestDialogIntro": "Die Beta ist kostenlos und auf 90 aktive Mitglieder begrenzt. Du erhältst 100 MB Cloud-Speicher für Welten, Charaktere und Pakete, und Online-Spiel wird freigeschaltet: Alle deine Charaktere werden online und deine Welten/Pakete können veröffentlicht werden. Nur der DM braucht einen Beta-Platz, damit der ganze Tisch online zusammen spielen kann. Bilder und Battle Maps, die in einer Live-Sitzung geteilt werden, zählen nicht auf dein Kontingent. Inaktive Konten (14+ Tage) werden freigegeben. Ein Admin prüft jede Anfrage — sag ihm gern, warum du dabei sein möchtest (optional).",
-  "subsBetaRequestMessageHint": "Warum möchtest du beitreten? (optional)",
-  "subsBetaRequestSubmit": "Anfrage senden",
-  "subsBetaRequestSubmitted": "Anfrage gesendet. Ein Admin wird sie prüfen.",
-  "subsBetaRequestUpdated": "Anfrage aktualisiert.",
-  "subsBetaRequestFailed": "Anfrage konnte nicht gesendet werden: {error}",
-  "@subsBetaRequestFailed": { "placeholders": { "error": { "type": "String" } } },
-  "subsBetaRequestPendingTitle": "Anfrage in Prüfung",
-  "subsBetaRequestPendingBody": "Ein Admin prüft deine Anfrage und nimmt sie an oder lehnt sie ab. Du kannst deine Anfrage unten aktualisieren oder zurückziehen.",
-  "subsBetaRequestPendingSince": "Gesendet {when}",
-  "@subsBetaRequestPendingSince": { "placeholders": { "when": { "type": "String" } } },
-  "subsBetaRequestYourMessage": "Deine Nachricht:",
-  "subsBetaRequestNoMessage": "(keine Nachricht angehängt)",
-  "subsBetaRequestEditBtn": "Nachricht bearbeiten",
-  "subsBetaRequestCancelBtn": "Anfrage zurückziehen",
-  "subsBetaRequestCancelled": "Anfrage zurückgezogen.",
-  "subsBetaRequestFullNote": "Aktuell sind keine Slots frei — deine Anfrage wartet in der Warteschlange.",
-  "subsBetaApprovedSnack": "Willkommen in der Beta — Slot #{n}",
-  "@subsBetaApprovedSnack": { "placeholders": { "n": { "type": "int" } } },
-
   "feedPostRateLimited": "Du postest zu schnell. Bitte gleich noch einmal versuchen.",
-
   "messagesComposeTooltip": "Neuer Chat",
   "messagesComposeNewDirect": "Neue Direktnachricht",
   "messagesComposeNewGroup": "Neuer Gruppenchat",
@@ -744,20 +1181,30 @@
   "newChatPickerStart": "Chat starten",
   "newChatPickerCreate": "Gruppe erstellen",
   "newChatPickerError": "Chat konnte nicht gestartet werden: {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@newChatPickerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "messageDateToday": "Heute",
   "messageDateYesterday": "Gestern",
   "messageDeleteTitle": "Nachricht löschen?",
   "messageDeleteBody": "Diese Nachricht wird dauerhaft gelöscht.",
   "messageDeleteAction": "Löschen",
   "cancelAction": "Abbrechen",
-
   "groupSettingsTitle": "Gruppeneinstellungen",
   "groupSettingsName": "Gruppenname",
   "groupSettingsNameSave": "Speichern",
   "groupSettingsMembers": "Mitglieder ({count})",
-  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "@groupSettingsMembers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "groupSettingsAdmin": "ADMIN",
   "groupSettingsLeave": "Gruppe verlassen",
   "groupSettingsLeaveTitle": "Gruppe verlassen?",
@@ -767,9 +1214,7 @@
   "groupSettingsDeleteTitle": "Gruppe löschen?",
   "groupSettingsDeleteBody": "Dadurch werden alle Nachrichten für alle gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
   "groupNameUpdated": "Gruppenname aktualisiert.",
-
   "cannotMessageSelf": "Du kannst dir nicht selbst eine Nachricht senden.",
-
   "chatMenuDelete": "Löschen",
   "chatMenuRenameGroup": "Gruppe umbenennen",
   "chatMenuLeaveGroup": "Gruppe verlassen",
@@ -782,7 +1227,6 @@
   "chatMenuAddMember": "Mitglied hinzufügen",
   "chatMemberAdded": "Mitglied hinzugefügt.",
   "chatAddMemberTitle": "Mitglied hinzufügen",
-
   "feedComposerAttachListing": "Eintrag anhängen",
   "feedAttachedListing": "Angehängter Eintrag",
   "feedRemoveAttachment": "Entfernen",
@@ -791,40 +1235,32 @@
   "feedPickerMarketplaceSection": "Marktplatz-Einträge",
   "feedPickerGameListingSection": "Spielanzeigen",
   "feedPickerEmpty": "Keine Einträge passen zu deiner Suche.",
-
   "socialTabDiscover": "Entdecken",
   "discoverSearchHint": "Nach Benutzername suchen…",
   "discoverSuggestedHeader": "Vorschläge für dich",
   "discoverSearchResults": "Suchergebnisse",
   "discoverEmptySearch": "Keine Benutzer gefunden",
   "discoverEmptyState": "Keine Vorschläge verfügbar",
-
   "dmDeleteChat": "Chat löschen",
   "dmDeleteTitle": "Unterhaltung löschen?",
   "dmDeleteBody": "Alle Nachrichten werden für beide Seiten gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
   "dmDeleteConfirm": "Löschen",
-
   "profileHideFromDiscover": "Nicht in Entdecken anzeigen",
   "profileHideFromDiscoverHint": "Dein Profil erscheint nicht in Vorschlägen oder Suchergebnissen",
-
   "welcomeTitle": "Willkommen, Dungeon Master!",
   "welcomeSystemIntro": "Dungeon Master Tool ist ein tragbarer, offline-fähiger Tabletop-Begleiter. Der Hub hat sechs Bereiche: Sozial (Feed, Nachrichten, Marketplace), Einstellungen (Konto, Theme, Sprache, Cloud-Sync), Welten (Kampagnen mit Battle Map, Mind Map, Entitäten und Sessions), Charaktere (alle Charaktere, die dir über deine Welten gehören), Vorlagen (Spielgerüste, aus denen du Welten startest) und Pakete (Plug-and-Play-Inhaltsbündel).",
-  "welcomeBetaNotice": "Die App befindet sich noch in der Beta — Funktionen, integrierte Vorlagen und Pakete können sich zwischen Releases ändern. Sichere wichtige Daten gelegentlich.",
-  "welcomeOnlinePlay": "Wenn du der geschlossenen Beta beitrittst, werden alle deine Charaktere online und deine Welten und Pakete können veröffentlicht werden. Online-Spiel ist noch experimentell — nur der DM muss in der Beta sein, damit der ganze Tisch online zusammen spielen kann.",
-  "welcomeOnlineStorage": "Der persönliche Cloud-Speicher hat aktuell ein paar Limits, aber während einer Live-Online-Sitzung kannst du Bilder und Battle Maps mit deinen Spielern teilen, ohne dein Kontingent zu belasten.",
+  "welcomeOnlinePlay": "Online-Spiel steht allen mit einem Konto offen. Deine Spieler sehen genau das, was du mit ihnen teilst — die Karten, die du austeilst, und alles, was du auf den geteilten Bildschirm legst — live, sobald du es teilst. Der Rest deiner Welt bleibt bei dir.",
+  "welcomeOnlineStorage": "Deine Welten, Charaktere und Pakete liegen auf diesem Gerät und gleichen sich über dein lokales Netzwerk zwischen deinen eigenen Geräten ab. Nur die Bilder, die du während einer Sitzung teilst, belegen Cloud-Speicher.",
   "welcomeRoadmap": "D&D 5e SRD-Inhalte sind bereits integriert. Visuelle Content-Packs und fertige Soundpad-Bundles folgen bald.",
   "welcomeClosing": "Danke fürs Ausprobieren — mögen deine Würfel rollen!",
   "welcomeContinue": "Los geht's",
-
   "tabSocial": "Sozial",
   "tabSettings": "Einstellungen",
   "tabWorlds": "Welten",
   "tabCharacters": "Charaktere",
   "tabTemplates": "Vorlagen",
-
   "hubReportBugTooltip": "Fehler melden",
   "hubSettingsTooltip": "Einstellungen",
-
   "profileMenuTooltip": "Profil",
   "profileMenuSignIn": "Anmelden",
   "profileMenuViewProfile": "Profil ansehen",
@@ -834,7 +1270,6 @@
   "profileMenuReportBug": "Fehler melden",
   "profileMenuSupport": "Unterstützung",
   "profileMenuSupportBody": "Wenn dir das Tool gefällt, kannst du die Entwicklung über die folgenden Kanäle unterstützen. Danke!",
-
   "accountRequiredTitle": "Konto erforderlich",
   "accountRequiredBody": "Melde dich an, um das zu nutzen. Deine Welten, Charaktere und installierten Pakete bleiben ohnehin auf diesem Gerät.",
   "accountRequiredSignIn": "Anmelden",
@@ -842,7 +1277,6 @@
   "accountRequiredCloudBackup": "Die Cloud-Sicherung kopiert dieses Element in dein Konto. Lokales Speichern funktioniert auch ohne.",
   "accountRequiredOnlineSync": "Die Online-Synchronisierung hält das mit deinen anderen Geräten im Gleichklang.",
   "accountRequiredWorldSharing": "Geteilte Welten, Einladungen und Spielerplätze liegen auf dem Server.",
-
   "lanSyncTitle": "Lokale Synchronisierung",
   "lanSyncSubtitle": "Welten, Pakete und Charaktere direkt mit deinen anderen Geräten im selben WLAN abgleichen. Nichts geht online.",
   "lanSyncOpen": "Lokale Synchronisierung",
@@ -857,7 +1291,6 @@
   "lanSyncFailures": "{count} Einträge konnten nicht übertragen werden: {names}",
   "lanSyncNoDeleteNotice": "Die lokale Synchronisierung fügt nur hinzu und aktualisiert. Auf keinem Gerät wird etwas gelöscht.",
   "lanSyncError": "Lokale Synchronisierung fehlgeschlagen: {message}",
-
   "lanSyncQrCaption": "Auf dem anderen Gerät scannen",
   "lanSyncPairedDevices": "Gekoppelte Geräte",
   "lanSyncNoDevices": "Noch keine gekoppelten Geräte. Tippe auf dem anderen Gerät auf „Gerät hinzufügen“ und scanne den Code oben.",

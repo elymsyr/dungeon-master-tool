@@ -123,15 +123,24 @@ Details and the full key table: [vault/20-Systems/Grant-Resolution.md](vault/20-
 
 Hard refs (`*_ref` → uuidv5) resolve inside a package at build time via the two-pass refgraph and **cannot dangle** — the build gates on it. Soft refs (`{slug, name}`) resolve lazily at read time across installed packages; a missing target is silently dropped and surfaced as a warning on `EffectiveCharacter`, never a failure. See [vault/20-Systems/Ref-Resolution-Hard-vs-Soft.md](vault/20-Systems/Ref-Resolution-Hard-vs-Soft.md).
 
-### Offline-first sync
+### Local-first: two sync arms, no cloud mirror
 
-Local Drift SQLite is the source of truth; Supabase Postgres is a row-for-row mirror; CDC replicates back. A local edit flows: `PendingWriteBuffer.schedule` (750–2000 ms debounce per `WriteKind`) → `SyncEngine.enqueue*` → `SyncOutboxDao.enqueueCoalesced`, where rows with a matching `(target_table, target_pk, op_type)` **overwrite** each other. Drain order is `(nextAttemptAt ASC, createdAt ASC)`, which preserves dependency order; retries back off exponentially to 5 min and dead-letter at 50 attempts. Inbound CDC lands via `world_mirror_applier` with a 3 s per-entity echo-suppression window. Fast tier (world-scoped data) drains immediately; slow tier (personal packages, worldless characters) carries a delay so coalescing can batch.
+Local Drift SQLite is the source of truth and **the world is never mirrored to the cloud**. The outbox, `SyncEngine`, `WorldReconciler`, `CloudCatchupService` and `cloud_backups` were removed 2026-08-24 (migration 077). A local edit flows `PendingWriteBuffer.schedule` (750–2000 ms debounce per `WriteKind`) → Drift, and stops there.
 
-Full step-by-step: [vault/20-Systems/CDC-Sync-Flow.md](vault/20-Systems/CDC-Sync-Flow.md).
+Two things still cross the network, and they are separate:
+
+- **LAN sync** (`lib/application/services/lan_sync/`) — the only way content moves between devices. Manual, same-network, persistent pairing, never touches Supabase. `PendingWriteBuffer.flush()` and `WorldRepositoryImpl.save()`'s granular row writes are load-bearing for it; don't "simplify" either. See [vault/20-Systems/LAN-Sync-Flow.md](vault/20-Systems/LAN-Sync-Flow.md).
+- **The DM's share broadcast** — what an online player receives. Exactly five subscribed tables: `world_projection` (live broadcast), `entity_shares` (shared cards **including their bodies** in `payload_json`), `world_characters`, `world_packages`, `world_members`. Pushes are direct writes with a 3 s echo-suppression window; there is no queue and no retry. Adding a table to `WorldSyncService._mirrorTables` means sending a player data the DM did not share — define the sharing action first.
+
+Full step-by-step: [vault/20-Systems/Share-Broadcast-Flow.md](vault/20-Systems/Share-Broadcast-Flow.md).
+
+Accounts are required for exactly three things: playing online, publishing to the marketplace, and downloading another user's content. Browsing the marketplace and installing official catalog content work with no account. There is no beta program (removed 2026-08-24, migration 076) — every user has full access.
 
 ### Drift schema v12
 
-`schemaVersion` is 12 and it is a **fresh cut** — all v1–v11 migration steps were deleted. Any pre-v12 DB found on disk is renamed to `dmt.sqlite.legacy.<ts>` (kept 30 days) and a fresh v12 file is created; `onUpgrade` should never run. The database is per-user (`AppPaths.dataRoot/users/{userId}/db/dmt.sqlite`). Four side tables (`asset_refs`, `sync_telemetry`, `migration_progress`, `bm_mark_ops_local`) are managed with idempotent raw DDL in `beforeOpen` to avoid codegen, so they do not bump the schema version. `foreign_keys = OFF` is intentional — it lets CDC apply events out of order, with parent-exists checked at the app level.
+`schemaVersion` is 12 and it is a **fresh cut** — all v1–v11 migration steps were deleted. Any pre-v12 DB found on disk is renamed to `dmt.sqlite.legacy.<ts>` (kept 30 days) and a fresh v12 file is created; `onUpgrade` should never run. The database is per-user (`AppPaths.dataRoot/users/{userId}/db/dmt.sqlite`). Three side tables (`asset_refs`, `migration_progress`, `lan_paired_devices`) are managed with idempotent raw DDL in `beforeOpen` to avoid codegen, so they do not bump the schema version. `foreign_keys = OFF` is intentional — it lets inbound share events apply out of order, with parent-exists checked at the app level.
+
+Tables retired with cloud sync (`sync_outbox`, `sync_telemetry`, `bm_mark_ops_local`, `personal_packages`) are dropped by `_retiredTablesDDL` in the same `beforeOpen` pass. **The version deliberately stayed at 12**: bumping it would rename every existing user's DB to `.legacy` and start them empty, and the only thing being removed is a dead table.
 
 ### Second screen / projection
 

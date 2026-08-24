@@ -6,13 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
-import '../../../application/providers/sync_engine_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../../domain/entities/online/world_role.dart';
@@ -110,14 +107,6 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     // deleted `_bundleAndPush` close-time push).
     final mapNotifier = ref.read(worldMapProvider.notifier);
     final campaign = ref.read(activeCampaignProvider.notifier);
-    final worldId =
-        ref.read(activeCampaignIdProvider).valueOrNull;
-    final online = worldId != null &&
-        ref.read(onlineWorldIdsProvider).contains(worldId);
-    final auth = ref.read(authProvider);
-    final isDm =
-        ref.read(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
-    final engine = ref.read(syncEngineProvider);
     // App close/reopen sonrası map resmi kalsın diye granular Drift row'una
     // da yazıyoruz; aksi halde yalnızca settings_json'da kalıyor ve force-
     // close, partial sync, ya da CDC clobber gibi durumlarda kayboluyor.
@@ -136,14 +125,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             // ignore: discarded_futures
             repo.saveMapData(campaignName, mapMap);
           }
-          // DM-only: world_map_data RLS rejects players (engine drops
-          // 42501 but pre-empting avoids the round-trip).
-          if (online && auth != null && isDm) {
-            // ignore: discarded_futures
-            engine.enqueueWorldMapData(worldId: worldId, data: mapMap);
-          }
         }
-        // Viewport sibling key — local only, never cloud.
+        // Viewport sibling key — local only.
         final mapView = campaign.data?['map_view'];
         if (mapView is Map) {
           // ignore: discarded_futures

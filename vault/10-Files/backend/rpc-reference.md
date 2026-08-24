@@ -23,7 +23,7 @@ tags: [file]
 
 ## Dependencies & Links
 - Depends on: [[migrations-auth-social]], [[migrations-online-worlds]], [[migrations-media-storage]], [[migrations-security]]
-- Used by: [[worker]], [[worker_rls]], [[edge-beta-purge]], [[supabase_world_membership_service]], [[world_join_service]], [[character_claim_service]], [[free_media_service]], [[beta_enter_gate]]
+- Used by: [[worker]], [[worker_rls]], `beta_purge_with_cleanup` edge fn (kaldırıldı), [[supabase_world_membership_service]], [[world_join_service]], [[character_claim_service]], [[free_media_service]], `beta_enter_gate.dart` (kaldırıldı)
 - Domain map: [[Backend-Infra]]
 - System flow: [[Media-Storage-Tiers]]
 - Spec / reference: [[Multiplayer-and-Online]]
