@@ -67,7 +67,7 @@ class WorldMembersNotifier
       state = AsyncValue.data(rows);
     } catch (e, st) {
       if (isOfflineError(e)) {
-        debugPrint('world members skipped: offline');
+        debugPrint('world members skipped: offline ($e)');
       } else {
         debugPrint('WorldMembersNotifier bootstrap error: $e');
       }

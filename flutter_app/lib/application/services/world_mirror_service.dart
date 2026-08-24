@@ -37,7 +37,7 @@ class WorldMirrorService {
   /// outbox retry'ı için hata yukarı çıkmalı).
   void _logMirrorError(String label, Object e) {
     if (isOfflineError(e)) {
-      debugPrint('$label skipped: offline');
+      debugPrint('$label skipped: offline ($e)');
     } else {
       debugPrint('$label error: $e');
     }
