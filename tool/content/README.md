@@ -1,293 +1,117 @@
-# Content Export Kuralları
+# Content Export Rehberi
 
-## Amaç
-Bu dizin, uygulama marketplace'ine eklenecek içerik modüllerini barındırır.
-Modüller kullanıcılara oynaması için sunulur.
+Bu dosya, agent'lar tarafından içerik aktarımı yapılırken kullanılacak yönergedir.
 
-## İş Akışı (İki Aşamalı)
+## Genel Kurallar
 
-### Aşama 1 — Lisans Kontrolü ve Manifest Hazırlama
-Her export işlemi lisans kontrolü ile başlar:
-1. İçerik dosyaları dizine kopyalanır (değiştirilmez)
-2. `manifest.json` oluşturulur — tüm metadata burada tutulur
-3. Orijinal dosya yapısı korunur
+1. **İçerik değiştirilmez** — Orijinal dosyalar (PDF, görsel, karakter dosyası) aynen paketlenir.
+2. **Blueprint'ler oluşturulur** — `manifest.json`, `blueprint.json`, `world-blueprint.json` hazırlanır.
+3. **Built-in paket tekrar eklenmez** — SRD 5.1'de zaten var olan içerik (canavar, sihir, eşya vb.) referans olarak kullanılır, yeniden oluşturulmaz.
+4. **Dosya yolları relative** — Tüm referanslar modül dizinine göreceli olmalı.
+5. **Medya doğru eşleştirilir** — Battlemap'ler location'a, token'lar encounter'a, handout'lar lore'a bağlanır.
 
-### Aşama 2 — İçerik Aktarımı
-Orijinal içerik, uygulamamızdaki formata dönüştürülür:
-- **Karakter Aktarımı**: Kaynak karakter alanları → uygulama karakter kartı alanları eşleştirilir, `blueprint.json` oluşturulur
-- **Campaign → World Aktarımı**: Kaynak campaign kategorileri → uygulama world entity kategorileri eşleştirilir, `world blueprint.json` oluşturulur
+## Aktarım Adımları
 
-Tüm çıktılar markdown formatında dokümante edilir.
+### 1. PDF'i Oku ve Anla
+- PDF'i open5e veya benzeri araçlarla parse et
+- İçeriği kategorilere ayır: canavarlar, mekanlar, encounter'lar,NPC'ler, tuzaklar, öğeler
+- Hangi içeriğin SRD'de olduğunu kontrol et
 
-## Kurallar
+### 2. World Blueprint Oluştur
+`world-blueprint.json` dosyasında şu kategorileri doldur:
 
-### Kural 1 — İçerik Değiştirilemez
-İçerik noktası virgülüne, kelimesi kelimesine aynı kalmalıdır.
-Hiçbir dosya (PDF, görsel, karakter dosyası) üzerinde düzenleme yapılmaz.
-Yalnızca `manifest.json` ve `blueprint.json` oluşturulur.
+| Kategori | Ne Zaman Kullanılır |
+|---|---|
+| `npc` |faction liderleri, mağazacılar, rehberler, önemli karakterler |
+| `location` | Mekanlar, binalar, bölgeler (hiyerarşik) |
+| `encounter` | Savaş planları, canavar grupları |
+| `quest` | Görevler, macera arc'ları |
+| `scene` | Senaryo akışı, beat listesi |
+| `trap` | Tuzaklar ve mekanikler |
+| `environmental-effect` | Çevresel etkiler |
+| `lore` | Dünya bilgisi, el yazmaları |
+| `campaign` | Genel kampanya notları |
 
-### Kural 2 — Manifest İçeriğe Referans Verir
-Metadata (başlık, yayıncı, lisans vb.) `manifest.json`'da tutulur.
-İçerik dosyaları olduğu gibi paketlenir, manifest'te tekrar edilmez.
+### 3. Karakter Blueprint Oluştur
+`blueprint.json` dosyasında PC'leri tanımla.
 
-### Kural 3 — Dosya Yolları Relative Olmalıdır
-Tüm dosya referansları modül dizinine göreceli olmalı.
+### 4. Medyayı Eşleştir
+- **Battlemap'ler** → `location.map` veya `location.battlemaps`
+- **Token/resimler** → `npc.imagePath` veya `encounter.monsters_refs`
+- **PDF'ler** → `lore.pdfs` veya `campaign.pdfs`
+- **Handout'lar** → `lore.pages` (markdown olarak)
 
-### Kural 4 — Orijinal Dizin Yapısı Korunur
-Mevcut klasör isimleri (`media/`, `Maps/`, `Handouts/` vb.) değişmez.
-
-### Kural 5 — Built-in / Official Paketteki İçerik Tekrar Eklenmez
-Eğer eklenmek istenen içerik (silah, zırh, sihir, ırk, sınıf, vb.) zaten built-in SRD paketinde mevcutsa, pakete tekrar eklenmez.
-Bunun yerine built-in paketteki varlık referansla kullanılır.
-Benzerlik kontrolü agent tarafından yapılır — isim, slug ve alan benzerliği dikkate alınır.
-Eşleşen varlık bulunamazsa yeni eklenir.
-
-Eğer içerik resmi (official) paketlerden geliyor ve birden fazla öğe içeren bir grup ise, bu öğeler tekrar yazılmaz — official paket import olarak referans verilir.
-Örneğin: bir maceradaki tüm canavarlar SRD'de zaten varsa, pakete tek tek eklenmek yerine `builtin-dnd5e` referansı kullanılır.
-
-## Modül Formatı
-
-```
-tool/content/<modul-adı>/
-├── manifest.json              # Aşama 1: Metadata
-├── blueprint.json             # Aşama 2: Karakter aktarım planı
-├── world-blueprint.json       # Aşama 2: World aktarım planı (varsa)
-├── <ana-dosya>.pdf
-└── media/
-    ├── maps/
-    ├── handouts/
-    ├── tokens/
-    └── gcs-characters/
-```
-
-## Aşama 1: Manifest Şablonu
-
+### 5. Kaynak Bilgisi Ekle
+Her entity'ye `source` alanını doldur:
 ```json
-{
-  "slug": "99-devils-of-uzrahs-palace-shadowdark",
-  "title": "99 Devils of Uzrah's Palace",
-  "system": "shadowdark",
-  "publisher": "",
-  "author": "",
-  "license": "",
-  "attribution": "",
-  "source_url": "",
-  "version": "1.0.0",
-  "description": "",
-  "files": {
-    "pdf": "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf",
-    "cover_image": "media/Title-Image.webp",
-    "media": {
-      "maps": [],
-      "handouts": [],
-      "tokens": [],
-      "gcs_characters": []
-    }
-  }
-}
+"source": "99 Devils of Uzrah's Palace, Shadowdark"
 ```
 
-## Aşama 2: Karakter Aktarım Blueprint'i
+### 6. Cross-Referansları Kur
+Entity'ler arası ilişkileri `cross_references` dizisinde tanımla.
 
-Orijinal içerikteki karakterler, uygulamamızdaki `player-character` kategorisine dönüştürülür.
-Her karakter için `blueprint.json` oluşturulur.
+## Karar Verme Noktaları
 
-### Eşleme Kuralları
+Agent olarak şu kararları sen vermelisin:
 
-> [!important] Alan sözleşmesinin tamamı: [character-blueprint.md](character-blueprint.md)
-> Orada her alanın tam JSON şekli, tipi, default'u ve hangi kaynaktan
-> doldurulduğu (sihirbaz / resolver / manuel) yazılı. Aşağıdaki tablo kısa özettir.
+1. **İçerik eşleme** — PDF'teki bir tablo NPC mi, encounter mı, location mu?
+2. **Medya atama** — Bir görsel hangi entity'ye ait?
+3. **SRD kontrolü** — Bu canavar zaten SRD'de var mı?
+4. **Hiyerarşi** — Location'lar nasıl sıralanmalı?
+5. **Açıklama yazımı** — Entity için kısa ve net açıklama
 
-Kaynak karakter alanları → Uygulama alanları:
+## Blueprint Formatı
 
-| Kaynak Alan | Uygulama Alanı | Not |
+Detaylar için:
+- [world-blueprint.md](world-blueprint.md) — World entity alanları
+- [character-blueprint.md](character-blueprint.md) — PC alanları
+
+## Örnek Eşleme
+
+### World Kategorileri
+
+| PDF İçeriği | Uygulama Kategorisi | Medya | Örnek |
+|---|---|---|---|
+| Canavar stat block'u | `monster` (SRD'de yoksa) | Token → `encounter.monsters_refs` | "Dodecaphage" |
+| Mekan açıklaması + harita | `location` | `map` alanına battlemap | "The Gate Hall" → `media/Maps/Upper-Level.webp` |
+| Encounter notları | `encounter` | `monsters_refs` + `trap_refs` | "Gate Hall Ambush" |
+| NPC portresi | `npc` | `imagePath` → `media/Tokens/NPC.webp` | "The White Shark of Basra" |
+| El yazması metin | `lore` | `pages` (markdown) + `pdfs` | "The History of Uzrah's Palace" |
+| Tuzak mekaniği | `trap` | — | "Collapsing Ceiling" |
+| Quest açıklaması | `quest` | — | "Reach the Palace" |
+| Sahne akışı | `scene` | `beats` (markdown) | "The Efreet's Revelation" |
+| Lanet | `curse` | `mechanical_notes` | "Mummy's Rot" |
+| Zehir | `poison` | `poison_kind` zorunlu | "Assassin's Blood" |
+| Çevre etkisi | `environmental-effect` | `damage_dice` + `effect` | "Efreet's Fire Aura" |
+| Kampanya özeti | `campaign` | `pdfs` | "99 Devils of Uzrah's Palace" |
+
+### Karakter Alanları
+
+| PDF İçeriği | Uygulama Alanı | Format |
 |---|---|---|
-| Name | `name` | Entity name |
-| Race/Species | `species_ref` | `relation` → species entity (tek id) |
-| Class | `class_refs` | `relation` list → class entity |
-| Level | `class_levels` | `levelTable` `{classEntityId: level}` — anahtar sınıfın **id**'si; blueprint'te isim yazılır, importer `class_refs` ile çözer |
-| Subclass | `subclass_refs` / `subclass_id` | relation list / resolver girdisi |
-| Alignment | `alignment_ref` | `relation` → alignment lookup |
-| Background | `background_ref` | `relation` → background entity |
-| STR/DEX/CON/INT/WIS/CHA | `stat_block` | `statBlock` map, int değerler: `{"STR":16, ...}` |
-| HP | `combat_stats.hp`, `combat_stats.max_hp` | `combatStats` int |
-| AC | `combat_stats.ac` | `combatStats` int |
-| Speed | `combat_stats.speed` | `combatStats` **text** — `"30 ft"` |
-| Skills | `skills` | `proficiencyTable` — satırlar preset üstüne isimle merge edilir |
-| Saving Throws | `saving_throws` | `proficiencyTable` (6 satır) |
-| Proficiencies | `tool_proficiencies`, `languages`, `weapon_proficiency_categories`, `armor_trainings`, `weapon_masteries` | `relation` listeleri |
-| Equipment | `inventory` | `relation` list → `{id, equipped}` satırları |
-| Spells | `spells_known` | `relation` list → `{id, equipped}` (equipped = hazırlanmış) |
-| Spell Slots | `spell_slots` | `{max:{seviye:adet}, remaining:{...}}` |
-| Features/Traits | `trait_refs`, `action_refs`, `bonus_action_refs`, `reaction_refs` | `relation` listeleri |
-| Personality | `personality_traits`, `ideals`, `bonds`, `flaws` | `markdown` |
-| Backstory / Appearance | `backstory`, `appearance`, `allies_organizations` | `markdown` |
-| Money | `cp` / `sp` / `ep` / `gp` / `pp` | `integer` |
+| İsim | `name` | Entity name |
+| Irk/Species | `species_ref` | relation→species |
+| Sınıf | `class_refs` | relation→class |
+| Seviye | `class_levels` | `{classId: level}` |
+| Background | `background_ref` | relation→background |
+| Hizalama | `alignment_ref` | relation→alignment |
+| Yetenek değerleri | `stat_block` | `{STR:16, DEX:14, ...}` |
+| Can puanı | `combat_stats.hp/max_hp` | int |
+| Zırh sınıfı | `combat_stats.ac` | int |
+| Hız | `combat_stats.speed` | text `"30 ft"` |
+| Beceriler | `skills` | proficiencyTable |
+| Kurtulma taslakları | `saving_throws` | proficiencyTable |
+| Eşyalar | `inventory` | relation list |
+| Büyüler | `spells_known` | relation list |
+| Kişilik | `personality_traits` | markdown |
+| Geçmiş | `backstory` | markdown |
 
-### Blueprint Formatı
+## Kontrol Listesi
 
-```json
-{
-  "version": "1.0.0",
-  "source_system": "shadowdark",
-  "app_schema": "builtin-dnd5e-default-v2",
-  "characters": [
-    {
-      "source_name": "Karakter Adı",
-      "source_file": "media/GURPS GCS Characters/Example.gcs",
-      "mapping": {
-        "name": "Karakter Adı",
-        "species_ref": {
-          "lookup": "species",
-          "match": "name",
-          "value": "Human"
-        },
-        "class_refs": [
-          {
-            "lookup": "class",
-            "match": "name",
-            "value": "Fighter"
-          }
-        ],
-        "class_levels": {
-          "Fighter": 5
-        },
-        "stat_block": {
-          "STR": 16,
-          "DEX": 12,
-          "CON": 14,
-          "INT": 10,
-          "WIS": 13,
-          "CHA": 8
-        },
-        "combat_stats": {
-          "hp": 35,
-          "max_hp": 35,
-          "ac": 18,
-          "speed": "30 ft",
-          "level": 5,
-          "initiative": "+1",
-          "cr": "",
-          "xp": 6500
-        },
-        "skills": {
-          "rows": [
-            {"name": "Athletics", "ability": "STR", "proficient": true},
-            {"name": "Intimidation", "ability": "CHA", "proficient": true}
-          ]
-        },
-        "inventory": [
-          {
-            "lookup": "weapon",
-            "match": "name",
-            "value": "Longsword",
-            "equipped": true
-          },
-          {
-            "lookup": "armor",
-            "match": "name",
-            "value": "Chain Mail",
-            "equipped": true
-          }
-        ],
-        "personality_traits": "Cesur ve kararlı bir savaşçı.",
-        "backstory": "Köyünden ayrılarak maceraya atıldı..."
-      },
-      "notes": "El yapımı karakter, SRD dışı"
-    }
-  ]
-}
-```
-
-### Eşleme Stratejileri
-
-**`match` türleri:**
-- `"name"` — İsim ile eşle (en yaygın)
-- `"slug"` — Slug ile eşle
-- `"abbreviation"` — Kısaltma ile eşle (ability scores için)
-- `"manual"` — Manuel değer (kaynakta karşılığı yoksa)
-
-**`lookup` kategorileri:**
-Karakterler genellikle şu Tier-0/Tier-1 kategorilerine referans verir:
-- `species`, `class`, `subclass`, `background`, `alignment`
-- `weapon`, `armor`, `adventuring-gear`, `magic-item`
-- `spell`, `feat`, `trait`, `creature-action`
-- `skill`, `language`, `tool`, `sense`, `condition`
-
-**Eşleşmeyen alanlar:**
-Kaynak içerikte karşılığı olmayan uygulama alanları `blueprint.json`'a yazılmaz.
-Uygulama varsayılan değerler kullanır (örn: `stat_block` → `{STR:10, DEX:10, ...}`).
-
-## Aşama 2: Campaign → World Aktarım Blueprint'i
-
-Orijinal campaign/setting içeriği, uygulamamızdaki world kategorilerine dönüştürülür.
-Her entity türü için `world-blueprint.json` oluşturulur.
-
-### World Kategorileri (Tier-2 DM)
-
-| Kategori | Slug | Kullanım |
-|---|---|---|
-| NPC | `npc` | Campaign'deki tüm NPC'ler |
-| Location | `location` | Mekanlar, binalar, bölgeler |
-| Quest | `quest` | Görevler, macera arc'ları |
-| Encounter | `encounter` | Savaş encounter'ları |
-| Scene | `scene` | Sahne/akt planları |
-| Trap | `trap` | Tuzaklar |
-| Curse | `curse` | Lanetler |
-| Poison | `poison` | Zehirler |
-| Environmental Effect | `environmental-effect` | Çevresel etkiler |
-| Hireling | `hireling` | Kiralık askerler |
-| Service | `service` | Hizmetler |
-
-### World Blueprint Formatı
-
-> [!important] Alan sözleşmesinin tamamı: [world-blueprint.md](world-blueprint.md)
-> Orada her Tier-2 kategorisinin alan adı, tipi, zorunluluğu, enum değerleri,
-> JSON şekli ve örnek blueprint var. Aşağıdaki tablo yalnızca kategori
-> eşlemesinin kısa özetidir.
-
-### Eşleme Kuralları (Campaign → World)
-
-| Kaynak Tür | Uygulama Kategorisi | Not |
-|---|---|---|
-| Person/Character | `npc` |faction liderleri, mağazacılar, rehberler |
-| Place/Region | `location` | Mekanlar, harita noktaları |
-| Quest/Mission | `quest` | Görevler, arc'lar |
-| Combat/Encounter | `encounter` | Savaş planları |
-| Scene/Beat | `scene` | Senaryo akışı |
-| Trap/Hazard | `trap` | Tuzaklar |
-| Magic Item | → `magic-item` (Tier-1) | World'e eklenen özel eşyalar |
-| Monster | → `monster` (Tier-1) | Özel yaratıklar |
-
-### Cross-Referanslar
-
-`cross_references` dizisi, entity'ler arası ilişkileri tanımlar:
-- `from_category` / `from_name`: Kaynak entity
-- `from_field`: Hangi alan referans veriyor
-- `to_category` / `to_name`: Hedef entity
-
-Bu referanslar, aktarım sonrası uygulama içinde otomatik olarak bağlanır.
-
-## Export Scripti
-
-```powershell
-# Modülü paketle
-powershell -ExecutionPolicy Bypass -File tool/content/export_module.ps1 -ModulePath "tool/content/<modul-adı>"
-```
-
-Script şu işlemleri yapar:
-1. Manifest'i doğrular (zorunlu alanlar, dosya varlığı)
-2. Tüm dosyaları zip paketine toplar
-3. Özeti yazdırır
-
-## Aktarım Sonrası Kontrol
-
-Her blueprint dosyası için:
-1. `blueprint.json` → Karakter alanları doğru mu?
-2. `world-blueprint.json` → Entity kategorileri doğru mu?
-3. Cross-referanslar tutarlı mı?
-4. Eşleşmeyen alanlar için varsayılanlar uygun mu?
-5. Built-in pakette zaten bulunan içerik tekrar eklenmemiş mi? (Kural 5)
-
-Aktarım tamamlandıktan sonra blueprint dosyaları `tool/content/<modul-adı>/` dizininde kalır.
-Uygulamaya entegrasyon gerektiğinde bu dosyalar okunarak entity'ler oluşturulur.
+- [ ] Tüm SRD dışı içerik blueprint'e eklendi
+- [ ] Medya dosyaları doğru entity'lere atandı
+- [ ] `source` alanları dolduruldu
+- [ ] Cross-referanslar tutarlı
+- [ ] Built-in paket tekrar eklenmedi
+- [ ] Location hiyerarşisi doğru kuruldu
+- [ ] Encounter'lar doğru canavarlara bağlandı
