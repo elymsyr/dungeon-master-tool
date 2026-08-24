@@ -597,10 +597,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     final packageRow =
         await ref.read(appDatabaseProvider).packagesDao.getByName(packageName);
     final localUpdatedAt = packageRow?.updatedAt;
-    final packageId = data['package_id'] as String? ??
-        data['world_id'] as String? ??
-        packageName;
-
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
@@ -658,9 +654,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
               ),
               const SizedBox(height: 12),
               SaveInfoSection(
-                itemName: packageName,
-                itemId: packageId,
-                type: 'package',
                 localUpdatedAt: localUpdatedAt,
               ),
               const SizedBox(height: 12),

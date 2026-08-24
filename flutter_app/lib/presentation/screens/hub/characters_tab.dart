@@ -640,9 +640,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     ),
                   const SizedBox(height: 12),
                   SaveInfoSection(
-                    itemName: c.entity.name,
-                    itemId: c.id,
-                    type: 'character',
                     localUpdatedAt: updatedAt,
                   ),
                   const SizedBox(height: 12),

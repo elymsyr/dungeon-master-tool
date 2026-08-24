@@ -18,7 +18,6 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/rule_config_provider.dart';
 import '../../../application/providers/locale_provider.dart';
-import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
@@ -3595,17 +3594,10 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                     : character.entity.name),
                 const SizedBox(height: 6),
                 SaveInfoSection(
-                  itemName: character.entity.name,
-                  itemId: character.id,
-                  type: 'character',
                   localUpdatedAt: updatedAt,
                 ),
 
                 if (hasCloud) ...[
-                  const SizedBox(height: 16),
-                  SectionLabel('Online', palette),
-                  const SizedBox(height: 8),
-                  _CharacterOnlineToggle(character: character),
                   const SizedBox(height: 16),
                   SectionLabel('Storage', palette),
                   const SizedBox(height: 8),
@@ -3629,55 +3621,6 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
         ),
       );
 
-}
-
-/// Online sync status card. Tek kural kaldı: karakter online bir dünyaya
-/// bağlıysa `world_characters` üzerinden DM'e canlı akar; değilse tamamen
-/// yereldir (cihazdan cihaza taşıma LAN sync'in işi).
-class _CharacterOnlineToggle extends ConsumerWidget {
-  final Character character;
-
-  const _CharacterOnlineToggle({required this.character});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final worldId = character.worldId;
-    final onlineIds = ref.watch(onlineWorldIdsProvider);
-    final worldOnline = worldId != null && onlineIds.contains(worldId);
-
-    final IconData icon;
-    final Color color;
-    final String label;
-    if (worldOnline) {
-      icon = Icons.cloud_done;
-      color = palette.successBtnBg;
-      label = 'Online · auto-synced';
-    } else {
-      icon = Icons.cloud_off;
-      color = palette.sidebarLabelSecondary;
-      label = 'Offline · local only';
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.br,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// E5/E6: header stat-chip strip with scoped name watches. Watches the

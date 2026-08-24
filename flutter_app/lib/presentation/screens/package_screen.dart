@@ -24,6 +24,7 @@ import '../dialogs/link_package_dialog.dart';
 import '../dialogs/rule_config_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/save_sync_indicator.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
 
@@ -327,9 +328,6 @@ class _PackageScreenContentState
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     final (canUndoVN, canRedoVN) = dispatcher.activeNotifiers(0);
 
-    // Save indicator
-    final saveStatus = ref.watch(saveStateProvider);
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -393,34 +391,8 @@ class _PackageScreenContentState
             ],
           ),
           const SizedBox(width: 4),
-          // Save indicator
-          Tooltip(
-            message: switch (saveStatus) {
-              SaveStatus.saved => 'All changes saved',
-              SaveStatus.dirty => 'Unsaved changes',
-              SaveStatus.saving => 'Saving...',
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: saveStatus == SaveStatus.saving
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: palette.uiAutosaveTextEditing),
-                    )
-                  : Icon(
-                      saveStatus == SaveStatus.saved
-                          ? Icons.cloud_done
-                          : Icons.cloud_upload,
-                      size: 18,
-                      color: saveStatus == SaveStatus.saved
-                          ? palette.uiAutosaveTextSaved
-                          : palette.uiAutosaveTextEditing,
-                    ),
-            ),
-          ),
+          // Save indicator — same dialog as worlds, package-scoped.
+          const SaveSyncIndicator(isPackage: true),
           const SizedBox(width: 4),
           // PR-SYNC-5: DM-only — share this package into the active world.
           if (ref.watch(hasAccountProvider) &&

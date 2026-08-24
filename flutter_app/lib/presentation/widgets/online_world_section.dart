@@ -138,7 +138,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.cloud_upload, size: 16),
-            label: const Text('Make Online'),
+            label: const Text('Multiplayer On'),
           ),
         ],
       ),
@@ -159,7 +159,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             TextButton.icon(
               onPressed: _busy ? null : _unpublish,
               icon: const Icon(Icons.cloud_off, size: 14),
-              label: const Text('Make Offline'),
+              label: const Text('Multiplayer Off'),
               style: TextButton.styleFrom(
                 foregroundColor: palette.dangerBtnBg,
                 visualDensity: VisualDensity.compact,
@@ -270,7 +270,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Make Offline'),
+        title: const Text('Multiplayer Off'),
         content: const Text(
             'This removes the world and all member data from the cloud. '
             'Local data is preserved. Continue?'),
@@ -280,7 +280,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
               child: const Text('Cancel')),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Make Offline')),
+              child: const Text('Multiplayer Off')),
         ],
       ),
     );
