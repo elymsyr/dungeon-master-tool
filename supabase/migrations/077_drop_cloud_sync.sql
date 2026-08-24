@@ -135,7 +135,10 @@ DROP FUNCTION IF EXISTS public.unpublish_personal_package(TEXT);
 DROP FUNCTION IF EXISTS public.publish_personal_package_entity(TEXT, TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.delete_personal_package_entity(TEXT, TEXT);
 DROP FUNCTION IF EXISTS public.max_online_packages_per_user();
-DROP FUNCTION IF EXISTS public.max_online_characters_per_user();
+-- max_online_characters_per_user() DÜŞMEZ: `world_characters` kalıyor ve
+-- üzerindeki `enforce_world_character_limits()` trigger'ı hâlâ çağırıyor.
+-- (plpgsql gövdesi bağımlılık kaydı yaratmaz — drop sessizce geçer, sonra
+-- her karakter INSERT'ü "function does not exist" ile patlar.)
 
 -- Battle-map collab denemesi: istemcisi hiç bağlanmadı (bkz. 061 başlığı).
 DROP FUNCTION IF EXISTS public.compact_battlemap_marks(TEXT, TEXT, BIGINT);
@@ -180,6 +183,24 @@ DROP TABLE IF EXISTS public.world_sessions           CASCADE;
 DROP TABLE IF EXISTS public.world_settings           CASCADE;
 DROP TABLE IF EXISTS public.cloud_backups            CASCADE;
 
+-- get_user_total_storage_used — cloud_backups terimi çıkar.
+-- SQL gövdesi bağımlılık kaydı yaratmaz, yani tablo sessizce düşer; sonra
+-- admin kullanıcı listesi (get_all_users_summary/search_users bunu çağırır)
+-- ve depolama göstergesi "relation cloud_backups does not exist" ile patlar.
+CREATE OR REPLACE FUNCTION public.get_user_total_storage_used(p_user_id UUID)
+RETURNS BIGINT
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT
+    COALESCE((SELECT SUM(size_bytes) FROM public.community_assets
+              WHERE uploader_id = p_user_id), 0)
+    +
+    COALESCE((SELECT SUM(size_bytes) FROM public.posts
+              WHERE author_id = p_user_id), 0)
+    +
+    COALESCE((SELECT SUM(size_bytes) FROM public.marketplace_listings
+              WHERE owner_id = p_user_id), 0);
+$$;
+
 -- `worlds.state_json` — dünyanın tamamını taşıyan blob. Artık yazılmıyor.
 ALTER TABLE public.worlds DROP COLUMN IF EXISTS state_json;
 
@@ -198,7 +219,15 @@ BEGIN
   END LOOP;
 END $$;
 
-DELETE FROM storage.objects WHERE bucket_id = 'campaign-backups';
-DELETE FROM storage.buckets WHERE id = 'campaign-backups';
+-- Supabase'in `storage.protect_delete` trigger'ı doğrudan DELETE'i
+-- engelleyebilir. Tüm migration'ı geri aldırmasın: yutulur, bucket
+-- Dashboard'dan / wipe_storage.sh ile boşaltılır.
+DO $$
+BEGIN
+  DELETE FROM storage.objects WHERE bucket_id = 'campaign-backups';
+  DELETE FROM storage.buckets WHERE id = 'campaign-backups';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'campaign-backups bucket elle silinmeli: %', SQLERRM;
+END $$;
 
 NOTIFY pgrst, 'reload schema';

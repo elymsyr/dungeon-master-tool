@@ -19,6 +19,11 @@ GRANT SELECT ON public.marketplace_listings TO anon;
 -- Listing kartı yazarın kullanıcı adını gösteriyor (`profiles` join'i).
 -- Sadece SELECT; profiles'ın kendi RLS'i hangi satırların görüneceğini
 -- belirlemeye devam eder.
-GRANT SELECT ON public.profiles TO anon;
+-- Kolon-kapsamlı: `profiles` RLS'i `USING (true)` olduğu için tam tablo
+-- GRANT'i `last_active_at`, `app_version`, `platform` ve moderasyon alanı
+-- `online_restricted_reason`'ı da hesapsız internete açardı. Listing kartının
+-- ihtiyacı olan dört kolon yeter.
+GRANT SELECT (user_id, username, display_name, avatar_url)
+  ON public.profiles TO anon;
 
 NOTIFY pgrst, 'reload schema';
