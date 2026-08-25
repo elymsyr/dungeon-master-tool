@@ -203,6 +203,47 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           } catch (_) {}
+          // Dedup: packages table has no UNIQUE on `name`, so duplicate rows
+          // (same name, different id) can accumulate from interrupted re-seeds
+          // or race conditions. Keep the row with the most entities; on tie,
+          // keep the most recently updated. Gated via migration_progress.
+          try {
+            final dedupDone = await customSelect(
+              "SELECT 1 FROM migration_progress WHERE "
+              "migration_name = 'packages_dedup_v1' AND completed = 1",
+            ).get();
+            if (dedupDone.isEmpty) {
+              // Delete the "loser" of each duplicate pair — fewer entities, or
+              // same count but older updated_at. Uses a self-join.
+              await customStatement(
+                "DELETE FROM packages WHERE id IN ("
+                "  SELECT p1.id FROM packages p1"
+                "  JOIN packages p2 ON p1.name = p2.name AND p1.id > p2.id"
+                "  WHERE ("
+                "    (SELECT count(*) FROM package_entities WHERE package_id = p1.id)"
+                "    < (SELECT count(*) FROM package_entities WHERE package_id = p2.id)"
+                "  ) OR ("
+                "    (SELECT count(*) FROM package_entities WHERE package_id = p1.id)"
+                "    = (SELECT count(*) FROM package_entities WHERE package_id = p2.id)"
+                "    AND p1.updated_at <= p2.updated_at"
+                "  )"
+                ")",
+              );
+              await customStatement(
+                "INSERT OR REPLACE INTO migration_progress "
+                "(migration_name, world_id, completed, updated_at) "
+                "VALUES ('packages_dedup_v1', '', 1, ?)",
+                [DateTime.now().millisecondsSinceEpoch],
+              );
+            }
+          } catch (_) {}
+          // Prevent future duplicate package names with a UNIQUE index.
+          try {
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS idx_packages_name '
+              'ON packages (name)',
+            );
+          } catch (_) {}
           // PR-D8 cleanup: 30-day Drift trash retention (replaces v11 FS
           // _cleanupTrash). Best-effort — purge errors don't block open.
           try {
@@ -269,6 +310,8 @@ const List<String> _v12Indexes = <String>[
       'ON character_claim_pool (world_id, available)',
 
   // packages catalog
+  'CREATE UNIQUE INDEX IF NOT EXISTS idx_packages_name '
+      'ON packages (name)',
   'CREATE INDEX IF NOT EXISTS idx_package_entities_package '
       'ON package_entities (package_id)',
 
