@@ -1,0 +1,2164 @@
+{
+  "version": "1.0.0",
+  "source_system": "shadowdark",
+  "app_schema": "builtin-dnd5e-default-v2",
+  "categories": {
+    "npc": [
+      {
+        "source_name": "The White Shark of Basra",
+        "mapping": {
+          "name": "The White Shark of Basra",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 5,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Neutral"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 14,
+            "DEX": 14,
+            "CON": 12,
+            "INT": 16,
+            "WIS": 13,
+            "CHA": 14
+          },
+          "combat_stats": {
+            "hp": 12,
+            "max_hp": 12,
+            "ac": 15,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 3,
+          "description": "An old pirate lord, 73 years old, with white hair and cunning eyes. Plans to distribute his vast treasure on the island ruins.",
+          "secrets": "The ruins were once the palace of a legendary vizier, now haunted by a capricious efreet. The Shark knows more than he lets on.",
+          "imagePath": "media/Tokens/White-Shark.webp"
+        }
+      },
+      {
+        "source_name": "Faruq Night-Eater",
+        "mapping": {
+          "name": "Faruq Night-Eater",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 4,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Lower Level"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 16,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 16,
+            "WIS": 13,
+            "CHA": 12
+          },
+          "combat_stats": {
+            "hp": 13,
+            "max_hp": 13,
+            "ac": 16,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A fearsome pirate lieutenant. 'Night-Eater' is not a metaphorical title.",
+          "secrets": "Secretly plans to betray the White Shark and claim the treasure for himself.",
+          "imagePath": "media/Tokens/Faruq-Night-Eater.webp"
+        }
+      },
+      {
+        "source_name": "Nefru-Sekhem",
+        "mapping": {
+          "name": "Nefru-Sekhem",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 4,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 18,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 12,
+            "WIS": 11,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 15,
+            "max_hp": 15,
+            "ac": 16,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A towering warrior serving as the White Shark's enforcer.",
+          "imagePath": "media/Tokens/Nefru-Sekhem.webp"
+        }
+      },
+      {
+        "source_name": "Timzahi",
+        "mapping": {
+          "name": "Timzahi",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 4,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 18,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 12,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 15,
+            "max_hp": 15,
+            "ac": 16,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "Another of the White Shark's elite guards. Identical in build to Nefru-Sekhem.",
+          "imagePath": "media/Tokens/Timzahi.webp"
+        }
+      },
+      {
+        "source_name": "Varazdat",
+        "mapping": {
+          "name": "Varazdat",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 5,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Neutral"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Gate Hall"
+          },
+          "stat_block": {
+            "STR": 20,
+            "DEX": 16,
+            "CON": 16,
+            "INT": 16,
+            "WIS": 13,
+            "CHA": 12
+          },
+          "combat_stats": {
+            "hp": 17,
+            "max_hp": 17,
+            "ac": 17,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 3,
+          "description": "A massive warrior of ambiguous allegiance. Serves as gatekeeper to the palace ruins.",
+          "secrets": "Bound by an ancient oath to guard the palace. Will respect anyone who speaks the old words.",
+          "imagePath": "media/Tokens/Varazdat.webp"
+        }
+      },
+      {
+        "source_name": "Ibrahim the Drifted Lord",
+        "mapping": {
+          "name": "Ibrahim the Drifted Lord",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 3,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Gate Hall"
+          },
+          "stat_block": {
+            "STR": 14,
+            "DEX": 14,
+            "CON": 14,
+            "INT": 12,
+            "WIS": 11,
+            "CHA": 12
+          },
+          "combat_stats": {
+            "hp": 11,
+            "max_hp": 11,
+            "ac": 14,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A displaced noble who has wandered into the ruins seeking redemption.",
+          "secrets": "Knows the location of a hidden vault, but fears what guards it.",
+          "imagePath": "media/Tokens/Ibrahim-the-Drifted-Lord.webp"
+        }
+      },
+      {
+        "source_name": "Keeper of Cups and Cushions",
+        "mapping": {
+          "name": "Keeper of Cups and Cushions",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 3,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Banquet Hall"
+          },
+          "stat_block": {
+            "STR": 10,
+            "DEX": 14,
+            "CON": 12,
+            "INT": 14,
+            "WIS": 14,
+            "CHA": 16
+          },
+          "combat_stats": {
+            "hp": 9,
+            "max_hp": 9,
+            "ac": 12,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A ghostly servant who still tends to a feast that ended centuries ago.",
+          "secrets": "Will help anyone who honors the traditions of hospitality.",
+          "imagePath": "media/Tokens/Keeper-of-Cups.webp"
+        }
+      },
+      {
+        "source_name": "Debbi",
+        "mapping": {
+          "name": "Debbi",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 2,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Neutral"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Builder Tunnels"
+          },
+          "stat_block": {
+            "STR": 10,
+            "DEX": 14,
+            "CON": 12,
+            "INT": 12,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 9,
+            "max_hp": 9,
+            "ac": 12,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A tunnel dweller who knows the secret passages of the palace.",
+          "imagePath": "media/Tokens/Debbi.webp"
+        }
+      },
+      {
+        "source_name": "Sangtarash the Mercenary",
+        "mapping": {
+          "name": "Sangtarash the Mercenary",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 3,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Neutral"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 14,
+            "DEX": 12,
+            "CON": 14,
+            "INT": 12,
+            "WIS": 11,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 12,
+            "max_hp": 12,
+            "ac": 16,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A sellsword hired by the White Shark. Fights for coin, not loyalty.",
+          "imagePath": "media/Tokens/Sangtarash.webp"
+        }
+      },
+      {
+        "source_name": "Rafiq the Pirate",
+        "mapping": {
+          "name": "Rafiq the Pirate",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 2,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 12,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 12,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 11,
+            "max_hp": 11,
+            "ac": 14,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "One of the White Shark's rank-and-file pirates.",
+          "imagePath": "media/Tokens/Rafiq-the-Pirate.webp"
+        }
+      },
+      {
+        "source_name": "Pirate Archer",
+        "mapping": {
+          "name": "Pirate Archer",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 2,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 12,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 12,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 11,
+            "max_hp": 11,
+            "ac": 14,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "An archer serving in the White Shark's crew.",
+          "imagePath": "media/Tokens/Pirate-Archer.webp"
+        }
+      },
+      {
+        "source_name": "Ropeburn the Pirate",
+        "mapping": {
+          "name": "Ropeburn the Pirate",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 2,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Builder Tunnels"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 12,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 12,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 11,
+            "max_hp": 11,
+            "ac": 14,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A grizzled pirate with burn scars covering his hands.",
+          "imagePath": "media/Tokens/Ropeburn-the-Pirate.webp"
+        }
+      },
+      {
+        "source_name": "Pirate Treasure Hauler",
+        "mapping": {
+          "name": "Pirate Treasure Hauler",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 1,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Hostile"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "faction": "White Shark's Crew",
+          "stat_block": {
+            "STR": 14,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 10,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 11,
+            "max_hp": 11,
+            "ac": 14,
+            "speed": "30 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "A strong but simple pirate tasked with moving treasure chests.",
+          "imagePath": "media/Tokens/Pirate-Hauler.webp"
+        }
+      },
+      {
+        "source_name": "Tariq the Monkey",
+        "mapping": {
+          "name": "Tariq the Monkey",
+          "species_ref": {
+            "lookup": "species",
+            "match": "name",
+            "value": "Human"
+          },
+          "level": 1,
+          "attitude_ref": {
+            "lookup": "attitude",
+            "match": "name",
+            "value": "Friendly"
+          },
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Builder Tunnels"
+          },
+          "stat_block": {
+            "STR": 8,
+            "DEX": 16,
+            "CON": 12,
+            "INT": 10,
+            "WIS": 10,
+            "CHA": 10
+          },
+          "combat_stats": {
+            "hp": 5,
+            "max_hp": 5,
+            "ac": 13,
+            "speed": "35 ft"
+          },
+          "proficiency_bonus": 2,
+          "description": "An agile little thief who skitters through the tunnels. Named for his climbing ability.",
+          "imagePath": "media/Tokens/Tariq-the-Monkey.webp"
+        }
+      },
+      {
+        "name": "Rashid the Jackal",
+        "mapping": {
+          "name": "Rashid the Jackal",
+          "description": "A cunning informant who operates in the shadows. Known for his ability to gather secrets and trade them for favors.",
+          "traits": "cunning, secretive, well-connected",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Gate Hall"
+          },
+          "imagePath": "media/Tokens/Rashid-the-Jackal.webp"
+        }
+      },
+      {
+        "name": "Hound of Ash Silk",
+        "mapping": {
+          "name": "Hound of Ash Silk",
+          "description": "A spectral hound with fur made of ash and silk. Guards the palace entrance and attacks intruders.",
+          "traits": "spectral, guarding, relentless",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "imagePath": "media/Tokens/Hound-Ash-Silk.webp"
+        }
+      }
+    ],
+    "location": [
+      {
+        "source_name": "Uzrah's Palace",
+        "mapping": {
+          "name": "Uzrah's Palace",
+          "danger_level": "Deadly",
+          "environment": "Ancient palace ruins, partially collapsed, haunted by an efreet",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Dim Light"
+          },
+          "description_long": "The crumbling palace of a legendary vizier, now haunted by a capricious efreet. The White Shark of Basra has claimed it as the site for his treasure distribution. The ruins are filled with traps, monsters, and the remnants of ancient magic.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Gate Hall",
+        "mapping": {
+          "name": "The Gate Hall",
+          "danger_level": "High",
+          "environment": "Grand entrance hall, 60-foot ceilings, crumbling pillars",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Dim Light"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "The main entrance to the palace. Massive stone doors stand partially open, revealing a hall lined with crumbling pillars. Faded murals depicting ancient victories cover the walls.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Upper Level",
+        "mapping": {
+          "name": "The Upper Level",
+          "danger_level": "High",
+          "environment": "Palace upper floors, guest quarters, audience chambers",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Dim Light"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "The upper floors of the palace, once reserved for honored guests. Now occupied by the White Shark's crew. Dusty tapestries and broken furniture litter the corridors.",
+          "map": "media/Maps/Upper-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Lower Level",
+        "mapping": {
+          "name": "The Lower Level",
+          "danger_level": "Deadly",
+          "environment": "Underground chambers, treasury vaults, ancient laboratories",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Darkness"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "The basement levels of the palace, where the vizier kept his most precious treasures and conducted his arcane experiments. Dark, cramped, and filled with ancient traps.",
+          "map": "media/Maps/Lower-Level.webp"
+        }
+      },
+      {
+        "source_name": "The Builder Tunnels",
+        "mapping": {
+          "name": "The Builder Tunnels",
+          "danger_level": "Medium",
+          "environment": "Narrow service tunnels, connecting various parts of the palace",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Darkness"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "A network of narrow tunnels used by the palace builders and servants. Now home to various creatures and tunnel dwellers.",
+          "map": "media/Maps/Builder-Tunnels.webp"
+        }
+      },
+      {
+        "source_name": "The Treasure Hall",
+        "mapping": {
+          "name": "The Treasure Hall",
+          "danger_level": "Deadly",
+          "environment": "Massive vaulted chamber, filled with ancient treasure chests",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Bright Light"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "The grand hall where the White Shark plans to distribute his treasure. Piles of gold, gems, and artifacts fill the room. The efreet watches from the shadows, waiting for the right moment to strike."
+        }
+      },
+      {
+        "source_name": "The Banquet Hall",
+        "mapping": {
+          "name": "The Banquet Hall",
+          "danger_level": "Medium",
+          "environment": "Long dining hall, tables set for a feast that never ended",
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Dim Light"
+          },
+          "parent_location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "description_long": "A grand dining hall where ghostly servants still tend to a feast that was interrupted centuries ago. The food is dust, the wine is vapor, but the servants remain."
+        }
+      }
+    ],
+    "encounter": [
+      {
+        "source_name": "Gate Hall Ambush",
+        "mapping": {
+          "name": "Gate Hall Ambush",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Gate Hall"
+          },
+          "difficulty": "Moderate",
+          "monsters_refs": [
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Cobra",
+              "count": 4
+            }
+          ],
+          "setup": "As the party enters the Gate Hall, giant cobras descend from the crumbling ceiling.",
+          "tactics": "The cobras attack from above, using surprise to gain advantage. They target the weakest-looking party member first.",
+          "xp_budget": 800
+        }
+      },
+      {
+        "source_name": "Upper Level Patrol",
+        "mapping": {
+          "name": "Upper Level Patrol",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "difficulty": "Moderate",
+          "npcs_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Rafiq the Pirate"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Pirate Archer"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Ropeburn the Pirate"
+            }
+          ],
+          "setup": "A patrol of three pirates rounds the corner, weapons drawn.",
+          "tactics": "The archer fires from behind while the others engage in melee. They retreat if two fall."
+        }
+      },
+      {
+        "source_name": "Nefru-Sekhem's Guard",
+        "mapping": {
+          "name": "Nefru-Sekhem's Guard",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Upper Level"
+          },
+          "difficulty": "Hard",
+          "npcs_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Nefru-Sekhem"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Timzahi"
+            }
+          ],
+          "setup": "Two massive warriors block the path, weapons ready. They fight to the death.",
+          "tactics": "Nefru-Sekhem and Timzahi fight in tandem, covering each other's flanks. They target healers first."
+        }
+      },
+      {
+        "source_name": "The Efreet's Lair",
+        "mapping": {
+          "name": "The Efreet's Lair",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "difficulty": "Deadly",
+          "setup": "The efreet reveals itself, demanding tribute or combat. The temperature rises as flames dance in its eyes.",
+          "tactics": "The efreet uses fireballs to control the battlefield, targeting groups. It picks off stragglers with flame touch. If reduced to half HP, it retreats to bargain.",
+          "xp_budget": 3000
+        }
+      },
+      {
+        "source_name": "Tunnel Ambush",
+        "mapping": {
+          "name": "Tunnel Ambush",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Builder Tunnels"
+          },
+          "difficulty": "Easy",
+          "monsters_refs": [
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Ghul-Bird",
+              "count": 6
+            }
+          ],
+          "setup": "Screeching fills the narrow tunnels as ghul-birds swoop down from above.",
+          "tactics": "The ghul-birds attack in waves, using the narrow tunnels to prevent the party from fighting effectively."
+        }
+      },
+      {
+        "source_name": "The Dodecaphage Encounter",
+        "mapping": {
+          "name": "The Dodecaphage Encounter",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Lower Level"
+          },
+          "difficulty": "Deadly",
+          "monsters_refs": [
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Dodecaphage",
+              "count": 1
+            }
+          ],
+          "setup": "A massive, impossible creature blocks the passage. It has too many mouths, too many eyes, and it is very, very hungry.",
+          "tactics": "The Dodecaphage uses its immense size to fill the corridor, forcing the party to fight in cramped conditions. It swallows targets whole."
+        }
+      }
+    ],
+    "trap": [
+      {
+        "source_name": "Collapsing Ceiling",
+        "mapping": {
+          "name": "Collapsing Ceiling",
+          "trigger_kind": "Pressure",
+          "trigger": "A pressure plate in the center of the hallway.",
+          "save_dc": 14,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Dexterity"
+          },
+          "damage_dice": "4d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "detection_dc": 15,
+          "disable_dc": 13,
+          "disable_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Intelligence"
+          },
+          "countermeasures": "The pressure plate can be spotted with a DC 15 Perception check. It can be disabled with a DC 13 Investigation check."
+        }
+      },
+      {
+        "source_name": "Flame Jet",
+        "mapping": {
+          "name": "Flame Jet",
+          "trigger_kind": "Touch",
+          "trigger": "Opening a treasure chest triggers a burst of flame from the walls.",
+          "save_dc": 13,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Dexterity"
+          },
+          "damage_dice": "3d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Fire"
+          },
+          "detection_dc": 14,
+          "disable_dc": 12,
+          "disable_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Intelligence"
+          }
+        }
+      },
+      {
+        "source_name": "Pit Trap",
+        "mapping": {
+          "name": "Pit Trap",
+          "trigger_kind": "Pressure",
+          "trigger": "A section of floor gives way under weight.",
+          "save_dc": 13,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Dexterity"
+          },
+          "damage_dice": "2d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "detection_dc": 12,
+          "disable_dc": 10,
+          "disable_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Intelligence"
+          }
+        }
+      }
+    ],
+    "scene": [
+      {
+        "source_name": "Arrival at the Island",
+        "mapping": {
+          "name": "Arrival at the Island",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "Uzrah's Palace"
+          },
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Bright Light"
+          },
+          "beats": "1. The party's ship approaches the island at dawn.\n2. They see the ruined palace rising from the jungle.\n3. A warning: fresh footprints in the sand — someone else is here.\n4. The gate stands ajar, inviting them in.",
+          "npc_refs": []
+        }
+      },
+      {
+        "source_name": "The Gate Hall Discovery",
+        "mapping": {
+          "name": "The Gate Hall Discovery",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Gate Hall"
+          },
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Dim Light"
+          },
+          "beats": "1. The party enters the grand hall, awestruck by its scale.\n2. Faded murals tell the story of a vizier's rise and fall.\n3. A ghostly voice whispers: 'Turn back... or join the feast eternal.'\n4. Ibrahim the Drifted Lord approaches cautiously.",
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Ibrahim the Drifted Lord"
+            }
+          ]
+        }
+      },
+      {
+        "source_name": "The Efreet's Revelation",
+        "mapping": {
+          "name": "The Efreet's Revelation",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Bright Light"
+          },
+          "beats": "1. The temperature rises as the party enters the Treasure Hall.\n2. Flames dance in the shadows — the efreet reveals itself.\n3. It demands tribute: 'Kneel, and I shall grant you riches beyond measure.'\n4. If refused, it attacks with terrifying fury.",
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "The White Shark of Basra"
+            }
+          ]
+        }
+      },
+      {
+        "source_name": "The Final Battle",
+        "mapping": {
+          "name": "The Final Battle",
+          "status": "Planned",
+          "location_ref": {
+            "lookup": "location",
+            "match": "name",
+            "value": "The Treasure Hall"
+          },
+          "illumination_ref": {
+            "lookup": "illumination",
+            "match": "name",
+            "value": "Bright Light"
+          },
+          "beats": "1. The White Shark and his elite guards surround the party.\n2. The efreet watches, amused, from its throne of gold.\n3. The battle rages — friend and foe fall alike.\n4. Victory: the treasure is claimed, but at what cost?",
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "The White Shark of Basra"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Nefru-Sekhem"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Timzahi"
+            }
+          ]
+        }
+      }
+    ],
+    "quest": [
+      {
+        "source_name": "Reach the Palace",
+        "mapping": {
+          "name": "Reach the Palace",
+          "status": "Not Started",
+          "objective": "Travel to the island and find the entrance to Uzrah's Palace.",
+          "reward_xp": 500,
+          "reward_gp": 100,
+          "secrets": "The palace is not abandoned — the White Shark's crew has already claimed it."
+        }
+      },
+      {
+        "source_name": "Stop the White Shark",
+        "mapping": {
+          "name": "Stop the White Shark",
+          "status": "Not Started",
+          "objective": "Defeat or drive off the White Shark of Basra and his crew before they can claim the treasure.",
+          "reward_xp": 2000,
+          "reward_gp": 500,
+          "secrets": "The White Shark knows more about the palace than he lets on — he seeks a specific artifact."
+        }
+      },
+      {
+        "source_name": "Survive the Efreet",
+        "mapping": {
+          "name": "Survive the Efreet",
+          "status": "Not Started",
+          "objective": "Deal with the capricious efreet that haunts the palace. Befriend, banish, or destroy it.",
+          "reward_xp": 3000,
+          "reward_gp": 1000,
+          "secrets": "The efreet was bound to the palace centuries ago. It can be freed — or bound tighter."
+        }
+      },
+      {
+        "source_name": "Claim the Treasure",
+        "mapping": {
+          "name": "Claim the Treasure",
+          "status": "Not Started",
+          "objective": "Find and claim the legendary treasure of Uzrah's Palace.",
+          "reward_xp": 1500,
+          "reward_gp": 2000,
+          "secrets": "The treasure is not what it seems — it is both a blessing and a curse."
+        }
+      }
+    ],
+    "lore": [
+      {
+        "source_name": "The History of Uzrah's Palace",
+        "mapping": {
+          "name": "The History of Uzrah's Palace",
+          "pages": [
+            "Uzrah's Palace was built centuries ago by a legendary vizier who served the sultan of a great desert kingdom. The palace was a marvel of architecture, with soaring towers and lush gardens.",
+            "The vizier was known for his wisdom and wealth, but also for his pride. He made a bargain with an efreet, trading his soul for eternal power. But the efreet betrayed him, trapping his spirit in the palace forever.",
+            "The palace fell into ruin after the vizier's death. The gardens withered, the towers crumbled, and the efreet remained, guarding the treasure that the vizier had hoarded."
+          ],
+          "pdfs": [
+            "media/Handouts/Handout-A-Invitation.png"
+          ]
+        }
+      },
+      {
+        "source_name": "The Legend of the Efreet",
+        "mapping": {
+          "name": "The Legend of the Efreet",
+          "pages": [
+            "The efreet that haunts Uzrah's Palace is not a ordinary fire spirit. It is ancient, powerful, and capricious — capable of granting wishes and destroying those who displease it.",
+            "Legend says that the efreet was once a djinni who fell in love with a mortal. When the mortal died, the djinni's grief turned to rage, and it became an efreet, burning everything it touched.",
+            "The efreet can be summoned with fire and gold, but it always demands a price. Those who try to trick it often find themselves burned."
+          ]
+        }
+      },
+      {
+        "source_name": "The White Shark's Plan",
+        "mapping": {
+          "name": "The White Shark's Plan",
+          "pages": [
+            "The White Shark of Basra is not a typical pirate. He is old, cunning, and has spent decades searching for Uzrah's Palace.",
+            "His plan is to distribute his treasure on the island, using the palace as a base of operations. But he secretly seeks the vizier's artifact — an item of immense power hidden somewhere in the palace.",
+            "The White Shark knows about the efreet and has prepared offerings to appease it. Whether he can control it is another matter."
+          ],
+          "secrets": "The White Shark's true goal is to bind the efreet to his will, using the vizier's artifact."
+        }
+      }
+    ],
+    "campaign": [
+      {
+        "source_name": "99 Devils of Uzrah's Palace",
+        "mapping": {
+          "name": "99 Devils of Uzrah's Palace",
+          "pages": [
+            "An Arabian Nights-inspired dungeon adventure for 4-6 players, set on a remote island where a pirate lord plans to distribute his treasure among the ruins of a legendary palace.",
+            "The palace was once home to a vizier who made a bargain with an efreet. Now the ruins are haunted by the efreet, filled with traps and monsters, and guarded by the White Shark's crew.",
+            "The party must navigate the ruins, deal with the efreet, and either claim the treasure or stop the White Shark's plans. The adventure features exploration, combat, and roleplaying opportunities."
+          ],
+          "pdfs": [
+            "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf"
+          ],
+          "imagePath": "media/Title-Image.webp",
+          "scene_refs": [
+            {
+              "lookup": "scene",
+              "match": "name",
+              "value": "Arrival at the Island"
+            },
+            {
+              "lookup": "scene",
+              "match": "name",
+              "value": "The Gate Hall Discovery"
+            },
+            {
+              "lookup": "scene",
+              "match": "name",
+              "value": "The Efreet's Revelation"
+            },
+            {
+              "lookup": "scene",
+              "match": "name",
+              "value": "The Final Battle"
+            }
+          ],
+          "quest_refs": [
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "Reach the Palace"
+            },
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "Stop the White Shark"
+            },
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "Survive the Efreet"
+            },
+            {
+              "lookup": "quest",
+              "match": "name",
+              "value": "Claim the Treasure"
+            }
+          ],
+          "lore_refs": [
+            {
+              "lookup": "lore",
+              "match": "name",
+              "value": "The History of Uzrah's Palace"
+            },
+            {
+              "lookup": "lore",
+              "match": "name",
+              "value": "The Legend of the Efreet"
+            },
+            {
+              "lookup": "lore",
+              "match": "name",
+              "value": "The White Shark's Plan"
+            }
+          ],
+          "location_refs": [
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "Uzrah's Palace"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Gate Hall"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Upper Level"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Lower Level"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Builder Tunnels"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Treasure Hall"
+            },
+            {
+              "lookup": "location",
+              "match": "name",
+              "value": "The Banquet Hall"
+            }
+          ],
+          "encounter_refs": [
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "Gate Hall Ambush"
+            },
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "Upper Level Patrol"
+            },
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "Nefru-Sekhem's Guard"
+            },
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "The Efreet's Lair"
+            },
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "Tunnel Ambush"
+            },
+            {
+              "lookup": "encounter",
+              "match": "name",
+              "value": "The Dodecaphage Encounter"
+            }
+          ],
+          "trap_refs": [
+            {
+              "lookup": "trap",
+              "match": "name",
+              "value": "Collapsing Ceiling"
+            },
+            {
+              "lookup": "trap",
+              "match": "name",
+              "value": "Flame Jet"
+            },
+            {
+              "lookup": "trap",
+              "match": "name",
+              "value": "Pit Trap"
+            }
+          ],
+          "npc_refs": [
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "The White Shark of Basra"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Faruq Night-Eater"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Nefru-Sekhem"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Timzahi"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Varazdat"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Ibrahim the Drifted Lord"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Keeper of Cups and Cushions"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Debbi"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Sangtarash the Mercenary"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Rafiq the Pirate"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Pirate Archer"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Ropeburn the Pirate"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Pirate Treasure Hauler"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Tariq the Monkey"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Rashid the Jackal"
+            },
+            {
+              "lookup": "npc",
+              "match": "name",
+              "value": "Hound of Ash Silk"
+            }
+          ],
+          "monster_refs": [
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Cobra"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Ghul-Bird"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Dodecaphage"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Death Chanter"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Filcher"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Hyena of Shiraz"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Smothering Carpet"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Twin-Maw Ghariq"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Ufrayta"
+            },
+            {
+              "lookup": "monster",
+              "match": "name",
+              "value": "Zagrossian Lion"
+            }
+          ],
+          "environmental_effect_refs": [
+            {
+              "lookup": "environmental-effect",
+              "match": "name",
+              "value": "Efreet's Fire Aura"
+            },
+            {
+              "lookup": "environmental-effect",
+              "match": "name",
+              "value": "Crumbling Ruins"
+            },
+            {
+              "lookup": "environmental-effect",
+              "match": "name",
+              "value": "Haunted Halls"
+            }
+          ]
+        }
+      }
+    ],
+    "environmental-effect": [
+      {
+        "source_name": "Efreet's Fire Aura",
+        "mapping": {
+          "name": "Efreet's Fire Aura",
+          "effect": "The efreet radiates intense heat. Within 30 feet, the air shimmers and flames dance at the edges of vision.",
+          "damage_dice": "1d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Fire"
+          },
+          "save_dc": 12,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Constitution"
+          },
+          "mechanical_notes": "Creatures within 30 feet of the efreet take 1d6 fire damage at the start of their turn. Fire-resistant creatures are immune."
+        }
+      },
+      {
+        "source_name": "Crumbling Ruins",
+        "mapping": {
+          "name": "Crumbling Ruins",
+          "effect": "The palace is ancient and unstable. Dust falls from the ceiling, and stones shift underfoot.",
+          "mechanical_notes": "Running or charging in the ruins requires a DC 10 Dexterity check or fall prone. Loud noises may trigger cave-ins (DM's discretion)."
+        }
+      },
+      {
+        "source_name": "Haunted Halls",
+        "mapping": {
+          "name": "Haunted Halls",
+          "effect": "The spirits of the palace's former inhabitants linger. Whispers echo, and shadows move on their own.",
+          "mechanical_notes": "Creatures with the Haunted One background have advantage on saves against fear effects in the palace. Others must make a DC 12 Wisdom save when entering a new area or be frightened for 1 minute."
+        }
+      }
+    ],
+    "monster": [
+      {
+        "name": "Cobra",
+        "mapping": {
+          "name": "Cobra",
+          "description": "A small venomous snake found in the palace ruins. Quick and aggressive when threatened.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Small"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Beast"
+          },
+          "tags_line": "snake, venomous, palace ruins",
+          "ac": 13,
+          "hp_average": 2,
+          "hp_dice": "1d4",
+          "speed_walk_ft": 30,
+          "speed_swim_ft": 30,
+          "stat_block": {
+            "STR": 2,
+            "DEX": 16,
+            "CON": 10,
+            "INT": 1,
+            "WIS": 10,
+            "CHA": 3
+          },
+          "cr": "1/8",
+          "xp": 25,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Blindsight"
+              },
+              "range_ft": 10
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Bite",
+              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or take 3 (1d6) poison damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Cobra.webp"
+        }
+      },
+      {
+        "name": "Ghul-Bird",
+        "mapping": {
+          "name": "Ghul-Bird",
+          "description": "An undead bird with skeletal wings and glowing eyes. Hunts in packs and swarms its prey.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Tiny"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Undead"
+          },
+          "tags_line": "undead, flying, swarm",
+          "ac": 12,
+          "hp_average": 3,
+          "hp_dice": "1d4",
+          "speed_walk_ft": 10,
+          "speed_fly_ft": 40,
+          "stat_block": {
+            "STR": 3,
+            "DEX": 14,
+            "CON": 10,
+            "INT": 1,
+            "WIS": 8,
+            "CHA": 3
+          },
+          "cr": "1/8",
+          "xp": 25,
+          "proficiency_bonus": 2,
+          "passive_perception": 9,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "damage_immunity_refs": [
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Poison"
+            }
+          ],
+          "condition_immunity_refs": [
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Poisoned"
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Talons",
+              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Ghul-Bird.webp"
+        }
+      },
+      {
+        "name": "Dodecaphage",
+        "mapping": {
+          "name": "Dodecaphage",
+          "description": "A massive aberration with twelve mouths arranged in a circle. Devours anything it encounters.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Large"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Aberration"
+          },
+          "tags_line": "aberration, twelve mouths, devourer",
+          "ac": 15,
+          "hp_average": 68,
+          "hp_dice": "8d10+24",
+          "speed_walk_ft": 30,
+          "speed_climb_ft": 30,
+          "stat_block": {
+            "STR": 18,
+            "DEX": 14,
+            "CON": 16,
+            "INT": 6,
+            "WIS": 10,
+            "CHA": 8
+          },
+          "cr": "4",
+          "xp": 1100,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Multiattack",
+              "description": "The dodecaphage makes three bite attacks."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Bite",
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 7 (1d6+4) piercing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Dodecaphage.webp"
+        }
+      },
+      {
+        "name": "Death Chanter",
+        "mapping": {
+          "name": "Death Chanter",
+          "description": "A giant humanoid that chants death incantations. Its voice can weaken and frighten foes.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Large"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Giant"
+          },
+          "tags_line": "giant, spellcaster, death magic",
+          "ac": 14,
+          "hp_average": 45,
+          "hp_dice": "6d10+12",
+          "speed_walk_ft": 30,
+          "stat_block": {
+            "STR": 16,
+            "DEX": 12,
+            "CON": 15,
+            "INT": 10,
+            "WIS": 14,
+            "CHA": 13
+          },
+          "cr": "3",
+          "xp": 700,
+          "proficiency_bonus": 2,
+          "passive_perception": 12,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Chant of Death",
+              "description": "The death chanter chants a death incantation. Each creature within 30 feet must succeed on a DC 12 Wisdom saving throw or be frightened for 1 minute."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Slam",
+              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) bludgeoning damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Death-Chanter-Giant.webp"
+        }
+      },
+      {
+        "name": "Filcher",
+        "mapping": {
+          "name": "Filcher",
+          "description": "A small, nimble creature that steals items and hides in shadows.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Small"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Monstrosity"
+          },
+          "tags_line": "monstrosity, thief, nimble",
+          "ac": 14,
+          "hp_average": 13,
+          "hp_dice": "3d6+3",
+          "speed_walk_ft": 40,
+          "stat_block": {
+            "STR": 8,
+            "DEX": 18,
+            "CON": 12,
+            "INT": 10,
+            "WIS": 10,
+            "CHA": 11
+          },
+          "cr": "1/2",
+          "xp": 100,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Steal",
+              "description": "The filcher attempts to steal an item from a creature within 5 feet. The target must succeed on a DC 13 Dexterity saving throw or have one item of the filcher's choice stolen."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Claws",
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Filcher.webp"
+        }
+      },
+      {
+        "name": "Hyena of Shiraz",
+        "mapping": {
+          "name": "Hyena of Shiraz",
+          "description": "A magical hyena with supernatural intelligence and cunning. Often serves as a familiar or mount.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Monstrosity"
+          },
+          "tags_line": "monstrosity, magical, intelligent",
+          "ac": 13,
+          "hp_average": 19,
+          "hp_dice": "3d8+6",
+          "speed_walk_ft": 50,
+          "stat_block": {
+            "STR": 14,
+            "DEX": 15,
+            "CON": 13,
+            "INT": 12,
+            "WIS": 11,
+            "CHA": 10
+          },
+          "cr": "1",
+          "xp": 200,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Bite",
+              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4+2) piercing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Hyena-of-Shiraz.webp"
+        }
+      },
+      {
+        "name": "Smothering Carpet",
+        "mapping": {
+          "name": "Smothering Carpet",
+          "description": "An animated carpet that wraps around and suffocates its victims.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Construct"
+          },
+          "tags_line": "construct, animated, suffocating",
+          "ac": 14,
+          "hp_average": 22,
+          "hp_dice": "4d8+4",
+          "speed_walk_ft": 30,
+          "speed_fly_ft": 30,
+          "stat_block": {
+            "STR": 14,
+            "DEX": 18,
+            "CON": 13,
+            "INT": 1,
+            "WIS": 6,
+            "CHA": 1
+          },
+          "cr": "1",
+          "xp": 200,
+          "proficiency_bonus": 2,
+          "passive_perception": 8,
+          "damage_immunity_refs": [
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Poison"
+            }
+          ],
+          "condition_immunity_refs": [
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Poisoned"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Frightened"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Paralyzed"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Petrified"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Exhaustion"
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Smother",
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one willing creature or creature that is grappled by the carpet. The target is grappled (escape DC 13) and restrained, and begins to suffocate."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Engulf",
+              "description": "The carpet moves up to its speed. While doing so, it can enter a Large or smaller creature's space. If the creature fails a DC 13 Dexterity saving throw, the creature is smothered by the carpet."
+            }
+          ],
+          "imagePath": "media/Tokens/Smothering-Carpet.webp"
+        }
+      },
+      {
+        "name": "Twin-Maw Ghariq",
+        "mapping": {
+          "name": "Twin-Maw Ghariq",
+          "description": "A bizarre creature with two mouths, one on each end of its body. Attacks from both directions.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Aberration"
+          },
+          "tags_line": "aberration, two mouths, bizarre",
+          "ac": 13,
+          "hp_average": 27,
+          "hp_dice": "5d8+5",
+          "speed_walk_ft": 40,
+          "stat_block": {
+            "STR": 14,
+            "DEX": 13,
+            "CON": 13,
+            "INT": 6,
+            "WIS": 10,
+            "CHA": 8
+          },
+          "cr": "1",
+          "xp": 200,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Dual Bite",
+              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., two different creatures. The ghariq makes one bite attack with each mouth."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Bite",
+              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d6+2) piercing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Twin-Maw-Ghariq.webp"
+        }
+      },
+      {
+        "name": "Ufrayta",
+        "mapping": {
+          "name": "Ufrayta",
+          "description": "A shadowy, ethereal creature that can phase through walls and ceilings.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Medium"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Undead"
+          },
+          "tags_line": "undead, ethereal, phase",
+          "ac": 15,
+          "hp_average": 33,
+          "hp_dice": "6d8+6",
+          "speed_walk_ft": 30,
+          "speed_fly_ft": 30,
+          "stat_block": {
+            "STR": 12,
+            "DEX": 16,
+            "CON": 13,
+            "INT": 8,
+            "WIS": 10,
+            "CHA": 8
+          },
+          "cr": "2",
+          "xp": 450,
+          "proficiency_bonus": 2,
+          "passive_perception": 10,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "damage_immunity_refs": [
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Poison"
+            },
+            {
+              "lookup": "damage-type",
+              "match": "name",
+              "value": "Psychic"
+            }
+          ],
+          "condition_immunity_refs": [
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Poisoned"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Frightened"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Paralyzed"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Petrified"
+            },
+            {
+              "lookup": "condition",
+              "match": "name",
+              "value": "Exhaustion"
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Ethereal Touch",
+              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) necrotic damage, and the target's hit point maximum is reduced by the same amount."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Phase Through",
+              "description": "The ufrayta can move through walls and ceilings as if they were difficult terrain."
+            }
+          ],
+          "imagePath": "media/Tokens/Ufrayta.webp"
+        }
+      },
+      {
+        "name": "Zagrossian Lion",
+        "mapping": {
+          "name": "Zagrossian Lion",
+          "description": "A massive lion with magical fur that shimmers like starlight. Fierce and territorial.",
+          "size_ref": {
+            "lookup": "size",
+            "match": "name",
+            "value": "Large"
+          },
+          "creature_type_ref": {
+            "lookup": "creature-type",
+            "match": "name",
+            "value": "Monstrosity"
+          },
+          "tags_line": "monstrosity, lion, magical",
+          "ac": 14,
+          "hp_average": 52,
+          "hp_dice": "8d10+16",
+          "speed_walk_ft": 50,
+          "stat_block": {
+            "STR": 18,
+            "DEX": 15,
+            "CON": 15,
+            "INT": 6,
+            "WIS": 12,
+            "CHA": 10
+          },
+          "cr": "3",
+          "xp": 700,
+          "proficiency_bonus": 2,
+          "passive_perception": 11,
+          "senses": [
+            {
+              "sense_ref": {
+                "lookup": "sense",
+                "match": "name",
+                "value": "Darkvision"
+              },
+              "range_ft": 60
+            }
+          ],
+          "action_refs": [
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Multiattack",
+              "description": "The zagrossian lion makes two attacks: one with its bite and one with its claws."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Bite",
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 9 (1d8+5) piercing damage."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Claws",
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6+4) slashing damage."
+            }
+          ],
+          "imagePath": "media/Tokens/Zagrossian-Lion.webp"
+        }
+      }
+    ]
+  },
+  "cross_references": []
+}

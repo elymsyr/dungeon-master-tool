@@ -86,6 +86,10 @@ class UiState {
   // versions. Toggled from the admin dashboard.
   final bool showAssetsPacks;
 
+  // Admin-only: install bundled worlds from `assets/worlds/` locally so the
+  // admin can inspect, edit, and test them before publishing.
+  final bool showBundledWorlds;
+
   const UiState({
     this.mainTabIndex = 0,
     this.sidebarOpen = true,
@@ -114,6 +118,7 @@ class UiState {
     this.autoLocalSave = true,
     this.welcomeSeen = false,
     this.showAssetsPacks = false,
+    this.showBundledWorlds = false,
     this.worldViewByWorld = const {},
     this.viewTouchedByWorld = const {},
   });
@@ -146,6 +151,7 @@ class UiState {
     bool? autoLocalSave,
     bool? welcomeSeen,
     bool? showAssetsPacks,
+    bool? showBundledWorlds,
     Map<String, String>? worldViewByWorld,
     Map<String, int>? viewTouchedByWorld,
   }) {
@@ -181,6 +187,7 @@ class UiState {
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
       welcomeSeen: welcomeSeen ?? this.welcomeSeen,
       showAssetsPacks: showAssetsPacks ?? this.showAssetsPacks,
+      showBundledWorlds: showBundledWorlds ?? this.showBundledWorlds,
       worldViewByWorld: worldViewByWorld ?? this.worldViewByWorld,
       viewTouchedByWorld: viewTouchedByWorld ?? this.viewTouchedByWorld,
     );
@@ -214,6 +221,7 @@ class UiState {
     'autoLocalSave': autoLocalSave,
     'welcomeSeen': welcomeSeen,
     'showAssetsPacks': showAssetsPacks,
+    'showBundledWorlds': showBundledWorlds,
     'worldViewByWorld': worldViewByWorld,
     'viewTouchedByWorld': viewTouchedByWorld,
   };
@@ -259,6 +267,7 @@ class UiState {
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
       welcomeSeen: json['welcomeSeen'] as bool? ?? false,
       showAssetsPacks: json['showAssetsPacks'] as bool? ?? false,
+      showBundledWorlds: json['showBundledWorlds'] as bool? ?? false,
       worldViewByWorld: _decodeStringMap(json['worldViewByWorld']),
       viewTouchedByWorld: _decodeIntMap(json['viewTouchedByWorld']),
     );

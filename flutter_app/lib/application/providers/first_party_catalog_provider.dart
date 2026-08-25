@@ -6,8 +6,10 @@ import '../../core/config/app_paths.dart';
 import '../../data/services/first_party_catalog_service.dart';
 import '../../domain/entities/catalog/catalog_entry.dart';
 import '../services/assets_pack_installer.dart';
+import '../services/bundled_worlds_installer.dart';
 import '../services/cover_image_bundler.dart';
 import '../services/package_payload_importer.dart';
+import 'campaign_provider.dart';
 import 'package_provider.dart';
 
 /// Long-lived catalog service (native HttpClient inside).
@@ -24,6 +26,15 @@ final assetsPackInstallerProvider = Provider<AssetsPackInstaller>(
 /// probe runs once.
 final assetsPacksAvailableProvider = FutureProvider<bool>(
     (ref) => ref.read(assetsPackInstallerProvider).isAvailable());
+
+/// Admin-only bundled worlds installer — reads from `assets/worlds/` and
+/// converts world-blueprint format to world entities via CampaignRepository.
+final bundledWorldsInstallerProvider = Provider<BundledWorldsInstaller>(
+    (ref) => BundledWorldsInstaller(ref.read(campaignRepositoryProvider)));
+
+/// Whether bundled worlds are present in this build.
+final bundledWorldsAvailableProvider = FutureProvider<bool>(
+    (ref) => ref.read(bundledWorldsInstallerProvider).isAvailable());
 
 /// Official package catalog: R2 manifest → bundled fallback. The service
 /// degrades to the bundled catalog when offline, so this never surfaces an

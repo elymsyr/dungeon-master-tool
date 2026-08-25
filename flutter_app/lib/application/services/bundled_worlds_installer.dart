@@ -4,21 +4,20 @@ import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../../domain/repositories/package_repository.dart';
-import 'package_payload_importer.dart';
+import '../../domain/repositories/campaign_repository.dart';
 
 /// Installs / removes bundled worlds from `assets/worlds/`.
 ///
 /// Each world directory contains a `manifest.json`, `world-blueprint.json`,
 /// `blueprint.json`, and a `media/` folder.  The installer reads the blueprint
-/// files, converts them to package format (mirroring `convert_blueprint.dart`),
-/// and delegates to [PackagePayloadImporter] for persistence.
+/// files, converts them to world format, and delegates to
+/// [CampaignRepository] for persistence — worlds appear in the Worlds tab,
+/// not Packages.
 ///
-/// Admin-only utility gated by the dashboard toggle — same pattern as
-/// [AssetsPackInstaller].
+/// Admin-only utility gated by the dashboard toggle.
 class BundledWorldsInstaller {
   BundledWorldsInstaller(this._repo);
-  final PackageRepository _repo;
+  final CampaignRepository _repo;
 
   static const _manifestAsset = 'assets/worlds/manifest.json';
   static const _assetDir = 'assets/worlds';
@@ -36,7 +35,7 @@ class BundledWorldsInstaller {
     'character-state', 'resource-pool',
   };
 
-  // ── Blueprint category → .pkg.json type slug ─────────────────────────
+  // ── Blueprint category → entity type slug ────────────────────────────
   static const _categoryMap = {
     'npc': 'npc',
     'location': 'location',
@@ -57,7 +56,7 @@ class BundledWorldsInstaller {
   /// Whether bundled worlds are present in this build.
   Future<bool> isAvailable() async => (await _tryLoad(_manifestAsset)) != null;
 
-  /// Install every bundled world.  Idempotent — `save()` upserts by name.
+  /// Install every bundled world.  Idempotent — upserts by name.
   /// Returns the number of worlds installed.
   Future<int> installAll() async {
     final raw = await _tryLoad(_manifestAsset);
@@ -66,16 +65,13 @@ class BundledWorldsInstaller {
     final worlds = (json is Map ? json['worlds'] : null);
     if (worlds is! List) return 0;
 
-    final importer = PackagePayloadImporter(_repo);
     var n = 0;
     for (final w in worlds.whereType<Map>()) {
       final dir = w['dir'] as String?;
       if (dir == null) continue;
       try {
-        final payload = await _buildPayload(dir, w.cast<String, dynamic>());
-        if (payload == null) continue;
-        await importer.install(payload, installedFrom: 'assets');
-        n++;
+        final ok = await _installWorld(dir, w.cast<String, dynamic>());
+        if (ok) n++;
       } catch (e) {
         // best-effort — skip worlds that fail to load/convert.
       }
@@ -84,7 +80,8 @@ class BundledWorldsInstaller {
   }
 
   /// Remove every world previously installed from bundled assets (those
-  /// stamped `metadata.installed_from == 'assets'`).  Returns the count removed.
+  /// stamped with `metadata.installed_from == 'assets'`).  Returns the count
+  /// removed.
   Future<int> uninstallAll() async {
     final names = await _repo.getAvailable();
     var n = 0;
@@ -103,9 +100,9 @@ class BundledWorldsInstaller {
     return n;
   }
 
-  // ── Blueprint → package payload conversion ────────────────────────────
+  // ── Single world install ─────────────────────────────────────────────
 
-  Future<Map<String, dynamic>?> _buildPayload(
+  Future<bool> _installWorld(
     String dir,
     Map<String, dynamic> manifestEntry,
   ) async {
@@ -114,7 +111,7 @@ class BundledWorldsInstaller {
     final worldRaw = await _tryLoad('$base/world-blueprint.json');
     final charRaw = await _tryLoad('$base/blueprint.json');
     final manifestRaw = await _tryLoad('$base/manifest.json');
-    if (worldRaw == null || manifestRaw == null) return null;
+    if (worldRaw == null || manifestRaw == null) return false;
 
     final worldBp = jsonDecode(worldRaw) as Map<String, dynamic>;
     final charBp = charRaw != null
@@ -122,15 +119,15 @@ class BundledWorldsInstaller {
         : null;
     final manifest = jsonDecode(manifestRaw) as Map<String, dynamic>;
 
-    final packageName = manifest['slug'] as String;
-    final packTitle = '${manifest['title']}, ${manifest['system']}';
+    final worldName = manifest['title'] as String;
+    final packTitle = '$worldName, ${manifest['system']}';
 
     // Pass 1: Mint UUIDs and build ref index.
     final entities = <String, dynamic>{};
     final refIndex = <String, Map<String, String>>{};
 
-    String stableId(String slug, String name) =>
-        _uuid5('dmt-pack:$packageName:$slug:${name.toLowerCase().trim()}');
+    String stableId(String typeSlug, String name) =>
+        _uuid5('dmt-world:$worldName:$typeSlug:${name.toLowerCase().trim()}');
 
     void registerEntity(String typeSlug, Map<String, dynamic> mapping) {
       final name = mapping['name'] as String;
@@ -186,15 +183,12 @@ class BundledWorldsInstaller {
       entity['attributes'] = _resolveAllRefs(attrs, refIndex);
     }
 
-    // Build counts.
-    final counts = <String, int>{};
-    for (final e in entities.values) {
-      final t = e['type'] as String;
-      counts[t] = (counts[t] ?? 0) + 1;
-    }
+    // Check if world already exists — if so, overwrite via save.
+    final existing = await _repo.getAvailable();
+    final alreadyExists = existing.contains(worldName);
 
-    return {
-      'package_name': packageName,
+    final worldData = <String, dynamic>{
+      'entities': entities,
       'metadata': {
         'title': manifest['title'],
         'publisher': manifest['publisher'],
@@ -203,10 +197,24 @@ class BundledWorldsInstaller {
         'game_system': manifest['system'],
         'source': manifest['title'],
         'pack_version': manifest['version'],
-        'counts': counts,
+        'installed_from': 'assets',
       },
-      'entities': entities,
     };
+
+    if (alreadyExists) {
+      // Merge entities into existing world data.
+      try {
+        final existingData = await _repo.load(worldName);
+        final existingEntities =
+            existingData['entities'] as Map<String, dynamic>? ?? {};
+        worldData['entities'] = {...existingEntities, ...entities};
+      } catch (_) {
+        // If load fails, just overwrite.
+      }
+    }
+
+    await _repo.save(worldName, worldData);
+    return true;
   }
 
   // ── UUID v5 (deterministic, same as convert_blueprint.dart) ───────────
@@ -304,7 +312,7 @@ class BundledWorldsInstaller {
     };
   }
 
-  // ── Asset loading (same as AssetsPackInstaller) ──────────────────────
+  // ── Asset loading ────────────────────────────────────────────────────
 
   Future<String?> _tryLoad(String asset) async {
     try {

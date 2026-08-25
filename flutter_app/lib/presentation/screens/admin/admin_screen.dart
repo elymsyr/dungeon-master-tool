@@ -144,10 +144,14 @@ class _DashboardTab extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final showAssetsPacks =
         ref.watch(uiStateProvider.select((s) => s.showAssetsPacks));
+    final showBundledWorlds =
+        ref.watch(uiStateProvider.select((s) => s.showBundledWorlds));
     // BB-1: only offer the bundled-assets installer when the (dev/admin-only)
     // Open5e packs actually ship in this build — hidden in normal prod builds.
     final assetsPacksAvailable =
         ref.watch(assetsPacksAvailableProvider).valueOrNull ?? false;
+    final bundledWorldsAvailable =
+        ref.watch(bundledWorldsAvailableProvider).valueOrNull ?? false;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -195,6 +199,28 @@ class _DashboardTab extends ConsumerWidget {
             ),
           ),
         ],
+        if (bundledWorldsAvailable) ...[
+          const SizedBox(height: 12),
+          _AdminCard(
+            padding: EdgeInsets.zero,
+            child: SwitchListTile(
+              value: showBundledWorlds,
+              onChanged: (v) => _toggleBundledWorlds(context, ref, v),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              title: Text('Install bundled worlds',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              subtitle: Text(
+                  'Install the shipped assets/worlds/ content locally (tagged '
+                  '"(assets)") to inspect, edit, and test before publishing.',
+                  style: TextStyle(
+                      fontSize: 11, color: palette.sidebarLabelSecondary)),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -227,6 +253,37 @@ class _DashboardTab extends ConsumerWidget {
       // Roll the flag back so it doesn't claim a state we failed to reach.
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
             showAssetsPacks: !on,
+          ));
+      messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
+  Future<void> _toggleBundledWorlds(
+    BuildContext context,
+    WidgetRef ref,
+    bool on,
+  ) async {
+    ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+          showBundledWorlds: on,
+        ));
+    final installer = ref.read(bundledWorldsInstallerProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final count = await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'bundled-worlds-toggle',
+        on ? 'Installing bundled worlds…' : 'Removing bundled worlds…',
+        () => on ? installer.installAll() : installer.uninstallAll(),
+      );
+      ref.invalidate(packageListProvider);
+      messenger.showSnackBar(SnackBar(
+        content: Text(on
+            ? 'Installed $count bundled world(s).'
+            : 'Removed $count bundled world(s).'),
+      ));
+    } catch (e) {
+      ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+            showBundledWorlds: !on,
           ));
       messenger.showSnackBar(SnackBar(content: Text('Failed: $e')));
     }

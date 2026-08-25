@@ -17,7 +17,6 @@ supabase/.branches
 .wrangler/
 .claude/
 # User data & runtime
-worlds/
 cache/
 output.txt
 cloudflare/node_modules/

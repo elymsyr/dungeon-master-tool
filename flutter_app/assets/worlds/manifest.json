@@ -1,0 +1,16 @@
+{
+  "worlds": [
+    {
+      "dir": "99_devils_of_uzrahs_palace_shadowdark",
+      "slug": "99-devils-of-uzrahs-palace-shadowdark",
+      "title": "99 Devils of Uzrah's Palace",
+      "system": "shadowdark",
+      "publisher": "1Shot Adventures",
+      "author": "JC Connors (thalcos)",
+      "license": "all-rights-reserved",
+      "attribution": "Copyright © 2026 JC Connors – 1Shot Adventures. All rights reserved. Free to download from 1shotadventures.com.",
+      "version": "1.0.0",
+      "description": "An Arabian Nights-inspired dungeon adventure for Shadowdark."
+    }
+  ]
+}
