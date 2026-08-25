@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-stable-brightgreen?style=flat-square" />
+  <img src="https://img.shields.io/badge/status-beta-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/version-v14.0.0-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/license-CC%20BY--NC%204.0-lightgrey?style=flat-square" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?style=flat-square&logo=flutter" />
