@@ -2,6 +2,7 @@
   "@@locale": "fr",
   "appTitle": "Outil du Maître de Donjon",
   "btnSave": "Sauvegarder",
+  "settingsSaved": "Paramètres enregistrés.",
   "btnLoad": "Charger",
   "btnCancel": "Annuler",
   "btnDelete": "Supprimer",
@@ -312,6 +313,7 @@
       }
     }
   },
+  "worldsSettingsSaved": "Paramètres enregistrés.",
   "worldsTemplateLine": "Modèle : {name}",
   "@worldsTemplateLine": {
     "placeholders": {

@@ -689,12 +689,26 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                   }
                   return;
                 }
+                // Aktif paket yeniden adlandırıldıysa provider'ı güncelle.
+                if (ref.read(activePackageProvider) == packageName) {
+                  await ref
+                      .read(activePackageProvider.notifier)
+                      .load(workingName);
+                }
+                packageName = workingName;
+                if (ctx.mounted) {
+                  setDialogState(() {});
+                }
               }
               await updatePackageMetadata(ref, packageName, workingMeta);
               ref.invalidate(packageListProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.settingsSaved)),
+                );
+              }
             },
-            child: const Text('Save'),
+            child: Text(l10n.btnSave),
           ),
         ],
       ),

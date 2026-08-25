@@ -2,6 +2,7 @@
   "@@locale": "de",
   "appTitle": "Dungeon Master Werkzeug",
   "btnSave": "Speichern",
+  "settingsSaved": "Einstellungen gespeichert.",
   "btnLoad": "Laden",
   "btnCancel": "Abbrechen",
   "btnDelete": "Löschen",
@@ -312,6 +313,7 @@
       }
     }
   },
+  "worldsSettingsSaved": "Einstellungen gespeichert.",
   "worldsTemplateLine": "Vorlage: {name}",
   "@worldsTemplateLine": {
     "placeholders": {

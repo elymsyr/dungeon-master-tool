@@ -986,10 +986,28 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     }
                     return;
                   }
+                  // Aktif dünya yeniden adlandırıldıysa provider'ı güncelle.
+                  if (ref.read(activeCampaignProvider) == campaignName) {
+                    final freshData = await ref
+                        .read(campaignRepositoryProvider)
+                        .load(workingName);
+                    ref.read(activeCampaignProvider.notifier).preload(
+                          workingName,
+                          freshData,
+                        );
+                  }
+                  campaignName = workingName;
+                  if (ctx.mounted) {
+                    setDialogState(() {});
+                  }
                 }
                 await updateCampaignMetadata(ref, campaignName, workingMeta);
                 ref.invalidate(campaignInfoListProvider);
-                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.worldsSettingsSaved)),
+                  );
+                }
               },
               child: Text(l10n.btnSave),
             ),
