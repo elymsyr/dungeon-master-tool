@@ -343,10 +343,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  /// Owned player chars in the active world. Online: pull from
+  /// Player chars in the active world. Online: pull from
   /// `worldCharactersProvider` (mirror covers other-player chars the local
   /// `characterListProvider` doesn't hydrate). Offline: filter the local
-  /// list by worldId + ownerId.
+  /// list by worldId.
   List<Character> _ownedWorldCharacters() {
     final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
     final onlineIds = ref.read(onlineWorldIdsProvider);
@@ -355,7 +355,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ref.read(worldCharactersProvider(worldId)).valueOrNull ?? const [];
       final out = <Character>[];
       for (final r in rows) {
-        if (r.ownerId == null || r.ownerId!.isEmpty) continue;
         try {
           final decoded = jsonDecode(r.payloadJson);
           if (decoded is Map<String, dynamic>) {
@@ -370,10 +369,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
     final list = ref.read(characterListProvider).valueOrNull ?? const [];
     return list
-        .where((c) =>
-            c.ownerId != null &&
-            c.ownerId!.isNotEmpty &&
-            (worldId == null || c.worldId == null || c.worldId == worldId))
+        .where(
+            (c) => worldId == null || c.worldId == null || c.worldId == worldId)
         .toList();
   }
 
