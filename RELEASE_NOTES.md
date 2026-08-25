@@ -1,5 +1,82 @@
 # Release Notes
 
+## Dungeon Master Tool v14.1.0 — Copy & Rename, LAN Rename Sync (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.1.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release with three user-facing features and several quality-of-life fixes. You can now **copy and rename** worlds, packages, and characters straight from the hub — and renames travel across devices over LAN sync. The database category picker is sorted by tier, external hyperlinks in entity cards finally open, and the era timeline stops collapsing on mobile. No migrations needed.
+
+---
+
+### Highlights
+
+- **Copy worlds, packages, and characters** — A copy button on each hub tab duplicates a world (with its media tree), package, or character in one tap.
+- **Rename worlds, packages, and characters** — Rename via the settings panel on worlds and packages, or directly on characters; renames sync across devices over LAN.
+- **Database category picker sorted by tier** — The add-to-database category list is now sorted alphabetically within each tier, with colored tier dots.
+- **External hyperlinks in entity cards** — External URLs in markdown and entity data now open via the system browser.
+- **Era timeline scrollable on mobile** — The era timeline no longer collapses on narrow screens; it scrolls horizontally.
+
+---
+
+### Hub: copy & rename
+
+#### Copy worlds, packages, characters
+
+Each hub tab (Worlds, Packages, Characters) gains a **Copy** button next to each item. Tapping it duplicates the item with a "Copy of …" prefix — the world's media tree is cloned on disk, packages are deep-copied, and characters get a full entity clone.
+
+#### Rename worlds, packages, characters
+
+Worlds and packages gain a **Rename** option in their settings panel. Characters can be renamed directly from the hub. The rename writes a `renamed_at` timestamp so that LAN sync picks it up and applies it on peer devices (Last-Writer-Wins).
+
+---
+
+### LAN sync: rename propagation
+
+Renaming a world, package, or character on one device now propagates to paired devices the next time you sync. The rename carries a `renamed_at` timestamp; the peer applies whichever rename is newer (DB + directory rename on disk). This closes the long-standing limitation where only content additions and updates synced, while renames stayed local.
+
+---
+
+### Database category picker
+
+The "Add to Database" category picker replaces the dropdown with a tier-based list sorted alphabetically within each tier. Colored tier dots help you scan at a glance. On mobile, tiers stack vertically for easier scrolling.
+
+---
+
+### Smaller improvements
+
+- **Hub header** — SaveSyncIndicator removed from the hub header for a cleaner look.
+- **Admin panel** — User list is now sortable; a new "Active (30d)" stat tile shows recently active users.
+- **l10n** — New keys for copy/rename in all four languages (EN · TR · DE · FR).
+
+---
+
+### Bug fixes
+
+- **External hyperlinks in entity data were silently ignored** — Tapping an https:// link in entity markdown did nothing; it now opens in the system browser. Fixes #87.
+- **Era timeline collapsed on narrow screens** — The era timeline bar could not scroll horizontally on mobile, causing layout issues. Now scrollable. Fixes #85.
+- **World characters without ownerId couldn't be added to encounters** — Characters created without an owner were blocked from the encounter editor; the check is relaxed. Fixes #86.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.0.0` → `14.1.0`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v14.0.0: Local Sync does not propagate deletions or renames (tombstones are the planned fix — this release adds rename sync but deletions are still one-way); Local Sync is not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.0.0 — Stable, Local-First, No More Cloud Sync
 
 **Release date:** August 2026
