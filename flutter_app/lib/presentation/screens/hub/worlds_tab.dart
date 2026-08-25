@@ -368,7 +368,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
               const SizedBox(height: 12),
 
-              // Load + Delete butonları
+              // Load + Copy + Delete butonları
               Row(
                 children: [
                   Expanded(
@@ -383,6 +383,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       icon: const Icon(Icons.folder_open, size: 18),
                       label: Text(l10n.worldsBtnLoad),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _selectedIndex >= 0 ? _copyWorld : null,
+                    icon: const Icon(Icons.content_copy, size: 18),
+                    label: const Text('Copy'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
@@ -627,6 +633,81 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
   }
 
+  Future<void> _copyWorld() async {
+    final campaigns = _currentFiltered();
+    final allCampaigns =
+        ref.read(campaignInfoListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
+    final source = campaigns[_selectedIndex].name;
+
+    String dest = '$source (Copy)';
+    final existingNames = allCampaigns.map((c) => c.name).toSet();
+    var n = 2;
+    while (existingNames.contains(dest)) {
+      dest = '$source (Copy $n)';
+      n++;
+    }
+
+    final controller = TextEditingController(text: dest);
+    final focusNode = FocusNode();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) focusNode.requestFocus();
+    });
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copy World'),
+        content: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: const InputDecoration(labelText: 'New world name'),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Copy'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    focusNode.dispose();
+    if (newName == null || newName.isEmpty) return;
+    if (existingNames.contains(newName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('World "$newName" already exists')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await ref.read(campaignRepositoryProvider).copy(
+            sourceName: source,
+            destinationName: newName,
+          );
+      ref.invalidate(campaignListProvider);
+      ref.invalidate(campaignInfoListProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copied "$source" → "$newName"')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copy failed: $e')),
+        );
+      }
+    }
+  }
+
   /// Player-side "delete world" path: leave online membership (server-side
   /// trigger releases owned characters back to the claim pool), then purge
   /// the local mirror without going through `.trash/`.
@@ -805,6 +886,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     workingMeta['description'] ??= '';
     workingMeta['tags'] ??= <String>[];
     workingMeta['cover_image_path'] ??= '';
+    var workingName = campaignName;
 
     await showDialog<void>(
       context: context,
@@ -819,15 +901,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MetadataEditorSection(
-                    showNameField: false,
-                    name: campaignName,
+                    showNameField: true,
+                    name: workingName,
                     description: workingMeta['description'] as String? ?? '',
                     tags: ((workingMeta['tags'] as List?) ?? const [])
                         .whereType<String>()
                         .toList(),
                     coverImagePath:
                         workingMeta['cover_image_path'] as String? ?? '',
-                    onNameChanged: (_) {},
+                    onNameChanged: (v) => workingName = v,
                     onDescriptionChanged: (v) => workingMeta['description'] = v,
                     onTagsChanged: (v) =>
                         setDialogState(() => workingMeta['tags'] = v),
@@ -889,7 +971,24 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             ),
             FilledButton(
               onPressed: () async {
+                // Ad değiştiyse adı yeniden adlandır.
+                if (workingName != campaignName) {
+                  try {
+                    await ref.read(campaignRepositoryProvider).renameWorld(
+                          campaignName,
+                          workingName,
+                        );
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Rename failed: $e')),
+                      );
+                    }
+                    return;
+                  }
+                }
                 await updateCampaignMetadata(ref, campaignName, workingMeta);
+                ref.invalidate(campaignInfoListProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               child: Text(l10n.btnSave),
