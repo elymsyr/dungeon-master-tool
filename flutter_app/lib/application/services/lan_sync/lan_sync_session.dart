@@ -332,6 +332,7 @@ class LanSyncSession {
     }
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
+    _ref.invalidate(campaignMetadataProvider(name));
   }
 
   /// Birleştirme sonrası granüler satır damgalarını geri yazar.
