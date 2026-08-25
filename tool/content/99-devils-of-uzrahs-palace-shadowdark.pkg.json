@@ -9,7 +9,7 @@
     "source": "99 Devils of Uzrah's Palace",
     "pack_version": "1.0.0",
     "counts": {
-      "npc": 14,
+      "npc": 16,
       "location": 7,
       "encounter": 6,
       "trap": 3,
@@ -18,7 +18,8 @@
       "lore": 3,
       "campaign": 1,
       "environmental-effect": 3,
-      "player-character": 7
+      "monster": 10,
+      "player-character": 8
     }
   },
   "entities": {
@@ -27,7 +28,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "An old pirate lord, 73 years old, with white hair and cunning eyes. Plans to distribute his vast treasure on the island ruins.",
-      "image_path": "",
+      "image_path": "media/Tokens/White-Shark.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -71,7 +72,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A fearsome pirate lieutenant. 'Night-Eater' is not a metaphorical title.",
-      "image_path": "",
+      "image_path": "media/Tokens/Faruq-Night-Eater.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -115,7 +116,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A towering warrior serving as the White Shark's enforcer.",
-      "image_path": "",
+      "image_path": "media/Tokens/Nefru-Sekhem.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -158,7 +159,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "Another of the White Shark's elite guards. Identical in build to Nefru-Sekhem.",
-      "image_path": "",
+      "image_path": "media/Tokens/Timzahi.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -201,7 +202,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A massive warrior of ambiguous allegiance. Serves as gatekeeper to the palace ruins.",
-      "image_path": "",
+      "image_path": "media/Tokens/Varazdat.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -244,7 +245,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A displaced noble who has wandered into the ruins seeking redemption.",
-      "image_path": "",
+      "image_path": "media/Tokens/Ibrahim-the-Drifted-Lord.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -287,7 +288,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A ghostly servant who still tends to a feast that ended centuries ago.",
-      "image_path": "",
+      "image_path": "media/Tokens/Keeper-of-Cups.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -330,7 +331,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A tunnel dweller who knows the secret passages of the palace.",
-      "image_path": "",
+      "image_path": "media/Tokens/Debbi.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -372,7 +373,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A sellsword hired by the White Shark. Fights for coin, not loyalty.",
-      "image_path": "",
+      "image_path": "media/Tokens/Sangtarash.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -415,7 +416,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "One of the White Shark's rank-and-file pirates.",
-      "image_path": "",
+      "image_path": "media/Tokens/Rafiq-the-Pirate.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -458,7 +459,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "An archer serving in the White Shark's crew.",
-      "image_path": "",
+      "image_path": "media/Tokens/Pirate-Archer.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -501,7 +502,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A grizzled pirate with burn scars covering his hands.",
-      "image_path": "",
+      "image_path": "media/Tokens/Ropeburn-the-Pirate.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -544,7 +545,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "A strong but simple pirate tasked with moving treasure chests.",
-      "image_path": "",
+      "image_path": "media/Tokens/Pirate-Hauler.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -587,7 +588,7 @@
       "type": "npc",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "An agile little thief who skitters through the tunnels. Named for his climbing ability.",
-      "image_path": "",
+      "image_path": "media/Tokens/Tariq-the-Monkey.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
@@ -622,6 +623,44 @@
           "speed": "35 ft"
         },
         "proficiency_bonus": 2
+      }
+    },
+    "2a4ecd70-70cd-5a4e-84e2a-2a4ecd702a4e": {
+      "name": "Rashid the Jackal",
+      "type": "npc",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A cunning informant who operates in the shadows. Known for his ability to gather secrets and trade them for favors.",
+      "image_path": "media/Tokens/Rashid-the-Jackal.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "traits": "cunning, secretive, well-connected",
+        "location_ref": {
+          "_ref": "location",
+          "name": "The Gate Hall"
+        }
+      }
+    },
+    "1c2d0eb0-b00e-5c2d-82d1c-1c2d0eb01c2d": {
+      "name": "Hound of Ash Silk",
+      "type": "npc",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A spectral hound with fur made of ash and silk. Guards the palace entrance and attacks intruders.",
+      "image_path": "media/Tokens/Hound-Ash-Silk.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "traits": "spectral, guarding, relentless",
+        "location_ref": {
+          "_ref": "location",
+          "name": "Uzrah's Palace"
+        }
       }
     },
     "5167daf0-f0da-5167-86751-5167daf05167": {
@@ -819,7 +858,7 @@
         "difficulty": "Moderate",
         "monsters_refs": [
           {
-            "slug": "monster",
+            "_ref": "monster",
             "name": "Cobra"
           }
         ],
@@ -935,7 +974,7 @@
         "difficulty": "Easy",
         "monsters_refs": [
           {
-            "slug": "monster",
+            "_ref": "monster",
             "name": "Ghul-Bird"
           }
         ],
@@ -962,7 +1001,7 @@
         "difficulty": "Deadly",
         "monsters_refs": [
           {
-            "slug": "monster",
+            "_ref": "monster",
             "name": "Dodecaphage"
           }
         ],
@@ -1275,16 +1314,15 @@
       "images": [],
       "tags": [],
       "dm_notes": "",
-      "pdfs": [],
+      "pdfs": [
+        "media/Handouts/Handout-A-Invitation.png"
+      ],
       "location_id": null,
       "attributes": {
         "pages": [
           "Uzrah's Palace was built centuries ago by a legendary vizier who served the sultan of a great desert kingdom. The palace was a marvel of architecture, with soaring towers and lush gardens.",
           "The vizier was known for his wisdom and wealth, but also for his pride. He made a bargain with an efreet, trading his soul for eternal power. But the efreet betrayed him, trapping his spirit in the palace forever.",
           "The palace fell into ruin after the vizier's death. The gardens withered, the towers crumbled, and the efreet remained, guarding the treasure that the vizier had hoarded."
-        ],
-        "pdfs": [
-          "media/Handouts/Handout-01.webp"
         ]
       }
     },
@@ -1332,11 +1370,13 @@
       "type": "campaign",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "",
+      "image_path": "media/Title-Image.webp",
       "images": [],
       "tags": [],
       "dm_notes": "",
-      "pdfs": [],
+      "pdfs": [
+        "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf"
+      ],
       "location_id": null,
       "attributes": {
         "pages": [
@@ -1344,8 +1384,247 @@
           "The palace was once home to a vizier who made a bargain with an efreet. Now the ruins are haunted by the efreet, filled with traps and monsters, and guarded by the White Shark's crew.",
           "The party must navigate the ruins, deal with the efreet, and either claim the treasure or stop the White Shark's plans. The adventure features exploration, combat, and roleplaying opportunities."
         ],
-        "pdfs": [
-          "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf"
+        "scene_refs": [
+          {
+            "_ref": "scene",
+            "name": "Arrival at the Island"
+          },
+          {
+            "_ref": "scene",
+            "name": "The Gate Hall Discovery"
+          },
+          {
+            "_ref": "scene",
+            "name": "The Efreet's Revelation"
+          },
+          {
+            "_ref": "scene",
+            "name": "The Final Battle"
+          }
+        ],
+        "quest_refs": [
+          {
+            "_ref": "quest",
+            "name": "Reach the Palace"
+          },
+          {
+            "_ref": "quest",
+            "name": "Stop the White Shark"
+          },
+          {
+            "_ref": "quest",
+            "name": "Survive the Efreet"
+          },
+          {
+            "_ref": "quest",
+            "name": "Claim the Treasure"
+          }
+        ],
+        "lore_refs": [
+          {
+            "_ref": "lore",
+            "name": "The History of Uzrah's Palace"
+          },
+          {
+            "_ref": "lore",
+            "name": "The Legend of the Efreet"
+          },
+          {
+            "_ref": "lore",
+            "name": "The White Shark's Plan"
+          }
+        ],
+        "location_refs": [
+          {
+            "_ref": "location",
+            "name": "Uzrah's Palace"
+          },
+          {
+            "_ref": "location",
+            "name": "The Gate Hall"
+          },
+          {
+            "_ref": "location",
+            "name": "The Upper Level"
+          },
+          {
+            "_ref": "location",
+            "name": "The Lower Level"
+          },
+          {
+            "_ref": "location",
+            "name": "The Builder Tunnels"
+          },
+          {
+            "_ref": "location",
+            "name": "The Treasure Hall"
+          },
+          {
+            "_ref": "location",
+            "name": "The Banquet Hall"
+          }
+        ],
+        "encounter_refs": [
+          {
+            "_ref": "encounter",
+            "name": "Gate Hall Ambush"
+          },
+          {
+            "_ref": "encounter",
+            "name": "Upper Level Patrol"
+          },
+          {
+            "_ref": "encounter",
+            "name": "Nefru-Sekhem's Guard"
+          },
+          {
+            "_ref": "encounter",
+            "name": "The Efreet's Lair"
+          },
+          {
+            "_ref": "encounter",
+            "name": "Tunnel Ambush"
+          },
+          {
+            "_ref": "encounter",
+            "name": "The Dodecaphage Encounter"
+          }
+        ],
+        "trap_refs": [
+          {
+            "_ref": "trap",
+            "name": "Collapsing Ceiling"
+          },
+          {
+            "_ref": "trap",
+            "name": "Flame Jet"
+          },
+          {
+            "_ref": "trap",
+            "name": "Pit Trap"
+          }
+        ],
+        "npc_refs": [
+          {
+            "_ref": "npc",
+            "name": "The White Shark of Basra"
+          },
+          {
+            "_ref": "npc",
+            "name": "Faruq Night-Eater"
+          },
+          {
+            "_ref": "npc",
+            "name": "Nefru-Sekhem"
+          },
+          {
+            "_ref": "npc",
+            "name": "Timzahi"
+          },
+          {
+            "_ref": "npc",
+            "name": "Varazdat"
+          },
+          {
+            "_ref": "npc",
+            "name": "Ibrahim the Drifted Lord"
+          },
+          {
+            "_ref": "npc",
+            "name": "Keeper of Cups and Cushions"
+          },
+          {
+            "_ref": "npc",
+            "name": "Debbi"
+          },
+          {
+            "_ref": "npc",
+            "name": "Sangtarash the Mercenary"
+          },
+          {
+            "_ref": "npc",
+            "name": "Rafiq the Pirate"
+          },
+          {
+            "_ref": "npc",
+            "name": "Pirate Archer"
+          },
+          {
+            "_ref": "npc",
+            "name": "Ropeburn the Pirate"
+          },
+          {
+            "_ref": "npc",
+            "name": "Pirate Treasure Hauler"
+          },
+          {
+            "_ref": "npc",
+            "name": "Tariq the Monkey"
+          },
+          {
+            "_ref": "npc",
+            "name": "Rashid the Jackal"
+          },
+          {
+            "_ref": "npc",
+            "name": "Hound of Ash Silk"
+          }
+        ],
+        "monster_refs": [
+          {
+            "_ref": "monster",
+            "name": "Cobra"
+          },
+          {
+            "_ref": "monster",
+            "name": "Ghul-Bird"
+          },
+          {
+            "_ref": "monster",
+            "name": "Dodecaphage"
+          },
+          {
+            "_ref": "monster",
+            "name": "Death Chanter"
+          },
+          {
+            "_ref": "monster",
+            "name": "Filcher"
+          },
+          {
+            "_ref": "monster",
+            "name": "Hyena of Shiraz"
+          },
+          {
+            "_ref": "monster",
+            "name": "Smothering Carpet"
+          },
+          {
+            "_ref": "monster",
+            "name": "Twin-Maw Ghariq"
+          },
+          {
+            "_ref": "monster",
+            "name": "Ufrayta"
+          },
+          {
+            "_ref": "monster",
+            "name": "Zagrossian Lion"
+          }
+        ],
+        "environmental_effect_refs": [
+          {
+            "_ref": "environmental-effect",
+            "name": "Efreet's Fire Aura"
+          },
+          {
+            "_ref": "environmental-effect",
+            "name": "Crumbling Ruins"
+          },
+          {
+            "_ref": "environmental-effect",
+            "name": "Haunted Halls"
+          }
         ]
       }
     },
@@ -1405,6 +1684,646 @@
       "attributes": {
         "effect": "The spirits of the palace's former inhabitants linger. Whispers echo, and shadows move on their own.",
         "mechanical_notes": "Creatures with the Haunted One background have advantage on saves against fear effects in the palace. Others must make a DC 12 Wisdom save when entering a new area or be frightened for 1 minute."
+      }
+    },
+    "582c571c-1c57-582c-82c58-582c571c582c": {
+      "name": "Cobra",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A small venomous snake found in the palace ruins. Quick and aggressive when threatened.",
+      "image_path": "media/Tokens/Cobra.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Small"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Beast"
+        },
+        "tags_line": "snake, venomous, palace ruins",
+        "ac": 13,
+        "hp_average": 2,
+        "hp_dice": "1d4",
+        "speed_walk_ft": 30,
+        "speed_swim_ft": 30,
+        "stat_block": {
+          "STR": 2,
+          "DEX": 16,
+          "CON": 10,
+          "INT": 1,
+          "WIS": 10,
+          "CHA": 3
+        },
+        "cr": "1/8",
+        "xp": 25,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Blindsight"
+            },
+            "range_ft": 10
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Bite"
+          }
+        ]
+      }
+    },
+    "37bd9633-3396-57bd-8bd37-37bd963337bd": {
+      "name": "Ghul-Bird",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "An undead bird with skeletal wings and glowing eyes. Hunts in packs and swarms its prey.",
+      "image_path": "media/Tokens/Ghul-Bird.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Tiny"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Undead"
+        },
+        "tags_line": "undead, flying, swarm",
+        "ac": 12,
+        "hp_average": 3,
+        "hp_dice": "1d4",
+        "speed_walk_ft": 10,
+        "speed_fly_ft": 40,
+        "stat_block": {
+          "STR": 3,
+          "DEX": 14,
+          "CON": 10,
+          "INT": 1,
+          "WIS": 8,
+          "CHA": 3
+        },
+        "cr": "1/8",
+        "xp": 25,
+        "proficiency_bonus": 2,
+        "passive_perception": 9,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "damage_immunity_refs": [
+          {
+            "_lookup": "damage-type",
+            "name": "Poison"
+          }
+        ],
+        "condition_immunity_refs": [
+          {
+            "_lookup": "condition",
+            "name": "Poisoned"
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Talons"
+          }
+        ]
+      }
+    },
+    "328c4c9a-9a4c-528c-88c32-328c4c9a328c": {
+      "name": "Dodecaphage",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A massive aberration with twelve mouths arranged in a circle. Devours anything it encounters.",
+      "image_path": "media/Tokens/Dodecaphage.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Large"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Aberration"
+        },
+        "tags_line": "aberration, twelve mouths, devourer",
+        "ac": 15,
+        "hp_average": 68,
+        "hp_dice": "8d10+24",
+        "speed_walk_ft": 30,
+        "speed_climb_ft": 30,
+        "stat_block": {
+          "STR": 18,
+          "DEX": 14,
+          "CON": 16,
+          "INT": 6,
+          "WIS": 10,
+          "CHA": 8
+        },
+        "cr": "4",
+        "xp": 1100,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Multiattack"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Bite"
+          }
+        ]
+      }
+    },
+    "2adecc80-80cc-5ade-8de2a-2adecc802ade": {
+      "name": "Death Chanter",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A giant humanoid that chants death incantations. Its voice can weaken and frighten foes.",
+      "image_path": "media/Tokens/Death-Chanter-Giant.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Large"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Giant"
+        },
+        "tags_line": "giant, spellcaster, death magic",
+        "ac": 14,
+        "hp_average": 45,
+        "hp_dice": "6d10+12",
+        "speed_walk_ft": 30,
+        "stat_block": {
+          "STR": 16,
+          "DEX": 12,
+          "CON": 15,
+          "INT": 10,
+          "WIS": 14,
+          "CHA": 13
+        },
+        "cr": "3",
+        "xp": 700,
+        "proficiency_bonus": 2,
+        "passive_perception": 12,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Chant of Death"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Slam"
+          }
+        ]
+      }
+    },
+    "6e3b3732-3237-5e3b-83b6e-6e3b37326e3b": {
+      "name": "Filcher",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A small, nimble creature that steals items and hides in shadows.",
+      "image_path": "media/Tokens/Filcher.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Small"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Monstrosity"
+        },
+        "tags_line": "monstrosity, thief, nimble",
+        "ac": 14,
+        "hp_average": 13,
+        "hp_dice": "3d6+3",
+        "speed_walk_ft": 40,
+        "stat_block": {
+          "STR": 8,
+          "DEX": 18,
+          "CON": 12,
+          "INT": 10,
+          "WIS": 10,
+          "CHA": 11
+        },
+        "cr": "1/2",
+        "xp": 100,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Steal"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Claws"
+          }
+        ]
+      }
+    },
+    "1ac03df0-f03d-5ac0-8c01a-1ac03df01ac0": {
+      "name": "Hyena of Shiraz",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A magical hyena with supernatural intelligence and cunning. Often serves as a familiar or mount.",
+      "image_path": "media/Tokens/Hyena-of-Shiraz.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Medium"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Monstrosity"
+        },
+        "tags_line": "monstrosity, magical, intelligent",
+        "ac": 13,
+        "hp_average": 19,
+        "hp_dice": "3d8+6",
+        "speed_walk_ft": 50,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 15,
+          "CON": 13,
+          "INT": 12,
+          "WIS": 11,
+          "CHA": 10
+        },
+        "cr": "1",
+        "xp": 200,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Bite"
+          }
+        ]
+      }
+    },
+    "7ba34c14-144c-5ba3-8a37b-7ba34c147ba3": {
+      "name": "Smothering Carpet",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "An animated carpet that wraps around and suffocates its victims.",
+      "image_path": "media/Tokens/Smothering-Carpet.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Medium"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Construct"
+        },
+        "tags_line": "construct, animated, suffocating",
+        "ac": 14,
+        "hp_average": 22,
+        "hp_dice": "4d8+4",
+        "speed_walk_ft": 30,
+        "speed_fly_ft": 30,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 18,
+          "CON": 13,
+          "INT": 1,
+          "WIS": 6,
+          "CHA": 1
+        },
+        "cr": "1",
+        "xp": 200,
+        "proficiency_bonus": 2,
+        "passive_perception": 8,
+        "damage_immunity_refs": [
+          {
+            "_lookup": "damage-type",
+            "name": "Poison"
+          }
+        ],
+        "condition_immunity_refs": [
+          {
+            "_lookup": "condition",
+            "name": "Poisoned"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Frightened"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Paralyzed"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Petrified"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Exhaustion"
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Smother"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Engulf"
+          }
+        ]
+      }
+    },
+    "5efc96c5-c596-5efc-8fc5e-5efc96c55efc": {
+      "name": "Twin-Maw Ghariq",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A bizarre creature with two mouths, one on each end of its body. Attacks from both directions.",
+      "image_path": "media/Tokens/Twin-Maw-Ghariq.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Medium"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Aberration"
+        },
+        "tags_line": "aberration, two mouths, bizarre",
+        "ac": 13,
+        "hp_average": 27,
+        "hp_dice": "5d8+5",
+        "speed_walk_ft": 40,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 13,
+          "CON": 13,
+          "INT": 6,
+          "WIS": 10,
+          "CHA": 8
+        },
+        "cr": "1",
+        "xp": 200,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Dual Bite"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Bite"
+          }
+        ]
+      }
+    },
+    "6a511111-1111-5a51-8516a-6a5111116a51": {
+      "name": "Ufrayta",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A shadowy, ethereal creature that can phase through walls and ceilings.",
+      "image_path": "media/Tokens/Ufrayta.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Medium"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Undead"
+        },
+        "tags_line": "undead, ethereal, phase",
+        "ac": 15,
+        "hp_average": 33,
+        "hp_dice": "6d8+6",
+        "speed_walk_ft": 30,
+        "speed_fly_ft": 30,
+        "stat_block": {
+          "STR": 12,
+          "DEX": 16,
+          "CON": 13,
+          "INT": 8,
+          "WIS": 10,
+          "CHA": 8
+        },
+        "cr": "2",
+        "xp": 450,
+        "proficiency_bonus": 2,
+        "passive_perception": 10,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "damage_immunity_refs": [
+          {
+            "_lookup": "damage-type",
+            "name": "Poison"
+          },
+          {
+            "_lookup": "damage-type",
+            "name": "Psychic"
+          }
+        ],
+        "condition_immunity_refs": [
+          {
+            "_lookup": "condition",
+            "name": "Poisoned"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Frightened"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Paralyzed"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Petrified"
+          },
+          {
+            "_lookup": "condition",
+            "name": "Exhaustion"
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Ethereal Touch"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Phase Through"
+          }
+        ]
+      }
+    },
+    "164c8f08-088f-564c-84c16-164c8f08164c": {
+      "name": "Zagrossian Lion",
+      "type": "monster",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "A massive lion with magical fur that shimmers like starlight. Fierce and territorial.",
+      "image_path": "media/Tokens/Zagrossian-Lion.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "size_ref": {
+          "_lookup": "size",
+          "name": "Large"
+        },
+        "creature_type_ref": {
+          "_lookup": "creature-type",
+          "name": "Monstrosity"
+        },
+        "tags_line": "monstrosity, lion, magical",
+        "ac": 14,
+        "hp_average": 52,
+        "hp_dice": "8d10+16",
+        "speed_walk_ft": 50,
+        "stat_block": {
+          "STR": 18,
+          "DEX": 15,
+          "CON": 15,
+          "INT": 6,
+          "WIS": 12,
+          "CHA": 10
+        },
+        "cr": "3",
+        "xp": 700,
+        "proficiency_bonus": 2,
+        "passive_perception": 11,
+        "senses": [
+          {
+            "sense_ref": {
+              "_lookup": "sense",
+              "name": "Darkvision"
+            },
+            "range_ft": 60
+          }
+        ],
+        "action_refs": [
+          {
+            "slug": "creature-action",
+            "name": "Multiattack"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Bite"
+          },
+          {
+            "slug": "creature-action",
+            "name": "Claws"
+          }
+        ]
       }
     },
     "16239a72-729a-5623-82316-16239a721623": {
@@ -2250,6 +3169,24 @@
         "bonds": "Tracks a rare creature that once saved her life.",
         "flaws": "Solitary. Struggles in crowds and cities.",
         "backstory": "Known only as The Owl, this silent ranger has watched over the borderlands for years. Few have seen her face; fewer have earned her trust."
+      }
+    },
+    "141740bc-bc40-5417-81714-141740bc1417": {
+      "name": "Singer",
+      "type": "player-character",
+      "source": "99 Devils of Uzrah's Palace, shadowdark",
+      "description": "",
+      "image_path": "media/Tokens/PC-Singer.webp",
+      "images": [],
+      "tags": [],
+      "dm_notes": "",
+      "pdfs": [],
+      "location_id": null,
+      "attributes": {
+        "class": "Bard",
+        "level": 3,
+        "background": "Entertainer",
+        "alignment": "Chaotic Good"
       }
     }
   }

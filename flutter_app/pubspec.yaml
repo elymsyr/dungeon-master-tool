@@ -123,6 +123,10 @@ flutter:
     # (`{worker}/catalog/banners/<slug>.png`, see cloudflare/upload_banners.sh).
     - assets/first_party/banners/dnd5e-template.jpg
     - assets/first_party/banners/dnd5e-package-builtin.jpg
+    # Bundled worlds (blueprint format).  Each subdir contains a manifest.json,
+    # world-blueprint.json, blueprint.json, and media/ folder.  Loaded by
+    # BundledWorldsInstaller at admin toggle time.
+    - assets/worlds/
 
 flutter_launcher_icons:
   android: true
