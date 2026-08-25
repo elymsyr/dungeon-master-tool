@@ -1,11 +1,11 @@
 # Release Notes
 
-## Dungeon Master Tool v14.1.1 — LAN Sync Fix, Settings Dialog Fix (Beta)
+## Dungeon Master Tool v14.1.1 — LAN Sync Fix, Settings Dialog Fix, Package Dedup, Auth Page Redesign (Beta)
 
 **Release date:** August 2026
 **Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-Patch release fixing two issues introduced in v14.1.0. Worlds synced over LAN now show their cover image in the hub without needing to open Settings first, and the settings dialog stays open after Save so you can continue editing instead of re-opening it. No migrations needed.
+Patch release fixing two issues introduced in v14.1.0 and adding two quality improvements. Worlds synced over LAN now show their cover image in the hub without needing to open Settings first, and the settings dialog stays open after Save so you can continue editing instead of re-opening it. Duplicate package entries are now cleaned up on launch, and a unique index prevents them from accumulating again. The authentication success page has been redesigned with a warmer, parchment-inspired aesthetic. No cloud migrations needed.
 
 ---
 
@@ -14,6 +14,8 @@ Patch release fixing two issues introduced in v14.1.0. Worlds synced over LAN no
 - **LAN-synced worlds now show cover images** — Worlds synced over LAN no longer need a Settings open to display their cover thumbnail on the Worlds tab.
 - **Settings dialog stays open after Save** — Save now keeps the dialog open; only Cancel closes it. A success snackbar confirms the save.
 - **Rename updates metadata live** — Renaming a world or package updates the active provider state so subsequent saves use the new name instead of failing.
+- **Duplicate package cleanup** — A one-time migration deduplicates package rows (keeping the one with more entities), and a UNIQUE index on `packages.name` prevents future duplicates.
+- **Authentication page redesigned** — The auth success page now uses a warmer, parchment-inspired color palette with Marcellus and Lora fonts, replacing the cold dark theme.
 
 ---
 
@@ -21,6 +23,13 @@ Patch release fixing two issues introduced in v14.1.0. Worlds synced over LAN no
 
 - **LAN-synced worlds showed no cover thumbnail** — `campaignMetadataProvider` cache wasn't invalidated after LAN sync, so the Worlds tab showed no cover image until Settings was opened. Now invalidated automatically. Fixes #88.
 - **Settings dialog closed after Save** — Save now keeps the dialog open for continued editing; only Cancel closes. All three hub tabs (world, package, character) show a success snackbar. Fixes #89.
+- **Duplicate package entries could accumulate** — Interrupted re-seeds or race conditions could create multiple package rows with the same name; the row with fewer entities is now removed on launch, and a UNIQUE index prevents future duplicates.
+
+---
+
+### Smaller improvements
+
+- **Authentication page** — Redesigned with a warmer, parchment-inspired aesthetic (Marcellus & Lora fonts, candle glow, paper grain texture) replacing the cold dark palette.
 
 ---
 
