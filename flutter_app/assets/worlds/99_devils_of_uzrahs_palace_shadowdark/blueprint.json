@@ -1,0 +1,895 @@
+{
+  "version": "1.0.0",
+  "source_system": "shadowdark",
+  "app_schema": "builtin-dnd5e-default-v2",
+  "characters": [
+    {
+      "source_name": "Jamal the Black Spear",
+      "source_file": "media/GURPS GCS Characters/PC-Jamal-the-Black-Spear.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Jamal the Black Spear",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Fighter"
+          }
+        ],
+        "class_levels": {
+          "Fighter": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Soldier"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Lawful Neutral"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 14,
+          "CON": 14,
+          "INT": 12,
+          "WIS": 10,
+          "CHA": 10
+        },
+        "combat_stats": {
+          "hp": 12,
+          "max_hp": 12,
+          "ac": 16,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+2",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Athletics",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "History",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Intimidation",
+              "ability": "CHA",
+              "proficient": false
+            },
+            {
+              "name": "Religion",
+              "ability": "INT",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Arabic"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Broadsword",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Chain Mail",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Shield",
+            "equipped": true
+          }
+        ],
+        "gp": 15,
+        "personality_traits": "Always faces east when sharpening his sword. Attached to his prayer charms. Believes the sky keeps men sane.",
+        "ideals": "Code of Honor. Hospitality is sacred. Never break your word.",
+        "bonds": "Fascinated by history. Keeps tiny packets of desert salt to throw at evil spirits.",
+        "flaws": "Honesty - must obey the law. Guilt Complex. Selfless.",
+        "backstory": "Ghazi Holy Warrior of the Arabian lands. A man of deep faith and rigid honor, Jamal carries the weight of his vows like armor heavier than any steel."
+      }
+    },
+    {
+      "source_name": "Farah the Fireborn",
+      "source_file": "media/GURPS GCS Characters/PC-Farah-Fireborn.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Farah the Fireborn",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Sorcerer"
+          }
+        ],
+        "class_levels": {
+          "Sorcerer": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Noble"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Neutral"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 14,
+          "CON": 12,
+          "INT": 14,
+          "WIS": 12,
+          "CHA": 14
+        },
+        "combat_stats": {
+          "hp": 11,
+          "max_hp": 11,
+          "ac": 13,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+2",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            },
+            {
+              "name": "Charisma",
+              "ability": "CHA",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Intimidation",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Persuasion",
+              "ability": "CHA",
+              "proficient": true
+            },
+            {
+              "name": "Arcana",
+              "ability": "INT",
+              "proficient": false
+            },
+            {
+              "name": "Deception",
+              "ability": "CHA",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Persian"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Arabic"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          }
+        ],
+        "gp": 50,
+        "personality_traits": "Secretly fears deep water. Laughs quietly whenever danger becomes especially severe. Keeps meticulous records of debts, favors, and insults. Collects expensive perfumes from every city she visits.",
+        "ideals": "Comfortable Wealth. Starting wealth is twice normal.",
+        "bonds": "Deeply vain about her hair. Mistaken Identity - someone important thinks she is someone else.",
+        "flaws": "Impulsiveness. Curious. Greedy. Gregarious.",
+        "backstory": "A fire-touched sorceress of noble blood, Farah carries flames in her veins and ambition in her heart. Her past is wrapped in mistaken identity - someone powerful believes she is another."
+      }
+    },
+    {
+      "source_name": "Ibn al-Aswad",
+      "source_file": "media/GURPS GCS Characters/PC-Ibn-al-Aswad.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Ibn al-Aswad",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Rogue"
+          }
+        ],
+        "class_levels": {
+          "Rogue": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Criminal"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Neutral"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 10,
+          "DEX": 16,
+          "CON": 12,
+          "INT": 14,
+          "WIS": 13,
+          "CHA": 12
+        },
+        "combat_stats": {
+          "hp": 12,
+          "max_hp": 12,
+          "ac": 15,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+3",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Dexterity",
+              "ability": "DEX",
+              "proficient": true
+            },
+            {
+              "name": "Intelligence",
+              "ability": "INT",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Stealth",
+              "ability": "DEX",
+              "proficient": true
+            },
+            {
+              "name": "Sleight of Hand",
+              "ability": "DEX",
+              "proficient": true
+            },
+            {
+              "name": "Acrobatics",
+              "ability": "DEX",
+              "proficient": false
+            },
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Thieves' Cant"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortbow",
+            "equipped": false
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Leather Armor",
+            "equipped": true
+          }
+        ],
+        "gp": 25,
+        "personality_traits": "Always looking for the angle. Quick with a knife and quicker with a lie.",
+        "ideals": "Freedom. Everyone should be free to live as they choose.",
+        "bonds": "Owes a debt to a powerful merchant prince.",
+        "flaws": "Greed. Cannot resist a valuable target.",
+        "backstory": "The Son of Darkness, Ibn al-Aswad is a thief of legendary skill who operates in the shadows of Basra's bazaars."
+      }
+    },
+    {
+      "source_name": "Naja",
+      "source_file": "media/GURPS GCS Characters/PC-Naja.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Naja",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Cleric"
+          }
+        ],
+        "class_levels": {
+          "Cleric": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Acolyte"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Neutral Good"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 12,
+          "DEX": 10,
+          "CON": 14,
+          "INT": 10,
+          "WIS": 16,
+          "CHA": 12
+        },
+        "combat_stats": {
+          "hp": 14,
+          "max_hp": 14,
+          "ac": 18,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+0",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Wisdom",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Charisma",
+              "ability": "CHA",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Medicine",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Religion",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Insight",
+              "ability": "WIS",
+              "proficient": false
+            },
+            {
+              "name": "Persuasion",
+              "ability": "CHA",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Celestial"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Mace",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Chain Mail",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Shield",
+            "equipped": true
+          }
+        ],
+        "gp": 10,
+        "personality_traits": "Compassionate and devout. Sees the divine in all things.",
+        "ideals": "Faith. The gods work through us.",
+        "bonds": "Devoted to healing the sick and protecting the innocent.",
+        "flaws": "Self-sacrificing to a fault.",
+        "backstory": "A priestess of the old faith, Naja carries the blessing of the moon goddess. Her mace is inscribed with prayers in a forgotten tongue."
+      }
+    },
+    {
+      "source_name": "Palmtree the Pirate",
+      "source_file": "media/GURPS GCS Characters/PC-Palmtree.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Palmtree the Pirate",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Fighter"
+          }
+        ],
+        "class_levels": {
+          "Fighter": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Sailor"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Good"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 16,
+          "DEX": 12,
+          "CON": 14,
+          "INT": 10,
+          "WIS": 12,
+          "CHA": 14
+        },
+        "combat_stats": {
+          "hp": 14,
+          "max_hp": 14,
+          "ac": 16,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+1",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Constitution",
+              "ability": "CON",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Athletics",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Intimidation",
+              "ability": "CHA",
+              "proficient": false
+            },
+            {
+              "name": "Survival",
+              "ability": "WIS",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Cutlass",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Hide Armor",
+            "equipped": true
+          }
+        ],
+        "gp": 35,
+        "personality_traits": "Loud, boisterous, and loves a good fight. Never turns down a drink or a dare.",
+        "ideals": "Loyalty. A pirate's word is their bond.",
+        "bonds": "Sworn to find the legendary White Shark's treasure.",
+        "flaws": "Reckless. Overconfident in combat.",
+        "backstory": "A weathered sea dog who has sailed every water from the Pearl Seas to the Burning Coast. Palmtree earned his name from the tattoo on his chest."
+      }
+    },
+    {
+      "source_name": "Qasim the Digitologist",
+      "source_file": "media/GURPS GCS Characters/PC-Qasim.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "Qasim the Digitologist",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Wizard"
+          }
+        ],
+        "class_levels": {
+          "Wizard": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Sage"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "True Neutral"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 8,
+          "DEX": 12,
+          "CON": 12,
+          "INT": 16,
+          "WIS": 14,
+          "CHA": 10
+        },
+        "combat_stats": {
+          "hp": 10,
+          "max_hp": 10,
+          "ac": 12,
+          "speed": "30 ft",
+          "level": 2,
+          "initiative": "+1",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Intelligence",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Wisdom",
+              "ability": "WIS",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Arcana",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "History",
+              "ability": "INT",
+              "proficient": true
+            },
+            {
+              "name": "Investigation",
+              "ability": "INT",
+              "proficient": false
+            },
+            {
+              "name": "Insight",
+              "ability": "WIS",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Elvish"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Draconic"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Quarterstaff",
+            "equipped": true
+          }
+        ],
+        "gp": 20,
+        "personality_traits": "Obsessed with numerical patterns. Speaks in equations when excited.",
+        "ideals": "Knowledge. The universe is a puzzle to be solved.",
+        "bonds": "Searching for the lost mathematical proofs of the ancients.",
+        "flaws": "Absent-minded. Forgets practical matters while lost in thought.",
+        "backstory": "A scholar of the mystic arts, Qasim believes all magic can be reduced to numbers. His 'digitology' is considered eccentric by mainstream wizards."
+      }
+    },
+    {
+      "source_name": "The Owl",
+      "source_file": "media/GURPS GCS Characters/PC-The-Owl.gcs",
+      "character_type": "pc",
+      "mapping": {
+        "name": "The Owl",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Ranger"
+          }
+        ],
+        "class_levels": {
+          "Ranger": 2
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Outlander"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "True Neutral"
+        },
+        "xp": 300,
+        "proficiency_bonus": 2,
+        "stat_block": {
+          "STR": 14,
+          "DEX": 14,
+          "CON": 12,
+          "INT": 10,
+          "WIS": 16,
+          "CHA": 10
+        },
+        "combat_stats": {
+          "hp": 12,
+          "max_hp": 12,
+          "ac": 15,
+          "speed": "35 ft",
+          "level": 2,
+          "initiative": "+2",
+          "cr": "",
+          "xp": 0
+        },
+        "saving_throws": {
+          "rows": [
+            {
+              "name": "Strength",
+              "ability": "STR",
+              "proficient": true
+            },
+            {
+              "name": "Dexterity",
+              "ability": "DEX",
+              "proficient": true
+            }
+          ]
+        },
+        "skills": {
+          "rows": [
+            {
+              "name": "Survival",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Perception",
+              "ability": "WIS",
+              "proficient": true
+            },
+            {
+              "name": "Stealth",
+              "ability": "DEX",
+              "proficient": false
+            },
+            {
+              "name": "Nature",
+              "ability": "INT",
+              "proficient": false
+            }
+          ]
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Elvish"
+          }
+        ],
+        "inventory": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Longbow",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword",
+            "equipped": true
+          },
+          {
+            "lookup": "armor",
+            "match": "name",
+            "value": "Leather Armor",
+            "equipped": true
+          }
+        ],
+        "gp": 15,
+        "personality_traits": "Speaks little, observes everything. Moves like a shadow.",
+        "ideals": "Balance. Nature demands equilibrium.",
+        "bonds": "Tracks a rare creature that once saved her life.",
+        "flaws": "Solitary. Struggles in crowds and cities.",
+        "backstory": "Known only as The Owl, this silent ranger has watched over the borderlands for years. Few have seen her face; fewer have earned her trust."
+      }
+    },
+    {
+      "mapping": {
+        "name": "Singer",
+        "class": "Bard",
+        "level": 3,
+        "background": "Entertainer",
+        "alignment": "Chaotic Good",
+        "imagePath": "media/Tokens/PC-Singer.webp"
+      }
+    }
+  ]
+}
