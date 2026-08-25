@@ -1,5 +1,47 @@
 # Release Notes
 
+## Dungeon Master Tool v14.1.1 — LAN Sync Fix, Settings Dialog Fix (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.1.1) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release fixing two issues introduced in v14.1.0. Worlds synced over LAN now show their cover image in the hub without needing to open Settings first, and the settings dialog stays open after Save so you can continue editing instead of re-opening it. No migrations needed.
+
+---
+
+### Highlights
+
+- **LAN-synced worlds now show cover images** — Worlds synced over LAN no longer need a Settings open to display their cover thumbnail on the Worlds tab.
+- **Settings dialog stays open after Save** — Save now keeps the dialog open; only Cancel closes it. A success snackbar confirms the save.
+- **Rename updates metadata live** — Renaming a world or package updates the active provider state so subsequent saves use the new name instead of failing.
+
+---
+
+### Bug fixes
+
+- **LAN-synced worlds showed no cover thumbnail** — `campaignMetadataProvider` cache wasn't invalidated after LAN sync, so the Worlds tab showed no cover image until Settings was opened. Now invalidated automatically. Fixes #88.
+- **Settings dialog closed after Save** — Save now keeps the dialog open for continued editing; only Cancel closes. All three hub tabs (world, package, character) show a success snackbar. Fixes #89.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.1.0` → `14.1.1`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v14.1.0: Local Sync does not propagate deletions or renames (tombstones are the planned fix — this release adds rename sync but deletions are still one-way); Local Sync is not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.1.0 — Copy & Rename, LAN Rename Sync (Beta)
 
 **Release date:** August 2026
