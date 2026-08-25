@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
@@ -365,10 +366,16 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea>
       // Touch devices: selection gestures swallow vertical drag → no scroll.
       selectable: !isTouchPlatform,
       styleSheet: widget.markdownStyleSheet ?? _defaultStyleSheet(palette),
-      onTapLink: (text, href, title) {
-        if (href != null && href.startsWith('entity:')) {
+      onTapLink: (text, href, title) async {
+        if (href == null) return;
+        if (href.startsWith('entity:')) {
           final entityId = href.substring('entity:'.length);
           _handleEntityLink(entityId);
+        } else {
+          final uri = Uri.tryParse(href);
+          if (uri != null) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
         }
       },
     );

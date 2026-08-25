@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../application/character_creation/pending_choices.dart';
 import '../../../domain/entities/entity.dart';
@@ -1723,6 +1724,14 @@ class _ResolverDialogState extends State<_ResolverDialog> {
                                   .copyWith(
                             p: TextStyle(fontSize: 11, color: hint),
                           ),
+                          onTapLink: (text, href, title) async {
+                            if (href == null) return;
+                            final uri = Uri.tryParse(href);
+                            if (uri != null) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
                         ),
                       ],
                     ],
