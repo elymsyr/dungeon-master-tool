@@ -42,6 +42,17 @@ final adminUsersDataSourceProvider = Provider<AdminUsersRemoteDataSource>((ref) 
 /// Admin panelindeki arama kutusu state'i. Boşken tüm kullanıcılar listelenir.
 final adminUserSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
+/// Kullanıcı listesi sıralama modu.
+enum AdminUserSortMode { registrationDate, lastSeen, appVersion }
+
+/// Sıralama yönü: true = azalan (yeniden eskiye), false = artan.
+final adminUserSortReversedProvider = StateProvider.autoDispose<bool>((ref) => true);
+
+/// Sıralama modu.
+final adminUserSortModeProvider = StateProvider.autoDispose<AdminUserSortMode>(
+  (ref) => AdminUserSortMode.registrationDate,
+);
+
 /// Tüm kullanıcılar (arama sorgusuna göre filtreli). Admin değilse boş döner.
 final adminUserListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>((ref) async {
   final isAdmin = await ref.watch(isAdminProvider.future);
@@ -52,6 +63,42 @@ final adminUserListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>
     return ds.fetchAllUsers();
   }
   return ds.searchUsers(query);
+});
+
+/// Sıralanmış kullanıcı listesi — adminUserListProvider'ı izler, client-side sıralama uygular.
+final adminUserSortedListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>((ref) async {
+  final users = await ref.watch(adminUserListProvider.future);
+  final mode = ref.watch(adminUserSortModeProvider);
+  final reversed = ref.watch(adminUserSortReversedProvider);
+
+  final sorted = List<AdminUserSummary>.of(users);
+  int Function(AdminUserSummary a, AdminUserSummary b) comparator;
+  switch (mode) {
+    case AdminUserSortMode.registrationDate:
+      comparator = (a, b) => a.createdAt.compareTo(b.createdAt);
+    case AdminUserSortMode.lastSeen:
+      comparator = (a, b) {
+        final aTime = a.lastActiveAt ?? DateTime(0);
+        final bTime = b.lastActiveAt ?? DateTime(0);
+        return aTime.compareTo(bTime);
+      };
+    case AdminUserSortMode.appVersion:
+      comparator = (a, b) {
+        final av = a.appVersion ?? '';
+        final bv = b.appVersion ?? '';
+        return av.compareTo(bv);
+      };
+  }
+  sorted.sort(comparator);
+  if (reversed) {
+    final len = sorted.length;
+    for (var i = 0; i < len ~/ 2; i++) {
+      final tmp = sorted[i];
+      sorted[i] = sorted[len - 1 - i];
+      sorted[len - 1 - i] = tmp;
+    }
+  }
+  return sorted;
 });
 
 /// Özet istatistikler — toplam kullanıcı sayısı. Arama sorgusundan
