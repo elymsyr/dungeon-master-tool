@@ -429,11 +429,7 @@ class CombatNotifier extends StateNotifier<CombatState>
     if (enc == null) return;
     final existingIds = enc.combatants.map((c) => c.entityId).toSet();
     final worldId = _campaignId;
-    // 039 unified character model: "player" entity kategorisi sabit değil;
-    // owner'lı (claim edilmiş) karakterler oyuncu karakterleridir. World
-    // bağlı olanları + worldless (orphan) ownerlı'ları al.
     for (final c in _getCharacters()) {
-      if (c.ownerId == null || c.ownerId!.isEmpty) continue;
       if (worldId != null && c.worldId != null && c.worldId != worldId) continue;
       if (existingIds.contains(c.entity.id)) continue;
       addCombatantFromEntity(c.entity.id);
