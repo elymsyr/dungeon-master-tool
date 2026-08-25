@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:path/path.dart' as p;
 
 import '../../application/services/srd_core_package_bootstrap.dart';
+import '../../core/config/app_paths.dart';
 import '../../core/utils/deep_copy.dart';
 import 'package:uuid/uuid.dart';
 
@@ -489,5 +492,34 @@ class PackageRepositoryImpl implements PackageRepository {
       await _db.packagesDao.deleteSchemasByPackage(packageId);
       await _db.packagesDao.deletePackage(packageId);
     });
+  }
+
+  /// Package adını değiştir — DB kolonunu güncelle + klasörü yeniden adlandır.
+  @override
+  Future<void> renamePackage(String oldName, String newName) async {
+    if (oldName == srdCorePackageName) {
+      throw StateError('Cannot rename the built-in package');
+    }
+    final existing = await _findByName(oldName);
+    if (existing == null) {
+      throw StateError('Package not found: $oldName');
+    }
+    final clash = await _findByName(newName);
+    if (clash != null) {
+      throw StateError('Package already exists: $newName');
+    }
+    final now = DateTime.now();
+    await _db.packagesDao.upsertPackage(PackagesCompanion(
+      id: Value(existing.id),
+      name: Value(newName),
+      updatedAt: Value(now),
+      renamedAt: Value(now),
+    ));
+    // Paket klasörünü de yeniden adlandır.
+    final oldDir = Directory(p.join(AppPaths.packagesDir, oldName));
+    final newDir = Directory(p.join(AppPaths.packagesDir, newName));
+    if (await oldDir.exists() && !await newDir.exists()) {
+      await oldDir.rename(newDir.path);
+    }
   }
 }

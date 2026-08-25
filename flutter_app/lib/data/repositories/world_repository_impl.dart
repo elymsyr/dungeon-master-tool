@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../application/services/srd_core_bootstrap.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
+import '../../core/config/app_paths.dart';
 import '../database/util/builtin_synth.dart';
 import '../schema/auto_grant_inversion.dart';
 import '../schema/rule_effects_migration.dart';
@@ -373,6 +376,63 @@ class WorldRepositoryImpl implements CampaignRepository {
   @override
   Future<void> permanentlyDelete(String trashId) =>
       _db.trashDao.deleteById(trashId);
+
+  @override
+  Future<String> copy({
+    required String sourceName,
+    required String destinationName,
+  }) async {
+    final src = await _findByName(sourceName);
+    if (src == null) {
+      throw StateError('Source world not found: $sourceName');
+    }
+    final existing = await _findByName(destinationName);
+    if (existing != null) {
+      throw StateError('World already exists: $destinationName');
+    }
+
+    final srcData = await _loadFromDb(src.id);
+    final newId = _uuid.v4();
+
+    srcData['world_id'] = newId;
+    srcData['world_name'] = destinationName;
+
+    await _db.worldsDao.upsert(WorldsCompanion.insert(
+      id: newId,
+      worldName: destinationName,
+      templateId: Value(src.templateId),
+      templateHash: Value(src.templateHash),
+      templateOriginalHash: Value(src.templateOriginalHash),
+    ));
+    await _saveToDb(newId, destinationName, srcData);
+    return destinationName;
+  }
+
+  /// World adını değiştir — DB kolonunu güncelle.
+  @override
+  Future<void> renameWorld(String oldName, String newName) async {
+    final existing = await _findByName(oldName);
+    if (existing == null) {
+      throw StateError('World not found: $oldName');
+    }
+    final clash = await _findByName(newName);
+    if (clash != null) {
+      throw StateError('World already exists: $newName');
+    }
+    final now = DateTime.now();
+    await (_db.update(_db.worlds)..where((t) => t.id.equals(existing.id)))
+        .write(WorldsCompanion(
+      worldName: Value(newName),
+      updatedAt: Value(now),
+      renamedAt: Value(now),
+    ));
+    // Dünya klasörünü de yeniden adlandır.
+    final oldDir = Directory(p.join(AppPaths.worldsDir, oldName));
+    final newDir = Directory(p.join(AppPaths.worldsDir, newName));
+    if (await oldDir.exists() && !await newDir.exists()) {
+      await oldDir.rename(newDir.path);
+    }
+  }
 
   // ── Internal helpers ─────────────────────────────────────────────────────
 

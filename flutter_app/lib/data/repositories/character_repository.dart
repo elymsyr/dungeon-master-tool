@@ -67,7 +67,44 @@ class CharacterRepository {
         );
       }
     }
-    await _db.worldCharactersDao.upsert(_characterToCompanion(character));
+    // renamedAt'i koru — LAN sync ve explicit rename tarafından yönetilir.
+    // Drift upsert tüm kolonları yazar; mevcut değeri okuyup geri koymazsak
+    // null'a döner.
+    final existing = await _db.worldCharactersDao.getById(character.id);
+    await _db.worldCharactersDao.upsert(
+      _characterToCompanion(character, renamedAt: existing?.renamedAt),
+    );
+  }
+
+  /// Karakterin bir kopyasını oluştur. Yeni id ve isim verilir; diğer tüm
+  /// alanlar derin kopyalanır (entity, stats, vs.).
+  Future<Character> copy({
+    required String sourceId,
+    required String destinationName,
+  }) async {
+    final row = await _db.worldCharactersDao.getById(sourceId);
+    if (row == null) {
+      throw StateError('Source character not found: $sourceId');
+    }
+    final json = _rowToCharacterJson(row);
+    final newId = _uuid.v4();
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    // Deep copy the entity and overwrite id + name.
+    final entity = Map<String, dynamic>.from(
+      (json['entity'] as Map?)?.cast<String, dynamic>() ?? {},
+    );
+    entity['name'] = destinationName;
+
+    final newJson = Map<String, dynamic>.from(json)
+      ..['id'] = newId
+      ..['entity'] = entity
+      ..['created_at'] = now
+      ..['updated_at'] = now;
+
+    final newChar = Character.fromJson(newJson);
+    await save(newChar);
+    return newChar;
   }
 
   /// Soft delete — snapshot the row into `trash_items` then drop from
@@ -163,19 +200,16 @@ class CharacterRepository {
     };
   }
 
-  WorldCharactersCompanion _characterToCompanion(Character c) {
+  WorldCharactersCompanion _characterToCompanion(
+    Character c, {
+    DateTime? renamedAt,
+  }) {
     return WorldCharactersCompanion(
       id: Value(c.id),
-      // FK to worlds is declared but PRAGMA foreign_keys=OFF (see
-      // app_database.dart). Empty string represents an orphan worldless
-      // char; fresh-cut v12 doesn't expect any but the domain model still
-      // allows it.
       worldId: Value(c.worldId ?? ''),
       ownerId: Value(c.ownerId),
       templateId: Value(c.templateId),
       templateName: Value(c.templateName),
-      // Opaque round-trip blob — never normalize. See world_characters_dao.dart
-      // and docs/full_drift_migration_plan.md § Character Mechanics Preservation.
       payloadJson: Value(jsonEncode(c.toJson())),
       createdAt: Value(
         DateTime.tryParse(c.createdAt)?.toUtc() ?? DateTime.now().toUtc(),
@@ -183,6 +217,7 @@ class CharacterRepository {
       updatedAt: Value(
         DateTime.tryParse(c.updatedAt)?.toUtc() ?? DateTime.now().toUtc(),
       ),
+      renamedAt: renamedAt != null ? Value(renamedAt) : const Value(null),
     );
   }
 }

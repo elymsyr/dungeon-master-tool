@@ -722,6 +722,22 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     }
   }
 
+  /// Karakterin bir kopyasını oluştur — yeni isim ve id ile.
+  Future<Character?> copyCharacter({
+    required String sourceId,
+    required String destinationName,
+  }) async {
+    final newChar = await _repo.copy(
+      sourceId: sourceId,
+      destinationName: destinationName,
+    );
+    final list = [...(state.valueOrNull ?? const <Character>[])];
+    list.insert(0, newChar);
+    state = AsyncValue.data(list);
+    _syncPush(newChar);
+    return newChar;
+  }
+
   /// Player a world'den ayrıldığında (leave / kick / DM-delete) çağrılır:
   /// world'ün entity blob'unu okur, her char ref'ini builtin SRD'nin stable
   /// UUID'sine çevirir (slug+name eşleşmesiyle), worldId'yi temizler ve
