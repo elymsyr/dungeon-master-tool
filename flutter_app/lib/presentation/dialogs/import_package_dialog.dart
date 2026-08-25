@@ -105,7 +105,9 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         ],
       ),
       content: SizedBox(
-        width: 500,
+        width: MediaQuery.of(context).size.width < 500
+            ? MediaQuery.of(context).size.width - 48
+            : 500,
         height: 480,
         child: _exportMode && canExport
             ? ExportPackagePanel(
@@ -470,14 +472,19 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, size: 16, color: color),
-                      const SizedBox(width: 4),
-                      Text(label,
-                          style: TextStyle(fontSize: 11, color: color)),
-                    ],
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 16, color: color),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(label,
+                              style: TextStyle(fontSize: 11, color: color),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(width: 8),
                   if (widget.viewOnly)
