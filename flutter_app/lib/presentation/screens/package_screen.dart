@@ -439,7 +439,7 @@ class _PackageScreenContentState
               icon: Icon(
                 isBuiltin
                     ? Icons.visibility_off_outlined
-                    : (_editMode ? Icons.edit : Icons.visibility),
+                    : (_editMode ? Icons.visibility : Icons.edit),
                 color: _editMode && !isBuiltin
                     ? palette.tokenBorderActive
                     : null,
