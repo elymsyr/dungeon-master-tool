@@ -386,8 +386,10 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final usersAsync = ref.watch(adminUserListProvider);
+    final usersAsync = ref.watch(adminUserSortedListProvider);
     final statsAsync = ref.watch(adminUserStatsProvider);
+    final sortMode = ref.watch(adminUserSortModeProvider);
+    final sortReversed = ref.watch(adminUserSortReversedProvider);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -404,6 +406,24 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
                     orElse: () => '…',
                   ),
                   accent: palette.featureCardAccent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatTile(
+                  icon: Icons.access_time,
+                  label: 'ACTIVE (30D)',
+                  value: usersAsync.maybeWhen(
+                    data: (users) {
+                      final cutoff = DateTime.now().subtract(const Duration(days: 30));
+                      return users
+                          .where((u) => u.lastActiveAt != null && u.lastActiveAt!.isAfter(cutoff))
+                          .length
+                          .toString();
+                    },
+                    orElse: () => '…',
+                  ),
+                  accent: palette.successBtnBg,
                 ),
               ),
             ],
@@ -444,6 +464,41 @@ class _UsersTabState extends ConsumerState<_UsersTab> {
                   onPressed: () {
                     ref.invalidate(adminUserListProvider);
                     ref.invalidate(adminUserStatsProvider);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _AdminCard(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.sort, size: 16, color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 8),
+                Text('Sort:',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: palette.sidebarLabelSecondary)),
+                const SizedBox(width: 6),
+                _SortDropdown(
+                  value: sortMode,
+                  onChanged: (v) {
+                    ref.read(adminUserSortModeProvider.notifier).state = v;
+                  },
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    sortReversed ? Icons.arrow_downward : Icons.arrow_upward,
+                    size: 16,
+                  ),
+                  tooltip: sortReversed ? 'Newest first' : 'Oldest first',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    ref.read(adminUserSortReversedProvider.notifier).state =
+                        !sortReversed;
                   },
                 ),
               ],
@@ -739,6 +794,53 @@ class _Chip extends StatelessWidget {
       child: Text(label,
           style: const TextStyle(
               fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.4)),
+    );
+  }
+}
+
+class _SortDropdown extends StatelessWidget {
+  final AdminUserSortMode value;
+  final ValueChanged<AdminUserSortMode> onChanged;
+  const _SortDropdown({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        border: Border.all(color: palette.featureCardBorder),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<AdminUserSortMode>(
+          value: value,
+          isDense: true,
+          isExpanded: false,
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: palette.tabActiveText),
+          items: const [
+            DropdownMenuItem(
+              value: AdminUserSortMode.registrationDate,
+              child: Text('Registration date'),
+            ),
+            DropdownMenuItem(
+              value: AdminUserSortMode.lastSeen,
+              child: Text('Last seen'),
+            ),
+            DropdownMenuItem(
+              value: AdminUserSortMode.appVersion,
+              child: Text('App version'),
+            ),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
     );
   }
 }
