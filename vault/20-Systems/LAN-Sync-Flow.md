@@ -1,7 +1,7 @@
 ---
 type: system
 domain: sync
-updated: 2026-08-20
+updated: 2026-08-25
 tags: [system]
 ---
 
@@ -137,6 +137,16 @@ manifest satırında ikinci bir alan var: `LanItemRef.viewUpdatedAt`
 world satırının **içerik** zaman damgasını kirletmez (aksi hâlde sırf sekme
 açmak buluta yeniden yükleme tetiklerdi).
 
+### Yeniden adlandırma zaman damgası
+`LanItemRef.renamedAt` — world, package ve character item'larında taşınır.
+`renameWorld()` / `renamePackage()` çağrıldığında ilgili tablonun
+`renamed_at` kolonu `DateTime.now()` ile damgalanır; klasör de yeniden
+adlandırılır. Karakterlerde `renamed_at`, `CharacterRepository.save()`
+tarafından mevcut değer korunarak taşınır; isim değişikliğinde
+`_applyCharacter()` tarafından LWW ile güncellenir. Alıcı tarafta peer'ın
+`renamedAt`'i local'den daha yeniyse DB + dosya sistemi yeniden adlandırılır;
+içerik birleştirilmeden önce isim eşitlenir.
+
 Görünüm dünya başına saklandığı için (`UiState.worldViewByWorld`) eşleme
 sırasında başka bir dünyada oturan kullanıcının ekranı yerinden oynamaz —
 kayıt, dünya bir sonraki açılışında `MainScreen.initState`'te restore edilir.
@@ -234,7 +244,12 @@ açık*). Eşleşmesi olmayan kullanıcıda hiç soket açılmaz.
 ## Bilinçli sınırlar (ponytail)
 - **Silme yayılmaz** — yalnız ekleme/güncelleme. Tombstone gerekirse manifest'e
   ölü satır + `trash_items`'a `deleted_at`.
-- **Yeniden adlandırma taşınmaz** — yerel ad kazanır, içerik eşitlenir.
+- **Yeniden adlandırma taşınır** — `worlds.renamed_at`, `packages.renamed_at`,
+  `world_characters.renamed_at` zaman damgaları LWW ile çözülür. Peer'ın
+  `renamedAt`'i local'den daha yeniyse alıcı hem DB'yi hem dosya sistemini
+  (world/package klasörü) yeniden adlandırır. Karakterlerde isim
+  `payloadJson.entity.name` içinde taşınır; `renamed_at` LWW çatışmasında
+  hangi ismin kazanacağını belirler. Eşitlikte yerel kazanır.
 - **Silme birleştirmede de yayılmaz** — bölüm bazlı birleşim tombstone'suz
   olduğu için A'da silinmiş bir entity'yi B hâlâ tutuyorsa geri gelir. Eski
   tam-değiştirme davranışında kazanan tarafın silmesi yayılıyordu; veri
