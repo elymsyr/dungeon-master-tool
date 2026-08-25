@@ -69,4 +69,10 @@ class WorldCharactersDao extends DatabaseAccessor<AppDatabase>
   Future<int> dropOwnership(String id) =>
       (update(worldCharacters)..where((t) => t.id.equals(id)))
           .write(const WorldCharactersCompanion(ownerId: Value(null)));
+
+  /// LAN sync: yeniden adlandırma zamanını kaydet.
+  Future<void> setRenamedAt(String id, DateTime renamedAt) async {
+    await (update(worldCharacters)..where((t) => t.id.equals(id)))
+        .write(WorldCharactersCompanion(renamedAt: Value(renamedAt)));
+  }
 }

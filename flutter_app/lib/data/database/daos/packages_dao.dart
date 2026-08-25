@@ -58,6 +58,12 @@ class PackagesDao extends DatabaseAccessor<AppDatabase>
         .write(PackagesCompanion(updatedAt: Value(updatedAt)));
   }
 
+  /// LAN sync: yeniden adlandırma zamanını kaydet.
+  Future<void> setRenamedAt(String id, DateTime renamedAt) async {
+    await (update(packages)..where((t) => t.id.equals(id)))
+        .write(PackagesCompanion(renamedAt: Value(renamedAt)));
+  }
+
   // ── Package schemas ──────────────────────────────────────────────────────
 
   Future<List<PackageSchema>> getSchemas(String packageId) =>
