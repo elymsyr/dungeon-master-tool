@@ -1,5 +1,53 @@
 # Release Notes
 
+## Dungeon Master Tool v14.1.2 — Mobile Import Fix, Guest Promotion Dedup, Edit Mode Icons (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.1.2) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Patch release fixing two bugs introduced in earlier versions and a small UI polish item. The import package dialog no longer overflows on mobile devices, and guest-to-account promotion no longer creates duplicate SRD packages. The edit mode toggle icons have been swapped so entering edit mode shows a pencil and exiting shows an eye. No migrations needed.
+
+---
+
+### Highlights
+
+- **Import package dialog fixed on mobile** — The import package dialog no longer overflows on narrow screens.
+- **Guest promotion no longer creates duplicate SRD packages** — Converting a guest account to a full account no longer duplicates SRD packages that already exist.
+- **Edit mode toggle icons swapped** — Entering edit mode now shows a pencil icon; exiting shows an eye icon.
+
+---
+
+### Bug fixes
+
+- **Import package dialog text overflow on mobile** — The dialog layout was causing text overflow on narrow screens. Now wraps correctly. Fixes regression from earlier dialog redesign.
+- **Guest promotion created duplicate SRD packages** — When promoting a guest account to a full account, INSERT OR IGNORE only checked the primary key, not the name. Different UUIDs for the same SRD package created duplicates. Now pre-computes name conflicts and excludes them during merge.
+
+---
+
+### Smaller improvements
+
+- **Edit mode toggle** — Swapped icons: pencil enters edit mode, eye exits. More intuitive visual feedback.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.1.1` → `14.1.2`.
+- **Local DB:** schema v12, unchanged. No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v14.1.1: Local Sync does not propagate deletions or renames (tombstones are the planned fix — this release adds rename sync but deletions are still one-way); Local Sync is not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.1.1 — LAN Sync Fix, Settings Dialog Fix, Package Dedup, Auth Page Redesign (Beta)
 
 **Release date:** August 2026
