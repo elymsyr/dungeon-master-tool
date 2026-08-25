@@ -2,6 +2,7 @@
   "@@locale": "tr",
   "appTitle": "Dungeon Master Aracı",
   "btnSave": "Kaydet",
+  "settingsSaved": "Ayarlar kaydedildi.",
   "btnLoad": "Yükle",
   "btnCancel": "İptal",
   "btnDelete": "Sil",
@@ -312,6 +313,7 @@
       }
     }
   },
+  "worldsSettingsSaved": "Ayarlar kaydedildi.",
   "worldsTemplateLine": "Template: {name}",
   "@worldsTemplateLine": {
     "placeholders": {

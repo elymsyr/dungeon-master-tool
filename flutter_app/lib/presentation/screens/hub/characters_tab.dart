@@ -747,7 +747,11 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       tags: workingTags,
                       coverImagePath: workingCover,
                     );
-                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.settingsSaved)),
+                  );
+                }
               },
               child: Text(l10n.btnSave),
             ),
