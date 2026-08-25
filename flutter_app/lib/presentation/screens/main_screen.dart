@@ -699,10 +699,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Edit Mode toggle
           IconButton(
             icon: Icon(
-              editMode ? Icons.edit : Icons.visibility,
+              editMode ? Icons.visibility : Icons.edit,
               color: editMode ? palette.tokenBorderActive : null,
             ),
-            tooltip: editMode ? l10n.mainEditMode : l10n.mainViewMode,
+            tooltip: editMode ? l10n.mainViewMode : l10n.mainEditMode,
             onPressed: () => ref
                 .read(editModeProvider.notifier)
                 .update((s) => !s),
