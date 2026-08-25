@@ -42,54 +42,68 @@ class _EraScrollBarState extends State<EraScrollBar> {
   int? _hoveredSegment;
   int? _hoveredWaypoint;
 
-  static const double _barWidth = 400;
+  static const double _baseBarWidth = 400;
+  static const double _minSegmentWidth = 60;
   static const double _barHeight = 36;
   static const double _trackY = 22;
   static const double _trackPadding = 40; // space for Start/End labels
   static const double _wpRadius = 7;
 
-  double get _trackStart => _trackPadding;
-  double get _trackEnd => _barWidth - _trackPadding;
-  double get _trackLength => _trackEnd - _trackStart;
+  double _computeBarWidth(int wpCount) {
+    const baseTrack = _baseBarWidth - 2 * _trackPadding; // 320
+    final neededTrack = (wpCount + 1) * _minSegmentWidth;
+    final trackLen = neededTrack > baseTrack ? neededTrack : baseTrack;
+    return 2 * _trackPadding + trackLen;
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = widget.palette;
-    return Container(
-      width: _barWidth,
-      height: _barHeight,
-      decoration: BoxDecoration(
-        color: p.uiFloatingBg,
-        border: Border.all(color: p.uiFloatingBorder),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapUp: (d) => _handleTap(d.localPosition),
-        onSecondaryTapUp: (d) => _handleSecondaryTap(d.localPosition, d.globalPosition),
-        onLongPressStart: (d) => _handleSecondaryTap(d.localPosition, d.globalPosition),
-        child: MouseRegion(
-          onHover: (e) => _updateHover(e.localPosition),
-          onExit: (_) => setState(() {
-            _hoveredSegment = null;
-            _hoveredWaypoint = null;
-          }),
-          child: CustomPaint(
-            size: const Size(_barWidth, _barHeight),
-            painter: _EraScrollPainter(
-              eras: widget.eras,
-              waypoints: widget.waypoints,
-              activeIndex: widget.activeEraIndex,
-              eraNames: widget.eraNames,
-              palette: widget.palette,
-              hoveredSegment: _hoveredSegment,
-              hoveredWaypoint: _hoveredWaypoint,
-              trackStart: _trackStart,
-              trackEnd: _trackEnd,
-              trackY: _trackY,
-              wpRadius: _wpRadius,
-              startLabel: widget.startLabel,
-              endLabel: widget.endLabel,
+    final wpCount = widget.waypoints.length;
+    final barWidth = _computeBarWidth(wpCount);
+    const trackStart = _trackPadding;
+    final trackEnd = barWidth - _trackPadding;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        width: barWidth,
+        height: _barHeight,
+        decoration: BoxDecoration(
+          color: p.uiFloatingBg,
+          border: Border.all(color: p.uiFloatingBorder),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (d) => _handleTap(d.localPosition, trackStart, trackEnd),
+          onSecondaryTapUp: (d) =>
+              _handleSecondaryTap(d.localPosition, d.globalPosition, trackStart, trackEnd),
+          onLongPressStart: (d) =>
+              _handleSecondaryTap(d.localPosition, d.globalPosition, trackStart, trackEnd),
+          child: MouseRegion(
+            onHover: (e) =>
+                _updateHover(e.localPosition, trackStart, trackEnd, wpCount),
+            onExit: (_) => setState(() {
+              _hoveredSegment = null;
+              _hoveredWaypoint = null;
+            }),
+            child: CustomPaint(
+              size: Size(barWidth, _barHeight),
+              painter: _EraScrollPainter(
+                eras: widget.eras,
+                waypoints: widget.waypoints,
+                activeIndex: widget.activeEraIndex,
+                eraNames: widget.eraNames,
+                palette: widget.palette,
+                hoveredSegment: _hoveredSegment,
+                hoveredWaypoint: _hoveredWaypoint,
+                trackStart: trackStart,
+                trackEnd: trackEnd,
+                trackY: _trackY,
+                wpRadius: _wpRadius,
+                startLabel: widget.startLabel,
+                endLabel: widget.endLabel,
+              ),
             ),
           ),
         ),
@@ -98,17 +112,18 @@ class _EraScrollBarState extends State<EraScrollBar> {
   }
 
   /// Returns the x positions of each waypoint along the track.
-  List<double> _waypointXPositions() {
+  List<double> _waypointXPositions(double trackStart, double trackEnd) {
     final count = widget.waypoints.length;
     if (count == 0) return [];
-    final segmentWidth = _trackLength / (count + 1);
-    return List.generate(count, (i) => _trackStart + segmentWidth * (i + 1));
+    final trackLen = trackEnd - trackStart;
+    final segmentWidth = trackLen / (count + 1);
+    return List.generate(count, (i) => trackStart + segmentWidth * (i + 1));
   }
 
   /// Returns the era segment index for a given x position.
-  int? _segmentAtX(double x) {
-    if (x < _trackStart || x > _trackEnd) return null;
-    final wpXs = _waypointXPositions();
+  int? _segmentAtX(double x, double trackStart, double trackEnd) {
+    if (x < trackStart || x > trackEnd) return null;
+    final wpXs = _waypointXPositions(trackStart, trackEnd);
     for (int i = 0; i < wpXs.length; i++) {
       if (x < wpXs[i]) return i;
     }
@@ -116,17 +131,19 @@ class _EraScrollBarState extends State<EraScrollBar> {
   }
 
   /// Returns the waypoint index if x is close to a waypoint marker.
-  int? _waypointAtX(double x) {
-    final wpXs = _waypointXPositions();
+  int? _waypointAtX(double x, double trackStart, double trackEnd) {
+    final wpXs = _waypointXPositions(trackStart, trackEnd);
     for (int i = 0; i < wpXs.length; i++) {
       if ((x - wpXs[i]).abs() <= _wpRadius + 4) return i;
     }
     return null;
   }
 
-  void _updateHover(Offset pos) {
-    final wpIdx = _waypointAtX(pos.dx);
-    final segIdx = wpIdx == null ? _segmentAtX(pos.dx) : null;
+  void _updateHover(
+      Offset pos, double trackStart, double trackEnd, int wpCount) {
+    final wpIdx = _waypointAtX(pos.dx, trackStart, trackEnd);
+    final segIdx =
+        wpIdx == null ? _segmentAtX(pos.dx, trackStart, trackEnd) : null;
     if (wpIdx != _hoveredWaypoint || segIdx != _hoveredSegment) {
       setState(() {
         _hoveredWaypoint = wpIdx;
@@ -135,41 +152,42 @@ class _EraScrollBarState extends State<EraScrollBar> {
     }
   }
 
-  void _handleTap(Offset pos) {
+  void _handleTap(Offset pos, double trackStart, double trackEnd) {
     // Check waypoint hit first
-    final wpIdx = _waypointAtX(pos.dx);
+    final wpIdx = _waypointAtX(pos.dx, trackStart, trackEnd);
     if (wpIdx != null) return; // waypoints use right-click
 
     // Check segment hit
-    final segIdx = _segmentAtX(pos.dx);
+    final segIdx = _segmentAtX(pos.dx, trackStart, trackEnd);
     if (segIdx == null) return;
 
     widget.onSwitchEra(segIdx);
   }
 
   /// Returns 'start' or 'end' if x is near an endpoint marker.
-  String? _endpointAtX(double x) {
-    if ((x - _trackStart).abs() <= 10) return 'start';
-    if ((x - _trackEnd).abs() <= 10) return 'end';
+  String? _endpointAtX(double x, double trackStart, double trackEnd) {
+    if ((x - trackStart).abs() <= 10) return 'start';
+    if ((x - trackEnd).abs() <= 10) return 'end';
     return null;
   }
 
-  void _handleSecondaryTap(Offset localPos, Offset globalPos) {
+  void _handleSecondaryTap(
+      Offset localPos, Offset globalPos, double trackStart, double trackEnd) {
     // Check endpoint hit (Start / End labels)
-    final ep = _endpointAtX(localPos.dx);
+    final ep = _endpointAtX(localPos.dx, trackStart, trackEnd);
     if (ep != null && widget.onRenameBoundary != null) {
       _showEndpointRenameMenu(globalPos, ep);
       return;
     }
 
-    final wpIdx = _waypointAtX(localPos.dx);
+    final wpIdx = _waypointAtX(localPos.dx, trackStart, trackEnd);
     if (wpIdx != null) {
       _showWaypointContextMenu(globalPos, wpIdx);
       return;
     }
 
     // Right-click on segment → add waypoint
-    final segIdx = _segmentAtX(localPos.dx);
+    final segIdx = _segmentAtX(localPos.dx, trackStart, trackEnd);
     if (segIdx != null) {
       widget.onAddWaypoint(segIdx);
     }
