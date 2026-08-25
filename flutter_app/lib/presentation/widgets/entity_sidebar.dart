@@ -1195,58 +1195,241 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   ) {
     final nameController = TextEditingController(text: 'New Record');
     String selectedSlug = categories.isNotEmpty ? categories.first.slug : 'npc';
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final isPhone = getScreenType(context) == ScreenType.phone;
+
+    // Group by tier and sort alphabetically within each tier.
+    final byTier = <int, List<EntityCategorySchema>>{0: [], 1: [], 2: []};
+    for (final c in categories) {
+      byTier[_tierFor(c.slug)]!.add(c);
+    }
+    for (final tierCats in byTier.values) {
+      tierCats.sort((a, b) => a.name.compareTo(b.name));
+    }
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New Entity'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
+      builder: (ctx) {
+        final mq = MediaQuery.of(ctx);
+        final width = mq.size.width.clamp(320.0, 560.0);
+        final height = (mq.size.height * 0.7).clamp(360.0, 600.0);
+
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            Widget buildCategoryRow(EntityCategorySchema cat) {
+              final isSelected = cat.slug == selectedSlug;
+              return InkWell(
+                onTap: () => setDialogState(() => selectedSlug = cat.slug),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: _parseColor(cat.color),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          cat.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            color: palette.tabActiveText,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(Icons.check,
+                            size: 14, color: palette.tabActiveText),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            Widget buildTierSection(int tier) {
+              final tierCats = byTier[tier] ?? const [];
+              if (tierCats.isEmpty) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    color: palette.tabBg,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                    child: Text(
+                      _tierLabels[tier]!,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: palette.sidebarDivider),
+                  for (final cat in tierCats) buildCategoryRow(cat),
+                ],
+              );
+            }
+
+            return Dialog(
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: Column(
+                  children: [
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline,
+                            size: 18,
+                            color: palette.tabActiveText,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            L10n.of(ctx)!.btnCreate,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    // Name field
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Name',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        autofocus: true,
+                        onSubmitted: (_) {
+                          final name = nameController.text.trim();
+                          if (name.isNotEmpty) {
+                            final id = ref
+                                .read(entityProvider.notifier)
+                                .create(selectedSlug, name: name);
+                            Navigator.pop(ctx);
+                            widget.onEntitySelected?.call(id);
+                          }
+                        },
+                      ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    // Category label
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+                      child: Text(
+                        'Select Category',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: palette.sidebarLabelSecondary,
+                        ),
+                      ),
+                    ),
+                    // Tier-based category grid
+                    Expanded(
+                      child: isPhone
+                          ? SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final tier in const [0, 1, 2])
+                                    buildTierSection(tier),
+                                ],
+                              ),
+                            )
+                          : Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final tier in const [0, 1, 2]) ...[
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        child:
+                                            buildTierSection(tier),
+                                      ),
+                                    ),
+                                    if (tier != 2)
+                                      VerticalDivider(
+                                        width: 1,
+                                        thickness: 1,
+                                        color: palette.sidebarDivider,
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    // Actions
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(L10n.of(ctx)!.btnCancel),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: () {
+                              final name = nameController.text.trim();
+                              if (name.isNotEmpty) {
+                                final id = ref
+                                    .read(entityProvider.notifier)
+                                    .create(selectedSlug, name: name);
+                                Navigator.pop(ctx);
+                                widget.onEntitySelected?.call(id);
+                              }
+                            },
+                            child: Text(L10n.of(ctx)!.btnCreate),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: selectedSlug,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-              items: categories
-                  .map(
-                    (c) => DropdownMenuItem(value: c.slug, child: Text(c.name)),
-                  )
-                  .toList(),
-              onChanged: (v) => selectedSlug = v ?? selectedSlug,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(L10n.of(context)!.btnCancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              if (name.isNotEmpty) {
-                final id = ref
-                    .read(entityProvider.notifier)
-                    .create(selectedSlug, name: name);
-                Navigator.pop(ctx);
-                widget.onEntitySelected?.call(id);
-              }
-            },
-            child: Text(L10n.of(context)!.btnCreate),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     ).whenComplete(nameController.dispose);
   }
 
