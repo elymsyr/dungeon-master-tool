@@ -586,6 +586,10 @@ class GuestPromotionService {
     await db.customStatement('ATTACH DATABASE ? AS guest', [guest.path]);
     try {
       final remap = await _guestPackageRemap(db);
+      // Precompute guest packages whose name already exists in the account —
+      // these must be skipped to prevent duplicates (INSERT OR IGNORE only
+      // checks PK, not name).
+      final nameConflicts = await _computeNameConflicts(db);
       final tables = await db
           .customSelect(
             "SELECT name FROM guest.sqlite_master WHERE type = 'table' "
@@ -605,8 +609,13 @@ class GuestPromotionService {
         // The account's copy of a remapped package wins whole: its rows are
         // already here under the ids the guest side would have used, and the
         // guest's package/schema/entity rows would only add an empty duplicate.
+        //
+        // Name conflict: INSERT OR IGNORE only checks PK, not name. A guest
+        // SRD package with a different UUID would slip through and create a
+        // duplicate. Exclude guest packages whose name already exists in the
+        // account — same effect as INSERT OR IGNORE on a UNIQUE(name) index.
         final skip = _packageOwnedTables.contains(table)
-            ? _remapExclusion(table, remap.keys)
+            ? _remapExclusion(table, remap.keys, nameConflicts: nameConflicts)
             : '';
         // Everywhere else the guest rows are kept and merely re-pointed.
         final select = shared
@@ -684,11 +693,46 @@ class GuestPromotionService {
     'package_entities',
   };
 
-  String _remapExclusion(String table, Iterable<String> guestIds) {
-    if (guestIds.isEmpty) return '';
-    final column = table == 'packages' ? 'id' : 'package_id';
-    final list = guestIds.map(_sqlString).join(', ');
-    return ' WHERE "$column" NOT IN ($list)';
+  /// Guest packages whose name already exists in the account — these must be
+  /// skipped during merge to prevent name-based duplicates (INSERT OR IGNORE
+  /// only checks PK, not name).
+  Future<Set<String>> _computeNameConflicts(AppDatabase db) async {
+    try {
+      final rows = await db.customSelect(
+        'SELECT g.name FROM guest.packages g '
+        'JOIN main.packages m ON m.name = g.name '
+        'WHERE g.id != m.id',
+      ).get();
+      return {for (final r in rows) r.read<String>('name')};
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  String _remapExclusion(String table, Iterable<String> guestIds,
+      {Set<String> nameConflicts = const {}}) {
+    final conditions = <String>[];
+    if (guestIds.isNotEmpty) {
+      final column = table == 'packages' ? 'id' : 'package_id';
+      final list = guestIds.map(_sqlString).join(', ');
+      conditions.add('"$column" NOT IN ($list)');
+    }
+    // Exclude guest packages whose name already exists in the account —
+    // prevents INSERT OR IGNORE from creating name-based duplicates.
+    if (nameConflicts.isNotEmpty && table == 'packages') {
+      final list = nameConflicts.map(_sqlString).join(', ');
+      conditions.add('"name" NOT IN ($list)');
+    } else if (nameConflicts.isNotEmpty) {
+      // For package_schemas / package_entities: exclude rows whose
+      // parent package name already exists in the account.
+      final list = nameConflicts.map(_sqlString).join(', ');
+      conditions.add(
+        '"package_id" NOT IN '
+        '(SELECT id FROM main.packages WHERE name IN ($list))',
+      );
+    }
+    if (conditions.isEmpty) return '';
+    return ' WHERE ${conditions.join(' AND ')}';
   }
 
   String _remapCase(Map<String, String> remap) {
