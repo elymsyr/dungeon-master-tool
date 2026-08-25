@@ -24,6 +24,7 @@ class WorldCharacters extends Table {
       dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt =>
       dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get renamedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

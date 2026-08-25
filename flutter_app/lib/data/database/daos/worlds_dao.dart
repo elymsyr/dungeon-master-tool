@@ -62,4 +62,10 @@ class WorldsDao extends DatabaseAccessor<AppDatabase> with _$WorldsDaoMixin {
     await (update(worlds)..where((t) => t.id.equals(id)))
         .write(WorldsCompanion(updatedAt: Value(updatedAt)));
   }
+
+  /// LAN sync: yeniden adlandırma zamanını kaydet.
+  Future<void> setRenamedAt(String id, DateTime renamedAt) async {
+    await (update(worlds)..where((t) => t.id.equals(id)))
+        .write(WorldsCompanion(renamedAt: Value(renamedAt)));
+  }
 }

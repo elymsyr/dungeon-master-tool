@@ -12,6 +12,7 @@ class Packages extends Table {
       dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get lastCloudPushAt => dateTime().nullable()();
   TextColumn get lastPushedHash => text().nullable()();
+  DateTimeColumn get renamedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

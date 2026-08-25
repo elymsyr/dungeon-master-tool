@@ -79,6 +79,7 @@ class LanSyncSession {
         viewUpdatedAt: touched == null
             ? null
             : DateTime.fromMillisecondsSinceEpoch(touched, isUtc: true),
+        renamedAt: w.renamedAt,
       ));
     }
 
@@ -89,6 +90,7 @@ class LanSyncSession {
         id: pkg.id,
         name: pkg.name,
         updatedAt: pkg.updatedAt,
+        renamedAt: pkg.renamedAt,
       ));
     }
 
@@ -98,6 +100,7 @@ class LanSyncSession {
         id: c.id,
         name: c.templateName,
         updatedAt: c.updatedAt,
+        renamedAt: c.renamedAt,
       ));
     }
 
@@ -262,9 +265,30 @@ class LanSyncSession {
     Map<String, dynamic> extras,
   ) async {
     final existing = await _db.worldsDao.getById(ref.id);
-    // ponytail: yeniden adlandırma taşınmıyor — yerel ad kazanır, içerik
-    // eşitlenir. Ad senkronu istenirse manifest'e `renamed_at` eklenir.
     var name = existing?.worldName ?? ref.name;
+
+    // Yeniden adlandırma senkronizasyonu: peer'ın `renamedAt`'i local'den
+    // daha yeniyse ismi güncelle — hem DB'yi hem dosya sistemini.
+    if (existing != null && ref.renamedAt != null) {
+      final localRenamedAt = existing.renamedAt;
+      if (localRenamedAt == null ||
+          ref.renamedAt!.isAfter(localRenamedAt)) {
+        // Eski klasörü yeniden adlandır.
+        final oldDir = Directory(p.join(AppPaths.worldsDir, name));
+        final newDir = Directory(p.join(AppPaths.worldsDir, ref.name));
+        if (await oldDir.exists() && !await newDir.exists()) {
+          await oldDir.rename(newDir.path);
+        }
+        // DB'de ismi ve renamedAt'i güncelle.
+        await (_db.update(_db.worlds)..where((t) => t.id.equals(ref.id)))
+            .write(WorldsCompanion(
+          worldName: Value(ref.name),
+          renamedAt: Value(ref.renamedAt),
+        ));
+        name = ref.name;
+      }
+    }
+
     if (existing == null && await _db.worldsDao.getByName(name) != null) {
       name = await _uniqueName(
         name,
@@ -274,8 +298,6 @@ class LanSyncSession {
     payload['world_id'] = ref.id;
 
     // Dünya burada da varsa: tam değiştirme değil, **bölüm bazlı birleştirme**.
-    // Eskiden gelen payload yereli olduğu gibi eziyordu; A'da savaş notu,
-    // B'de mindmap düzenlendiyse birinin işi tamamen kayboluyordu.
     var effectiveUpdatedAt = ref.updatedAt;
     if (existing != null) {
       final localPayload =
@@ -293,9 +315,6 @@ class LanSyncSession {
       );
       merged['world_id'] = ref.id;
       await _ref.read(campaignRepositoryProvider).save(name, merged);
-      // Bulk save satırları silip yeniden yazdığı için hepsi `now()` damgalı
-      // döndü — kazananların gerçek damgalarını geri koy, yoksa bir sonraki
-      // eşlemede bölüm karşılaştırması anlamsızlaşır.
       await _restoreSectionStamps(
         ref.id,
         mergeSectionStamps(local: localStamps, remote: remoteStamps),
@@ -308,10 +327,6 @@ class LanSyncSession {
     }
     await _db.worldsDao.setUpdatedAt(ref.id, effectiveUpdatedAt);
     await _applyWorldExtras(ref, name, extras);
-    // Dunya su an acik ise bellekteki kopya bayat: bir sonraki otomatik
-    // kayit senkronize edilen icerigi geri ezerdi ve kullanici hicbir sey
-    // gelmemis gibi gorurdu. Cloud restore'un "acik dunyanin icine geri
-    // yukle" yolunun aynisi.
     if (_ref.read(activeCampaignProvider) == name) {
       await _ref.read(activeCampaignProvider.notifier).reload();
     }
@@ -394,6 +409,27 @@ class LanSyncSession {
     if (ref.name == srdCorePackageName) return;
     final existing = await _db.packagesDao.getById(ref.id);
     var name = existing?.name ?? ref.name;
+
+    // Yeniden adlandırma senkronizasyonu: peer'ın `renamedAt`'i local'den
+    // daha yeniyse ismi güncelle — hem DB'yi hem dosya sistemini.
+    if (existing != null && ref.renamedAt != null) {
+      final localRenamedAt = existing.renamedAt;
+      if (localRenamedAt == null ||
+          ref.renamedAt!.isAfter(localRenamedAt)) {
+        final oldDir = Directory(p.join(AppPaths.packagesDir, name));
+        final newDir = Directory(p.join(AppPaths.packagesDir, ref.name));
+        if (await oldDir.exists() && !await newDir.exists()) {
+          await oldDir.rename(newDir.path);
+        }
+        await (_db.update(_db.packages)..where((t) => t.id.equals(ref.id)))
+            .write(PackagesCompanion(
+          name: Value(ref.name),
+          renamedAt: Value(ref.renamedAt),
+        ));
+        name = ref.name;
+      }
+    }
+
     if (existing == null && await _db.packagesDao.getByName(name) != null) {
       name = await _uniqueName(
         name,
@@ -410,6 +446,20 @@ class LanSyncSession {
     LanItemRef ref,
     Map<String, dynamic> payload,
   ) async {
+    // Yeniden adlandırma senkronizasyonu: peer'ın `renamedAt`'i local'den
+    // daha yeniyse DB'deki `renamed_at`'i güncelle. Bunu save()'den ÖNCE
+    // yapıyoruz çünkü save() mevcut renamedAt'i koruyor.
+    if (ref.renamedAt != null) {
+      final existing = await _db.worldCharactersDao.getById(ref.id);
+      if (existing != null) {
+        final localRenamedAt = existing.renamedAt;
+        if (localRenamedAt == null ||
+            ref.renamedAt!.isAfter(localRenamedAt)) {
+          await _db.worldCharactersDao.setRenamedAt(ref.id, ref.renamedAt!);
+        }
+      }
+    }
+
     // Karakterin `updatedAt`'i payload'ın kendisinde taşınıyor ve
     // `CharacterRepository` onu olduğu gibi yazıyor — restamp gerekmez.
     final character = Character.fromJson({...payload, 'id': ref.id});

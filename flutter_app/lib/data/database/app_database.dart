@@ -152,6 +152,13 @@ class AppDatabase extends _$AppDatabase {
           for (final stmt in _sideTablesDDL) {
             await customStatement(stmt);
           }
+          // LAN sync: yeniden adlandırma zamanı — tablolara kolon ekle.
+          // ALTER TABLE IF NOT EXISTS SQLite'da desteklenmiyor; hata yutulur.
+          for (final stmt in _renamedAtColumnsDDL) {
+            try {
+              await customStatement(stmt);
+            } catch (_) {}
+          }
           // Bulut sync kaldırıldı: outbox/telemetry/personal-package tabloları
           // artık yok. Mevcut v12 DB'lerde artık satırlar duruyor; burada
           // düşürülür. schemaVersion 12'de KALIR — v13'e çıkmak her kullanıcının
@@ -327,6 +334,15 @@ const List<String> _sideTablesDDL = <String>[
       'paired_at INTEGER NOT NULL, '
       'last_seen_at INTEGER NOT NULL DEFAULT 0'
       ')',
+];
+
+/// LAN sync: yeniden adlandırma zamanı damgası. Schema bump yok — her
+/// `beforeOpen`'da `ALTER TABLE … ADD COLUMN` denenir, kolon zaten varsa
+/// hata yutulur.
+const List<String> _renamedAtColumnsDDL = <String>[
+  'ALTER TABLE worlds ADD COLUMN renamed_at INTEGER',
+  'ALTER TABLE packages ADD COLUMN renamed_at INTEGER',
+  'ALTER TABLE world_characters ADD COLUMN renamed_at INTEGER',
 ];
 
 /// Bulut sync ile birlikte emekliye ayrılan tablolar. `beforeOpen`'da

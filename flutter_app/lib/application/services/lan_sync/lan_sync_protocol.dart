@@ -48,9 +48,11 @@ class LanItemRef {
     required this.name,
     required DateTime updatedAt,
     DateTime? viewUpdatedAt,
+    DateTime? renamedAt,
   })  : updatedAt = _toMs(updatedAt),
         viewUpdatedAt =
-            viewUpdatedAt == null ? null : _toMs(viewUpdatedAt);
+            viewUpdatedAt == null ? null : _toMs(viewUpdatedAt),
+        renamedAt = renamedAt == null ? null : _toMs(renamedAt);
 
   static DateTime _toMs(DateTime t) => DateTime.fromMillisecondsSinceEpoch(
         t.toUtc().millisecondsSinceEpoch,
@@ -68,6 +70,10 @@ class LanItemRef {
   /// tarafta world satırının içerik zaman damgasını kirletmez.
   final DateTime? viewUpdatedAt;
 
+  /// World, package ve character için: son yeniden adlandırma zamanı. Alıcı
+  /// tarafta peer'ın `renamedAt`'i local'den daha yeniyse isim güncellenir.
+  final DateTime? renamedAt;
+
   /// LWW karşılaştırmasında kullanılan zaman: içerik ve görünümün yenisi.
   DateTime get effectiveUpdatedAt =>
       (viewUpdatedAt != null && viewUpdatedAt!.isAfter(updatedAt))
@@ -83,6 +89,7 @@ class LanItemRef {
         'updated_at': updatedAt.toIso8601String(),
         if (viewUpdatedAt != null)
           'view_updated_at': viewUpdatedAt!.toIso8601String(),
+        if (renamedAt != null) 'renamed_at': renamedAt!.toIso8601String(),
       };
 
   static LanItemRef? fromJson(Map<String, dynamic> j) {
@@ -99,6 +106,9 @@ class LanItemRef {
       viewUpdatedAt: j['view_updated_at'] == null
           ? null
           : DateTime.tryParse('${j['view_updated_at']}'),
+      renamedAt: j['renamed_at'] == null
+          ? null
+          : DateTime.tryParse('${j['renamed_at']}'),
     );
   }
 
