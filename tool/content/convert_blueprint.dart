@@ -72,6 +72,11 @@ const _categoryMap = {
   'lore': 'lore',
   'campaign': 'campaign',
   'environmental-effect': 'environmental-effect',
+  'monster': 'monster',
+  'hireling': 'hireling',
+  'service': 'service',
+  'poison': 'poison',
+  'curse': 'curse',
 };
 
 void main(List<String> args) {
@@ -223,7 +228,7 @@ dynamic _resolveAllRefs(dynamic value, Map<String, Map<String, String>> refIndex
   return value;
 }
 
-  Map<String, dynamic> _buildEntity(
+Map<String, dynamic> _buildEntity(
   String id,
   String typeSlug,
   String sourceTitle,
@@ -242,17 +247,32 @@ dynamic _resolveAllRefs(dynamic value, Map<String, Map<String, String>> refIndex
     attrs[key] = _resolveAllRefs(value, refIndex);
   }
 
+  // ── Promote base Entity fields from mapping to entity level ──────────
+  // The blueprint spec defines these as base fields on every entity, but
+  // the default loop puts everything into `attributes`.  Extract them so
+  // they land at the correct output level.
+  String _str(dynamic v) => v is String ? v : '${v ?? ''}';
+  List<String> _strList(dynamic v) =>
+      v is List ? v.map((e) => '$e').toList() : <String>[];
+
+  final description = _str(attrs.remove('description'));
+  final imagePath = _str(attrs.remove('imagePath'));
+  final dmNotes = _str(attrs.remove('dmNotes'));
+  final tags = _strList(attrs.remove('tags'));
+  final pdfs = _strList(attrs.remove('pdfs'));
+  final locationId = attrs.remove('locationId');
+
   return {
     'name': mapping['name'],
     'type': typeSlug,
     'source': sourceTitle,
-    'description': attrs.remove('description') ?? '',
-    'image_path': '',
+    'description': description,
+    'image_path': imagePath,
     'images': <String>[],
-    'tags': <String>[],
-    'dm_notes': '',
-    'pdfs': <String>[],
-    'location_id': null,
+    'tags': tags,
+    'dm_notes': dmNotes,
+    'pdfs': pdfs,
+    'location_id': locationId,
     'attributes': attrs,
   };
 }
