@@ -379,6 +379,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: selected != null ? _copyCharacter : null,
+                      icon: const Icon(Icons.content_copy, size: 18),
+                      label: const Text('Copy'),
+                    ),
+                    const SizedBox(width: 8),
                     actionButton,
                   ],
                 );
@@ -540,6 +546,81 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _releasing = false);
+    }
+  }
+
+  Future<void> _copyCharacter() async {
+    final list = _visibleList(L10n.of(context)!);
+    final idx = _selectedIndex.value;
+    if (idx < 0 || idx >= list.length) return;
+    final source = list[idx];
+    final allChars =
+        ref.read(characterListProvider).valueOrNull ?? const [];
+
+    String dest = '${source.entity.name} (Copy)';
+    final existingNames = allChars.map((c) => c.entity.name).toSet();
+    var n = 2;
+    while (existingNames.contains(dest)) {
+      dest = '${source.entity.name} (Copy $n)';
+      n++;
+    }
+
+    final controller = TextEditingController(text: dest);
+    final focusNode = FocusNode();
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) focusNode.requestFocus();
+    });
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copy Character'),
+        content: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: const InputDecoration(labelText: 'New character name'),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Copy'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    focusNode.dispose();
+    if (newName == null || newName.isEmpty) return;
+    if (existingNames.contains(newName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Character "$newName" already exists')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await ref.read(characterListProvider.notifier).copyCharacter(
+            sourceId: source.id,
+            destinationName: newName,
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Copied "${source.entity.name}" → "$newName"')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copy failed: $e')),
+        );
+      }
     }
   }
 

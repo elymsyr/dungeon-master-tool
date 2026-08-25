@@ -609,6 +609,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     workingMeta['description'] ??= '';
     workingMeta['tags'] ??= <String>[];
     workingMeta['cover_image_path'] ??= '';
+    var workingName = packageName;
 
     await showDialog<void>(
       context: context,
@@ -623,15 +624,15 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               MetadataEditorSection(
-                showNameField: false,
-                name: packageName,
+                showNameField: true,
+                name: workingName,
                 description: workingMeta['description'] as String? ?? '',
                 tags: ((workingMeta['tags'] as List?) ?? const [])
                     .whereType<String>()
                     .toList(),
                 coverImagePath:
                     workingMeta['cover_image_path'] as String? ?? '',
-                onNameChanged: (_) {},
+                onNameChanged: (v) => workingName = v,
                 onDescriptionChanged: (v) =>
                     workingMeta['description'] = v,
                 onTagsChanged: (v) =>
@@ -673,7 +674,24 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           ),
           FilledButton(
             onPressed: () async {
+              // Ad değiştiyse adı yeniden adlandır.
+              if (workingName != packageName) {
+                try {
+                  await ref.read(packageRepositoryProvider).renamePackage(
+                        packageName,
+                        workingName,
+                      );
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Rename failed: $e')),
+                    );
+                  }
+                  return;
+                }
+              }
               await updatePackageMetadata(ref, packageName, workingMeta);
+              ref.invalidate(packageListProvider);
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),

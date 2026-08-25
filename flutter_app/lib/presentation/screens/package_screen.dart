@@ -224,6 +224,16 @@ class _PackageAsCampaignRepo implements CampaignRepository {
 
   @override
   Future<void> permanentlyDelete(String trashId) async {}
+
+  @override
+  Future<String> copy({
+    required String sourceName,
+    required String destinationName,
+  }) async =>
+      destinationName;
+
+  @override
+  Future<void> renameWorld(String oldName, String newName) async {}
 }
 
 /// Paket düzenleme ekranının asıl içeriği — ProviderScope içinde çalışır.
