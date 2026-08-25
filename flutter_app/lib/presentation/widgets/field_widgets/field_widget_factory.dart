@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/cr_calculator.dart';
@@ -2542,6 +2543,14 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                           data: description,
                           // Touch: selection swallows drag → no scroll.
                           selectable: !isTouchPlatform,
+                          onTapLink: (text, href, title) async {
+                            if (href == null) return;
+                            final uri = Uri.tryParse(href);
+                            if (uri != null) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
                           styleSheet:
                               MarkdownStyleSheet.fromTheme(
                                 Theme.of(context),
