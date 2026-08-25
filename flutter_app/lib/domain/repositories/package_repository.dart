@@ -50,4 +50,7 @@ abstract class PackageRepository {
 
   /// PR-D4: hard-delete a trash row.
   Future<void> permanentlyDelete(String trashId);
+
+  /// Package adını değiştir.
+  Future<void> renamePackage(String oldName, String newName);
 }

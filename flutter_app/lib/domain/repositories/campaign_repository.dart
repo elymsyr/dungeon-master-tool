@@ -84,4 +84,13 @@ abstract class CampaignRepository {
 
   /// PR-D4: hard-delete a trash row.
   Future<void> permanentlyDelete(String trashId);
+
+  /// Kampanyanın bir kopyasını oluştur (deep copy). Yeni isim zorunlu.
+  Future<String> copy({
+    required String sourceName,
+    required String destinationName,
+  });
+
+  /// Kampanya adını değiştir.
+  Future<void> renameWorld(String oldName, String newName);
 }
