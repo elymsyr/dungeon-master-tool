@@ -257,10 +257,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     WorldMapNotifier notifier,
     WorldMapState mapState,
   ) {
-    const pinTypes = ['npc', 'monster', 'location', 'event', 'default'];
-    final allHidden = pinTypes.every(
-      (t) => mapState.hiddenPinTypes.contains(t),
-    );
+    // Compute unique pin types from actual pins on the map.
+    final pinTypes = <String>{
+      for (final p in mapState.pins) p.pinType,
+    }.toList()
+      ..sort();
+    final allHidden = pinTypes.isNotEmpty &&
+        pinTypes.every(
+          (t) => mapState.hiddenPinTypes.contains(t),
+        );
 
     return Container(
       width: double.infinity,
@@ -299,6 +304,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           // Pin category dropdown
           _PinCategoryDropdown(
             palette: palette,
+            pins: mapState.pins,
+            ref: ref,
             hiddenPinTypes: mapState.hiddenPinTypes,
             onToggle: notifier.togglePinTypeVisibility,
           ),
@@ -670,6 +677,23 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                       'location'
               ? pin.entityId
               : null;
+          // Resolve display color from category schema if pin has no custom color.
+          Color? categoryColor;
+          if (pin.color.isEmpty) {
+            final catSlug = pin.entityId != null
+                ? ref.read(entityProvider)[pin.entityId!]?.categorySlug
+                : pin.pinType;
+            if (catSlug != null) {
+              final cat = ref
+                  .read(worldSchemaProvider)
+                  .categories
+                  .where((c) => c.slug == catSlug)
+                  .firstOrNull;
+              if (cat != null && cat.color.isNotEmpty) {
+                categoryColor = _parseHexColor(cat.color);
+              }
+            }
+          }
           return _DraggablePin(
             key: ValueKey('pin_${pin.id}'),
             pin: pin,
@@ -677,6 +701,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             notifier: notifier,
             pinSize: mapState.pinSize,
             iconData: _pinIcon(pin, ref),
+            displayColor: categoryColor,
             linkedLocationId: linkedLoc,
             onEdit: () => _editPin(pin, notifier, palette),
             onInspect: pin.entityId != null
@@ -924,15 +949,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   /// Map category slug → pin type for display/filtering.
-  static String _pinTypeFromCategorySlug(String slug) {
-    return switch (slug) {
-      'npc' => 'npc',
-      'monster' => 'monster',
-      'player' => 'npc',
-      'location' => 'location',
-      _ => 'default',
-    };
-  }
+  /// Uses the category slug directly as pin type for uniform mapping.
+  static String _pinTypeFromCategorySlug(String slug) => slug;
 
   // -------------------------------------------------------------------------
   // Dialogs / Sheets
@@ -1042,6 +1060,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       allowedTypes: allowedSlugs.isEmpty ? null : allowedSlugs,
       // Filter ancestors / self → recursive drill chain would loop.
       excludeIds: ref.read(worldMapProvider).locationStack,
+      // Include bundled SRD Tier-1 entities (monsters, weapons, spells…).
+      includeBuiltinSrd: true,
     );
     if (result == null || result.isEmpty) return;
 
@@ -1413,6 +1433,7 @@ class _DraggablePin extends StatefulWidget {
   final VoidCallback? onCopyToEra;
   final PinSize pinSize;
   final IconData iconData;
+  final Color? displayColor;
   // When non-null this pin links to a location entity → tap/hover surfaces
   // the LocationPinPreviewCard with a drill-in handle.
   final String? linkedLocationId;
@@ -1424,6 +1445,7 @@ class _DraggablePin extends StatefulWidget {
     required this.notifier,
     required this.onEdit,
     required this.iconData,
+    this.displayColor,
     this.onInspect,
     this.onDelete,
     this.onCopyToEra,
@@ -1456,9 +1478,10 @@ class _DraggablePinState extends State<_DraggablePin> {
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
-    final displayColor = pin.color.isNotEmpty
-        ? _parseHexColor(pin.color)
-        : _pinColor(pin.pinType, widget.palette);
+    final displayColor = widget.displayColor ??
+        (pin.color.isNotEmpty
+            ? _parseHexColor(pin.color)
+            : _pinColor(pin.pinType, widget.palette));
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
@@ -2257,22 +2280,32 @@ class _ToolbarCheckbox extends StatelessWidget {
 
 class _PinCategoryDropdown extends StatelessWidget {
   final DmToolColors palette;
+  final List<MapPin> pins;
+  final WidgetRef ref;
   final Set<String> hiddenPinTypes;
   final void Function(String) onToggle;
 
-  static const _pinTypes = ['npc', 'monster', 'location', 'event', 'default'];
-
   const _PinCategoryDropdown({
     required this.palette,
+    required this.pins,
+    required this.ref,
     required this.hiddenPinTypes,
     required this.onToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final visibleCount = _pinTypes
-        .where((t) => !hiddenPinTypes.contains(t))
-        .length;
+    // Compute unique pin types from actual pins on the map.
+    final pinTypes = <String>{
+      for (final p in pins) p.pinType,
+    }.toList()
+      ..sort();
+
+    if (pinTypes.isEmpty) return const SizedBox.shrink();
+
+    final schema = ref.read(worldSchemaProvider);
+    final visibleCount =
+        pinTypes.where((t) => !hiddenPinTypes.contains(t)).length;
 
     return PopupMenuButton<String>(
       tooltip: 'Pin categories',
@@ -2280,8 +2313,14 @@ class _PinCategoryDropdown extends StatelessWidget {
       color: palette.uiFloatingBg,
       shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onSelected: onToggle,
-      itemBuilder: (_) => _pinTypes.map((type) {
+      itemBuilder: (_) => pinTypes.map((type) {
         final visible = !hiddenPinTypes.contains(type);
+        // Resolve category name and color from schema.
+        final cat = schema.categories.where((c) => c.slug == type).firstOrNull;
+        final label = cat?.name ?? type[0].toUpperCase() + type.substring(1);
+        final color = cat != null && cat.color.isNotEmpty
+            ? _parseHexColor(cat.color)
+            : _pinColor(type, palette);
         return PopupMenuItem<String>(
           value: type,
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -2307,13 +2346,13 @@ class _PinCategoryDropdown extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: _pinColor(type, palette),
+                  color: color,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                type[0].toUpperCase() + type.substring(1),
+                label,
                 style: TextStyle(fontSize: 11, color: palette.uiFloatingText),
               ),
             ],
@@ -2328,7 +2367,7 @@ class _PinCategoryDropdown extends StatelessWidget {
             Icon(Icons.category, size: 14, color: palette.tabText),
             const SizedBox(width: 4),
             Text(
-              'Categories ($visibleCount/${_pinTypes.length})',
+              'Categories ($visibleCount/${pinTypes.length})',
               style: TextStyle(fontSize: 10, color: palette.tabText),
             ),
             Icon(Icons.arrow_drop_down, size: 14, color: palette.tabText),
@@ -2348,7 +2387,15 @@ Color _pinColor(String pinType, DmToolColors palette) {
     'npc' => palette.pinNpc,
     'monster' => palette.pinMonster,
     'location' => palette.pinLocation,
+    'player-character' => palette.pinPlayer,
     'player' => palette.pinPlayer,
+    'spell' => const Color(0xFF7E57C2),
+    'weapon' => const Color(0xFFC62828),
+    'armor' => const Color(0xFF37474F),
+    'quest' => const Color(0xFFF57C00),
+    'encounter' => const Color(0xFFC62828),
+    'trap' => const Color(0xFFBF360C),
+    'scene' => const Color(0xFF3949AB),
     _ => palette.pinDefault,
   };
 }
@@ -2362,6 +2409,7 @@ IconData _iconFromName(String name) {
     'workspaces' => Icons.workspaces,
     'fork_right' => Icons.fork_right,
     'diversity_3' => Icons.diversity_3,
+    'diversity_2' => Icons.diversity_2,
     'history_edu' => Icons.history_edu,
     'stars' => Icons.stars,
     'auto_awesome' => Icons.auto_awesome,
@@ -2375,7 +2423,25 @@ IconData _iconFromName(String name) {
     'directions_boat' => Icons.directions_boat,
     'diamond' => Icons.diamond,
     'auto_fix_high' => Icons.auto_fix_high,
-    'coronavirus' => Icons.colorize, // monster builtin → kılıç silüetine yakın
+    'auto_fix_off' => Icons.auto_fix_off,
+    'coronavirus' => Icons.colorize,
+    'flash_on' => Icons.flash_on,
+    'cruelty_free' => Icons.cruelty_free,
+    'person' => Icons.person,
+    'person_outline' => Icons.person_outline,
+    'person_pin' => Icons.person_pin,
+    'healing' => Icons.healing,
+    'place' => Icons.place,
+    'movie' => Icons.movie,
+    'flag' => Icons.flag,
+    'sports_kabaddi' => Icons.sports_kabaddi,
+    'gpp_bad' => Icons.gpp_bad,
+    'science' => Icons.science,
+    'cloud' => Icons.cloud,
+    'engineering' => Icons.engineering,
+    'storefront' => Icons.storefront,
+    'campaign' => Icons.campaign,
+    'menu_book' => Icons.menu_book,
     // Builtin default_* category icon strings
     'default_npc' => Icons.person_pin,
     'default_monster' => Icons.colorize,
@@ -2396,11 +2462,7 @@ IconData _iconFromName(String name) {
     'default_action' => Icons.flash_on,
     'default_reaction' => Icons.fork_right,
     'default_legendary-action' => Icons.auto_fix_high,
-    'flash_on' => Icons.flash_on,
-    'cruelty_free' => Icons.cruelty_free,
     // Common alternates a custom category might pick
-    'person' => Icons.person,
-    'person_pin' => Icons.person_pin,
     'location_on' => Icons.location_on,
     'location_city' => Icons.location_city,
     'event' => Icons.event,
@@ -2408,7 +2470,6 @@ IconData _iconFromName(String name) {
     'forest' => Icons.forest,
     'home' => Icons.home,
     'map' => Icons.map,
-    'flag' => Icons.flag,
     _ => Icons.location_pin,
   };
 }
@@ -2433,12 +2494,20 @@ IconData _pinIcon(MapPin pin, WidgetRef ref) {
       }
     }
   }
+  // For entity-less pins, try resolving icon from pinType as category slug.
+  final schema = ref.read(worldSchemaProvider);
+  final cat = schema.categories
+      .where((c) => c.slug == pin.pinType)
+      .firstOrNull;
+  if (cat != null && cat.icon.isNotEmpty) {
+    return _iconFromName(cat.icon);
+  }
   return switch (pin.pinType) {
     'npc' => Icons.person_pin,
     'monster' => Icons.colorize,
     'location' => Icons.location_on,
     'event' => Icons.event,
-    'player' => Icons.person,
+    'player-character' => Icons.person,
     _ => Icons.location_pin,
   };
 }

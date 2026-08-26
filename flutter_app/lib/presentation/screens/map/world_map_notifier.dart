@@ -397,6 +397,19 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     final eraEndLabel =
         (data['era_end_label'] ?? data['epoch_end_label']) as String? ?? 'End';
 
+    // Normalize legacy pinType values to category slugs for uniform filtering.
+    eras = [
+      for (final era in eras)
+        era.copyWith(
+          pins: era.pins.map((p) => _normalizePinType(p)).toList(),
+          locationMaps: {
+            for (final entry in era.locationMaps.entries)
+              entry.key: entry.value.copyWith(
+                pins: entry.value.pins.map((p) => _normalizePinType(p)).toList(),
+              ),
+          },
+        ),
+    ];
     final active = eras[activeIdx];
     state = WorldMapState(
       imagePath: active.imagePath,
@@ -422,6 +435,17 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     return raw
         .map((p) => MapPin.fromJson(Map<String, dynamic>.from(p as Map)))
         .toList();
+  }
+
+  /// Normalize legacy pinType values to category slugs.
+  /// 'player' → 'player-character', 'event' → 'default', etc.
+  static MapPin _normalizePinType(MapPin pin) {
+    const legacyMap = <String, String>{
+      'player': 'player-character',
+    };
+    final normalized = legacyMap[pin.pinType];
+    if (normalized != null) return pin.copyWith(pinType: normalized);
+    return pin;
   }
 
   List<TimelinePin> _parseRawTimelinePins(List<dynamic> raw) {

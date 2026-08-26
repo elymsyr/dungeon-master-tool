@@ -250,7 +250,7 @@ EntityCategorySchema _mk({
   required List<FieldGroup> groups,
   required int orderIndex,
   required String now,
-  List<String> allowedInSections = const ['mindmap'],
+  List<String> allowedInSections = const ['mindmap', 'worldmap'],
   List<String> filterFieldKeys = const [],
 }) {
   return EntityCategorySchema(
