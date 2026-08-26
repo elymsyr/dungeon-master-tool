@@ -74,6 +74,11 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
         schema = mapPatched;
         dirty = true;
       }
+      final worldmapPatched = _migrateWorldmapAllowedSections(schema);
+      if (worldmapPatched != null) {
+        schema = worldmapPatched;
+        dirty = true;
+      }
       if (dirty) {
         if (data != null) {
           final serialized = deepCopyJson(schema.toJson());
@@ -234,6 +239,32 @@ WorldSchema? _migrateStaleEnumRelations(WorldSchema schema) {
       }
     }
     newCats.add(catDirty ? cat.copyWith(fields: newFields) : cat);
+  }
+  if (!dirty) return null;
+  return schema.copyWith(categories: newCats);
+}
+
+/// Patch legacy stored schemas whose `allowedInSections` used the old default
+/// `['mindmap']`. Adds `'worldmap'` so all Tier-1/Tier-2 categories (except
+/// the handful intentionally restricted) become pinnable on the world map.
+/// Idempotent — categories already containing `'worldmap'` are left untouched.
+const _noWorldmapSlugs = {
+  'applied-condition', 'quest', 'lore', 'campaign', 'session',
+};
+
+WorldSchema? _migrateWorldmapAllowedSections(WorldSchema schema) {
+  var dirty = false;
+  final newCats = <EntityCategorySchema>[];
+  for (final cat in schema.categories) {
+    if (cat.allowedInSections.contains('worldmap') ||
+        _noWorldmapSlugs.contains(cat.slug)) {
+      newCats.add(cat);
+      continue;
+    }
+    newCats.add(cat.copyWith(
+      allowedInSections: [...cat.allowedInSections, 'worldmap'],
+    ));
+    dirty = true;
   }
   if (!dirty) return null;
   return schema.copyWith(categories: newCats);
