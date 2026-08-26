@@ -580,6 +580,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     }
                   },
                   child: GestureDetector(
+                    // Exclude trackpad so touchpad two-finger scroll falls
+                    // through to the Listener's onPointerSignal for zoom
+                    // instead of being consumed as a pan gesture (GitHub #90).
+                    supportedDevices: const {
+                      PointerDeviceKind.mouse,
+                      PointerDeviceKind.touch,
+                    },
                     onScaleStart: notifier.onScaleStart,
                     onScaleUpdate: notifier.onScaleUpdate,
                     onScaleEnd: (_) => notifier.onScaleEnd(),

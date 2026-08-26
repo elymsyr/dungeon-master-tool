@@ -100,6 +100,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               }
             },
             child: GestureDetector(
+              // Exclude trackpad so touchpad two-finger scroll falls through
+              // to the Listener's onPointerSignal for zoom (GitHub #90).
+              supportedDevices: const {
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.touch,
+              },
               onScaleStart: notifier.onScaleStart,
               onScaleUpdate: (d) {
                 notifier.onScaleUpdate(d);
