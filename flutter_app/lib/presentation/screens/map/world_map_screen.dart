@@ -174,6 +174,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               Consumer(
                 builder: (context, ref, _) {
                   final mapState = ref.watch(worldMapProvider);
+                  // Watch entityProvider so location pin preview cards
+                  // rebuild when entity fields (like map) change.
+                  ref.watch(entityProvider);
                   return _buildCanvas(palette, notifier, mapState);
                 },
               ),
@@ -1262,6 +1265,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     }
     final fallback = location.fields['map'];
     if (fallback is String && fallback.isNotEmpty) return fallback;
+    // _ImageFieldWidget stores a List even for non-list fields.
+    if (fallback is List && fallback.isNotEmpty) {
+      final first = fallback.first;
+      if (first is String && first.isNotEmpty) return first;
+    }
     return null;
   }
 
