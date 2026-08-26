@@ -1,11 +1,11 @@
 # Release Notes
 
-## Dungeon Master Tool v14.2.0 — Vertical Era Bar, World Map Pinning, Relation Links (Beta)
+## Dungeon Master Tool v14.2.0 — Vertical Era Bar, World Map Pinning, Battle Map Fixes, Performance (Beta)
 
 **Release date:** August 2026
 **Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
 
-The era bar on the world map is now vertical and collapsible, every Tier 1 and Tier 2 category can be pinned to the world map, relation chips on entity cards actually navigate to the linked entity, and copying a package no longer destroys the original. Performance work under the hood — database index, provider restructuring, character editor caching — makes large worlds snappier. No migrations needed.
+The era bar on the world map is now vertical and collapsible, every Tier 1 and Tier 2 category can be pinned to the world map, relation chips on entity cards actually navigate to the linked entity, and copying a package no longer destroys the original. The battle map token size slider finally scales all tokens, trackpad scroll triggers zoom on all map surfaces, and the entity selector dialog is keyboard-friendly. Performance work under the hood — database index, provider restructuring, character editor caching, hub list virtualization — makes large worlds snappier. No migrations needed.
 
 ---
 
@@ -14,9 +14,12 @@ The era bar on the world map is now vertical and collapsible, every Tier 1 and T
 - **Vertical era bar** — The era bar on the world map is now a collapsible vertical sidebar with full waypoint labels and scroll support.
 - **All Tier 1/2 categories pinnable on world map** — Pin any Tier 1 or Tier 2 entity category (spells, items, feats, etc.) to the world map, not just the original subset.
 - **Relation chips navigate to entities** — Tapping a relation chip on an entity card opens the linked entity instead of doing nothing.
+- **Token size slider scales all tokens** — The battle map token size slider now correctly scales every token; the old formula cancelled out the variable so only manually resized tokens responded.
+- **Trackpad zoom on all maps** — Touchpad two-finger scroll now triggers zoom (not pan) on the battle map, world map, and mind map.
+- **Entity selector dialog keyboard support** — The search field auto-focuses on open, and pressing Enter confirms a multi-select selection.
 - **Package copy no longer destroys the source** — Copying a package no longer overwrites the original's entities via PK collision.
 - **Import dialog simplified** — Compat warnings moved to an expandable section; the header is less crowded on mobile.
-- **Performance improvements** — Database index on world name, provider restructuring, and character editor caching reduce jank in large worlds.
+- **Performance improvements** — Database index on world name, provider restructuring, character editor caching, hub character list virtualization, and main screen entity selection moved to `ValueNotifier`.
 
 ---
 
@@ -40,17 +43,46 @@ Relation chips, spell lists, structured list rows, and markdown references on en
 
 ---
 
+### Battle map: token size slider and trackpad zoom
+
+#### Token size slider
+
+**Before (v14.1.2):** the default token size multiplier was computed as `cells × gridSize / tokenSize`, which cancelled out the `tokenSize` variable — the slider had no visible effect on non-overridden tokens.
+
+**After (v14.2.0):** the multiplier is the creature's cell span directly, so `rendered px = tokenSize × cells` responds to the slider. Manually resized tokens still override.
+
+#### Trackpad zoom
+
+**Before (v14.1.2):** the `GestureDetector` on the battle map, world map, and mind map consumed trackpad two-finger scroll as a pan/drag gesture, so desktop trackpad users could not zoom.
+
+**After (v14.2.0):** `supportedDevices` excludes `PointerDeviceKind.trackpad`, letting scroll events fall through to the `Listener`'s `onPointerSignal` for zoom on all three surfaces.
+
+---
+
+### Entity selector dialog
+
+The entity selector dialog now auto-focuses the search field on open. In multi-select mode, pressing Enter confirms the selection and closes the dialog (same as tapping the checkmark).
+
+---
+
 ### Bug fixes
 
 - **Package copy overwrote source entities** — `copy()` loaded source entities and wrote them via `insertOnConflictUpdate`; identical IDs collided with the source package's rows, effectively stealing all entities from the original. Now remaps every entity to a fresh UUID and rewrites hard refs inside attributes. The bug was masked by `SrdCorePackageBootstrap` re-seeding the empty SRD pack on restart.
 - **Import dialog too crowded on mobile** — The inline compat icon and label in the header row caused overflow on narrow screens. Compat warnings are now in an expandable section below the header.
 - **Relation chips didn't navigate** — Tapping a relation chip on an entity card did nothing. Now wrapped with `EntityLink` to open the target.
+- **Token size slider did nothing** — The default multiplier formula cancelled out `tokenSize`, making the toolbar slider ineffective for non-overridden tokens. Now returns the creature's cell span directly so `pixelSize = tokenSize × cells` responds to the slider.
+- **Location map pins could not resolve fallback images** — `_ImageFieldWidget` stores image fields as a `List` even for non-list fields, but the location map resolver only handled `String`. All three resolve functions (`_resolveLocationMapImage`, `_resolveLocationMapRef`, screen-level fallback) now handle both shapes. Pin preview cards also watch `entityProvider` so they rebuild on entity edits.
+- **Trackpad scroll did not zoom maps** — The `GestureDetector` consumed trackpad two-finger scroll as pan/drag. Excluding trackpad from `supportedDevices` on battle map, world map, and mind map lets scroll fall through to zoom.
 
 ---
 
 ### Smaller improvements
 
-- **Performance** — Database index on `worlds.name` for faster lookups; campaign provider restructured to reduce rebuilds; character editor caching reduced unnecessary widget rebuilds; main screen entity selection moved to `ValueNotifier`.
+- **Performance — database** — Index on `worlds.name` for faster lookups across 12 call sites; `getByName` now uses the index with `limit(1)`.
+- **Performance — campaign provider** — `loadMetadata` reads only the metadata blob (cover / description / tags) without loading entity rows or synthesizing the built-in SRD pack, eliminating the biggest freeze on the hub worlds list.
+- **Performance — character editor** — Build-pass caches for the entities map and pending choices avoid re-parsing and re-allocating a 7K-entry `CombinedMapView` on every field tile; own-save echoes adopt the timestamp without triggering a full rebuild.
+- **Performance — hub characters list** — Replaced `SingleChildScrollView` + `Column` + `ListView(shrinkWrap: true)` with `CustomScrollView` + slivers so only visible rows are built; `entityProvider` watch reduced to length-only to stop keyboard edits from rebuilding the entire list tree.
+- **Performance — main screen** — Entity selection management moved from `setState` to `ValueNotifier` for cheaper rebuilds.
 - **l10n** — New import dialog compat strings in all four languages (EN · TR · DE · FR).
 
 ---
