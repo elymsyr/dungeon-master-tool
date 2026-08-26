@@ -153,6 +153,8 @@
   },
   "importFieldsMissing": "Eksik alanlar (varsayılan kullanılacak)",
   "importFieldsExtra": "Fazla alanlar (atlanacak)",
+  "importDifferences": "Farklılıklar",
+  "importCategoriesNotInWorld": "Paketin dünyada olmayan kategorileri",
   "importNoCompatible": "Bu dünyanın template'i ile uyumlu paket bulunamadı.",
   "importConfirmTitle": "\"{name}\" içe aktarılsın mı?",
   "@importConfirmTitle": {

@@ -153,6 +153,8 @@
   },
   "importFieldsMissing": "Champs manquants (valeurs par défaut utilisées)",
   "importFieldsExtra": "Champs supplémentaires (seront ignorés)",
+  "importDifferences": "Différences",
+  "importCategoriesNotInWorld": "Catégories du paquet absentes du monde",
   "importNoCompatible": "Aucun paquet compatible trouvé pour le modèle de ce monde.",
   "importConfirmTitle": "Importer \"{name}\" ?",
   "@importConfirmTitle": {
