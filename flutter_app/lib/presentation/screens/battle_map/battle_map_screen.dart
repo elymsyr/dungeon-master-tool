@@ -252,10 +252,10 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
   /// Token size multiplier for a combatant. A manual resize (an explicit entry
   /// in [BattleMapState.tokenSizeMultipliers]) always wins; otherwise the
-  /// creature's 5e size drives a grid-anchored footprint — `cells × gridSize /
-  /// tokenSize`, so the rendered px (`tokenSize × multiplier`) equals exactly
-  /// `cells × gridSize` and snaps to whole grid cells regardless of the global
-  /// token-size slider. Falls back to Medium (1 cell) when size is unknown.
+  /// creature's 5e size drives a grid-anchored footprint — the multiplier is
+  /// the creature's cell span, so the rendered px (`tokenSize × cells`) equals
+  /// `cells × tokenSize`. The global token-size slider therefore scales all
+  /// non-overridden tokens. Falls back to Medium (1 cell) when size is unknown.
   double _effectiveSizeMultiplier(
     String combatantId,
     String? entityId,
@@ -263,8 +263,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   ) {
     final manual = s.tokenSizeMultipliers[combatantId];
     if (manual != null) return manual;
-    final cells = tokenCellSpan(_entityFor(entityId), ref.read(entityProvider));
-    return s.tokenSize > 0 ? cells * s.gridSize / s.tokenSize : cells;
+    return tokenCellSpan(_entityFor(entityId), ref.read(entityProvider));
   }
 
   Widget _buildTokenLayer(DmToolColors palette, BattleMapNotifier notifier) {
