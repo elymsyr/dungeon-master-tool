@@ -1,5 +1,78 @@
 # Release Notes
 
+## Dungeon Master Tool v14.2.0 — Vertical Era Bar, World Map Pinning, Relation Links (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.2.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+The era bar on the world map is now vertical and collapsible, every Tier 1 and Tier 2 category can be pinned to the world map, relation chips on entity cards actually navigate to the linked entity, and copying a package no longer destroys the original. Performance work under the hood — database index, provider restructuring, character editor caching — makes large worlds snappier. No migrations needed.
+
+---
+
+### Highlights
+
+- **Vertical era bar** — The era bar on the world map is now a collapsible vertical sidebar with full waypoint labels and scroll support.
+- **All Tier 1/2 categories pinnable on world map** — Pin any Tier 1 or Tier 2 entity category (spells, items, feats, etc.) to the world map, not just the original subset.
+- **Relation chips navigate to entities** — Tapping a relation chip on an entity card opens the linked entity instead of doing nothing.
+- **Package copy no longer destroys the source** — Copying a package no longer overwrites the original's entities via PK collision.
+- **Import dialog simplified** — Compat warnings moved to an expandable section; the header is less crowded on mobile.
+- **Performance improvements** — Database index on world name, provider restructuring, and character editor caching reduce jank in large worlds.
+
+---
+
+### World Map: vertical era bar
+
+**Before (v14.1.2):** the era bar was horizontal, fixed at the top of the map, with single-letter initials and no way to collapse it.
+
+**After (v14.2.0):** the era bar is a fixed-width vertical sidebar (200 px) with full waypoint labels, a toggle button to show/hide it, and scroll support when content overflows. It starts at the top and ends at the bottom with waypoints between segments.
+
+---
+
+### World Map: pinnable categories
+
+Every Tier 1 and Tier 2 entity category is now pinnable on the world map. Previously only a hardcoded subset could be pinned. The pin category dropdown now computes from the actual pins on the map, and legacy `pinType` values are normalized to category slugs on init. Entity picker also includes SRD built-in entities so you can pin them directly.
+
+---
+
+### Entity cards: relation chips open linked cards
+
+Relation chips, spell lists, structured list rows, and markdown references on entity cards now navigate to the linked entity. Before, tapping a relation chip did nothing. The chip is now wrapped with `EntityLink` so it opens the target card in a new tab.
+
+---
+
+### Bug fixes
+
+- **Package copy overwrote source entities** — `copy()` loaded source entities and wrote them via `insertOnConflictUpdate`; identical IDs collided with the source package's rows, effectively stealing all entities from the original. Now remaps every entity to a fresh UUID and rewrites hard refs inside attributes. The bug was masked by `SrdCorePackageBootstrap` re-seeding the empty SRD pack on restart.
+- **Import dialog too crowded on mobile** — The inline compat icon and label in the header row caused overflow on narrow screens. Compat warnings are now in an expandable section below the header.
+- **Relation chips didn't navigate** — Tapping a relation chip on an entity card did nothing. Now wrapped with `EntityLink` to open the target.
+
+---
+
+### Smaller improvements
+
+- **Performance** — Database index on `worlds.name` for faster lookups; campaign provider restructured to reduce rebuilds; character editor caching reduced unnecessary widget rebuilds; main screen entity selection moved to `ValueNotifier`.
+- **l10n** — New import dialog compat strings in all four languages (EN · TR · DE · FR).
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.1.2` → `14.2.0`.
+- **Local DB:** schema v12, unchanged. The new index is created by `beforeOpen` DDL on first launch (idempotent). No client migration.
+- **No cloud migrations.**
+
+---
+
+### Known issues
+
+- Carry-over from v14.1.2: Local Sync does not propagate deletions or renames (tombstones are the planned fix — this release adds rename sync but deletions are still one-way); Local Sync is not encrypted; soundpad content does not sync over LAN; raising a character's class level by hand skips the spell-slot grid; same-second edits do not transfer; first-party packs still ship duplicate content; package art is not bundled yet.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.1.2 — Mobile Import Fix, Guest Promotion Dedup, Edit Mode Icons (Beta)
 
 **Release date:** August 2026
