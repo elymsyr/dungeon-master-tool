@@ -153,6 +153,8 @@
   },
   "importFieldsMissing": "Fehlende Felder (Standardwerte werden verwendet)",
   "importFieldsExtra": "Zusätzliche Felder (werden übersprungen)",
+  "importDifferences": "Unterschiede",
+  "importCategoriesNotInWorld": "Kategorien im Paket, die nicht in der Welt sind",
   "importNoCompatible": "Keine kompatiblen Pakete für die Vorlage dieser Welt gefunden.",
   "importConfirmTitle": "\"{name}\" importieren?",
   "@importConfirmTitle": {

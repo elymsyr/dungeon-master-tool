@@ -153,6 +153,8 @@
   },
   "importFieldsMissing": "Missing fields (will use defaults)",
   "importFieldsExtra": "Extra fields (will be dropped)",
+  "importDifferences": "Differences",
+  "importCategoriesNotInWorld": "Categories in package not in world",
   "importNoCompatible": "No compatible packages found for this world's template.",
   "importConfirmTitle": "Import \"{name}\"?",
   "@importConfirmTitle": {

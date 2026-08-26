@@ -381,33 +381,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
     final palette = widget.palette;
     final l10n = widget.l10n;
 
-    final (IconData icon, Color color, String label) = _loading
-        ? (Icons.hourglass_empty, palette.sidebarLabelSecondary, '...')
-        : widget.alreadyInstalled
-            ? (Icons.check_circle, palette.successBtnBg, 'Imported')
-            : switch (_compat?.level) {
-                CompatibilityLevel.perfect => (
-                    Icons.check_circle,
-                    palette.successBtnBg,
-                    l10n.importCompatPerfect,
-                  ),
-                CompatibilityLevel.compatible => (
-                    Icons.warning_amber,
-                    palette.uiAutosaveTextEditing,
-                    l10n.importCompatWarning,
-                  ),
-                CompatibilityLevel.incompatible => (
-                    Icons.cancel,
-                    palette.dangerBtnBg,
-                    l10n.importCompatIncompatible,
-                  ),
-                null => (
-                    Icons.help_outline,
-                    palette.sidebarLabelSecondary,
-                    'Unknown',
-                  ),
-              };
-
     final isIncompatible = _compat?.level == CompatibilityLevel.incompatible;
     final canImport = !_loading && !widget.importing && _compat != null;
 
@@ -415,7 +388,8 @@ class _PackageImportCardState extends State<_PackageImportCard> {
         (_compat!.warnings.isNotEmpty ||
             _compat!.addedFields.isNotEmpty ||
             _compat!.removedFields.isNotEmpty ||
-            _compat!.removedCategories.isNotEmpty);
+            _compat!.removedCategories.isNotEmpty ||
+            _compat!.addedCategories.isNotEmpty);
 
     return Container(
       decoration: BoxDecoration(
@@ -469,20 +443,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                               ),
                             ],
                           ),
-                      ],
-                    ),
-                  ),
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 16, color: color),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(label,
-                              style: TextStyle(fontSize: 11, color: color),
-                              overflow: TextOverflow.ellipsis),
-                        ),
                       ],
                     ),
                   ),
@@ -551,6 +511,36 @@ class _PackageImportCardState extends State<_PackageImportCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_compat!.warnings.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          _compat!.level == CompatibilityLevel.incompatible
+                              ? Icons.cancel
+                              : Icons.warning_amber,
+                          size: 13,
+                          color: _compat!.level == CompatibilityLevel.incompatible
+                              ? palette.dangerBtnBg
+                              : palette.uiAutosaveTextEditing,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(l10n.importDifferences,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: palette.tabActiveText)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    ..._compat!.warnings.map((w) => Padding(
+                          padding: const EdgeInsets.only(left: 8, bottom: 1),
+                          child: Text('• $w',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: palette.sidebarLabelSecondary)),
+                        )),
+                    const SizedBox(height: 6),
+                  ],
                   if (_compat!.addedFields.isNotEmpty) ...[
                     Text(l10n.importFieldsMissing,
                         style: TextStyle(
@@ -584,7 +574,7 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     const SizedBox(height: 6),
                   ],
                   if (_compat!.removedCategories.isNotEmpty) ...[
-                    Text('Categories in package not in world:',
+                    Text(l10n.importCategoriesNotInWorld,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
