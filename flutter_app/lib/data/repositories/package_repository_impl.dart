@@ -321,6 +321,26 @@ class PackageRepositoryImpl implements PackageRepository {
     srcData.remove('marketplace_listing_id');
     srcData.remove('marketplace_version');
 
+    // Remap entity IDs to fresh UUIDs so insertOnConflictUpdate in
+    // _saveToDb doesn't steal rows from the source package (primary key
+    // is just {id}, so duplicate IDs would update the source's packageId).
+    final entities = srcData['entities'] as Map<String, dynamic>? ?? {};
+    if (entities.isNotEmpty) {
+      final oldToNewId = <String, String>{
+        for (final oldId in entities.keys) oldId: _uuid.v4(),
+      };
+      final remapped = <String, dynamic>{};
+      for (final entry in entities.entries) {
+        final newEntityId = oldToNewId[entry.key]!;
+        final data = Map<String, dynamic>.from(entry.value as Map);
+        // Rewrite hard refs in attributes that point to other entities
+        // within this package (resolved UUIDs from pack build).
+        _remapRefs(data, oldToNewId);
+        remapped[newEntityId] = data;
+      }
+      srcData['entities'] = remapped;
+    }
+
     await _db.packagesDao.upsertPackage(PackagesCompanion.insert(
       id: newId,
       name: destinationName,
@@ -330,6 +350,52 @@ class PackageRepositoryImpl implements PackageRepository {
   }
 
   // --- Internal helpers ---
+
+  /// Walk an entity's attribute map and rewrite any UUID string value that
+  /// matches a key in [oldToNewId] to the corresponding new ID. This keeps
+  /// hard refs (`*_ref` → resolved UUID) pointing at the correct entity
+  /// after copy remaps the entity primary keys.
+  static void _remapRefs(
+      Map<String, dynamic> attrs, Map<String, String> oldToNewId) {
+    for (final key in attrs.keys.toList()) {
+      final v = attrs[key];
+      if (v is String && oldToNewId.containsKey(v)) {
+        attrs[key] = oldToNewId[v];
+      } else if (v is Map<String, dynamic>) {
+        _remapMapRefs(v, oldToNewId);
+      } else if (v is List) {
+        _remapListRefs(v, oldToNewId);
+      }
+    }
+  }
+
+  static void _remapMapRefs(
+      Map<String, dynamic> m, Map<String, String> oldToNewId) {
+    for (final key in m.keys.toList()) {
+      final v = m[key];
+      if (v is String && oldToNewId.containsKey(v)) {
+        m[key] = oldToNewId[v];
+      } else if (v is Map<String, dynamic>) {
+        _remapMapRefs(v, oldToNewId);
+      } else if (v is List) {
+        _remapListRefs(v, oldToNewId);
+      }
+    }
+  }
+
+  static void _remapListRefs(
+      List<dynamic> list, Map<String, String> oldToNewId) {
+    for (var i = 0; i < list.length; i++) {
+      final v = list[i];
+      if (v is String && oldToNewId.containsKey(v)) {
+        list[i] = oldToNewId[v];
+      } else if (v is Map<String, dynamic>) {
+        _remapMapRefs(v, oldToNewId);
+      } else if (v is List) {
+        _remapListRefs(v, oldToNewId);
+      }
+    }
+  }
 
   // SS-1/DB-3: use the indexed name lookup instead of getAll() + linear scan
   // (which materialised every package's full stateJson blob on each call).
