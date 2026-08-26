@@ -162,6 +162,11 @@ class _DeleteWaypointDialogState extends State<DeleteWaypointDialog> {
     }
     final fallback = entity.fields['map'];
     if (fallback is String && fallback.isNotEmpty) return fallback;
+    // _ImageFieldWidget stores a List even for non-list fields.
+    if (fallback is List && fallback.isNotEmpty) {
+      final first = fallback.first;
+      if (first is String && first.isNotEmpty) return first;
+    }
     return null;
   }
 
