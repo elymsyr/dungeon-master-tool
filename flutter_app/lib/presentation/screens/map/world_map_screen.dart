@@ -40,6 +40,7 @@ class WorldMapScreen extends ConsumerStatefulWidget {
 
 class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   final FocusNode _canvasFocusNode = FocusNode(debugLabel: 'WorldMapCanvas');
+  bool _eraBarOpen = false;
 
   @override
   void initState() {
@@ -130,9 +131,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         final mapView = campaign.data?['map_view'];
         if (mapView is Map) {
           // ignore: discarded_futures
-          campaign.saveSettingsPatchLocalOnly(
-            {'map_view': Map<String, dynamic>.from(mapView)},
-          );
+          campaign.saveSettingsPatchLocalOnly({
+            'map_view': Map<String, dynamic>.from(mapView),
+          });
         }
       } catch (_) {}
     });
@@ -198,47 +199,134 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               ),
               Positioned(
                 left: 16,
+                top: 8,
                 bottom: 16,
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final eras = ref.watch(
-                      worldMapProvider.select((s) => s.eras),
-                    );
-                    if (eras.length <= 1) return const SizedBox.shrink();
-                    final waypoints = ref.watch(
-                      worldMapProvider.select((s) => s.waypoints),
-                    );
-                    final activeEraIndex = ref.watch(
-                      worldMapProvider.select((s) => s.activeEraIndex),
-                    );
-                    final startLabel = ref.watch(
-                      worldMapProvider.select((s) => s.eraStartLabel),
-                    );
-                    final endLabel = ref.watch(
-                      worldMapProvider.select((s) => s.eraEndLabel),
-                    );
-                    return EraScrollBar(
-                      eras: eras,
-                      waypoints: waypoints,
-                      activeEraIndex: activeEraIndex,
-                      eraNames: notifier.eraNames,
-                      palette: palette,
-                      startLabel: startLabel,
-                      endLabel: endLabel,
-                      onSwitchEra: notifier.switchEra,
-                      onAddWaypoint: (insertIdx) =>
-                          _showAddWaypointDialog(insertIdx, notifier, palette),
-                      onDeleteWaypoint: (wpIdx) =>
-                          _showDeleteWaypointDialog(wpIdx, notifier, palette),
-                      onRenameWaypoint: (wpIdx) =>
-                          _showRenameWaypointDialog(wpIdx, notifier, palette),
-                      onRenameBoundary: (s, e) =>
-                          notifier.updateEraBoundaryLabels(
-                            startLabel: s,
-                            endLabel: e,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_eraBarOpen)
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(
+                              context,
+                            ).copyWith(scrollbars: false),
+                            child: SingleChildScrollView(
+                              reverse: true,
+                              child: Consumer(
+                                builder: (context, ref, _) {
+                                  final eras = ref.watch(
+                                    worldMapProvider.select((s) => s.eras),
+                                  );
+                                  if (eras.length <= 1) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final waypoints = ref.watch(
+                                    worldMapProvider.select((s) => s.waypoints),
+                                  );
+                                  final activeEraIndex = ref.watch(
+                                    worldMapProvider.select(
+                                      (s) => s.activeEraIndex,
+                                    ),
+                                  );
+                                  final startLabel = ref.watch(
+                                    worldMapProvider.select(
+                                      (s) => s.eraStartLabel,
+                                    ),
+                                  );
+                                  final endLabel = ref.watch(
+                                    worldMapProvider.select(
+                                      (s) => s.eraEndLabel,
+                                    ),
+                                  );
+                                  return EraScrollBar(
+                                    eras: eras,
+                                    waypoints: waypoints,
+                                    activeEraIndex: activeEraIndex,
+                                    palette: palette,
+                                    startLabel: startLabel,
+                                    endLabel: endLabel,
+                                    onSwitchEra: notifier.switchEra,
+                                    onAddWaypoint: (insertIdx) =>
+                                        _showAddWaypointDialog(
+                                          insertIdx,
+                                          notifier,
+                                          palette,
+                                        ),
+                                    onDeleteWaypoint: (wpIdx) =>
+                                        _showDeleteWaypointDialog(
+                                          wpIdx,
+                                          notifier,
+                                          palette,
+                                        ),
+                                    onRenameWaypoint: (wpIdx) =>
+                                        _showRenameWaypointDialog(
+                                          wpIdx,
+                                          notifier,
+                                          palette,
+                                        ),
+                                    onRenameBoundary: (s, e) =>
+                                        notifier.updateEraBoundaryLabels(
+                                          startLabel: s,
+                                          endLabel: e,
+                                        ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                    );
-                  },
+                        ),
+                      ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => setState(() => _eraBarOpen = !_eraBarOpen),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _eraBarOpen
+                                ? palette.tabIndicator.withValues(alpha: 0.2)
+                                : palette.uiFloatingBg,
+                            border: Border.all(
+                              color: _eraBarOpen
+                                  ? palette.tabIndicator.withValues(alpha: 0.4)
+                                  : palette.uiFloatingBorder,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.timeline,
+                                size: 14,
+                                color: _eraBarOpen
+                                    ? palette.tabIndicator
+                                    : palette.uiFloatingText,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Era',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: _eraBarOpen
+                                      ? palette.tabIndicator
+                                      : palette.uiFloatingText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -258,14 +346,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     WorldMapState mapState,
   ) {
     // Compute unique pin types from actual pins on the map.
-    final pinTypes = <String>{
-      for (final p in mapState.pins) p.pinType,
-    }.toList()
+    final pinTypes = <String>{for (final p in mapState.pins) p.pinType}.toList()
       ..sort();
-    final allHidden = pinTypes.isNotEmpty &&
-        pinTypes.every(
-          (t) => mapState.hiddenPinTypes.contains(t),
-        );
+    final allHidden =
+        pinTypes.isNotEmpty &&
+        pinTypes.every((t) => mapState.hiddenPinTypes.contains(t));
 
     return Container(
       width: double.infinity,
@@ -406,23 +491,6 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               onTap: () => _projectMap(palette),
             ),
           ],
-
-          _VertDiv(palette: palette),
-
-          // Eras
-          _ToolbarButton(
-            icon: Icons.timeline,
-            label: mapState.eras.length > 1
-                ? 'Eras (${mapState.eras.length})'
-                : 'Eras',
-            palette: palette,
-            highlight: mapState.eras.length > 1,
-            onTap: () => _showAddWaypointDialog(
-              mapState.activeEraIndex,
-              notifier,
-              palette,
-            ),
-          ),
 
           // Status text
           if (mapState.isLinkMode)
@@ -647,10 +715,12 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         y >= viewport.top &&
         y <= viewport.bottom;
 
-    final culledPins =
-        notifier.visiblePins.where((p) => inside(p.x, p.y)).toList();
-    final culledTimeline =
-        notifier.visibleTimelinePins.where((p) => inside(p.x, p.y)).toList();
+    final culledPins = notifier.visiblePins
+        .where((p) => inside(p.x, p.y))
+        .toList();
+    final culledTimeline = notifier.visibleTimelinePins
+        .where((p) => inside(p.x, p.y))
+        .toList();
 
     return UnboundedStack(
       clipBehavior: Clip.none,
@@ -672,7 +742,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
         // Map pins
         ...culledPins.map((pin) {
-          final linkedLoc = pin.entityId != null &&
+          final linkedLoc =
+              pin.entityId != null &&
                   ref.read(entityProvider)[pin.entityId!]?.categorySlug ==
                       'location'
               ? pin.entityId
@@ -709,11 +780,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 : null,
             onDelete: () => notifier.deletePin(pin.id),
             onCopyToEra: mapState.eras.length > 1
-                ? () => _showCopyToEraDialog(
-                      notifier,
-                      palette,
-                      pinId: pin.id,
-                    )
+                ? () => _showCopyToEraDialog(notifier, palette, pinId: pin.id)
                 : null,
           );
         }),
@@ -725,8 +792,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           valueListenable: notifier.hoveredLocationPinId,
           builder: (_, hoveredId, _) {
             if (hoveredId == null) return const SizedBox.shrink();
-            final pin =
-                culledPins.where((p) => p.id == hoveredId).firstOrNull;
+            final pin = culledPins.where((p) => p.id == hoveredId).firstOrNull;
             if (pin == null || pin.entityId == null) {
               return const SizedBox.shrink();
             }
@@ -738,9 +804,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               top: pin.y - 24,
               child: MouseRegion(
                 onEnter: (_) => notifier.cancelClearLocationPinHover(),
-                onExit: (_) => notifier.scheduleClearLocationPinHover(
-                  onlyIfId: hoveredId,
-                ),
+                onExit: (_) =>
+                    notifier.scheduleClearLocationPinHover(onlyIfId: hoveredId),
                 child: LocationPinPreviewCard(
                   location: entity,
                   mapRef: mapRef,
@@ -805,18 +870,14 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             onLinkNew: () => notifier.startLinkMode(pin.id),
             onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
             onDelete: () => notifier.deleteTimelinePin(pin.id),
-            onEntityDrop: (entityId) => _onEntityDropOnTimelinePin(
-              context,
-              pin,
-              entityId,
-              notifier,
-            ),
+            onEntityDrop: (entityId) =>
+                _onEntityDropOnTimelinePin(context, pin, entityId, notifier),
             onCopyToEra: mapState.eras.length > 1
                 ? () => _showCopyToEraDialog(
-                      notifier,
-                      palette,
-                      timelinePinId: pin.id,
-                    )
+                    notifier,
+                    palette,
+                    timelinePinId: pin.id,
+                  )
                 : null,
           ),
         ),
@@ -1179,7 +1240,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   /// Picks the best map image ref for a location entity given the active era.
   String? _resolveLocationMapRef(Entity location, WorldMapState mapState) {
     final perEra = location.fields['map_per_era'];
-    final activeEra = mapState.eras.isNotEmpty &&
+    final activeEra =
+        mapState.eras.isNotEmpty &&
             mapState.activeEraIndex < mapState.eras.length
         ? mapState.eras[mapState.activeEraIndex]
         : null;
@@ -1396,8 +1458,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   /// Projects the active era's map background image to the player screen.
   /// DM pins are deliberately excluded — only the bare map is shared.
   Future<void> _projectMap(DmToolColors palette) async {
-    final imagePath =
-        await ref.read(worldMapProvider.notifier).ensureMapImageUploaded();
+    final imagePath = await ref
+        .read(worldMapProvider.notifier)
+        .ensureMapImageUploaded();
     if (!mounted) return;
     if (imagePath.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1408,7 +1471,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       );
       return;
     }
-    ref.read(projectionControllerProvider.notifier).addItem(
+    ref
+        .read(projectionControllerProvider.notifier)
+        .addItem(
           ProjectionItemBuilders.image(
             label: 'World Map',
             filePaths: [imagePath],
@@ -1478,7 +1543,8 @@ class _DraggablePinState extends State<_DraggablePin> {
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
-    final displayColor = widget.displayColor ??
+    final displayColor =
+        widget.displayColor ??
         (pin.color.isNotEmpty
             ? _parseHexColor(pin.color)
             : _pinColor(pin.pinType, widget.palette));
@@ -2054,9 +2120,7 @@ Widget _menuRow(
 class _TimelineConnectionPainter extends CustomPainter {
   final List<TimelinePin> pins;
   final Rect? viewport;
-  late final Map<String, TimelinePin> _pinMap = {
-    for (final p in pins) p.id: p,
-  };
+  late final Map<String, TimelinePin> _pinMap = {for (final p in pins) p.id: p};
   late final int _fingerprint = _computeFingerprint(pins);
 
   // Cache the per-color stroke Paint. withValues allocates on every call;
@@ -2116,17 +2180,14 @@ class _TimelineConnectionPainter extends CustomPainter {
 
   static Paint _paintFor(Color color) {
     final faded = color.withValues(alpha: 0.7);
-    return _paintCache.putIfAbsent(
-      faded.toARGB32(),
-      () {
-        if (_paintCache.length >= _paintCacheCap) _paintCache.clear();
-        return Paint()
-          ..color = faded
-          ..strokeWidth = 3
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
-      },
-    );
+    return _paintCache.putIfAbsent(faded.toARGB32(), () {
+      if (_paintCache.length >= _paintCacheCap) _paintCache.clear();
+      return Paint()
+        ..color = faded
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+    });
   }
 
   static Path _buildDashedPath(Offset start, Offset end) {
@@ -2180,14 +2241,12 @@ class _ToolbarButton extends StatelessWidget {
   final String label;
   final DmToolColors palette;
   final VoidCallback onTap;
-  final bool highlight;
 
   const _ToolbarButton({
     required this.icon,
     required this.label,
     required this.palette,
     required this.onTap,
-    this.highlight = false,
   });
 
   @override
@@ -2197,28 +2256,12 @@ class _ToolbarButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: highlight
-            ? BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-              )
-            : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: highlight ? Colors.red[300] : palette.tabText,
-            ),
+            Icon(icon, size: 14, color: palette.tabText),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: highlight ? Colors.red[300] : palette.tabText,
-              ),
-            ),
+            Text(label, style: TextStyle(fontSize: 11, color: palette.tabText)),
           ],
         ),
       ),
@@ -2296,16 +2339,14 @@ class _PinCategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Compute unique pin types from actual pins on the map.
-    final pinTypes = <String>{
-      for (final p in pins) p.pinType,
-    }.toList()
-      ..sort();
+    final pinTypes = <String>{for (final p in pins) p.pinType}.toList()..sort();
 
     if (pinTypes.isEmpty) return const SizedBox.shrink();
 
     final schema = ref.read(worldSchemaProvider);
-    final visibleCount =
-        pinTypes.where((t) => !hiddenPinTypes.contains(t)).length;
+    final visibleCount = pinTypes
+        .where((t) => !hiddenPinTypes.contains(t))
+        .length;
 
     return PopupMenuButton<String>(
       tooltip: 'Pin categories',
@@ -2345,10 +2386,7 @@ class _PinCategoryDropdown extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 6),
               Text(
@@ -2496,9 +2534,7 @@ IconData _pinIcon(MapPin pin, WidgetRef ref) {
   }
   // For entity-less pins, try resolving icon from pinType as category slug.
   final schema = ref.read(worldSchemaProvider);
-  final cat = schema.categories
-      .where((c) => c.slug == pin.pinType)
-      .firstOrNull;
+  final cat = schema.categories.where((c) => c.slug == pin.pinType).firstOrNull;
   if (cat != null && cat.icon.isNotEmpty) {
     return _iconFromName(cat.icon);
   }

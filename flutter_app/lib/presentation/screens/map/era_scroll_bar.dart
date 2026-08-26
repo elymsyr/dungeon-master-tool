@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
 
-/// Horizontal scroll bar showing era segments separated by waypoints.
+/// Vertical era bar — opens upward from bottom-left.
+/// Start at top, End at bottom. Fixed segment height per era.
 class EraScrollBar extends StatefulWidget {
   final List<MapEra> eras;
   final List<EraWaypoint> waypoints;
   final int activeEraIndex;
-  final List<String> eraNames;
   final DmToolColors palette;
   final ValueChanged<int> onSwitchEra;
   final void Function(int insertIndex) onAddWaypoint;
@@ -23,7 +23,6 @@ class EraScrollBar extends StatefulWidget {
     required this.eras,
     required this.waypoints,
     required this.activeEraIndex,
-    required this.eraNames,
     required this.palette,
     required this.onSwitchEra,
     required this.onAddWaypoint,
@@ -42,68 +41,55 @@ class _EraScrollBarState extends State<EraScrollBar> {
   int? _hoveredSegment;
   int? _hoveredWaypoint;
 
-  static const double _baseBarWidth = 400;
-  static const double _minSegmentWidth = 60;
-  static const double _barHeight = 36;
-  static const double _trackY = 22;
-  static const double _trackPadding = 40; // space for Start/End labels
-  static const double _wpRadius = 7;
-
-  double _computeBarWidth(int wpCount) {
-    const baseTrack = _baseBarWidth - 2 * _trackPadding; // 320
-    final neededTrack = (wpCount + 1) * _minSegmentWidth;
-    final trackLen = neededTrack > baseTrack ? neededTrack : baseTrack;
-    return 2 * _trackPadding + trackLen;
-  }
+  static const double _barWidth = 200;
+  static const double _segmentHeight = 32;
+  static const double _wpRadius = 8;
+  static const double _trackX = 28;
+  static const double _paddingV = 16;
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.palette;
+    final eraCount = widget.eras.length;
     final wpCount = widget.waypoints.length;
-    final barWidth = _computeBarWidth(wpCount);
-    const trackStart = _trackPadding;
-    final trackEnd = barWidth - _trackPadding;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        width: barWidth,
-        height: _barHeight,
-        decoration: BoxDecoration(
-          color: p.uiFloatingBg,
-          border: Border.all(color: p.uiFloatingBorder),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (d) => _handleTap(d.localPosition, trackStart, trackEnd),
-          onSecondaryTapUp: (d) =>
-              _handleSecondaryTap(d.localPosition, d.globalPosition, trackStart, trackEnd),
-          onLongPressStart: (d) =>
-              _handleSecondaryTap(d.localPosition, d.globalPosition, trackStart, trackEnd),
-          child: MouseRegion(
-            onHover: (e) =>
-                _updateHover(e.localPosition, trackStart, trackEnd, wpCount),
-            onExit: (_) => setState(() {
-              _hoveredSegment = null;
-              _hoveredWaypoint = null;
-            }),
-            child: CustomPaint(
-              size: Size(barWidth, _barHeight),
-              painter: _EraScrollPainter(
-                eras: widget.eras,
-                waypoints: widget.waypoints,
-                activeIndex: widget.activeEraIndex,
-                eraNames: widget.eraNames,
-                palette: widget.palette,
-                hoveredSegment: _hoveredSegment,
-                hoveredWaypoint: _hoveredWaypoint,
-                trackStart: trackStart,
-                trackEnd: trackEnd,
-                trackY: _trackY,
-                wpRadius: _wpRadius,
-                startLabel: widget.startLabel,
-                endLabel: widget.endLabel,
-              ),
+    final barHeight =
+        _paddingV * 2 + eraCount * _segmentHeight + wpCount * _segmentHeight;
+
+    const trackTop = _paddingV; // small y → top of canvas (Start)
+    final trackBottom = barHeight - _paddingV; // large y → bottom (End)
+
+    return SizedBox(
+      width: _barWidth,
+      height: barHeight.toDouble(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: (d) => _handleTap(d.localPosition, trackTop, trackBottom),
+        onSecondaryTapUp: (d) => _handleSecondaryTap(
+            d.localPosition, d.globalPosition, trackTop, trackBottom),
+        onLongPressStart: (d) => _handleSecondaryTap(
+            d.localPosition, d.globalPosition, trackTop, trackBottom),
+        child: MouseRegion(
+          onHover: (e) => _updateHover(
+              e.localPosition, trackTop, trackBottom, eraCount),
+          onExit: (_) => setState(() {
+            _hoveredSegment = null;
+            _hoveredWaypoint = null;
+          }),
+          child: CustomPaint(
+            size: Size(_barWidth, barHeight.toDouble()),
+            painter: _EraScrollPainter(
+              eras: widget.eras,
+              waypoints: widget.waypoints,
+              activeIndex: widget.activeEraIndex,
+              palette: widget.palette,
+              hoveredSegment: _hoveredSegment,
+              hoveredWaypoint: _hoveredWaypoint,
+              trackTop: trackTop,
+              trackBottom: trackBottom,
+              trackX: _trackX,
+              wpRadius: _wpRadius,
+              barWidth: _barWidth,
+              startLabel: widget.startLabel,
+              endLabel: widget.endLabel,
             ),
           ),
         ),
@@ -111,39 +97,43 @@ class _EraScrollBarState extends State<EraScrollBar> {
     );
   }
 
-  /// Returns the x positions of each waypoint along the track.
-  List<double> _waypointXPositions(double trackStart, double trackEnd) {
+  /// Returns the y positions of each waypoint along the track.
+  /// Waypoints sit between segments, fixed spacing. Start at top (small y),
+  /// going down (increasing y) toward End at bottom.
+  List<double> _waypointYPositions(double trackTop, double trackBottom) {
     final count = widget.waypoints.length;
     if (count == 0) return [];
-    final trackLen = trackEnd - trackStart;
-    final segmentWidth = trackLen / (count + 1);
-    return List.generate(count, (i) => trackStart + segmentWidth * (i + 1));
+    final trackLen = trackBottom - trackTop; // positive (bottom > top)
+    final step = trackLen / (count + 1);
+    return List.generate(count, (i) => trackTop + step * (i + 1));
   }
 
-  /// Returns the era segment index for a given x position.
-  int? _segmentAtX(double x, double trackStart, double trackEnd) {
-    if (x < trackStart || x > trackEnd) return null;
-    final wpXs = _waypointXPositions(trackStart, trackEnd);
-    for (int i = 0; i < wpXs.length; i++) {
-      if (x < wpXs[i]) return i;
+  /// Returns the era segment index for a given y position.
+  /// Segments are between waypoints. Top-most segment = index 0.
+  int? _segmentAtY(double y, double trackTop, double trackBottom) {
+    if (y < trackTop || y > trackBottom) return null;
+    final wpYs = _waypointYPositions(trackTop, trackBottom);
+    // wpYs is ascending (top → bottom). Walk from top (low y) downward.
+    for (int i = 0; i < wpYs.length; i++) {
+      if (y < wpYs[i]) return i;
     }
     return widget.eras.length - 1;
   }
 
-  /// Returns the waypoint index if x is close to a waypoint marker.
-  int? _waypointAtX(double x, double trackStart, double trackEnd) {
-    final wpXs = _waypointXPositions(trackStart, trackEnd);
-    for (int i = 0; i < wpXs.length; i++) {
-      if ((x - wpXs[i]).abs() <= _wpRadius + 4) return i;
+  /// Returns the waypoint index if y is close to a waypoint marker.
+  int? _waypointAtY(double y, double trackTop, double trackBottom) {
+    final wpYs = _waypointYPositions(trackTop, trackBottom);
+    for (int i = 0; i < wpYs.length; i++) {
+      if ((y - wpYs[i]).abs() <= _wpRadius + 6) return i;
     }
     return null;
   }
 
   void _updateHover(
-      Offset pos, double trackStart, double trackEnd, int wpCount) {
-    final wpIdx = _waypointAtX(pos.dx, trackStart, trackEnd);
+      Offset pos, double trackTop, double trackBottom, int eraCount) {
+    final wpIdx = _waypointAtY(pos.dy, trackTop, trackBottom);
     final segIdx =
-        wpIdx == null ? _segmentAtX(pos.dx, trackStart, trackEnd) : null;
+        wpIdx == null ? _segmentAtY(pos.dy, trackTop, trackBottom) : null;
     if (wpIdx != _hoveredWaypoint || segIdx != _hoveredSegment) {
       setState(() {
         _hoveredWaypoint = wpIdx;
@@ -152,42 +142,37 @@ class _EraScrollBarState extends State<EraScrollBar> {
     }
   }
 
-  void _handleTap(Offset pos, double trackStart, double trackEnd) {
-    // Check waypoint hit first
-    final wpIdx = _waypointAtX(pos.dx, trackStart, trackEnd);
-    if (wpIdx != null) return; // waypoints use right-click
+  void _handleTap(Offset pos, double trackTop, double trackBottom) {
+    final wpIdx = _waypointAtY(pos.dy, trackTop, trackBottom);
+    if (wpIdx != null) return;
 
-    // Check segment hit
-    final segIdx = _segmentAtX(pos.dx, trackStart, trackEnd);
+    final segIdx = _segmentAtY(pos.dy, trackTop, trackBottom);
     if (segIdx == null) return;
 
     widget.onSwitchEra(segIdx);
   }
 
-  /// Returns 'start' or 'end' if x is near an endpoint marker.
-  String? _endpointAtX(double x, double trackStart, double trackEnd) {
-    if ((x - trackStart).abs() <= 10) return 'start';
-    if ((x - trackEnd).abs() <= 10) return 'end';
+  String? _endpointAtY(double y, double trackTop, double trackBottom) {
+    if ((y - trackTop).abs() <= 12) return 'start'; // top = Start
+    if ((y - trackBottom).abs() <= 12) return 'end'; // bottom = End
     return null;
   }
 
   void _handleSecondaryTap(
-      Offset localPos, Offset globalPos, double trackStart, double trackEnd) {
-    // Check endpoint hit (Start / End labels)
-    final ep = _endpointAtX(localPos.dx, trackStart, trackEnd);
+      Offset localPos, Offset globalPos, double trackTop, double trackBottom) {
+    final ep = _endpointAtY(localPos.dy, trackTop, trackBottom);
     if (ep != null && widget.onRenameBoundary != null) {
       _showEndpointRenameMenu(globalPos, ep);
       return;
     }
 
-    final wpIdx = _waypointAtX(localPos.dx, trackStart, trackEnd);
+    final wpIdx = _waypointAtY(localPos.dy, trackTop, trackBottom);
     if (wpIdx != null) {
       _showWaypointContextMenu(globalPos, wpIdx);
       return;
     }
 
-    // Right-click on segment → add waypoint
-    final segIdx = _segmentAtX(localPos.dx, trackStart, trackEnd);
+    final segIdx = _segmentAtY(localPos.dy, trackTop, trackBottom);
     if (segIdx != null) {
       widget.onAddWaypoint(segIdx);
     }
@@ -240,8 +225,8 @@ class _EraScrollBarState extends State<EraScrollBar> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: p.uiFloatingText)),
+            child:
+                Text('Cancel', style: TextStyle(color: p.uiFloatingText)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -296,27 +281,29 @@ class _EraScrollBarState extends State<EraScrollBar> {
           widget.onRenameWaypoint(wpIndex);
         case 'delete':
           widget.onDeleteWaypoint(wpIndex);
+        default:
+          break;
       }
     });
   }
 }
 
 // ---------------------------------------------------------------------------
-// Painter
+// Vertical Painter — Start at top, End at bottom
 // ---------------------------------------------------------------------------
 
 class _EraScrollPainter extends CustomPainter {
   final List<MapEra> eras;
   final List<EraWaypoint> waypoints;
   final int activeIndex;
-  final List<String> eraNames;
   final DmToolColors palette;
   final int? hoveredSegment;
   final int? hoveredWaypoint;
-  final double trackStart;
-  final double trackEnd;
-  final double trackY;
+  final double trackTop;
+  final double trackBottom;
+  final double trackX;
   final double wpRadius;
+  final double barWidth;
   final String startLabel;
   final String endLabel;
 
@@ -324,20 +311,17 @@ class _EraScrollPainter extends CustomPainter {
     required this.eras,
     required this.waypoints,
     required this.activeIndex,
-    required this.eraNames,
     required this.palette,
     required this.hoveredSegment,
     required this.hoveredWaypoint,
-    required this.trackStart,
-    required this.trackEnd,
-    required this.trackY,
+    required this.trackTop,
+    required this.trackBottom,
+    required this.trackX,
     required this.wpRadius,
+    required this.barWidth,
     required this.startLabel,
     required this.endLabel,
   });
-
-  static final RegExp _digitsLikeRe = RegExp(r'^[\d./-]+$');
-  static final RegExp _wsRe = RegExp(r'\s+');
 
   late final Paint _activeSegPaint = Paint()
     ..color = palette.tabIndicator.withValues(alpha: 0.2);
@@ -353,34 +337,36 @@ class _EraScrollPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final trackLength = trackEnd - trackStart;
     final segCount = eras.length;
     final wpCount = waypoints.length;
 
-    // Waypoint x positions (evenly spaced)
-    final wpXs = <double>[];
+    // Waypoint y positions (fixed spacing).
+    // trackBottom is high y (bottom of canvas), trackTop is low y (top).
+    final wpYs = <double>[];
     if (wpCount > 0) {
-      final segW = trackLength / (wpCount + 1);
+      final trackLen = trackBottom - trackTop; // positive (bottom > top)
+      final step = trackLen / (wpCount + 1);
       for (int i = 0; i < wpCount; i++) {
-        wpXs.add(trackStart + segW * (i + 1));
+        wpYs.add(trackTop + step * (i + 1)); // from top, going down
       }
     }
 
-    // Segment boundaries
-    final segBounds = <(double, double)>[];
+    // Segment boundaries (y ranges).
+    // Segment 0 is top-most (near Start), segment N-1 is bottom-most (near End).
+    final segBounds = <(double, double)>[]; // (top, bottom) in canvas coords
     for (int i = 0; i < segCount; i++) {
-      final left = i == 0 ? trackStart : wpXs[i - 1];
-      final right = i >= wpXs.length ? trackEnd : wpXs[i];
-      segBounds.add((left, right));
+      final top = i == 0 ? trackTop : wpYs[i - 1];
+      final bottom = i >= wpYs.length ? trackBottom : wpYs[i];
+      segBounds.add((top, bottom));
     }
 
     // Draw active segment highlight
     if (activeIndex >= 0 && activeIndex < segBounds.length) {
-      final (l, r) = segBounds[activeIndex];
+      final (t, b) = segBounds[activeIndex];
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTRB(l, trackY - 8, r, trackY + 8),
-            const Radius.circular(3)),
+            Rect.fromLTRB(trackX - 12, t, trackX + 12, b),
+            const Radius.circular(4)),
         _activeSegPaint,
       );
     }
@@ -389,84 +375,65 @@ class _EraScrollPainter extends CustomPainter {
     if (hoveredSegment != null &&
         hoveredSegment != activeIndex &&
         hoveredSegment! < segBounds.length) {
-      final (l, r) = segBounds[hoveredSegment!];
+      final (t, b) = segBounds[hoveredSegment!];
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTRB(l, trackY - 8, r, trackY + 8),
-            const Radius.circular(3)),
+            Rect.fromLTRB(trackX - 12, t, trackX + 12, b),
+            const Radius.circular(4)),
         _hoverSegPaint,
       );
     }
 
-    // Draw track line
+    // Draw vertical track line
     canvas.drawLine(
-      Offset(trackStart, trackY),
-      Offset(trackEnd, trackY),
+      Offset(trackX, trackTop),
+      Offset(trackX, trackBottom),
       _trackPaint,
     );
 
-    // Draw endpoint markers
-    _drawEndpoint(canvas, trackStart, trackY, startLabel);
-    _drawEndpoint(canvas, trackEnd, trackY, endLabel);
+    // Draw endpoint: Start at top, End at bottom
+    _drawEndpoint(canvas, trackX, trackTop, startLabel);
+    _drawEndpoint(canvas, trackX, trackBottom, endLabel);
 
     // Draw waypoint markers
-    for (int i = 0; i < wpXs.length; i++) {
+    for (int i = 0; i < wpYs.length; i++) {
       final isHovered = hoveredWaypoint == i;
-      _drawWaypoint(canvas, wpXs[i], trackY, waypoints[i], isHovered);
-    }
-
-    // Draw era name for active segment
-    if (activeIndex >= 0 && activeIndex < eraNames.length) {
-      final name = eraNames[activeIndex];
-      final tp = TextPainter(
-        text: TextSpan(
-          text: name,
-          style: TextStyle(
-            fontSize: 9,
-            color: palette.uiFloatingText.withValues(alpha: 0.6),
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      final (sl, sr) = segBounds[activeIndex];
-      final cx = (sl + sr) / 2 - tp.width / 2;
-      tp.paint(canvas, Offset(cx.clamp(2, size.width - tp.width - 2), 2));
+      _drawWaypoint(canvas, trackX, wpYs[i], waypoints[i], isHovered);
     }
   }
 
   void _drawEndpoint(Canvas canvas, double x, double y, String label) {
-    canvas.drawCircle(Offset(x, y), 4, _endpointPaint);
-    final display = _shortLabel(label);
+    canvas.drawCircle(Offset(x, y), 5, _endpointPaint);
+    final display = label.isEmpty ? '?' : label;
     final tp = TextPainter(
       text: TextSpan(
         text: display,
         style: TextStyle(
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: palette.uiFloatingText.withValues(alpha: 0.5),
         ),
       ),
       textDirection: TextDirection.ltr,
-    )..layout(maxWidth: 36);
-    tp.paint(canvas, Offset(x - tp.width / 2, y - 16));
+    )..layout(maxWidth: 100);
+    tp.paint(canvas, Offset(x + 12, y - tp.height / 2));
   }
 
   void _drawWaypoint(
       Canvas canvas, double x, double y, EraWaypoint wp, bool isHovered) {
-    // Circle
     canvas.drawCircle(
       Offset(x, y),
       wpRadius,
       isHovered ? _waypointHoverPaint : _waypointPaint,
     );
 
-    // Label
-    final displayLabel = _shortLabel(wp.label);
+    // Full label, to the right of the circle
+    final displayLabel = wp.label.isEmpty ? '?' : wp.label;
     final tp = TextPainter(
       text: TextSpan(
         text: displayLabel,
         style: TextStyle(
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: isHovered
               ? palette.tabIndicator
@@ -474,18 +441,8 @@ class _EraScrollPainter extends CustomPainter {
         ),
       ),
       textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(x - tp.width / 2, y - wpRadius - 12));
-  }
-
-  String _shortLabel(String label) {
-    if (label.isEmpty) return '?';
-    if (_digitsLikeRe.hasMatch(label)) return label;
-    return label
-        .split(_wsRe)
-        .where((w) => w.isNotEmpty)
-        .map((w) => w[0].toUpperCase())
-        .join();
+    )..layout(maxWidth: barWidth - trackX - wpRadius - 20);
+    tp.paint(canvas, Offset(x + wpRadius + 10, y - tp.height / 2));
   }
 
   @override
@@ -494,5 +451,7 @@ class _EraScrollPainter extends CustomPainter {
       old.hoveredSegment != hoveredSegment ||
       old.hoveredWaypoint != hoveredWaypoint ||
       old.eras != eras ||
-      old.waypoints != waypoints;
+      old.waypoints != waypoints ||
+      old.startLabel != startLabel ||
+      old.endLabel != endLabel;
 }
