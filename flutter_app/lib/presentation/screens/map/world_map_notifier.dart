@@ -705,20 +705,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     return names;
   }
 
-  static final RegExp _digitsLikeRe = RegExp(r'^[\d./-]+$');
-  static final RegExp _wsRe = RegExp(r'\s+');
-
-  /// Short display label for a waypoint.
+  /// Display label for a waypoint — show full name.
   static String _waypointDisplayLabel(EraWaypoint wp) {
     if (wp.label.isEmpty) return '?';
-    // If it looks like a number or date, show as-is
-    if (_digitsLikeRe.hasMatch(wp.label)) return wp.label;
-    // Otherwise show uppercase initials
-    return wp.label
-        .split(_wsRe)
-        .where((w) => w.isNotEmpty)
-        .map((w) => w[0].toUpperCase())
-        .join();
+    return wp.label;
   }
 
   /// In-memory campaign data güncelle + diske debounced yaz.
