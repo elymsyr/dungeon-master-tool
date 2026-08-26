@@ -67,6 +67,26 @@ class WorldRepositoryImpl implements CampaignRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> loadMetadata(String campaignName) async {
+    final existing = await _findByName(campaignName);
+    if (existing == null) return <String, dynamic>{};
+    // `metadata`, `_typedTopKeys` dışında kaldığı için settings blob'una
+    // paketleniyor (bkz. `_saveToDb`). Entity satırlarına ve builtin synth'e
+    // hiç dokunmadan oradan okunabilir.
+    final settingsRow = await _db.worldSettingsDao.get(existing.id);
+    final raw = settingsRow?.settingsJson;
+    if (raw == null || raw.isEmpty || raw == '{}') return <String, dynamic>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final meta = decoded['metadata'];
+        if (meta is Map) return Map<String, dynamic>.from(meta);
+      }
+    } catch (_) {}
+    return <String, dynamic>{};
+  }
+
+  @override
   Future<List<Map<String, String>>> installedPackages(
       String campaignName) async {
     final existing = await _findByName(campaignName);

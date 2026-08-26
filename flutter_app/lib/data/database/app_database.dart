@@ -260,6 +260,10 @@ const List<String> _v12Indexes = <String>[
   // worlds
   'CREATE INDEX IF NOT EXISTS idx_worlds_owner '
       'ON worlds (owner_id)',
+  // `WorldRepositoryImpl._findByName` her yazma yolunda (12 çağrı noktası)
+  // isimle arıyor — indekssiz tam tarama oluyordu.
+  'CREATE INDEX IF NOT EXISTS idx_worlds_name '
+      'ON worlds (world_name)',
 
   // world_members
   'CREATE INDEX IF NOT EXISTS idx_world_members_user '

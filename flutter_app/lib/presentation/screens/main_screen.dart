@@ -62,8 +62,17 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with WidgetsBindingObserver {
   int _tabIndex = 0;
-  String? _selectedEntityId;
-  String? _selectedEntityPanel;
+  /// Seçili kart + hedef panel. `setState` yerine ValueNotifier: `LazyIndexedStack`
+  /// altındaki sekmeler `prewarm` ile mount edildiği ve `IndexedStack` mount
+  /// olan HER child'ı build ettiği için, bir kart seçimi için atılan setState
+  /// yedi ağır alt ağacı birden yeniden inşa ediyordu. Artık yalnız
+  /// `DatabaseScreen`'i saran ValueListenableBuilder tetikleniyor.
+  final ValueNotifier<({String? id, String? panel})> _selectedEntity =
+      ValueNotifier<({String? id, String? panel})>((id: null, panel: null));
+
+  void _selectEntity(String? id, {String? panel}) {
+    _selectedEntity.value = (id: id, panel: panel);
+  }
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -149,6 +158,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   void dispose() {
+    _selectedEntity.dispose();
     _sidebarWidthNotifier.dispose();
     _rightSidebarWidthNotifier.dispose();
     _rightSidebarCtrl.dispose();
@@ -325,10 +335,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
           schema: schema,
           onEntitySelected: (id) {
             Navigator.pop(ctx);
-            setState(() {
-              _selectedEntityId = id;
-              _tabIndex = 0;
-            });
+            _selectEntity(id);
+            setState(() => _tabIndex = 0);
             _persistUiState();
           },
         ),
@@ -538,11 +546,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     ref.listen<String?>(entityNavigationProvider, (_, entityId) {
       if (entityId != null) {
         final panel = ref.read(entityNavigationTargetPanelProvider);
-        setState(() {
-          _selectedEntityId = entityId;
-          _selectedEntityPanel = panel;
-          _tabIndex = 0;
-        });
+        _selectEntity(entityId, panel: panel);
+        setState(() => _tabIndex = 0);
         _persistUiState();
         ref.read(entityNavigationProvider.notifier).state = null;
         ref.read(entityNavigationTargetPanelProvider.notifier).state = null;
@@ -602,31 +607,37 @@ class _MainScreenState extends ConsumerState<MainScreen>
       index: _tabIndex,
       // Pre-warm offstage tabs after first paint so tab switches are
       // cheap IndexedStack swaps instead of cold subtree mounts.
-      prewarm: true,
+      //
+      // Telefonda KAPALI: burada altı ağır alt ağaç (session, mind map, world
+      // map, pdf, soundpad, characters) mount ediliyor. Idle önceliğinde
+      // olsalar bile düşük-RAM'li bir cihazda kullanıcı world açılışından
+      // hemen sonra kart listesini kaydırırken onunla yarışıyorlar, ve mount
+      // olan her sekme `IndexedStack` yüzünden sonraki her rebuild'de yeniden
+      // build ediliyor. Sekme ilk ziyaretinde zaten mount edilip saklanıyor.
+      prewarm: screen != ScreenType.phone,
       children: [
-        DatabaseScreen(
-          editMode: editMode,
-          selectedEntityId: _selectedEntityId,
-          selectedEntityPanel: _selectedEntityPanel,
-          onEntitySelected: (id) => setState(() => _selectedEntityId = id),
+        ValueListenableBuilder<({String? id, String? panel})>(
+          valueListenable: _selectedEntity,
+          builder: (_, sel, _) => DatabaseScreen(
+            editMode: editMode,
+            selectedEntityId: sel.id,
+            selectedEntityPanel: sel.panel,
+            onEntitySelected: (id) => _selectEntity(id),
+          ),
         ),
         const SessionScreen(),
         MindMapScreen(
           editMode: editMode,
           onOpenEntity: (entityId) {
-            setState(() {
-              _selectedEntityId = entityId;
-              _tabIndex = 0;
-            });
+            _selectEntity(entityId);
+            setState(() => _tabIndex = 0);
             _persistUiState();
           },
         ),
         WorldMapScreen(
           onOpenEntity: (entityId) {
-            setState(() {
-              _selectedEntityId = entityId;
-              _tabIndex = 0;
-            });
+            _selectEntity(entityId);
+            setState(() => _tabIndex = 0);
             _persistUiState();
           },
         ),
@@ -871,10 +882,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                           child: EntitySidebar(
                             schema: schema,
                             onEntitySelected: (id) {
-                              setState(() {
-                                _selectedEntityId = id;
-                                _tabIndex = 0;
-                              });
+                              _selectEntity(id);
+                              setState(() => _tabIndex = 0);
                               _persistUiState();
                             },
                           ),

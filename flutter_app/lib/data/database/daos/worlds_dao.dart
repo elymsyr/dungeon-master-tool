@@ -19,11 +19,13 @@ class WorldsDao extends DatabaseAccessor<AppDatabase> with _$WorldsDaoMixin {
   Future<World?> getById(String id) =>
       (select(worlds)..where((t) => t.id.equals(id))).getSingleOrNull();
 
-  Future<World?> getByName(String name) async {
-    final rows = await (select(worlds)..where((t) => t.worldName.equals(name)))
-        .get();
-    return rows.isEmpty ? null : rows.first;
-  }
+  /// İlk eşleşen world. `idx_worlds_name` üzerinden; `limit(1)` sayesinde
+  /// aynı isimli birden çok satır olsa bile yalnız biri materialize edilir.
+  Future<World?> getByName(String name) =>
+      (select(worlds)
+            ..where((t) => t.worldName.equals(name))
+            ..limit(1))
+          .getSingleOrNull();
 
   Stream<World?> watchById(String id) =>
       (select(worlds)..where((t) => t.id.equals(id)))

@@ -95,6 +95,22 @@ class _CharacterEditorScreenState
   bool _readOnly = true;
   bool _grantsBackfilled = false;
 
+  // ── Build-pass caches (reset every _buildCardBody call) ──────────
+  // Same entities map instance reused across _readEntitiesFor calls within
+  // one build. Keeps identity stable so the Expando name-index in
+  // entity_ref.dart stays warm (7K-entry O(n) rebuild avoided per tile).
+  Map<String, Entity>? _entitiesCache;
+  // Cache'in üretildiği kaynak map kimlikleri. `EntityNotifier` her düzenlemede
+  // yeni bir map instance'ı ürettiği için, build dışından (async handler)
+  // gelen bir çağrı eski bir `CombinedMapView`'i görmesin diye kimlik
+  // değişince cache düşürülür.
+  Map<String, Entity>? _entitiesCacheCampaign;
+  Map<String, Entity>? _entitiesCacheBuiltin;
+  List<String>? _entitiesCachePackages;
+  // Parsed pending choices for the current build — avoids re-parsing the
+  // same raw list inside every _pendingChoicesForField call (~20×/build).
+  List<PendingChoice> _buildPendingChoices = const [];
+
   // Markdown controllers — kept in sync with `_working.entity` so user input
   // doesn't fight the rebuild loop. Initialized lazily on first build.
   final TextEditingController _descController = TextEditingController();
@@ -284,6 +300,13 @@ class _CharacterEditorScreenState
         final workingAt = DateTime.tryParse(working.updatedAt);
         if (nextAt == null || workingAt == null) return;
         if (!nextAt.isAfter(workingAt)) return;
+        // Own-save echo: the persisted copy only differs in `updatedAt`
+        // (same content the editor just wrote). Adopt the timestamp
+        // without triggering a full-frame rebuild + resolver pass.
+        if (next.copyWith(updatedAt: working.updatedAt) == working) {
+          _working = next;
+          return;
+        }
         setState(() => _working = next);
       },
     );
@@ -591,6 +614,13 @@ class _CharacterEditorScreenState
     _syncIfNotFocused(
         _dmNotesController, _dmNotesFocus, character.entity.dmNotes);
 
+    // Reset build-pass caches so the first _readEntitiesFor call within
+    // this build creates a fresh map, and subsequent calls reuse it.
+    _invalidateEntitiesCache();
+    _buildPendingChoices = readPendingChoices(
+      character.entity.fields['pending_choices'],
+    );
+
     // UI-1: resolve the effective character ONCE per build and thread the
     // derived armour values into BOTH the combat-stats tile and the header
     // stat-chips, instead of re-running the ~1500-line CharacterResolver in
@@ -727,8 +757,7 @@ class _CharacterEditorScreenState
         );
 
     const portraitSize = 200.0;
-    final pendingCount =
-        readPendingChoices(entity.fields['pending_choices']).length;
+    final pendingCount = _buildPendingChoices.length;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1217,8 +1246,10 @@ class _CharacterEditorScreenState
   /// has no pending decisions matching that field key.
   List<PendingChoice> _pendingChoicesForField(
       Character character, String fieldKey) {
-    final raw = character.entity.fields['pending_choices'];
-    final list = readPendingChoices(raw);
+    // Yalnız `_fieldTile` içinden, yani build sırasında çağrılıyor:
+    // `_buildCardBody` aynı listeyi build başında bir kez parse ediyor.
+    // Alan başına yeniden parse etmek ~20×/build boşa işti.
+    final list = _buildPendingChoices;
     if (list.isEmpty) return const [];
     return list
         .where((p) =>
@@ -2692,9 +2723,16 @@ class _CharacterEditorScreenState
   /// E1: returns a lazy `CombinedMapView` instead of spreading both
   /// maps into a fresh `{}` per call. Reads are O(1); 20+ field tiles
   /// hitting this helper no longer allocate one 7 K-entry map each.
+  void _invalidateEntitiesCache() {
+    _entitiesCache = null;
+    _entitiesCacheCampaign = null;
+    _entitiesCacheBuiltin = null;
+    _entitiesCachePackages = null;
+  }
+
   Map<String, Entity> _readEntitiesFor(Character character) {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
-    Map<String, Entity> base = builtin;
+    Map<String, Entity>? campaign;
     if (character.worldId != null) {
       final activeWorldId = ref.watch(activeCampaignIdProvider).valueOrNull;
       if (activeWorldId == character.worldId) {
@@ -2703,22 +2741,54 @@ class _CharacterEditorScreenState
         // helper no longer triggers a 20+ tile rebuild cascade. Linked-entity
         // value freshness handled at the specific tile level if needed.
         ref.watch(entityProvider.select((m) => m.length));
-        final campaign = ref.read(entityProvider);
-        if (campaign.isNotEmpty) {
-          base = CombinedMapView<String, Entity>([campaign, builtin]);
-        }
+        final live = ref.read(entityProvider);
+        if (live.isNotEmpty) campaign = live;
       }
     }
+    final packages = sourcePackagesOf(character);
+
+    // Build-pass memo. Bu helper tek bir build içinde 14 yerden — biri
+    // `_fieldTile`, yani alan başına — çağrılıyor ve her çağrı yeni bir
+    // `CombinedMapView` üretiyordu. `entity_ref.dart`'taki isim-indeksi
+    // Expando'su map INSTANCE'ına göre cache'lediği için her yeni instance
+    // 7K girdilik indeksin baştan kurulmasına yol açıyordu. Aynı kaynaklardan
+    // türeyen sonucu paylaşmak o ıskaları build başına ~25'ten 1'e indirir.
+    final cached = _entitiesCache;
+    if (cached != null &&
+        identical(_entitiesCacheCampaign, campaign) &&
+        identical(_entitiesCacheBuiltin, builtin) &&
+        _sameStrings(_entitiesCachePackages, packages)) {
+      return cached;
+    }
+
+    final Map<String, Entity> base = campaign == null
+        ? builtin
+        : CombinedMapView<String, Entity>([campaign, builtin]);
+
     // Layer standalone source packages so species/class/spell refs outside the
     // bundled pack still render. Packages still loading contribute nothing yet;
     // the watch re-runs when each future settles. Shared with the resolver and
     // header chips so all card surfaces resolve identically.
-    return layerCharacterPackages(
+    final result = layerCharacterPackages(
       ref.watch,
       base,
-      sourcePackagesOf(character),
+      packages,
       (name) => ref.watch(packageEntitiesProvider(name)).valueOrNull,
     );
+
+    _entitiesCache = result;
+    _entitiesCacheCampaign = campaign;
+    _entitiesCacheBuiltin = builtin;
+    _entitiesCachePackages = packages;
+    return result;
+  }
+
+  static bool _sameStrings(List<String>? a, List<String> b) {
+    if (a == null || a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   Future<void> _levelUp(Character character) async {
