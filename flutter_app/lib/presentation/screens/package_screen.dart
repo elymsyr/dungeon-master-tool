@@ -165,6 +165,12 @@ class _PackageAsCampaignRepo implements CampaignRepository {
       _packageNotifier.data ?? {};
 
   @override
+  Future<Map<String, dynamic>> loadMetadata(String name) async {
+    final meta = _packageNotifier.data?['metadata'];
+    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
+  }
+
+  @override
   Future<List<Map<String, String>>> installedPackages(String name) async =>
       const [];
 

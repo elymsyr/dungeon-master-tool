@@ -144,13 +144,13 @@ final campaignMetadataProvider =
       campaignName,
     ) async {
       try {
-        final data = await ref
+        // `loadMetadata` yalnız `world_settings` satırını okur. Eskiden burada
+        // tam `load()` çağrılıyordu; hub listesi bu provider'ı satır başına
+        // watch ettiği için N dünya = N tam yükleme + N built-in SRD synth
+        // demekti (liste açılışındaki asıl donma kaynağı).
+        return await ref
             .read(campaignRepositoryProvider)
-            .load(campaignName);
-        final meta = data['metadata'];
-        return meta is Map
-            ? Map<String, dynamic>.from(meta)
-            : <String, dynamic>{};
+            .loadMetadata(campaignName);
       } catch (_) {
         return <String, dynamic>{};
       }

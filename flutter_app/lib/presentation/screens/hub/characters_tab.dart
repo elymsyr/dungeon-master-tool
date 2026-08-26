@@ -97,7 +97,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
     final activeWorldId =
         ref.watch(activeCampaignIdProvider).valueOrNull;
-    final campaign = ref.watch(entityProvider);
+    // Alan düzenlemeleri map'i yerinde değiştirip yeni instance ürettiği için
+    // filtresiz `watch` her tuş vuruşunda bu ağacı yeniden build ediyordu.
+    // Yalnız ekle/çıkar (length) izlenir; gövde `read` ile okunur — karakter
+    // editöründeki `_readEntitiesFor` ile aynı, belgelenmiş takas.
+    ref.watch(entityProvider.select((m) => m.length));
+    final campaign = ref.read(entityProvider);
     final merged = (activeWorldId == null || campaign.isEmpty)
         ? builtin
         : UnmodifiableMapView<String, Entity>(
@@ -127,16 +132,21 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       for (final c in owned) _worldLabel(c, l10n)
     }.toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: kCardMaxWidth),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    // Eskiden `SingleChildScrollView` + `Column` + `ListView(shrinkWrap: true,
+    // physics: NeverScrollable)`. Bu kombinasyon viewport culling'i tamamen
+    // kapatıyor: 200 karakterlik listede her rebuild'de 200 satırın HEPSİ
+    // build ediliyordu. CustomScrollView ile yalnız görünen satırlar inşa
+    // edilir. Genişlik sınırı scroll view'in dışına alındı, padding
+    // sliver'lara taşındı (24 + 24 = +48).
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kCardMaxWidth + 48),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              sliver: SliverList.list(children: [
               Row(
                 children: [
                   Expanded(
@@ -218,8 +228,10 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       fontSize: 12,
                       color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
+              ]),
+            ),
 
-              charactersAsync.when(
+            charactersAsync.when(
                 data: (all) {
                   // H3: sort hoisted to provider via `owned` (computed at the
                   // top of build from sortedCharactersProvider + ownership).
@@ -229,7 +241,10 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       .where((c) => _matchesFilter(c, filter, l10n))
                       .toList();
                   if (sorted.isEmpty) {
-                    return Container(
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      sliver: SliverToBoxAdapter(
+                          child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: palette.featureCardBg,
@@ -248,11 +263,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               fontSize: 12),
                         ),
                       ),
+                    )),
                     );
                   }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverList.separated(
                     itemCount: sorted.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
@@ -316,16 +332,19 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                         ),
                       );
                     },
+                  ),
                   );
                 },
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text(l10n.hubErrorGeneric(e.toString())),
+                loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator())),
+                error: (e, _) => SliverToBoxAdapter(
+                    child: Text(l10n.hubErrorGeneric(e.toString()))),
               ),
 
-              const SizedBox(height: 12),
-
-              ValueListenableBuilder<int>(
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              sliver: SliverToBoxAdapter(
+                  child: ValueListenableBuilder<int>(
                 valueListenable: _selectedIndex,
                 builder: (context, selectedIdx, _) {
                 final list = _visibleList(l10n);
@@ -388,10 +407,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     actionButton,
                   ],
                 );
-              }),
-
-            ],
-          ),
+              })),
+            ),
+          ],
         ),
       ),
     );

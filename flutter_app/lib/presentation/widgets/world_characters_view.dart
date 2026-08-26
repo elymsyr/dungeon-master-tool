@@ -677,7 +677,12 @@ class _CharacterRowState extends ConsumerState<_CharacterRow> {
         character.worldId != activeWorldId) {
       entities = builtin;
     } else {
-      final campaign = ref.watch(entityProvider);
+      // Alan düzenlemeleri map'i yerinde değiştirip yeni instance ürettiği için
+      // filtresiz `watch` her tuş vuruşunda bu ağacı yeniden build ediyordu.
+      // Yalnız ekle/çıkar (length) izlenir; gövde `read` ile okunur — karakter
+      // editöründeki `_readEntitiesFor` ile aynı, belgelenmiş takas.
+      ref.watch(entityProvider.select((m) => m.length));
+      final campaign = ref.read(entityProvider);
       entities = campaign.isEmpty
           ? builtin
           : UnmodifiableMapView<String, Entity>(

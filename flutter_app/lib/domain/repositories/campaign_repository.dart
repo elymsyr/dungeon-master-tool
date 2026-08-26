@@ -10,6 +10,13 @@ abstract class CampaignRepository {
   /// Kampanya verisini yükle (ID veya isim ile).
   Future<Map<String, dynamic>> load(String campaignName);
 
+  /// Yalnız `metadata` bloğunu oku (cover / description / tags).
+  ///
+  /// [load] ile aynı sonucu verir ama entity satırlarını okumaz ve built-in
+  /// SRD pack'ini sentezlemez — hub listesi world başına bunu çağırdığı için
+  /// tam yükleme oradaki en büyük donma kaynağıydı. World yoksa boş map.
+  Future<Map<String, dynamic>> loadMetadata(String campaignName);
+
   /// [campaignName]'e import edilmiş paketler (id, name, version). World'ün
   /// yoksa boş döner. Yayınlanan bir world'ün marketplace kartında import
   /// edilen paketleri özetlemek için kullanılır.
