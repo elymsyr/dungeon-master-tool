@@ -366,7 +366,7 @@ class _EraScrollPainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromLTRB(trackX - 12, t, trackX + 12, b),
-            const Radius.circular(4)),
+            palette.br.topLeft),
         _activeSegPaint,
       );
     }
@@ -379,7 +379,7 @@ class _EraScrollPainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromLTRB(trackX - 12, t, trackX + 12, b),
-            const Radius.circular(4)),
+            palette.br.topLeft),
         _hoverSegPaint,
       );
     }

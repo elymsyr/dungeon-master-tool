@@ -282,8 +282,19 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => setState(() => _eraBarOpen = !_eraBarOpen),
-                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          setState(() => _eraBarOpen = !_eraBarOpen);
+                          if (_eraBarOpen) {
+                            final waypoints =
+                                ref.read(worldMapProvider).waypoints;
+                            if (waypoints.isEmpty) {
+                              final notifier =
+                                  ref.read(worldMapProvider.notifier);
+                              _showAddWaypointDialog(0, notifier, palette);
+                            }
+                          }
+                        },
+                        borderRadius: palette.br,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -298,7 +309,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                                   ? palette.tabIndicator.withValues(alpha: 0.4)
                                   : palette.uiFloatingBorder,
                             ),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: palette.br,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -416,7 +427,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           InkWell(
             key: const ValueKey('pin_size'),
             onTap: notifier.cyclePinSize,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Icon(
@@ -455,7 +466,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           InkWell(
             key: const ValueKey('zoom_in'),
             onTap: () => notifier.zoomAtPoint(const Offset(0, 0), -1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Icon(Icons.add, size: 14, color: palette.tabText),
@@ -464,7 +475,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           InkWell(
             key: const ValueKey('zoom_out'),
             onTap: () => notifier.zoomAtPoint(const Offset(0, 0), 1),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Icon(Icons.remove, size: 14, color: palette.tabText),
@@ -473,7 +484,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           InkWell(
             key: const ValueKey('reset_view'),
             onTap: notifier.resetView,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: palette.br,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Icon(Icons.fit_screen, size: 14, color: palette.tabText),
@@ -2253,7 +2264,7 @@ class _ToolbarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Row(
@@ -2288,7 +2299,7 @@ class _ToolbarCheckbox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: InkWell(
         onTap: () => onChanged(!value),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: palette.br,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
