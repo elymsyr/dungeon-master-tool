@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Code search (codebase-memory MCP)
 
+Project Name: home-eren-GitHub-dungeon-master-tool
+
 This workspace is indexed as **one** project, indexed `full`: the Flutter app (`flutter_app/lib/`, `tool/`, `test/`), the Supabase surface (`supabase/migrations/` + edge functions), the Cloudflare worker (`cloudflare/src/`), and the `vault/` markdown. Gitignored generated files (`*.g.dart`/`*.freezed.dart`) and large binary assets are not in the index.
 
 The `project` name is derived from the repo path, so it **differs per machine** — get this machine's name with `list_projects` (the one ending in `-dungeon-master-tool`) and pass that to every tool.
