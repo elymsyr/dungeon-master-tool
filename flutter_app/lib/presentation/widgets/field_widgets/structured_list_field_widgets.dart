@@ -2105,20 +2105,30 @@ class _RelationListChips extends StatelessWidget {
               runSpacing: 4,
               children: [
                 for (var i = 0; i < values.length; i++)
-                  Chip(
-                    label: Text(
-                      entities?[values[i]]?.name ?? values[i],
-                      style: const TextStyle(fontSize: 11),
+                  EntityLink(
+                    targetId: entityLinkTarget(values[i], entities),
+                    ref: ref,
+                    child: Chip(
+                      label: Text(
+                        entities?[values[i]]?.name ?? values[i],
+                        style: TextStyle(
+                          fontSize: 11,
+                          decoration: entityLinkTarget(values[i], entities) !=
+                                  null
+                              ? TextDecoration.underline
+                              : null,
+                        ),
+                      ),
+                      onDeleted: readOnly
+                          ? null
+                          : () {
+                              final next = [...values]..removeAt(i);
+                              onChanged(next);
+                            },
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize:
+                          MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onDeleted: readOnly
-                        ? null
-                        : () {
-                            final next = [...values]..removeAt(i);
-                            onChanged(next);
-                          },
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
                   ),
                 if (!readOnly)
                   InkWell(
