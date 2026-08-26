@@ -138,6 +138,7 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
           children: [
             // Arama — F4: 150 ms debounce before re-running the filter.
             TextField(
+              autofocus: true,
               decoration: const InputDecoration(
                 hintText: 'Search...',
                 prefixIcon: Icon(Icons.search, size: 18),
@@ -153,6 +154,9 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
                   setState(() => _search = v);
                 });
               },
+              onSubmitted: widget.multiSelect && _selected.isNotEmpty
+                  ? (_) => Navigator.pop(context, _selected.toList())
+                  : null,
             ),
             const SizedBox(height: 8),
             // Liste
