@@ -635,6 +635,14 @@
   "signOutConfirmBody": "Çıkış yapılacak ve giriş ekranına dönülecek. Bekleyen değişikliklerin kaydedildiğinden veya yedeklendiğinden emin olun.",
   "signOut": "Çıkış Yap",
   "signOutLocalDataNote": "Dünyalarınız, karakterleriniz ve paketleriniz hesabınızda kalır; bir sonraki girişinizde geri gelir. Bu cihazdaki çevrimdışı çalışma alanı boş başlar.",
+  "deleteAccount": "Hesabı Sil",
+  "deleteAccountConfirmTitle": "Hesabınız silinsin mi?",
+  "deleteAccountConfirmBody": "Bu işlem hesabınızı ve ona bağlı her şeyi kalıcı olarak siler: profil, gönderiler, pazar yeri ilanları, paylaşılan dünyalar, yüklenen medya ve bu cihazdaki hesap verileri. Geri alınamaz.",
+  "deleteAccountFailed": "Hesap silinemedi: {error}",
+  "deleteAccountSuccess": "Hesabınız ve verileriniz silindi.",
+  "@deleteAccountFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "settingsVolume": "Ses Düzeyi",
   "settingsData": "Veri",
   "settingsTrash": "Çöp Kutusu",

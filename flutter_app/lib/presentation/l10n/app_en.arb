@@ -680,6 +680,14 @@
   "signOutConfirmBody": "You will be signed out and returned to the sign-in screen. Make sure any pending changes have been saved or backed up.",
   "signOut": "Sign Out",
   "signOutLocalDataNote": "Your worlds, characters and packages stay in your account and come back the next time you sign in. The offline workspace on this device starts empty.",
+  "deleteAccount": "Delete Account",
+  "deleteAccountConfirmTitle": "Delete your account?",
+  "deleteAccountConfirmBody": "This permanently deletes your account and everything tied to it: profile, posts, marketplace listings, shared worlds, uploaded media and the local data of this account on this device. This cannot be undone.",
+  "deleteAccountFailed": "Account deletion failed: {error}",
+  "deleteAccountSuccess": "Your account and data have been deleted.",
+  "@deleteAccountFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "settingsVolume": "Volume",
   "settingsData": "Data",
   "settingsTrash": "Trash",

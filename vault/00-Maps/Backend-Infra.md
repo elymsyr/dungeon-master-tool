@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: backend
-updated: 2026-06-09
+updated: 2026-08-27
 tags: [moc]
 ---
 
@@ -20,7 +20,8 @@ tags: [moc]
 - [[migrations-online-worlds]] — 026 shared worlds + invites + realtime mirror.
 - [[migrations-media-storage]] — 053/065 free-media bucket + transient LRU pool.
 - [[migrations-security]] — 072/073 RLS hardening + revoke anon execute.
-- [[rpc-reference]] — key RPCs: `transient_reserve/touch/evict_pop`, `get_user_total_storage_used`, `is_admin`.
+- [[rpc-reference]] — key RPCs: `transient_reserve/touch/evict_pop`, `get_user_total_storage_used`, `is_admin`, `delete_my_account` (083).
+- Hesap silme: `/admin/purge-user` artık admin token'ın yanında **kendi JWT'siyle** de çağrılabilir; akışın tamamı [[account_deletion_service]].
 
 ## Data Flow
 Client JWT → [[worker]] → [[worker_jwt]] verify → [[worker_rls]] RPC (ownership/quota) → R2 stream. Realtime: DM'in paylaşım kanalı (beş tablo) → client [[world_mirror_applier]] (see [[Share-Broadcast-Flow]]).

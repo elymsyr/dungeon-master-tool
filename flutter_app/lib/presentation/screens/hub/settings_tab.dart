@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/locale_provider.dart';
@@ -17,6 +18,7 @@ import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/audio/audio_models.dart';
+import '../../dialogs/delete_account_dialog.dart';
 import '../../dialogs/theme_builder_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -278,6 +280,25 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 error: (e, _) => Text('Error: $e'),
               ),
 
+              // --- DANGER ZONE --- (yalnız oturum açıkken; en altta, kazara
+              // dokunuşun en uzak olduğu yer)
+              if (ref.watch(authProvider) != null) ...[
+                const SizedBox(height: 40),
+                const Divider(),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.delete_forever, size: 18),
+                    label: Text(l10n.deleteAccount),
+                    onPressed: () => confirmAndDeleteAccount(context, ref),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: palette.dangerBtnBg,
+                      side: BorderSide(color: palette.dangerBtnBg),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

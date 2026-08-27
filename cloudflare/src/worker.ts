@@ -532,16 +532,15 @@ async function handleAdminPurgeAll(
 // Hesap silme / admin moderasyon akışında çağrılır. `{userId}/...` (permanent) +
 // `transient/{userId}/...` (transient) iki prefix ayrı ayrı sweep edilir.
 // Pattern: handleAdminPurgeAll cursor + batch delete, prefix-scoped.
-// Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN.
+// Body: { "user_id": "<uuid>" }. Auth: Bearer ADMIN_TOKEN — VEYA sub'ı
+// `user_id`'ye eşit bir kullanıcı JWT'si (self-service hesap silme; kullanıcı
+// yalnızca kendi prefix'ini silebilir, admin token'ı istemciye inmez).
 async function handleAdminPurgeUser(
   request: Request,
   env: Env,
 ): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse(405, { error: 'method_not_allowed' });
-  }
-  if (!checkAdminAuth(request, env)) {
-    return jsonResponse(401, { error: 'admin_auth_required' });
   }
   let body: { user_id?: unknown };
   try {
@@ -553,6 +552,21 @@ async function handleAdminPurgeUser(
   // UUID rough validation — path traversal & accidental wildcard guard.
   if (!/^[0-9a-fA-F-]{20,64}$/.test(userId)) {
     return jsonResponse(400, { error: 'invalid_user_id' });
+  }
+  if (!checkAdminAuth(request, env)) {
+    const authHeader = request.headers.get('Authorization') ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return jsonResponse(401, { error: 'missing_token' });
+    }
+    try {
+      const payload = await verifyJwt(authHeader.slice(7), env.SUPABASE_URL);
+      if (payload.sub !== userId) {
+        return jsonResponse(403, { error: 'forbidden' });
+      }
+    } catch (err) {
+      const reason = err instanceof JwtError ? err.reason : 'invalid_token';
+      return jsonResponse(401, { error: reason });
+    }
   }
   const dry = new URL(request.url).searchParams.get('dry') === '1';
 
