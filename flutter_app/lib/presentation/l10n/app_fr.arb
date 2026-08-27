@@ -637,9 +637,9 @@
   "signOutLocalDataNote": "Vos mondes, personnages et paquets restent dans votre compte et reviendront à votre prochaine connexion. L'espace de travail hors ligne de cet appareil repart vide.",
   "deleteAccount": "Supprimer le compte",
   "deleteAccountConfirmTitle": "Supprimer votre compte ?",
-  "deleteAccountConfirmBody": "Cette action supprime définitivement votre compte et tout ce qui y est lié : profil, publications, annonces du marché, mondes partagés, médias téléversés et les données locales de ce compte sur cet appareil. C'est irréversible.",
+  "deleteAccountConfirmBody": "Cette action supprime définitivement votre compte et tout ce qui est stocké en ligne : profil, publications, annonces du marché, mondes partagés et médias téléversés. Vos données locales restent sur cet appareil — connectez-vous ensuite en tant qu'invité pour continuer à les utiliser. Le compte lui-même est irrécupérable.",
   "deleteAccountFailed": "Échec de la suppression du compte : {error}",
-  "deleteAccountSuccess": "Votre compte et vos données ont été supprimés.",
+  "deleteAccountSuccess": "Votre compte a été supprimé. Vos données locales sont toujours sur cet appareil — continuez en tant qu'invité.",
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },

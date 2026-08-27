@@ -952,6 +952,110 @@ class GuestPromotionService {
     return pairs;
   }
 
+  /// **Terfinin tersi — hesap silindiğinde ağacı misafire geri verir.**
+  ///
+  /// Kullanıcı hesabını sildiğinde bulut tarafı gider ama **yerel veri onun
+  /// kendi diskinde kalır**: aynı cihazda misafir olarak girip kaldığı yerden
+  /// devam edebilmeli. Bu yüzden `users/{id}/` ağacı silinmez, misafir köküne
+  /// taşınır.
+  ///
+  /// Üç adım, sırası kritik:
+  ///   1. [retireClaimedGuestTree] — kökte terfiden kalan **bayat** kopya
+  ///      varsa arşive alınır ve talep düşer. Talep düşmeden taşırsak
+  ///      `deactivate()`'in ikinci emekliliği bu sefer *yeni* taşıdığımız
+  ///      veriyi arşivler. (Talep yoksa bu adım zaten no-op.)
+  ///   2. `db/` + medya alt ağaçları köke taşınır. `.v12_cut_applied`
+  ///      işaretçisi taşınan DB'nin yanında olmak zorunda — yoksa bir sonraki
+  ///      açılış onu pre-v12 sanıp `dmt.sqlite.legacy.<ts>`'e alır ve
+  ///      kullanıcı yine boş bir çalışma alanı görür.
+  ///   3. Geriye kalan hesap kökü (`cache/`, sentinel'ler) silinir.
+  ///
+  /// Çağrılmadan önce hesabın veritabanı **kapalı** olmalı (WAL çifti de
+  /// taşınıyor). Bkz. `finishAccountDeletion`.
+  Future<({bool database, List<String> media})> demoteAccountToGuest(
+    String userId,
+  ) async {
+    final retirement = await retireClaimedGuestTree();
+    if (retirement.movedAnything) {
+      debugPrint('Demotion: stale guest tree retired -> $retirement');
+    }
+
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final archive = Directory(p.join(dataRoot, archiveDirName, '$stamp'));
+    final guestDb = _guestDatabase();
+    final accountDb = _accountDatabase(userId);
+
+    var database = false;
+    if (accountDb.existsSync()) {
+      await Directory(p.dirname(guestDb.path)).create(recursive: true);
+      for (final suffix in const ['', '-wal', '-shm']) {
+        // Kökte hâlâ bir DB duruyorsa (talep edilmemiş, dolayısıyla emekli
+        // edilmemiş bir misafir alanı) üzerine yazmak yerine arşive park et.
+        final stale = File('${guestDb.path}$suffix');
+        if (stale.existsSync()) {
+          final parked = File(p.join(archive.path, 'db', 'dmt.sqlite$suffix'));
+          await parked.parent.create(recursive: true);
+          if (!parked.existsSync()) await stale.rename(parked.path);
+        }
+        final src = File('${accountDb.path}$suffix');
+        if (!src.existsSync()) continue;
+        await src.rename('${guestDb.path}$suffix');
+        database = true;
+      }
+      if (database) {
+        final marker = File(p.join(p.dirname(guestDb.path), '.v12_cut_applied'));
+        if (!marker.existsSync()) await marker.create(recursive: true);
+      }
+    }
+
+    final media = <String>[];
+    for (final name in mediaSubtrees) {
+      final src = Directory(p.join(accountRoot(userId), name));
+      if (!src.existsSync()) continue;
+      final moved = await _moveDirectory(src, Directory(p.join(dataRoot, name)));
+      if (moved > 0) media.add(name);
+    }
+
+    // Talep/nesil dosyaları: emeklilik bunları düşürmüş olmalı, ama yarıda
+    // kalmış bir arşivleme onları bırakabilir. Hesap artık yok, dolayısıyla
+    // talebin adını verdiği içeriğin sahibi de yok — kalırlarsa `deactivate()`
+    // az önce taşıdığımız veriyi arşivler.
+    try {
+      if (_claim().existsSync()) await _claim().delete();
+      if (_generation().existsSync()) await _generation().delete();
+    } catch (_) {
+      // Best-effort.
+    }
+
+    try {
+      final root = Directory(accountRoot(userId));
+      if (root.existsSync()) await root.delete(recursive: true);
+    } catch (e) {
+      debugPrint('Demotion: account root cleanup failed: $e');
+    }
+
+    return (database: database, media: media);
+  }
+
+  /// Moves [src]'s contents into [dst] without ever overwriting something that
+  /// is already there, and returns how many entries it moved. Whatever could
+  /// not move stays in [src].
+  static Future<int> _moveDirectory(Directory src, Directory dst) async {
+    await dst.create(recursive: true);
+    var moved = 0;
+    await for (final entity in src.list(recursive: false)) {
+      final target = p.join(dst.path, p.basename(entity.path));
+      if (entity is File) {
+        if (File(target).existsSync()) continue;
+        await entity.rename(target);
+        moved++;
+      } else if (entity is Directory) {
+        moved += await _moveDirectory(entity, Directory(target));
+      }
+    }
+    return moved;
+  }
+
   /// Copies [src] into [dst] without ever overwriting a file that is already
   /// there, and returns how many files it actually wrote.
   static Future<int> _copyDirectory(Directory src, Directory dst) async {

@@ -743,4 +743,61 @@ void main() {
       });
     });
   });
+
+  /// Hesabını silen kullanıcı aynı cihazda misafir olarak devam edebilmeli:
+  /// terfi ne aldıysa `demoteAccountToGuest` onu geri verir. Bu grup düşerse
+  /// hesap silme, kullanıcının yerel dünyalarını da götürüyor demektir.
+  group('the account goes away but the device keeps the work', () {
+    test('the account tree comes back to the guest root', () async {
+      await seedGuestDatabase();
+      await seedGuestMedia();
+      await promote();
+
+      // Hesap altında bir şey üret ki geri gelenin *hesabın* hâli olduğu
+      // ayırt edilebilsin.
+      await withAccountDatabase((db) async {
+        await db.into(db.worlds).insert(
+              WorldsCompanion.insert(id: 'w2', worldName: 'Written in account'),
+            );
+      });
+
+      final report = await service.demoteAccountToGuest(_userId);
+
+      expect(report.database, isTrue);
+      expect(report.media, GuestPromotionService.mediaSubtrees);
+      expect(Directory(p.join(root.path, 'users', _userId)).existsSync(),
+          isFalse, reason: 'hesap kökü arkada kalmaz');
+      expect(guestDb().existsSync(), isTrue);
+      expect(
+        File(p.join(root.path, 'db', '.v12_cut_applied')).existsSync(),
+        isTrue,
+        reason: 'işaretçi olmadan bir sonraki açılış DB\'yi .legacy yapar',
+      );
+      expect(File(p.join(guestWorldsDir(), 'Barrowmoor', 'media', 'ilse.png'))
+          .existsSync(), isTrue);
+
+      final db = openTestDatabaseAt(guestDb());
+      try {
+        final worlds = await db.select(db.worlds).get();
+        expect({for (final w in worlds) w.id}, {'w1', 'w2'});
+      } finally {
+        await db.close();
+      }
+    });
+
+    test('a later account can take the workspace over again', () async {
+      await seedGuestDatabase();
+      await seedGuestMedia();
+      await promote();
+      expect(service.canPromote('user-2'), isFalse, reason: 'talep duruyor');
+
+      await service.demoteAccountToGuest(_userId);
+
+      // Talep ve nesil düştüğü için alan yeniden devredilebilir — ve
+      // `deactivate()`'in ikinci emekliliği az önce taşınanı arşivlemez.
+      expect(service.canPromote('user-2'), isTrue);
+      expect((await service.retireClaimedGuestTree()).movedAnything, isFalse);
+      expect(guestDb().existsSync(), isTrue);
+    });
+  });
 }

@@ -637,9 +637,9 @@
   "signOutLocalDataNote": "Dünyalarınız, karakterleriniz ve paketleriniz hesabınızda kalır; bir sonraki girişinizde geri gelir. Bu cihazdaki çevrimdışı çalışma alanı boş başlar.",
   "deleteAccount": "Hesabı Sil",
   "deleteAccountConfirmTitle": "Hesabınız silinsin mi?",
-  "deleteAccountConfirmBody": "Bu işlem hesabınızı ve ona bağlı her şeyi kalıcı olarak siler: profil, gönderiler, pazar yeri ilanları, paylaşılan dünyalar, yüklenen medya ve bu cihazdaki hesap verileri. Geri alınamaz.",
+  "deleteAccountConfirmBody": "Bu işlem hesabınızı ve çevrimiçi tutulan her şeyi kalıcı olarak siler: profil, gönderiler, pazar yeri ilanları, paylaşılan dünyalar ve yüklenen medya. Bu cihazdaki yerel verileriniz kalır — sonrasında misafir olarak girip çalışmaya devam edebilirsiniz. Hesabın kendisi geri alınamaz.",
   "deleteAccountFailed": "Hesap silinemedi: {error}",
-  "deleteAccountSuccess": "Hesabınız ve verileriniz silindi.",
+  "deleteAccountSuccess": "Hesabınız silindi. Yerel verileriniz bu cihazda duruyor — misafir olarak devam edebilirsiniz.",
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
