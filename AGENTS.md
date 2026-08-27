@@ -76,6 +76,10 @@ dart run tool/migrate_pack_assets.dart [--dry-run]        # rewrite bundled .pkg
 
 `build_packs` exits non-zero on any unresolved `_ref`, so a broken pack can never ship.
 
+### Version bump
+
+When the user asks to bump the version, follow [docs/VERSION-BUMP-GUIDE.md](docs/VERSION-BUMP-GUIDE.md) end-to-end — it covers version discovery, semver rules, source-file updates, release notes, and verification.
+
 ### Testing caveat
 
 A full `flutter test` run has a sizable set of environmental failures unrelated to any given change (empty-state results in `test/application/combat_provider_test.dart`, `test/application/services/content_store_test.dart`, `test/data/network/asset_service_test.dart` and a few others). Before attributing failures to your work, capture the failing set on a clean tree (`git stash`) and treat only the difference as a regression. Targeted runs of the files you touched are the reliable signal.
