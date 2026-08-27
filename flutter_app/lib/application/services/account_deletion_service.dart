@@ -104,35 +104,106 @@ Future<void> finishAccountDeletion(WidgetRef ref, String uid) async {
 /// `{uid}/listings/{id}.json.gz` yolunda duruyor, tek seviye tarayan ilk hâli
 /// bunları hiç görmüyordu (`list` klasörü `id == null` olan bir girdi olarak
 /// döndürüyor, `remove` ona dokunmuyordu).
-// ponytail: sayfa başına 100 obje (Supabase list varsayılanı) — bir kullanıcı
-// tek klasörde bundan fazlasını biriktirirse burada sayfalama gerekir.
 Future<void> _purgeStorage(SupabaseClient client, String uid) async {
   for (final bucket in _ownedBuckets) {
-    await _purgeStorageFolder(client, bucket, uid);
+    try {
+      await _purgeStorageFolder(client, bucket, uid);
+    } on StateError catch (e) {
+      throw StateError('$bucket → ${e.message}');
+    }
   }
+}
+
+/// Bir sayfada dönen azami obje sayısı. `SearchOptions.limit` varsayılanı
+/// **100**'dür (storage_client `types.dart`) ve `list()` onu gövdeye koyar —
+/// belirtmezsek 100'den fazlası hiç listelenmez, dolayısıyla hiç silinmez ve
+/// hata da alınmaz. Hesabı silinmiş kullanıcının artık RLS'i eşleşmediği için
+/// o objeler kalıcı olarak erişilemez hâle gelirdi.
+const _storagePageSize = 1000;
+
+/// Bir turda silinemeyecek kadar dolu klasör için üst sınır: 200 × 1000 obje.
+/// Aşılırsa döngü değil hata — sessiz eksik silme bir daha olmasın.
+const _storageMaxPasses = 200;
+
+/// [purgeStorageTree]'nin gördüğü tek girdi şekli. Supabase `list` bir klasörü
+/// `id == null` olan bir girdi olarak döndürür.
+typedef StorageEntry = ({String name, bool isFolder});
+
+/// Silme döngüsünün Supabase'den ayrılmış hâli — IO iki closure'a taşındığı
+/// için testten düz fonksiyonlarla sürülebiliyor. [remove] gerçekten silinen
+/// obje **sayısını** döndürmeli.
+@visibleForTesting
+Future<void> purgeStorageTree({
+  required Future<List<StorageEntry>> Function(String path) list,
+  required Future<int> Function(List<String> keys) remove,
+  required String path,
+}) async {
+  // Sildikçe offset kaydığı için sayfalama offset'le değil "her turda baştan
+  // oku, dosya kalmayana kadar sil" ile yapılıyor. Klasörler sanal: altları
+  // boşalınca listeden kendiliğinden düşerler.
+  for (var pass = 0; pass < _storageMaxPasses; pass++) {
+    final entries = await list(path);
+    final files = <String>[];
+    final folders = <String>[];
+    for (final entry in entries) {
+      (entry.isFolder ? folders : files).add(entry.name);
+    }
+    // Klasör klasör iner: `shared-payloads` içinde marketplace payload'ları
+    // `{uid}/listings/{id}.json.gz` yolunda duruyor.
+    for (final folder in folders) {
+      await purgeStorageTree(list: list, remove: remove, path: '$path/$folder');
+    }
+    if (files.isEmpty) return;
+
+    final keys = [for (final file in files) '$path/$file'];
+    final removed = await remove(keys);
+    if (removed != keys.length) {
+      throw StateError(
+        'storage purge incomplete: $path ($removed/${keys.length} silindi)',
+      );
+    }
+  }
+  throw StateError('storage purge did not converge: $path');
 }
 
 Future<void> _purgeStorageFolder(
   SupabaseClient client,
   String bucket,
   String path,
-) async {
-  final entries = await client.storage.from(bucket).list(path: path);
-  final files = <String>[];
-  for (final entry in entries) {
-    if (entry.id == null) {
-      await _purgeStorageFolder(client, bucket, '$path/${entry.name}');
-    } else {
-      files.add('$path/${entry.name}');
-    }
-  }
-  if (files.isNotEmpty) await client.storage.from(bucket).remove(files);
-}
+) =>
+    purgeStorageTree(
+      path: path,
+      list: (p) async {
+        final entries = await client.storage.from(bucket).list(
+              path: p,
+              searchOptions: const SearchOptions(limit: _storagePageSize),
+            );
+        return [
+          for (final e in entries) (name: e.name, isFolder: e.id == null),
+        ];
+      },
+      // `remove` yalnız GERÇEKTEN sildiklerini döner; RLS bir objeyi engellerse
+      // 200 + eksik liste gelir, exception gelmez. Farkı çağıran yakalıyor.
+      remove: (keys) async =>
+          (await client.storage.from(bucket).remove(keys)).length,
+    );
 
 /// Worker `/admin/purge-user` — kullanıcı kendi JWT'siyle kendi prefix'ini
-/// sildirir. Worker URL'i derlenmemişse (offline build) R2 zaten kullanılmıyor.
+/// sildirir.
+///
+/// Boş worker URL'i "R2 kullanılmıyor" demek **değil**: buraya gelindiğinde
+/// `SupabaseConfig.isConfigured` zaten true, yani bu online bir build ve tek
+/// eksik `DMT_WORKER_URL` define'ı. Aynı hesap daha önce worker URL'li bir
+/// build'den (CI release) obje yüklemiş olabilir; sessizce atlarsak
+/// `delete_my_account()` çalıştıktan sonra o objeler **kalıcı olarak** yetim
+/// kalır — `/admin/purge-user`'ın kullanıcı yolu `sub == user_id` istiyor ve o
+/// `sub` için artık token üretilemez. O yüzden sessiz `return` değil, hata.
 Future<void> _purgeR2(String uid, String token) async {
-  if (_workerBaseUrl.isEmpty) return;
+  if (_workerBaseUrl.isEmpty) {
+    throw StateError(
+      'DMT_WORKER_URL not compiled in; R2 objects would be orphaned',
+    );
+  }
   final base = _workerBaseUrl.replaceAll(RegExp(r'/$'), '');
   final httpClient = HttpClient();
   try {

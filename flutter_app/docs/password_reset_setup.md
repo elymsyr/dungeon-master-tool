@@ -364,11 +364,22 @@ registered address from an unknown one, and `_forgotPassword` shows the same
 message either way. Don't surface its error — doing so turns the button into a
 "is this email registered?" oracle.
 
+**4e. CSP + form fallback.** Her iki hosted sayfada `<meta http-equiv=
+"Content-Security-Policy">`: `default-src 'none'`, yalnız Google Fonts ve bu
+projenin Supabase origin'i açık, `form-action 'none'`. Ayrıca `#prompt`'ta
+inline `display:none` ve `show()` inline display'i de yönetiyor — `.hidden`
+yalnız `auth.css`'te tanımlı, CSS ile script birlikte düşerse form handler'sız
+görünür olup native GET submit ile parolayı URL'e yazıyordu.
+
 Accepted, tracked, not fixed here:
 
 - ~~**Session revocation on password change**~~ — **kapatıldı**: sayfa parolayı
   güncelledikten sonra `POST /auth/v1/logout?scope=global` çağırıyor, saldırganın
-  elindeki refresh token'lar da düşüyor.
+  elindeki refresh token'lar da düşüyor. Bu çağrı kendi `try`'ında: `PUT /user`
+  başarılı olduktan sonra artık parola **değişmiştir**, logout'un ağ hatası akışı
+  geri saramaz. Hata halinde sayfa yine "başarılı" diyor ve altına "diğer
+  cihazlar kapatılamadı" uyarısı ekliyor — aksi halde kullanıcı "olmadı" sanıp
+  vazgeçiyor ve parolasının değiştiğinden habersiz kalıyordu.
 - **OAuth-only users** — sending a reset to a Google-registered address lets a
   password be set on that account. Not a takeover (whoever reads the inbox owns
   the account already), but it creates a second sign-in path that bypasses

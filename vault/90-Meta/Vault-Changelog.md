@@ -1168,3 +1168,11 @@ silinen entity diğerinde duruyorsa geri gelir.
 - l10n: `landingForgotPassword`, `landingInfoResetSent` (en/tr/de/fr).
 - **Repo dışında kalan adımlar** (bkz. `flutter_app/docs/password_reset_setup.md`): `elymsyr.github.io/reset/index.html`, custom SMTP (Brevo), Reset Password mail şablonu, parola politikası + OTP ömrü.
 - Güncellenen not: [[auth_provider]].
+
+## 2026-08-27 — Güvenlik taraması düzeltmeleri (hesap silme + şifre sıfırlama)
+- **Migration 086** (`086_delete_account_ownership_semantics.sql`): `delete_my_account()`'ın iki sahiplik hatası. (a) `world_characters` blanket `DELETE ... WHERE owner_id` başka bir DM'in dünyasındaki satırı da siliyordu — artık 039'un durum makinesi: `(owner, NULL)` → DELETE, `(owner, W)` → `(NULL, W)`. (b) `admin_audit_log` satırları siliniyordu (admin kendi izini süpürebiliyordu) — 023'ün `NOT NULL + ON DELETE SET NULL` çelişkisi kaldırıldı, satır anonimleşiyor (`admin_legacy_id`). `admin_list_audit_log` COALESCE zinciri güncellendi.
+- **`account_deletion_service`**: Supabase Storage taraması sayfalanmıyordu (`SearchOptions.limit` varsayılanı 100) — 100+ objesi olan kullanıcıda fazlası sessizce kalıyor, hesap düşünce RLS eşleşmediği için kalıcı erişilemez oluyordu. Sayfalama + `remove()` dönüş sayısı kontrolü + boş `DMT_WORKER_URL` artık `StateError`.
+- **`delete_account_dialog`**: geri dönüşsüz silme için sürtünme yoktu. E-posta yazma zorunluluğu (sahipsiz cihaz / yanlış dokunuş) + parola hesaplarında taze `signInWithPassword` reauth (çalınmış oturum). OAuth hesaplarında e-posta yazımı tek kapı.
+- **`elymsyr.github.io`** (repo dışı): `reset/index.html` — `logout?scope=global` ayrı `try`'a alındı (PUT başarılı + logout hatalı = parola değişmiş ama kullanıcıya "başarısız" deniyordu, saldırganın oturumları da canlı kalıyordu). Her iki hosted sayfaya meta CSP; `#prompt`'a inline `display:none` + `show()` inline display yönetimi (CSS+JS birlikte düşerse native GET submit parolayı URL'e yazıyordu).
+- l10n: `deleteAccountConfirmEmailLabel`, `deleteAccountPasswordLabel`, `deleteAccountReauthFailed` (en/tr/de/fr).
+- Güncellenen notlar: [[rpc-reference]], [[account_deletion_service]].

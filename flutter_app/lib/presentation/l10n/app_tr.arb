@@ -646,6 +646,12 @@
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "deleteAccountConfirmEmailLabel": "Onaylamak için {email} yazın",
+  "@deleteAccountConfirmEmailLabel": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "deleteAccountPasswordLabel": "Mevcut parola",
+  "deleteAccountReauthFailed": "Parola yanlış.",
   "settingsVolume": "Ses Düzeyi",
   "settingsData": "Veri",
   "settingsTrash": "Çöp Kutusu",
