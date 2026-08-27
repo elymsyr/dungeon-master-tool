@@ -559,6 +559,32 @@ class GuestPromotionService {
     }
   }
 
+  /// [claimGuestCharacters]'ın simetriği: hesap silinirken karakterlerin
+  /// sahipliğini düşürür.
+  ///
+  /// Hub'ın karakter sekmesi own-only: `owner_id == auth.uid` iken kullanıcının,
+  /// `owner_id == null` iken **yalnız oturum kapalıyken** kullanıcının sayılır
+  /// (`characters_tab._isOwned`). Hesap silinip misafire dönüldüğünde dünyalar
+  /// ve paketler geliyor ama karakterler artık var olmayan bir uid'e ait
+  /// olduğu için hiçbir ekranda görünmüyordu.
+  ///
+  /// Serbest bırakma anlamı burada belirsiz değil: sahip hesap yok, dolayısıyla
+  /// `release_character` ile karışacak bir durum da yok.
+  ///
+  /// DB **açıkken** ve demote'tan (dosya taşıma) önce çağrılır.
+  Future<int> releaseAccountCharacters(AppDatabase db, String userId) async {
+    try {
+      return await db.customUpdate(
+        'UPDATE world_characters SET owner_id = NULL WHERE owner_id = '
+        '${_sqlString(userId)}',
+        updates: const {},
+      );
+    } catch (_) {
+      // Sahiplik bir onarım; başarısızlığı silmeyi durdurmamalı.
+      return 0;
+    }
+  }
+
   /// **O5 — the row-level half of the handover.**
   ///
   /// Attaches the guest database to the already-open account database and
@@ -896,8 +922,25 @@ class GuestPromotionService {
   /// and columns like `world_entities.image_path` — legacy values the F11
   /// `RawPathMigrator` exists to convert — so the sweep is over every TEXT
   /// column of every table.
-  Future<int> rewriteGuestPaths(AppDatabase db, String userId) async {
-    final replacements = _pathReplacements(userId);
+  Future<int> rewriteGuestPaths(AppDatabase db, String userId) =>
+      _replaceInEveryTextColumn(db, _pathReplacements(userId));
+
+  /// [rewriteGuestPaths]'in tersi: hesap kökündeki medya yollarını misafir
+  /// köküne çevirir. Demote dosyaları taşıyor ama gövdelerdeki mutlak yollar
+  /// silinen `users/{id}/...` ağacını göstermeye devam ediyordu — portreler,
+  /// battle map arka planları ve mindmap resimleri kırık kalıyordu.
+  ///
+  /// DB **açıkken** ve [demoteAccountToGuest]'ten önce çağrılır.
+  Future<int> restoreGuestPaths(AppDatabase db, String userId) =>
+      _replaceInEveryTextColumn(
+        db,
+        [for (final (from, to) in _pathReplacements(userId)) (to, from)],
+      );
+
+  Future<int> _replaceInEveryTextColumn(
+    AppDatabase db,
+    List<(String, String)> replacements,
+  ) async {
     if (replacements.isEmpty) return 0;
 
     final tables = await db
