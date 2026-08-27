@@ -1161,3 +1161,10 @@ silinen entity diğerinde duruyorsa geri gelir.
   **Bilinçli sınır:** kalıcı yazma kuyruğu yok. Karakter/paylaşım yazmaları doğrudan gidiyor (LWW); çevrimdışıyken kaçan yazma dünya açılışındaki `pushOwnedCharacters` geçişinde kapanıyor. Kodda `ponytail:` yorumu ile işaretli.
 
   Güncellenen notlar: [[Sync-and-Realtime]], [[Multiplayer-and-Online]], [[Backend-Infra]], [[_Architecture-Overview]], [[Home]], [[Glossary]], [[drift_database]], [[tables-sync]], [[world_mirror_applier]], [[world_mirror_service]], [[world_sync_service]], [[pending_write_buffer]].
+
+## 2026-08-27 — Şifre sıfırlama (uygulama tarafı)
+- `auth_provider`: `resetPassword(email)` eklendi — `resetPasswordForEmail`, `redirectTo` yok; link hedefi mail şablonundan (`{{ .SiteURL }}/reset/?token_hash=…&type=recovery`) gelir, sıfırlama e-posta doğrulamayla aynı hosted sayfada tamamlanır (deep link / yeni Redirect URL yok).
+- `landing_screen`: giriş modunda "Şifremi unuttum" butonu + `_forgotPassword`. Hata olsun olmasın tek mesaj gösteriliyor (account enumeration). Form yalnızca `SupabaseConfig.isConfigured` iken çiziliyor, çevrimdışıda buton hiç yok.
+- l10n: `landingForgotPassword`, `landingInfoResetSent` (en/tr/de/fr).
+- **Repo dışında kalan adımlar** (bkz. `flutter_app/docs/password_reset_setup.md`): `elymsyr.github.io/reset/index.html`, custom SMTP (Brevo), Reset Password mail şablonu, parola politikası + OTP ömrü.
+- Güncellenen not: [[auth_provider]].

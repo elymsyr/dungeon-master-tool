@@ -8,6 +8,7 @@ import '../../../application/providers/guest_mode_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/utils/error_format.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
@@ -464,6 +465,16 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 : Text(_isSignUp ? l10n.landingSignUp : l10n.landingSignIn, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           ),
         ),
+        if (!_isSignUp)
+          Center(
+            child: TextButton(
+              onPressed: _loading ? null : _forgotPassword,
+              child: Text(
+                l10n.landingForgotPassword,
+                style: TextStyle(fontSize: 11, color: palette.featureCardAccent),
+              ),
+            ),
+          ),
         const SizedBox(height: 2),
         Center(
           child: TextButton(
@@ -558,6 +569,35 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   }
 
   // ── Auth logic ────────────────────────────────────────────────────
+
+  Future<void> _forgotPassword() async {
+    final l10n = L10n.of(context)!;
+    final email = _emailController.text.trim();
+    if (!email.contains('@') || !email.contains('.')) {
+      setState(() => _error = l10n.landingErrInvalidEmail);
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+    });
+    final error = await ref.read(authProvider.notifier).resetPassword(email);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      // Çevrimdışıysa mail hiç yola çıkmadı; "gönderildi" demek kullanıcıyı
+      // beklemeye mahkûm eder. Bunun dışında hata olsa da olmasa da aynı
+      // mesaj: aksi halde "bu e-posta kayıtlı mı" sorusu dışarıdan
+      // sorulabilir hale gelir (account enumeration).
+      if (error != null && isOfflineError(error)) {
+        _error = l10n.landingErrOffline;
+      } else {
+        _info = l10n.landingInfoResetSent;
+      }
+    });
+  }
 
   Future<void> _submit() async {
     final l10n = L10n.of(context)!;
