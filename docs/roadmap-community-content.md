@@ -70,7 +70,29 @@ bu iş için örnek teşkil eder.
 - Ses altyapısı için `soundpad_engine.dart` (SoLoud) ve session transport için
   `online-session-model.md` referans.
 
-## 8. Local Sync — tur iki
+## 8. Cross-world karakter import
+
+- Bir karakter başka bir world'e aitken, farklı bir world içine import edildiğinde
+  **görünecek** ancak zorunlu **copy** işlemi yapılacak.
+- Orijinal karakter değişmez; import edilen world'e bağımsız bir kopya olarak eklenir.
+- Bu sayede aynı karakter farklı world'lerde farklı versiyonlarıyla var olabilir.
+- **Gerekli:** import akışında copy zorunluluğu, karakterin world bağlamının
+  (background, location vb.) yeniden eşlenmesi.
+
+## 9. Free template oluşturma
+
+- Tüm dünyalarda **serbest kategori oluşturma** imkanı tanınır; kategoriler
+  mekaniklerden bağımsız olarak tanımlanabilir.
+- Her kategorinin içeriği (alanlar, düzen, gösterim) kullanıcı tarafından
+  özgürce düzenlenebilir.
+- Template, dünya içerisinden de düzenlenebilir; oluşturma sonrası esneklik
+  tanınır.
+- Bu özellik, DM'lere kendi içerik yapılarını (notlar, sahneler, NPC listeleri,
+  özel bölümler vb.) tanımlama serbestliği getirir.
+- **Gerekli:** şema esnekliği (dynamic fields), dünya-içi düzenleme UI'ı,
+  template yönetim ekranı.
+
+## 10. Local Sync — tur iki
 
 - **Silme ve yeniden adlandırma** Local Sync'te yayılmıyor (şu an yalnızca ekleme +
   güncelleme var). Düzeltilecek.
@@ -85,11 +107,13 @@ bu iş için örnek teşkil eder.
 |---|---|---|
 | 1 | Marketplace filtreleri (official + 18+) | Küçük, yüksek etki, bağımsız |
 | 2 | Battle map layer düzeltmesi | Bug düzeltmesi, net kapsam |
-| 3 | Local Sync tur iki (silme/rename + şifreleme) | Veri bütünlüğü + güvenlik |
-| 4 | Session model geçişi (`online-session-model.md`) | Büyük refactor, önce kararlar |
-| 5 | Ücretsiz içerik importu | Lisans doğrulama seri iş; kaynak var |
-| 6 | Built-in görseller (art_gen) | Pipeline hazır, üretim zamanı |
-| 7 | UI yeniden tasarımı | Büyük, sona bırakıldı (session ile çakışma) |
-| 8 | YouTube senkron müzik | Lisans netleşince |
+| 3 | Cross-world karakter import | Kullanıcı isteği, copy zorunluluğu ile veri bütünlüğü |
+| 4 | Free template oluşturma | Serbest içerik yapısı, düşük bağımlılık |
+| 5 | Local Sync tur iki (silme/rename + şifreleme) | Veri bütünlüğü + güvenlik |
+| 6 | Session model geçişi (`online-session-model.md`) | Büyük refactor, önce kararlar |
+| 7 | Ücretsiz içerik importu | Lisans doğrulama seri iş; kaynak var |
+| 8 | Built-in görseller (art_gen) | Pipeline hazır, üretim zamanı |
+| 9 | UI yeniden tasarımı | Büyük, sona bırakıldı (session ile çakışma) |
+| 10 | YouTube senkron müzik | Lisans netleşince |
 
 Faz sıralaması öneridir — büyük işler (4, 7) aynı anda yürütülmemeli.
