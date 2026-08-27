@@ -212,6 +212,23 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     }
   }
 
+  /// Şifre sıfırlama maili gönderir. Başarıda null döner.
+  /// Sıfırlama, e-posta doğrulamayla aynı hosted sayfada tamamlanır
+  /// (token_hash + verifyOtp) — deep link kullanılmaz. Link hedefi mail
+  /// şablonundan gelir, o yüzden redirectTo yok.
+  Future<String?> resetPassword(String email) async {
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      return null;
+    } on AuthException catch (e) {
+      debugPrint('Auth resetPassword failed (AuthException): ${e.message}');
+      return e.message;
+    } catch (e, st) {
+      debugPrint('Auth resetPassword failed (${e.runtimeType}): $e\n$st');
+      return e.toString();
+    }
+  }
+
   /// Sign in with an OAuth provider (Google, GitHub, etc.) via PKCE flow.
   /// Uses deep links on mobile and a local HTTP server on desktop.
   Future<String?> signInWithOAuth(OAuthProvider provider) async {

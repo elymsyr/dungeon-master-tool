@@ -5,7 +5,7 @@ path: flutter_app/lib/application/providers/auth_provider.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-06-09
+updated: 2026-08-27
 tags: [file]
 ---
 
@@ -23,7 +23,7 @@ tags: [file]
 
 **Outputs**
 - Providers exposed: `authProvider` → `StateNotifierProvider<AuthNotifier, AuthState?>`.
-- Public API: `signUp(email,pw)`, `signIn(email,pw)`, `signInWithOAuth(provider)`, `signOut()`, `checkBanStatus()`, `banMessageNotifier` (ValueNotifier<String?>).
+- Public API: `signUp(email,pw)`, `signIn(email,pw)`, `resetPassword(email)`, `signInWithOAuth(provider)`, `signOut()`, `checkBanStatus()`, `banMessageNotifier` (ValueNotifier<String?>).
 - Supabase RPC called: `am_i_banned`.
 
 ## Dependencies & Links
@@ -37,6 +37,7 @@ tags: [file]
 - If `!SupabaseConfig.isConfigured`, the notifier stays inert (state always `null`) — app runs fully offline.
 - **Init**: restores `currentSession` if present (and runs a startup ban check), then subscribes to `onAuthStateChange`. The `onError` handler is critical — without it a stream error (e.g. failed deep-link exchange) would cancel the sub permanently.
 - **Ban enforcement**: `checkBanStatus()` calls `am_i_banned` RPC; if banned returns a message (with optional reason) — does NOT sign out. `_enforceBanCheck()` runs on startup restore, every sign-in/token-refresh, and signs out + `clearCache()` + sets `banMessageNotifier` (landing screen shows the dialog after the unauth transition — single UX point).
+- **Şifre sıfırlama**: `resetPassword(email)` → `resetPasswordForEmail`, `redirectTo` **yok**. Link hedefi Supabase mail şablonundan gelir (`{{ .SiteURL }}/reset/?token_hash=…&type=recovery`) ve sıfırlama, e-posta doğrulamayla aynı hosted sayfada (`token_hash` + `verifyOtp`) tamamlanır — deep link yok, yeni Redirect URL yok. Çağıran (`landing_screen._forgotPassword`) dönen hatayı bilerek yutar: aksi halde buton "bu e-posta kayıtlı mı" oracle'ına dönüşür. Kurulum: `flutter_app/docs/password_reset_setup.md`.
 - **OAuth**: `signInWithOAuth` branches by platform:
   - Mobile (`_signInWithOAuthMobile`): `getOAuthSignInUrl(redirectTo: _authRedirect)`, subscribes to `onAuthStateChange` BEFORE launching the browser, waits on a `Completer`. On app resume, an 8-second grace period; if no `signedIn` event arrives, completes with the `oauthDeepLinkTimeout` sentinel (`__OAUTH_DEEP_LINK_TIMEOUT__`) for the UI to localize. supabase_flutter handles the PKCE code exchange via its deep-link handler.
   - Desktop (`_signInWithOAuthDesktop`): binds an ephemeral `localhost:0` HTTP server, uses `http://localhost:<port>/auth/callback` as redirect, catches the `?code`, serves a styled success HTML page, then `exchangeCodeForSession(code)`.
