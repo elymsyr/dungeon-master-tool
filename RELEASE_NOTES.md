@@ -1,5 +1,81 @@
 # Release Notes
 
+## Dungeon Master Tool v14.3.0 — Account Deletion, Password Reset, Cross-World Import (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.3.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+You can now delete your account and all associated data directly from Settings. When you do, your local worlds, characters, and packages stay on your device as a guest — only the cloud account and remote data are removed. Password reset via email is also in, and you can import characters across worlds and create free templates. A security audit of the deletion flow fixed several edge cases around ownership checks, storage pagination, and reauthentication.
+
+---
+
+### Highlights
+
+- **Self-service account deletion** — Delete your account and all cloud data from a single button in Settings, with a confirmation dialog and password reauthentication.
+- **Local data survives account deletion** — Your worlds, characters, and packages remain on your device as a guest after account deletion.
+- **Password reset** — Reset your password via email verification; the flow works for both email/password and OAuth-linked accounts.
+- **Cross-world character import** — Import characters from one world into another.
+- **Free template creation** — Create character templates without needing a paid plan.
+
+---
+
+### Account & Security
+
+#### Self-service account and data deletion
+
+A new **Delete Account** button sits at the bottom of the Settings tab (only visible when logged in). Tapping it opens a confirmation dialog that requires typing your email address and, for password-based accounts, re-entering your password. The deletion proceeds in order: Supabase Storage objects, R2 objects via worker, `delete_my_account()` RPC, then sign-out and local data demotion.
+
+#### Local data preserved after deletion
+
+When your account is deleted, your local `users/{uid}` tree is not destroyed — it is moved to the guest root. You can continue using the app as a guest with all your worlds, characters, and packages intact on that device. The account slot becomes available for re-registration.
+
+#### Password reset
+
+A **Forgot Password?** link on the login screen sends a verification email. The reset flow works for both email/password accounts and OAuth-linked accounts (where email entry is the sole gate).
+
+---
+
+### Characters
+
+#### Cross-world character import
+
+You can now import a character from one world into another. The character is copied with its stats, equipment, and notes — the original remains untouched in its source world.
+
+#### Free template creation
+
+Character templates can now be created without a paid plan, making it easier to share builds with your group.
+
+---
+
+### Bug fixes
+
+- **Account deletion ownership** — `delete_my_account()` no longer deletes world characters belonging to other DMs; uses the same claim/release state machine as kick/leave.
+- **Storage purge pagination** — The storage scan now pages through all objects instead of stopping at 100, preventing orphaned cloud data for users with large media libraries.
+- **Reauthentication requirement** — Account deletion now requires fresh password verification for password-based accounts, preventing abuse from stolen sessions.
+- **Local media paths after deletion** — Guest media paths are now correctly remapped to the guest root instead of using absolute paths.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.2.0` → `14.3.0`.
+- **In-app migrations:** None. No schema changes.
+- **Cloud migrations:** 083–085 (account deletion RPC, cascade fixes, marketplace cleanup). Required for online features; purely local usage unaffected.
+
+---
+
+### Known issues
+
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision still needs resolver wiring; Tier-4 combat-tracker-dependent effects remain unimplemented.
+- **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.2.0 — Vertical Era Bar, World Map Pinning, Battle Map Fixes, Performance (Beta)
 
 **Release date:** August 2026
