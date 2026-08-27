@@ -5,7 +5,7 @@ path: flutter_app/lib/application/services/guest_promotion_service.dart
 layer: application
 language: dart
 status: stable
-updated: 2026-08-15
+updated: 2026-08-27
 tags: [file]
 ---
 
@@ -129,6 +129,9 @@ Testler: `guest_promotion_service_test.dart` içinde **`a second life`** grubu (
 - **Buluta itiş:** `activate` artık soğurma olduğunda `BetaEnterGate.clear(userId)` çağırır — aksi halde bu cihazda daha önce giriş yapmış bir hesabın sentinel'i set olduğu için `BetaEnterMergeService` yeni gelen satırları hiç itmezdi.
 - **O5'in ikinci yarısı — terfiden *sonra* açılan misafir alanı.** O4'ün emekliliği `db/dmt.sqlite`'ı arşive taşıdığı için "burada veritabanı yok" artık **rutin** bir durum; `_openConnectionForUser`'daki iki kontrol bunu "temiz kurulum" diye okuyup eski bir DB'yi dirilttti: (a) pre-Apr-2026 support-dizini içe aktarımının tek koruması `!newFile.existsSync()`'ti, (b) v12 kesimi de `.v12_cut_applied` zaten dizinde olduğu için gelen dosyaya dokunmadı. Ölçüm: çıkış sonrası misafir alanı **şema v5** bir dosyayla açıldı (`map_pins.campaign_id`, `world_id` yok) → `onUpgrade` → `createAll()` eski tabloları bıraktı → ilk index deyimi `no such column: world_id` fırlattı ve hub dünya listesi yerine SqliteException gösterdi. İki kural eklendi: içe aktarım **tek seferlik** (kesim işaretçisi varsa veya legacy dizinde `.moved_to_dataroot` makbuzu varsa atlanır) ve kesim artık işaretçiye değil **dosyanın kendi `user_version`'ına** da bakıyor — SQLite başlığının 60. baytından okunuyor, `sqlite3` handle'ı gerektirmiyor (bu katmanda dev-only bağımlılık). Test: `test/data/database/pre_v12_file_guard_test.dart`; mutasyonla doğrulandı, koruma kapatıldığında test tam da kullanıcının gördüğü hatayla düşüyor. Bkz. [[drift_database]].
 - **Gerçek veriyle doğrulandı:** kullanıcının iki DB'si geçici bir köke kopyalanıp akış tekrar koşuldu → `mergedIntoAccountDatabase`, **25 satır** merge, hesapta `dasd` dünyası ve 1 karakter.
+
+### Ters yön — `demoteAccountToGuest` (2026-08-27)
+Hesap silme ([[account_deletion_service]]) yerel ağacı silmiyor, misafir köküne **geri veriyor** — terfinin simetriği. Üç adım: (1) `retireClaimedGuestTree()` kökteki bayat kopyayı arşive alır **ve talebi düşürür** — bu sıra zorunlu, aksi halde `deactivate()`'in ikinci emekliliği az önce taşınan taze veriyi arşivler; (2) `db/` (WAL çifti dahil) + medya alt ağaçları köke taşınır, üzerine hiçbir zaman yazılmaz — kökte talep edilmemiş bir DB duruyorsa o da arşive park edilir; `.v12_cut_applied` işaretçisi taşınan DB'nin yanına yazılır, yoksa bir sonraki açılış onu pre-v12 sanıp `.legacy`'ye alır (O4'ün bulduğu hatanın aynısı); (3) kalan hesap kökü (`cache/`, sentinel'ler) silinir. Talep ve nesil düştüğü için alan **yeniden devredilebilir** hale gelir. Testler: `the account goes away but the device keeps the work` grubu (2 vaka).
 
 ## Notes
 - Yerini aldığı `_migrateGlobalDataIfNeeded` yalnız `worlds/` ve `packages/` kopyalıyordu; **`characters/` listede hiç yoktu** — dokümanın adlandırmadığı üçüncü boşluk. Üçü de artık gidiyor.

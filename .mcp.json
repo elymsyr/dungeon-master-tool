@@ -5,10 +5,6 @@
       "command": "codebase-memory-mcp",
       "args": [],
       "env": {}
-    },
-    "supabase": {
-      "type": "http",
-      "url": "https://mcp.supabase.com/mcp"
     }
   }
 }

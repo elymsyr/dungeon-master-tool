@@ -637,9 +637,9 @@
   "signOutLocalDataNote": "Ihre Welten, Charaktere und Pakete bleiben in Ihrem Konto und sind bei der nächsten Anmeldung wieder da. Der Offline-Arbeitsbereich auf diesem Gerät beginnt leer.",
   "deleteAccount": "Konto löschen",
   "deleteAccountConfirmTitle": "Konto löschen?",
-  "deleteAccountConfirmBody": "Dies löscht Ihr Konto und alles damit Verbundene endgültig: Profil, Beiträge, Marktplatz-Angebote, geteilte Welten, hochgeladene Medien und die lokalen Daten dieses Kontos auf diesem Gerät. Das kann nicht rückgängig gemacht werden.",
+  "deleteAccountConfirmBody": "Dies löscht Ihr Konto und alles online Gespeicherte endgültig: Profil, Beiträge, Marktplatz-Angebote, geteilte Welten und hochgeladene Medien. Ihre lokalen Daten bleiben auf diesem Gerät — melden Sie sich danach als Gast an, um damit weiterzuarbeiten. Das Konto selbst kann nicht wiederhergestellt werden.",
   "deleteAccountFailed": "Konto konnte nicht gelöscht werden: {error}",
-  "deleteAccountSuccess": "Ihr Konto und Ihre Daten wurden gelöscht.",
+  "deleteAccountSuccess": "Ihr Konto wurde gelöscht. Ihre lokalen Daten sind weiterhin auf diesem Gerät — fahren Sie als Gast fort.",
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },

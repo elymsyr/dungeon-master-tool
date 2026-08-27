@@ -3,13 +3,14 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
-import '../providers/user_session_provider.dart';
+import '../../data/database/database_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_session_provider.dart';
+import 'guest_promotion_service.dart';
 
 /// Cloudflare Worker base URL — network_providers.dart ile aynı define.
 const String _workerBaseUrl = String.fromEnvironment('DMT_WORKER_URL');
@@ -49,22 +50,31 @@ Future<String> deleteCloudAccountData(WidgetRef ref) async {
   return uid;
 }
 
-/// Oturumu kapatır ve silinen hesabın yerel ağacını (`users/{uid}`) siler.
-/// Hata yutulur — hesap bulutta zaten yok, dosyaları kimse okumaz.
+/// Yerel ağacı misafir köküne geri verir ve oturumu kapatır.
+///
+/// **Yerel veri silinmez.** Hesabın bulut tarafı gitti, ama diskteki dünyalar
+/// / karakterler / paketler kullanıcının kendi makinesinde: hesabını silen biri
+/// aynı cihazda misafir olarak girip kaldığı yerden devam edebilmeli. Devir
+/// (`GuestPromotionService.copyIntoAccount`) ne yaptıysa
+/// [GuestPromotionService.demoteAccountToGuest] onu geri alır.
+///
+/// Hata yutulur: taşıma başarısızsa ağaç `users/{uid}` altında olduğu gibi
+/// kalır — kullanıcı ona ulaşamaz ama hiçbir şey kaybolmaz.
 Future<void> finishAccountDeletion(WidgetRef ref, String uid) async {
-  // DB'yi önce kapat: provider misafir köküne dönerken eski dosya kolunu
-  // bırakır, ancak ondan sonra dizin silinebilir (Windows kilitli dosyayı
-  // sildirmez). signOut'un hub listener'ı deactivate'i tekrar çağırırsa
-  // zararsız — idempotent.
+  try {
+    // Taşımadan önce DB kapanmalı (WAL çifti de taşınıyor). `deactivate()`
+    // misafir köküne dönerken yeni DB'yi açtığı için taşıma ondan **önce**
+    // bitmeli — aksi halde açılan boş dosya taşınacak olanın yerini alır.
+    await ref.read(appDatabaseProvider).close();
+    final report = await GuestPromotionService(dataRoot: AppPaths.dataRoot)
+        .demoteAccountToGuest(uid);
+    debugPrint('Account tree handed back to guest: $report');
+  } catch (e, st) {
+    debugPrint('Account tree handback failed: $e\n$st');
+  }
+
   await ref.read(userSessionProvider.notifier).deactivate();
   await ref.read(authProvider.notifier).signOut();
-
-  try {
-    final dir = Directory(p.join(AppPaths.dataRoot, 'users', uid));
-    if (await dir.exists()) await dir.delete(recursive: true);
-  } catch (e) {
-    debugPrint('Local user tree delete failed: $e');
-  }
 }
 
 /// Bucket başına `{uid}/` klasörünü listeleyip siler.

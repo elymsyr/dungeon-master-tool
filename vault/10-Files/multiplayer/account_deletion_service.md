@@ -24,7 +24,7 @@ tags: [file]
 - Supabase Storage: `avatars`, `post-images`, `shared-payloads`, `free-media` bucket'larında `{uid}/` klasörünün silinmesi (kullanıcının kendi owner-delete RLS'i ile).
 - Worker `POST /admin/purge-user` (kendi JWT'si ile) → R2'de `{uid}/` + `transient/{uid}/`.
 - RPC `delete_my_account()` → `auth.users` satırı.
-- Yerel `dataRoot/users/{uid}/` ağacının silinmesi + oturum kapatma.
+- Yerel `dataRoot/users/{uid}/` ağacının **misafir köküne taşınması** (`GuestPromotionService.demoteAccountToGuest`) + oturum kapatma.
 
 ## Dependencies & Links
 - Depends on: [[auth_provider]], [[user_session_provider]], [[worker]], [[rpc-reference]] (`delete_my_account`, migration **083** + **084** düzeltmesi).
@@ -32,7 +32,8 @@ tags: [file]
 - Domain map: [[Multiplayer-and-Online]] · [[Backend-Infra]]
 
 ## Key Logic / Variables
-- **Sıra sözleşmesi:** bulut objeleri → RPC → sign-out → yerel ağaç.
+- **Sıra sözleşmesi:** bulut objeleri → RPC → yerel ağacın devri → sign-out.
+- **Yerel veri silinmez, geri verilir.** Ürün kararı: hesabını silen kullanıcı aynı cihazda misafir olarak kaldığı yerden devam edebilmeli. Diskteki dünyalar onun kendi makinesinde; silinen şey hesap ve bulut tarafı. Devrin tersi [[guest_promotion_service]] `demoteAccountToGuest` içinde. Sıra kritik: `deactivate()` misafir köküne dönerken yeni bir DB açıyor, o yüzden taşıma ondan **önce** ve DB kapalıyken bitmeli.
 - **Neden iki fonksiyon:** `signOut` hub listener'ı üzerinden landing'e navigate ediyor. Tek fonksiyon olduğunda çağıranın ilerleme dialog'u o sırada hâlâ açıktı ve dispose edilen Navigator'da pop edilince `!_debugLocked` assert'i düşüyordu. Dialog artık iki çağrının **arasında** kapanıyor. Hesap satırı düştükten sonra kullanıcının JWT'si ile yapılabilecek hiçbir temizlik kalmaz; storage/R2 sonraya bırakılırsa sahipsiz kalır.
 - 1–3 arasındaki hata **yukarı fırlar** (dialog snackbar'da gösterir, kullanıcı tekrar dener — hiçbiri kısmi silme bırakmaz: obje silme idempotent, RPC hiç çalışmamıştır). 4'teki yerel silme hatası **yutulur** — hesap zaten yok.
 - **DB önce kapatılır:** `deactivate()` `activeUserIdProvider`'ı null'a çeker, `appDatabaseProvider` yeniden kurulurken eski `AppDatabase` kapanır; ancak ondan sonra `users/{uid}` dizini silinebilir (Windows açık dosyayı sildirmez). `signOut` sonrası hub listener'ının tekrar çağırdığı `deactivate` zararsız/idempotent.

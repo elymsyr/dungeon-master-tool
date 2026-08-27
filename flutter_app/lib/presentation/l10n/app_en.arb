@@ -682,9 +682,9 @@
   "signOutLocalDataNote": "Your worlds, characters and packages stay in your account and come back the next time you sign in. The offline workspace on this device starts empty.",
   "deleteAccount": "Delete Account",
   "deleteAccountConfirmTitle": "Delete your account?",
-  "deleteAccountConfirmBody": "This permanently deletes your account and everything tied to it: profile, posts, marketplace listings, shared worlds, uploaded media and the local data of this account on this device. This cannot be undone.",
+  "deleteAccountConfirmBody": "This permanently deletes your account and everything stored online: profile, posts, marketplace listings, shared worlds and uploaded media. Your local data stays on this device — sign in as a guest afterwards to keep working with it. The account itself cannot be recovered.",
   "deleteAccountFailed": "Account deletion failed: {error}",
-  "deleteAccountSuccess": "Your account and data have been deleted.",
+  "deleteAccountSuccess": "Your account has been deleted. Your local data is still on this device — continue as a guest.",
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
