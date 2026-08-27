@@ -799,5 +799,60 @@ void main() {
       expect((await service.retireClaimedGuestTree()).movedAnything, isFalse);
       expect(guestDb().existsSync(), isTrue);
     });
+
+    test('the characters stay visible as guest', () async {
+      // Rapor: "world ve package kaldı ama karakterler gitti". Kalmışlardı —
+      // silinmiş bir uid'e ait oldukları için own-only sekme onları
+      // göstermiyordu.
+      await seedGuestDatabase();
+      await promote();
+      await withAccountDatabase((db) async {
+        await db.into(db.worldCharacters).insert(
+              WorldCharactersCompanion.insert(
+                id: 'c2',
+                worldId: 'w1',
+                templateId: 'dnd5e',
+                templateName: 'D&D 5e',
+                ownerId: const Value(_userId),
+              ),
+            );
+        // Terfi sırasında sahiplenilen misafir karakteri + bu satır.
+        expect(await service.releaseAccountCharacters(db, _userId), 2);
+      });
+
+      await service.demoteAccountToGuest(_userId);
+
+      final db = openTestDatabaseAt(guestDb());
+      try {
+        final rows = await db.select(db.worldCharacters).get();
+        expect({for (final r in rows) r.ownerId}, {null},
+            reason: 'misafirde yalnız sahipsiz satır kullanıcınındır');
+      } finally {
+        await db.close();
+      }
+    });
+
+    test('the media paths point back at the guest root', () async {
+      await seedGuestDatabase();
+      await seedGuestMedia();
+      await promote();
+
+      final restored = await withAccountDatabase(
+          (db) => service.restoreGuestPaths(db, _userId));
+      expect(restored, 2, reason: 'image_path + fields_json portresi');
+
+      await service.demoteAccountToGuest(_userId);
+
+      final db = openTestDatabaseAt(guestDb());
+      try {
+        final entity = (await db.select(db.worldEntities).get()).single;
+        expect(entity.imagePath, startsWith(guestWorldsDir()));
+        expect(entity.imagePath, isNot(contains('users')));
+        expect(File(entity.imagePath).existsSync(), isTrue,
+            reason: 'yol taşınan dosyayı göstermeli');
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

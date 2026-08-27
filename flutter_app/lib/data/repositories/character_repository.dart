@@ -99,8 +99,8 @@ class CharacterRepository {
     final newJson = Map<String, dynamic>.from(json)
       ..['id'] = newId
       ..['entity'] = entity
-      ..['created_at'] = now
-      ..['updated_at'] = now;
+      ..['createdAt'] = now
+      ..['updatedAt'] = now;
 
     final newChar = Character.fromJson(newJson);
     await save(newChar);
@@ -186,16 +186,23 @@ class CharacterRepository {
       throw StateError('Corrupt payload_json for character ${row.id}');
     }
     // Column values are canonical; payload values fill in everything else.
+    //
+    // Anahtarlar **camelCase**: `Character.fromJson` json_serializable'ın
+    // varsayılan adlandırmasını kullanıyor (`ownerId`, `worldId`, ...), snake
+    // yazıldıklarında bu satırların hiçbiri okunmuyor ve `...payload` içindeki
+    // bayat kopya kazanıyordu — hesap silinip sahiplik kolonda düşürüldüğünde
+    // karakterler hâlâ silinmiş uid'e ait görünüyor, own-only sekmede
+    // kayboluyordu.
     return {
       ...payload,
       'id': row.id,
-      'template_id': row.templateId,
-      'template_name': row.templateName,
-      'world_id': row.worldId.isEmpty ? null : row.worldId,
-      'owner_id': row.ownerId,
-      'updated_at': row.updatedAt.toUtc().toIso8601String(),
-      'created_at': payload['created_at'] is String
-          ? payload['created_at']
+      'templateId': row.templateId,
+      'templateName': row.templateName,
+      'worldId': row.worldId.isEmpty ? null : row.worldId,
+      'ownerId': row.ownerId,
+      'updatedAt': row.updatedAt.toUtc().toIso8601String(),
+      'createdAt': payload['createdAt'] is String
+          ? payload['createdAt']
           : row.createdAt.toUtc().toIso8601String(),
     };
   }

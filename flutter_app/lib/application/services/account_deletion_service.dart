@@ -46,7 +46,12 @@ Future<String> deleteCloudAccountData(WidgetRef ref) async {
 
   await _purgeStorage(client, uid);
   await _purgeR2(uid, token);
-  await client.rpc('delete_my_account');
+  // Dönüş değeri kontrol edilir: RPC `auth.uid()` NULL ise sessizce FALSE
+  // döner — bunu yutmak, hiçbir şey silinmemişken hesabı silinmiş sanmaktır.
+  final deleted = await client.rpc('delete_my_account');
+  if (deleted != true) {
+    throw StateError('delete_my_account returned $deleted');
+  }
   return uid;
 }
 
@@ -61,13 +66,29 @@ Future<String> deleteCloudAccountData(WidgetRef ref) async {
 /// Hata yutulur: taşıma başarısızsa ağaç `users/{uid}` altında olduğu gibi
 /// kalır — kullanıcı ona ulaşamaz ama hiçbir şey kaybolmaz.
 Future<void> finishAccountDeletion(WidgetRef ref, String uid) async {
+  final guest = GuestPromotionService(dataRoot: AppPaths.dataRoot);
+  try {
+    // Karakterlerin sahipliği DB kapanmadan düşer: hub'ın karakter sekmesi
+    // own-only, silinmiş bir uid'e ait satır misafirde hiçbir ekranda
+    // görünmez (bkz. releaseAccountCharacters).
+    final released =
+        await guest.releaseAccountCharacters(ref.read(appDatabaseProvider), uid);
+    debugPrint('Characters released to guest ownership: $released');
+    // Gövdelerdeki mutlak medya yolları hâlâ `users/{uid}/...` gösteriyor;
+    // demote dosyaları taşıyor, bu da kayıtları peşinden çeviriyor.
+    final paths =
+        await guest.restoreGuestPaths(ref.read(appDatabaseProvider), uid);
+    debugPrint('Media paths pointed back at the guest root: $paths');
+  } catch (e) {
+    debugPrint('Character release / path restore failed: $e');
+  }
+
   try {
     // Taşımadan önce DB kapanmalı (WAL çifti de taşınıyor). `deactivate()`
     // misafir köküne dönerken yeni DB'yi açtığı için taşıma ondan **önce**
     // bitmeli — aksi halde açılan boş dosya taşınacak olanın yerini alır.
     await ref.read(appDatabaseProvider).close();
-    final report = await GuestPromotionService(dataRoot: AppPaths.dataRoot)
-        .demoteAccountToGuest(uid);
+    final report = await guest.demoteAccountToGuest(uid);
     debugPrint('Account tree handed back to guest: $report');
   } catch (e, st) {
     debugPrint('Account tree handback failed: $e\n$st');
@@ -77,17 +98,35 @@ Future<void> finishAccountDeletion(WidgetRef ref, String uid) async {
   await ref.read(authProvider.notifier).signOut();
 }
 
-/// Bucket başına `{uid}/` klasörünü listeleyip siler.
-// ponytail: klasör tek seviye taranır — bugün tüm yükleyiciler `{uid}/{sha}.{ext}`
-// yazıyor. İç içe path'li bir bucket eklenirse burası recursive olmalı.
+/// Kullanıcının `{uid}/` prefix'i altındaki her objeyi siler.
+///
+/// Klasör klasör iner: `shared-payloads` içinde marketplace payload'ları
+/// `{uid}/listings/{id}.json.gz` yolunda duruyor, tek seviye tarayan ilk hâli
+/// bunları hiç görmüyordu (`list` klasörü `id == null` olan bir girdi olarak
+/// döndürüyor, `remove` ona dokunmuyordu).
+// ponytail: sayfa başına 100 obje (Supabase list varsayılanı) — bir kullanıcı
+// tek klasörde bundan fazlasını biriktirirse burada sayfalama gerekir.
 Future<void> _purgeStorage(SupabaseClient client, String uid) async {
   for (final bucket in _ownedBuckets) {
-    final files = await client.storage.from(bucket).list(path: uid);
-    if (files.isEmpty) continue;
-    await client.storage
-        .from(bucket)
-        .remove([for (final f in files) '$uid/${f.name}']);
+    await _purgeStorageFolder(client, bucket, uid);
   }
+}
+
+Future<void> _purgeStorageFolder(
+  SupabaseClient client,
+  String bucket,
+  String path,
+) async {
+  final entries = await client.storage.from(bucket).list(path: path);
+  final files = <String>[];
+  for (final entry in entries) {
+    if (entry.id == null) {
+      await _purgeStorageFolder(client, bucket, '$path/${entry.name}');
+    } else {
+      files.add('$path/${entry.name}');
+    }
+  }
+  if (files.isNotEmpty) await client.storage.from(bucket).remove(files);
 }
 
 /// Worker `/admin/purge-user` — kullanıcı kendi JWT'siyle kendi prefix'ini
