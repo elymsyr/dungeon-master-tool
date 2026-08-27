@@ -646,6 +646,12 @@
   "@deleteAccountFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "deleteAccountConfirmEmailLabel": "Saisissez {email} pour confirmer",
+  "@deleteAccountConfirmEmailLabel": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "deleteAccountPasswordLabel": "Mot de passe actuel",
+  "deleteAccountReauthFailed": "Mot de passe incorrect.",
   "settingsVolume": "Volume",
   "settingsData": "Données",
   "settingsTrash": "Corbeille",
