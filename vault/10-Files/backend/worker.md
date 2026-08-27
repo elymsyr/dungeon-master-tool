@@ -5,7 +5,7 @@ path: cloudflare/src/worker.ts
 layer: backend
 language: typescript
 status: stable
-updated: 2026-06-09
+updated: 2026-08-27
 tags: [file]
 ---
 
@@ -34,13 +34,13 @@ tags: [file]
 - Spec / reference: [[migrations-security]]
 
 ## Key Logic / Variables
-- **Routing** (`handleRequest`): `OPTIONS`→CORS 204; `/transient/evict-sweep`, `/admin/purge-all`, `/admin/purge-user` (admin-gated POST); `/catalog/{key}` (public GET, admin PUT/DELETE); `/assets/{key}` (JWT-gated GET/PUT/DELETE). Key sanitized against `..`, leading `/`, `//`.
+- **Routing** (`handleRequest`): `OPTIONS`→CORS 204; `/transient/evict-sweep`, `/admin/purge-all` (admin-gated POST), `/admin/purge-user` (admin token **or** self JWT); `/catalog/{key}` (public GET, admin PUT/DELETE); `/assets/{key}` (JWT-gated GET/PUT/DELETE). Key sanitized against `..`, leading `/`, `//`.
 - **Auth**: `/assets/*` requires `Bearer` JWT verified by `verifyJwt`; `payload.sub` becomes `userId`. Admin routes use `checkAdminAuth` — constant `ADMIN_TOKEN` Bearer (rejects if token < 16 chars).
 - **Download** (`handleDownload`): rate-limit (`dl`) → RLS. `transient/{uploaderId}/...` keys use `checkTransientAccess(userId, uploaderId)`; all other keys use `checkAssetAccess(userId, r2Key)`. On allow, streams R2 object with `Cache-Control: private, max-age=604800` and `X-Content-SHA256`.
 - **Upload** (`handleUpload`): prefix must equal `transient/{userId}/` (transient) or `{userId}/` (permanent) else `403 prefix_mismatch`. Rate-limit (`ul`). Size limit = `min(MAX_UPLOAD_BYTES, KIND_MAX_BYTES[X-Asset-Kind])`; unknown kind falls back to the global ceiling, never exceeds it. **Permanent only**: quota check via `checkAssetQuota`, where asset effective limit = `USER_QUOTA_BYTES - ASSET_QUOTA_RESERVE_BYTES (4 MB)` (reserve kept for cloud backups). Transient skips quota. MIME allowlist: `image/*`, `audio/*`, plus exact `application/gzip`, `application/octet-stream`. `X-Content-SHA256` must be 64 hex chars. Stores `customMetadata`: uploader, sha256, `transient:'true'` if transient.
 - **`KIND_MAX_BYTES`**: portrait/cover/entity-image/extra-image/mind_map = 4 MB; `battle_map` = 10 MB. Must stay in sync with Flutter `MediaKind`.
 - **Catalog** (`handleCatalog`): GET is public, per-IP rate-limited (`cat`, `CATALOG_GET_LIMIT_PER_HOUR` default 600). `manifest.json` cached 120 s; versioned payloads `public, max-age=31536000, immutable`. PUT/DELETE need `ADMIN_TOKEN`. Objects live under `catalog/` prefix.
-- **Maintenance**: `handleTransientEvictSweep` pops up to 500 (clamp) rows from `transient_evict_pop`, deletes R2 keys `transient/{uploader}/{sha}{ext}`. `handleAdminPurgeAll` cursor-paginates R2 (5 pages × 1000/invocation, batch-200 parallel delete), `?dry=1` counts only, returns `next_cursor`. `handleAdminPurgeUser` sweeps two prefixes `{userId}/` and `transient/{userId}/` (UUID rough-validated `[0-9a-fA-F-]{20,64}`).
+- **Maintenance**: `handleTransientEvictSweep` pops up to 500 (clamp) rows from `transient_evict_pop`, deletes R2 keys `transient/{uploader}/{sha}{ext}`. `handleAdminPurgeAll` cursor-paginates R2 (5 pages × 1000/invocation, batch-200 parallel delete), `?dry=1` counts only, returns `next_cursor`. `handleAdminPurgeUser` sweeps two prefixes `{userId}/` and `transient/{userId}/` (UUID rough-validated `[0-9a-fA-F-]{20,64}`). Auth burada iki kapılı: `ADMIN_TOKEN` **veya** `sub == body.user_id` olan bir kullanıcı JWT'si — hesap silme akışı istemciden çağırdığı için (admin token'ı istemciye inmez), başkasının prefix'i `403 forbidden`. Body önce parse edilir ki JWT'nin `sub`'ı doğrulanacak id ile karşılaştırılabilsin. Çağıran: [[account_deletion_service]].
 
 ## Notes
 - Worker is the enforcement point for the **counted/transient** media tiers; the **free** tier goes directly to Supabase Storage and never touches this Worker (see [[migrations-media-storage]]).

@@ -1,7 +1,7 @@
 ---
 type: moc
 domain: multiplayer
-updated: 2026-08-24
+updated: 2026-08-27
 tags: [moc]
 ---
 
@@ -23,6 +23,7 @@ tags: [moc]
 - [[world_join_service]] — accept invite → membership.
 - [[character_claim_service]] — claim/release a PC from the pool.
 - [[auth_provider]] — Supabase auth state.
+- [[account_deletion_service]] — hesabı + tüm veriyi tek eylemde siler (storage/R2 → `delete_my_account()` RPC → sign-out → yerel ağaç).
 - [[route_access]] — rota başına "bu hesap ister mi" kararı (O1); misafir yerel her ekrana girer, yalnız `/profile` ve `/admin` kapalıdır.
 - [[guest_mode_provider]] — "hesapsız devam et" seçiminin kalıcılığı (O1).
 - [[account_gate]] — "bu yüzey hesap ister mi" tek yüklemi + yüzey tablosu (O2); misafir/offline-build/oturumlu üç durumu adlandırır.
