@@ -163,11 +163,20 @@ class BattleMapPainter extends CustomPainter {
     final liveCurrentColor = notifier.currentColor;
     final liveCurrentWidth = notifier.currentWidth;
     final liveCurrentIsErase = notifier.currentIsErase;
+    final liveCurrentLayer = notifier.currentLayer;
+
+    // Only paint background-layer strokes here; object+GM are in foreground.
+    final bgStrokes = [
+      for (final s in mapState.strokes)
+        if (s.layer == ShapeLayer.background) s,
+    ];
+    final showLiveStroke = liveCurrentPath != null &&
+        liveCurrentLayer == ShapeLayer.background;
 
     // Only need saveLayer when erase strokes are present (BlendMode.clear
     // requires compositing within an offscreen layer).
     final hasErase =
-        mapState.strokes.any((s) => s.isErase) || liveCurrentIsErase;
+        bgStrokes.any((s) => s.isErase) || (showLiveStroke && liveCurrentIsErase);
 
     if (hasErase) {
       canvas.saveLayer(bounds, Paint());
@@ -185,8 +194,8 @@ class BattleMapPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // Committed strokes (since last save)
-    for (final stroke in mapState.strokes) {
+    // Committed background-layer strokes
+    for (final stroke in bgStrokes) {
       strokePaint
         ..color = stroke.isErase ? Colors.transparent : stroke.color
         ..blendMode = stroke.isErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
@@ -194,8 +203,8 @@ class BattleMapPainter extends CustomPainter {
       canvas.drawPath(stroke.path, strokePaint);
     }
 
-    // In-progress stroke
-    if (liveCurrentPath != null) {
+    // In-progress stroke (only if on background layer)
+    if (showLiveStroke) {
       strokePaint
         ..color = liveCurrentIsErase ? Colors.transparent : liveCurrentColor
         ..blendMode =
@@ -258,9 +267,13 @@ class BattleMapPainter extends CustomPainter {
 
   void _paintMeasurements(Canvas canvas, ViewTransform vt) {
     final rule = diagonalRuleFromInt(mapState.diagonalRule);
+    // Only paint background-layer measurements here; object+GM are in foreground.
     final all = [
-      ...mapState.persistentMeasurements,
-      if (mapState.activeMeasurement != null) mapState.activeMeasurement!,
+      for (final m in mapState.persistentMeasurements)
+        if (m.layer == ShapeLayer.background) m,
+      if (mapState.activeMeasurement != null &&
+          mapState.activeMeasurement!.layer == ShapeLayer.background)
+        mapState.activeMeasurement!,
     ];
 
     for (final m in all) {
@@ -467,10 +480,11 @@ void paintShapeList(
   }
 }
 
-/// DM-only foreground painter: object + GM vector shapes + the live shape draft,
-/// drawn in screen-space ABOVE the token widget layer (so object shapes sit
-/// over tokens, matching the player's single-canvas z-order). GM shapes are
-/// never sent to a player, so showing them here is DM-only by construction.
+/// DM-only foreground painter: object + GM vector shapes, strokes, measurements,
+/// and the live shape/stroke draft, drawn in screen-space ABOVE the token widget
+/// layer (so object content sits over tokens, matching the player's single-canvas
+/// z-order). GM content is never sent to a player, so showing it here is
+/// DM-only by construction.
 class BattleMapForegroundPainter extends CustomPainter {
   final BattleMapState mapState;
   final ValueNotifier<ViewTransform> viewTransform;
@@ -486,13 +500,15 @@ class BattleMapForegroundPainter extends CustomPainter {
     required this.viewTransform,
     required this.notifier,
     required ValueNotifier<int> shapeTick,
-  }) : super(repaint: Listenable.merge([viewTransform, shapeTick]));
+    required ValueNotifier<int> strokeTick,
+  }) : super(repaint: Listenable.merge([viewTransform, shapeTick, strokeTick]));
 
   @override
   void paint(Canvas canvas, Size size) {
     final vt = viewTransform.value;
     Offset project(Offset p) => p * vt.scale + vt.panOffset;
 
+    // Object + GM vector shapes
     final fg = [
       for (final s in mapState.shapes)
         if (s.layer != ShapeLayer.background) s,
@@ -505,6 +521,214 @@ class BattleMapForegroundPainter extends CustomPainter {
     if (draft != null) {
       paintShapeList(canvas, [draft], project, vt.scale, _fill, _stroke);
     }
+
+    // Object + GM freehand strokes — paths are in canvas-space, so apply
+    // the view transform for the stroke drawing pass, matching how shapes
+    // are projected via project().
+    final fgStrokes = [
+      for (final s in mapState.strokes)
+        if (s.layer != ShapeLayer.background) s,
+    ];
+    final liveCurrentPath = notifier.currentPath;
+    final liveCurrentLayer = notifier.currentLayer;
+    final showLiveStroke = liveCurrentPath != null &&
+        liveCurrentLayer != ShapeLayer.background;
+
+    if (fgStrokes.isNotEmpty || showLiveStroke) {
+      final strokePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+
+      canvas.save();
+      canvas.translate(vt.panOffset.dx, vt.panOffset.dy);
+      canvas.scale(vt.scale);
+
+      for (final stroke in fgStrokes) {
+        strokePaint
+          ..color = stroke.isErase ? Colors.transparent : stroke.color
+          ..blendMode =
+              stroke.isErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
+          ..strokeWidth = stroke.width;
+        canvas.drawPath(stroke.path, strokePaint);
+      }
+
+      if (showLiveStroke) {
+        strokePaint
+          ..color = notifier.currentIsErase
+              ? Colors.transparent
+              : notifier.currentColor
+          ..blendMode = notifier.currentIsErase
+              ? ui.BlendMode.clear
+              : ui.BlendMode.srcOver
+          ..strokeWidth = notifier.currentWidth;
+        canvas.drawPath(liveCurrentPath, strokePaint);
+      }
+
+      canvas.restore();
+    }
+
+    // Object + GM measurements (screen-space)
+    final rule = diagonalRuleFromInt(mapState.diagonalRule);
+    final fgMeasurements = [
+      for (final m in mapState.persistentMeasurements)
+        if (m.layer != ShapeLayer.background) m,
+      if (mapState.activeMeasurement != null &&
+          mapState.activeMeasurement!.layer != ShapeLayer.background)
+        mapState.activeMeasurement!,
+    ];
+    if (fgMeasurements.isNotEmpty) {
+      _paintFgMeasurements(canvas, vt, fgMeasurements, rule);
+    }
+  }
+
+  void _paintFgMeasurements(
+    Canvas canvas,
+    ViewTransform vt,
+    List<MeasurementMark> measurements,
+    DiagonalRule rule,
+  ) {
+    final aoeFill = Paint()..style = PaintingStyle.fill;
+    final aoeStroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (final m in measurements) {
+      final sStart = m.start * vt.scale + vt.panOffset;
+      final sEnd = m.end * vt.scale + vt.panOffset;
+      switch (m.type) {
+        case BattleMapTool.ruler:
+          _drawFgRuler(canvas, sStart, sEnd, m, rule);
+        case BattleMapTool.circle:
+          _drawFgCircle(canvas, sStart, sEnd, m, rule);
+        case BattleMapTool.aoeCone:
+          _drawFgAoeShape(
+              canvas, aoeConePath(sStart, sEnd), m, aoeFill, aoeStroke,
+              labelAt: sEnd, feet: _geoFeet(m.start, m.end));
+        case BattleMapTool.aoeLine:
+          _drawFgAoeShape(
+              canvas,
+              aoeLinePath(sStart, sEnd, mapState.gridSize * vt.scale),
+              m, aoeFill, aoeStroke,
+              labelAt: sEnd, feet: _geoFeet(m.start, m.end));
+        case BattleMapTool.aoeCircle:
+          final r = (sEnd - sStart).distance;
+          _drawFgAoeShape(
+              canvas,
+              Path()..addOval(Rect.fromCircle(center: sStart, radius: r)),
+              m, aoeFill, aoeStroke,
+              labelAt: Offset(sStart.dx, sStart.dy - r - 12),
+              feet: _geoFeet(m.start, m.end),
+              radiusLabel: true);
+        case BattleMapTool.aoeSquare:
+          final rect = aoeSquareRect(sStart, sEnd);
+          _drawFgAoeShape(canvas, Path()..addRect(rect), m, aoeFill, aoeStroke,
+              labelAt: rect.topCenter, feet: _geoSideFeet(m.start, m.end));
+        case BattleMapTool.aoeSector:
+          final rFeet = _geoFeet(m.start, m.end);
+          if (m.sweepDeg == null) {
+            final color = _aoeColor(m);
+            final r = (sEnd - sStart).distance;
+            aoeStroke
+              ..color = color.withValues(alpha: 0.5)
+              ..strokeWidth = 1.5;
+            canvas.drawCircle(sStart, r, aoeStroke);
+            aoeStroke
+              ..color = color
+              ..strokeWidth = 2;
+            canvas.drawLine(sStart, sEnd, aoeStroke);
+            _drawFgLabel(canvas, sStart, sEnd - const Offset(0, 12),
+                'r = ${rFeet.toStringAsFixed(0)} ft');
+          } else {
+            _drawFgAoeShape(
+                canvas,
+                aoeSectorPath(sStart, sEnd, m.sweepDeg!),
+                m, aoeFill, aoeStroke,
+                labelAt: sEnd,
+                feet: rFeet,
+                labelOverride:
+                    'r = ${rFeet.toStringAsFixed(0)} ft, ${m.sweepDeg!.toStringAsFixed(0)}°');
+          }
+        default:
+          break;
+      }
+    }
+  }
+
+  void _drawFgRuler(
+      Canvas canvas, Offset sStart, Offset sEnd, MeasurementMark m, DiagonalRule rule) {
+    final paint = Paint()
+      ..color = const Color(0xFFFFFF00)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(sStart, sEnd, paint);
+    final feet = _geoFeet(m.start, m.end);
+    _drawFgLabel(canvas, sStart, sEnd, '${feet.toStringAsFixed(0)} ft');
+  }
+
+  void _drawFgCircle(
+      Canvas canvas, Offset sStart, Offset sEnd, MeasurementMark m, DiagonalRule rule) {
+    final r = (sEnd - sStart).distance;
+    final paint = Paint()
+      ..color = const Color(0xFF00FFFF)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(sStart, r, paint);
+    final feet = _geoFeet(m.start, m.end);
+    _drawFgLabel(canvas, sStart, Offset(sStart.dx, sStart.dy - r - 12),
+        'r = ${feet.toStringAsFixed(0)} ft');
+  }
+
+  void _drawFgAoeShape(
+    Canvas canvas,
+    Path path,
+    MeasurementMark m,
+    Paint fill,
+    Paint stroke, {
+    required Offset labelAt,
+    required double feet,
+    bool radiusLabel = false,
+    String? labelOverride,
+  }) {
+    stroke.strokeWidth = 2;
+    final color = _aoeColor(m);
+    drawAoeShape(canvas, path, color, fill, stroke);
+    final label = labelOverride ??
+        (radiusLabel
+            ? 'r = ${feet.toStringAsFixed(0)} ft'
+            : '${feet.toStringAsFixed(0)} ft');
+    _drawFgLabel(canvas, labelAt, labelAt, label);
+  }
+
+  void _drawFgLabel(Canvas canvas, Offset origin, Offset pos, String text) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          shadows: [
+            Shadow(blurRadius: 3, color: Colors.black, offset: Offset(1, 1)),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, pos + const Offset(4, -16));
+  }
+
+  Color _aoeColor(MeasurementMark m) =>
+      hexToColor(m.colorHex ?? defaultAoeColorHex(m.type) ?? '#ff9800');
+
+  double _geoFeet(Offset a, Offset b) {
+    if (mapState.gridSize <= 0) return 0;
+    return (b - a).distance / mapState.gridSize * mapState.feetPerCell;
+  }
+
+  double _geoSideFeet(Offset a, Offset b) {
+    if (mapState.gridSize <= 0) return 0;
+    final side = math.max((b.dx - a.dx).abs(), (b.dy - a.dy).abs());
+    return side / mapState.gridSize * mapState.feetPerCell;
   }
 
   @override

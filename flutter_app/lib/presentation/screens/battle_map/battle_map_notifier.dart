@@ -145,6 +145,7 @@ class DrawStroke {
   final Color color;
   final double width;
   final bool isErase;
+  final ShapeLayer layer;
 
   /// Raw point list captured alongside `path` so the stroke can be serialized
   /// for cross-isolate projection (Path is not JSON-serializable).
@@ -156,6 +157,7 @@ class DrawStroke {
     required this.width,
     this.rawPoints = const [],
     this.isErase = false,
+    this.layer = ShapeLayer.object,
   });
 }
 
@@ -164,6 +166,7 @@ class MeasurementMark {
   final Offset start;
   final Offset end;
   final bool isPersistent;
+  final ShapeLayer layer;
 
   /// Fill/stroke color (hex) for AoE templates. Null for plain ruler/circle
   /// measurements, which paint with their fixed yellow/cyan.
@@ -178,6 +181,7 @@ class MeasurementMark {
     required this.start,
     required this.end,
     this.isPersistent = false,
+    this.layer = ShapeLayer.object,
     this.colorHex,
     this.sweepDeg,
   });
@@ -374,6 +378,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Color _currentColor = Colors.red;
   double _currentWidth = 4.0;
   bool _currentIsErase = false;
+  ShapeLayer _currentLayer = ShapeLayer.object;
   // Set by eraseMarksAt on every pan sample that deletes a mark/stroke; flushed
   // once (sync + autosave) at pan-end in commitEraseStroke instead of per sample.
   bool _eraseDirty = false;
@@ -562,11 +567,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       }
     }
 
-    // Map DrawStrokes to JSON-clean snapshots — skip erase strokes (DM-only).
+    // Map DrawStrokes to JSON-clean snapshots — skip erase strokes (DM-only)
+    // and GM-layer strokes (must never reach a player).
     final strokeSnaps = <StrokeSnapshot>[];
     for (final s in state.strokes) {
       if (s.isErase) continue;
       if (s.rawPoints.length < 2) continue;
+      if (s.layer == ShapeLayer.gm) continue;
       final flat = <double>[];
       for (final p in s.rawPoints) {
         flat
@@ -577,20 +584,25 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         points: flat,
         colorHex: _colorToHex(s.color),
         width: s.width,
+        layer: s.layer.index,
       ));
     }
 
-    final measurementSnaps = state.persistentMeasurements
-        .map((m) => MeasurementSnapshot(
-              type: battleMapToolToTypeString(m.type),
-              x1: m.start.dx,
-              y1: m.start.dy,
-              x2: m.end.dx,
-              y2: m.end.dy,
-              colorHex: m.colorHex,
-              sweepDeg: m.sweepDeg,
-            ))
-        .toList();
+    // Measurements — skip GM-layer (must never reach a player).
+    final measurementSnaps = [
+      for (final m in state.persistentMeasurements)
+        if (m.layer != ShapeLayer.gm)
+          MeasurementSnapshot(
+            type: battleMapToolToTypeString(m.type),
+            x1: m.start.dx,
+            y1: m.start.dy,
+            x2: m.end.dx,
+            y2: m.end.dy,
+            colorHex: m.colorHex,
+            layer: m.layer.index,
+            sweepDeg: m.sweepDeg,
+          ),
+    ];
 
     // Vector shapes — filter the GM layer out send-side (it must NEVER reach a
     // player), mirroring the erase-stroke skip above.
@@ -759,6 +771,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
                 (m['y2'] as num?)?.toDouble() ?? 0,
               ),
               isPersistent: true,
+              layer: shapeLayerFromInt((m['l'] as num?)?.toInt() ?? 1),
               colorHex: m['c'] as String?,
               sweepDeg: (m['s'] as num?)?.toDouble(),
             ));
@@ -791,6 +804,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
               color: _colorFromHex(snap.colorHex),
               width: snap.width,
               rawPoints: pts,
+              layer: shapeLayerFromInt(snap.layer),
             ));
           }
         }
@@ -1123,6 +1137,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _currentIsErase = erase;
     _currentColor = erase ? Colors.transparent : Colors.red;
     _currentWidth = erase ? 20.0 : 4.0;
+    _currentLayer = state.activeLayer;
     // Force the painter to repaint immediately. Without this the live
     // stroke wouldn't appear until the first `continueAnnotationStroke`
     // call ticks the notifier — leaving a tiny but visible "dead zone"
@@ -1145,6 +1160,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       width: _currentWidth,
       rawPoints: List<Offset>.from(_currentRawPoints),
       isErase: _currentIsErase,
+      layer: _currentLayer,
     );
     _currentPath = null;
     _currentRawPoints.clear();
@@ -1227,10 +1243,16 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     flush();
   }
 
-  void clearAnnotation() {
+  void clearAnnotation({ShapeLayer? layer}) {
     _currentPath = null;
     _currentRawPoints.clear();
-    state = state.copyWith(strokes: [], clearAnnotationImage: true);
+    if (layer != null) {
+      state = state.copyWith(
+        strokes: [for (final s in state.strokes) if (s.layer != layer) s],
+      );
+    } else {
+      state = state.copyWith(strokes: [], clearAnnotationImage: true);
+    }
     _scheduleDrawingsSync();
     _debouncedAutoSave(); // persist the cleared state (else it survives reload)
   }
@@ -1240,6 +1262,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Color get currentColor => _currentColor;
   double get currentWidth => _currentWidth;
   bool get currentIsErase => _currentIsErase;
+  ShapeLayer get currentLayer => _currentLayer;
 
   // -------------------------------------------------------------------------
   // Measurements
@@ -1258,6 +1281,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         type: tool,
         start: origin,
         end: origin,
+        layer: state.activeLayer,
         colorHex: defaultAoeColorHex(tool),
       ),
     );
@@ -1282,6 +1306,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           type: m.type,
           start: m.start,
           end: m.end,
+          layer: m.layer,
           colorHex: m.colorHex,
           sweepDeg: sweep,
         ),
@@ -1293,6 +1318,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         type: m.type,
         start: m.start,
         end: pt,
+        layer: m.layer,
         colorHex: m.colorHex,
         sweepDeg: m.sweepDeg,
       ),
@@ -1316,6 +1342,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
           type: m.type,
           start: m.start,
           end: m.end,
+          layer: m.layer,
           colorHex: m.colorHex,
           sweepDeg: kDefaultSectorSweepDeg,
         ),
@@ -1330,6 +1357,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       start: m.start,
       end: m.end,
       isPersistent: true,
+      layer: m.layer,
       colorHex: m.colorHex,
       sweepDeg: m.sweepDeg,
     );
@@ -1341,11 +1369,21 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _debouncedAutoSave();
   }
 
-  void clearMeasurements() {
-    state = state.copyWith(
-      persistentMeasurements: [],
-      clearActiveMeasurement: true,
-    );
+  void clearMeasurements({ShapeLayer? layer}) {
+    if (layer != null) {
+      state = state.copyWith(
+        persistentMeasurements: [
+          for (final m in state.persistentMeasurements)
+            if (m.layer != layer) m,
+        ],
+        clearActiveMeasurement: state.activeMeasurement?.layer == layer,
+      );
+    } else {
+      state = state.copyWith(
+        persistentMeasurements: [],
+        clearActiveMeasurement: true,
+      );
+    }
     _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
@@ -1532,11 +1570,35 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   /// Clear all committed shapes (toolbar "Clear Marks" extends to shapes too).
-  void clearShapes() {
+  void clearShapes({ShapeLayer? layer}) {
     if (state.shapes.isEmpty && _shapeDraft == null) return;
     _shapeDraft = null;
-    state = state.copyWith(shapes: const []);
+    if (layer != null) {
+      state = state.copyWith(
+        shapes: [for (final s in state.shapes) if (s.layer != layer) s],
+      );
+    } else {
+      state = state.copyWith(shapes: const []);
+    }
     shapeTick.value++;
+    _scheduleDrawingsSync();
+    _debouncedAutoSave();
+  }
+
+  /// Clear everything: all strokes, measurements, shapes, and fog.
+  Future<void> clearAll() async {
+    _currentPath = null;
+    _currentRawPoints.clear();
+    _shapeDraft = null;
+    state = state.copyWith(
+      strokes: [],
+      clearAnnotationImage: true,
+      persistentMeasurements: [],
+      clearActiveMeasurement: true,
+      shapes: const [],
+    );
+    shapeTick.value++;
+    await clearFog();
     _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
@@ -1849,10 +1911,11 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
                   'x2': m.end.dx,
                   'y2': m.end.dy,
                   if (m.colorHex != null) 'c': m.colorHex,
+                  'l': m.layer.index,
                   if (m.sweepDeg != null) 's': m.sweepDeg,
                 })
             .toList());
-    // Pen strokes as vector JSON (reuse StrokeSnapshot's p/c/w encoding — the
+    // Pen strokes as vector JSON (reuse StrokeSnapshot's p/c/w/l encoding — the
     // same shape the projection sends). Skip erase + degenerate strokes.
     final keepStrokes =
         state.strokes.where((s) => !s.isErase && s.rawPoints.length >= 2);
@@ -1864,6 +1927,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
                 points: [for (final p in s.rawPoints) ...[p.dx, p.dy]],
                 colorHex: _colorToHex(s.color),
                 width: s.width,
+                layer: s.layer.index,
               ).toJson(),
           ]);
     // Vector shapes → versioned scene blob `{"v":1,"shapes":[...]}`. Empty

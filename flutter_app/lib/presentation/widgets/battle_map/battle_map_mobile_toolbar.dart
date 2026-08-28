@@ -335,9 +335,10 @@ class _ToolsTab extends StatelessWidget {
             children: [
               _SheetActionButton(icon: Icons.cloud_queue, label: 'Fill Fog', palette: palette, onTap: () async { await notifier.fillFog(); }),
               _SheetActionButton(icon: Icons.wb_sunny_outlined, label: 'Clear Fog', palette: palette, onTap: () async { await notifier.clearFog(); }),
-              _SheetActionButton(icon: Icons.cleaning_services_outlined, label: 'Clear Draw', palette: palette, onTap: notifier.clearAnnotation),
-              _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Marks', palette: palette, onTap: notifier.clearMeasurements),
-              _SheetActionButton(icon: Icons.format_shapes_outlined, label: 'Clear Shapes', palette: palette, onTap: notifier.clearShapes),
+              _SheetActionButton(icon: Icons.cleaning_services_outlined, label: 'Clear Draw', palette: palette, onTap: () => notifier.clearAnnotation(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.straighten_outlined, label: 'Clear Marks', palette: palette, onTap: () => notifier.clearMeasurements(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.format_shapes_outlined, label: 'Clear Shapes', palette: palette, onTap: () => notifier.clearShapes(layer: tb.activeLayer)),
+              _SheetActionButton(icon: Icons.delete_sweep_outlined, label: 'Clear All', palette: palette, onTap: () async { await notifier.clearAll(); }),
             ],
           ),
           const SizedBox(height: 10),

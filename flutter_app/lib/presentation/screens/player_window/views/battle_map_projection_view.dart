@@ -377,6 +377,155 @@ class _BattleMapProjectionPainter extends CustomPainter {
 
     drawShapesLayer(true); // background — under tokens
 
+    // 2.5. Background-layer strokes — under tokens so they don't occlude them.
+    final strokeMult = compact ? 0.5 : 1.0;
+    void drawStrokesLayer(bool background) {
+      for (final s in snapshot.strokes) {
+        if ((s.layer == 0) != background) continue; // 0 = background
+        if (s.points.length < 4) continue;
+        final path = Path()
+          ..moveTo(dx + s.points[0] * scale, dy + s.points[1] * scale);
+        for (var i = 2; i + 1 < s.points.length; i += 2) {
+          path.lineTo(
+              dx + s.points[i] * scale, dy + s.points[i + 1] * scale);
+        }
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = _hexColor(s.colorHex)
+            ..strokeWidth = s.width * scale * strokeMult
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round,
+        );
+      }
+    }
+
+    drawStrokesLayer(true); // background strokes — under tokens
+
+    // Shared helpers for measurements (used by both bg and object sections).
+    final rule = diagonalRuleFromInt(snapshot.diagonalRule);
+
+    void drawFeetLabel(Offset at, String text, Color color) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            color: color,
+            fontSize: compact ? 9 : 13,
+            fontWeight: FontWeight.bold,
+            shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, at);
+    }
+
+    double geoFeet(double cx1, double cy1, double cx2, double cy2) {
+      if (snapshot.gridSize <= 0) return 0;
+      final d = math.sqrt(
+          (cx2 - cx1) * (cx2 - cx1) + (cy2 - cy1) * (cy2 - cy1));
+      return d / snapshot.gridSize * snapshot.feetPerCell;
+    }
+
+    // 2.6. Background-layer measurements — under tokens.
+    {
+      final bgMeasureFill = Paint()..style = PaintingStyle.fill;
+      final bgMeasureStroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = compact ? 1.2 : 2;
+
+      void drawBgAoe(
+          Path path, String? colorHex, Offset labelAt, String label) {
+        final color = _hexColor(colorHex ?? '#ff9800');
+        drawAoeShape(canvas, path, color, bgMeasureFill, bgMeasureStroke);
+        drawFeetLabel(labelAt, label, color);
+      }
+
+      for (final m in snapshot.measurements) {
+        if (m.layer != 0) continue; // background only
+        final p1 = Offset(dx + m.x1 * scale, dy + m.y1 * scale);
+        final p2 = Offset(dx + m.x2 * scale, dy + m.y2 * scale);
+        switch (m.type) {
+          case 'ruler':
+            canvas.drawLine(
+              p1,
+              p2,
+              Paint()
+                ..color = const Color(0xFFFFD54F)
+                ..strokeWidth = compact ? 1.2 : 2.5
+                ..strokeCap = StrokeCap.round,
+            );
+            canvas.drawCircle(p1, compact ? 2 : 4,
+                Paint()..color = const Color(0xFFFFD54F));
+            canvas.drawCircle(p2, compact ? 2 : 4,
+                Paint()..color = const Color(0xFFFFD54F));
+            final feet = geoFeet(m.x1, m.y1, m.x2, m.y2);
+            final squares =
+                snapshot.gridSize > 0 ? feet / snapshot.feetPerCell : 0.0;
+            drawFeetLabel(
+                (p1 + p2) / 2 - const Offset(0, 14),
+                '${feet.toStringAsFixed(0)} ft (${squares.toStringAsFixed(1)} sq)',
+                const Color(0xFFFFD54F));
+          case 'circle':
+            final r = (p2 - p1).distance;
+            canvas.drawCircle(
+              p1,
+              r,
+              Paint()
+                ..color = const Color(0xFF50C8FF)
+                ..strokeWidth = compact ? 1.2 : 2.5
+                ..style = PaintingStyle.stroke,
+            );
+            canvas.drawCircle(
+                p1, compact ? 2 : 4, Paint()..color = const Color(0xFF50C8FF));
+            final rFeet = geoFeet(m.x1, m.y1, m.x2, m.y2);
+            drawFeetLabel(
+                p1 - Offset(0, r + 16), 'r = $rFeet ft', const Color(0xFF50C8FF));
+          case 'aoeCone':
+            drawBgAoe(aoeConePath(p1, p2), m.colorHex, p2,
+                '${geoFeet(m.x1, m.y1, m.x2, m.y2).toStringAsFixed(0)} ft');
+          case 'aoeLine':
+            drawBgAoe(
+                aoeLinePath(p1, p2, snapshot.gridSize * scale),
+                m.colorHex,
+                p2,
+                '${geoFeet(m.x1, m.y1, m.x2, m.y2).toStringAsFixed(0)} ft');
+          case 'aoeCircle':
+            final r = (p2 - p1).distance;
+            final feet = geoFeet(m.x1, m.y1, m.x2, m.y2);
+            drawBgAoe(
+                Path()..addOval(Rect.fromCircle(center: p1, radius: r)),
+                m.colorHex,
+                p1 - Offset(0, r + 16),
+                'r = ${feet.toStringAsFixed(0)} ft');
+          case 'aoeSquare':
+            final feet = geoFeet(m.x1, m.y1, m.x2, m.y2);
+            final sw = feet * snapshot.gridSize / snapshot.feetPerCell * scale;
+            drawBgAoe(
+                Path()
+                  ..addRect(Rect.fromCenter(
+                      center: p1,
+                      width: sw * math.sqrt2,
+                      height: sw * math.sqrt2)),
+                m.colorHex,
+                p1 - Offset(0, sw * math.sqrt2 / 2 + 16),
+                '${(feet * 2).toStringAsFixed(0)} ft');
+          case 'aoeSector':
+            final rFeet = geoFeet(m.x1, m.y1, m.x2, m.y2);
+            if (m.sweepDeg == null) {
+              drawBgAoe(aoeSectorPath(p1, p2, 90), m.colorHex, p2,
+                  'r = $rFeet ft');
+            } else {
+              final sweep = m.sweepDeg!;
+              drawBgAoe(aoeSectorPath(p1, p2, sweep), m.colorHex, p2,
+                  'r = $rFeet ft, ${sweep.round()}°');
+            }
+        }
+      }
+    }
+
     // 3. Tokens — drawn BEFORE fog so the fog actually hides hidden tokens.
     final activeIdx = snapshot.turnIndex;
     for (var i = 0; i < snapshot.tokens.length; i++) {
@@ -565,10 +714,10 @@ class _BattleMapProjectionPainter extends CustomPainter {
       canvas.restore();
     }
 
-    // 5. Annotation strokes — drawn ABOVE the fog so the DM's drawings
+    // 5. Object-layer strokes — drawn ABOVE the fog so the DM's drawings
     // remain visible even where players are looking through fog.
-    final strokeMult = compact ? 0.5 : 1.0;
     for (final s in snapshot.strokes) {
+      if (s.layer == 0) continue; // background already drawn; object+GM only
       if (s.points.length < 4) continue;
       final path = Path()
         ..moveTo(dx + s.points[0] * scale, dy + s.points[1] * scale);
@@ -586,133 +735,111 @@ class _BattleMapProjectionPainter extends CustomPainter {
       );
     }
 
-    // 6. Measurements + AoE templates — also above fog. AoE shapes (cone /
-    // line / aoeCircle / square) are filled; rulers/circles stay as lines.
-    final rule = diagonalRuleFromInt(snapshot.diagonalRule);
+    // 6. Object-layer measurements + AoE templates — also above fog.
+    {
+      final aoeFill = Paint()..style = PaintingStyle.fill;
+      final aoeStroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = compact ? 1.2 : 2;
 
-    void drawFeetLabel(Offset at, String text, Color color) {
-      final tp = TextPainter(
-        text: TextSpan(
-          text: text,
-          style: TextStyle(
-            color: color,
-            fontSize: compact ? 9 : 13,
-            fontWeight: FontWeight.bold,
-            shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, at);
-    }
+      void drawAoe(
+          Path path, String? colorHex, Offset labelAt, String label) {
+        final color = _hexColor(colorHex ?? '#ff9800');
+        drawAoeShape(canvas, path, color, aoeFill, aoeStroke);
+        drawFeetLabel(labelAt, label, color);
+      }
 
-    // Euclidean feet of a canvas-space segment (AoE templates use geometry).
-    double geoFeet(double cx1, double cy1, double cx2, double cy2) {
-      if (snapshot.gridSize <= 0) return 0;
-      final d = math.sqrt(
-          (cx2 - cx1) * (cx2 - cx1) + (cy2 - cy1) * (cy2 - cy1));
-      return d / snapshot.gridSize * snapshot.feetPerCell;
-    }
-
-    // Reusable Paints for AoE shapes — mutated per shape to avoid two fresh
-    // Paint() allocations per AoE mark per frame (fill + stroke keep distinct
-    // styles).
-    final aoeFill = Paint()..style = PaintingStyle.fill;
-    final aoeStroke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = compact ? 1.2 : 2;
-    void drawAoe(Path path, String? colorHex, Offset labelAt, String label) {
-      final color = _hexColor(colorHex ?? '#ff9800');
-      drawAoeShape(canvas, path, color, aoeFill, aoeStroke);
-      drawFeetLabel(labelAt, label, color);
-    }
-
-    for (final m in snapshot.measurements) {
-      final p1 = Offset(dx + m.x1 * scale, dy + m.y1 * scale);
-      final p2 = Offset(dx + m.x2 * scale, dy + m.y2 * scale);
-      switch (m.type) {
-        case 'ruler':
-          canvas.drawLine(
-            p1,
-            p2,
-            Paint()
-              ..color = const Color(0xFFFFD54F)
-              ..strokeWidth = compact ? 1.2 : 2,
-          );
-          final dotR = compact ? 2.5 : 4.0;
-          canvas.drawCircle(p1, dotR, Paint()..color = const Color(0xFFFFD54F));
-          canvas.drawCircle(p2, dotR, Paint()..color = const Color(0xFFFFD54F));
-          final feet = gridDistanceFeet(
-            Offset(m.x1, m.y1),
-            Offset(m.x2, m.y2),
-            gridSize: snapshot.gridSize.toDouble(),
-            feetPerCell: snapshot.feetPerCell.toDouble(),
-            rule: rule,
-          ).round();
-          final mid = (p1 + p2) / 2;
-          drawFeetLabel(Offset(mid.dx + 6, mid.dy - 7), '$feet ft', Colors.yellow);
-        case 'circle':
-          final r = (p2 - p1).distance;
-          canvas.drawCircle(
-            p1,
-            r,
-            Paint()
-              ..color = const Color(0xFF00BCD4)
-              ..strokeWidth = compact ? 1.2 : 2
-              ..style = PaintingStyle.stroke,
-          );
-          canvas.drawCircle(p1, compact ? 2 : 3,
-              Paint()..color = const Color(0xFF00BCD4));
-          final feet = gridDistanceFeet(
-            Offset(m.x1, m.y1),
-            Offset(m.x2, m.y2),
-            gridSize: snapshot.gridSize.toDouble(),
-            feetPerCell: snapshot.feetPerCell.toDouble(),
-            rule: rule,
-          ).round();
-          drawFeetLabel(Offset(p1.dx + 6, p1.dy - r - 16), '$feet ft',
-              const Color(0xFF00BCD4));
-        case 'cone':
-          drawAoe(aoeConePath(p1, p2), m.colorHex, p2,
-              '${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
-        case 'line':
-          drawAoe(aoeLinePath(p1, p2, snapshot.gridSize * scale), m.colorHex,
-              p2, '${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
-        case 'aoeCircle':
-          final r = (p2 - p1).distance;
-          drawAoe(
-              Path()..addOval(Rect.fromCircle(center: p1, radius: r)),
-              m.colorHex,
-              Offset(p1.dx, p1.dy - r - 12),
-              'r = ${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
-        case 'square':
-          final rect = aoeSquareRect(p1, p2);
-          final side = math.max((m.x2 - m.x1).abs(), (m.y2 - m.y1).abs());
-          final feet = snapshot.gridSize > 0
-              ? (side / snapshot.gridSize * snapshot.feetPerCell).round()
-              : 0;
-          drawAoe(Path()..addRect(rect), m.colorHex, rect.topCenter, '$feet ft');
-        case 'sector':
-          final rFeet = geoFeet(m.x1, m.y1, m.x2, m.y2).round();
-          if (m.sweepDeg == null) {
-            // Stage 1 preview — stroke-only circle + radius guide line, matching
-            // the DM painter so a null-sweep sector renders the same on both.
-            final color = _hexColor(m.colorHex ?? '#ff9800');
+      for (final m in snapshot.measurements) {
+        if (m.layer == 0) continue; // background already drawn; object only
+        final p1 = Offset(dx + m.x1 * scale, dy + m.y1 * scale);
+        final p2 = Offset(dx + m.x2 * scale, dy + m.y2 * scale);
+        switch (m.type) {
+          case 'ruler':
+            canvas.drawLine(
+              p1,
+              p2,
+              Paint()
+                ..color = const Color(0xFFFFD54F)
+                ..strokeWidth = compact ? 1.2 : 2,
+            );
+            final dotR = compact ? 2.5 : 4.0;
+            canvas.drawCircle(
+                p1, dotR, Paint()..color = const Color(0xFFFFD54F));
+            canvas.drawCircle(
+                p2, dotR, Paint()..color = const Color(0xFFFFD54F));
+            final feet = gridDistanceFeet(
+              Offset(m.x1, m.y1),
+              Offset(m.x2, m.y2),
+              gridSize: snapshot.gridSize.toDouble(),
+              feetPerCell: snapshot.feetPerCell.toDouble(),
+              rule: rule,
+            ).round();
+            final mid = (p1 + p2) / 2;
+            drawFeetLabel(
+                Offset(mid.dx + 6, mid.dy - 7), '$feet ft', Colors.yellow);
+          case 'circle':
             final r = (p2 - p1).distance;
-            aoeStroke
-              ..color = color.withValues(alpha: 0.5)
-              ..strokeWidth = compact ? 1.0 : 1.5;
-            canvas.drawCircle(p1, r, aoeStroke);
-            aoeStroke
-              ..color = color
-              ..strokeWidth = compact ? 1.2 : 2;
-            canvas.drawLine(p1, p2, aoeStroke);
-            drawFeetLabel(p2 - const Offset(0, 12), 'r = $rFeet ft', color);
-          } else {
-            final sweep = m.sweepDeg!;
-            drawAoe(aoeSectorPath(p1, p2, sweep), m.colorHex, p2,
-                'r = $rFeet ft, ${sweep.round()}°');
-          }
+            canvas.drawCircle(
+              p1,
+              r,
+              Paint()
+                ..color = const Color(0xFF00BCD4)
+                ..strokeWidth = compact ? 1.2 : 2
+                ..style = PaintingStyle.stroke,
+            );
+            canvas.drawCircle(p1, compact ? 2 : 3,
+                Paint()..color = const Color(0xFF00BCD4));
+            final feet = gridDistanceFeet(
+              Offset(m.x1, m.y1),
+              Offset(m.x2, m.y2),
+              gridSize: snapshot.gridSize.toDouble(),
+              feetPerCell: snapshot.feetPerCell.toDouble(),
+              rule: rule,
+            ).round();
+            drawFeetLabel(Offset(p1.dx + 6, p1.dy - r - 16), '$feet ft',
+                const Color(0xFF00BCD4));
+          case 'cone':
+            drawAoe(aoeConePath(p1, p2), m.colorHex, p2,
+                '${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
+          case 'line':
+            drawAoe(aoeLinePath(p1, p2, snapshot.gridSize * scale), m.colorHex,
+                p2, '${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
+          case 'aoeCircle':
+            final r = (p2 - p1).distance;
+            drawAoe(
+                Path()..addOval(Rect.fromCircle(center: p1, radius: r)),
+                m.colorHex,
+                Offset(p1.dx, p1.dy - r - 12),
+                'r = ${geoFeet(m.x1, m.y1, m.x2, m.y2).round()} ft');
+          case 'square':
+            final rect = aoeSquareRect(p1, p2);
+            final side = math.max((m.x2 - m.x1).abs(), (m.y2 - m.y1).abs());
+            final feet = snapshot.gridSize > 0
+                ? (side / snapshot.gridSize * snapshot.feetPerCell).round()
+                : 0;
+            drawAoe(
+                Path()..addRect(rect), m.colorHex, rect.topCenter, '$feet ft');
+          case 'sector':
+            final rFeet = geoFeet(m.x1, m.y1, m.x2, m.y2).round();
+            if (m.sweepDeg == null) {
+              final color = _hexColor(m.colorHex ?? '#ff9800');
+              final r = (p2 - p1).distance;
+              aoeStroke
+                ..color = color.withValues(alpha: 0.5)
+                ..strokeWidth = compact ? 1.0 : 1.5;
+              canvas.drawCircle(p1, r, aoeStroke);
+              aoeStroke
+                ..color = color
+                ..strokeWidth = compact ? 1.2 : 2;
+              canvas.drawLine(p1, p2, aoeStroke);
+              drawFeetLabel(
+                  p2 - const Offset(0, 12), 'r = $rFeet ft', color);
+            } else {
+              final sweep = m.sweepDeg!;
+              drawAoe(aoeSectorPath(p1, p2, sweep), m.colorHex, p2,
+                  'r = $rFeet ft, ${sweep.round()}°');
+            }
+        }
       }
     }
 

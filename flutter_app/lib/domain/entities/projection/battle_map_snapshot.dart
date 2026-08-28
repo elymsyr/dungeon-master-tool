@@ -235,23 +235,27 @@ class StrokeSnapshot {
   final List<double> points;
   final String colorHex;
   final double width;
+  final int layer;
 
   const StrokeSnapshot({
     required this.points,
     this.colorHex = '#ff0000',
     this.width = 4,
+    this.layer = 1, // ShapeLayer.object index
   });
 
   Map<String, dynamic> toJson() => {
         'p': points,
         'c': colorHex,
         'w': width,
+        'l': layer,
       };
 
   factory StrokeSnapshot.fromJson(Map<String, dynamic> json) => StrokeSnapshot(
         points: (json['p'] as List).map((e) => (e as num).toDouble()).toList(),
         colorHex: json['c'] as String? ?? '#ff0000',
         width: (json['w'] as num?)?.toDouble() ?? 4,
+        layer: (json['l'] as num?)?.toInt() ?? 1,
       );
 }
 
@@ -266,6 +270,7 @@ class MeasurementSnapshot {
   final double x2;
   final double y2;
   final String? colorHex;
+  final int layer;
 
   /// Sector sweep angle in degrees (`'sector'` type only); null otherwise.
   final double? sweepDeg;
@@ -277,6 +282,7 @@ class MeasurementSnapshot {
     required this.x2,
     required this.y2,
     this.colorHex,
+    this.layer = 1, // ShapeLayer.object index
     this.sweepDeg,
   });
 
@@ -285,6 +291,7 @@ class MeasurementSnapshot {
         'a': [x1, y1],
         'b': [x2, y2],
         if (colorHex != null) 'c': colorHex,
+        'l': layer,
         if (sweepDeg != null) 's': sweepDeg,
       };
 
@@ -298,6 +305,7 @@ class MeasurementSnapshot {
       x2: b[0],
       y2: b[1],
       colorHex: json['c'] as String?,
+      layer: (json['l'] as num?)?.toInt() ?? 1,
       sweepDeg: (json['s'] as num?)?.toDouble(),
     );
   }
