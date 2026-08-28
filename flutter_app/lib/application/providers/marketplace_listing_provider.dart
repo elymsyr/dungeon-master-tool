@@ -115,6 +115,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     String? language,
     List<String> tags = const [],
     String? changelog,
+    String contentRating = 'all',
   }) async {
     // Publishing needs an account. That is enforced authoritatively by the
     // `publish_listing_snapshot` RPC and the `auth.uid() = owner_id` RLS
@@ -151,6 +152,7 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         coverImageB64: coverB64,
         templateName: summary?['template'] as String?,
         contentSummary: summary,
+        contentRating: contentRating,
       );
 
       await _ref.read(marketplaceLinksLocalDsProvider).addOwnedListingId(

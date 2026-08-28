@@ -58,6 +58,7 @@ class _PublishSnapshotDialogState
   late final TextEditingController _changelogCtrl;
   String? _language = 'en';
   List<String> _tags = const [];
+  bool _matureContent = false;
   bool _busy = false;
 
   @override
@@ -107,6 +108,7 @@ class _PublishSnapshotDialogState
             changelog: _changelogCtrl.text.trim().isEmpty
                 ? null
                 : _changelogCtrl.text.trim(),
+            contentRating: _matureContent ? 'mature' : 'all',
           );
       if (!mounted) return;
       Navigator.pop(context, listing);
@@ -187,6 +189,11 @@ class _PublishSnapshotDialogState
                 onChanged: (v) => setState(() => _tags = v),
               ),
               const SizedBox(height: 10),
+              _MatureContentCheckbox(
+                value: _matureContent,
+                onChanged: (v) => setState(() => _matureContent = v),
+              ),
+              const SizedBox(height: 10),
               TextField(
                 controller: _changelogCtrl,
                 maxLines: 2,
@@ -251,6 +258,70 @@ class _ImmutabilityNotice extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: palette.tabActiveText),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MatureContentCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _MatureContentCheckbox({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: value
+            ? Colors.orange.withValues(alpha: 0.08)
+            : palette.featureCardBg,
+        border: Border.all(
+          color: value ? Colors.orange.withValues(alpha: 0.4) : palette.featureCardBorder,
+        ),
+        borderRadius: palette.cbr,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: value,
+                  onChanged: (v) => onChanged(v ?? false),
+                  title: Text(
+                    l10n.publishDialogMatureLabel,
+                    style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+                  ),
+                  subtitle: Text(
+                    l10n.publishDialogMatureHint,
+                    style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (value) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.info_outline, size: 12, color: Colors.orange),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    l10n.publishDialogMatureWarning,
+                    style: TextStyle(fontSize: 10, color: Colors.orange.shade700),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

@@ -74,6 +74,9 @@ List<String> _tagList(MarketplaceListing listing) {
   ];
 }
 
+bool _isMature(MarketplaceListing listing) =>
+    listing.contentRating == 'mature';
+
 class _BannerTile extends StatelessWidget {
   final MarketplaceListing listing;
   final DmToolColors palette;
@@ -116,6 +119,8 @@ class _BannerTile extends StatelessWidget {
               label: labelForListingType(l10n, listing.itemType),
               palette: palette,
             ),
+            if (_isMature(listing))
+              const _MatureBadge(),
           ],
           // No per-item settings in the marketplace — owner overflow menu when
           // deletable, otherwise a "Get" button (opens the preview dialog).
@@ -298,6 +303,29 @@ class _OwnerMenu extends StatelessWidget {
       itemBuilder: (_) => [
         PopupMenuItem(value: 'delete', child: Text(l10n.listingDeleteAction)),
       ],
+    );
+  }
+}
+
+class _MatureBadge extends StatelessWidget {
+  const _MatureBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Text(
+        '18+',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }

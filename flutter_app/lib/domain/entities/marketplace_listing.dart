@@ -23,6 +23,7 @@ class MarketplaceListing {
     this.coverImageB64,
     this.templateName,
     this.contentSummary,
+    this.contentRating = 'all',
   });
 
   final String id;
@@ -62,6 +63,10 @@ class MarketplaceListing {
   /// breakdown without downloading the payload. Null when unavailable.
   final Map<String, dynamic>? contentSummary;
 
+  /// Content rating captured at publish time. 'all' = safe for everyone,
+  /// 'mature' = contains adult themes (18+).
+  final String contentRating;
+
   MarketplaceListing copyWith({
     int? downloadCount,
     String? ownerUsername,
@@ -84,6 +89,7 @@ class MarketplaceListing {
       coverImageB64: coverImageB64,
       templateName: templateName,
       contentSummary: contentSummary,
+      contentRating: contentRating,
     );
   }
 }
