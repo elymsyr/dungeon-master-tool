@@ -43,6 +43,7 @@ class MarketplaceListingsRemoteDataSource {
     String? coverImageB64,
     String? templateName,
     Map<String, dynamic>? contentSummary,
+    String contentRating = 'all',
   }) async {
     final uid = _userId;
     final listingId = _uuid.v4();
@@ -74,6 +75,7 @@ class MarketplaceListingsRemoteDataSource {
       'p_cover_image_b64': coverImageB64,
       'p_template_name': templateName,
       'p_content_summary': contentSummary,
+      'p_content_rating': contentRating,
     };
     try {
       try {
@@ -86,7 +88,8 @@ class MarketplaceListingsRemoteDataSource {
         if (_isMissingFunctionSignature(e)) {
           final legacy = Map<String, dynamic>.from(params)
             ..remove('p_template_name')
-            ..remove('p_content_summary');
+            ..remove('p_content_summary')
+            ..remove('p_content_rating');
           await _client.rpc('publish_listing_snapshot', params: legacy);
         } else {
           rethrow;
@@ -156,6 +159,7 @@ class MarketplaceListingsRemoteDataSource {
     String? itemType,
     String? language,
     String? tag,
+    bool? hideMature,
     int limit = 100,
   }) async {
     var query = _client
@@ -164,6 +168,7 @@ class MarketplaceListingsRemoteDataSource {
     if (itemType != null) query = query.eq('item_type', itemType);
     if (language != null && language.isNotEmpty) query = query.eq('language', language);
     if (tag != null && tag.isNotEmpty) query = query.contains('tags', [tag]);
+    if (hideMature == true) query = query.eq('content_rating', 'all');
     final rows = await query.order('created_at', ascending: false).limit(limit);
     return rows.map(_rowToListing).toList();
   }
@@ -226,6 +231,7 @@ class MarketplaceListingsRemoteDataSource {
       coverImageB64: row['cover_image_b64'] as String?,
       templateName: row['template_name'] as String?,
       contentSummary: (row['content_summary'] as Map?)?.cast<String, dynamic>(),
+      contentRating: row['content_rating'] as String? ?? 'all',
     );
   }
 

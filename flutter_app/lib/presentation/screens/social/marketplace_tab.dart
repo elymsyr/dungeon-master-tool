@@ -75,9 +75,11 @@ class _MarketplaceFeed extends ConsumerWidget {
     // so soundpacks aren't hidden behind their dedicated tab.
     final isAll = filters.type == 'all';
     // "All" and "Packages" also surface the first-party (R2) official packages
-    // catalog below the Supabase package listings.
+    // catalog below the Supabase package listings — unless the user filtered
+    // to "community only" via the content type filter.
     final isPackage = filters.type == 'package';
-    final showOfficialPackages = isAll || isPackage;
+    final showOfficialPackages =
+        (isAll || isPackage) && filters.contentType != 'community';
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
@@ -124,7 +126,7 @@ class _MarketplaceFeed extends ConsumerWidget {
             data: (items) {
               if (items.isEmpty) {
                 // In "All"/"Packages" the catalog below carries content — skip
-                // the empty state so soundpacks / official packages still show.
+                // the empty state.
                 if (isAll || showOfficialPackages) {
                   return const SizedBox.shrink();
                 }
@@ -217,22 +219,114 @@ class _FilterBar extends ConsumerWidget {
   }
 }
 
-class _SecondaryFilterRow extends ConsumerStatefulWidget {
+class _SecondaryFilterRow extends ConsumerWidget {
   final MarketplaceFilters filters;
   final DmToolColors palette;
   const _SecondaryFilterRow({required this.filters, required this.palette});
 
+  bool get _hasActiveFilters =>
+      filters.contentType != 'all' ||
+      filters.language != null ||
+      filters.tag != null ||
+      filters.showMature;
+
   @override
-  ConsumerState<_SecondaryFilterRow> createState() => _SecondaryFilterRowState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
+    return Row(
+      children: [
+        InkWell(
+          borderRadius: palette.br,
+          onTap: () => _openFilterDialog(context, ref),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _hasActiveFilters
+                  ? palette.featureCardAccent.withValues(alpha: 0.1)
+                  : palette.featureCardBg,
+              borderRadius: palette.br,
+              border: Border.all(
+                color: _hasActiveFilters
+                    ? palette.featureCardAccent.withValues(alpha: 0.4)
+                    : palette.featureCardBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.tune, size: 16, color: palette.tabActiveText),
+                const SizedBox(width: 6),
+                Text(
+                  l10n.marketplaceFilterButton,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+                if (_hasActiveFilters) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: palette.featureCardAccent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openFilterDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (_) => _FilterDialog(
+        filters: filters,
+        onApply: (updated) {
+          ref.read(marketplaceFiltersProvider.notifier).state = updated;
+        },
+        onClear: () {
+          ref.read(marketplaceFiltersProvider.notifier).state =
+              const MarketplaceFilters();
+        },
+      ),
+    );
+  }
 }
 
-class _SecondaryFilterRowState extends ConsumerState<_SecondaryFilterRow> {
-  late final TextEditingController _tagCtrl;
+class _FilterDialog extends StatefulWidget {
+  final MarketplaceFilters filters;
+  final ValueChanged<MarketplaceFilters> onApply;
+  final VoidCallback onClear;
+  const _FilterDialog({
+    required this.filters,
+    required this.onApply,
+    required this.onClear,
+  });
+
+  @override
+  State<_FilterDialog> createState() => _FilterDialogState();
+}
+
+class _FilterDialogState extends State<_FilterDialog> {
+  late String? _language;
+  late TextEditingController _tagCtrl;
+  late bool _showMature;
+  late String _contentType;
 
   @override
   void initState() {
     super.initState();
+    _language = widget.filters.language;
     _tagCtrl = TextEditingController(text: widget.filters.tag ?? '');
+    _showMature = widget.filters.showMature;
+    _contentType = widget.filters.contentType;
   }
 
   @override
@@ -244,67 +338,143 @@ class _SecondaryFilterRowState extends ConsumerState<_SecondaryFilterRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
-    final palette = widget.palette;
-    final filters = widget.filters;
-    return Row(
-      children: [
-        // Language dropdown
-        Expanded(
-          child: DropdownButtonFormField<String?>(
-            initialValue: filters.language,
-            isDense: true,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: l10n.marketplaceLanguageFilter,
-              border: const OutlineInputBorder(),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            ),
-            items: [
-              DropdownMenuItem<String?>(
-                value: null,
-                child: Text(l10n.marketplaceFilterAny, style: const TextStyle(fontSize: 12)),
-              ),
-              ...worldLanguages.map((lang) => DropdownMenuItem(
-                    value: lang.code,
-                    child: Text(lang.native,
-                        style: const TextStyle(fontSize: 12),
-                        overflow: TextOverflow.ellipsis),
-                  )),
-            ],
-            onChanged: (v) {
-              ref.read(marketplaceFiltersProvider.notifier).state =
-                  filters.copyWith(language: v);
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Tag input
-        Expanded(
-          child: TextField(
-            controller: _tagCtrl,
-            decoration: InputDecoration(
-              labelText: l10n.marketplaceTagFilter,
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return AlertDialog(
+      title: Text(l10n.marketplaceFilterButton),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Content Type
+            DropdownButtonFormField<String>(
+              initialValue: _contentType,
               isDense: true,
-              border: const OutlineInputBorder(),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: l10n.marketplaceContentTypeFilter,
+                border: const OutlineInputBorder(),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'all',
+                  child: Text(l10n.filterAll,
+                      style: const TextStyle(fontSize: 12)),
+                ),
+                DropdownMenuItem(
+                  value: 'official',
+                  child: Text(l10n.filterOfficial,
+                      style: const TextStyle(fontSize: 12)),
+                ),
+                DropdownMenuItem(
+                  value: 'community',
+                  child: Text(l10n.filterCommunity,
+                      style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+              onChanged: (v) =>
+                  setState(() => _contentType = v ?? 'all'),
             ),
-            style: const TextStyle(fontSize: 12),
-            onSubmitted: (v) {
-              ref.read(marketplaceFiltersProvider.notifier).state =
-                  filters.copyWith(tag: v.trim().isEmpty ? null : v.trim().toLowerCase());
-            },
-          ),
+            const SizedBox(height: 12),
+            // Language
+            DropdownButtonFormField<String?>(
+              initialValue: _language,
+              isDense: true,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: l10n.marketplaceLanguageFilter,
+                border: const OutlineInputBorder(),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              ),
+              items: [
+                DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text(l10n.marketplaceFilterAny,
+                      style: const TextStyle(fontSize: 12)),
+                ),
+                ...worldLanguages.map((lang) => DropdownMenuItem(
+                      value: lang.code,
+                      child: Text(lang.native,
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis),
+                    )),
+              ],
+              onChanged: (v) => setState(() => _language = v),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _tagCtrl,
+              decoration: InputDecoration(
+                labelText: l10n.marketplaceTagFilter,
+                isDense: true,
+                border: const OutlineInputBorder(),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => setState(() => _showMature = !_showMature),
+              borderRadius: palette.br,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Checkbox(
+                        value: _showMature,
+                        onChanged: (v) => setState(() => _showMature = v ?? false),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(
+                          color: palette.tabText.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      l10n.marketplaceMatureFilter,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          tooltip: l10n.marketplaceFilterClear,
-          icon: Icon(Icons.filter_alt_off_outlined, size: 18, color: palette.sidebarLabelSecondary),
+      ),
+      actions: [
+        TextButton(
           onPressed: () {
-            _tagCtrl.clear();
-            ref.read(marketplaceFiltersProvider.notifier).state =
-                const MarketplaceFilters();
+            widget.onClear();
+            Navigator.pop(context);
           },
+          child: Text(l10n.marketplaceFilterClear),
+        ),
+        FilledButton(
+          onPressed: () {
+            widget.onApply(MarketplaceFilters(
+              type: widget.filters.type,
+              contentType: _contentType,
+              language: _language,
+              tag: _tagCtrl.text.trim().isEmpty
+                  ? null
+                  : _tagCtrl.text.trim().toLowerCase(),
+              showMature: _showMature,
+            ));
+            Navigator.pop(context);
+          },
+          child: Text(l10n.marketplaceFilterApply),
         ),
       ],
     );

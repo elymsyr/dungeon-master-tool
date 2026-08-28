@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
@@ -559,31 +560,90 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
 // ── Marketplace (public marketplace_listings) ───────────────────────
 
 class MarketplaceFilters {
-  final String type; // 'all' | 'world' | 'template' | 'package' | 'character'
+  final String type; // 'all' | 'world' | 'template' | 'package' | 'character' | 'soundpack'
+  final String contentType; // 'all' | 'official' | 'community'
   final String? language;
   final String? tag;
+  final bool showMature;
   const MarketplaceFilters({
     this.type = 'all',
+    this.contentType = 'all',
     this.language,
     this.tag,
+    this.showMature = false,
   });
 
   MarketplaceFilters copyWith({
     String? type,
+    String? contentType,
     Object? language = _sentinel,
     Object? tag = _sentinel,
+    bool? showMature,
   }) =>
       MarketplaceFilters(
         type: type ?? this.type,
+        contentType: contentType ?? this.contentType,
         language: language == _sentinel ? this.language : language as String?,
         tag: tag == _sentinel ? this.tag : tag as String?,
+        showMature: showMature ?? this.showMature,
       );
 
   static const _sentinel = Object();
+
+  // ── SharedPreferences persistence ───────────────────────────────────────
+
+  static const _keyLanguage = 'mp_filter_language';
+  static const _keyTag = 'mp_filter_tag';
+  static const _keyShowMature = 'mp_filter_show_mature';
+  static const _keyContentType = 'mp_filter_content_type';
+
+  Future<void> save() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (language != null) {
+      await prefs.setString(_keyLanguage, language!);
+    } else {
+      await prefs.remove(_keyLanguage);
+    }
+    if (tag != null) {
+      await prefs.setString(_keyTag, tag!);
+    } else {
+      await prefs.remove(_keyTag);
+    }
+    await prefs.setBool(_keyShowMature, showMature);
+    await prefs.setString(_keyContentType, contentType);
+  }
+
+  static Future<MarketplaceFilters> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    return MarketplaceFilters(
+      language: prefs.getString(_keyLanguage),
+      tag: prefs.getString(_keyTag),
+      showMature: prefs.getBool(_keyShowMature) ?? false,
+      contentType: prefs.getString(_keyContentType) ?? 'all',
+    );
+  }
+}
+
+class _MarketplaceFiltersNotifier extends StateNotifier<MarketplaceFilters> {
+  _MarketplaceFiltersNotifier() : super(const MarketplaceFilters()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = await MarketplaceFilters.load();
+  }
+
+  @override
+  set state(MarketplaceFilters value) {
+    super.state = value;
+    value.save();
+  }
 }
 
 final marketplaceFiltersProvider =
-    StateProvider<MarketplaceFilters>((_) => const MarketplaceFilters());
+    StateNotifierProvider<_MarketplaceFiltersNotifier, MarketplaceFilters>(
+  (_) => _MarketplaceFiltersNotifier(),
+);
 
 /// Eski filtre provider'ı bazı yerlerde `type` için hâlâ kullanılıyor
 /// olabilir — tutarlılık için geri uyumlu shortcut.
@@ -601,10 +661,13 @@ final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async
   // rozeti, kendi listing'i). Ama null artık boş liste demek değil.
   ref.watch(authProvider);
   final filters = ref.watch(marketplaceFiltersProvider);
+  // 'official' content type'ta Supabase feed'i boş döner — resmi paketler
+  // ayrı render edilir.
+  if (filters.contentType == 'official') return const [];
   return cachedFetch(
     ref: ref,
     cacheKey:
-        'marketplace:${filters.type}:${filters.language}:${filters.tag}',
+        'marketplace:${filters.type}:${filters.contentType}:${filters.language}:${filters.tag}:${filters.showMature}',
     ttl: const Duration(minutes: 5),
     fetch: () => guardedNetwork(
       ref,
@@ -612,6 +675,7 @@ final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async
             itemType: filters.type == 'all' ? null : filters.type,
             language: filters.language,
             tag: filters.tag,
+            hideMature: !filters.showMature,
           ),
     ),
   );

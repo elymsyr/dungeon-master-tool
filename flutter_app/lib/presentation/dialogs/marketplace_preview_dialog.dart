@@ -111,6 +111,13 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
+                  if (listing.contentRating == 'mature')
+                    _KvPill(
+                      icon: Icons.warning_amber_outlined,
+                      label: '18+',
+                      palette: palette,
+                      accent: Colors.orange,
+                    ),
                   if (listing.templateName != null &&
                       listing.templateName!.isNotEmpty)
                     _KvPill(
@@ -419,25 +426,27 @@ class _KvPill extends StatelessWidget {
   final String label;
   final IconData? icon;
   final DmToolColors palette;
-  const _KvPill({required this.label, this.icon, required this.palette});
+  final Color? accent;
+  const _KvPill({required this.label, this.icon, required this.palette, this.accent});
 
   @override
   Widget build(BuildContext context) {
+    final color = accent ?? palette.featureCardAccent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: palette.featureCardBg,
+        color: color.withValues(alpha: 0.1),
         borderRadius: palette.chr,
-        border: Border.all(color: palette.featureCardBorder),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: palette.sidebarLabelSecondary),
+            Icon(icon, size: 12, color: color),
             const SizedBox(width: 4),
           ],
-          Text(label, style: TextStyle(fontSize: 11, color: palette.tabText)),
+          Text(label, style: TextStyle(fontSize: 11, color: color)),
         ],
       ),
     );
