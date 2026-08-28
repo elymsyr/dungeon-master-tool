@@ -1,5 +1,66 @@
 # Release Notes
 
+## Dungeon Master Tool v14.4.0 — Marketplace Official Filter, Content Rating, Battle Map Polish (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v14.4.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+Marketplace listings now support an official filter and 18+ content rating, making it easier to find curated content and avoid surprises. On the battle map side, strokes, measurement lines, and clear buttons now render correctly regardless of which layer you're working on.
+
+---
+
+### Highlights
+
+- **Official filter on Marketplace** — Filter listings to show only officially published content.
+- **18+ content rating** — Marketplace listings can now be flagged as mature content.
+- **Layer-aware battle map rendering** — Strokes, measurement lines, and clear buttons now respect the active layer, fixing visual artifacts when switching layers.
+
+---
+
+### Marketplace
+
+#### Official filter
+A new toggle on the Marketplace browse screen lets you filter for officially published content only. This makes it faster to find curated, high-quality packs without wading through community submissions.
+
+#### 18+ content rating
+Listings can now carry an 18+ content rating. Mature content is visually marked in the browse and detail screens so you can make informed choices before installing.
+
+---
+
+### Battle Map
+
+#### Layer-aware rendering for strokes, measurements, and clear buttons
+Strokes, measurement lines, and clear buttons were previously drawn on a fixed layer, causing them to appear behind or in front of content incorrectly. They now render on the correct layer relative to your current editing context, fixing visual glitches when switching between map layers.
+
+---
+
+### Bug fixes
+
+- **Battle map strokes** — Stroke lines no longer disappear behind map content when drawing on upper layers.
+- **Measurement lines** — Measurement overlays now render on the correct layer instead of being hidden behind tokens.
+- **Clear buttons** — Clear/reset buttons are now visible and clickable regardless of the active layer.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.3.0` → `14.4.0`.
+- **In-app migrations:** None. No schema changes.
+
+---
+
+### Known issues
+
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision still needs resolver wiring; Tier-4 combat-tracker-dependent effects remain unimplemented.
+- **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.3.0 — Account Deletion, Password Reset, Cross-World Import (Beta)
 
 **Release date:** August 2026
