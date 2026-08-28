@@ -183,6 +183,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                               viewTransform: notifier.viewTransform,
                               notifier: notifier,
                               shapeTick: notifier.shapeTick,
+                              strokeTick: notifier.strokeTick,
                             ),
                           ),
                         ),
