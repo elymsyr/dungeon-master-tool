@@ -87,6 +87,9 @@ SYS = (
     "no quotes, no trailing period.\n"
     "For this subject focus on: {guide}\n"
     "Entity: {name}\n"
+    "Category: {category}\n"
+    "Package: {package}\n"
+    "Game: Dungeons and Dragons 5th Edition (Dnd 5e)\n"
     "Description: {desc}\n"
 )
 
@@ -109,11 +112,13 @@ def valid_subject(text: str) -> bool:
     return 8 <= words <= 120
 
 
-def entity_input(row: dict) -> tuple[str, str, str]:
-    """build_prompt ile aynı girdiyi üretir (LLM'e verilecek metin)."""
+def entity_input(row: dict) -> tuple[str, str, str, str]:
+    """build_prompt ile aynı girdiyi üretir (LLM'e verilecek metin).
+    Döndürür: (type, name, desc, package)."""
     t = row.get("type")
     name = (row.get("name") or "").strip()
     attrs = row.get("attributes") or {}
+    pkg = row.get("_package", "")
     if t == "monster":
         desc = monster_prompt(name, attrs)
     elif t in NAME_ONLY_TYPES:
@@ -128,28 +133,31 @@ def entity_input(row: dict) -> tuple[str, str, str]:
             r = lookup(attrs, "rarity_ref")
             if r:
                 desc += f", {r.lower()} artifact"
-    return t, name, desc
+    return t, name, desc, pkg
 
 
 def load_packs(packs_dirs: list[Path]) -> dict[str, dict]:
-    """uuid -> row haritası (paketlerden ham satırlar)."""
+    """uuid -> row haritası (paketlerden ham satırlar). '_package' eklenir."""
     out = {}
     for packs_dir in packs_dirs:
         if not packs_dir.is_dir():
             continue
         for pack in sorted(packs_dir.glob("*.pkg.json")):
             data = json.loads(pack.read_text())
+            pkg_title = data.get("package_name") or pack.stem
             for uuid, row in (data.get("entities") or {}).items():
                 if row.get("type") not in NAME_ONLY_TYPES and row.get("type") not in (
                         "monster", "spell", "magic-item", "background",
                         "subspecies", "species"):
                     continue
+                row["_package"] = pkg_title
                 out.setdefault(uuid, row)
     return out
 
 
-def build_message(t: str, name: str, desc: str) -> str:
-    return SYS.format(guide=CATEGORY_GUIDE[t], name=name, desc=desc or name)
+def build_message(t: str, name: str, desc: str, pkg: str) -> str:
+    return SYS.format(guide=CATEGORY_GUIDE[t], name=name, category=t,
+                      package=pkg, desc=desc or name)
 
 
 def remote_subject(prompt_text: str, timeout: int = 180) -> str:
@@ -252,8 +260,8 @@ def main() -> None:
         row = rows.get(uuid)
         if not row:
             return uuid, "", "", ""
-        t, name, desc = entity_input(row)
-        msg = build_message(t, name, desc)
+        t, name, desc, pkg = entity_input(row)
+        msg = build_message(t, name, desc, pkg)
         subject = ""
         last_err: Exception | None = None
         for _ in range(args.retries + 1):
