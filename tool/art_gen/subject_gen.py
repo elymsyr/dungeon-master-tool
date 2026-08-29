@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entity görsel özniteliği üretir — sunucudaki opencode (mimo-v2.5-free, high).
+"""Entity görsel özniteliği üretir — sunucudaki opencode (opencode-go/mimo-v2.5).
 
 Sorun: difüzyon modeli entity'yi (örn. halfling, Aboleth) "bilmiyor"; prompt'a
 verilen kural/lore metni de görselleştirilemez. Bu betik her entity için KISA,
@@ -23,13 +23,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from prompts import (NAME_ONLY_TYPES, clean_prose, lookup, monster_prompt,
                      tidy_name)
 
-# Sunucudaki opencode erişimi. Variant "high": canon araştırması için
-# reasoning gerekiyor (örn. Blemmyes = yüzü göğsünde olan başsız dev).
+# Sunucudaki opencode erişimi. Zen free tier (mimo-v2.5-free) yanıt vermiyordu;
+# ücretli opencode-go provider'ı kullanılıyor. Bu provider --variant desteklemiyor.
 SSH_HOST = "sadektech@192.168.1.12"
 SSH_PORT = "8772"
 OPCODE = "/home/sadektech/.opencode/bin/opencode"
-MODEL = "opencode/mimo-v2.5-free"
-VARIANT = "high"
+MODEL = "opencode-go/mimo-v2.5"
 
 # Kategoriye göre görsel odak — LLM'e hangi yönleri betimleyeceğini söyler.
 CATEGORY_GUIDE = {
@@ -174,7 +173,7 @@ def remote_subject(prompt_text: str, timeout: int = 180) -> str:
     b64 = base64.b64encode(prompt_text.encode()).decode()
     remote_cmd = (
         "p=$(base64 -d <<'B64E'\n" + b64 + "\nB64E\n) && "
-        f"{OPCODE} run -m {MODEL} --variant {VARIANT} --format json \"$p\""
+        f"{OPCODE} run -m {MODEL} --format json \"$p\""
     )
     if on_server:
         r = subprocess.run(["bash", "-c", remote_cmd],
@@ -255,11 +254,11 @@ def main() -> None:
 
     t0 = time.time()
 
-    def generate(uuid: str) -> tuple[str, str, str, str]:
+    def generate(uuid: str) -> tuple[str, str, str, str, str]:
         """Tek uuid için subject üretir; başarısızda subject boş döner."""
         row = rows.get(uuid)
         if not row:
-            return uuid, "", "", ""
+            return uuid, "", "", "", "satır bulunamadı"
         t, name, desc, pkg = entity_input(row)
         msg = build_message(t, name, desc, pkg)
         subject = ""
@@ -272,8 +271,8 @@ def main() -> None:
                 subject = ""
             except Exception as e:  # noqa: BLE001
                 last_err = e
-        err = "" if subject else getattr(last_err, "strerror", str(last_err))
-        return uuid, t, name, subject or err
+        err = "" if subject else str(last_err)
+        return uuid, t, name, subject, err
 
     lock = threading.Lock()
     done = 0
@@ -281,13 +280,13 @@ def main() -> None:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = [pool.submit(generate, u) for u in todo]
         for fut in as_completed(futures):
-            uuid, t, name, subject = fut.result()
+            uuid, t, name, subject, err = fut.result()
             with lock:
                 if subject:
                     cache[uuid] = subject
                 else:
                     errors += 1
-                    print(f"!!! HATA {name}: {subject}", file=sys.stderr)
+                    print(f"!!! HATA {name}: {err[:200]}", file=sys.stderr)
                 done += 1
                 if done % 10 == 0 or done == len(todo):
                     args.cache.write_text(
