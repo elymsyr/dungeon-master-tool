@@ -116,7 +116,7 @@ görsel bir "subject" cümleciği** yazdırır ve `subject_cache.json`'a kaydede
    olmayan uuid'ler işlenir (`--force` ile hepsi yeniden üretilir).
 3. **LLM çağrısı** — Her entity için `prompts.py`'nin `build_prompt` ile aynı
    girdiyi üretir (`entity_input()`), LLM system prompt'uyla sarmalar, sunucudaki
-   opencode'a (mimo-v2.5-free, high variant) SSH ile gönderir. 4 paralel worker.
+   opencode’a (opencode-go/mimo-v2.5) SSH ile gönderir. 4 paralel worker.
 4. **Doğrulama** — Çıktı 8-120 kelime olmalı, red/sohbet yanıtı olmamalı.
    Başarısızsa boş döner ve hata loglanır.
 
