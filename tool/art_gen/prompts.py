@@ -398,6 +398,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     if not name:
         return None
     attrs = row.get("attributes") or {}
+    raw_desc = row.get("description") or ""
 
     if t == "monster":
         subject = monster_prompt(name, attrs)
@@ -405,7 +406,7 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         # Bu tiplerin description'ı saf kural metni ("+1 to Wisdom") — resmedilemez.
         subject = f"{tidy_name(name)}, {NAME_ONLY_TYPES[t]}"
     else:
-        desc = clean_prose(row.get("description") or "")
+        desc = clean_prose(raw_desc)
         subject = f"{tidy_name(name)}, {desc}" if desc else tidy_name(name)
         if t == "spell":
             school = lookup(attrs, "school_ref")
@@ -425,6 +426,17 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
     else:
         framing = FRAMING[t]
 
+    pkg_title = PACKAGE_TITLE.get(pkg, pkg)
+    header = (f"An image of {name}, from category {t} "
+              f"in package {pkg_title} from Dungeons and Dragons (DnD).")
+
+    # Subject'ten name prefix'ini kaldır — header zaten name'i içeriyor.
+    name_prefix = f"{tidy_name(name)}, "
+    subject_body = subject
+    if subject.startswith(name_prefix):
+        subject_body = subject[len(name_prefix):]
+    subject_body = subject_body.rstrip(". ")  # çift noktayı önle
+
     style = f"{style_for(pkg)}, {STYLE_TAIL}"
     flavor = STYLE_FLAVOR[_hash(uuid, 5) % len(STYLE_FLAVOR)]
     return {
@@ -432,7 +444,8 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         "package": pkg,
         "type": t,
         "name": name,
-        "prompt": (f"{subject}. {DND_CONTEXT}, {framing}, {FULL_BLEED}, "
+        "prompt": (f"{header}\n{subject_body}. {DND_CONTEXT}, "
+                   f"{framing}, {FULL_BLEED}, "
                    f"{palette_for(pkg, t)}, {mood_for(pkg, t, uuid)}, "
                    f"{style}, {flavor}"),
         "seed": int(uuid[:8], 16),
@@ -460,15 +473,17 @@ def load_jobs(packs_dirs: list[Path]) -> list[dict]:
 
 def self_check(jobs: list[dict]) -> None:
     assert jobs, "hiç job üretilmedi"
+    header_re = re.compile(r"^An image of .+", re.M)
     for j in jobs:
+        assert header_re.search(j["prompt"]), f"category header yok: {j['name']}"
         assert STYLE_TAIL in j["prompt"], f"stil kuyruğu yok: {j['name']}"
         assert FULL_BLEED in j["prompt"], f"full-bleed talimatı yok: {j['name']}"
         assert DND_CONTEXT in j["prompt"], f"D&D bağlamı yok: {j['name']}"
         assert any(f in j["prompt"] for f in STYLE_FLAVOR), f"flavor yok: {j['name']}"
+        assert "\n" in j["prompt"], f"header newline eksik: {j['name']}"
         assert not re.search(r"[*_`#|]", j["prompt"]), f"markdown artığı: {j['name']}"
-        assert "\n" not in j["prompt"], f"newline kaldı: {j['name']}"
         assert j["seed"] == int(j["uuid"][:8], 16), "seed deterministik değil"
-        assert 20 < len(j["prompt"]) < 1600, f"prompt boyu bozuk: {j['name']}"
+        assert 20 < len(j["prompt"]) < 2000, f"prompt boyu bozuk: {j['name']}"
         assert j["package"], f"paket yok: {j['name']}"
     by_type: dict[str, int] = {}
     for j in jobs:
