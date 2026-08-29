@@ -15,6 +15,7 @@ için package_grid'ın yazdığı manifest.json'a (seçilen entity'ler) sınırl
     python3 subject_gen.py --manifest grids/pkg_s1234/manifest.json
     python3 subject_gen.py --limit 5 --force     # önbelleği görmezden gel, 5 üret
 """
+from __future__ import annotations
 import argparse, base64, json, re, subprocess, sys, threading, time
 from pathlib import Path
 
@@ -47,8 +48,9 @@ CATEGORY_GUIDE = {
 
 SYS = (
     "You are a fantasy art director writing the VISUAL SUBJECT description for a "
-    "painter. The painter draws ONLY what you describe — anything you omit is "
-    "invented wrongly. Output ONLY the physical appearance of the subject.\n"
+    "Dungeons & Dragons 5th edition illustration. The painter draws ONLY what you "
+    "describe — anything you omit is invented wrongly. Output ONLY the physical "
+    "appearance of the subject.\n"
     "Research rule (MOST IMPORTANT): first recall the canonical appearance of "
     "this entity from D&D, Pathfinder, mythology, or its source book. If the "
     "entity is well-known (e.g. Blemmyes, Aboleth, Gnoll, Displacer Beast), "
@@ -149,14 +151,27 @@ def build_message(t: str, name: str, desc: str) -> str:
 
 
 def remote_subject(prompt_text: str, timeout: int = 180) -> str:
-    """Sunucudaki opencode'a tek atış gönderir, temiz metni döner."""
+    """Sunucudaki opencode'a tek atış gönderir, temiz metni döner.
+    Sunucuda çalışıyorsa SSH yerine doğrudan opencode çağırır."""
+    import socket
+    try:
+        hostname = socket.gethostname()
+        on_server = "sadektech" in hostname or \
+                     socket.gethostbyname(hostname) == "192.168.1.12"
+    except Exception:
+        on_server = False
+
     b64 = base64.b64encode(prompt_text.encode()).decode()
     remote_cmd = (
         "p=$(base64 -d <<'B64E'\n" + b64 + "\nB64E\n) && "
         f"{OPCODE} run -m {MODEL} --variant {VARIANT} --format json \"$p\""
     )
-    ssh = ["ssh", "-p", SSH_PORT, "-o", "ConnectTimeout=10", SSH_HOST, remote_cmd]
-    r = subprocess.run(ssh, capture_output=True, text=True, timeout=timeout)
+    if on_server:
+        r = subprocess.run(["bash", "-c", remote_cmd],
+                           capture_output=True, text=True, timeout=timeout)
+    else:
+        ssh = ["ssh", "-p", SSH_PORT, "-o", "ConnectTimeout=10", SSH_HOST, remote_cmd]
+        r = subprocess.run(ssh, capture_output=True, text=True, timeout=timeout)
     if r.returncode != 0:
         raise RuntimeError((r.stderr or r.stdout)[-500:])
     return extract_text(r.stdout)

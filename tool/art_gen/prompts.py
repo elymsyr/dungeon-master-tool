@@ -12,6 +12,7 @@ Böylece aynı kategorinin görselleri bile paketten pakete farklı renk/zemin t
 Karanlık olmak zorunlu değil — paket adına ve kapak (banner) paletine göre bazı
 paketler aydınlık, bazıları loş tutulur.
 """
+from __future__ import annotations
 import argparse, json, re, sys
 from pathlib import Path
 
@@ -41,6 +42,10 @@ STYLE_TAIL = (
 FULL_BLEED = ("borderless edge-to-edge composition, the artwork fills the entire "
               "square frame, every corner fully painted, the background "
               "covering the whole canvas")
+
+# Her prompt'un başına eklenen D&D bağlamı — modelin bu görselin bir masa üstü
+# rol yapma oyunu içeriği olduğunu anlamasını sağlar.
+DND_CONTEXT = ("Dungeons & Dragons 5th edition tabletop roleplaying game illustration")
 
 # Paket başına çizim tarzı. Medya somut adlandırılır; hepsi geleneksel araçlar
 # olduğundan AI-default parlaklığına düşmez. Paket kimliği = tarz.
@@ -427,8 +432,9 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         "package": pkg,
         "type": t,
         "name": name,
-        "prompt": (f"{subject}. {framing}, {FULL_BLEED}, {palette_for(pkg, t)}, "
-                   f"{mood_for(pkg, t, uuid)}, {style}, {flavor}"),
+        "prompt": (f"{subject}. {DND_CONTEXT}, {framing}, {FULL_BLEED}, "
+                   f"{palette_for(pkg, t)}, {mood_for(pkg, t, uuid)}, "
+                   f"{style}, {flavor}"),
         "seed": int(uuid[:8], 16),
     }
 
@@ -457,6 +463,7 @@ def self_check(jobs: list[dict]) -> None:
     for j in jobs:
         assert STYLE_TAIL in j["prompt"], f"stil kuyruğu yok: {j['name']}"
         assert FULL_BLEED in j["prompt"], f"full-bleed talimatı yok: {j['name']}"
+        assert DND_CONTEXT in j["prompt"], f"D&D bağlamı yok: {j['name']}"
         assert any(f in j["prompt"] for f in STYLE_FLAVOR), f"flavor yok: {j['name']}"
         assert not re.search(r"[*_`#|]", j["prompt"]), f"markdown artığı: {j['name']}"
         assert "\n" not in j["prompt"], f"newline kaldı: {j['name']}"
