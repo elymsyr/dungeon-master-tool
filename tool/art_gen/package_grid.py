@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Paket basina grid testi."""
-import argparse, json, random, sys, time
+import argparse, json, random, subprocess, sys, time
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -76,6 +76,32 @@ def compose_package_grid(pkg, cells, thumb, pad):
     return canvas
 
 
+def ensure_srd_pack(packs_dirs):
+    """dnd5e-srd.pkg.json yoksa Dart tool'la otomatik olustur."""
+    for d in packs_dirs:
+        if (d / "dnd5e-srd.pkg.json").exists():
+            return
+    # Ilk packs dizinine olustur
+    out_dir = packs_dirs[0] if packs_dirs else None
+    if out_dir is None:
+        return
+    flutter_app = Path(__file__).resolve().parents[2] / "flutter_app"
+    dump_tool = flutter_app / "tool" / "srd_art_dump" / "bin" / "dump_srd.dart"
+    if not dump_tool.exists():
+        print("WARN: dump_srd.dart bulunamadi, dnd5e-srd atlandi", file=sys.stderr)
+        return
+    out_path = out_dir / "dnd5e-srd.pkg.json"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cmd = ["dart", "run", str(dump_tool), str(out_path)]
+    print("dnd5e-srd.pkg.json uretiliyor: %s" % " ".join(cmd), file=sys.stderr)
+    r = subprocess.run(cmd, cwd=str(flutter_app), capture_output=True, text=True)
+    if r.returncode != 0:
+        print("WARN: dump_srd.dart basarisiz (rc=%d): %s" % (r.returncode, r.stderr.strip()),
+              file=sys.stderr)
+    else:
+        print(r.stderr.strip(), file=sys.stderr)
+
+
 def main():
     base = Path(__file__).resolve().parent
     p = argparse.ArgumentParser()
@@ -98,6 +124,8 @@ def main():
     p.add_argument("--vae", default="ae.safetensors")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
+
+    ensure_srd_pack(args.packs)
 
     jobs_path = args.jobs
     if not jobs_path.exists():
