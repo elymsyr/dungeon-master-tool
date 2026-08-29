@@ -96,7 +96,9 @@ _WS = re.compile(r"\s+")
 _REFUSAL = re.compile(
     r"(\*\*|Question:|\bI (can|could|would|am|will|'m|'ll)\b|"
     r"\bI can'?t\b|as an AI|plan mode|please provide|let me know|"
-    r"\bHowever, I\b|clarify|I need to)", re.I)
+    r"\bHowever, I\b|clarify|I need to|"
+    r"Based on the|here is the visual|VISUAL SUBJECT DESCRIPTION|"
+    r"I'?ll research|before creating|the canonical appearance)", re.I)
 
 
 def valid_subject(text: str) -> bool:
