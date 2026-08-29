@@ -36,12 +36,17 @@ STYLE_TAIL = (
     "classic fantasy tabletop roleplaying game art"
 )
 
-# Tam kare kaplama — en kritik kompozisyon talimatı. Beyaz kenar, boş zemin ve
-# "kenarları kesilmiş" görünümünü önler. cfg 1.0'da negasyon ("no border")
-# işe yaramadığından pozitif ifade kullanılır; her prompt'a eklenir.
-FULL_BLEED = ("borderless edge-to-edge composition, the artwork fills the entire "
-              "square frame, every corner fully painted, the background "
-              "covering the whole canvas")
+# Tam kare kaplama — en kritik kompozisyon talimatı. Flux "bust framing" gibi
+# kelimeleri edge-to-edge talimatından güçlü yorumlayabiliyor, bu yüzden
+# kompozisyonu subject'ten hemen sonra,olareksiz ve net veriyoruz.
+FULL_BLEED = (
+    "full-bleed square artwork, edge-to-edge composition, the illustration "
+    "extends continuously to all four edges of the image, background reaches "
+    "and touches every edge and corner of the canvas, no empty margins, no "
+    "white space, no blank border, no frame, no vignette, no isolated "
+    "character on a plain background, character and environment composition "
+    "naturally cropped by the image boundaries"
+)
 
 # Her prompt'un başına eklenen D&D bağlamı — modelin bu görselin bir masa üstü
 # rol yapma oyunu içeriği olduğunu anlamasını sağlar.
@@ -188,13 +193,14 @@ CATEGORY_PALETTE = {
     "subclass":   "heraldic accents, crimson, royal blue, antique gold",
     "feat":       "heraldic accents, crimson, slate blue, antique gold",
     "background": "warm scene accents, amber, russet, deep brown",
-    "subspecies": "portrait accents, ivory, amber, bronze",
-    "species":    "portrait accents, ivory, amber, bronze",
+    "subspecies": "ivory, amber, bronze tones",
+    "species":    "ivory, amber, bronze tones",
 }
 
 # Kategori zemini (sahne tipi — parlaklık paketten gelir, burası sadece neyin
 # arkada olduğu). "plain / empty / flat backdrop" ve "vignette" kelimeleri
 # kullanılmaz: tekdüze boş zemin en büyük AI tell'idir; yerine doğal mekan verilir.
+# "soft horizon" kullanılmaz — Flux bunu "kenarda boş alan bırak" olarak yorumlar.
 CATEGORY_BG = {
     "monster":    "in its natural habitat, untamed wilderness terrain",
     "spell":      "swirling energy field",
@@ -202,8 +208,8 @@ CATEGORY_BG = {
     "subclass":   "heraldic banner",
     "feat":       "heraldic banner",
     "background": "lived-in scene, natural setting",
-    "subspecies": "in a natural landscape, soft horizon",
-    "species":    "in a natural landscape, soft horizon",
+    "subspecies": "in a natural landscape",
+    "species":    "in a natural landscape",
 }
 
 # Pakete özel zemin sözcükleri — CATEGORY_BG yerine geçer. Arka planda "o işi
@@ -444,8 +450,8 @@ def build_prompt(uuid: str, pkg: str, row: dict) -> dict | None:
         "package": pkg,
         "type": t,
         "name": name,
-        "prompt": (f"{header}\n{subject_body}. {DND_CONTEXT}, "
-                   f"{framing}, {FULL_BLEED}, "
+        "prompt": (f"{header}\n{subject_body}. {FULL_BLEED}, "
+                   f"{DND_CONTEXT}, {framing}, "
                    f"{palette_for(pkg, t)}, {mood_for(pkg, t, uuid)}, "
                    f"{style}, {flavor}"),
         "seed": int(uuid[:8], 16),
