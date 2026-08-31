@@ -1,5 +1,124 @@
 # Release Notes
 
+## Dungeon Master Tool v15.0.0 — Bundled World Pipeline, Class Resources, Offline SRD (Beta)
+
+**Release date:** August 2026
+**Downloads & source:** [GitHub release](https://github.com/elymsyr/dungeon-master-tool/releases/tag/v15.0.0) · [elymsyr.github.io](https://elymsyr.github.io/)
+
+This release rebuilds how ready-made worlds get into the app. Bundled adventures now install their player characters, maps, tokens and handouts properly instead of dropping half of them on the floor, and their text cross-links to the entities it mentions. Character sheets gain a real Class Resources tracker for Rage, Bardic Inspiration, Channel Divinity and the rest, and the full SRD 5.2.1 package now ships inside the app so first-run content works with no network. NPC and monster sheets pick up free-text description, traits, spellcasting and equipment fields alongside the existing structured references.
+
+> **Heads-up for anyone who installed a bundled world on 14.x:** re-install it from Admin → Bundled Worlds. Earlier release builds shipped the world manifest without its media or blueprints, so previously installed copies can be missing images and player characters.
+
+---
+
+### Highlights
+
+- **Class Resources tracker** — Rage uses, Bardic Inspiration, Channel Divinity, Sorcery Points and friends now show on the character sheet with spendable counters.
+- **Font of Magic conversion** — Convert sorcery points to spell slots directly from the Class Resources card.
+- **Bundled worlds ship their player characters** — Pre-made PCs from a bundled adventure land in the Characters tab, ready to claim.
+- **Bundled world media actually installs** — Maps, tokens, handouts and character sheets now reach your device in release builds, not just debug.
+- **Entity cross-links in bundled world text** — Names mentioned in a bundled world's descriptions resolve to tappable entity links.
+- **Offline SRD package** — The full SRD 5.2.1 content pack is bundled in the app, so it imports with no network connection.
+- **Fullscreen image viewer** — Tap any entity image for a pan/zoom fullscreen preview.
+- **Richer NPC and monster sheets** — New Description, Backstory, Traits & Features, Spellcasting and Equipment & Gear fields for free-text stat blocks.
+
+---
+
+### Characters
+
+#### Class Resources tracker
+
+The character editor has a real **Class Resources** group. Countable class, subclass and feat resources — Rage uses, Bardic Inspiration, Channel Divinity, Focus Points, Sorcery Points — each get a row with remaining and maximum plus tap-to-spend controls. The maximum is always derived from your class, subclass and level, never stored, so a character built in the wizard, one that came from a bundled world, and one received over LAN all show the same rows. Only the spent count is saved with the character.
+
+The group moved above **Spells** in the sheet, since you usually reach for it more often.
+
+#### Font of Magic
+
+When a character has both sorcery points and spell slots, the Class Resources card offers the Font of Magic conversion. It does not appear for characters without spell slots.
+
+#### Race and class chips on imported characters
+
+Characters that arrive from a bundled world carry unresolved species and class references. Their sheet chips now fall back to the name recorded in the reference instead of showing a dash.
+
+---
+
+### Worlds & Content
+
+#### Bundled worlds install their player characters
+
+A bundled adventure's pre-made player characters are now written into the world's Characters tab as unowned entries, so any player at the table can claim one. Re-installing the same world is idempotent — existing characters are not duplicated.
+
+#### Bundled world media now installs correctly
+
+Flutter asset folders are not recursive, so earlier builds shipped only the top-level world manifest. A release build then found no blueprints and no images at all — a problem invisible in desktop debug builds, which fall back to reading files off disk. Every media subfolder is now declared explicitly, and a test fails the build when a world directory is left out. Media extracts into world-specific paths, so two bundled worlds no longer collide.
+
+- If you installed a bundled world with 14.x, re-install it to pick up the missing media and characters.
+
+#### Entity mentions in bundled world text
+
+Bundled world descriptions can reference other entities inline. Mentions are resolved to real entity IDs when the world is converted, so a name that appears in a scene description becomes a link to that NPC, location or item. An unresolvable mention now fails at authoring time rather than shipping as dead text.
+
+#### Offline SRD 5.2.1 package
+
+The complete SRD 5.2.1 content package ships as a bundled asset. First-run content import no longer depends on a network round-trip.
+
+---
+
+### Entities & Editors
+
+#### Fullscreen image viewer
+
+Tapping an image on an entity card, in a field editor, or anywhere an asset reference is rendered opens a fullscreen preview with pan and zoom. Previously each surface had its own partial implementation; there is now one viewer everywhere.
+
+#### New free-text fields on NPCs and monsters
+
+Both NPCs and monsters gain **Description**, **Traits & Features**, **Spellcasting** and **Equipment & Gear** markdown fields, alongside the structured relation lists they already had. NPCs also get **Backstory** under Roleplay. Use them for stat blocks and flavor that does not decompose into references.
+
+#### Consistent markdown styling
+
+Markdown now renders through one shared style across entity cards, notification blocks, expandable sections and text areas. Blockquotes are legible in dark mode instead of washing out.
+
+---
+
+### Bug fixes
+
+- **Bundled world images missing in release builds** — Maps, tokens and handouts now ship and install; previously only the world manifest was bundled.
+- **Bundled world player characters not appearing** — Pre-made PCs are written to the Characters tab and the list refreshes after installation instead of needing an app restart.
+- **Class resources invisible on the sheet** — Level-up wrote resource pools to a field nothing read, so they never rendered. Capacity is now derived from the resolver and always shows.
+- **Blank race and class chips on bundled characters** — Chips show the referenced name when the reference has not been resolved to a local entity.
+- **Dark-mode blockquotes** — Markdown blockquotes no longer render near-invisible on dark backgrounds.
+
+---
+
+### Deprecations & removals
+
+- **`class_resources` proficiency table on player characters** — Removed. It was never populated and the editor hid it; the derived Class Resources tracker replaces it.
+
+---
+
+### Upgrade notes
+
+- **App version bump:** `14.4.0` → `15.0.0`.
+- **In-app migrations:** None. Built-in schemas regenerate on launch to pick up the new NPC and monster fields; existing entity data is untouched.
+- **Bundled worlds installed on 14.x:** Re-install from Admin → Bundled Worlds to get the media and player characters that earlier release builds silently skipped.
+- **Class resource maximums are no longer stored:** They are recomputed from class, subclass and level on every open. Spent counts carry over; any hand-edited maximum from a previous version is ignored.
+- **App size:** The bundled SRD package and world media increase the install size. This buys offline first-run content.
+
+---
+
+### Known issues
+
+- **Custom content editors (full WYSIWYG)** — Still deferred; JSON editing remains the workaround for schemas and templates.
+- **Remaining SRD effect gaps** — Drow 120ft superior darkvision still needs resolver wiring; Tier-4 combat-tracker-dependent effects remain unimplemented.
+- **Online play is experimental** — Expect occasional desync; report cases via Settings → Report a bug.
+- **Bundled world references stay soft** — Species and class references on imported player characters are not linked to local entities; sheets display the recorded name rather than a live link.
+
+---
+
+*Thanks for playing. Roll well.*
+
+---
+
 ## Dungeon Master Tool v14.4.0 — Marketplace Official Filter, Content Rating, Battle Map Polish (Beta)
 
 **Release date:** August 2026
