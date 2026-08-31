@@ -17,7 +17,7 @@
           "attitude_ref": {
             "lookup": "attitude",
             "match": "name",
-            "value": "Neutral"
+            "value": "Indifferent"
           },
           "location_ref": {
             "lookup": "location",
@@ -26,23 +26,86 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 14,
-            "DEX": 14,
-            "CON": 12,
-            "INT": 16,
+            "STR": 12,
+            "DEX": 12,
+            "CON": 10,
+            "INT": 13,
             "WIS": 13,
-            "CHA": 14
+            "CHA": 13
           },
           "combat_stats": {
             "hp": 12,
             "max_hp": 12,
-            "ac": 15,
-            "speed": "30 ft"
+            "ac": 14,
+            "speed": "30 ft",
+            "level": 5
           },
           "proficiency_bonus": 3,
-          "description": "An old pirate lord, 73 years old, with white hair and cunning eyes. Plans to distribute his vast treasure on the island ruins.",
+          "description": "A legendary pirate captain.",
           "secrets": "The ruins were once the palace of a legendary vizier, now haunted by a capricious efreet. The Shark knows more than he lets on.",
-          "imagePath": "media/Tokens/White-Shark.webp"
+          "imagePath": "media/Tokens/White-Shark.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Insight",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Persuasion",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "appearance": "Height: 6', Weight: 160 lb, Eyes: Brown, Hair: White, Skin: Light Brown",
+          "traits_md": "**@Physical Quirk@**\n**Combat Reflexes** — Never freeze\n**Natural Attacks**\n**Filthy Rich** — Starting wealth is 100x normal\n**Social Stigma (Criminal Record)**\n**Sense of Duty**\n**Ambidexterity**\n**Compulsive Generosity**\n**Hard to Kill**\n**Luck** — Usable once per hour of play\n**High Pain Threshold** — Never suffer shock penalties when injured",
+          "equipment_md": "- Mail, Fine Torso Armor (equipped)\n- Stormcord (4 yard reach) (equipped)\n- Leather, Light Pot Helm, Padded (equipped)\n- Shoes  (equipped)\n- Shortsword (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Chain Shirt",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Stormcord",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -67,23 +130,148 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 16,
-            "DEX": 14,
-            "CON": 14,
-            "INT": 16,
+            "STR": 13,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 13,
             "WIS": 13,
-            "CHA": 12
+            "CHA": 10
           },
           "combat_stats": {
             "hp": 13,
             "max_hp": 13,
-            "ac": 16,
-            "speed": "30 ft"
+            "ac": 15,
+            "speed": "30 ft",
+            "level": 4
           },
           "proficiency_bonus": 2,
-          "description": "A fearsome pirate lieutenant. 'Night-Eater' is not a metaphorical title.",
+          "description": "A water mage and pirate lieutenant.",
           "secrets": "Secretly plans to betray the White Shark and claim the treasure for himself.",
-          "imagePath": "media/Tokens/Faruq-Night-Eater.webp"
+          "imagePath": "media/Tokens/Faruq-Night-Eater.webp",
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Water Breathing"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Gust of Wind"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Create or Destroy Water"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Control Water"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Fog Cloud"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Shield"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Ray of Sickness"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Ray of Enfeeblement"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Purify Food and Drink"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "False Life"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Locate Creature"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Water Walk"
+            }
+          ],
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Arcana",
+                "ability": "INT",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 6', Weight: 170 lb, Eyes: Brown, Hair: Black, Skin: Brown",
+          "traits_md": "**Combat Reflexes** — Never freeze\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Magery**\n**Megalomania**\n**Natural Attacks**\n**Very Wealthy** — Starting wealth is 20x normal\n**Selfish** — Make a self-control roll whenever you experience a clear social slight or “snub.” On a failure, you lash out at the offending party just as if you had Bad Temper.\n**Overconfidence** — You must make a self-control roll any time the GM feels you show an unreasonable degree of caution. If you fail, you must go ahead as though you were able to handle the situation!",
+          "spells_md": "- **Breathe Water** → *Water Breathing* (Cost: 4, Dur: 1 min, Time: 1 sec)\n- **Create Air** → *Gust of Wind* (Cost: 1, Dur: 5 sec, Time: 1 sec)\n- **Create Water** → *Create or Destroy Water* (Cost: 2/gal, Dur: Permanent, Time: 1 sec)\n- **Destroy Water** → *Control Water* (Cost: 3, Dur: Permanent, Time: 1 sec)\n- **Fog** → *Fog Cloud* (Cost: 2, Dur: 1 min, Time: 1 sec)\n- **Iron Arm** → *Shield* (Cost: 1, Dur: Instant, Time: 1 sec)\n- **Itch** → *Ray of Sickness* (Cost: 2, Dur: Until scratched, Time: 1 sec)\n- **Pain** → *Ray of Enfeeblement* (Cost: 2, Dur: 1 sec, Time: 2 sec)\n- **Purify Air** → *Purify Food and Water* (Cost: 1, Dur: Instant, Time: 1 sec)\n- **Purify Water** → *Purify Food and Water* (Cost: 1/gal, Dur: Permanent, Time: 5-10/gal #)\n- **Resist Pain** → *False Life* (Cost: 4, Dur: 1 min, Time: 1 sec)\n- **Seek Water** → *Locate Creature* (Cost: 2, Dur: Instant, Time: 1 sec)\n- **Shape Air** → *Gust of Wind* (Cost: 1-10, Dur: 1 min, Time: 1 sec)\n- **Shape Water** → *Control Water* (Cost: 1#, Dur: 1 min, Time: 2 sec)\n- **Spasm** → *Ray of Sickness* (Cost: 2, Dur: Instant, Time: 1 sec)\n- **Walk on Water** → *Water Walk* (Cost: 3, Dur: 1 min, Time: 4 sec)\n- **Water Jet** → *Control Water* (Cost: 1-3, Dur: 1 sec, Time: 1 sec)",
+          "equipment_md": "- Layered Cloth, Medium Torso Armor (equipped)\n- Layered Cloth, Medium Arm Armor (equipped)\n- Boots, Leather  (equipped)\n- Shortsword (equipped)\n- Spear (equipped)\n- 5 pt Powerstone (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Padded Armor",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Spear",
+              "equipped": true
+            },
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Powerstone (5 pt)",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -108,22 +296,84 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 18,
-            "DEX": 14,
-            "CON": 14,
-            "INT": 12,
-            "WIS": 11,
+            "STR": 15,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 11,
+            "WIS": 12,
             "CHA": 10
           },
           "combat_stats": {
             "hp": 15,
             "max_hp": 15,
             "ac": 16,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 4
           },
           "proficiency_bonus": 2,
-          "description": "A towering warrior serving as the White Shark's enforcer.",
-          "imagePath": "media/Tokens/Nefru-Sekhem.webp"
+          "description": "An ancient mummy warrior.",
+          "imagePath": "media/Tokens/Nefru-Sekhem.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 6', Weight: 200 lb, Eyes: Black, Hair: None, Skin: Green",
+          "traits_md": "**Born Biter**\n**Combat Reflexes** — Never freeze\n**Damage Resistance**\n**Discriminatory Smell**\n**Gluttony** — Make a self-control roll when presented with a tempting morsel or good wine that, for some reason, you should resist. If you fail, you partake – regardless of the consequences.\n**Hard to Kill**\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Low Empathy**\n**Magic Resistance**\n**Natural Attacks**\n**Night Vision**\n**Peripheral Vision**\n**Sharp Teeth**\n**Striking ST**",
+          "equipment_md": "- Mace (equipped)\n- Brass Vizier's Ring (equipped)\n- Snake-Eye Amulet (equipped)\n- Wand of the Spitting Cobra (equipped)",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            }
+          ],
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Mace",
+              "equipped": true
+            },
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Brass Vizier's Ring",
+              "equipped": true
+            },
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Snake-Eye Amulet",
+              "equipped": true
+            },
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Wand of the Spitting Cobra",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -148,10 +398,10 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 18,
-            "DEX": 14,
-            "CON": 14,
-            "INT": 12,
+            "STR": 15,
+            "DEX": 12,
+            "CON": 12,
+            "INT": 10,
             "WIS": 10,
             "CHA": 10
           },
@@ -159,11 +409,55 @@
             "hp": 15,
             "max_hp": 15,
             "ac": 16,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 4
           },
           "proficiency_bonus": 2,
-          "description": "Another of the White Shark's elite guards. Identical in build to Nefru-Sekhem.",
-          "imagePath": "media/Tokens/Timzahi.webp"
+          "description": "A quick-footed pirate scout.",
+          "imagePath": "media/Tokens/Timzahi.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 6', Weight: 200 lb, Eyes: Black, Hair: None, Skin: Green",
+          "traits_md": "**Born Biter**\n**Combat Reflexes** — Never freeze\n**Damage Resistance**\n**Discriminatory Smell**\n**Gluttony** — Make a self-control roll when presented with a tempting morsel or good wine that, for some reason, you should resist. If you fail, you partake – regardless of the consequences.\n**Hard to Kill**\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Low Empathy**\n**Magic Resistance**\n**Natural Attacks**\n**Night Vision**\n**Peripheral Vision**\n**Sharp Teeth**\n**Striking ST**",
+          "equipment_md": "- Thrusting Broadsword (equipped)",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            }
+          ],
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Thrusting Broadsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -179,7 +473,7 @@
           "attitude_ref": {
             "lookup": "attitude",
             "match": "name",
-            "value": "Neutral"
+            "value": "Indifferent"
           },
           "location_ref": {
             "lookup": "location",
@@ -187,10 +481,10 @@
             "value": "The Gate Hall"
           },
           "stat_block": {
-            "STR": 20,
-            "DEX": 16,
-            "CON": 16,
-            "INT": 16,
+            "STR": 17,
+            "DEX": 13,
+            "CON": 13,
+            "INT": 13,
             "WIS": 13,
             "CHA": 12
           },
@@ -198,12 +492,109 @@
             "hp": 17,
             "max_hp": 17,
             "ac": 17,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 5
           },
           "proficiency_bonus": 3,
-          "description": "A massive warrior of ambiguous allegiance. Serves as gatekeeper to the palace ruins.",
+          "description": "An undead mage.",
           "secrets": "Bound by an ancient oath to guard the palace. Will respect anyone who speaks the old words.",
-          "imagePath": "media/Tokens/Varazdat.webp"
+          "imagePath": "media/Tokens/Varazdat.webp",
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Gust of Wind"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Control Flames"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Invisibility"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Light"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Purify Food and Drink"
+            }
+          ],
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Arcana",
+                "ability": "INT",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Insight",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Intimidation",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Sleight of Hand",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 12', Weight: 14,005 lb, Eyes: Embers, Hair: Black, Skin: Red-bronze",
+          "traits_md": "**Appearance**\n**Callous**\n**Combat Reflexes** — Never freeze\n**Damage Resistance**\n**Damage Resistance (Fire)** — Fire attacks\n**Flight** — Air Move is Basic Speed x 2 (drop all fractions)\n**Hard to Kill**\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Jumper (@World/Time/Spirit@)**\n**Magery**\n**Natural Attacks**\n**Telecommunication**\n**Weapon Bond (@Specific Weapon@)**",
+          "spells_md": "- **Blur**\n- **Complex Illusion**\n- **Continual Light**\n- **Create Air** → *Gust of Wind* (Cost: 1, Dur: 5 sec, Time: 1 sec)\n- **Create Fire**\n- **Darkness**\n- **Colors**\n- **Essential Flame**\n- **Extinguish Fire** → *Control Flames* (Cost: 3, Dur: Permanent, Time: 1 sec)\n- **Fire Cloud**\n- **Fireball**\n- **Counterspell**\n- **Fireproof**\n- **Gloom**\n- **Ignite Fire** → *Control Flames* (Cost: 1-4, Dur: 1 sec, Time: 1 sec)\n- **Invisibility** → *Invisibility* (Cost: 5, Dur: 1 min, Time: 3 sec)\n- **Light** → *Light* (Cost: 1, Dur: 1 min, Time: 1 sec)\n- **Perfect Illusion**\n- **Purify Air** → *Purify Food and Water* (Cost: 1, Dur: Instant, Time: 1 sec)\n- **Resist Fire**\n- **Seek Fire**\n- **Shape Air** → *Gust of Wind* (Cost: 1-10, Dur: 1 min, Time: 1 sec)\n- **Shape Fire**\n- **Simple Illusion**\n- **Sound**",
+          "equipment_md": "- Djinn-crafted Bronze Bracers (equipped)\n- Leather, Medium Torso Armor (equipped)\n- Dagger (equipped)\n- The Blade of Brass Winds (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Djinn-crafted Bronze Bracers",
+              "equipped": true
+            },
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Leather Armor",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Dagger",
+              "equipped": true
+            },
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "The Blade of Brass Winds",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -227,23 +618,101 @@
             "value": "The Gate Hall"
           },
           "stat_block": {
-            "STR": 14,
-            "DEX": 14,
-            "CON": 14,
-            "INT": 12,
-            "WIS": 11,
-            "CHA": 12
+            "STR": 11,
+            "DEX": 12,
+            "CON": 11,
+            "INT": 10,
+            "WIS": 10,
+            "CHA": 10
           },
           "combat_stats": {
             "hp": 11,
             "max_hp": 11,
             "ac": 14,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 3
           },
           "proficiency_bonus": 2,
-          "description": "A displaced noble who has wandered into the ruins seeking redemption.",
+          "description": "A noble-born pirate captain with water magic.",
           "secrets": "Knows the location of a hidden vault, but fears what guards it.",
-          "imagePath": "media/Tokens/Ibrahim-the-Drifted-Lord.webp"
+          "imagePath": "media/Tokens/Ibrahim-the-Drifted-Lord.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Deception",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Insight",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Investigation",
+                "ability": "INT",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Performance",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Persuasion",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 5'10\", Weight: 225 lb, Eyes: Brown, Hair: Black, Skin: Dark Brown",
+          "traits_md": "**Natural Attacks**\n**Appearance**\n**Fit** — Recover FP at twice the normal rate (but not FP spent for spells or psi powers)\n**Post-Combat Shakes** — Make a self-control roll at the end of any battle. If you fail, roll 3d, add the amount by which you failed your self-control roll, and look up the result on the Fright Check Table.\n**Language: @Language@**\n**High Status** — @Description@\n**Overconfidence** — You must make a self-control roll any time the GM feels you show an unreasonable degree of caution. If you fail, you must go ahead as though you were able to handle the situation!\n**@Mental Quirk@**\n**Ornithophobia (Birds)**",
+          "equipment_md": "- Shoes, leather (equipped)\n- Thrusting Broadsword (equipped)\n- Large Knife (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Thrusting Broadsword",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Large Knife",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -267,23 +736,114 @@
             "value": "The Banquet Hall"
           },
           "stat_block": {
-            "STR": 10,
-            "DEX": 14,
+            "STR": 9,
+            "DEX": 12,
             "CON": 12,
-            "INT": 14,
-            "WIS": 14,
-            "CHA": 16
+            "INT": 12,
+            "WIS": 12,
+            "CHA": 12
           },
           "combat_stats": {
             "hp": 9,
             "max_hp": 9,
             "ac": 12,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 3
           },
           "proficiency_bonus": 2,
-          "description": "A ghostly servant who still tends to a feast that ended centuries ago.",
+          "description": "A masterful healer and potion brewer.",
           "secrets": "Will help anyone who honors the traditions of hospitality.",
-          "imagePath": "media/Tokens/Keeper-of-Cups.webp"
+          "imagePath": "media/Tokens/Keeper-of-Cups.webp",
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Detect Magic"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Control Flames"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Invisibility"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Light"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Purify Food and Drink"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Locate Creature"
+            }
+          ],
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Insight",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Investigation",
+                "ability": "INT",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Medicine",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Persuasion",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 4'9\", Weight: 90 lb, Eyes: White, Hair: Black, Skin: Tanned",
+          "traits_md": "**Enhanced Dodge**\n**Flight** — Air Move is Basic Speed x 2 (drop all fractions)\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Magery**\n**@Mental Quirk@**\n**Natural Attacks**",
+          "spells_md": "- **Apportation**\n- **Blur**\n- **Clean**\n- **Magelock**\n- **Continual Light**\n- **Darkness**\n- **Detect Magic** → *Detect Magic* (Cost: 2, Dur: Instant, Time: 5 sec)\n- **Find Weakness**\n- **Gloom**\n- **Haste**\n- **Ignite Fire** → *Control Flames* (Cost: 1-4, Dur: 1 sec, Time: 1 sec)\n- **Invisibility** → *Invisibility* (Cost: 5, Dur: 1 min, Time: 3 sec)\n- **Light** → *Light* (Cost: 1, Dur: 1 min, Time: 1 sec)\n- **Lockmaster**\n- **Mage Light**\n- **Mage Sight**\n- **Purify Water** → *Purify Food and Water* (Cost: 1/gal, Dur: Permanent, Time: 5-10/gal #)\n- **Restore**\n- **Seek Air**\n- **Seek Earth**\n- **Seek Water** → *Locate Creature* (Cost: 2, Dur: Instant, Time: 1 sec)\n- **Simple Illusion**",
+          "equipment_md": "- Enchanted Knife (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "magic-item",
+              "match": "name",
+              "value": "Enchanted Knife",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -299,7 +859,7 @@
           "attitude_ref": {
             "lookup": "attitude",
             "match": "name",
-            "value": "Neutral"
+            "value": "Indifferent"
           },
           "location_ref": {
             "lookup": "location",
@@ -307,10 +867,10 @@
             "value": "The Builder Tunnels"
           },
           "stat_block": {
-            "STR": 10,
-            "DEX": 14,
-            "CON": 12,
-            "INT": 12,
+            "STR": 9,
+            "DEX": 12,
+            "CON": 10,
+            "INT": 6,
             "WIS": 10,
             "CHA": 10
           },
@@ -318,11 +878,39 @@
             "hp": 9,
             "max_hp": 9,
             "ac": 12,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 2
           },
           "proficiency_bonus": 2,
-          "description": "A tunnel dweller who knows the secret passages of the palace.",
-          "imagePath": "media/Tokens/Debbi.webp"
+          "description": "A fearsome orc warrior.",
+          "imagePath": "media/Tokens/Debbi.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Intimidation",
+                "ability": "CHA",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 5'6\", Weight: 90 lb, Eyes: Brown, Hair: Brown, Skin: Light Brown",
+          "traits_md": "**Acute Taste & Smell**\n**Bloodlust** — You must make a self-control roll whenever you need to accept a surrender, evade a sentry, take a prisoner, etc.\n**Born Biter**\n**Brachiator**\n**Callous**\n**Chummy**\n**Fur**\n**Meta-Trait: Wild Animal**\n**Natural Attacks**\n**Semi-Upright** — Moving while upright reduces Move by 40%\n**Sharp Claws**\n**Sharp Teeth**\n**Striking ST**\n**Terror**\n**Trait**"
         }
       },
       {
@@ -338,7 +926,7 @@
           "attitude_ref": {
             "lookup": "attitude",
             "match": "name",
-            "value": "Neutral"
+            "value": "Indifferent"
           },
           "location_ref": {
             "lookup": "location",
@@ -347,10 +935,10 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 14,
-            "DEX": 12,
-            "CON": 14,
-            "INT": 12,
+            "STR": 12,
+            "DEX": 11,
+            "CON": 11,
+            "INT": 11,
             "WIS": 11,
             "CHA": 10
           },
@@ -358,11 +946,60 @@
             "hp": 12,
             "max_hp": 12,
             "ac": 16,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 3
           },
           "proficiency_bonus": 2,
-          "description": "A sellsword hired by the White Shark. Fights for coin, not loyalty.",
-          "imagePath": "media/Tokens/Sangtarash.webp"
+          "description": "A skilled mercenary fighter.",
+          "imagePath": "media/Tokens/Sangtarash.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 5'11\", Weight: 165 lb, Eyes: Brown, Hair: Brown, Skin: Brown",
+          "traits_md": "**Natural Attacks**\n**Combat Reflexes** — Never freeze\n**Duty (@Duty@)**",
+          "equipment_md": "- Shoes  (equipped)\n- Chopping Broadsword (equipped)\n- Layered Cloth, Medium Arm Armor (equipped)\n- Small Shield, Light (equipped)\n- Layered Cloth, Medium Torso Armor (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Broadsword",
+              "equipped": true
+            },
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Padded Armor",
+              "equipped": true
+            },
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Shield",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -387,10 +1024,10 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 12,
-            "DEX": 12,
-            "CON": 12,
-            "INT": 12,
+            "STR": 11,
+            "DEX": 11,
+            "CON": 10,
+            "INT": 10,
             "WIS": 10,
             "CHA": 10
           },
@@ -398,11 +1035,54 @@
             "hp": 11,
             "max_hp": 11,
             "ac": 14,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 2
           },
           "proficiency_bonus": 2,
-          "description": "One of the White Shark's rank-and-file pirates.",
-          "imagePath": "media/Tokens/Rafiq-the-Pirate.webp"
+          "description": "A seasoned pirate with magical abilities.",
+          "imagePath": "media/Tokens/Rafiq-the-Pirate.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "appearance": "Height: 5'8\", Weight: 140 lb, Eyes: Brown, Hair: Bald, Skin: Light Brown",
+          "traits_md": "**Natural Attacks**\n**Duty (@Duty@)**",
+          "equipment_md": "- Baton (equipped)\n- Shortsword (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Club",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -427,10 +1107,10 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 12,
-            "DEX": 12,
-            "CON": 12,
-            "INT": 12,
+            "STR": 11,
+            "DEX": 11,
+            "CON": 10,
+            "INT": 10,
             "WIS": 10,
             "CHA": 10
           },
@@ -438,11 +1118,61 @@
             "hp": 11,
             "max_hp": 11,
             "ac": 14,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 2
           },
           "proficiency_bonus": 2,
-          "description": "An archer serving in the White Shark's crew.",
-          "imagePath": "media/Tokens/Pirate-Archer.webp"
+          "description": "A ranged combat specialist.",
+          "imagePath": "media/Tokens/Pirate-Archer.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Sleight of Hand",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "appearance": "Height: 5'8\", Weight: 140 lb, Eyes: Brown, Hair: Bald, Skin: Light Brown",
+          "traits_md": "**Natural Attacks**\n**Duty (@Duty@)**",
+          "equipment_md": "- Short Bow (equipped)\n- Shortsword (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortbow",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -467,10 +1197,10 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 12,
-            "DEX": 12,
-            "CON": 12,
-            "INT": 12,
+            "STR": 11,
+            "DEX": 11,
+            "CON": 10,
+            "INT": 10,
             "WIS": 10,
             "CHA": 10
           },
@@ -478,11 +1208,54 @@
             "hp": 11,
             "max_hp": 11,
             "ac": 14,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 2
           },
           "proficiency_bonus": 2,
-          "description": "A grizzled pirate with burn scars covering his hands.",
-          "imagePath": "media/Tokens/Ropeburn-the-Pirate.webp"
+          "description": "A brutal pirate enforcer.",
+          "imagePath": "media/Tokens/Ropeburn-the-Pirate.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "appearance": "Height: 5'8\", Weight: 140 lb, Eyes: Brown, Hair: Bald, Skin: Light Brown",
+          "traits_md": "**Natural Attacks**\n**Duty (@Duty@)**",
+          "equipment_md": "- Baton (equipped)\n- Shortsword (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Club",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -507,9 +1280,9 @@
           },
           "faction": "White Shark's Crew",
           "stat_block": {
-            "STR": 14,
-            "DEX": 12,
-            "CON": 12,
+            "STR": 11,
+            "DEX": 11,
+            "CON": 10,
             "INT": 10,
             "WIS": 10,
             "CHA": 10
@@ -518,11 +1291,54 @@
             "hp": 11,
             "max_hp": 11,
             "ac": 14,
-            "speed": "30 ft"
+            "speed": "30 ft",
+            "level": 1
           },
           "proficiency_bonus": 2,
-          "description": "A strong but simple pirate tasked with moving treasure chests.",
-          "imagePath": "media/Tokens/Pirate-Hauler.webp"
+          "description": "A strong carrier of loot.",
+          "imagePath": "media/Tokens/Pirate-Hauler.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "appearance": "Height: 5'8\", Weight: 140 lb, Eyes: Brown, Hair: Bald, Skin: Light Brown",
+          "traits_md": "**Natural Attacks**\n**Duty (@Duty@)**",
+          "equipment_md": "- Baton (equipped)\n- Shortsword (equipped)",
+          "equipment_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Club",
+              "equipped": true
+            },
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Shortsword",
+              "equipped": true
+            }
+          ]
         }
       },
       {
@@ -557,11 +1373,53 @@
             "hp": 5,
             "max_hp": 5,
             "ac": 13,
-            "speed": "35 ft"
+            "speed": "35 ft",
+            "level": 1
           },
           "proficiency_bonus": 2,
-          "description": "An agile little thief who skitters through the tunnels. Named for his climbing ability.",
-          "imagePath": "media/Tokens/Tariq-the-Monkey.webp"
+          "description": "A trained monkey companion.",
+          "imagePath": "media/Tokens/Tariq-the-Monkey.webp",
+          "skills": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 5
+              },
+              {
+                "name": "Intimidation",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Survival",
+                "ability": "WIS",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "appearance": "Height: 5'9\", Weight: 144 lb, Eyes: Hazel, Hair: Brown, Skin: Brown",
+          "traits_md": "**Natural Attacks**\n**Chummy**\n**Meta-Trait: Wild Animal**\n**Fur**\n**Bad Temper**\n**Brachiator**\n**Semi-Upright** — Moving while upright reduces Move by 40%\n**Extra Arm**\n**Impulsiveness** — Make a self-control roll whenever it would be wise to wait and ponder. If you fail, you must act"
         }
       },
       {
@@ -569,13 +1427,13 @@
         "mapping": {
           "name": "Rashid the Jackal",
           "description": "A cunning informant who operates in the shadows. Known for his ability to gather secrets and trade them for favors.",
-          "traits": "cunning, secretive, well-connected",
           "location_ref": {
             "lookup": "location",
             "match": "name",
             "value": "The Gate Hall"
           },
-          "imagePath": "media/Tokens/Rashid-the-Jackal.webp"
+          "imagePath": "media/Tokens/Rashid-the-Jackal.webp",
+          "traits_md": "cunning, secretive, well-connected"
         }
       },
       {
@@ -583,13 +1441,13 @@
         "mapping": {
           "name": "Hound of Ash Silk",
           "description": "A spectral hound with fur made of ash and silk. Guards the palace entrance and attacks intruders.",
-          "traits": "spectral, guarding, relentless",
           "location_ref": {
             "lookup": "location",
             "match": "name",
             "value": "Uzrah's Palace"
           },
-          "imagePath": "media/Tokens/Hound-Ash-Silk.webp"
+          "imagePath": "media/Tokens/Hound-Ash-Silk.webp",
+          "traits_md": "spectral, guarding, relentless"
         }
       }
     ],
@@ -603,7 +1461,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Dim Light"
+            "value": "Dim"
           },
           "description_long": "The crumbling palace of a legendary vizier, now haunted by a capricious efreet. The White Shark of Basra has claimed it as the site for his treasure distribution. The ruins are filled with traps, monsters, and the remnants of ancient magic.",
           "map": "media/Maps/Upper-Level.webp"
@@ -618,7 +1476,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Dim Light"
+            "value": "Dim"
           },
           "parent_location_ref": {
             "lookup": "location",
@@ -638,7 +1496,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Dim Light"
+            "value": "Dim"
           },
           "parent_location_ref": {
             "lookup": "location",
@@ -698,7 +1556,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Bright Light"
+            "value": "Bright"
           },
           "parent_location_ref": {
             "lookup": "location",
@@ -717,7 +1575,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Dim Light"
+            "value": "Dim"
           },
           "parent_location_ref": {
             "lookup": "location",
@@ -967,7 +1825,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Bright Light"
+            "value": "Bright"
           },
           "beats": "1. The party's ship approaches the island at dawn.\n2. They see the ruined palace rising from the jungle.\n3. A warning: fresh footprints in the sand — someone else is here.\n4. The gate stands ajar, inviting them in.",
           "npc_refs": []
@@ -986,7 +1844,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Dim Light"
+            "value": "Dim"
           },
           "beats": "1. The party enters the grand hall, awestruck by its scale.\n2. Faded murals tell the story of a vizier's rise and fall.\n3. A ghostly voice whispers: 'Turn back... or join the feast eternal.'\n4. Ibrahim the Drifted Lord approaches cautiously.",
           "npc_refs": [
@@ -1011,7 +1869,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Bright Light"
+            "value": "Bright"
           },
           "beats": "1. The temperature rises as the party enters the Treasure Hall.\n2. Flames dance in the shadows — the efreet reveals itself.\n3. It demands tribute: 'Kneel, and I shall grant you riches beyond measure.'\n4. If refused, it attacks with terrifying fury.",
           "npc_refs": [
@@ -1036,7 +1894,7 @@
           "illumination_ref": {
             "lookup": "illumination",
             "match": "name",
-            "value": "Bright Light"
+            "value": "Bright"
           },
           "beats": "1. The White Shark and his elite guards surround the party.\n2. The efreet watches, amused, from its throne of gold.\n3. The battle rages — friend and foe fall alike.\n4. Victory: the treasure is claimed, but at what cost?",
           "npc_refs": [
@@ -1138,9 +1996,9 @@
           "pages": [
             "The White Shark of Basra is not a typical pirate. He is old, cunning, and has spent decades searching for Uzrah's Palace.",
             "His plan is to distribute his treasure on the island, using the palace as a base of operations. But he secretly seeks the vizier's artifact — an item of immense power hidden somewhere in the palace.",
-            "The White Shark knows about the efreet and has prepared offerings to appease it. Whether he can control it is another matter."
-          ],
-          "secrets": "The White Shark's true goal is to bind the efreet to his will, using the vizier's artifact."
+            "The White Shark knows about the efreet and has prepared offerings to appease it. Whether he can control it is another matter.",
+            "**Secrets:** The White Shark's true goal is to bind the efreet to his will, using the vizier's artifact."
+          ]
         }
       }
     ],
@@ -1152,310 +2010,13 @@
           "pages": [
             "An Arabian Nights-inspired dungeon adventure for 4-6 players, set on a remote island where a pirate lord plans to distribute his treasure among the ruins of a legendary palace.",
             "The palace was once home to a vizier who made a bargain with an efreet. Now the ruins are haunted by the efreet, filled with traps and monsters, and guarded by the White Shark's crew.",
-            "The party must navigate the ruins, deal with the efreet, and either claim the treasure or stop the White Shark's plans. The adventure features exploration, combat, and roleplaying opportunities."
+            "The party must navigate the ruins, deal with the efreet, and either claim the treasure or stop the White Shark's plans. The adventure features exploration, combat, and roleplaying opportunities.",
+            "## Contents\n\n**Locations:** Uzrah's Palace, The Gate Hall, The Upper Level, The Lower Level, The Builder Tunnels, The Treasure Hall, The Banquet Hall\n\n**NPCs:** The White Shark of Basra, Faruq Night-Eater, Nefru-Sekhem, Timzahi, Varazdat, Ibrahim the Drifted Lord, Keeper of Cups and Cushions, Debbi, Sangtarash the Mercenary, Rafiq the Pirate, Pirate Archer, Ropeburn the Pirate, Pirate Treasure Hauler, Tariq the Monkey, Rashid the Jackal, Hound of Ash Silk\n\n**Monsters:** Cobra, Ghul-Bird, Dodecaphage, Death Chanter, Filcher, Hyena of Shiraz, Smothering Carpet, Twin-Maw Ghariq, Ufrayta, Zagrossian Lion\n\n**Encounters:** Gate Hall Ambush, Upper Level Patrol, Nefru-Sekhem's Guard, The Efreet's Lair, Tunnel Ambush, The Dodecaphage Encounter\n\n**Traps:** Collapsing Ceiling, Flame Jet, Pit Trap\n\n**Scenes:** Arrival at the Island, The Gate Hall Discovery, The Efreet's Revelation, The Final Battle\n\n**Quests:** Reach the Palace, Stop the White Shark, Survive the Efreet, Claim the Treasure\n\n**Lore:** The History of Uzrah's Palace, The Legend of the Efreet, The White Shark's Plan\n\n**Environmental Effects:** Efreet's Fire Aura, Crumbling Ruins, Haunted Halls"
           ],
           "pdfs": [
             "99-Devils-of-Uzrahs-Palace-Shadowdark.pdf"
           ],
-          "imagePath": "media/Title-Image.webp",
-          "scene_refs": [
-            {
-              "lookup": "scene",
-              "match": "name",
-              "value": "Arrival at the Island"
-            },
-            {
-              "lookup": "scene",
-              "match": "name",
-              "value": "The Gate Hall Discovery"
-            },
-            {
-              "lookup": "scene",
-              "match": "name",
-              "value": "The Efreet's Revelation"
-            },
-            {
-              "lookup": "scene",
-              "match": "name",
-              "value": "The Final Battle"
-            }
-          ],
-          "quest_refs": [
-            {
-              "lookup": "quest",
-              "match": "name",
-              "value": "Reach the Palace"
-            },
-            {
-              "lookup": "quest",
-              "match": "name",
-              "value": "Stop the White Shark"
-            },
-            {
-              "lookup": "quest",
-              "match": "name",
-              "value": "Survive the Efreet"
-            },
-            {
-              "lookup": "quest",
-              "match": "name",
-              "value": "Claim the Treasure"
-            }
-          ],
-          "lore_refs": [
-            {
-              "lookup": "lore",
-              "match": "name",
-              "value": "The History of Uzrah's Palace"
-            },
-            {
-              "lookup": "lore",
-              "match": "name",
-              "value": "The Legend of the Efreet"
-            },
-            {
-              "lookup": "lore",
-              "match": "name",
-              "value": "The White Shark's Plan"
-            }
-          ],
-          "location_refs": [
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "Uzrah's Palace"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Gate Hall"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Upper Level"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Lower Level"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Builder Tunnels"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Treasure Hall"
-            },
-            {
-              "lookup": "location",
-              "match": "name",
-              "value": "The Banquet Hall"
-            }
-          ],
-          "encounter_refs": [
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "Gate Hall Ambush"
-            },
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "Upper Level Patrol"
-            },
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "Nefru-Sekhem's Guard"
-            },
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "The Efreet's Lair"
-            },
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "Tunnel Ambush"
-            },
-            {
-              "lookup": "encounter",
-              "match": "name",
-              "value": "The Dodecaphage Encounter"
-            }
-          ],
-          "trap_refs": [
-            {
-              "lookup": "trap",
-              "match": "name",
-              "value": "Collapsing Ceiling"
-            },
-            {
-              "lookup": "trap",
-              "match": "name",
-              "value": "Flame Jet"
-            },
-            {
-              "lookup": "trap",
-              "match": "name",
-              "value": "Pit Trap"
-            }
-          ],
-          "npc_refs": [
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "The White Shark of Basra"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Faruq Night-Eater"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Nefru-Sekhem"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Timzahi"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Varazdat"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Ibrahim the Drifted Lord"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Keeper of Cups and Cushions"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Debbi"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Sangtarash the Mercenary"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Rafiq the Pirate"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Pirate Archer"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Ropeburn the Pirate"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Pirate Treasure Hauler"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Tariq the Monkey"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Rashid the Jackal"
-            },
-            {
-              "lookup": "npc",
-              "match": "name",
-              "value": "Hound of Ash Silk"
-            }
-          ],
-          "monster_refs": [
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Cobra"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Ghul-Bird"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Dodecaphage"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Death Chanter"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Filcher"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Hyena of Shiraz"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Smothering Carpet"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Twin-Maw Ghariq"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Ufrayta"
-            },
-            {
-              "lookup": "monster",
-              "match": "name",
-              "value": "Zagrossian Lion"
-            }
-          ],
-          "environmental_effect_refs": [
-            {
-              "lookup": "environmental-effect",
-              "match": "name",
-              "value": "Efreet's Fire Aura"
-            },
-            {
-              "lookup": "environmental-effect",
-              "match": "name",
-              "value": "Crumbling Ruins"
-            },
-            {
-              "lookup": "environmental-effect",
-              "match": "name",
-              "value": "Haunted Halls"
-            }
-          ]
+          "imagePath": "media/Title-Image.webp"
         }
       }
     ],
@@ -1502,7 +2063,7 @@
         "name": "Cobra",
         "mapping": {
           "name": "Cobra",
-          "description": "A small venomous snake found in the palace ruins. Quick and aggressive when threatened.",
+          "description": "Giant venomous snake with hypnotic gaze.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1546,17 +2107,48 @@
               "lookup": "creature-action",
               "match": "name",
               "value": "Bite",
-              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or take 3 (1d6) poison damage."
+              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or take 3 (1d6) poison damage."
             }
           ],
-          "imagePath": "media/Tokens/Cobra.webp"
+          "imagePath": "media/Tokens/Cobra.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Keen Smell"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Ambusher"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 3
+              }
+            ]
+          },
+          "traits_md": "**Hard to Subdue**\n**Natural Attacks**\n**Meta-Trait: Vermiform**\n**Combat Reflexes** — Never freeze\n**Meta-Trait: Wild Animal**\n**Hard to Kill**\n**Decreased Basic Move**"
         }
       },
       {
         "name": "Ghul-Bird",
         "mapping": {
           "name": "Ghul-Bird",
-          "description": "An undead bird with skeletal wings and glowing eyes. Hunts in packs and swarms its prey.",
+          "description": "An undead avian that mimics the voices of the dead.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1617,14 +2209,46 @@
               "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage."
             }
           ],
-          "imagePath": "media/Tokens/Ghul-Bird.webp"
+          "imagePath": "media/Tokens/Ghul-Bird.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Evasion"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Keen Sight"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Flesh to Stone"
+            }
+          ],
+          "traits_md": "**Flight** — Air Move is Basic Speed x 2 (drop all fractions)\n**Night Vision**\n**Meta-Trait: Wild Animal**\n**Natural Attacks**\n**No Fine Manipulators**\n**Peripheral Vision**\n**Sharp Beak**",
+          "spells_md": "- **Flesh to Stone**"
         }
       },
       {
         "name": "Dodecaphage",
         "mapping": {
           "name": "Dodecaphage",
-          "description": "A massive aberration with twelve mouths arranged in a circle. Devours anything it encounters.",
+          "description": "A twelve-mouthed aberration that devours flesh.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1674,10 +2298,36 @@
               "lookup": "creature-action",
               "match": "name",
               "value": "Bite",
-              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 7 (1d6+4) piercing damage."
+              "description": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 14 (2d6+7) piercing damage."
             }
           ],
-          "imagePath": "media/Tokens/Dodecaphage.webp"
+          "imagePath": "media/Tokens/Dodecaphage.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "traits_md": "**Combat Reflexes** — Never freeze\n**Dark Vision**\n**Constriction Attack** — If you succeed on a grapple against an opponent no larger than your own SM, on your next turn, and each successive turn, roll a Quick Contest of your ST vs. your victim’s ST or HT, whichever is higher. If you win, your victim takes damage equal to your margin of victory; otherwise, no damage is inflicted\n**Terror**\n**Insubstantiality**\n**Magic Resistance**\n**Meta-Trait: Body of Stone**\n**Meta-Trait: Vermiform**\n**Natural Attacks**\n**Vibration Sense**"
         }
       },
       {
@@ -1693,7 +2343,7 @@
           "creature_type_ref": {
             "lookup": "creature-type",
             "match": "name",
-            "value": "Giant"
+            "value": "Undead"
           },
           "tags_line": "giant, spellcaster, death magic",
           "ac": 14,
@@ -1726,24 +2376,59 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Chant of Death",
-              "description": "The death chanter chants a death incantation. Each creature within 30 feet must succeed on a DC 12 Wisdom saving throw or be frightened for 1 minute."
+              "value": "Multiattack",
+              "description": "The death chanter makes two slam attacks."
             },
             {
               "lookup": "creature-action",
               "match": "name",
               "value": "Slam",
-              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) bludgeoning damage."
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) bludgeoning damage."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Chant of Death",
+              "description": "The death chanter chants a death incantation. Each creature within 30 feet must succeed on a DC 12 Wisdom saving throw or be frightened for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
             }
           ],
-          "imagePath": "media/Tokens/Death-Chanter-Giant.webp"
+          "imagePath": "media/Tokens/Death-Chanter-Giant.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Legendary Resistance (3/Day)"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Undead Fortitude"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "traits_md": "**Damage Resistance**\n**Resistant**\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Combat Reflexes** — Never freeze\n**Injury Tolerance**\n**Doesn't Breathe**\n**Doesn't Eat or Drink**\n**Cursed Words** — Innate Attack (Fatigue)\n**Natural Attacks**\n**Terror**\n**Unfazeable** — Exempt from fright checks. Reaction modifiers do not affect you.\n**Extra Attack**"
         }
       },
       {
         "name": "Filcher",
         "mapping": {
           "name": "Filcher",
-          "description": "A small, nimble creature that steals items and hides in shadows.",
+          "description": "A small, quick-handed theft creature.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1785,24 +2470,72 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Steal",
-              "description": "The filcher attempts to steal an item from a creature within 5 feet. The target must succeed on a DC 13 Dexterity saving throw or have one item of the filcher's choice stolen."
+              "value": "Multiattack",
+              "description": "The filcher makes two claw attacks."
             },
             {
               "lookup": "creature-action",
               "match": "name",
               "value": "Claws",
               "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage."
+            },
+            {
+              "lookup": "creature-action",
+              "match": "name",
+              "value": "Steal",
+              "description": "The filcher attempts to steal an item from a creature within 5 feet. The target must succeed on a DC 13 Dexterity saving throw or have one item of the filcher's choice stolen. The filcher must have at least one free hand to use this ability."
             }
           ],
-          "imagePath": "media/Tokens/Filcher.webp"
+          "imagePath": "media/Tokens/Filcher.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Nimble Escape"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "traits_md": "**Natural Attacks**",
+          "equipment_md": "- Shoes (equipped)\n- Small Knife (equipped)",
+          "gear_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Dagger",
+              "equipped": true
+            }
+          ]
         }
       },
       {
         "name": "Hyena of Shiraz",
         "mapping": {
           "name": "Hyena of Shiraz",
-          "description": "A magical hyena with supernatural intelligence and cunning. Often serves as a familiar or mount.",
+          "description": "A cunning, coordinated predator.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1848,14 +2581,73 @@
               "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4+2) piercing damage."
             }
           ],
-          "imagePath": "media/Tokens/Hyena-of-Shiraz.webp"
+          "imagePath": "media/Tokens/Hyena-of-Shiraz.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Pack Tactics"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Keen Smell"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "traits_md": "**Natural Attacks**\n**Fit** — Recover FP at twice the normal rate (but not FP spent for spells or psi powers)\n**Combat Reflexes** — Never freeze\n**Duty (@Duty@)**",
+          "equipment_md": "- Shoes  (equipped)\n- Chopping Broadsword (equipped)\n- Layered Cloth, Medium Arm Armor (equipped)\n- Small Shield, Light (equipped)\n- Layered Cloth, Medium Torso Armor (equipped)",
+          "gear_refs": [
+            {
+              "lookup": "weapon",
+              "match": "name",
+              "value": "Broadsword",
+              "equipped": true
+            },
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Padded Armor",
+              "equipped": true
+            },
+            {
+              "lookup": "armor",
+              "match": "name",
+              "value": "Shield",
+              "equipped": true
+            }
+          ]
         }
       },
       {
         "name": "Smothering Carpet",
         "mapping": {
           "name": "Smothering Carpet",
-          "description": "An animated carpet that wraps around and suffocates its victims.",
+          "description": "A magical animated carpet that grapples prey.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1932,14 +2724,38 @@
               "description": "The carpet moves up to its speed. While doing so, it can enter a Large or smaller creature's space. If the creature fails a DC 13 Dexterity saving throw, the creature is smothered by the carpet."
             }
           ],
-          "imagePath": "media/Tokens/Smothering-Carpet.webp"
+          "imagePath": "media/Tokens/Smothering-Carpet.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "False Appearance"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              }
+            ]
+          },
+          "traits_md": "**Damage Resistance**\n**Flight** — Air Move is Basic Speed x 2 (drop all fractions)\n**High Pain Threshold** — Never suffer shock penalties when injured\n**Immunity to Mind Control**\n**Injury Tolerance**\n**Natural Attacks**\n**@Mental Quirk@**\n**Resistant**\n**Unfazeable** — Exempt from fright checks. Reaction modifiers do not affect you."
         }
       },
       {
         "name": "Twin-Maw Ghariq",
         "mapping": {
           "name": "Twin-Maw Ghariq",
-          "description": "A bizarre creature with two mouths, one on each end of its body. Attacks from both directions.",
+          "description": "A two-headed beast.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -1981,8 +2797,8 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Dual Bite",
-              "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., two different creatures. The ghariq makes one bite attack with each mouth."
+              "value": "Multiattack",
+              "description": "The ghariq makes two bite attacks, one with each head."
             },
             {
               "lookup": "creature-action",
@@ -1991,14 +2807,45 @@
               "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d6+2) piercing damage."
             }
           ],
-          "imagePath": "media/Tokens/Twin-Maw-Ghariq.webp"
+          "imagePath": "media/Tokens/Twin-Maw-Ghariq.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Two Heads"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "traits_md": "**Flexibility (Double-Jointed)**\n**Natural Attacks**\n**Cutting Striker (@Body Part@)**\n**Injury Tolerance**\n**Ambidexterity**\n**Damage Resistance**\n**Appearance**\n**Extra Head**\n**Extra Attack**\n**Resistant**\n**Sharp Teeth**"
         }
       },
       {
         "name": "Ufrayta",
         "mapping": {
           "name": "Ufrayta",
-          "description": "A shadowy, ethereal creature that can phase through walls and ceilings.",
+          "description": "A serpentine creature.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -2080,24 +2927,48 @@
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Ethereal Touch",
-              "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) necrotic damage, and the target's hit point maximum is reduced by the same amount."
+              "value": "Life Drain",
+              "description": "Melee Spell Attack: +4 to hit, reach 5 ft., one creature. Hit: 10 (3d6) necrotic damage. The target's hit point maximum is reduced by an amount equal to the damage taken."
             },
             {
               "lookup": "creature-action",
               "match": "name",
-              "value": "Phase Through",
-              "description": "The ufrayta can move through walls and ceilings as if they were difficult terrain."
+              "value": "Etherealness",
+              "description": "The ufrayta enters the Ethereal Plane from the Material Plane, or vice versa."
             }
           ],
-          "imagePath": "media/Tokens/Ufrayta.webp"
+          "imagePath": "media/Tokens/Ufrayta.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Incorporeal Movement"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Evasion"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Acrobatics",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "traits_md": "**Enhanced Dodge**\n**Flight** — Air Move is Basic Speed x 2 (drop all fractions)\n**Vulnerability** — x2 damage\n**Injury Tolerance**\n**Fiery Spittle** — Innate Attack (Burn)"
         }
       },
       {
         "name": "Zagrossian Lion",
         "mapping": {
           "name": "Zagrossian Lion",
-          "description": "A massive lion with magical fur that shimmers like starlight. Fierce and territorial.",
+          "description": "A massive, battle-scarred lion.",
           "size_ref": {
             "lookup": "size",
             "match": "name",
@@ -2140,13 +3011,13 @@
               "lookup": "creature-action",
               "match": "name",
               "value": "Multiattack",
-              "description": "The zagrossian lion makes two attacks: one with its bite and one with its claws."
+              "description": "The lion makes two attacks: one with its bite and one with its claws."
             },
             {
               "lookup": "creature-action",
               "match": "name",
               "value": "Bite",
-              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 9 (1d8+5) piercing damage."
+              "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 9 (1d8+4) piercing damage."
             },
             {
               "lookup": "creature-action",
@@ -2155,7 +3026,1349 @@
               "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6+4) slashing damage."
             }
           ],
-          "imagePath": "media/Tokens/Zagrossian-Lion.webp"
+          "imagePath": "media/Tokens/Zagrossian-Lion.webp",
+          "trait_refs": [
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Magic Resistance"
+            },
+            {
+              "lookup": "trait",
+              "match": "name",
+              "value": "Innate Spellcasting"
+            }
+          ],
+          "skill_bonuses": {
+            "rows": [
+              {
+                "name": "Athletics",
+                "ability": "STR",
+                "proficient": true,
+                "expertise": false,
+                "misc": 1
+              },
+              {
+                "name": "Intimidation",
+                "ability": "CHA",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              },
+              {
+                "name": "Stealth",
+                "ability": "DEX",
+                "proficient": false,
+                "expertise": false,
+                "misc": 0
+              }
+            ]
+          },
+          "spell_refs": [
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Minor Illusion"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Major Image"
+            },
+            {
+              "lookup": "spell",
+              "match": "name",
+              "value": "Mirror Image"
+            }
+          ],
+          "traits_md": "**Born Biter 2**\n**Catfall**\n**Colorblindness**\n**Combat Reflexes** — Never freeze\n**Dark Vision**\n**Damage Resistance**\n**Doesn't Breathe**\n**Doesn't Eat or Drink**\n**Doesn't Sleep**\n**Injury Tolerance**\n**Meta-Trait: Quadruped**\n**Meta-Trait: Wild Animal**\n**Natural Attacks**\n**Perfect Balance**\n**Sharp Claws**\n**Sharp Teeth**\n**Unfazeable** — Exempt from fright checks. Reaction modifiers do not affect you.\n**Unhealing (Total)**\n**Vibration Sense**"
+        }
+      }
+    ],
+    "trait": [
+      {
+        "source_name": "Keen Smell",
+        "mapping": {
+          "name": "Keen Smell",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has advantage on Wisdom (Perception) checks that rely on smell.",
+          "benefits": "The creature has advantage on Wisdom (Perception) checks that rely on smell."
+        }
+      },
+      {
+        "source_name": "Ambusher",
+        "mapping": {
+          "name": "Ambusher",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has advantage on attack rolls against any creature it has surprised.",
+          "benefits": "The creature has advantage on attack rolls against any creature it has surprised."
+        }
+      },
+      {
+        "source_name": "Evasion",
+        "mapping": {
+          "name": "Evasion",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "If the creature is subjected to an effect that allows it to make a saving throw to take only half damage, it instead takes no damage if it succeeds on the saving throw, and only half damage if it fails.",
+          "benefits": "If the creature is subjected to an effect that allows it to make a saving throw to take only half damage, it instead takes no damage if it succeeds on the saving throw, and only half damage if it fails."
+        }
+      },
+      {
+        "source_name": "Keen Sight",
+        "mapping": {
+          "name": "Keen Sight",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has advantage on Wisdom (Perception) checks that rely on sight.",
+          "benefits": "The creature has advantage on Wisdom (Perception) checks that rely on sight."
+        }
+      },
+      {
+        "source_name": "Magic Resistance",
+        "mapping": {
+          "name": "Magic Resistance",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has advantage on saving throws against spells and other magical effects.",
+          "benefits": "The creature has advantage on saving throws against spells and other magical effects."
+        }
+      },
+      {
+        "source_name": "Siege Monster",
+        "mapping": {
+          "name": "Siege Monster",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature deals double damage to objects and structures.",
+          "benefits": "The creature deals double damage to objects and structures."
+        }
+      },
+      {
+        "source_name": "Legendary Resistance (3/Day)",
+        "mapping": {
+          "name": "Legendary Resistance (3/Day)",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "If the creature fails a saving throw, it can choose to succeed instead.",
+          "benefits": "If the creature fails a saving throw, it can choose to succeed instead."
+        }
+      },
+      {
+        "source_name": "Undead Fortitude",
+        "mapping": {
+          "name": "Undead Fortitude",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "If damage reduces the creature to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the creature drops to 1 hit point instead.",
+          "benefits": "If damage reduces the creature to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the creature drops to 1 hit point instead."
+        }
+      },
+      {
+        "source_name": "Nimble Escape",
+        "mapping": {
+          "name": "Nimble Escape",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature can take the Disengage or Hide action as a bonus action on each of its turns.",
+          "benefits": "The creature can take the Disengage or Hide action as a bonus action on each of its turns."
+        }
+      },
+      {
+        "source_name": "Pack Tactics",
+        "mapping": {
+          "name": "Pack Tactics",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has advantage on an attack roll against a creature if at least one of the creature allies is within 5 feet of the target and the ally is not incapacitated.",
+          "benefits": "The creature has advantage on an attack roll against a creature if at least one of the creature allies is within 5 feet of the target and the ally is not incapacitated."
+        }
+      },
+      {
+        "source_name": "False Appearance",
+        "mapping": {
+          "name": "False Appearance",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "While the creature remains motionless, it is indistinguishable from a normal object.",
+          "benefits": "While the creature remains motionless, it is indistinguishable from a normal object."
+        }
+      },
+      {
+        "source_name": "Two Heads",
+        "mapping": {
+          "name": "Two Heads",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature has two heads. Each head controls one attack. The creature has advantage on saving throws against being blinded, deafened, stunned, knocked unconscious, or killed outright if one head is destroyed.",
+          "benefits": "The creature has two heads. Each head controls one attack. The creature has advantage on saving throws against being blinded, deafened, stunned, knocked unconscious, or killed outright if one head is destroyed."
+        }
+      },
+      {
+        "source_name": "Incorporeal Movement",
+        "mapping": {
+          "name": "Incorporeal Movement",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object.",
+          "benefits": "The creature can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+        }
+      },
+      {
+        "source_name": "Innate Spellcasting",
+        "mapping": {
+          "name": "Innate Spellcasting",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "trait_kind": "Passive",
+          "description": "The creature innate spellcasting ability is Wisdom (spell save DC 12). It can innately cast the following spells, requiring no material components: At will: minor illusion; 1/day each: major image, mirror image.",
+          "benefits": "The creature innate spellcasting ability is Wisdom (spell save DC 12). It can innately cast the following spells, requiring no material components: At will: minor illusion; 1/day each: major image, mirror image."
+        }
+      },
+      {
+        "source_name": "Combat Reflexes",
+        "mapping": {
+          "name": "Combat Reflexes",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Defensive",
+          "description": "Never freezes; recovers from surprise faster than anyone around them.",
+          "benefits": "Advantage on initiative rolls. You cannot be surprised while conscious.",
+          "initiative_bonus": 1
+        }
+      },
+      {
+        "source_name": "High Pain Threshold",
+        "mapping": {
+          "name": "High Pain Threshold",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Defensive",
+          "description": "Wounds register as information, not as agony.",
+          "benefits": "Advantage on saving throws against effects that would stun you, and you ignore the first point of exhaustion from injury."
+        }
+      },
+      {
+        "source_name": "Night Vision",
+        "mapping": {
+          "name": "Night Vision",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Sense",
+          "description": "Eyes that open wide in the dark of the palace corridors.",
+          "benefits": "You can see in dim light within 60 feet as if it were bright light."
+        }
+      },
+      {
+        "source_name": "Ghazi Rank",
+        "mapping": {
+          "name": "Ghazi Rank",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "Recognised standing among the holy warriors of the frontier.",
+          "benefits": "Ghazi warriors and the faithful treat you as an officer; you can requisition shelter, food and a mount from any Ghazi house."
+        }
+      },
+      {
+        "source_name": "Magery",
+        "mapping": {
+          "name": "Magery",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Spellcasting",
+          "description": "An innate channel to the arcane, formalised by long study.",
+          "benefits": "You count as a spellcaster for items and effects that require one, and you learn one extra cantrip from your class list."
+        }
+      },
+      {
+        "source_name": "Weapon Bond (Broadsword)",
+        "mapping": {
+          "name": "Weapon Bond (Broadsword)",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "The blade answers only to its owner.",
+          "benefits": "You cannot be disarmed of your bonded broadsword while conscious, and you can summon it to your hand as a bonus action if it is within 60 feet."
+        }
+      },
+      {
+        "source_name": "Fit",
+        "mapping": {
+          "name": "Fit",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "Hard living has made the body efficient.",
+          "benefits": "Advantage on saving throws against disease and exhaustion; you recover one extra Hit Die on a long rest."
+        }
+      },
+      {
+        "source_name": "Charisma",
+        "mapping": {
+          "name": "Charisma",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "People simply want to agree with them.",
+          "benefits": "Advantage on Charisma (Persuasion) checks made against a creature that is not hostile."
+        }
+      },
+      {
+        "source_name": "High Manual Dexterity",
+        "mapping": {
+          "name": "High Manual Dexterity",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "Fingers that work faster than the eye can follow.",
+          "benefits": "Advantage on Dexterity (Sleight of Hand) checks and on checks made with thieves’ tools."
+        }
+      },
+      {
+        "source_name": "Talent (Street Smarts)",
+        "mapping": {
+          "name": "Talent (Street Smarts)",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "An instinct for the shape of a city and the people working it.",
+          "benefits": "Advantage on Charisma (Deception) and Wisdom (Insight) checks made in an urban setting."
+        }
+      },
+      {
+        "source_name": "Trickster",
+        "mapping": {
+          "name": "Trickster",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "Cannot leave a mark unpicked or a mark unplayed.",
+          "benefits": "Once per short rest you may take the Help action as a bonus action by means of a distraction or ruse."
+        }
+      },
+      {
+        "source_name": "Danger Sense",
+        "mapping": {
+          "name": "Danger Sense",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Sense",
+          "description": "Knows a heartbeat before the trap fires.",
+          "benefits": "You are not surprised by traps or ambushes as long as you are not incapacitated, and you have advantage on saves against traps."
+        }
+      },
+      {
+        "source_name": "Acute Vision",
+        "mapping": {
+          "name": "Acute Vision",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Sense",
+          "description": "Picks out a rider on a dune at two miles.",
+          "benefits": "Advantage on Wisdom (Perception) checks that rely on sight."
+        }
+      },
+      {
+        "source_name": "Talent (Survivor)",
+        "mapping": {
+          "name": "Talent (Survivor)",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "The desert has already tried and failed to kill them.",
+          "benefits": "Advantage on Wisdom (Survival) checks, and you always find enough food and water for yourself in any terrain."
+        }
+      },
+      {
+        "source_name": "Forgettable Face",
+        "mapping": {
+          "name": "Forgettable Face",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "Nobody in the caravanserai can describe her afterwards.",
+          "benefits": "Creatures that see you only briefly cannot describe or identify you later; Dexterity (Stealth) checks made in a crowd have advantage."
+        }
+      },
+      {
+        "source_name": "Hard to Kill",
+        "mapping": {
+          "name": "Hard to Kill",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Defensive",
+          "description": "Has been left for dead more than once and disagreed.",
+          "benefits": "Advantage on death saving throws."
+        }
+      },
+      {
+        "source_name": "Luck",
+        "mapping": {
+          "name": "Luck",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "Falls off a mast and lands in the rigging.",
+          "benefits": "Once per short rest you may reroll one attack roll, ability check, or saving throw and take the new result."
+        }
+      },
+      {
+        "source_name": "Eidetic Memory",
+        "mapping": {
+          "name": "Eidetic Memory",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "Reads a page once and keeps it.",
+          "benefits": "You can recall perfectly anything you have read, seen or heard within the last month; advantage on Intelligence (History) and (Investigation) checks to recall information."
+        }
+      },
+      {
+        "source_name": "Psychic Guidance (Stone Missile)",
+        "mapping": {
+          "name": "Psychic Guidance (Stone Missile)",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Spellcasting",
+          "description": "The stones know where they are going.",
+          "benefits": "Once per turn you may reroll a missed spell attack made with a stone or earth effect."
+        }
+      },
+      {
+        "source_name": "Digitologist Guild Rank",
+        "mapping": {
+          "name": "Digitologist Guild Rank",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "Standing in the guild of number-mages.",
+          "benefits": "Guild houses in any large city will shelter you, and you may consult the guild library without fee."
+        }
+      },
+      {
+        "source_name": "Ambidexterity",
+        "mapping": {
+          "name": "Ambidexterity",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Passive",
+          "description": "Neither hand is the off hand.",
+          "benefits": "You do not have disadvantage on attacks made with your off hand, and two-weapon fighting adds your ability modifier to the second attack."
+        }
+      },
+      {
+        "source_name": "Hard to Subdue",
+        "mapping": {
+          "name": "Hard to Subdue",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Defensive",
+          "description": "Refuses to go down quietly.",
+          "benefits": "Advantage on saving throws against being knocked unconscious, grappled or restrained."
+        }
+      },
+      {
+        "source_name": "Fearlessness",
+        "mapping": {
+          "name": "Fearlessness",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Defensive",
+          "description": "Has already made peace with dying.",
+          "benefits": "Advantage on saving throws against being frightened."
+        }
+      },
+      {
+        "source_name": "Light Sleeper",
+        "mapping": {
+          "name": "Light Sleeper",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Sense",
+          "description": "Wakes at a footfall on sand.",
+          "benefits": "You gain the benefits of a long rest even while keeping watch, and you cannot be surprised while resting."
+        }
+      },
+      {
+        "source_name": "Good Reputation",
+        "mapping": {
+          "name": "Good Reputation",
+          "source": "GURPS GCS character sheet",
+          "trait_kind": "Other",
+          "description": "The poor quarters know his name and it is a good one.",
+          "benefits": "Advantage on Charisma checks made with common folk who have heard of you."
+        }
+      }
+    ],
+    "creature-action": [
+      {
+        "source_name": "Bite",
+        "mapping": {
+          "name": "Bite",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or take 3 (1d6) poison damage.",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 4,
+          "reach_ft": 5,
+          "damage_dice": "1",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          }
+        }
+      },
+      {
+        "source_name": "Talons",
+        "mapping": {
+          "name": "Talons",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage.",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 4,
+          "reach_ft": 5,
+          "damage_dice": "1d4+2",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          }
+        }
+      },
+      {
+        "source_name": "Multiattack",
+        "mapping": {
+          "name": "Multiattack",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "The dodecaphage makes three bite attacks.",
+          "is_attack": false
+        }
+      },
+      {
+        "source_name": "Slam",
+        "mapping": {
+          "name": "Slam",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) bludgeoning damage.",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 6,
+          "reach_ft": 5,
+          "damage_dice": "2d6+3",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          }
+        }
+      },
+      {
+        "source_name": "Chant of Death",
+        "mapping": {
+          "name": "Chant of Death",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "The death chanter chants a death incantation. Each creature within 30 feet must succeed on a DC 12 Wisdom saving throw or be frightened for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success.",
+          "is_attack": false
+        }
+      },
+      {
+        "source_name": "Claws",
+        "mapping": {
+          "name": "Claws",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 4 (1d4+2) slashing damage.",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 6,
+          "reach_ft": 5,
+          "damage_dice": "1d4+2",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          }
+        }
+      },
+      {
+        "source_name": "Steal",
+        "mapping": {
+          "name": "Steal",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "The filcher attempts to steal an item from a creature within 5 feet. The target must succeed on a DC 13 Dexterity saving throw or have one item of the filcher's choice stolen. The filcher must have at least one free hand to use this ability.",
+          "is_attack": false
+        }
+      },
+      {
+        "source_name": "Smother",
+        "mapping": {
+          "name": "Smother",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one willing creature or creature that is grappled by the carpet. The target is grappled (escape DC 13) and restrained, and begins to suffocate.",
+          "is_attack": true,
+          "attack_kind": "Melee Weapon",
+          "attack_bonus": 6,
+          "reach_ft": 5
+        }
+      },
+      {
+        "source_name": "Engulf",
+        "mapping": {
+          "name": "Engulf",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "The carpet moves up to its speed. While doing so, it can enter a Large or smaller creature's space. If the creature fails a DC 13 Dexterity saving throw, the creature is smothered by the carpet.",
+          "is_attack": false
+        }
+      },
+      {
+        "source_name": "Life Drain",
+        "mapping": {
+          "name": "Life Drain",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "Melee Spell Attack: +4 to hit, reach 5 ft., one creature. Hit: 10 (3d6) necrotic damage. The target's hit point maximum is reduced by an amount equal to the damage taken.",
+          "is_attack": true,
+          "attack_kind": "Melee Spell",
+          "attack_bonus": 4,
+          "reach_ft": 5,
+          "damage_dice": "3d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Necrotic"
+          },
+          "save_dc": 11,
+          "save_ability_ref": {
+            "lookup": "ability",
+            "match": "name",
+            "value": "Constitution"
+          }
+        }
+      },
+      {
+        "source_name": "Etherealness",
+        "mapping": {
+          "name": "Etherealness",
+          "source": "99 Devils of Uzrah's Palace, Shadowdark",
+          "action_type": "Action",
+          "description": "The ufrayta enters the Ethereal Plane from the Material Plane, or vice versa.",
+          "is_attack": false
+        }
+      }
+    ],
+    "language": [
+      {
+        "source_name": "Arabic",
+        "mapping": {
+          "name": "Arabic",
+          "summary": "The trade and court tongue of the Arabian lands the adventure is set in.",
+          "tier": "Standard",
+          "typical_speakers": "Merchants, sailors, scholars and courtiers across Basra, Baghdad and the Gulf.",
+          "script": "Arabic abjad"
+        }
+      },
+      {
+        "source_name": "Persian",
+        "mapping": {
+          "name": "Persian",
+          "summary": "Court and poetic tongue of the Zagros highlands and the old vizier’s house.",
+          "tier": "Standard",
+          "typical_speakers": "Highland nobles, viziers, and the descendants of Uzrah’s court.",
+          "script": "Arabic abjad"
+        }
+      }
+    ],
+    "weapon": [
+      {
+        "source_name": "Broadsword",
+        "mapping": {
+          "name": "Broadsword",
+          "description": "A straight cut-and-thrust sword of the Arabian ghazi; the source characters carry it in place of a longsword.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial Melee"
+          },
+          "is_melee": true,
+          "damage_dice": "1d8",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Versatile"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Sap"
+          },
+          "cost_gp": 15,
+          "weight_lb": 3,
+          "versatile_damage_dice": "1d10"
+        }
+      },
+      {
+        "source_name": "Thrusting Broadsword",
+        "mapping": {
+          "name": "Thrusting Broadsword",
+          "description": "A narrow-bladed broadsword balanced for the point rather than the edge.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial Melee"
+          },
+          "is_melee": true,
+          "damage_dice": "1d8",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Versatile"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Vex"
+          },
+          "cost_gp": 20,
+          "weight_lb": 3,
+          "versatile_damage_dice": "1d10"
+        }
+      },
+      {
+        "source_name": "Cutlass",
+        "mapping": {
+          "name": "Cutlass",
+          "description": "Short, heavy, single-edged sailor’s blade — the pirate crews of the White Shark carry these.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial Melee"
+          },
+          "is_melee": true,
+          "damage_dice": "1d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Finesse"
+            },
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Light"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Nick"
+          },
+          "cost_gp": 25,
+          "weight_lb": 3
+        }
+      },
+      {
+        "source_name": "Large Knife",
+        "mapping": {
+          "name": "Large Knife",
+          "description": "An oversized belt knife, halfway between a dagger and a shortsword.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple Melee"
+          },
+          "is_melee": true,
+          "damage_dice": "1d4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Finesse"
+            },
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Light"
+            },
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Thrown"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Nick"
+          },
+          "cost_gp": 2,
+          "weight_lb": 1,
+          "normal_range_ft": 20,
+          "long_range_ft": 60
+        }
+      },
+      {
+        "source_name": "Brass Knuckles",
+        "mapping": {
+          "name": "Brass Knuckles",
+          "description": "Cast brass bar gripped in the fist; turns a punch into a real weapon.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple Melee"
+          },
+          "is_melee": true,
+          "damage_dice": "1d4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Bludgeoning"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Light"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Slow"
+          },
+          "cost_gp": 1,
+          "weight_lb": 1
+        }
+      },
+      {
+        "source_name": "Reflex Bow",
+        "mapping": {
+          "name": "Reflex Bow",
+          "description": "A short composite bow of horn and sinew, favoured by desert riders.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial Ranged"
+          },
+          "is_melee": false,
+          "damage_dice": "1d6",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Piercing"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Ammunition"
+            },
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Two-Handed"
+            }
+          ],
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Vex"
+          },
+          "cost_gp": 25,
+          "weight_lb": 2,
+          "normal_range_ft": 80,
+          "long_range_ft": 320,
+          "ammunition_type_ref": {
+            "lookup": "ammunition",
+            "match": "name",
+            "value": "Arrows"
+          }
+        }
+      },
+      {
+        "source_name": "Stormcord",
+        "mapping": {
+          "name": "Stormcord",
+          "description": "Basra'nın Ak Köpekbalığı'nın kullandığı, dört yarda erişimli örgülü kırbaç.",
+          "category_ref": {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial Melee"
+          },
+          "damage_dice": "1d4",
+          "damage_type_ref": {
+            "lookup": "damage-type",
+            "match": "name",
+            "value": "Slashing"
+          },
+          "is_melee": true,
+          "cost_gp": 2,
+          "weight_lb": 3,
+          "mastery_ref": {
+            "lookup": "weapon-mastery",
+            "match": "name",
+            "value": "Slow"
+          },
+          "property_refs": [
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Finesse"
+            },
+            {
+              "lookup": "weapon-property",
+              "match": "name",
+              "value": "Reach"
+            }
+          ]
+        }
+      }
+    ],
+    "magic-item": [
+      {
+        "source_name": "Powerstone (3 pt)",
+        "mapping": {
+          "name": "Powerstone (3 pt)",
+          "description": "A cut gem that stores raw magical energy for its bearer.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Holds 3 points of stored magical energy; a caster may draw on it instead of expending a spell slot of 1st level once per long rest.",
+          "cost_gp": 200,
+          "weight_lb": 0.1
+        }
+      },
+      {
+        "source_name": "Powerstone (5 pt)",
+        "mapping": {
+          "name": "Powerstone (5 pt)",
+          "description": "A larger, deeply flawed powerstone; the Digitologist keeps it wound in copper wire.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Holds 5 points of stored magical energy; a caster may draw on it instead of expending a spell slot of 1st or 2nd level once per long rest.",
+          "cost_gp": 500,
+          "weight_lb": 0.1
+        }
+      },
+      {
+        "source_name": "Oak Rod",
+        "mapping": {
+          "name": "Oak Rod",
+          "description": "A plain rod of desert oak, cut and enchanted by a Digitologist.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Rods"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Functions as an arcane focus and as a club (1d4 bludgeoning).",
+          "cost_gp": 60,
+          "weight_lb": 1
+        }
+      },
+      {
+        "source_name": "Prince’s Turban",
+        "mapping": {
+          "name": "Prince’s Turban",
+          "description": "Fine silk turban wound in the manner of a prince of Basra.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Common"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Head"
+          },
+          "mechanical_notes": "Advantage on Charisma (Deception) checks made to pass as a person of rank.",
+          "cost_gp": 50,
+          "weight_lb": 1
+        }
+      },
+      {
+        "source_name": "Bronze Facemask",
+        "mapping": {
+          "name": "Bronze Facemask",
+          "description": "A blank bronze mask, worn so that no one can name the man behind it.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Common"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Head"
+          },
+          "mechanical_notes": "The wearer’s face cannot be described or recognised; Charisma (Deception) checks to conceal identity have advantage.",
+          "cost_gp": 25,
+          "weight_lb": 2
+        }
+      },
+      {
+        "source_name": "Pearl Necklace",
+        "mapping": {
+          "name": "Pearl Necklace",
+          "description": "A string of Gulf pearls, taken off a merchant who no longer needed it.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Common"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Neck"
+          },
+          "mechanical_notes": "Worth 100 gp to the right buyer.",
+          "cost_gp": 100,
+          "weight_lb": 0.5
+        }
+      },
+      {
+        "source_name": "Djelabba of Fate",
+        "mapping": {
+          "name": "Djelabba of Fate",
+          "description": "A worn traveller’s robe that always seems to have been in the right place.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Body"
+          },
+          "mechanical_notes": "Once per long rest the wearer may reroll one failed ability check or saving throw.",
+          "cost_gp": 250,
+          "weight_lb": 4
+        }
+      },
+      {
+        "source_name": "Brass Vizier's Ring",
+        "mapping": {
+          "name": "Brass Vizier's Ring",
+          "description": "Nefru-Sekhem'in taşıdığı pirinç vezir yüzüğü.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Rings"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": true,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 0.05,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Finger"
+          }
+        }
+      },
+      {
+        "source_name": "Snake-Eye Amulet",
+        "mapping": {
+          "name": "Snake-Eye Amulet",
+          "description": "Mumya savaşçı Nefru-Sekhem'in boynundaki yılan gözlü tılsım.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": true,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 0.5,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Neck"
+          }
+        }
+      },
+      {
+        "source_name": "Wand of the Spitting Cobra",
+        "mapping": {
+          "name": "Wand of the Spitting Cobra",
+          "description": "Nefru-Sekhem'in tüküren kobra asası.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wands"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": true,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 1.0
+        }
+      },
+      {
+        "source_name": "Djinn-crafted Bronze Bracers",
+        "mapping": {
+          "name": "Djinn-crafted Bronze Bracers",
+          "description": "Cin işi tunç bilezikler; ölümsüz büyücü Varazdat'ın kollarında.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Wondrous Items"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": true,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 2.0,
+          "body_slot_ref": {
+            "lookup": "body-slot",
+            "match": "name",
+            "value": "Arms"
+          }
+        }
+      },
+      {
+        "source_name": "The Blade of Brass Winds",
+        "mapping": {
+          "name": "The Blade of Brass Winds",
+          "description": "Varazdat'ın pirinç rüzgârların kılıcı.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Weapons"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Rare"
+          },
+          "requires_attunement": true,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 3.0
+        }
+      },
+      {
+        "source_name": "Enchanted Knife",
+        "mapping": {
+          "name": "Enchanted Knife",
+          "description": "Kadeh ve Minder Muhafızı'nın büyülü bıçağı.",
+          "magic_category_ref": {
+            "lookup": "magic-item-category",
+            "match": "name",
+            "value": "Weapons"
+          },
+          "rarity_ref": {
+            "lookup": "rarity",
+            "match": "name",
+            "value": "Uncommon"
+          },
+          "requires_attunement": false,
+          "is_cursed": false,
+          "is_sentient": false,
+          "mechanical_notes": "Kaynak GCS karakter dosyasında yalnızca isimle listeleniyor; mekanik bir tanımı verilmemiş. Masada DM tarafından doldurulmak üzere kayda geçirildi.",
+          "cost_gp": 0,
+          "weight_lb": 1.0
+        }
+      }
+    ],
+    "background": [
+      {
+        "source_name": "Outlander",
+        "mapping": {
+          "name": "Outlander",
+          "description": "You grew up in the wilds far from civilisation — the deep desert, the salt flats, the highland pastures.",
+          "granted_skill_refs": [
+            {
+              "lookup": "skill",
+              "match": "name",
+              "value": "Athletics"
+            },
+            {
+              "lookup": "skill",
+              "match": "name",
+              "value": "Survival"
+            }
+          ],
+          "granted_tool_refs": [
+            {
+              "lookup": "tool",
+              "match": "name",
+              "value": "Drum"
+            }
+          ],
+          "ability_score_options": [
+            {
+              "lookup": "ability",
+              "match": "name",
+              "value": "Strength"
+            },
+            {
+              "lookup": "ability",
+              "match": "name",
+              "value": "Wisdom"
+            },
+            {
+              "lookup": "ability",
+              "match": "name",
+              "value": "Constitution"
+            }
+          ],
+          "asi_distribution_options": [
+            "+2/+1",
+            "+1/+1/+1"
+          ],
+          "origin_feat_ref": {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Tough"
+          },
+          "granted_language_count": 1,
+          "starting_gold_gp": 10,
+          "gold_alternative_gp": 50
+        }
+      }
+    ],
+    "spell": [
+      {
+        "name": "Control Flames",
+        "mapping": {
+          "name": "Control Flames",
+          "level": 0,
+          "school_ref": {
+            "lookup": "spell-school",
+            "match": "name",
+            "value": "Transmutation"
+          },
+          "casting_time_amount": 1,
+          "casting_time_unit_ref": {
+            "lookup": "casting-time-unit",
+            "match": "name",
+            "value": "Action"
+          },
+          "is_ritual": false,
+          "range_type": "Ranged",
+          "range_ft": 60,
+          "area_shape_ref": {
+            "lookup": "area-shape",
+            "match": "name",
+            "value": "Cube"
+          },
+          "area_size_ft": 5,
+          "components": [
+            {
+              "lookup": "casting-component",
+              "match": "name",
+              "value": "Somatic"
+            }
+          ],
+          "duration_unit_ref": {
+            "lookup": "duration-unit",
+            "match": "name",
+            "value": "Instantaneous"
+          },
+          "requires_concentration": false,
+          "attack_type": "None",
+          "description": "Görüş alanındaki, en fazla 5 fitlik bir küpü dolduran doğal alevi hedef alırsın ve aşağıdaki etkilerden birini yaratırsın:\n\n- Alevleri 5 fitlik küpü doldurana kadar büyütür ya da söndürene kadar küçültürsün.\n- Alevlerin ışığını iki katına çıkarır ya da yarıya indirirsin; rengini de değiştirebilirsin.\n- Alevleri 5 fite kadar hareket ettirirsin.\n- Bir yanıcı maddeyi tutuşturur ya da söndürürsün.\n\nEtkilerden biri seçildiğinde 1 saat boyunca sürer; bu süre içinde büyüyü yeniden yaparak aynı alevler üzerinde başka bir etki seçebilirsin. Uzrah Sarayı'nın ateş hizmetkârları bu cantrip'i mangalları ve lamba alevlerini yönetmek için kullanır."
         }
       }
     ]

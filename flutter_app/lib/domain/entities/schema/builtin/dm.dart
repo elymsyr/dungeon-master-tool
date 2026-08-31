@@ -286,6 +286,7 @@ EntityCategorySchema _npcCategory(String schemaId, String now, int orderIndex) {
   fb.relation('attitude_ref', 'Attitude', const ['attitude'], required_: true);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.text('faction', 'Faction');
+  fb.textarea('description', 'Description');
   // Stat block
   fb.statBlock('stat_block', 'Ability Scores');
   fb.combatStats('combat_stats', 'Combat Stats');
@@ -306,13 +307,17 @@ EntityCategorySchema _npcCategory(String schemaId, String now, int orderIndex) {
   fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
   fb.relation('action_refs', 'Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
   fb.relation('special_action_refs', 'Special Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.markdown('traits_md', 'Traits & Features', g: grpTraitsActions);
   fb.relation('equipment_refs', 'Equipment', const [
     'weapon', 'armor', 'tool', 'adventuring-gear', 'ammunition',
     'pack', 'mount', 'vehicle', 'trinket', 'magic-item',
   ], isList: true, g: grpTraitsActions);
+  fb.markdown('equipment_md', 'Equipment & Gear', g: grpTraitsActions);
   fb.relation('spell_refs', 'Spells', const ['spell'], isList: true, g: grpSpells);
+  fb.markdown('spells_md', 'Spellcasting', g: grpSpells);
   fb.markdown('goals', 'Goals', g: grpRules);
   fb.markdown('appearance', 'Appearance', g: grpRules);
+  fb.markdown('backstory', 'Backstory', g: grpRules);
   fb.markdown('mannerisms', 'Mannerisms', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
 

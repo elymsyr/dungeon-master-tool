@@ -19,6 +19,7 @@ tags: [moc]
 - [[refgraph]] — PackBuilder: uuidv5 namespace + two-pass `_ref` resolution. See [[Pack-Build-Two-Pass-Refgraph]].
 - [[emit]] — assemble wire-format `.pkg.json` + manifest + unmapped report.
 - [[migrate_pack_assets]] — one-shot rewrite of bundled `.pkg.json` assets off the retired effect DSLs.
+- [[convert_blueprint]] — bundled-world blueprint validator + `.pkg.json` emitter. Non-zero exit on an unresolved ref, an off-schema field key, or a missing media file — the world-side counterpart to [[build_packs]]'s `_ref` gate. Shares [[world_blueprint_converter]] with the in-app installer.
 - [[mapper_monster]] · [[mapper_spell]] · [[mapper_item]] · [[mapper_chargen]] — per-type mappers.
 - [[audit_packs]] · [[dupe_census]] · [[diff_packs]] — offline censuses over the shipped assets: *are the fields filled?*, *should this entity exist at all?* and *what did my rebuild change?*. All three back `flutter_app/docs/open5e_content_audit.md`. `audit_packs --builtin` (T2) runs the same census over the built-in pack — the link target — instead of the assets.
 - [[dupe]] — the single definition of *"the same card"* (L4), shared by [[dupe_census]] and [[build_packs]] so the census and the build cannot drift apart, plus the build-time drop that acts on it. Records the asymmetry that decides every duplicate: **drop toward the built-in pack, never toward another bundled pack** — the built-in one is in scope implicitly, a bundled one would become a transitive install dependency.

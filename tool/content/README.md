@@ -6,9 +6,34 @@ Bu dosya, agent'lar tarafından içerik aktarımı yapılırken kullanılacak y�
 
 1. **İçerik değiştirilmez** — Orijinal dosyalar (PDF, görsel, karakter dosyası) aynen paketlenir.
 2. **Blueprint'ler oluşturulur** — `manifest.json`, `blueprint.json`, `world-blueprint.json` hazırlanır.
-3. **Built-in paket tekrar eklenmez** — SRD 5.1'de zaten var olan içerik (canavar, sihir, eşya vb.) referans olarak kullanılır, yeniden oluşturulmaz.
-4. **Dosya yolları relative** — Tüm referanslar modül dizinine göreceli olmalı.
-5. **Medya doğru eşleştirilir** — Battlemap'ler location'a, token'lar encounter'a, handout'lar lore'a bağlanır.
+3. **Built-in paket tekrar eklenmez** — SRD 5.2.1'de **birebir aynı isimle** var olan içerik (canavar, sihir, eşya vb.) referans olarak kullanılır, yeniden oluşturulmaz.
+4. **Önce entity, sonra referans** — Referans verilecek her şey önce kendi kategorisinde
+   bir entity olarak var olmalı. Bir ekipmanı envantere koyacaksan önce `weapon` /
+   `armor` / `adventuring-gear` / `magic-item` olarak ekle, sonra `inventory`'ye
+   referans ver. Aynı kural trait, feat, spell, language, background için de geçerli.
+   SRD'de yoksa ve blueprint'te de yoksa referans **sessizce düşer** — build bunu hata sayar.
+5. **Dosya yolları relative** — Tüm referanslar modül dizinine göreceli olmalı.
+6. **Medya doğru eşleştirilir** — Battlemap'ler location'a, token'lar encounter'a, handout'lar lore'a bağlanır.
+   Her medya yolu `manifest.json`'ın `files` bloğunda listelenmeli; installer yalnız orada
+   listelenen dosyaları diske çıkarır ve `image_path`'i mutlak yola çevirir.
+7. **Alan adları şemadan gelir** — `mapping` içindeki her anahtar kategori şemasında
+   tanımlı olmalı. Şemada olmayan bir anahtar (`spell_refs` yerine `spells_known`,
+   `traits` yerine `traits_md`) hiçbir widget tarafından okunmaz; veri sessizce kaybolur.
+
+## Doğrulama — her aktarımdan sonra çalıştır
+
+```bash
+cd flutter_app
+dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir> --check
+```
+
+Çözülemeyen tek bir ref, şemada olmayan tek bir alan, eksik tek bir medya dosyası
+bile **non-zero exit** demektir ve rapor tam olarak hangi entity'nin hangi alanının
+bozuk olduğunu yazar. Temiz çıktı alınmadan aktarım bitmiş sayılmaz.
+`--check`'i düşürünce aynı komut `.pkg.json` üretir.
+
+`test/domain/services/bundled_worlds_blueprint_test.dart` aynı doğrulamayı
+`assets/worlds/` altındaki her dünya için CI'da tekrarlar.
 
 ## Aktarım Adımları
 
@@ -101,8 +126,13 @@ Detaylar için:
 | Hız | `combat_stats.speed` | text `"30 ft"` |
 | Beceriler | `skills` | proficiencyTable |
 | Kurtulma taslakları | `saving_throws` | proficiencyTable |
-| Eşyalar | `inventory` | relation list |
-| Büyüler | `spells_known` | relation list |
+| Eşyalar | `inventory` | relation list → `weapon` / `armor` / `adventuring-gear` / `magic-item` |
+| Büyüler | `spells_known` | relation list → `spell` (`spell_refs` **değil**) |
+| Yetenekler / özellikler | `trait_refs` | relation list → `trait` |
+| Feat'ler | `feats` | relation list → `feat` |
+| Alet yetkinlikleri | `tool_proficiencies` | relation list → `tool` |
+| Duyular | `senses` | relation list → `sense` |
+| Portre | `imagePath` | `media/Tokens/…` |
 | Kişilik | `personality_traits` | markdown |
 | Geçmiş | `backstory` | markdown |
 
@@ -115,3 +145,5 @@ Detaylar için:
 - [ ] Built-in paket tekrar eklenmedi
 - [ ] Location hiyerarşisi doğru kuruldu
 - [ ] Encounter'lar doğru canavarlara bağlandı
+- [ ] Her referansın hedefi ya SRD'de ya blueprint'te var
+- [ ] `--check` temiz çıktı verdi

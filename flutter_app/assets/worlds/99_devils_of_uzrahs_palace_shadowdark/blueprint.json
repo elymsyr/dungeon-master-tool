@@ -122,6 +122,42 @@
             "match": "name",
             "value": "Shield",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Javelin",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Scimitar",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Rope",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Pouch",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
           }
         ],
         "gp": 15,
@@ -129,7 +165,107 @@
         "ideals": "Code of Honor. Hospitality is sacred. Never break your word.",
         "bonds": "Fascinated by history. Keeps tiny packets of desert salt to throw at evil spirits.",
         "flaws": "Honesty - must obey the law. Guilt Complex. Selfless.",
-        "backstory": "Ghazi Holy Warrior of the Arabian lands. A man of deep faith and rigid honor, Jamal carries the weight of his vows like armor heavier than any steel."
+        "backstory": "Ghazi Holy Warrior of the Arabian lands. A man of deep faith and rigid honor, Jamal carries the weight of his vows like armor heavier than any steel. Age 43, 6' tall, 175 lb.\n\n**Skills (GCS detail):** Animal Handling (Equines) 11, Armoury (Melee Weapons) 10, Bow 12, Broadsword 14, Climbing 10, Cooking 10, Diplomacy 10, Disarming 15, Falconry 10, First Aid 12, History (Arabian) 11, Knife 12, Law (Arabian) 9, Occultism 10, Riding (Equines) 12, Shield 13, Shortsword 12, Soldier 11, Spear 12, Tactics 10, Theology (Islam) 10, Throwing 11, Thrown Weapon (Spear) 13\n\n**Equipment (GCS detail):** Scale Light Pot Helm, Boots, Small Shield, Javelin, Scimitar, Dagger, Rope 3/4\" 10 yards, Pouch (Bandages, Personal Basics, Prayer Charms), Scale Light Arm Armor, Scale Medium Torso Armor",
+        "imagePath": "media/Tokens/PC-Jamal.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Combat Reflexes"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "High Pain Threshold"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Night Vision"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Ghazi Rank"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Alert"
+          },
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Tough"
+          }
+        ],
+        "senses": [
+          {
+            "lookup": "sense",
+            "match": "name",
+            "value": "Darkvision"
+          }
+        ],
+        "weapon_masteries": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Broadsword"
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Scimitar"
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Javelin"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          },
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial"
+          }
+        ],
+        "armor_trainings": [
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Light"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Medium"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Heavy"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Shield"
+          }
+        ],
+        "age": "43",
+        "height": "6'",
+        "weight": "175 lb",
+        "eyes": "Brown",
+        "skin": "Brown",
+        "hair": "Brown",
+        "appearance": "*Ghazi Holy Warrior* · Male · Right-handed · born May 28"
       }
     },
     {
@@ -244,6 +380,36 @@
             "match": "name",
             "value": "Dagger",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Thrusting Broadsword",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Powerstone (3 pt)",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Backpack",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Component Pouch",
+            "equipped": true
           }
         ],
         "gp": 50,
@@ -251,7 +417,77 @@
         "ideals": "Comfortable Wealth. Starting wealth is twice normal.",
         "bonds": "Deeply vain about her hair. Mistaken Identity - someone important thinks she is someone else.",
         "flaws": "Impulsiveness. Curious. Greedy. Gregarious.",
-        "backstory": "A fire-touched sorceress of noble blood, Farah carries flames in her veins and ambition in her heart. Her past is wrapped in mistaken identity - someone powerful believes she is another."
+        "backstory": "A fire-touched sorceress of noble blood, Farah carries flames in her veins and ambition in her heart. Her past is wrapped in mistaken identity - someone powerful believes she is another. Age 24, 5'8\", 125 lb.\n\n**Skills (GCS detail):** Sex Appeal 10, Research 11, Knife 12, Intimidation 11, Fast-Talk 12, Fast-Draw (Sword) 13, Current Affairs (People) 12, Innate Attack (Beam) 12, Innate Attack (Breath) 12, Climbing 11, Broadsword 13, Axe/Mace 11\n\n**Spells (GCS detail):** Fire College: Breathe Fire 12, Create Fire 12, Extinguish Fire 12, Fireproof 12, Flame Jet 12, Flaming Weapon 13, Heat 12, Ignite Fire 12, Resist Fire 12, Shape Fire 12, Smoke 12\n\n**Equipment (GCS detail):** Shoes, Cloth Padded Arm Armor, Mail Fine Torso Armor, Thrusting Broadsword, 3 pt Powerstone, Dagger Fine, Backpack Small (Personal Basics, Ointment: Attractiveness, Lacquered Journal)",
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Fire Bolt",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Scorching Ray",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Burning Hands",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Fireball",
+            "equipped": true
+          }
+        ],
+        "imagePath": "media/Tokens/PC-Farah-Fireborn.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Magery"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Weapon Bond (Broadsword)"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Fit"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Combat Reflexes"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Alert"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          }
+        ],
+        "age": "24",
+        "height": "5'8\"",
+        "weight": "125 lb",
+        "eyes": "Brown",
+        "skin": "Brown",
+        "hair": "Black",
+        "appearance": "Female · Right-handed · born June 22"
       }
     },
     {
@@ -373,6 +609,36 @@
             "match": "name",
             "value": "Leather Armor",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Pouch",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Prince’s Turban",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Djelabba of Fate",
+            "equipped": true
           }
         ],
         "gp": 25,
@@ -380,7 +646,65 @@
         "ideals": "Freedom. Everyone should be free to live as they choose.",
         "bonds": "Owes a debt to a powerful merchant prince.",
         "flaws": "Greed. Cannot resist a valuable target.",
-        "backstory": "The Son of Darkness, Ibn al-Aswad is a thief of legendary skill who operates in the shadows of Basra's bazaars."
+        "backstory": "The Son of Darkness, Ibn al-Aswad is a thief of legendary skill who operates in the shadows of Basra's bazaars. Age 19, 5'8\", 125 lb.\n\n**Skills (GCS detail):** Area Knowledge (Al-Shihr) 12, Carousing 12, Climbing 13, Current Affairs (Al-Shihr) 12, Filch 12, Knife 12, Lockpicking 13, Merchant 11, Pickpocket 13, Scrounging 14, Search 13, Sex Appeal 12, Shadowing 12, Shortsword 13, Stealth 13, Streetwise 12, Traps 12\n\n**Equipment (GCS detail):** Shortsword Fine, Leather Pouch (Personal Basics, Lockpicks), Dagger, Shoes, Prince's Turban",
+        "imagePath": "media/Tokens/PC-Ibn-Al-Aswad.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Charisma"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "High Manual Dexterity"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Talent (Street Smarts)"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Trickster"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Skilled"
+          }
+        ],
+        "tool_proficiencies": [
+          {
+            "lookup": "tool",
+            "match": "name",
+            "value": "Thieves' Tools"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          }
+        ],
+        "armor_trainings": [
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Light"
+          }
+        ],
+        "age": "19",
+        "height": "5'8\"",
+        "weight": "125 lb",
+        "eyes": "Brown",
+        "skin": "Olive",
+        "hair": "Brown",
+        "appearance": "*The Handsome Hyena of Al-Shihr* · Male · Right-handed · born September 2"
       }
     },
     {
@@ -502,6 +826,42 @@
             "match": "name",
             "value": "Shield",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Large Knife",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Sling",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Reflex Bow",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Quiver",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Pouch",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
           }
         ],
         "gp": 10,
@@ -509,7 +869,115 @@
         "ideals": "Faith. The gods work through us.",
         "bonds": "Devoted to healing the sick and protecting the innocent.",
         "flaws": "Self-sacrificing to a fault.",
-        "backstory": "A priestess of the old faith, Naja carries the blessing of the moon goddess. Her mace is inscribed with prayers in a forgotten tongue."
+        "backstory": "A priestess of the old faith, Naja carries the blessing of the moon goddess. Her mace is inscribed with prayers in a forgotten tongue. Age 30, 5'7\", 110 lb.\n\n**Skills (GCS detail):** Animal Handling (Sheep) 9, Area Knowledge (Zagros Mountains) 11, Armoury (Missile Weapons) 9, Bow 15, Broadsword 14, Climbing 13, Fast-Draw (Arrow) 14, Fast-Draw (Knife) 14, First Aid 12, Games (Chess) 10, Hiking 11, Intimidation 9, Knife 13, Musical Instrument (Reed Flute) 8, Navigation (Land) 9, Observation 11, Poetry 9, Riding (Camel) 12, Riding (Equines) 12, Sling 12, Survival (Desert) 13, Tracking 12\n\n**Equipment (GCS detail):** Large Knife, Pouch (Personal Basics, Extra Bowstring, Sling Stone x10), Sling, Shoes, Reflex Bow, Shoulder Quiver (Arrow x12)",
+        "imagePath": "media/Tokens/PC-Naja.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Combat Reflexes"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Danger Sense"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Acute Vision"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Talent (Survivor)"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Forgettable Face"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Fit"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Alert"
+          },
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Tough"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          }
+        ],
+        "armor_trainings": [
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Light"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Medium"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Shield"
+          }
+        ],
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Sacred Flame",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Guidance",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Cure Wounds",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Bless",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Shield of Faith",
+            "equipped": true
+          }
+        ],
+        "age": "30",
+        "height": "5'7\"",
+        "weight": "110 lb",
+        "eyes": "Green",
+        "skin": "Tanned",
+        "hair": "Black",
+        "appearance": "*The Green Eyes of the Desert* · Female · Right-handed · born June 27"
       }
     },
     {
@@ -620,6 +1088,36 @@
             "match": "name",
             "value": "Hide Armor",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Brass Knuckles",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Large Knife",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Pearl Necklace",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
           }
         ],
         "gp": 35,
@@ -627,7 +1125,97 @@
         "ideals": "Loyalty. A pirate's word is their bond.",
         "bonds": "Sworn to find the legendary White Shark's treasure.",
         "flaws": "Reckless. Overconfident in combat.",
-        "backstory": "A weathered sea dog who has sailed every water from the Pearl Seas to the Burning Coast. Palmtree earned his name from the tattoo on his chest."
+        "backstory": "A weathered sea dog who has sailed every water from the Pearl Seas to the Burning Coast. Palmtree earned his name from the tattoo on his chest. Age 31, 5'10\", 225 lb.\n\n**Skills (GCS detail):** Animal Handling (Monkeys) 8, Boating (Unpowered) 11, Brawling 13, Carousing 13, Climbing 12, Crossbow 13, Fast-Draw (Knife) 13, Fast-Talk 8, Fishing 10, Ground Fighting 11, Knife 13, Lockpicking 8, Merchant 9, Seamanship 10, Search 10, Shortsword 12, Smuggling 9, Survival (Salt-Water Sea) 10, Swimming 13\n\n**Equipment (GCS detail):** Shoes Leather, Shortsword Cheap, Brass Knuckles, Pearl Necklace, Large Knife, Lockpicks",
+        "imagePath": "media/Tokens/Palmtree-the-Pirate.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Hard to Kill"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Luck"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Combat Reflexes"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Lucky"
+          },
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Tough"
+          }
+        ],
+        "tool_proficiencies": [
+          {
+            "lookup": "tool",
+            "match": "name",
+            "value": "Thieves' Tools"
+          }
+        ],
+        "weapon_masteries": [
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Cutlass"
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortsword"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          },
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial"
+          }
+        ],
+        "armor_trainings": [
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Light"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Medium"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Heavy"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Shield"
+          }
+        ],
+        "age": "31",
+        "height": "5'10\"",
+        "weight": "225 lb",
+        "eyes": "Brown",
+        "skin": "Dark Brown",
+        "hair": "Black",
+        "appearance": "Male · Right-handed · born July 8"
       }
     },
     {
@@ -659,7 +1247,7 @@
         "alignment_ref": {
           "lookup": "alignment",
           "match": "name",
-          "value": "True Neutral"
+          "value": "Neutral"
         },
         "xp": 300,
         "proficiency_bonus": 2,
@@ -742,6 +1330,42 @@
             "match": "name",
             "value": "Quarterstaff",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Dagger",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Powerstone (5 pt)",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Oak Rod",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Backpack",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Spellbook",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
           }
         ],
         "gp": 20,
@@ -749,7 +1373,78 @@
         "ideals": "Knowledge. The universe is a puzzle to be solved.",
         "bonds": "Searching for the lost mathematical proofs of the ancients.",
         "flaws": "Absent-minded. Forgets practical matters while lost in thought.",
-        "backstory": "A scholar of the mystic arts, Qasim believes all magic can be reduced to numbers. His 'digitology' is considered eccentric by mainstream wizards."
+        "backstory": "A scholar of the mystic arts, Qasim believes all magic can be reduced to numbers. His 'digitology' is considered eccentric by mainstream wizards. Age 35, 5'10\", 150 lb.\n\n**Skills (GCS detail):** Astronomy (Observational) 13, Climbing 10, Gambling 13, History (Arabian) 11, Innate Attack (Beam) 13, Knife 12, Mathematics (Pure) 12, Occultism 12, Poisons 11, Research 12, Shortsword 11, Staff 12, Streetwise 12, Thaumatology 14, Alchemy 10, Fast-Talk 12\n\n**Spells (GCS detail):** Earth/Stone College: Apportation 15, Create Water 15, Darkness 15, Mud Jet 15, Continual Light 15, Flash 15, Rain of Stones 15, Stone to Earth 15, Seek Earth 15, Flesh to Stone 15, Sand Jet 15, Shape Darkness 15, Purify Water 15, Create Earth 15, Earth to Stone 15, Shape Earth 15, Shape Water 15, Seek Fire 15, Stone Missile 15 (1d+1 cr/point), Stone to Flesh 15, Animate Object 14, Light 15, History 15, Seek Water 15, Seeker 15, Ancient History 15, Trace 15, Prehistory 15\n\n**Equipment (GCS detail):** 5 pt Powerstone, Oak Rod Enchanted with Staff, Leather Light Pot Helm Padded, Quarterstaff Enchanted with Staff",
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Stone Shape",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Flesh to Stone",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Earthquake",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Meld into Stone",
+            "equipped": true
+          }
+        ],
+        "imagePath": "media/Tokens/PC-Qasim-the-Digitologist.webp",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Magery"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Eidetic Memory"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Psychic Guidance (Stone Missile)"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Digitologist Guild Rank"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Skilled"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          }
+        ],
+        "age": "35",
+        "height": "5'10\"",
+        "weight": "150 lb",
+        "eyes": "Brown",
+        "skin": "Brown",
+        "hair": "Black",
+        "appearance": "*The Counter of Stars* · Male · Left-handed · born December 18",
+        "allies_organizations": "Guild of Digitalogists"
       }
     },
     {
@@ -781,7 +1476,7 @@
         "alignment_ref": {
           "lookup": "alignment",
           "match": "name",
-          "value": "True Neutral"
+          "value": "Neutral"
         },
         "xp": 300,
         "proficiency_bonus": 2,
@@ -871,6 +1566,42 @@
             "match": "name",
             "value": "Leather Armor",
             "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Longsword",
+            "equipped": true
+          },
+          {
+            "lookup": "weapon",
+            "match": "name",
+            "value": "Shortbow",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Quiver",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Backpack",
+            "equipped": true
+          },
+          {
+            "lookup": "adventuring-gear",
+            "match": "name",
+            "value": "Clothes, Traveler's",
+            "equipped": true
+          },
+          {
+            "lookup": "magic-item",
+            "match": "name",
+            "value": "Bronze Facemask",
+            "equipped": true
           }
         ],
         "gp": 15,
@@ -878,16 +1609,146 @@
         "ideals": "Balance. Nature demands equilibrium.",
         "bonds": "Tracks a rare creature that once saved her life.",
         "flaws": "Solitary. Struggles in crowds and cities.",
-        "backstory": "Known only as The Owl, this silent ranger has watched over the borderlands for years. Few have seen her face; fewer have earned her trust."
+        "backstory": "Known only as The Owl, this silent ranger has watched over the borderlands for years. Few have seen her face; fewer have earned her trust. Age 25, 5'10\", 170 lb.\n\n**Skills (GCS detail):** Acrobatics 12, Armoury (Melee Weapons) 10, Bow 13, Broadsword 14, Climbing 13, Counterattack (Broadsword) 12, Detect Lies 10, Gesture 12, Hidden Lore (Demon Lore) 10, Intimidation 11, Knife 13, Seamanship 11, Singing 13, Sleight of Hand 11, Stealth 14, Swimming 12, Tactics 9, Thrown Weapon (Knife) 13, Two-Handed Sword 14\n\n**Equipment (GCS detail):** Bronze Facemask, Shoes, Longsword Cheap, Backpack Small (Personal Basics), Layered Cloth Light Torso Armor, Short Bow, Gloves Light Leather, Shoulder Quiver (Arrow Bodkin x12), Worn Cloak",
+        "trait_refs": [
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Ambidexterity"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Hard to Subdue"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Fearlessness"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Fit"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Light Sleeper"
+          },
+          {
+            "lookup": "trait",
+            "match": "name",
+            "value": "Good Reputation"
+          }
+        ],
+        "feats": [
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Tough"
+          },
+          {
+            "lookup": "feat",
+            "match": "name",
+            "value": "Alert"
+          }
+        ],
+        "weapon_proficiency_categories": [
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Simple"
+          },
+          {
+            "lookup": "weapon-category",
+            "match": "name",
+            "value": "Martial"
+          }
+        ],
+        "armor_trainings": [
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Light"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Medium"
+          },
+          {
+            "lookup": "armor-category",
+            "match": "name",
+            "value": "Shield"
+          }
+        ],
+        "spells_known": [
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Hunter's Mark",
+            "equipped": true
+          },
+          {
+            "lookup": "spell",
+            "match": "name",
+            "value": "Cure Wounds",
+            "equipped": true
+          }
+        ],
+        "age": "25",
+        "height": "5'10\"",
+        "weight": "170 lb",
+        "eyes": "Green",
+        "skin": "Light Brown",
+        "hair": "Brown",
+        "appearance": "*The Owl of Al-Shihr* · Male · Right-handed · born December 8"
       }
     },
     {
       "mapping": {
         "name": "Singer",
-        "class": "Bard",
-        "level": 3,
-        "background": "Entertainer",
-        "alignment": "Chaotic Good",
+        "species_ref": {
+          "lookup": "species",
+          "match": "name",
+          "value": "Human"
+        },
+        "class_refs": [
+          {
+            "lookup": "class",
+            "match": "name",
+            "value": "Bard"
+          }
+        ],
+        "class_levels": {
+          "Bard": 3
+        },
+        "background_ref": {
+          "lookup": "background",
+          "match": "name",
+          "value": "Entertainer"
+        },
+        "alignment_ref": {
+          "lookup": "alignment",
+          "match": "name",
+          "value": "Chaotic Good"
+        },
+        "combat_stats": {
+          "level": 3
+        },
+        "languages": [
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Common"
+          },
+          {
+            "lookup": "language",
+            "match": "name",
+            "value": "Arabic"
+          }
+        ],
         "imagePath": "media/Tokens/PC-Singer.webp"
       }
     }

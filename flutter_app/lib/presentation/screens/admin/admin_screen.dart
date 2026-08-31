@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/admin_provider.dart';
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/first_party_catalog_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/package_provider.dart';
@@ -269,18 +270,32 @@ class _DashboardTab extends ConsumerWidget {
     final installer = ref.read(bundledWorldsInstallerProvider);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final count = await withLoading(
+      final summary = await withLoading(
         ref.read(globalLoadingProvider.notifier),
         'bundled-worlds-toggle',
         on ? 'Installing bundled worlds…' : 'Removing bundled worlds…',
-        () => on ? installer.installAll() : installer.uninstallAll(),
+        () async {
+          if (!on) {
+            return 'Removed ${await installer.uninstallAll()} bundled world(s).';
+          }
+          final report = await installer.installAll();
+          // Kısmi kurulumu sessizce başarı gibi gösterme: çözülemeyen ref
+          // okuma anında sessizce düşer, kullanıcı eksik listeyi göremez.
+          for (final issue in [...report.failures, ...report.issues]) {
+            debugPrint('[bundled-worlds] $issue');
+          }
+          return report.isClean
+              ? 'Installed ${report.count} bundled world(s).'
+              : 'Installed ${report.count} world(s) with '
+                  '${report.issues.length + report.failures.length} '
+                  'content issue(s) — see logs.';
+        },
       );
+      // Dünyalar Worlds sekmesinde listeleniyor — paket listesini tazelemek
+      // yetmiyor, yeni kurulan dünya yenilenene kadar görünmüyordu.
+      ref.invalidate(campaignListProvider);
       ref.invalidate(packageListProvider);
-      messenger.showSnackBar(SnackBar(
-        content: Text(on
-            ? 'Installed $count bundled world(s).'
-            : 'Removed $count bundled world(s).'),
-      ));
+      messenger.showSnackBar(SnackBar(content: Text(summary)));
     } catch (e) {
       ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
             showBundledWorlds: !on,

@@ -6,6 +6,7 @@ key.properties
 web-mockup
 __pycache__
 .tmp/
+gcs
 .env
 grids
 out

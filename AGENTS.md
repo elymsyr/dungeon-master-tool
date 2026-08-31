@@ -72,9 +72,17 @@ dart run tool/open5e_import/bin/build_packs.dart --data <open5e-api-staging/data
 dart run tool/catalog_publish/bin/build_catalog.dart      # → assets/first_party/manifest.json
 dart run tool/catalog_publish/bin/publish_catalog.dart --worker <url> [--dry-run]
 dart run tool/migrate_pack_assets.dart [--dry-run]        # rewrite bundled .pkg.json off retired DSLs
+
+dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir> --check   # validate a bundled world
+dart run tool/content/convert_blueprint.dart --dir assets/worlds/<dir>           # → <slug>.pkg.json
 ```
 
 `build_packs` exits non-zero on any unresolved `_ref`, so a broken pack can never ship.
+`convert_blueprint` does the same for bundled worlds: an unresolved ref, a field the
+category schema does not declare, or a missing media file is a non-zero exit. Both the
+CLI and `BundledWorldsInstaller` go through the one converter in
+[world_blueprint_converter.dart](flutter_app/lib/domain/services/world_blueprint_converter.dart);
+authoring rules live in [tool/content/README.md](tool/content/README.md).
 
 ### Version bump
 

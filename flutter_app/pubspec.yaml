@@ -126,7 +126,21 @@ flutter:
     # Bundled worlds (blueprint format).  Each subdir contains a manifest.json,
     # world-blueprint.json, blueprint.json, and media/ folder.  Loaded by
     # BundledWorldsInstaller at admin toggle time.
+    #
+    # Flutter asset directories are NOT recursive — every media subfolder has to
+    # be listed by hand.  Listing only `assets/worlds/` ships the top-level
+    # manifest and nothing else: in a release build the installer then finds no
+    # blueprints and no images at all (debug on desktop hid this, because
+    # `_tryLoad` falls back to reading the file off the working directory).
+    # `bundled_worlds_blueprint_test.dart` fails when a world directory is
+    # missing from this list.
     - assets/worlds/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Maps/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Tokens/
+    - assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/Handouts/
+    - "assets/worlds/99_devils_of_uzrahs_palace_shadowdark/media/GURPS GCS Characters/"
 
 flutter_launcher_icons:
   android: true
