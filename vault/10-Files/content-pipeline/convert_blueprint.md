@@ -23,8 +23,8 @@ tags: [file]
 - `<dir>/manifest.json`, `world-blueprint.json`, `blueprint.json`, and the media files on disk.
 
 **Outputs**
-- Issue report on stderr, entity counts on stdout.
-- `<dir>/<slug>.pkg.json` unless `--check`.
+- Issue report on stderr, entity counts + player-character count on stdout.
+- `<dir>/<slug>.pkg.json` unless `--check` — `entities` plus a separate `characters` array (PCs are not entities; the installer writes them as ownerless world characters).
 - **Exit 1 on any error**, 64 on bad usage, 66 on a missing manifest.
 
 ## Dependencies & Links

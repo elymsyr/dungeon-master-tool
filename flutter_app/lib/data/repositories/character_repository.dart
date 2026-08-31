@@ -46,6 +46,11 @@ class CharacterRepository {
     return CharacterLoadResult(chars: out, legacyWorldNames: const {});
   }
 
+  /// Bu id ile bir satır var mı. Paketlenmiş dünya kurulumu idempotent
+  /// olmalı: ikinci kurulum DM'in üzerinde oynadığı karakteri ezmemeli.
+  Future<bool> exists(String id) async =>
+      (await _db.worldCharactersDao.getById(id)) != null;
+
   /// Karakteri kaydeder. Portre yolu ham bir seçici yoluysa (ör.
   /// `.../Downloads/portre.png`) önce `{charactersDir}/{id}_portre.png`
   /// olarak kopyalanır — tek çıkış kapısı burası olduğu için editör, sihirbaz

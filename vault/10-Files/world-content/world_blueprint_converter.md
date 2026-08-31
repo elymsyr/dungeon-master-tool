@@ -27,12 +27,14 @@ tags: [file]
 - `tier0Slugs`, `contentSlugs` — schema-derived (see [[builtin_content_names]]); never hand-listed.
 - `knownNames` — `slug → {name}` for everything that exists outside the blueprint (Tier-0 seeds + SRD pack).
 - `fieldKeys` — `slug → {field key}` per category; empty disables field checking.
+- `relationTargets` — `slug → fieldKey → {allowed target category}`, from the schema's `allowedTypes`; empty disables target checking.
 - `mediaResolver` — relative media path → resolved value, `null` = missing file.
 - `convert({worldBlueprint, characterBlueprint})`.
 
 **Outputs**
 - `BlueprintConversion.entities` — `uuid → wire entity` (`name`, `type`, `source`, `description`, `image_path`, `images`, `tags`, `dm_notes`, `pdfs`, `location_id`, `attributes`).
-- `BlueprintConversion.issues` / `errors` / `hasErrors` / `counts`.
+- `BlueprintConversion.characters` — the `characters` block, in **`Entity.toJson()`** shape (`id`, `categorySlug`, `imagePath`, `fields`, …), *not* wire-entity shape and *not* in `entities`. The caller wraps each in an ownerless `Character`.
+- `BlueprintConversion.issues` / `errors` / `hasErrors` / `counts` (`counts` covers entities only).
 
 ## Dependencies & Links
 - Depends on: `package:uuid` only (pure domain, no Flutter).
@@ -52,6 +54,8 @@ tags: [file]
 - Ids are `uuid.v5(_namespace, '<package>:<slug>:<lowercased name>')` — deterministic across runs. Two rows sharing `(slug, name)` are an error, not a silent overwrite.
 - Any string matching `\.(webp|png|jpe?g|gif|svg|pdf|mp3|ogg|wav|gcs)$` goes through `mediaResolver`, wherever it sits in the tree — no per-key allowlist to drift.
 - A `mapping` key absent from `fieldKeys[slug]` is an error: it would land in `attributes` where no widget reads it (this is how two PCs' spell lists vanished into `spell_refs` instead of `spells_known`).
+- A ref whose target category is not in `relationTargets[slug][fieldKey]` is an error — the field widget drops a row of the wrong type at read time.
+- **PCs leave through a different door.** `characters` entries are built by the same `_buildEntity` pass (same ref tiers, same field checking) and then renamed to `Entity.toJson()` keys by `_characterEntity`; they never enter `entities`. As world entities they were unreachable — `entity_sidebar.dart` filters `kPlayerCategorySlugs` out of the Database tab, and the Characters tab reads `world_characters`.
 
 ## Notes
 - Guards: `test/domain/services/world_blueprint_converter_test.dart` (unit) and `bundled_worlds_blueprint_test.dart` (every shipped world converts with zero issues).

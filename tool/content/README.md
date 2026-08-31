@@ -19,6 +19,23 @@ Bu dosya, agent'lar tarafından içerik aktarımı yapılırken kullanılacak y�
 7. **Alan adları şemadan gelir** — `mapping` içindeki her anahtar kategori şemasında
    tanımlı olmalı. Şemada olmayan bir anahtar (`spell_refs` yerine `spells_known`,
    `traits` yerine `traits_md`) hiçbir widget tarafından okunmaz; veri sessizce kaybolur.
+8. **Ref zarfını elle yazma** — her referans `{"lookup": "<kategori>", "match": "name",
+   "value": "<ad>"}` biçiminde yazılır. `lookup` **hedef kategorinin** slug'ıdır, içeriğin
+   kendi slug'ı değil: `{"slug": "gust-of-wind", "name": "Gust of Wind"}` yanlıştır ve artık
+   hata verir (doğrusu `lookup: "spell"`). `equipped`, `quantity`, `prepared` gibi satır-yanı
+   alanlar aynı objeye yazılır.
+9. **Hedef kategori alanla uyuşmalı** — şema her relation alanı için izin verilen
+   kategorileri belirtir (`monster.gear_refs` → `adventuring-gear` / `weapon` / `armor`).
+   Uymayan satır okuma anında atılır; converter bunu build-time'da keser.
+10. **Serbest metin alanı listenin yerine geçmez** — `equipment_md` / `spells_md` /
+    `traits_md` kaynağı olduğu gibi korumak içindir. Aynı içerik **ayrıca**
+    `equipment_refs` / `gear_refs` / `spell_refs` / `trait_refs` olarak da bağlanmalı;
+    yoksa uygulamada ekipman/büyü listesi boş görünür.
+11. **PC'ler entity değil karakter** — `blueprint.json` içindeki oyuncu karakterleri world
+    entity'si olarak yazılmaz; kurulum onları dünyanın **Characters** sekmesine *ownersız*
+    (unclaimed) karakter olarak yazar. Database sekmesi `player-character` kategorisini
+    listelemiyor, dolayısıyla entity olarak yazılan bir PC hiçbir ekranda görünmez.
+    `--check` çıktısı entity sayısının altında ayrı bir "player character(s)" satırı verir.
 
 ## Doğrulama — her aktarımdan sonra çalıştır
 

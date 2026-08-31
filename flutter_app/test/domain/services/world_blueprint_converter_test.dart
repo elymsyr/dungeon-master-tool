@@ -157,12 +157,37 @@ void main() {
         },
       );
       expect(r.hasErrors, isFalse);
-      final pc = r.entities.values
-          .firstWhere((e) => e['type'] == 'player-character');
-      expect(pc['attributes']['inventory'], [
+      final pc = r.characters.single;
+      expect(pc['fields']['inventory'], [
         {'_ref': 'weapon', 'name': 'Cutlass', 'equipped': true},
         {'slug': 'weapon', 'name': 'Longsword'},
       ]);
+    });
+
+    test('PCs land in characters, never in entities', () {
+      // Regression: PC'ler world entity'si olarak yazılıyordu ve hiçbir
+      // ekranda görünmüyorlardı — Database sekmesi `player-character`
+      // kategorisini listesinden çıkarıyor, Characters sekmesi ise
+      // `world_characters` okuyor.
+      final r = build().convert(
+        characterBlueprint: {
+          'characters': [
+            {
+              'mapping': {'name': 'Pirate', 'imagePath': 'media/ok.webp'},
+            },
+          ],
+        },
+      );
+      expect(r.hasErrors, isFalse);
+      expect(r.entities, isEmpty);
+      // `Entity.fromJson` bu biçimi bekliyor — wire satırının `type` /
+      // `image_path` / `attributes` adlandırması değil.
+      final pc = r.characters.single;
+      expect(pc['categorySlug'], 'player-character');
+      expect(pc['name'], 'Pirate');
+      expect(pc['imagePath'], '/abs/media/ok.webp');
+      expect(pc['fields'], isA<Map<String, dynamic>>());
+      expect(pc['id'], isNotEmpty);
     });
 
     test('target in neither the blueprint nor the SRD pack is an error', () {

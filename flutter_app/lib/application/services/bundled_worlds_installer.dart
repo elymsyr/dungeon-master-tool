@@ -6,6 +6,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 
 import '../../core/config/app_paths.dart';
+import '../../data/repositories/character_repository.dart';
+import '../../domain/entities/character.dart';
+import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -34,9 +37,15 @@ import '../../domain/services/world_blueprint_converter.dart';
 ///  3. **Hata yutulmaz.** Çözülemeyen ref / eksik medya [InstallReport]
 ///     içinde döner; sessiz kısmi kurulum "içerik doğru geldi mi bilmiyorum"
 ///     durumunun kaynağıydı.
+///  4. **PC'ler entity değil karakter.** `blueprint.json` içindeki oyuncu
+///     karakterleri `world_characters`'a **ownersız** (unclaimed) yazılır,
+///     yani dünyanın Characters sekmesinde çıkar. World entity'si olarak
+///     yazıldıklarında hiçbir yerde görünmüyorlardı: Database sekmesi
+///     `player-character` kategorisini listeden çıkarıyor.
 class BundledWorldsInstaller {
-  BundledWorldsInstaller(this._repo);
+  BundledWorldsInstaller(this._repo, this._chars);
   final CampaignRepository _repo;
+  final CharacterRepository _chars;
 
   static const _manifestAsset = 'assets/worlds/manifest.json';
   static const _assetDir = 'assets/worlds';
@@ -72,10 +81,18 @@ class BundledWorldsInstaller {
       try {
         final data = await _repo.load(name);
         final meta = data['metadata'];
-        if (meta is Map && meta['installed_from'] == 'assets') {
-          await _repo.delete(name);
-          n++;
+        if (meta is! Map || meta['installed_from'] != 'assets') continue;
+        // `_purgeWorld` world_characters'a dokunmuyor (karakterler normalde
+        // dünyayı sağ kurtarır). Buradakiler kurulum artığı — dünya gidince
+        // ölü bir world id'ye bakan karakter kalmasın.
+        final worldId = data['world_id'];
+        if (worldId is String) {
+          for (final c in await _chars.loadAll()) {
+            if (c.worldId == worldId) await _chars.dropLocal(c.id);
+          }
         }
+        await _repo.delete(name);
+        n++;
       } catch (_) {
         // best-effort
       }
@@ -155,13 +172,21 @@ class BundledWorldsInstaller {
     // Var olan dünyanın kullanıcı tarafından eklenmiş satırlarını koru —
     // `_saveToDb` entities için full-replace uyguluyor.
     final existing = await _repo.getAvailable();
+    String? worldId;
     if (existing.contains(worldName)) {
       try {
         final prev = await _repo.load(worldName);
+        worldId = prev['world_id'] as String?;
         final prevEntities = prev['entities'];
         if (prevEntities is Map) {
           worldData['entities'] = <String, dynamic>{
-            ...prevEntities.cast<String, dynamic>(),
+            for (final e in prevEntities.cast<String, dynamic>().entries)
+              // Eski kurulumun PC entity'leri: artık karakter olarak
+              // yazılıyorlar, entity kopyası hiçbir ekranda görünmeyen ölü
+              // satır. Yeniden kurulum bunu temizlesin.
+              if ((e.value is! Map) ||
+                  (e.value as Map)['type'] != 'player-character')
+                e.key: e.value,
             ...result.entities,
           };
         }
@@ -171,7 +196,53 @@ class BundledWorldsInstaller {
     }
 
     await _repo.save(worldName, worldData);
+    // `save` yeni dünya açarken ürettiği id'yi map'e geri yazıyor; var olan
+    // dünyada yazmıyor, o yüzden yukarıdaki `load`'dan alındı.
+    worldId ??= worldData['world_id'] as String?;
+    await _installCharacters(worldId, result.characters, build, report,
+        worldName: worldName);
     report.installed.add(worldName);
+  }
+
+  // ── Oyuncu karakterleri ──────────────────────────────────────────────
+
+  /// Blueprint'in PC'lerini dünyanın Characters sekmesine, **ownersız**
+  /// yazar. Id'ler blueprint'ten deterministik (uuidv5) geliyor; zaten var
+  /// olan satıra dokunulmaz, yoksa ikinci kurulum DM'in level-up'ını siler.
+  Future<void> _installCharacters(
+    String? worldId,
+    List<Map<String, dynamic>> characters,
+    BuiltinDnd5eV2Build build,
+    InstallReport report, {
+    required String worldName,
+  }) async {
+    if (characters.isEmpty) return;
+    if (worldId == null) {
+      report.issues.add('$worldName · characters: world id unresolved — '
+          '${characters.length} character(s) not installed');
+      return;
+    }
+    final now = DateTime.now().toUtc().toIso8601String();
+    for (final json in characters) {
+      final id = json['id'] as String;
+      try {
+        if (await _chars.exists(id)) continue;
+        await _chars.save(Character(
+          id: id,
+          templateId: build.schema.schemaId,
+          templateName: build.schema.name,
+          entity: Entity.fromJson(json),
+          worldId: worldId,
+          // Sahipsiz: dünyayı açan DM dağıtana / bir oyuncu claim edene dek
+          // "Available to Claim" bölümünde durur.
+          ownerId: null,
+          createdAt: now,
+          updatedAt: now,
+        ));
+      } catch (e) {
+        report.issues.add('$worldName · character ${json['name']}: $e');
+      }
+    }
   }
 
   // ── Medya çıkarımı ───────────────────────────────────────────────────

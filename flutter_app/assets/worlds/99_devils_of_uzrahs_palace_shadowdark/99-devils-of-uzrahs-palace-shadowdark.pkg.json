@@ -4959,19 +4959,22 @@
         "requires_concentration": false,
         "attack_type": "None"
       }
-    },
-    "a9bc0b4c-73a7-57ed-917d-509e014f5c44": {
+    }
+  },
+  "characters": [
+    {
+      "id": "a9bc0b4c-73a7-57ed-917d-509e014f5c44",
       "name": "Jamal the Black Spear",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Jamal.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Jamal.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -5199,18 +5202,19 @@
         "appearance": "*Ghazi Holy Warrior* · Male · Right-handed · born May 28"
       }
     },
-    "a4ba8356-c1d2-5d72-964c-1d6df0ef2bd8": {
+    {
+      "id": "a4ba8356-c1d2-5d72-964c-1d6df0ef2bd8",
       "name": "Farah the Fireborn",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Farah-Fireborn.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Farah-Fireborn.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -5403,18 +5407,19 @@
         "appearance": "Female · Right-handed · born June 22"
       }
     },
-    "859ad852-7025-5f8a-955c-f434d553996c": {
+    {
+      "id": "859ad852-7025-5f8a-955c-f434d553996c",
       "name": "Ibn al-Aswad",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Ibn-Al-Aswad.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Ibn-Al-Aswad.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -5603,18 +5608,19 @@
         "appearance": "*The Handsome Hyena of Al-Shihr* · Male · Right-handed · born September 2"
       }
     },
-    "a3711fc8-da33-5ae1-8774-2ef871adfd97": {
+    {
+      "id": "a3711fc8-da33-5ae1-8774-2ef871adfd97",
       "name": "Naja",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Naja.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Naja.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -5849,18 +5855,19 @@
         "appearance": "*The Green Eyes of the Desert* · Female · Right-handed · born June 27"
       }
     },
-    "eaa93e4a-fdd7-5ef7-9300-b8b634a47eb1": {
+    {
+      "id": "eaa93e4a-fdd7-5ef7-9300-b8b634a47eb1",
       "name": "Palmtree the Pirate",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/Palmtree-the-Pirate.webp",
       "images": [],
+      "imagePath": "media/Tokens/Palmtree-the-Pirate.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -6066,18 +6073,19 @@
         "appearance": "Male · Right-handed · born July 8"
       }
     },
-    "e1058179-dd97-5f2f-a776-fb0ec461f851": {
+    {
+      "id": "e1058179-dd97-5f2f-a776-fb0ec461f851",
       "name": "Qasim the Digitologist",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Qasim-the-Digitologist.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Qasim-the-Digitologist.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -6276,18 +6284,19 @@
         "allies_organizations": "Guild of Digitalogists"
       }
     },
-    "dfc45d14-e2d6-5d10-8a78-4a33c8babb63": {
+    {
+      "id": "dfc45d14-e2d6-5d10-8a78-4a33c8babb63",
       "name": "The Owl",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "",
       "images": [],
+      "imagePath": "",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -6511,18 +6520,19 @@
         "appearance": "*The Owl of Al-Shihr* · Male · Right-handed · born December 8"
       }
     },
-    "b8b2dee2-5d7a-5110-891d-e27f4377f662": {
+    {
+      "id": "b8b2dee2-5d7a-5110-891d-e27f4377f662",
       "name": "Singer",
-      "type": "player-character",
+      "categorySlug": "player-character",
       "source": "99 Devils of Uzrah's Palace, shadowdark",
       "description": "",
-      "image_path": "media/Tokens/PC-Singer.webp",
       "images": [],
+      "imagePath": "media/Tokens/PC-Singer.webp",
       "tags": [],
-      "dm_notes": "",
+      "dmNotes": "",
       "pdfs": [],
-      "location_id": null,
-      "attributes": {
+      "locationId": null,
+      "fields": {
         "species_ref": {
           "slug": "species",
           "name": "Human"
@@ -6559,5 +6569,5 @@
         ]
       }
     }
-  }
+  ]
 }
